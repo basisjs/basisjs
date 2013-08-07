@@ -429,78 +429,46 @@
         }
       },
 
-      templateSync: function(noRecreate){
-        var template = this.template;
-        var tmpl = this.tmpl;
+      templateSync: function(){
         var oldElement = this.element;
+        var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
 
-        if (!noRecreate)
+        if (tmpl.childNodesHere)
         {
-          if (this.tmpl)
-            template.clearInstance(this.tmpl);
-   
-          tmpl = template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
+          tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
+          tmpl.childNodesElement.insertPoint = tmpl.childNodesHere; // FIXME: we should avoid add expando to dom nodes
+        }
 
-          if (tmpl.childNodesHere)
-          {
-            tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
-            tmpl.childNodesElement.insertPoint = tmpl.childNodesHere; // FIXME: we should avoid add expando to dom nodes
-          }
+        this.tmpl = tmpl;
+        this.element = tmpl.element;
+        this.childNodesElement = tmpl.childNodesElement || tmpl.element;
+        ;;;this.noChildNodesElement = false;
 
-          this.tmpl = tmpl;
-          this.element = tmpl.element;
-          this.childNodesElement = tmpl.childNodesElement || tmpl.element;
-          ;;;this.noChildNodesElement = false;
+        if (this.childNodesElement.nodeType != 1)
+        {
+          this.childNodesElement = document.createDocumentFragment();
+          ;;;this.noChildNodesElement = true;
+        }
 
-          if (this.childNodesElement.nodeType != 1)
-          {
-            this.childNodesElement = document.createDocumentFragment();
-            ;;;this.noChildNodesElement = true;
-          }
+        if (this.grouping)
+          this.grouping.syncDomRefs();
 
-          if (this.grouping)
-            this.grouping.syncDomRefs();
-
-          if (this instanceof PartitionNode)
-          {
-            var nodes = this.nodes;
-            if (nodes)
-              for (var i = nodes.length - 1, child; child = nodes[i]; i--)
-                child.parentNode.insertBefore(child, child.nextSibling);
-          }
-          else
-          {
-            for (var child = this.lastChild; child; child = child.previousSibling)
-              this.insertBefore(child, child.nextSibling);
-          }
+        if (this instanceof PartitionNode)
+        {
+          var nodes = this.nodes;
+          if (nodes)
+            for (var i = nodes.length - 1, child; child = nodes[i]; i--)
+              child.parentNode.insertBefore(child, child.nextSibling);
+        }
+        else
+        {
+          for (var child = this.lastChild; child; child = child.previousSibling)
+            this.insertBefore(child, child.nextSibling);
         }
 
         // insert content
         if (this.content)
-        {
-          if (this.content instanceof basis.l10n.Token)
-          {
-            ;;;basis.dev.warn('WARN: use instance of basis.l10n.Token as value for basis.ui.Node#content property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.content);
-
-            // FIXME: buggy code here, looks like we shouldn't want to do that
-            var token = this.content;
-            var textNode = DOM.createText(token.value);
-            var handler = function(value){
-              this.nodeValue = value;
-            };
-
-            token.attach(handler, textNode);
-            this.addHandler({
-              destroy: function(){
-                token.detach(handler, textNode);
-              }
-            });
-
-            DOM.insert(tmpl.content || tmpl.element, textNode);
-          }
-          else
-            DOM.insert(tmpl.content || tmpl.element, this.content);
-        }
+          DOM.insert(tmpl.content || tmpl.element, this.content);
 
         // update template
         if (this.id)
@@ -533,16 +501,16 @@
 
         this.templateUpdate(this.tmpl);
 
-        if (oldElement && oldElement.nodeType != 11 && this.element && oldElement !== this.element)
+        if (oldElement && oldElement !== this.element && oldElement.nodeType != 11)
         {
           var parentNode = oldElement && oldElement.parentNode;
           
           if (parentNode)
             parentNode.replaceChild(this.element, oldElement);
-
-          // emit event
-          this.emit_templateChanged();
         }
+
+        // emit event
+        this.emit_templateChanged();
       },
 
      /**
@@ -577,9 +545,7 @@
         // apply new value
         if (this.template !== template)
         {
-          var tmpl;
           var oldTemplate = this.template;
-          var oldElement = this.element;
 
           // set new template
           this.template = template;
@@ -588,21 +554,16 @@
             this.templateSync();
           else
           {
+            var oldElement = this.element;
             oldTemplate.clearInstance(this.tmpl);
 
             this.tmpl = null;
             this.element = null;
             this.childNodesElement = null;
-          }
 
-          if (oldElement)
-          {
-            if (!this.element || this.element != oldElement)
-            {
-              var parentNode = oldElement && oldElement.parentNode;
-              if (parentNode && parentNode.nodeType == DOM.ELEMENT_NODE)
-                parentNode.removeChild(oldElement);
-            }
+            var parentNode = oldElement && oldElement.parentNode;
+            if (parentNode && parentNode.nodeType == DOM.ELEMENT_NODE)
+              parentNode.removeChild(oldElement);
           }
         }
       },
@@ -643,13 +604,13 @@
       focus: function(select){
         if (this.focusable)
         {
-          var focusElement = this.tmpl.focus || this.element;
+          var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
           if (focusElement)
           {
             if (focusTimer)
-              focusTimer = basis.timer.clearImmediate(focusTimer);
+              focusTimer = basis.clearImmediate(focusTimer);
 
-            focusTimer = basis.timer.setImmediate(function(){
+            focusTimer = basis.setImmediate(function(){
               DOM.focus(focusElement, select);
             });
           }
@@ -662,7 +623,7 @@
       blur: function(){
         if (this.focusable)
         {
-          var focusElement = this.tmpl.focus || this.element;
+          var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
           if (focusElement)
             focusElement.blur();
         }
