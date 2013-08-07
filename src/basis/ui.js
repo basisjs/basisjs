@@ -851,6 +851,68 @@
   });
 
 
+ /**
+  * @class
+  */ 
+  var ShadowNodeList = Node.subclass({
+    className: namespace + '.ShadowNodeList',
+
+    emit_ownerChanged: function(oldOwner){
+      Node.prototype.emit_ownerChanged.call(this, oldOwner);
+
+      this.setDataSource(this.owner && this.owner.getChildNodesDataset());
+    },
+
+    getChildNodesElement: function(owner){
+      return owner.childNodesElement;
+    },
+
+    listen: {
+      owner: {
+        templateChanged: function(){
+          this.childNodesElement = this.getChildNodesElement(this.owner) || this.owner.element;
+          DOM.insert(this.childNodesElement, this.childNodes.map(function(item){
+            return item.element;
+          }));
+        }
+      }
+    },
+
+    childClass: {
+      className: namespace + '.ShadowNode',
+
+      getElement: function(node){
+        return node.element;
+      },
+      templateSync: function(){
+        Node.prototype.templateSync.call(this);
+
+        var newElement = this.getElement(this.delegate);
+
+        if (newElement)
+        {
+          newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
+          this.element = newElement;
+        }
+      },
+      listen: {
+        delegate: {
+          templateChanged: function(){
+            var oldElement = this.element;
+            var newElement = this.getElement(this.delegate);
+
+            if (newElement)
+              newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
+
+            this.element = newElement || this.tmpl.element;
+            DOM.replace(oldElement, this.element);
+          }
+        }
+      }
+    }
+  });
+
+
   //
   // export names
   //
@@ -860,7 +922,10 @@
 
     Node: Node,
     PartitionNode: PartitionNode,
-    GroupingNode: GroupingNode
+    GroupingNode: GroupingNode,
+
+    ShadowNodeList: ShadowNodeList,
+    ShadowNode: ShadowNodeList.prototype.childClass
   };
 
   // deprecated, left here for backward capability
