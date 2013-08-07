@@ -198,7 +198,7 @@
         }));
 
         this.setChildNodes(
-          Object
+          basis.object
             .values(mapDO[this.data.fullPath].data.obj.docsProto_)
             .map(function(val){
               return {

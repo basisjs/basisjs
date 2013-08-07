@@ -580,6 +580,7 @@
       if (tmplRef && tmplRef.action)
       {
         var actions = attr.nodeValue.qw();
+        event.actionTarget = cursor;
         for (var i = 0, actionName; actionName = actions[i++];)
           tmplRef.action.call(tmplRef.context, actionName, event);
       }

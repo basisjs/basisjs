@@ -38,7 +38,6 @@ basis.require('basis.net.upload');
 basis.require('basis.l10n');
 basis.require('basis.ui');
 basis.require('basis.ui.button');
-basis.require('basis.ui.label');
 basis.require('basis.ui.tree');
 basis.require('basis.ui.popup');
 basis.require('basis.ui.menu');

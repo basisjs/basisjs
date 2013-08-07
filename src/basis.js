@@ -605,11 +605,173 @@
   })();
 
 
+  //
+  // Support for setImmediate/clearImmediate
+  //
+
+  var setImmediate = global.setImmediate || global.msSetImmediate;
+  var clearImmediate = global.clearImmediate || global.msSetImmediate;
+
+  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't global
+  if (setImmediate)
+    setImmediate = setImmediate.bind(global);
+
+  if (clearImmediate)
+    clearImmediate = clearImmediate.bind(global);
+
+  //
+  // emulate setImmediate/clearImmediate
+  // Inspired on Domenic Denicola's solution https://github.com/NobleJS/setImmediate
+  //
+  if (!setImmediate)
+    (function(){
+      var MESSAGE_NAME = 'basisjs.setImmediate';
+      var runTask = (function(){
+        var taskById = {};
+        var taskId = 1;
+
+        // emulate setImmediate
+        setImmediate = function(){
+          taskById[++taskId] = {
+            fn: arguments[0],
+            args: arrayFrom(arguments, 1)
+          };
+
+          addToQueue(taskId);
+
+          return taskId;
+        };
+
+        // emulate clearImmediate
+        clearImmediate = function(id){
+          delete taskById[id];
+        };
+
+        //
+        // return result function for task run
+        //
+        return function(id){
+          var task = taskById[id];
+
+          if (task)
+          {
+            try {
+              if (typeof task.fn == 'function')
+                task.fn.apply(undefined, task.args);
+              else
+              {
+                (global.execScript || function(fn){
+                  global['eval'].call(global, fn);
+                })(String(task.fn));
+              }
+            } finally {
+              delete taskById[id];
+            }
+          }
+        };
+      })();
+
+      // by default
+      var addToQueue = function(taskId){
+        setTimeout(function(){
+          runTask(taskId);
+        }, 0);
+      };
+
+      //
+      // implement platform specific solution
+      //
+      if (global.process && typeof process.nextTick == 'function')
+      {
+        // use next tick on node.js
+        addToQueue = function(taskId){
+          process.nextTick(function(){
+            runTask(taskId);
+          });
+        }
+      }
+      else
+      {
+        if (global.MessageChannel)
+        {
+          addToQueue = function(taskId){
+            var channel = new global.MessageChannel();
+            channel.port1.onmessage = function(){
+              runTask(taskId);
+            };
+            channel.port2.postMessage(''); // broken in Opera if no value
+          };
+        }
+        else
+        {
+          // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+          // where `global.postMessage` means something completely different and can't be used for this purpose.
+          var postMessageSupported = global.postMessage && !global.importScripts;
+
+          // IE8 has postMessage implementation, but it is synchronous and can't be used.
+          if (postMessageSupported)
+          {
+            var oldOnMessage = global.onmessage;
+            global.onmessage = function(){
+              postMessageSupported = false;
+            };
+            global.postMessage('', '*');
+            global.onmessage = oldOnMessage;
+          }
+
+          if (postMessageSupported)
+          {
+            // postMessage scheme
+            var handleMessage = function(event){
+              if (event && event.source == global)
+              {
+                var taskId = String(event.data).split(MESSAGE_NAME)[1];
+
+                if (taskId)
+                  runTask(taskId);
+              }
+            };
+
+            if (global.addEventListener)
+              global.addEventListener('message', handleMessage, true);
+            else
+              global.attachEvent('onmessage', handleMessage);
+
+            // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
+            // invoking our onGlobalMessage listener above.
+            addToQueue = function(taskId){
+              global.postMessage(MESSAGE_NAME + taskId, '*');
+            };
+          }
+          else
+          {
+            if (document && 'onreadystatechange' in createScript())
+            {
+              // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+              // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
+              addToQueue = function(taskId){
+                var scriptEl = createScript();
+                scriptEl.onreadystatechange = function(){
+                  runTask(taskId);
+
+                  scriptEl.onreadystatechange = null;
+                  scriptEl.parentNode.removeChild(scriptEl);
+                  scriptEl = null;
+                };
+                document.documentElement.appendChild(scriptEl);
+              };
+            }
+          }
+        }
+      }
+    })();
+
+
   // ============================================
   // path utils
   //
 
-  var NODE_ENV = typeof process != 'undefined' && process.versions && process.versions.node;
+  var NODE_ENV = typeof process == 'object' && Object_toString.call(process) == '[object process]';
 
  /**
   * Utilities for handling and transforming file paths. All these functions perform
@@ -1414,6 +1576,11 @@
     handler: null,
 
    /**
+    * @type {basis.DeferredToken}
+    */
+    deferredToken: null,
+
+   /**
     * Binding interface.
     * @type {object}
     */ 
@@ -1510,15 +1677,93 @@
     },
 
    /**
+    * Returns deferred token based on this token. Every token can has
+    * only one it's own deferred token.
+    * @return {basis.DeferredToken}
+    */
+    deferred: function(){
+      var token = this.deferredToken;
+   
+      if (!token)
+      {
+        token = this.deferredToken = new basis.DeferredToken(this.value);
+        this.attach(token.set, token);
+      }
+   
+      return token;
+    },
+
+   /**
     * Actually it's not require invoke destroy method for token, garbage 
     * collector have no problems to free token's memory when all references
     * to token are removed.
     * @destructor
     */
     destroy: function(){
+      if (this.deferredToken)
+      {
+        this.deferredToken.destroy();
+        this.deferredToken = null;
+      }
+
       this.handler = null;
       this.value = null;
     }  
+  });
+
+  //
+  // Deferred token
+  //
+
+  var awaitToApply = (function(){
+    var tokens = {};
+    var timer;
+   
+    function applyTokens(){
+      var list = tokens;
+   
+      // reset list & timer
+      tokens = {};
+      timer = null;
+   
+      // call apply method for all tokens in the list
+      for (var key in list)
+        list[key].apply();
+    }
+   
+    return function(token){
+      if (token.basisObjectId in tokens)
+        return;
+ 
+      tokens[token.basisObjectId] = token;
+ 
+      if (!timer)
+        setImmediate(applyTokens);
+    }
+  })();
+   
+ /**
+  * @class
+  */ 
+  var DeferredToken = Token.subclass({
+   /**
+    * Set new value for token and schedule to call apply method.
+    * @param {*} value
+    */
+    set: function(value){
+      if (this.value !== value)
+      {
+        this.value = value;
+        awaitToApply(this);
+      }
+    },
+
+   /**
+    * That method for DeferredToken returns token itself.
+    */ 
+    deferred: function(){
+      return this;
+    }
   });
 
 
@@ -2690,8 +2935,15 @@
     getter: getter,
     ready: ready,
 
+    setImmediate: setImmediate,
+    clearImmediate: clearImmediate,
+    nextTick: function(){
+      setImmediate.apply(null, arguments);
+    },
+
     Class: Class,
     Token: Token,
+    DeferredToken: DeferredToken,
 
     cleaner: cleaner,
     console: consoleMethods,
