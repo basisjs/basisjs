@@ -2641,6 +2641,8 @@
   };
 
  /**
+  * You should avoid to create instances of this class using `new` operator,
+  * use basis.dom.wrapper.AbstractNode#getChildNodesDataset method instead.
   * @class
   */
   var ChildNodesDataset = Class(AbstractDataset, {
@@ -2792,9 +2794,7 @@
     PartitionNode: PartitionNode,
 
     // datasets
+    ChildNodesDataset: ChildNodesDataset,
     Selection: Selection,
-    nullSelection: new AbstractDataset,
-
-    // deprecated, use node.getChildNodesDataset()
-    ChildNodesDataset: ChildNodesDataset
+    nullSelection: new AbstractDataset
   };
