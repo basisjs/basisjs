@@ -813,17 +813,18 @@
 
     init: function(){
       ComplexField.prototype.init.call(this);
-      this.selection.set([this.childNodes[this.tmpl.field.selectedIndex]]);
+      this.selection.set([this.childNodes[this.tmpl && this.tmpl.field.selectedIndex]]);
     },
 
     getValue: function(){
-      var item = this.childNodes[this.tmpl.field.selectedIndex];
+      var item = this.childNodes[this.tmpl && this.tmpl.field.selectedIndex];
       return item && item.getValue();
     },
     setValue: function(value){
       var item = this.childNodes.search(value, getFieldValue);
       this.selection.set([item]);
-      this.tmpl.field.selectedIndex = item ? this.childNodes.indexOf(item) : -1;
+      if (this.tmpl)
+        this.tmpl.field.selectedIndex = item ? this.childNodes.indexOf(item) : -1;
     }
   });
 
@@ -1040,7 +1041,6 @@
 
       // create items popup
       this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
-        ignoreClickFor: [this.tmpl.field],
         content: this.childNodesElement,
         handler: {
           context: this,
@@ -1059,10 +1059,15 @@
 
       if (this.childNodesElement && this.popup)
         DOM.insert(this.popup.tmpl.content, this.childNodesElement);
+
+      this.popup.ignoreClickFor = [this.tmpl.field];
     },
     show: function(){
-      this.popup.show(this.tmpl.field); 
-      this.focus();
+      if (this.tmpl)
+      {
+        this.popup.show(this.tmpl.field);
+        this.focus();
+      }
     },
     hide: function(){
       this.popup.hide();

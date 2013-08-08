@@ -177,7 +177,7 @@
       if (this.onSubmit)
         this.onSubmit(this.serialize());
 
-      if (this.tmpl.form)
+      if (this.tmpl && this.tmpl.form)
         this.tmpl.form.submit();
     }
   });
