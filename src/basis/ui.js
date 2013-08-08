@@ -934,7 +934,3 @@
     ShadowNodeList: ShadowNodeList,
     ShadowNode: ShadowNodeList.prototype.childClass
   };
-
-  // deprecated, left here for backward capability
-  // TODO: remove in future
-  module.exports.Container = Node;
