@@ -8,11 +8,6 @@
   // export names
   //
 
-  module.setWrapper(function(){
-    ;;;basis.dev.warn('using basis.format.highlight as function is deprecated now, use basis.format.highlight.highlight instead');
-    return highlight.apply(this, arguments);
-  });
-
   module.exports = {
     // functions
     highlight: function(){

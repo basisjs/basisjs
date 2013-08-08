@@ -1104,10 +1104,9 @@
   *   var fooBarNamespace = basis.namespace('foo.bar');
   * @name namespace
   * @param {string} path
-  * @param {function()} wrapFunction Deprecated.
   * @return {basis.Namespace}
   */
-  var getNamespace = function(path, wrapFunction){
+  var getNamespace = function(path){
     var cursor = global;
     var nsRoot;
 
@@ -1119,16 +1118,10 @@
         var nspath = path.slice(0, i + 1).join('.');
 
         // create new namespace
-        cursor[name] = (function(path, wrapFn){
-         /**
-          * @returns {*|undefined}
-          */
+        cursor[name] = (function(path){
           function namespace_(){
-            if (wrapFunction)
-              return wrapFunction.apply(this, arguments);
           }
 
-          var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
           var pathFn = function(name){
             return path + (name ? '.' + name : '');
           };
@@ -1143,16 +1136,9 @@
             extend: function(names){
               extend(this.exports, names);
               return complete(this, names);
-            },
-            setWrapper: function(wrapFn){
-              if (typeof wrapFn == 'function')
-              {
-                ;;;if (wrapFunction) consoleMethods.warn('Wrapper for ' + path + ' is already set. Probably mistake here.');
-                wrapFunction = wrapFn;
-              }
             }
           });
-        })(nspath, i < path.length ? wrapFunction : null);
+        })(nspath);
 
         if (nsRoot)
           nsRoot.namespaces_[nspath] = cursor[name];
@@ -1543,7 +1529,7 @@
     // export names
     //
 
-    return getNamespace(namespace, BaseClass.create).extend({
+    return extend(BaseClass.create, {
       SELF: SELF,
       BaseClass: BaseClass,
       create: BaseClass.create,

@@ -297,11 +297,6 @@
   // export names
   //
 
-  module.setWrapper(function(){
-    ;;;basis.dev.warn('using basis.crypt as function is deprecated now, use basis.crypt.wrap instead');
-    return wrap.apply(this, arguments);
-  });
-
   module.exports = {
     hex: hex,
     sha1: sha1,

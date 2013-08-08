@@ -2216,11 +2216,6 @@
   // export names
   //
 
-  module.setWrapper(function(){
-    ;;;basis.dev.warn('using basis.template as function is deprecated now, use basis.template.define instead');
-    return baseTheme.define.apply(baseTheme, arguments);
-  });
-
   module.exports = {
     DECLARATION_VERSION: DECLARATION_VERSION,
     // const

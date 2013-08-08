@@ -1367,10 +1367,10 @@
       throw 'Unknown field type `{0}`'.format(fieldType);
   }
 
-  module.setWrapper(function(config){
-    ;;;basis.dev.warn('using basis.ui.field as function is deprecated now, use basis.ui.field.create instead');
-    return createField(config);
-  });
+
+  //
+  // export names
+  //
 
   module.exports = {
     Validator: Validator,  // deprecated

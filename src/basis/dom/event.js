@@ -651,11 +651,6 @@
   // export names
   //
 
-  module.setWrapper(function(value){
-    ;;;basis.dev.warn('using basis.dom.event as function is deprecated now, use basis.dom.event.wrap instead');
-    return wrap(value);
-  });
-
   module.exports = {
     // support and testing
     W3CSUPPORT: W3CSUPPORT,

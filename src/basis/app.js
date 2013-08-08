@@ -140,11 +140,6 @@
   // export names
   //
 
-  module.setWrapper(function(){
-    ;;;basis.dev.warn('using basis.app as function is deprecated now, use basis.app.create instead');
-    return createApp.apply(this, arguments);
-  });
-
   module.exports = {
     create: createApp
   };
