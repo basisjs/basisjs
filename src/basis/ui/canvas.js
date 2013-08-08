@@ -64,6 +64,8 @@
     template: templates.Canvas,
 
     templateSync: function(noRecreate){
+      Node.prototype.templateSync.call(this, noRecreate);
+
       var canvasElement = this.tmpl.canvas;
 
       if (canvasElement)
@@ -71,13 +73,10 @@
         canvasElement.width = this.width || 600;
         canvasElement.height = this.height || 400;
       }
-
-      Node.prototype.templateSync.call(this, noRecreate);
       
       this.context = canvasElement && canvasElement.getContext ? canvasElement.getContext('2d') : null;
 
-      if (this.redrawRequest)
-        this.redrawRequest();
+      this.redrawRequest();
     },
 
     childClass: Shape,
@@ -88,6 +87,9 @@
     clear: dwNode.prototype.clear,
 
     draw: basis.fn.$undef,
+    redrawRequest: function(){
+    },
+
     reset: function(){
       if (this.context)
         this.context.clearRect(0, 0, this.tmpl.canvas.width, this.tmpl.canvas.height);
@@ -124,19 +126,18 @@
       this.updateTimer_ = setInterval(this.draw.bind(this), 1000 / 60);
     },
     isNeedToDraw: function(){
-      return this.context && (
-        this.updateCount != this.lastDrawUpdateCount
-        ||
-        this.tmpl.canvas.width != this.lastDrawWidth
-        ||
-        this.tmpl.canvas.height != this.lastDrawHeight
-      );
-    },
-    draw: function(){
-      var canvas = this.tmpl.canvas;
-
       if (!this.context)
         return false;
+
+      return this.updateCount != this.lastDrawUpdateCount
+          || this.tmpl.canvas.width != this.lastDrawWidth
+          || this.tmpl.canvas.height != this.lastDrawHeight;
+    },
+    draw: function(){
+      if (!this.context)
+        return false;
+
+      var canvas = this.tmpl.canvas;
 
       if (canvas.offsetWidth && canvas.width != canvas.offsetWidth)
         canvas.width = canvas.offsetWidth;

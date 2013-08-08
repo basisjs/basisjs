@@ -187,7 +187,123 @@
 
     new LinearChart({
       container: DOM.get('demo-container'),
-      template: '<b:include src="basis.ui.chart.Chart" id="RangeChart">',
+      template:
+        '<b:include src="basis.ui.chart.Chart" id="RangeChart">' +
+          '<b:append><!--{period}--></b:append>' +
+        '</b:include>',
+
+      binding: {
+        period: new basis.ui.Node({
+          template:
+            '<div class="rangeOver">' +
+              '<div{before} class="rangeOver__before" style="width: {beforeWidth}%"><div class="trigger"/></div>' +
+              '<div{after} class="rangeOver__after" style="width: {afterWidth}%"><div class="trigger"/></div>' +
+              '<div{win} class="rangeOver__window"/>' +
+            '</div>',
+          binding: {
+            beforeWidth: 'beforeWidth',
+            afterWidth: 'afterWidth'
+          },
+
+          delegate: reportSlice,
+          listen: {
+            delegate: {
+              rangeChanged: function(){
+                this.sync();
+              }
+            }
+          },
+
+          beforeWidth: 0,
+          afterWidth: 0,
+          sync: function(){
+            var itemCount = this.delegate.index_.length;
+            var start = this.delegate.offset;
+            var end = start + this.delegate.limit;
+
+            if (this.delegate.orderDesc)
+            {
+              start = itemCount - end;
+              end = start + this.delegate.limit;
+            }
+
+            start = Math.max(0, start);
+            end = Math.max(0, end);
+
+            this.beforeWidth = 100 * (start/itemCount);
+            this.afterWidth = 100 * (1-end/itemCount);
+
+            this.updateBind('beforeWidth');
+            this.updateBind('afterWidth');
+          },
+          templateSync: function(){
+            basis.ui.Node.prototype.templateSync.call(this);
+            this.dd1.setElement(this.tmpl.win);
+            this.dd2.setElement(this.tmpl.before.firstChild);
+            this.dd3.setElement(this.tmpl.after.firstChild);
+          },
+
+          init: function(){
+            basis.ui.Node.prototype.init.call(this);
+
+            this.sync();
+
+            // add drag posibility for slider
+            this.dd1 = new basis.dragdrop.DragDropElement({
+              axisY: false,
+              handler: {
+                context: this,
+                callbacks: {
+                  start: function(){
+                    this.offset__ = reportSlice.offset;
+                  },
+                  drag: function(sender, config){
+                    var itemCount = reportSlice.index_.length;
+                    var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                    reportSlice.setOffset(offset.fit(0, itemCount - reportSlice.limit));
+                  }
+                }
+              }
+            });
+
+            this.dd2 = new basis.dragdrop.DragDropElement({
+              axisY: false,
+              handler: {
+                context: this,
+                callbacks: {
+                  start: function(){
+                    this.limit__ = reportSlice.limit;
+                  },
+                  drag: function(sender, config){
+                    var itemCount = reportSlice.index_.length;
+                    var limit = this.limit__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                    reportSlice.setLimit(Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
+                  }
+                }
+              }
+            });
+
+            this.dd3 = new basis.dragdrop.DragDropElement({
+              axisY: false,
+              handler: {
+                context: this,
+                callbacks: {
+                  start: function(){
+                    this.offset__ = reportSlice.offset;
+                    this.limit__ = reportSlice.limit;
+                  },
+                  drag: function(sender, config){
+                    var itemCount = reportSlice.index_.length;
+                    var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
+                    var limit = reportSlice.limit - (offset - reportSlice.offset);
+                    reportSlice.setRange(offset, limit);
+                  }
+                }
+              }
+            });
+          }
+        })
+      },
       
       width: 800,
       height: 50,
@@ -207,110 +323,7 @@
         lineWidth: .5
       },
       satelliteConfig: {
-        chartViewer: null,
-        period: {
-          instanceOf: basis.ui.Node,
-          config: function(owner){
-            return {
-              container: owner.element,
-              template:
-                '<div class="rangeOver">' +
-                  '<div{before} class="rangeOver__before"><div class="trigger"/></div>' +
-                  '<div{after} class="rangeOver__after"><div class="trigger"/></div>' +
-                  '<div{win} class="rangeOver__window"/>' +
-                '</div>',
-              delegate: reportSlice,
-              listen: {
-                delegate: {
-                  rangeChanged: function(){
-                    this.sync();
-                  }
-                }
-              },
-
-              sync: function(){
-                var itemCount = this.delegate.index_.length;
-                var start = this.delegate.offset;
-                var end = start + this.delegate.limit;
-
-                if (this.delegate.orderDesc)
-                {
-                  start = itemCount - end;
-                  end = start + this.delegate.limit;
-                }
-
-                start = Math.max(0, start);
-                end = Math.max(0, end);
-
-                this.tmpl.before.style.width = 100 * (start/itemCount) + '%';
-                this.tmpl.after.style.width = 100 * (1-end/itemCount) + '%';
-              },
-
-              init: function(){
-                basis.ui.Node.prototype.init.call(this);
-
-                this.sync();
-
-                // add drag posibility for slider
-                this.dd1 = new basis.dragdrop.DragDropElement({
-                  element: this.tmpl.win,
-                  axisY: false,
-                  handler: {
-                    context: this,
-                    callbacks: {
-                      start: function(){
-                        this.offset__ = reportSlice.offset;
-                      },
-                      drag: function(sender, config){
-                        var itemCount = reportSlice.index_.length;
-                        var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
-                        reportSlice.setOffset(offset.fit(0, itemCount - reportSlice.limit));
-                      }
-                    }
-                  }
-                });
-
-                this.dd2 = new basis.dragdrop.DragDropElement({
-                  element: this.tmpl.before.firstChild,
-                  axisY: false,
-                  handler: {
-                    context: this,
-                    callbacks: {
-                      start: function(){
-                        this.limit__ = reportSlice.limit;
-                      },
-                      drag: function(sender, config){
-                        var itemCount = reportSlice.index_.length;
-                        var limit = this.limit__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
-                        reportSlice.setLimit(Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
-                      }
-                    }
-                  }
-                });
-
-                this.dd3 = new basis.dragdrop.DragDropElement({
-                  element: this.tmpl.after.firstChild,
-                  axisY: false,
-                  handler: {
-                    context: this,
-                    callbacks: {
-                      start: function(){
-                        this.offset__ = reportSlice.offset;
-                        this.limit__ = reportSlice.limit;
-                      },
-                      drag: function(sender, config){
-                        var itemCount = reportSlice.index_.length;
-                        var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
-                        var limit = reportSlice.limit - (offset - reportSlice.offset);
-                        reportSlice.setRange(offset, limit);
-                      }
-                    }
-                  }
-                });
-              }
-            };
-          }
-        }
+        chartViewer: null
       }
     });
 
