@@ -846,19 +846,6 @@
 
       // reg entity type
       entityTypes.push(this);
-
-      /** @cut */ this.addField = function(key, config){
-      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addField method is deprecated, define all fields on type create and use type by name resolving');
-      /** @cut */   addField(this, key, config);
-      /** @cut */ };
-      /** @cut */ this.addAlias = function(alias, key){
-      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addAlias method is deprecated, define all field aliases on type create');
-      /** @cut */   addFieldAlias(this, alias, key);
-      /** @cut */ };
-      /** @cut */ this.addCalcField = function(key, wrapper){
-      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addCalcField method is deprecated, define all fields on type create');
-      /** @cut */   addCalcField(this, key, wrapper);
-      /** @cut */ };
     },
     reader: function(data){
       var result = {};
