@@ -63,8 +63,8 @@
 
     template: templates.Canvas,
 
-    templateSync: function(noRecreate){
-      Node.prototype.templateSync.call(this, noRecreate);
+    templateSync: function(){
+      Node.prototype.templateSync.call(this);
 
       var canvasElement = this.tmpl.canvas;
 

@@ -224,12 +224,12 @@
       this.title = title;
       this.updateBind('title');
     },
-    templateSync: function(noRecreate){
+    templateSync: function(){
       var style;
       if (!this.autocenter && this.element.nodeType == 1)
         style = basis.object.slice(this.element.style, ['left', 'top', 'margin']);
 
-      UINode.prototype.templateSync.call(this, noRecreate);
+      UINode.prototype.templateSync.call(this);
 
       if (this.element.nodeType == 1)
       {

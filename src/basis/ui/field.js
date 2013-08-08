@@ -1051,11 +1051,8 @@
       if (this.property)
         this.property.addLink(this, this.setValue);
     },
-    templateSync: function(noRecreate){
-      if (this.childNodesElement)
-        DOM.remove(this.childNodesElement);
-
-      UINode.prototype.templateSync.call(this, noRecreate);
+    templateSync: function(){
+      UINode.prototype.templateSync.call(this);
 
       if (this.childNodesElement && this.popup)
         DOM.insert(this.popup.tmpl.content, this.childNodesElement);

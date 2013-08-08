@@ -71,8 +71,8 @@ var panel = new basis.ui.Node({
 
     this.dde = new basis.dragdrop.MoveableElement();
   },
-  templateSync: function(noRecreate){
-    basis.ui.Node.prototype.templateSync.call(this, noRecreate);
+  templateSync: function(){
+    basis.ui.Node.prototype.templateSync.call(this);
 
     this.dde.setElement(this.element, this.tmpl.dragElement);
   },

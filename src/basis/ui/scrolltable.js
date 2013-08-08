@@ -178,8 +178,8 @@
         setTimeout(this.requestRelayout, 1);
     },
 
-    templateSync: function(noRecreate){
-      Table.prototype.templateSync.call(this, noRecreate);
+    templateSync: function(){
+      Table.prototype.templateSync.call(this);
 
       // add block resize trigger
       if ('boundElement' in this.tmpl)

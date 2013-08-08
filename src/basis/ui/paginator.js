@@ -242,8 +242,8 @@
    /**
     * @inheritDoc
     */ 
-    templateSync: function(noRecreate){
-      UINode.prototype.templateSync.call(this, noRecreate);
+    templateSync: function(){
+      UINode.prototype.templateSync.call(this);
 
       this.scrollbarDD.setElement(
         'scrollThumb' in this.tmpl && 'scrollThumbWrapper' in this.tmpl

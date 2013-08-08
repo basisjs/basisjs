@@ -101,8 +101,8 @@ var panels = new basis.layout.VerticalPanelStack({
           factor: -1
         });
       },
-      templateSync: function(noRecreate){
-        basis.ui.Node.prototype.templateSync.call(this, noRecreate);
+      templateSync: function(){
+        basis.ui.Node.prototype.templateSync.call(this);
         this.resizer.setElement(this.element);
       },
       destroy: function(){
@@ -149,8 +149,8 @@ var view = new basis.ui.Node({
     basis.ui.Node.prototype.init.call(this);
     this.resizer = new basis.ui.resizer.Resizer();
   },
-  templateSync: function(noRecreate){
-    basis.ui.Node.prototype.templateSync.call(this, noRecreate);
+  templateSync: function(){
+    basis.ui.Node.prototype.templateSync.call(this);
     this.resizer.setElement(this.tmpl.sidebar);
   },
   destroy: function(){

@@ -719,8 +719,8 @@
       }, this);
     },
 
-    templateSync: function(noRecreate){
-      UINode.prototype.templateSync.call(this, noRecreate);
+    templateSync: function(){
+      UINode.prototype.templateSync.call(this);
 
       var scrollElement = this.tmpl.scrollElement || this.element;
 

@@ -1080,8 +1080,8 @@
       }
     },
 
-    templateSync: function(noRecreate){
-      AbstractCanvas.prototype.templateSync.call(this, noRecreate);
+    templateSync: function(){
+      AbstractCanvas.prototype.templateSync.call(this);
 
       this.recalc();
       Event.addHandlers(this.element, CHART_ELEMENT_HANDLER, this);

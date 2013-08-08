@@ -86,8 +86,8 @@
         this.adjustRotation(true);
     },
 
-    templateSync: function(noRecreate){
-      PageControl.prototype.templateSync.call(this, noRecreate);
+    templateSync: function(){
+      PageControl.prototype.templateSync.call(this);
       this.scroller.setElement(this.childNodesElement);
       this.realign();
     },

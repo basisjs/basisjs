@@ -304,8 +304,8 @@
       });
     },
 
-    templateSync: function(noRecreate){
-      UINode.prototype.templateSync.call(this, noRecreate);
+    templateSync: function(){
+      UINode.prototype.templateSync.call(this);
 
       if (this.tmpl.scrollThumb)
         this.dde.setElement(this.tmpl.scrollThumb);
