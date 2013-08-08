@@ -599,29 +599,10 @@
     }
   }
 
+
  /**
-  * Extend for basis.data.AbstractDataset
-  * @namespace basis.data.AbstractDataset
+  * @class
   */
-  AbstractDataset.extend({
-   /**
-    * @param {basis.data.index.IndexConstructor}
-    */ 
-    getIndex: function(indexConstructor){
-      ;;;basis.dev.warn('basis.data.Dataset#getIndex is deprecated and will be removed soon, use basis.data.index.getDatasetIndex or basis.data.index.{indexName} functions instead');
-      return getDatasetIndex(this, indexConstructor);
-    },
-
-   /**
-    * @param {basis.data.index.Index}
-    */
-    deleteIndex: function(index){
-      ;;;basis.dev.warn('basis.data.Dataset#deleteIndex is deprecated and will be removed soon, use basis.data.index.removeDatasetIndex fucntion instead');
-      removeDatasetIndex(this, index);
-    }
-  });
-
-
   var CalcIndexPreset = Class(null, {
     extendConstructor_: true,
     indexes: {},
