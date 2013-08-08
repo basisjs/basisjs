@@ -48,10 +48,7 @@ function startInspect(){
 
     basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
     basis.dom.event.addHandler(window, 'resize', updateOnResize);
-    DOM.event.captureEvent('mousedown', DOM.event.kill);
-    DOM.event.captureEvent('mouseup', DOM.event.kill);
     DOM.event.captureEvent('contextmenu', endInspect);
-    //DOM.event.captureEvent('click', pickHandler);
 
     //transport.sendData('startInspect', 'l10n');
 
@@ -75,10 +72,7 @@ function endInspect(){
 
     basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
     basis.dom.event.removeHandler(window, 'resize', updateOnResize);
-    DOM.event.releaseEvent('mousedown');
-    DOM.event.releaseEvent('mouseup');
     DOM.event.releaseEvent('contextmenu');    
-    DOM.event.releaseEvent('click');
 
     unhighlight();
     inspectMode = false;
