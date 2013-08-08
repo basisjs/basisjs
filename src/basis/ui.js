@@ -321,12 +321,6 @@
       childNodesElement: null,
 
      /**
-      * @type {string}
-      * @deprecated
-      */
-      id: null,
-
-     /**
       * Classes for template elements.
       * @type {object}
       * @deprecated
@@ -471,13 +465,6 @@
           DOM.insert(tmpl.content || tmpl.element, this.content);
 
         // update template
-        if (this.id)
-        {
-          ;;;basis.dev.warn('WARN: basis.ui.Node#id property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.id);
-
-          tmpl.element.id = this.id;
-        }
-
         var cssClassNames = this.cssClassName;
         if (cssClassNames)
         {
