@@ -297,12 +297,14 @@
   * @deprecated use basis.cssom.display instead.
   */
   function show(element){
+    ;;;basis.dev.warn('basis.cssom.show is deprecated, use basis.cssom.display instead');
     return display(element, true);
   }
  /**
   * @deprecated use basis.cssom.display instead.
   */
   function hide(element){ 
+    ;;;basis.dev.warn('basis.cssom.hide is deprecated, use basis.cssom.display instead');
     return display(element);
   }
 
@@ -320,12 +322,14 @@
   * @deprecated use basis.cssom.visibility instead.
   */
   function visible(element){
+    ;;;basis.dev.warn('basis.cssom.visible is deprecated, use basis.cssom.visibility instead');
     return visibility(element, true);
   }
  /**
   * @deprecated use basis.cssom.visibility instead.
   */
   function invisible(element){
+    ;;;basis.dev.warn('basis.cssom.invisible is deprecated, use basis.cssom.visibility instead');
     return visibility(element);
   }
 
