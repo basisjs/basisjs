@@ -769,6 +769,8 @@
   * @class
   */
   var CssResource = Class(null, {
+    className: namespace + '.CssResource',
+
     inUse: 0,
 
     url: '',

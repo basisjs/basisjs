@@ -504,9 +504,16 @@
         if (oldElement && oldElement !== this.element && oldElement.nodeType != 11)
         {
           var parentNode = oldElement && oldElement.parentNode;
+          var replaced = false;
           
           if (parentNode)
-            parentNode.replaceChild(this.element, oldElement);
+          {
+            if (this.owner && this.owner.tmpl)
+              replaced = this.owner.tmpl.setByRef(oldElement, this.element);
+            
+            if (!replaced)
+              parentNode.replaceChild(this.element, oldElement);
+          }
         }
 
         // emit event

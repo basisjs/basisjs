@@ -31,6 +31,7 @@
   //
 
   var tmplFunctions = {}; // precompiled functions
+  var inlineSeed = 1;
 
 
  /**
@@ -295,6 +296,7 @@
       var bindVar;
       var varList = [];
       var result = [];
+      var domRefs = {};
       var varName;
       var l10nMap;
       var l10nCompute = [];
@@ -451,14 +453,25 @@
           /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
           /** @cut */ ] +'}');
 
-          varList.push(bindVar + '=' + domRef);
-          if (!bindCode.nodeBindUsed || bindType == TYPE_ELEMENT)
-            putBindCode(bindFunctions[bindType], domRef, bindVar, bindCode.nodeBindUsed ? 'value!==null?String(value):null' : 'value');
+          if (!bindCode.nodeBindUsed)
+          {
+            varList.push(bindVar + '=' + domRef);
+            domRefs[bindVar] = bindName;
+            putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
+          }
           else
           {
-            if (bindType == TYPE_TEXT)
-              bindCode.push(domRef + '.nodeValue=value;');
-            // ignore bindings for comment, as we can't apply anything but Node to comment
+            switch (bindType)
+            {
+              case TYPE_ELEMENT:
+                putBindCode(bindFunctions[bindType], domRef, domRef, 'value!==null?String(value):null');
+                break;
+              case TYPE_TEXT:
+                bindCode.push(domRef + '.nodeValue=value;');
+                break
+
+              // ignore bindings for comment, as we can't apply anything but Node to comment
+            }
           }
 
           bindCode.nodeBindUsed = true;
@@ -605,6 +618,7 @@
         /** @cut */ debugList: debugList,
         keys: basis.object.keys(bindMap).filter(function(key){ return key.indexOf('@') == -1 }),
         vars: varList,
+        domRefs: domRefs,
         set: result.join(''),
         l10n: l10nMap,
         l10nCompute: l10nCompute
@@ -631,6 +645,9 @@
       l10nKeys: basis.object.keys(bindings.l10n)
     };
 
+    /** @cut */ if (!uri)
+    /** @cut */   uri = basis.path.baseURI + 'inline_template' + (inlineSeed++) + '.tmpl';
+
     if (bindings.l10n)
     {
       var code = [];
@@ -653,8 +670,8 @@
           '}' +
         '}\n'
         
-        /** @cut */ + (uri ? '//# sourceURL=' + basis.path.origin + uri + '_l10n\n' : '')
-        /** @cut */ + (uri ? '//@ sourceURL=' + basis.path.origin + uri + '_l10n\n' : '')
+        /** @cut */ + '//# sourceURL=' + basis.path.origin + uri + '_l10n\n'
+        /** @cut */ + '//@ sourceURL=' + basis.path.origin + uri + '_l10n\n'
       );
     }
 
@@ -669,7 +686,7 @@
           'context:obj,' +
           'action:onAction,' +
           'rebuild:onRebuild,' +
-          /** @cut */ (debug ? 'debug:function(){return[' + bindings.debugList + ']},' : '') +
+          /** @cut */ (debug ? 'debug:function debug(){return[' + bindings.debugList + ']},' : '') +
           'tmpl:null' +
         '},' +
         'id=seed,' +
@@ -695,7 +712,10 @@
         ';return ref.tmpl={' + [
           paths.ref,
           'set:set,' +
-          'destroy_:function(){' +
+          'setByRef:function setByRef(ref,value){' +
+            basis.object.iterate(bindings.domRefs, function(key, value){ return 'if(' + key + '===ref){set("' + value + '",value);return true}' }).join('') +
+          '},' +
+          'destroy_:function destroy_(){' +
             'if(bindings&&bindingInterface&&tmplBindings.handler)bindingInterface.detach(obj,tmplBindings.handler,set);' +
             // detach attaches
             //'var a;' +
@@ -710,8 +730,8 @@
           '}'] +
         '}' +
 
-        /** @cut */ (uri ? '\n//# sourceURL=' + basis.path.origin + uri : '') +
-        /** @cut */ (uri ? '\n//@ sourceURL=' + basis.path.origin + uri + '\n' : '') +
+        /** @cut */ '\n//# sourceURL=' + basis.path.origin + uri +
+        /** @cut */ '\n//@ sourceURL=' + basis.path.origin + uri + '\n' +
       '}'
     );
     /** @cut */ } catch(e) { basis.dev.error('Can\'t build createInstance: ' + e + '\n', fnBody); }
