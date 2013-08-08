@@ -695,10 +695,6 @@
     
     fireEvent: fireEvent,
 
-    onLoad: function(fn){
-      ;;;basis.dev.warn('using basis.dom.event.onLoad is deprecated, use basis.ready instead');
-      return basis.ready(fn);
-    },
     onUnload: onUnload,
 
     // helpers
