@@ -294,19 +294,6 @@
   }
 
  /**
-  * @deprecated use basis.cssom.display instead.
-  */
-  function show(element){
-    return display(element, true);
-  }
- /**
-  * @deprecated use basis.cssom.display instead.
-  */
-  function hide(element){ 
-    return display(element);
-  }
-
- /**
   * Changes node visibility.
   * @param {Element} node
   * @param {boolean=} visible
@@ -316,18 +303,6 @@
     return setStyleProperty(node, 'visibility', visible ? '' : 'hidden');
   }
 
- /**
-  * @deprecated use basis.cssom.visibility instead.
-  */
-  function visible(element){
-    return visibility(element, true);
-  }
- /**
-  * @deprecated use basis.cssom.visibility instead.
-  */
-  function invisible(element){
-    return visibility(element);
-  }
 
   //
   // classes
@@ -936,12 +911,6 @@
     em: createUnitFormatter('em'),
     ex: createUnitFormatter('ex'),
     px: createUnitFormatter('px'),
-    percent: createUnitFormatter('%'),
-
-    // deprecated
-    show: show,
-    hide: hide,
-    visible: visible,
-    invisible: invisible
+    percent: createUnitFormatter('%')
   };
 
