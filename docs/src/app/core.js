@@ -348,48 +348,42 @@
 
       if (typeof obj == 'function')
       {
-        if (basis.namespaces_[fullPath])
+        var isClass = basis.Class.isClass(obj);
+        if (isPrototype)
         {
-          kind = 'namespace';
+          if (isClass)   // for properties which contains ref for class
+            kind = 'property';
+          else
+          {
+            var m = title.match(/^emit_(.+)/);
+            if (m)
+            {
+              kind = 'event';
+              title = m[1];
+            }
+            else
+              kind = 'method';
+          }
         }
         else
         {
-          var isClass = basis.Class.isClass(obj);
-          if (isPrototype)
-          {
-            if (isClass)   // for properties which contains ref for class
-              kind = 'property';
-            else
-            {
-              var m = title.match(/^emit_(.+)/);
-              if (m)
-              {
-                kind = 'event';
-                title = m[1];
-              }
-              else
-                kind = 'method';
-            }
-          }
-          else
-          {
-            kind = isClass ? 'class' : 'function';
+          kind = isClass ? 'class' : 'function';
 
-            if (context == 'class' && kind == 'function')
-              if (obj === Function.prototype[key] || obj === basis.Class.BaseClass[key])
-                continue;
-          }
+          if (context == 'class' && kind == 'function')
+            if (obj === Function.prototype[key] || obj === basis.Class.BaseClass[key])
+              continue;
         }
       }
       else
       {
-        if (isPrototype)
+        if (basis.namespaces_[fullPath])
+          kind = 'namespace';
+        else if (isPrototype)
           kind = 'property';
+        else if (obj && (obj == document || (obj.ownerDocument && obj.ownerDocument == document)))
+          kind = 'htmlElement';
         else
-          if (obj && (obj == document || (obj.ownerDocument && obj.ownerDocument == document)))
-            kind = 'htmlElement';
-          else
-            kind = /[^A-Z0-9_]/.test(key) ? 'object' : 'constant';
+          kind = /[^A-Z0-9_]/.test(key) ? 'object' : 'constant';
       }
 
       if (isPrototype)

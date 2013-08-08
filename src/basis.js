@@ -1119,15 +1119,12 @@
 
         // create new namespace
         cursor[name] = (function(path){
-          function namespace_(){
-          }
-
           var pathFn = function(name){
             return path + (name ? '.' + name : '');
           };
           pathFn.toString = $const(path);
 
-          return extend(namespace_, {
+          return {
             path: pathFn,
             exports: {
               path: pathFn
@@ -1137,7 +1134,7 @@
               extend(this.exports, names);
               return complete(this, names);
             }
-          });
+          };
         })(nspath);
 
         if (nsRoot)
