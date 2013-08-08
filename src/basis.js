@@ -1017,15 +1017,12 @@
   * Special processing options:
   * - autoload: namespace that must be loaded right after core loaded
   * - path: dictionary of paths for root namespaces
-  * - extClass: extend buildin classes (Object, Array, String, )
   *
   * Other options copy into basis.config as is.
   */
   var config = (function(){
     var basisBaseURI = '';
-    var config = {
-      extClass: true
-    };
+    var config = {};
 
     if (NODE_ENV)
     {
@@ -1047,6 +1044,10 @@
           } catch (e) {
             ;;;consoleMethods.error('basis.js config parse fault: ' + e);
           }
+
+          // @cut warn about extClass in basis-config, this option was introduced in 0.9.8 for preventing using custom methods via buildin clasess
+          // TODO: remove this warning in later versions
+          /** @cut */ if ('extClass' in config) consoleMethods.warn('extClass option in basis-config is not required, basis.js doesn\'t extend buildin classes by custom methods any more');
 
           basisFilename = pathUtils.normalize(scriptEl.src)
           basisBaseURI = pathUtils.dirname(basisFilename);
@@ -3010,21 +3011,6 @@
 
   // TODO: rename path->stmElse and add path to exports
   basis.path = pathUtils;
-
-
-  //
-  // basis extenstions
-  //
-
-  if (config.extClass)
-  {
-    /** @cut */ consoleMethods.warn('Extension of build classes by custom functions (i.e. Object.*, Array.*, String.*, Function.*) is deprecated, but extends by default until 0.10 version; use `extClass: false` in basis.js config to prevent buildin class extenstion and make code ready to new basis.js versions');
-
-    extend(Object, basis.object);
-    extend(Function, basis.fn);
-    extend(Array, basis.array);
-    extend(String, basis.string);
-  }
 
 
   //
