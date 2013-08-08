@@ -297,7 +297,6 @@
       var result = [];
       var varName;
       var l10nMap;
-      var l10nKeys;
       var l10nCompute = [];
       var l10nBindings = {};
       var l10nBindSeed = 1;
@@ -424,28 +423,16 @@
 
             l10nMap[l10nName].push(domRef + '.nodeValue=value;');
             bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"]' + (l10nBinding ? '[__' + l10nBinding + ']' : '') + ';');
+
+            continue;
           }
           else
           {
-            attrName = '"' + binding[ATTR_NAME] + '"';
-
-            /** @cut */ debugList.push('{' + [
-            /** @cut */   'binding:"' + l10nFullPath + '"',
-            /** @cut */   'dom:' + domRef,
-            /** @cut */   'attr:' + attrName,
-            /** @cut */   'val:__l10n["' + l10nName + '"]',
-            /** @cut */   'attachment:l10nToken("' + l10nName + '")'
-            /** @cut */ ] + '}');
-            /** @cut */ toolsUsed.l10nToken = true;
-            
             // use NaN value to make sure it trigger in any case
-            l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, 'l10n', l10nBindings)] + ');');
+            l10nMap[l10nName].push('bind_attr(' + [domRef, '"' + binding[ATTR_NAME] + '"', 'NaN', buildAttrExpression(binding, 'l10n', l10nBindings)] + ');');
 
-            varList.push(bindVar);
-            putBindCode('bind_attr', domRef, attrName, bindVar, buildAttrExpression(binding, false, l10nBindings));
+            // attribute binding will be processed as common attribute binding
           }
-
-          continue;
         }
 
         if (!bindCode)
@@ -465,7 +452,16 @@
           /** @cut */ ] +'}');
 
           varList.push(bindVar + '=' + domRef);
-          putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
+          if (!bindCode.nodeBindUsed || bindType == TYPE_ELEMENT)
+            putBindCode(bindFunctions[bindType], domRef, bindVar, bindCode.nodeBindUsed ? 'value!==null?String(value):null' : 'value');
+          else
+          {
+            if (bindType == TYPE_TEXT)
+              bindCode.push(domRef + '.nodeValue=value;');
+            // ignore bindings for comment, as we can't apply anything but Node to comment
+          }
+
+          bindCode.nodeBindUsed = true;
         }
         else
         {
@@ -571,7 +567,7 @@
               if (specialAttr && (specialAttr == '*' || specialAttr.has(binding[6].toLowerCase())))
                 bindCode.push(
                   'if(' + domRef + '.' + attrName + '!=' + bindVar + ')' +
-                    domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!(' : '(') + bindVar + ');'
+                    domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' + bindVar : bindVar) + ';'
                 );
           }
         }
