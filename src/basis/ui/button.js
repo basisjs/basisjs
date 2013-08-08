@@ -97,18 +97,7 @@
       }
     },
 
-    grouping: {}, // use grouping by default
-
-   /**
-    * Fetch button by name.
-    * @deprecated
-    * @param {string} name Name value of button.
-    * @return {basis.ui.button.Button}
-    */
-    getButtonByName: function(name){
-      ;;;basis.dev.warn('basis.ui.button.ButtonPanel#getButtonByName is deprecated, use getChildByName method istead');
-      return this.getChildByName(name);
-    }
+    grouping: {} // use grouping by default
   });
 
 
