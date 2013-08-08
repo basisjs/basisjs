@@ -13,51 +13,6 @@
   var cleaner = basis.cleaner;
   var getter = basis.getter;
 
-  var MESSAGE_NAME = 'basisjs.setImmediate';
-
-  var setImmediate = basis.setImmediate;
-  var clearImmediate = basis.clearImmediate;
-  
-  //!!!!!!!!!!!!!!!!!!!!!!!! this section will be removed in 0.10 !!!!!!!!!!!!!!!!!!!!!!!!
-  //
-  // Add support for setImmediate/clearImmediate
-  //
-  if (!global.setImmediate)
-  {
-    global.setImmediate = setImmediate;
-    global.clearImmediate = clearImmediate;
-  }
-
-  //
-  // store native setTimeout/clearTimeout
-  //
-  global.nativeSetTimeout_ = global.setTimeout;
-  global.nativeClearTimeout_ = global.clearTimeout;
-
-  //
-  // Override setTimeout
-  //
-  global.setTimeout = function(fn, timeout){
-    /** @cut */ if (isNaN(timeout) || timeout <= 0)
-    /** @cut */   basis.dev.warn('Don\'t use setTimeout() with zero timeout, use basis.timer.setImmediate instead');
-
-    return isNaN(timeout) || timeout <= 0
-      ? MESSAGE_NAME + setImmediate(fn)
-      : global.nativeSetTimeout_(fn, timeout);
-  };
-
-  //
-  // Override clearTimeout
-  //
-  global.clearTimeout = function(timer){
-    var immediateId = String(timer).split(MESSAGE_NAME)[1];
-
-    return immediateId
-      ? clearImmediate(immediateId)
-      : global.nativeClearTimeout_(timer);
-  };
-  //!!!!!!!!!!!!!!!!!!!!!!!! this section will be removed in 0.10 !!!!!!!!!!!!!!!!!!!!!!!!
-
 
   //
   // taskManager
@@ -193,8 +148,8 @@
 
   module.exports = {
     nextTick: basis.nextTick,
-    setImmediate: setImmediate,
-    clearImmediate: clearImmediate,
+    setImmediate: basis.setImmediate,
+    clearImmediate: basis.clearImmediate,
 
     add: taskManager.add,
     remove: taskManager.remove
