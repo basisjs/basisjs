@@ -1373,7 +1373,6 @@
   //
 
   module.exports = {
-    Validator: Validator,  // deprecated
     validator: Validator,
     ValidatorError: ValidatorError,
 
