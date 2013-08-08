@@ -199,6 +199,3 @@
     add: taskManager.add,
     remove: taskManager.remove
   };
-
-  // deprecated
-  module.exports.TimeEventManager = taskManager;
