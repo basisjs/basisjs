@@ -8,7 +8,7 @@
   * Namespace overview:
   * - {basis.data.value.BindValue}
   * - {basis.data.value.Property}
-  * - {basis.data.value.ObjectSet} (alias basis.data.value.DataObjectSet, but it's deprecate)
+  * - {basis.data.value.ObjectSet}
   * - {basis.data.value.Expression}
   *
   * @see ./demo/data/basic.html
@@ -590,6 +590,3 @@
     ObjectSet: ObjectSet,
     Expression: Expression
   };
-
-  // deprecated
-  module.exports.DataObjectSet = ObjectSet;
