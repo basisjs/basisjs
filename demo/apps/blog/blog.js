@@ -72,8 +72,8 @@ basis.ready(function(){
 
   blogThreadPage.addHandler({
     sourceChanged: function(ds){
-      this.setProperties(ds.source ? Math.ceil(ds.source.itemCount / POST_PER_PAGE) : 0, 10, 0);
-      this.spotlightPage(0);
+      this.setPageCount(ds.source ? Math.ceil(ds.source.itemCount / POST_PER_PAGE) : 0);
+      this.setActivePage(1, true)
     }
   }, paginator);
 
