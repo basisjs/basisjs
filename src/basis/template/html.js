@@ -579,7 +579,10 @@
      /**
       * @param {object} bindings
       */
-      return function getBinding(bindings){
+      return function getBinding(bindings, obj, set, bindingInterface){
+        if (!bindings)
+          return {};
+
         var cacheId = 'bindingId' in bindings ? bindings.bindingId : null;
 
         /** @cut */ if (!cacheId)
@@ -636,7 +639,16 @@
             bindingCache[cacheId] = result;
         }
 
-        return result;
+        if (obj && set)
+          result.sync.call(set, obj)
+
+        if (!bindingInterface)
+          return {};
+
+        if (result.handler)
+          bindingInterface.attach(obj, result.handler, set);
+
+        return result.handler;
       };
     }
 

@@ -610,12 +610,14 @@
 
       result.push('}}');
 
+      var toolsVarList = [];
       for (var key in toolsUsed)
-        varList.push(key + '=tools.' + key);
+        toolsVarList.push(key + '=tools.' + key);
 
       return {
         /** @cut */ debugList: debugList,
         keys: basis.object.keys(bindMap).filter(function(key){ return key.indexOf('@') == -1 }),
+        tools: toolsVarList,
         vars: varList,
         set: result.join(''),
         l10n: l10nMap,
@@ -678,6 +680,7 @@
       /** @cut */ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
       'var seed=0,' +
       'getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
+      (bindings.tools.length ? bindings.tools + ',' : '') +
       'resolve=tools.resolve;' +
       'return function createInstance_(obj,onAction,onRebuild,bindings,bindingInterface){' +
         'var ref=map[++seed]={' +
@@ -689,27 +692,23 @@
         '},' +
         'id=seed,' +
         'attaches={' + bindings.keys.map(function(key){ return key + ':null' }) + '},' +
-        'tmplBindings,' +
         '_=build(),' +
         paths.path.concat(bindings.vars) +
+        ',bindingHandler=bindings?getBindings(bindings,obj,set,bindingInterface):null' +
 
         (objectRefs ? ';if(obj)' + objectRefs + '=(id<<12)|tid' : '') +
 
         bindings.set +
 
         // sync template with bindings
-        ';if(bindings){' +
-          'tmplBindings=getBindings(bindings);' +
-          'if(bindingInterface&&tmplBindings.handler)bindingInterface.attach(obj,tmplBindings.handler,set);' +
-          'tmplBindings.sync.call(set,obj);' +
-        '}' +
         ';' + bindings.l10nCompute +
 
         ';return ref.tmpl={' + [
           paths.ref,
           'set:set,' +
           'destroy_:function destroy_(){' +
-            'if(bindings&&bindingInterface&&tmplBindings.handler)bindingInterface.detach(obj,tmplBindings.handler,set);' +
+            'if(bindingHandler)' +
+              'bindingInterface.detach(obj,bindingHandler,set);' +
             // detach attaches
             //'var a;' +
             'for(var key in attaches)' +
