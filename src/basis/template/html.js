@@ -255,17 +255,18 @@
   };
 
   function resolveTemplateById(refId){
-    var parts = refId.split('-', 2);
-    var object = templates[parts[0]];
+    var templateId = refId & 0xFFF;
+    var object = templates[templateId];
 
     return object && object.template;
   }
 
   function resolveInstanceById(refId){
-    var parts = refId.split('-', 2);
-    var object = templates[parts[0]];
+    var templateId = refId & 0xFFF;
+    var instanceId = refId >> 12;
+    var object = templates[templateId];
 
-    return object && object.instances[parts[1]];
+    return object && object.instances[instanceId];
   }
 
   function resolveObjectById(refId){

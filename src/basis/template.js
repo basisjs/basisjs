@@ -1463,7 +1463,7 @@
 
     // apply new values
     this.createInstance = funcs.createInstance;
-    this.getBinding = function(){ return {names:[],events:{},handler:null,sync:function(){}} };//createBindingFunction(funcs.keys);
+    this.getBinding = function(){ return {names:[],events:{},handler:null,sync:function(){}} }; // TODO: fix me; createBindingFunction(funcs.keys);
     this.destroyBuilder = funcs.destroy;
 
     ;;;this.instances_ = funcs.instances_;
@@ -1581,6 +1581,9 @@
     * @constructor
     */
     init: function(source){
+      if (templateList.length == 4096)
+        throw 'Too many templates (maximum 4096)';
+
       this.attaches_ = [];
       this.setSource(source || '');
 

@@ -695,7 +695,7 @@
         '_=build(),' +
         paths.path.concat(bindings.vars) +
 
-        (objectRefs ? ';if(obj)' + objectRefs + '=tid+"-"+id' : '') +
+        (objectRefs ? ';if(obj)' + objectRefs + '=(id<<12)|tid' : '') +
 
         ';function updateAttach(){set(this.name,this.value)}' +
 
