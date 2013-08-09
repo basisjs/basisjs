@@ -301,7 +301,9 @@
       var l10nCompute = [];
       var l10nBindings = {};
       var l10nBindSeed = 1;
-      var toolsUsed = {};
+      var toolsUsed = {
+        resolve: true
+      };
       var specialAttr;
       /** @cut */ var debugList = [];
 
@@ -681,7 +683,8 @@
       'var seed=0,' +
       'getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
-      'resolve=tools.resolve;' +
+      'Attaches=function(){};' +
+      'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null' }) + '};' +
       'return function createInstance_(obj,onAction,onRebuild,bindings,bindingInterface){' +
         'var ref=map[++seed]={' +
           'context:obj,' +
@@ -691,7 +694,7 @@
           'tmpl:null' +
         '},' +
         'id=seed,' +
-        'attaches={' + bindings.keys.map(function(key){ return key + ':null' }) + '},' +
+        'attaches=new Attaches,' +
         '_=build(),' +
         paths.path.concat(bindings.vars) +
         ',bindingHandler=bindings?getBindings(bindings,obj,set,bindingInterface):null' +
@@ -709,13 +712,10 @@
           'destroy_:function destroy_(){' +
             'if(bindingHandler)' +
               'bindingInterface.detach(obj,bindingHandler,set);' +
+
             // detach attaches
-            //'var a;' +
             'for(var key in attaches)' +
-              //'if(a = attaches[key])' +
-                'resolve(attaches,set,key,null);' +
-                //'a.detach(a.value,updateAttach,a);' +
-            'attaches=null;' +
+              'resolve(attaches,set,key,null);' +
 
             // delete from template map
             'delete map[id];' +
