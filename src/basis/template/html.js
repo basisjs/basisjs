@@ -476,11 +476,17 @@
       return newValue;
     };
 
-    
    /**
     * @func
     */ 
-    function resolveValue(attaches, updateAttach, bindingName, value, object, bindings, bindingInterface){
+    function updateAttach(){
+      this.set(this.name, this.value);
+    }
+
+   /**
+    * @func
+    */ 
+    function resolveValue(attaches, set, bindingName, value, object, bindings, bindingInterface){
       var bridge = value && value.bindingBridge;
       var oldAttach = attaches[bindingName];
       var tmpl = null;
@@ -499,7 +505,7 @@
                 oldAttach.tmpl.destroy_();
               }
 
-              oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
+              oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             }
 
             if (value.type == 'markup' && value instanceof basis.l10n.Token)
@@ -520,10 +526,9 @@
 
             var newAttach = attaches[bindingName] = {
               name: bindingName,
-              object: object,
-              detach: bridge.detach,
               value: value,
-              tmpl: tmpl
+              tmpl: tmpl,
+              set: set
             };
 
             bridge.attach(value, updateAttach, newAttach);
@@ -546,7 +551,7 @@
               oldAttach.tmpl.destroy_();
             }
 
-            oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
+            oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             attaches[bindingName] = null;
           }
         }

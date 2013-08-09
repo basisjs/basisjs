@@ -584,9 +584,9 @@
       }
 
       result.push(
-        'function set(bindName,value){' +
+        ';function set(bindName,value){' +
           'if(typeof bindName=="string")' +
-            'value=resolve(attaches,updateAttach,bindName,value,obj,bindings,bindingInterface);' +
+            'value=resolve(attaches,set,bindName,value,obj,bindings,bindingInterface);' +
           'switch(bindName){'
       );
 
@@ -695,8 +695,6 @@
 
         (objectRefs ? ';if(obj)' + objectRefs + '=(id<<12)|tid' : '') +
 
-        ';function updateAttach(){set(this.name,this.value)}' +
-
         bindings.set +
 
         // sync template with bindings
@@ -716,7 +714,7 @@
             //'var a;' +
             'for(var key in attaches)' +
               //'if(a = attaches[key])' +
-                'resolve(attaches,updateAttach,key,null);' +
+                'resolve(attaches,set,key,null);' +
                 //'a.detach(a.value,updateAttach,a);' +
             'attaches=null;' +
 
