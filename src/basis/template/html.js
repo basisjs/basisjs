@@ -56,7 +56,6 @@
   // dictionaries
   var tmplEventListeners = {};
   var templates = {};
-  var templateId = 0;
 
   var namespaceURI = {
     svg: 'http://www.w3.org/2000/svg'
@@ -90,10 +89,212 @@
     return htmlTemplate;
   }
 
+
+  //
+  // Constructs dom structure
+  //
+
+ /**
+  * @func
+  */
+  function createEventHandler(attrName){
+    return function(event){
+      event = new domEvent.Event(event);
+
+      // don't process right click - generaly FF problem
+      if (event && event.type == 'click' && event.which == 3)
+        return;
+
+      var cursor = event.sender;
+      var attr;
+
+      // IE events may have no source, nothing to do in this case
+      if (!cursor)
+        return;
+
+      // search for nearest node with event-{eventName} attribute
+      do {
+        if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
+          break;
+      } while (cursor = cursor.parentNode);
+
+      // if not found - exit
+      if (!cursor || !attr)
+        return;
+
+      // search for nearest node with basisTemplateId property
+      var refId;
+      var tmplRef;
+
+      do {
+        if (refId = cursor.basisTemplateId)
+        {
+          // if node found, return it
+          if (tmplRef = resolveInstanceById(refId))
+            break;
+        }
+      } while (cursor = cursor.parentNode);
+
+      if (tmplRef && tmplRef.action)
+      {
+        var actions = attr.nodeValue.qw();
+        event.actionTarget = cursor;
+        for (var i = 0, actionName; actionName = actions[i++];)
+          tmplRef.action.call(tmplRef.context, actionName, event);
+      }
+    };
+  }
+
+  function createEventTrigger(eventName){
+    return function(){
+      domEvent.fireEvent(document, eventName);
+    };
+  }
+
+ /**
+  * Creates dom structure by declaration.
+  */
+  var buildHtml = function(tokens, parent){
+    function setEventAttribute(eventName, actions){
+      var attrName = 'event-' + eventName;
+
+      if (!tmplEventListeners[eventName])
+      {
+        tmplEventListeners[eventName] = createEventHandler(attrName);
+
+        for (var k = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[k++];)
+          domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
+      }
+
+      // hack for non-bubble events in IE<=8
+      if (!domEvent.W3CSUPPORT)
+      {
+        var eventInfo = domEvent.getEventInfo(eventName, tagName);
+        if (eventInfo.supported && !eventInfo.bubble)
+          result.attachEvent('on' + eventName, createEventTrigger(eventName));
+      }
+
+      result.setAttribute(attrName, actions);
+    }
+
+    function setAttribute(name, value){
+      if (SET_CLASS_ATTRIBUTE_BUG && name == 'class')
+        name = 'className';
+
+      result.setAttribute(name, value);
+    }
+
+
+    var result = parent || document.createDocumentFragment();
+
+    for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
+    {
+      switch(token[TOKEN_TYPE])
+      {
+        case TYPE_ELEMENT: 
+          var tagName = token[ELEMENT_NAME];
+          var parts = tagName.split(/:/);
+
+          var element = parts.length > 1
+            ? document.createElementNS(namespaceURI[parts[0]], tagName)
+            : document.createElement(tagName);
+
+          // precess for children and attributes
+          buildHtml(token, element);
+
+          // add to result
+          result.appendChild(element);
+
+          break;
+
+        case TYPE_ATTRIBUTE:
+          var attrName = token[ATTR_NAME];
+          var attrValue = token[ATTR_VALUE];
+          var eventName = attrName.replace(/^event-/, '');
+
+          if (eventName != attrName)
+          {
+            setEventAttribute(eventName, attrValue);
+          }
+          else
+          {
+            if (attrName != 'class' && attrName != 'style' ? !token[TOKEN_BINDINGS] : attrValue)
+              setAttribute(attrName, attrValue || '');
+          }
+
+          break;
+
+        case 4:
+        case 5:
+          var attrValue = token[ATTR_VALUE - 1];
+
+          if (attrValue)
+            setAttribute(ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]], attrValue);
+
+          break;
+
+        case 6:
+          setEventAttribute(token[1], token[2] || token[1]);
+          break;
+
+        case TYPE_COMMENT:
+          result.appendChild(document.createComment(token[COMMENT_VALUE] || (token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : '')));
+          break;
+
+        case TYPE_TEXT:
+          // fix bug with normalize text node in IE8-
+          if (CLONE_NORMALIZATION_TEXT_BUG && i && tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT)
+            result.appendChild(document.createComment(''));
+
+          result.appendChild(document.createTextNode(token[TEXT_VALUE] || (token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : '') || (token[TOKEN_BINDINGS] ? '{' + token[TOKEN_BINDINGS] + '}' : '')));
+          break;
+      }
+    }
+
+    return result;
+  };
+
+  function resolveTemplateById(refId){
+    var parts = refId.split('-', 2);
+    var object = templates[parts[0]];
+
+    return object && object.template;
+  }
+
+  function resolveInstanceById(refId){
+    var parts = refId.split('-', 2);
+    var object = templates[parts[0]];
+
+    return object && object.instances[parts[1]];
+  }
+
+  function resolveObjectById(refId){
+    var templateRef = resolveInstanceById(refId);
+
+    return templateRef && templateRef.context;
+  }
+
+  function resolveTmplById(refId){
+    var templateRef = resolveInstanceById(refId);
+
+    return templateRef && templateRef.tmpl;
+  }
+
+  function getDebugInfoById(refId){
+    var templateRef = resolveInstanceById(refId);
+
+    return templateRef && templateRef.debug && templateRef.debug();
+  }
+
+
+  //
+  // html template
+  //
+
  /**
   * Build functions for creating instance of template.
   */
-  var buildFunctions = (function(){
+  var builder = (function(){
 
     var WHITESPACE = /\s+/;
     var W3C_DOM_NODE_SUPPORTED = typeof Node == 'function' && document instanceof Node;
@@ -446,7 +647,7 @@
       createBindingFunction: createBindingFunction
     };
 
-    return function(tokens, template){
+    return function(tokens){
       var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG);
       var instances = {};
       var l10nMap = {};
@@ -457,9 +658,9 @@
         return proto.cloneNode(true);
       };
 
-      var id = templateId++;
+      var id = this.templateId;
       templates[id] = {
-        template: template,
+        template: this,
         instances: instances
       };
 
@@ -507,6 +708,9 @@
               tmplRef.tmpl.destroy_();
           }
 
+          if (templates[id] && templates[id].instances === instances)
+            delete templates[id];
+
           fn = null;
           build = null;
           proto = null;
@@ -514,210 +718,10 @@
           l10nLinks = null;
           l10nProtoSync = null;
           instances = null;
-
-          delete templates[id];
         }
       };
     };
-  })();
-
-
-  //
-  // Constructs dom structure
-  //
-
- /**
-  * @func
-  */
-  function createEventHandler(attrName){
-    return function(event){
-      event = new domEvent.Event(event);
-
-      // don't process right click - generaly FF problem
-      if (event && event.type == 'click' && event.which == 3)
-        return;
-
-      var cursor = event.sender;
-      var attr;
-
-      // IE events may have no source, nothing to do in this case
-      if (!cursor)
-        return;
-
-      // search for nearest node with event-{eventName} attribute
-      do {
-        if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
-          break;
-      } while (cursor = cursor.parentNode);
-
-      // if not found - exit
-      if (!cursor || !attr)
-        return;
-
-      // search for nearest node with basisTemplateId property
-      var refId;
-      var tmplRef;
-
-      do {
-        if (refId = cursor.basisTemplateId)
-        {
-          // if node found, return it
-          if (tmplRef = resolveInstanceById(refId))
-            break;
-        }
-      } while (cursor = cursor.parentNode);
-
-      if (tmplRef && tmplRef.action)
-      {
-        var actions = attr.nodeValue.qw();
-        event.actionTarget = cursor;
-        for (var i = 0, actionName; actionName = actions[i++];)
-          tmplRef.action.call(tmplRef.context, actionName, event);
-      }
-    };
-  }
-
-  function createEventTrigger(eventName){
-    return function(){
-      domEvent.fireEvent(document, eventName);
-    };
-  }
-
- /**
-  * Creates dom structure by declaration.
-  */
-  var buildHtml = function(tokens, parent){
-    function setEventAttribute(eventName, actions){
-      var attrName = 'event-' + eventName;
-
-      if (!tmplEventListeners[eventName])
-      {
-        tmplEventListeners[eventName] = createEventHandler(attrName);
-
-        for (var k = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[k++];)
-          domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
-      }
-
-      // hack for non-bubble events in IE<=8
-      if (!domEvent.W3CSUPPORT)
-      {
-        var eventInfo = domEvent.getEventInfo(eventName, tagName);
-        if (eventInfo.supported && !eventInfo.bubble)
-          result.attachEvent('on' + eventName, createEventTrigger(eventName));
-      }
-
-      result.setAttribute(attrName, actions);
-    }
-
-    function setAttribute(name, value){
-      if (SET_CLASS_ATTRIBUTE_BUG && name == 'class')
-        name = 'className';
-
-      result.setAttribute(name, value);
-    }
-
-
-    var result = parent || document.createDocumentFragment();
-
-    for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
-    {
-      switch(token[TOKEN_TYPE])
-      {
-        case TYPE_ELEMENT: 
-          var tagName = token[ELEMENT_NAME];
-          var parts = tagName.split(/:/);
-
-          var element = parts.length > 1
-            ? document.createElementNS(namespaceURI[parts[0]], tagName)
-            : document.createElement(tagName);
-
-          // precess for children and attributes
-          buildHtml(token, element);
-
-          // add to result
-          result.appendChild(element);
-
-          break;
-
-        case TYPE_ATTRIBUTE:
-          var attrName = token[ATTR_NAME];
-          var attrValue = token[ATTR_VALUE];
-          var eventName = attrName.replace(/^event-/, '');
-
-          if (eventName != attrName)
-          {
-            setEventAttribute(eventName, attrValue);
-          }
-          else
-          {
-            if (attrName != 'class' && attrName != 'style' ? !token[TOKEN_BINDINGS] : attrValue)
-              setAttribute(attrName, attrValue || '');
-          }
-
-          break;
-
-        case 4:
-        case 5:
-          var attrValue = token[ATTR_VALUE - 1];
-
-          if (attrValue)
-            setAttribute(ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]], attrValue);
-
-          break;
-
-        case 6:
-          setEventAttribute(token[1], token[2] || token[1]);
-          break;
-
-        case TYPE_COMMENT:
-          result.appendChild(document.createComment(token[COMMENT_VALUE] || (token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : '')));
-          break;
-
-        case TYPE_TEXT:
-          // fix bug with normalize text node in IE8-
-          if (CLONE_NORMALIZATION_TEXT_BUG && i && tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT)
-            result.appendChild(document.createComment(''));
-
-          result.appendChild(document.createTextNode(token[TEXT_VALUE] || (token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : '') || (token[TOKEN_BINDINGS] ? '{' + token[TOKEN_BINDINGS] + '}' : '')));
-          break;
-      }
-    }
-
-    return result;
-  };
-
-  function resolveTemplateById(refId){
-    var parts = refId.split('-', 2);
-    var object = templates[parts[0]];
-
-    return object && object.template;
-  }
-
-  function resolveInstanceById(refId){
-    var parts = refId.split('-', 2);
-    var object = templates[parts[0]];
-
-    return object && object.instances[parts[1]];
-  }
-
-  function resolveObjectById(refId){
-    var templateRef = resolveInstanceById(refId);
-
-    return templateRef && templateRef.context;
-  }
-
-  function resolveTmplById(refId){
-    var templateRef = resolveInstanceById(refId);
-
-    return templateRef && templateRef.tmpl;
-  }
-
-  function getDebugInfoById(refId){
-    var templateRef = resolveInstanceById(refId);
-
-    return templateRef && templateRef.debug && templateRef.debug();
-  }
-
+  })();  
 
  /**
   * @class
@@ -735,7 +739,7 @@
       return new HtmlTemplate(value);
     },
 
-    builder: buildFunctions
+    builder: builder
   });
 
 
@@ -766,7 +770,6 @@
     /** @cut using only in dev mode */ getDebugInfoById: getDebugInfoById,
 
     buildHtml: buildHtml,
-    buildFunctions: buildFunctions,
 
     resolveTemplateById: resolveTemplateById,
     resolveObjectById: resolveObjectById,
