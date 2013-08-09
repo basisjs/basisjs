@@ -491,14 +491,13 @@
         if (oldElement && oldElement !== this.element && oldElement.nodeType != 11)
         {
           var parentNode = oldElement && oldElement.parentNode;
-          var replaced = false;
           
           if (parentNode)
           {
             if (this.owner && this.owner.tmpl)
-              replaced = this.owner.tmpl.setByRef(oldElement, this.element);
+              this.owner.tmpl.set(oldElement, this.element);
             
-            if (!replaced)
+            if (this.element.parentNode !== parentNode)
               parentNode.replaceChild(this.element, oldElement);
           }
         }

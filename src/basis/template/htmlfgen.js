@@ -296,7 +296,6 @@
       var bindVar;
       var varList = [];
       var result = [];
-      var domRefs = {};
       var varName;
       var l10nMap;
       var l10nCompute = [];
@@ -453,11 +452,11 @@
           /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
           /** @cut */ ] +'}');
 
-          if (!bindCode.nodeBindUsed)
+          if (!bindCode.nodeBind)
           {
             varList.push(bindVar + '=' + domRef);
-            domRefs[bindVar] = bindName;
             putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
+            bindCode.nodeBind = bindVar;
           }
           else
           {
@@ -473,8 +472,6 @@
               // ignore bindings for comment, as we can't apply anything but Node to comment
             }
           }
-
-          bindCode.nodeBindUsed = true;
         }
         else
         {
@@ -588,7 +585,8 @@
 
       result.push(
         'function set(bindName,value){' +
-          'value=resolve(attaches,updateAttach,bindName,value,obj,bindings,bindingInterface);' +
+          'if(typeof bindName=="string")' +
+            'value=resolve(attaches,updateAttach,bindName,value,obj,bindings,bindingInterface);' +
           'switch(bindName){'
       );
 
@@ -597,6 +595,7 @@
         /** @cut */ if (bindName.indexOf('@') == -1) varList.push('$$' + bindName + '=0');
         result.push(
           'case"' + bindName + '":' +
+          (bindMap[bindName].nodeBind ? 'case ' + bindMap[bindName].nodeBind + ':' : '') +
           (bindMap[bindName].l10n
             ? bindMap[bindName].join('')
             : 'if(__' + bindName + '!==value)' +
@@ -618,7 +617,6 @@
         /** @cut */ debugList: debugList,
         keys: basis.object.keys(bindMap).filter(function(key){ return key.indexOf('@') == -1 }),
         vars: varList,
-        domRefs: domRefs,
         set: result.join(''),
         l10n: l10nMap,
         l10nCompute: l10nCompute
@@ -712,9 +710,6 @@
         ';return ref.tmpl={' + [
           paths.ref,
           'set:set,' +
-          'setByRef:function setByRef(ref,value){' +
-            basis.object.iterate(bindings.domRefs, function(key, value){ return 'if(' + key + '===ref){set("' + value + '",value);return true}' }).join('') +
-          '},' +
           'destroy_:function destroy_(){' +
             'if(bindings&&bindingInterface&&tmplBindings.handler)bindingInterface.detach(obj,tmplBindings.handler,set);' +
             // detach attaches
