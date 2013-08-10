@@ -1,3 +1,3 @@
-var MyClass = basis.Class.create(null, {
+var MyClass = basis.Class(null, {
   name: 'Jhon'
 });
