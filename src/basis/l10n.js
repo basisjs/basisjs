@@ -494,7 +494,6 @@
   var cultureList = [];
   var cultureGetTokenValue = {};
   var cultureFallback = {}; 
-  var cultureChangeHandlers = [];
   var cultures = {};
 
 
@@ -536,6 +535,8 @@
     return culture;
   }
 
+  basis.object.extend(resolveCulture, new basis.Token(currentCulture));
+
  /**
   * Returns current culture name.
   * @return {string} Current culture name.
@@ -560,8 +561,7 @@
       for (var i = 0, dictionary; dictionary = dictionaries[i]; i++)
         dictionary.setCulture(currentCulture);
 
-      for (var i = 0, handler; handler = cultureChangeHandlers[i]; i++)
-        handler.fn.call(handler.context, culture);
+      resolveCulture.set(culture);
     }
   }
 
@@ -612,10 +612,7 @@
   *   culture name right after callback attachment.
   */ 
   function onCultureChange(fn, context, fire){
-    cultureChangeHandlers.push({
-      fn: fn,
-      context: context
-    });
+    resolveCulture.attach(fn, context);
 
     if (fire)
       fn.call(context, currentCulture);
