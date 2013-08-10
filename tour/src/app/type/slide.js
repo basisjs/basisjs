@@ -18,8 +18,8 @@ var Slide = basis.entity.createType('Slide', {
 // sync data
 //
 
-Slide.all.setSyncAction(function(){
-  var data = basis.resource('slide/index.json').fetch();
+var slideIndex = basis.resource('slide/index.json');
+slideIndex.ready(function(data){
   var prev = null;
   var next = null;
 
@@ -38,6 +38,10 @@ Slide.all.setSyncAction(function(){
   }
 
   this.sync(data);
+}, Slide.all);
+
+Slide.all.setSyncAction(function(){
+  slideIndex.fetch();  
 });
 
 
