@@ -1,4 +1,4 @@
-basis.require('basis.timer');
+basis.require('basis.l10n');
 basis.require('basis.data');
 basis.require('basis.data.dataset');
 basis.require('basis.data.index');
@@ -9,9 +9,9 @@ basis.require('basis.ui.resizer');
 basis.require('basis.router');
 basis.require('app.type');
 
-var timer;
 var fileList = resource('module/fileList/index.js').fetch();
 var editor = resource('module/editor/index.js').fetch();
+var timer;
 
 fileList.selection.addHandler({
   itemsChanged: function(){
@@ -51,7 +51,7 @@ var panels = new basis.layout.VerticalPanelStack({
       },
       action: {
         resetSlide: function(){
-          this.data.files.getItems().forEach(function(file){
+          this.data.files.forEach(function(file){
             file.rollback();
           });
         }
@@ -87,9 +87,9 @@ var panels = new basis.layout.VerticalPanelStack({
         timer = clearTimeout(timer);
         this.tmpl.launcher.src = 'launcher.html';
 
-        this.tmpl.set('reloaded', true);
         var self = this;
-        basis.timer.nextTick(function(){
+        this.tmpl.set('reloaded', true);
+        basis.nextTick(function(){
           self.tmpl.set('reloaded', false);
         });
       },
@@ -122,7 +122,9 @@ var view = new basis.ui.Node({
     description: {
       events: 'update',
       getter: function(node){
-        return node.data.id ? basis.resource('slide/' + node.data.id + '/index.html') : null;
+        return node.data.id
+          ? basis.l10n.dictionary('slide/' + node.data.id + '/description.l10n').token('text')
+          : null;
       }
     },
 

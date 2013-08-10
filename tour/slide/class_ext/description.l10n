@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "type": {
+      "text": "markup"
+    }
+  },
+  "ru-RU": {
+    "text": "<b:include src=\"ru.tmpl\"/>"
+  },
+  "en-US": {
+    "text": "<b:include src=\"en.tmpl\"/>"
+  }
+}
