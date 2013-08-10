@@ -259,11 +259,30 @@
 
   var ENTITYSET_SYNC_METHOD = function(superClass){
     return function(data){
-      Dataset.setAccumulateState(true);
-      data = (data || []).map(this.wrapper);
-      Dataset.setAccumulateState(false);
+      var destroyItems = basis.object.slice(this.items_);
+      var inserted = [];
 
-      return superClass.prototype.sync.call(this, data);
+      if (data)
+      {
+        Dataset.setAccumulateState(true);
+        for (var i = 0; i < data.length; i++)
+        {
+          var entity = this.wrapper(data[i]);
+          if (entity)
+            destroyItems[entity.basisObjectId] = false;
+        }
+        Dataset.setAccumulateState(false);
+      }
+
+      for (var key in this.items_)
+        if (key in destroyItems == false)
+          inserted.push(this.items_[key]);
+
+      for (var key in destroyItems)
+        if (destroyItems[key])
+          destroyItems[key].destroy();
+
+      return inserted.length ? inserted : null;
     };
   };
 
