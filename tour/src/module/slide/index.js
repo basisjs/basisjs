@@ -6,6 +6,7 @@ basis.require('basis.layout');
 basis.require('basis.ui');
 basis.require('basis.ui.tabs');
 basis.require('basis.ui.resizer');
+basis.require('basis.ui.menu');
 basis.require('basis.router');
 basis.require('app.type');
 
@@ -37,6 +38,21 @@ var changedFiles = new basis.data.dataset.Subset({
   }
 });
 
+var langPopup = new basis.ui.menu.Menu({
+  childClass: {
+    click: function(){
+      basis.l10n.setCulture(this.lang);
+      langPopup.hide();
+    }
+  },
+  childNodes: basis.l10n.getCultureList().map(function(lang){
+    return {
+      caption: lang,
+      lang: lang
+    }
+  })
+});
+
 var panels = new basis.layout.VerticalPanelStack({
   template: resource('template/main-part.tmpl'),
   autoDelegate: true,
@@ -47,13 +63,17 @@ var panels = new basis.layout.VerticalPanelStack({
     {
       template: resource('template/header.tmpl'),
       binding: {
-        hasChanges: basis.data.index.count(changedFiles)
+        hasChanges: basis.data.index.count(changedFiles),
+        lang: basis.l10n.culture
       },
       action: {
         resetSlide: function(){
           this.data.files.forEach(function(file){
             file.rollback();
           });
+        },
+        changeLang: function(event){
+          langPopup.show(event.sender);
         }
       }
     },
