@@ -85,15 +85,14 @@
           if (typeof value == 'string')
             value = BINDING_PRESET.process(key, value);
           else
-            // getter is function that returns value if value is basis.Token or basis.data.AbstractData instance
-            // those sort of instance has mechanism (via bindingBridge) to update value itself
-            if (value instanceof basis.Token || (value instanceof basis.data.AbstractData && value.bindingBridge))
+            // if value has bindingBridge means that it can update itself
+            if (value.bindingBridge)
               value = basis.fn.$const(value);
 
           if (typeof value != 'object')
           {
             def = {
-              getter: basis.getter(value)
+              getter: typeof value == 'function' ? value : basis.getter(value)
             };
           }
           else
