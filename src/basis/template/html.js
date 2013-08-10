@@ -512,13 +512,16 @@
             if (value.type == 'markup' && value instanceof basis.l10n.Token)
             {
               var template = getL10nTemplate(value);
-              tmpl = template.createInstance(this.context, null, function onRebuild(){
-                tmpl = newAttach.tmpl = template.createInstance(this.context, null, onRebuild, this.bindings, this.bindingInterface);
+              var context = this.context;
+              var bindings = this.bindings;
+              var bindingInterface = this.bindingInterface;
+              tmpl = template.createInstance(context, null, function onRebuild(){
+                tmpl = newAttach.tmpl = template.createInstance(context, null, onRebuild, bindings, bindingInterface);
                 tmpl.element.toString = function(){
                   return value.value;
                 };
                 updateAttach.call(newAttach);
-              }, this.bindings, this.bindingInterface);
+              }, bindings, bindingInterface);
               tmpl.element.toString = function(){
                 return value.value;
               }
