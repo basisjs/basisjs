@@ -1,8 +1,5 @@
 basis.require('basis.entity');
 
-var calc = basis.entity.CalculateField;
-var File = resource('file.js').fetch();
-
 //
 // main part
 //
@@ -11,8 +8,7 @@ var Slide = basis.entity.createType('Slide', {
   id: basis.entity.StringId,
   num: Number,
   title: String,
-  code: String,
-  files: new basis.entity.EntitySetType(File),
+  files: new basis.entity.EntitySetType('File'),
   prev: 'Slide',
   next: 'Slide'
 });
@@ -26,6 +22,7 @@ Slide.all.setSyncAction(function(){
   var data = basis.resource('slide/index.json').fetch();
   var prev = null;
   var next = null;
+
   for (var i = 0, item; item = data[i]; i++)
   {
     next = data[i + 1];

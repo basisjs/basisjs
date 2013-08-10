@@ -2,8 +2,8 @@ basis.require('basis.ui');
 basis.require('app.type');
 
 module.exports = new basis.ui.Node({
-  dataSource: app.type.Slide.all,
   active: true,
+  dataSource: app.type.Slide.all,
 
   template: resource('template/list.tmpl'),
   

@@ -1,8 +1,12 @@
+basis.require('basis.l10n');
 basis.require('basis.app');
 basis.require('basis.ui');
 basis.require('basis.router');
 basis.require('app.type');
 
+
+basis.l10n.setCultureList('en-US/ru-RU ru-RU');
+basis.l10n.setCulture('ru-RU'); // temporary here
 
 var view;
 module.exports = basis.app.create({
@@ -49,7 +53,7 @@ module.exports = basis.app.create({
     });
     basis.router.start();
 
-    return view.element;
+    return view;
   }
 });
 
@@ -73,14 +77,18 @@ global.launcherCallback = function(fn){
     file.removeHandler(updatableHandler);
   });
 
-  var res = {};
-  (view.data.files ? view.data.files.getItems() : []).forEach(function(file){
-    res[file.data.name] = file.data.content;
-    if (file.data.updatable)
-    {
-      updatableFiles.push(file);
-      file.addHandler(updatableHandler);
-    }
-  });
-  return res;
+  var result = {};
+  var files = view.data.files ? view.data.files.getItems() : null;
+
+  if (files)
+    files.forEach(function(file){
+      result[file.data.name] = file.data.content;
+      if (file.data.updatable)
+      {
+        updatableFiles.push(file);
+        file.addHandler(updatableHandler);
+      }
+    });
+
+  return result;
 };
