@@ -1929,6 +1929,8 @@
           }
 
           resource.attach(fn, context);
+
+          return resource;
         }
       }));
 
