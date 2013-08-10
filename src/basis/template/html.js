@@ -486,9 +486,9 @@
    /**
     * @func
     */ 
-    function resolveValue(attaches, set, bindingName, value, object, bindings, bindingInterface){
+    function resolveValue(bindingName, value, Attaches){
       var bridge = value && value.bindingBridge;
-      var oldAttach = attaches[bindingName];
+      var oldAttach = this.attaches && this.attaches[bindingName];
       var tmpl = null;
 
       if (bridge || oldAttach)
@@ -501,8 +501,9 @@
             {
               if (oldAttach.tmpl)
               {
+                // FIX ME
                 oldAttach.tmpl.element.toString = null;
-                oldAttach.tmpl.destroy_();
+                getL10nTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
               }
 
               oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
@@ -511,24 +512,26 @@
             if (value.type == 'markup' && value instanceof basis.l10n.Token)
             {
               var template = getL10nTemplate(value);
-              tmpl = template.createInstance(object, null, function onRebuild(){
-                tmpl.destroy_();
-                tmpl = newAttach.tmpl = template.createInstance(object, null, onRebuild, bindings, bindingInterface);
+              tmpl = template.createInstance(this.context, null, function onRebuild(){
+                tmpl = newAttach.tmpl = template.createInstance(this.context, null, onRebuild, this.bindings, this.bindingInterface);
                 tmpl.element.toString = function(){
                   return value.value;
                 };
                 updateAttach.call(newAttach);
-              }, bindings, bindingInterface);
+              }, this.bindings, this.bindingInterface);
               tmpl.element.toString = function(){
                 return value.value;
               }
             }
 
-            var newAttach = attaches[bindingName] = {
+            if (!this.attaches)
+              this.attaches = new Attaches;
+
+            var newAttach = this.attaches[bindingName] = {
               name: bindingName,
               value: value,
               tmpl: tmpl,
-              set: set
+              set: this.tmpl.set
             };
 
             bridge.attach(value, updateAttach, newAttach);
@@ -547,12 +550,13 @@
           {
             if (oldAttach.tmpl)
             {
+              // FIX ME
               oldAttach.tmpl.element.toString = null;
-              oldAttach.tmpl.destroy_();
+              getL10nTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
             }
 
             oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
-            attaches[bindingName] = null;
+            this.attaches[bindingName] = null;
           }
         }
       }
@@ -667,9 +671,11 @@
 
     return function(tokens){
       var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG);
+      var createInstance;
       var instances = {};
       var l10nMap = {};
       var l10nLinks = [];
+      var seed = 0;
 
       var proto = buildHtml(tokens);
       var build = function(){
@@ -707,8 +713,34 @@
           }
       }
 
+      createInstance = fn.createInstance(id, instances, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
+
       return {
-        createInstance: fn.createInstance(id, instances, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG),
+        createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
+          var instanceId = seed++;
+          var instance = createInstance(instanceId, obj, onAction, onRebuild, bindings, bindingInterface);
+          
+          instances[instanceId] = instance;
+
+          return instance.tmpl;
+        },
+        destroyInstance: function(tmpl){
+          var instanceId = tmpl.templateId_;
+          var instance = instances[instanceId];
+
+          if (instance)
+          {
+            // detach handler if any
+            if (instance.handler)
+              instance.bindingInterface.detach(instance.context, instance.handler, instance.tmpl.set);
+
+            // detach attaches
+            for(var key in instance.attaches)
+              resolveValue.call(instance, key, null);
+
+            delete instances[instanceId];
+          }
+        },
         
         keys: fn.keys,
         /** @cut */ instances_: instances,
@@ -719,11 +751,21 @@
 
           for (var key in instances)
           {
-            var tmplRef = instances[key];
-            if (rebuild && tmplRef.rebuild)
-              tmplRef.rebuild.call(tmplRef.context);
+            var instance = instances[key];
+
+            if (rebuild && instance.rebuild)
+              instance.rebuild.call(instance.context);
+
             if (!rebuild || key in instances)
-              tmplRef.tmpl.destroy_();
+            {
+              // detach handler if any
+              if (instance.handler)
+                instance.bindingInterface.detach(instance.context, instance.handler, instance.tmpl.set);
+
+              // detach attaches
+              for(var key in instance.attaches)
+                resolveValue.call(key, null);
+            }
           }
 
           if (templates[id] && templates[id].instances === instances)

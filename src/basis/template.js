@@ -1463,6 +1463,7 @@
 
     // apply new values
     this.createInstance = funcs.createInstance;
+    this.clearInstance = funcs.destroyInstance;
     this.getBinding = function(){ return {names:[],events:{},handler:null,sync:function(){}} }; // TODO: fix me; createBindingFunction(funcs.keys);
     this.destroyBuilder = funcs.destroy;
 
@@ -1635,7 +1636,6 @@
     * @param {object=} object Storage of DOM references.
     */
     clearInstance: function(tmpl){
-      tmpl.destroy_();
     },
 
     getBinding: function(bindings){

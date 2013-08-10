@@ -313,7 +313,7 @@
         var domRef = binding[1];
         var bindName = binding[2];
 
-        if (['set', 'destroy_'].indexOf(bindName) != -1)
+        if (['set', 'templateId_'].indexOf(bindName) != -1)
         {
           ;;;basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
           continue;
@@ -449,7 +449,7 @@
           /** @cut */ debugList.push('{' + [
           /** @cut */   'binding:"' + bindName + '"',
           /** @cut */   'dom:' + domRef,
-          /** @cut */   'val:' + bindVar,
+          /** @cut */   'val:' + (bindCode.nodeBind ? varName : bindVar),
           /** @cut */   'updates:$$' + bindName,
           /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
           /** @cut */ ] +'}');
@@ -588,7 +588,7 @@
       result.push(
         ';function set(bindName,value){' +
           'if(typeof bindName=="string")' +
-            'value=resolve(attaches,set,bindName,value,obj,bindings,bindingInterface);' +
+            'value=resolve.call(instance,bindName,value,Attaches);' +
           'switch(bindName){'
       );
 
@@ -680,47 +680,38 @@
     /** @cut */ try {
     result.createInstance = new Function('tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG',
       /** @cut */ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
-      'var seed=0,' +
-      'getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
+      'var getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
       'Attaches=function(){};' +
       'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null' }) + '};' +
-      'return function createInstance_(obj,onAction,onRebuild,bindings,bindingInterface){' +
-        'var ref=map[++seed]={' +
+      'return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){' +
+        'var _=build(),' +
+        paths.path.concat(bindings.vars) + ',' +
+        'instance={' +
           'context:obj,' +
           'action:onAction,' +
           'rebuild:onRebuild,' +
           /** @cut */ (debug ? 'debug:function debug(){return[' + bindings.debugList + ']},' : '') +
-          'tmpl:null' +
-        '},' +
-        'id=seed,' +
-        'attaches=new Attaches,' +
-        '_=build(),' +
-        paths.path.concat(bindings.vars) +
-        ',bindingHandler=bindings?getBindings(bindings,obj,set,bindingInterface):null' +
+          'handler:null,' +
+          'bindingInterface:bindingInterface,' +
+          'attaches:null,' +
+          'tmpl:{' + [
+            paths.ref,
+            'templateId_:id',
+            'set:set'
+            ] +
+          '}' +
+        '}' +
 
         (objectRefs ? ';if(obj)' + objectRefs + '=(id<<12)|tid' : '') +
 
         bindings.set +
 
         // sync template with bindings
+        ';instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null' +
         ';' + bindings.l10nCompute +
 
-        ';return ref.tmpl={' + [
-          paths.ref,
-          'set:set,' +
-          'destroy_:function destroy_(){' +
-            'if(bindingHandler)' +
-              'bindingInterface.detach(obj,bindingHandler,set);' +
-
-            // detach attaches
-            'for(var key in attaches)' +
-              'resolve(attaches,set,key,null);' +
-
-            // delete from template map
-            'delete map[id];' +
-          '}'] +
-        '}' +
+        ';return instance' +
 
         /** @cut */ '\n//# sourceURL=' + basis.path.origin + uri +
         /** @cut */ '\n//@ sourceURL=' + basis.path.origin + uri + '\n' +
