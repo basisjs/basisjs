@@ -1135,7 +1135,7 @@
         return value;
 
       var parts = value.split(':');
-      if (parts[0] == 'l10n' && parts[1].indexOf('@') == -1)
+      if (parts.length == 2 && parts[0] == 'l10n' && parts[1].indexOf('@') == -1)
         parts[1] = parts[1] + '@' + dictURI;
 
       return parts.join(':');
