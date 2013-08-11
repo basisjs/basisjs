@@ -35,5 +35,65 @@ module.exports = {
   
   setTokenCultureValue: function(namespace, name, culture, value){
     basis.l10n.dictionary(namespace).setCultureValue(culture, name, value);
+  },
+
+  loadDictionaryTokens: function(dictionaryName){
+    var dict = basis.l10n.dictionary(dictionaryName);
+    if (dict)
+    {
+      sendData('dictionaryTokens', {
+        dictionary: dictionaryName,
+        tokenKeys: basis.object.keys(dict.tokens),
+        tokenTypes: dict.types,
+        cultureValues: dict.cultureValues
+      });
+    }    
+  },
+
+  saveDictionary: function(data){
+    if (!basis.devtools)
+      return;
+
+    // prepare data 
+    var dictionaryData = {};
+
+    if (data.tokenTypes)
+    {
+      dictionaryData['_meta'] = {
+        type: data.tokenTypes
+      } 
+    }
+    basis.object.extend(dictionaryData, data.cultureValues);
+
+    var newContent = JSON.stringify(dictionaryData, undefined, 2);
+
+
+    // saving
+    var file = basis.devtools.getFile('/' + basis.path.relative('/', data.dictionary), true);
+
+    var FILE_HANDLER = {
+      stateChanged: function(){
+        if (this.state == STATE.READY)
+        {
+          data.result = 'success';
+          sendData('saveDictionary', data);
+        }
+        
+        if (this.state == STATE.ERROR)
+        {
+          sendData('saveDictionary', { 
+            result: 'error', 
+            dictionary: data.dictionary, 
+            errorText: this.state.data 
+          });
+        }
+
+        if (this.state == STATE.READY || this.state == STATE.ERROR)
+          this.removeHandler(FILE_HANDLER);
+      }
+    }
+
+    file.addHandler(FILE_HANDLER);
+    file.save(newContent);
   }
 };
