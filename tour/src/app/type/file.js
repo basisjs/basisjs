@@ -18,6 +18,9 @@ File.extend({
     var res = basis.resource('slide/' + this.data.filename);
     res.ready(this.set_content, this);
     this.set('content', res.get(true));
+
+    // prevent more than one resource attachment
+    this.setSyncAction();
   }
 });
 

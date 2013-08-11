@@ -5,11 +5,16 @@
   left: 0;
   right: 0;
   bottom: 0;
-  margin: 0;
-  border: none;
-  resize: none;
-  padding: 8px 8px 8px 14px;
-  background: rgba(255,255,0,.25);
-  outline: none;
+}
+
+#code-editor .CodeMirror
+{
+  height: 100%;
   font-family: Monaco, Consolas, monospace;
+  line-height: 1.35;
+}
+
+#code-editor .CodeMirror-lines
+{
+  padding: 4px 2px;
 }

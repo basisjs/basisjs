@@ -10,10 +10,10 @@
 }
 .slide-file-tab_selected
 {
-  background: rgba(255,255,0,.25);
   padding-bottom: 5px;
   cursor: default;
-  color: #996600;
+  color: #EEE;
+  background: #272822;
 }
 .slide-file-tab_modified
 {

@@ -23,6 +23,7 @@
   background: #E0E0E0;
   padding: 4px 8px;
   float: left;
+  margin-left: 4px;
 }
 #header .buttons .button-reset
 {
