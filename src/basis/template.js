@@ -896,6 +896,12 @@
                           ]
                         });
 
+                      if (elAttrs.ref)
+                        if (tokenRefMap.element)
+                          elAttrs.ref.trim().split(/\s+/).map(function(refName){
+                            addTokenRef(tokenRefMap.element.token, refName);
+                          });
+
                       for (var j = 0, child; child = instructions[j]; j++)
                       {
                         // process special elements (basis namespace)
@@ -921,6 +927,7 @@
                                 }
                               }
                             break;
+
                             case 'prepend':                            
                             case 'append':
                               var childAttrs = tokenAttrs(child);
@@ -943,21 +950,46 @@
                             case 'set-attr':
                               modifyAttr(child, false, 'set');
                             break;
+
                             case 'append-attr':
                               modifyAttr(child, false, 'append');
                             break;
+
                             case 'remove-attr':
                               modifyAttr(child, false, 'remove');
                             break;
+
                             case 'class':
                             case 'append-class':
                               modifyAttr(child, 'class', 'append');
                             break;
+
                             case 'set-class':
                               modifyAttr(child, 'class', 'set');
                             break;
+
                             case 'remove-class':
                               modifyAttr(child, 'class', 'remove');
+                            break;
+
+                            case 'add-ref':
+                              var childAttrs = tokenAttrs(child);
+                              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                              var tokenRef = ref && tokenRefMap[ref];
+                              var token = tokenRef && tokenRef.token;
+
+                              if (token && childAttrs.name)
+                                addTokenRef(token, childAttrs.name);
+                            break;
+
+                            case 'remove-ref':
+                              var childAttrs = tokenAttrs(child);
+                              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                              var tokenRef = ref && tokenRefMap[ref];
+                              var token = tokenRef && tokenRef.token;
+
+                              if (token)
+                                removeTokenRef(token, childAttrs.name || childAttrs.ref);
                             break;
 
                             default: 
