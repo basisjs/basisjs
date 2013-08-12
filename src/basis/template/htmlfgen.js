@@ -377,7 +377,7 @@
               /** @cut */   'binding:"' + bindName + '"',
               /** @cut */   'dom:' + domRef,
               /** @cut */   'val:' + bindVar,
-              /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
+              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
               /** @cut */ ] +'}');
 
               varList.push(bindVar + '=' + domRef);
@@ -392,7 +392,7 @@
               /** @cut */   'dom:' + domRef,
               /** @cut */   'attr:' + attrName,
               /** @cut */   'val:' + bindVar,
-              /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
+              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
               /** @cut */ ] + '}');
 
               varList.push(bindVar);
@@ -451,7 +451,7 @@
           /** @cut */   'dom:' + domRef,
           /** @cut */   'val:' + (bindCode.nodeBind ? varName : bindVar),
           /** @cut */   'updates:$$' + bindName,
-          /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
+          /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
           /** @cut */ ] +'}');
 
           if (!bindCode.nodeBind)
@@ -484,7 +484,7 @@
           /** @cut */   'dom:' + domRef,
           /** @cut */   'attr:"' + attrName + '"',
           /** @cut */   'val:' + bindVar,
-          /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
+          /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
           /** @cut */ ] + '}');
 
           switch (attrName)
