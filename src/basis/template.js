@@ -71,6 +71,7 @@
   var CLOSE_TAG = /([a-z_][a-z0-9_\-]*(?::[a-z_][a-z0-9_\-]*)?)>/ig;
   var REFERENCE = /([a-z_][a-z0-9_]*)(\||\}\s*)/ig;
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
+  var BREAK_TAG_PARSE = /^/g;
   var TAG_IGNORE_CONTENT = {
     text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g
   };
@@ -241,15 +242,11 @@
         case ATTRIBUTE_NAME_OR_END:
           if (m[2] == ':')
           {
-            if (token.prefix)      // prefix was before
-            {
-              pos = startPos;      // move parser back
-              state = REFERENCE;   // we know on that position no reference,
-                                   // so it's stop parse tag and converts token into text
-              break;
-            }
+            if (token.prefix)      // prefix was before, break tag parse
+              state = BREAK_TAG_PARSE;
+            else
+              token.prefix = m[1];
 
-            token.prefix = m[1];
             break;
           }
 
@@ -265,7 +262,11 @@
 
           if (m[2] == '{')
           {
-            state = REFERENCE;
+            if (token.type == TYPE_ELEMENT)
+              state = REFERENCE;
+            else
+              state = BREAK_TAG_PARSE;
+
             break;
           }
 
