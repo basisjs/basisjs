@@ -71,6 +71,9 @@
   var CLOSE_TAG = /([a-z_][a-z0-9_\-]*(?::[a-z_][a-z0-9_\-]*)?)>/ig;
   var REFERENCE = /([a-z_][a-z0-9_]*)(\||\}\s*)/ig;
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
+  var TAG_IGNORE_CONTENT = {
+    text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g
+  };
 
   var quoteUnescape = /\\"/g;
 
@@ -268,10 +271,17 @@
 
             if (m[3]) // end tag declaration
             {
-              if (m[3] == '/>') // otherwise m[3] == '>', nothing to do
-                lastTag = tagStack.pop();
-
               parseTag = false;
+
+              if (m[3] == '/>') // otherwise m[3] == '>'
+                lastTag = tagStack.pop();
+              else
+                if (lastTag.prefix == 'b' && lastTag.name in TAG_IGNORE_CONTENT)
+                {
+                  state = TAG_IGNORE_CONTENT[lastTag.name];
+                  break;
+                }
+
               state = TEXT;
               break;
             }
@@ -339,6 +349,17 @@
             };
             state = ATTRIBUTE_NAME_OR_END;
 
+            break;
+
+          case TAG_IGNORE_CONTENT.text:
+            lastTag.childs.push({
+              type: TYPE_TEXT,
+              value: m[1]
+            });
+
+            lastTag = tagStack.pop();
+
+            state = TEXT;
             break;
 
           default:
@@ -856,6 +877,14 @@
                       /** @cut */  template.warns.push('Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
                     }
                   }
+                break;
+
+                case 'text':
+                  var text = token.childs[0];
+                  tokens[i--] = basis.object.extend(text, {
+                    refs: (elAttrs.ref || '').trim().split(/\s+/),
+                    value: 'notrim' in elAttrs ? text.value : text.value.replace(/^\s*[\r\n]+|[\r\n]\s*$/g, '')
+                  });
                 break;
 
                 case 'include':
