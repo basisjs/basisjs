@@ -280,11 +280,21 @@
   var dictionaryUpdateListeners = [];
 
   function walkTokens(dictionary, culture, tokens, path){
+    var cultureValues = dictionary.cultureValues[culture];
+
     path = path ? path + '.' : '';
-    
-    for (var tokenName in tokens)
-      if (hasOwnProperty.call(tokens, tokenName))
-        dictionary.setCultureValue(culture, path + tokenName, tokens[tokenName]);
+
+    for (var name in tokens)
+      if (hasOwnProperty.call(tokens, name))
+      {
+        var tokenName = path + name;
+        var tokenValue = tokens[tokenName];
+
+        cultureValues[tokenName] = tokenValue;
+
+        if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
+          walkTokens(dictionary, culture, tokenValue, tokenName);
+      }
   }
 
 
@@ -340,7 +350,7 @@
       this.index = dictionaries.push(this) - 1;
 
       // notify dictionary created
-      createDictionaryNotifier.notify(resource.url);
+      createDictionaryNotifier.set(resource.url);
     },
 
    /**
@@ -350,24 +360,47 @@
       if (!data)
         data = {};
 
+      // reset old data
+      this.cultureValues = {};
+
+      // apply token values
       for (var culture in data)
         if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
+        {
+          this.cultureValues[culture] = {};
           walkTokens(this, culture, data[culture]);
+        }
 
+      // apply types
       this.types = (data._meta && data._meta.type) || {};
       for (var key in this.tokens)
-        this.tokens[key].setType(this.types[key])
+        this.tokens[key].setType(this.types[key]);
+
+      // update values
+      this.syncValues();
     },
 
    /**
-    * @param {string} culture Culture name
+    * Sync token values according to current culture and it's fallback.
     */ 
-    setCulture: function(culture){
+    syncValues: function(){
       for (var tokenName in this.tokens)
-        this.tokens[tokenName].set(cultureGetTokenValue[culture]
-          ? cultureGetTokenValue[culture].call(this, tokenName)
-          : this.getCultureValue(culture, tokenName)
-        );
+        this.tokens[tokenName].set(this.getValue(tokenName));
+    },
+
+   /**
+    * Get current value for tokenName according to current culture and it's fallback.
+    * @param {string} tokenName
+    */ 
+    getValue: function(tokenName){
+      var fallback = cultureFallback[currentCulture];
+
+      for (var i = 0, cultureName; cultureName = fallback[i]; i++)
+      {
+        var cultureValues = this.cultureValues[cultureName];
+        if (cultureValues && tokenName in cultureValues)
+          return cultureValues[tokenName];
+      }
     },
 
    /**
@@ -377,29 +410,6 @@
     */ 
     getCultureValue: function(culture, tokenName){
       return this.cultureValues[culture] && this.cultureValues[culture][tokenName];
-    },    
-
-   /**
-    * @param {string} culture Culture name
-    * @param {string} tokenName Token name
-    * @param {string} tokenValue New token value
-    */ 
-    setCultureValue: function(culture, tokenName, tokenValue){
-      var cultureValues = this.cultureValues[culture];
-
-      if (!cultureValues)
-        cultureValues = this.cultureValues[culture] = {};
-
-      cultureValues[tokenName] = tokenValue;
-
-      if (this.tokens[tokenName] && culture == currentCulture)
-        this.tokens[tokenName].set(cultureGetTokenValue[culture]
-          ? cultureGetTokenValue[culture].call(this, tokenName)
-          : this.getCultureValue(culture, tokenName)
-        );
-
-      if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
-        walkTokens(this, culture, tokenValue, tokenName);
     },
 
    /**
@@ -411,11 +421,11 @@
 
       if (!token)
       {
-        token = this.tokens[tokenName] = new Token(this, tokenName, this.types[tokenName],
-          // value
-          cultureGetTokenValue[currentCulture]
-            ? cultureGetTokenValue[currentCulture].call(this, tokenName)
-            : this.getCultureValue(currentCulture, tokenName)
+        token = this.tokens[tokenName] = new Token(
+          this,
+          tokenName,
+          this.types[tokenName],
+          this.getValue(tokenName)
         );
       }
 
@@ -450,21 +460,6 @@
 
 
  /**
-  * @param {Array.<string>} cultureList
-  * @return {function(tokenName)}
-  */
-  function createGetTokenValueFunction(cultureList){
-    return function(tokenName){
-      for (var i = 0, culture, value; culture = cultureList[i++];)
-        if (value = this.getCultureValue(culture, tokenName))
-          return value;
-
-      return this.getCultureValue('base', tokenName);
-    }
-  }
-
-
- /**
   * Returns list of all dictionaries. Using in development mode.
   * @return {Array.<basis.l10n.Dictionary>}
   */
@@ -475,26 +470,18 @@
  /**
   * 
   */
-  var createDictionaryNotifier = basis.object.extend(new basis.Token(), {
-    notify: function(value){
-      this.value = value;
-      this.apply();
-    },
-    get: function(){
-      return this.value;
-    }
-  });
+  var createDictionaryNotifier = new basis.Token();
 
 
   //
   // Culture
   //
 
-  var currentCulture = null;
   var cultureList = [];
-  var cultureGetTokenValue = {};
-  var cultureFallback = {}; 
   var cultures = {};
+  var cultureFallback = {}; 
+
+  var currentCulture = null;
 
 
  /**
@@ -559,7 +546,7 @@
       currentCulture = culture;
 
       for (var i = 0, dictionary; dictionary = dictionaries[i]; i++)
-        dictionary.setCulture(currentCulture);
+        dictionary.syncValues();
 
       resolveCulture.set(culture);
     }
@@ -601,23 +588,44 @@
 
     cultureFallback = {};
 
+    // process list
     for (var i = 0, culture, cultureName; culture = list[i]; i++)
     {
       cultureRow = culture.split('/');
+
+      if (cultureRow.length > 2)
+      {
+        basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture+ '`; other cultures except first one was ignored');
+        cultureRow = cultureRow.slice(0, 2);
+      }
+
       cultureName = cultureRow[0];
 
       if (!baseCulture)
         baseCulture = cultureName;
-      else
-        cultureRow.push(baseCulture);
 
       cultures[cultureName] = resolveCulture(cultureName);
-      cultureGetTokenValue[cultureName] = createGetTokenValueFunction(cultureRow);
       cultureFallback[cultureName] = cultureRow;
     }
 
+    // normalize fallback
+    for (var cultureName in cultureFallback)
+    {
+      cultureFallback[cultureName] = cultureFallback[cultureName]
+        .map(function(name){
+          return cultureFallback[name];
+        })
+        .flatten()
+        .concat(baseCulture)
+        .filter(function(item, idx, array){
+          return !idx || array.lastIndexOf(item, idx - 1) == -1;
+        });
+    }
+
+    // update current culture list
     cultureList = basis.object.keys(cultures);
 
+    // if current culture not in culture list, change it for base culture
     if (currentCulture in cultures == false)
       setCulture(baseCulture);
   }
