@@ -589,18 +589,37 @@
     if (typeof list == 'string')
       list = list.qw();
 
+    if (!list.length)
+    {
+      ;;;basis.dev.warn('basis.l10n.setCultureList: culture list can\'t be empty, the culture list isn\'t changed');
+      return;
+    }
+
     var cultures = {};
     var cultureRow;
+    var baseCulture;
 
-    for (var i = 0, culture; culture = list[i]; i++)
+    cultureFallback = {};
+
+    for (var i = 0, culture, cultureName; culture = list[i]; i++)
     {
       cultureRow = culture.split('/');
-      cultures[cultureRow[0]] = resolveCulture(cultureRow[0]);
-      cultureGetTokenValue[cultureRow[0]] = createGetTokenValueFunction(cultureRow);
-      cultureFallback[cultureRow[0]] = cultureRow.slice(1);
+      cultureName = cultureRow[0];
+
+      if (!baseCulture)
+        baseCulture = cultureName;
+      else
+        cultureRow.push(baseCulture);
+
+      cultures[cultureName] = resolveCulture(cultureName);
+      cultureGetTokenValue[cultureName] = createGetTokenValueFunction(cultureRow);
+      cultureFallback[cultureName] = cultureRow;
     }
 
     cultureList = basis.object.keys(cultures);
+
+    if (currentCulture in cultures == false)
+      setCulture(baseCulture);
   }
 
 
