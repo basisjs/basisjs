@@ -100,290 +100,289 @@
     var m;
 
     source = source.trim();
+    /** @cut */ result.warns = [];
 
-    try {
-      while (pos < source.length || state != TEXT)
+    while (pos < source.length || state != TEXT)
+    {
+      state.lastIndex = pos;
+      startPos = pos;
+
+      m = state.exec(source);
+
+      if (!m || m.index !== pos)
       {
-        state.lastIndex = pos;
-        startPos = pos;
-
-        m = state.exec(source);
-
-        if (!m || m.index !== pos)
+        // treat broken comment reference as comment content
+        if (state == REFERENCE && token && token.type == TYPE_COMMENT)
         {
-          // treat broken comment reference as comment content
-          if (state == REFERENCE && token && token.type == TYPE_COMMENT)
-          {
-            state = COMMENT;
-            continue;
-          }
-
-          if (parseTag)
-            lastTag = tagStack.pop();
-
-          if (token)
-            lastTag.childs.pop();
-
-          if (token = lastTag.childs.pop())
-          {
-            if (token.type == TYPE_TEXT && !token.refs)
-              textStateEndPos -= 'len' in token ? token.len : token.value.length;
-            else
-              lastTag.childs.push(token);
-          }
-
-          parseTag = false;
-          state = TEXT;
+          state = COMMENT;
           continue;
         }
 
-        pos = state.lastIndex;
+        if (parseTag)
+          lastTag = tagStack.pop();
 
-        //stat[state] = (stat[state] || 0) + 1;
-        switch(state)
+        if (token)
+          lastTag.childs.pop();
+
+        if (token = lastTag.childs.pop())
         {
-          case TEXT:
+          if (token.type == TYPE_TEXT && !token.refs)
+            textStateEndPos -= 'len' in token ? token.len : token.value.length;
+          else
+            lastTag.childs.push(token);
+        }
 
-            textEndPos = startPos + m[1].length;
+        parseTag = false;
+        state = TEXT;
+        continue;
+      }
 
-            if (textStateEndPos != textEndPos)
-            {
-              sourceText = textStateEndPos == startPos
-                ? m[1]
-                : source.substring(textStateEndPos, textEndPos);
+      pos = state.lastIndex;
 
-              token = sourceText.replace(/\s*(\r\n?|\n\r?)\s*/g, '');
+      //stat[state] = (stat[state] || 0) + 1;
+      switch(state)
+      {
+        case TEXT:
 
-              if (token)
-                lastTag.childs.push({
-                  type: TYPE_TEXT,
-                  len: sourceText.length,
-                  value: token
-                });
-            }
+          textEndPos = startPos + m[1].length;
 
-            textStateEndPos = textEndPos;
+          if (textStateEndPos != textEndPos)
+          {
+            sourceText = textStateEndPos == startPos
+              ? m[1]
+              : source.substring(textStateEndPos, textEndPos);
 
-            if (m[3])
-            {
+            token = sourceText.replace(/\s*(\r\n?|\n\r?)\s*/g, '');
+
+            if (token)
               lastTag.childs.push({
                 type: TYPE_TEXT,
-                refs: ['l10n:' + m[3]],
-                value: '{l10n:' + m[3] + '}'
+                len: sourceText.length,
+                value: token
               });
-            }
-            else if (m[2] == '{')
+          }
+
+          textStateEndPos = textEndPos;
+
+          if (m[3])
+          {
+            lastTag.childs.push({
+              type: TYPE_TEXT,
+              refs: ['l10n:' + m[3]],
+              value: '{l10n:' + m[3] + '}'
+            });
+          }
+          else if (m[2] == '{')
+          {
+            bufferPos = pos - 1;
+            lastTag.childs.push(token = {
+              type: TYPE_TEXT
+            });
+            state = REFERENCE;
+          }
+          else if (m[4])
+          {
+            if (m[4] == '/')
             {
-              bufferPos = pos - 1;
+              token = null;
+              state = CLOSE_TAG;
+            }
+            else //if (m[3] == '!--')
+            {
               lastTag.childs.push(token = {
-                type: TYPE_TEXT
+                type: TYPE_COMMENT
               });
-              state = REFERENCE;
-            }
-            else if (m[4])
-            {
-              if (m[4] == '/')
-              {
-                token = null;
-                state = CLOSE_TAG;
-              }
-              else //if (m[3] == '!--')
-              {
-                lastTag.childs.push(token = {
-                  type: TYPE_COMMENT
-                });
 
-                if (m[5])
-                {
-                  bufferPos = pos - m[5].length;
-                  state = REFERENCE;
-                }
-                else
-                {
-                  bufferPos = pos;
-                  state = COMMENT;
-                }
+              if (m[5])
+              {
+                bufferPos = pos - m[5].length;
+                state = REFERENCE;
+              }
+              else
+              {
+                bufferPos = pos;
+                state = COMMENT;
               }
             }
-            else if (m[2]) // m[2] == '<' open tag
+          }
+          else if (m[2]) // m[2] == '<' open tag
+          {
+            parseTag = true;
+            tagStack.push(lastTag);
+
+            lastTag.childs.push(token = {
+              type: TYPE_ELEMENT,
+              attrs: [],
+              childs: []
+            });
+            lastTag = token;
+
+            state = TAG_NAME;
+          }
+
+          break;
+
+        case CLOSE_TAG:
+          if (m[1] !== (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name)
+          {
+            //throw 'Wrong close tag';
+            lastTag.childs.push({
+              type: TYPE_TEXT,
+              value: '</' + m[0]
+            });
+          }
+          else
+            lastTag = tagStack.pop();
+
+          state = TEXT;
+          break;
+
+        case TAG_NAME:
+        case ATTRIBUTE_NAME_OR_END:
+          if (m[2] == ':')
+          {
+            if (token.prefix)      // prefix was before
             {
-              parseTag = true;
-              tagStack.push(lastTag);
-
-              lastTag.childs.push(token = {
-                type: TYPE_ELEMENT,
-                attrs: [],
-                childs: []
-              });
-              lastTag = token;
-
-              state = TAG_NAME;
+              pos = startPos;      // move parser back
+              state = REFERENCE;   // we know on that position no reference,
+                                   // so it's stop parse tag and converts token into text
+              break;
             }
 
+            token.prefix = m[1];
             break;
+          }
 
-          case CLOSE_TAG:
-            if (m[1] !== (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name)
-            {
-              //throw 'Wrong close tag';
-              lastTag.childs.push({
-                type: TYPE_TEXT,
-                value: '</' + m[0]
-              });
-            }
-            else
+          if (m[1])
+          {
+            // store name (it may be null when check for attribute and end)
+            token.name = m[1];
+
+            // store attribute
+            if (token.type == TYPE_ATTRIBUTE)
+              lastTag.attrs.push(token);
+          }
+
+          if (m[2] == '{')
+          {
+            state = REFERENCE;
+            break;
+          }
+
+          if (m[3]) // end tag declaration
+          {
+            parseTag = false;
+
+            if (m[3] == '/>') // otherwise m[3] == '>'
               lastTag = tagStack.pop();
-
-            state = TEXT;
-            break;
-
-          case TAG_NAME:
-          case ATTRIBUTE_NAME_OR_END:
-            if (m[2] == ':')
-            {
-              if (token.prefix)      // prefix was before
+            else
+              if (lastTag.prefix == 'b' && lastTag.name in TAG_IGNORE_CONTENT)
               {
-                pos = startPos;      // move parser back
-                state = REFERENCE;   // we know on that position no reference,
-                                     // so it's stop parse tag and converts token into text
+                state = TAG_IGNORE_CONTENT[lastTag.name];
                 break;
               }
 
-              token.prefix = m[1];
-              break;
-            }
+            state = TEXT;
+            break;
+          }
 
-            if (m[1])
+          if (m[2] == '=') // ATTRIBUTE_NAME_OR_END only
+          {
+            state = ATTRIBUTE_VALUE;
+            break;
+          }
+
+          // m[2] == '\s+' next attr, state doesn't change
+          token = {
+            type: TYPE_ATTRIBUTE
+          };
+          state = ATTRIBUTE_NAME_OR_END;
+          break;
+
+        case COMMENT:
+          token.value = source.substring(bufferPos, pos - 3);
+          state = TEXT;
+          break;
+
+        case REFERENCE:
+          // add reference to token list name
+          if (token.refs)
+            token.refs.push(m[1]);
+          else
+            token.refs = [m[1]];
+
+          // go next
+          if (m[2] != '|') // m[2] == '}\s*'
+          {
+            if (token.type == TYPE_TEXT)
             {
-              // store name (it may be null when check for attribute and end)
-              token.name = m[1];
-
-              // store attribute
-              if (token.type == TYPE_ATTRIBUTE)
-                lastTag.attrs.push(token);
-            }
-
-            if (m[2] == '{')
-            {
-              state = REFERENCE;
-              break;
-            }
-
-            if (m[3]) // end tag declaration
-            {
-              parseTag = false;
-
-              if (m[3] == '/>') // otherwise m[3] == '>'
-                lastTag = tagStack.pop();
-              else
-                if (lastTag.prefix == 'b' && lastTag.name in TAG_IGNORE_CONTENT)
-                {
-                  state = TAG_IGNORE_CONTENT[lastTag.name];
-                  break;
-                }
-
+              pos -= m[2].length - 1;
+              token.value = source.substring(bufferPos, pos);
               state = TEXT;
-              break;
             }
-
-            if (m[2] == '=') // ATTRIBUTE_NAME_OR_END only
+            else if (token.type == TYPE_COMMENT)
             {
+              state = COMMENT;
+            }
+            else if (token.type == TYPE_ATTRIBUTE && source[pos] == '=')
+            {
+              pos++;
               state = ATTRIBUTE_VALUE;
-              break;
             }
-
-            // m[2] == '\s+' next attr, state doesn't change
-            token = {
-              type: TYPE_ATTRIBUTE
-            };
-            state = ATTRIBUTE_NAME_OR_END;
-            break;
-
-          case COMMENT:
-            token.value = source.substring(bufferPos, pos - 3);
-            state = TEXT;
-            break;
-
-          case REFERENCE:
-            // add reference to token list name
-            if (token.refs)
-              token.refs.push(m[1]);
-            else
-              token.refs = [m[1]];
-
-            // go next
-            if (m[2] != '|') // m[2] == '}\s*'
+            else // ATTRIBUTE || ELEMENT
             {
-              if (token.type == TYPE_TEXT)
-              {
-                pos -= m[2].length - 1;
-                token.value = source.substring(bufferPos, pos);
-                state = TEXT;
-              }
-              else if (token.type == TYPE_COMMENT)
-              {
-                state = COMMENT;
-              }
-              else if (token.type == TYPE_ATTRIBUTE && source[pos] == '=')
-              {
-                pos++;
-                state = ATTRIBUTE_VALUE;
-              }
-              else // ATTRIBUTE || ELEMENT
-              {
-                token = {
-                  type: TYPE_ATTRIBUTE
-                };
-                state = ATTRIBUTE_NAME_OR_END;
-              }
+              token = {
+                type: TYPE_ATTRIBUTE
+              };
+              state = ATTRIBUTE_NAME_OR_END;
             }
+          }
 
-            // continue to collect references
-            break;
+          // continue to collect references
+          break;
 
-          case ATTRIBUTE_VALUE:
-            token.value = m[1].replace(quoteUnescape, '"');
+        case ATTRIBUTE_VALUE:
+          token.value = m[1].replace(quoteUnescape, '"');
 
-            token = {
-              type: TYPE_ATTRIBUTE
-            };
-            state = ATTRIBUTE_NAME_OR_END;
+          token = {
+            type: TYPE_ATTRIBUTE
+          };
+          state = ATTRIBUTE_NAME_OR_END;
 
-            break;
+          break;
 
-          case TAG_IGNORE_CONTENT.text:
-            lastTag.childs.push({
-              type: TYPE_TEXT,
-              value: m[1]
-            });
+        case TAG_IGNORE_CONTENT.text:
+          lastTag.childs.push({
+            type: TYPE_TEXT,
+            value: m[1]
+          });
 
-            lastTag = tagStack.pop();
+          lastTag = tagStack.pop();
 
-            state = TEXT;
-            break;
+          state = TEXT;
+          break;
 
-          default:
-            throw 'Parser bug'; // Must never to be here; bug in parser otherwise
-        }
-
-        if (state == TEXT)
-          textStateEndPos = pos;
+        default:
+          throw 'Parser bug'; // Must never to be here; bug in parser otherwise
       }
 
-      if (textStateEndPos != pos)
-        lastTag.childs.push({
-          type: TYPE_TEXT,
-          value: source.substring(textStateEndPos, pos)
-        });
-
-      if (tagStack.length > 1)
-        throw 'No close tag for ' + tagStack.pop().name;
-
-      result.templateTokens = true;
-
-    } catch(e) {
-      ;;;basis.dev.warn(e, source);
+      if (state == TEXT)
+        textStateEndPos = pos;
     }
+
+    if (textStateEndPos != pos)
+      lastTag.childs.push({
+        type: TYPE_TEXT,
+        value: source.substring(textStateEndPos, pos)
+      });
+
+    /** @cut */ if (lastTag.name)
+    /** @cut */   result.warns.push('No close tag for <' + lastTag.name + '>');
+    /** @cut */ 
+    /** @cut */ if (!result.warns.length)
+    /** @cut */   delete result.warns;
+
+    result.templateTokens = true;
 
     return result;
   };
@@ -1313,6 +1312,12 @@
       {
         ;;;source_ = source;
         source = tokenize('' + source);
+      }
+      else
+      {
+        // add tokenizer warnings if any
+        if (source.warns)
+          warns.push.apply(warns, source.warns);
       }
 
       // main task
