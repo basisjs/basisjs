@@ -238,8 +238,13 @@
           case ATTRIBUTE_NAME_OR_END:
             if (m[2] == ':')
             {
-              if (token.prefix)  // if '/' or prefix was before
-                throw SYNTAX_ERROR;      // TODO: drop to text but not throw
+              if (token.prefix)      // prefix was before
+              {
+                pos = startPos;      // move parser back
+                state = REFERENCE;   // we know on that position no reference,
+                                     // so it's stop parse tag and converts token into text
+                break;
+              }
 
               token.prefix = m[1];
               break;
