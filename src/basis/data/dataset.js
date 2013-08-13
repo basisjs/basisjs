@@ -40,6 +40,7 @@
   var KeyObjectMap = basis.data.KeyObjectMap;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
+  var DatasetWrapper = basis.data.DatasetWrapper;
 
 
   //
@@ -125,6 +126,20 @@
     })(events);
   }
 
+ /**
+  *
+  */ 
+  function createKeyMap(config, keyGetter, itemClass, subsetClass){
+    return new KeyObjectMap(extend({
+      keyGetter: keyGetter,
+      itemClass: itemClass,
+      create: function(key, object){
+        var obj = KeyObjectMap.prototype.create.call(this, key, object);
+        obj.setDataset(new subsetClass());
+        return obj;
+      }
+    }, config));
+  }
 
   //
   // Merge dataset 
@@ -690,6 +705,18 @@
   // Source dataset mixin
   //
 
+  var SOURCE_WRAPPER_HANDLER = {
+    datasetChanged: function(wrapper){
+      this.setSource(wrapper);
+    },
+    destroy: function(){
+      this.setSource();
+    }
+  };
+
+ /**
+  * @class
+  */
   var SourceDataset = Class(AbstractDataset, {
     className: namespace + '.SourceDataset',
 
@@ -712,12 +739,24 @@
     sourceMap_: null,
 
    /**
-    * Fires when source property changed.
-    * @param {basis.data.AbstractDataset} dataset Event initiator.
+    * Fires when source changed.
     * @param {basis.data.AbstractDataset} oldSource Previous value for source property.
     * @event
     */
     emit_sourceChanged: createEvent('sourceChanged', 'oldSource'),
+
+   /**
+    * Source wrapper
+    * @type {basis.data.DatasetWrapper}
+    */ 
+    sourceWrapper: null,
+
+   /**
+    * Fires when source wrapper changed.
+    * @param {basis.data.AbstractDataset} oldSource Previous value for sourceWrapper property.
+    * @event
+    */
+    emit_sourceWrapperChanged: createEvent('sourceWrapperChanged', 'oldSourceWrapper'),
 
    /**
     * @inheritDoc
@@ -752,9 +791,35 @@
     * @param {basis.data.AbstractDataset} source
     */
     setSource: function(source){
-      if (source instanceof AbstractDataset == false)
-        source = null;
+      var sourceWrapper = null;
 
+      // dataset wrapper
+      if (source instanceof DatasetWrapper)
+      {
+        sourceWrapper = source;
+        source = sourceWrapper.dataset;
+      }
+
+      // link with dataset wrapper
+      if (this.sourceWrapper !== sourceWrapper)
+      {
+        var oldSourceWrapper = this.sourceWrapper;
+        if (oldSourceWrapper)
+          oldSourceWrapper.removeHandler(SOURCE_WRAPPER_HANDLER, this);
+
+        if (sourceWrapper)
+          sourceWrapper.addHandler(SOURCE_WRAPPER_HANDLER, this);
+
+        this.sourceWrapper = sourceWrapper;
+
+        this.emit_sourceWrapperChanged(oldSourceWrapper);
+      }
+
+      // check source
+      if (source instanceof AbstractDataset == false)
+        source = null;      
+
+      // sync with source
       if (this.source !== source)
       {
         var oldSource = this.source;
@@ -1186,9 +1251,16 @@
     className: namespace + '.Split',
 
    /**
+    * Class for subset
     * @type {basis.data.AbstractDataset}
     */
     subsetClass: AbstractDataset,
+
+   /**
+    * Class for subset wrapper
+    * @type {function}
+    */
+    subsetWrapperClass: DatasetWrapper,
 
    /**
     * @type {basis.data.KeyObjectMap}
@@ -1220,15 +1292,19 @@
    /**
     * @inheritDoc
     */
-    addMemberRef: function(subset, sourceObject){
-      subset.emit_itemsChanged({ inserted: [sourceObject] });
+    addMemberRef: function(wrapper, sourceObject){
+      wrapper.dataset.emit_itemsChanged({
+        inserted: [sourceObject]
+      });
     },
 
    /**
     * @inheritDoc
     */
-    removeMemberRef: function(subset, sourceObject){
-      subset.emit_itemsChanged({ deleted: [sourceObject] });
+    removeMemberRef: function(wrapper, sourceObject){
+      wrapper.dataset.emit_itemsChanged({
+        deleted: [sourceObject]
+      });
     },
 
    /**
@@ -1236,10 +1312,7 @@
     */ 
     init: function(){
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
-        this.keyMap = new KeyObjectMap(extend({
-          keyGetter: this.rule,
-          itemClass: this.subsetClass
-        }, this.keyMap));
+        this.keyMap = createKeyMap(this.keyMap, this.rule, this.subsetWrapperClass, this.subsetClass);
 
       // inherit
       MapFilter.prototype.init.call(this);
@@ -1604,7 +1677,7 @@
 
           if (!oldList[subsetId])
           {
-            subset.emit_itemsChanged({ inserted: [sourceObject] });
+            subset.dataset.emit_itemsChanged({ inserted: [sourceObject] });
 
             if (!memberMap[subsetId])
             {
@@ -1622,7 +1695,7 @@
       if (!newList[subsetId])
       {
         var subset = oldList[subsetId];
-        subset.emit_itemsChanged({ deleted: [sourceObject] });
+        subset.dataset.emit_itemsChanged({ deleted: [sourceObject] });
 
         if (!--memberMap[subsetId])
         {
@@ -1670,7 +1743,7 @@
                 dupFilter[subsetId] = true;
                 sourceObjectInfo.list[subsetId] = subset;
 
-                subset.emit_itemsChanged({ inserted: [sourceObject] });
+                subset.dataset.emit_itemsChanged({ inserted: [sourceObject] });
 
                 if (!memberMap[subsetId])
                 {
@@ -1697,7 +1770,7 @@
           for (var subsetId in list)
           {
             subset = list[subsetId];
-            subset.emit_itemsChanged({ deleted: [sourceObject] });
+            subset.dataset.emit_itemsChanged({ deleted: [sourceObject] });
 
             if (!--memberMap[subsetId])
             {
@@ -1724,9 +1797,16 @@
     className: namespace + '.Cloud',
 
    /**
-    * @type {basis.data.AbstractDataset}
+    * Class for subset
+    * @type {function}
     */
     subsetClass: AbstractDataset,
+
+   /**
+    * Class for subset wrapper
+    * @type {function}
+    */
+    subsetWrapperClass: DatasetWrapper,
     
    /**
     * @type {function(basis.data.Object)}
@@ -1760,10 +1840,7 @@
     */ 
     init: function(){
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
-        this.keyMap = new KeyObjectMap(extend({
-          keyGetter: this.map,
-          itemClass: this.subsetClass
-        }, this.keyMap));
+        this.keyMap = createKeyMap(this.keyMap, this.rule, this.subsetWrapperClass, this.subsetClass);
 
       // inherit
       SourceDataset.prototype.init.call(this);

@@ -1432,6 +1432,14 @@
     },
 
    /**
+    * Proxy method for contained dataset. If no dataset, returns empty array.
+    * @return {Array.<basis.data.Object>}
+    */ 
+    getItems: function(){
+      return this.dataset ? this.dataset.getItems() : []
+    },
+
+   /**
     * @destructor
     */
     destroy: function(){
@@ -1446,7 +1454,7 @@
  /**
   * @class
   */
-  var AbstractDataset = Class(DataObject, {
+  var AbstractDataset = Class(AbstractData, {
     className: namespace('AbstractDataset'),
 
    /**

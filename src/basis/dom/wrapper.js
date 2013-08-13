@@ -41,6 +41,7 @@
   var DataObject = basis.data.Object;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
+  var DatasetWrapper = basis.data.DatasetWrapper;
 
 
   //
@@ -453,6 +454,11 @@
     * @param {basis.data.AbstractDataset} oldDataSource
     */
     emit_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
+
+   /**
+    * @type {basis.data.DatasetWrapper}
+    */
+    dataSourceWrapper: null,
 
    /**
     * Map dataSource members to child nodes.
@@ -1124,6 +1130,16 @@
     }
   };
 
+  var MIXIN_DATASOURCE_WRAPPER_HANDLER = {
+    datasetChanged: function(wrapper){
+      this.setDataSource(wrapper);
+    },
+    destroy: function(){
+      this.setDataSource();
+    }
+  };
+
+
   function fastChildNodesOrder(node, order){
     var lastIndex = order.length - 1;
     node.childNodes = order;
@@ -1739,7 +1755,31 @@
     * @inheritDoc
     */
     setDataSource: function(dataSource){
-      if (!dataSource || !this.childClass || dataSource instanceof AbstractDataset == false)
+      var dataSourceWrapper = null;
+
+      if (!dataSource || !this.childClass)
+        dataSource = null;
+
+      // dataset wrapper
+      if (dataSource instanceof DatasetWrapper)
+      {
+        dataSourceWrapper = dataSource;
+        dataSource = dataSourceWrapper.dataset;
+      }
+
+      if (this.dataSourceWrapper !== dataSourceWrapper)
+      {
+        if (this.dataSourceWrapper)
+          this.dataSourceWrapper.removeHandler(MIXIN_DATASOURCE_WRAPPER_HANDLER, this);
+
+        if (dataSourceWrapper)
+          dataSourceWrapper.addHandler(MIXIN_DATASOURCE_WRAPPER_HANDLER, this);
+
+        this.dataSourceWrapper = dataSourceWrapper;
+      }
+
+      // dataset
+      if (dataSource instanceof AbstractDataset == false)
         dataSource = null;
 
       if (this.dataSource !== dataSource)

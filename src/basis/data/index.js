@@ -19,10 +19,10 @@
 
   var Class = basis.Class;
   
-  var nsData = basis.data;
-  var DataObject = nsData.Object;
-  var KeyObjectMap = nsData.KeyObjectMap;
-  var AbstractDataset = nsData.AbstractDataset;
+  var DataObject = basis.data.Object;
+  var KeyObjectMap = basis.data.KeyObjectMap;
+  var AbstractDataset = basis.data.AbstractDataset;
+  var DatasetWrapper = basis.data.DatasetWrapper;
 
   var BindValue = basis.data.value.BindValue;
   var MapFilter = basis.data.dataset.MapFilter;
@@ -413,7 +413,7 @@
     return function(getter, events){
       var dataset;
 
-      if (getter instanceof AbstractDataset)
+      if (getter instanceof AbstractDataset || getter instanceof DatasetWrapper)
       {
         dataset = getter;
         getter = events;
@@ -533,7 +533,7 @@
   };
 
  //
- // 
+ // getDatasetIndex/removeDatasetIndex
  //
 
  var datasetIndexes = {};
@@ -580,7 +580,7 @@
 
  /**
   * @param {basis.data.AbstractDataset} dataset
-  * @param {basis.data.index.Index}
+  * @param {basis.data.index.Index} index
   */
   function removeDatasetIndex(dataset, index){
     var indexes = datasetIndexes[dataset.basisObjectId];
@@ -599,6 +599,10 @@
     }
   }
 
+
+  //
+  // IndexMap
+  //
 
  /**
   * @class
