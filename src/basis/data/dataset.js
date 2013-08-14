@@ -749,14 +749,7 @@
     * Source wrapper
     * @type {basis.data.DatasetWrapper}
     */ 
-    sourceWrapper: null,
-
-   /**
-    * Fires when source wrapper changed.
-    * @param {basis.data.AbstractDataset} oldSource Previous value for sourceWrapper property.
-    * @event
-    */
-    emit_sourceWrapperChanged: createEvent('sourceWrapperChanged', 'oldSourceWrapper'),
+    sourceWrapper_: null,
 
    /**
     * @inheritDoc
@@ -792,6 +785,7 @@
     */
     setSource: function(source){
       var sourceWrapper = null;
+      var oldSourceWrapper = this.sourceWrapper_;
 
       // dataset wrapper
       if (source instanceof DatasetWrapper)
@@ -801,18 +795,15 @@
       }
 
       // link with dataset wrapper
-      if (this.sourceWrapper !== sourceWrapper)
+      if (oldSourceWrapper !== sourceWrapper)
       {
-        var oldSourceWrapper = this.sourceWrapper;
         if (oldSourceWrapper)
           oldSourceWrapper.removeHandler(SOURCE_WRAPPER_HANDLER, this);
 
         if (sourceWrapper)
           sourceWrapper.addHandler(SOURCE_WRAPPER_HANDLER, this);
 
-        this.sourceWrapper = sourceWrapper;
-
-        this.emit_sourceWrapperChanged(oldSourceWrapper);
+        this.sourceWrapper_ = sourceWrapper;
       }
 
       // check source

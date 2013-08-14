@@ -458,7 +458,7 @@
    /**
     * @type {basis.data.DatasetWrapper}
     */
-    dataSourceWrapper: null,
+    dataSourceWrapper_: null,
 
    /**
     * Map dataSource members to child nodes.
@@ -1756,6 +1756,7 @@
     */
     setDataSource: function(dataSource){
       var dataSourceWrapper = null;
+      var oldDataSourceWrapper = this.dataSourceWrapper_;
 
       if (!dataSource || !this.childClass)
         dataSource = null;
@@ -1767,15 +1768,15 @@
         dataSource = dataSourceWrapper.dataset;
       }
 
-      if (this.dataSourceWrapper !== dataSourceWrapper)
+      if (oldDataSourceWrapper !== dataSourceWrapper)
       {
-        if (this.dataSourceWrapper)
-          this.dataSourceWrapper.removeHandler(MIXIN_DATASOURCE_WRAPPER_HANDLER, this);
+        if (oldDataSourceWrapper)
+          oldDataSourceWrapper.removeHandler(MIXIN_DATASOURCE_WRAPPER_HANDLER, this);
 
         if (dataSourceWrapper)
           dataSourceWrapper.addHandler(MIXIN_DATASOURCE_WRAPPER_HANDLER, this);
 
-        this.dataSourceWrapper = dataSourceWrapper;
+        this.dataSourceWrapper_ = dataSourceWrapper;
       }
 
       // dataset
