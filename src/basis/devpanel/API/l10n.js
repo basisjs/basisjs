@@ -14,8 +14,23 @@ basis.l10n.onCultureChange(function(culture){
   sendData('cultureChanged', culture);
 });
 
+function createDictionaryFileContent(data){
+  var dictionaryData = {};
+
+  if (data.tokenTypes)
+  {
+    dictionaryData['_meta'] = {
+      type: data.tokenTypes
+    } 
+  }
+  basis.object.extend(dictionaryData, data.cultureValues);
+
+  return JSON.stringify(dictionaryData, undefined, 2);
+}
+
 module.exports = {
   loadCultureList: function(){
+
     var data = {
       currentCulture: basis.l10n.getCulture(),
       cultureList: basis.l10n.getCultureList()
@@ -50,23 +65,15 @@ module.exports = {
     }    
   },
 
+  updateDictionary: function(data){
+    basis.resource(data.dictionary).update(createDictionaryFileContent(data));
+  },
+
   saveDictionary: function(data){
     if (!basis.devtools)
       return;
 
-    // prepare data 
-    var dictionaryData = {};
-
-    if (data.tokenTypes)
-    {
-      dictionaryData['_meta'] = {
-        type: data.tokenTypes
-      } 
-    }
-    basis.object.extend(dictionaryData, data.cultureValues);
-
-    var newContent = JSON.stringify(dictionaryData, undefined, 2);
-
+    var newContent = createDictionaryFileContent(data);
 
     // saving
     var file = basis.devtools.getFile('/' + basis.path.relative('/', data.dictionary), true);
