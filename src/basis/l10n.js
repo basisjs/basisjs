@@ -288,7 +288,7 @@
       if (hasOwnProperty.call(tokens, name))
       {
         var tokenName = path + name;
-        var tokenValue = tokens[tokenName];
+        var tokenValue = tokens[name];
 
         cultureValues[tokenName] = tokenValue;
 
