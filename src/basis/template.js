@@ -902,6 +902,13 @@
                     else
                       resource = basis.resource(path.resolve(template.baseURI + url));
 
+                    if (!resource)
+                    {
+                      /** @cut */ template.warns.push('<b:include src="' + templateSrc + '"> is not resolved, instruction ignored');
+                      /** @cut */ basis.dev.warn('<b:include src="' + templateSrc + '"> is not resolved, instruction ignored');
+                      continue;
+                    }
+
                     if (includeStack.indexOf(resource) == -1) // prevent recursion
                     {
                       var decl;
@@ -1099,10 +1106,11 @@
                 if (!parts[2])
                 {
                   // reset binding with no dictionary
-                  refs.remove(bindings);
+                  refs.remove(bindings);                  
                   if (refs.length == 0)
                     refs = null;
                   bindings = 0;
+                  token.value = token.value.replace(/\}$/, '@undefined}');
                 }
                 else
                 {
@@ -1307,7 +1315,7 @@
       };
 
       // resolve l10n dictionary url
-      result.dictURI = sourceUrl ? basis.path.relative(result.baseURI + basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n') : baseURI;
+      result.dictURI = sourceUrl ? basis.path.relative(result.baseURI + basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n') : baseURI || '';
 
       if (!source.templateTokens)
       {
