@@ -1315,7 +1315,7 @@
       };
 
       // resolve l10n dictionary url
-      result.dictURI = sourceUrl ? basis.path.relative(result.baseURI + basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n') : baseURI || '';
+      result.dictURI = sourceUrl ? basis.path.relative(basis.path.baseURI, result.baseURI + basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n') : baseURI || '';
 
       if (!source.templateTokens)
       {
