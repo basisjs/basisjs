@@ -1,3 +1,25 @@
+## 0.9.9 (september 4, 2013)
+
+- NEW: `basis.event.Emitter#handler_list` method was implemented to show list of handlers as an array (available in development only)
+- NEW: add `actionTarget` for action events that points to node which trigger an action execute
+- API: deprecate `basis.data.index` `getIndex`/`deleteIndex` methods extension of `basis.data.AbstractDataset` (`basis.data.index.addDatasetIndex`/`basis.data.index.removeDatasetIndex` functions must be used instead or related index helpers)
+- API: warn when overloaded `setTimeout` with zero timeout used (that overload will be removed in next versions)
+- API: `basis.timer.nextTick` returns undefined now (like node.js does)
+- API: `setImmediate`/`clearImmediate`/`nixtTick` moved from `basis.timer` into core (basis.js) 
+- NEW: `basis.DeferredToken` implemented
+- API: `basis.data.Value#as` method extended with new argument to get deferred tokens
+- NEW: `basis.data.Value#deferred` method implemented, works as `basis.data.Value#as` but returns deferred tokens
+- NEW: basis.data.Value#compute result now has a deferred method to return deferred tokens
+- API: show warning when using deprecated `basis.cssom.hide`/`basis.cssom.show`/`basis.cssom.visible`/`basis.cssom.invisible` functions (those functions will be removed in next versions)
+- FIX: make `basis.path` context free 
+- API: `basis.resource#ready` returns resource now
+- FIX: `basis.entity` sync method of datasets not destroy items on remove
+- NEW: `ref` attribute for `<b:include>` and `<b:add-ref>`/`<b:remove-ref>` implemented  (issue #10)
+- FIX: `basis.template` avoid multiple template definitions for pair path-theme (ignore new definitions)
+- FIX: `basis.template.SourceWrapper` destroy method to work correctly
+- FIX: `basis.ui.pageslider.PageSlider` bug with adjust rotation when no children
+- FIX: kill `click` event for `basis.ui.scroller.Scroller` while scrolling
+
 ## 0.9.8 (august 3, 2013)
 
 - API: new basis config option `extClass` to disable buildin class extension (preparations for 0.10)
