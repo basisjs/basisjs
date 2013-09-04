@@ -693,6 +693,7 @@
           'rebuild:onRebuild,' +
           /** @cut */ (debug ? 'debug:function debug(){return[' + bindings.debugList + ']},' : '') +
           'handler:null,' +
+          'bindings:bindings,' +
           'bindingInterface:bindingInterface,' +
           'attaches:null,' +
           'tmpl:{' + [
