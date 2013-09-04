@@ -863,7 +863,7 @@
         * @return {string}
         */ 
         dirname: function(path){
-          return this.normalize(path).replace(/\/[^\/]*$/, '');
+          return utils.normalize(path).replace(/\/[^\/]*$/, '');
         },
 
        /**
@@ -881,7 +881,7 @@
         * @return {string} Path extension with leading dot or empty string.
         */ 
         extname: function(path){
-          var ext = this.normalize(path).match(/\.[^\\\/]*$/);
+          var ext = utils.normalize(path).match(/\.[^\\\/]*$/);
           return ext ? ext[0] : '';
         },
 
@@ -898,10 +898,10 @@
         * @return {string}
         */ 
         basename: function(path, ext){
-          var filename = this.normalize(path).match(/[^\\\/]*$/);
+          var filename = utils.normalize(path).match(/[^\\\/]*$/);
           filename = filename ? filename[0] : '';
 
-          if (ext == this.extname(filename))
+          if (ext == utils.extname(filename))
             filename = filename.substring(0, filename.length - ext.length);
 
           return filename;
@@ -946,7 +946,7 @@
           if (!absoluteFound)
             path.unshift(baseURI == '/' ? '' : baseURI);
 
-          return this.normalize(path.join('/'));
+          return utils.normalize(path.join('/'));
         },
 
        /**
@@ -975,8 +975,8 @@
             from = baseURI;
           }
 
-          var abs = this.normalize(to).split(/\//);
-          var loc = this.normalize(from).split(/\//);
+          var abs = utils.normalize(to).split(/\//);
+          var loc = utils.normalize(from).split(/\//);
           var i = 0;
 
           while (abs[i] == loc[i] && typeof loc[i] == 'string')
@@ -1913,6 +1913,8 @@
           }
 
           resource.attach(fn, context);
+
+          return resource;
         }
       }));
 

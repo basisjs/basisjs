@@ -46,7 +46,7 @@
         itemsChanged: function(selection, delta){
           if (this.scroller)
           {
-            if (this.rotate)
+            if (this.rotate && delta.deleted && delta.inserted)
             {
               var nextPosition = this.childNodes.indexOf(delta.deleted[0]);
               var prevPosition = this.childNodes.indexOf(delta.inserted[0]);
@@ -82,7 +82,7 @@
         }
       }, this.scrollerConfig));
 
-      if (this.rotate)
+      if (this.rotate && this.firstChild)
         this.adjustRotation(true);
     },
 

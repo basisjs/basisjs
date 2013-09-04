@@ -250,6 +250,8 @@
       this.updateElementPosition();
 
       this.emit_finish();
+
+      basis.dom.event.releaseEvent('click');
     },
 
     onMouseDown: function(event){
@@ -335,7 +337,7 @@
       Event.cancelDefault(event);
     },
 
-    onMouseUp: function(){
+    onMouseUp: function(event){
       this.panningActive = false;
       this.processInertia = true;
 
@@ -357,6 +359,9 @@
       Event.removeGlobalHandler('touchmove', this.onMouseMove, this);
       Event.removeGlobalHandler('mouseup', this.onMouseUp, this);
       Event.removeGlobalHandler('touchend', this.onMouseUp, this);
+
+      if (this.minScrollDeltaXReached || this.minScrollDeltaYReached)
+        basis.dom.event.captureEvent('click', basis.fn.$true);
 
       this.emit_startInertia();
     },
@@ -469,7 +474,8 @@
       }
       else
       {
-        this.stopUpdate();
+        //this.stopUpdate();
+        this.resetVariables();
         this.viewportX = positionX;
         this.viewportTargetX = positionX;
         this.updateElementPosition();
@@ -485,7 +491,8 @@
       }
       else
       {
-        this.stopUpdate();
+        //this.stopUpdate();
+        this.resetVariables();
         this.viewportY = positionY;
         this.viewportTargetY = positionY;
         this.updateElementPosition();

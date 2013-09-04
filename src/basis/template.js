@@ -979,6 +979,12 @@
                           ]
                         });
 
+                      if (elAttrs.ref)
+                        if (tokenRefMap.element)
+                          elAttrs.ref.trim().split(/\s+/).map(function(refName){
+                            addTokenRef(tokenRefMap.element.token, refName);
+                          });
+
                       for (var j = 0, child; child = instructions[j]; j++)
                       {
                         // process special elements (basis namespace)
@@ -1004,6 +1010,7 @@
                                 }
                               }
                             break;
+
                             case 'prepend':                            
                             case 'append':
                               var childAttrs = tokenAttrs(child);
@@ -1026,21 +1033,46 @@
                             case 'set-attr':
                               modifyAttr(child, false, 'set');
                             break;
+
                             case 'append-attr':
                               modifyAttr(child, false, 'append');
                             break;
+
                             case 'remove-attr':
                               modifyAttr(child, false, 'remove');
                             break;
+
                             case 'class':
                             case 'append-class':
                               modifyAttr(child, 'class', 'append');
                             break;
+
                             case 'set-class':
                               modifyAttr(child, 'class', 'set');
                             break;
+
                             case 'remove-class':
                               modifyAttr(child, 'class', 'remove');
+                            break;
+
+                            case 'add-ref':
+                              var childAttrs = tokenAttrs(child);
+                              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                              var tokenRef = ref && tokenRefMap[ref];
+                              var token = tokenRef && tokenRef.token;
+
+                              if (token && childAttrs.name)
+                                addTokenRef(token, childAttrs.name);
+                            break;
+
+                            case 'remove-ref':
+                              var childAttrs = tokenAttrs(child);
+                              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                              var tokenRef = ref && tokenRefMap[ref];
+                              var token = tokenRef && tokenRef.token;
+
+                              if (token)
+                                removeTokenRef(token, childAttrs.name || childAttrs.ref);
                             break;
 
                             default: 
@@ -1899,6 +1931,12 @@
     className: namespace + '.SourceWrapper',
 
    /**
+    * Template source name.
+    * @type {string}
+    */
+    path: '',
+
+   /**
     * Url of wrapped content, if exists.
     * @type {string}
     */
@@ -1916,9 +1954,8 @@
     * @param {string} path
     */ 
     init: function(value, path){
-      basis.Token.prototype.init.call(this, null);
       this.path = path;
-      this.set(value);
+      basis.Token.prototype.init.call(this, '');
     },
 
    /**
@@ -1933,7 +1970,9 @@
    /**
     * @inheritDocs
     */ 
-    set: function(content){
+    set: function(){
+      var content = getThemeSource(currentThemeName, this.path);
+
       if (this.value != content)
       {
         if (this.value && this.value.bindingBridge)
@@ -1954,8 +1993,12 @@
     * @destructor
     */
     destroy: function(){
-      this.apply = basis.fn.$null;
-      this.set();
+      this.url = null;
+      this.baseURI = null;
+      
+      if (this.value && this.value.bindingBridge)
+        this.value.bindingBridge.detach(this.value, this.apply, this);
+
       basis.Token.prototype.destroy.call(this);
     }
   });
@@ -1988,7 +2031,7 @@
     return result;
   }
 
-  function expendFallback(themeName, list){
+  function extendFallback(themeName, list){
     var result = [];
     result.source = normalize(list).join('/');
 
@@ -2044,7 +2087,7 @@
   }
 
   function syncCurrentThemePath(path){
-    getSourceByPath(path).set(getThemeSource(currentThemeName, path));
+    getSourceByPath(path).set();
   }
 
   function syncCurrentTheme(changed){
@@ -2078,10 +2121,15 @@
     // closure methods
 
     var addSource = function(path, source){
-      sources[path] = source;
+      if (path in sources == false)
+      {
+        sources[path] = source;
 
-      if (themeHasEffect(name))
-        syncCurrentThemePath(path);
+        if (themeHasEffect(name))
+          syncCurrentThemePath(path);
+      }
+      /** @cut */ else
+      /** @cut */   basis.dev.warn('Template path `' + path + '` is already defined for theme `' + name + '` (definition ignored).');
 
       return getSourceByPath(path);
     };
@@ -2095,7 +2143,7 @@
 
           // process new fallback
           var changed = {};
-          newFallback = expendFallback(name, newFallback);
+          newFallback = extendFallback(name, newFallback);
           if (themes[name].fallback.source != newFallback.source)
           {
             themes[name].fallback.source = newFallback.source;
@@ -2103,7 +2151,7 @@
             for (var themeName in themes)
             {
               var curFallback = themes[themeName].fallback;
-              var newFallback = expendFallback(themeName, (curFallback.source || '').split('/'));
+              var newFallback = extendFallback(themeName, (curFallback.source || '').split('/'));
               if (newFallback.value != curFallback.value)
               {
                 changed[themeName] = true;
@@ -2218,7 +2266,7 @@
       }
     });
 
-    themes[name].fallback = expendFallback(name, []);
+    themes[name].fallback = extendFallback(name, []);
     sourceList.push(themes['base'].sources);
 
     return themeInterface;
