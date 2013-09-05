@@ -637,6 +637,14 @@
     },
 
     setTimeout: function(timeout){
+      // According to XMLHttpRequest specification, timeout property can't be set for synchronous
+      // requests and browser must throw exception on property set (like Firefox and Chrome 29 does).
+      // setTimeout also doesn't work in this case, because synchronous request blocks
+      // browser and it never fire until request finished.
+      // http://www.w3.org/TR/XMLHttpRequest/#the-timeout-attribute
+      if (!this.xhr.asynchronous)
+        return;
+
       if ('ontimeout' in this.xhr)
       {
         this.xhr.timeout = timeout;
@@ -647,7 +655,7 @@
     },
 
     clearTimeout: function(){
-      if ('ontimeout' in this.xhr == false)
+      if (this.timer_)
         this.timer_ = clearTimeout(this.timer_);
     },
 
