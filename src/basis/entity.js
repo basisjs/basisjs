@@ -840,8 +840,6 @@
         }, this);
       }
 
-      ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');
-
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.fields, this.defaults, this.slots);
       this.entityClass.extend({
