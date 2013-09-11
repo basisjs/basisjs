@@ -7,6 +7,7 @@ basis.require('app.type');
 
 basis.l10n.setCultureList('en-US/ru-RU ru-RU');
 basis.l10n.setCulture('ru-RU'); // temporary here
+basis.l10n.enableMarkup = true; // temporary here
 
 var view;
 module.exports = basis.app.create({

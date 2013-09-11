@@ -158,7 +158,7 @@
     },
 
     setType: function(type){
-      if (type != 'plural')// && type != 'markup')
+      if (type != 'plural' && (!basis.l10n.enableMarkup || type != 'markup'))
         type = 'default';
 
       if (this.type != type)
