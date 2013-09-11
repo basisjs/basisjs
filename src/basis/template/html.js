@@ -123,6 +123,7 @@
         return;
 
       // search for nearest node with basisTemplateId property
+      var actionTarget = cursor;
       var refId;
       var tmplRef;
 
@@ -138,7 +139,7 @@
       if (tmplRef && tmplRef.action)
       {
         var actions = attr.nodeValue.qw();
-        event.actionTarget = cursor;
+        event.actionTarget = actionTarget;
         for (var i = 0, actionName; actionName = actions[i++];)
           tmplRef.action.call(tmplRef.context, actionName, event);
       }
