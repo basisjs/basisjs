@@ -787,18 +787,25 @@
   var pathUtils = (function(){
     var origin = '';
     var baseURI;
-    var utils;
+    var utils = {};
 
     if (NODE_ENV)
     {
-      utils = slice(require('path'), [
+      var methods = [
         'normalize',
         'dirname',
         'extname',
         'basename',
         'resolve',
         'relative'
-      ]);
+      ];
+
+      for (var i = 0, method; method = methods[i]; i++)
+        utils[method] = (function(method, path){
+          return function(){
+            return path[method].apply(path, arguments).replace(/\\/g, '/');
+          }
+        })(method, require('path'));
 
       baseURI = utils.resolve('.') + '/';
     }
