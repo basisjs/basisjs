@@ -1321,7 +1321,10 @@
     var deleted = [];
 
     if (!a || !a.itemCount)
-      inserted = b.getItems();
+    {
+      if (b)
+        inserted = b.getItems();
+    }
     else
     {
       if (!b || !b.itemCount)
