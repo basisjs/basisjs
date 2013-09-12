@@ -1178,8 +1178,9 @@
     * to call inherited method (via this.inherit(args..)), like in other OO
     * languages. All Basis classes and components (with some exceptions) are
     * building using this sheme.
+    *
     * @example
-    *   var classA = basis.Class(null, { // you can use basis.Class instead of null
+    *   var Foo = basis.Class(null, { // you can use basis.Class instead of null
     *     name: 'default value',
     *     init: function(title){ // special method - constructor
     *       this.title = title;
@@ -1189,41 +1190,33 @@
     *     }
     *   });
     *
-    *   var classB = basis.Class(classA, {
+    *   var Bar = basis.Class(Foo, {
     *     age: 0,
     *     init: function(title, age){
-    *       classA.prototype.init.call(this, title);
+    *       Foo.prototype.init.call(this, title);
     *       this.age = age;
     *     },
     *     say: function(){
-    *       return classA.prototype.say.call(this) + ' I\'m {0} year old.'.format(this.age);
+    *       return Foo.prototype.say.call(this) + ' I\'m {0} year old.'.format(this.age);
     *     }
     *   });
     *
-    *   var foo = new classA('John');
-    *   var bar = new classB('Ivan', 25);
-    *   alert(foo.say()); // My name is John.
-    *   alert(bar.say()); // My name is Ivan. I'm 25 year old.
-    *   alert(bar instanceof basis.Class); // false (for some reasons it false now)
-    *   alert(bar instanceof classA); // true
-    *   alert(bar instanceof classB); // true
+    *   var foo = new Foo('John');
+    *   var bar = new Bar('Ivan', 25);
+    *   console.log(foo.say()); // My name is John.
+    *   console.log(bar.say()); // My name is Ivan. I'm 25 year old.
+    *   console.log(bar instanceof basis.Class); // true
+    *   console.log(bar instanceof Foo); // true
+    *   console.log(bar instanceof Bar); // true
+    *
     * @namespace basis.Class
     */
-
-    var namespace = 'basis.Class';
-
-
-   /**
-    * Root class for all classes created by Basis class model.
-    */
-    var BaseClass = function(){};
 
    /**
     * Global instances seed.
     */
-    var seed = { id: 1 };
+    var instanceSeed = { id: 1 };
     var classSeed = 1;
-    var NULL_FUNCTION = function(){};
 
    /**
     * Class construct helper: self reference value
@@ -1232,7 +1225,6 @@
 
    /**
     * Test object is it a class.
-    * @func
     * @param {Object} object
     * @return {boolean} Returns true if object is class.
     */
@@ -1241,17 +1233,19 @@
     }
 
    /**
-    * @func
+    * @param {function()} superClass
+    * @return {boolean}
     */
     function isSubclassOf(superClass){
       var cursor = this;
+
       while (cursor && cursor !== superClass)
         cursor = cursor.superClass_;
+
       return cursor === superClass;
     }
 
    /**
-    * @func
     * dev mode only
     */
     function dev_verboseNameWrap(name, args, fn){
@@ -1267,195 +1261,206 @@
     })();
 
 
-    //
-    // main class object
-    //
-    extend(BaseClass, {
-      // Base class name
-      className: namespace,
+   /**
+    * Class constructor.
+    * @param {function()} SuperClass Class that new one inherits of.
+    * @param {...object} extensions Objects that extends new class prototype.
+    * @return {function()} A new class.
+    */
+    function createClass(SuperClass, extensions){
+      var classId = classSeed++;        
 
+      if (typeof SuperClass != 'function')
+        SuperClass = BaseClass;
+
+      /** @cut */ var className = '';
+
+      /** @cut */ for (var i = 1, extension; extension = arguments[i]; i++)
+      /** @cut */   if (typeof extension != 'function' && extension.className)
+      /** @cut */     className = extension.className;
+
+      /** @cut */ if (!className)
+      /** @cut */   className = SuperClass.className + '._Class' + classId;
+      /** @cut */ // consoleMethods.warn('Class has no name');
+
+      // temp class constructor with no init call
+      var NewClassProto = function(){};
+
+      // verbose name in dev
+      /** @cut */ NewClassProto = dev_verboseNameWrap(className, {}, NewClassProto);
+
+      NewClassProto.prototype = SuperClass.prototype;
+
+      var newProto = new NewClassProto;
+      var newClassProps = {
+        /** @cut */ className: className,
+
+        basisClassId_: classId,
+        superClass_: SuperClass,
+        extendConstructor_: !!SuperClass.extendConstructor_,
+
+        // class methods
+        isSubclassOf: isSubclassOf,
+        subclass: function(){
+          return createClass.apply(null, [newClass].concat(arrayFrom(arguments)));
+        },
+        extend: extendClass,
+
+        // auto extend creates a subclass
+        __extend__: function(value){
+          if (value && value !== SELF && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
+            return BaseClass.create.call(null, newClass, value);
+          else
+            return value;
+        },
+
+        // new class prototype
+        prototype: newProto
+      };
+
+      // extend newClass prototype
+      for (var i = 1, extension; extension = arguments[i]; i++)
+        newClassProps.extend(extension);
+
+      /** @cut */if (newProto.init !== BaseClass.prototype.init && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
+
+      // new class constructor
+      var newClass = newClassProps.extendConstructor_
+        // constructor with instance extension
+        ? function(extend){
+            // mark object
+            this.basisObjectId = instanceSeed.id++;
+
+            // extend and override instance properties
+            var prop;
+            for (var key in extend)
+            {
+              prop = this[key];
+              this[key] = prop && prop.__extend__
+                ? prop.__extend__(extend[key])
+                : extend[key];
+            }
+
+            // call constructor
+            this.init();
+
+            // post init
+            this.postInit();
+          }
+
+        // simple constructor
+        : function(){
+            // mark object
+            this.basisObjectId = instanceSeed.id++;
+
+            // call constructor
+            this.init.apply(this, arguments);
+
+            // post init
+            this.postInit();
+          };
+
+      // verbose name in dev
+      // NOTE: this code makes Chrome and Firefox show class name in console
+      ;;;newClass = dev_verboseNameWrap(className, { instanceSeed: instanceSeed }, newClass);
+
+      // add constructor property to prototype
+      newProto.constructor = newClass;
+
+      for (var key in newProto)
+        if (newProto[key] === SELF)
+          newProto[key] = newClass;
+        //else
+        //  newProto[key] = newProto[key];
+
+      // extend constructor with properties
+      extend(newClass, newClassProps);
+
+      // return new class
+      return newClass;
+    }
+
+   /**
+    * Extend class prototype
+    * @param {Object} source If source has a prototype, it will be used to extend current prototype.
+    * @return {function()} Returns `this`.
+    */
+    function extendClass(source){
+      var proto = this.prototype;
+
+      if (typeof source == 'function' && !isClass(source))
+        source = source(this.superClass_.prototype);
+
+      if (source.prototype)
+        source = source.prototype;
+
+      for (var key in source)
+      {
+        var value = source[key];
+        var protoValue = proto[key];
+
+        if (key == 'className' || key == 'extendConstructor_')
+          this[key] = value;
+        else
+        {
+          if (protoValue && protoValue.__extend__)
+            proto[key] = protoValue.__extend__(value);
+          else
+          {
+            proto[key] = value;
+            //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
+          }
+        }
+      }
+
+      // for browsers that doesn't enum toString
+      if (TOSTRING_BUG && source[key = 'toString'] !== Object_toString)
+        proto[key] = source[key];
+
+      return this;
+    }
+
+
+    //
+    // base class
+    //
+    var BaseClass = extend(createClass, {
+      className: 'basis.Class',
+
+      // non-auto extend by default
       extendConstructor_: false,
 
       // prototype defaults
       prototype: {
         constructor: null,
-        init: NULL_FUNCTION,
-        postInit: NULL_FUNCTION,
-        toString: function(){
-          return '[object ' + (this.constructor || this).className + ']';
+        
+        init: function(){
         },
+        postInit: function(){
+        },
+
+        /** @cut */ toString: function(){ // verbose in dev
+        /** @cut */   return '[object ' + (this.constructor || this).className + ']';
+        /** @cut */ },
+
         destroy: function(){
           for (var prop in this)
-            this[prop] = null;
+            if (hasOwnProperty.call(this, prop))
+              this[prop] = null;
 
           this.destroy = $undef;
         }
-      },
-
-     /**
-      * Class constructor.
-      * @param {function()} SuperClass Class that new one inherits of.
-      * @param {...object} extensions Objects that extends new class prototype.
-      * @return {function()} A new class.
-      */
-      create: function(SuperClass, extensions){
-        var classId = classSeed++;        
-
-        if (typeof SuperClass != 'function')
-          SuperClass = BaseClass;
-
-        /** @cut */ var className = '';
-
-        /** @cut */ for (var i = 1, extension; extension = arguments[i]; i++)
-        /** @cut */   if (typeof extension != 'function' && extension.className)
-        /** @cut */     className = extension.className;
-
-        /** @cut */ if (!className)
-        /** @cut */   className = SuperClass.className + '._Class' + classId;
-        /** @cut */// consoleMethods.warn('Class has no name');
-
-        // temp class constructor with no init call
-        var NewClassProto = function(){};
-
-        // verbose name in dev
-        /** @cut */ NewClassProto = dev_verboseNameWrap(className, {}, NewClassProto);
-
-        NewClassProto.prototype = SuperClass.prototype;
-
-        var newProto = new NewClassProto;
-        var newClassProps = {
-          /** @cut */ className: className,
-
-          basisClassId_: classId,
-          superClass_: SuperClass,
-          extendConstructor_: !!SuperClass.extendConstructor_,
-
-          // class methods
-          isSubclassOf: isSubclassOf,
-          subclass: function(){
-            return BaseClass.create.apply(null, [newClass].concat(arrayFrom(arguments)));
-          },
-          extend: BaseClass.extend,
-          // auto extend creates a subclass
-          __extend__: function(value){
-            if (value && value !== SELF && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
-              return BaseClass.create.call(null, newClass, value);
-            else
-              return value;
-          },
-
-          // new class prototype
-          prototype: newProto
-        };
-
-        // extend newClass prototype
-        for (var i = 1, extension; extension = arguments[i]; i++)
-          newClassProps.extend(extension);
-
-
-        /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
-
-        // new class constructor
-        var newClass = newClassProps.extendConstructor_
-          // constructor with instance extension
-          ? function(extend){
-              // mark object
-              this.basisObjectId = seed.id++;
-
-              // extend and override instance properties
-              var prop;
-              for (var key in extend)
-              {
-                prop = this[key];
-                this[key] = prop && prop.__extend__
-                  ? prop.__extend__(extend[key])
-                  : extend[key];
-              }
-
-              // call constructor
-              this.init();
-
-              // post init
-              this.postInit();
-            }
-
-          // simple constructor
-          : function(){
-              // mark object
-              this.basisObjectId = seed.id++;
-
-              // call constructor
-              this.init.apply(this, arguments);
-
-              // post init
-              this.postInit();
-            };
-
-        // verbose name in dev
-        // NOTE: this code makes Chrome and Firefox show class name in console
-        ;;;newClass = dev_verboseNameWrap(className, { seed: seed }, newClass);
-
-        // add constructor property to prototype
-        newProto.constructor = newClass;
-
-        for (var key in newProto)
-          if (newProto[key] === SELF)
-            newProto[key] = newClass;
-          //else
-          //  newProto[key] = newProto[key];
-
-        // extend constructor with properties
-        extend(newClass, newClassProps);
-
-        return newClass;
-      },
-
-     /**
-      * Extend class prototype
-      * @param {Object} source If source has a prototype, it will be used to extend current prototype.
-      * @return {function()} Returns `this`.
-      */
-      extend: function(source){
-        var proto = this.prototype;
-
-        if (typeof source == 'function' && !isClass(source))
-          source = source(this.superClass_.prototype);
-
-        if (source.prototype)
-          source = source.prototype;
-
-        for (var key in source)
-        {
-          var value = source[key];
-          var protoValue = proto[key];
-
-          if (key == 'className' || key == 'extendConstructor_')
-            this[key] = value;
-          else
-          {
-            if (protoValue && protoValue.__extend__)
-              proto[key] = protoValue.__extend__(value);
-            else
-            {
-              proto[key] = value;
-              //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
-            }
-          }
-        }
-
-        // for browsers that doesn't enum toString
-        if (TOSTRING_BUG && source[key = 'toString'] !== Object_toString)
-          proto[key] = source[key];
-
-        return this;
       }
     });
 
 
    /**
-    * @func
+    * @param {object} extension
+    * @param {function()=} fn
+    * @param {string} devName Dev only
+    * @return {object}
     */
-    var customExtendProperty = function(extension, func, devName){
+    var customExtendProperty = function(extension, fn, devName){
       return {
         __extend__: function(extension){
           if (!extension)
@@ -1465,10 +1470,13 @@
             return extension;
 
           var Base = function(){};
-          /** @cut verbose name in dev */Base = dev_verboseNameWrap(devName || 'customExtendProperty', {}, Base);
+          /** @cut verbose name in dev */ Base = dev_verboseNameWrap(devName || 'customExtendProperty', {}, Base);
           Base.prototype = this;
+
           var result = new Base;
-          func(result, extension);
+
+          fn(result, extension);
+
           return result;
         }
       }.__extend__(extension || {});
@@ -1476,7 +1484,8 @@
 
 
    /**
-    * @func
+    * @param {object} extension
+    * @return {object}
     */
     var extensibleProperty = function(extension){
       return customExtendProperty(extension, extend, 'extensibleProperty');
@@ -1484,7 +1493,8 @@
 
 
    /**
-    * @func
+    * @param {object} extension
+    * @return {object}
     */
     var nestedExtendProperty = function(extension){
       return customExtendProperty(extension, function(result, extension){
@@ -1499,23 +1509,25 @@
     };
 
    /**
-    * @func
+    * @param {function()} fn
+    * @param {object=} keys
+    * @return {object}
     */
     var oneFunctionProperty = function(fn, keys){
       var create = function(keys){
-        var result;
+        var result = {
+          __extend__: create
+        };
 
         if (keys)
         {
           if (keys.__extend__)
             return keys;
 
-          result = {
-            __extend__: create
-          };
-
           // verbose name in dev
-          ;;;var Cls = dev_verboseNameWrap('oneFunctionProperty', {}, function(){}); result = new Cls; result.__extend__ = create;
+          /** @cut */ var Cls = dev_verboseNameWrap('oneFunctionProperty', {}, function(){});
+          /** @cut */ result = new Cls;
+          /** @cut */ result.__extend__ = create;
 
           for (var key in keys)
             if (keys[key])
@@ -1533,11 +1545,12 @@
     // export names
     //
 
-    return extend(BaseClass.create, {
+    return extend(BaseClass, {
       SELF: SELF,
-      BaseClass: BaseClass,
-      create: BaseClass.create,
+
+      create: createClass,
       isClass: isClass,
+
       customExtendProperty: customExtendProperty,
       extensibleProperty: extensibleProperty,
       nestedExtendProperty: nestedExtendProperty,
@@ -2763,7 +2776,6 @@
 
  /**
   * Attach document ready handlers
-  * @function
   * @param {function()} handler 
   * @param {*} thisObject Context for handler
   */

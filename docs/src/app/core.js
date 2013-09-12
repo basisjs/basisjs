@@ -330,7 +330,7 @@
           || (key == 'className' && context == 'class')
           || (key == 'subclass' && context == 'class')
           || (key == 'isSubclassOf' && context == 'class')
-          || (key == 'toString' && (Object.prototype.toString === obj || basis.Class.BaseClass.prototype.toString === obj)))
+          || (key == 'toString' && (Object.prototype.toString === obj || basis.Class.prototype.toString === obj)))
         continue;
 
       walkThroughCount++;
@@ -370,7 +370,7 @@
           kind = isClass ? 'class' : 'function';
 
           if (context == 'class' && kind == 'function')
-            if (obj === Function.prototype[key] || obj === basis.Class.BaseClass[key])
+            if (obj === Function.prototype[key] || obj === basis.Class[key])
               continue;
         }
       }
