@@ -1100,71 +1100,6 @@
 
 
   // ============================================
-  // Namespace subsystem
-  //
-
-  var namespaces = {};
-
- /**
-  * Returns namespace by path or creates new one (if namespace isn't exists).
-  * @example
-  *   var fooBarNamespace = basis.namespace('foo.bar');
-  * @name namespace
-  * @param {string} path
-  * @return {basis.Namespace}
-  */
-  var getNamespace = function(path){
-    var cursor = global;
-    var nsRoot;
-
-    path = path.split('.');
-    for (var i = 0, name; name = path[i]; i++)
-    {
-      if (!cursor[name])
-      {
-        var nspath = path.slice(0, i + 1).join('.');
-
-        // create new namespace
-        cursor[name] = (function(path){
-          var pathFn = function(name){
-            return path + (name ? '.' + name : '');
-          };
-          pathFn.toString = $const(path);
-
-          return {
-            path: pathFn,
-            exports: {
-              path: pathFn
-            },
-            toString: $const('[basis.namespace ' + path + ']'),
-            extend: function(names){
-              extend(this.exports, names);
-              return complete(this, names);
-            }
-          };
-        })(nspath);
-
-        if (nsRoot)
-          nsRoot.namespaces_[nspath] = cursor[name];
-      }
-
-      cursor = cursor[name];
-
-      if (!nsRoot)
-      {
-        nsRoot = cursor;
-        if (!nsRoot.namespaces_)
-          nsRoot.namespaces_ = {};
-      }
-    }
-
-    namespaces[path.join('.')] = cursor;
-
-    return cursor;
-  }
-
-
-  // ============================================
   // OOP section: Class implementation
   //
 
@@ -1945,6 +1880,9 @@
     return resourceCache[resourceUrl];
   };
 
+  var nsRootPath = slice(config.path);
+  /** @cut */ var requires;
+
   extend(getResource, {
     getFiles: function(){
       var result = [];
@@ -1961,18 +1899,59 @@
       return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
     },
     extensions: {
-      '.js': function(resource, url){
-        return runScriptInContext({ exports: {} }, url, resource).exports;
+      '.js': function(content, filename){
+        var namespace = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
+        var implicitNamespace = true;
+
+        for (var ns in config.path)
+        {
+          var path = config.path[ns] + ns + '/';
+          if (filename.substr(0, path.length) == path)
+          {
+            implicitNamespace = false;
+            namespace = namespace.substr(config.path[ns].length);
+            break;
+          }
+        }
+
+        namespace = namespace.replace(/\./g, '_').replace(/\//g, '.');
+
+        if (implicitNamespace)
+          namespace = 'implicit.' + namespace;
+
+        /** @cut */ if (requires)
+        /** @cut */   requires.push(namespace);
+
+        if (!namespaces[namespace])
+        {
+          var ns = getNamespace(namespace);
+
+          /** @cut */ var savedRequires = requires;
+          /** @cut */ requires = [];
+
+          runScriptInContext(ns, filename, content);
+
+          if (ns.exports && ns.exports.constructor === Object)
+            complete(ns, ns.exports);
+
+          /** @cut */ ns.filename_ = filename;
+          /** @cut */ ns.source_ = content;
+          /** @cut */ ns.requires_ = requires;
+
+          /** @cut */ requires = savedRequires;
+        }
+
+        return namespaces[namespace].exports;
       },
-      '.json': extend(function(resource, url){
-        if (typeof resource == 'object')
-          return resource;
+      '.json': extend(function(content, url){
+        if (typeof content == 'object')
+          return content;
 
         var result;
         try {
-          result = JSON.parse(String(resource));
+          result = JSON.parse(String(content));
         } catch(e) {
-          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
+          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: String(content) });
         }
         return result || null;
       }, {
@@ -1992,11 +1971,15 @@
     // compile context function
     if (typeof compiledSourceCode != 'function')
       try {
-        compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
-          '//@ sourceURL=' + pathUtils.origin + sourceURL + '\n' +
-          '//# sourceURL=' + pathUtils.origin + sourceURL + '\n' +
+        compiledSourceCode = new Function('exports, module, basis, global',
+          'var __filename = "' + (sourceURL).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '";\n' +
+          'var __dirname = basis.path.dirname(__filename);\n' +
+          'var resource = function(url){ return basis.resource(__dirname + "/" + url); };\n' +
+          'var require = function(url){ return basis.require(url, __dirname); };\n' +
           '"use strict";\n\n' +
-          sourceCode
+          sourceCode +
+          /** @cut */ '\n//@ sourceURL=' + pathUtils.origin + sourceURL +
+          /** @cut */ '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
         );
       } catch(e) {
         /** @cut */ if ('line' in e == false && 'addEventListener' in window)
@@ -2043,6 +2026,74 @@
   };
 
 
+  // ============================================
+  // Namespace subsystem
+  //
+
+  var namespaces = {};
+
+  var Namespace = Class(null, {
+    className: 'basis.Namespace',
+    init: function(path){
+      (this.path = function(name){
+        return path + (name ? '.' + name : '');
+      }).toString = $const(path);
+
+      this.exports = {
+        path: this.path
+      };
+    },
+    toString: function(){
+      return '[basis.namespace ' + this.path + ']';
+    },
+    extend: function(names){
+      extend(this.exports, names);
+      return complete(this, names);
+    }
+  });
+
+ /**
+  * Returns namespace by path or creates new one (if namespace isn't exists).
+  * @example
+  *   var fooBarNamespace = basis.namespace('foo.bar');
+  * @name namespace
+  * @param {string} path
+  * @return {basis.Namespace}
+  */
+  var getNamespace = function(path){
+    var cursor = global;
+    var nsRoot;
+
+    path = path.split('.');
+    for (var i = 0, name; name = path[i]; i++)
+    {
+      if (!cursor[name])
+      {
+        var nspath = path.slice(0, i + 1).join('.');
+
+        // create new namespace
+        cursor[name] = new Namespace(nspath);
+
+        if (nsRoot)
+          nsRoot.namespaces_[nspath] = cursor[name];
+      }
+
+      cursor = cursor[name];
+
+      if (!nsRoot)
+      {
+        nsRoot = cursor;
+        if (!nsRoot.namespaces_)
+          nsRoot.namespaces_ = {};
+      }
+    }
+
+    namespaces[path.join('.')] = cursor;
+
+    return cursor;
+  }
+
+
  /**
   * @param {string} namespace
   * @name require
@@ -2052,79 +2103,66 @@
     {
       var requirePath = pathUtils.dirname(module.filename) + '/';
       var moduleProto = module.constructor.prototype;
-      return function(path){
-        var _compile = moduleProto._compile;
-        var namespace = getNamespace(path);
+      return function(filename, dirname){
+        if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == '.js')
+        {
+          var _compile = moduleProto._compile;
+          var namespace = getNamespace(filename);
 
-        // patch node.js module._compile
-        moduleProto._compile = function(content, filename){
-          this.basis = basis;
-          content = 
-            'var basis = module.basis;\n' +
-            'var resource = function(filename){ return basis.require(__dirname + "/" + filename) };\n' +
-            content;
-          _compile.call(extend(this, namespace), content, filename);
-        };
+          // patch node.js module._compile
+          moduleProto._compile = function(content, filename){
+            this.basis = basis;
+            content = 
+              'var basis = module.basis;\n' +
+              'var resource = function(filename){ return basis.require(__dirname + "/" + filename) };\n' +
+              'var require = function(filename){ return basis.require(filename, __dirname) };\n' +
+              content;
+            _compile.call(extend(this, namespace), content, filename);
+          };
 
-        var exports = require(requirePath + path.replace(/\./g, '/'));
-        namespace.exports = exports;
-        complete(namespace, exports);
+          var exports = require(requirePath + filename.replace(/\./g, '/'));
+          
+          namespace.exports = exports;
+          if (exports && exports.constructor === Object)
+            complete(namespace, exports);
 
-        // restore node.js module._compile
-        moduleProto._compile = _compile;
+          // restore node.js module._compile
+          moduleProto._compile = _compile;
 
-        return exports;
+          return exports;
+        }
+        else
+        {
+          filename = pathUtils.resolve(dirname, filename);
+          return require(filename);
+        }
       };
     }
     else
     {
-      var nsRootPath = config.path;
-      var requested = {};
-      /** @cut */ var requires;
-
-      return function(namespace){
-        if (/[^a-z0-9_\.]/i.test(namespace))
-          throw 'Namespace `' + namespace + '` contains wrong chars.';
-
-        /** @cut */ if (requires)
-        /** @cut */   requires.push(namespace);
-
-        var filename = namespace.replace(/\./g, '/') + '.js';
-        var namespaceRoot = namespace.split('.')[0];
-
-        if (namespaceRoot == namespace)
-          nsRootPath[namespaceRoot] = nsRootPath[namespace] || pathUtils.baseURI;
-
-        if (!namespaces[namespace])
+      return function(filename, dirname){
+        if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
         {
-          var requirePath = nsRootPath[namespaceRoot];
+          // namespace, like 'foo.bar.baz'
+          var namespace = filename;
+          var namespaceRoot = namespace.split('.')[0];
 
-          if (!/^\//.test(requirePath))
-            throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
+          filename = namespace.replace(/\./g, '/') + '.js';
 
-          if (!requested[namespace])
-            requested[namespace] = true;
-          else
-            throw 'Recursive require for ' + namespace;
+          if (namespaceRoot == namespace)
+            nsRootPath[namespaceRoot] = nsRootPath[namespace] || pathUtils.baseURI;
 
-          var requestUrl = requirePath + filename;
+          filename = nsRootPath[namespaceRoot] + filename;
 
-
-          var ns = getNamespace(namespace);
-          var sourceCode = getResourceContent(requestUrl);
-
-          /** @cut */ var savedRequires = requires;
-          /** @cut */ requires = [];
-
-          runScriptInContext(ns, requestUrl, sourceCode);
-          complete(ns, ns.exports);
-
-          /** @cut */ ns.filename_ = requestUrl;
-          /** @cut */ ns.source_ = sourceCode;
-          /** @cut */ ns.requires_ = requires;
-
-          /** @cut */ requires = savedRequires;
+          /** @cut */ if (requires)
+          /** @cut */   requires.push(namespace);
         }
+        else
+        {
+          filename = pathUtils.resolve(dirname, filename);
+        }
+
+        return getResource(filename).fetch();
       };
     }
   })();
