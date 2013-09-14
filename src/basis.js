@@ -37,7 +37,6 @@
   'use strict';
 
   var document = global.document;
-  var prefetchedResources = global.__resources__;
   var Object_toString = Object.prototype.toString;
 
 
@@ -1716,11 +1715,13 @@
 
   // apply prefetched resources to cache
   (function(){
-    if (prefetchedResources)
-      for (var key in prefetchedResources)
-        resourceRequestCache[pathUtils.resolve(key)] = prefetchedResources[key];
+    if (typeof __resources__ != 'undefined')
+    {
+      for (var key in __resources__)
+        resourceRequestCache[pathUtils.resolve(key)] = __resources__[key];
 
-    prefetchedResources = null; // reset prefetched to reduce memory leaks
+      __resources__ = null; // reset prefetched to reduce memory leaks
+    }
   })();
 
   var getResourceContent = function(url, ignoreCache){
