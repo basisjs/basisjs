@@ -1977,9 +1977,9 @@
           'var resource = function(url){ return basis.resource(__dirname + "/" + url); };\n' +
           'var require = function(url){ return basis.require(url, __dirname); };\n' +
           '"use strict";\n\n' +
-          sourceCode +
-          /** @cut */ '\n//@ sourceURL=' + pathUtils.origin + sourceURL +
-          /** @cut */ '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
+          sourceCode
+          /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
+          /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
         );
       } catch(e) {
         /** @cut */ if ('line' in e == false && 'addEventListener' in window)
