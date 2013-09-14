@@ -1900,24 +1900,29 @@
     },
     extensions: {
       '.js': function(content, filename){
-        var namespace = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
-        var implicitNamespace = true;
+        var namespace = filename2namespace[filename];
 
-        for (var ns in config.path)
+        if (!namespace) 
         {
-          var path = config.path[ns] + ns + '/';
-          if (filename.substr(0, path.length) == path)
+          var implicitNamespace = true;
+          namespace = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
+
+          for (var ns in config.path)
           {
-            implicitNamespace = false;
-            namespace = namespace.substr(config.path[ns].length);
-            break;
+            var path = config.path[ns] + ns + '/';
+            if (filename.substr(0, path.length) == path)
+            {
+              implicitNamespace = false;
+              namespace = namespace.substr(config.path[ns].length);
+              break;
+            }
           }
+
+          namespace = namespace.replace(/\./g, '_').replace(/\//g, '.');
+
+          if (implicitNamespace)
+            namespace = 'implicit.' + namespace;
         }
-
-        namespace = namespace.replace(/\./g, '_').replace(/\//g, '.');
-
-        if (implicitNamespace)
-          namespace = 'implicit.' + namespace;
 
         /** @cut */ if (requires)
         /** @cut */   requires.push(namespace);
@@ -1929,7 +1934,10 @@
           /** @cut */ var savedRequires = requires;
           /** @cut */ requires = [];
 
-          runScriptInContext(ns, filename, content);
+          ns.exports = runScriptInContext({
+            path: ns.path,
+            exports: ns.exports
+          }, filename, content).exports;
 
           if (ns.exports && ns.exports.constructor === Object)
             complete(ns, ns.exports);
@@ -2031,16 +2039,26 @@
   //
 
   var namespaces = {};
+  var namespace2filename = {};
+  var filename2namespace = {};
+
+  if (typeof __namespace_map__ != 'undefined')
+    (function(map){
+      for (var key in map)
+      {
+        var filename = pathUtils.resolve(key);
+        var namespace = map[key]
+        filename2namespace[filename] = namespace;
+        namespace2filename[namespace] = filename;
+      }
+    })(__namespace_map__);
 
   var Namespace = Class(null, {
     className: 'basis.Namespace',
-    init: function(path){
-      (this.path = function(name){
-        return path + (name ? '.' + name : '');
-      }).toString = $const(path);
-
+    init: function(name){
+      this.name = name;
       this.exports = {
-        path: this.path
+        path: this.name
       };
     },
     toString: function(){
@@ -2968,6 +2986,8 @@
     config: config,
     platformFeature: {},
 
+    path: pathUtils,
+
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
@@ -3050,10 +3070,7 @@
 
   // add dev namespace, host for special functionality in development environment
   getNamespace('basis.dev').extend(consoleMethods);
-
-  // TODO: rename path->stmElse and add path to exports
-  basis.path = pathUtils;
-
+  
 
   //
   // auto load section

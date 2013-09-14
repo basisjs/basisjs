@@ -1215,7 +1215,7 @@
   //
 
   var Slot = Class(DataObject, {
-    className: namespace('Slot')
+    className: namespace + '.Slot'
   });
 
 
@@ -1233,7 +1233,7 @@
   * @class
   */
   var KeyObjectMap = Class(null, {
-    className: namespace('KeyObjectMap'),
+    className: namespace + '.KeyObjectMap',
 
     itemClass: DataObject,
     keyGetter: $self,
@@ -1458,7 +1458,7 @@
   * @class
   */
   var AbstractDataset = Class(AbstractData, {
-    className: namespace('AbstractDataset'),
+    className: namespace + '.AbstractDataset',
 
    /**
     * Cardinality of set.
@@ -1630,7 +1630,7 @@
   * @class
   */
   var Dataset = Class(AbstractDataset, {
-    className: namespace('Dataset'),
+    className: namespace + '.Dataset',
 
    /**
     * @inheritDoc
