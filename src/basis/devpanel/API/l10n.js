@@ -43,7 +43,7 @@ module.exports = {
     var dictionaries = basis.l10n.getDictionaries();
 
     for (var i = 0, dict; dict = dictionaries[i]; i++)
-      data.push('/' + basis.path.relative('/', dict.resource.url));
+      data.push(basis.path.relative('/', dict.resource.url));
 
     sendData('dictionaryList', data);
   },
@@ -76,7 +76,7 @@ module.exports = {
     var newContent = createDictionaryFileContent(data);
 
     // saving
-    var file = basis.devtools.getFile('/' + basis.path.relative('/', data.dictionary), true);
+    var file = basis.devtools.getFile('/' + data.dictionary, true);
 
     var FILE_HANDLER = {
       stateChanged: function(){
