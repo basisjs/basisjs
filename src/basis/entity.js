@@ -630,12 +630,17 @@
       if (Array.isArray(config.type))
       {
         var values = config.type.slice(); // make copy of array to make it stable
+
         config.type = function(value, oldValue){
           var exists = values.indexOf(value) != -1;
-          ;;;if (!exists) basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + key + ', new value ignored.');
+
+          /** @cut */ if (!exists)
+          /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + key + ', new value ignored.');
+
           return exists ? value : oldValue;
         };
-        config.defValue = config.type(config.defValue, values[0]);
+
+        config.defValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
       }
 
       if (config.type === Array)
