@@ -217,13 +217,13 @@
         if (mask & 1)
         {
           var cfg = subscriptionConfig[idx];
+
+          actions.push(cfg.action);
+
           for (var key in cfg.handler)
-          {
-            actions.push(cfg.action);
             handler[key] = handler[key]
               ? mixFunctions(handler[key], cfg.handler[key])  // suppose it never be used, but do it for double sure
               : cfg.handler[key];
-          }
         }
         idx <<= 1;
         mask >>= 1;
