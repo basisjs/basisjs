@@ -568,10 +568,10 @@
     satellite: null,
 
    /**
-    * @param {string} key
-    * @param {basis.data.Object} oldSattelite Old satellite for key
+    * @param {string} name Name of satellite
+    * @param {basis.dom.wrapper.AbstractNode} oldSattelite Old satellite for key
     */
-    emit_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
+    emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
 
    /**
     * Node owner. Generaly using by satellites and GroupingNode.
@@ -644,14 +644,14 @@
       this.satellite = {};
       
       if (satellites)
-        for (var key in satellites)
-          this.setSatellite(key, satellites[key]);
+        for (var name in satellites)
+          this.setSatellite(name, satellites[name]);
 
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
-        for (var key in this.satelliteConfig)
+        for (var name in this.satelliteConfig)
         {
-          var satelliteConfig = this.satelliteConfig[key];
+          var satelliteConfig = this.satelliteConfig[name];
           if (satelliteConfig && typeof satelliteConfig == 'object')
           {
             var context = {
@@ -1992,11 +1992,11 @@
     * @param {string} key
     * @param {basis.data.Object} oldSattelite Old satellite for key
     */
-    emit_satelliteChanged: function(key, oldSatellite){
-      AbstractNode.prototype.emit_satelliteChanged.call(this, key, oldSatellite);
+    emit_satelliteChanged: function(name, oldSatellite){
+      AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
 
-      if (this.satellite[key] instanceof Node)
-        updateNodeDisableContext(this.satellite[key], this.disabled || this.contextDisabled);
+      if (this.satellite[name] instanceof Node)
+        updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
     },    
 
    /**
