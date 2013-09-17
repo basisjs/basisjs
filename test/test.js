@@ -370,7 +370,7 @@
           this.testcase.error = this.test.error;
 
         // run next step, after all event handlers fires
-        this.testcase.timer = setTimeout(function(){ 
+        this.testcase.timer = basis.nextTick(function(){ 
           // run next test
           self.testcase.run(self.nextStep);
         }, 0);
