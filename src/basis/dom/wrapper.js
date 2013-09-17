@@ -782,13 +782,23 @@
       if (oldOwner !== owner)
       {
         var listenHandler = this.listen.owner;
+
         if (listenHandler)
         {
           if (oldOwner)
             oldOwner.removeHandler(listenHandler, this);
+
           if (owner)
             owner.addHandler(listenHandler, this);
         }
+
+        if (oldOwner)
+          for (var name in oldOwner.satellite)
+            if (oldOwner.satellite[name] === this)
+            {
+              oldOwner.setSatellite(name, null);
+              break;
+            }
 
         this.owner = owner;
         this.emit_ownerChanged(oldOwner);
@@ -815,21 +825,22 @@
 
         if (oldSatellite)
         {
+          delete this.satellite[name];
+
           if (oldSatellite instanceof AbstractNode)
             oldSatellite.setOwner(null);
+
           if (satelliteListen)
             oldSatellite.removeHandler(satelliteListen, this);
         }
 
         if (satellite)
-          this.satellite[name] = satellite;
-        else
-          delete this.satellite[name];
-
-        if (satellite)
         {
+          this.satellite[name] = satellite;
+
           if (satellite instanceof AbstractNode)
             satellite.setOwner(this);
+
           if (satelliteListen)
             satellite.addHandler(satelliteListen, this);
         }

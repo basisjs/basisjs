@@ -413,6 +413,52 @@
               ]
             },
             {
+              name: 'Satellite',
+              testcase: [
+                {
+                  name: 'switch owner (setSatellite)',
+                  test: function(){
+                    var satellite = new basis.dom.wrapper.Node();
+                    var node1 = new basis.dom.wrapper.Node({
+                      satellite: {
+                        example: satellite
+                      }
+                    });
+                    var node2 = new basis.dom.wrapper.Node();
+
+                    this.is(true, node1.satellite.example === satellite);
+                    this.is(true, node1.satellite.example.owner === node1);
+
+                    node2.setSatellite('somename', node1.satellite.example);
+
+                    this.is(true, node1.satellite.example === undefined);
+                    this.is(true, node2.satellite.somename === satellite);
+                    this.is(true, satellite.owner === node2);
+                  }
+                },
+                {
+                  name: 'switch owner (setOwner)',
+                  test: function(){
+                    var satellite = new basis.dom.wrapper.Node();
+                    var node1 = new basis.dom.wrapper.Node({
+                      satellite: {
+                        example: satellite
+                      }
+                    });
+                    var node2 = new basis.dom.wrapper.Node();
+
+                    this.is(true, node1.satellite.example === satellite);
+                    this.is(true, node1.satellite.example.owner === node1);
+
+                    satellite.setOwner(node2);
+
+                    this.is(true, node1.satellite.example === undefined);
+                    this.is(true, satellite.owner === node2);
+                  }
+                }
+              ]
+            },
+            {
               name: 'dataSource',
               testcase: [
                 {
