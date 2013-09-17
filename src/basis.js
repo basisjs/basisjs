@@ -1291,6 +1291,7 @@
 
       // prototype defaults
       prototype: {
+        basisObjectId: 0,
         constructor: null,
         init: NULL_FUNCTION,
         postInit: NULL_FUNCTION,
@@ -1312,7 +1313,7 @@
       * @return {function()} A new class.
       */
       create: function(SuperClass, extensions){
-        var classId = classSeed++;        
+        var classId = classSeed++;
 
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
