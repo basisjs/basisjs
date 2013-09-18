@@ -6,10 +6,6 @@ var STATE = basis.data.STATE;
 var transport = resource('transport.js').fetch();
 var sendData = transport.sendData;
 
-basis.l10n.addCreateDictionaryHandler(function(dictionaryName){
-  sendData('newDictionary', { dictionaryName: dictionaryName });
-}); 
-
 basis.l10n.onCultureChange(function(culture){
   sendData('cultureChanged', culture);
 });
@@ -49,11 +45,11 @@ module.exports = {
   },
   
   setTokenCultureValue: function(namespace, name, culture, value){
-    basis.l10n.dictionary(namespace).setCultureValue(culture, name, value);
+    basis.l10n.dictionary('/' + namespace).setCultureValue(culture, name, value);
   },
 
   loadDictionaryTokens: function(dictionaryName){
-    var dict = basis.l10n.dictionary(dictionaryName);
+    var dict = basis.l10n.dictionary('/' + dictionaryName);
     if (dict)
     {
       sendData('dictionaryTokens', {
@@ -66,7 +62,7 @@ module.exports = {
   },
 
   updateDictionary: function(data){
-    basis.resource(data.dictionary).update(createDictionaryFileContent(data));
+    basis.resource('/' + data.dictionary).update(createDictionaryFileContent(data));
   },
 
   saveDictionary: function(data){
