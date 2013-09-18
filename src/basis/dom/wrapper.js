@@ -214,13 +214,17 @@
         if (config && typeof config == 'object')
         {
           var hookRequired = false;
-          var contextConfig = {
-            instanceOf: config.instanceOf
-          };
+          var instanceClass = config.instanceOf;
+          var contextConfig = {};
           var context = {
             key: key,
             config: contextConfig
           };
+
+          if (!Class.isClass(instanceClass) || !instanceClass.isSubclassOf(AbstractData))
+            instanceClass = AbstractNode;
+
+          contextConfig.instanceOf = instanceClass;
 
           if (typeof config.config)
             contextConfig.config = config.config;
@@ -569,7 +573,7 @@
 
    /**
     * @param {string} name Name of satellite
-    * @param {basis.dom.wrapper.AbstractNode} oldSattelite Old satellite for key
+    * @param {basis.data.AbstractData} oldSattelite Old satellite for key
     */
     emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
 
