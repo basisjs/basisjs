@@ -1,4 +1,4 @@
-resource('app/basis_modules.js').fetch();
+basis.require('basis.all');
 
 basis.require('basis.dom');
 basis.require('basis.dom.event');
