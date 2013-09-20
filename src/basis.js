@@ -1926,7 +1926,7 @@
         }
 
         /** @cut */ if (requires)
-        /** @cut */   requires.push(namespace);
+        /** @cut */   requires.add(namespace);
 
         if (!namespaces[namespace])
         {
