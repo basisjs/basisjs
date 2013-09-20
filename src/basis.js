@@ -744,6 +744,10 @@
           }
           else
           {
+            var createScript = function(){
+              return document.createElement('script');
+            };
+
             if (document && 'onreadystatechange' in createScript())
             {
               // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
@@ -1366,6 +1370,8 @@
 
       // prototype defaults
       prototype: {
+        basisObjectId: 0,
+
         constructor: null,
         
         init: function(){

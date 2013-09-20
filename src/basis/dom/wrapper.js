@@ -215,13 +215,17 @@
         if (config && typeof config == 'object')
         {
           var hookRequired = false;
-          var contextConfig = {
-            instanceOf: config.instanceOf
-          };
+          var instanceClass = config.instanceOf;
+          var contextConfig = {};
           var context = {
             key: key,
             config: contextConfig
           };
+
+          if (!Class.isClass(instanceClass) || !instanceClass.isSubclassOf(AbstractData))
+            instanceClass = AbstractNode;
+
+          contextConfig.instanceOf = instanceClass;
 
           if (typeof config.config)
             contextConfig.config = config.config;
@@ -574,10 +578,10 @@
     satellite: null,
 
    /**
-    * @param {string} key
-    * @param {basis.data.Object} oldSattelite Old satellite for key
+    * @param {string} name Name of satellite
+    * @param {basis.data.AbstractData} oldSattelite Old satellite for key
     */
-    emit_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
+    emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
 
    /**
     * Node owner. Generaly using by satellites and GroupingNode.
@@ -650,14 +654,14 @@
       this.satellite = {};
       
       if (satellites)
-        for (var key in satellites)
-          this.setSatellite(key, satellites[key]);
+        for (var name in satellites)
+          this.setSatellite(name, satellites[name]);
 
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
-        for (var key in this.satelliteConfig)
+        for (var name in this.satelliteConfig)
         {
-          var satelliteConfig = this.satelliteConfig[key];
+          var satelliteConfig = this.satelliteConfig[name];
           if (satelliteConfig && typeof satelliteConfig == 'object')
           {
             var context = {
@@ -788,13 +792,23 @@
       if (oldOwner !== owner)
       {
         var listenHandler = this.listen.owner;
+
         if (listenHandler)
         {
           if (oldOwner)
             oldOwner.removeHandler(listenHandler, this);
+
           if (owner)
             owner.addHandler(listenHandler, this);
         }
+
+        if (oldOwner)
+          for (var name in oldOwner.satellite)
+            if (oldOwner.satellite[name] === this)
+            {
+              oldOwner.setSatellite(name, null);
+              break;
+            }
 
         this.owner = owner;
         this.emit_ownerChanged(oldOwner);
@@ -821,21 +835,22 @@
 
         if (oldSatellite)
         {
+          delete this.satellite[name];
+
           if (oldSatellite instanceof AbstractNode)
             oldSatellite.setOwner(null);
+
           if (satelliteListen)
             oldSatellite.removeHandler(satelliteListen, this);
         }
 
         if (satellite)
-          this.satellite[name] = satellite;
-        else
-          delete this.satellite[name];
-
-        if (satellite)
         {
+          this.satellite[name] = satellite;
+
           if (satellite instanceof AbstractNode)
             satellite.setOwner(this);
+
           if (satelliteListen)
             satellite.addHandler(satelliteListen, this);
         }
@@ -2033,11 +2048,11 @@
     * @param {string} key
     * @param {basis.data.Object} oldSattelite Old satellite for key
     */
-    emit_satelliteChanged: function(key, oldSatellite){
-      AbstractNode.prototype.emit_satelliteChanged.call(this, key, oldSatellite);
+    emit_satelliteChanged: function(name, oldSatellite){
+      AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
 
-      if (this.satellite[key] instanceof Node)
-        updateNodeDisableContext(this.satellite[key], this.disabled || this.contextDisabled);
+      if (this.satellite[name] instanceof Node)
+        updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
     },    
 
    /**

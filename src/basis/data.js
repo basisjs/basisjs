@@ -217,13 +217,13 @@
         if (mask & 1)
         {
           var cfg = subscriptionConfig[idx];
+
+          actions.push(cfg.action);
+
           for (var key in cfg.handler)
-          {
-            actions.push(cfg.action);
             handler[key] = handler[key]
               ? mixFunctions(handler[key], cfg.handler[key])  // suppose it never be used, but do it for double sure
               : cfg.handler[key];
-          }
         }
         idx <<= 1;
         mask >>= 1;
@@ -1870,8 +1870,7 @@
   //
 
   Dataset.setAccumulateState = (function(){
-    var proto = AbstractDataset.prototype;
-    var realEvent = proto.emit_itemsChanged;
+    var realEvent = events.itemsChanged;
     var setStateCount = 0;
     var urgentTimer;
     var eventCache = {};
@@ -1934,7 +1933,7 @@
     }
 
     function setAccumulateStateOff(){
-      proto.emit_itemsChanged = realEvent;
+      events.itemsChanged = realEvent;
       flushAllDataset();
     }
 
@@ -1943,7 +1942,7 @@
       {
         if (setStateCount == 0)
         {
-          proto.emit_itemsChanged = storeDatasetDelta;
+          events.itemsChanged = storeDatasetDelta;
           if (!urgentTimer)
             urgentTimer = basis.setImmediate(urgentFlush);
         }
