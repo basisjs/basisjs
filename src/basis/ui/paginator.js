@@ -213,6 +213,8 @@
     spanStartPage_: -1,
     scrollThumbLeft_: NaN,
 
+    dde: null,
+
    /**
     * @constructor
     */
@@ -231,7 +233,7 @@
       this.setPageSpan(pageSpan);
       this.setActivePage(activePage, true);
 
-      this.scrollbarDD = new DragDropElement({
+      this.dde = new DragDropElement({
         handler: {
           context: this,
           callbacks: DRAGDROP_HANDLER
@@ -245,7 +247,7 @@
     templateSync: function(){
       UINode.prototype.templateSync.call(this);
 
-      this.scrollbarDD.setElement(
+      this.dde.setElement(
         'scrollThumb' in this.tmpl && 'scrollThumbWrapper' in this.tmpl
           ? this.tmpl.scrollThumb
           : null
@@ -373,8 +375,8 @@
     * @destructor
     */
     destroy: function(){
-      this.scrollbarDD.destroy();
-      this.scrollbarDD = null;
+      this.dde.destroy();
+      this.dde = null;
 
       UINode.prototype.destroy.call(this);
     }

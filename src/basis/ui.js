@@ -425,6 +425,7 @@
       templateSync: function(){
         var oldElement = this.element;
         var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
+        var noChildNodesElement;
 
         if (tmpl.childNodesHere)
         {
@@ -435,13 +436,15 @@
         this.tmpl = tmpl;
         this.element = tmpl.element;
         this.childNodesElement = tmpl.childNodesElement || tmpl.element;
-        ;;;this.noChildNodesElement = false;
+        noChildNodesElement = this.childNodesElement.nodeType != 1;
 
-        if (this.childNodesElement.nodeType != 1)
-        {
+        if (noChildNodesElement)
           this.childNodesElement = document.createDocumentFragment();
-          ;;;this.noChildNodesElement = true;
-        }
+
+        /** @cut */ if (noChildNodesElement)
+        /** @cut */   this.noChildNodesElement_ = true;
+        /** @cut */ else
+        /** @cut */   delete this.noChildNodesElement_;
 
         if (this.grouping)
           this.grouping.syncDomRefs();
@@ -640,7 +643,11 @@
     return {
       // methods
       insertBefore: function(newChild, refChild){
-        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; basis.dev.warn('Bug: Template has no childNodesElement container, but insertBefore called'); }
+        /** @cut */ if (this.noChildNodesElement_)
+        /** @cut */ {
+        /** @cut */   delete this.noChildNodesElement_;
+        /** @cut */   basis.dev.warn('basis.ui: Template has no childNodesElement container, but insertBefore method called; probably it\'s a bug');
+        /** @cut */ }
 
         // inherit
         newChild = super_.insertBefore.call(this, newChild, refChild);
@@ -693,7 +700,11 @@
         super_.clear.call(this, alive);
       },
       setChildNodes: function(childNodes, keepAlive){
-        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; basis.dev.warn('Template has no childNodesElement container, probably it is bug'); }
+        /** @cut */ if (this.noChildNodesElement_)
+        /** @cut */ {
+        /** @cut */   delete this.noChildNodesElement_;
+        /** @cut */   basis.dev.warn('basis.ui: Template has no childNodesElement container, but setChildNodes method called; probably it\'s a bug');
+        /** @cut */ }
 
         // reallocate childNodesElement to new DocumentFragment
         var domFragment = DOM.createFragment();
@@ -748,6 +759,10 @@
     * @inheritDoc
     */
     groupingClass: Class.SELF,
+
+    nullElement: null,
+    element: null,
+    childNodesElement: null,
 
    /**
     * @inheritDoc

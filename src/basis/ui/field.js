@@ -120,10 +120,13 @@
 
     name: '',
     title: '',
+    validators: null,
     validity: VALIDITY_INDETERMINATE,
     error: '',
     example: null,
     focused: false,
+    defaultValue: undefined,
+    value: undefined,
 
     //
     // events

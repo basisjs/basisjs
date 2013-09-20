@@ -683,9 +683,11 @@
 
     indexes: null,
     indexes_: null,
+    indexesBind_: null,
 
     timer_: undefined,
     indexUpdated: null,
+    indexValues: null,
     memberSourceMap: null,
     keyMap: null,
 

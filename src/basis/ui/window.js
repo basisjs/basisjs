@@ -116,6 +116,8 @@
     closed: true,
     moveable: true,
     zIndex: 0,
+    
+    dde: null,
 
     title: dict.token('emptyTitle'),
 

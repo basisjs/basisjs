@@ -2438,6 +2438,7 @@
     // properties
 
     map_: null,
+    nullGroup: null,
 
     autoDestroyWithNoOwner: true,
     autoDestroyEmptyGroups: true,

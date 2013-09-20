@@ -125,7 +125,6 @@
         }
       }
     },
-
     action: {
       hide: function(){
         this.hide();
@@ -140,6 +139,7 @@
 
     visible: false,
     autorotate: false,
+    zIndex: 0,
 
     dir: '',
     defaultDir: DEFAULT_DIR,

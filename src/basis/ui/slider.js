@@ -176,6 +176,8 @@
       return Math.round(Number(value));
     },
 
+    dde: null,
+
     marks: 'auto',
 
     min: 0,
@@ -185,7 +187,6 @@
 
     stepCount: NaN,
     stepValue: NaN,
-
 
     template: templates.Slider,
     binding: {

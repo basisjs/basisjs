@@ -292,6 +292,7 @@
   var EntitySet = Class(Dataset, {
     className: namespace + '.EntitySet',
 
+    name: null,
     wrapper: $self,
 
     init: ENTITYSET_INIT_METHOD(Dataset, 'EntitySet'),
@@ -333,6 +334,8 @@
   var EntityCollection = Class(Subset, {
     className: namespace + '.EntityCollection',
 
+    name: null,
+
     init: ENTITYSET_INIT_METHOD(Subset, 'EntityCollection'),
     sync: ENTITYSET_SYNC_METHOD(Subset)
   });
@@ -348,6 +351,8 @@
   */
   var EntityGrouping = Class(Split, {
     className: namespace + '.EntityGrouping',
+
+    name: null,
 
     subsetClass: ReadOnlyEntitySet,
 
