@@ -1,6 +1,8 @@
 
   basis.require('basis.net');
 
+  var namespace = this.path;
+
 
   // features support detection
 
@@ -37,6 +39,8 @@
   if (fileAPISupport() && formDataSupport()) // XMLHttpRequest2
   { 
     FileUploader = basis.net.Transport.subclass({
+      className: namespace + '.FileUploader',
+
       method: 'POST',
       contentType: 'multipart/form-data',
 
@@ -81,6 +85,8 @@
   else //IFrame
   {
     var IFrameRequest = basis.net.AbstractRequest.subclass({
+      className: namespace + '.IFrameRequest',
+
       state: basis.data.STATE.UNDEFINED,
       inprogress: false,
 
@@ -161,6 +167,8 @@
     });
 
     FileUploader = basis.net.AbstractTransport.subclass({
+      className: namespace + '.FileUploader',
+
       requestClass: IFrameRequest,
 
       formSubmit: function(form, requestData){

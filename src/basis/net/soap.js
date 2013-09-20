@@ -19,9 +19,7 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
-
   var XML = basis.xml;
-
 
 
   var QName = XML.QName;
@@ -56,7 +54,7 @@
   */ 
 
   var SOAPRequest = Class(AjaxRequest, {
-    className: namespace + 'SOAPRequest',
+    className: namespace + '.SOAPRequest',
 
     requestDataGetter: basis.fn.$self,
     responseDataGetter: basis.fn.$self,

@@ -1684,6 +1684,8 @@
   * @class
   */ 
   var DeferredToken = Token.subclass({
+    className: 'basis.DeferredToken',
+
    /**
     * Set new value for token and schedule to call apply method.
     * @param {*} value

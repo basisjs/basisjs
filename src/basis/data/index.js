@@ -608,6 +608,7 @@
   * @class
   */
   var CalcIndexPreset = Class(null, {
+    className: namespace + '.CalcIndexPreset',
     extendConstructor_: true,
     indexes: {},
     calc: basis.fn.$null
