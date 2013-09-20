@@ -1537,7 +1537,7 @@
     */
     init: function(){
       // inherit
-      DataObject.prototype.init.call(this);
+      AbstractData.prototype.init.call(this);
 
       this.members_ = {};
       this.items_ = {};
@@ -1615,7 +1615,7 @@
       this.clear();
 
       // inherit
-      DataObject.prototype.destroy.call(this);
+      AbstractData.prototype.destroy.call(this);
 
       this.cache_ = EMPTY_ARRAY;  // empty array here, to prevent recalc cache
       this.itemCount = 0;
