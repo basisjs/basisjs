@@ -632,10 +632,12 @@
 
     satelliteConfig: {
       shadowTabs: basis.ui.ShadowNodeList.subclass({
+        className: namespace + '.ShadowTabs',
         getChildNodesElement: function(host){
           return host.tmpl.sectionTabs;
         },
         childClass: {
+          className: namespace + '.ShadowTab',
           getElement: function(node){
             return node.tmpl.tabElement;
           }

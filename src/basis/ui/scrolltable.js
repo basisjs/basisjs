@@ -139,6 +139,7 @@
     },
 
     headerClass: {
+      className: namespace + '.Header',
       listen: {
         childNode: {
           '*': function(){

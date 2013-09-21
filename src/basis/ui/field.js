@@ -230,6 +230,7 @@
           return owner.example;
         },
         instanceOf: UINode.subclass({
+          className: namespace + '.Example',
           template: templates.Example,
           binding: {
             example: 'owner.example'
@@ -251,6 +252,7 @@
           return owner.description;
         },
         instanceOf: UINode.subclass({
+          className: namespace + '.Description',
           template: templates.Description,
           binding: {
             description: 'owner.description'
@@ -565,8 +567,9 @@
           return owner.maxLength > 0;
         },
         instanceOf: UINode.subclass({
-          template: templates.Counter,
+          className: namespace + '.Counter',
 
+          template: templates.Counter,
           binding: {
             availChars: function(node){
               return node.owner.symbolsLeft;
@@ -922,6 +925,7 @@
           return owner.name;
         },
         instanceOf: Hidden.subclass({
+          className: namespace + '.ComboboxHidden',
           getValue: function(){
             return this.owner.getValue();
           },

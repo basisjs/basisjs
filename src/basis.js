@@ -1157,6 +1157,7 @@
     */
     var instanceSeed = { id: 1 };
     var classSeed = 1;
+    /** @cut */ var classes = [];
 
    /**
     * Class construct helper: self reference value
@@ -1208,7 +1209,7 @@
     * @return {function()} A new class.
     */
     function createClass(SuperClass, extensions){
-      var classId = classSeed++;        
+      var classId = classSeed++;
 
       if (typeof SuperClass != 'function')
         SuperClass = BaseClass;
@@ -1315,6 +1316,9 @@
 
       // extend constructor with properties
       extend(newClass, newClassProps);
+
+      // for class introspection
+      /** @cut */ classes.push(newClass);
 
       // return new class
       return newClass;
@@ -1488,6 +1492,8 @@
     //
 
     return extend(BaseClass, {
+      /** @cut */ all_: classes,
+
       SELF: SELF,
 
       create: createClass,

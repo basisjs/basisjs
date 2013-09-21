@@ -48,7 +48,10 @@
       return delta;
   }
 
-  var VectorFn = basis.Class(null, { extendConstructor_: true });
+  var VectorFn = basis.Class(null, {
+    className: namespace + '.Count',
+    extendConstructor_: true
+  });
 
   var Count = VectorFn.subclass({
     className: namespace + '.Count',

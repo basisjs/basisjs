@@ -197,10 +197,12 @@
 
     satelliteConfig: {
       shadowPages: basis.ui.ShadowNodeList.subclass({
+        className: namespace + '.ShadowPages',
         getChildNodesElement: function(host){
           return host.tmpl.pagesElement;
         },
         childClass: {
+          className: namespace + '.ShadowPage',
           getElement: function(node){
             return node.tmpl.pageElement;
           }

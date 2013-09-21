@@ -1,0 +1,40 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Basis Test Suite - Test classes</title>
+
+  <script src="../src/basis.js" basis-config></script>
+</head>
+<body>
+  See results in console.
+  <script>
+    basis.require('basis.all');
+
+    function checkMiss(obj) {
+      var res = [];
+
+      for (var k in obj)
+        if (k in obj.constructor.prototype == false)
+          res.push(k);
+
+      return res;
+    }
+
+    var err = 0;
+    basis.Class.classes_.sortAsObject('className').map(function(cls){
+      try {
+        var m = checkMiss(new cls);
+        console.log(cls.className, 'OK', m.length ? 'properties not in prototype: ' + m.join(', ') : '');
+      } catch (e) {
+        err++;
+        console.error(cls.className, 'FAIL', e.message);
+      }
+    });
+    console.log(err, '/', basis.Class.classes_.length);
+  </script>
+</body>
+
+</html>

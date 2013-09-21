@@ -151,6 +151,8 @@
     },
 
     buttonPanelClass: ButtonPanel.subclass({
+      className: namespace + '.ButtonPanel',
+
       template: templates.ButtonPanel,
       listen: {
         owner: {
