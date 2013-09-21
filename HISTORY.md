@@ -1,3 +1,83 @@
+## 1.0.0-rc1 (september 20, 2013)
+
+basis.require:
+  
+  * now accepts filename (allow any file type) and returns resource content (exports for `.js`) like node.js
+  * basis.require(smth) works like basis.resource(smth).fetch(), if smth is not a namespace
+  * any `.js` file requested by `basis.require` or `basis.resource` has it own namespace
+
+**Brand new `basis.l10n` module**:
+
+  * new simplified API
+  * no namespaces and no base dictionaries any more
+  * new dictionary format (file extension is `.l10n` now)
+  * support for enums
+  * support plural
+  * support for markup, but disabled by default due to build problems for now; it could be enabled by setting `true` to `basis.l10n.enableMarkup`, but no guarantee build be successful
+  * Chrome Developer tools [plugin](https://chrome.google.com/webstore/detail/basisjs-tools/paeokpmlopbdaancddhdhmfepfhcbmek) and [basisjs-tools](https://github.com/basisjs/basisjs-tools) ready
+
+Templates:
+
+  * support for new `basis.l10n`
+  * `<b:l10n>` implemented, to define dictionary using by template
+  * `<b:text>` implemented, to preserve text inside as is and ignore any markup
+  * count of `basis.template.Template` instances limited to 4096
+  * no more exception on double colon in tag/attribute name, tokenizer silently converts those tags into text
+  * remove support for references on attributes in template source
+  * DOM node values bind as node only for first binding occurrence and as string for others
+  * template instances **reduce memory consumption by more than 30%**
+
+UI:
+
+  * move template instance creation to `basis.ui.Node#postInit` and related changes, one step closer to `basis.ui.Node` template independence
+  * rework `basis.ui.Node#setTemplate` and `basis.ui.Node#templateSync` methods
+  * remove `noRecreate` argument for `basis.ui.Node#templateSync` as not using any more
+  * emit `templateChanged` event on template changing, but not on `basis.ui.Node#init`
+  * any value for `basis.ui.Node#binding` keys that has `bindingBridge` accept as is now
+  * fix problem when satellite changes it's template
+  * rework all `basis.ui.*` components to support new workflow
+
+Dev panel:
+
+  * support for new `l10n` and `templates`
+  * improve l10n tokens hightlighing
+  * improve template selection and highlighting
+  * new feature: basic heat map implementation
+
+Tour:
+
+  * reworked to support for new features
+  * use `codemirror` for code editor
+  * everything is updatable
+  * support `l10n` for slides
+  * slide generator
+
+Removals:
+
+- don't extend build in classes by default and drop extClass option in `basis-config`
+- don't extend global with `setImmediate`/`clearImmediate` and don't patch `setTimeout`/`clearTimeout`
+- remove all deprecated things
+  * namespaces: `basis.format.highlight`, `basis.net.rpc`, `basis.ui.label` and `basis.data.property`
+  * classes: `basis.ui.Container`, `basis.ui.field.Validator`, `basis.data.value.DataObjectSet`
+  * functions: `basis.crypt.UTF16/UTF8/HEX/Base64/SHA1/MD5`, `basis.cssom.hide`, `basis.cssom.show`, `basis.cssom.visible`, `basis.cssom.invisible`, `basis.dom.event.onLoad`
+  * objects: `basis.timer.TimeEventManager`
+  * methods: remove `basis.namespace#setWrapper` (and all wrappers), `basis.data.AbstractDataset#getIndex`, `basis.data.AbstractDataset#deleteIndex`, `basis.entity.EntityTypeConstructor#addField`, `basis.entity.EntityTypeConstructor#addAlias`, `basis.entity.EntityTypeConstructor#addCalcField`, `basis.ui.button.ButtonPanel#getButtonByName`, `basis.ui.form.FormContent#getFieldByName` and `basis.ui.form.FormContent#getFieldById`
+- drop support for `basis.ui.Node#id`, `basis.l10n.Token` instance as value for `basis.ui.Node#content`
+
+Other changes:
+
+- basis.Class refactored
+- NEW: `basis.all` implemented
+- API: basis namespaces are objects now (instances of `basis.Namespace`, was functions before)
+- NEW: `basis.event.Emitter#handler_list` method implemented to show list of handlers as an array (available in development only)
+- API: `basis.data.Value` instances don't pass `value` as first argument for `change` event handlers any more
+- API: inherits `basis.data.AbstractDataset` from `basis.data.AbstractData`
+- API: `basis.data.SourceDataset#setSource` and `basis.dom.wrapper.Node#setDataSource` methods accept `basis.data.DatasetWrapper` as correct value, and `basis.data.index`'es also work with `basis.data.DatasetWrapper` as with dataset
+- NEW: `basis.ui.ShadowNodeList` and `basis.ui.ShadowNode` classes implemented, `basis.ui.tabs` and `basis.ui.calendar` reworked to use it
+- API: rework `basis.ui.paginator` (API changed)
+
+And other various bug fixes, improvements, refactoring and code clean up.
+
 ## 0.9.10 (september 20, 2013)
 
 - FIX: `basis.net.AjaxRequest#setTimeout` for synchronous requests
