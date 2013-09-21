@@ -1030,7 +1030,9 @@
   */
   var config = (function(){
     var basisBaseURI = '';
-    var config = {};
+    var config = {
+      extProto: true
+    };
 
     if (NODE_ENV)
     {
@@ -2209,6 +2211,23 @@
     }
   })();
 
+  //
+  // Buildin classes extension
+  //
+
+  function extendProto(cls, extensions){
+    if (config.extProto)
+      for (var key in extensions)
+        cls.prototype[key] = (function(method, clsName){
+          return function(){
+            /** @cut */ if (config.extProto == 'warn')
+            /** @cut */   consoleMethods.warn(clsName + '#' + method + ' is not a standard method, and it\'s and will be removed soon; use basis.' + clsName.toLowerCase() + '.' + method + ' instead');
+
+            return extensions[method].apply(extensions, Array.prototype.concat.apply([this], arguments));
+          }
+        })(key, cls.name);
+  }
+
 
  /**
   * @namespace Function.prototype
@@ -2377,19 +2396,19 @@
     }
   });
 
-  extend(Array.prototype, {
+  var Array_extensions = {
     // extractors
-    flatten: function(){
-      return this.concat.apply([], this);
+    flatten: function(this_){
+      return this_.concat.apply([], this_);
     },
-    repeat: function(count){
-      return createArray(parseInt(count, 10) || 0, this).flatten();
+    repeat: function(this_, count){
+      return createArray(parseInt(count, 10) || 0, this_).flatten();
     },
 
     // getters
-    item: function(index){
+    item: function(this_, index){
       index = parseInt(index || 0, 10);
-      return this[index >= 0 ? index : this.length + index];
+      return this_[index >= 0 ? index : this_.length + index];
     },
 
     // search
@@ -2425,13 +2444,13 @@
     * @param {number=} offset
     * @return {*}
     */
-    search: function(value, getter_, offset){
+    search: function(this_, value, getter_, offset){
       Array.lastSearchIndex = -1;
       getter_ = getter(getter_ || $self);
 
-      for (var index = parseInt(offset, 10) || 0, len = this.length; index < len; index++)
-        if (getter_(this[index]) === value)
-          return this[Array.lastSearchIndex = index];
+      for (var index = parseInt(offset, 10) || 0, len = this_.length; index < len; index++)
+        if (getter_(this_[index]) === value)
+          return this_[Array.lastSearchIndex = index];
     },
 
    /**
@@ -2440,16 +2459,16 @@
     * @param {number=} offset
     * @return {*}
     */
-    lastSearch: function(value, getter_, offset){
+    lastSearch: function(this_, value, getter_, offset){
       Array.lastSearchIndex = -1;
       getter_ = getter(getter_ || $self);
 
-      var len = this.length;
+      var len = this_.length;
       var index = isNaN(offset) || offset == null ? len : parseInt(offset, 10);
 
       for (var i = index > len ? len : index; i-- > 0;)
-        if (getter_(this[i]) === value)
-          return this[Array.lastSearchIndex = i];
+        if (getter_(this_[i]) === value)
+          return this_[Array.lastSearchIndex = i];
     },
 
    /**
@@ -2464,8 +2483,8 @@
     * @param {number=} right Max right index. If omit it equals to array length.
     * @return {number}
     */
-    binarySearchPos: function(value, getter_, desc, strong, left, right){
-      if (!this.length)  // empty array check
+    binarySearchPos: function(this_, value, getter_, desc, strong, left, right){
+      if (!this_.length)  // empty array check
         return strong ? -1 : 0;
 
       getter_ = getter(getter_ || $self);
@@ -2473,12 +2492,12 @@
 
       var pos, compareValue;
       var l = isNaN(left) ? 0 : left;
-      var r = isNaN(right) ? this.length - 1 : right;
+      var r = isNaN(right) ? this_.length - 1 : right;
 
       do
       {
         pos = (l + r) >> 1;
-        compareValue = getter_(this[pos]);
+        compareValue = getter_(this_[pos]);
         if (desc ? value > compareValue : value < compareValue)
           r = pos - 1;
         else
@@ -2493,31 +2512,31 @@
 
       return strong ? -1 : pos + ((compareValue < value) ^ desc);
     },
-    binarySearch: function(value, getter){ // position of value
-      return this.binarySearchPos(value, getter, false, true);
+    binarySearch: function(this_, value, getter){ // position of value
+      return this_.binarySearchPos(value, getter, false, true);
     },
 
     // collection for
-    add: function(value){
-      return this.indexOf(value) == -1 && !!this.push(value);
+    add: function(this_, value){
+      return this_.indexOf(value) == -1 && !!this_.push(value);
     },
-    remove: function(value){
-      var index = this.indexOf(value);
-      return index != -1 && !!this.splice(index, 1);
+    remove: function(this_, value){
+      var index = this_.indexOf(value);
+      return index != -1 && !!this_.splice(index, 1);
     },
-    has: function(value){
-      return this.indexOf(value) != -1;
+    has: function(this_, value){
+      return this_.indexOf(value) != -1;
     },
 
     // misc.
-    merge: function(object){
-      return this.reduce(extend, object || {});
+    merge: function(this_, object){
+      return this_.reduce(extend, object || {});
     },
-    sortAsObject: function(getter_, comparator, desc){
+    sortAsObject: function(this_, getter_, comparator, desc){
       getter_ = getter(getter_);
       desc = desc ? -1 : 1;
 
-      return this
+      return this_
         .map(function(item, index){
                return {
                  i: index,       // index
@@ -2526,22 +2545,25 @@
              })                                                                           // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
         .sort(comparator || function(a, b){ return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1)); })
         .map(function(item){
-               return this[item.i];
-             }, this);
+               return this_[item.i];
+             }, this_);
     },
-    set: function(array){
-      if (this !== array)
+    set: function(this_, array){
+      if (this_ !== array)
       {
-        this.length = 0;
-        this.push.apply(this, array);
+        this_.length = 0;
+        this_.push.apply(this_, array);
       }
-      return this;
+      return this_;
     },
-    clear: function(){
-      this.length = 0;
-      return this;
+    clear: function(this_){
+      this_.length = 0;
+      return this_;
     }
-  });
+  };
+
+  // it's prohibited and will be removed soon
+  extendProto(Array, Array_extensions);
 
   // IE 5.5+ & Opera
   // when second argument is omited, method set this parameter equal zero (must be equal array length)
@@ -2624,50 +2646,50 @@
     }
   });
 
-  extend(String.prototype, {
+  var String_extensions = {
    /**
     * @return {*}
     */
-    toObject: function(rethrow){
-      // try { return eval('0,' + this) } catch(e) {}
+    toObject: function(this_, rethrow){
+      // try { return eval('0,' + this_) } catch(e) {}
       // safe solution with no eval:
       try {
-        return new Function('return 0,' + this)();
+        return new Function('return 0,' + this_)();
       } catch(e) {
         if (rethrow)
           throw e;
       }
     },
     toArray: ('a'.hasOwnProperty('0')
-      ? function(){
-          return arrayFrom(this);
+      ? function(this_){
+          return arrayFrom(this_);
         }
       // IE Array and String are not generics
-      : function(){
+      : function(this_){
           var result = [];
-          var len = this.length;
+          var len = this_.length;
           for (var i = 0; i < len; i++)
-            result[i] = this.charAt(i);
+            result[i] = this_.charAt(i);
           return result;
         }
     ),
-    repeat: function(count){
-      return (new Array(parseInt(count, 10) + 1 || 0)).join(this);
+    repeat: function(this_, count){
+      return (new Array(parseInt(count, 10) + 1 || 0)).join(this_);
     },
-    qw: function(){
-      var trimmed = this.trim();
+    qw: function(this_){
+      var trimmed = this_.trim();
       return trimmed ? trimmed.split(/\s+/) : [];
     },
-    forRegExp: function(){
-      return this.replace(ESCAPE_FOR_REGEXP, "\\$1");
+    forRegExp: function(this_){
+      return this_.replace(ESCAPE_FOR_REGEXP, "\\$1");
     },
-    format: function(first){
-      var data = arguments;
+    format: function(this_, first){
+      var data = arrayFrom(arguments, 1);
 
       if (typeof first == 'object')
         extend(data, first);
 
-      return this.replace(FORMAT_REGEXP,
+      return this_.replace(FORMAT_REGEXP,
         function(m, key, numFormat, num, noNull){
           var value = key in data ? data[key] : (noNull ? '' : m);
           if (numFormat && !isNaN(value))
@@ -2681,22 +2703,24 @@
         }
       );
     },
-    quote: function(quoteS, quoteE){
+    quote: function(this_, quoteS, quoteE){
       quoteS = quoteS || '"';
       quoteE = quoteE || STRING_QUOTE_PAIRS[quoteS] || quoteS;
       var rx = (quoteS.length == 1 ? quoteS : '') + (quoteE.length == 1 ? quoteE : '');
-      return quoteS + (rx ? this.replace(QUOTE_REGEXP_CACHE[rx] || (QUOTE_REGEXP_CACHE[rx] = new RegExp('[' + rx.forRegExp() + ']', 'g')), "\\$&") : this) + quoteE;
+      return quoteS + (rx ? this_.replace(QUOTE_REGEXP_CACHE[rx] || (QUOTE_REGEXP_CACHE[rx] = new RegExp('[' + rx.forRegExp() + ']', 'g')), "\\$&") : this_) + quoteE;
     },
-    capitalize: function(){
-      return this.charAt(0).toUpperCase() + this.substr(1).toLowerCase();
+    capitalize: function(this_){
+      return this_.charAt(0).toUpperCase() + this_.substr(1).toLowerCase();
     },
-    camelize: function(){
-      return this.replace(/-(.)/g, function(m, chr){ return chr.toUpperCase(); });
+    camelize: function(this_){
+      return this_.replace(/-(.)/g, function(m, chr){ return chr.toUpperCase(); });
     },
-    dasherize: function(){
-      return this.replace(/[A-Z]/g, function(m){ return '-' + m.toLowerCase(); });
+    dasherize: function(this_){
+      return this_.replace(/[A-Z]/g, function(m){ return '-' + m.toLowerCase(); });
     }
-  });
+  };
+
+  extendProto(String, String_extensions);
 
 
   // Fix some methods
@@ -2754,46 +2778,46 @@
   * @namespace Number.prototype
   */
 
-  extend(Number.prototype, {
-    fit: function(min, max){
-      if (!isNaN(min) && this < min)
+  var Number_extensions = {
+    fit: function(this_, min, max){
+      if (!isNaN(min) && this_ < min)
         return Number(min);
-      if (!isNaN(max) && this > max)
+      if (!isNaN(max) && this_ > max)
         return Number(max);
-      return this;
+      return this_;
     },
-    between: function(min, max){
-      return !isNaN(this) && this >= min && this <= max;
+    between: function(this_, min, max){
+      return !isNaN(this_) && this_ >= min && this_ <= max;
     },
-    quote: function(start, end){
-      return (this + '').quote(start, end);
+    quote: function(this_, start, end){
+      return (this_ + '').quote(start, end);
     },
-    toHex: function(){
-      return parseInt(this, 10).toString(16).toUpperCase();
+    toHex: function(this_){
+      return parseInt(this_, 10).toString(16).toUpperCase();
     },
-    sign: function(){
-      return this < 0 ? -1 : +(this > 0);
+    sign: function(this_){
+      return this_ < 0 ? -1 : +(this_ > 0);
     },
-    base: function(div){
-      return !div || isNaN(div) ? 0 : Math.floor(this/div) * div;
+    base: function(this_, div){
+      return !div || isNaN(div) ? 0 : Math.floor(this_/div) * div;
     },
-    lead: function(len, leadChar){
+    lead: function(this_, len, leadChar){
       // convert to string and lead first digits by leadChar
-      return (this + '').replace(/\d+/, function(number){
+      return (this_ + '').replace(/\d+/, function(number){
         // substract number length from desired length converting len to Number and indicates how much leadChars we need to add
         // here is no isNaN(len) check, because comparation of NaN and a Number is always false
         return (len -= number.length - 1) > 1 ? new Array(len).join(leadChar || 0) + number : number;
       });
     },
-    group: function(len, splitter){
-      return (this + '').replace(/\d+/, function(number){
+    group: function(this_, len, splitter){
+      return (this_ + '').replace(/\d+/, function(number){
         return number.replace(/\d/g, function(m, pos){
           return !pos + (number.length - pos) % (len || 3) ? m : (splitter || ' ') + m;
         });
       });
     },
-    format: function(prec, gs, prefix, postfix, comma){
-      var res = this.toFixed(prec);
+    format: function(this_, prec, gs, prefix, postfix, comma){
+      var res = this_.toFixed(prec);
       if (gs || comma)
         res = res.replace(/(\d+)(\.?)/, function(m, number, c){
           return (gs ? Number(number).group(3, gs) : number) + (c ? comma || c : '');
@@ -2802,7 +2826,10 @@
         res = res.replace(/^-?/, '$&' + (prefix || ''));
       return res + (postfix || '');
     }
-  });
+  };
+
+  // 
+  extendProto(Number, Number_extensions);
 
 
   // ============================================
@@ -3182,16 +3209,16 @@
       lazyInitAndRun: lazyInitAndRun,
       runOnce: runOnce
     },
-    array: extend(arrayFrom, {
+    array: extend(arrayFrom, merge(Array_extensions, {
       from: arrayFrom,
       create: createArray
-    }),
-    string: {
+    })),
+    string: merge(String_extensions, {
       entity: Entity,
       isEmpty: isEmptyString,
-      isNotEmpty: isNotEmptyString,
-      format: String.prototype.format
-    },
+      isNotEmpty: isNotEmptyString
+    }),
+    number: Number_extensions,
     bool: {
       invert: function(value){
         return !value;
