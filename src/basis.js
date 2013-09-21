@@ -2179,7 +2179,7 @@
           if (namespaceRoot == namespace)
             nsRootPath[namespaceRoot] = nsRootPath[namespace] || pathUtils.baseURI;
 
-          filename = nsRootPath[namespaceRoot] + filename;
+          filename = (nsRootPath[namespaceRoot] || '') + filename;
 
           /** @cut */ if (requires)
           /** @cut */   requires.push(namespace);
