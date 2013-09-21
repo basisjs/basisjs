@@ -36,6 +36,8 @@
 ;(function(global){ // global is current context (`window` in browser and `global` on node.js)
   'use strict';
 
+  var VERSION = '1.0.0-rc1';
+
   var document = global.document;
   var Object_toString = Object.prototype.toString;
 
@@ -2989,7 +2991,9 @@
 
   // create and extend basis namespace
   var basis = getNamespace('basis').extend({
-    filename_: basisFilename,
+    /** @cut */ filename_: basisFilename,
+
+    version: VERSION,
 
     NODE_ENV: NODE_ENV,
     config: config,
