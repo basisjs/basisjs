@@ -20,6 +20,7 @@
   var document = global.document;
   var domEvent = basis.dom.event;
   var arrayFrom = basis.array.from;
+  var camelize = basis.string.camelize;
   var l10nToken = basis.l10n.token;
   var getFunctions = basis.template.htmlfgen.getFunctions;
   
@@ -454,7 +455,7 @@
       if (oldValue !== newValue)
       {
         try {
-          domRef.style[propertyName.camelize()] = newValue;
+          domRef.style[camelize(propertyName)] = newValue;
         } catch(e){
         }
       }

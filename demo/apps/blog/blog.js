@@ -268,7 +268,7 @@ basis.ready(function(){
         fontSize: {
           events: 'update',
           getter: function(node){
-            return '{0:.2}%'.format(80 + 120 * node.data.percentOfRange);
+            return basis.string.format('{0:.2}%', 80 + 120 * node.data.percentOfRange);
           }
         }
       },
