@@ -1,0 +1,183 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Basis Test Suite - Dataset</title>
+
+  <style type="text/css">
+    @import "../../style/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript" data-basis-config src="../../../src/basis.js"></script>
+  <script type="text/javascript">
+    (function(){
+      basis.require('basis.event');
+
+      var eventTypeFilter = function(event){ return event.type == this; };
+      var proto = basis.event.Emitter.prototype;
+      var eventsMap = {};
+      var seed = 1;
+
+      proto.emit_debug = function(event){
+        if (!this.testEventId_)
+        {
+          this.testEventId_ = seed++;
+          eventsMap[this.testEventId_] = [];
+        }
+
+        eventsMap[this.testEventId_].push(event);
+      };
+
+      window.getEvents = function(object, type){
+        var events = eventsMap[object.testEventId_];
+
+        if (events && type)
+          events = events.filter(eventTypeFilter, type);
+
+        return events;
+      };
+
+      window.eventCount = function(object, type){
+        var events = getEvents(object, type);
+
+        return events ? events.length : 0;
+      };
+
+      window.getLastEvent = function(object, type){
+        var events = getEvents(object, type);
+
+        return events && events[events.length - 1];
+      };
+    })();
+  </script>
+  <script type="text/javascript" src="../../test.js"></script>
+  <script type="text/javascript" src="../../common.js"></script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    loadTest((function(){
+      basis.require('basis.data');
+      basis.require('basis.data.dataset');
+      basis.require('basis.ui');
+
+      var nsData = basis.data;
+      var DataObject = nsData.Object;
+      
+      return [
+        {
+          name: 'Main frame',
+          testcase: [
+            {
+              name: 'accumulate events and updates',
+              test: function(){
+                var inserted = [];
+                var deleted = [];
+                var insertDoubles = 0;
+                var deleteDoubles = 0;
+
+                var items = basis.data.wrap(basis.array.create(10, function(i){ return i <= 5 ? i : 100 }), true);
+                var dataset = new basis.data.Dataset({
+                  items: items
+                });
+
+                var subset = new basis.data.dataset.Subset({
+                  source: dataset,
+                  rule: function(obj){
+                    return obj.data.value % 2;
+                  }
+                });
+
+                var slice = new basis.data.dataset.Slice({
+                  source: subset,
+                  rule: 'data.value',
+                  handler: {
+                    itemsChanged: function(sender, delta){
+                      if (delta.inserted)
+                        for (var i = 0; i < delta.inserted.length; i++)
+                          insertDoubles += !inserted.add(delta.inserted[i]);
+
+                      if (delta.deleted)
+                        for (var i = 0; i < delta.deleted.length; i++)
+                          deleteDoubles += !deleted.add(delta.deleted[i]);
+                    }
+                  }
+                });
+
+                basis.data.Dataset.setAccumulateState(true);
+                items[6].update({ value: 3 });
+                items[5].update({ value: 100 });
+                basis.data.Dataset.setAccumulateState(false);
+
+                this.is(0, insertDoubles);
+                this.is(0, deleteDoubles);
+              }
+            },
+            {
+              name: 'accumulate events and updates',
+              test: function(){
+                var inserted = [];
+                var deleted = [];
+                var insertDoubles = 0;
+                var deleteDoubles = 0;
+
+                var items = basis.data.wrap(basis.array.create(10, function(i){ return i <= 5 ? i : 100 }), true);
+                var dataset = new basis.data.Dataset({
+                  items: items
+                });
+
+                var subset = new basis.data.dataset.Subset({
+                  source: dataset,
+                  rule: function(obj){
+                    return obj.data.value % 2;
+                  }
+                });
+
+                var slice = new basis.data.dataset.Slice({
+                  source: subset,
+                  rule: 'data.value',
+                  handler: {
+                    itemsChanged: function(sender, delta){
+                      if (delta.inserted)
+                        for (var i = 0; i < delta.inserted.length; i++)
+                          insertDoubles += !inserted.add(delta.inserted[i]);
+
+                      if (delta.deleted)
+                        for (var i = 0; i < delta.deleted.length; i++)
+                          deleteDoubles += !deleted.add(delta.deleted[i]);
+                    }
+                  }
+                });
+
+                basis.data.Dataset.setAccumulateState(true);
+                items[5].update({ value: 100 });
+                items[6].update({ value: 3 });
+                basis.data.Dataset.setAccumulateState(false);
+
+                this.is(0, insertDoubles);
+                this.is(0, deleteDoubles);
+              }
+            }
+          ]
+        }
+      ];
+
+    })());
+
+//    if (top.nextTest)
+//      top.nextTest();
+
+  </script>
+</body>
+
+</html>
