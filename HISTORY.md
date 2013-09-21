@@ -1,3 +1,14 @@
+## 0.9.10 (september 20, 2013)
+
+- FIX: `basis.net.AjaxRequest#setTimeout` for synchronous requests
+- FIX: `basis.setImmediate` for IE8 and below and other old browsers
+- FIX: fix multiple subscribe/unsubscribe for subscriptions with more than one event
+- FIX: no more warnings on `enum` entity field definition in `basis.entity`
+- FIX: add `basisObjectId` to base class prototype
+- FIX: `satellite` doesn't remove itself from `owner.satellite` map on `owner` change via `setSatellite` and `setOwner` methods
+- FIX: make `instanceOf` for satellite as `basis.dom.wrapper.AbstractNode` by default (if not defined)
+- FIX: make `itemsChanged` event accumulation more stable ([test](test/spec/data/dataset.html))
+
 ## 0.9.9 (september 4, 2013)
 
 - NEW: `basis.event.Emitter#handler_list` method was implemented to show list of handlers as an array (available in development only)
