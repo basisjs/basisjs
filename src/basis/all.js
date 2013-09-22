@@ -21,6 +21,7 @@ basis.require('basis.crypt');
 basis.require('basis.utils.base64');
 basis.require('basis.utils.utf8');
 basis.require('basis.utils.utf16');
+basis.require('basis.utils.info');
 basis.require('basis.utils.highlight');
 basis.require('basis.data');
 basis.require('basis.data.dataset');

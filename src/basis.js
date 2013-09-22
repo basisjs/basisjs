@@ -570,14 +570,6 @@
     };
   }
 
- /**
-  * Retuns function body code
-  * @return {string}
-  */
-  function functionBody(fn){
-    return fn.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
-  }
-
 
   // ============================================
   // safe console method wrappers
@@ -3067,8 +3059,7 @@
       // lazy
       lazyInit: lazyInit,
       lazyInitAndRun: lazyInitAndRun,
-      runOnce: runOnce,
-      body: functionBody
+      runOnce: runOnce
     },
     array: extend(arrayFrom, {
       from: arrayFrom,

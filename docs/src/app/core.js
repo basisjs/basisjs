@@ -527,19 +527,7 @@
     if (func.basisDocFD_)
       return func.basisDocFD_;
 
-    var fnString = Function.prototype.toString.call(func);
-    var m = fnString.match(/^\s*function(\s+\S+)?\s*\((\s*(?:\S+|\/\*[^*]+\*\/)(\s*(?:,\s*\S+|\/\*[^*]+\*\/))*\s*)?\)/);
-    if (!m)
-      basis.dev.log('Function parse error: ' + fnString);
-
-    var name = String(m[1] || 'anonymous').trim();
-    var args = String(m[2] || '').replace(/\s*,\s*/g, ', ');
-
-    return func.basisDocFD_ = {
-      name: name,
-      args: args,
-      fullname: name + args.quote('(')
-    };
+    return func.basisDocFD_ = basis.utils.info.fn(func);
   }
 
   function getMembers(path){

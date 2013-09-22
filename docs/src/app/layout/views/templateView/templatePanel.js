@@ -9,40 +9,13 @@
 
 
   function resolveFunction(fn){
-    function resolveGetter(getter){
-      if (getter.basisGetterId_ > 0)
-      {
-        var result = 'getter(';
+    var info = basis.utils.info.fn(fn);
+    var result = {
+      asIs: info.source
+    };
 
-        if (typeof getter.base == 'string')
-          result += '"' + getter.base.replace(/"/g, '\\"') + '"';
-        else
-        {
-          if (!getter.mod)
-            return resolveGetter(getter.base);
-          else
-            result += resolveGetter(getter.base);
-        }
-
-        if (getter.mod)
-        {
-          if (typeof getter.mod == 'string')
-            result += ', "' + getter.mod.replace(/"/g, '\\"') + '"';
-          else
-            result += ', ' + resolveGetter(getter.mod);
-        }
-
-        return result + ')';
-      }
-      else
-        return Function.prototype.toString.call(getter);
-    }
-
-    var result = { asIs: Function.prototype.toString.call(fn) };
-    var getter = resolveGetter(fn);
-
-    if (result.asIs != getter)
-      result.getter = getter;
+    if (info.getter)
+      result.getter = info.getter;
 
     return result;
   }
