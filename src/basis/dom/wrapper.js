@@ -1071,8 +1071,10 @@
         {
           // copy childNodes to deleted
           deleted = arrayFrom(this.childNodes);
+
+          // restore posibility to change delegate, to drop delegate
           for (var i = 0, child; child = deleted[i]; i++)
-            child.canSetDelegate = true;
+            child.setDelegate = child.constructor.prototype.setDelegate;
 
           // optimization: if all old nodes deleted -> clear childNodes
           var tmp = this.dataSource;
@@ -1088,8 +1090,10 @@
             var delegateId = item.basisObjectId;
             var oldChild = this.dataSourceMap_[delegateId];
 
+            // restore posibility to change delegate, to drop delegate
+            oldChild.setDelegate = oldChild.constructor.prototype.setDelegate;
+
             delete this.dataSourceMap_[delegateId];
-            oldChild.canSetDelegate = true; // allow delegate drop
             this.removeChild(oldChild);
 
             deleted.push(oldChild);
@@ -1104,12 +1108,13 @@
         for (var i = 0, item; item = delta.inserted[i]; i++)
         {
           var newChild = createChildByFactory(this, {
-            //canSetDelegate: false,   // NOTE: we can't set canSetDelegate in config, because it
-                                       // prevents delegate assignment
             delegate: item
           });
 
-          newChild.canSetDelegate = false; // prevent delegate override
+          // prevent delegate override
+          // NOTE: we can't define setDelegate in config, because it
+          // prevents delegate assignment
+          newChild.setDelegate = basis.fn.$undef;
 
           // insert
           this.dataSourceMap_[item.basisObjectId] = newChild;
@@ -1816,7 +1821,7 @@
           // return posibility to change delegate
           if (oldDataSource)
             for (var i = 0, child; child = this.childNodes[i]; i++)
-              child.canSetDelegate = true;
+              child.setDelegate = child.constructor.prototype.setDelegate;
 
           this.clear();
         }

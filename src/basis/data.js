@@ -858,11 +858,6 @@
     delegate: null,
 
    /**
-    * @type {boolean}
-    */
-    canSetDelegate: true,
-
-   /**
     * Fires when delegate was changed.
     * @param {basis.data.Object} oldDelegate Object delegate before changes.
     * @event
@@ -1015,9 +1010,6 @@
     * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
-      if (!this.canSetDelegate)
-        return false;
-
       // check is newDelegate can be linked to this object as delegate
       if (newDelegate && newDelegate instanceof DataObject)
       {
