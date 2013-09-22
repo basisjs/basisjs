@@ -386,12 +386,6 @@
     autoDelegate: DELEGATE.NONE,
 
    /**
-    * @type {string}
-    * @readonly
-    */
-    nodeType: 'DOMWrapperNode',
-
-   /**
     * Name of node. Using by parent to fetch child by name.
     * @type {string}
     */
