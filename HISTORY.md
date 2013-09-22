@@ -1,4 +1,4 @@
-## 1.0.0-rc1 (september 20, 2013)
+## 1.0.0-rc1 (september 21, 2013)
 
 basis.require:
   
@@ -78,7 +78,7 @@ Other changes:
 
 And other various bug fixes, improvements, refactoring and code clean up.
 
-## 0.9.10 (september 20, 2013)
+## 0.9.10 (september 21, 2013)
 
 - FIX: `basis.net.AjaxRequest#setTimeout` for synchronous requests
 - FIX: `basis.setImmediate` for IE8 and below and other old browsers
