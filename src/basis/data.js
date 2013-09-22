@@ -1860,7 +1860,8 @@
   //
 
   Dataset.setAccumulateState = (function(){
-    var realEvent = events.itemsChanged;
+    var proto = AbstractDataset.prototype;
+    var realEvent = proto.emit_itemsChanged;
     var setStateCount = 0;
     var urgentTimer;
     var eventCache = {};
@@ -1923,7 +1924,7 @@
     }
 
     function setAccumulateStateOff(){
-      events.itemsChanged = realEvent;
+      proto.emit_itemsChanged = realEvent
       flushAllDataset();
     }
 
@@ -1932,7 +1933,7 @@
       {
         if (setStateCount == 0)
         {
-          events.itemsChanged = storeDatasetDelta;
+          proto.emit_itemsChanged = storeDatasetDelta;
           if (!urgentTimer)
             urgentTimer = basis.setImmediate(urgentFlush);
         }

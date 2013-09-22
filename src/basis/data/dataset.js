@@ -1542,7 +1542,7 @@
         end = start + this.limit;
       }
 
-      var curSet = basis.object.slice(this.items_);
+      var curSet = basis.object.slice(this.members_);
       var newSet = this.index_.slice(Math.max(0, start), Math.max(0, end));
       var inserted = [];
       var delta;
@@ -1550,11 +1550,18 @@
       for (var i = 0, item; item = newSet[i]; i++)
       {
         var objectId = item.object.basisObjectId;
+
         if (curSet[objectId])
           delete curSet[objectId];
         else
+        {
           inserted.push(item.object);
+          this.members_[objectId] = item.object;
+        }
       }
+
+      for (var objectId in curSet)
+        delete this.members_[objectId];
 
       if (delta = getDelta(inserted, values(curSet)))
         this.emit_itemsChanged(delta);
