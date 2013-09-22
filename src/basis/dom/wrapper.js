@@ -64,6 +64,21 @@
 
   var childNodesDatasetMap = {};
 
+  function warnOnDataSourceItemNodeDestoy(){
+    /** @cut */ basis.dev.warn(namespace + ': node can\'t be destroed as representing dataSource item, destroy delegate item or remove it from dataSource first');
+  }
+
+  function lockDataSourceItemNode(node){
+    node.setDelegate = basis.fn.$undef;
+    node.destroy = warnOnDataSourceItemNodeDestoy;
+  }
+
+  function unlockDataSourceItemNode(node){
+    var proto = node.constructor.prototype;
+    node.setDelegate = proto.setDelegate;
+    node.destroy = proto.destroy;
+  }
+
 
   //
   // sorting
@@ -1066,9 +1081,9 @@
           // copy childNodes to deleted
           deleted = arrayFrom(this.childNodes);
 
-          // restore posibility to change delegate, to drop delegate
+          // restore posibility to change delegate and destroy
           for (var i = 0, child; child = deleted[i]; i++)
-            child.setDelegate = child.constructor.prototype.setDelegate;
+            unlockDataSourceItemNode(child);
 
           // optimization: if all old nodes deleted -> clear childNodes
           var tmp = this.dataSource;
@@ -1084,8 +1099,8 @@
             var delegateId = item.basisObjectId;
             var oldChild = this.dataSourceMap_[delegateId];
 
-            // restore posibility to change delegate, to drop delegate
-            oldChild.setDelegate = oldChild.constructor.prototype.setDelegate;
+            // restore posibility to change delegate and destroy
+            unlockDataSourceItemNode(oldChild);
 
             delete this.dataSourceMap_[delegateId];
             this.removeChild(oldChild);
@@ -1105,10 +1120,10 @@
             delegate: item
           });
 
-          // prevent delegate override
+          // prevent delegate override and destroy
           // NOTE: we can't define setDelegate in config, because it
           // prevents delegate assignment
-          newChild.setDelegate = basis.fn.$undef;
+          lockDataSourceItemNode(newChild);
 
           // insert
           this.dataSourceMap_[item.basisObjectId] = newChild;
@@ -1809,7 +1824,7 @@
           // return posibility to change delegate
           if (oldDataSource)
             for (var i = 0, child; child = this.childNodes[i]; i++)
-              child.setDelegate = child.constructor.prototype.setDelegate;
+              unlockDataSourceItemNode(child);
 
           this.clear();
         }
