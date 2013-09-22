@@ -2205,14 +2205,6 @@
         return true;
       }
     },
-    
-   /**
-    * Returns true if node has it's own selection.
-    * @return {boolean}
-    */
-    hasOwnSelection: function(){
-      return !!this.selection;
-    },
 
    /**
     * Makes node selected if possible.
