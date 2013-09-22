@@ -327,12 +327,6 @@
       cssClassName: null,
 
      /**
-      * Identify node can have focus. Useful when search for next/previous node to focus.
-      * @type {boolean}
-      */
-      focusable: true,
-
-     /**
       * @inheritDoc
       */
       emit_update: function(delta){
@@ -597,18 +591,16 @@
       * @param {boolean=} select
       */
       focus: function(select){
-        if (this.focusable)
-        {
-          var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
-          if (focusElement)
-          {
-            if (focusTimer)
-              focusTimer = basis.clearImmediate(focusTimer);
+        var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
 
-            focusTimer = basis.setImmediate(function(){
-              DOM.focus(focusElement, select);
-            });
-          }
+        if (focusElement)
+        {
+          if (focusTimer)
+            focusTimer = basis.clearImmediate(focusTimer);
+
+          focusTimer = basis.setImmediate(function(){
+            DOM.focus(focusElement, select);
+          });
         }
       },
 
@@ -616,12 +608,10 @@
       * Remove focus from element.
       */
       blur: function(){
-        if (this.focusable)
-        {
-          var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
-          if (focusElement)
-            focusElement.blur();
-        }
+        var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
+
+        if (focusElement)
+          focusElement.blur();
       },
 
      /**

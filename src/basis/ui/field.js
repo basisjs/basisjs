@@ -128,6 +128,12 @@
     defaultValue: undefined,
     value: undefined,
 
+    /**
+    * Identify field can have focus. Useful when search for next/previous node to focus.
+    * @type {boolean}
+    */
+    focusable: true,
+
     //
     // events
     //
