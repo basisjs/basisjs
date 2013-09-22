@@ -1104,9 +1104,6 @@
         for (var i = 0, item; item = delta.inserted[i]; i++)
         {
           var newChild = createChildByFactory(this, {
-            cascadeDestroy: false,     // NOTE: it's important set cascadeDestroy to false, otherwise
-                                       // there will be two attempts to destroy node - 1st on delegate
-                                       // destroy, 2nd on object removal from dataSource
             //canSetDelegate: false,   // NOTE: we can't set canSetDelegate in config, because it
                                        // prevents delegate assignment
             delegate: item

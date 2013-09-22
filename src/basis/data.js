@@ -906,14 +906,6 @@
     emit_rootChanged: createEvent('rootChanged', 'oldRoot'),
 
    /**
-    * Flag determines object behaviour when assigned delegate is destroing:
-    * - true - destroy object on delegate object destroing (cascade destroy)
-    * - false - don't destroy object, detach delegate only
-    * @type {boolean}
-    */
-    cascadeDestroy: false,
-
-   /**
     * Default listeners.
     * @inheritDoc
     */
@@ -948,10 +940,7 @@
           this.emit_rootChanged(oldRoot);
         },
         destroy: function(){
-          if (this.cascadeDestroy)
-            this.destroy();
-          else
-            this.setDelegate();
+          this.setDelegate();
         }
       }
     },
