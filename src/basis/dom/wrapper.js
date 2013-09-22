@@ -1240,26 +1240,20 @@
     },
 
    /**
-    *
+    * @param {*} value
+    * @param {function|string} getter
+    * @return {basis.dom.wrapper.AbstractNode|undefined}
     */
     getChild: function(value, getter){
       return this.childNodes.search(value, getter);
     },
 
    /**
-    *
+    * @param {string} name
+    * @return {basis.dom.wrapper.AbstractNode|undefined} Return first child node with specified name.
     */
     getChildByName: function(name){
       return this.getChild(name, 'name');
-    },
-
-   /**
-    *
-    */
-    getChildren: function(value, getter){
-      return this.childNodes.filter(function(child){
-        return getter(child) == value;
-      });
     },
 
    /**
