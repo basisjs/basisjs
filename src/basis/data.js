@@ -944,6 +944,9 @@
     * @constructor
     */
     init: function(){
+      // root always must be set, by default root is instance itself
+      this.root = this;
+
       // inherit
       AbstractData.prototype.init.call(this);
 
@@ -953,16 +956,17 @@
       if (delegate)
       {
         // assign a delegate
-        // NOTE: ignore for this.data & this.state, no update/stateChanged events fired
         this.delegate = null;
+
+        // assign data & state to avoid update and stateChanged events
         this.data = delegate.data;
         this.state = delegate.state;
+
+        // assign delegate
         this.setDelegate(delegate);
       }
       else
       {
-        this.root = this;
-
         // if data doesn't exists - init it
         if (!this.data)
           this.data = {};
@@ -972,6 +976,15 @@
           this.target = this;
       }
     },
+
+    /** @cut */ setSyncAction: function(syncAction){
+    /** @cut */   // object with delegate and syncAction can produce data and state conflicts with delegate
+    /** @cut */   // warn about it
+    /** @cut */   if (syncAction && this.delegate)
+    /** @cut */     basis.dev.warn(this.constructor.syncAction + ' instance has a delegate and syncAction - it may produce conflics with data & state');
+    /** @cut */   
+    /** @cut */   AbstractData.prototype.setSyncAction.call(this, syncAction);
+    /** @cut */ },
 
    /**
     * Set new delegate object or reject it (if passed null).
