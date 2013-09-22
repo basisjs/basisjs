@@ -974,19 +974,6 @@
     },
 
    /**
-    * Returns root delegate object (that haven't delegate).
-    * @return {basis.data.Object}
-    */
-    getRootDelegate: function(){
-      var object = this;
-
-      while (object.delegate && object.delegate !== object)
-        object = object.delegate;
-
-      return object;
-    },
-
-   /**
     * Set new delegate object or reject it (if passed null).
     * @example
     *   var a = new basis.data.Object();
@@ -1127,7 +1114,7 @@
     * @return {boolean} Current object state.
     */
     setState: function(state, data){
-      var root = this.target || this.getRootDelegate();
+      var root = this.target || this.root;
 
       // set new state for root
       if (root !== this)
@@ -1142,7 +1129,7 @@
     * @return {Object|boolean} Delta if object data (this.data) was updated or false otherwise.
     */
     update: function(data){
-      var root = this.target || this.getRootDelegate();
+      var root = this.target || this.root;
 
       if (root !== this)
         return root.update(data);
