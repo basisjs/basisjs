@@ -491,19 +491,6 @@
     __extend__: getter
   });
 
- /**
-  * @param {function(object)|string|object} getter
-  * @param {*} defValue
-  * @param {function(value):boolean} checker
-  * @return {function(object)}
-  */
-  function def(getter, defValue, checker){
-    checker = checker || $isNull;
-    return function(object){
-      var res = getter(object);
-      return checker(res) ? defValue : res;
-    };
-  }
 
  /**
   * @param {string} key
@@ -3053,7 +3040,6 @@
       // getters and modificators
       getter: getter,
       nullGetter: nullGetter,
-      def: def,
       wrapper: wrapper,
 
       // lazy
