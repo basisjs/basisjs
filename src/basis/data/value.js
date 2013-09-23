@@ -57,10 +57,10 @@
     */
     bindingBridge: {
       attach: function(property, handler, context){
-        return property.addLink(context, handler);
+        property.addLink(context, handler);
       },
       detach: function(property, handler, context){
-        return property.removeLink(context, handler);
+        property.removeLink(context, handler);
       },
       get: function(property){
         return property.value;

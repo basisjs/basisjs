@@ -1517,10 +1517,10 @@
     */ 
     bindingBridge: {
       attach: function(host, fn, context){
-        return host.attach(fn, context);
+        host.attach(fn, context);
       },
       detach: function(host, fn, context){
-        return host.detach(fn, context);
+        host.detach(fn, context);
       },
       get: function(host){
         return host.get();

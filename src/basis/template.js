@@ -1675,24 +1675,20 @@
       attach: function(template, handler, context){
         for (var i = 0, listener; listener = template.attaches_[i]; i++)
           if (listener.handler == handler && listener.context == context)
-            return false;
+            return;
 
         template.attaches_.push({
           handler: handler,
           context: context
         });
-
-        return true;
       },
       detach: function(template, handler, context){
         for (var i = 0, listener; listener = template.attaches_[i]; i++)
           if (listener.handler == handler && listener.context == context)
           {
             template.attaches_.splice(i, 1);
-            return true;
+            return;
           }
-
-        return false;
       },
       get: function(){}
     },
