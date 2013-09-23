@@ -44,7 +44,7 @@ function loadToken(token){
   var data = {
     cultureList: cultureList,
     selectedToken: token.name,
-    dictionaryName: '/' + basis.path.relative('/', dictionary.resource.url)
+    dictionaryName: basis.path.relative('/', dictionary.resource.url)
   };
 
   transport.sendData('token', data);        
