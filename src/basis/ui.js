@@ -275,7 +275,7 @@
     return {
      /**
       * Template for object.
-      * @type {basis.html.Template}
+      * @type {basis.template.html.Template}
       */
       template: TEMPLATE,         // NOTE: explicit template constructor here;
                                   // it could be ommited in subclasses

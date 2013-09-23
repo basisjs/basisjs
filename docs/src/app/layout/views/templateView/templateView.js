@@ -5,7 +5,7 @@
   var TemplatePanel = resource('templatePanel.js')();
 
   var classList = basis.cssom.classList;
-  var Template = basis.html.Template;
+  var Template = basis.template.html.Template;
 
   function hasTemplate(node){
     return node.data.obj && node.data.obj.prototype && node.data.obj.prototype.template instanceof Template;
