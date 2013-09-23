@@ -1,5 +1,4 @@
 
-  basis.require('basis.timer');
   basis.require('basis.event');
   basis.require('basis.data');
 
@@ -437,7 +436,7 @@
         this.stateChanged_ = this.stateChanged_ || !!stateChanged;
 
         if (!this.timer_ && (this.valueChanged_ || this.stateChanged_))
-          this.timer_ = basis.timer.setImmediate(this.update.bind(this));
+          this.timer_ = basis.setImmediate(this.update.bind(this));
       }
     },
 
@@ -465,7 +464,7 @@
       this.valueChanged_ = false;
       this.stateChanged_ = false;
 
-      this.timer_ = basis.timer.clearImmediate(this.timer_);
+      this.timer_ = basis.clearImmediate(this.timer_);
 
       if (!cleaner.globalDestroy)
       {
@@ -506,8 +505,9 @@
     destroy: function(){
       this.lock();
       this.clear();
+
       if (this.timer_)
-        basis.timer.clearImmediate(this.timer_);
+        basis.clearImmediate(this.timer_);
 
       BindValue.prototype.destroy.call(this);
     }

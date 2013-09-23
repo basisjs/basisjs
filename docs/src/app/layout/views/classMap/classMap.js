@@ -1,5 +1,4 @@
 
-  basis.require('basis.timer');
   basis.require('basis.cssom');
   basis.require('basis.data')
   basis.require('basis.data.dataset')
@@ -80,7 +79,7 @@
         clearTimeout(scrollTimeout);
         classNode = searchClassNode(this, this.delegate.data.obj.className);
         if (classNode)
-          scrollTimeout = basis.timer.nextTick(scrollToClassNode);
+          scrollTimeout = basis.nextTick(scrollToClassNode);
       }
     }     
   });

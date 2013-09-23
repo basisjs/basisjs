@@ -1,4 +1,3 @@
-basis.require('basis.timer');
 basis.require('basis.dom.event');
 basis.require('app.ext.docTree');
 
@@ -125,7 +124,7 @@ if ('onhashchange' in window)
 else
   setInterval(checkLocation, 250);
 
-basis.timer.nextTick(checkLocation);
+basis.nextTick(checkLocation);
 
 //
 // exports

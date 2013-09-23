@@ -1,5 +1,4 @@
 
-  basis.require('basis.timer');
   basis.require('basis.event');
   basis.require('basis.data');
   basis.require('basis.entity');
@@ -189,7 +188,7 @@
       if (this.subscriberCount && 'text' in delta)
       {
         var self = this;
-        basis.timer.nextTick(function(){
+        basis.nextTick(function(){
           self.parseText(self.data.text);
         });
       }
@@ -200,7 +199,7 @@
       if (this.subscriberCount && this.data.text)
       {
         var self = this;
-        basis.timer.nextTick(function(){
+        basis.nextTick(function(){
           self.parseText(self.data.text);
         });
       }
@@ -694,7 +693,7 @@
         },
         complete: function(){
           this.curResource = null;
-          basis.timer.nextTick(this.load.bind(this));
+          basis.nextTick(this.load.bind(this));
         }
       }, resourceLoader);
 
@@ -710,7 +709,7 @@
           attemptCount: 0
         });
 
-        basis.timer.nextTick(this.load.bind(this));
+        basis.nextTick(this.load.bind(this));
       }
     },
     load: function(){
@@ -743,12 +742,12 @@
     if (item)
     {
       sourceParser[item.kind](item);
-      basis.timer.nextTick(resolveRes);
+      basis.nextTick(resolveRes);
     }
     else
       basis.dev.log(new Date - resolveResStart);
   }
-  basis.timer.nextTick(resolveRes);
+  basis.nextTick(resolveRes);
 
 
   module.exports = {

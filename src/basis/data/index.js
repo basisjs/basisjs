@@ -1,5 +1,4 @@
 
-  basis.require('basis.timer');
   basis.require('basis.data');
   basis.require('basis.data.dataset');
   basis.require('basis.data.value');
@@ -885,7 +884,7 @@
 
     recalcRequest: function(){
       if (!this.timer_)
-        this.timer_ = basis.timer.setImmediate(this.recalc);
+        this.timer_ = basis.setImmediate(this.recalc);
     },
 
     recalc: function(){
@@ -893,7 +892,7 @@
         this.calcMember(this.items_[idx]);
 
       this.indexUpdated = false;
-      this.timer_ = basis.timer.clearImmediate(this.timer_);
+      this.timer_ = basis.clearImmediate(this.timer_);
     },
 
     calcMember: function(member){

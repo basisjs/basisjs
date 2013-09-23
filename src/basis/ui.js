@@ -1,5 +1,4 @@
 
-  basis.require('basis.timer');
   basis.require('basis.l10n');
   basis.require('basis.data');
   basis.require('basis.dom.wrapper');
