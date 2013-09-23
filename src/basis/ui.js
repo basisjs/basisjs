@@ -557,9 +557,13 @@
         }
       },
 
+     /**
+      * @param {string} bindName
+      */ 
       updateBind: function(bindName){
         var binding = this.binding[bindName];
         var getter = binding && binding.getter;
+
         if (getter && this.tmpl)
           this.tmpl.set(bindName, getter(this));
       },
@@ -574,6 +578,9 @@
 
         if (action)
           action.call(this, event);
+
+        /** @cut */ if (!action)
+        /** @cut */   basis.dev.warn('template call `' + actionName + '` action, but it isn\'t defined in action list');
       },
 
      /**
@@ -583,7 +590,7 @@
       * @param {object} delta
       */
       templateUpdate: function(tmpl, eventName, delta){
-        /** nothing to do, override it in sub classes */
+        /* nothing to do, override it in sub classes */
       },
 
      /**
