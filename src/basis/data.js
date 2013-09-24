@@ -1501,11 +1501,39 @@
     },
 
    /**
-    * Proxy method for contained dataset. If no dataset, returns empty array.
-    * @return {Array.<basis.data.Object>}
+    * Proxy method for contained dataset.
+    */ 
+    has: function(object){
+      return this.dataset ? this.dataset.has(object) : null;
+    },
+
+   /**
+    * Proxy method for contained dataset.
     */ 
     getItems: function(){
-      return this.dataset ? this.dataset.getItems() : []
+      return this.dataset ? this.dataset.getItems() : [];
+    },
+
+   /**
+    * Proxy method for contained dataset.
+    */ 
+    pick: function(){
+      return this.dataset ? this.dataset.pick() : null;
+    },
+
+   /**
+    * Proxy method for contained dataset.
+    */
+    top: function(count){
+      return this.dataset ? this.dataset.top(count) : [];
+    },   
+
+   /**
+    * Proxy method for contained dataset.
+    */ 
+    forEach: function(fn){
+      if (this.dataset)
+        return this.dataset.forEach(fn);
     },
 
    /**
