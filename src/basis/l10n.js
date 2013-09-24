@@ -595,7 +595,7 @@
 
       if (cultureRow.length > 2)
       {
-        basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture+ '`; other cultures except first one was ignored');
+        ;;;basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture+ '`; other cultures except first one was ignored');
         cultureRow = cultureRow.slice(0, 2);
       }
 

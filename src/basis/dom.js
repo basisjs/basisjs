@@ -691,10 +691,7 @@
   * @return {Node|Array.<Node>} Inserted nodes (may different of source members).
   */
   function insert(node, source, insertPoint, refChild){
-    node = get(node); // TODO: remove
-
-    if (!node)
-      throw new Error('basis.dom.insert: destination node can\'t be null');
+    node = get(node) || node; // TODO: remove
 
     switch (insertPoint) {
       case undefined: // insertPoint omitted
