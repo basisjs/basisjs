@@ -30,7 +30,6 @@ basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('basis.data.vector');
 basis.require('basis.entity');
-basis.require('basis.session');
 basis.require('basis.net');
 basis.require('basis.net.action');
 basis.require('basis.net.service');
