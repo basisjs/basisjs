@@ -1,4 +1,3 @@
-basis.require('basis.timer');
 basis.require('basis.event');
 basis.require('basis.ua');
 basis.require('basis.ua.visibility');
