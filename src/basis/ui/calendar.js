@@ -588,12 +588,12 @@
         for (var i = 0, section; section = delta.inserted[i++];)
         {
           section.setViewDate(this.date.value);
-          this.selectedDate.addLink(section, section.setSelectedDate);
+          this.selectedDate.link(section, section.setSelectedDate);
         }
 
       if (delta.deleted)
         for (var i = 0, section; section = delta.deleted[i++];)
-          this.selectedDate.removeLink(section, section.setSelectedDate);
+          this.selectedDate.unlink(section, section.setSelectedDate);
 
       UINode.prototype.emit_childNodesModified.call(this, delta);
 

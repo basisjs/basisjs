@@ -1062,7 +1062,7 @@
       }, this.popup));
 
       if (this.property)
-        this.property.addLink(this, this.setValue);
+        this.property.link(this, this.setValue);
     },
     templateSync: function(){
       UINode.prototype.templateSync.call(this);
@@ -1104,7 +1104,7 @@
     destroy: function(){
       if (this.property)
       {
-        this.property.removeLink(this);
+        this.property.unlink(this);
         this.property = null;
       }
 

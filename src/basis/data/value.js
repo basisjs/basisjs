@@ -5,7 +5,6 @@
 
  /**
   * Namespace overview:
-  * - {basis.data.value.BindValue}
   * - {basis.data.value.Property}
   * - {basis.data.value.ObjectSet}
   * - {basis.data.value.Expression}
@@ -27,249 +26,11 @@
   var Value = basis.data.Value;
   var STATE = basis.data.STATE;
 
-  var instanceMap = {};
-
-
-  //
-  // BindValue
-  //
-
-  var EMMITER_HANDLER = { 
-    destroy: function(object){
-      this.removeLink(object); 
-    }
-  };
-
+ 
  /**
   * @class
   */
-  var BindValue = Value.subclass({
-    className: namespace + '.BindValue',
-
-   /**
-    * @type {Array.<object>}
-    * @private
-    */
-    links_: null,
-
-   /**
-    * Settings for bindings.
-    */
-    bindingBridge: {
-      attach: function(property, handler, context){
-        property.addLink(context, handler);
-      },
-      detach: function(property, handler, context){
-        property.removeLink(context, handler);
-      },
-      get: function(property){
-        return property.value;
-      }
-    },
-
-   /**
-    * @event
-    */
-    emit_change: function(value, oldValue){
-      Value.prototype.emit_change.call(this, value, oldValue);
-
-      if (cleaner.globalDestroy)
-        return;
-
-      var cursor = this;
-      while (cursor = cursor.links_)
-        this.apply_(cursor, oldValue);
-    },
-
-   /**
-    * @constructor
-    */
-    init: function(){
-      Value.prototype.init.call(this);
-
-      instanceMap[this.basisObjectId] = this;
-    },
-
-   /**
-    * Adds link to object property or method. Optional parameter `format` using for
-    * value convertation to another value or type.
-    * If object is instance of {basis.event.Emitter}, BindValue attach handler which
-    * removes property links on object destroy.
-    *
-    * @example
-    *
-    *   var value = new basis.data.value.BindValue({ ... });
-    *
-    *   value.addLink(object, 'property');          // object.property = value;
-    *   value.addLink(object, 'property', '[{0}]'); // object.property = '[{0}]'.format(value, oldValue);
-    *   value.addLink(object, 'property', Number);  // object.property = Number(value, oldValue);
-    *   value.addLink(object, 'property', { a: 1, b: 2});  // object.property = { a: 1, b: 2 }[value];
-    *   value.addLink(object, object.method);       // object.method(value, oldValue);
-    *
-    *   value.addLink(object, function(value, oldValue){ // {function}.call(object, value, oldValue);
-    *     // some code
-    *     // `this` refer to object
-    *   });
-    *
-    *   // Trace property changes
-    *   var historyOfChanges = new Array();
-    *   var value = new basis.data.value.BindValue({ value: 1 });
-    *   value.addLink(historyOfChanges, historyOfChanges.push);  // historyOfChanges -> [1]
-    *   value.set(2);  // historyOfChanges -> [1, 2]
-    *   value.set(3);  // historyOfChanges -> [1, 2, 3]
-    *   value.set(3);  // property didn't change self value
-    *                     // historyOfChanges -> [1, 2, 3]
-    *   value.set(1);  // historyOfChanges -> [1, 2, 3, 1]
-    *
-    *   // Use console for log value changes
-    *   value.addLink(console, console.log, 'new value is {0}');
-    *
-    * @param {object} object Target object.
-    * @param {string|function} field Field or method of target object.
-    * @param {string|function|object=} format Value modificator.
-    * @return {object} Returns object.
-    */
-    addLink: function(object, field, format){
-      // process format argument
-      if (typeof format != 'function')
-        format = getter(basis.fn.$self, format);
-
-      // check for duplicates
-      /** @cut */ var cursor = this;
-      /** @cut */ while (cursor = cursor.links_)
-      /** @cut */   if (cursor.object === object && cursor.field == field)
-      /** @cut */   {
-      /** @cut */     basis.dev.warn(this.constructor.className + '#addLink: Duplicate link for property');
-      /** @cut */     break;
-      /** @cut */   }
-
-      // create link
-      this.links_ = { 
-        object: object,
-        field: field,
-        format: format,
-        links_: this.links_
-      };
-      
-      // add handler if object is basis.event.Emitter
-      if (object instanceof Emitter)
-        object.addHandler(EMMITER_HANDLER, this);
-
-      // make effect on object
-      this.apply_(this.links_);
-
-      return object;
-    },
-
-   /**
-    * Removes link from object. Parameters must be the same
-    * as for addLink method. If field omited all links are remove.
-    *
-    * @example
-    *   var value = new basis.data.value.BindValue();
-    *   // add links
-    *   value.addLink(object, 'field');
-    *   value.addLink(object, object.method);
-    *   // remove links
-    *   value.removeLink(object, 'field');
-    *   value.removeLink(object, object.method);
-    *   // or remove all links for object
-    *   value.removeLink(object);
-    *
-    *   // incorrect usage
-    *   value.addLink(object, function(value){ this.field = value * 2; });
-    *   ...
-    *   value.removeLink(object, function(value){ this.field = value * 2; });
-    *   // link to object will not removed
-    *
-    *   // right way
-    *   var linkHandler = function(value){ this.field = value * 2; };
-    *   value.addLink(object, linkHandler);
-    *   ...
-    *   value.removeLink(object, linkHandler);
-    *
-    *   // for cases when object is instance of {basis.event.Emitter} removing link on destroy is not required
-    *   var emitterInstance = new basis.event.Emitter();
-    *   value.addLink(emitterInstance, 'title');
-    *   ...
-    *   emitterInstance.destroy();    // links to emitterInstance will be removed
-    *
-    * @param {object} object
-    * @param {string|function=} field
-    */
-    removeLink: function(object, field){
-      var cursor = this;
-      var prev;
-
-      while (prev = cursor, cursor = cursor.links_)
-        if (cursor.object === object && (!field || field == cursor.field))
-        {
-          // prevent apply new values
-          cursor.field = null;
-
-          // delete link
-          prev.links_ = cursor.links_;
-
-          // remove handler if object is basis.event.Emitter
-          if (cursor.object instanceof Emitter)
-            cursor.object.removeHandler(EMMITER_HANDLER, this);
-        }
-    },
-
-   /**
-    * Removes all property links to objects.
-    */
-    clear: function(){
-      var cursor = this;
-
-      // remove event handlers from basis.event.Emitter instances
-      while (cursor = cursor.links_)
-        if (cursor.object instanceof Emitter)
-          cursor.object.removeHandler(EMMITER_HANDLER, this);
-
-      // clear links
-      this.links_ = null;
-    },
-
-   /**
-    * @param {object} link
-    * @param {*} oldValue Object value before changes.
-    * @private
-    */
-    apply_: function(link, oldValue){
-      var field = link.field;
-
-      // field specified
-      if (field != null)
-      {
-        var value = link.format(this.value);
-        var object = link.object;
-
-        if (typeof field == 'function')
-          field.call(object, value, arguments.length < 2 ? value : link.format(oldValue));
-        else
-          object[field] = value;
-      }
-    },
-
-   /**
-    * @destructor
-    */
-    destroy: function(){
-      this.clear();
-
-      Value.prototype.destroy.call(this);
-
-      this.links_ = null;
-      delete instanceMap[this.basisObjectId];
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Property = BindValue.subclass({
+  var Property = Value.subclass({
     className: namespace + '.Property',
 
     // use custom constructor
@@ -286,7 +47,7 @@
       this.handler = handler;
       this.proxy = proxy;
 
-      BindValue.prototype.init.call(this);
+      Value.prototype.init.call(this);
     }
   });
 
@@ -314,7 +75,7 @@
  /**
   * @class
   */    
-  var ObjectSet = BindValue.subclass({
+  var ObjectSet = Value.subclass({
     className: namespace + '.ObjectSet',
 
    /**
@@ -366,7 +127,7 @@
     * @constructor
     */
     init: function(){
-      BindValue.prototype.init.call(this);
+      Value.prototype.init.call(this);
 
       var objects = this.objects;
       this.objects = [];
@@ -509,7 +270,7 @@
       if (this.timer_)
         basis.clearImmediate(this.timer_);
 
-      BindValue.prototype.destroy.call(this);
+      Value.prototype.destroy.call(this);
     }
   });
 
@@ -525,7 +286,7 @@
     className: namespace + '.Expression',
 
     init: function(args, calc){
-      BindValue.prototype.init.call(this);
+      Value.prototype.init.call(this);
 
       var args = basis.array(arguments);
       var calc = args.pop();
@@ -538,7 +299,7 @@
 
       if (args.length == 1)
       {
-        args[0].addLink(this, function(value){
+        args[0].link(this, function(value){
           this.set(calc.call(this, value));
         });
       }
@@ -555,7 +316,7 @@
           }
         });
 
-        changeWatcher.addLink(this, this.set);
+        changeWatcher.link(this, this.set);
 
         this.addHandler({
           destroy: function(){
@@ -569,23 +330,10 @@
 
 
   //
-  // clean up instances
-  //
-
-  cleaner.add(function(){
-    for (var key in instanceMap)
-      instanceMap[key].destroy();
-
-    instanceMap = null;
-  });
-
-
-  //
   // export names
   //
 
   module.exports = {
-    BindValue: BindValue,
     Property: Property,
     ObjectSet: ObjectSet,
     Expression: Expression

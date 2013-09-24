@@ -62,6 +62,6 @@ var view = new basis.ui.Node({
   }
 });
 
-Todo.selected.addLink(view, view.setDataSource);
+Todo.selected.link(view, view.setDataSource);
 
 module.exports = view;

@@ -529,16 +529,15 @@
   //
 
   var computeFunctions = {};
-
-  var VALUE_TOKEN_HANDLER = {
-    change: function(sender){
-      var cursor = this;
-
-      while (cursor = cursor.tokens_)
-        cursor.token.set(cursor.fn(sender.value));
-    }
+  var valueSetters = {};
+  var valueSyncToken = function(value){
+    this.set(this.fn(value));
   };
-
+  var VALUE_EMMITER_HANDLER = { 
+    destroy: function(object){
+      this.value.unlink(object, this.fn);
+    }
+  };  
 
  /**
   * @class
@@ -551,7 +550,14 @@
     * @param {*} oldValue Value before changes.
     * @event
     */
-    emit_change: createEvent('change', 'oldValue'),
+    emit_change: createEvent('change', 'oldValue') && function(oldValue){
+      events.change.call(this, oldValue);
+
+      var cursor = this;
+
+      while (cursor = cursor.links_)
+        cursor.fn.call(cursor.context, this.value, oldValue);
+    },
 
    /**
     * Actual value.
@@ -587,7 +593,22 @@
    /**
     * @type {object}
     */
-    tokens_: null,
+    links_: null,    
+
+   /**
+    * Settings for bindings.
+    */
+    bindingBridge: {
+      attach: function(host, callback, context){
+        host.link(context, callback, true);
+      },
+      detach: function(host, callback, context){
+        host.unlink(context, callback);
+      },
+      get: function(host){
+        return host.value;
+      }
+    },
 
    /**
     * @constructor
@@ -749,35 +770,23 @@
     * @return {basis.Token|basis.DeferredToken}
     */ 
     as: function(fn, deferred){
-      if (typeof fn != 'function')
-        fn = basis.fn.$self;
-
-      if (this.tokens_)
+      if (this.links_)
       {
         // try to find token with the same function
         var cursor = this;
 
-        while (cursor = cursor.tokens_)
-          if (cursor.fn == String(fn)) // compare functions as strings, as they should be with no sideeffect
+        while (cursor = cursor.links_)
+          if (cursor.context instanceof basis.Token && cursor.context.fn == String(fn)) // compare functions as strings, as they should be with no sideeffect
             return deferred
-              ? cursor.token.deferred()
-              : cursor.token;
-      }
-      else
-      {
-        // add handler on value change, if there was no token before
-        this.addHandler(VALUE_TOKEN_HANDLER);
+              ? cursor.context.deferred()
+              : cursor.context;
       }
 
       // create token
-      var token = new basis.Token(fn(this.value));
+      var token = new basis.Token();
+      token.fn = fn;
 
-      // add to list
-      this.tokens_ = {
-        fn: fn,
-        token: token,
-        tokens_: this.tokens_
-      };
+      this.link(token, valueSyncToken);
 
       return deferred ? token.deferred() : token;
     },
@@ -790,17 +799,93 @@
       return this.as(fn, true);
     },
 
+   /* 
+    * @param {object} context Target object.
+    * @param {string|function} fn Property or setter function.
+    * @return {object} Returns object.
+    */
+    link: function(context, fn, noApply){
+      if (typeof fn != 'function')
+      {
+        var property = String(fn);
+
+        fn = valueSetters[property];
+
+        if (!fn)
+          fn = valueSetters[property] = function(value){
+            this[property] = value;
+          };
+      }
+
+      // check for duplicates
+      /** @cut */ var cursor = this;
+      /** @cut */ while (cursor = cursor.links_)
+      /** @cut */   if (cursor.context === context && cursor.fn === fn)
+      /** @cut */   {
+      /** @cut */     basis.dev.warn(this.constructor.className + '#attach: Duplicate link pair context-fn');
+      /** @cut */     break;
+      /** @cut */   }
+
+      // create link
+      this.links_ = {
+        value: this,
+        context: context,
+        fn: fn,
+        links_: this.links_
+      };
+      
+      // add handler if object is basis.event.Emitter
+      if (context instanceof Emitter)
+        context.addHandler(VALUE_EMMITER_HANDLER, this.links_);
+
+      if (!noApply)
+        fn.call(context, this.value);
+
+      return context;
+    },
+
+   /* 
+    * @param {object} context Target object.
+    * @param {string|function} fn Property or setter function.
+    * @return {object} Returns object.
+    */
+    unlink: function(context, fn){
+      var cursor = this;
+      var prev;
+
+      while (prev = cursor, cursor = cursor.links_)
+        if (cursor.context === context && (!fn || cursor.fn === fn))
+        {
+          // prevent apply new values
+          cursor.fn = basis.fn.$undef;
+
+          // delete link
+          prev.links_ = cursor.links_;
+
+          // remove handler if object is basis.event.Emitter
+          if (cursor.context instanceof Emitter)
+            cursor.context.removeHandler(VALUE_EMMITER_HANDLER, cursor);
+        }
+    },
+
    /**
     * @destructor
     */
     destroy: function(){
+      var cursor = this;
+
+      // remove event handlers from all basis.event.Emitter instances
+      while (cursor = cursor.links_)
+        if (cursor.object instanceof Emitter)
+          cursor.object.removeHandler(VALUE_EMMITER_HANDLER, cursor);
+
       AbstractData.prototype.destroy.call(this);
 
       this.proxy = null;
       this.initValue = null;
       this.value = null;
       this.lockedValue_ = null;
-      this.tokens_ = null;
+      this.links_ = null;
     }
   });
 

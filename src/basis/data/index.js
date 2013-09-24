@@ -23,7 +23,7 @@
   var AbstractDataset = basis.data.AbstractDataset;
   var DatasetWrapper = basis.data.DatasetWrapper;
 
-  var BindValue = basis.data.value.BindValue;
+  var Value = basis.data.Value;
   var MapFilter = basis.data.dataset.MapFilter;
 
 
@@ -67,7 +67,7 @@
   * Base class for indexes.
   * @class
   */
-  var Index = Class(BindValue, {
+  var Index = Class(Value, {
     className: namespace + '.Index',
     autoDestroy: true,
 
@@ -100,7 +100,7 @@
     init: function(){
       this.indexCache_ = {};
 
-      BindValue.prototype.init.call(this);
+      Value.prototype.init.call(this);
     },
 
    /**
@@ -129,7 +129,7 @@
     },
 
     destroy: function(){
-      BindValue.prototype.destroy.call(this);
+      Value.prototype.destroy.call(this);
 
       this.indexCache_ = null;
     }
