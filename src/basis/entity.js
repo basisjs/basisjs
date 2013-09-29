@@ -960,8 +960,10 @@
   var BaseEntity = Class(DataObject, {
     className: namespace + '.BaseEntity',
 
-    canSetDelegate: false,
     isTarget: true,
+    setDelegate: function(){
+      // entity can't has a delegate
+    },
 
     modified: null,
 

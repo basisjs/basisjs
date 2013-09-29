@@ -1,5 +1,4 @@
 
-  basis.require('basis.timer');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.cssom');
@@ -194,7 +193,7 @@
     */
     requestRelayout: function(){
       if (!this.timer_)
-        this.timer_ = basis.timer.nextTick(this.relayout, 0);
+        this.timer_ = basis.setImmediate(this.relayout);
     },
 
    /**
@@ -257,14 +256,14 @@
 
       // reset timer
       // it should be at the end of relayout to prevent relayout call while relayout
-      this.timer_ = clearTimeout(this.timer_);
+      this.timer_ = basis.clearImmediate(this.timer_);
     },
 
    /**
     * @inheritDoc
     */
     destroy: function(){
-      clearTimeout(this.timer_);
+      basis.clearImmediate(this.timer_);
       this.timer_ = true; // prevent relayout call
 
       this.section_measure_ = null;

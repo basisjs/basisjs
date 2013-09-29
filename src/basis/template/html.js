@@ -1,5 +1,4 @@
 
-  basis.require('basis.timer');
   basis.require('basis.dom.event');
   basis.require('basis.l10n');
   basis.require('basis.template');
@@ -392,7 +391,7 @@
               if (anim)
               {
                 domRef.classList.add(newClass + '-anim');
-                basis.timer.nextTick(function(){
+                basis.nextTick(function(){
                   domRef.classList.remove(newClass + '-anim');
                 });
               }
@@ -426,7 +425,7 @@
               if (anim)
               {
                 classList.add(newClass + '-anim');
-                basis.timer.nextTick(function(){
+                basis.nextTick(function(){
                   var classList = (classNameIsObject ? domRef.className.baseVal : domRef.className).split(WHITESPACE);
                   
                   classList.remove(newClass + '-anim');

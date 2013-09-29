@@ -704,7 +704,7 @@
           '}' +
         '}' +
 
-        (objectRefs ? ';if(obj)' + objectRefs + '=(id<<12)|tid' : '') +
+        (objectRefs ? ';if(obj||onAction)' + objectRefs + '=(id<<12)|tid' : '') +
 
         bindings.set +
 

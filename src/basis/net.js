@@ -2,7 +2,6 @@
   basis.require('basis.ua');
   basis.require('basis.event');
   basis.require('basis.data');
-  basis.require('basis.timer');
 
  /**
   * @namespace basis.net
@@ -286,7 +285,7 @@
       var nextRequest = this.requestQueue.shift();
       if (nextRequest)
       {
-        basis.timer.nextTick(function(){
+        basis.nextTick(function(){
           nextRequest.doRequest();
         });
       }
@@ -775,7 +774,7 @@
           failureCallback(error);
         },
         complete: function(){
-          basis.timer.nextTick(function(){
+          basis.nextTick(function(){
             transport.destroy();
           });
         }

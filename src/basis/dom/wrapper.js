@@ -64,6 +64,21 @@
 
   var childNodesDatasetMap = {};
 
+  function warnOnDataSourceItemNodeDestoy(){
+    /** @cut */ basis.dev.warn(namespace + ': node can\'t be destroed as representing dataSource item, destroy delegate item or remove it from dataSource first');
+  }
+
+  function lockDataSourceItemNode(node){
+    node.setDelegate = basis.fn.$undef;
+    node.destroy = warnOnDataSourceItemNodeDestoy;
+  }
+
+  function unlockDataSourceItemNode(node){
+    var proto = node.constructor.prototype;
+    node.setDelegate = proto.setDelegate;
+    node.destroy = proto.destroy;
+  }
+
 
   //
   // sorting
@@ -384,12 +399,6 @@
     * @type {basis.dom.wrapper.DELEGATE}
     */
     autoDelegate: DELEGATE.NONE,
-
-   /**
-    * @type {string}
-    * @readonly
-    */
-    nodeType: 'DOMWrapperNode',
 
    /**
     * Name of node. Using by parent to fetch child by name.
@@ -1071,8 +1080,10 @@
         {
           // copy childNodes to deleted
           deleted = arrayFrom(this.childNodes);
+
+          // restore posibility to change delegate and destroy
           for (var i = 0, child; child = deleted[i]; i++)
-            child.canSetDelegate = true;
+            unlockDataSourceItemNode(child);
 
           // optimization: if all old nodes deleted -> clear childNodes
           var tmp = this.dataSource;
@@ -1088,8 +1099,10 @@
             var delegateId = item.basisObjectId;
             var oldChild = this.dataSourceMap_[delegateId];
 
+            // restore posibility to change delegate and destroy
+            unlockDataSourceItemNode(oldChild);
+
             delete this.dataSourceMap_[delegateId];
-            oldChild.canSetDelegate = true; // allow delegate drop
             this.removeChild(oldChild);
 
             deleted.push(oldChild);
@@ -1104,15 +1117,13 @@
         for (var i = 0, item; item = delta.inserted[i]; i++)
         {
           var newChild = createChildByFactory(this, {
-            cascadeDestroy: false,     // NOTE: it's important set cascadeDestroy to false, otherwise
-                                       // there will be two attempts to destroy node - 1st on delegate
-                                       // destroy, 2nd on object removal from dataSource
-            //canSetDelegate: false,   // NOTE: we can't set canSetDelegate in config, because it
-                                       // prevents delegate assignment
             delegate: item
           });
 
-          newChild.canSetDelegate = false; // prevent delegate override
+          // prevent delegate override and destroy
+          // NOTE: we can't define setDelegate in config, because it
+          // prevents delegate assignment
+          lockDataSourceItemNode(newChild);
 
           // insert
           this.dataSourceMap_[item.basisObjectId] = newChild;
@@ -1244,26 +1255,20 @@
     },
 
    /**
-    *
+    * @param {*} value
+    * @param {function|string} getter
+    * @return {basis.dom.wrapper.AbstractNode|undefined}
     */
     getChild: function(value, getter){
       return this.childNodes.search(value, getter);
     },
 
    /**
-    *
+    * @param {string} name
+    * @return {basis.dom.wrapper.AbstractNode|undefined} Return first child node with specified name.
     */
     getChildByName: function(name){
       return this.getChild(name, 'name');
-    },
-
-   /**
-    *
-    */
-    getChildren: function(value, getter){
-      return this.childNodes.filter(function(child){
-        return getter(child) == value;
-      });
     },
 
    /**
@@ -1819,7 +1824,7 @@
           // return posibility to change delegate
           if (oldDataSource)
             for (var i = 0, child; child = this.childNodes[i]; i++)
-              child.canSetDelegate = true;
+              unlockDataSourceItemNode(child);
 
           this.clear();
         }
@@ -2202,14 +2207,6 @@
 
         return true;
       }
-    },
-    
-   /**
-    * Returns true if node has it's own selection.
-    * @return {boolean}
-    */
-    hasOwnSelection: function(){
-      return !!this.selection;
     },
 
    /**

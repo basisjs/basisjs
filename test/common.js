@@ -45,8 +45,8 @@ function loadTest(TestCase){
       }
     });
 
-    Tester.state.addLink(buttonRun, function(value){ this.disabled = value == 'run'; });
-    Tester.state.addLink(buttonStop, function(value){ this.disabled = value != 'run'; });
+    Tester.state.link(buttonRun, function(value){ this.disabled = value == 'run'; });
+    Tester.state.link(buttonStop, function(value){ this.disabled = value != 'run'; });
 
     if (location.hash == '#autorun')
       Tester.run();

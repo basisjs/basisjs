@@ -40,6 +40,58 @@
 
       return [
         {
+          name: 'basis.data.Value',
+          testcase: [
+            {
+              name: 'Value#as',
+              test: function(){
+                var value = new basis.data.Value();
+                var fn = function(){};
+                var a = value.as(fn);
+                var b = value.as(fn);
+
+                this.is(true, a instanceof basis.Token);
+                this.is(true, a === b);
+
+                ///////
+
+                var value = new basis.data.Value();
+                var fn = function(){};
+                var a = value.as(fn, true);
+                var b = value.as(fn, true);
+
+                this.is(true, a instanceof basis.DeferredToken);
+                this.is(true, a === b);
+
+                ///////
+
+                var value = new basis.data.Value();
+                var a = value.as(function(){});
+                var b = value.as(function(){});
+
+                this.is(true, a instanceof basis.Token);
+                this.is(true, a === b);
+
+                ///////
+
+                var value = new basis.data.Value({ value: 3 });
+                var fn = function(v){ return v * v };
+                var a = value.as(fn);
+                var b = value.as(basis.fn.$self);
+
+                this.is(true, a !== b);
+                this.is(9, a.value);
+                this.is(3, b.value);
+
+                value.set(4);
+
+                this.is(16, a.value);
+                this.is(4, b.value);
+              }
+            }
+          ]
+        },
+        {
           name: 'Property',
           testcase: [
             {
@@ -50,26 +102,31 @@
               }
             },
             {
-              name: 'addLink/removeLink',
+              name: 'link/unlink',
               test: function(){
                 var p = new Property(1);
-                var o = new basis.data.Object();
+                var o = new basis.data.Object({
+                  setXXX: function(value){
+                    this.xxx = value;
+                  }
+                });
 
                 this.is(null, p.links_);
                 this.is(null, o.handler);
                 
-                p.addLink(o, 'xxx');
+                p.link(o, o.setXXX);
                 this.is(1, o.xxx);
                 this.is(true, o.handler !== null);
-                this.is(true, p.links_.object === o);
+                this.is(true, p.links_.context === o);
                 this.is(null, p.links_.links_);
 
-                p.removeLink(o);
+                p.unlink(o);
                 this.is(null, o.handler);
                 this.is(null, p.links_);
 
-                p.addLink(o, 'xxx');
-                this.is(true, p.links_.object === o);
+                p.link(o, o.setXXX);
+                p.link(o, function(value){ this.xxx = value });
+                this.is(true, p.links_.context === o);
 
                 o.destroy();
                 this.is(null, o.handler);
@@ -83,7 +140,7 @@
                 var t = {};
                 var value = Math.random();
 
-                TestProperty.addLink(t, 'saved');
+                TestProperty.link(t, 'saved');
                 TestProperty.set(value);
                 this.is(value, TestProperty.value);
                 this.is(value, t.saved);
@@ -94,75 +151,29 @@
                 this.is(value, TestProperty.value);
                 this.is(0, t.saved);
 
-                TestProperty.clear();
+                TestProperty.destroy();
               }
             },
             {
               name: 'set #2',
               test: function(){
                 var TestProperty = new Property(123);
-
                 var t = {};
                 var value = Math.random();
-                TestProperty.addLink(t, 'saved');
+                TestProperty.link(t, 'saved');
                 TestProperty.set(value);
                 this.is(value, TestProperty.value);
                 this.is(value, t.saved);
-                TestProperty.clear();
+                TestProperty.destroy();
 
+                var TestProperty = new Property(123);
                 var t = {};
                 var value = Math.random();
-                TestProperty.addLink(t, 'saved', '{0:.2}');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(value.toFixed(2), t.saved);
-                TestProperty.clear();
-
-                var t = {};
-                var value = Math.random();
-                TestProperty.addLink(t, function(value){ this.saved = value * 2; });
+                TestProperty.link(t, function(value){ this.saved = value * 2; });
                 TestProperty.set(value);
                 this.is(value, TestProperty.value);
                 this.is(value * 2, t.saved);
-                TestProperty.clear();
-              }
-            },
-            {
-              name: 'set #3',
-              test: function(){
-                var TestProperty = new Property(123);
-
-                var t = DOM.createElement('DIV');
-                var value = Math.random();
-                TestProperty.addLink(t, 'innerHTML');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(String(value), t.innerHTML);
-                TestProperty.clear();
-
-                var t = DOM.createElement('DIV');
-                var value = Math.random();
-                TestProperty.addLink(t, 'title');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(String(value), t.title);
-                TestProperty.clear();
-
-                var t = DOM.createText('#text');
-                var value = Math.random();
-                TestProperty.addLink(t, 'nodeValue');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(String(value), t.nodeValue);
-                TestProperty.clear();
-
-                var t = DOM.createText('#text');
-                var value = Math.random();
-                TestProperty.addLink(t, 'nodeValue', '{0:.2}');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(value.toFixed(2), t.nodeValue);
-                TestProperty.clear();
+                TestProperty.destroy();
               }
             },
             {

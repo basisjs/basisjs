@@ -491,19 +491,6 @@
     __extend__: getter
   });
 
- /**
-  * @param {function(object)|string|object} getter
-  * @param {*} defValue
-  * @param {function(value):boolean} checker
-  * @return {function(object)}
-  */
-  function def(getter, defValue, checker){
-    checker = checker || $isNull;
-    return function(object){
-      var res = getter(object);
-      return checker(res) ? defValue : res;
-    };
-  }
 
  /**
   * @param {string} key
@@ -568,14 +555,6 @@
       if (!fired++)
         return run.apply(thisObject || this, arguments);
     };
-  }
-
- /**
-  * Retuns function body code
-  * @return {string}
-  */
-  function functionBody(fn){
-    return fn.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
   }
 
 
@@ -1059,7 +1038,7 @@
             ;;;consoleMethods.error('basis.js config parse fault: ' + e);
           }
 
-          // @cut warn about extClass in basis-config, this option was introduced in 0.9.8 for preventing using custom methods via buildin clasess
+          // warn about extClass in basis-config, this option was introduced in 0.9.8 for preventing using custom methods via buildin clasess
           // TODO: remove this warning in later versions
           /** @cut */ if ('extClass' in config) consoleMethods.warn('extClass option in basis-config is not required, basis.js doesn\'t extend buildin classes by custom methods any more');
 
@@ -1116,9 +1095,7 @@
     * This namespace introduce class creation scheme. It recomended for new
     * classes creation, but use able to use buildin sheme for your purposes.
     *
-    * The main benefits that provides by this sheme, that all methods are able
-    * to call inherited method (via this.inherit(args..)), like in other OO
-    * languages. All Basis classes and components (with some exceptions) are
+    * All Basis classes and components (with some exceptions) are
     * building using this sheme.
     *
     * @example
@@ -1540,10 +1517,10 @@
     */ 
     bindingBridge: {
       attach: function(host, fn, context){
-        return host.attach(fn, context);
+        host.attach(fn, context);
       },
       detach: function(host, fn, context){
-        return host.detach(fn, context);
+        host.detach(fn, context);
       },
       get: function(host){
         return host.get();
@@ -2002,7 +1979,7 @@
           'var __filename = "' + (sourceURL).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '";\n' +
           'var __dirname = basis.path.dirname(__filename);\n' +
           'var resource = function(url){ return basis.resource(__dirname + "/" + url); };\n' +
-          'var require = function(url){ return basis.require(url, __dirname); };\n' +
+          //'var require = function(url){ return basis.require(url, __dirname); };\n' +
           '"use strict";\n\n' +
           sourceCode
           /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
@@ -2089,6 +2066,27 @@
     }
   });
 
+  function getRootNamespace(name){
+    var namespace = namespaces[name];
+
+    if (!namespace)
+    {
+      namespace = namespaces[name] = new Namespace(name)
+
+      namespace.namespaces_ = {};
+      namespace.namespaces_[name] = namespace;
+
+      if (!config.noConflict)
+        global[name] = namespace;
+    }
+
+    // builder could generate some code here, something like this
+    // if (name == 'app' && !app)
+    //   return app = namespace;
+
+    return namespace;
+  }
+
  /**
   * Returns namespace by path or creates new one (if namespace isn't exists).
   * @example
@@ -2098,11 +2096,12 @@
   * @return {basis.Namespace}
   */
   var getNamespace = function(path){
-    var cursor = global;
-    var nsRoot;
-
     path = path.split('.');
-    for (var i = 0, name; name = path[i]; i++)
+
+    var rootNs = getRootNamespace(path[0]);
+    var cursor = rootNs;
+
+    for (var i = 1, name; name = path[i]; i++)
     {
       if (!cursor[name])
       {
@@ -2110,19 +2109,10 @@
 
         // create new namespace
         cursor[name] = new Namespace(nspath);
-
-        if (nsRoot)
-          nsRoot.namespaces_[nspath] = cursor[name];
+        rootNs.namespaces_[nspath] = cursor[name];
       }
 
       cursor = cursor[name];
-
-      if (!nsRoot)
-      {
-        nsRoot = cursor;
-        if (!nsRoot.namespaces_)
-          nsRoot.namespaces_ = {};
-      }
     }
 
     namespaces[path.join('.')] = cursor;
@@ -2152,7 +2142,7 @@
             content = 
               'var basis = module.basis;\n' +
               'var resource = function(filename){ return basis.require(__dirname + "/" + filename) };\n' +
-              'var require = function(filename){ return basis.require(filename, __dirname) };\n' +
+              //'var require = function(filename){ return basis.require(filename, __dirname) };\n' +
               content;
             _compile.call(extend(this, namespace), content, filename);
           };
@@ -2187,12 +2177,12 @@
           filename = namespace.replace(/\./g, '/') + '.js';
 
           if (namespaceRoot == namespace)
+          {
             nsRootPath[namespaceRoot] = nsRootPath[namespace] || pathUtils.baseURI;
+            filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
+          }
 
           filename = (nsRootPath[namespaceRoot] || '') + filename;
-
-          /** @cut */ if (requires)
-          /** @cut */   requires.push(namespace);
         }
         else
         {
@@ -3088,14 +3078,12 @@
       // getters and modificators
       getter: getter,
       nullGetter: nullGetter,
-      def: def,
       wrapper: wrapper,
 
       // lazy
       lazyInit: lazyInit,
       lazyInitAndRun: lazyInitAndRun,
-      runOnce: runOnce,
-      body: functionBody
+      runOnce: runOnce
     },
     array: extend(arrayFrom, merge(Array_extensions, {
       from: arrayFrom,
