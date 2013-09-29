@@ -2732,7 +2732,7 @@
   {
     String.prototype.split = function(pattern, count){
       if (pattern == '' || (pattern && pattern.source == ''))
-        return this.toArray();
+        return String_extensions.toArray(this);
 
       var result = [];
       var pos = 0;

@@ -46,7 +46,7 @@
     if (Array.isArray(input))
       output = input.map(hex);
     else
-      output = String(input).toArray().map(function(c){ return number2hex(c.charCodeAt(0)); });
+      output = String(input).split('').map(function(c){ return number2hex(c.charCodeAt(0)); });
 
     return output.join('');
   }

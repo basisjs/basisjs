@@ -45,7 +45,7 @@
       }
 
       var result = [];
-      var sym = text.toArray();
+      var sym = text.split('');
       var start;
       var lastMatchPos = 0;
       var strSym;
@@ -212,7 +212,7 @@
       }
 
       var result = [];
-      var sym = text.toArray();
+      var sym = text.split('');
       var start = 0;
       var lastMatchPos = 0;
       var strSym;
