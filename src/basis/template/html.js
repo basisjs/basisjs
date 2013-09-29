@@ -127,7 +127,8 @@
       var tmplRef;
 
       do {
-        if (refId = cursor.basisTemplateId)
+        refId = cursor.basisTemplateId;
+        if (typeof refId == 'number')
         {
           // if node found, return it
           if (tmplRef = resolveInstanceById(refId))

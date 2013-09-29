@@ -1668,7 +1668,7 @@
       this.attaches_ = [];
       this.setSource(source || '');
 
-      this.templateId = templateList.push(this);
+      this.templateId = templateList.push(this) - 1;
     },
 
     bindingBridge: {
