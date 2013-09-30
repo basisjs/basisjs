@@ -2845,11 +2845,15 @@
   var ready = (function(){
     // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig/Roman Dvornov
 
-    var fired = !document || document.readyState == 'complete';
+    function isReady(){
+      return document.readyState == 'complete' && !!document.body;
+    }
+
+    var fired = !document || isReady();
     var deferredHandler;
 
     function fireHandlers(){
-      if (document.readyState == 'complete')
+      if (isReady())
         if (!fired++)
           while (deferredHandler)
           {

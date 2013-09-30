@@ -508,10 +508,13 @@
       this.ruleClassName = this.cssRule.token;
 
       UINode.prototype.init.call(this);
+    },
+    templateSync: function(){
+      UINode.prototype.templateSync.call(this);
 
       if (SUPPORT_DISPLAYBOX === false)
       {
-        this.realign();
+        basis.nextTick(this.realign.bind(this));
         addBlockResizeHandler(this.childNodesElement, this.realign.bind(this));
       }
     },
@@ -539,7 +542,7 @@
       }
     },
     realign: function(){
-      if (SUPPORT_DISPLAYBOX !== false)
+      if (SUPPORT_DISPLAYBOX !== false || !this.tmpl)
         return;
 
       var element = this.element;
