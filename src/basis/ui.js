@@ -368,6 +368,12 @@
       postInit: function(){
         super_.postInit.call(this);
 
+        if (this.templateFn)
+        {
+          this.templateFn();
+          return;
+        }
+
         // create dom fragment by template
         var template = this.template;
         if (template)

@@ -74,6 +74,10 @@
   <![endif]-->
 
   <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+  <script type="text/javascript" src="jquery.js"></script>
+  <link rel="stylesheet" href="../../src/basis/ui/templates/tree/Node.css" />
+  <link rel="stylesheet" href="../../src/basis/ui/templates/tree/Folder.css" />
+  <link rel="stylesheet" href="../../src/basis/ui/templates/tree/Node_Expander.css" />
 </head>
 
 <body>
@@ -97,6 +101,7 @@
       <input type="text" id="nodeCount"/><button id="buttonGenerate">gen nodes</button>
       <div><span id="time"></span><span id="clearTime"></span></div>
       <input type="checkbox" id="checkRandomNames" /> <label for="checkRandomNames">random names</label>
+      <button id="buttonInnerHTML">re-set innerHTML</button>
     </fieldset>
 
     <fieldset>
@@ -201,34 +206,39 @@
         }
 
         //if (console && console.profile) console.profile();
-        var timeStart = new Date();
-        var nodes = [TestTree];
-        var cn = [];
-        for (var i = 0; i < count; i++)
-        {
-          var kind = i % 2 ? TreeFolder : TreeNode;
-          // create node
-          var node = new kind(data[i]);
 
-          // add node to tree
-          var refNode = nodes[(i * count * 173) % nodes.length];
-          if (refNode == TestTree)
-            cn.push(node);
-          else
-            refNode.insertBefore(node);
-            
-          if (kind == TreeFolder)
-            nodes.push(node);
-        }
-        TestTree.setChildNodes(cn);
+          var timeStart = new Date();
+          console.profile
+          var nodes = [TestTree];
+          var cn = [];
+          for (var i = 0; i < count; i++)
+          {
+            var kind = i % 2 ? TreeFolder : TreeNode;
+            // create node
+            var node = new kind(data[i]);
 
-        var time = ((new Date() - timeStart)/1000).toFixed(3);
-        DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + time + '</b> sec';
+            // add node to tree
+            var refNode = nodes[(i * count * 173) % nodes.length];
+            if (refNode == TestTree)
+              cn.push(node);
+            else
+              refNode.insertBefore(node);
+              
+            if (kind == TreeFolder)
+              nodes.push(node);
+          }
+          TestTree.setChildNodes(cn);
+          //x = TestTree.element.clientHeight;
 
-        cn.length = 0;
-        nodes.length = 0;
+          var time = ((new Date() - timeStart)/1000).toFixed(3);
+          DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + time + '</b> sec';
+
+          cn.length = 0;
+          nodes.length = 0;
+
       };
 
+      var x = 0;
       var buttons = {
         Generate: function(){ 
           setNodeCount(DOM.get('nodeCount').value); 
@@ -289,6 +299,17 @@
         },
         EnableTree: function(){
           this.enable();
+        },
+        InnerHTML: function(){
+          var html = TestTree.element.innerHTML;
+          TestTree.element.innerHTML = '';
+
+            var time = new Date;
+            TestTree.element.innerHTML = html;
+            //x = TestTree.element.lastChild;
+            time = (new Date - time);
+            DOM.get('time').innerHTML = 're-set innerHTML in <b>' + time + '</b> sec';
+
         }
       };
 

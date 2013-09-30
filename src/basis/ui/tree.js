@@ -146,6 +146,26 @@
     */
     template: templates.Node,
 
+    templateFn: function(){
+      this.$el = $('<li>');
+      this.element = this.$el[0];
+      //this.element = document.createElement('li');
+      this.element.className = 'Basis-TreeNode';
+      this.element.innerHTML =
+        '<div class="Basis-TreeNode-Title">' +
+          '<span class="Basis-TreeNode-Caption">' +
+            this.data.title +
+          '</span>' +
+        '</div>';
+
+      this.childNodesElement = this.element;
+
+      //this.$el.toggleClass('Basis-TreeNode__selected', this.selected);
+      //this.$el.toggleClass('Basis-TreeNode__disabled', this.disabled);
+
+      //this.$el.on('click', '.Basis-TreeNode-Caption', this.action.select.bind(this));
+    },
+
     binding: {
       title: {
         events: 'update',
@@ -197,6 +217,31 @@
     * @inheritDoc
     */
     template: templates.Folder,
+
+    templateFn: function(){
+      this.$el = $('<li>');
+      this.element = this.$el[0];
+      //this.element = document.createElement('li');
+      this.element.className = 'Basis-TreeNode';
+      this.element.innerHTML =
+        '<div class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
+          '<div class="Basis-TreeNode_Expander"></div>' +
+          '<span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption">' +
+            this.data.title +
+          '</span>' +
+        '</div>' +
+        '<ul class="Basis-TreeNode-Content"></ul>';
+
+      //this.childNodesElement = $('.Basis-TreeNode-Content', this.element)[0];
+      this.childNodesElement = this.element.lastChild;
+
+      //this.$el.toggleClass('Basis-TreeNode__collapsed', this.collapsed);
+      //this.$el.toggleClass('Basis-TreeNode__selected', this.selected);
+      //this.$el.toggleClass('Basis-TreeNode__disabled', this.disabled);
+
+      //this.$el.on('click', '.Basis-TreeNode_Expander', this.action.toggle.bind(this));
+      //this.$el.on('click', '.Basis-TreeNode-Caption', this.action.select.bind(this));
+    },
 
    /**
     * @type {boolean}
