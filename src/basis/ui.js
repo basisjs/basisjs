@@ -368,12 +368,6 @@
       postInit: function(){
         super_.postInit.call(this);
 
-        if (this.templateFn)
-        {
-          this.templateFn();
-          return;
-        }
-
         // create dom fragment by template
         var template = this.template;
         if (template)
@@ -549,7 +543,9 @@
           else
           {
             var oldElement = this.element;
-            oldTemplate.clearInstance(this.tmpl);
+
+            if (this.tmpl)
+              oldTemplate.clearInstance(this.tmpl);
 
             this.tmpl = null;
             this.element = null;
@@ -629,7 +625,11 @@
      /**
       * @inheritDoc
       */
+      destroy_: null,
       destroy: function(){
+        if (this.destroy_)
+          this.destroy_();
+
         super_.destroy.call(this);
 
         this.setTemplate();

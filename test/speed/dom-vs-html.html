@@ -1,0 +1,478 @@
+﻿<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Speed Test: Basis Tree</title>
+
+  <style type="text/css">
+    HTML,
+    BODY
+    {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    LABEL
+    {
+      cursor: pointer;
+    }
+    LABEL:hover
+    {
+      text-decoration: underline;
+    }
+    INPUT[type=checkbox]
+    {
+      position: relative;
+      top: 2px;
+    }
+
+    #result table
+    {
+      border-collapse: collapse;
+    }
+    #result th,
+    #result td
+    {
+      border: 1px solid white;      
+      background: #F0F0F0;
+      padding: .5em 1em;
+      min-width: 8ex;
+      user-select: none;
+    }
+    #result td:not(:first-child)
+    {
+      text-align: center;
+    }
+    #result td:last-child
+    {
+      user-select: ;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+  <script type="text/javascript" src="jquery1.10.2.js"></script>
+  <link rel="stylesheet" href="../../src/basis/ui/templates/tree/Node.css" />
+  <link rel="stylesheet" href="../../src/basis/ui/templates/tree/Folder.css" />
+  <link rel="stylesheet" href="../../src/basis/ui/templates/tree/Node_Expander.css" />
+</head>
+
+<body>
+  <div id="control_panel" style="border: 2px solid #808080; background: #F0F0F0; margin: .25em; padding: .5em">
+    <fieldset>
+      <legend> node count </legend>
+      <span id="buttons"></span>
+      <input type="text" id="nodeCount"/><button id="buttonGenerate">run test</button>
+    </fieldset>
+  </div>
+  <div id="result">
+  </div>
+  <script type="text/javascript">
+
+    (function(){
+      basis.require('basis.dom');
+      basis.require('basis.data.generator');
+      basis.require('basis.ui.tree');
+      basis.require('basis.ui.button');
+
+      var dom = basis.dom;
+      var Event = basis.dom.event;
+      var RUN_COUNT = 3;
+
+      var gString = basis.data.generator.string;
+
+      var Tree = basis.ui.tree.Tree;
+      var TreeNode = basis.ui.tree.Node;
+      var TreeFolder = basis.ui.tree.Folder;
+
+      var buttons = new basis.ui.button.ButtonPanel({
+        container: document.getElementById('buttons'),
+        childClass: {
+          click: function(){
+            runTests(this.caption);
+          }
+        },
+        childNodes: [1, 10, 100, 250, 500, 1000, 2000, 5000].map(function(count){
+          return {
+            caption: count
+          };
+        })
+      });
+
+      var nodeProto = dom.createElement('li.Basis-TreeNode',
+        dom.createElement('.Basis-TreeNode-Title',
+          dom.createElement('span.Basis-TreeNode-Caption',
+            dom.createText(' ')
+          )
+        )
+      );
+      var folderProto = dom.createElement('li.Basis-TreeNode',
+        dom.createElement('.Basis-TreeNode-Title.Basis-TreeNode-CanHaveChildren',
+          dom.createElement('.Basis-TreeNode_Expander'),
+          dom.createElement('span.Basis-TreeNode-Caption.Basis-TreeNode-FolderCaption',
+            dom.createText(' ')
+          )
+        ),
+        dom.createElement('ul.Basis-TreeNode-Content')
+      );
+
+      var testProfile;
+      var tests = [
+        {
+          name: 'DOM init',
+          node: function(){
+            this.element = dom.createElement('li.Basis-TreeNode' + 
+                (this.selected ? '.Basis-TreeNode__selected' : '') +
+                (this.disabled ? '.Basis-TreeNode__disabled' : ''),
+              dom.createElement('.Basis-TreeNode-Title',
+                this.caption = dom.createElement('span.Basis-TreeNode-Caption',
+                  this.title = dom.createText(this.data.title)
+                )
+              )
+            );
+
+            dom.event.addHandler(this.caption, 'click', this.action.select, this);
+
+            this.childNodesElement = this.element;
+          },
+          node_destroy: function(){
+            dom.event.removeHandler(this.caption, 'click', this.action.select, this);
+            this.caption = null;
+            this.title = null;
+          },
+          folder: function(){
+            this.element = dom.createElement('li.Basis-TreeNode' + 
+                (this.collapsed ? '.Basis-TreeNode__collapsed' : '') +
+                (this.selected ? '.Basis-TreeNode__selected' : '') +
+                (this.disabled ? '.Basis-TreeNode__disabled' : ''),
+              dom.createElement('.Basis-TreeNode-Title.Basis-TreeNode-CanHaveChildren',
+                this.expander = dom.createElement('.Basis-TreeNode_Expander'),
+                this.caption = dom.createElement('span.Basis-TreeNode-Caption.Basis-TreeNode-FolderCaption',
+                  this.title = dom.createText(this.data.title)
+                )
+              ),
+              this.childNodesElement = dom.createElement('ul.Basis-TreeNode-Content')
+            );
+
+            dom.event.addHandler(this.expander, 'click', this.action.toggle, this);
+            dom.event.addHandler(this.caption, 'click', this.action.select, this);
+          },
+          folder_destroy: function(){
+            dom.event.removeHandler(this.expander, 'click', this.action.toggle, this);
+            dom.event.removeHandler(this.caption, 'click', this.action.select, this);
+            this.expander = null;
+            this.caption = null;
+            this.title = null;
+          }
+        },
+        {
+          name: 'DOM improve',
+          node: function(){
+            this.element = nodeProto.cloneNode(true);
+
+            this.caption = this.element.firstChild.firstChild;
+            this.title = this.caption.firstChild;
+            this.title.nodeValue = this.data.title;
+
+            this.childNodesElement = this.element;
+          },
+          node_destroy: function(){
+            this.caption = null;
+            this.title = null;
+          },
+          folder: function(){
+            this.element = folderProto.cloneNode(true);
+
+            var e = this.element.firstChild;
+            this.expander = e.firstChild;
+            this.caption = e.lastChild;
+            this.title = this.caption.firstChild;
+            this.title.nodeValue = this.data.title;
+
+            this.childNodesElement = this.element.lastChild;
+          },
+          folder_destroy: function(){
+            this.expander = null;
+            this.caption = null;
+            this.title = null;
+          }
+        },
+        {
+          name: 'basis templates'
+        },
+        {
+          name: 'innerHTML baseline',
+          node: function(){
+            this.element = document.createElement('li');
+            this.element.className = 'Basis-TreeNode';
+            this.element.innerHTML =
+              '<div class="Basis-TreeNode-Title">' +
+                '<span class="Basis-TreeNode-Caption">' +
+                  this.data.title +
+                '</span>' +
+              '</div>';
+
+            this.childNodesElement = this.element;
+          },
+          folder: function(){
+            this.element = document.createElement('li');
+            this.element.className = 'Basis-TreeNode';
+            this.element.innerHTML =
+              '<div class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
+                '<div class="Basis-TreeNode_Expander"></div>' +
+                '<span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption">' +
+                  this.data.title +
+                '</span>' +
+              '</div>' +
+              '<ul class="Basis-TreeNode-Content"></ul>';
+
+            this.childNodesElement = this.element.lastChild;
+          }
+        },
+        {
+          name: 'backbone style',
+          node: function(){
+            this.$el = $('<li>').attr({ class: 'Basis-TreeNode' });
+            this.element = this.$el[0];
+
+            this.element.innerHTML =
+              '<div class="Basis-TreeNode-Title">' +
+                '<span class="Basis-TreeNode-Caption">' +
+                  this.data.title +
+                '</span>' +
+              '</div>';
+
+            this.childNodesElement = this.element;
+
+            this.$el.toggleClass('Basis-TreeNode__selected', this.selected);
+            this.$el.toggleClass('Basis-TreeNode__disabled', this.disabled);
+
+            this.$el.on('click', '.Basis-TreeNode-Caption', this.action.select.bind(this));
+          },
+          node_destroy: function(){
+            this.$el.off('click', '.Basis-TreeNode-Caption');
+            this.$el = null;
+          },
+          folder: function(){
+            this.$el = $('<li>').attr({ class: 'Basis-TreeNode' });
+            this.element = this.$el[0];
+
+            this.element.innerHTML =
+              '<div class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
+                '<div class="Basis-TreeNode_Expander"></div>' +
+                '<span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption">' +
+                  this.data.title +
+                '</span>' +
+              '</div>' +
+              '<ul class="Basis-TreeNode-Content"></ul>';
+
+            this.childNodesElement = $('.Basis-TreeNode-Content', this.element)[0];
+
+            this.$el.toggleClass('Basis-TreeNode__collapsed', this.collapsed);
+            this.$el.toggleClass('Basis-TreeNode__selected', this.selected);
+            this.$el.toggleClass('Basis-TreeNode__disabled', this.disabled);
+
+            this.$el.on('click', '.Basis-TreeNode_Expander', this.action.toggle.bind(this));
+            this.$el.on('click', '.Basis-TreeNode-Caption', this.action.select.bind(this));
+          },
+          folder_destroy: function(){
+            this.$el.off('click', '.Basis-TreeNode_Expander');
+            this.$el.off('click', '.Basis-TreeNode-Caption');
+            this.$el = null;
+          }
+        }/**/
+      ];
+
+      // create tree (reference allowed in global scope)
+      TestTree = new Tree({
+        childFactory: function(config){
+          if (config.type == 'TreeFolder')
+            return new TreeFolder(config);
+          else
+            return new TreeNode(config);
+        },
+        selection: { multiple: true }
+      });
+
+      // path post init
+      var postInit_ = basis.ui.Node.prototype.postInit;
+      basis.ui.Node.prototype.templateFn = null;
+      basis.ui.Node.prototype.postInit = function(){
+        if (this.templateFn)
+          this.templateFn();
+        else
+          postInit_.call(this);
+      }
+
+      basis.ui.tree.Node.prototype.template = new basis.template.html.Template(
+        '<li class="Basis-TreeNode Basis-TreeNode__{collapsed} Basis-TreeNode__{selected} Basis-TreeNode__{disabled}">' +
+          '<div class="Basis-TreeNode-Title">' +
+            '<span class="Basis-TreeNode-Caption">' +
+              '{title}' +
+            '</span>' +
+          '</div>' +
+        '</li>'
+      );      
+      basis.ui.tree.Folder.prototype.template = new basis.template.html.Template(
+        '<li class="Basis-TreeNode Basis-TreeNode__{collapsed} Basis-TreeNode__{selected} Basis-TreeNode__{disabled}">' +
+          '<div class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
+            '<div class="Basis-TreeNode_Expander" event-click="toggle" />' +
+            '<span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption" event-click="select">' +
+              '{title}' +
+            '</span>' +
+          '</div>' +
+          '<ul{childNodesElement} class="Basis-TreeNode-Content"/>' +
+        '</li>'
+      );
+
+      // warn up      
+      new basis.ui.tree.Node();
+      new basis.ui.tree.Folder();
+
+      var testQueue = [];
+      function runTests(count){
+        buttons.disable();
+
+        testProfile = {};
+
+        function runTest(){
+          var test = testQueue.shift();
+          if (!test)
+          {
+            //console.clear();
+            for (var key in testProfile)
+            {
+              var avg = (testProfile[key].times.reduce(function(a, b){ return a + b }) / 3);
+              console.log(key,
+                '\nmin:' + Math.min.apply(Math, testProfile[key].times).toFixed(3),
+                '\nmax:' + Math.max.apply(Math, testProfile[key].times).toFixed(3),
+                '\navg:' + avg.toFixed(3),
+                '\ntimes: [' + testProfile[key].times + ']'
+              );
+              testProfile[key].score.innerHTML = parseInt(avg * 1000);
+            }
+
+            buttons.enable();            
+            return;
+          }
+
+          var nodes = [TestTree];
+          var cn = [];
+
+          basis.ui.tree.Node.prototype.templateFn = test.node || null;
+          basis.ui.tree.Node.prototype.destroy_ = test.node_destroy || null;
+          basis.ui.tree.Folder.prototype.templateFn = test.folder || null;
+          basis.ui.tree.Folder.prototype.destroy_ = test.folder_destroy || null;
+
+          var timeStart = new Date();
+          for (var i = 0; i < count; i++)
+          {
+            var NodeClass = i % 2 ? TreeFolder : TreeNode;
+            // create node
+            var node = new NodeClass(data[i]);
+
+            // add node to tree
+            var refNode = nodes[(i * count * 173) % nodes.length];
+            if (refNode == TestTree)
+              cn.push(node);
+            else
+              refNode.insertBefore(node);
+              
+            if (NodeClass == TreeFolder)
+              nodes.push(node);
+          }
+          TestTree.setChildNodes(cn);
+
+          var time = (new Date() - timeStart) / 1000;
+
+          testProfile[test.name].times.push(time);
+          var cell = testProfile[test.name].cells.shift();
+          cell.innerHTML = parseInt(1000 * time);
+
+
+          TestTree.clear();
+          cn = null;
+          nodes = null;
+          basis.ui.tree.Node.prototype.templateFn = null;
+          basis.ui.tree.Node.prototype.destroy_ = null;
+          basis.ui.tree.Folder.prototype.templateFn = null;
+          basis.ui.tree.Node.prototype.destroy_ = null;
+
+          setTimeout(runTest, 100);
+        }
+
+
+        // generate data
+        var data = [];
+        var title = 'very very long title '.repeat(10);
+        for (var i = 0; i < count; i++)
+        {
+          var val = Math.round(Math.random() * 10);
+          data.push({
+            data: {
+              id: 'tree_node' + i,
+              value: val,
+              title: title
+            }
+          });
+          title = 'title' + i;
+        }
+
+        var res = dom.clear(document.getElementById('result'));
+        var header;
+        res.appendChild(
+          dom.createElement('table',
+            dom.createElement('thead',
+              header = dom.createElement('tr',
+                dom.createElement('th', 'test'),
+                basis.array.create(RUN_COUNT, function(idx){
+                  return dom.createElement('th', 'run' + (idx + 1));
+                }),
+                dom.createElement('th', 'score')
+              )
+            ),
+            body = dom.createElement('tbody')
+          )
+        )
+
+        for (var j = 0, test; test = tests[j]; j++)
+        {
+          var row = body.appendChild(dom.createElement('tr', dom.createElement('td', test.name)));
+          testProfile[test.name] = {
+            times: [],
+            cells: basis.array.create(RUN_COUNT, function(){
+              return dom.createElement('td', '');
+            }),
+            score: dom.createElement('td.score', '')
+          };
+          dom.insert(row, testProfile[test.name].cells);
+          row.appendChild(testProfile[test.name].score);
+        }
+
+        for (var k = 0; k < RUN_COUNT; k++)
+          for (var j = 0, test; test = tests[j]; j++)
+            testQueue.push(test);
+
+
+        setTimeout(runTest, 10);
+      }
+
+    })();
+
+  </script>
+</body>
+
+</html>
