@@ -112,33 +112,38 @@
         })
       });
 
-      var nodeProto = dom.createElement('li.Basis-TreeNode',
-        dom.createElement('.Basis-TreeNode-Title',
-          dom.createElement('span.Basis-TreeNode-Caption',
+      var nodeProto = dom.createElement('li.tree-node',
+        dom.createElement('.title',
+          dom.createElement('span.caption',
             dom.createText(' ')
           )
         )
       );
-      var folderProto = dom.createElement('li.Basis-TreeNode',
-        dom.createElement('.Basis-TreeNode-Title.Basis-TreeNode-CanHaveChildren',
-          dom.createElement('.Basis-TreeNode_Expander'),
-          dom.createElement('span.Basis-TreeNode-Caption.Basis-TreeNode-FolderCaption',
+      var folderProto = dom.createElement('li.tree-node',
+        dom.createElement('.title',
+          dom.createElement('.expander'),
+          dom.createElement('span.caption',
             dom.createText(' ')
           )
         ),
-        dom.createElement('ul.Basis-TreeNode-Content')
+        dom.createElement('ul.content')
       );
 
       var testProfile;
       var tests = [
         {
+          name: 'new basis.ui.Node',
+          node: function(){},
+          folder: function(){}
+        },
+        {
           name: 'DOM init',
           node: function(){
-            this.element = dom.createElement('li.Basis-TreeNode' + 
-                (this.selected ? '.Basis-TreeNode__selected' : '') +
-                (this.disabled ? '.Basis-TreeNode__disabled' : ''),
-              dom.createElement('.Basis-TreeNode-Title',
-                this.caption = dom.createElement('span.Basis-TreeNode-Caption',
+            this.element = dom.createElement('li.tree-node' + 
+                (this.selected ? '.selected' : '') +
+                (this.disabled ? '.disabled' : ''),
+              dom.createElement('.title',
+                this.caption = dom.createElement('span.caption',
                   this.title = dom.createText(this.data.title)
                 )
               )
@@ -154,17 +159,17 @@
             this.title = null;
           },
           folder: function(){
-            this.element = dom.createElement('li.Basis-TreeNode' + 
-                (this.collapsed ? '.Basis-TreeNode__collapsed' : '') +
-                (this.selected ? '.Basis-TreeNode__selected' : '') +
-                (this.disabled ? '.Basis-TreeNode__disabled' : ''),
-              dom.createElement('.Basis-TreeNode-Title.Basis-TreeNode-CanHaveChildren',
-                this.expander = dom.createElement('.Basis-TreeNode_Expander'),
-                this.caption = dom.createElement('span.Basis-TreeNode-Caption.Basis-TreeNode-FolderCaption',
+            this.element = dom.createElement('li.tree-node' + 
+                (this.collapsed ? '.collapsed' : '') +
+                (this.selected ? '.selected' : '') +
+                (this.disabled ? '.disabled' : ''),
+              dom.createElement('.title',
+                this.expander = dom.createElement('.expander'),
+                this.caption = dom.createElement('span.caption',
                   this.title = dom.createText(this.data.title)
                 )
               ),
-              this.childNodesElement = dom.createElement('ul.Basis-TreeNode-Content')
+              this.childNodesElement = dom.createElement('ul.content')
             );
 
             dom.event.addHandler(this.expander, 'click', this.action.toggle, this);
@@ -217,10 +222,10 @@
           name: 'innerHTML baseline',
           node: function(){
             this.element = document.createElement('li');
-            this.element.className = 'Basis-TreeNode';
+            this.element.className = 'tree-node';
             this.element.innerHTML =
-              '<div class="Basis-TreeNode-Title">' +
-                '<span class="Basis-TreeNode-Caption">' +
+              '<div class="title">' +
+                '<span class="caption">' +
                   this.data.title +
                 '</span>' +
               '</div>';
@@ -229,15 +234,15 @@
           },
           folder: function(){
             this.element = document.createElement('li');
-            this.element.className = 'Basis-TreeNode';
+            this.element.className = 'tree-node';
             this.element.innerHTML =
-              '<div class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
-                '<div class="Basis-TreeNode_Expander"></div>' +
-                '<span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption">' +
+              '<div class="title">' +
+                '<div class="expander"></div>' +
+                '<span class="caption">' +
                   this.data.title +
                 '</span>' +
               '</div>' +
-              '<ul class="Basis-TreeNode-Content"></ul>';
+              '<ul class="content"></ul>';
 
             this.childNodesElement = this.element.lastChild;
           }
@@ -245,52 +250,52 @@
         {
           name: 'backbone style',
           node: function(){
-            this.$el = $('<li>').attr({ class: 'Basis-TreeNode' });
+            this.$el = $('<li>').attr({ class: 'tree-node' });
             this.element = this.$el[0];
 
             this.element.innerHTML =
-              '<div class="Basis-TreeNode-Title">' +
-                '<span class="Basis-TreeNode-Caption">' +
+              '<div class="title">' +
+                '<span class="caption">' +
                   this.data.title +
                 '</span>' +
               '</div>';
 
             this.childNodesElement = this.element;
 
-            this.$el.toggleClass('Basis-TreeNode__selected', this.selected);
-            this.$el.toggleClass('Basis-TreeNode__disabled', this.disabled);
+            this.$el.toggleClass('_selected', this.selected);
+            this.$el.toggleClass('_disabled', this.disabled);
 
-            this.$el.on('click', '.Basis-TreeNode-Caption', this.action.select.bind(this));
+            this.$el.on('click', '.caption', this.action.select.bind(this));
           },
           node_destroy: function(){
-            this.$el.off('click', '.Basis-TreeNode-Caption');
+            this.$el.off('click', '.caption');
             this.$el = null;
           },
           folder: function(){
-            this.$el = $('<li>').attr({ class: 'Basis-TreeNode' });
+            this.$el = $('<li>').attr({ class: 'tree-node' });
             this.element = this.$el[0];
 
             this.element.innerHTML =
-              '<div class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
-                '<div class="Basis-TreeNode_Expander"></div>' +
-                '<span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption">' +
+              '<div class="title">' +
+                '<div class="expander"></div>' +
+                '<span class="caption">' +
                   this.data.title +
                 '</span>' +
               '</div>' +
-              '<ul class="Basis-TreeNode-Content"></ul>';
+              '<ul class="content"></ul>';
 
-            this.childNodesElement = $('.Basis-TreeNode-Content', this.element)[0];
+            this.childNodesElement = $('.content', this.element)[0];
 
-            this.$el.toggleClass('Basis-TreeNode__collapsed', this.collapsed);
-            this.$el.toggleClass('Basis-TreeNode__selected', this.selected);
-            this.$el.toggleClass('Basis-TreeNode__disabled', this.disabled);
+            this.$el.toggleClass('collapsed', this.collapsed);
+            this.$el.toggleClass('selected', this.selected);
+            this.$el.toggleClass('disabled', this.disabled);
 
-            this.$el.on('click', '.Basis-TreeNode_Expander', this.action.toggle.bind(this));
-            this.$el.on('click', '.Basis-TreeNode-Caption', this.action.select.bind(this));
+            this.$el.on('click', '.expander', this.action.toggle.bind(this));
+            this.$el.on('click', '.caption', this.action.select.bind(this));
           },
           folder_destroy: function(){
-            this.$el.off('click', '.Basis-TreeNode_Expander');
-            this.$el.off('click', '.Basis-TreeNode-Caption');
+            this.$el.off('click', '.expander');
+            this.$el.off('click', '.caption');
             this.$el = null;
           }
         }/**/
@@ -318,23 +323,23 @@
       }
 
       basis.ui.tree.Node.prototype.template = new basis.template.html.Template(
-        '<li class="Basis-TreeNode Basis-TreeNode__{collapsed} Basis-TreeNode__{selected} Basis-TreeNode__{disabled}">' +
-          '<div class="Basis-TreeNode-Title">' +
-            '<span class="Basis-TreeNode-Caption">' +
+        '<li class="tree-node {collapsed} {selected} {disabled}">' +
+          '<div class="title">' +
+            '<span class="caption">' +
               '{title}' +
             '</span>' +
           '</div>' +
         '</li>'
       );      
       basis.ui.tree.Folder.prototype.template = new basis.template.html.Template(
-        '<li class="Basis-TreeNode Basis-TreeNode__{collapsed} Basis-TreeNode__{selected} Basis-TreeNode__{disabled}">' +
-          '<div class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
-            '<div class="Basis-TreeNode_Expander" event-click="toggle" />' +
-            '<span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption" event-click="select">' +
+        '<li class="tree-node {collapsed} {selected} {disabled}">' +
+          '<div class="title">' +
+            '<div class="expander" event-click="toggle" />' +
+            '<span class="caption" event-click="select">' +
               '{title}' +
             '</span>' +
           '</div>' +
-          '<ul{childNodesElement} class="Basis-TreeNode-Content"/>' +
+          '<ul{childNodesElement} class="content"/>' +
         '</li>'
       );
 
@@ -353,16 +358,18 @@
           if (!test)
           {
             //console.clear();
+            var base = testProfile['new basis.ui.Node'].times.reduce(function(a, b){ return a + b }) / 3;
             for (var key in testProfile)
             {
-              var avg = (testProfile[key].times.reduce(function(a, b){ return a + b }) / 3);
-              console.log(key,
+              var avg = testProfile[key].times.reduce(function(a, b){ return a + b }) / 3;
+              /*console.log(key,
                 '\nmin:' + Math.min.apply(Math, testProfile[key].times).toFixed(3),
                 '\nmax:' + Math.max.apply(Math, testProfile[key].times).toFixed(3),
                 '\navg:' + avg.toFixed(3),
                 '\ntimes: [' + testProfile[key].times + ']'
-              );
-              testProfile[key].score.innerHTML = parseInt(avg * 1000);
+              );*/
+              testProfile[key].avg.innerHTML = parseInt(avg * 1000);
+              testProfile[key].score.innerHTML = Math.round((avg - base) * 1000) || '-';
             }
 
             buttons.enable();            
@@ -441,6 +448,7 @@
                 basis.array.create(RUN_COUNT, function(idx){
                   return dom.createElement('th', 'run' + (idx + 1));
                 }),
+                dom.createElement('th', 'avg'),
                 dom.createElement('th', 'score')
               )
             ),
@@ -456,9 +464,11 @@
             cells: basis.array.create(RUN_COUNT, function(){
               return dom.createElement('td', '');
             }),
+            avg: dom.createElement('td.avg', ''),
             score: dom.createElement('td.score', '')
           };
           dom.insert(row, testProfile[test.name].cells);
+          row.appendChild(testProfile[test.name].avg);
           row.appendChild(testProfile[test.name].score);
         }
 
