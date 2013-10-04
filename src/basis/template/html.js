@@ -149,7 +149,7 @@
 
       if (tmplRef && tmplRef.action)
       {
-        var actions = attr.nodeValue.qw();
+        var actions = attr.nodeValue.trim().split(' ');
         event.actionTarget = actionTarget;
         for (var i = 0, actionName; actionName = actions[i++];)
           tmplRef.action.call(tmplRef.context, actionName, event);

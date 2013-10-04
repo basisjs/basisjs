@@ -121,7 +121,7 @@
       orientation: {
         events: 'layoutChanged',
         getter: function(node){
-          return (node.orientation + '-' + node.dir.qw().slice(2, 4).join('-')).toLowerCase();
+          return (node.orientation + '-' + node.dir.split(' ').slice(2, 4).join('-')).toLowerCase();
         }
       }
     },
@@ -190,7 +190,7 @@
       }
     },
     flip: function(orientation){
-      var dir = this.dir.qw();
+      var dir = this.dir.split(' ');
       var v = orientation == ORIENTATION.VERTICAL;
 
       dir[0 + v] = FLIP[dir[0 + v]];
@@ -199,7 +199,7 @@
       this.setLayout(dir.join(' '));
     },
     rotate: function(offset){
-      var dir = this.dir.qw();
+      var dir = this.dir.split(' ');
       var result = [];
       
       offset = ((offset % 4) + 4) % 4;
@@ -241,7 +241,7 @@
         var width = this.element.offsetWidth;
         var height = this.element.offsetHeight;
 
-        dir = normalizeDir(dir, this.dir).qw();
+        dir = normalizeDir(dir, this.dir).split(' ');
 
         var pointX = dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()];
         var pointY = dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()];
@@ -274,7 +274,7 @@
 
       if (this.visible && this.relElement)
       {
-        var dir = this.dir.qw();
+        var dir = this.dir.split(' ');
         var point;
         var rotateOffset = 0;
         var curDir = dir;

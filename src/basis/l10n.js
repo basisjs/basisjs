@@ -574,7 +574,7 @@
   */
   function setCultureList(list){
     if (typeof list == 'string')
-      list = list.qw();
+      list = list.trim().split(' ');
 
     if (!list.length)
     {

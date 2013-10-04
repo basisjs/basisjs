@@ -1,9 +1,13 @@
 
   basis.require('basis.cssom');
 
+
  /**
   * @namespace basis.utils.highlight
   */
+
+  var lead = basis.number.lead;
+  var repeat = basis.string.repeat;
 
   var LANG_PARSER = {};
   var PARSER = {
@@ -31,7 +35,7 @@
       'new null return super switch ' +
       'this throw true try typeof var while with';
 
-    var keywordRegExp = new RegExp('\\b(' + keywords.qw().join('|') + ')\\b', 'g');
+    var keywordRegExp = new RegExp('\\b(' + keywords.split(' ').join('|') + ')\\b', 'g');
 
     return function(text){
       function addMatch(kind, start, end, rn){
@@ -185,8 +189,8 @@
       'ideograph-space keep-all break-all break-word lr-tb tb-rl thin thick inline-block ' +
       'w-resize hand distribute-letter distribute-space whitespace ignore';
 
-    var propertiesRegExp = new RegExp('(^|[^a-z0-9\-])((?:' + prefixes.qw().join('|') + ')?(?:' + css3properties.qw().join('|') + ')|(?:' + properties.qw().join('|') + '))(\s|:|$)', 'gi');
-    var valuesRegExp = new RegExp('\\b(' + values.qw().join('|') + ')\\b', 'g');
+    var propertiesRegExp = new RegExp('(^|[^a-z0-9\-])((?:' + prefixes.split(' ').join('|') + ')?(?:' + css3properties.split(' ').join('|') + ')|(?:' + properties.split(' ').join('|') + '))(\s|:|$)', 'gi');
+    var valuesRegExp = new RegExp('\\b(' + values.split(' ').join('|') + ')\\b', 'g');
 
     return function(text){
       function addMatch(kind, start, end, rn){
@@ -358,7 +362,7 @@
       }
 
       text = text.replace(new RegExp('(^|\\n)( +)', 'g'), function(m, a, b){
-        return a + '\xA0'.repeat(b.length);
+        return a + repeat('\xA0', b.length);
       });
 
       return text; 
@@ -382,7 +386,7 @@
         '<div class="line ' + (i % 2 ? 'odd' : 'even') + lineClass + '">' +
           '<span class="lineContent">' + 
             (!options.noLineNumber
-              ? '<input class="lineNumber" value="' + (i + 1).lead(numberWidth) + '" type="none" unselectable="on" readonly="readonly" tabindex="-1" />' +
+              ? '<input class="lineNumber" value="' + lead(i + 1, numberWidth) + '" type="none" unselectable="on" readonly="readonly" tabindex="-1" />' +
                 '<span class="over"></span>'
               : ''
             ) +

@@ -370,7 +370,7 @@
   * @param {Node} node
   * @return {string}
   */
-  var TEXT_PROPERTIES = 'textContent innerText nodeValue'.qw();
+  var TEXT_PROPERTIES = ['textContent', 'innerText', 'nodeValue'];
 
   function textContent(node){
     for (var i = 0, property; property = TEXT_PROPERTIES[i++];)

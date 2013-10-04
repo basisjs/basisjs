@@ -155,7 +155,7 @@
 
   function createStyleMapping(property, names, regSupport, getters){
     getters = getters || {};
-    names = names.qw();
+    names = names.split(' ');
 
     for (var i = 0, name; name = names[i]; i++)
     {
@@ -552,7 +552,7 @@
 
     set: function(tokenList){
       this.clear();
-      tokenList.qw().forEach(this.add, this);
+      tokenList.trim().split(' ').forEach(this.add, this);
     },
     replace: function(searchFor, replaceFor, prefix){
       prefix = prefix || '';
@@ -577,7 +577,7 @@
       return !!this.toString().match(tokenRegExp(token));
     },
     item: function(index){
-      return this.toString().qw()[index];
+      return this.toString().trim().split(' ')[index];
     },
     add: function(token){ 
       var className = this.toString();

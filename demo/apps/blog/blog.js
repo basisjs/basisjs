@@ -175,7 +175,7 @@ basis.ready(function(){
   times.push([new Date, 'category list']);
 
 
-  var MONTH = 'January February March April May June July August September October November December'.qw();
+  var MONTH = 'January February March April May June July August September October November December'.split(' ');
   var archiveList = new basis.ui.Node({
     dataSource: new basis.data.dataset.Split({
       source: allPostDataset,
