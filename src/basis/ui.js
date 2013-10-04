@@ -337,24 +337,6 @@
      /**
       * @inheritDoc
       */
-      emit_match: function(){
-        super_.emit_match.call(this);
-
-        cssom.display(this.element, true);
-      },
-
-     /**
-      * @inheritDoc
-      */
-      emit_unmatch: function(){
-        super_.emit_unmatch.call(this);
-
-        cssom.display(this.element, false);
-      },
-
-     /**
-      * @inheritDoc
-      */
       init: function(){
         this.element = this.childNodesElement = getDocumentFragment();
 

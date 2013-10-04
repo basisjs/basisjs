@@ -41,6 +41,10 @@
       -moz-border-radius: 2px;
       border-radius: 2px;
     }
+    .unmatched
+    {
+      display: none;
+    }
 
     .custom-match
     {
@@ -108,9 +112,15 @@
     var list = new basis.ui.Node({
       template: '<ul/>',
       childClass: {
-        template: '<li>{title}</li>',
+        template: '<li class="{unmatched}">{title}</li>',
         binding: {
-          title: 'data:'
+          title: 'data:',
+          unmatched: {
+            events: 'match unmatch',
+            getter: function(node){
+              return !node.matched;
+            }
+          }
         }
       },
       childNodes: data
@@ -132,8 +142,15 @@
     // Create a table
     var table = new basis.ui.table.Table({
       structure: [
-        { header: 'Title', body: { content: basis.getter('data.title') }, sorting: basis.getter('data.title') },
-        { header: 'Content', body: { templateRef: 'text', content: basis.getter('data.content') } }
+        {
+          header: 'Title',
+          body: { templateRef: 'col1', content: basis.getter('data.title') },
+          sorting: basis.getter('data.title')
+        },
+        {
+          header: 'Content',
+          body: { templateRef: 'col2', content: basis.getter('data.content') }
+        }
       ],
       childNodes: data
     });
@@ -145,7 +162,12 @@
           template: '<b:include src="basis.ui.field.MatchInput" class="MatchHolder"/>',
           matchFilter: {
             node: table,
-            textNodeGetter: 'tmpl.text.firstChild',
+            textNodeGetter: function(node){
+              return [
+                node.tmpl.col1.firstChild,
+                node.tmpl.col2.firstChild
+              ];
+            },
             wrapElement: 'A.custom-match'
           }
         })

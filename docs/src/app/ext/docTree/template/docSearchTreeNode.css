@@ -28,3 +28,8 @@
     display: block;
     float: right;
   }
+  
+  .App-DocSearchTreeNode_unmatched
+  {
+    display: none;
+  }

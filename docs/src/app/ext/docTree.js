@@ -69,6 +69,12 @@
     binding: {
       namespace: function(node){
         return node.data.kind != 'namespace' ? node.data.path + '.' : '';
+      },
+      unmatched: {
+        events: 'match unmatch',
+        getter: function(node){
+          return !node.matched;
+        }
       }
     }
   });
