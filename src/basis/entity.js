@@ -661,7 +661,7 @@
 
     var wrapper = config.type || $self;
 
-    if ([NumericId, NumberId, IntId, StringId].has(wrapper))
+    if ([NumericId, NumberId, IntId, StringId].indexOf(wrapper) != -1)
       config.id = true;
 
     if (config.id)
@@ -746,7 +746,7 @@
 
     if (wrapper.args)
       for (var i = 0; i < entityType.calcs.length; i++)
-        if (wrapper.args.has(entityType.calcs[i].key))
+        if (wrapper.args.indexOf(entityType.calcs[i].key) != -1)
           after = i + 1;
 
     if (key)
@@ -754,7 +754,7 @@
       // natural calc field
       calcConfig.key = key;
       for (var i = 0; i < entityType.calcs.length; i++)
-        if (entityType.calcs[i].args.has(key))
+        if (entityType.calcs[i].args.indexOf(key) != -1)
         {
           before = i;
           break;

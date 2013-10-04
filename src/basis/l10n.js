@@ -438,7 +438,7 @@
     destroy: function(){
       this.tokens = null;
       this.cultureValues = null;
-      dictionaries.remove(this);
+      basis.array.remove(dictionaries, this);
     }
   });
 

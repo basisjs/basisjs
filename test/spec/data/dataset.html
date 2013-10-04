@@ -105,11 +105,11 @@
                     itemsChanged: function(sender, delta){
                       if (delta.inserted)
                         for (var i = 0; i < delta.inserted.length; i++)
-                          insertDoubles += !inserted.add(delta.inserted[i]);
+                          insertDoubles += !basis.array.add(inserted, delta.inserted[i]);
 
                       if (delta.deleted)
                         for (var i = 0; i < delta.deleted.length; i++)
-                          deleteDoubles += !deleted.add(delta.deleted[i]);
+                          deleteDoubles += !basis.array.add(deleted, delta.deleted[i]);
                     }
                   }
                 });
@@ -150,11 +150,11 @@
                     itemsChanged: function(sender, delta){
                       if (delta.inserted)
                         for (var i = 0; i < delta.inserted.length; i++)
-                          insertDoubles += !inserted.add(delta.inserted[i]);
+                          insertDoubles += !basis.array.add(inserted, delta.inserted[i]);
 
                       if (delta.deleted)
                         for (var i = 0; i < delta.deleted.length; i++)
-                          deleteDoubles += !deleted.add(delta.deleted[i]);
+                          deleteDoubles += !basis.array.add(deleted, delta.deleted[i]);
                     }
                   }
                 });

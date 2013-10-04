@@ -17,6 +17,8 @@
   var cleaner = basis.cleaner;
   var path = basis.path;
   var arraySearch = basis.array.search;
+  var arrayAdd = basis.array.add;
+  var arrayRemove = basis.array.remove;
 
 
   //
@@ -659,7 +661,7 @@
       if (!token[TOKEN_REFS])
         token[TOKEN_REFS] = [];
 
-      token[TOKEN_REFS].add(refName);
+      arrayAdd(token[TOKEN_REFS], refName);
 
       if (refName != 'element')
         token[TOKEN_BINDINGS] = token[TOKEN_REFS].length == 1 ? refName : 0;
@@ -698,7 +700,7 @@
 
     function addUnique(array, items){
       for (var i = 0; i < items.length; i++)
-        array.add(items[i]);
+        arrayAdd(array, items[i]);
     }
 
     //
@@ -771,7 +773,7 @@
                 if (classOrStyle)
                   if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
                   {
-                    itAttrs.remove(itAttrToken);
+                    arrayRemove(itAttrs, itAttrToken);
                     return;
                   }
 
@@ -811,7 +813,7 @@
                 if (classOrStyle)
                   if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
                   {
-                    itAttrs.remove(itAttrToken);
+                    arrayRemove(itAttrs, itAttrToken);
                     return;
                   }
 
@@ -819,7 +821,7 @@
 
               case 'remove':
                 if (itAttrToken)
-                  itAttrs.remove(itAttrToken);
+                  arrayRemove(itAttrs, itAttrToken);
 
                 break;
             }
@@ -914,7 +916,7 @@
                     {
                       var decl;
 
-                      template.deps.add(resource);
+                      arrayAdd(template.deps, resource);
                       
                       // prevent recursion
                       includeStack.push(resource);
@@ -923,7 +925,7 @@
                       {
                         // source wrapper
                         if (resource.source.bindingBridge)
-                          template.deps.add(resource.source);
+                          arrayAdd(template.deps, resource.source);
 
                         decl = getDeclFromSource(resource.source, resource.baseURI, true, options);
                       }
@@ -1139,7 +1141,7 @@
                 if (!parts[2])
                 {
                   // reset binding with no dictionary
-                  refs.remove(bindings);                  
+                  arrayRemove(refs, bindings);                  
                   if (refs.length == 0)
                     refs = null;
                   bindings = 0;
@@ -1160,7 +1162,7 @@
                   }
                   /** @cut for token type change in dev mode */
                   /** @cut */ else
-                  /** @cut */   template.l10n.add(l10nId);
+                  /** @cut */   arrayAdd(template.l10n, l10nId);
                 }
               }
             }
@@ -1307,9 +1309,9 @@
                 if (bindDef[0])
                 {
                   if (bindDef.length == 1) // bool
-                    newAttrValue.add(bind[0] + bindName);
+                    arrayAdd(newAttrValue, bind[0] + bindName);
                   else                     // enum
-                    newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
+                    arrayAdd(newAttrValue, bind[0] + bindDef[1][bindDef[0] - 1]);
                 }
               }
               else
@@ -1763,7 +1765,7 @@
           var tmplList = oldSource.url && tmplFilesMap[oldSource.url];
           if (tmplList)
           {
-            tmplList.remove(this);
+            arrayRemove(tmplList, this);
             if (!tmplList.length)
               delete tmplFilesMap[oldSource.url];
           }
@@ -1779,7 +1781,7 @@
             this.baseURI = path.dirname(source.url) + '/';
             if (!tmplFilesMap[source.url])
               tmplFilesMap[source.url] = [];
-            tmplFilesMap[source.url].add(this);
+            arrayAdd(tmplFilesMap[source.url], this);
           }
 
           source.bindingBridge.attach(source, templateSourceUpdate, this);
@@ -2080,7 +2082,7 @@
   }
 
   function themeHasEffect(themeName){
-    return themes[currentThemeName].fallback.has(themeName);
+    return themes[currentThemeName].fallback.indexOf(themeName) != -1;
   }
 
   function syncCurrentThemePath(path){

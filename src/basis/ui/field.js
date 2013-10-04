@@ -326,11 +326,11 @@
     },
 
     attachValidator: function(validator, validate){
-      if (this.validators.add(validator) && validate)
+      if (basis.array.add(this.validators, validator) && validate)
         this.validate();
     },
     detachValidator: function(validator, validate){
-      if (this.validators.remove(validator) && validate)
+      if (basis.array.remove(this.validators, validator) && validate)
         this.validate();
     },
     setValidity: function(validity, message){

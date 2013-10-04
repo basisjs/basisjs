@@ -28,10 +28,10 @@
 
   var SERVICE_HANDLER = {
     start: function(service, request){
-      this.inprogressTransports.add(request.transport);
+      basis.array.add(this.inprogressTransports, request.transport);
     },
     complete: function(service, request){
-      this.inprogressTransports.remove(request.transport);
+      basis.array.remove(this.inprogressTransports, request.transport);
     }
   };
 

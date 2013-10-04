@@ -977,7 +977,7 @@
     else
     {
       for (var i = 0, item, pos; item = applyItems[i]; i++)
-        selectedItems.remove(item);
+        basis.array.remove(selectedItems, item);
     }
     
     return selectedItems;
