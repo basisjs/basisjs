@@ -762,7 +762,7 @@
 
       if (after > before)
       {
-        ;;;basis.dev.warn('Can\'t add calculate field `{0}`, because recursion'.format(key));
+        ;;;basis.dev.warn('Can\'t add calculate field `' + key + '`, because recursion');
         return;
       }
 

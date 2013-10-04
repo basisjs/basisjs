@@ -801,7 +801,7 @@
           }
           else
           {
-            ;;;basis.dev.warn('Index `{0}` already exists'.format(key));
+            ;;;basis.dev.warn('Index `' + key + '` already exists');
             return;
           }
         }
@@ -831,7 +831,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Index `{0}` already exists'.format(key));
+        ;;;basis.dev.warn('Index `' + key + '` already exists');
       }
     },
 

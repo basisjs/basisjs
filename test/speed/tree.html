@@ -275,7 +275,7 @@
             node.update({ value: this }); 
             var txt = node.title.firstChild.nextSibling;
             if (txt && txt.nodeValue.indexOf('value:') != -1)
-              txt.nodeValue = ' [value: {0}]'.format(this);
+              txt.nodeValue = basis.string.format(' [value: {0}]', this);
           }, Number(DOM.get('selected_value').value));
         },
         DisableSelected: function(){

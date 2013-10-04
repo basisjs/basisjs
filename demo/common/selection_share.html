@@ -136,10 +136,13 @@
           template: '<div>Selected items:</div>',
           dataSource: sharedSelection,
           childClass: {
-            template: '<div>{title}</div>',
+            template: '<div>({name}) {title}</div>',
             binding: {
+              name: function(node){
+                return node.delegate.parentNode.name;
+              },
               title: function(node){
-                return '({0}) {1}'.format(node.delegate.parentNode.name, node.data.title);
+                return node.data.title;
               }
             }
           }

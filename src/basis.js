@@ -433,7 +433,7 @@
       {
         case 'string':
           result = function(object){
-            return modificator.format(func(object));
+            return String_extensions.format(modificator, func(object));
           };
         break;
 
@@ -1122,7 +1122,7 @@
     *       this.title = title;
     *     },
     *     say: function(){
-    *       return 'My name is {0}.'.format(this.title);
+    *       return 'My name is ' + this.title;
     *     }
     *   });
     *
@@ -1133,7 +1133,7 @@
     *       this.age = age;
     *     },
     *     say: function(){
-    *       return Foo.prototype.say.call(this) + ' I\'m {0} year old.'.format(this.age);
+    *       return Foo.prototype.say.call(this) + ' I\'m ' + this.age + ' year old.';
     *     }
     *   });
     *

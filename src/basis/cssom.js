@@ -119,7 +119,7 @@
   * @return {StyleSheet}
   */
   function addStyleSheet(url, title){
-    var element = dom.createElement(!url ? 'style[type="text/css"]' : 'link[type="text/css"][rel="{alt}stylesheet"][href="{url}"]'.format({
+    var element = dom.createElement(!url ? 'style[type="text/css"]' : basis.string.format('link[type="text/css"][rel="{alt}stylesheet"][href="{url}"]', {
       alt: title ? 'alternate ' : '',
       url: url.replace(/\"/g, '\\"')
     }));

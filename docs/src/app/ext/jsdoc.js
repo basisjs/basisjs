@@ -56,7 +56,7 @@
       {
         var filename = basis.path.relative(newData.file);
         result.appendChild(
-          DOM.createElement('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]'.format(filename, newData.line),
+          DOM.createElement(basis.string.format('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]', filename, newData.line),
             basis.path.basename(filename) + ':' + newData.line
           )
         );
@@ -206,7 +206,7 @@
         var mapPath = parts[i].replace(/#/, '.prototype.');
         var descr = mapDO[mapPath];
         if (descr)
-          parts[i] = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr.data), descr.data.title);
+          parts[i] = DOM.createElement(basis.string.format('A[href=#{fullPath}].doclink-{kind}', descr.data), descr.data.title);
         else
           parts[i] = '{' + parts[i] + '}';
       }
@@ -248,12 +248,12 @@
 
       var descr = mapDO[parts[i]];
       if (descr)
-        node = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr.data), parts[i]);
+        node = DOM.createElement(basis.string.format('A[href=#{fullPath}].doclink-{kind}', descr.data), parts[i]);
       else
       {
         var m = parts[i].match(/^Array\.\<(.+)\>/);
         if (m && (descr = mapDO[m[1]]))
-          node = DOM.createFragment('Array.<', DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr.data), m[1]), '>');
+          node = DOM.createFragment('Array.<', DOM.createElement(basis.string.format('A[href=#{fullPath}].doclink-{kind}', descr.data), m[1]), '>');
         else
           node = DOM.createText(parts[i]);
       }

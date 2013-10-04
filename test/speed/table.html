@@ -184,7 +184,7 @@
 
             body: {
               content: function(node){
-                return '{0:.4}'.format(Math.random());
+                return Math.random().toFixed(4);
               }
             }
           },
