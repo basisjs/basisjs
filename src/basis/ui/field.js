@@ -833,7 +833,7 @@
       return item && item.getValue();
     },
     setValue: function(value){
-      var item = this.childNodes.search(value, getFieldValue);
+      var item = basis.array.search(this.childNodes, value, getFieldValue);
       this.selection.set([item]);
       if (this.tmpl)
         this.tmpl.field.selectedIndex = item ? this.childNodes.indexOf(item) : -1;
@@ -976,7 +976,7 @@
               return;
             }
 
-            next = DOM.axis(cur || this.firstChild, DOM.AXIS_FOLLOWING_SIBLING).search(false, 'disabled');
+            next = basis.array.search(DOM.axis(cur || this.firstChild, DOM.AXIS_FOLLOWING_SIBLING), false, 'disabled');
           break;
 
           case event.KEY.UP: 
@@ -990,7 +990,7 @@
               return;
             }
 
-            next = DOM.axis(cur || this.lastChild, DOM.AXIS_PRECEDING_SIBLING).search(false, 'disabled');
+            next = basis.array.search(DOM.axis(cur || this.lastChild, DOM.AXIS_PRECEDING_SIBLING), false, 'disabled');
           break;
         }
 
@@ -1094,7 +1094,7 @@
       if (this.getValue() != value)
       {
         // update value & selection
-        var item = this.childNodes.search(value, getFieldValue);
+        var item = basis.array.search(this.childNodes, value, getFieldValue);
         if (item && !item.isDisabled())
           this.selection.set([item]);
         else

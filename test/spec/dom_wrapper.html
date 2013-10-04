@@ -749,7 +749,7 @@
                     });
 
                     var target = dataset.pick();
-                    var targetNode = node.childNodes.search(target, 'root');
+                    var targetNode = basis.array.search(node.childNodes, target, 'root');
 
                     node.destroy();
 
@@ -775,7 +775,7 @@
                     });
 
                     var target = dataset.pick();
-                    var targetNode = node.childNodes.search(target, 'root');
+                    var targetNode = basis.array.search(node.childNodes, target, 'root');
 
                     dataset.clear();
 

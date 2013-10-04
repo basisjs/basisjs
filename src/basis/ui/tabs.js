@@ -51,7 +51,7 @@
     if (this.autoSelectChild && this.selection && !this.selection.itemCount)
     {
       // select first non-disabled child
-      var node = this.childNodes.search(false, 'disabled');
+      var node = basis.array.search(this.childNodes, false, 'disabled');
       if (node)
         node.select();
     }
@@ -92,7 +92,7 @@
         return this.childNodes.indexOf(item);
 
       // search by name
-      if (this.childNodes.search(item, 'name'))
+      if (basis.array.search(this.childNodes, item, 'name'))
         return Array.lastSearchIndex;
 
       return -1;
