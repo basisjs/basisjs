@@ -932,32 +932,6 @@
       return ieGetInputPosition(false);
   }
 
-  // head/body
-
-  function head(doc){
-    if (!doc)
-      doc = document || { head: null };
-
-    return doc.head || tag(doc, 'head')[0];
-  }
-
-  function body(doc){
-    if (!doc)
-      doc = document || { body: null };
-
-    return doc.body || tag(doc, 'body')[0];
-  }
-
-  function appendHead(node){
-    if (document)
-      insert(head(), node);
-    else
-    {
-      ;;;basis.dev.warn('Can\'t append to head, document not found');
-    }
-  }
-
-
   //
   // export names
   //
@@ -1056,9 +1030,5 @@
     focus: focus,
     setSelectionRange: setSelectionRange,
     getSelectionStart: getSelectionStart,
-    getSelectionEnd: getSelectionEnd,
-
-    head: head,
-    body: body,
-    appendHead: appendHead
+    getSelectionEnd: getSelectionEnd
   };

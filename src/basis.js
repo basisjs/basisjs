@@ -652,11 +652,12 @@
       })();
 
       // by default
-      var addToQueue = function(taskId){
+      var defaultAddToQueue = function(taskId){
         setTimeout(function(){
           runTask(taskId);
         }, 0);
       };
+      var addToQueue = defaultAddToQueue;
 
       //
       // implement platform specific solution
@@ -733,16 +734,32 @@
             {
               // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
               // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
-              addToQueue = function(taskId){
-                var scriptEl = createScript();
-                scriptEl.onreadystatechange = function(){
-                  runTask(taskId);
+              addToQueue = function beforeHeadReady(taskId){
+                if (typeof documentInterface != 'undefined')
+                {
+                  addToQueue = defaultAddToQueue;
 
-                  scriptEl.onreadystatechange = null;
-                  scriptEl.parentNode.removeChild(scriptEl);
-                  scriptEl = null;
-                };
-                document.documentElement.appendChild(scriptEl);
+                  documentInterface.head.ready(function(){
+                    addToQueue = function(taskId){
+                      var scriptEl = createScript();
+                      scriptEl.onreadystatechange = function(){
+                        runTask(taskId);
+
+                        scriptEl.onreadystatechange = null;
+                        //scriptEl.parentNode.removeChild(scriptEl);
+                        documentInterface.remove(scriptEl);
+                        scriptEl = null;
+                      };
+                      //document.documentElement.appendChild(scriptEl);
+                      documentInterface.head.add(scriptEl);
+                    };
+                  });
+                }
+
+                if (addToQueue === beforeHeadReady)
+                  defaultAddToQueue(taskId);
+                else
+                  addToQueue(taskId);
               };
             }
           }
@@ -2920,6 +2937,108 @@
 
 
  /**
+  * Document interface for safe add/remove nodes to/from head and body.
+  */  
+  var documentInterface = (function(){
+    var timer;
+    var reference = {};
+    var callbacks = {
+      head: [],
+      body: []
+    };
+
+    function getParent(name){
+      if (document && !reference[name])
+      {
+        reference[name] = document[name] || document.getElementsByTagName(name)[0];
+
+        if (reference[name])
+        {
+          var items = callbacks[name];
+          delete callbacks[name];
+          for (var i = 0, cb; cb = items[i]; i++)
+            cb[0].call(cb[1], reference[name]);
+        }
+      }
+
+      return reference[name];
+    }
+
+    function add(){
+      var name = this[0];
+      var node = this[1];
+      var ref = this[2];
+
+      remove(node);
+
+      var parent = getParent(name);
+      if (parent)
+      {
+        if (ref === true)
+          ref = parent.firstChild;
+
+        if (!ref || ref.parentNode !== parent)
+          ref = null;
+
+        parent.insertBefore(node, ref);
+      }
+      else
+        callbacks[name].push([add, [name, node, ref]])
+    }
+
+    function docReady(name, fn, context){
+      if (callbacks[name])
+        callbacks[name].push([fn, context]);
+      else
+        fn.call(context);
+    }
+
+    function remove(node){
+      for (var key in callbacks)
+      {
+        var entry = callbacks[key].search(node, function(item){
+          return item[1] && item[1][1];
+        });
+
+        if (entry)
+          callbacks[key].remove(entry);
+      }
+
+      if (node && node.parentNode && node.parentNode.nodeType == 1)
+        node.parentNode.removeChild(node);
+    }
+
+    function checkParents(){
+      if (getParent('head') && getParent('body'))
+        clearInterval(timer);
+    }
+
+    timer = setInterval(checkParents, 5);
+    ready(checkParents);
+
+    return {
+      head: {
+        ready: function(fn, context){
+          docReady('head', fn, context);
+        },
+        add: function(node, ref){
+          add.call(['head', node, ref]);
+        }
+      },
+      body: {
+        ready: function(fn, context){
+          docReady('body', fn, context);
+        },        
+        add: function(node, ref){
+          add.call(['body', node, ref]);
+        }
+      },
+      remove: remove
+    };
+  })();
+
+
+ /**
   * @namespace basis
   */
 
@@ -3024,6 +3143,7 @@
     cleaner: cleaner,
     console: consoleMethods,
 
+    doc: documentInterface,
     object: {
       extend: extend,
       complete: complete,
