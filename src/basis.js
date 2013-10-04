@@ -2223,7 +2223,9 @@
             /** @cut */ if (config.extProto == 'warn')
             /** @cut */   consoleMethods.warn(clsName + '#' + method + ' is not a standard method, and it\'s and will be removed soon; use basis.' + clsName.toLowerCase() + '.' + method + ' instead');
 
-            return extensions[method].apply(extensions, Array.prototype.concat.apply([this], arguments));
+            var args = [this];
+            Array.prototype.push.apply(args, arguments);
+            return extensions[method].apply(extensions, args);
           }
         })(key, cls.name);
   }
