@@ -254,11 +254,11 @@
               emit_update: function(delta){
                 nsData.Object.prototype.emit_update.call(this, delta);
 
-                this.owner.percentOfTotalSum = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);
+                this.owner.percentOfTotalSum = basis.string.format('{0:.2}%', 100 * this.data.percentOfTotalSum);
                 this.owner.updateBind('percentOfTotalSum');
-                this.owner.percentOfTotalRange = '{0:.2}%'.format(100 * this.data.percentOfTotalRange);
+                this.owner.percentOfTotalRange = basis.string.format('{0:.2}%', 100 * this.data.percentOfTotalRange);
                 this.owner.updateBind('percentOfTotalRange');
-                this.owner.percentOfValueMax = '{0:.2}%'.format(100 * this.data.percentOfValueMax);
+                this.owner.percentOfValueMax = basis.string.format('{0:.2}%', 100 * this.data.percentOfValueMax);
                 this.owner.updateBind('percentOfValueMax');
               }
             })

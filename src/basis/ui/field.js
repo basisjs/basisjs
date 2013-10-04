@@ -1342,13 +1342,13 @@
       var value = field.getValue();
       var length = basis.fn.$isNotNull(value.length) ? value.length : String(value).length;
       if (length < field.minLength)
-        return new ValidatorError(field, String(dict.token('validator.minLengthError')).format(field.minLength));
+        return new ValidatorError(field, basis.string.format(String(dict.token('validator.minLengthError')), field.minLength));
     },
     MaxLength: function(field){
       var value = field.getValue();
       var length = basis.fn.$isNotNull(value.length) ? value.length : String(value).length;
       if (length > field.maxLength)
-        return new ValidatorError(field, String(dict.token('validator.maxLengthError')).format(field.maxLength));
+        return new ValidatorError(field, basis.string.format(String(dict.token('validator.maxLengthError')), field.maxLength));
     }
   };
 
@@ -1377,7 +1377,7 @@
     if (fieldType2Class.hasOwnProperty(fieldType))
       return new fieldType2Class[fieldType](config);
     else
-      throw 'Unknown field type `{0}`'.format(fieldType);
+      throw 'Unknown field type `' + fieldType + '`';
   }
 
 

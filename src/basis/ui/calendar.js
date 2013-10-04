@@ -131,11 +131,9 @@
     },
     quarter: function(period){
       return dict.token('quarter');
-      //return LOCALE('QUARTER').toLowerCase().format(1 + period.periodStart.getMonth().base(3)/3);
     },
     month: function(period){
       return dict.token('monthShort.' + monthNumToRef[period.periodStart.getMonth()]);
-      //return LOCALE('MONTH').SHORT[period.periodStart.getMonth()].toLowerCase();
     },
     day: function(period){
       return period.periodStart.getDate();

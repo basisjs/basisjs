@@ -201,6 +201,10 @@
     var clear_time = 0;
     var fast_clear_time = 0;
 
+    function sec(value){
+      return value.toFixed(3) + ' sec';
+    }
+
     function run1(func){
       saveEventStat();
       var t1 = test(); var s1 = summary(); var es1 = getEventStatElement();
@@ -218,10 +222,10 @@
 
       DOM.insert(document.body, [
         DOM.createElement('hr'),
-        DOM.createElement(null, '1st run: ', '{0:.3} sec'.format(t1/1000), s1, es1),
-        DOM.createElement(null, '2nd run (no changes): ', '{0:.3} sec'.format(t2/1000), s2, es2),
-        DOM.createElement(null, '3rd run (changes): ', '{0:.3} sec'.format(t22/1000), s3, es3),
-        DOM.createElement(null, 'Clear all: ', '{0:.3} sec'.format(t3/1000), s4, es4)
+        DOM.createElement(null, '1st run: ', sec(t1/1000), s1, es1),
+        DOM.createElement(null, '2nd run (no changes): ', sec(t2/1000), s2, es2),
+        DOM.createElement(null, '3rd run (changes): ', sec(t22/1000), s3, es3),
+        DOM.createElement(null, 'Clear all: ', sec(t3/1000), s4, es4)
       ]);
       setTimeout(func, 50);
     }
@@ -243,10 +247,10 @@
 
       DOM.insert(document.body, [
         DOM.createElement('hr'),
-        DOM.createElement(null, '1st run: ', '{0:.3} sec'.format(t1/1000), s1, es1),
-        DOM.createElement(null, '2nd run (no changes): ', '{0:.3} sec'.format(t2/1000), s2, es2),
-        DOM.createElement(null, '3rd run (changes): ', '{0:.3} sec'.format(t22/1000), s3, es3),
-        DOM.createElement(null, 'Fast clear all: ', '{0:.3} sec'.format(t3/1000), s4, es4)
+        DOM.createElement(null, '1st run: ', sec(t1/1000), s1, es1),
+        DOM.createElement(null, '2nd run (no changes): ', sec(t2/1000), s2, es2),
+        DOM.createElement(null, '3rd run (changes): ', sec(t22/1000), s3, es3),
+        DOM.createElement(null, 'Fast clear all: ', sec(t3/1000), s4, es4)
       ]);
       setTimeout(func, 50);
     }
@@ -283,12 +287,12 @@
     function total(){
       DOM.insert(document.body, [
         DOM.createElement('hr'),
-        DOM.createElement('H2', 'SCORE: ', '{0:.0}'.format((cold_insert+hot_update+hot_update_changes + 2*clear_time + 2*fast_clear_time)/4)),
-        DOM.createElement(null, 'First run: ', '{0:.3} sec'.format(cold_insert/4000)),
-        DOM.createElement(null, 'Second run (no changes): ', '{0:.3} sec'.format(hot_update/4000)),
-        DOM.createElement(null, 'Second run (changes): ', '{0:.3} sec'.format(hot_update_changes/4000)),
-        DOM.createElement(null, 'Clear total: ', '{0:.3} sec'.format(clear_time/2000)),
-        DOM.createElement(null, 'Fast clear total: ', '{0:.3} sec'.format(fast_clear_time/2000))
+        DOM.createElement('H2', 'SCORE: ', parseInt((cold_insert+hot_update+hot_update_changes + 2*clear_time + 2*fast_clear_time)/4)),
+        DOM.createElement(null, 'First run: ', sec(cold_insert/4000)),
+        DOM.createElement(null, 'Second run (no changes): ', sec(hot_update/4000)),
+        DOM.createElement(null, 'Second run (changes): ', sec(hot_update_changes/4000)),
+        DOM.createElement(null, 'Clear total: ', sec(clear_time/2000)),
+        DOM.createElement(null, 'Fast clear total: ', sec(fast_clear_time/2000))
       ]);
     }
 

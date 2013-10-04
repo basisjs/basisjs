@@ -4,7 +4,7 @@ var Human = basis.Class(null, {
     this.name = name;
   },
   say: function(){
-    return 'My name is {0}.'.format(this.name);
+    return 'My name is ' + this.name;
   }
 });
 
@@ -16,7 +16,7 @@ var Gamer = basis.Class(Human, {
   },
   say: function(){
     return Human.prototype.say.call(this) +
-      ' I\'m {0} level.'.format(this.level);
+      ' I\'m ' + this.level + ' level.';
   }
 });
 

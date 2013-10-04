@@ -167,7 +167,7 @@
               emit_update: function(delta){
                 basis.data.Object.prototype.emit_update.call(this, delta);
 
-                this.owner.fontSize = '{0:.2}%'.format(50 + 200 * this.data.percentOfRange);
+                this.owner.fontSize = basis.string.format('{0:.2}%', 50 + 200 * this.data.percentOfRange);
                 this.owner.updateBind('fontSize');
               }
             })

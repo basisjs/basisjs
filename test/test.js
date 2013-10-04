@@ -154,7 +154,7 @@
           this.emit_progress(diff, this.completeTestCount/(this.totalTestCount || 1));
       },
       toString: function(){
-        return (this.testType ? this.testType + ' ' : '') + this.name + ': ' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.success ? 'success' : 'fault (passed {1} of {0})'.format(this.testCount, this.successCount))));
+        return (this.testType ? this.testType + ' ' : '') + this.name + ': ' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.success ? 'success' : basis.string.format('fault (passed {1} of {0})', this.testCount, this.successCount))));
       },
       toHTML: function(){
         return DOM.createElement('', this.toDOM()).innerHTML;
@@ -169,7 +169,7 @@
                  DOM.createElement('SPAN.' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? 'success' : 'fault'))),
                    this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? 'success' : 'fault'))
                  ),
-                 this.complete && !this.result ? DOM.createElement('SPAN.comment', ' (passed {1} of {0})'.format(this.testCount, this.successCount)) : null
+                 this.complete && !this.result ? DOM.createElement('SPAN.comment', basis.string.format(' (passed {1} of {0})', this.testCount, this.successCount)) : null
                );
       }
 
@@ -459,7 +459,7 @@
                    DOM.createElement('SPAN', this.testType),
                    '\xA0',
                    DOM.createElement('EM', this.name),
-                   (!this.success ? ' ({1} passed of {0})'.format(this.testCount, this.successCount) : '') + ':'
+                   (!this.success ? basis.string.format(' ({1} passed of {0})', this.testCount, this.successCount) : '') + ':'
                  ),
                  DOM.createElement('UL', this.items.map(function(item){ return DOM.createElement('LI.' + item.testType, item.toDOM(DOM)); }))
                );
