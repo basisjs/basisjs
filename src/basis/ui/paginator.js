@@ -345,7 +345,7 @@
    /**
     */ 
     updateSelection: function(){
-      var node = this.childNodes.search(this.activePage + this.pageOffset, 'pageNumber');
+      var node = basis.array.search(this.childNodes, this.activePage + this.pageOffset, 'pageNumber');
 
       if (node)
         node.select();

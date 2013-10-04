@@ -16,6 +16,7 @@
   var Class = basis.Class;
   var cleaner = basis.cleaner;
   var path = basis.path;
+  var arraySearch = basis.array.search;
 
 
   //
@@ -731,7 +732,7 @@
             var itAttrs = includedToken.token;
             var itType = ATTR_TYPE_BY_NAME[attrs.name];
             var valueIdx = ATTR_VALUE - !!itType;
-            var itAttrToken = itAttrs && itAttrs.search(attrs.name, function(token){
+            var itAttrToken = itAttrs && arraySearch(itAttrs, attrs.name, function(token){
               return itType ? ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] : token[ATTR_NAME];
             });
 
@@ -1122,7 +1123,7 @@
             break;
 
           case TYPE_TEXT:
-            if (refs && refs.length == 2 && refs.search('element'))
+            if (refs && refs.length == 2 && arraySearch(refs, 'element'))
               bindings = refs[+!Array.lastSearchIndex]; // get first one reference but not `element`
 
             // process l10n

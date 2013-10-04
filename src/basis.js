@@ -3023,7 +3023,7 @@
     function remove(node){
       for (var key in callbacks)
       {
-        var entry = callbacks[key].search(node, function(item){
+        var entry = Array_extensions.search(callbacks[key], node, function(item){
           return item[1] && item[1][1];
         });
 

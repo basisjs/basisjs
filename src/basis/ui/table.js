@@ -268,7 +268,7 @@
     listen: {
       owner: {
         sortingChanged: function(owner){
-          var cell = this.childNodes.search(owner.sorting, 'colSorting');
+          var cell = basis.array.search(this.childNodes, owner.sorting, 'colSorting');
           if (cell)
           {
             cell.select();

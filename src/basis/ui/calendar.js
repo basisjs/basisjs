@@ -702,7 +702,7 @@
 
     // section navigate
     setSection: function(sectionName){
-      var section = this.childNodes.search('sectionName', sectionName);
+      var section = basis.array.search(this.childNodes, 'sectionName', sectionName);
       if (section)
         section.select();
     },
