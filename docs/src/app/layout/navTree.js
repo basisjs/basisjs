@@ -2,6 +2,7 @@ basis.require('basis.dom.event');
 basis.require('app.ext.docTree');
 
 var curHash;
+var arraySearch = basis.array.search;
 
 var navTree = new app.ext.docTree.DocTree({
   childNodes: [
@@ -62,26 +63,29 @@ var navTree = new app.ext.docTree.DocTree({
     if (app.core.buildin[root])
       root = 'window';
 
-    var node = this.childNodes.search(root, 'data.fullPath');
+    var node = arraySearch(this.childNodes, root, 'data.fullPath');
 
     if (node)
     {
       node.expand();
-      node = node.childNodes.search(path, 'data.fullPath')
+      node = arraySearch(node.childNodes, path, 'data.fullPath')
              ||
-             node.childNodes
-               .sortAsObject('data.fullPath')
-               .reverse()
-               .search(0, function(item){
+             arraySearch(
+               node.childNodes
+                 .sortAsObject('data.fullPath')
+                 .reverse(),
+               0,
+               function(item){
                  return path.indexOf(item.data.fullPath + '.');
-               });
+               }
+             );
     }
 
 
     if (node)
     {
       var cursor = node.data.fullPath;
-      var least = path.replace(new RegExp("^" + cursor.forRegExp() + '\\.?'), '');
+      var least = path.replace(new RegExp("^" + basis.string.forRegExp(cursor) + '\\.?'), '');
       if (least)
       {
         var parts = least.split(/\./);
@@ -93,7 +97,7 @@ var navTree = new app.ext.docTree.DocTree({
             cursor += '.' + parts.shift();
 
           node.expand();
-          node = node.childNodes.search(cursor, 'data.fullPath');
+          node = arraySearch(node.childNodes, cursor, 'data.fullPath');
         }
       }
 

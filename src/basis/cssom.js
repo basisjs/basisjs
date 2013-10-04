@@ -17,6 +17,7 @@
   var location = global.location;
   var path = basis.path;
   var arrayFrom = basis.array.from;
+  var camelize = basis.string.camelize;
   var Class = basis.Class;
   var cleaner = basis.cleaner;
   var dom = basis.dom;
@@ -190,7 +191,7 @@
   function getStylePropertyMapping(key, value){
     var mapping = styleMapping[key];
 
-    if (key = mapping ? mapping.key : key.replace(/^-ms-/, 'ms-').camelize())
+    if (key = mapping ? mapping.key : camelize(key.replace(/^-ms-/, 'ms-')))
       return {
         key: key,
         value: mapping && mapping.getter ? mapping.getter(value) : value

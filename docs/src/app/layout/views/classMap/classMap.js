@@ -85,7 +85,7 @@
   });
 
   function searchClassNode(parent, className){
-    var result = parent.childNodes.search(className, basis.getter('data.className'));
+    var result = basis.array.search(parent.childNodes, className, basis.getter('data.className'));
     if (!result)
     {
       for (var i = 0, node; node = parent.childNodes[i]; i++)

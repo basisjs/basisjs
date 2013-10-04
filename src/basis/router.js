@@ -35,8 +35,7 @@
   function pathToRegExp(route){
     return new RegExp(
       '^' +
-      String(route)
-        .forRegExp()
+      basis.string.forRegExp(String(route))
         .replace(NAMED_PARAM, '([^\/]+)')
         .replace(SPLAT_PARAM, '(.*?)')
       + '$',
