@@ -128,7 +128,7 @@
                          
         data.push({
           Company: company,
-          Date: (2011 + Math.floor(month / 12)) + '-' + (1 + month % 12).lead(2),
+          Date: (2011 + Math.floor(month / 12)) + '-' + basis.number.lead(1 + month % 12, 2),
           Amount: value
         });
 

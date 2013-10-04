@@ -100,7 +100,7 @@
       this.initOffset = this.tmpl.scrollThumb.offsetLeft;
     },
     drag: function(sender, dragData){
-      var pos = ((this.initOffset + dragData.deltaX) / this.tmpl.scrollThumbWrapper.offsetWidth).fit(0, 1);
+      var pos = basis.number.fit((this.initOffset + dragData.deltaX) / this.tmpl.scrollThumbWrapper.offsetWidth, 0, 1);
       this.scrollThumbLeft_ = percent(pos);
       this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
     },
@@ -148,7 +148,7 @@
       activePageMarkLeft: {
         events: 'pageCountChanged activePageChanged',
         getter: function(node){
-          var activePage = node.activePage.fit(0, node.pageCount - 1);
+          var activePage = basis.number.fit(node.activePage, 0, node.pageCount - 1);
           return percent(activePage / Math.max(node.pageCount - 1, 1))
         }
       },
@@ -173,7 +173,8 @@
       scrollThumbLeft: {
         events: 'pageCountChanged pageSpanChanged',
         getter: function(node){
-          return node.scrollThumbLeft_ || percent((node.spanStartPage_ / Math.max(node.pageCount - node.pageSpan, 1)).fit(0, 1));
+          return node.scrollThumbLeft_
+              || percent(basis.number.fit(node.spanStartPage_ / Math.max(node.pageCount - node.pageSpan, 1), 0, 1));
         }
       }
     },
@@ -327,7 +328,7 @@
     * @param {number} pageNumber
     */ 
     setSpanStartPage: function(pageNumber){
-      pageNumber = pageNumber.fit(0, this.pageCount < this.pageSpan ? 0 : this.pageCount - this.pageSpan);
+      pageNumber = basis.number.fit(pageNumber, 0, this.pageCount < this.pageSpan ? 0 : this.pageCount - this.pageSpan);
 
       if (pageNumber != this.spanStartPage_)
       {

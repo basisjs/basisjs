@@ -529,7 +529,7 @@
     getTabTitle: function(date){
       var year = date.getFullYear();
       var start = year - year % 10;
-      return start + '-' + (Number(start.toString().substr(-2)) + 9).lead(2);
+      return start + '-' + basis.number.lead(Number(start.toString().substr(-2)) + 9, 2);
     },
 
     getInitOffset: function(){

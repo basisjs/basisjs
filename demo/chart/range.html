@@ -260,7 +260,7 @@
                   drag: function(sender, config){
                     var itemCount = reportSlice.index_.length;
                     var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
-                    reportSlice.setOffset(offset.fit(0, itemCount - reportSlice.limit));
+                    reportSlice.setOffset(basis.number.fit(offset, 0, itemCount - reportSlice.limit));
                   }
                 }
               }

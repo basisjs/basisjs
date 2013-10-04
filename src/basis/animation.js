@@ -27,7 +27,7 @@
   //
 
   function timePosition(startTime, duration){
-    return (Date.now() - startTime).fit(0, duration) / duration;
+    return basis.number.fit(Date.now() - startTime, 0, duration) / duration;
   }
 
   //

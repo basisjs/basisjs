@@ -368,14 +368,14 @@
     * @return {number} Closest to pos value.
     */
     closest: function(pos){
-      return this.normalize(this.min + (this.max - this.min) * pos.fit(0, 1) + (this.step / 2));
+      return this.normalize(this.min + (this.max - this.min) * basis.number.fit(pos, 0, 1) + (this.step / 2));
     },
 
    /**
     * @return {number}
     */
     value2pos: function(value){     
-      return (value.fit(this.min, this.max) - this.min) / (this.max - this.min);
+      return (basis.number.fit(value, this.min, this.max) - this.min) / (this.max - this.min);
     },
 
    /**
@@ -414,7 +414,7 @@
     * @param {number} stepValue
     */
     setStepValue: function(stepValue){
-      stepValue = Math.round(stepValue).fit(0, this.stepCount);
+      stepValue = basis.number.fit(Math.round(stepValue), 0, this.stepCount);
 
       if (this.stepValue != stepValue)
       {
