@@ -2585,10 +2585,8 @@
   * @namespace String
   */
 
-  var STRING_QUOTE_PAIRS = { '<': '>', '[': ']', '(': ')', '{': '}', '\xAB': '\xBB' };
   var ESCAPE_FOR_REGEXP = /([\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$])/g;
   var FORMAT_REGEXP = /\{([a-z\d_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
-  var QUOTE_REGEXP_CACHE = {};
 
   function isEmptyString(value){
     return value == null || String(value) == '';
@@ -2690,12 +2688,6 @@
         }
       );
     },
-    quote: function(this_, quoteS, quoteE){
-      quoteS = quoteS || '"';
-      quoteE = quoteE || STRING_QUOTE_PAIRS[quoteS] || quoteS;
-      var rx = (quoteS.length == 1 ? quoteS : '') + (quoteE.length == 1 ? quoteE : '');
-      return quoteS + (rx ? this_.replace(QUOTE_REGEXP_CACHE[rx] || (QUOTE_REGEXP_CACHE[rx] = new RegExp('[' + rx.forRegExp() + ']', 'g')), "\\$&") : this_) + quoteE;
-    },
     capitalize: function(this_){
       return this_.charAt(0).toUpperCase() + this_.substr(1).toLowerCase();
     },
@@ -2775,9 +2767,6 @@
     },
     between: function(this_, min, max){
       return !isNaN(this_) && this_ >= min && this_ <= max;
-    },
-    quote: function(this_, start, end){
-      return (this_ + '').quote(start, end);
     },
     toHex: function(this_){
       return parseInt(this_, 10).toString(16).toUpperCase();
@@ -3074,7 +3063,7 @@
         if (typeof object.destroy == 'function')
         {
           try {
-            ;;;if (logDestroy) consoleMethods.log('destroy', String(object.className).quote('['), object);
+            ;;;if (logDestroy) consoleMethods.log('destroy', '[' + String(object.className) + ']', object);
             object.destroy();
           } catch(e) {
             ;;;consoleMethods.warn(String(object), e);

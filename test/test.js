@@ -47,7 +47,7 @@
         case 'undefined':
           return String(value);
         case 'string':
-          return value.quote("'");
+          return '\'' + value.replace(/\'/g, '\\\'') + '\'';
         case 'function':
           return !linear ? value.toString() : value.toString().replace(/\{([\r\n]|.)*\}/, '{..}');
         case 'object':
