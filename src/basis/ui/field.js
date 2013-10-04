@@ -217,7 +217,7 @@
 
     action: 'focus blur change keydown keypress keyup input'.split(' ').reduce(
       function(res, item){
-        var eventName = 'emit_field' + item.capitalize();
+        var eventName = 'emit_field' + basis.string.capitalize(item);
         res[item] = function(event){
           this.setValue(this.readFieldValue_());
           this[eventName](event);
@@ -1196,7 +1196,7 @@
 
       if (typeof this.regexpGetter != 'function')
         this.regexpGetter = function(value){ 
-          return new RegExp('(' + startPoints + ')(' + value.forRegExp() + ')', 'i'); 
+          return new RegExp('(' + startPoints + ')(' + basis.string.forRegExp(value) + ')', 'i'); 
         };
 
       this.map = {};

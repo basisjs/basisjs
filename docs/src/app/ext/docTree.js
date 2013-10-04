@@ -1,6 +1,8 @@
 
   basis.require('app.core');
 
+  var capitalize = basis.string.capitalize;
+
   //
   // Maps
   //
@@ -35,7 +37,7 @@
   var nodeTypeGrouping = {
     sorting: basis.getter('data.id', groupWeight),
     groupGetter: function(node){
-      return node.data.isClassMember ? 'ClassMember' : node.data.kind.capitalize();
+      return node.data.isClassMember ? 'ClassMember' : capitalize(node.data.kind);
     },
     childClass: {
       titleGetter: basis.getter('data.id', groupTitle),
@@ -51,7 +53,7 @@
 
     binding: {
       kind: function(node){
-        return node.data.kind && node.data.kind.capitalize();
+        return node.data.kind && capitalize(node.data.kind);
       },
       args: function(node){
         if (/^(function|method|class|classMember)$/i.test(node.data.kind))

@@ -58,7 +58,7 @@
     },
     matchFilter: {
       regexpGetter: function(value){
-        return new RegExp('(^|[^a-z])(' + value.forRegExp() + ')', 'i');
+        return new RegExp('(^|[^a-z])(' + basis.string.forRegExp(value) + ')', 'i');
       },
       handler: {
         change: function(){
@@ -80,9 +80,9 @@
             pos = cn.indexOf(selected);
           
           if (key == event.KEY.UP)
-            node = cn.lastSearch(true, 'matched', pos == -1 ? cn.length : pos);
+            node = basis.array.lastSearch(cn, true, 'matched', pos == -1 ? cn.length : pos);
           else
-            node = cn.search(true, 'matched', pos + 1);
+            node = basis.array.search(cn, true, 'matched', pos + 1);
 
           if (node)
             node.select();
