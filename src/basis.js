@@ -2402,7 +2402,7 @@
       return this_.concat.apply([], this_);
     },
     repeat: function(this_, count){
-      return createArray(parseInt(count, 10) || 0, this_).flatten();
+      return Array_extensions.flatten(createArray(parseInt(count, 10) || 0, this_));
     },
 
     // getters

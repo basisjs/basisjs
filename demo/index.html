@@ -304,14 +304,14 @@
             template: 'id:demo-group'
           }
         },
-        childNodes: data.map(function(section){
+        childNodes: basis.array.flatten(data.map(function(section){
           return section.demos.map(function(demo){
             return {
               section: section.title,
               data: demo
             };
           });
-        }).flatten()
+        }))
       });
 
 

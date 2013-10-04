@@ -9,6 +9,7 @@
 
   var arrayFrom = basis.array.from;
   var createArray = basis.array.create;
+  var flatten = basis.array.flatten;
   var UTF16 = basis.utils.utf16;
   var UTF8 = basis.utils.utf8;
   var base64 = basis.utils.base64;
@@ -142,7 +143,7 @@
       }
 
       // return sha1 hash bytes array
-      return H.map(vector).flatten();
+      return flatten(H.map(vector));
     };
   })();
 
@@ -171,7 +172,7 @@
     ];
 
     function initConst(){
-      S = [[7,12,17,22].repeat(4), [5,9,14,20].repeat(4), [4,11,16,23].repeat(4), [6,10,15,21].repeat(4)].flatten();
+      S = flatten([[7,12,17,22].repeat(4), [5,9,14,20].repeat(4), [4,11,16,23].repeat(4), [6,10,15,21].repeat(4)]);
 
       for (var i = 0; i < 64; i++)
       {
@@ -259,7 +260,7 @@
       }
 
       // return md5 hash bytes array
-      return A.map(vector).flatten();
+      return flatten(A.map(vector));
     };
   })();
 

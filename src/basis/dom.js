@@ -652,7 +652,7 @@
 
     // append child nodes
     if (arguments.length > 1)
-      handleInsert(element, createFragment.apply(0, arrayFrom(arguments, 1).flatten()));
+      handleInsert(element, createFragment.apply(0, basis.array.flatten(arrayFrom(arguments, 1))));
 
     // attach event handlers
     if (isConfig)
