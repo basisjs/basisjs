@@ -1031,7 +1031,7 @@
   var config = (function(){
     var basisBaseURI = '';
     var config = {
-      extProto: true
+      extProto: 'warn'
     };
 
     if (NODE_ENV)
@@ -3075,7 +3075,7 @@
             object[prop] = null;
         }
       }
-      objects.clear();
+      objects.length = 0;
     }
 
     if ('attachEvent' in global)

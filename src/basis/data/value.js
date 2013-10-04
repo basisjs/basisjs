@@ -181,7 +181,7 @@
       for (var i = 0, object; object = this.objects[i]; i++)
         object.removeHandler(OBJECTSET_HANDLER, this);
 
-      this.objects.clear();
+      this.objects.length = 0;
 
       this.fire(true, true);
     },
