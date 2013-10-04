@@ -534,7 +534,7 @@
                   name: '<b:remove-attr>',
                   test: function(){
                     var a = createTemplate('<span title="a"/>');
-                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="class" value="b"/></b:include>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="class"/></b:include>');
 
                     this.is(text('<span title="a"/>'), text(b))
 
