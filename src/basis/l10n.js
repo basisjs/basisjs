@@ -611,11 +611,10 @@
     // normalize fallback
     for (var cultureName in cultureFallback)
     {
-      cultureFallback[cultureName] = cultureFallback[cultureName]
+      cultureFallback[cultureName] = basis.array.flatten(cultureFallback[cultureName]
         .map(function(name){
           return cultureFallback[name];
-        })
-        .flatten()
+        }))
         .concat(baseCulture)
         .filter(function(item, idx, array){
           return !idx || array.lastIndexOf(item, idx - 1) == -1;

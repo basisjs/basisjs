@@ -185,7 +185,7 @@
   //
   function parseDescription(text){
     var listItem = false;
-    var lines = text.trimRight().split(/(?:\r\n?|\n\r?){2,}|((?:\r\n?|\n\r?)\s*\-\s+)/).map(function(line, idx){
+    var lines = basis.array.flatten(text.trimRight().split(/(?:\r\n?|\n\r?){2,}|((?:\r\n?|\n\r?)\s*\-\s+)/).map(function(line, idx){
       if (idx % 2)
       {
         listItem = !!line;
@@ -212,7 +212,7 @@
       }
 
       return DOM.createElement(listItem ? 'LI' : 'P', h, parts);
-    }).filter(basis.fn.$isNotNull).flatten();
+    }).filter(basis.fn.$isNotNull));
 
     var result = [];
     var listContext;

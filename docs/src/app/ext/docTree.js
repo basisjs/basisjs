@@ -123,10 +123,10 @@
   */
   var DocTreeClassNode = DocTreeFolder.subclass({
     getMembers: function(){
-      return [
+      return basis.array.flatten([
         app.core.getMembers(this.data.fullPath + '.prototype'),
         app.core.getMembers(this.data.fullPath).map(function(item){ item.data.isClassMember = true; return item; })
-      ].flatten();
+      ]);
     }
   });
 
