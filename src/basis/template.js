@@ -1126,7 +1126,7 @@
 
           case TYPE_TEXT:
             if (refs && refs.length == 2 && arraySearch(refs, 'element'))
-              bindings = refs[+!Array.lastSearchIndex]; // get first one reference but not `element`
+              bindings = refs[+!refs.lastSearchIndex]; // get first one reference but not `element`
 
             // process l10n
             if (bindings)
