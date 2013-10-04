@@ -2590,21 +2590,6 @@
   var FORMAT_REGEXP = /\{([a-z\d_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
   var QUOTE_REGEXP_CACHE = {};
 
-  var Entity = {
-    laquo:  '\xAB',
-    raquo:  '\xBB',
-    nbsp:   '\xA0',
-    quot:   '\x22',
-    quote:  '\x22',
-    copy:   '\xA9',
-    shy:    '\xAD',
-    para:   '\xB6',
-    sect:   '\xA7',
-    deg:    '\xB0',
-    mdash:  '\u2014',
-    hellip: '\u2026'
-  };
-
   function isEmptyString(value){
     return value == null || String(value) == '';
   }
@@ -3216,7 +3201,6 @@
       create: createArray
     })),
     string: merge(String_extensions, {
-      entity: Entity,
       isEmpty: isEmptyString,
       isNotEmpty: isNotEmptyString
     }),
