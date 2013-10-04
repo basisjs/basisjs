@@ -71,7 +71,7 @@
         var ctrl = this.matchFilter.node;
         var selected = ctrl.selection.pick();
         
-        if ([event.KEY.UP, event.KEY.DOWN].has(event.key))
+        if (event.key == event.KEY.UP || event.key == event.KEY.DOWN)
         {
           var cn = ctrl.childNodes;
           var pos = -1, node;
@@ -97,7 +97,7 @@
         }
         else
         {
-          if ([event.KEY.UP, event.KEY.DOWN].has(event.key))
+          if (event.key == event.KEY.UP || event.key == event.KEY.DOWN)
             event.die();
         }
       },

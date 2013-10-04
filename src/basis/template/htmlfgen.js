@@ -576,7 +576,7 @@
                   : buildAttrExpression(binding, false, l10nBindings)
               );
 
-              if (specialAttr && (specialAttr == '*' || specialAttr.has(binding[6].toLowerCase())))
+              if (specialAttr && (specialAttr == '*' || specialAttr.indexOf(binding[6].toLowerCase()) != -1))
                 bindCode.push(
                   'if(' + domRef + '.' + attrName + '!=' + bindVar + ')' +
                     domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' + bindVar : bindVar) + ';'

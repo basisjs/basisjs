@@ -270,7 +270,7 @@
             e = { message: e };
 
           error = e;
-          this.broken = ['Wrong answer', 'Type mismatch'].has(e.message);
+          this.broken = e.message == 'Wrong answer' || e.message == 'Type mismatch';
         } finally {
           if (this.critical && !this.isSuccess())
             error = TestFaultError;

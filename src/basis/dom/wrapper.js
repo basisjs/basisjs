@@ -27,6 +27,7 @@
   var Class = basis.Class;
   var complete = basis.object.complete;
   var arrayFrom = basis.array;
+  var arrayRemove = basis.array.remove;
   var binarySearchPos = basis.array.binarySearchPos;
   var $undef = basis.fn.$undef;
   var getter = basis.getter;
@@ -1009,7 +1010,7 @@
     */
     remove: function(oldNode){
       var nodes = this.nodes;
-      if (nodes.remove(oldNode))
+      if (arrayRemove(nodes, oldNode))
       {
         this.first = nodes[0] || null;
         this.last = nodes[nodes.length - 1] || null;
@@ -1504,7 +1505,7 @@
           this.firstChild = nextSibling;
 
         if (pos == -1)
-          childNodes.remove(newChild);
+          arrayRemove(childNodes, newChild);
         else
         {
           var oldPos = childNodes.indexOf(newChild);

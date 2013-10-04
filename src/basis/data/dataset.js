@@ -321,7 +321,7 @@
     addSource: function(source){
       if (source instanceof AbstractDataset)
       {
-        if (this.sources.add(source))
+        if (basis.array.add(this.sources, source))
         {
           // add event listeners to source
           if (this.listen.source)
@@ -370,7 +370,7 @@
     * @return {boolean} Returns true if source removed.
     */
     removeSource: function(source){
-      if (this.sources.remove(source))
+      if (basis.array.remove(this.sources, source))
       {
         // remove event listeners from source
         if (this.listen.source)
@@ -410,7 +410,7 @@
       {
         if (source instanceof AbstractDataset)
         {
-          if (!exists.remove(source))
+          if (!basis.array.remove(exists, source))
             this.addSource(source);
         }
         else

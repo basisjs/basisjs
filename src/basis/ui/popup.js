@@ -496,7 +496,9 @@
 
       for (var popup = this.lastChild; popup; popup = popup.previousSibling)
       {
-        if (ancestorAxis.has(popup.element) || ancestorAxis.some(Array.prototype.has, popup.ignoreClickFor))
+        if (ancestorAxis.indexOf(popup.element) != -1 || ancestorAxis.some(function(element){
+          return popup.ignoreClickFor.indexOf(element) != -1;
+        }))
         {
           while (popup = popup.nextSibling)
           {
@@ -524,7 +526,7 @@
           result = popup.hideOnKey(event.key);
         else
           if (Array.isArray(popup.hideOnKey))
-            result = popup.hideOnKey.has(event.key);
+            result = popup.hideOnKey.indexOf(event.key) != -1;
 
         if (result)
           popup.hide();

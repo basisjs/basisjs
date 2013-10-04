@@ -153,7 +153,7 @@
         var object = arguments[i];
         if (object instanceof AbstractData)
         {
-          if (this.objects.add(object))
+          if (basis.array.add(this.objects, object))
             object.addHandler(OBJECTSET_HANDLER, this);
         }
         else
@@ -168,7 +168,7 @@
     * @param {basis.data.AbstractData} object
     */
     remove: function(object){
-      if (this.objects.remove(object))
+      if (basis.array.remove(this.objects, object))
         object.removeHandler(OBJECTSET_HANDLER, this);
 
       this.fire(true, true);

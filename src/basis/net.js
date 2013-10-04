@@ -77,10 +77,10 @@
     },
     handler: {
       start: function(request){
-        inprogressTransports.add(request.transport);
+        basis.array.add(inprogressTransports, request.transport);
       },
       complete: function(request){
-        inprogressTransports.remove(request.transport);
+        basis.array.remove(inprogressTransports, request.transport);
       }
     }
   });
@@ -179,7 +179,7 @@
       {
         //find idle transport
         for (var id in this.requests)
-          if (this.requests[id].isIdle() && !this.requestQueue.has(this.requests[id]))
+          if (this.requests[id].isIdle() && !this.requestQueue.indexOf(this.requests[id]) != -1)
           {
             request = this.requests[id];
             delete this.requests[id];
@@ -273,10 +273,10 @@
 
   var TRANSPORT_REQUEST_HANDLER = {
     start: function(sender, request){
-      this.inprogressRequests.add(request);
+      basis.array.add(this.inprogressRequests, request);
     },
     complete: function(sender, request){
-      this.inprogressRequests.remove(request);
+      basis.array.remove(this.inprogressRequests, request);
     }
   };
 

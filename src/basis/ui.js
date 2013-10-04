@@ -458,7 +458,7 @@
               var nodeClassName = classList(node);
               var names = String(cssClassNames[alias]).trim().split(' ');
               for (var i = 0, name; name = names[i++];)
-                nodeClassName.add(name);
+                basis.array.add(nodeClassName, name);
             }
           }
         }

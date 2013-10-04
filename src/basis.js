@@ -1938,7 +1938,7 @@
         }
 
         /** @cut */ if (requires)
-        /** @cut */   requires.add(namespace);
+        /** @cut */   Array_extensions.add(requires, namespace);
 
         if (!namespaces[namespace])
         {
@@ -3030,7 +3030,7 @@
         });
 
         if (entry)
-          callbacks[key].remove(entry);
+          Array_extensions.remove(callbacks[key], entry);
       }
 
       if (node && node.parentNode && node.parentNode.nodeType == 1)
@@ -3121,7 +3121,7 @@
           objects.push(object);
       },
       remove: function(object){
-        objects.remove(object);
+        Array_extensions.remove(objects, object);
       }
     };
 
