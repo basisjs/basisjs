@@ -304,7 +304,7 @@
   /** @const */ var STATE_LOADING = 3;
   /** @const */ var STATE_DONE = 4;
 
-  var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.qw();
+  var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.split(' ');
   var IS_POST_REGEXP = /POST/i;
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
   var ESCAPE_CHARS = /[\%\=\&\<\>\s\+]/g;

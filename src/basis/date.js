@@ -23,7 +23,7 @@
   };
 
   var PART_ERROR = 'Unknown date part: ';
-  var DATE_PART = 'year month day hour minute second millisecond'.qw();
+  var DATE_PART = 'year month day hour minute second millisecond'.split(' ');
 
   var GETTER = {};
   var SETTER = {};

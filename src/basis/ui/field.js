@@ -215,7 +215,7 @@
       description: 'satellite:'
     },
 
-    action: 'focus blur change keydown keypress keyup input'.qw().reduce(
+    action: 'focus blur change keydown keypress keyup input'.split(' ').reduce(
       function(res, item){
         var eventName = 'emit_field' + item.capitalize();
         res[item] = function(event){

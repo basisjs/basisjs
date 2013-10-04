@@ -378,7 +378,7 @@
     if (typeof events != 'string')
       throw 'Events must be a event names space separated string';
 
-    events = events.qw().sort();
+    events = events.trim().split(' ').sort();
 
     var indexId = [BaseClass.basisClassId_, getter.basisGetterId_, events].join('_');
     var indexConstructor = indexConstructors_[indexId];

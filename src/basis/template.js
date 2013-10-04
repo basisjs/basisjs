@@ -870,7 +870,7 @@
                         template.defines[elAttrs.name] = [elAttrs['default'] == 'true' ? 1 : 0];
                         break;
                       case 'enum':
-                        var values = elAttrs.values ? elAttrs.values.qw() : [];
+                        var values = elAttrs.values ? elAttrs.values.trim().split(' ') : [];
                         template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
                         break;
                       /** @cut */ default:
@@ -1288,7 +1288,7 @@
 
           if (bindings)
           {
-            var newAttrValue = (token[valueIdx] || '').qw();
+            var newAttrValue = (token[valueIdx] || '').trim().split(' ');
 
             for (var k = 0, bind; bind = bindings[k]; k++)
             {

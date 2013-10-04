@@ -263,7 +263,7 @@
                 }
 
                 this.is(r1, DOM.axis(root, DOM.AXIS_CHILD));
-                this.is('n2 n3 n10'.qw().map(DOM.get), DOM.axis(root, DOM.AXIS_CHILD, function(node){ return node.tagName == 'LI'; }));
+                this.is(['n2', 'n3', 'n10'].map(DOM.get), DOM.axis(root, DOM.AXIS_CHILD, function(node){ return node.tagName == 'LI'; }));
 
                 var root = DOM.get('n3');
                 var node = root.firstChild;
