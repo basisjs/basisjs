@@ -19,28 +19,32 @@
     template: resource('templates/highlight/SourceCode.tmpl'),
 
     binding: {
-      code: 'codeHtml'
+      code: {
+        events: 'update',
+        getter: function(node){
+          var code = node.codeGetter(node);
+
+          if (code != node.code_)
+          {
+            node.code_ = code;
+            node.codeHtml_ = highlight(code, node.lang, {
+              keepFormat: !node.normalize,
+              noLineNumber: !node.lineNumber
+            });
+          }
+
+          return node.codeHtml_;
+        }
+      }
     },
 
     codeGetter: basis.getter('data.code'),
-    codeHtml: '',
+    codeHtml_: '',
+    code_: '',
 
     normalize: true,
     lineNumber: true,
-    lang: 'text',
-
-    templateUpdate: function(){
-      var code = this.codeGetter(this);
-      if (code != this.code_)
-      {
-        this.code_ = code;
-        this.codeHtml = highlight(code, this.lang, {
-          keepFormat: !this.normalize,
-          noLineNumber: !this.lineNumber
-        });
-        this.updateBind('code');
-      }
-    }
+    lang: 'text'
   });
 
 
