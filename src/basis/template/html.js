@@ -60,11 +60,21 @@
     svg: 'http://www.w3.org/2000/svg'
   };
 
+  var CAPTURE_FALLBACK = !document.addEventListener && '__basisTemplate' + parseInt(1e9 * Math.random());
+  if (CAPTURE_FALLBACK)
+    global[CAPTURE_FALLBACK] = function(eventName, event){
+      domEvent.fireEvent(document, eventName);
+
+      var listener = tmplEventListeners[eventName];
+      if (listener)
+        listener(event);
+    };
+
   // test for browser (IE) normalize text nodes during cloning
   var CLONE_NORMALIZATION_TEXT_BUG = (function(){
     var element = document.createElement('div');
     element.appendChild(document.createTextNode('a'));
-    element.appendChild(document.createTextNode('b'));
+    element.appendChild(document.createTextNode('a'));
     return element.cloneNode(true).childNodes.length == 1;
   })();
 
@@ -146,12 +156,6 @@
     };
   }
 
-  function createEventTrigger(eventName){
-    return function(){
-      domEvent.fireEvent(document, eventName);
-    };
-  }
-
  /**
   * Creates dom structure by declaration.
   */
@@ -163,17 +167,14 @@
       {
         tmplEventListeners[eventName] = createEventHandler(attrName);
 
-        for (var k = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[k++];)
-          domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
+        if (!CAPTURE_FALLBACK)
+          for (var k = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[k++];)
+            domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
       }
 
       // hack for non-bubble events in IE<=8
-      if (!domEvent.W3CSUPPORT)
-      {
-        var eventInfo = domEvent.getEventInfo(eventName, tagName);
-        if (eventInfo.supported && !eventInfo.bubble)
-          result.attachEvent('on' + eventName, createEventTrigger(eventName));
-      }
+      if (CAPTURE_FALLBACK)
+        result.setAttribute('on' + eventName, CAPTURE_FALLBACK + '("' + eventName + '",event)');
 
       result.setAttribute(attrName, actions);
     }
