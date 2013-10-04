@@ -615,7 +615,7 @@
 
   var calcIndexPreset_seed = 1;
   function getUniqueCalcIndexId(){
-    return 'calc-index-preset-' + (calcIndexPreset_seed++).lead(8);
+    return 'calc-index-preset-' + basis.number.lead(calcIndexPreset_seed++, 8);
   }
 
   function percentOfRange(getter, events){

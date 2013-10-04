@@ -2697,7 +2697,7 @@
             value = Number(value);
             return numFormat == '.'
               ? value.toFixed(num)
-              : value.lead(num);
+              : Number_extensions.lead(value, num);
           }
           return value;
         }
