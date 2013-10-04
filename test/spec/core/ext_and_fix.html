@@ -691,23 +691,6 @@
               }
             },
             {
-              name: 'quote()',
-              test: function(){
-                this.is('""', ''.quote('"'));
-                this.is("''", ''.quote("'"));
-                this.is('"hello"', 'hello'.quote('"'));
-                this.is("'hello'", 'hello'.quote("'"));
-                this.is('<!--hello-->', 'hello'.quote('<!--', '-->'));
-                this.is('[hello]', 'hello'.quote('['));
-                this.is('(hello)', 'hello'.quote('('));
-                this.is('<hello>', 'hello'.quote('<'));
-
-                this.is('[he\\[l\\]lo]', 'he[l]lo'.quote('['));
-                this.is('"he[\\"l\\"]lo"', 'he["l"]lo'.quote('"'));
-                this.is('"he\'[\\"l\\"]\'lo"', 'he\'["l"]\'lo'.quote('"'));
-              }
-            },
-            {
               name: 'capitalize()',
               test: function(){
                 this.is('Foo', 'foo'.capitalize());
@@ -778,46 +761,6 @@
                 this.is('5.123', N.toFixed(3));
                 this.is('5.12345', N.toFixed(5));
                 this.is('5.1234500', N.toFixed(7));
-              }
-            },/* removed from Basis
-            {
-              name: 'toBin()',
-              test: function(){
-                var N = 0;
-                this.is('0', (0).toBin());
-                this.is('1', (1).toBin());
-                this.is('10', (2).toBin());
-                this.is('10', (2.5).toBin());
-                this.is('11', (3).toBin());
-                this.is('101', (5).toBin());
-                this.is('1111111', (127).toBin());
-                this.is('10000000', (128).toBin());
-                this.is('11111111', (255).toBin());
-                this.is('1001001100101100000001011010010', (1234567890).toBin());
-                this.is('-1', (-1).toBin());
-                this.is('-1010', (-10).toBin());
-                this.is('-1010', (-10.5).toBin());
-              }
-            },*/
-            {
-              name: 'quote',
-              test: function(){
-                var N = 5;
-                this.is('"5"', N.quote('"'));
-                this.is('(5)', N.quote('('));
-                this.is('<!--5-->', N.quote('<!--', '-->'));
-
-                var N = 5.2;
-                this.is('"5.2"', N.quote('"'));
-                this.is('(5.2)', N.quote('('));
-
-                var N = -5;
-                this.is('"-5"', N.quote('"'));
-                this.is('(-5)', N.quote('('));
-
-                var N = -5.3;
-                this.is('"-5.3"', N.quote('"'));
-                this.is('(-5.3)', N.quote('('));
               }
             },
             {

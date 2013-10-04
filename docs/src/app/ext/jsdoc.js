@@ -208,7 +208,7 @@
         if (descr)
           parts[i] = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr.data), descr.data.title);
         else
-          parts[i] = parts[i].quote('{');
+          parts[i] = '{' + parts[i] + '}';
       }
 
       return DOM.createElement(listItem ? 'LI' : 'P', h, parts);

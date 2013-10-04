@@ -55,7 +55,7 @@
       },
       args: function(node){
         if (/^(function|method|class|classMember)$/i.test(node.data.kind))
-          return basis.dom.createElement('SPAN.args', app.core.getFunctionDescription(node.data.obj).args.quote('('));
+          return basis.dom.createElement('SPAN.args', '(' + app.core.getFunctionDescription(node.data.obj).args + ')');
       }
     }
   });

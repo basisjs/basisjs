@@ -12,7 +12,11 @@ module.exports = new basis.ui.Node({
     title: {
       events: 'update',
       getter: function(node){
-        return (node.data.title || '') + (/^(method|function|class)$/.test(node.data.kind) ? app.core.getFunctionDescription(node.data.obj).args.quote('(') : '');
+        return (node.data.title || '') +
+          (/^(method|function|class)$/.test(node.data.kind)
+            ? '(' + app.core.getFunctionDescription(node.data.obj).args + ')'
+            : ''
+          );
       }
     },
     hasTarget: {
