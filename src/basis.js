@@ -2433,7 +2433,7 @@
     *   while (item)
     *   {
     *     result.push(item)
-    *     item = list.search(1, 'a', Array.lastSearchIndex + 1);
+    *     item = list.search(1, 'a', list.lastSearchIndex + 1);
     *                                   // lastSearchIndex store index of last founded item
     *   }
     *     // result -> [{ a: 1, b: 2 }, { a: 1, b: 4}]
@@ -2447,12 +2447,12 @@
     * @return {*}
     */
     search: function(this_, value, getter_, offset){
-      Array.lastSearchIndex = -1;
+      this_.lastSearchIndex = -1;
       getter_ = getter(getter_ || $self);
 
       for (var index = parseInt(offset, 10) || 0, len = this_.length; index < len; index++)
         if (getter_(this_[index]) === value)
-          return this_[Array.lastSearchIndex = index];
+          return this_[this_.lastSearchIndex = index];
     },
 
    /**
@@ -2462,7 +2462,7 @@
     * @return {*}
     */
     lastSearch: function(this_, value, getter_, offset){
-      Array.lastSearchIndex = -1;
+      this_.lastSearchIndex = -1;
       getter_ = getter(getter_ || $self);
 
       var len = this_.length;
@@ -2470,7 +2470,7 @@
 
       for (var i = index > len ? len : index; i-- > 0;)
         if (getter_(this_[i]) === value)
-          return this_[Array.lastSearchIndex = i];
+          return this_[this_.lastSearchIndex = i];
     },
 
    /**

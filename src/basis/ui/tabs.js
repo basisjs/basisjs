@@ -93,7 +93,7 @@
 
       // search by name
       if (basis.array.search(this.childNodes, item, 'name'))
-        return Array.lastSearchIndex;
+        return this.childNodes.lastSearchIndex;
 
       return -1;
     }
