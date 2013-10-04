@@ -1666,7 +1666,7 @@
     if (Array.isArray(list))
       for (var j = 0; j < list.length; j++)
       {
-        subset = this.keyMap.resolve(list[j]);
+        subset = this.keyMap.get(list[j], true);
 
         if (subset && !subset.has(sourceObject))
         {

@@ -46,10 +46,7 @@
         fn = global[prefixes[i] + name];
     }
 
-    if (!fn)
-      fn = fallback;
-
-    return fn && fn.bind(global);
+    return fn ? fn.bind(global) : fallback;
   }
 
   var requestAnimationFrame = createMethod('requestAnimationFrame',
@@ -58,7 +55,11 @@
     }
   );
 
-  var cancelAnimationFrame = createMethod('cancelRequestAnimationFrame') || createMethod('cancelAnimationFrame', clearTimeout);
+  var cancelAnimationFrame = createMethod('cancelRequestAnimationFrame') || createMethod('cancelAnimationFrame',
+    function(id){
+      clearTimeout(id);
+    }
+  );
 
 
  /**

@@ -68,11 +68,10 @@
     },
     handler: {
       fieldKeyup: function(sender, event){
-        var key = Event.key(event);
         var ctrl = this.matchFilter.node;
         var selected = ctrl.selection.pick();
         
-        if ([Event.KEY.UP, Event.KEY.DOWN].has(key))
+        if ([event.KEY.UP, event.KEY.DOWN].has(event.key))
         {
           var cn = ctrl.childNodes;
           var pos = -1, node;
@@ -80,7 +79,7 @@
           if (selected && selected.matched)
             pos = cn.indexOf(selected);
           
-          if (key == Event.KEY.UP)
+          if (key == event.KEY.UP)
             node = cn.lastSearch(true, 'matched', pos == -1 ? cn.length : pos);
           else
             node = cn.search(true, 'matched', pos + 1);
@@ -88,22 +87,18 @@
           if (node)
             node.select();
         }
-        /*else
-          if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(key))
-            if (selected)
-              navTree.open(selected.data.fullPath);*/
       },
       fieldKeydown: function(sender, event){
         var key = Event.key(event);
         
-        if (key == Event.KEY.ESC)
+        if (event.key == event.KEY.ESC)
         {
           searchInput.reset();
         }
         else
         {
-          if (!/[a-z\_0-9\x08\x09\x0A\x0D\x23-\x28]/i.test(String.fromCharCode(key)))
-            Event.kill(event);
+          if ([event.KEY.UP, event.KEY.DOWN].has(event.key))
+            event.die();
         }
       },
       fieldFocus: function(){
