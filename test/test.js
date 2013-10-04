@@ -206,8 +206,8 @@
         if (ss)
         {
           ss = ss.sort();
-          var scount = !/^[\r\n]/.test(ss.item(-1).charAt(0)) ? ss.item(-1).length : 0;
-          scount = Math.min(scount, ss.item().length - 1);
+          var scount = !/^[\r\n]/.test(ss[ss.length - 1].charAt(0)) ? ss[ss.length - 1].length : 0;
+          scount = Math.min(scount, ss[0].length - 1);
           if (scount)
             s = s.replace(new RegExp('(^|[\r\n]) {' + scount + '}', 'g'), '$1');
         }

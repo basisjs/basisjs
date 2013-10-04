@@ -73,14 +73,14 @@ basis.ready(function(){
         if (!oldValue)
         {
           searchCloud.setSource(app.core.searchIndex);
-          sidebarPages.item('search').select();
+          sidebarPages.getChildByName('search').select();
         }
 
         searchTree.setDataSource(searchCloud.getSubset(this.value.charAt(0).toUpperCase()));
       }
       else
       {
-        sidebarPages.item('tree').select();
+        sidebarPages.getChildByName('tree').select();
         var selected = navTree.selection.pick();
         if (selected)
           selected.element.scrollIntoView(true);
