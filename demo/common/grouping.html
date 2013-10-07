@@ -61,13 +61,13 @@
     basis.require('basis.ui.field');
 
     // data
-    var data = [
+    var data = basis.array.repeat([
       { data: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
       { data: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
       { data: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
       { data: { title: 'tortor', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
       { data: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
-    ].repeat(3);
+    ], 3);
 
     //
     // Create controls

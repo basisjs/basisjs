@@ -24,7 +24,7 @@
     }
 
     var err = 0;
-    basis.Class.classes_.sortAsObject('className').map(function(cls){
+    basis.array.sortAsObject(basis.Class.classes_, 'className').map(function(cls){
       try {
         var m = checkMiss(new cls);
         console.log(cls.className, 'OK', m.length ? 'properties not in prototype: ' + m.join(', ') : '');

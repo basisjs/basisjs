@@ -71,9 +71,7 @@ var navTree = new app.ext.docTree.DocTree({
       node = arraySearch(node.childNodes, path, 'data.fullPath')
              ||
              arraySearch(
-               node.childNodes
-                 .sortAsObject('data.fullPath')
-                 .reverse(),
+               basis.array.sortAsObject(node.childNodes, 'data.fullPath').reverse(),
                0,
                function(item){
                  return path.indexOf(item.data.fullPath + '.');

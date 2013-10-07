@@ -90,13 +90,13 @@
     var MatchInput = basis.ui.field.MatchInput;
 
     // data
-    var data = [
+    var data = basis.array.sortAsObject(basis.array.repeat([
       { data: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
       { data: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
       { data: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
       { data: { title: 'Maecenas', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
       { data: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
-    ].repeat(5).sortAsObject(Math.random);
+    ], 5), Math.random);
 
     var MatchDemo = new basis.ui.Node.subclass({
       container: document.getElementById('demo-container'),

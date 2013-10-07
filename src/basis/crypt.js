@@ -9,6 +9,7 @@
 
   var arrayFrom = basis.array.from;
   var createArray = basis.array.create;
+  var repeatArray = basis.array.repeat;
   var flatten = basis.array.flatten;
   var UTF16 = basis.utils.utf16;
   var UTF8 = basis.utils.utf8;
@@ -172,7 +173,12 @@
     ];
 
     function initConst(){
-      S = flatten([[7,12,17,22].repeat(4), [5,9,14,20].repeat(4), [4,11,16,23].repeat(4), [6,10,15,21].repeat(4)]);
+      S = flatten([
+        repeatArray([7,12,17,22], 4),
+        repeatArray([5,9,14,20], 4),
+        repeatArray([4,11,16,23], 4),
+        repeatArray([6,10,15,21], 4)
+      ]);
 
       for (var i = 0; i < 64; i++)
       {

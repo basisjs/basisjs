@@ -1314,7 +1314,7 @@
       }
 
       // adjust label positions 
-      labels = labels.sortAsObject('valueY');
+      labels = basis.array.sortAsObject(labels, 'valueY');
 
       var hasCrossing = true;
       var crossGroup = labels.map(function(label){

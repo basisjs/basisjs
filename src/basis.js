@@ -2649,9 +2649,7 @@
           }
         },
     toArray: 'a'.hasOwnProperty('0')
-      ? function(this_){
-          return arrayFrom(this_);
-        }
+      ? arrayFrom
       // IE Array and String are not generics
       : function(this_){
           var result = [];

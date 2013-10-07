@@ -125,7 +125,7 @@
         }
       }
 
-      marks = marks.filter(basis.fn.$isNotNull).sortAsObject('pos');
+      marks = basis.array.sortAsObject(marks.filter(basis.fn.$isNotNull), 'pos');
 
       var pos = 0;
       for (var i = 0, mark; mark = marks[i]; i++)
