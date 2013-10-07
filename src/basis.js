@@ -1971,7 +1971,7 @@
         var result;
         try {
           content = String(content);
-          result = String_extensions.toObject(content);
+          result = basis.json.parse(content);
         } catch(e) {
           ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
         }
@@ -2570,18 +2570,16 @@
    /**
     * @return {*}
     */
-    toObject: typeof JSON != 'undefined'
-      ? JSON.parse
-      : function(this_, rethrow){
-          // try { return eval('0,' + this_) } catch(e) {}
-          // safe solution with no eval:
-          try {
-            return new Function('return 0,' + this_)();
-          } catch(e) {
-            if (rethrow)
-              throw e;
-          }
-        },
+    toObject: function(this_, rethrow){
+      // try { return eval('0,' + this_) } catch(e) {}
+      // safe solution with no eval:
+      try {
+        return new Function('return 0,' + this_)();
+      } catch(e) {
+        if (rethrow)
+          throw e;
+      }
+    },
     repeat: function(this_, count){
       return (new Array(parseInt(count, 10) + 1 || 0)).join(this_);
     },
@@ -3090,6 +3088,11 @@
       invert: function(value){
         return !value;
       }
+    },
+    json: {
+      parse: typeof JSON != 'undefined'
+        ? JSON.parse
+        : String_extensions.toObject
     }
   });
 
