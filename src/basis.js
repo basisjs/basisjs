@@ -2674,46 +2674,37 @@
 
   // Fix some methods
   // ----------------
-  // IE 5.0+ fix
+  // IE 5.0-8.0 fix
   // 1. result array without null elements
   // 2. when parenthesis uses, result array with no parenthesis value
   if ('|||'.split(/\|/).length + '|||'.split(/(\|)/).length != 11)
   {
-    var native_split_ = String.prototype.split;
+    var nativeStringSplit = String.prototype.split;
     String.prototype.split = function(pattern, count){
-      if (typeof pattern == 'string' || (pattern && pattern.source == ''))
-        return native_split_.apply(this, arguments);
+      if (!pattern || pattern instanceof RegExp == false || pattern.source == '')
+        return nativeStringSplit.apply(this, arguments);
 
       var result = [];
       var pos = 0;
       var match;
 
-      if (pattern instanceof RegExp)
-      {
-        if (!pattern.global)
-          pattern = new RegExp(pattern.source, /\/([mi]*)$/.exec(pattern)[1] + 'g');
+      if (!pattern.global)
+        pattern = new RegExp(pattern.source, /\/([mi]*)$/.exec(pattern)[1] + 'g');
 
-        while (match = pattern.exec(this))
-        {
-          match[0] = this.substring(pos, match.index);
-          result.push.apply(result, match);
-          pos = pattern.lastIndex;
-        }
-      }
-      else
+      while (match = pattern.exec(this))
       {
-        while ((match = this.indexOf(pattern, pos)) != -1)
-        {
-          result.push(this.substring(pos, match));
-          pos = match + pattern.length;
-        }
+        match[0] = this.substring(pos, match.index);
+        result.push.apply(result, match);
+        pos = pattern.lastIndex;
       }
+
       result.push(this.substr(pos));
+
       return result;
     };
   }
 
-  // IE fix
+  // IE 5.0-8.0 fix
   if ('12'.substr(-1) != '2')
   {
     var nativeStringSubstr = String.prototype.substr;
@@ -2768,7 +2759,7 @@
 
 
   // ============================================
-  // Date (other extensions & fixes moved to date.js)
+  // Date (other extensions & fixes moved to basis.date)
   //
 
  /**
@@ -2789,22 +2780,6 @@
       return +new Date();
     }
   });
-
- /**
-  * @namespace Date.prototype
-  */
-
-  if ((new Date).getYear() < 1900)
-  {
-    extend(Date.prototype, {
-      getYear: function(){
-        return this.getFullYear() - 1900;
-      },
-      setYear: function(year){
-        return this.setFullYear(!isNaN(year) && year < 100 ? Number(year) + 1900 : year);
-      }
-    });
-  }
 
 
   // ============================================
