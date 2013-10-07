@@ -1964,6 +1964,20 @@
 
         return namespaces[namespace].exports;
       },
+
+      '.css': extend(function(content, url){
+        var resource = CssResource.resources[url];
+
+        if (!resource)
+          resource = new CssResource(url);
+        else
+          resource.updateCssText(content);
+
+        return resource;
+      }, {
+        updatable: true
+      }),
+
       '.json': extend(function(content, url){
         if (typeof content == 'object')
           return content;
@@ -2994,6 +3008,185 @@
     ;;;result.objects_ = objects;
 
     return result;
+  })();
+
+
+  //
+  // CSS resource
+  //
+
+  var CssResource = (function(){
+    var cssResources = {};
+    var cleanupDom = true; // is require remove style node on CssResource destroy or not
+
+    // Test for appendChild bugs (old IE browsers has a problem with append textNode into <style>)
+    var STYLE_APPEND_BUGGY = (function(){
+      try {
+        return !document.createElement('style').appendChild(
+          document.createTextNode('')
+        );
+      } catch(e) {
+        return true;
+      }
+    })();
+
+    // cleanup on page unload
+    cleaner.add({
+      destroy: function(){
+        cleanupDom = false; // don't need remove unused style on global destroy
+
+        for (var url in cssResources)
+          cssResources[url].destroy();
+
+        cssResources = null;
+      }
+    });
+
+
+   /**
+    * Helper functions for path resolving
+    */
+    var baseEl = document && document.createElement('base');
+
+    function setBase(baseURI){
+      // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
+      // convert path to absolute value
+      baseEl.setAttribute('href', baseURI);
+
+      // if more than one <base> elements in document, only first has effect
+      // put our <base> resolver at the begining of <head>
+      documentInterface.head.add(baseEl, true);
+    }
+
+    function restoreBase(){
+      // Opera left document base as <base> element specified,
+      // even if this element is removed from document
+      // so we set current location for base
+      baseEl.setAttribute('href', location.href);
+
+      documentInterface.remove(baseEl);
+    }
+
+    // inject style into document
+    function injectStyleToHead(){
+      // set base before <style> element creating, because IE9+ set baseURI
+      // for <style> element on element creation
+      setBase(this.baseURI);
+
+      // create <style> element for first time
+      if (!this.element)
+      {
+        this.element = document.createElement('style');
+
+        if (!STYLE_APPEND_BUGGY)
+          this.textNode = this.element.appendChild(document.createTextNode(''));
+
+        /** @cut */ this.element.setAttribute('src', pathUtils.relative(this.url));
+      }
+
+      // add element to document
+      documentInterface.head.add(this.element);
+      
+      // set css text after node inserted into document,
+      // IE8 and lower crash otherwise (this.element.styleSheet is not defined)
+      this.syncCssText();
+
+      restoreBase();
+    }
+
+
+   /**
+    * @class
+    */
+    var CssResource = Class(null, {
+      className: 'basis.CssResource',
+
+      inUse: 0,
+
+      url: '',
+      baseURI: '',
+      cssText: '',
+
+      resource: null,
+      element: null,
+      textNode: null,
+
+      init: function(url){
+        this.url = pathUtils.resolve(url);
+        this.baseURI = pathUtils.dirname(url) + '/';
+
+        cssResources[url] = this;
+      },
+
+      updateCssText: function(cssText){
+        if (this.cssText != cssText)
+        {
+          this.cssText = cssText;
+          if (this.inUse && this.element)
+          {
+            setBase(this.baseURI);
+            this.syncCssText();
+            restoreBase();
+          }
+        }
+      },
+
+      syncCssText: function(){
+        if (this.textNode)
+        {
+          // W3C browsers
+          this.textNode.nodeValue = this.cssText;
+        }
+        else
+        {
+          // old IE
+          this.element.styleSheet.cssText = this.cssText;
+        }
+      },
+
+      startUse: function(){
+        if (!this.inUse)
+        {
+          if (!this.resource)
+          {
+            var resource = getResource(this.url);
+
+            this.resource = resource;
+            this.cssText = resource.get(true);
+          }
+
+          documentInterface.head.ready(injectStyleToHead, this); 
+        }
+
+        this.inUse += 1;
+      },
+
+      stopUse: function(){
+        if (this.inUse)
+        {
+          // decrease usage count
+          this.inUse -= 1;
+
+          // remove element if nobody use it
+          if (!this.inUse && this.element)
+            documentInterface.remove(this.element);
+        }
+      },
+
+      destroy: function(){
+        if (this.element && cleanupDom)
+          documentInterface.remove(this.element);
+
+        this.element = null;
+        this.textNode = null;
+        this.resource = null;
+        this.cssText = null;
+      }
+    });
+
+    CssResource.resources = cssResources;
+
+    return CssResource;
   })();
 
 
