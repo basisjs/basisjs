@@ -3016,8 +3016,11 @@
         clearInterval(timer);
     }
 
-    timer = setInterval(checkParents, 5);
-    ready(checkParents);
+    if (document)
+    {
+      timer = setInterval(checkParents, 5);
+      ready(checkParents);
+    }
 
     return {
       head: {
