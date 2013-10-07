@@ -218,7 +218,7 @@
         methodName: this.methodName,
         soapBody: requestData.soapBody || this.soapBody,
         soapHeader: requestData.soapHeader || this.soapHeader,
-        soapHeaderSections: [this.soapHeaderSections, requestData.soapHeaderSections].merge(),
+        soapHeaderSections: basis.object.merge(this.soapHeaderSections, requestData.soapHeaderSections),
         mapping: requestData.mapping || this.mapping
       });
 

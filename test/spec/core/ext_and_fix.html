@@ -345,20 +345,6 @@
                   }
                 },
                 {
-                  name: 'item()',
-                  test: function(){
-                    var T = [0,1,2,3,4,5];
-                    this.is(0, T.item());
-                    this.is(3, T.item(3));
-                    this.is(4, T.item(4));
-                    this.is(3, T.item(-3));
-                    this.is(2, T.item(-4));
-                    this.is(0, T.item(-6));
-                    this.is(undefined, T.item(6));
-                    this.is(undefined, T.item(-7));
-                  }
-                },
-                {
                   name: 'search()',
                   test: function(){
                     var T = [{ value: 0 },{ value: 1 },{ value: 2 },{ value: 3 },{ value: 4 },{ value: 2, b: 1 }];
@@ -523,14 +509,6 @@
                   name: 'sortAsObject()',
                   test: function(){
                   }
-                },
-                {
-                  name: 'clear()',
-                  test: function(){
-                    var T = [1,2,3,4,5];
-                    this.is([], T.clear());
-                    this.is([], T);
-                  }
                 }
               ]
             }/**/
@@ -621,17 +599,6 @@
                 this.is('', 'abc'.repeat());
                 this.is('', 'abc'.repeat(0));
                 this.is('abcabcabc', 'abc'.repeat(3));
-              }
-            },
-            {
-              name: 'toArray()',
-              test: function(){
-                var S = 'hello';
-                this.is(["h", "e", "l", "l", "o"], S.toArray());
-                this.is([], ''.toArray());
-
-                var S = "\u043F\u0440\u0438\u0432\u0435\u0442";
-                this.is(["\u043F","\u0440","\u0438","\u0432","\u0435","\u0442"], S.toArray());
               }
             },
             {

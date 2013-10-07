@@ -2408,12 +2408,6 @@
       return Array_extensions.flatten(createArray(parseInt(count, 10) || 0, this_));
     },
 
-    // getters
-    item: function(this_, index){
-      index = parseInt(index || 0, 10);
-      return this_[index >= 0 ? index : this_.length + index];
-    },
-
     // search
    /**
     * Returns first item where getter(item) === value
@@ -2532,9 +2526,6 @@
     },
 
     // misc.
-    merge: function(this_, object){
-      return this_.reduce(extend, object || {});
-    },
     sortAsObject: function(this_, getter_, comparator, desc){
       getter_ = getter(getter_);
       desc = desc ? -1 : 1;
@@ -2550,18 +2541,6 @@
         .map(function(item){
                return this_[item.i];
              }, this_);
-    },
-    set: function(this_, array){
-      if (this_ !== array)
-      {
-        this_.length = 0;
-        this_.push.apply(this_, array);
-      }
-      return this_;
-    },
-    clear: function(this_){
-      this_.length = 0;
-      return this_;
     }
   };
 
@@ -2648,16 +2627,6 @@
               throw e;
           }
         },
-    toArray: 'a'.hasOwnProperty('0')
-      ? arrayFrom
-      // IE Array and String are not generics
-      : function(this_){
-          var result = [];
-          var len = this_.length;
-          for (var i = 0; i < len; i++)
-            result[i] = this_.charAt(i);
-          return result;
-        },
     repeat: function(this_, count){
       return (new Array(parseInt(count, 10) + 1 || 0)).join(this_);
     },
@@ -2707,11 +2676,12 @@
   // IE 5.0+ fix
   // 1. result array without null elements
   // 2. when parenthesis uses, result array with no parenthesis value
-  if ('|||'.split(/\|/).length + '|||'.split(/(\|)/).length != 11)
+  if (true || '|||'.split(/\|/).length + '|||'.split(/(\|)/).length != 11)
   {
+    var native_split_ = String.prototype.split;
     String.prototype.split = function(pattern, count){
-      if (pattern == '' || (pattern && pattern.source == ''))
-        return String_extensions.toArray(this);
+      if (typeof pattern == 'string' || (pattern && pattern.source == ''))
+        return native_split_.apply(this, arguments);
 
       var result = [];
       var pos = 0;
