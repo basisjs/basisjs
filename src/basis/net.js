@@ -311,7 +311,7 @@
 
   function escapeValue(value){
     return String(value).replace(ESCAPE_CHARS, function(m){
-      var code = m.charCodeAt(0).toHex();
+      var code = m.charCodeAt(0).toString(16).toUpperCase();
       return '%' + (code.length < 2 ? '0' : '') + code;
     });
   }

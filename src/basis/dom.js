@@ -707,7 +707,8 @@
         refChild = refChild[NEXT_SIBLING];
       break;
       default:
-        refChild = Number(insertPoint).between(0, node.childNodes.length) ? node.childNodes[insertPoint] : null;
+        insertPoint = Number(insertPoint);
+        refChild = insertPoint >= 0 && insertPoint < node.childNodes.length ? node.childNodes[insertPoint] : null;
     }
 
     var isDOMLikeObject = !isNode(node);

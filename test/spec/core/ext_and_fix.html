@@ -731,26 +731,6 @@
               }
             },
             {
-              name: 'base()',
-              test: function(){
-                var N = 7;
-                this.is(6, N.base(6));
-                this.is(5, N.base(5));
-                this.is(4, N.base(4));
-                this.is(6, N.base(3));
-                this.is(6, N.base(2));
-                this.is(7, N.base(1));
-
-                var N = -7;
-                this.is(-12, N.base(6));
-                this.is(-10, N.base(5));
-                this.is(-8, N.base(4));
-                this.is(-9, N.base(3));
-                this.is(-8, N.base(2));
-                this.is(-7, N.base(1));
-              }
-            },
-            {
               name: 'group',
               test: function(){
                 var N = 1;
@@ -812,14 +792,6 @@
                 this.is('-12 3456 7890.12345', N.group(4));
                 this.is('-1234567890.12345', N.group(10));
                 this.is('-1234567890.12345', N.group(15));
-              }
-            },
-            {
-              name: 'toHex()',
-              test: function(){
-                this.is('FF', (255).toHex());
-                this.is('A0', (160).toHex());
-                this.is('263BD1', (2505681).toHex());
               }
             },
             {

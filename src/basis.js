@@ -2668,6 +2668,7 @@
     }
   };
 
+  // it's prohibited and will be removed soon
   extendProto(String, String_extensions);
 
 
@@ -2676,7 +2677,7 @@
   // IE 5.0+ fix
   // 1. result array without null elements
   // 2. when parenthesis uses, result array with no parenthesis value
-  if (true || '|||'.split(/\|/).length + '|||'.split(/(\|)/).length != 11)
+  if ('|||'.split(/\|/).length + '|||'.split(/(\|)/).length != 11)
   {
     var native_split_ = String.prototype.split;
     String.prototype.split = function(pattern, count){
@@ -2735,18 +2736,6 @@
         return Number(max);
       return this_;
     },
-    between: function(this_, min, max){
-      return !isNaN(this_) && this_ >= min && this_ <= max;
-    },
-    toHex: function(this_){
-      return parseInt(this_, 10).toString(16).toUpperCase();
-    },
-    sign: function(this_){
-      return this_ < 0 ? -1 : +(this_ > 0);
-    },
-    base: function(this_, div){
-      return !div || isNaN(div) ? 0 : Math.floor(this_/div) * div;
-    },
     lead: function(this_, len, leadChar){
       // convert to string and lead first digits by leadChar
       return (this_ + '').replace(/\d+/, function(number){
@@ -2774,7 +2763,7 @@
     }
   };
 
-  // 
+  // it's prohibited and will be removed soon
   extendProto(Number, Number_extensions);
 
 
