@@ -1745,7 +1745,7 @@
                 source = resolveSourceById(source);
                 break;
               case 'tokens':
-                source = source.toObject();
+                source = basis.string.toObject(source);
                 source.isDecl = true;
                 break;
               case 'raw':

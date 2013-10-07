@@ -1970,9 +1970,10 @@
 
         var result;
         try {
-          result = JSON.parse(String(content));
+          content = String(content);
+          result = String_extensions.toObject(content);
         } catch(e) {
-          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: String(content) });
+          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
         }
         return result || null;
       }, {
@@ -2635,17 +2636,19 @@
    /**
     * @return {*}
     */
-    toObject: function(this_, rethrow){
-      // try { return eval('0,' + this_) } catch(e) {}
-      // safe solution with no eval:
-      try {
-        return new Function('return 0,' + this_)();
-      } catch(e) {
-        if (rethrow)
-          throw e;
-      }
-    },
-    toArray: ('a'.hasOwnProperty('0')
+    toObject: typeof JSON != 'undefined'
+      ? JSON.parse
+      : function(this_, rethrow){
+          // try { return eval('0,' + this_) } catch(e) {}
+          // safe solution with no eval:
+          try {
+            return new Function('return 0,' + this_)();
+          } catch(e) {
+            if (rethrow)
+              throw e;
+          }
+        },
+    toArray: 'a'.hasOwnProperty('0')
       ? function(this_){
           return arrayFrom(this_);
         }
@@ -2656,8 +2659,7 @@
           for (var i = 0; i < len; i++)
             result[i] = this_.charAt(i);
           return result;
-        }
-    ),
+        },
     repeat: function(this_, count){
       return (new Array(parseInt(count, 10) + 1 || 0)).join(this_);
     },

@@ -493,7 +493,14 @@
 
     getResponseData: function(){
       if (/^application\/json/i.test(this.data.contentType))
-        return this.data.responseText.toObject();
+      {
+        try {
+          var content = String(this.data.responseText);
+          return basis.string.toObject(content);
+        } catch(e) {
+          ;;;consoleMethods.warn('basis.net: Can\'t parse JSON from ' + this.url, { url: url, content: content });
+        }
+      }
       else
         return this.data.responseText;
     },
