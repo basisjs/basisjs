@@ -28,7 +28,6 @@
   var complete = basis.object.complete;
   var arrayFrom = basis.array;
   var arrayRemove = basis.array.remove;
-  var binarySearchPos = basis.array.binarySearchPos;
   var $undef = basis.fn.$undef;
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
@@ -112,6 +111,34 @@
     );
   }
 
+  function binarySearchPos(array, value, getter_, desc){
+    if (!array.length)  // empty array check
+      return 0;
+
+    desc = !!desc;
+
+    var pos, compareValue;
+    var l = 0;
+    var r = array.length - 1;
+
+    do
+    {
+      pos = (l + r) >> 1;
+      compareValue = getter_(array[pos]);
+      if (desc ? value > compareValue : value < compareValue)
+        r = pos - 1;
+      else
+        if (desc ? value < compareValue : value > compareValue)
+          l = pos + 1;
+        else
+          return value == compareValue ? pos : 0;  // founded element
+                                                    // -1 returns when it seems as founded element,
+                                                    // but not equal (array item or value looked for have wrong data type for compare)
+    }
+    while (l <= r);
+
+    return pos + ((compareValue < value) ^ desc);
+  }
 
   //
   // selection

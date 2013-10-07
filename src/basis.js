@@ -2468,51 +2468,6 @@
           return this_[this_.lastSearchIndex = i];
     },
 
-   /**
-    * Binary search in ordered array where getter(item) === value and return position.
-    * When strong parameter equal false insert position returns.
-    * Otherwise returns position of founded item, but -1 if nothing found.
-    * @param {*} value Value search for
-    * @param {function(object)|string=} getter_
-    * @param {boolean=} desc Must be true for reverse sorted arrays.
-    * @param {boolean=} strong If true - returns result only if value found.
-    * @param {number=} left Min left index. If omit it equals to zero.
-    * @param {number=} right Max right index. If omit it equals to array length.
-    * @return {number}
-    */
-    binarySearchPos: function(this_, value, getter_, desc, strong, left, right){
-      if (!this_.length)  // empty array check
-        return strong ? -1 : 0;
-
-      getter_ = getter(getter_ || $self);
-      desc = !!desc;
-
-      var pos, compareValue;
-      var l = isNaN(left) ? 0 : left;
-      var r = isNaN(right) ? this_.length - 1 : right;
-
-      do
-      {
-        pos = (l + r) >> 1;
-        compareValue = getter_(this_[pos]);
-        if (desc ? value > compareValue : value < compareValue)
-          r = pos - 1;
-        else
-          if (desc ? value < compareValue : value > compareValue)
-            l = pos + 1;
-          else
-            return value == compareValue ? pos : (strong ? -1 : 0);  // founded element
-                                                      // -1 returns when it seems as founded element,
-                                                      // but not equal (array item or value looked for have wrong data type for compare)
-      }
-      while (l <= r);
-
-      return strong ? -1 : pos + ((compareValue < value) ^ desc);
-    },
-    binarySearch: function(this_, value, getter){ // position of value
-      return this_.binarySearchPos(value, getter, false, true);
-    },
-
     // collection for
     add: function(this_, value){
       return this_.indexOf(value) == -1 && !!this_.push(value);
