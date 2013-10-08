@@ -201,27 +201,29 @@
         },
         {
           sorting: basis.getter('data.value', Number),
-          cssClassName: 'right',
           header: 'Value',
           body: '<div class="barWrapper"><div class="bar" style="width: {percentOfValueMax}%"/><span class="label">{value}</span></div>',
           footer: {
+            template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
             value: basis.data.index.count(dataset)
           }
         },
         {
           sorting: basis.getter('data.total', Number),
-          cssClassName: 'right',
           header: 'Total',
           body: '<div class="barWrapper"><div class="bar" style="width: {percentOfTotalRange}%"/><span class="label">{total}</span></div>',
           footer: {
+            template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
             value: basis.data.index.sum(dataset, 'data.total')
           }
         },
         {
           header: 'Total, %',
-          cssClassName: 'right',
-          body: '{percentOfTotalSum}',
+          body: {
+            template: '<td class="right">{percentOfTotalSum}</td>'
+          },
           footer: {
+            template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
             value: basis.data.index.avg(indexMap, 'data.percentOfTotalSum').as(function(avg){
               return (avg * 100).toFixed(2) + '%';
             })
