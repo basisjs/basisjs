@@ -1,8 +1,8 @@
 
   basis.require('basis.l10n');
   basis.require('basis.data');
+  basis.require('basis.dom');
   basis.require('basis.dom.wrapper');
-  basis.require('basis.cssom');
   basis.require('basis.template');
   basis.require('basis.template.html');
 
@@ -22,9 +22,7 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var cssom = basis.cssom;
 
-  var classList = basis.cssom.classList;
   var createEvent = basis.event.create;
 
   var Template = basis.template.html.Template;
@@ -319,13 +317,6 @@
       childNodesElement: null,
 
      /**
-      * Classes for template elements.
-      * @type {object}
-      * @deprecated
-      */
-      cssClassName: null,
-
-     /**
       * @inheritDoc
       */
       emit_update: function(delta){
@@ -440,28 +431,6 @@
         // insert content
         if (this.content)
           DOM.insert(tmpl.content || tmpl.element, this.content);
-
-        // update template
-        var cssClassNames = this.cssClassName;
-        if (cssClassNames)
-        {
-          ;;;basis.dev.warn('WARN: basis.ui.Node#cssClassName property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.cssClassName);
-
-          if (typeof cssClassNames == 'string')
-            cssClassNames = { element: cssClassNames };
-
-          for (var alias in cssClassNames)
-          {
-            var node = tmpl[alias];
-            if (node)
-            {
-              var nodeClassName = classList(node);
-              var names = String(cssClassNames[alias]).trim().split(' ');
-              for (var i = 0, name; name = names[i++];)
-                nodeClassName.add(name);
-            }
-          }
-        }
 
         this.templateUpdate(this.tmpl);
 
