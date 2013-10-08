@@ -309,7 +309,7 @@
       var currentTest;
 
       var buttonPanel = new basis.ui.button.ButtonPanel({
-        container: 'Content',
+        container: document.getElementById('Content'),
         childNodes: [
           {
             delegate: processingQueue,
@@ -345,7 +345,7 @@
       });
 
       var testList = new basis.ui.Node({
-        container: 'TestList',
+        container: document.getElementById('TestList'),
         childNodes: testCases,
 
         template: '<ul/>',

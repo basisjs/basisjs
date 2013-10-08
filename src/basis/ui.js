@@ -1,7 +1,6 @@
 
   basis.require('basis.l10n');
   basis.require('basis.data');
-  basis.require('basis.dom');
   basis.require('basis.dom.wrapper');
   basis.require('basis.template');
   basis.require('basis.template.html');
@@ -21,12 +20,10 @@
   var document = global.document;
 
   var Class = basis.Class;
-  var DOM = basis.dom;
-
   var createEvent = basis.event.create;
 
-  var Template = basis.template.html.Template;
-  var TemplateSwitcher = basis.template.html.TemplateSwitcher;
+  var HtmlTemplate = basis.template.html.Template;
+  var TemplateSwitcher = basis.template.TemplateSwitcher;
   var DWNode = basis.dom.wrapper.Node;
   var DWPartitionNode = basis.dom.wrapper.PartitionNode;
   var DWGroupingNode = basis.dom.wrapper.GroupingNode;
@@ -247,7 +244,7 @@
  /**
   * Base template for TemplateMixin
   */
-  var TEMPLATE = new Template('<div/>');
+  var TEMPLATE = new HtmlTemplate('<div/>');
 
 
  /**
@@ -381,8 +378,7 @@
           // process container 
           if (this.container)
           {
-            // use basis.dom.insert, because `container` may be contains element id as value
-            DOM.insert(this.container, this.element);
+            this.container.appendChild(this.element);
             this.container = null;
           }
         }
@@ -430,11 +426,11 @@
 
         // insert content
         if (this.content)
-          DOM.insert(tmpl.content || tmpl.element, this.content);
+          (tmpl.content || tmpl.element).appendChild(this.content.nodeType ? this.content : document.createTextNode(this.content));
 
         this.templateUpdate(this.tmpl);
 
-        if (oldElement && oldElement !== this.element && oldElement.nodeType != 11)
+        if (oldElement && oldElement !== this.element && oldElement.nodeType != 11) // 11 - DocumentFragment
         {
           var parentNode = oldElement && oldElement.parentNode;
           
@@ -459,7 +455,7 @@
         var curSwitcher = this.templateSwitcher_;
 
         // dance with template switcher
-        if (template instanceof basis.template.TemplateSwitcher)
+        if (template instanceof TemplateSwitcher)
         {
           var switcher = template;
           this.templateSwitcher_ = switcher;
@@ -471,7 +467,7 @@
         }
         
         // check template for correct class instance
-        if (template instanceof Template == false)
+        if (template instanceof HtmlTemplate == false)
           template = null;
 
         // drop template switcher if no template, or new template is not a result of switcher resolving
@@ -501,7 +497,7 @@
             this.childNodesElement = null;
 
             var parentNode = oldElement && oldElement.parentNode;
-            if (parentNode && parentNode.nodeType == DOM.ELEMENT_NODE)
+            if (parentNode && parentNode.nodeType == 1) // 1 – Element
               parentNode.removeChild(oldElement);
           }
         }
@@ -556,7 +552,11 @@
             focusTimer = basis.clearImmediate(focusTimer);
 
           focusTimer = basis.setImmediate(function(){
-            DOM.focus(focusElement, select);
+            try {
+              focusElement.focus();
+              if (select)
+                focusElement.select();
+            } catch(e) {}
           });
         }
       },
@@ -568,7 +568,9 @@
         var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
 
         if (focusElement)
-          focusElement.blur();
+          try {
+            focusElement.blur();
+          } catch(e) {}
       },
 
      /**
@@ -654,7 +656,7 @@
         /** @cut */ }
 
         // reallocate childNodesElement to new DocumentFragment
-        var domFragment = DOM.createFragment();
+        var domFragment = document.createDocumentFragment();
         var target = this.grouping || this;
         var container = target.childNodesElement;
         target.childNodesElement = domFragment;
@@ -730,7 +732,7 @@
     },
 
     init: function(){
-      this.nullElement = DOM.createFragment();
+      this.nullElement = document.createDocumentFragment();
       this.element = this.childNodesElement = this.nullElement;
       DWGroupingNode.prototype.init.call(this);
     },
@@ -824,10 +826,9 @@
     listen: {
       owner: {
         templateChanged: function(){
-          this.childNodesElement = this.getChildNodesElement(this.owner) || this.owner.element;
-          DOM.insert(this.childNodesElement, this.childNodes.map(function(item){
-            return item.element;
-          }));
+          this.childNodes.forEach(function(child){
+            this.appendChild(child.element);
+          }, this.getChildNodesElement(this.owner) || this.owner.element);
         }
       }
     },
@@ -853,13 +854,16 @@
         delegate: {
           templateChanged: function(){
             var oldElement = this.element;
+            var oldElementParent = oldElement.parentNode;
             var newElement = this.getElement(this.delegate);
 
             if (newElement)
               newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
 
             this.element = newElement || this.tmpl.element;
-            DOM.replace(oldElement, this.element);
+
+            if (oldElementParent)
+              oldElementParent.replaceChild(this.element, oldElement);
           }
         }
       }
