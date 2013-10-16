@@ -184,6 +184,126 @@
           }
         },
         {
+          name: 'DOM init w/o helpers',
+          node: function(){
+            this.element = document.createElement('li');
+            this.element.className = 'tree-node' + 
+                (this.selected ? ' selected' : '') +
+                (this.disabled ? ' disabled' : '');
+
+            var el = document.createElement('div');
+            el.className = 'title';
+
+            this.element.appendChild(el);
+
+            this.caption = document.createElement('span');
+            this.caption.className = 'caption';
+            el.appendChild(this.caption);
+
+            this.title = this.caption.appendChild(document.createTextNode(this.data.title));
+
+            dom.event.addHandler(this.caption, 'click', this.action.select, this);
+
+            this.childNodesElement = this.element;
+          },
+          node_destroy: function(){
+            dom.event.removeHandler(this.caption, 'click', this.action.select, this);
+            this.caption = null;
+            this.title = null;
+          },
+          folder: function(){
+            this.element = document.createElement('li');
+            this.element.className = 'tree-node' + 
+                (this.collapsed ? ' collapsed' : '') +
+                (this.selected ? ' selected' : '') +
+                (this.disabled ? ' disabled' : '');
+
+            var el = document.createElement('div');
+            el.className = 'title';
+            this.element.appendChild(el);
+
+            this.expander = document.createElement('div');
+            this.expander.className = 'expander';
+            el.appendChild(this.expander);
+
+            this.caption = document.createElement('span');
+            this.caption.className = 'caption';
+            el.appendChild(this.caption);
+
+            this.title = this.caption.appendChild(document.createTextNode(this.data.title));
+
+            this.childNodesElement = document.createElement('ul');
+            this.childNodesElement.className = 'content';
+            this.element.appendChild(this.childNodesElement);
+
+            dom.event.addHandler(this.expander, 'click', this.action.toggle, this);
+            dom.event.addHandler(this.caption, 'click', this.action.select, this);
+          },
+          folder_destroy: function(){
+            dom.event.removeHandler(this.expander, 'click', this.action.toggle, this);
+            dom.event.removeHandler(this.caption, 'click', this.action.select, this);
+            this.expander = null;
+            this.caption = null;
+            this.title = null;
+          }
+        },
+        {
+          name: 'DOM init w/o helpers && w/o event handler',
+          node: function(){
+            this.element = document.createElement('li');
+            this.element.className = 'tree-node' + 
+                (this.selected ? ' selected' : '') +
+                (this.disabled ? ' disabled' : '');
+
+            var el = document.createElement('div');
+            el.className = 'title';
+
+            this.element.appendChild(el);
+
+            this.caption = document.createElement('span');
+            this.caption.className = 'caption';
+            el.appendChild(this.caption);
+
+            this.title = this.caption.appendChild(document.createTextNode(this.data.title));
+
+            this.childNodesElement = this.element;
+          },
+          node_destroy: function(){
+            this.caption = null;
+            this.title = null;
+          },
+          folder: function(){
+            this.element = document.createElement('li');
+            this.element.className = 'tree-node' + 
+                (this.collapsed ? ' collapsed' : '') +
+                (this.selected ? ' selected' : '') +
+                (this.disabled ? ' disabled' : '');
+
+            var el = document.createElement('div');
+            el.className = 'title';
+            this.element.appendChild(el);
+
+            this.expander = document.createElement('div');
+            this.expander.className = 'expander';
+            el.appendChild(this.expander);
+
+            this.caption = document.createElement('span');
+            this.caption.className = 'caption';
+            el.appendChild(this.caption);
+
+            this.title = this.caption.appendChild(document.createTextNode(this.data.title));
+
+            this.childNodesElement = document.createElement('ul');
+            this.childNodesElement.className = 'content';
+            this.element.appendChild(this.childNodesElement);
+          },
+          folder_destroy: function(){
+            this.expander = null;
+            this.caption = null;
+            this.title = null;
+          }
+        },
+        {
           name: 'DOM improve',
           node: function(){
             this.element = nodeProto.cloneNode(true);
@@ -353,6 +473,7 @@
           }
         }/**/
       ];
+      //tests = [tests[0], tests[8]]
 
       // create tree (reference allowed in global scope)
       TestTree = new Tree({
@@ -445,16 +566,16 @@
             var node = new NodeClass(data[i]);
 
             // add node to tree
-            var refNode = nodes[(i * count * 173) % nodes.length];
-            if (refNode == TestTree)
-              cn.push(node);
-            else
-              refNode.insertBefore(node);
+            // var refNode = nodes[(i * count * 173) % nodes.length];
+            // if (refNode == TestTree)
+            //   cn.push(node);
+            // else
+            //   refNode.insertBefore(node);
               
-            if (NodeClass == TreeFolder)
+            //if (NodeClass == TreeFolder)
               nodes.push(node);
           }
-          TestTree.setChildNodes(cn);
+          //TestTree.setChildNodes(cn);
 
           var time = (new Date() - timeStart) / 1000;
 
@@ -464,6 +585,7 @@
 
 
           TestTree.clear();
+          nodes.slice(1).forEach(function(i){ i.destroy() });
           cn = null;
           nodes = null;
           basis.ui.tree.Node.prototype.templateFn = null;
