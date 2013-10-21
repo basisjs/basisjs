@@ -43,17 +43,6 @@
 
 
  /**
-  * Returns first not null value.
-  * @param {...*} args
-  * @return {*}
-  */
-  function coalesce(/* arg1 .. argN */){
-    for (var i = 0; i < arguments.length; i++)
-      if (arguments[i] != null)
-        return arguments[i];
-  }
-
- /**
   * Copy all properties from source (object) to destination object.
   * @param {object} dest Object should be extended.
   * @param {object} source
@@ -3238,8 +3227,7 @@
       slice: slice,
       splice: splice,
       merge: merge,
-      iterate: iterate,
-      coalesce: coalesce
+      iterate: iterate
     },
     fn: {
       // test functions
