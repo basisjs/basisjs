@@ -631,7 +631,7 @@
         this.clearTimeout();
         this.xhr.abort();
 
-        if (this.xhr.readyState != STATE_DONE)
+        if (this.xhr.readyState != STATE_DONE && this.xhr.readyState != STATE_UNSENT)
           readyStateChangeHandler.call(this, STATE_DONE);
       }
     },
