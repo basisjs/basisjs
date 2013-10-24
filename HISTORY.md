@@ -1,3 +1,49 @@
+## 1.0.0-rc2 (october 25, 2013)
+
+Removals:
+
+- namespaces: `basis.session`, `basis.timer` (`basis.timer.*` -> `basis.*`)
+- classes: `basis.data.BindValue`
+- methods and properties: `basis.string.quote`, `Array#item`, `Array#merge`, `Array#set`, `Array#clear`, `Array#binarySearchPos`, `Array#binarySearch`, `String#quote`, `String#toArray`, `Number#between`, `Number#toHex`, `Number#sign`, `Number#base`, `Number#quote`, `basis.data.Object#getRootDelegate`, `basis.data.Object#cascadeDestroy`, `basis.data.Object#canSetDelegate`, `basis.dom.wrapper.Node#nodeType`, `basis.dom.wrapper.Node#getChildren`, `basis.dom.wrapper.Node#hasOwnSelection`, `basis.ui.Node#cssClassName`
+- functions: `basis.object.coalesce`, `basis.fn.body`, `basis.fn.def`, `basis.dom.head`, `basis.dom.body`, `basis.dom.appendHead`
+- fixes for `Date#getYear` and `Date#setYear`
+
+Relocations:
+
+- `basis.cssom.CssResource` -> core (basis.js)
+- `basis.data.BindValue#addLink` -> `basis.data.Value#link`
+- `basis.data.BindValue#removeLink` -> `basis.data.Value#unlink`
+- `basis.ui.Node#focusable` -> `basis.ui.field.Field#focusable`
+- `basis.html` -> `basis.utils.html`
+
+Other changes:
+
+- NEW: `noConflict` in `basis-config` implemented
+- NEW: `extProto` in `basis-config` implemented (`false` – don't extend buildin class prototypes, `true` – extend, `"warn"` – extend, but warn about non-standard method usage)
+- NEW: `basis.doc` – async interface for head/body implemented
+- NEW: `basis.Class.all_` implemented that contains list of all classes (for debug purposes, dev only)
+- NEW: `basis.json.parse` implemented, that replaced `String#toObject` in some cases
+- API: don't store `lastSearchIndex` in `Array`, but into array itself
+- API: binding bridge `attach`/`detach` methods return nothing now (`undefined`) 
+- FIX: dictionary path resolving in `basis.devpanel`
+- NEW: `basis.utils.info` namespace implemented
+- NEW: extend `basis.data.DatasetWrapper` with `has`, `pick`, `top` and `forEach` proxy methods 
+- FIX: `root` & `syncAction` problem on init for `basis.data.Object`
+- FIX: issue with `subscription` for `basis.data.DatasetWrapper#dataset` on init
+- FIX: `basis.data.dataset.Cloud` subset auto-creation on source items changed 
+- FIX: `basis.entity.Grouping` set wrapper for subset
+- FIX: edge cases in templates (`actions` doesn't process if `basisTemplateId` equals to 0 or no context object)
+- FIX: prevent `basis.dom.wrapper.Node` destroy if it delegates dataSource item
+- API: remove support of `cssClassName` in `basis.ui.table` column config, but add support for `templates`
+- NEW: warn about action name isn't found in `basis.ui.Node#action` list
+- `basis.ui.Node` don't change `display` style of element on `match` and `unmatch` events by default 
+- FIX: `basis.net.AbstractRequest#abort` method in new Chrome
+- FIX: IE8 issue with `basis.ready`
+- FIX: IE8 issue with `basis.animation`
+- FIX: IE8 issue with `basis.layout.VerticalPanelStack`
+- improve template fallback for browsers with no capture phase 
+- rework creation of root namespaces
+
 ## 1.0.0-rc1 (september 21, 2013)
 
 basis.require:
