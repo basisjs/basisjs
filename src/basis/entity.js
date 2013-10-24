@@ -340,8 +340,6 @@
     sync: ENTITYSET_SYNC_METHOD(Subset)
   });
 
-  EntityCollection.sourceHandler = Subset.sourceHandler;
-
   //
   // Entity grouping
   //
@@ -361,8 +359,10 @@
 
     getSubset: function(object, autocreate){
       var group = Split.prototype.getSubset.call(this, object, autocreate);
-      if (group)
-        group.wrapper = this.wrapper;
+
+      if (group && group.dataset)
+        group.dataset.wrapper = this.wrapper;
+
       return group;
     }
   });
