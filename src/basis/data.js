@@ -1460,14 +1460,14 @@
     * @constructor
     */
     init: function(){
+      DataObject.prototype.init.call(this);
+
       var dataset = this.dataset;
       if (dataset)
       {
         this.dataset = null;
         this.setDataset(dataset);
       }
-
-      DataObject.prototype.init.call(this);
     },
 
    /**
