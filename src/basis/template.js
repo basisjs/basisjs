@@ -931,7 +931,7 @@
                       }
                       else
                       {
-                        decl = getDeclFromSource(resource.get(), resource.url ? path.dirname(resource.url) + '/' : '', true, options);
+                        decl = getDeclFromSource(resource, resource.url ? path.dirname(resource.url) + '/' : '', true, options);
                       }
 
                       // prevent recursion
