@@ -135,7 +135,9 @@
       itemClass: itemClass,
       create: function(key, object){
         var obj = KeyObjectMap.prototype.create.call(this, key, object);
-        obj.setDataset(new subsetClass());
+        obj.setDataset(new subsetClass({
+          ruleValue: key
+        }));
         return obj;
       }
     }, config));
