@@ -81,14 +81,15 @@
           }
         }
       }, this.scrollerConfig));
+    },
+
+    postInit: function(){
+      PageControl.prototype.postInit.call(this);
+      this.scroller.setElement(this.childNodesElement);
 
       if (this.rotate && this.firstChild)
         this.adjustRotation(true);
-    },
 
-    templateSync: function(){
-      PageControl.prototype.templateSync.call(this);
-      this.scroller.setElement(this.childNodesElement);
       this.realign();
     },
 
