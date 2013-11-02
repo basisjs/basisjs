@@ -2702,7 +2702,7 @@
       var res = this_.toFixed(prec);
       if (gs || comma)
         res = res.replace(/(\d+)(\.?)/, function(m, number, c){
-          return (gs ? Number(number).group(3, gs) : number) + (c ? comma || c : '');
+          return (gs ? basis.number.group(Number(number), 3, gs) : number) + (c ? comma || c : '');
         });
       if (prefix)
         res = res.replace(/^-?/, '$&' + (prefix || ''));
