@@ -2231,7 +2231,7 @@
             Array.prototype.push.apply(args, arguments);
             return extensions[method].apply(extensions, args);
           }
-        })(key, cls.name);
+        })(key, cls.name || cls.toString().match(/^\s*function\s*(\w*)\s*\(/)[1]);
   }
 
 
