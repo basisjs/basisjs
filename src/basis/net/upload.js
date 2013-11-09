@@ -45,7 +45,18 @@
       contentType: 'multipart/form-data',
 
       formSubmit: function(form, requestData){
-        var formData = new FormData(form);
+        var formData = new FormData();
+
+        for (var i = 0, field; field = form.elements[i]; i++)
+        {
+          if (field.files)
+          {
+            for (var j = 0; j < field.files.length; j++)
+              formData.append(field.name, field.files[j]);
+          }
+          else
+            formData.append(field.name, field.value);
+        }        
 
         var requestConfig = basis.object.extend({}, requestData);
 
@@ -55,11 +66,11 @@
         }));
       },
       
-      uploadFiles: function(url, files){
+      uploadFiles: function(url, files, fileParam){
         var formData = new FormData();
 
         for (var i = 0, file; file = files[i]; i++) 
-          formData.append(file.name, file);
+          formData.append(fileParam || file.name, file);
 
         this.request({
           url: url,
