@@ -779,7 +779,7 @@
   function clone(node, noChildren){
     var result = node.cloneNode(!noChildren);
     if (result.attachEvent) // clear event handlers for IE
-      axis(result, AXIS_DESCENDANT_OR_SELF).forEach(Event.clearHandlers);
+      axis(result, AXIS_DESCENDANT_OR_SELF).forEach(basis.dom.event.clearHandlers);
     return result;
   }
 
