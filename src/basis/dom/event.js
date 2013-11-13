@@ -272,7 +272,7 @@
       if (event.type == 'DOMMouseScroll')
         delta = -event.detail;    // gecko
 
-    return delta / Math.abs(delta);
+    return delta && (delta / Math.abs(delta));
   }
 
   //
