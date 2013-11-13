@@ -240,7 +240,7 @@
       if ('pageX' in event)                 // all others
         return event.pageX;
       else                                  
-        return event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft);
+        return 'clientX' in event ? event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft) : 0;
   }
 
  /**
@@ -255,7 +255,7 @@
       if ('pageY' in event)
         return event.pageY;
       else                                  
-        return event.clientY + (document.documentElement.scrollTop || document.body.scrollTop);
+        return 'clientY' in event ? event.clientY + (document.documentElement.scrollTop || document.body.scrollTop) : 0;
   }
 
  /**
