@@ -98,7 +98,11 @@
     init: function(event){
       event = wrap(event);
 
-      basis.object.extend(basis.object.complete(this, event), { 
+      for (var name in event)
+        if (event.hasOwnProperty(name) && name in this == false)
+          this[name] = event[name];
+
+      basis.object.extend(this, { 
         event_: event,
 
         sender: sender(event),
