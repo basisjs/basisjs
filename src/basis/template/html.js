@@ -112,10 +112,11 @@
       event = new domEvent.Event(event);
 
       // don't process right click - generaly FF problem
-      if (event && event.type == 'click' && event.which == 3)
+      if (event.type == 'click' && event.which == 3)
         return;
 
       var cursor = event.sender;
+      var bubble = event.type != 'mouseenter' && event.type != 'mouseleave';
       var attr;
 
       // IE events may have no source, nothing to do in this case
@@ -125,6 +126,8 @@
       // search for nearest node with event-{eventName} attribute
       do {
         if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
+          break;
+        if (!bubble)
           break;
       } while (cursor = cursor.parentNode);
 
