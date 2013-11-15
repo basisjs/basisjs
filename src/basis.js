@@ -1568,8 +1568,8 @@
     attach: function(fn, context){
       /** @cut */ var cursor = this;
       /** @cut */ while (cursor = cursor.handler)
-      /** @cut */  if (cursor.fn === fn && cursor.context === context)
-      /** @cut */    consoleMethods.warn('basis.Token#attach: duplicate fn & context pair');
+      /** @cut */   if (cursor.fn === fn && cursor.context === context)
+      /** @cut */     consoleMethods.warn('basis.Token#attach: duplicate fn & context pair');
 
       this.handler = {
         fn: fn,
@@ -1645,6 +1645,8 @@
 
       this.handler = null;
       this.value = null;
+      this.attach = $undef;
+      this.detach = $undef;
     }  
   });
 
