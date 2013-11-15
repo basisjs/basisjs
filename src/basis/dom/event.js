@@ -99,7 +99,7 @@
       event = wrap(event);
 
       for (var name in event)
-        if (event.hasOwnProperty(name) && name in this == false)
+        if (typeof event[name] != 'function' && name in this == false)
           this[name] = event[name];
 
       basis.object.extend(this, { 
