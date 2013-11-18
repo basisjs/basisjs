@@ -150,10 +150,17 @@
     },
     releaseColor: function(object){
       delete this.usedColors[object.color];
-      this.presetColors.unshift(object.color);
     },
     getColor: function(){
-      var color = this.presetColors.pop();
+      for (var i = 0; i < this.presetColors.length; i++)
+      {
+        if (!this.usedColors[this.presetColors[i]])
+        {
+          color = this.presetColors[i];
+          break;
+        }
+      }
+
       if (!color)
       {
         do
@@ -547,6 +554,10 @@
     invertAxis: false,
     autoRotateScale: false,
     scaleAngle: 0,
+    showScale: true,
+    gridColor: '#edeef2',
+    scaleXLabelColor: 'black',
+    scaleYLabelColor: 'black',
 
     min: 0,
     max: 'auto',
@@ -700,34 +711,35 @@
       //
       context.font = '10px tahoma';
       context.lineWidth = 1;
-      context.fillStyle = 'black';
-      context.strokeStyle = 'black';
+      context.strokeStyle = this.gridColor;
 
       var textHeight = 10;
       var skipLabel;
       var skipScale;
-      var skipLabelCount;
+      var skipXLabelCount;
+      var skipYLabelCount;
 
       // xscale
+      context.fillStyle = this.scaleXLabelColor;
       var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : keysCount - (this.keyValuesOnEdges ? 1 : 0)); 
       if (this.showXLabels)
       {
         var angle;
         if (this.autoRotateScale)
         {
-          skipLabelCount = Math.ceil((textHeight + 3) / xStep) - 1;
-          angle = (skipLabelCount + 1) * xStep < maxXLabelWidth ? Math.asin((textHeight + 3) / ((skipLabelCount + 1) * xStep)) : 0;
+          skipXLabelCount = Math.ceil((textHeight + 3) / xStep) - 1;
+          angle = (skipXLabelCount + 1) * xStep < maxXLabelWidth ? Math.asin((textHeight + 3) / ((skipXLabelCount + 1) * xStep)) : 0;
         }
         else
         {
           angle = (this.scaleAngle % 180) * Math.PI / 180;
           var optimalLabelSpace = angle ? Math.min(textHeight / Math.sin(angle), maxXLabelWidth) : maxXLabelWidth;
-          skipLabelCount = Math.ceil((optimalLabelSpace + 3) / xStep) - 1;
+          skipXLabelCount = Math.ceil((optimalLabelSpace + 3) / xStep) - 1;
         }
         
         BOTTOM += Math.round(maxXLabelWidth * Math.sin(angle));
 
-        skipScale = skipLabelCount > 10 || xStep < 4;
+        skipScale = skipXLabelCount > 10 || xStep < 4;
         context.textAlign = angle ? 'right' : 'center';        
         context.beginPath();
         
@@ -735,18 +747,18 @@
         for (var i = 0; i < xLabels.length; i++)
         {
           var x = Math.round(leftOffset + LEFT + i * xStep) + .5;//xLabelsX[i];
-          skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
+          skipLabel = skipXLabelCount && (i % (skipXLabelCount + 1) != 0);
 
           context.save();
           if (!skipLabel)
           {
-            context.translate(x + 3, HEIGHT - BOTTOM + 15);
+            context.translate(x, HEIGHT - BOTTOM + 15);
             context.rotate(-angle);
             context.fillText(xLabels[i], 0, 0);
           }
           context.restore();
  
-          if (!skipLabel || !skipScale)
+          if (this.showScale && (!skipLabel || !skipScale))
           {
             context.moveTo(x, HEIGHT - BOTTOM + .5);
             context.lineTo(x, HEIGHT - BOTTOM + (skipLabel ? 3 : 5));
@@ -758,6 +770,7 @@
       }
 
       // yscale
+      context.fillStyle = this.scaleYLabelColor;      
       var yStep = (HEIGHT - TOP - BOTTOM) / (this.invertAxis ? keysCount - (this.keyValuesOnEdges ? 1 : 0) : partCount);
       if (this.showYLabels)
       {
@@ -765,9 +778,9 @@
 
         var topOffset = !this.keyValuesOnEdges && this.invertAxis ? yStep / 2 : 0;
 
-        skipLabelCount = Math.ceil(15 / yStep) - 1;
-        //skipLabelCount = 0;
-        skipScale = skipLabelCount > 10 || yStep < 4;
+        skipYLabelCount = Math.ceil(15 / yStep) - 1;
+        //skipYLabelCount = 0;
+        skipScale = skipYLabelCount > 10 || yStep < 4;
  
         context.beginPath();        
         
@@ -775,12 +788,12 @@
         {
           var labelY = Math.round(this.invertAxis ? (TOP + topOffset + i * yStep) : (HEIGHT - BOTTOM - topOffset - i * yStep)) + .5;
 
-          skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
+          skipLabel = skipYLabelCount && (i % (skipYLabelCount + 1) != 0);
 
           if (!skipLabel)
             context.fillText(label, LEFT - 6, labelY + 2.5);
 
-          if (!skipLabel || !skipScale)
+          if (this.showScale && (!skipLabel || !skipScale))
           {
             context.moveTo(LEFT + .5 - 3, labelY);
             context.lineTo(LEFT + .5, labelY);
@@ -814,7 +827,7 @@
           }
         }
 
-        context.strokeStyle = 'rgba(128, 128, 128, .25)';
+        context.strokeStyle = this.gridColor;
         context.stroke();
         context.closePath();
       }
@@ -831,7 +844,7 @@
         context.moveTo(LEFT + .5, HEIGHT - BOTTOM + .5);
         context.lineTo(WIDTH - RIGHT + .5, HEIGHT - BOTTOM + .5);
         context.lineWidth = 1;
-        context.strokeStyle = 'black';
+        context.strokeStyle = this.gridColor;
         context.stroke();
         context.closePath();
       }
@@ -840,7 +853,7 @@
       var step = this.invertAxis ? yStep : xStep;
       for (var i = 0, seria; seria = series[i]; i++)
       {
-        this.drawSeria(this.getValuesForSeria(seria), seria.getColor(), i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
+        this.drawSeria(this.getValuesForSeria(seria), seria.getColor(), i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM, skipXLabelCount);
       }  
 
       //save chart data
@@ -1392,6 +1405,7 @@
     className: namespace + '.LinearChart',
 
     fillArea: false,
+    drawPoints: false,
     style: {
       strokeStyle: '#090',
       lineWidth: 2.5,
@@ -1415,25 +1429,33 @@
       AxisChart.prototype.init.call(this);
     },
 
-    drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
+    drawSeria: function(values, color, pos, min, max, step, left, top, width, height, pointFrequency){
+
+      var points = [];
+      for (var i = 0; i < values.length; i++)
+      {
+        points.push({
+          x: i * step,
+          y: height * (1 - (values[i] - min) / (max - min))
+        });
+      }
+
       var context = this.context;
 
       if (!this.keyValuesOnEdges)
         left += step / 2;
 
-      //var color = seria.getColor();
       this.style.strokeStyle = color;
-      //var values = seria.getValues(keys);
 
       context.save();
       context.translate(left, top);
       context.beginPath();
 
       var x, y;
-      for (var i = 0; i < values.length; i++)
+      for (var i = 0; i < points.length; i++)
       {
-        x = i * step;
-        y = height * (1 - (values[i] - min) / (max - min));
+        var x = points[i].x;
+        var y = points[i].y;
         
         if (i == 0)
           context.moveTo(x, y);
@@ -1444,7 +1466,7 @@
       extend(context, this.style);
       context.stroke();
 
-      if (this.fillArea && this.series.childNodes.length == 1)
+      if (this.fillArea /*&& this.series.childNodes.length == 1*/)
       {
         context.lineWidth = 0;
         var zeroPosition = min < 0 ? Math.max(0, max) / (max - min) * height : height;
@@ -1456,6 +1478,48 @@
       }
 
       context.closePath();
+
+      
+      if (this.drawPoints)
+      {
+        var direction = 0;
+        var angle = 0;
+        
+        for (var i = 0; i < points.length; i++)
+        {
+          var x = points[i].x;
+          var y = points[i].y;
+
+          if (i != points.length - 1)
+          {
+            var nextX = points[i + 1].x;
+            var nextY = points[i + 1].y;
+
+            var nextDirection = nextY == y ? 0 : (nextY > y ? 1 : -1);
+            var nextAngle = Math.abs(Math.atan(Math.abs(nextY - y) / (nextX - x)) / Math.PI * 180);
+          }
+
+          var isLabelPoint = !pointFrequency || (i % (pointFrequency + 1) == 0);
+
+          if (i == 0 || i == points.length - 1 || nextDirection != direction || Math.abs(nextAngle - angle) > 30 || isLabelPoint)
+          {
+            context.beginPath();
+            context.arc(x, y, 4, 0, 2 * Math.PI, false);
+            context.globalAlpha = 1;
+            context.fillStyle = color;
+            context.lineWidth = 2;
+            context.strokeStyle = 'white';
+            context.fill();
+            context.stroke();
+            context.closePath();      
+          }
+
+          direction = nextDirection;
+          angle = nextAngle;
+        }
+      }
+      
+
       context.restore();
     }
   });
