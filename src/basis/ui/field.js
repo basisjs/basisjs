@@ -883,6 +883,12 @@
     }
   });
 
+  var COMBOBOX_SELECTION_HANDLER = {
+    itemsChanged: function(selection){
+      this.setDelegate(selection.pick());
+    }
+  }
+
  /**
   * @class
   */
@@ -1030,7 +1036,7 @@
       // inherit
       ComplexField.prototype.init.call(this);
 
-      var captionItem = new this.childClass({
+      this.setSatellite('captionItem', new this.childClass({
         delegate: this.selection.pick(),
         owner: this,
         getTitle: function(){
@@ -1044,13 +1050,8 @@
             this.updateBind('title');
           }
         }
-      });
-      this.setSatellite('captionItem', captionItem);
-      this.selection.addHandler({
-        itemsChanged: function(){
-          captionItem.setDelegate(this.pick());
-        }
-      });
+      }));
+      this.selection.addHandler(COMBOBOX_SELECTION_HANDLER, this.satellite.captionItem);
 
       // create items popup
       this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
@@ -1110,6 +1111,10 @@
 
       this.popup.destroy();
       this.popup = null;
+
+      this.satellite.captionItem.setDelegate();
+      this.selection.removeHandler(COMBOBOX_SELECTION_HANDLER, this.satellite.captionItem);
+      this.setSatellite('captionItem', null);
 
       ComplexField.prototype.destroy.call(this);
     }
