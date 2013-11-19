@@ -50,8 +50,8 @@
     dragElement = this;
     dragData = {
       // calculate point
-      initX: Event.mouseX(event),
-      initY: Event.mouseY(event),
+      initX: event.mouseX,
+      initY: event.mouseY,
       deltaX: 0,
       deltaY: 0
     };
@@ -63,27 +63,28 @@
     if (SELECTSTART_SUPPORTED)
       addGlobalHandler('selectstart', Event.kill);
 
-    // kill event
-    Event.cancelDefault(event);
+    // cancel event default action
+    event.preventDefault();
 
     // ready to drag start, make other preparations if need
     this.prepareDrag(dragData, event);
   }
 
   function onDrag(event){
-    if (!dragging)
+    if (dragElement.axisX)
+      dragData.deltaX = dragElement.axisXproxy(event.mouseX - dragData.initX);
+
+    if (dragElement.axisY)
+      dragData.deltaY = dragElement.axisYproxy(event.mouseY - dragData.initY);
+
+    if (!dragging && dragElement.startRule(dragData.deltaX, dragData.deltaY))
     {
       dragging = true;
       dragElement.emit_start(dragData, event);
     }
 
-    if (dragElement.axisX)
-      dragData.deltaX = dragElement.axisXproxy(Event.mouseX(event) - dragData.initX);
-
-    if (dragElement.axisY)
-      dragData.deltaY = dragElement.axisYproxy(Event.mouseY(event) - dragData.initY);
-
-    dragElement.emit_drag(dragData, event);
+    if (dragging)
+      dragElement.emit_drag(dragData, event);
   }
 
   function stopDrag(event){
@@ -103,7 +104,7 @@
     dragElement = null;
     dragData = null;
 
-    Event.kill(event);
+    event.die();
   }
 
 
@@ -130,6 +131,8 @@
     axisXproxy: basis.fn.$self,
     axisYproxy: basis.fn.$self,
 
+    startRule: basis.fn.$true,
+
     prepareDrag: function(){},
     emit_start: createEvent('start'), // occure on first mouse move
     emit_drag: createEvent('drag'),
@@ -153,11 +156,6 @@
       cleaner.add(this);
     },
 
-
-    //
-    // public
-    //
-
     setElement: function(element, trigger){
       this.element = DOM.get(element);
       trigger = DOM.get(trigger) || this.element;
@@ -173,7 +171,6 @@
           Event.addHandler(this.trigger, 'mousedown', startDrag, this);
       }
     },
-
     setBase: function(baseElement){
       this.baseElement = DOM.get(baseElement) || defaultBaseElement;
     },
@@ -191,9 +188,8 @@
     },
 
     destroy: function(){
-      cleaner.remove(this);
-
       this.stop();
+      cleaner.remove(this);
 
       Emitter.prototype.destroy.call(this);
       
