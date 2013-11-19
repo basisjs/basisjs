@@ -1999,11 +1999,11 @@
     if (typeof compiledSourceCode != 'function')
       try {
         compiledSourceCode = new Function('exports, module, basis, global',
+          '"use strict";\n' +
           'var __filename = "' + (sourceURL).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '";\n' +
           'var __dirname = basis.path.dirname(__filename);\n' +
-          'var resource = function(url){ return basis.resource(__dirname + "/" + url); };\n' +
+          'var resource = function(url){ return basis.resource(__dirname + "/" + url); };\n\n' +
           //'var require = function(url){ return basis.require(url, __dirname); };\n' +
-          '"use strict";\n\n' +
           sourceCode
           /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
           /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
