@@ -152,7 +152,7 @@
       delete this.usedColors[object.color];
     },
     getColor: function(){
-      for (var i = 0; i < this.presetColors.length; i++)
+      for (var i = 0, color; i < this.presetColors.length; i++)
       {
         if (!this.usedColors[this.presetColors[i]])
         {
