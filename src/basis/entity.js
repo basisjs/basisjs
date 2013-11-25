@@ -636,6 +636,9 @@
       {
         var values = config.type.slice(); // make copy of array to make it stable
 
+        /** @cut */ if (!values.length)
+        /** @cut */   basis.dev.warn('Empty array set as type definition for ' + entityType.name + '#field.' + key + ', is it a bug?');
+
         config.type = function(value, oldValue){
           var exists = values.indexOf(value) != -1;
 
