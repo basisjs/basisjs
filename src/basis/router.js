@@ -22,8 +22,6 @@
   var eventSupport = 'onhashchange' in global && !buggyIE;
 
   var CHECK_INTERVAL = 50;
-  var NAMED_PARAM = /:\w+/g;
-  var SPLAT_PARAM = /\\\*\w+/g;
 
   var routes = {};
   var matched = {};
@@ -33,13 +31,73 @@
 
 
   function pathToRegExp(route){
-    return new RegExp(
-      '^' +
-      basis.string.forRegExp(String(route))
-        .replace(NAMED_PARAM, '([^\/]+)')
-        .replace(SPLAT_PARAM, '(.*?)')
-      + '$',
-    'i');
+    var value = String(route || '');
+    var chars = value.split('');
+
+    function findWord(offset){
+      return value.substr(offset).match(/^\w+/);
+    }
+
+    function parse(offset, stopChar){
+      var result = '';
+      var res;
+
+      for (var i = offset; i < chars.length; i++)
+        switch (chars[i])
+        {
+          case stopChar:
+            return {
+              result: result,
+              offset: i
+            };
+
+          case '(':  // optional: (something) -> (?:something)?
+            var res = parse(i + 1, ')');
+            if (res)
+            {
+              i = res.offset;
+              result += '(?:' + res.result + ')?';
+            }
+            else
+            {
+              result += '\\(';
+            }
+            break;
+
+          case ':':  // named:   :name -> ([^/]+)
+            if (res = findWord(i + 1))
+            {
+              i += res[0].length;
+              result += '([^\/]+)';
+            }
+            else
+            {
+              result += ':';
+            }
+
+            break;
+
+          case '*':  // splat:   *name -> (.*?)
+            if (res = findWord(i + 1))
+            {
+              i += res[0].length;
+              result += '(.*?)';
+            }
+            else
+            {
+              result += '\\*';
+            }
+
+            break;
+
+          default:
+            result += basis.string.forRegExp(chars[i]);
+        }
+
+      return stopChar ? null : result;
+    }
+
+    return new RegExp('^' + parse(0) + '$', 'i');
   }
 
   function startWatch(){
