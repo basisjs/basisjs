@@ -313,7 +313,7 @@
       return this.value;
     },
     setValue: function(newValue){
-      if (this.value != newValue)
+      if (this.value !== newValue)
       {
         var oldValue = this.value;
         this.value = newValue;
@@ -447,7 +447,7 @@
       this.setMaxLength(maxLength);
     },
     setValue: function(newValue){
-      return Field.prototype.setValue.call(this, newValue == null ? '' : newValue);
+      return Field.prototype.setValue.call(this, newValue == null ? '' : String(newValue));
     },
     setReadOnly: function(readOnly){
       this.readOnly = !!readOnly;
@@ -1092,7 +1092,7 @@
       return selected && selected.getValue();
     },
     setValue: function(value){
-      if (this.getValue() != value)
+      if (this.getValue() !== value)
       {
         // update value & selection
         var item = basis.array.search(this.childNodes, value, getFieldValue);
