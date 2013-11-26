@@ -61,6 +61,10 @@
     svg: 'http://www.w3.org/2000/svg'
   };
 
+  // events
+  var afterEventAction = {};
+  var insideElementEvent = {};
+  var MOUSE_ENTER_LEAVE_SUPPORT = 'onmouseenter' in document.documentElement;
   var CAPTURE_FALLBACK = !document.addEventListener && '__basisTemplate' + parseInt(1e9 * Math.random());
   if (CAPTURE_FALLBACK)
     global[CAPTURE_FALLBACK] = function(eventName, event){
@@ -86,7 +90,14 @@
     return !element.className;
   })();
 
+  // old firefox has no Node#contains method
+  if (typeof Node != 'undefined' && !Node.prototype.contains)
+    Node.prototype.contains = function(child){
+      return !!(this.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
+    };
 
+
+  // l10n
   var l10nTemplates = {};
   function getL10nTemplate(token){
     var template = basis.template.getL10nTemplate(token);
@@ -108,79 +119,124 @@
   * @func
   */
   function createEventHandler(attrName){
+   /**
+    * @param {basis.dom.event.Event} event
+    */ 
     return function(event){
-      event = new domEvent.Event(event);
 
       // don't process right click - generaly FF problem
       if (event.type == 'click' && event.which == 3)
         return;
 
-      var cursor = event.sender;
-      var bubble = event.type != 'mouseenter' && event.type != 'mouseleave';
+      var bubble = insideElementEvent[event.type] || (event.type != 'mouseenter' && event.type != 'mouseleave');
+      var attrCursor = event.sender;
       var attr;
 
-      // IE events may have no source, nothing to do in this case
-      if (!cursor)
-        return;
-
       // search for nearest node with event-{eventName} attribute
-      do {
-        if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
-          break;
-        if (!bubble)
-          break;
-      } while (cursor = cursor.parentNode);
-
-      // if not found - exit
-      if (!cursor || !attr)
-        return;
-
-      // search for nearest node with basisTemplateId property
-      var actionTarget = cursor;
-      var refId;
-      var tmplRef;
-
-      do {
-        refId = cursor.basisTemplateId;
-        if (typeof refId == 'number')
-        {
-          // if node found, return it
-          if (tmplRef = resolveInstanceById(refId))
-            break;
-        }
-      } while (cursor = cursor.parentNode);
-
-      if (tmplRef && tmplRef.action)
+      // Note: IE events may have no event source, nothing to do in this case
+      while (attrCursor)
       {
-        var actions = attr.nodeValue.trim().split(' ');
-        event.actionTarget = actionTarget;
-        for (var i = 0, actionName; actionName = actions[i++];)
-          tmplRef.action.call(tmplRef.context, actionName, event);
+        attr = attrCursor.getAttribute && attrCursor.getAttribute(attrName);
+        
+        if (!bubble || typeof attr == 'string')
+          break;
+
+        attrCursor = attrCursor.parentNode;
       }
+
+      // attribute found
+      if (typeof attr == 'string')
+      {
+        // search for nearest node with basisTemplateId property
+        var cursor = attrCursor;
+        var actionTarget = cursor;
+        var refId;
+        var tmplRef;
+
+        if (insideElementEvent[event.type])
+        {
+          var relTarget = event.relatedTarget;
+          if (relTarget && (cursor === relTarget || cursor.contains(relTarget)))
+            cursor = null;  // prevent action processing
+        }
+
+        while (cursor)
+        {
+          refId = cursor.basisTemplateId;
+          if (typeof refId == 'number')
+          {
+            // if node found, return it
+            if (tmplRef = resolveInstanceById(refId))
+              break;
+          }
+          cursor = cursor.parentNode;
+        }
+
+        if (tmplRef && tmplRef.action)
+        {
+          var actions = attr.trim().split(/\s+/);
+          event.actionTarget = actionTarget;
+          for (var i = 0, actionName; actionName = actions[i++];)
+            tmplRef.action.call(tmplRef.context, actionName, event);
+        }
+      }
+
+      if (event.type in afterEventAction)
+        afterEventAction[event.type](event, attrCursor);
     };
   }
+
 
  /**
   * Creates dom structure by declaration.
   */
   var buildHtml = function(tokens, parent){
-    function setEventAttribute(eventName, actions){
-      var attrName = 'event-' + eventName;
+    function emulateEvent(origEventName, emulEventName){
+      regEventHandler(emulEventName);
+      insideElementEvent[origEventName] = true;
+      afterEventAction[emulEventName] = function(event){
+        event = new domEvent.Event(event);
+        event.type = origEventName;
+        tmplEventListeners[origEventName](event);
+      }
+      afterEventAction[origEventName] = function(event, cursor){
+        cursor = cursor && cursor.parentNode;
+        if (cursor)
+        {
+          event = new domEvent.Event(event);
+          event.type = origEventName;
+          event.sender = cursor;
+          tmplEventListeners[origEventName](event);
+        }
+      }
+    }
 
+    function regEventHandler(eventName){
       if (!tmplEventListeners[eventName])
       {
-        tmplEventListeners[eventName] = createEventHandler(attrName);
+        tmplEventListeners[eventName] = createEventHandler('event-' + eventName);
 
         if (!CAPTURE_FALLBACK)
-          for (var k = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[k++];)
+        {
+          if (!MOUSE_ENTER_LEAVE_SUPPORT && eventName == 'mouseenter')
+            return emulateEvent(eventName, 'mouseover');
+          if (!MOUSE_ENTER_LEAVE_SUPPORT && eventName == 'mouseleave')
+            return emulateEvent(eventName, 'mouseout');
+
+          for (var i = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[i]; i++)
             domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
+        }
       }
+    }
+
+    function setEventAttribute(eventName, actions){
+      regEventHandler(eventName);
 
       // hack for non-bubble events in IE<=8
       if (CAPTURE_FALLBACK)
         result.setAttribute('on' + eventName, CAPTURE_FALLBACK + '("' + eventName + '",event)');
 
-      result.setAttribute(attrName, actions);
+      result.setAttribute('event-' + eventName, actions);
     }
 
     function setAttribute(name, value){
