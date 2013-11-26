@@ -1310,7 +1310,7 @@
         regexp = new RegExp(regexp);
 
       return function(field){
-        var value = field.getValue();
+        var value = String(field.getValue());
         if (value != '' && !value.match(regexp))
           return new ValidatorError(field, l10nToken(namespace, 'validator', 'regExpWrongFormat'));
       };
@@ -1333,12 +1333,12 @@
         return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyMustBeGreaterZero'));
     },
     Email: function(field){
-      var value = field.getValue().trim();
+      var value = String(field.getValue()).trim();
       if (value != '' && !value.match(REGEXP_EMAIL))
         return new ValidatorError(field, l10nToken(namespace, 'validator', 'emailWrongFormat'));
     },
     Url: function(field){
-      var value = field.getValue().trim();
+      var value = String(field.getValue()).trim();
       if (value != '' && !value.match(REGEXP_URL))
         return new ValidatorError(field, l10nToken(namespace, 'validator', 'urlWrongFormat'));
     },
