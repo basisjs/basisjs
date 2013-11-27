@@ -262,7 +262,7 @@
 
   function getPeriods(){
     // update nodes
-    var nodePeriod = getPeriod(this.nodePeriodName, new Date(this.periodStart).add(this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(this.periodStart) || 0)));
+    var nodePeriod = getPeriod(this.nodePeriodName, basis.date.add(new Date(this.periodStart), this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(this.periodStart) || 0)));
     var result = [];
 
     for (var i = 0; i < this.nodeCount; i++)
@@ -270,7 +270,7 @@
       result.push(nodePeriod);
 
       // move to next period
-      nodePeriod = getPeriod(this.nodePeriodName, new Date(nodePeriod.periodStart).add(this.nodePeriodUnit, this.nodePeriodUnitCount));
+      nodePeriod = getPeriod(this.nodePeriodName, basis.date.add(new Date(nodePeriod.periodStart), this.nodePeriodUnit, this.nodePeriodUnitCount));
     }
 
     return result;
@@ -448,7 +448,7 @@
       return date.getDate();
     },
     getInitOffset: function(date){
-      return 1 + (new Date(date).set(DAY, 1).getDay() + 5) % 7;
+      return 1 + (basis.date.set(new Date(date), DAY, 1).getDay() + 5) % 7;
     },
 
     template: templates.SectionMonth,
@@ -602,7 +602,7 @@
     template: templates.Calendar,
     binding: {
       today: function(){
-        return new Date().toFormat("%D.%M.%Y");
+        return basis.date.format(new Date(), '%D.%M.%Y');
       }
     },
     action: {
@@ -623,7 +623,7 @@
       {
         var newDate = node.periodStart;
         var activeSection = this.selection.pick();
-        this.selectedDate.set(new Date(this.selectedDate.value).add(activeSection.nodePeriodUnit, this.selectedDate.value.diff(activeSection.nodePeriodUnit, newDate)));
+        this.selectedDate.set(basis.date.add(new Date(this.selectedDate.value), activeSection.nodePeriodUnit, basis.date.diff(this.selectedDate.value, activeSection.nodePeriodUnit, newDate)));
         this.nextSection(BACKWARD);
       }
     },
@@ -722,7 +722,7 @@
     // date change
     selectDate: function(date){
       if (date - this.date.value != 0)  // test for date equal
-        this.date.set(date);
+        basis.date.set(this.date, date);
     },
 
     //
@@ -739,7 +739,7 @@
         var offset = forward ? 1 : -1;
         var startMark = forward ? 'start' : 'till';
         var endMark = forward ? 'till' : 'start';
-        var cursor = (new Date(date)).add('millisecond', offset);
+        var cursor = basis.date.add(new Date(date), 'millisecond', offset);
         var map = this.map[this.periodEnableByDefault ? 'disabled' : 'enabled'];
 
         if (map)
@@ -753,12 +753,12 @@
 
           // search for enable year
           while (!this.isPeriodEnabled(period.periodStart, period.periodEnd))
-            period = getPeriod(YEAR, cursor.add(YEAR, offset));
+            period = getPeriod(YEAR, basis.date.add(cursor, YEAR, offset));
 
           // enabled year found, search for enabled month - it's situate between period.periodStart and period.periodEnd
           period[endMark] = getPeriod(MONTH, period[startMark])[endMark];
           while (!this.isPeriodEnabled(period.periodStart, period.periodEnd))
-            period = getPeriod(MONTH, cursor.add(MONTH, offset));
+            period = getPeriod(MONTH, basis.date.add(cursor, MONTH, offset));
 
           // enabled month found, search for day
           var s = unpackDate(period[startMark]);
@@ -819,9 +819,11 @@
         {
           var offset = forward ? 1 : -1;
           var curYear = date.getFullYear();
-          var firstDate = (new Date(date)).add('millisecond', offset);
+          var firstDate = basis.date.add(new Date(date), 'millisecond', offset);
           var firstYear = firstDate.getFullYear();
-          var years = basis.object.keys(this.map.enable).filter(function(year){ return offset * year >= offset * firstYear; });
+          var years = basis.object.keys(this.map.enable).filter(function(year){
+            return offset * year >= offset * firstYear;
+          });
           var yearCount = years.length;
 
           if (yearCount)

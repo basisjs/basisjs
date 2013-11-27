@@ -127,6 +127,9 @@
         }
       };
     });
+    var lastUpdateGetter = function(node){
+      return basis.date.format(node.data.lastUpdate, '%M/%D/%Y');
+    };
 
     new Table({
       container: createBlock('table'),
@@ -135,7 +138,7 @@
         { header: 'Price', body: getter('data.price', '${0:.2}'), autosorting: true, sorting: getter('data.price') },
         { header: 'Change', body: getter('data.change', '{0:.2}') },
         { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
-        { header: 'Last Updated', body: getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+        { header: 'Last Updated', body: lastUpdateGetter }
       ],
       childNodes: data
     });
@@ -157,7 +160,7 @@
           { header: 'Price', body: getter('data.price', '${0:.2}'), sorting: getter('data.price') },
           { header: 'Change', body: getter('data.change', '{0:.2}') },
           { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
-          { header: 'Last Updated', body: getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+          { header: 'Last Updated', body: lastUpdateGetter }
         ],
         childNodes: data
       });
@@ -182,7 +185,7 @@
           { header: 'Price', body: getter('data.price', '${0:.2}'), sorting: getter('data.price'), footer: 'xxx' },
           { header: 'Change', body: getter('data.change', '{0:.2}') },
           { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
-          { header: 'Last Updated', body: getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+          { header: 'Last Updated', body: lastUpdateGetter }
         ],
         childNodes: data
       }); 

@@ -95,7 +95,7 @@ basis.ready(function(){
         pubDate: {
           events: 'update',
           getter: function(node){
-            return basis.date.fromISOString(node.data.pubDate).toFormat('%D/%M/%Y %H:%I:%S');
+            return basis.date.format(basis.date.fromISOString(node.data.pubDate), '%D/%M/%Y %H:%I:%S');
           }
         },
         tagList: 'satellite:'

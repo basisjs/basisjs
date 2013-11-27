@@ -205,33 +205,24 @@
             afterWidth: 'afterWidth'
           },
 
-          delegate: reportSlice,
-          listen: {
-            delegate: {
-              rangeChanged: function(){
-                this.sync();
-              }
-            }
-          },
-
           beforeWidth: 0,
           afterWidth: 0,
           sync: function(){
-            var itemCount = this.delegate.index_.length;
-            var start = this.delegate.offset;
-            var end = start + this.delegate.limit;
+            var itemCount = reportSlice.index_.length;
+            var start = reportSlice.offset;
+            var end = start + reportSlice.limit;
 
-            if (this.delegate.orderDesc)
+            if (reportSlice.orderDesc)
             {
               start = itemCount - end;
-              end = start + this.delegate.limit;
+              end = start + reportSlice.limit;
             }
 
             start = Math.max(0, start);
             end = Math.max(0, end);
 
-            this.beforeWidth = 100 * (start/itemCount);
-            this.afterWidth = 100 * (1-end/itemCount);
+            this.beforeWidth = 100 * (start / itemCount);
+            this.afterWidth = 100 * (1 - end / itemCount);
 
             this.updateBind('beforeWidth');
             this.updateBind('afterWidth');
@@ -241,12 +232,16 @@
             this.dd1.setElement(this.tmpl.win);
             this.dd2.setElement(this.tmpl.before.firstChild);
             this.dd3.setElement(this.tmpl.after.firstChild);
+
+            this.sync();
           },
 
           init: function(){
             basis.ui.Node.prototype.init.call(this);
 
-            this.sync();
+            reportSlice.addHandler({
+              rangeChanged: this.sync
+            }, this);
 
             // add drag posibility for slider
             this.dd1 = new basis.dragdrop.DragDropElement({
