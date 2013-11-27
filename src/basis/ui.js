@@ -55,19 +55,34 @@
       var def = null;
       var value = extension[key];
 
-      // NOTE: check for Node, because first call of extendBinding happens before Node declared
-      if (Node && value instanceof Node)
+      // NOTE: check for Node, because first extendBinding invoke before Node class declared
+      if ((Node && value instanceof Node) || basis.resource.isResource(value))
       {
         def = {
           events: 'satelliteChanged',
           getter: (function(key, satellite){
-            var init = basis.fn.runOnce(function(node){
+            var resource = typeof satellite == 'function' ? satellite : null;
+            var init = function(node){
+              init = false;
+
+              if (resource)
+              {
+                satellite = resource();
+                if (satellite instanceof Node == false)
+                  return;
+                resource = null;
+              }
+
               node.setSatellite(key, satellite);
-              ;;;if (node.satellite[key] !== satellite) basis.dev.warn('basis.ui.binding: implicit satellite `' + key + '` attach to owner failed');
-            });
+
+              /** @cut */ if (node.satellite[key] !== satellite)
+              /** @cut */   basis.dev.warn('basis.ui.binding: implicit satellite `' + key + '` attach to owner failed');
+            };
             return function(node){
-              init(node);
-              return node.satellite[key] ? node.satellite[key].element : null;
+              if (init)
+                init(node);
+
+              return resource || (node.satellite[key] ? node.satellite[key].element : null);
             };
           })(key, value)
         };

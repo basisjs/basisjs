@@ -1902,6 +1902,9 @@
     exists: function(resourceUrl){
       return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
     },
+    isResource: function(value){
+      return value && resourceCache[value.url] === value;
+    },
     extensions: {
       '.js': function(content, filename){
         var namespace = filename2namespace[filename];
@@ -2376,7 +2379,7 @@
       return result;
     },
     // JavaScript 1.8
-    reduce: function(callback, initialValue){ // unfortunately mozilla implementation hasn't thisObject as third argument
+    reduce: function(callback, initialValue){
       var len = this.length;
       var argsLen = arguments.length;
 
