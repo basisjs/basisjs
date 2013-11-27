@@ -212,14 +212,16 @@
       minlength: ['input'],
       maxlength: ['input'],
       readonly: ['input'],
-      selected: ['option']
+      selected: ['option'],
+      multiple: ['select']
     };
 
     var SPECIAL_ATTR_SINGLE = {
       disabled: true,
       checked: true,
       selected: true,
-      readonly: true
+      readonly: true,
+      multiple: true
     };
 
     var bindFunctions = {

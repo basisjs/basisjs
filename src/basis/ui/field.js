@@ -139,10 +139,7 @@
     //
 
     emit_commit: createEvent('commit'),
-    emit_change: createEvent('change', 'oldValue') && function(oldValue){
-      this.writeFieldValue_(this.value);
-      events.change.call(this, oldValue);
-    },
+    emit_change: createEvent('change', 'oldValue'),
     emit_validityChanged: createEvent('validityChanged', 'oldValidity'),
     emit_errorChanged: createEvent('errorChanged'),
     emit_exampleChanged: createEvent('exampleChanged'),
@@ -219,7 +216,7 @@
       function(res, item){
         var eventName = 'emit_field' + basis.string.capitalize(item);
         res[item] = function(event){
-          this.setValue(this.readFieldValue_());
+          this.syncFieldValue_();
           this[eventName](event);
         };
         return res;
@@ -305,10 +302,9 @@
       }
     },
 
-    readFieldValue_: function(){
-      return this.getValue();
+    syncFieldValue_: function(){
+      this.setValue(this.getValue());
     },
-    writeFieldValue_: function(){},
     getValue: function(){
       return this.value;
     },
@@ -488,13 +484,10 @@
       }
     },
 
-    readFieldValue_: function(){
-      return this.tmpl && this.tmpl.field && this.tmpl.field.value;
-    }/*,
-    writeFieldValue_: function(value){
-      if (this.tmpl && this.tmpl.field && this.tmpl.field.value != value)
-        this.tmpl.field.value = value;
-    }*/
+    syncFieldValue_: function(){
+      if (this.tmpl && this.tmpl.field)
+        this.setValue(this.tmpl.field.value);
+    }
   });
 
  /**
@@ -638,8 +631,9 @@
     setValue: function(value){
       return Field.prototype.setValue.call(this, !!value);
     },
-    readFieldValue_: function(){
-      return this.tmpl && this.tmpl.field && !!this.tmpl.field.checked;
+    syncFieldValue_: function(){
+      if (this.tmpl && this.tmpl.field)
+        this.setValue(!!this.tmpl.field.checked);
     }
   });
 
@@ -673,7 +667,6 @@
       name: 'name',
       title: function(node){
         return node.getTitle();
-
       },
       value: function(node){
         return node.getValue();
@@ -690,7 +683,7 @@
       select: function(event){
         if (!this.isDisabled())
         {
-          this.select(this.parentNode.multipleSelect);
+          this.select(this.contextSelection ? this.contextSelection.multiple : false);
 
           if (event.sender.tagName != 'INPUT')
             event.die();
@@ -732,33 +725,38 @@
     className: namespace + '.ComplexField',
 
     childClass: ComplexFieldItem,
-    multipleSelect: false,
 
-    init: function(){
-      this.selection = new Selection({
-        multiple: !!this.multipleSelect,
-        handler: {
-          context: this,
-          callbacks: COMPLEXFIELD_SELECTION_HANDLER
-        }
-      });
-
-      //inherit
-      Field.prototype.init.call(this);
+    selection: {
+      multiple: false
     },
+    binding: {
+      multiple: function(node){
+        return node.selection.multiple;
+      }
+    },
+    listen: {
+      selection: {
+        itemsChanged: function(){
+          this.emit_change();
+        }
+      }
+    },
+
     getValue: function(){
       var value = this.selection.getItems().map(getFieldValue);
-      return this.multipleSelect ? value : value[0];
+      return this.selection.multiple ? value : value[0];
     },
-    setValue: function(value/* value[] */){
-      var newValues = this.multipleSelect ? arrayFrom(value) : [value];
-      var selectedItems = [];
+    setValue: function(value){
+      var selected;
 
-      for (var item = this.firstChild; item; item = item.nextSibling)
-        if (newValues.indexOf(item.getValue()) != -1)
-          selectedItems.push(item);
+      if (this.selection.multiple)
+        selected = this.childNodes.filter(function(item){
+          return this.indexOf(item.getValue()) != -1;
+        }, arrayFrom(value));
+      else
+        selected = [basis.array.search(this.childNodes, value, getFieldValue)];
 
-      this.selection.set(selectedItems);
+      this.selection.set(selected);
     }
   });
 
@@ -793,9 +791,11 @@
   var CheckGroup = ComplexField.subclass({
     className: namespace + '.CheckGroup',
 
-    multipleSelect: true,
-
     template: templates.CheckGroup,
+
+    selection: {
+      multiple: true
+    },
 
     childClass: {
       className: namespace + '.CheckGroupItem',
@@ -817,26 +817,26 @@
 
     template: templates.Select,
 
+    syncFieldValue_: function(){
+      if (this.tmpl && this.tmpl.field)
+      {
+        var selected;
+
+        if (this.selection.multiple && this.tmpl.field.selectedIndex != -1)
+          selected = this.childNodes.filter(function(item){
+            return item.tmpl && item.tmpl.field && item.tmpl.field.selected;
+          });
+        else
+          selected = [this.childNodes[this.tmpl.field.selectedIndex]];
+
+        this.selection.set(selected);
+      }
+    },
+
     childClass: {
       className: namespace + '.SelectItem',
 
-      template: templates.SelectItem,
-    },
-
-    init: function(){
-      ComplexField.prototype.init.call(this);
-      this.selection.set([this.childNodes[this.tmpl && this.tmpl.field.selectedIndex]]);
-    },
-
-    getValue: function(){
-      var item = this.childNodes[this.tmpl && this.tmpl.field.selectedIndex];
-      return item && item.getValue();
-    },
-    setValue: function(value){
-      var item = basis.array.search(this.childNodes, value, getFieldValue);
-      this.selection.set([item]);
-      if (this.tmpl)
-        this.tmpl.field.selectedIndex = item ? this.childNodes.indexOf(item) : -1;
+      template: templates.SelectItem
     }
   });
 
