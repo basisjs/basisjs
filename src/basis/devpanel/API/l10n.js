@@ -14,6 +14,11 @@ basis.l10n.onCultureChange(function(culture){
   sendData('cultureChanged', culture);
 });
 
+
+function escapeToken(token){
+  return token.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 module.exports = {
   loadCultureList: function(){
     var data = {
@@ -128,7 +133,7 @@ module.exports = {
           {
             var tokenValue = tokens[tokenName] || '';
 
-            resourceParts.push('    "' + tokenName + '": "' + tokenValue + '"');
+            resourceParts.push('    "' + tokenName + '": "' + escapeToken(tokenValue) + '"');
 
             if (!dictionaryData[tokenName])
               dictionaryData[tokenName] = {};
@@ -139,7 +144,7 @@ module.exports = {
         else
         {
           for (var tokenName in dictionaries[dName])
-            resourceParts.push('    "' + tokenName + '": "' + dictionaries[dName][tokenName] + '"');
+            resourceParts.push('    "' + tokenName + '": "' + escapeToken(dictionaries[dName][tokenName]) + '"');
         }
 
         dictParts.push('\r\n  "' + dName + '": {\r\n' + resourceParts.join(',\r\n') + '\r\n  }');
