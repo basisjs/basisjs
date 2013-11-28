@@ -2001,12 +2001,8 @@
     // compile context function
     if (typeof compiledSourceCode != 'function')
       try {
-        compiledSourceCode = new Function('exports, module, basis, global',
+        compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource, require',
           '"use strict";\n' +
-          'var __filename = "' + (sourceURL).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '";\n' +
-          'var __dirname = basis.path.dirname(__filename);\n' +
-          'var resource = function(url){ return basis.resource(__dirname + "/" + url); };\n\n' +
-          //'var require = function(url){ return basis.require(url, __dirname); };\n' +
           sourceCode
           /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
           /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
@@ -2034,7 +2030,7 @@
 
         // don't throw new exception, just output error message and return undefined
         // in this case more chances for other modules continue to work
-        basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 4) : '') + ': ' + e);
+        basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 1) : '') + ': ' + e);
         return context;
       }
 
@@ -2049,6 +2045,9 @@
       baseURL,
       function(relativePath){
         return getResource(baseURL + relativePath);
+      },
+      function(relativePath, base){
+        return requireNamespace(relativePath, base || baseURL);
       }
     );
 
@@ -2166,9 +2165,10 @@
           moduleProto._compile = function(content, filename){
             this.basis = basis;
             content = 
+              'var node_require = require;\n' +
               'var basis = module.basis;\n' +
-              'var resource = function(filename){ return basis.require(__dirname + "/" + filename) };\n' +
-              //'var require = function(filename){ return basis.require(filename, __dirname) };\n' +
+              'var resource = function(filename){ return basis.resource(__dirname + "/" + filename) };\n' +
+              'var require = function(filename, baseURI){ return basis.require(filename, baseURI || __dirname) };\n' +
               content;
             _compile.call(extend(this, namespace), content, filename);
           };
