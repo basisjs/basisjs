@@ -487,94 +487,94 @@
   // source: http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html?id=l10n/pluralforms
   var pluralFormsMap = {};
   var pluralForms = [
-    [1, function(n){
+    /*  0 */ [1, function(n){
       return 0;
     }],
-    [2, function(n){
+    /*  1 */ [2, function(n){
       return n == 1 || n % 10 == 1 ? 0 : 1;
     }],
-    [2, function(n){
+    /*  2 */ [2, function(n){
       return n == 0 ? 0 : 1;
     }],
-    [2, function(n){
+    /*  3 */ [2, function(n){
       return n == 1 ? 0 : 1;
     }],
-    [2, function(n){
+    /*  4 */ [2, function(n){
       return n == 0 || n == 1 ? 0 : 1;
     }],
-    [2, function(n){
+    /*  5 */ [2, function(n){
       return n % 10 != 1 || n % 100 == 11 ? 1 : 0;
     }],
-    [3, function(n){
+    /*  6 */ [3, function(n){
       return n == 1 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
     }],
-    [3, function(n){
+    /*  7 */ [3, function(n){
       return n % 10 == 1 && n % 100 != 11 ? 0 : n != 0 ? 1 : 2;
     }],
-    [3, function(n){
+    /*  8 */ [3, function(n){
       return n % 10 == 1 && n % 100 != 11 ? 0 : n % 10 >= 2 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
     }],
-    [3, function(n){
+    /*  9 */ [3, function(n){
       return n % 10 == 1 && n % 100 != 11 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
     }],
-    [3, function(n){
+    /* 10 */ [3, function(n){
       return n == 0 ? 0 : n == 1 ? 1 : 2;
     }],
-    [3, function(n){
-      return n == 1 ? 0 : (n == 0 || (n % 100 > 0 && n % 100 < 20)) ? 1 : 2;
+    /* 11 */ [3, function(n){
+      return n == 1 ? 0 : n == 0 || (n % 100 > 0 && n % 100 < 20) ? 1 : 2;
     }],
-    [3, function(n){
+    /* 12 */ [3, function(n){
       return n == 1 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
     }],
-    [3, function(n){
-      return n == 1 ? 0 : (n >= 2 && n <= 4) ? 1 : 2;
+    /* 13 */ [3, function(n){
+      return n == 1 ? 0 : n >= 2 && n <= 4 ? 1 : 2;
     }],
-    [4, function(n){
-      return n == 1 ? 0 : n == 2 ? 1 : (n != 8 && n != 11) ? 2 : 3;
+    /* 14 */ [4, function(n){
+      return n == 1 ? 0 : n == 2 ? 1 : n != 8 && n != 11 ? 2 : 3;
     }],
-    [4, function(n){
+    /* 15 */ [4, function(n){
       return n == 1 ? 0 : n == 2 ? 1 : n == 3 ? 2 : 3;
     }],
-    [4, function(n){
+    /* 16 */ [4, function(n){
       return n % 100 == 1 ? 1 : n % 100 == 2 ? 2 : n % 100 == 3 || n % 100 == 4 ? 3 : 0;
     }],
-    [4, function(n){
-      return n == 1 ? 0 : n == 0 || (n % 100 > 1 && n % 100 < 11) ? 1 : (n % 100 > 10 && n % 100 < 20) ? 2 : 3;
+    /* 17 */ [4, function(n){
+      return n == 1 ? 0 : n == 0 || (n % 100 > 1 && n % 100 < 11) ? 1 : n % 100 > 10 && n % 100 < 20 ? 2 : 3;
     }],
-    [4, function(n){
-      return (n == 1 || n == 11) ? 0 : (n == 2 || n == 12) ? 1 : (n > 2 && n < 20) ? 2 : 3;
+    /* 18 */ [4, function(n){
+      return n == 1 || n == 11 ? 0 : n == 2 || n == 12 ? 1 : n > 2 && n < 20 ? 2 : 3;
     }],
-    [5, function(n){
+    /* 19 */ [5, function(n){
       return n == 1 ? 0 : n == 2 ? 1 : n < 7 ? 2 : n < 11 ? 3 : 4;
     }],
-    [6, function(n){
+    /* 20 */ [6, function(n){
       return n == 0 ? 0 : n == 1 ? 1 : n == 2 ? 2 : n % 100 >= 3 && n % 100 <= 10 ? 3 : n % 100 >= 11 ? 4 : 5;
     }]
   ];
 
   // populate pluralFormsMap
   [
-    "ay bo cgg dz fa id ja jbo ka kk km ko ky lo ms my sah su th tt ug vi wo zh",
-    "mk",
-    "jv",
-    "af an ast az bg bn brx ca da de doi el en eo es es-AR et eu ff fi fo fur fy gl gu ha he hi hne hu hy ia it kn ku lb mai ml mn mni mr nah nap nb ne nl nn no nso or pa pap pms ps pt rm rw sat sco sd se si so son sq sv sw ta te tk ur yo",
-    "ach ak am arn br fil fr gun ln mfe mg mi oc pt-BR tg ti tr uz wa zh",
-    "is",
-    "csb",
-    "lv",
-    "lt",
-    "be bs hr ru sr uk",
-    "mnk",
-    "ro",
-    "pl",
-    "cs sk",
-    "cy",
-    "kw",
-    "sl",
-    "mt",
-    "gd",
-    "ga",
-    "ar"
+    /*  0 */ "ay bo cgg dz fa id ja jbo ka kk km ko ky lo ms my sah su th tt ug vi wo zh",
+    /*  1 */ "mk",
+    /*  2 */ "jv",
+    /*  3 */ "af an ast az bg bn brx ca da de doi el en eo es es-AR et eu ff fi fo fur fy gl gu ha he hi hne hu hy ia it kn ku lb mai ml mn mni mr nah nap nb ne nl nn no nso or pa pap pms ps pt rm rw sat sco sd se si so son sq sv sw ta te tk ur yo",
+    /*  4 */ "ach ak am arn br fil fr gun ln mfe mg mi oc pt-BR tg ti tr uz wa zh",
+    /*  5 */ "is",
+    /*  6 */ "csb",
+    /*  7 */ "lv",
+    /*  8 */ "lt",
+    /*  9 */ "be bs hr ru sr uk",
+    /* 10 */ "mnk",
+    /* 11 */ "ro",
+    /* 12 */ "pl",
+    /* 13 */ "cs sk",
+    /* 14 */ "cy",
+    /* 15 */ "kw",
+    /* 16 */ "sl",
+    /* 17 */ "mt",
+    /* 18 */ "gd",
+    /* 19 */ "ga",
+    /* 20 */ "ar"
   ].forEach(function(langs, idx){
     langs.split(' ').forEach(function(lang){
       pluralFormsMap[lang] = this;
@@ -589,14 +589,19 @@
     className: namespace + '.Culture',
 
     name: '',
-    pluralForm: pluralForms[0],
+    pluralForm: null,
 
-    init: function(name){
+    init: function(name, pluralForm){
+      if (cultures[name])
+        return cultures[name];
+
       this.name = name;
+      cultures[name] = this;
 
-      var pluralForm = pluralFormsMap[name] || pluralFormsMap[name.split('-')[0]];
-      if (pluralForm)
-        this.pluralForm = pluralForm;
+      this.pluralForm = pluralForm
+        || pluralFormsMap[name]
+        || pluralFormsMap[name.split('-')[0]]
+        || pluralForms[0];
     },
 
     plural: function(value){
@@ -604,21 +609,19 @@
     }
   });
 
+
  /**
   * Returns culture instance by name. Creates new one if not exists yet.
   * @param {string} name Culture name
+  * @param {object} pluralForm
   * @return {basis.l10n.Culture}
   */
-  function resolveCulture(name){
-    var culture = cultures[name];
-
-    if (!culture)
-      culture = cultures[name] = new Culture(name);
-
-    return culture;
+  function resolveCulture(name, pluralForm){
+    return new Culture(name, pluralForm);
   }
 
   basis.object.extend(resolveCulture, new basis.Token(currentCulture));
+
 
  /**
   * Returns current culture name.
