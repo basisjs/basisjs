@@ -1346,7 +1346,7 @@
     MinLength: function(field){
       var value = field.getValue();
       var length = basis.fn.$isNotNull(value.length) ? value.length : String(value).length;
-      if (length < field.minLength)
+      if (value && length < field.minLength)
         return new ValidatorError(field, basis.string.format(String(dict.token('validator.minLengthError')), field.minLength));
     },
     MaxLength: function(field){
