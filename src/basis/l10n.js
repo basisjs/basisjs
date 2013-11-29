@@ -483,6 +483,104 @@
 
   var currentCulture = null;
 
+  // plural forms
+  // source: http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html?id=l10n/pluralforms
+  var pluralFormsMap = {};
+  var pluralForms = [
+    [1, function(n){
+      return 0;
+    }],
+    [2, function(n){
+      return n == 1 || n % 10 == 1 ? 0 : 1;
+    }],
+    [2, function(n){
+      return n == 0 ? 0 : 1;
+    }],
+    [2, function(n){
+      return n == 1 ? 0 : 1;
+    }],
+    [2, function(n){
+      return n == 0 || n == 1 ? 0 : 1;
+    }],
+    [2, function(n){
+      return n % 10 != 1 || n % 100 == 11 ? 1 : 0;
+    }],
+    [3, function(n){
+      return n == 1 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
+    }],
+    [3, function(n){
+      return n % 10 == 1 && n % 100 != 11 ? 0 : n != 0 ? 1 : 2;
+    }],
+    [3, function(n){
+      return n % 10 == 1 && n % 100 != 11 ? 0 : n % 10 >= 2 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
+    }],
+    [3, function(n){
+      return n % 10 == 1 && n % 100 != 11 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
+    }],
+    [3, function(n){
+      return n == 0 ? 0 : n == 1 ? 1 : 2;
+    }],
+    [3, function(n){
+      return n == 1 ? 0 : (n == 0 || (n % 100 > 0 && n % 100 < 20)) ? 1 : 2;
+    }],
+    [3, function(n){
+      return n == 1 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2;
+    }],
+    [3, function(n){
+      return n == 1 ? 0 : (n >= 2 && n <= 4) ? 1 : 2;
+    }],
+    [4, function(n){
+      return n == 1 ? 0 : n == 2 ? 1 : (n != 8 && n != 11) ? 2 : 3;
+    }],
+    [4, function(n){
+      return n == 1 ? 0 : n == 2 ? 1 : n == 3 ? 2 : 3;
+    }],
+    [4, function(n){
+      return n % 100 == 1 ? 1 : n % 100 == 2 ? 2 : n % 100 == 3 || n % 100 == 4 ? 3 : 0;
+    }],
+    [4, function(n){
+      return n == 1 ? 0 : n == 0 || (n % 100 > 1 && n % 100 < 11) ? 1 : (n % 100 > 10 && n % 100 < 20) ? 2 : 3;
+    }],
+    [4, function(n){
+      return (n == 1 || n == 11) ? 0 : (n == 2 || n == 12) ? 1 : (n > 2 && n < 20) ? 2 : 3;
+    }],
+    [5, function(n){
+      return n == 1 ? 0 : n == 2 ? 1 : n < 7 ? 2 : n < 11 ? 3 : 4;
+    }],
+    [6, function(n){
+      return n == 0 ? 0 : n == 1 ? 1 : n == 2 ? 2 : n % 100 >= 3 && n % 100 <= 10 ? 3 : n % 100 >= 11 ? 4 : 5;
+    }]
+  ];
+
+  // populate pluralFormsMap
+  [
+    "ay bo cgg dz fa id ja jbo ka kk km ko ky lo ms my sah su th tt ug vi wo zh",
+    "mk",
+    "jv",
+    "af an ast az bg bn brx ca da de doi el en eo es es-AR et eu ff fi fo fur fy gl gu ha he hi hne hu hy ia it kn ku lb mai ml mn mni mr nah nap nb ne nl nn no nso or pa pap pms ps pt rm rw sat sco sd se si so son sq sv sw ta te tk ur yo",
+    "ach ak am arn br fil fr gun ln mfe mg mi oc pt-BR tg ti tr uz wa zh",
+    "is",
+    "csb",
+    "lv",
+    "lt",
+    "be bs hr ru sr uk",
+    "mnk",
+    "ro",
+    "pl",
+    "cs sk",
+    "cy",
+    "kw",
+    "sl",
+    "mt",
+    "gd",
+    "ga",
+    "ar"
+  ].forEach(function(langs, idx){
+    langs.split(' ').forEach(function(lang){
+      pluralFormsMap[lang] = this;
+    }, pluralForms[idx]);
+  });
+
 
  /**
   * @class
@@ -491,27 +589,25 @@
     className: namespace + '.Culture',
 
     name: '',
+    pluralForm: pluralForms[0],
+
     init: function(name){
       this.name = name;
 
-      // temporary here
-      if (name == 'ru-RU')
-        this.plural = function(n){
-          if (n % 10 == 1 && n % 100 !=11)
-            return 0;
-          if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20))
-            return 1;
-          return 2;
-        }
+      var pluralForm = pluralFormsMap[name] || pluralFormsMap[name.split('-')[0]];
+      if (pluralForm)
+        this.pluralForm = pluralForm;
     },
 
     plural: function(value){
-      return Number(value) == 1 ? 0 : 1;
+      return Number(this.pluralForm[1](Math.abs(parseInt(value, 10))));
     }
   });
 
  /**
-  * 
+  * Returns culture instance by name. Creates new one if not exists yet.
+  * @param {string} name Culture name
+  * @return {basis.l10n.Culture}
   */
   function resolveCulture(name){
     var culture = cultures[name];
@@ -644,6 +740,11 @@
       fn.call(context, currentCulture);
   }
 
+
+  //
+  // set default culture list and current culture
+  //
+
   setCultureList('en-US');
   setCulture('en-US');
 
@@ -670,5 +771,6 @@
     getCultureList: getCultureList,
     setCultureList: setCultureList,
 
+    pluralForms: pluralForms,
     onCultureChange: onCultureChange
   };
