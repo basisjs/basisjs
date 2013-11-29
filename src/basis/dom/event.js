@@ -99,6 +99,8 @@
       event = wrap(event);
 
       for (var name in event)
+        /** prevent warnings on deprecated properties */
+        /** @cut*/ if (name != 'returnValue' && name != 'keyLocation' && name != 'layerX' && name != 'layerY')
         if (typeof event[name] != 'function' && name in this == false)
           this[name] = event[name];
 
