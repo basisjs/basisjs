@@ -157,7 +157,10 @@
   * @return {Node}
   */
   function sender(event){
-    return event.target || event.srcElement;
+    // all events should has a target (see http://bugs.jquery.com/ticket/13255)
+    var target = event.target || event.srcElement || document;
+    // sometimes target may be a text node (see http://bugs.jquery.com/ticket/13143)
+    return target.nodeType == 3 ? target.parentNode : target;
   }
 
  /**
