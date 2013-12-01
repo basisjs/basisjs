@@ -84,50 +84,91 @@
   }
 
   function dateFormat(date, format, useUTC){
-    var local = function(m, part){
-      switch (part)
-      {
-        case 'y': return String(date.getFullYear()).substr(2);      // %y - year in YY
-        case 'Y': return date.getFullYear();                        // %Y - year in YYYY
-        case 'd': return date.getDate();                            // %d - day (1..31)
-        case 'D': return lead2(date.getDate());                     // %D - day (01..31)
-        case 'm': return date.getMonth() + 1;                       // %m - month (1..12)
-        case 'M': return lead2(date.getMonth() + 1);                // %M - month (01..12)
-        case 'h': return date.getHours();                           // %h - hours (0..23)
-        case 'H': return lead2(date.getHours());                    // %H - hours (00..23)
-        case 'i': return lead2(date.getHours() % 12 || 12);         // %i - hours (01..12)
-        case 'p': return date.getHours() > 12 ? 'pm' : 'am';        // %p - am or pm
-        case 'P': return date.getHours() > 12 ? 'PM' : 'AM';        // %p - AM or PM
-        case 'I': return lead2(date.getMinutes());                  // %I - minutes (00..59)
-        case 's': return date.getSeconds();                         // %s - seconds (0..59)
-        case 'S': return lead2(date.getSeconds());                  // %S - seconds (00..59)
-        case 'z': return date.getMilliseconds();                    // %z - milliseconds (0..999)
-        case 'Z': return lead3(date.getMilliseconds());             // %Z - milliseconds (000..999)
-      }
-    };
-    var utc = function(m, part){
-      switch (part)
-      {
-        case 'y': return String(date.getUTCFullYear()).substr(2);      // %y - year in YY
-        case 'Y': return date.getUTCFullYear();                        // %Y - year in YYYY
-        case 'd': return date.getUTCDate();                            // %d - day (1..31)
-        case 'D': return lead2(date.getUTCDate());                     // %D - day (01..31)
-        case 'm': return date.getUTCMonth() + 1;                       // %m - month (1..12)
-        case 'M': return lead2(date.getUTCMonth() + 1);                // %M - month (01..12)
-        case 'h': return date.getUTCHours();                           // %h - hours (0..23)
-        case 'H': return lead2(date.getUTCHours());                    // %H - hours (00..23)
-        case 'i': return lead2(date.getUTCHours() % 12 || 12);         // %i - hours (01..12)
-        case 'p': return date.getUTCHours() > 12 ? 'pm' : 'am';        // %p - am or pm
-        case 'P': return date.getUTCHours() > 12 ? 'PM' : 'AM';        // %p - AM or PM
-        case 'I': return lead2(date.getUTCMinutes());                  // %I - minutes (00..59)
-        case 's': return date.getUTCSeconds();                         // %s - seconds (0..59)
-        case 'S': return lead2(date.getUTCSeconds());                  // %S - seconds (00..59)
-        case 'z': return date.getUTCMilliseconds();                    // %z - milliseconds (0..999)
-        case 'Z': return lead3(date.getUTCMilliseconds());             // %Z - milliseconds (000..999)
-      }
+    var result = '';
+
+    for (var i = 0, chr, val; i < format.length; i++)
+    {
+      chr = format.charAt(i);
+      if (chr == '%')
+        switch (chr = format.charAt(++i))
+        {
+          case 'y': // %y - year as YY
+            result += String(useUTC ? date.getUTCFullYear() : date.getFullYear()).substr(2);
+            break;
+
+          case 'Y': // %Y - year as YYYY
+            result += useUTC ? date.getUTCFullYear() : date.getFullYear();
+            break;
+
+          case 'd': // %d - day (1..31)
+            result += useUTC ? date.getUTCDate() : date.getDate();
+            break;
+
+          case 'D': // %D - day (01..31)
+            result += lead2(useUTC ? date.getUTCDate() : date.getDate());
+            break;
+
+          case 'm': // %m - month (1..12)
+            result += useUTC ? date.getUTCMonth() + 1 : date.getMonth() + 1;
+            break;
+
+          case 'M': // %M - month (01..12)
+            result += lead2(useUTC ? date.getUTCMonth() + 1 : date.getMonth() + 1);
+            break;
+
+          case 'h': // %h - hours (0..23)
+            result += useUTC ? date.getUTCHours() : date.getHours();
+            break;
+
+          case 'H': // %H - hours (00..23)
+            result += lead2(useUTC ? date.getUTCHours() : date.getHours());
+            break;
+
+          case 'i': // %i - hours (01..12)
+            result += lead2((useUTC ? date.getUTCHours() : date.getHours()) % 12 || 12);
+            break;
+
+          case 'p': // %p - am or pm
+            result += (useUTC ? date.getUTCHours() : date.getHours()) > 12 ? 'pm' : 'am';
+            break;
+
+          case 'P': // %p - AM or PM
+            result += (useUTC ? date.getUTCHours() : date.getHours()) > 12 ? 'PM' : 'AM';
+            break;
+
+          case 'I': // %I - minutes (00..59)
+            result += lead2(useUTC ? date.getUTCMinutes() : date.getMinutes());
+            break;
+
+          case 's': // %s - seconds (0..59)
+            result += useUTC ? date.getUTCSeconds() : date.getSeconds();
+            break;
+
+          case 'S': // %S - seconds (00..59)
+            result += lead2(useUTC ? date.getUTCSeconds() : date.getSeconds());
+            break;
+
+          case 'z': // %z - milliseconds (0..999)
+            result += useUTC ? date.getUTCMilliseconds() : date.getMilliseconds();
+            break;
+
+          case 'Z': // %Z - milliseconds (000..999)
+            result += lead3(useUTC ? date.getUTCMilliseconds() : date.getMilliseconds());
+            break;
+
+          case '%':
+            result += '%';
+            i--;
+            break;
+
+          default:
+            result += '%' + chr;
+        }
+      else
+        result += chr;
     }
 
-    return format.replace(reFormat, useUTC ? utc : local);
+    return result;
   }
 
   var fromISOString = (function(){
