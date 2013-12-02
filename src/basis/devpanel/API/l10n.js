@@ -16,7 +16,11 @@ basis.l10n.onCultureChange(function(culture){
 
 
 function escapeToken(token){
-  return token.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return token
+    .replace(/\\/g, '\\\\')
+    .replace(/\r/g, '')
+    .replace(/\n/g, '\\n')
+    .replace(/"/g, '\\"');
 }
 
 module.exports = {
@@ -147,10 +151,10 @@ module.exports = {
             resourceParts.push('    "' + tokenName + '": "' + escapeToken(dictionaries[dName][tokenName]) + '"');
         }
 
-        dictParts.push('\r\n  "' + dName + '": {\r\n' + resourceParts.join(',\r\n') + '\r\n  }');
+        dictParts.push('\n  "' + dName + '": {\n' + resourceParts.join(',\n') + '\n  }');
       }
 
-      newContent = '{' + dictParts.join(', ') + '\r\n}';  
+      newContent = '{' + dictParts.join(', ') + '\n}';  
 
 
       fileObjectSet.add(file);
