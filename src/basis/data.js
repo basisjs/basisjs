@@ -907,6 +907,60 @@
     return b === a;
   }
 
+ /**
+  * Apply changes for all delegate graph
+  */ 
+  function applyDelegateChanges(object, oldRoot, oldTarget){
+    var delegate = object.delegate;
+
+    if (delegate)
+    {
+      object.root = delegate.root;
+      object.target = delegate.target;
+      object.data = delegate.data;
+      object.state = delegate.state;
+    }
+
+    // fire event if root changed
+    if (object.root !== oldRoot)
+    {
+      var rootListenHandler = object.listen.root;
+      
+      if (rootListenHandler)
+      {
+        if (oldRoot && oldRoot !== object)
+          oldRoot.removeHandler(rootListenHandler, object);
+
+        if (object.root && object.root !== object)
+          object.root.addHandler(rootListenHandler, object);
+      }
+
+      object.emit_rootChanged(oldRoot);
+    }
+
+    // fire event if target changed
+    if (object.target !== oldTarget)
+    {
+      var targetListenHandler = object.listen.target;
+      
+      if (targetListenHandler)
+      {
+        if (oldTarget && oldTarget !== object)
+          oldTarget.removeHandler(targetListenHandler, object);
+
+        if (object.target && object.target !== object)
+          object.target.addHandler(targetListenHandler, object);
+      }
+
+      object.emit_targetChanged(oldTarget);
+    }
+
+    var delegates = object.delegates_;
+    if (delegates)
+      for (var i = 0; i < delegates.length; i++)
+        applyDelegateChanges(delegates[i], oldRoot, oldTarget);
+  }
+
 
  /**
   * Key-value storage.
@@ -934,13 +988,43 @@
     * (value of property before changes).
     * @event
     */
-    emit_update: createEvent('update', 'delta'),
+    emit_update: createEvent('update', 'delta') && function(delta){
+      events.update.call(this, delta);
+
+      // delegate update event
+      var delegates = this.delegates_;
+      if (delegates)
+        for (var i = 0; i < delegates.length; i++)
+          delegates[i].emit_update(delta);
+    },
+
+   /**
+    * @inheritDoc
+    */ 
+    emit_stateChanged: function(oldState){
+      AbstractData.prototype.emit_stateChanged.call(this, oldState);
+
+      // delegate state changes
+      var delegates = this.delegates_;
+      if (delegates)
+        for (var i = 0, object; i < delegates.length; i++)
+        {
+          object = delegates[i];
+          object.state = this.state;
+          object.emit_stateChanged(oldState);
+        }
+    },
 
    /**
     * Object that manage data updates if assigned.
     * @type {basis.data.Object}
     */
     delegate: null,
+
+   /**
+    * @type {Array.<basis.data.Object>}
+    */ 
+    delegates_: null,
 
    /**
     * Fires when delegate was changed.
@@ -986,46 +1070,6 @@
     emit_rootChanged: createEvent('rootChanged', 'oldRoot'),
 
    /**
-    * Default listeners.
-    * @inheritDoc
-    */
-    listen: {
-      delegate: {
-        update: function(object, delta){
-          this.data = object.data;
-          this.emit_update(delta);
-        },
-        stateChanged: function(object, oldState){
-          this.state = object.state;
-          this.emit_stateChanged(oldState);
-        },
-        targetChanged: function(object, oldTarget){
-          this.target = object.target;
-
-          var targetListenHandler = this.listen.target;
-          if (targetListenHandler)
-          {
-            if (oldTarget)
-              oldTarget.removeHandler(targetListenHandler, this);
-
-            if (this.target)
-              this.target.addHandler(targetListenHandler, this);
-          }
-
-          this.emit_targetChanged(oldTarget);
-        },
-        rootChanged: function(object, oldRoot){
-          this.data = object.data;
-          this.root = object.root;
-          this.emit_rootChanged(oldRoot);
-        },
-        destroy: function(){
-          this.setDelegate();
-        }
-      }
-    },
-
-   /**
     * @constructor
     */
     init: function(){
@@ -1042,6 +1086,8 @@
       {
         // assign a delegate
         this.delegate = null;
+
+        // TODO: what to do in case when this.isTarget is true 
 
         // assign data & state to avoid update and stateChanged events
         this.data = delegate.data;
@@ -1124,55 +1170,50 @@
         var oldTarget = this.target;
         var oldRoot = this.root;
         var delta = {};
-
+        var dataChanged = false;
         var delegateListenHandler = this.listen.delegate;
-        var targetListenHandler = (oldTarget || newDelegate) && 
-                                  (!newDelegate || newDelegate.target !== oldTarget) && 
-                                  this.listen.target;
 
-        if (oldDelegate && delegateListenHandler)
-          oldDelegate.removeHandler(delegateListenHandler, this);
+        if (oldDelegate)
+        {
+          if (delegateListenHandler)
+            oldDelegate.removeHandler(delegateListenHandler, this);
 
-        if (oldTarget && targetListenHandler)
-          oldTarget.removeHandler(targetListenHandler, this);
+          if (oldDelegate.delegates_) // may be null on destroy
+          {
+            if (oldDelegate.delegates_.length != 1)
+              oldDelegate.delegates_.splice(oldDelegate.delegates_.indexOf(this), 1);
+            else
+              oldDelegate.delegates_ = null;
+          }
+        }
 
         if (newDelegate)
         {
           // assign new delegate
           this.delegate = newDelegate;
-          this.root = newDelegate.root;
-          this.data = newDelegate.data;
-          this.state = newDelegate.state;
-          this.target = newDelegate.target;
+
+          if (newDelegate.delegates_)
+            newDelegate.delegates_.push(this);
+          else
+            newDelegate.delegates_ = [this];
 
           // calculate delta as difference between current data and delegate info
           for (var key in newDelegate.data)
             if (key in oldData === false)
+            {
+              dataChanged = true;
               delta[key] = undefined;
+            }
 
           for (var key in oldData)
             if (oldData[key] !== newDelegate.data[key])
+            {
+              dataChanged = true;
               delta[key] = oldData[key];
+            }
 
           if (delegateListenHandler)
             newDelegate.addHandler(delegateListenHandler, this);
-
-          if (newDelegate.target && targetListenHandler)
-            newDelegate.target.addHandler(targetListenHandler, this);
-
-          // update & stateChanged can be fired only if new delegate was assigned;
-          // otherwise (delegate drop) do nothing -> performance benefits
-
-          // fire update event if any key in delta (data changed)
-          for (var key in delta)
-          {
-            this.emit_update(delta);
-            break;
-          }
-
-          // fire stateChanged event if state was changed
-          if (oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
-            this.emit_stateChanged(oldState);
         }
         else
         {
@@ -1187,13 +1228,15 @@
             this.data[key] = oldData[key];
         }
 
-        // fire event if target changed
-        if (this.root !== oldRoot)
-          this.emit_rootChanged(oldRoot);
+        applyDelegateChanges(this, oldRoot, oldTarget);
 
-        // fire event if target changed
-        if (this.target !== oldTarget)
-          this.emit_targetChanged(oldTarget);
+        // emit event if data changed
+        if (dataChanged)
+          this.emit_update(delta);
+
+        // emit event state changed
+        if (oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
+          this.emit_stateChanged(oldState);
 
         // fire event if delegate changed
         this.emit_delegateChanged(oldDelegate);
@@ -1261,6 +1304,14 @@
     * @destructor
     */
     destroy: function(){
+      var delegates = this.delegates_;
+      if (delegates)
+      {
+        this.delegates_ = null;
+        for (var i = delegates.length - 1; i >= 0; i--)
+          delegates[i].setDelegate();
+      }
+
       // drop delegate
       if (this.delegate)
         this.setDelegate();

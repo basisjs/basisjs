@@ -47,7 +47,17 @@
           // callback call
           fn = cursor.callbacks[eventName];
           if (typeof fn == 'function')
-            fn.apply(cursor.context || this, args || (args = [this].concat(slice.call(arguments))));
+          {
+            if (!args)
+            {
+              // it should be better for browser optimizations (instead of [this].concat(slice.call(arguments)))
+              args = [this];
+              for (var i = 0; i < arguments.length; i++)
+                args.push(arguments[i]);
+            }
+
+            fn.apply(cursor.context || this, args);
+          }
 
           // any event callback call
           fn = cursor.callbacks['*'];
