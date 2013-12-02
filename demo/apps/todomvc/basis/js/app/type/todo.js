@@ -2,6 +2,7 @@ basis.require('basis.entity');
 basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('basis.data.dataset');
+basis.require('basis.dom.event');
 
 
 //
