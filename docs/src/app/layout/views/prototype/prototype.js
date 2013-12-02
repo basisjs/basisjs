@@ -156,11 +156,8 @@
 
       return cls || mapDO['basis.Class'];
     },
-    childClass: {
-      titleGetter: getter('data.fullPath')
-    },
     sorting: function(group){
-      return group.delegate && group.delegate.basisObjectId;
+      return group.data.obj && group.data.obj.docsLevel_;
     }
   };
 
