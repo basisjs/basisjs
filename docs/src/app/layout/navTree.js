@@ -7,22 +7,6 @@ var arraySearch = basis.array.search;
 var navTree = new app.ext.docTree.DocTree({
   childNodes: [
     {
-      data: { kind: 'Section', title: 'Buildin class extensions', fullPath: 'window' },
-      selectable: false,
-      collapsed: true,
-      childNodes: basis.object.iterate(app.core.buildin, function(key, value){
-        return new app.ext.docTree.DocTreeClassNode({
-          data: {
-            kind: 'Class',
-            title: key,
-            path: '',
-            fullPath: key,
-            obj: value
-          }
-        });
-      })
-    },
-    {
       data: { kind: 'Section', title: 'basis', fullPath: 'basis' },
       selectable: false,
       childNodes: basis.object.iterate(basis.namespaces_, function(key){
@@ -60,9 +44,6 @@ var navTree = new app.ext.docTree.DocTree({
     }
 
     var root = path.split(".")[0];
-    if (app.core.buildin[root])
-      root = 'window';
-
     var node = arraySearch(this.childNodes, root, 'data.fullPath');
 
     if (node)
@@ -116,17 +97,13 @@ var navTree = new app.ext.docTree.DocTree({
   }
 });
 
-function checkLocation(){
-  if (location.hash != curHash)
-    navTree.open(location.hash);
-}
+basis.router.add('*all', function(path){
+  navTree.open(path);
+});
 
-if ('onhashchange' in window)
-  basis.dom.event.addHandler(window, 'hashchange', checkLocation);
-else
-  setInterval(checkLocation, 250);
-
-basis.nextTick(checkLocation);
+basis.nextTick(function(){
+  basis.router.start();
+});
 
 //
 // exports

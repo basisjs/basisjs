@@ -1547,7 +1547,7 @@
     // apply new values
     this.createInstance = funcs.createInstance;
     this.clearInstance = funcs.destroyInstance;
-    this.getBinding = function(){ return {names:[],events:{},handler:null,sync:function(){}} }; // TODO: fix me; createBindingFunction(funcs.keys);
+    this.getBinding = function(){ return {names:funcs.keys} };
     this.destroyBuilder = funcs.destroy;
 
     ;;;this.instances_ = funcs.instances_;

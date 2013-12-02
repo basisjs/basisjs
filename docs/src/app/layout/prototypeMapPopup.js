@@ -27,7 +27,10 @@
       template: resource('template/prototypeMapPopupPanelItem.tmpl'),
 
       binding: {
-        key: 'data:'
+        key: 'data:',
+        unmatched: ['match unmatch', function(node){
+          return !node.matched;
+        }]
       },
 
       action: {
@@ -47,18 +50,18 @@
   });
 
   var prototypeMapPopupMatchInput = new basis.ui.field.MatchInput({
-    emit_keyup: function(event){
-      this.constructor.prototype.emit_keyup.call(this, event);
+    emit_fieldKeyup: function(event){
+      this.constructor.prototype.emit_fieldKeyup.call(this, event);
 
       var selected = prototypeMapPopup.selection.pick();
-      switch (Event.key(event)){
-        case Event.KEY.UP: 
+      switch (event.key){
+        case event.KEY.UP: 
           prototypeMapPopup.selection.set([selected && selected.previousSibling || prototypeMapPopup.lastChild]);
         break;
-        case Event.KEY.DOWN: 
+        case event.KEY.DOWN: 
           prototypeMapPopup.selection.set([selected && selected.nextSibling || prototypeMapPopup.firstChild]);
         break;
-        case Event.KEY.ENTER: 
+        case event.KEY.ENTER: 
           if (selected)
             selected.templateAction('scrollTo');
         break;
@@ -66,7 +69,7 @@
     },
     matchFilter: {
       node: prototypeMapPopupPanel,
-      textNodeGetter: basis.getter('tmpl.this_data_title')
+      textNodeGetter: basis.getter('tmpl.key')
     }
   });
 
@@ -76,7 +79,7 @@
     template: '<b:include src="basis.ui.popup.Balloon" id="PrototypeMapPopup"/>',
 
     dir: 'center bottom center top',
-    selection: {},
+    selection: true,
 
     childNodes: prototypeMapPopupPanel,
 
@@ -85,7 +88,7 @@
         prototypeMapPopupPanel.setDataSource(prototypeDataset);
       },
       show: function(){
-        prototypeMapPopupMatchInput.select();
+        prototypeMapPopupMatchInput.focus();
       },
       hide: function(){
         prototypeMapPopupPanel.setDataSource();

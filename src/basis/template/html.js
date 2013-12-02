@@ -712,7 +712,7 @@
           result.sync.call(set, obj)
 
         if (!bindingInterface)
-          return {};
+          return;
 
         if (result.handler)
           bindingInterface.attach(obj, result.handler, set);

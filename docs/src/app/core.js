@@ -481,30 +481,9 @@
     delete scope.basisDocsVisited_;
   }
 
-  var buildin = {
-    'Object': Object,
-    'String': String,
-    'Number': Number,
-    'Date': Date,
-    'Array': Array,
-    'Function': Function,
-    'Boolean': Boolean
-  };
-
   var walkStartTime = Date.now();
-  walk({
-    scope: buildin,
-    context: 'object'
-  });  // buildin, '', 'object'
-
-  basis.object.iterate(buildin, function(name, value){
-    value.className = name;
-    walk({ scope: value, path: name, context: 'class' });
-    walk({ scope: value.prototype, path: name + '.prototype', context: 'prototype' });
-  });
 
   basis.namespaces_['basis'] = basis;
-  //walk(basis.namespaces_, '', 'object',0);
   walk({
     scope: basis.namespaces_,
     context: 'object'
@@ -719,22 +698,21 @@
       this.curResource = this.queue.shift();
 
       if (this.curResource)
-      {
-        this.transport().request({ url: this.curResource.url });
-      }
+        this.transport().request({
+          url: this.curResource.url
+        });
     }
   };
 
   basis.source_ = basis.net.request(basis.filename_);
   var resolveQueue = basis.object.values(basis.namespaces_).concat(basis).map(function(ns){
-    return ns.source_
-      ? {
-          url: ns.filename_,
-          kind: 'jsdoc',
-          text: '/** @namespace ' + (ns === basis ? 'basis' : ns.path) + '*/' + ns.source_
-        }
-      : null;
-  }).filter(basis.fn.$isNotNull);
+    if (ns.source_)
+      return {
+        url: ns.filename_,
+        kind: 'jsdoc',
+        text: '/** @namespace ' + (ns === basis ? 'basis' : ns.path) + '*/' + ns.source_
+      };
+  }).filter(Boolean);
 
   var resolveResStart = new Date;
   function resolveRes(){
@@ -760,7 +738,6 @@
 
     resolveUrl: resolveUrl,
 
-    buildin: buildin,
     getFunctionDescription: getFunctionDescription,
     getMembers: getMembers,
     getInheritance: getInheritance,

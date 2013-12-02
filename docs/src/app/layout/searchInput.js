@@ -79,7 +79,7 @@
           if (selected && selected.matched)
             pos = cn.indexOf(selected);
           
-          if (key == event.KEY.UP)
+          if (event.key == event.KEY.UP)
             node = basis.array.lastSearch(cn, true, 'matched', pos == -1 ? cn.length : pos);
           else
             node = basis.array.search(cn, true, 'matched', pos + 1);
