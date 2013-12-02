@@ -117,7 +117,7 @@
     var indexMap = new basis.data.index.IndexMap({
       source: cloud,
       calcs: {
-        percentOfRange: basis.data.index.percentOfRange('itemCount', 'itemsChanged')
+        percentOfRange: basis.data.index.percentOfRange('itemsChanged', 'itemCount')
       }
     });
 
@@ -126,7 +126,7 @@
     //
 
     var tagCloud = new basis.ui.Node({
-      container: basis.dom.get('demo-container'),
+      container: document.getElementById('demo-container'),
       template: '<div id="TagCloud"/>',
 
       dataSource: cloud,

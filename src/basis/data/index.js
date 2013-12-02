@@ -409,15 +409,26 @@
   }
 
   var createIndexConstructor = function(IndexClass, defGetter){
-    return function(getter, events){
+    return function(events, getter){
       var dataset;
 
-      if (getter instanceof AbstractDataset || getter instanceof DatasetWrapper)
+      if (events instanceof AbstractDataset || events instanceof DatasetWrapper)
       {
-        dataset = getter;
-        getter = events;
-        events = arguments[2];
+        dataset = events;
+        events = getter;
+        getter = arguments[2];
       }
+
+      if (!getter)
+      {
+        getter = events;
+        events = '';
+      }
+
+      /** @cut */ if (events)
+      /** @cut */   if (typeof getter == 'string' && getter.split(/\s+/).some(function(e){ return e in basis.event.events; })
+      /** @cut */       || Array.isArray(getter) && getter.some(function(e){ return e in basis.event.events; }))
+      /** @cut */     basis.dev.warn('events must be before getter in basis.data.index constructor');
 
       var indexConstructor = getIndexConstructor(IndexClass, getter || defGetter, events);
 
@@ -618,14 +629,14 @@
     return 'calc-index-preset-' + basis.number.lead(calcIndexPreset_seed++, 8);
   }
 
-  function percentOfRange(getter, events){
+  function percentOfRange(events, getter){
     var minIndex = 'min_' + getUniqueCalcIndexId();
     var maxIndex = 'max_' + getUniqueCalcIndexId();
     var indexes = {};
 
-    getter = basis.getter(getter);
-    indexes[minIndex] = min(getter, events);
-    indexes[maxIndex] = max(getter, events);
+    indexes[minIndex] = min(events, getter);
+    indexes[maxIndex] = max(events, getter);
+    getter = basis.getter(getter || events);
 
     var calc = function(data, index, object){
       return (getter(object) - index[minIndex]) / (index[maxIndex] - index[minIndex]);
@@ -637,12 +648,12 @@
     });
   }
 
-  function percentOfMax(getter, events){
+  function percentOfMax(events, getter){
     var maxIndex = 'max_' + getUniqueCalcIndexId();
     var indexes = {};
 
-    getter = basis.getter(getter);
-    indexes[maxIndex] = max(getter, events);
+    indexes[maxIndex] = max(events, getter);
+    getter = basis.getter(getter || events);
 
     var calc = function(data, index, object){
       return getter(object) / index[maxIndex];
@@ -658,8 +669,8 @@
     var sumIndex = 'sum_' + getUniqueCalcIndexId();
     var indexes = {};
 
-    getter = basis.getter(getter);
-    indexes[sumIndex] = sum(getter, events);
+    indexes[sumIndex] = sum(events, getter);
+    getter = basis.getter(getter || events);
 
     var calc = function(data, index, object){
       return getter(object) / index[sumIndex];

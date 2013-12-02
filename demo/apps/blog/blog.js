@@ -246,7 +246,7 @@ basis.ready(function(){
   var cloudCalcs = new basis.data.index.IndexMap({
     source: cloud,
     calcs: {
-      percentOfRange: basis.data.index.percentOfRange('itemCount', 'itemsChanged'),
+      percentOfRange: basis.data.index.percentOfRange('itemsChanged', 'itemCount'),
       source: function(data, indexes, obj){
         return obj;
       }
