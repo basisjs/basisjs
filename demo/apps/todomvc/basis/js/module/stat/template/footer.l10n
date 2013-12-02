@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "type": {
+      "itemsLeft": "plural"
+    }
+  },
+  "en-US": {
+    "itemsLeft": [
+      "item",
+      "items"
+    ]
+  }
+}

@@ -48,10 +48,7 @@ module.exports = new basis.ui.Node({
   binding: {
     filters: filters,
     completed: count(Todo.completed),
-    active: count(Todo.active),
-    itemLabel: count(Todo.active).as(function(value){
-      return value == 1 ? 'item' : 'items';
-    })
+    active: count(Todo.active)
   },
   action: {
     clearCompleted: function(){
