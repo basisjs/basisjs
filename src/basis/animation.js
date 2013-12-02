@@ -174,8 +174,8 @@
           this.start += this.range;
           this.range *= -1;
         },
-        change: function(){
-          this.setter(this.start + this.range * this.timeFunction(this.value));
+        change: function(sender){
+          this.setter(this.start + this.range * this.timeFunction(sender.value));
         },
         finish: function(){
           if (!this.notInvert)
