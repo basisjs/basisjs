@@ -1074,7 +1074,9 @@
         // set up some properties
         this.fieldHandlers_ = {};
 
-        ;;;for (var key in data) if (!fields[key]) entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
+        /** @cut */ for (var key in data)
+        /** @cut */   if (key in fields == false)
+        /** @cut */     entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
 
         // copy default values
         var value;
@@ -1337,7 +1339,6 @@
             update = true;
 
           // dispatch events
-
           if (update)
             this.emit_update(delta);
 
@@ -1352,43 +1353,35 @@
       },
       clear: function(){
         var data = {};
+
         for (var key in this.data)
           data[key] = undefined;
+        
         return this.update(data);
       },
       commit: function(data){
-        if (this.modified)
-        {
-          var rollbackData = this.modified;
-          this.modified = null;
-        }
+        var rollbackData = this.modified;
 
-        this.update(data);
+        this.modified = null;
+
+        if (data)
+          this.update(data);
 
         if (rollbackData)
           this.emit_rollbackUpdate(rollbackData);
       },
       rollback: function(){
-        if (this.state == STATE.PROCESSING)
-        {
-          ;;;entityWarn(this, 'Entity in processing state (entity.rollback() aborted)');
-          return;
-        }
+        var rollbackData = this.modified;
 
-        if (this.modified)
+        if (rollbackData)
         {
-          var rollbackData = this.modified;
           this.modified = null;
           this.update(rollbackData);
 
           this.emit_rollbackUpdate(rollbackData);
         }
-        this.setState(STATE.READY);
       },
       destroy: function(){
-        // shortcut
-        //var entityType = this.entityType;
-
         // unlink attached handlers
         for (var key in this.fieldHandlers_)
           if (this.fieldHandlers_[key])
