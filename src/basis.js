@@ -1990,6 +1990,38 @@
     }
   });
 
+  function compileFunction(sourceURL, args, body){
+    try {
+      return new Function(args, body
+        /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
+        /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
+      );
+    } catch(e) {
+      /** @cut */ if (document && 'line' in e == false && 'addEventListener' in global)
+      /** @cut */ {
+      /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
+      /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
+      /** @cut */   global.addEventListener('error', function onerror(event){
+      /** @cut */     if (event.filename == pathUtils.origin + sourceURL)
+      /** @cut */     {
+      /** @cut */       global.removeEventListener('error', onerror);
+      /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
+      /** @cut */       event.preventDefault()
+      /** @cut */     }
+      /** @cut */   })
+      /** @cut */ 
+      /** @cut */   var script = document.createElement('script');
+      /** @cut */   script.src = sourceURL;
+      /** @cut */   script.async = false;
+      /** @cut */   document.head.appendChild(script);
+      /** @cut */   document.head.removeChild(script);
+      /** @cut */ }
+
+      // don't throw new exception, just output error message and return undefined
+      // in this case more chances for other modules continue to work
+      basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 1) : '') + ': ' + e);
+    }
+  }
 
   var runScriptInContext = function(context, sourceURL, sourceCode){
     var baseURL = pathUtils.dirname(sourceURL) + '/';
@@ -1998,58 +2030,30 @@
     if (!context.exports)
       context.exports = {};
 
-    // compile context function
+    // compile function if required
     if (typeof compiledSourceCode != 'function')
-      try {
-        compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource, require',
-          '"use strict";\n' +
-          sourceCode
-          /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
-          /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
-        );
-      } catch(e) {
-        /** @cut */ if ('line' in e == false && 'addEventListener' in window)
-        /** @cut */ {
-        /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
-        /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
-        /** @cut */   window.addEventListener('error', function onerror(event){
-        /** @cut */     if (event.filename == pathUtils.origin + sourceURL)
-        /** @cut */     {
-        /** @cut */       window.removeEventListener('error', onerror);
-        /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
-        /** @cut */       event.preventDefault()
-        /** @cut */     }
-        /** @cut */   })
-        /** @cut */ 
-        /** @cut */   var script = document.createElement('script');
-        /** @cut */   script.src = sourceURL;
-        /** @cut */   script.async = false;
-        /** @cut */   document.head.appendChild(script);
-        /** @cut */   document.head.removeChild(script);
-        /** @cut */ }
-
-        // don't throw new exception, just output error message and return undefined
-        // in this case more chances for other modules continue to work
-        basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 1) : '') + ': ' + e);
-        return context;
-      }
+      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require'],
+        '"use strict";\n' +
+        sourceCode
+      );
 
     // run
-    compiledSourceCode.call(
-      context.exports,
-      context.exports,
-      context,
-      basis,
-      global,
-      sourceURL,
-      baseURL,
-      function(relativePath){
-        return getResource(baseURL + relativePath);
-      },
-      function(relativePath, base){
-        return requireNamespace(relativePath, base || baseURL);
-      }
-    );
+    if (typeof compiledSourceCode == 'function')
+      compiledSourceCode.call(
+        context.exports,
+        context.exports,
+        context,
+        basis,
+        global,
+        sourceURL,
+        baseURL,
+        function(relativePath){
+          return getResource(baseURL + relativePath);
+        },
+        function(relativePath, base){
+          return requireNamespace(relativePath, base || baseURL);
+        }
+      );
 
     return context;
   };

@@ -90,6 +90,13 @@
     return !element.className;
   })();
 
+  // test set style properties doesn't throw an error
+  var IS_SET_STYLE_SAFE = !!(function(){
+    try {
+      return document.documentElement.style.color = 'x';
+    } catch(e) {}
+  })();
+
   // old firefox has no Node#contains method
   if (typeof Node != 'undefined' && !Node.prototype.contains)
     Node.prototype.contains = function(child){
@@ -511,17 +518,24 @@
    /**
     * @func
     */
-    var bind_attrStyle = function(domRef, propertyName, oldValue, newValue){
-      if (oldValue !== newValue)
-      {
-        try {
-          domRef.style[camelize(propertyName)] = newValue;
-        } catch(e){
-        }
-      }
+    var bind_attrStyle = IS_SET_STYLE_SAFE
+      ? function(domRef, propertyName, oldValue, newValue){
+          if (oldValue !== newValue)
+            domRef.style[camelize(propertyName)] = newValue;
 
-      return newValue;
-    };
+          return newValue;
+        }
+      : function(domRef, propertyName, oldValue, newValue){
+          if (oldValue !== newValue)
+          {
+            try {
+              domRef.style[camelize(propertyName)] = newValue;
+            } catch(e){
+            }
+          }
+
+          return newValue;
+        };
 
    /**
     * @func

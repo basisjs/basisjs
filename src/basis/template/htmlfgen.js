@@ -630,6 +630,11 @@
     }
   })();
 
+  function compileFunction(args, body){
+    /** @cut */ try {
+      return new Function(args, body);
+    /** @cut */ } catch(e) { basis.dev.error('Can\'t build template function: ' + e + '\n', 'function(' + args +'){\n' + body + '\n}'); }
+  }
 
   var getFunctions = function(tokens, debug, uri, source, noTextBug){
     // try get functions from cache by templateId
@@ -664,7 +669,7 @@
           'break;'
         );
 
-      result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'TEXT_BUG',
+      result.createL10nSync = compileFunction(['_', '__l10n', 'bind_attr', 'TEXT_BUG'],
         /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
 
         'var ' + paths.path + ';' +
@@ -679,9 +684,9 @@
       );
     }
 
-    /** @cut */ try {
-    result.createInstance = new Function('tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG',
-      /** @cut */ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
+    result.createInstance = compileFunction(['tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG'],
+      /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
+
       'var getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
       'Attaches=function(){};' +
@@ -720,7 +725,6 @@
         /** @cut */ '\n//@ sourceURL=' + basis.path.origin + uri + '\n' +
       '}'
     );
-    /** @cut */ } catch(e) { basis.dev.error('Can\'t build createInstance: ' + e + '\n', fnBody); }
 
     return result;
   }
