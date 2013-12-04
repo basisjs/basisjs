@@ -83,14 +83,18 @@
       }, this.scrollerConfig));
     },
 
-    postInit: function(){
-      PageControl.prototype.postInit.call(this);
-      this.scroller.setElement(this.childNodesElement);
+    templateSync: function(){
+      PageControl.prototype.templateSync.call(this);
 
-      if (this.rotate && this.firstChild)
-        this.adjustRotation(true);
+      if (this.childNodesElement)
+      {
+        this.scroller.setElement(this.childNodesElement);
 
-      this.realign();
+        if (this.rotate && this.firstChild)
+          this.adjustRotation(true);
+
+        this.realign();
+      }
     },
 
     realign: function(){

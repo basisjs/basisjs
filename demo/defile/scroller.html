@@ -245,8 +245,9 @@
         },
 
         action: {
-          scrollTo: function(){
+          scrollTo: function(event){
             this.parentNode.satellite.worldMap.scrollTo(this.data.PositionX, this.data.PositionY);
+            event.die();
           }
         }
       },
@@ -341,10 +342,23 @@
       template: '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>',
       container: createBlock('Page Slider', 'short'),
 
+      childClass: {
+        template:
+          '<b:include src="basis.ui.tabs.Page">' +
+            '<b:append ref="content">' +
+              '<div class="PageContent">' +
+                '{text}' +
+              '</div>' +
+            '</b:append>' +
+          '</b:include>',
+        binding: {
+          text: 'text'
+        }
+      },
       childNodes: [
-        { content: DOM.createElement('.PageContent', 'Page 1') },
-        { content: DOM.createElement('.PageContent', 'Page 2') },
-        { content: DOM.createElement('.PageContent', 'Page 3') }
+        { text: 'Page 1' },
+        { text: 'Page 2' },
+        { text: 'Page 3' }
       ]
     });
 
