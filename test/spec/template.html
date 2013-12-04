@@ -78,6 +78,7 @@
                     basis.template.setTheme('base');
                     
                     var tmpl = new basis.template.html.Template(basis.template.get('test'));
+                    tmpl.createInstance(); // trigger for template parsing
                     this.is(1, tmpl.resources.length);
                     this.is(basis.path.resolve('foo/1.css'), tmpl.resources[0]);
 
