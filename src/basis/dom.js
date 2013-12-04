@@ -667,9 +667,6 @@
         for (var event in config)
           if (typeof config[event] == 'function')
             basis.dom.event.addHandler(element, event, config[event], element);
-          else
-            if (config[event] instanceof basis.dom.event.Handler)
-              basis.dom.event.addHandler(element, event, config[event].handler, config[event].thisObject);
       }
     }
 

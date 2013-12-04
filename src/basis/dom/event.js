@@ -78,14 +78,6 @@
     return BROWSER_EVENTS[eventName] || [eventName];
   }
 
- /**
-  * Function wrapper with thisObject as context.
-  * @class
-  */
-  var Handler = function(handler, thisObject){
-    this.handler = handler;
-    this.thisObject = thisObject;
-  };
 
  /**
   * @class
@@ -673,7 +665,6 @@
     MOUSE_MIDDLE: MOUSE_MIDDLE,
 
     // classes
-    Handler: Handler,
     Event: Event,
 
     // event functions

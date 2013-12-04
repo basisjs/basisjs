@@ -21,8 +21,8 @@ function loadTest(TestCase){
         progressbar = DOM.createElement('#TestProgressbar',
           DOM.createElement()
         ),
-        buttonRun = DOM.createElement({ description: 'BUTTON', click: new Event.Handler(Tester.run, Tester) }, 'Run'),
-        buttonStop = DOM.createElement({ description: 'BUTTON', click: new Event.Handler(Tester.stop, Tester) }, 'Stop'),
+        buttonRun = DOM.createElement({ description: 'BUTTON', click: Tester.run.bind(Tester) }, 'Run'),
+        buttonStop = DOM.createElement({ description: 'BUTTON', click: Tester.stop.bind(Tester) }, 'Stop'),
         DOM.createElement({ description: 'A[href=#autorun]', click: function(event){ Tester.run(); } }, 'Autorun')
       )
     ]);
