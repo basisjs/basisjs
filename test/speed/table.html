@@ -108,7 +108,7 @@
       }, multipleSelection);
 
       var grouping = {
-        groupGetter: function(node){
+        rule: function(node){
           if (node.data.count >= 0)
             return 'greates or equal 0';
           else

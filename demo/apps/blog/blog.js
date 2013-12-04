@@ -184,7 +184,7 @@ basis.ready(function(){
     sorting: 'data.id',
     sortingDesc: true,
     grouping: {
-      groupGetter: 'data.id.substr(0, 4)',
+      rule: 'data.id.substr(0, 4)',
       sorting: 'data.id',
       sortingDesc: true,
       childClass: {

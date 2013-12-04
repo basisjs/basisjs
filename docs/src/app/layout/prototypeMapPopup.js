@@ -46,7 +46,7 @@
       }
     }),
     sorting: basis.getter('data.title'),
-    grouping: basis.object.slice(viewPrototype().grouping, ['groupGetter', 'sorting', 'childClass'])
+    grouping: basis.object.slice(viewPrototype().grouping, ['rule', 'sorting', 'childClass'])
   });
 
   var prototypeMapPopupMatchInput = new basis.ui.field.MatchInput({

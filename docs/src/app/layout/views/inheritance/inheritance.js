@@ -118,7 +118,7 @@
                 selected: true,
                 onselect: function(){
                   owner.setGrouping({
-                    groupGetter: getter('delegate.group'),
+                    rule: 'delegate.group',
                     childClass: {
                       titleGetter: getter('data.title')
                     }

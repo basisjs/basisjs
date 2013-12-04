@@ -1897,7 +1897,7 @@
     setGrouping: function(grouping, alive){
       if (typeof grouping == 'function' || typeof grouping == 'string')
         grouping = {
-          groupGetter: grouping
+          rule: grouping
         };
 
       if (grouping instanceof GroupingNode == false)
@@ -2468,7 +2468,7 @@
 
     autoDestroyWithNoOwner: true,
     autoDestroyEmptyGroups: true,
-    groupGetter: nullGetter,
+    rule: nullGetter,
 
     childClass: PartitionNode,
     childFactory: function(config){
@@ -2483,7 +2483,12 @@
       this.map_ = {};
       this.nullGroup = new PartitionNode();
 
-      ;;;if ('titleGetter' in this) basis.dev.warn(namespace + '.GroupingNode: titleGetter is not support anymore for GroupingNode; extend partition nodes with titleGetter instead');
+      // TODO: remove in next releases
+      if ('groupGetter' in this)
+      {
+        this.rule = getter(this.groupGetter);
+        /** @cut */ basis.dev.warn('basis.dom.wrapper.GroupingNode#groupGetter is deprecated now, use basis.dom.wrapper.GroupingNode#rule instead. groupGetter value was set to rule property.');
+      }
 
       AbstractNode.prototype.init.call(this);
     },
@@ -2493,7 +2498,7 @@
     * @return {basis.dom.wrapper.PartitionNode}
     */
     getGroupNode: function(node, autocreate){
-      var groupRef = this.groupGetter(node);
+      var groupRef = this.rule(node);
       var isDelegate = groupRef instanceof DataObject;
       var group = this.map_[isDelegate ? groupRef.basisObjectId : groupRef];
 

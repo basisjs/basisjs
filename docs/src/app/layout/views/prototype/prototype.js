@@ -118,7 +118,7 @@
 
   var PROTOTYPE_GROUPING_TYPE = {
     type: 'type',
-    groupGetter: getter('data.kind'),
+    rule: 'data.kind',
     sorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT),
     childClass: {
       titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE)
@@ -127,7 +127,7 @@
 
   var PROTOTYPE_GROUPING_IMPLEMENTATION = {
     type: 'class',
-    groupGetter: function(node){
+    rule: function(node){
       //console.log(node.data, node.data.key, node.data.cls.className, mapDO[node.data.cls.className]);
       var key = node.data.key;
       var tag = node.data.tag;

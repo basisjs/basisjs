@@ -138,7 +138,7 @@
    
     var grouping = {
       childClass: nsUI.PartitionNode,
-      groupGetter: function(node){
+      rule: function(node){
         return node instanceof nsTree.Folder == false;
       },
       sorting: basis.getter('data.id')

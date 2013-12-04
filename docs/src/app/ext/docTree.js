@@ -36,7 +36,7 @@
 
   var nodeTypeGrouping = {
     sorting: basis.getter('data.id', groupWeight),
-    groupGetter: function(node){
+    rule: function(node){
       return node.data.isClassMember ? 'ClassMember' : capitalize(node.data.kind);
     },
     childClass: {

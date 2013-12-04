@@ -87,7 +87,7 @@
       sorting: basis.getter('title'),
       sortingDesc: true,
       grouping: {
-        groupGetter: basis.getter('data.id % 2'),
+        rule: 'data.id % 2',
         childClass: {
           binding: {
             title: basis.getter('data.id', { 0: 'even', 1: 'odd' })

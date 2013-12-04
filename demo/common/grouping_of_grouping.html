@@ -147,7 +147,7 @@
       container: document.getElementById('NumberDemo-Container'),
 
       groupingClass: basis.ui.GroupingNode.subclass({
-        groupGetter: function(node){
+        rule: function(node){
           return node.data.id >> 1;
         },
         groupingClass: basis.Class.SELF,
@@ -430,7 +430,7 @@
 
       grouping: {
         // group metro by country
-        groupGetter: 'data.country',
+        rule: 'data.country',
         sorting: 'data.title',
         childClass: {
           template:
@@ -442,7 +442,7 @@
 
         grouping: {
           // .. than group country by continent
-          groupGetter: function(node){
+          rule: function(node){
             return continentByCountry[node.data.id];
           },
           sorting: 'data.title',
