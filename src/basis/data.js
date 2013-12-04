@@ -1007,11 +1007,10 @@
       // delegate state changes
       var delegates = this.delegates_;
       if (delegates)
-        for (var i = 0, object; i < delegates.length; i++)
+        for (var i = 0; i < delegates.length; i++)
         {
-          object = delegates[i];
-          object.state = this.state;
-          object.emit_stateChanged(oldState);
+          delegates[i].state = this.state;
+          delegates[i].emit_stateChanged(oldState);
         }
     },
 
@@ -1032,14 +1031,6 @@
     * @event
     */
     emit_delegateChanged: createEvent('delegateChanged', 'oldDelegate'),
-
-   /**
-    * Flag to determine is this object target object or not. This property
-    * is readonly and can't be changed after init.
-    * @type {boolean}
-    * @readobly
-    */
-    isTarget: false,
 
    /**
     * Reference to root delegate if some object in delegate chain marked as targetPoint.
@@ -1086,8 +1077,7 @@
       {
         // assign a delegate
         this.delegate = null;
-
-        // TODO: what to do in case when this.isTarget is true 
+        this.target = null;
 
         // assign data & state to avoid update and stateChanged events
         this.data = delegate.data;
@@ -1102,8 +1092,15 @@
         if (!this.data)
           this.data = {};
 
-        // set target property to itself if isTarget property true
-        if (this.isTarget)
+        // TODO: remove in next releases
+        if ('isTarget' in this)
+        {
+          this.target = this;
+          /** @cut */ basis.dev.warn('basis.data.Object#isTarget is deprecated now, use basis.data.Object#target instead. Set any value to the property, but not a null, to mark object as target.');
+        }
+
+        // set target property to itself if target property is not null
+        if (this.target !== null)
           this.target = this;
       }
     },
@@ -1255,11 +1252,8 @@
     * @return {boolean} Current object state.
     */
     setState: function(state, data){
-      var root = this.target || this.root;
-
-      // set new state for root
-      if (root !== this)
-        return root.setState(state, data);
+      if (this.delegate)
+        return this.root.setState(state, data);
       else
         return AbstractData.prototype.setState.call(this, state, data);
     },
@@ -1270,10 +1264,8 @@
     * @return {Object|boolean} Delta if object data (this.data) was updated or false otherwise.
     */
     update: function(data){
-      var root = this.target || this.root;
-
-      if (root !== this)
-        return root.update(data);
+      if (this.delegate)
+        return this.root.update(data);
 
       if (data)
       {
@@ -1281,14 +1273,12 @@
         var changed = false;
 
         for (var prop in data)
-        {
           if (this.data[prop] !== data[prop])
           {
             changed = true;
             delta[prop] = this.data[prop];
             this.data[prop] = data[prop];
           }
-        }
 
         if (changed)
         {

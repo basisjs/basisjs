@@ -80,15 +80,15 @@
           while (cursor.delegate && cursor.delegate !== cursor)
           {
             cursor = cursor.delegate;
-            chain.push(cursor);
+            chain.unshift(cursor);
           }
 
-          var target = object.target;
-          var root = chain[chain.length - 1];
+          var target = null;
+          var root = chain[0];
 
           for (var i = 0, chainObject; chainObject = chain[i]; i++)
           {
-            if (chainObject.isTarget)
+            if (chainObject === chainObject.target)
               target = chainObject.target;
 
             if (chainObject.data !== object.data)

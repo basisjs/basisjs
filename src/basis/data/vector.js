@@ -381,7 +381,7 @@
 
   var Item = Class(DataObject, {
     className: namespace + '.Item',
-    isTarget: true,
+    target: true,
     key: undefined
   });
 

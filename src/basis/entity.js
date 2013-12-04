@@ -984,7 +984,7 @@
   var BaseEntity = Class(DataObject, {
     className: namespace + '.BaseEntity',
 
-    isTarget: true,
+    target: true,
     setDelegate: function(){
       // entity can't has a delegate
     },
