@@ -70,8 +70,8 @@
         }
 
         // that feature available in development mode only
-        if (DEVMODE && this.emit_debug)
-          this.emit_debug({
+        if (DEVMODE && this.debug_emit)
+          this.debug_emit({
             sender: this,
             type: eventName,
             args: arguments
@@ -256,7 +256,7 @@
       * WARN: This functionality is supported in development mode only.
       * @return {Array.<object>} List of handlers
       */ 
-      handler_list: function(){
+      debug_handlers: function(){
         var result = [];
         var cursor = this;
 
@@ -271,7 +271,7 @@
       * WARN: This functionality is supported in development mode only.
       * @type {function(event)}
       */
-      emit_debug: null
+      debug_emit: null
     });
   }
 

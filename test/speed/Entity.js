@@ -19,7 +19,7 @@
 
     var eventStat = {};
 
-    basis.event.Emitter.prototype.emit_debug = function(event){
+    basis.event.Emitter.prototype.debug_emit = function(event){
       eventStat[event.type] = (eventStat[event.type] || 0) + 1;
     }
 
