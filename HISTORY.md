@@ -1,3 +1,46 @@
+## 1.0.0-rc3 (december 4, 2013)
+
+- NEW: `ruleValue` property implemented for `basis.data.dataset.Split` and `basis.data.dataset.Cloud` subsets
+- NEW: email & url validators support cyryllic symbols
+- NEW: add `file` param name implemented in `net.upload`
+- NEW: cross-browser implementation for `mouseenter` and `mouseleave` events in templates
+- NEW: flexible style customization for `basis.ui.chart`
+- NEW: `basis.dragdrop.DragDropElement#startRule` implemented
+- NEW: `basis.router` support for optional parts in path
+- NEW: `basis.ui.field.Select` support multiple selection
+- NEW: rework `basis.date`: make optional `Date` prototype extension and related changes
+- NEW: resources with `basis.ui.Node` instance as `module.exports` now can be used as binding value with no `fetch` method
+- NEW: support for local vesion of `basis.require` in js resources
+- NEW: plural forms for most languages and cultures in `basis.l10n`
+- NEW: rework `basis.data.Object#setDelegate` to solve various problems on delegate change
+- NEW: `basis.data.Object` is support for `root` listener now
+- NEW: `basis.entity.Entity#rollback` support for list of fields that should be rolled back
+- API: change order for `basis.data.index` helpers, optional events argument should be before getter argument
+- API: `basis.entity.Entity#rollback` might be call for any state of entity (it was possible if entity hasn't processing state before)
+- API: `basis.entity.Entity#rollback` doesn't change entity's state
+- API: rename `basis.dom.wrapper.GroupingNode#groupGetter` -> `basis.dom.wrapper.GroupingNode#rule`
+- FIX: issue with `Function#name` property usage that doesn't support by old IE
+- FIX: l10n token resolving for included by name templates
+- FIX: proper usage of `FormData` for IE in `net.upload`
+- FIX: `basis.dom.event.mouseX` and `basis.dom.event.mouseY` to prevent page reflow when event has no mouse related properties
+- FIX: NaN for `basis.dom.event.wheelDelta` when delta is equal to zero
+- FIX: improve `basis.event.sender` to be more stable across browsers
+- FIX: prevent warnings about deprecated properties usage on `basis.event.Event` creation 
+- FIX: override `basis.Token.attach` and `basis.Token.detach` methods on destroy to avoid warnings and possible problems
+- FIX: `basis.ui.field.Combobox` creation & destruction to avoid warnings about incorrect handlers removals
+- FIX: 'use strict' usage in modules
+- FIX: warn when empty array set as definition for `basis.entity.Entity` field
+- FIX: `basis.ui.field` field's new and current values comparison
+- FIX: `basis.ui.field` explicit cast of field value to string type before applying regexp validator
+- FIX: `minLength` validator in `basis.ui.field`
+- FIX: `basis.animation.Modificator` computations on thread value changes 
+- FIX: calc doesn't compute on `basis.entity.Entity` creation in some cases
+- improve `basis.router` path parsing
+- speed up `basis.date.format` function
+- some code changes for better browser js optimizations
+- small refactoring of `basis.ui.field.Field` & `basis.ui.field.ComplexField`
+- various bug fixes
+
 ## 1.0.0-rc2 (october 25, 2013)
 
 Removals:
