@@ -737,8 +737,11 @@
     if (!entityType.calcs)
       entityType.calcs = [];
 
+    var calcs = entityType.calcs;
+    var deps = entityType.deps;
+    var calcArgs = wrapper.args || [];
     var calcConfig = {
-      args: wrapper.args || [],
+      args: calcArgs,
       wrapper: wrapper
     };
 
@@ -747,17 +750,17 @@
     var before = entityType.calcs.length;
     var after = 0;
 
-    if (wrapper.args)
-      for (var i = 0; i < entityType.calcs.length; i++)
-        if (wrapper.args.indexOf(entityType.calcs[i].key) != -1)
+    if (calcArgs)
+      for (var i = 0, calc; calc = calcs[i]; i++)
+        if (calcArgs.indexOf(calc.key) != -1)
           after = i + 1;
 
     if (key)
     {
       // natural calc field
       calcConfig.key = key;
-      for (var i = 0; i < entityType.calcs.length; i++)
-        if (entityType.calcs[i].args.indexOf(key) != -1)
+      for (var i = 0, calc; calc = calcs[i]; i++)
+        if (calc.args.indexOf(key) != -1)
         {
           before = i;
           break;
@@ -772,6 +775,23 @@
       if (entityType.idField && key == entityType.idField)
         entityType.compositeKey = wrapper;
 
+      // resolve calc dependencies
+      deps[key] = calcArgs.reduce(function(res, ref){
+        var items = deps[ref] || [ref];
+        for (var i = 0; i < items.length; i++)
+          basis.array.add(res, items[i]);
+        return res;
+      }, []);
+
+      // update other registered calcs dependencies
+      for (var ref in deps)
+      {
+        var idx = deps[ref].indexOf(key);
+        if (idx != -1)
+          Array.prototype.splice.apply(deps[ref], [idx, 1].concat(deps[key]));
+      }
+
+      // reg as field
       entityType.fields[key] = function(value, oldValue){
         ;;;basis.dev.log('Calculate fields are readonly');
         return oldValue;
@@ -783,7 +803,7 @@
       before = after;
     }
 
-    entityType.calcs.splice(Math.min(before, after), 0, calcConfig);
+    calcs.splice(Math.min(before, after), 0, calcConfig);
   }
 
 
@@ -818,6 +838,7 @@
 
       // init properties
       this.fields = {};
+      this.deps = {};
       this.idFields = {};
       this.defaults = {};
       this.aliases = {};
@@ -1090,13 +1111,11 @@
           }
           else
           {
-            if (typeof defaults[key] == 'function')
-            {
-              delta[key] = undefined;
-              value = defaults[key](data);
-            }
-            else
-              value = defaults[key];
+            delta[key] = undefined;
+            value = defaults[key];
+
+            if (typeof value == 'function')
+              value = value(data);
           }
 
           if (value && value !== this && value instanceof Emitter)
@@ -1305,11 +1324,11 @@
         return result || false;
       },
       update: function(data, rollback){
+        var update = false;
+        var delta = {};
+
         if (data)
         {
-          var update;
-          var delta = {};
-
           var rollbackUpdate;
           var rollbackDelta = {};
 
@@ -1370,16 +1389,21 @@
         if (rollbackData)
           this.emit_rollbackUpdate(rollbackData);
       },
-      rollback: function(){
+      rollback: function(keys){
         var rollbackData = this.modified;
 
-        if (rollbackData)
+        if (rollbackData && keys)
         {
-          this.modified = null;
-          this.update(rollbackData);
+          if (!Array.isArray(keys))
+            keys = [keys];
 
-          this.emit_rollbackUpdate(rollbackData);
+          rollbackData = basis.object.slice(rollbackData, keys.reduce(function(res, item){
+            return res.concat(entityType.deps[item] || item);
+          }, []));
         }
+
+        // rollback
+        this.update(rollbackData, true);
       },
       destroy: function(){
         // unlink attached handlers

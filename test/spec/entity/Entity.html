@@ -184,7 +184,7 @@
                     this.is(2, EntityType.all.itemCount);
                     this.is({ id: 1, value: '' }, entityB.data);
 
-                    // try to change id for existing value, will be ignored
+                    // try to change id for existing value, must be ignored
                     entityA.update({ id: 1 });
                     this.is(2, EntityType.all.itemCount);
                     this.is(entityB, EntityType.get(1));
@@ -218,6 +218,71 @@
                     this.is(0, EntityType.all.itemCount);
                     this.is(undefined, EntityType.get(1));
                     this.is({}, entityA.data);
+                  }
+                },
+                {
+                  name: 'calc',
+                  test: function(){
+                    var Type = basis.entity.createType(null, {
+                      a: String,
+                      b: Number,
+                      c: basis.entity.calc('a', 'b', function(a, b){ return a + b; }),
+                      d: basis.entity.calc('b', 'c', function(a, b){ return a + b; })
+                    });
+
+                    // calc values should be computed even if empty config
+                    var entity = Type({});
+                    this.is({ a: '', b: 0, c: '0', d: '00' }, entity.data);
+
+                    // values for calc fields in config must be ignored
+                    var entity = Type({ c: 'xxx' });
+                    this.is({ a: '', b: 0, c: '0', d: '00' }, entity.data);
+
+                    // calc values should be computed
+                    var entity = Type({ a: 'xxx' });
+                    this.is({ a: 'xxx', b: 0, c: 'xxx0', d: '0xxx0' }, entity.data);
+                  }
+                },
+                {
+                  name: 'default values',
+                  test: function(){
+                    var Type = basis.entity.createType(null, {
+                      a: {
+                        type: Number,
+                        defValue: 1
+                      },
+                      b: {
+                        defValue: 'default'
+                      },
+                      c: {
+                        defValue: function(initData){
+                          if ('a' in initData && 'b' in initData)
+                            return initData.a + initData.b;
+                          else
+                            return 'default';
+                        }
+                      },
+                      calcWithDefault: {
+                        defValue: 777,
+                        calc: basis.entity.calc('a', function(a){ return a * 5 })
+                      }
+                    });
+
+                    // #1 - defaults only
+                    var entity = Type({});
+                    this.is({ a: 1, b: 'default', c: 'default', calcWithDefault: 5 }, entity.data);
+
+                    // #2 - set all values
+                    var entity = Type({ a: 2, b: 3, c: 4, calcWithDefault: 5 });
+                    this.is({ a: 2, b: 3, c: 4, calcWithDefault: 10 }, entity.data);
+
+                    // #3
+                    var entity = Type({ a: 2 });
+                    this.is({ a: 2, b: 'default', c: 'default', calcWithDefault: 10 }, entity.data);
+
+                    // #4
+                    var entity = Type({ a: 2, b: 3 });
+                    this.is({ a: 2, b: 3, c: 5, calcWithDefault: 10 }, entity.data);
                   }
                 }
               ]
@@ -966,7 +1031,7 @@
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate'; }).length);
                     this.is({ value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate'; })[0][2]);
                   }
-                }/*,
+                },
                 {
                   name: 'must not change object state',
                   test: function(){
@@ -981,8 +1046,8 @@
                     var entity = EntityType({ id: 1, value: '1', self: false });
 
                     entity.update({ id: 2, value: 2, self: true }, true);
-                    this.is(2, entity.history_.length);
-                    this.is({ id: 1, value: '1', self: false }, entity.history_[1]);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
                     this.is({ value: '1', self: false }, entity.modified);
                     this.is({ id: 2, value: '2', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
@@ -991,13 +1056,114 @@
 
                     entity.rollback();
                     this.is(nsData.STATE.UNDEFINED, entity.state);
-                    this.is(3, entity.history_.length);
-                    this.is({ value: '2', self: true }, entity.history_[2]);
+                    this.is(2, entity.history_.length);
+                    this.is({ value: '2', self: true }, entity.history_[1]);
                     this.is(null, entity.modified);
                     this.is({ id: 2, value: '1', self: false }, entity.data);
                     this.is(2, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                   }
-                }*/
+                },
+                {
+                  name: 'rollback custom fields',
+                  test: function(){
+                    var Type = basis.entity.createType(null, {
+                      id: basis.entity.StringId,
+                      a: String,
+                      b: Number,
+                      c: Number
+                    });
+
+                    // #1
+                    var entity = Type({});
+                    this.is({ id: null, a: '', b: 0, c: 0 }, entity.data);
+                    this.is(null, entity.modified);
+
+                    entity.update({ a: 'xx', b: 123 }, true);
+                    this.is({ id: null, a: 'xx', b: 123, c: 0 }, entity.data);
+                    this.is({ a: '', b: 0 }, entity.modified);
+
+                    entity.rollback('a');
+                    this.is({ id: null, a: '', b: 123, c: 0 }, entity.data);
+                    this.is({ b: 0 }, entity.modified);
+
+                    // #2
+                    var entity = Type({ c: 123 });
+
+                    entity.update({ a: 'xx', b: 123, c: 456 }, true);
+                    this.is({ id: null, a: 'xx', b: 123, c: 456 }, entity.data);
+                    this.is({ a: '', b: 0, c: 123 }, entity.modified);
+
+                    entity.rollback(['a', 'c']);
+                    this.is({ id: null, a: '', b: 123, c: 123 }, entity.data);
+                    this.is({ b: 0 }, entity.modified);
+
+                    // #3 - rollback non-existing fields
+                    var entity = Type({ c: 123 });
+
+                    entity.update({ a: 'xx', b: 123, c: 456 }, true);
+                    this.is({ id: null, a: 'xx', b: 123, c: 456 }, entity.data);
+                    this.is({ a: '', b: 0, c: 123 }, entity.modified);
+
+                    entity.rollback(['x', 'y']);
+                    this.is({ id: null, a: 'xx', b: 123, c: 456 }, entity.data);
+                    this.is({ a: '', b: 0, c: 123 }, entity.modified);
+
+                    entity.rollback(['a', 'x', 'b']);
+                    this.is({ id: null, a: '', b: 0, c: 456 }, entity.data);
+                    this.is({ c: 123 }, entity.modified);
+                  }
+                },
+                {
+                  name: 'rollback custom calc fields',
+                  test: function(){
+                    var Type = basis.entity.createType(null, {
+                      id: basis.entity.StringId,
+                      a: String,
+                      b: Number,
+                      c: basis.entity.calc('a', 'b', function(a, b){ return a + b; }),
+                      d: basis.entity.calc('b', 'c', function(a, b){ return a + b; }),
+                      e: basis.entity.calc('d', 'c', function(){ return 1; })
+                    });
+
+                    // #1 - calc depends on fields only
+                    var entity = Type({});
+                    this.is({ id: null, a: '', b: 0, c: '0', d: '00', e: 1 }, entity.data);
+                    this.is(null, entity.modified);
+
+                    entity.update({ a: 'test' }, true);
+                    this.is({ id: null, a: 'test', b: 0, c: 'test0', d: '0test0', e: 1 }, entity.data);
+                    this.is({ a: '' }, entity.modified);
+
+                    entity.rollback('c');
+                    this.is({ id: null, a: '', b: 0, c: '0', d: '00', e: 1 }, entity.data);
+                    this.is(null, entity.modified);
+
+                    // #2 - calc depends on field and calc
+                    var entity = Type({});
+                    entity.update({ a: 'test' }, true);
+
+                    entity.rollback('d');
+                    this.is({ id: null, a: '', b: 0, c: '0', d: '00', e: 1 }, entity.data);
+                    this.is(null, entity.modified);
+
+                    // #3 - calc depends on calcs only
+                    var entity = Type({});
+                    entity.update({ a: 'test' }, true);
+
+                    entity.rollback('e');
+                    this.is({ id: null, a: '', b: 0, c: '0', d: '00', e: 1 }, entity.data);
+                    this.is(null, entity.modified);
+
+                    // #4 - mixed
+                    entity.update({ a: 'test', b: 2 }, true);
+                    this.is({ id: null, a: 'test', b: 2, c: 'test2', d: '2test2', e: 1 }, entity.data);
+                    this.is({ a: '', b: 0 }, entity.modified);
+
+                    entity.rollback(['a', 'e']);
+                    this.is({ id: null, a: '', b: 0, c: '0', d: '00', e: 1 }, entity.data);
+                    this.is(null, entity.modified);
+                  }
+                }
               ]
             },
             {
