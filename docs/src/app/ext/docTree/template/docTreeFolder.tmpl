@@ -1,14 +1,4 @@
-<b:include src="basis.ui.tree.Folder">
-  <b:replace ref="element">
-    <li class="Basis-TreeNode App-DocTreeNode">
-      <div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected} Type-{kind}">
-        <div class="Basis-TreeNode_Expander Basis-TreeNode_Expander__{collapsed}" event-click="toggle" />
-        <span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption Basis-TreeNode-Caption__{disabled} Basis-TreeNode-Caption__{selected}" event-click="select">
-          {title}
-        </span>
-      </div> 
-      <ul{childNodesElement} class="Basis-TreeNode-Content Basis-TreeNode-Content__{collapsed}"/> 
-    </li>
-  </b:replace>
+<b:include src="basis.ui.tree.Folder" class="App-DocTreeNode">
+  <b:class ref="content" value="Type-{kind}"/>
 </b:include>
-<b:resource src="docTreeNode.css"/>
+<b:style src="docTreeNode.css"/>

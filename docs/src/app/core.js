@@ -375,14 +375,14 @@
       }
       else
       {
-        if (basis.namespaces_[fullPath])
+        if (obj instanceof basis.constructor) // basis.constructor === basis.Namespace
           kind = 'namespace';
         else if (isPrototype)
           kind = 'property';
         else if (obj && (obj == document || (obj.ownerDocument && obj.ownerDocument == document)))
           kind = 'htmlElement';
         else
-          kind = /[^A-Z0-9_]/.test(key) ? 'object' : 'constant';
+          kind = /[^A-Z0-9_]/.test(key) ? (obj && typeof obj == 'object' ? 'object' : 'property') : 'constant';
       }
 
       if (isPrototype)

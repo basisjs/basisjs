@@ -1,12 +1,6 @@
-<b:include src="basis.ui.tree.Node">
-  <b:replace ref="element">
-    <li class="Basis-TreeNode App-DocTreeNode Type-{kind}">
-      <div{content} class="Basis-TreeNode-Title {selected}">
-        <span class="Basis-TreeNode-Caption Basis-TreeNode-Caption__{disabled} Basis-TreeNode-Caption__{selected}" event-click="select">
-          {title}<!--{args}-->
-        </span>
-      </div>
-    </li>
-  </b:replace>
+<b:include src="basis.ui.tree.Node" class="App-DocTreeNode Type-{kind}">
+  <b:after ref="title">
+    <!--{args}-->
+  </b:after>
 </b:include>
-<b:resource src="docTreeNode.css"/>
+<b:style src="docTreeNode.css"/>
