@@ -307,14 +307,7 @@
   var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.split(' ');
   var IS_POST_REGEXP = /POST/i;
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
-  var ESCAPE_CHARS = /[\%\=\&\<\>\s\+]/g;
-
-  function escapeValue(value){
-    return String(value).replace(ESCAPE_CHARS, function(m){
-      var code = m.charCodeAt(0).toString(16).toUpperCase();
-      return '%' + (code.length < 2 ? '0' : '') + code;
-    });
-  }
+  var escapeValue = encodeURIComponent;
 
 
  /**
@@ -547,6 +540,8 @@
         url = url.replace(/:([a-z\_\-][a-z0-9\_\-]+)/gi, function(m, key){
           if (key in requestData.routerParams)
             return requestData.routerParams[key]; // escapeValue?
+          else
+            return m;
         });
 
       if (params)
