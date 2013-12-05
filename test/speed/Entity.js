@@ -5,6 +5,7 @@
     basis.require('basis.dom.event');
     basis.require('basis.data');
     basis.require('basis.entity');
+    basis.require('basis.utils.benchmark');
     
     var MAX_COUNT = 3000;
     var MAX_COUNT_QUATER = MAX_COUNT >> 2;
@@ -16,6 +17,7 @@
 
     var getter = basis.getter;
     var arrayFrom = basis.array.from;
+    var getTime = basis.utils.benchmark.time;
 
     var eventStat = {};
 
@@ -104,9 +106,9 @@
       }
     });
 
-    var date = new Date();
+    var date = new Date;
     function test(){
-      var st = Date.now();
+      var st = getTime();
       for (var i = 1; i <= MAX_COUNT; i++)
       {
         Transfer({
@@ -120,11 +122,11 @@
           CreateDate: date
         });
       }
-      return Date.now() - st;
+      return getTime(st);
     }
 
     function test_fast_insert(){
-      var st = Date.now();
+      var st = getTime();
       var data = [];
       for (var i = 1; i <= MAX_COUNT; i++)
       {
@@ -140,13 +142,13 @@
         });
       }
       Transfer.all.sync(data);
-      return Date.now() - st;
+      return getTime(st);
     }
 
 
     var uniqValue = 1;
     function test_update(){
-      var st = Date.now();
+      var st = getTime();
       for (var i = 1; i <= MAX_COUNT; i++)
       {
         Transfer({
@@ -160,7 +162,7 @@
           }
         });
       }
-      return Date.now() - st;
+      return getTime(st);
     }
 
 
@@ -172,24 +174,24 @@
       return es.itemCount;
     }
     function clear(){
-      var st = Date.now();
+      var st = getTime();
       for (var i = 1, cnt = getCount(Transfer.all); i <= cnt; i++)
         Transfer(i).destroy();
       for (var i = 1, cnt = getCount(Currency.all); i <= cnt; i++)
         Currency(i).destroy();
       for (var i = 1, cnt = getCount(User.all); i <= cnt; i++)
         User(i).destroy();
-      return Date.now() - st;
+      return getTime(st);
     }
 
     function fast_clear(){
       if (Transfer.all.sync)
       {
-        var st = Date.now();
+        var st = getTime();
         Transfer.all.sync([]);
         User.all.sync([]);
         Currency.all.sync([]);
-        return Date.now() - st;
+        return getTime(st);
       }
       else
         return clear();
@@ -280,7 +282,9 @@
             padding: '0 2ex'
           }
         },
-        basis.object.iterate(res, basis.string.format, '{0}: +{1}').sort().join(', ')
+        basis.object.iterate(res, function(k, v){
+          return k + ': +' + v;
+        }).sort().join(', ')
       );
     }
 

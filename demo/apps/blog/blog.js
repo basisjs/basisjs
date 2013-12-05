@@ -6,9 +6,11 @@ basis.require('basis.data.dataset');
 basis.require('basis.data.index');
 basis.require('basis.ui');
 basis.require('basis.ui.paginator');
+basis.require('basis.utils.benchmark');
 
 basis.ready(function(){
   var statOutElement = basis.dom.createElement('ul');
+  var getTime = basis.utils.benchmark.time;
   var PROFILE = false;
 
   function outStat(){
@@ -18,23 +20,23 @@ basis.ready(function(){
     for (var i = 0; i < times.length; i++)
     {
       var t = times[i];
-      statOutElement.appendChild(basis.dom.createElement('LI', (t[0] - sdate) + 'ms, self: ' + (t[0] - (lasttime)) + ' [' + t[1] + ']'));
+      statOutElement.appendChild(basis.dom.createElement('LI', parseInt(t[0] - sdate) + 'ms, self: ' + parseInt(t[0] - (lasttime)) + ' [' + t[1] + ']'));
       lasttime = t[0];
     }
 
     basis.dom.insert(statOutElement, [
-      basis.dom.createElement('B', lasttime - sdate),
-      basis.dom.createElement('SPAN', ' (' + (lasttime - firstTime) + ')')
+      basis.dom.createElement('B', parseInt(lasttime - sdate)),
+      basis.dom.createElement('SPAN', ' (' + parseInt(Date.now() - firstTime) + ')')
     ]);
   }
 
   if (PROFILE) console.profile();
 
-  var times = [new Date];
+  var times = [getTime()];
 
   var postsData = resource('blog_posts.js').fetch();
 
-  times.push([new Date, 'generate posts']);
+  times.push([getTime(), 'generate posts']);
 
   var allPostDataset = new basis.data.Dataset({
     items: postsData.map(function(data){
@@ -45,7 +47,7 @@ basis.ready(function(){
   });
 
   //console.profileEnd();
-  times.push([new Date, 'data load']);
+  times.push([getTime(), 'data load']);
 
   //console.profile();
 
@@ -58,7 +60,7 @@ basis.ready(function(){
     rule: 'data.pubDate'
   });
 
-  times.push([new Date, 'thread slice']);
+  times.push([getTime(), 'thread slice']);
 
   var paginator = new basis.ui.paginator.Paginator({
     pageCount: Math.ceil(allPostDataset.itemCount / POST_PER_PAGE),
@@ -144,7 +146,7 @@ basis.ready(function(){
   });
 
 
-  times.push([new Date, 'post list']);
+  times.push([getTime(), 'post list']);
 
 
   var postByCategory = new basis.data.dataset.Split({
@@ -172,7 +174,7 @@ basis.ready(function(){
   });
 
 
-  times.push([new Date, 'category list']);
+  times.push([getTime(), 'category list']);
 
 
   var MONTH = 'January February March April May June July August September October November December'.split(' ');
@@ -236,7 +238,7 @@ basis.ready(function(){
   archiveList.grouping.firstChild.collapsed = false;
   archiveList.grouping.firstChild.updateBind('collapsed');
 
-  times.push([new Date, 'archive list']);
+  times.push([getTime(), 'archive list']);
 
   var cloud = new basis.data.dataset.Cloud({
     source: allPostDataset,
@@ -281,7 +283,7 @@ basis.ready(function(){
     }
   });
 
-  times.push([new Date, 'tag cloud']);
+  times.push([getTime(), 'tag cloud']);
 
   var app = new basis.ui.Node({
     container: document.body,
@@ -314,7 +316,7 @@ basis.ready(function(){
     }
   });
 
-  times.push([new Date, 'app']);
+  times.push([getTime(), 'app']);
 
   if (PROFILE) console.profileEnd();
 
