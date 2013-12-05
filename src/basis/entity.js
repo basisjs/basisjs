@@ -278,9 +278,11 @@
         if (key in destroyItems == false)
           inserted.push(this.items_[key]);
 
+      Dataset.setAccumulateState(true);
       for (var key in destroyItems)
         if (destroyItems[key])
           destroyItems[key].destroy();
+      Dataset.setAccumulateState(false);
 
       return inserted.length ? inserted : null;
     };
