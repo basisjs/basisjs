@@ -1,5 +1,4 @@
 
-  basis.require('basis.ua');
   basis.require('basis.dom.event');
 
 
@@ -17,9 +16,10 @@
 
   var location = global.location;
   var document = global.document;
+
+  // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
   var docMode = document.documentMode;
-  var buggyIE = basis.ua.is('IE') && (!docMode || docMode <= 7);
-  var eventSupport = 'onhashchange' in global && !buggyIE;
+  var eventSupport = 'onhashchange' in global && (docMode === undefined || docMode > 7);
 
   var CHECK_INTERVAL = 50;
 
@@ -32,7 +32,6 @@
 
   function pathToRegExp(route){
     var value = String(route || '');
-    var chars = value.split('');
 
     function findWord(offset){
       return value.substr(offset).match(/^\w+/);
@@ -42,8 +41,10 @@
       var result = '';
       var res;
 
-      for (var i = offset; i < chars.length; i++)
-        switch (chars[i])
+      for (var i = offset; i < value.length; i++)
+      {
+        var c = value.charAt(i);
+        switch (c)
         {
           case stopChar:
             return {
@@ -51,9 +52,16 @@
               offset: i
             };
 
+          case '\\':
+            result += '\\' + value.charAt(++i);
+            break;
+
+          case '|':  // allow | inside braces1
+            result += stopChar != ')' ? '\\|' : '|';
+            break;
+
           case '(':  // optional: (something) -> (?:something)?
-            var res = parse(i + 1, ')');
-            if (res)
+            if (res = parse(i + 1, ')'))
             {
               i = res.offset;
               result += '(?:' + res.result + ')?';
@@ -62,6 +70,7 @@
             {
               result += '\\(';
             }
+
             break;
 
           case ':':  // named:   :name -> ([^/]+)
@@ -91,8 +100,9 @@
             break;
 
           default:
-            result += basis.string.forRegExp(chars[i]);
+            result += basis.string.forRegExp(c);
         }
+      }
 
       return stopChar ? null : result;
     }
@@ -122,8 +132,8 @@
     {
       startWatch();
 
-      ;;;if (ns.debug) basis.dev.log(namespace + ' started');
       started = true;
+      /** @cut */ if (ns.debug) basis.dev.log(namespace + ' started');
 
       checkUrl();      
     }
@@ -137,8 +147,8 @@
     {
       stopWatch();
 
-      ;;;if (ns.debug) basis.dev.log(namespace + ' stopped');
       started = false;
+      /** @cut */ if (ns.debug) basis.dev.log(namespace + ' stopped');
     }
   }
 
@@ -146,13 +156,14 @@
   * Process current location
   */
   function checkUrl(){
-    var newPath = location.hash.substr(1) || '/';
+    var newPath = location.hash.substr(1) || '';
 
     if (newPath != currentPath)
     {
       var inserted = [];
       var deleted = [];
-      ;;;var log = [];
+      /** @cut */ var log = [];
+
       currentPath = newPath;
 
       for (var path in routes)
@@ -183,8 +194,8 @@
         for (var j = 0, item; item = callbacks[j]; j++)
           if (item.callback.leave)
           {
-            ;;;log.push('\n', { type: 'leave', path: route.source, cb: item, route: route });
             item.callback.leave.call(item.context);
+            /** @cut */ log.push('\n', { type: 'leave', path: route.source, cb: item, route: route });
           }
       }       
 
@@ -195,8 +206,8 @@
         for (var j = 0, item; item = callbacks[j]; j++)
           if (item.callback.enter)
           {
-            ;;;log.push('\n', { type: 'enter', path: route.source, cb: item, route: route });
             item.callback.enter.call(item.context);
+            /** @cut */ log.push('\n', { type: 'enter', path: route.source, cb: item, route: route });
           }
       }
 
@@ -210,12 +221,12 @@
         for (var i = 0, item; item = callbacks[i]; i++)
           if (item.callback.match)
           {
-            ;;;log.push('\n', { type: 'match', path: route.source, cb: item, route: route, args: args });
             item.callback.match.apply(item.context, args);
+            /** @cut */ log.push('\n', { type: 'match', path: route.source, cb: item, route: route, args: args });
           }
       }
 
-      ;;;if (ns.debug) basis.dev.info.apply(basis.dev, [namespace + ': hash changed to ' + newPath].concat(log.length ? log : 'no matches'));
+      /** @cut */ if (ns.debug) basis.dev.info.apply(basis.dev, [namespace + ': hash changed to "' + newPath + '"'].concat(log.length ? log : '<no matches>'));
     }
 
   }
@@ -245,10 +256,10 @@
     
     config = {
       cb_: callback,
-      callback: typeof callback != 'function' ? callback : {
+      context: context,
+      callback: typeof callback != 'function' ? callback || {} : {
         match: callback
-      },
-      context: context
+      }
     };
 
     route.callbacks.push(config);
