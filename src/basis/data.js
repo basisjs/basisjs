@@ -1967,9 +1967,11 @@
       var delta = this.set(items) || {};
       var deleted = delta.deleted;
 
+      setAccumulateState(true);
       if (deleted)
         for (var i = 0, object; object = deleted[i]; i++)
           object.destroy();
+      setAccumulateState(false);
 
       return delta.inserted;
     },
