@@ -91,6 +91,6 @@
   //
 
   module.exports = {
-    encode: encode,
-    decode: decode
+    encode: typeof btoa == 'function' ? btoa.bind(global) : encode,
+    decode: typeof atob == 'function' ? atob.bind(global) : decode
   };
