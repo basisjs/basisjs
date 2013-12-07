@@ -1,7 +1,5 @@
 
   basis.require('basis.event');
-  basis.require('basis.ua');
-  basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.layout');
 
@@ -20,7 +18,6 @@
   var document = global.document;
   var cleaner = basis.cleaner;
 
-  var DOM = basis.dom;
   var Event = basis.dom.event;
   var addGlobalHandler = Event.addGlobalHandler;
   var removeGlobalHandler = Event.removeGlobalHandler;
@@ -29,7 +26,6 @@
   var createEvent = basis.event.create;
 
   var nsLayout = basis.layout;
-  var ua = basis.ua;
   
 
   //
@@ -37,11 +33,14 @@
   //
 
   var SELECTSTART_SUPPORTED = Event.getEventInfo('selectstart').supported;
-  var defaultBaseElement = ua.is('IE7-') ? document.body : document.documentElement;
 
   var dragging;
   var dragElement;
   var dragData;
+
+  function resolveElement(value){
+    return typeof value == 'string' ? document.getElementById(value) : value;
+  }
   
   function startDrag(event){
     if (dragElement)
@@ -157,8 +156,8 @@
     },
 
     setElement: function(element, trigger){
-      this.element = DOM.get(element);
-      trigger = DOM.get(trigger) || this.element;
+      this.element = resolveElement(element);
+      trigger = resolveElement(trigger) || this.element;
 
       if (this.trigger !== trigger)
       {
@@ -172,7 +171,10 @@
       }
     },
     setBase: function(baseElement){
-      this.baseElement = DOM.get(baseElement) || defaultBaseElement;
+      this.baseElement = resolveElement(baseElement);
+    },
+    getBase: function(){
+      return this.baseElement || (document.compatMode == 'CSS1Compat' ? document.documentElement : document.body);
     },
 
     isDragging: function(){
@@ -211,7 +213,7 @@
       {
         dragData.element = element;
         dragData.box = new nsLayout.Box(element);
-        dragData.viewport = new nsLayout.Viewport(this.baseElement);
+        dragData.viewport = new nsLayout.Viewport(this.getBase());
       }
 
       DragDropElement.prototype.emit_start.call(this, dragData, event);

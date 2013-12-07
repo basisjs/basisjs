@@ -1,4 +1,5 @@
 
+  basis.require('basis.ua');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.cssom');

@@ -23,7 +23,6 @@
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var browser = basis.ua;
   var extend = basis.object.extend;
   var cssom = basis.cssom;
   var classList = basis.cssom.classList;
@@ -37,9 +36,7 @@
 
   // tests
 
-  var IS_IE = browser.test('IE');
-  var IS_IE7_UP = browser.test('IE7+');
-  var IS_IE8_DOWN = browser.test('IE8-');
+  var IS_IE8_DOWN = basis.ua.test('IE8-');
 
   var SUPPORT_DISPLAYBOX = false;
 
@@ -50,7 +47,7 @@
     try
     {
       // Opera tries to use -webkit-box but doesn't set "-webkit-box-orient" dynamically for cssRule
-      if (prefixes[i] == '-webkit-' && basis.ua.is('opera'))
+      if (prefixes[i] == '-webkit-' && 'WebkitBoxOrient' in testElement.style == false)
         continue;
 
       var value = prefixes[i] + 'box';
@@ -194,24 +191,23 @@
           this.left = box.left;
 
           // offset fix
-          if (IS_IE)
+          if (document.compatMode == 'CSS1Compat')
           {
-            if (IS_IE7_UP)
+            if (IS_IE8_DOWN)
             {
-              if (IS_IE8_DOWN)
-              {
-                // IE7-8
-                this.top  += documentElement.scrollTop  - documentElement.clientTop;
-                this.left += documentElement.scrollLeft - documentElement.clientLeft;
-              }
+              // IE7-8
+              this.top  += documentElement.scrollTop  - documentElement.clientTop;
+              this.left += documentElement.scrollLeft - documentElement.clientLeft;
             }
-            else
-              // IE6 and lower
-              if (element != document.body)
-              {
-                this.top  -= document.body.clientTop  - document.body.scrollTop;
-                this.left -= document.body.clientLeft - document.body.scrollLeft;
-              }
+          }
+          else
+          {
+            // IE6 and lower
+            if (element != document.body)
+            {
+              this.top  += document.body.scrollTop  - document.body.clientTop;
+              this.left += document.body.scrollLeft - document.body.clientLeft;
+            }
           }
 
           // coords relative of offsetElement
@@ -226,7 +222,7 @@
             }
             else
             {
-              this.top += offsetElement.scrollTop + documentElement.scrollTop;
+              this.top  += offsetElement.scrollTop  + documentElement.scrollTop;
               this.left += offsetElement.scrollLeft + documentElement.scrollLeft;
             }
           }
