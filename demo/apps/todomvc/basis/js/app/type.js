@@ -1,3 +1,3 @@
 module.exports = {
-  Todo: resource('type/todo.js').fetch()
+  Todo: require('type/todo.js')
 };

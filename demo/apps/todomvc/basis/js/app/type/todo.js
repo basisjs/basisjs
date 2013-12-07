@@ -1,12 +1,11 @@
-basis.require('basis.entity');
-basis.require('basis.data.value');
-basis.require('basis.data.index');
-basis.require('basis.data.dataset');
-basis.require('basis.dom.event');
+require('basis.entity');
+require('basis.data.index');
+require('basis.data.dataset');
+require('basis.dom.event');
 
 
 //
-// define type
+// Define todo type
 //
 
 var Todo = basis.entity.createType('Todo', {
@@ -22,7 +21,7 @@ var Todo = basis.entity.createType('Todo', {
 
 
 //
-// datasets
+// Datasets
 //
 
 var splitByCompleted = new basis.data.dataset.Split({
@@ -30,13 +29,22 @@ var splitByCompleted = new basis.data.dataset.Split({
   rule: 'data.completed'
 });
 
-Todo.selected = new basis.data.value.Property(Todo.all);
-Todo.active = splitByCompleted.getSubset(false, true);
-Todo.completed = splitByCompleted.getSubset(true, true);
+var IS_COMPLETED = true;
+var IS_NOT_COMPLETED = false;
+
+Todo.completed = splitByCompleted.getSubset(IS_COMPLETED, true);
+Todo.active = splitByCompleted.getSubset(IS_NOT_COMPLETED, true);
 
 
 //
-// persistance
+// Dataset used for list
+//
+
+Todo.selected = new basis.data.Value({ value: Todo.all });
+
+
+//
+// Persistence
 //
 
 if (typeof localStorage != 'undefined')
@@ -49,7 +57,7 @@ if (typeof localStorage != 'undefined')
   // add handler to save todos on page unload
   basis.dom.event.onUnload(function(){
     localStorage.setItem('todos-basisjs', JSON.stringify(Todo.all.getItems().map(function(item){
-      return basis.object.slice(item.data);
+      return item.data;
     })));
   });
 }

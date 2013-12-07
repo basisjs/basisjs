@@ -1,11 +1,13 @@
-basis.require('basis.ui');
-basis.require('basis.data.index');
-basis.require('app.type');
+require('basis.ui');
+require('basis.data.index');
 
+//
 // import names
+//
 
-var Todo = app.type.Todo;
+var Todo = require('app.type').Todo;
 var count = basis.data.index.count;
+
 
 //
 // filters
@@ -38,6 +40,7 @@ var filters = new basis.ui.Node({
     }
   ]
 });
+
 
 //
 // panel
