@@ -52,7 +52,7 @@
   } 
   
   function decode(input, useUTF8){
-    input = input.replace(/[^a-z0-9\+\/]/ig, '');
+    input = input.replace(/[^a-zA-Z0-9\+\/]/g, '');
 
     var output = [];
     var chr1, chr2, chr3;
@@ -91,6 +91,6 @@
   //
 
   module.exports = {
-    encode: typeof btoa == 'function' ? btoa.bind(global) : encode,
-    decode: typeof atob == 'function' ? atob.bind(global) : decode
+    encode: encode,
+    decode: decode
   };
