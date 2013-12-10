@@ -67,6 +67,7 @@
 
     basis.require('basis.dom');
     basis.require('basis.date');
+    basis.require('basis.ui.button');
     basis.require('basis.ui.table');
     basis.require('basis.ui.scrolltable');
     basis.require('basis.ui.resizer');
@@ -144,7 +145,29 @@
     });
 
     basis.ready(function(){
-      var container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));
+      new basis.ui.button.ButtonPanel({
+        container: createBlock('tests'),
+        childNodes: [
+          {
+            caption: 'test remove/add to document',
+            click: function(){
+              basis.dom.remove(table.element);
+              table.firstChild.update({ price: table.firstChild.data.price + 'xx' });
+              basis.dom.insert(container, table.element);
+            }
+          },
+          {
+            caption: 'test display none/block',
+            click: function(){
+              table.element.display = 'none';
+              table.firstChild.update({ price: table.firstChild.data.price + 'xx' });
+              table.element.display = '';
+            }
+          }
+        ]
+      });
+
+      var container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));      
 
       var table = new ScrollTable({
         container: container,

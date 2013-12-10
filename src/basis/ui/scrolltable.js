@@ -1,7 +1,5 @@
 
-  basis.require('basis.ua');
   basis.require('basis.dom');
-  basis.require('basis.dom.event');
   basis.require('basis.cssom');
   basis.require('basis.layout');
   basis.require('basis.ui.table');
@@ -24,7 +22,6 @@
   var cssom = basis.cssom;
   var layout = basis.layout;
 
-  var sender = basis.dom.event.sender;
   var createArray = basis.array.create;
   var createElement = basis.dom.createElement;
 
@@ -44,10 +41,12 @@
   // main part
   //
 
-  var IE8 = basis.ua.is('IE8');
+  function resetStyleAttr(extraStyle){
+    return 'style="padding:0!important;margin:0!important;border:0!important;width:auto!important;height:0!important;font-size:0!important;' + (extraStyle || '') + '"';
+  }  
 
   function resetStyle(extraStyle){
-    return '[style="padding:0!important;margin:0!important;border:0!important;width:auto!important;height:0!important;font-size:0!important;' + (extraStyle || '') + '"]';
+    return '[' + resetStyleAttr(extraStyle) + ']';
   }
 
   function cellSectionBuilder(property){
@@ -69,19 +68,17 @@
   }
 
   // Cells proto
-  // TODO: remove reference to basis.dom.event, because future build improvement may hide basis from global scope
-  var measureCell = createElement('td' + resetStyle(),
-    createElement(resetStyle('position:relative!important'),
-      createElement('iframe[event-load="measureInit"]' +
-        resetStyle(
-          'width:100%!important;position:absolute!important;visibility:hidden!important;' +
-          // hack for IE via behavior - load event emulation
-          // FIXME: find to better way, but anyway don't access to basis via global scope (it may be removed on build)
-          'behavior:expression(basis.dom.event.fireEvent(window,\\"load\\",{type:\\"load\\",target:this}),(runtimeStyle.behavior=\\"none\\"))'
-        )
-      )
-    )
-  );
+  var measureCell = basis.template.buildHtml(
+    basis.template.makeDeclaration(
+      '<td ' + resetStyleAttr() + '>' +
+        '<div ' + resetStyleAttr('position:relative!important') + '>' +
+          '<iframe event-load="measureInit" ' +
+            resetStyleAttr('width:100%!important;position:absolute!important;visibility:hidden!important;') +
+          '/>' +
+        '</div>' +
+      '</td>'
+    ).tokens
+  ).firstChild;
 
   var expanderCell = createElement('td' + resetStyle(),
     createElement(resetStyle())
@@ -134,7 +131,7 @@
         }
       },
       measureInit: function(event){
-        (sender(event).contentWindow.onresize = this.requestRelayout)();
+        (event.sender.contentWindow.onresize = this.requestRelayout)();
       }
     },
 
@@ -173,10 +170,6 @@
           footer: expanderCell.cloneNode(true)
         };
       });
-
-      // FIXME: hack for ie, trigger relayout on create
-      if (IE8)
-        setTimeout(this.requestRelayout, 1);
     },
 
     templateSync: function(){
