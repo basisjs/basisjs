@@ -72,7 +72,7 @@
 
       var listener = tmplEventListeners[eventName];
       if (listener)
-        listener(event);
+        listener(new domEvent.Event(event));
     };
 
   // test for browser (IE) normalize text nodes during cloning
