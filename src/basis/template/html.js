@@ -90,6 +90,12 @@
     return !element.className;
   })();
 
+  var SET_STYLE_ATTRIBUTE_BUG = (function(){
+    var element = document.createElement('div');
+    element.setAttribute('style', 'position:absolute');
+    return element.style.position != 'absolute';
+  })();
+
   // test set style properties doesn't throw an error
   var IS_SET_STYLE_SAFE = !!(function(){
     try {
@@ -249,6 +255,9 @@
     function setAttribute(name, value){
       if (SET_CLASS_ATTRIBUTE_BUG && name == 'class')
         name = 'className';
+
+      if (SET_STYLE_ATTRIBUTE_BUG && name == 'style')
+        return result.style.cssText = value;
 
       result.setAttribute(name, value);
     }

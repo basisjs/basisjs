@@ -51,7 +51,7 @@
     HeaderCell: resource('templates/table/HeaderCell.tmpl'),
     
     FooterCell: resource('templates/table/FooterCell.tmpl'),
-    Footer: resource('templates/table/Footer.tmpl'),
+    Footer: resource('templates/table/Footer.tmpl')
   });
 
 

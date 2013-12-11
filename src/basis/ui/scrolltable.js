@@ -131,7 +131,10 @@
         }
       },
       measureInit: function(event){
-        (event.sender.contentWindow.onresize = this.requestRelayout)();
+        var win = event.sender.contentWindow;
+        win.onresize = this.requestRelayout;
+        win.document.body.onresize = this.requestRelayout;
+        this.requestRelayout();
       }
     },
 

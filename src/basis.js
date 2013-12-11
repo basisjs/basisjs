@@ -1048,7 +1048,19 @@
           // TODO: remove this warning in later versions
           /** @cut */ if ('extClass' in config) consoleMethods.warn('extClass option in basis-config is not required, basis.js doesn\'t extend buildin classes by custom methods any more');
 
-          basisFilename = pathUtils.normalize(scriptEl.src)
+          var src = scriptEl.src;
+
+          // IE7 and lower doesn't absolutize src value
+          if (!/^[a-z]+:\/\//.test(src))
+          {
+            // absolutize src using anchor, IE absolutize href on <a> cloning
+            var anchor = document.createElement('a');
+            anchor.href = src;
+            src = anchor.cloneNode(false).href;  // NOTE: false is important here, 
+                                                 // wrong href transformation otherwise
+          }
+
+          basisFilename = pathUtils.normalize(src);
           basisBaseURI = pathUtils.dirname(basisFilename);
 
           break;
