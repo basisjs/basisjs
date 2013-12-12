@@ -20,6 +20,9 @@
   // import names
   //
 
+  
+  var document = global.document;
+  var documentElement = document && document.documentElement;
   var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
@@ -101,6 +104,19 @@
 
   function normalizeDir(value, valueOnFailure){
     return DIR_MAP[typeof value == 'string' && value.toUpperCase()] || valueOnFailure;
+  }
+
+  function getStylePosition(node){
+    return typeof getComputedStyle != 'undefined' ? getComputedStyle(node).position : '';
+  }
+
+  function getOffsetParent(node){
+    var offsetParent = node.offsetParent || documentElement;
+
+    while (offsetParent && offsetParent.tagName != 'html' && getStylePosition(offsetParent) == 'static')
+      offsetParent = offsetParent.offsetParent;
+
+    return offsetParent || documentElement;
   }
 
 
@@ -236,8 +252,9 @@
     isFitToViewport: function(dir){
       if (this.visible && this.relElement)
       {
-        var box = new layout.Box(this.relElement, false, this.element.offsetParent);
-        var viewport = new layout.Viewport(this.element.offsetParent);
+        var offsetParent = getOffsetParent(this.element);
+        var box = new layout.Box(this.relElement, false, offsetParent);
+        var viewport = new layout.Viewport(offsetParent);
         var width = this.element.offsetWidth;
         var height = this.element.offsetHeight;
 
@@ -281,6 +298,7 @@
         var dirH = dir[2];
         var dirV = dir[3];
         var maxRotate = typeof this.autorotate == 'number' || !this.autorotate.length ? 3 : this.autorotate.length;
+        var offsetParent = getOffsetParent(this.element);
 
         while (this.autorotate && rotateOffset <= maxRotate)
         {
@@ -310,7 +328,7 @@
 
         if (!point)
         {
-          var box = new layout.Box(this.relElement, false, this.element.offsetParent);
+          var box = new layout.Box(this.relElement, false, offsetParent);
 
           point = {
             x: dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()],
@@ -318,7 +336,7 @@
           };
         }
 
-        var offsetParentBox = new layout.Box(this.element.offsetParent);
+        var offsetParentBox = new layout.Box(offsetParent);
         var style = {
           left: 'auto',
           right: 'auto',
@@ -549,8 +567,8 @@
     }
   });
 
-  basis.ready(function(){
-    DOM.insert(document.body, popupManager.element, DOM.INSERT_BEGIN);
+  basis.doc.body.ready(function(body){
+    DOM.insert(body, popupManager.element, DOM.INSERT_BEGIN);
     popupManager.realignAll();
   });
 
