@@ -384,8 +384,8 @@
     }      
   });
 
-  basis.ready(function(){
-    DOM.insert(document.body, windowManager.element, DOM.INSERT_BEGIN);
+  basis.doc.body.ready(function(body){
+    DOM.insert(body, windowManager.element, DOM.INSERT_BEGIN);
     for (var node = windowManager.firstChild; node; node = node.nextSibling)
       node.realign();
   });

@@ -917,7 +917,13 @@
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
       template: templates.ComboboxDropdownList,
-      autorotate: 1
+      autorotate: 1,
+      templateSync: function(){
+        Popup.prototype.templateSync.call(this);
+
+        if (this.owner && this.owner.childNodesElement)
+          DOM.insert(this.tmpl.content || this.element, this.owner.childNodesElement);
+      }
     }),
     property: null,
 
@@ -1069,7 +1075,7 @@
       UINode.prototype.templateSync.call(this);
 
       if (this.childNodesElement && this.popup)
-        DOM.insert(this.popup.tmpl.content, this.childNodesElement);
+        DOM.insert(this.popup.tmpl.content || this.popup.element, this.childNodesElement);
 
       this.popup.ignoreClickFor = [this.tmpl.field];
     },

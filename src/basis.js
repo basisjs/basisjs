@@ -2904,7 +2904,7 @@
       if (callbacks[name])
         callbacks[name].push([fn, context]);
       else
-        fn.call(context);
+        fn.call(context, reference[name]);
     }
 
     function remove(node){

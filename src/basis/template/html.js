@@ -90,20 +90,21 @@
     return !element.className;
   })();
 
+  // test for style attribute set via setAttribute bug (IE7 and lower)
   var SET_STYLE_ATTRIBUTE_BUG = (function(){
     var element = document.createElement('div');
     element.setAttribute('style', 'position:absolute');
     return element.style.position != 'absolute';
   })();
 
-  // test set style properties doesn't throw an error
+  // test set style properties doesn't throw an error (IE8 and lower)
   var IS_SET_STYLE_SAFE = !!(function(){
     try {
       return document.documentElement.style.color = 'x';
     } catch(e) {}
   })();
 
-  // old firefox has no Node#contains method
+  // old Firefox has no Node#contains method (Firefox 8 and lower)
   if (typeof Node != 'undefined' && !Node.prototype.contains)
     Node.prototype.contains = function(child){
       return !!(this.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
