@@ -172,7 +172,7 @@ basis.app.create({
     //
     // Global events
     //
-    basis.dom.event.addGlobalHandler('click', function(e){
+    basis.dom.event.addGlobalHandler('click', function(event){
       if (!event.mouseLeft)
         return;
       
