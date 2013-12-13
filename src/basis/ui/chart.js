@@ -108,6 +108,27 @@
       Math.floor((rgb[2] + m) * 256) 
     ];
   }
+  function ColorLuminance(hex, lum) {
+    // validate hex string
+    hex = String(hex).replace(/[^0-9a-f]/gi, '');
+
+    if (hex.length < 6)
+      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    
+    if (!lum)
+      lum = 0;
+
+    // convert to decimal and change luminosity
+    var rgb = "#";
+    for (var i = 0, c; i < 3; i++) {
+      var c = parseInt(hex.substr(i * 2, 2), 16);
+      c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
+      rgb += ('0' + c).substr(c.length - 1);
+    }
+
+    return rgb;
+  }
+  window.ColorLuminance = ColorLuminance;
 
 
  /**
@@ -242,18 +263,6 @@
       var value;
       var valuesDelta = [];
 
-      if (delta.inserted)
-        for (var i = 0, child; child = delta.inserted[i]; i++)
-        {
-          key = this.keyGetter(child);
-          value = this.valueGetter(child);
-
-          valuesDelta[key] = value;
-          this.valuesMap[key] = value;
-
-          child.addHandler(SERIA_ITEM_HANDLER, this);
-        }
-
       if (delta.deleted)
       {
         for (var i = 0, child; child = delta.deleted[i]; i++)
@@ -265,6 +274,18 @@
           child.removeHandler(SERIA_ITEM_HANDLER, this);
         }
       }
+
+      if (delta.inserted)
+        for (var i = 0, child; child = delta.inserted[i]; i++)
+        {
+          key = this.keyGetter(child);
+          value = this.valueGetter(child);
+
+          valuesDelta[key] = value;
+          this.valuesMap[key] = value;
+
+          child.addHandler(SERIA_ITEM_HANDLER, this);
+        }
 
       this.emit_valuesChanged(valuesDelta);
     } 
@@ -318,7 +339,7 @@
     init: function(){
       this.valuesMap = {};
 
-      Node.prototype.init.call(this);
+      AbstractNode.prototype.init.call(this);
 
       this.source = this.sourceGetter(this);
 
@@ -594,13 +615,13 @@
 
       var maxValue = this.getMaxGridValue();
       var minValue = this.getMinGridValue();
-      var gridPart = this.getGridPart(Math.max(Math.abs(minValue), Math.abs(maxValue))); 
+      var gridPart = this.getGridPart(Math.abs(maxValue - minValue)); 
 
       //correct min/max
-      if (Math.abs(minValue) > Math.abs(maxValue))
+      /*if (Math.abs(minValue) > Math.abs(maxValue))
         maxValue = Math.ceil(maxValue / gridPart) * gridPart;
       else 
-        minValue = Math.floor(minValue / gridPart) * gridPart;
+        minValue = Math.floor(minValue / gridPart) * gridPart;*/
 
       var partCount = (maxValue - minValue) / gridPart;
 
@@ -1226,7 +1247,7 @@
       }
 
       this.clientRect = this.owner.clientRect;
-      this.max = this.owner.maxValue;
+      //this.max = this.owner.maxValue;
     },
 
     updatePosition: function(mx, my){
@@ -1255,7 +1276,8 @@
       var TOP = this.clientRect.top;
       var WIDTH = this.clientRect.width;
       var HEIGHT = this.clientRect.height;
-      var MAX = this.max;
+      var MIN = this.owner ? this.owner.getMinGridValue() : this.min;
+      var MAX = this.owner ? this.owner.getMaxGridValue() : this.max;
 
       var series = this.owner.series.childNodes;
       var keyCount = this.owner.childNodes.length;
@@ -1286,7 +1308,7 @@
       context.lineTo(xPosition + 3 + .5, HEIGHT + 4 + .5);
       context.lineTo(xPosition + .5, HEIGHT + 1);
       context.fillStyle = '#c29e22';
-      context.strokeStyle = '#070';
+      context.strokeStyle = ColorLuminance('#c29e22', -.25);
       context.fill();
       context.stroke();
       context.closePath();
@@ -1314,7 +1336,7 @@
         if (labelWidth < valueTextWidth)
           labelWidth = valueTextWidth; 
 
-        var valueY = Math.round((1 - value / MAX) * HEIGHT);
+        var valueY = Math.round(HEIGHT * (1 - (value - MIN) / (MAX - MIN)));
         var labelY = Math.max(labelHeight / 2, Math.min(valueY, HEIGHT - labelHeight / 2));
 
         labels.push({
@@ -1382,7 +1404,7 @@
         context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + .5, label.labelY + 5 + .5);
         context.lineTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
         context.fillStyle = label.color;
-        context.strokeStyle = '#444';
+        context.strokeStyle = ColorLuminance(label.color, -.25);
         context.lineWidth = 1;
         context.stroke();
         context.fill();
