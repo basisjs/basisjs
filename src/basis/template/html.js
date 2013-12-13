@@ -68,7 +68,11 @@
   var CAPTURE_FALLBACK = !document.addEventListener && '__basisTemplate' + parseInt(1e9 * Math.random());
   if (CAPTURE_FALLBACK)
     global[CAPTURE_FALLBACK] = function(eventName, event){
+       // trigger global handlers proceesing
       domEvent.fireEvent(document, eventName);
+
+      // prevent twice global handlers processing
+      event.returnValue = true;
 
       var listener = tmplEventListeners[eventName];
       if (listener)
@@ -494,7 +498,7 @@
             classList = className.split(WHITESPACE);
 
             if (oldClass)
-              classList.remove(oldClass);
+              basis.array.remove(classList, oldClass);
 
             if (newClass)
             {
@@ -502,11 +506,11 @@
 
               if (anim)
               {
-                classList.add(newClass + '-anim');
+                basis.array.add(classList, newClass + '-anim');
                 basis.nextTick(function(){
                   var classList = (classNameIsObject ? domRef.className.baseVal : domRef.className).split(WHITESPACE);
                   
-                  classList.remove(newClass + '-anim');
+                  basis.array.remove(classList, newClass + '-anim');
 
                   if (classNameIsObject)
                     domRef.className.baseVal = classList.join(' ');
