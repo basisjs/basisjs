@@ -434,7 +434,7 @@
   };
 
   var CHART_NODE_UPDATE_HANDLER = function(object){
-    for (var i = 0, seria; seria = this.series.childNides[i]; i++)
+    for (var i = 0, seria; seria = this.series.childNodes[i]; i++)
       object.values[seria.basisObjectId] = seria.getValue(object, this.keyGetter(object));
 
     this.redrawRequest();
@@ -476,16 +476,14 @@
     
     emit_childNodesModified: function(delta){
       Chart.prototype.emit_childNodesModified.call(this, delta);
-
-      if (!this.series || !this.series.childNodes)
-        return;
     
       if (delta.inserted)
         for (var i = 0, child; child = delta.inserted[i]; i++)
         {
-          for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
-            if (seria.getValue)
-              child.values[seria.basisObjectId] = seria.getValue(child, this.keyGetter(child));
+          if (this.series && this.series.childNodes)
+            for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
+              if (seria.getValue)
+                child.values[seria.basisObjectId] = seria.getValue(child, this.keyGetter(child));
 
           child.addHandler(child.valueChangeEvents, this);
         }
@@ -493,8 +491,9 @@
       if (delta.deleted)
         for (var i = 0, child; child = delta.deleted[i]; i++)
         {
-          for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
-            child.values[seria.basisObjectId] = null;
+          if (this.series && this.series.childNodes)
+            for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
+              child.values[seria.basisObjectId] = null;
 
           child.removeHandler(child.valueChangeEvents, this);
         }
