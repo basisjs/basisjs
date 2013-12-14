@@ -68,30 +68,26 @@
     else
     {
       var m = String(number).match(/0\.(0+)?[^0]/);
-      return -(m ? m[1].length : 0) - 1;
+      return (m ? -m[1].length : 0) - 1;
     }
+  }
+
+  function hex2(num){
+    var res = num.toString(16);
+    return res.length == 1 ? '0' + res : res;
   }
 
 
   //generate random color func
 
-  function generateColor(){
-    var golden_ratio_conjugate = 0.618033988749895;
-
-    var h = Math.random();
-    h += golden_ratio_conjugate;
-    h %= 1;
-
-    var rgb = hsv_to_rgb(h, 0.6, 0.95);
- 
-    return '#' + rgb[0].toString(16) + rgb[1].toString(16) + rgb[2].toString(16);
-  }
   function hsv_to_rgb(h, s, v)
   {
     var h1 = h * 6;
     var c = v * s;
     var x = c * (1 - Math.abs(h1 % 2 - 1));
+    var m = v - c; 
     var rgb;
+
     switch(Math.floor(h1))
     { 
       case 0: rgb = [c, x, 0]; break;
@@ -101,34 +97,37 @@
       case 4: rgb = [x, 0, c]; break;
       case 5: rgb = [c, 0, x]; break;
     }
-    var m = v - c; 
+    
     return [
       Math.floor((rgb[0] + m) * 256), 
       Math.floor((rgb[1] + m) * 256), 
       Math.floor((rgb[2] + m) * 256) 
     ];
   }
-  function ColorLuminance(hex, lum) {
+
+  function generateColor(){
+    var golden_ratio_conjugate = 0.618033988749895;
+    var h = (Math.random() + golden_ratio_conjugate) % 1;
+ 
+    return '#' + hsv_to_rgb(h, 0.6, 0.95).map(hex2).join('');
+  }
+
+  function colorLuminance(hex, lum) {
     // validate hex string
     hex = String(hex).replace(/[^0-9a-f]/gi, '');
 
-    if (hex.length < 6)
-      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    if (hex.length == 3)
+      hex = hex.replace(/./g, '$&$&');
     
     if (!lum)
       lum = 0;
 
     // convert to decimal and change luminosity
-    var rgb = "#";
-    for (var i = 0, c; i < 3; i++) {
-      var c = parseInt(hex.substr(i * 2, 2), 16);
-      c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
-      rgb += ('0' + c).substr(c.length - 1);
-    }
-
-    return rgb;
+    return '#' + hex.replace(/../g, function(m){
+      var val = parseInt(m, 16) * (1 + lum);
+      return hex2(Math.round(basis.number.fit(val, 0, 255)))
+    });
   }
-  window.ColorLuminance = ColorLuminance;
 
 
  /**
@@ -261,7 +260,7 @@
     itemsChanged: function(object, delta){
       var key;
       var value;
-      var valuesDelta = [];
+      var valuesDelta = {};
 
       if (delta.deleted)
       {
@@ -269,7 +268,7 @@
         {
           key = this.keyGetter(child);
           valuesDelta[key] = null;
-          this.valuesMap[key] = 0;
+          this.valuesMap[key] = undefined;
 
           child.removeHandler(SERIA_ITEM_HANDLER, this);
         }
@@ -514,7 +513,7 @@
         {
           if (this.series && this.series.childNodes)
             for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
-              child.values[seria.basisObjectId] = null;
+              child.values[seria.basisObjectId] = undefined;
 
           child.removeHandler(child.valueChangeEvents, this);
         }
@@ -545,7 +544,7 @@
     getValuesForSeria: function(seria){
       var values = [];
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        values.push(child.values[seria.basisObjectId] || 0);
+        values.push(child.values[seria.basisObjectId]);
       
       return values;
     },
@@ -615,7 +614,7 @@
 
       var maxValue = this.getMaxGridValue();
       var minValue = this.getMinGridValue();
-      var gridPart = this.getGridPart(Math.abs(maxValue - minValue)); 
+      var gridPart = this.getGridPart(minValue, maxValue);
 
       //correct min/max
       /*if (Math.abs(minValue) > Math.abs(maxValue))
@@ -643,7 +642,7 @@
         var valueLabels = this.invertAxis ? xLabels : yLabels;
         
         var tw;
-        for (var i = 0; i < partCount + 1; i++)
+        for (var i = 0; i <= partCount; i++)
         {
           valueLabels[i] = basis.number.group(Math.round(minValue + gridPart * i));
           tw = context.measureText(valueLabels[i]).width;
@@ -872,9 +871,7 @@
       // Series
       var step = this.invertAxis ? yStep : xStep;
       for (var i = 0, seria; seria = series[i]; i++)
-      {
         this.drawSeria(this.getValuesForSeria(seria), seria.getColor(), i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM, skipXLabelCount);
-      }  
 
       //save chart data
       extend(this.clientRect, {
@@ -900,8 +897,11 @@
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         for (var j in child.values)
-          if (child.values[j] < min)
-            min = child.values[j];
+        {
+          var value = child.values[j];
+          if (!isNaN(value) && value < min)
+            min = value;
+        }
       }
       return min;
     },
@@ -910,8 +910,12 @@
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         for (var j in child.values)
-          if (child.values[j] > max)
-            max = child.values[j];
+        {
+          var value = child.values[j];
+          if (!isNaN(value) && value > max)
+            max = value;
+        }
+
       }
       return max;
     },
@@ -923,30 +927,31 @@
       var maxValue = this.max == 'auto' ? this.getMaxValue() : this.max;
       return Math.ceil(Math.ceil(maxValue) / Math.pow(10, getDegree(maxValue))) * Math.pow(10, getDegree(maxValue));
     },
-    getGridPart: function(maxGridValue){
-      var MIN_PART_COUNT = 5;
+    getGridPart: function(minGridValue, maxGridValue){
+      var MIN_PART_COUNT = 2;
       var MAX_PART_COUNT = 20;
 
-      var result;
       var maxDegree = getDegree(maxGridValue);
+      var range = maxGridValue - minGridValue;
+      var result;
 
       if (maxDegree == 0)
         result = maxGridValue;
 
-      if (maxGridValue % Math.pow(10, maxDegree) == 0)
+      if (!minGridValue && maxGridValue % Math.pow(10, maxDegree) == 0)
       {
         var res = maxGridValue / Math.pow(10, maxDegree);
-        if (res >= MIN_PART_COUNT)
+        if (res >= MIN_PART_COUNT && res <= MAX_PART_COUNT)
           result = res;
       }
 
       if (!result)
       {
         var count = 1;
-        var step;
-        var newVal;
-        var curVal = maxGridValue;
         var divisionCount = 0;
+        var curVal = range;
+        var newVal;
+        var step;
 
         while (count < MIN_PART_COUNT && divisionCount <= maxDegree)
         {
@@ -954,7 +959,7 @@
           {
             step = curVal / i;
             newVal = (curVal - step) / Math.pow(10, maxDegree - divisionCount);
-            if ((newVal - Math.floor(newVal) == 0) && (count*i < MAX_PART_COUNT))
+            if ((newVal % 1) == 0 && (count * i < MAX_PART_COUNT))
             {
               curVal = step;
               count *= i;
@@ -965,10 +970,14 @@
           divisionCount++;
         }
 
-        result = count;
+        if (count == 1)
+          result = basis.number.fit(getDegree(range), 4, MAX_PART_COUNT)
+        else
+          result = count;
       }
 
-      return maxGridValue / result;
+
+      return range / Math.max(MIN_PART_COUNT, result);
     },
 
     // abstract methods
@@ -1018,6 +1027,9 @@
 
   var CHART_ELEMENT_HANDLER = {
     mousedown: function(event){
+      if (!event.mouseLeft)
+        return;
+
       var chart = this.owner; 
       var x = getChartXByMouseX(chart, Event.mouseX(event));
       var y = getChartYByMouseY(chart, Event.mouseY(event));
@@ -1027,7 +1039,7 @@
         for (var eventName in CHART_SELECTION_GLOBAL_HANDLER)
           Event.addGlobalHandler(eventName, CHART_SELECTION_GLOBAL_HANDLER[eventName], this);
 
-        addSelectionMode = event.mouseLeft;
+        addSelectionMode = true; //event.mouseLeft;
 
         var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
         startItemPosition = curItemPosition;
@@ -1046,7 +1058,7 @@
       event.die();
     },
     contextmenu: function(event){
-      event.die();
+      //event.die();
     },
     blur: function(){
       //lastItemPosition = -1;
@@ -1096,7 +1108,7 @@
     style: {
       fillStyle: '#dfdaff', 
       strokeStyle: '#9a89ff',
-      alpha: '.7'
+      alpha: '.6'
     },
 
     template: templates.ChartSelection,
@@ -1152,8 +1164,11 @@
 
       this.reset();
 
-      this.context.save();
-      this.context.translate(this.clientRect.left, this.clientRect.top);
+      var context = this.context;
+
+      context.save();
+      context.translate(this.clientRect.left, this.clientRect.top);
+      context.globalAlpha = this.style.alpha;
 
       var selectionBarWidth = this.clientRect.width / (this.owner.childNodes.length - 1);
 
@@ -1182,10 +1197,10 @@
         {
           if (lastPos != -1)
           {
-            left = Math.round(lastPos * selectionBarWidth - (lastPos == i - 1 ? 1 : 0));
-            right = Math.round((i - 1) * selectionBarWidth + (lastPos == i - 1 ? 1 : 0));
-            this.context.fillRect(left + .5, .5, right - left, this.clientRect.height);
-            this.context.strokeRect(left + .5, .5, right - left, this.clientRect.height);
+            left = Math.round(lastPos * selectionBarWidth - (lastPos == i - 1));
+            right = Math.round((i - 1) * selectionBarWidth + (lastPos == i - 1));
+            context.fillRect(left + .5, .5, right - left, this.clientRect.height);
+            context.strokeRect(left + .5, .5, right - left, this.clientRect.height);
             lastPos = -1;
           }
         }
@@ -1308,7 +1323,7 @@
       context.lineTo(xPosition + 3 + .5, HEIGHT + 4 + .5);
       context.lineTo(xPosition + .5, HEIGHT + 1);
       context.fillStyle = '#c29e22';
-      context.strokeStyle = ColorLuminance('#c29e22', -.25);
+      context.strokeStyle = colorLuminance('#c29e22', -.25);
       context.fill();
       context.stroke();
       context.closePath();
@@ -1404,7 +1419,7 @@
         context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + .5, label.labelY + 5 + .5);
         context.lineTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
         context.fillStyle = label.color;
-        context.strokeStyle = ColorLuminance(label.color, -.25);
+        context.strokeStyle = colorLuminance(label.color, -.25);
         context.lineWidth = 1;
         context.stroke();
         context.fill();
@@ -1451,54 +1466,67 @@
     },
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height, pointFrequency){
-
-      var points = [];
-      for (var i = 0; i < values.length; i++)
-      {
-        points.push({
-          x: i * step,
-          y: height * (1 - (values[i] - min) / (max - min))
-        });
-      }
-
       var context = this.context;
 
       if (!this.keyValuesOnEdges)
         left += step / 2;
 
-      this.style.strokeStyle = color;
-
       context.save();
+
       context.translate(left, top);
-      context.beginPath();
-
-      var x, y;
-      for (var i = 0; i < points.length; i++)
-      {
-        var x = points[i].x;
-        var y = points[i].y;
-        
-        if (i == 0)
-          context.moveTo(x, y);
-        else
-          context.lineTo(x, y);
-      }
-
+      context.fillStyle = color;
       extend(context, this.style);
-      context.stroke();
+      context.strokeStyle = color;
 
-      if (this.fillArea /*&& this.series.childNodes.length == 1*/)
+      var points = [];
+      var started = false;
+      var ended = false;
+      for (var i = 0; i <= values.length; i++) // <= for final stroke
       {
-        context.lineWidth = 0;
-        var zeroPosition = min < 0 ? Math.max(0, max) / (max - min) * height : height;
-        context.lineTo(width, zeroPosition);
-        context.lineTo(0, zeroPosition);
-        context.globalAlpha = .15;
-        context.fillStyle = color;
-        context.fill();
-      }
+        if (!isNaN(values[i]))
+        {
+          var x = i * step;
+          var y = height * (1 - (values[i] - min) / (max - min));
+          var point = [x, y];
+          if (!started)
+          {
+            started = point;
+            context.beginPath();
+            context.moveTo(x, y);
+          }
+          else
+            context.lineTo(x, y);
 
-      context.closePath();
+          ended = point;
+          points.push({
+            x: x,
+            y: y
+          });
+        }
+        else
+        {
+          if (started)
+          {
+            context.stroke();
+
+            // fill
+            if (this.fillArea)
+            {
+              context.lineTo(ended[0], height);
+              context.lineTo(started[0], height);
+
+              context.lineWidth = 0;
+              context.globalAlpha = .15;
+              context.fill();
+              context.globalAlpha = 1;
+            }
+
+            context.closePath();
+            started = false;
+            ended = false;
+          }
+        }
+      }
 
       
       if (this.drawPoints)
@@ -1526,10 +1554,9 @@
           {
             context.beginPath();
             context.arc(x, y, 4, 0, 2 * Math.PI, false);
-            context.globalAlpha = 1;
             context.fillStyle = color;
-            context.lineWidth = 2;
-            context.strokeStyle = 'white';
+            context.lineWidth = 1.5;
+            context.strokeStyle = 'rgba(255,255,255,.9)';
             context.fill();
             context.stroke();
             context.closePath();      
@@ -1677,7 +1704,7 @@
       {
         bar = this.getBarRect(values[i], pos, i, min, max, step, width, height, zeroLinePosition);
 
-        bar.value = values[i];
+        bar.value = values[i] || 0;
         this.bars[pos].push(bar);
 
         bar.x = Math.round(bar.x);
@@ -1736,7 +1763,8 @@
       {
         sum = 0;
         for (var j in child.values)
-          sum += child.values[j];
+          if (!isNaN(child.values[j]))
+            sum += child.values[j];
 
         if (sum > max || max == null)
           max = sum;
