@@ -1277,11 +1277,11 @@
     if (!array.length)  // empty array check
       return 0;
 
-    var pos;
-    var id = map.object.basisObjectId;
     var value = map.value;
+    var id = map.object.basisObjectId;
     var cmpValue;
     var cmpId;
+    var pos;
     var item;
     var l = 0;
     var r = array.length - 1;
@@ -1293,31 +1293,27 @@
       item = array[pos];
       cmpValue = item.value;
 
-      if (cmpValue === value)
-      {
-        cmpId = item.object.basisObjectId;
-        if (id < cmpId)
-          r = pos - 1;
-        else 
-          if (id > cmpId)
-            l = pos + 1;
-          else
-            return id == cmpId ? pos : 0;  
-      }
-      else
-      {
-        if (value < cmpValue)
-          r = pos - 1;
-        else 
-          if (value > cmpValue)
-            l = pos + 1;
-          else
-            return value == cmpValue ? pos : 0;  
-      }
+      if (value < cmpValue)
+        r = pos - 1;
+      else 
+        if (value > cmpValue)
+          l = pos + 1;
+        else
+        {
+          // value == cmpValue, compare id's
+          cmpId = item.object.basisObjectId;
+          if (id < cmpId)
+            r = pos - 1;
+          else 
+            if (id > cmpId)
+              l = pos + 1;
+            else
+              return pos;
+        }
     }
     while (l <= r);
 
-    return pos + (cmpValue < value);
+    return pos + (cmpId ? cmpId < id : cmpValue < value);
   }
 
   var SLICE_SOURCEOBJECT_UPDATE = function(sourceObject){
@@ -1327,10 +1323,14 @@
 
     if (newValue !== sourceObjectInfo.value)
     {
-      index.splice(binarySearchPos(index, sourceObjectInfo), 1);
-      sourceObjectInfo.value = newValue;
-      index.splice(binarySearchPos(index, sourceObjectInfo), 0, sourceObjectInfo);
-      this.applyRule();
+      var oldPos = binarySearchPos(index, sourceObjectInfo);
+      if ((index[oldPos - 1] && index[oldPos - 1] > newValue) || (index[oldPos + 1] && index[oldPos + 1] < newValue))
+      {
+        index.splice(oldPos, 1);
+        sourceObjectInfo.value = newValue;
+        index.splice(binarySearchPos(index, sourceObjectInfo), 0, sourceObjectInfo);
+        this.applyRule();
+      }
     }
   };
 

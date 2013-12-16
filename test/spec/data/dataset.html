@@ -167,6 +167,36 @@
                 this.is(0, insertDoubles);
                 this.is(0, deleteDoubles);
               }
+            },
+            {
+              name: 'Slice order',
+              test: function(){
+                var dataset = new basis.data.Dataset({
+                  items: basis.array.create(10, function(v){
+                    return new basis.data.Object({
+                      data: { value: v % 3 }
+                    })
+                  })
+                }); 
+ 
+                var slice = new basis.data.dataset.Slice({
+                  source: dataset,
+                  limit: 3, 
+                  rule: 'data.value'
+                });
+ 
+                dataset.forEach(function(item){
+                  item.update({
+                    value: item.data.value + 10
+                  })
+                });
+ 
+                slice.index_[9].object.update({ value: 10 });
+ 
+                // check slice index order
+                var index = slice.index_.map(function(i){ return i.value });
+                this.is(basis.array.sortAsObject(index, Number), index);
+              }
             }
           ]
         }
