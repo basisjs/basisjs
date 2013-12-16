@@ -1321,7 +1321,7 @@
       context.lineTo(xPosition + Math.round(keyTextWidth / 2) + 5 + .5, HEIGHT + 4 + keyTextHeight + 5 + .5);
       context.lineTo(xPosition + Math.round(keyTextWidth / 2) + 5 + .5, HEIGHT + 4 + .5);
       context.lineTo(xPosition + 3 + .5, HEIGHT + 4 + .5);
-      context.lineTo(xPosition + .5, HEIGHT + 1);
+      context.lineTo(xPosition + .5, HEIGHT + 1 + .5);
       context.fillStyle = '#c29e22';
       context.strokeStyle = colorLuminance('#c29e22', -.25);
       context.fill();
@@ -1507,6 +1507,14 @@
         {
           if (started)
           {
+            if (started == ended)
+            {
+              started = [started[0] - context.lineWidth / 2 - .5, started[1]];
+              ended = [started[0] + context.lineWidth / 2 + .5, started[1]];
+              context.moveTo(started[0], started[1]);
+              context.lineTo(ended[0], ended[1]);
+            }
+
             context.stroke();
 
             // fill
