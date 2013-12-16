@@ -2,7 +2,6 @@
   (function(){
     basis.require('basis.dom');
     basis.require('basis.cssom');
-    basis.require('basis.ua');
     basis.require('basis.event');
     basis.require('basis.data.value');
 

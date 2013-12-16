@@ -58,21 +58,6 @@
   }
 
   //
-  // DATA URI SHEME test
-  //
-
-  basis.platformFeature.datauri = false;
-
-  if (typeof Image != 'undefined') // NOTE test for Image is neccesary for node.js
-    (function(){
-      var testImage = new Image();
-      testImage.onload = function() {
-        basis.platformFeature.datauri = true;
-      };
-      testImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
-    })();
-
-  //
   // Version tests
   //
 
@@ -80,7 +65,7 @@
     var base = 1000000;
     var part = String(version).split(".");
 
-    for (var i = 0, result = 0; i < 4 && i < part.length; i++, base/=100)
+    for (var i = 0, result = 0; i < 4 && i < part.length; i++, base /= 100)
       result += part[i] * base;
 
     return result;
@@ -105,8 +90,7 @@
       var cmpVersion = versions[name];  // with
 
       if (cmpVersion)
-        return answers[forTest] = 
-             !version
+        return answers[forTest] = !version
           || (operation == '=' && cmpVersion == version)
           || (operation == '+' && cmpVersion >= version)
           || (operation == '-' && cmpVersion <  version);
@@ -140,16 +124,6 @@
     }
   };
 
-  //
-  // user agent depended actions
-  //
-
-  // enable background image cache for IE6
-  if (testBrowser('IE7-')) 
-    try {
-      document.execCommand("BackgroundImageCache", false, true);
-    } catch(e) {}
-
 
   //
   // export names
@@ -158,10 +132,10 @@
   module.exports = {
     prettyName: browserPrettyName,
     
+    is: testBrowser,   // single test
     test: function(){  // multiple test
       return basis.array(arguments).some(testBrowser);
     },
-    is: testBrowser, // single test
 
     // cookie interface
     cookies: cookies
