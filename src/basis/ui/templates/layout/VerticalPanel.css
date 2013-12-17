@@ -3,3 +3,8 @@
   {
     position: relative;
   }
+  .Basis-VerticalPanel_isFlex
+  {
+    overflow: auto;
+    -webkit-box-flex: 1;
+  }

@@ -1,7 +1,7 @@
 
   basis.require('basis.ua');
   basis.require('basis.dom');
-  basis.require('basis.cssom');
+  basis.require('basis.dom.computedStyle');
   basis.require('basis.template');
   basis.require('basis.ui');
 
@@ -18,15 +18,10 @@
   //
 
   var document = global.document;
-  var defaultView = document.defaultView;
-
-  var Class = basis.Class;
-  var DOM = basis.dom;
 
   var extend = basis.object.extend;
-  var cssom = basis.cssom;
-  var classList = basis.cssom.classList;
-
+  var Class = basis.Class;
+  var DOM = basis.dom;
   var UINode = basis.ui.Node;
 
 
@@ -61,39 +56,15 @@
   }
 
   var SUPPORT_ONRESIZE = typeof testElement.onresize != 'undefined';
-  var SUPPORT_COMPUTESTYLE = defaultView && defaultView.getComputedStyle;
 
   //
   // functions
   //
 
-  function getComputedProperty(element, what){
-    if (SUPPORT_COMPUTESTYLE)
-      try {
-        return parseFloat(defaultView.getComputedStyle(element, null)[what]);
-      } catch(e){}
-   return 0;
-  }
-
-  function getHeight(element, ruller){
-    if (SUPPORT_COMPUTESTYLE)
-    {
-      return getComputedProperty(element, 'height');
-    }
-    else
-    {
-      cssom.setStyle(ruller, {
-        borderTop: element.currentStyle.borderTopWidth + ' solid red',
-        borderBottom: element.currentStyle.borderBottomWidth + ' solid red',
-        paddingTop: element.currentStyle.paddingTop,
-        paddingBottom: element.currentStyle.paddingBottom,
-        fontSize: 0.01,
-        height: 0,
-        overflow: 'hidden'
-      });
-
-      return element.offsetHeight - ruller.offsetHeight;
-    }
+  function getHeight(element){
+    return element.clientHeight
+      - parseInt(basis.dom.computedStyle.get(element, 'padding-top'))
+      - parseInt(basis.dom.computedStyle.get(element, 'padding-bottom'));
   }
 
   function addBlockResizeHandler(element, handler){
@@ -466,25 +437,22 @@
     className: namespace + '.VerticalPanel',
 
     template: templates.Panel,
+    binding: {
+      height: 'height',
+      isFlex: function(node){
+        return !!node.flex;
+      },
+      flexboxSupported: function(){
+        return !!SUPPORT_DISPLAYBOX;
+      }
+    },
 
     flex: 0,
+    height: 'auto',
 
-    templateSync: function(){
-      UINode.prototype.templateSync.call(this);
-
-      if (this.flex)
-      {
-        if (SUPPORT_DISPLAYBOX !== false)
-          cssom.setStyleProperty(this.element, SUPPORT_DISPLAYBOX + 'box-flex', this.flex);
-      }
-      else
-      {
-        if (SUPPORT_DISPLAYBOX === false)
-          addBlockResizeHandler(this.element, (function(){
-            if (this.parentNode)
-              this.parentNode.realign();
-          }).bind(this));
-      }
+    setHeight: function(height){
+      this.height = height;
+      this.updateBind('height');
     }
   });
 
@@ -495,95 +463,59 @@
     className: namespace + '.VerticalPanelStack',
 
     template: templates.Stack,
+    binding: {
+      flexboxSupported: function(){
+        return !!SUPPORT_DISPLAYBOX;
+      }
+    },
 
     childClass: VerticalPanel,
 
-    init: function(){
-      this.cssRule = cssom.uniqueRule();
-      this.cssRule.setProperty('overflow', 'auto');
-      this.ruleClassName = this.cssRule.token;
-
-      UINode.prototype.init.call(this);
-    },
     templateSync: function(){
       UINode.prototype.templateSync.call(this);
 
       if (SUPPORT_DISPLAYBOX === false)
       {
-        basis.nextTick(this.realign.bind(this));
-        addBlockResizeHandler(this.childNodesElement, this.realign.bind(this));
+        var realign = this.realign.bind(this);
+        basis.nextTick(realign);
+        addBlockResizeHandler(this.element, realign);
+        addBlockResizeHandler(this.childNodesElement, realign);
       }
     },
-    insertBefore: function(newChild, refChild){
-      newChild = UINode.prototype.insertBefore.call(this, newChild, refChild);
-      if (newChild)
-      {
-        if (newChild.flex)
-          classList(newChild.element).add(this.ruleClassName);
-
-        this.realign();
-
-        return newChild;
-      }
-    },
-    removeChild: function(oldChild){
-      if (UINode.prototype.removeChild.call(this, oldChild))
-      {
-        if (oldChild.flex)
-          classList(oldChild.element).remove(this.ruleClassName);
-
-        this.realign();
-
-        return oldChild;
-      }
+    emit_childNodesModified: function(delta){
+      UINode.prototype.emit_childNodesModified.call(this, delta);
+      this.realign();
     },
     realign: function(){
       if (SUPPORT_DISPLAYBOX !== false || !this.tmpl)
         return;
 
-      var element = this.element;
-      var lastElement = this.lastChild.element;
-      var ruler = this.tmpl.ruller;
-
-      var lastBox = new Box(lastElement, false, element);
-      var bottom = (lastBox.bottom - getComputedProperty(element, 'paddingTop') - getComputedProperty(element, 'borderTopWidth')) || 0;
-      var height = getHeight(element, ruler);
-
-      if (!SUPPORT_COMPUTESTYLE)
-      {
-        var offsetHeight = ruler.offsetHeight;
-        ruler.style.height = lastElement.currentStyle.marginBottom;
-        bottom += ruler.offsetHeight - offsetHeight;
-      }
-      else
-      {
-        bottom += getComputedProperty(lastElement, 'marginBottom');
-      }
-
-      var delta = height - bottom;
+      var contentHeight = this.childNodesElement.offsetHeight;
+      var availHeight = getHeight(this.element);
+      var delta = availHeight - contentHeight;
 
       if (!delta)
         return;
 
-      var flexNodeCount = 0;
+      var flexNodes = [];
       var flexHeight = delta;
+
       for (var i = 0, node; node = this.childNodes[i]; i++)
       {
         if (node.flex)
         {
-          flexNodeCount++;
-          flexHeight += getHeight(node.element, ruler);
+          flexNodes.push(node);
+          flexHeight += getHeight(node.element);
         }
       }
 
-      if (flexNodeCount)
-        this.cssRule.setProperty('height', Math.max(0, flexHeight/flexNodeCount) + 'px');
-    },
-    destroy: function(){
-      UINode.prototype.destroy.call(this);
+      while (node = flexNodes.shift())
+      {
+        var height = Math.max(0, parseInt(flexHeight / (flexNodes.length + 1)));
+        flexHeight -= height;
 
-      this.cssRule.destroy();
-      this.cssRule = null;
+        node.setHeight(height);
+      }
     }
   });
 
