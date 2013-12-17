@@ -1,0 +1,421 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Basis Test Suite - basis.layout</title>
+
+  <style type="text/css">
+    BODY,
+    HTML
+    {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+
+    HTML
+    {
+      padding: 1px 3px;
+      border: solid white;
+      border-width: 3px 5px;
+      margin: 7px 7px;
+    }
+
+    BODY
+    {
+      padding: 5px 7px;        /*        9 */
+      border: solid white;     /*        7 */
+      border-width: 7px 9px;   /*        5 */
+      margin: 9px 11px;        /* 11 9 7 x */
+    }
+  </style>
+  <link rel="stylesheet" href="../style/style.css"/>
+
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../test.js"></script>
+  <script type="text/javascript" src="../common.js"></script>
+  <script type="text/javascript" src="jquery.js"></script>
+</head>
+
+<body>
+  <!-- page client box expander -->
+  <div style="position: absolute; top: 200%; left: 125%; width: 10px; height: 10px; background: green; background: rgba(0,160,0,.5)"></div>
+
+  <div id="container">
+    <div id="test1" style="position: absolute; top: 15px; left: 15px; width: 10px; height: 10px; background: red; background: rgba(255,0,0,.5)"></div>
+    <div id="test3" style="position: fixed; top: 15px; left: 15px; width: 10px; height: 10px; background: red; background: rgba(255,0,0,.5)"></div>
+  </div>
+
+  <div id="test2_container" style="position: absolute; top: 50px; left: 215px; height: 100px; width: 100px; background: blue; background: rgba(0, 0, 255, .5); margin: 3px; border: 5px solid white; padding: 7px; overflow: auto; visibility: hidden">
+    <div id="test2" style="position: absolute; top: 15px; left: 15px; width: 10px; height: 10px; background: red; background: rgba(255,0,0,.5)"></div>
+    <!-- block client box expander -->
+    <div style="position: absolute; top: 200%; left: 200%;">x</div>
+  </div>
+
+  <script type="text/javascript">
+    loadTest((function(){
+      basis.require('basis.layout');
+
+      var computedStyle = basis.require('basis.dom.computedStyle').get;
+
+      function $(id){
+        return document.getElementById(id);
+      }
+
+      return [
+        {
+          name: 'Offset parent',
+          testcase: [
+            {
+              name: 'basic',
+              test: function(){
+
+              }
+            }
+          ]
+        },
+        {
+          name: 'Zero scroll',
+          testcase: [
+            {
+              name: 'Reset scroll offset',
+              test: function(){
+                var container = $('test2_container');
+
+                document.documentElement.scrollTop = 0;
+                document.documentElement.scrollLeft = 0;
+                document.body.scrollTop = 0;
+                document.body.scrollLeft = 0;
+                container.scrollTop = 0;
+                container.scrollLeft = 0;
+
+                this.is(0, document.documentElement.scrollTop);
+                this.is(0, document.documentElement.scrollLeft);
+                this.is(0, document.body.scrollTop);
+                this.is(0, document.body.scrollLeft);
+                this.is(0, container.scrollLeft);
+                this.is(0, container.scrollLeft);
+              }
+            },
+            {
+              name: 'Test #1',
+              test: function(){
+                var el = $('test1');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15, box.top);
+                this.is(15, box.left);
+              }
+            },
+            {
+              name: 'Test #2',
+              test: function(){
+                var el = $('test2');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(50 + 15 + 3 + 5, box.top);
+                this.is(215 + 15 + 3 + 5, box.left);
+              }
+            },
+            {
+              name: 'Test #3',
+              test: function(){
+                var el = $('test3');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15, box.top);
+                this.is(15, box.left);
+              }
+            },
+            {
+              name: 'Rel box',
+              test: function(){
+                var el = $('test2');
+                var box = basis.layout.getBoundingRect(el, $('test1'));
+
+                this.is((50 + 15 + 3 + 5) - 15, box.top);
+                this.is((215 + 15 + 3 + 5) - 15, box.left);
+              }
+            }
+          ]
+        },
+        {
+          name: 'Zero scroll + relative documentElement',
+          testcase: [
+            {
+              name: 'Set documentElement position relative',
+              test: function(){
+                document.documentElement.style.position = 'relative';
+                this.is('relative', computedStyle(document.documentElement, 'position'));
+              }
+            },
+            {
+              name: 'Test #1',
+              test: function(){
+                var el = $('test1');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15 + 7 + 3, box.top);
+                this.is(15 + 7 + 5, box.left);
+              }
+            },
+            {
+              name: 'Test #2',
+              test: function(){
+                var el = $('test2');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(50 + 15 + 3 + 5 + 7 + 3, box.top);
+                this.is(215 + 15 + 3 + 5 + 7 + 5, box.left);
+              }
+            },
+            {
+              name: 'Test #3',
+              test: function(){
+                var el = $('test3');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15, box.top);
+                this.is(15, box.left);
+              }
+            },
+            {
+              name: 'Set documentElement position static',
+              test: function(){
+                document.documentElement.style.position = 'static';
+                this.is('static', computedStyle(document.documentElement, 'position'));
+              }
+            }
+          ]
+        },
+        {
+          name: 'Zero scroll + relative body',
+          testcase: [
+            {
+              name: 'Set body position relative',
+              test: function(){
+                document.body.style.position = 'relative';
+                this.is('relative', computedStyle(document.body, 'position'));
+              }
+            },
+            {
+              name: 'Test #1',
+              test: function(){
+                var el = $('test1');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15 + 11 + 9 + 7, box.top);
+                this.is(15 + /*html*/15 + /*body*/11 + 9, box.left);
+              }
+            },
+            {
+              name: 'Test #2',
+              test: function(){
+                var el = $('test2');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(50 + 15 + 3 + 5 + (11 + 9 + 7), box.top);
+                this.is(215 + 15 + 3 + 5 + (15 + 11 + 9), box.left);
+              }
+            },
+            {
+              name: 'Test #3',
+              test: function(){
+                var el = $('test3');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15, box.top);
+                this.is(15, box.left);
+              }
+            },
+            {
+              name: 'Set body position static',
+              test: function(){
+                document.body.style.position = 'static';
+                this.is('static', computedStyle(document.body, 'position'));
+              }
+            }
+          ]
+        },
+        {
+          name: 'Root scroll',
+          testcase: [
+            {
+              name: 'Set scroll offset 23x23',
+              test: function(){
+                document.documentElement.scrollTop = 23;
+                document.documentElement.scrollLeft = 23;
+                document.body.scrollTop = 23;
+                document.body.scrollLeft = 23;
+
+                this.is(23, document.documentElement.scrollTop || document.body.scrollTop);
+                this.is(23, document.documentElement.scrollLeft || document.body.scrollLeft);
+              }
+            },
+            {
+              name: 'Test #1',
+              test: function(){
+                var el = $('test1');
+                var box = basis.layout.getBoundingRect(el);
+                var rect = el.getBoundingClientRect();
+
+                this.is(15, box.top);
+                this.is(15, box.left);
+              }
+            },
+            {
+              name: 'Test #2',
+              test: function(){
+                var el = $('test2');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(50 + 15 + 3 + 5, box.top);
+                this.is(215 + 15 + 3 + 5, box.left);
+              }
+            },
+            {
+              name: 'Test #3',
+              test: function(){
+                var el = $('test3');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15 + 23, box.top);
+                this.is(15 + 23, box.left);
+              }
+            }
+          ]
+        },
+        {
+          name: 'Root scroll + relative documentElement',
+          testcase: [
+            {
+              name: 'Set documentElement position relative',
+              test: function(){
+                document.documentElement.style.position = 'relative';
+                this.is('relative', computedStyle(document.documentElement, 'position'));
+              }
+            },
+            {
+              name: 'Test #1',
+              test: function(){
+                var el = $('test1');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15 + 7 + 3, box.top);
+                this.is(15 + 7 + 5, box.left);
+              }
+            },
+            {
+              name: 'Test #2',
+              test: function(){
+                var el = $('test2');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(50 + 15 + 3 + 5 + 7 + 3, box.top);
+                this.is(215 + 15 + 3 + 5 + 7 + 5, box.left);
+              }
+            },
+            {
+              name: 'Test #3',
+              test: function(){
+                var el = $('test3');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15 + 23, box.top);
+                this.is(15 + 23, box.left);
+              }
+            },
+            {
+              name: 'Set documentElement position static',
+              test: function(){
+                document.documentElement.style.position = 'static';
+                this.is('static', computedStyle(document.documentElement, 'position'));
+              }
+            }
+          ]
+        },
+        {
+          name: 'Root scroll + relative body',
+          testcase: [
+            {
+              name: 'Set body position relative',
+              test: function(){
+                document.body.style.position = 'relative';
+                this.is('relative', computedStyle(document.body, 'position'));
+              }
+            },
+            {
+              name: 'Test #1',
+              test: function(){
+                var el = $('test1');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15 + 11 + 9 + 7, box.top);
+                this.is(15 + /*html*/15 + /*body*/11 + 9, box.left);
+              }
+            },
+            {
+              name: 'Test #2',
+              test: function(){
+                var el = $('test2');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(50 + 15 + 3 + 5 + (11 + 9 + 7), box.top);
+                this.is(215 + 15 + 3 + 5 + (15 + 11 + 9), box.left);
+              }
+            },
+            {
+              name: 'Test #3',
+              test: function(){
+                var el = $('test3');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(15 + 23, box.top);
+                this.is(15 + 23, box.left);
+              }
+            },
+            {
+              name: 'Set body position static',
+              test: function(){
+                document.body.style.position = 'static';
+                this.is('static', computedStyle(document.body, 'position'));
+              }
+            }
+          ]
+        },
+        {
+          name: 'Root scroll + container scroll',
+          testcase: [
+            {
+              name: 'Set container scroll offset 11x11',
+              test: function(){
+                var container = $('test2_container');
+                container.scrollTop = 11;
+                container.scrollLeft = 11;
+
+                this.is(11, container.scrollTop);
+                this.is(11, container.scrollLeft);
+              }
+            },
+            {
+              name: 'Test #2',
+              test: function(){
+                var el = $('test2');
+                var box = basis.layout.getBoundingRect(el);
+
+                this.is(50 + 15 + 3 + 5 - 11, box.top);
+                this.is(215 + 15 + 3 + 5 - 11, box.left);
+              }
+            }
+          ]
+        }
+      ]
+    })());
+  </script>
+<body>
+</html>

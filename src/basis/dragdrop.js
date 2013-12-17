@@ -25,7 +25,8 @@
   var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
-  var nsLayout = basis.layout;
+  var getBoundingRect = basis.layout.getBoundingRect;
+  var getViewportRect = basis.layout.getViewportRect;
   
 
   //
@@ -212,8 +213,8 @@
       if (element)
       {
         dragData.element = element;
-        dragData.box = new nsLayout.Box(element);
-        dragData.viewport = new nsLayout.Viewport(this.getBase());
+        dragData.box = basis.layout.getBoundingRect(element);  // relative to offsetParent?
+        dragData.viewport = basis.layout.getViewportRect(this.getBase());
       }
 
       DragDropElement.prototype.emit_start.call(this, dragData, event);

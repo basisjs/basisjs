@@ -1,8 +1,7 @@
 
   basis.require('basis.event');
-  basis.require('basis.dom.event');
-  basis.require('basis.dom.wrapper');
   basis.require('basis.dragdrop');
+  basis.require('basis.layout');
   basis.require('basis.ui');
 
 
@@ -17,13 +16,11 @@
   // import names
   //
 
-  var Event = basis.dom.event;
-
   var createArray = basis.array.create;
   var createEvent = basis.event.create;
   var events = basis.event.events;
+  var getBoundingRect = basis.layout.getBoundingRect;
 
-  var Box = basis.layout.Box;
   var DragDropElement = basis.dragdrop.DragDropElement;
   var UINode = basis.ui.Node;
 
@@ -69,7 +66,7 @@
 
     action: {
       click: function(event){
-        Event.kill(event);
+        event.die();
         if (!this.isDisabled())
           this.click();
       }
@@ -181,7 +178,7 @@
     action: {
       jumpTo: function(event){
         var scrollbar = this.tmpl.scrollbar || this.element;
-        var pos = (event.mouseX - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
+        var pos = (event.mouseX - getBoundingRect(scrollbar).left) / scrollbar.offsetWidth;
 
         this.setSpanStartPage(Math.floor(pos * this.pageCount) - Math.floor(this.pageSpan / 2));
       },

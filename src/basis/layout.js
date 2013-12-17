@@ -18,8 +18,10 @@
   //
 
   var document = global.document;
+  var documentElement = document.documentElement;
 
   var extend = basis.object.extend;
+  var computedStyle = basis.dom.computedStyle.get;
   var Class = basis.Class;
   var DOM = basis.dom;
   var UINode = basis.ui.Node;
@@ -58,7 +60,7 @@
   var SUPPORT_ONRESIZE = typeof testElement.onresize != 'undefined';
 
   //
-  // functions
+  // helpers
   //
 
   function getHeight(element){
@@ -94,17 +96,101 @@
     }
   }
 
-  // other stuff
+  //
+  // main functions
+  //
 
-  var BOX_UNDEFINED = {
-    top: NaN,
-    left: NaN,
-    bottom: NaN,
-    right: NaN,
-    width: NaN,
-    height: NaN,
-    defined: false
-  };
+  function getOffsetParent(node){
+    var offsetParent = node.offsetParent || documentElement;
+
+    while (offsetParent && offsetParent !== documentElement && computedStyle(offsetParent, 'position') == 'static')
+      offsetParent = offsetParent.offsetParent;
+
+    return offsetParent || documentElement;
+  }
+
+  function getTopLeftPoint(element){
+    var left = 0;
+    var top = 0;
+
+    if (element && element.getBoundingClientRect)
+    {
+      // Internet Explorer, FF3, Opera9.50 sheme
+      var box = element.getBoundingClientRect();
+
+      top = box.top;
+      left = box.left;
+
+      // offset fix
+      if (document.compatMode == 'CSS1Compat')
+      {
+        top += (global.pageYOffset || documentElement.scrollTop);
+        left += (global.pageXOffset || documentElement.scrollLeft);
+      }
+      else
+      {
+        // IE6 and lower
+        var body = document.body;
+        if (element !== body)
+        {
+          top += body.scrollTop - body.clientTop;
+          left += body.scrollLeft - body.clientLeft;
+        }
+      }
+    }
+
+    return {
+      top: top,
+      left: left
+    };
+  }
+
+  function getBoundingRect(element, relElement){
+    var point = getTopLeftPoint(element);
+    var top = point.top;
+    var left = point.left;
+    var width = element.offsetWidth;
+    var height = element.offsetHeight;
+
+    // coords relative of relElement
+    if (relElement)
+    {
+      var relPoint = getTopLeftPoint(relElement);
+      top -= relPoint.top;
+      left -= relPoint.left;
+    }
+
+    return {
+      top: top,
+      left: left,
+      bottom: top + height,
+      right: left + width,
+      width: width,
+      height: height
+    };
+  }
+
+  function getViewportRect(element){
+    var point = getTopLeftPoint(element);
+    var top = point.top;
+    var left = point.left;
+    var width = element.clientWidth;
+    var height = element.clientHeight;
+
+    top += element.clientTop + (global.pageYOffset || documentElement.scrollTop);
+    left += element.clientLeft + (global.pageXOffset || documentElement.scrollLeft);
+
+    return {
+      top: top,
+      left: left,
+      bottom: top + height,
+      right: left + width,
+      width: width,
+      height: height
+    };
+  }
+
+  
 
   //
   // Boxes
@@ -112,19 +198,29 @@
 
  /**
   * @class
+  * @deprecated
   */
   var Box = Class(null, {
     className: namespace + '.Box',
 
-    init: function(element, woCalc, offsetElement){
+    init: function(element, woCalc, relElement){
+      /** #cut */ basis.dev.warn('Class `basis.layout.Box` is deprecated now, use basis.layout.getBoundingRect function instead.');
       this.reset();
       this.element = DOM.get(element);
-      this.offsetElement = offsetElement;
+      this.relElement = relElement;
       if (!woCalc)
-        this.recalc(this.offsetElement);
+        this.recalc(this.relElement);
     },
     reset: function(){
-      extend(this, BOX_UNDEFINED);
+      extend(this, {
+        top: NaN,
+        left: NaN,
+        bottom: NaN,
+        right: NaN,
+        width: NaN,
+        height: NaN,
+        defined: false
+      });
     },
     set: function(property, value){
       if (this.defined)
@@ -143,150 +239,14 @@
 
       return this;
     },
-    recalc: function(offsetElement){
+    recalc: function(relElement){
       this.reset();
 
       var element = this.element;
-
       if (element)
       {
-        var offsetParent = element;
-        var documentElement = document.documentElement;
-
-        if (element.getBoundingClientRect)
-        {
-          // Internet Explorer, FF3, Opera9.50 sheme
-          var box = element.getBoundingClientRect();
-
-          this.top = box.top;
-          this.left = box.left;
-
-          // offset fix
-          if (document.compatMode == 'CSS1Compat')
-          {
-            if (IS_IE8_DOWN)
-            {
-              // IE7-8
-              this.top  += documentElement.scrollTop  - documentElement.clientTop;
-              this.left += documentElement.scrollLeft - documentElement.clientLeft;
-            }
-          }
-          else
-          {
-            // IE6 and lower
-            if (element != document.body)
-            {
-              this.top  += document.body.scrollTop  - document.body.clientTop;
-              this.left += document.body.scrollLeft - document.body.clientLeft;
-            }
-          }
-
-          // coords relative of offsetElement
-          if (offsetElement) // TODO: check for body.style === 'static', not bug if body is not static
-          {
-            if (offsetElement !== document.body)
-            {
-              var relBox = new Box(offsetElement);
-              this.top  -= relBox.top;
-              this.left -= relBox.left;
-              relBox.destroy();
-            }
-            else
-            {
-              this.top  += offsetElement.scrollTop  + documentElement.scrollTop;
-              this.left += offsetElement.scrollLeft + documentElement.scrollLeft;
-            }
-          }
-        }
-        else
-          if (document.getBoxObjectFor)
-          {
-            // Mozilla sheme
-            var oPageBox = document.getBoxObjectFor(documentElement);
-            var box = document.getBoxObjectFor(element);
-
-            this.top  = box.screenY - oPageBox.screenY;
-            this.left = box.screenX - oPageBox.screenX;
-
-            if (browser.test('FF1.5-'))
-            {
-              offsetParent = element.offsetParent;
-              // offsetParent offset fix
-              if (offsetParent)
-              {
-                this.top  -= offsetParent.scrollTop;
-                this.left -= offsetParent.scrollLeft;
-              }
-
-              // documentElement offset fix
-              if (offsetParent != document.body)
-              {
-                this.top  += documentElement.scrollTop;
-                this.left += documentElement.scrollLeft;
-              }
-            }
-
-            if (browser.test('FF2+'))
-            {
-              if (this.top)
-              {
-                var top = documentElement.scrollTop;
-                if (top > 2)
-                {
-                  var end = 0;
-                  for (var k = Math.floor(Math.log(top)/Math.LN2); k >= 0; k -= 3)
-                    end += 1 << k;
-                  if (top > end)
-                    this.top -= 1;
-                }
-              }
-              if (this.left)
-                this.left -= documentElement.scrollLeft > 1;
-            }
-
-            // coords relative of offsetElement
-            if (offsetElement)
-            {
-              var relBox = new Box(offsetElement);
-              this.top  -= relBox.top;
-              this.left -= relBox.left;
-              relBox.destroy();
-            }
-          }
-          else
-          {
-            // Other browser sheme
-            if (element != offsetElement)
-            {
-              this.top  = element.offsetTop;
-              this.left = element.offsetLeft;
-
-              // Body offset fix
-              this.top  -= document.body.clientTop  - document.body.scrollTop;
-              this.left -= document.body.clientLeft - document.body.scrollLeft;
-
-              while ((offsetParent = offsetParent.offsetParent) && offsetParent != offsetElement)
-              {
-                this.top  += offsetParent.offsetTop  + offsetParent.clientTop  - offsetParent.scrollTop;
-                this.left += offsetParent.offsetLeft + offsetParent.clientLeft - offsetParent.scrollLeft;
-              }
-            }
-            else
-              this.top = this.left = 0;
-          }
-
-        this.width  = element.offsetWidth;
-        this.height = element.offsetHeight;
-
-        //if (this.width <= 0 || this.height <= 0)
-        //  this.reset();
-        //else
-        {
-          this.bottom = this.top  + this.height;
-          this.right  = this.left + this.width;
-
-          this.defined = true;
-        }
+        extend(this, getBoundingRect(element, relElement));
+        this.defined = true;
       }
 
       return this.defined;
@@ -306,61 +266,22 @@
     },
     destroy: function(){
       this.element = null;
-      this.offsetElement = null;
+      this.relElement = null;
     }
   });
 
 
  /**
   * @class
-  */
-  var Intersection = Class(Box, {
-    className: namespace + '.Intersection',
-
-    init: function(boxA, boxB, bWoCalc){
-      this.boxA = boxA instanceof Box ? boxA : new Box(boxA, true);
-      this.boxB = boxB instanceof Box ? boxB : new Box(boxB, true);
-
-      if (!bWoCalc)
-        this.recalc();
-    },
-    recalc: function(){
-      this.reset();
-
-      if (!this.boxA.recalc() ||
-          !this.boxB.recalc())
-        return false;
-
-      if (this.boxA.intersect(this.boxB))
-      {
-        this.top     = Math.max(this.boxA.top, this.boxB.top);
-        this.left    = Math.max(this.boxA.left, this.boxB.left);
-        this.bottom  = Math.min(this.boxA.bottom, this.boxB.bottom);
-        this.right   = Math.min(this.boxA.right, this.boxB.right);
-        this.width   = this.right - this.left;
-        this.height  = this.bottom - this.top;
-
-        if (this.width <= 0 || this.height <= 0)
-          this.reset();
-        else
-          this.defined = true;
-      }
-
-      return this.defined;
-    },
-    destroy: function(){
-      Box.prototype.destroy.call(this);
-      this.boxA = null;
-      this.boxB = null;
-    }
-  });
-
-
- /**
-  * @class
+  * @deprecated
   */
   var Viewport = Class(Box, {
     className: namespace + '.Viewport',
+
+    init: function(){
+       /** #cut */ basis.dev.warn('Class `basis.layout.Viewport` is deprecated now, use basis.layout.getBoundingRect function instead.');
+       Box.prototype.init.call(this);
+    },
 
     recalc: function(){
       this.reset();
@@ -368,51 +289,7 @@
       var element = this.element;
       if (element)
       {
-        var offsetParent = element;
-
-        this.width = element.clientWidth;
-        this.height = element.clientHeight;
-
-        if (element.getBoundingClientRect)
-        {
-          // Internet Explorer, FF3, Opera9.50 sheme
-          var box = element.getBoundingClientRect();
-
-          this.top = box.top;
-          this.left = box.left;
-
-          while (offsetParent = offsetParent.offsetParent)
-          {
-            this.top -= offsetParent.scrollTop;
-            this.left -= offsetParent.scrollLeft;
-          }
-        }
-        else
-          if (document.getBoxObjectFor)
-          {
-            // Mozilla sheme
-            var box = document.getBoxObjectFor(element);
-
-            this.top = box.y;
-            this.left = box.x;
-
-            while (offsetParent = offsetParent.offsetParent)
-            {
-              this.top -= offsetParent.scrollTop;
-              this.left -= offsetParent.scrollLeft;
-            }
-          }
-          else
-          {
-            // Other browsers sheme
-            var box = new Box(element);
-            this.top = box.top + element.clientTop;
-            this.left = box.left + element.clientLeft;
-          }
-
-        this.bottom = this.top + this.height;
-        this.right = this.left + this.width;
-
+        extend(this, getViewportRect(element));
         this.defined = true;
       }
 
@@ -526,8 +403,12 @@
 
   module.exports = {
     Box: Box,
-    Intersection: Intersection,
     Viewport: Viewport,
+
+    getOffsetParent: getOffsetParent,
+    getTopLeftPoint: getTopLeftPoint,
+    getBoundingRect: getBoundingRect,
+    getViewportRect: getViewportRect,
 
     VerticalPanel: VerticalPanel,
     VerticalPanelStack: VerticalPanelStack,

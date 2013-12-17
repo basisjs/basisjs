@@ -1269,7 +1269,7 @@
       this.reset();
       this.recalc();
 
-      var canvasRect = new basis.layout.Box(this.element, false, this.owner.element.offsetParent);
+      var canvasRect = basis.layout.getBoundingRect(this.element, false, this.owner.element.offsetParent);
       var x = mx - canvasRect.left - this.clientRect.left;
       var y = my - canvasRect.top - this.clientRect.top;
 

@@ -4,6 +4,7 @@
   basis.require('basis.dom.event');
   basis.require('basis.layout');
   basis.require('basis.dragdrop');
+  basis.require('basis.ui');
 
 
  /**
@@ -23,11 +24,11 @@
 
   var events = basis.event.events;
   var createEvent = basis.event.create;
+  var getBoundingRect = basis.layout.getBoundingRect;
 
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var UINode = basis.ui.Node;
   var DragDropElement = basis.dragdrop.DragDropElement;
-  var Box = basis.layout.Box;
 
 
   //
@@ -153,7 +154,7 @@
 
   var eventToValue = function(event){
     var scrollbar = this.tmpl.scrollbar;
-    var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
+    var pos = (Event.mouseX(event) - getBoundingRect(scrollbar).left) / scrollbar.offsetWidth;
     this.setStepValue(pos * this.stepCount);
   };
 

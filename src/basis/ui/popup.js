@@ -32,6 +32,9 @@
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
+  var getOffsetParent = basis.layout.getOffsetParent;
+  var getBoundingRect = basis.layout.getBoundingRect;
+  var getViewportRect = basis.layout.getViewportRect;
 
   var UINode = basis.ui.Node;
 
@@ -104,19 +107,6 @@
 
   function normalizeDir(value, valueOnFailure){
     return DIR_MAP[typeof value == 'string' && value.toUpperCase()] || valueOnFailure;
-  }
-
-  function getStylePosition(node){
-    return typeof getComputedStyle != 'undefined' ? getComputedStyle(node).position : '';
-  }
-
-  function getOffsetParent(node){
-    var offsetParent = node.offsetParent || documentElement;
-
-    while (offsetParent && offsetParent.tagName != 'html' && getStylePosition(offsetParent) == 'static')
-      offsetParent = offsetParent.offsetParent;
-
-    return offsetParent || documentElement;
   }
 
 
@@ -253,8 +243,8 @@
       if (this.visible && this.relElement)
       {
         var offsetParent = getOffsetParent(this.element);
-        var box = new layout.Box(this.relElement, false, offsetParent);
-        var viewport = new layout.Viewport(offsetParent);
+        var box = getBoundingRect(this.relElement, offsetParent);
+        var viewport = getViewportRect(offsetParent);
         var width = this.element.offsetWidth;
         var height = this.element.offsetHeight;
 
@@ -264,13 +254,13 @@
         var pointY = dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()];
 
         if (
-            (dir[2] != LEFT) * (pointX < (width >> (dir[2] == CENTER)))
+            (dir[2] != LEFT && pointX < (width >> (dir[2] == CENTER)))
             ||
-            (dir[2] != RIGHT) * ((viewport.width - pointX) < (width >> (dir[2] == CENTER)))
+            (dir[2] != RIGHT && (viewport.width - pointX + viewport.left) < (width >> (dir[2] == CENTER)))
             ||
-            (dir[3] != TOP) * (pointY < (height >> (dir[3] == CENTER)))
+            (dir[3] != TOP && pointY < (height >> (dir[3] == CENTER)))
             ||
-            (dir[3] != BOTTOM) * ((viewport.height - pointY) < (height >> (dir[3] == CENTER)))
+            (dir[3] != BOTTOM && (viewport.height - pointY + viewport.top) < (height >> (dir[3] == CENTER)))
            )
           return false;
 
@@ -328,7 +318,7 @@
 
         if (!point)
         {
-          var box = new layout.Box(this.relElement, false, offsetParent);
+          var box = getBoundingRect(this.relElement, offsetParent);
 
           point = {
             x: dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()],
@@ -336,7 +326,6 @@
           };
         }
 
-        var offsetParentBox = new layout.Box(offsetParent);
         var style = {
           left: 'auto',
           right: 'auto',
@@ -350,10 +339,10 @@
             style.left = point.x + 'px';
             break;
           case CENTER:
-            style.left = Math.round(point.x - this.element.offsetWidth/2) + 'px';
+            style.left = Math.round(point.x - this.element.offsetWidth / 2) + 'px';
             break;
           case RIGHT:
-            style.right = (offsetParentBox.width - point.x) + 'px';
+            style.right = (offsetParent.clientWidth - point.x) + 'px';
             break;
         }
 
@@ -363,10 +352,10 @@
             style.top = point.y + 'px';
             break;
           case CENTER:
-            style.top = Math.round(point.y - this.element.offsetHeight/2) + 'px';
+            style.top = Math.round(point.y - this.element.offsetHeight / 2) + 'px';
             break;
           case BOTTOM:
-            style.bottom = (offsetParentBox.height - point.y) + 'px';
+            style.bottom = (offsetParent.clientHeight - point.y) + 'px';
             break;
         }
 
