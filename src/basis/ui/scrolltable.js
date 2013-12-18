@@ -1,5 +1,6 @@
 
   basis.require('basis.dom');
+  basis.require('basis.dom.resize');
   basis.require('basis.cssom');
   basis.require('basis.layout');
   basis.require('basis.ui.table');
@@ -24,6 +25,7 @@
 
   var createArray = basis.array.create;
   var createElement = basis.dom.createElement;
+  var listenResize = basis.dom.resize.add;
 
   var Table = basis.ui.table.Table;
 
@@ -68,19 +70,11 @@
   }
 
   // Cells proto
-  var measureCell = basis.template.buildHtml(
-    basis.template.makeDeclaration(
-      '<td ' + resetStyleAttr() + '>' +
-        '<div ' + resetStyleAttr('position:relative!important') + '>' +
-          '<iframe event-load="measureInit" ' +
-            resetStyleAttr('width:100%!important;position:absolute!important;visibility:hidden!important;') +
-          '/>' +
-        '</div>' +
-      '</td>'
-    ).tokens
-  ).firstChild;
+  var measureCellProto = createElement('td' + resetStyle(),
+    createElement(resetStyle('position:relative!important'))
+  );
 
-  var expanderCell = createElement('td' + resetStyle(),
+  var expanderCellProto = createElement('td' + resetStyle(),
     createElement(resetStyle())
   );
 
@@ -129,12 +123,6 @@
           this.tmpl.headerOffset.style.left = scrollLeft;
           this.tmpl.footerOffset.style.left = scrollLeft;
         }
-      },
-      measureInit: function(event){
-        var win = event.sender.contentWindow;
-        win.onresize = this.requestRelayout;
-        win.document.body.onresize = this.requestRelayout;
-        this.requestRelayout();
       }
     },
 
@@ -166,13 +154,19 @@
       }, this);
 
       // column width sync cells
-      this.columnWidthSync_ = createArray(this.columnCount, function(){
-        return {
-          measure: measureCell.cloneNode(true),
-          header: expanderCell.cloneNode(true),
-          footer: expanderCell.cloneNode(true)
-        };
-      });
+      var columnWidthSync_ = [];
+      for (var i = 0; i < this.columnCount; i++)
+      {
+        var measureCell = measureCellProto.cloneNode(true);
+        listenResize(measureCell.firstChild, this.requestRelayout, this)
+        columnWidthSync_.push({
+          measure: measureCell,
+          header: expanderCellProto.cloneNode(true),
+          footer: expanderCellProto.cloneNode(true)
+        });
+      }
+
+      this.columnWidthSync_ = columnWidthSync_;
     },
 
     templateSync: function(){
@@ -180,7 +174,7 @@
 
       // add block resize trigger
       if ('boundElement' in this.tmpl)
-        layout.addBlockResizeHandler(this.tmpl.boundElement, this.requestRelayout);
+        listenResize(this.tmpl.boundElement, this.requestRelayout, this);
 
       this.requestRelayout();
     },

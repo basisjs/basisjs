@@ -1,9 +1,9 @@
 
-  basis.require('basis.ua');
-  basis.require('basis.dom');
   basis.require('basis.dom.computedStyle');
+  basis.require('basis.dom.resize');
   basis.require('basis.template');
   basis.require('basis.ui');
+  basis.require('basis.dom');
 
 
  /**
@@ -22,8 +22,9 @@
 
   var extend = basis.object.extend;
   var computedStyle = basis.dom.computedStyle.get;
+  var listenResize = basis.dom.resize.add;
+
   var Class = basis.Class;
-  var DOM = basis.dom;
   var UINode = basis.ui.Node;
 
 
@@ -33,31 +34,27 @@
 
   // tests
 
-  var IS_IE8_DOWN = basis.ua.test('IE8-');
-
-  var SUPPORT_DISPLAYBOX = false;
-
-  var testElement = DOM.createElement('');
-  var prefixes = ['', '-webkit-'];
-  for (var i = 0; i < prefixes.length; i++)
-  {
-    try
-    {
-      // Opera tries to use -webkit-box but doesn't set "-webkit-box-orient" dynamically for cssRule
-      if (prefixes[i] == '-webkit-' && 'WebkitBoxOrient' in testElement.style == false)
-        continue;
-
-      var value = prefixes[i] + 'box';
-      testElement.style.display = value;
-      if (testElement.style.display == value)
-      {
-        SUPPORT_DISPLAYBOX = prefixes[i];
-        break;
-      }
-    } catch(e) {}
-  }
-
+  var testElement = document.createElement('div');
   var SUPPORT_ONRESIZE = typeof testElement.onresize != 'undefined';
+  var SUPPORT_DISPLAYBOX = (function(){
+    var prefixes = ['', '-webkit-'];
+
+    for (var i = 0; i < prefixes.length; i++)
+      try
+      {
+        // Opera tries to use -webkit-box but doesn't set "-webkit-box-orient" dynamically for cssRule
+        if (prefixes[i] == '-webkit-' && 'WebkitBoxOrient' in testElement.style == false)
+          continue;
+
+        var value = prefixes[i] + 'box';
+        testElement.style.display = value;
+        if (testElement.style.display == value)
+          return true;
+      } catch(e) {}
+
+    return false;
+  })();
+
 
   //
   // helpers
@@ -69,32 +66,6 @@
       - parseInt(basis.dom.computedStyle.get(element, 'padding-bottom'));
   }
 
-  function addBlockResizeHandler(element, handler){
-    // element.style.position = 'relative';
-    if (SUPPORT_ONRESIZE)
-      element.onresize = handler;
-    else
-    {
-      var iframe = DOM.createElement({
-        description: 'iframe',
-        css: {
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          left: 0,
-          zIndex: -1,
-          top: '-2000px'
-        }
-      });
-
-      DOM.insert(element, iframe);
-
-      iframe.onload = function(){
-        (iframe.contentWindow.onresize = handler)();
-      };
-    }
-  }
 
   //
   // main functions
@@ -204,9 +175,9 @@
     className: namespace + '.Box',
 
     init: function(element, woCalc, relElement){
-      /** #cut */ basis.dev.warn('Class `basis.layout.Box` is deprecated now, use basis.layout.getBoundingRect function instead.');
+      /** @cut */ basis.dev.warn('Class `basis.layout.Box` is deprecated now, use basis.layout.getBoundingRect function instead.');
       this.reset();
-      this.element = DOM.get(element);
+      this.element = element;
       this.relElement = relElement;
       if (!woCalc)
         this.recalc(this.relElement);
@@ -279,7 +250,7 @@
     className: namespace + '.Viewport',
 
     init: function(){
-       /** #cut */ basis.dev.warn('Class `basis.layout.Viewport` is deprecated now, use basis.layout.getBoundingRect function instead.');
+       /** @cut */ basis.dev.warn('Class `basis.layout.Viewport` is deprecated now, use basis.layout.getBoundingRect function instead.');
        Box.prototype.init.call(this);
     },
 
@@ -320,7 +291,7 @@
         return !!node.flex;
       },
       flexboxSupported: function(){
-        return !!SUPPORT_DISPLAYBOX;
+        return SUPPORT_DISPLAYBOX;
       }
     },
 
@@ -342,7 +313,7 @@
     template: templates.Stack,
     binding: {
       flexboxSupported: function(){
-        return !!SUPPORT_DISPLAYBOX;
+        return SUPPORT_DISPLAYBOX;
       }
     },
 
@@ -351,20 +322,14 @@
     templateSync: function(){
       UINode.prototype.templateSync.call(this);
 
-      if (SUPPORT_DISPLAYBOX === false)
+      if (!SUPPORT_DISPLAYBOX)
       {
-        var realign = this.realign.bind(this);
-        basis.nextTick(realign);
-        addBlockResizeHandler(this.element, realign);
-        addBlockResizeHandler(this.childNodesElement, realign);
+        listenResize(this.element, this.realign, this);
+        listenResize(this.childNodesElement, this.realign, this);
       }
     },
-    emit_childNodesModified: function(delta){
-      UINode.prototype.emit_childNodesModified.call(this, delta);
-      this.realign();
-    },
     realign: function(){
-      if (SUPPORT_DISPLAYBOX !== false || !this.tmpl)
+      if (SUPPORT_DISPLAYBOX || !this.tmpl)
         return;
 
       var contentHeight = this.childNodesElement.offsetHeight;
@@ -413,5 +378,8 @@
     VerticalPanel: VerticalPanel,
     VerticalPanelStack: VerticalPanelStack,
 
-    addBlockResizeHandler: addBlockResizeHandler
+    addBlockResizeHandler: function(element, fn){
+      /** @cut */ basis.dev.warn('`basis.layout.addBlockResizeHandler` is deprecated now, use basis.dom.resize.add/basis.dom.resize.remove functions instead.');
+      listenResize(element, fn);
+    }
   };

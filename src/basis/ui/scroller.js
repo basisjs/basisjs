@@ -1,6 +1,7 @@
 
   basis.require('basis.event');
   basis.require('basis.dom.event');
+  basis.require('basis.dom.resize');
   basis.require('basis.cssom');
   basis.require('basis.ui');
   basis.require('basis.animation');
@@ -24,6 +25,7 @@
   var anim = basis.animation;
 
   var createEvent = basis.event.create;
+  var listenResize = basis.dom.resize.add;
 
   var Emitter = basis.event.Emitter;
   var UINode = basis.ui.Node;
@@ -734,7 +736,7 @@
       this.scroller.setElement(scrollElement);
 
       // add resize handler
-      basis.layout.addBlockResizeHandler(scrollElement, this.realign.bind(this));
+      listenResize(scrollElement, this.realign, this);
     },
 
     updatePosition: function(){
