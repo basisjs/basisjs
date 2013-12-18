@@ -1,3 +1,12 @@
+## 0.9.11 (december 18, 2013)
+
+- FIX: `AjaxRequest#abort` method
+- NEW: `basis.ui.field` email & url validators support cyryllic symbols
+- FIX: no warnings `basis.ui.field.Combobox` on creation & destruction
+- NEW: improve `basis.router` path parsing, add support for optional parts
+- FIX: explicit cast of field value to string type before applying of regexp validator
+- FIX: `basis.devpanel` escape strings resources on dictionary saving
+
 ## 0.9.10 (september 20, 2013)
 
 - FIX: `basis.net.AjaxRequest#setTimeout` for synchronous requests
