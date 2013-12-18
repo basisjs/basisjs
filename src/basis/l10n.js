@@ -266,7 +266,7 @@
       if (parts)
         return resolveDictionary(parts[2]).token(parts[1]);
 
-      ;;;basis.dev.warn('basis.l10n.token accepts token references in format `token.path@path/to/dict.l10n` only');
+      /** @cut */ basis.dev.warn('basis.l10n.token accepts token references in format `token.path@path/to/dict.l10n` only');
     }
   }
 
@@ -393,7 +393,7 @@
     * @param {string} tokenName
     */ 
     getValue: function(tokenName){
-      var fallback = cultureFallback[currentCulture];
+      var fallback = cultureFallback[currentCulture] || [];
 
       for (var i = 0, cultureName; cultureName = fallback[i]; i++)
       {
@@ -642,6 +642,12 @@
 
     if (currentCulture != culture)
     {
+      if (cultureList.indexOf(culture) == -1)
+      {
+        /** @cut */ basis.dev.warn('basis.l10n.setCulture: culture `' + culture + '` not in the list, the culture isn\'t changed');
+        return;
+      }
+
       currentCulture = culture;
 
       for (var i = 0, dictionary; dictionary = dictionaries[i]; i++)
@@ -677,7 +683,7 @@
 
     if (!list.length)
     {
-      ;;;basis.dev.warn('basis.l10n.setCultureList: culture list can\'t be empty, the culture list isn\'t changed');
+      /** @cut */ basis.dev.warn('basis.l10n.setCultureList: culture list can\'t be empty, the culture list isn\'t changed');
       return;
     }
 
@@ -694,7 +700,7 @@
 
       if (cultureRow.length > 2)
       {
-        ;;;basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture+ '`; other cultures except first one was ignored');
+        /** @cut */ basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture+ '`; other cultures except first one was ignored');
         cultureRow = cultureRow.slice(0, 2);
       }
 
