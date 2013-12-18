@@ -1,3 +1,13 @@
+## 1.0.0 (december 18, 2013)
+
+- FIX: template events for IE8 and below
+- FIX: `basis.ui.field.Combobox` to be more stable with popup template sync
+- FIX: `basis.doc.ready` and use it in `basis.ui.popup`/basis.ui.window`
+- FIX: `basis.ui.popup.Popup` layout for case when body.position = static
+- FIX: style and template bindgins in IE8 and lower
+- FIX: issue on `basis.ui.chart` childNodes update
+- FIX: `basis.data.dataset.Slice` internal member index corruption when some items has the same value
+
 ## 1.0.0-rc3 (december 4, 2013)
 
 - NEW: `ruleValue` property implemented for `basis.data.dataset.Split` and `basis.data.dataset.Cloud` subsets
