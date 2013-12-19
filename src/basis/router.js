@@ -91,7 +91,7 @@
             break;
 
           default:
-            result += basis.string.forRegExp(chars[i]);
+            result += chars[i].forRegExp();
         }
 
       return stopChar ? null : result;
