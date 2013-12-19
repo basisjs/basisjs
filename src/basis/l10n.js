@@ -620,7 +620,8 @@
     return new Culture(name, pluralForm);
   }
 
-  basis.object.extend(resolveCulture, new basis.Token(currentCulture));
+  basis.object.extend(resolveCulture, new basis.Token());
+  resolveCulture.set = setCulture;
 
 
  /**
@@ -653,7 +654,7 @@
       for (var i = 0, dictionary; dictionary = dictionaries[i]; i++)
         dictionary.syncValues();
 
-      resolveCulture.set(culture);
+      basis.Token.prototype.set.call(resolveCulture, culture);
     }
   }
 
