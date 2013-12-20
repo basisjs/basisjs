@@ -1915,7 +1915,7 @@
       return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
     },
     isResource: function(value){
-      return value && resourceCache[value.url] === value;
+      return value ? resourceCache[value.url] === value : false;
     },
     extensions: {
       '.js': function(content, filename){

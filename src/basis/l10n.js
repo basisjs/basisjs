@@ -334,23 +334,35 @@
 
    /**
     * @constructor
-    * @param {string} name Dictionary name
+    * @param {basis.Resource} content Dictionary content (tokens source)
     */ 
-    init: function(resource){
+    init: function(content){
       this.tokens = {};
       this.types = {};
       this.cultureValues = {};
 
-      // attach to resource
-      this.resource = resource;
-      this.update(resource());
-      resource.attach(this.update, this);
-
       // add to dictionary list
       this.index = dictionaries.push(this) - 1;
 
-      // notify dictionary created
-      createDictionaryNotifier.set(resource.url);
+      if (basis.resource.isResource(content))
+      {
+        // attach to resource
+        this.resource = content;
+        this.update(content());
+        content.attach(this.update, this);
+
+        // notify dictionary created
+        if (!dictionaryByLocation[content.url])
+        {
+          dictionaryByLocation[content.url] = this;
+          createDictionaryNotifier.set(content.url);
+        }
+      }
+      else
+      {
+        /** @cut */ basis.dev.warn('Use object as content of dictionary is experimental and not production-ready');
+        this.update(content || {});
+      }
     },
 
    /**
@@ -444,18 +456,23 @@
 
 
  /**
-  * @param {string} location
+  * @param {basis.Resource|string} content
   * @return {basis.l10n.Dictionary}
   */ 
-  function resolveDictionary(location){
-    var extname = basis.path.extname(location);
-    var resource = basis.resource(extname != '.l10n' ? basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n' : location);
-    var dictionary = dictionaryByLocation[resource.url];
+  function resolveDictionary(content){
+    var dictionary;
 
-    if (!dictionary)
-      dictionary = dictionaryByLocation[resource.url] = new Dictionary(resource);
+    if (typeof content == 'string')
+    {
+      var location = content;
+      var extname = basis.path.extname(location);
+      content = basis.resource(extname != '.l10n' ? basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n' : location);
+    }
 
-    return dictionary;
+    if (basis.resource.isResource(content))
+      dictionary = dictionaryByLocation[content.url];
+
+    return dictionary || new Dictionary(content);
   }
 
 
@@ -478,10 +495,9 @@
   //
 
   var cultureList = [];
+  var currentCulture = null;
   var cultures = {};
   var cultureFallback = {}; 
-
-  var currentCulture = null;
 
   // plural forms
   // source: http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html?id=l10n/pluralforms
