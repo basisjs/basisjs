@@ -75,6 +75,35 @@
                 basis.l10n.setCulture('c');
                 this.is('c', dict.token('value').value);
               }
+            },
+            {
+              name: 'culture/Culture',
+              test: function(){
+                basis.l10n.setCultureList('en-US ru-RU');
+
+                basis.l10n.setCulture('en-US');
+                this.is('en-US', basis.l10n.getCulture());
+                this.is('en-US', basis.l10n.culture.value);
+                this.is('en-US', basis.l10n.culture.get());
+                this.is('en-US', basis.l10n.culture().name);
+
+                basis.l10n.setCulture('ru-RU');
+                this.is('ru-RU', basis.l10n.getCulture());
+                this.is('ru-RU', basis.l10n.culture.value);
+                this.is('ru-RU', basis.l10n.culture.get());
+                this.is('ru-RU', basis.l10n.culture().name);
+
+                basis.l10n.culture.set('en-US');
+                this.is('en-US', basis.l10n.getCulture());
+                this.is('en-US', basis.l10n.culture.value);
+                this.is('en-US', basis.l10n.culture.get());
+                this.is('en-US', basis.l10n.culture().name);
+
+                // create/get culture instance
+                this.is('en-US', (new basis.l10n.Culture('en-US')).name);
+                this.is(true, basis.l10n.culture('ru-RU') === basis.l10n.culture('ru-RU'));                
+                this.is(true, basis.l10n.culture() === basis.l10n.culture(basis.l10n.getCulture()));                
+              }
             }
           ]
         }

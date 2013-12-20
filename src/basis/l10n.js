@@ -592,11 +592,10 @@
     pluralForm: null,
 
     init: function(name, pluralForm){
-      if (cultures[name])
-        return cultures[name];
-
       this.name = name;
-      cultures[name] = this;
+
+      if (!cultures[name])
+        cultures[name] = this;
 
       this.pluralForm = pluralForm
         || pluralFormsMap[name]
@@ -617,7 +616,10 @@
   * @return {basis.l10n.Culture}
   */
   function resolveCulture(name, pluralForm){
-    return new Culture(name, pluralForm);
+    if (name && !cultures[name])
+      cultures[name] = new Culture(name, pluralForm);
+
+    return cultures[name || currentCulture];
   }
 
   basis.object.extend(resolveCulture, new basis.Token());
