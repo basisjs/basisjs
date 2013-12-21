@@ -4,6 +4,8 @@ basis.require('basis.ua.visibility');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
+basis.require('basis.dom.computedStyle');
+basis.require('basis.dom.resize');
 basis.require('basis.cssom');
 basis.require('basis.router');
 basis.require('basis.app');
