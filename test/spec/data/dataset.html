@@ -171,6 +171,15 @@
             {
               name: 'Slice order',
               test: function(){
+                var sliceSort = function(a, b){
+                  return +(a.value > b.value) || -(a.value < b.value) || (a.object.basisObjectId - b.object.basisObjectId);
+                };
+                var sliceMap = function(array){
+                  return array.map(function(item){
+                    return item.value + '/' + item.object.basisObjectId;
+                  });
+                };
+
                 var dataset = new basis.data.Dataset({
                   items: basis.array.create(10, function(v){
                     return new basis.data.Object({
@@ -184,18 +193,46 @@
                   limit: 3, 
                   rule: 'data.value'
                 });
+
+                // check index on create
+                this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
  
+                // update items
                 dataset.forEach(function(item){
                   item.update({
                     value: item.data.value + 10
                   })
                 });
+
+                this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
  
+                // random item update
                 slice.index_[9].object.update({ value: 10 });
- 
-                // check slice index order
-                var index = slice.index_.map(function(i){ return i.value });
-                this.is(basis.array.sortAsObject(index, Number), index);
+                this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
+
+                // set 1 value to every item
+                var items = dataset.getItems().slice(0);
+                items.forEach(function(item){
+                  item.update({ value: 1 });
+                });
+
+                // check correct sorting and all index value must be 1
+                this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
+                this.is(basis.array.create(10, 1), slice.index_.map(function(i){ return i.value }));
+
+                // set 2 value to every item in random order
+                var i = 3;
+                items
+                  .sort(function(a, b){
+                    return a.basisObjectId * ((i += 111) % 19) - b.basisObjectId * ((i += 113) % 13);
+                  })
+                  .forEach(function(item){
+                    item.update({ value: 2 });
+                  });
+
+                // correct sorting and all index value must be 2
+                this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
+                this.is(basis.array.create(10, 2), slice.index_.map(function(i){ return i.value }));
               }
             }
           ]
