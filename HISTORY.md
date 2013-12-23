@@ -1,3 +1,8 @@
+## 0.9.12 (december 23, 2013)
+
+- FIX: hot fix for `basis.router`
+- FIX: `basis.data.dataset.Slice` internal member index corruption when some items has the same value
+
 ## 0.9.11 (december 18, 2013)
 
 - FIX: `AjaxRequest#abort` method
