@@ -1313,7 +1313,7 @@
     }
     while (l <= r);
 
-    return pos + (cmpId ? cmpId < id : cmpValue < value);
+    return pos + (cmpValue == value ? cmpId < id : cmpValue < value);
   }
 
   var SLICE_SOURCEOBJECT_UPDATE = function(sourceObject){
@@ -1323,11 +1323,17 @@
 
     if (newValue !== sourceObjectInfo.value)
     {
-      var oldPos = binarySearchPos(index, sourceObjectInfo);
-      if ((index[oldPos - 1] && index[oldPos - 1] > newValue) || (index[oldPos + 1] && index[oldPos + 1] < newValue))
+      var pos = binarySearchPos(index, sourceObjectInfo);
+      var prev = index[pos - 1];
+      var next = index[pos + 1];
+
+      sourceObjectInfo.value = newValue;
+
+      // update index only if neccessary
+      if ((prev && (prev.value > newValue || (prev.value == newValue && prev.object.basisObjectId > sourceObjectInfo.object.basisObjectId))) ||
+          (next && (next.value < newValue || (next.value == newValue && next.object.basisObjectId < sourceObjectInfo.object.basisObjectId))))
       {
-        index.splice(oldPos, 1);
-        sourceObjectInfo.value = newValue;
+        index.splice(pos, 1);
         index.splice(binarySearchPos(index, sourceObjectInfo), 0, sourceObjectInfo);
         this.applyRule();
       }
