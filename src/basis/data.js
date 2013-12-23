@@ -889,6 +889,68 @@
     }
   });
 
+  //
+  // cast to Value
+  //
+
+  var castValueMap = {};
+  Value.from = function(obj, events, getter){
+    var result;
+
+    if (obj instanceof Emitter)
+    {
+      if (!getter)
+      {
+        getter = events;
+        events = null;
+      }
+
+      var handler = basis.event.createHandler(events, function(object){
+        this.set(getter(object)); // `this` is a token
+      });
+      var id = handler.events.concat(String(getter), obj.basisObjectId).join('_');
+      
+      result = castValueMap[id];
+      if (!result)
+      {
+        getter = basis.getter(getter);
+        result = castValueMap[id] = new Value({
+          value: getter(obj)
+        });
+
+        handler.destroy = function(sender){
+          delete castValueMap[id];
+          this.destroy();
+        };
+
+        obj.addHandler(handler, result);
+      }
+    }
+
+    if (!result)
+    {
+      var id = obj.basisObjectId;
+      var bindingBridge = obj.bindingBridge;
+      if (id && bindingBridge)
+      {
+        result = castValueMap[id];
+        if (!result)
+        {
+          result = castValueMap[id] = new Value({
+            value: bindingBridge.get(obj)
+          });
+
+          bindingBridge.attach(obj, result.set, result);
+        }
+      }
+    }
+
+    if (!result)
+      throw 'Bad object type';
+
+    return result;
+  };
+
 
   //
   // Object
