@@ -1355,6 +1355,10 @@
     * @destructor
     */
     destroy: function(){
+      // inherit
+      AbstractData.prototype.destroy.call(this);
+
+      // remove delegates
       var delegates = this.delegates_;
       if (delegates)
       {
@@ -1366,9 +1370,6 @@
       // drop delegate
       if (this.delegate)
         this.setDelegate();
-
-      // inherit
-      AbstractData.prototype.destroy.call(this);
 
       // drop data & state
       this.data = NULL_OBJECT;
