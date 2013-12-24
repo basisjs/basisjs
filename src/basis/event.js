@@ -175,7 +175,7 @@
     */
     addHandler: function(callbacks, context){
       if (DEVMODE && !callbacks)
-        basis.dev.warn(this.constructor.className + '#addHandler: callbacks is not an object (', callbacks, ')');
+        basis.dev.warn(namespace + '.Emitter#addHandler: callbacks is not an object (', callbacks, ')');
 
       context = context || this;
       
@@ -187,7 +187,7 @@
         {
           if (cursor.callbacks === callbacks && cursor.context === context)
           {
-            basis.dev.warn(this.constructor.className + '#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
+            basis.dev.warn(namespace + '.Emitter#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
             break;
           }
         }
@@ -228,7 +228,7 @@
 
       // handler not found
       if (DEVMODE)
-        basis.dev.warn(this.constructor.className + '#removeHandler: no handler removed');
+        basis.dev.warn(namespace + '.Emitter#removeHandler: no handler removed');
     },
 
    /**
