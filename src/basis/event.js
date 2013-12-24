@@ -227,7 +227,7 @@
         }
 
       // handler not found
-      if (DEVMODE && prev !== this)
+      if (DEVMODE)
         basis.dev.warn(this.constructor.className + '#removeHandler: no handler removed');
     },
 
