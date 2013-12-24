@@ -23,7 +23,7 @@
   var NULL_HANDLER = {};
   var events = {};
   var warnOnDestroy = function(){
-    basis.dev.warn('Object had been destroyed before. Destroy method must not be called more than once.');
+    /** @cut */ basis.dev.warn('Object had been destroyed before. Destroy method must not be called more than once.');
   };
 
 
