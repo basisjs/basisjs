@@ -418,7 +418,14 @@
                 {
                   name: 'switch owner (setSatellite)',
                   test: function(){
-                    var satellite = new basis.dom.wrapper.Node();
+                    var ownerChangedCount = 0;
+                    var satellite = new basis.dom.wrapper.Node({
+                      handler: {
+                        ownerChanged: function(){
+                          ownerChangedCount++;
+                        }
+                      }
+                    });
                     var node1 = new basis.dom.wrapper.Node({
                       satellite: {
                         example: satellite
@@ -428,9 +435,22 @@
 
                     this.is(true, node1.satellite.example === satellite);
                     this.is(true, node1.satellite.example.owner === node1);
+                    this.is(1, ownerChangedCount);
 
-                    node2.setSatellite('somename', node1.satellite.example);
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
 
+                      node2.setSatellite('somename', node1.satellite.example);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }                    
+
+                    this.is(false, warning);
+                    this.is(2, ownerChangedCount);
                     this.is(true, node1.satellite.example === undefined);
                     this.is(true, node2.satellite.somename === satellite);
                     this.is(true, satellite.owner === node2);
@@ -439,7 +459,14 @@
                 {
                   name: 'switch owner (setOwner)',
                   test: function(){
-                    var satellite = new basis.dom.wrapper.Node();
+                    var ownerChangedCount = 0;
+                    var satellite = new basis.dom.wrapper.Node({
+                      handler: {
+                        ownerChanged: function(){
+                          ownerChangedCount++;
+                        }
+                      }
+                    });
                     var node1 = new basis.dom.wrapper.Node({
                       satellite: {
                         example: satellite
@@ -449,11 +476,54 @@
 
                     this.is(true, node1.satellite.example === satellite);
                     this.is(true, node1.satellite.example.owner === node1);
+                    this.is(1, ownerChangedCount);
 
-                    satellite.setOwner(node2);
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
 
+                      satellite.setOwner(node2);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(false, warning);
+                    this.is(2, ownerChangedCount);
                     this.is(true, node1.satellite.example === undefined);
                     this.is(true, satellite.owner === node2);
+                  }
+                },
+                {
+                  name: 'reset owner',
+                  test: function(){
+                    var satellite = new basis.dom.wrapper.Node();
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: satellite
+                      }
+                    });
+
+                    this.is(true, satellite.owner === node);
+                    this.is(true, node.satellite.test === satellite);
+                    
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      satellite.setOwner();
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(false, warning);
+                    this.is(null, satellite.owner);
+                    this.is(undefined, node.satellite.test);
                   }
                 }
               ]

@@ -844,6 +844,8 @@
           for (var name in oldOwner.satellite)
             if (oldOwner.satellite[name] === this)
             {
+              this.owner = null; // set owner to null to prevent double event emit
+                                 // and warnings on double removeHandler
               oldOwner.setSatellite(name, null);
               break;
             }
