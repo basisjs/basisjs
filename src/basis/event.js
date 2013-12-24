@@ -23,7 +23,7 @@
   var NULL_HANDLER = {};
   var events = {};
   var warnOnDestroy = function(){
-    throw 'Object had been destroyed before. Destroy method must not be called more than once.';
+    basis.dev.warn('Object had been destroyed before. Destroy method must not be called more than once.');
   };
 
 
@@ -236,8 +236,7 @@
     */
     destroy: function(){
       // warn on destroy method call (only in debug mode)
-      if (DEVMODE)
-        this.destroy = warnOnDestroy;
+      this.destroy = warnOnDestroy;
 
       // fire object destroy event handlers
       this.emit_destroy();
