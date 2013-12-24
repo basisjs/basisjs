@@ -108,6 +108,7 @@
         this.critical = critical || false;
         this.timer = 0;
         this.tester = Tester;
+        this.warnings = [];
       },
       reset: function(){
         if (TesterState == 'stop')
@@ -119,6 +120,7 @@
           this.complete = false;
           this.error = null;
           this.successCount = 0;
+          this.warnings = [];
 
           var tmp = this.completeTestCount;
           this.completeTestCount = 0;
@@ -133,12 +135,15 @@
       isSuccess: function(){
         return this.testCount == this.successCount;
       },
-      over: function(error){
+      over: function(error, warns, errors){
         this.over     = basis.fn.$null;
         this.empty    = !error && this.testCount == 0;
-        this.result   = !error && this.isSuccess();
+        this.result   = !error && this.isSuccess() && !errors;
         this.error    = error;
         this.complete = true;
+
+        if (warns)
+          this.warnings.push.apply(this.warnings, warns);
 
         var tmp = this.totalTestCount - this.completeTestCount;
         this.completeTestCount = this.totalTestCount;
@@ -150,7 +155,7 @@
       fault: basis.fn.$null,
       progress: function(diff){
         if (diff)
-          this.emit_progress(diff, this.completeTestCount/(this.totalTestCount || 1));
+          this.emit_progress(diff, this.completeTestCount / (this.totalTestCount || 1));
       },
       toString: function(){
         return (this.testType ? this.testType + ' ' : '') + this.name + ': ' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.success ? 'success' : basis.string.format('fault (passed {1} of {0})', this.testCount, this.successCount))));
@@ -159,14 +164,18 @@
         return DOM.createElement('', this.toDOM()).innerHTML;
       },
       toDOM: function(DOMFOR){
-        if (DOMFOR) DOM = DOMFOR;
+        if (DOMFOR)
+          DOM = DOMFOR;
+
+        var res = this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? (!this.warnings.length ? 'success' : 'warnings') : 'fault'))
+
         return DOM.createElement('.' + this.testType, 
                  DOM.createElement('SPAN', this.testType),
                  '\xA0',
                  DOM.createElement('EM', this.name),
                  ': ',
-                 DOM.createElement('SPAN.' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? 'success' : 'fault'))),
-                   this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? 'success' : 'fault'))
+                 DOM.createElement('SPAN.' + res,
+                   res
                  ),
                  this.complete && !this.result ? DOM.createElement('SPAN.comment', basis.string.format(' (passed {1} of {0})', this.testCount, this.successCount)) : null
                );
@@ -259,8 +268,22 @@
       run: function(){
         var error;
 
+        var _warn = basis.dev.warn;
+        var _error = basis.dev.error;
+        var warnMessages = [];
+        var errorMessages = [];
         try {
+          /*basis.dev.warn = function(){
+            warnMessages.push(arguments);
+            _warn.apply(this, arguments);
+          };
+          basis.dev.error = function(){
+            errorMessages.push(arguments);
+            _error.apply(this, arguments);
+          };*/
+
           Tester.result = this;
+
           this.test.call(Tester);
         } catch(e) {
           this.testCount++;
@@ -271,10 +294,13 @@
           error = e;
           this.broken = e.message == 'Wrong answer' || e.message == 'Type mismatch';
         } finally {
+          basis.dev.warn = _warn;
+          basis.dev.error = _error;
+
           if (this.critical && !this.isSuccess())
             error = TestFaultError;
             
-          this.over(error);
+          this.over(error, warnMessages.length ? warnMessages : null, errorMessages.length ? errorMessages : null);
         }
       },
       toDOM: function(){
@@ -362,17 +388,19 @@
 
         // process test result
         this.testcase[self.test.isSuccess() ? 'success' : 'fault']();
-//        this.testcase.complete(this.test.completeTestCount);
 
         // copy test error to testcase if testcase or test is critical
         if (this.test.error && (this.test.critical || this.testcase.critical))
           this.testcase.error = this.test.error;
 
+        if (this.test.warnings)
+          this.testcase.warnings.push.apply(this.testcase.warnings, this.test.warnings);
+
         // run next step, after all event handlers fires
         this.testcase.timer = basis.nextTick(function(){ 
           // run next test
           self.testcase.run(self.nextStep);
-        }, 0);
+        });
 
         // unlink handler
         this.test.removeHandler(testcaseHandler, this);
@@ -393,6 +421,7 @@
         AbstractTest.prototype.init.call(this, name, critical);
 
         this.items = [];
+        this.warnings = [];
         this.totalTestCount = 0;
         for (var i = 0, item, config; config = tests[i]; i++)
         {
@@ -422,6 +451,7 @@
       reset: function(){
         if (TesterState == 'stop')
         {
+          this.warnings = [];
           this.items.forEach(function(item){ item.reset(); });
           AbstractTest.prototype.reset.call(this);
           return true;

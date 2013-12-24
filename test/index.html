@@ -158,6 +158,10 @@
     {
       color: red;
     }
+    .testCase-warnings
+    {
+      color: orange;
+    }
 
     .show_test
     {
@@ -386,6 +390,12 @@
             url: 'data:',
             testFrame: 'satellite:',
             progressBar: 'satellite:',
+            state: {
+              events: 'stateChanged',
+              getter: function(node){
+                return node.state != basis.data.STATE.ERROR && node.state.data != 'warnings' ? String(node.state) : 'warnings';
+              }
+            },
             error: {
               events: 'stateChanged',
               getter: function(node){
@@ -393,7 +403,7 @@
               }
             }
           },
-          satelliteConfig: {
+          satellite: {
             progressBar: {
               hook: {stateChanged: true },
               existsIf: function(owner){
@@ -454,10 +464,13 @@
               this.setState(basis.data.STATE.PROCESSING, progress);
             },
             over: function(sender){
-              if (test.testCount == test.successCount)
+              if (test.testCount == test.successCount && !test.warnings.length)
                 this.setState(basis.data.STATE.READY);
               else
-                this.setState(basis.data.STATE.ERROR, (sender.totalTestCount - sender.totalSuccessTestCount) + ' of ' + sender.totalTestCount + ' fault');
+              {
+                var fault = sender.totalTestCount - sender.totalSuccessTestCount;
+                this.setState(basis.data.STATE.ERROR, fault ? fault + ' of ' + sender.totalTestCount + ' fault' : 'warnings');
+              }
             }
           }, currentTestCase);
 

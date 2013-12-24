@@ -92,7 +92,8 @@
   .TestCase SPAN.success,
   .TestCase SPAN.fault,
   .TestCase SPAN.uncomplete,
-  .TestCase SPAN.empty
+  .TestCase SPAN.empty,
+  .TestCase SPAN.warnings
   {
     font-weight: bold;
     text-transform: uppercase;
@@ -113,6 +114,10 @@
   .TestCase SPAN.empty
   {
     color: #909090;
+  }
+  .TestCase SPAN.warnings
+  {
+    color: #A08000;
   }
 
   .Test DIV.code
