@@ -209,71 +209,75 @@
       var CSS = basis.cssom;
 
       var testCases = [
-        { 
+        {
           url: 'spec/core/ext_and_fix.html',
           name: 'Buildin Classes/Objects extensions & fix'
-        }, 
-        { 
+        },
+        {
           url: 'spec/core/getter.html',
           name: 'basis.getter'
-        }, 
-        { 
+        },
+        {
           url: 'spec/date.html',
           name: 'basis.date'
-        }, 
-        { 
+        },
+        {
           url: 'spec/dom.html',
           name: 'basis.dom'
         },
-        { 
+        {
           url: 'spec/stylesheet.html',
           name: 'basis.cssom.stylesheet'
         },
-        { 
+        {
           url: 'spec/dom_wrapper.html',
           name: 'basis.dom.wrapper'
-        }, 
-        { 
+        },
+        {
           url: 'spec/crypt.html',
           name: 'basis.crypt'
-        }, 
-        { 
-          url: 'spec/browser.html',
+        },
+        {
+          url: 'spec/ua.html',
           name: 'basis.ua'
         },
-        { 
+        {
           url: 'spec/router.html',
           name: 'basis.router'
-        },         
-        { 
+        },
+        {
           url: 'spec/l10n.html',
           name: 'basis.l10n'
         },
-        { 
+        {
+          url: 'spec/data/value.html',
+          name: 'basis.data.Value'
+        },
+        {
           url: 'spec/data/object.html',
           name: 'basis.data.Object'
         },
-        { 
+        {
           url: 'spec/data/dataset.html',
-          name: 'Datasets'
+          name: 'basis.data datasets'
         },
-        { 
+        {
           url: 'spec/data/vector.html',
           name: 'basis.data.vector'
-        }, 
-        { 
+        },
+        {
           url: 'spec/data.value/property.html',
           name: 'basis.data.value'
-        }, 
-        { 
-          url: 'spec/entity/entity.html',
+        },
+        {
+          url: 'spec/entity.html',
           name: 'basis.entity'
         },
-        { 
+        {
           url: 'spec/layout.html',
           name: 'basis.layout'
         },
-        { 
+        {
           url: 'spec/template.html',
           name: 'basis.template'
         }
@@ -303,7 +307,7 @@
           itemsChanged: function(sender, delta){
             if (delta.inserted)
               delta.inserted.forEach(function(item){
-                item.update({ test: null });
+                item.update({test: null });
                 item.setState(basis.data.STATE.PROCESSING);
               });
           }
@@ -391,7 +395,7 @@
           },
           satelliteConfig: {
             progressBar: {
-              hook: { stateChanged: true },
+              hook: {stateChanged: true },
               existsIf: function(owner){
                 return owner.state == basis.data.STATE.PROCESSING;
               },
@@ -412,7 +416,7 @@
               })
             },
             testFrame: {
-              hook: { stateChanged: true },
+              hook: {stateChanged: true },
               existsIf: function(owner){
                 return owner.state == basis.data.STATE.PROCESSING;
               },
