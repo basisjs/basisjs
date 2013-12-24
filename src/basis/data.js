@@ -872,14 +872,13 @@
     * @destructor
     */
     destroy: function(){
-      var cursor = this;
+      AbstractData.prototype.destroy.call(this);
 
       // remove event handlers from all basis.event.Emitter instances
+      var cursor = this;
       while (cursor = cursor.links_)
-        if (cursor.object instanceof Emitter)
-          cursor.object.removeHandler(VALUE_EMMITER_HANDLER, cursor);
-
-      AbstractData.prototype.destroy.call(this);
+        if (cursor.context instanceof Emitter)
+          cursor.context.removeHandler(VALUE_EMMITER_HANDLER, cursor);
 
       this.proxy = null;
       this.initValue = null;

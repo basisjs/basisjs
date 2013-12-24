@@ -127,8 +127,28 @@
                 p.link(o, o.setXXX);
                 p.link(o, function(value){ this.xxx = value });
                 this.is(true, p.links_.context === o);
+              }
+            },
+            {
+              name: 'linked value and emitter should correct reset links',
+              test: function(){
+                // destroy linked object
+                var p = new Property(1);
+                var o = new basis.data.Object();
+                p.link(o, function(){});
+                this.is(true, !!o.handler);
+                this.is(true, !!p.links_);
 
                 o.destroy();
+                this.is(null, o.handler);
+                this.is(null, p.links_);
+
+                // destroy value with link to emitter
+                var p = new Property(1);
+                var o = new basis.data.Object();
+                p.link(o, function(){});
+
+                p.destroy();
                 this.is(null, o.handler);
                 this.is(null, p.links_);
               }
