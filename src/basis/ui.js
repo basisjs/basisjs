@@ -468,25 +468,34 @@
       */
       setTemplate: function(template){
         var curSwitcher = this.templateSwitcher_;
+        var switcher;
 
         // dance with template switcher
         if (template instanceof TemplateSwitcher)
         {
-          var switcher = template;
-          this.templateSwitcher_ = switcher;
-
+          switcher = template;
           template = switcher.resolve(this);
-
-          if (!curSwitcher)
-            this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
         }
-        
+
         // check template for correct class instance
         if (template instanceof HtmlTemplate == false)
           template = null;
 
+        if (!template)
+        {
+          /** @cut */ basis.dev.warn('basis.ui.Node#setTemplate: set null to template possible only on node destroy');
+          return;
+        }
+
+        if (switcher)
+        {
+          this.templateSwitcher_ = switcher;
+          if (!curSwitcher)
+            this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
+        }
+
         // drop template switcher if no template, or new template is not a result of switcher resolving
-        if (curSwitcher && (!template || curSwitcher.resolve(this) !== template))
+        if (curSwitcher && curSwitcher.resolve(this) !== template)
         {
           this.templateSwitcher_ = null;
           this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
@@ -495,26 +504,9 @@
         // apply new value
         if (this.template !== template)
         {
-          var oldTemplate = this.template;
-
           // set new template
           this.template = template;
-
-          if (template)
-            this.templateSync();
-          else
-          {
-            var oldElement = this.element;
-            oldTemplate.clearInstance(this.tmpl);
-
-            this.tmpl = null;
-            this.element = null;
-            this.childNodesElement = null;
-
-            var parentNode = oldElement && oldElement.parentNode;
-            if (parentNode && parentNode.nodeType == 1) // 1 – Element
-              parentNode.removeChild(oldElement);
-          }
+          this.templateSync();
         }
       },
 
@@ -592,9 +584,31 @@
       * @inheritDoc
       */
       destroy: function(){
+        var template = this.template;
+        var element = this.element;
+
+        // remove template switcher handler
+        if (this.templateSwitcher_)
+        {
+          this.templateSwitcher_ = null;
+          this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
+        }
+
+        // destroy template instance
+        template.clearInstance(this.tmpl);
+
+        // inherit
         super_.destroy.call(this);
 
-        this.setTemplate();
+        // reset DOM references
+        this.tmpl = null;
+        this.element = null;
+        this.childNodesElement = null;
+
+        // remove DOM node from it's parent, if parent is DOM element
+        var parentNode = element && element.parentNode;
+        if (parentNode && parentNode.nodeType == 1) // 1 – Element
+          parentNode.removeChild(element);
       }
     };
   };
@@ -674,6 +688,8 @@
         var domFragment = document.createDocumentFragment();
         var target = this.grouping || this;
         var container = target.childNodesElement;
+
+        // set child nodes element points to DOM fragment
         target.childNodesElement = domFragment;
 
         // call inherit method
@@ -686,11 +702,8 @@
         // flush dom fragment nodes into container
         container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
 
-        // restore childNodesElement, but only if childNodesElement isn't changed during children insert,
-        // as example, by template switching on childNodesModified
-        // TODO: find better solution, movement template creation into postInit can solve that problem on init
-        if (target.childNodesElement === domFragment)
-          target.childNodesElement = container;
+        // restore childNodesElement
+        target.childNodesElement = container;
       }
     };
   };
