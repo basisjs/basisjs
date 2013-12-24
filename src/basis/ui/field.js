@@ -224,7 +224,7 @@
       {}
     ),
 
-    satelliteConfig: {
+    satellite: {
       example: {
         hook: {
           exampleChanged: true
@@ -557,7 +557,7 @@
       }
     },
 
-    satelliteConfig: {
+    satellite: {
       counter: {
         hook: {
           maxLengthChanged: true
@@ -937,7 +937,7 @@
       }
     },
 
-    satelliteConfig: {
+    satellite: {
       hiddenField: {
         existsIf: function(owner){
           return owner.name;

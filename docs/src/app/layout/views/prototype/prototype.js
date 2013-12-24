@@ -47,7 +47,7 @@
       }
     },
 
-    satelliteConfig: {
+    satellite: {
       jsdocs: {
         delegate: function(owner){
           return app.core.JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
@@ -242,7 +242,7 @@
       }
     },
 
-    satelliteConfig: {
+    satellite: {
       viewOptions: {
         instanceOf: app.ext.view.ViewOptions,
         config: function(owner){

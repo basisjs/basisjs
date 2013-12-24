@@ -109,7 +109,7 @@ basis.ready(function(){
         }
       },
 
-      satelliteConfig: {
+      satellite: {
         tagList: {
           existsIf: function(owner){
             return owner.data.tags && owner.data.tags.length;

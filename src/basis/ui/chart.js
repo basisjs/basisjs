@@ -1448,7 +1448,7 @@
       lineJoin: 'bevel'
     },
 
-    satelliteConfig: {
+    satellite: {
       chartViewer: {
         instanceOf: ChartViewer
       },
@@ -1681,7 +1681,7 @@
     bars: null,
     keyValuesOnEdges: false,
 
-    satelliteConfig: {
+    satellite: {
       chartViewer: BarChartViewer
     },
 

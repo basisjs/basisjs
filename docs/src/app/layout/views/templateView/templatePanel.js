@@ -77,7 +77,7 @@
         }
       },
 
-      satelliteConfig: {
+      satellite: {
         source: {
           hook: { toggle: true },
           existsIf: basis.getter('expanded'),
@@ -156,7 +156,7 @@
         }
       },
 
-      satelliteConfig: {
+      satellite: {
         source: {
           hook: { toggle: true },
           existsIf: basis.getter('expanded'),
@@ -239,7 +239,7 @@
       this.emit_templateViewChanged(oldTemplate);
     },
 
-    satelliteConfig: {
+    satellite: {
       bindings: {
         hook: { templateViewChanged: true },
         existsIf: basis.getter('templateView'),

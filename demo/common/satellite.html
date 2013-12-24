@@ -239,7 +239,7 @@
           }
         },
 
-        satelliteConfig: {
+        satellite: {
           group: {
             existsIf: basis.getter('data.group'),
             delegate: basis.getter('data.group'),
@@ -275,7 +275,7 @@
           titleEditor: 'satellite:'
         },
 
-        satelliteConfig: {
+        satellite: {
           titleEditor: {
             instanceOf: basis.ui.field.Text.subclass({
               autoDelegate: true,

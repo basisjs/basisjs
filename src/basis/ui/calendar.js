@@ -628,7 +628,7 @@
       }
     },
 
-    satelliteConfig: {
+    satellite: {
       shadowTabs: basis.ui.ShadowNodeList.subclass({
         className: namespace + '.ShadowTabs',
         getChildNodesElement: function(host){

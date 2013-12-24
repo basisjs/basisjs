@@ -681,7 +681,7 @@
       }
     },
 
-    satelliteConfig: {
+    satellite: {
       horizontalScrollbar: {
         instanceOf: HorizontalScrollbar,
         existsIf: function(object){

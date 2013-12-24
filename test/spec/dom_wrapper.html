@@ -525,6 +525,265 @@
                     this.is(null, satellite.owner);
                     this.is(undefined, node.satellite.test);
                   }
+                },
+                {
+                  name: 'destroy satellite on owner destroy',
+                  test: function(){
+                    var satellite = new basis.dom.wrapper.Node();
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: satellite
+                      }
+                    });
+
+                    this.is(true, satellite.owner === node);
+                    this.is(true, node.satellite.test === satellite);
+
+                    var satelliteDestroyed = false;
+                    satellite.addHandler({
+                      destroy: function(){
+                        satelliteDestroyed = true;
+                      }
+                    });
+
+                    node.destroy();
+                    
+                    this.is(true, satelliteDestroyed);
+                    this.is(null, node.satellite);
+                    this.is(null, satellite.owner);
+                  }
+                },
+                {
+                  name: 'reset owner for objects that isn\'t a satellite',
+                  test: function(){
+                    var nodeDestroyed = false;
+                    var ownerDestroyed = false;
+                    var owner = new basis.dom.wrapper.Node({
+                      handler: {
+                        destroy: function(){
+                          ownerDestroyed = true;
+                        }
+                      }
+                    });
+                    var node = new basis.dom.wrapper.Node({
+                      owner: owner,
+                      handler: {
+                        destroy: function(){
+                          nodeDestroyed = true;
+                        }
+                      }
+                    });
+
+                    this.is(true, node.owner === owner);
+
+                    owner.destroy();
+                    
+                    this.is(false, nodeDestroyed);
+                    this.is(true, ownerDestroyed);
+                    this.is(null, node.owner);
+                  }
+                },
+                {
+                  name: 'auto-create satellite (empty config)',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {}
+                      }
+                    });
+
+                    this.is(true, !!node.satellite.test);
+                    this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+                    this.is(true, node.satellite.test.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-create satellite with existsIf',
+                  test: function(){
+                    // use existsIf config
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          existsIf: 'data.value'
+                        }
+                      }
+                    });
+
+                    // must not exists
+                    this.is(undefined, node.satellite.test);
+                    
+                    // must be created
+                    node.update({ value: true });
+                    this.is(true, !!node.satellite.test);
+                    this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+                    this.is(true, node.satellite.test.owner === node);
+
+                    // must be destroyed
+                    var satelliteDestroyed = false;
+                    node.satellite.test.addHandler({
+                      destroy: function(){
+                        satelliteDestroyed = true;
+                      }
+                    });
+                    node.update({ value: false });
+                    this.is(undefined, node.satellite.test);
+                    this.is(true, satelliteDestroyed);
+                  }
+                },
+                {
+                  name: 'auto-create satellite can\'t be replaced',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {}
+                      }
+                    });
+
+                    // auto-create satellite can't be replaced
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      node.setSatellite('test', new basis.dom.wrapper.AbstractNode);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, node.satellite.test === satellite);
+                  }
+                },
+                {
+                  name: 'auto-create satellite can\'t be replaced even if not created',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          existsIf: basis.fn.$false
+                        }
+                      }
+                    });
+
+                    // auto-create satellite can't be replaced
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      node.setSatellite('test', new basis.dom.wrapper.AbstractNode);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, !node.satellite.test);
+                  }
+                },
+                {
+                  name: 'auto-create satellite can\'t change owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {}
+                      }
+                    });
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      satellite.setOwner()
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, node.satellite.test.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-create satellite can\'t be destroyed',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {}
+                      }
+                    });
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      satellite.destroy();
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, node.satellite.test.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-create satellite must be destroyed with owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        autoCreateSatellite: {},
+                        regularSatellite: new basis.dom.wrapper.Node()
+                      }
+                    });
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var autoCreateSatellite = node.satellite.autoCreateSatellite;
+                    var autoCreateSatelliteDestroyed = false;
+                    var regularSatellite = node.satellite.autoCreateSatellite;
+                    var regularSatelliteDestroyed = false;
+                    
+                    autoCreateSatellite.addHandler({
+                      destroy: function(){
+                        autoCreateSatelliteDestroyed = true;
+                      }
+                    });
+                    regularSatellite.addHandler({
+                      destroy: function(){
+                        regularSatelliteDestroyed = true;
+                      }
+                    });
+
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      node.destroy();
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(false, warning); // no warnings
+                    this.is(true, autoCreateSatelliteDestroyed);
+                    this.is(true, regularSatelliteDestroyed);
+                    this.is(null, node.satellite);
+                    this.is(null, autoCreateSatellite.owner);
+                    this.is(null, regularSatellite.owner);
+                  }
                 }
               ]
             },

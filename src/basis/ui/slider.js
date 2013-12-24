@@ -270,7 +270,7 @@
    /**
     * @inheritDoc
     */
-    satelliteConfig: {
+    satellite: {
       marks: UINode.subclass({
         className: namespace + '.MarkLayers',
         template: templates.MarkLayers,

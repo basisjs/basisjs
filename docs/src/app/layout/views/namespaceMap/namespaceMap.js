@@ -69,7 +69,7 @@
       classMap: 'satellite:'
     },
 
-    satelliteConfig: {
+    satellite: {
       classMap: {
         instanceOf: basis.ui.Node.subclass({
           template: '<ul class="firstLevel"/>',

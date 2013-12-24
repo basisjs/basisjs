@@ -13,7 +13,7 @@
       sourceCode: 'satellite:'
     },
 
-    satelliteConfig: {
+    satellite: {
       sourceCode: basis.ui.code.SourceCode.subclass({
         autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
         lang: 'js',

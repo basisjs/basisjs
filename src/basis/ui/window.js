@@ -164,7 +164,7 @@
       }
     }),
 
-    satelliteConfig: {
+    satellite: {
       titleButtons: {
         existsIf: function(owner){
           return !owner.titleButton || owner.titleButton.close !== false;

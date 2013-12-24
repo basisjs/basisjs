@@ -14,7 +14,7 @@
       docsView: 'satellite:content'
     },
 
-    satelliteConfig: {
+    satellite: {
       content: {
         existsIf: basis.getter('data.fullPath'),
         delegate: function(owner){

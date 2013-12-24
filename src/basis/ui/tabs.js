@@ -195,7 +195,7 @@
 
     childClass: TabSheet,
 
-    satelliteConfig: {
+    satellite: {
       shadowPages: basis.ui.ShadowNodeList.subclass({
         className: namespace + '.ShadowPages',
         getChildNodesElement: function(host){
