@@ -247,7 +247,7 @@
         },
         satellite: {
           indexes: {
-            hook: { rootChanged: true },
+            events: 'rootChanged',
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },

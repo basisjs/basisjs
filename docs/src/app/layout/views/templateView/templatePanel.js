@@ -79,7 +79,7 @@
 
       satellite: {
         source: {
-          hook: { toggle: true },
+          events: 'toggle',
           existsIf: basis.getter('expanded'),
           instanceOf: basis.ui.code.SourceCode.subclass({
             autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
@@ -158,7 +158,7 @@
 
       satellite: {
         source: {
-          hook: { toggle: true },
+          events: 'toggle',
           existsIf: basis.getter('expanded'),
           instanceOf: basis.ui.code.SourceCode.subclass({
             autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
@@ -241,13 +241,13 @@
 
     satellite: {
       bindings: {
-        hook: { templateViewChanged: true },
+        events: 'templateViewChanged',
         existsIf: basis.getter('templateView'),
         delegate: basis.fn.$self,
         instanceOf: BindingsPanel
       },
       actions: {
-        hook: { templateViewChanged: true },
+        events: 'templateViewChanged',
         existsIf: basis.getter('templateView'),
         delegate: basis.fn.$self,
         instanceOf: ActionsPanel

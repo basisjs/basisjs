@@ -405,7 +405,7 @@
           },
           satellite: {
             progressBar: {
-              hook: {stateChanged: true },
+              events: 'stateChanged',
               existsIf: function(owner){
                 return owner.state == basis.data.STATE.PROCESSING;
               },
@@ -426,7 +426,7 @@
               })
             },
             testFrame: {
-              hook: {stateChanged: true },
+              events: 'stateChanged',
               existsIf: function(owner){
                 return owner.state == basis.data.STATE.PROCESSING;
               },

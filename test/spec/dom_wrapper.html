@@ -631,6 +631,90 @@
                   }
                 },
                 {
+                  name: 'auto-create satellite with existsIf and custom events',
+                  test: function(){
+                    // events as string
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          events: 'stateChanged activeChanged',
+                          existsIf: 'data.value'
+                        }
+                      }
+                    });
+
+                    // must not exists
+                    this.is(undefined, node.satellite.test);
+                    
+                    // must not be created (no changes on update event)
+                    node.update({ value: true });
+                    this.is(undefined, node.satellite.test);
+
+                    // must be created
+                    node.setState(basis.data.STATE.READY, '1');
+                    this.is(true, !!node.satellite.test);
+                    this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+                    this.is(true, node.satellite.test.owner === node);
+
+                    // must not be destroyed (no changes on update event)
+                    var satelliteDestroyed = false;
+                    node.satellite.test.addHandler({
+                      destroy: function(){
+                        satelliteDestroyed = true;
+                      }
+                    });
+                    node.update({ value: false });
+                    this.is(true, !!node.satellite.test);
+                    this.is(true, node.satellite.test.owner === node);
+
+                    // must be destroyed
+                    node.setActive(!node.active);
+                    this.is(undefined, node.satellite.test);
+                    this.is(true, satelliteDestroyed);
+
+                    /////////////////////////////////////////////
+
+                    // events as array
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          events: ['stateChanged', 'activeChanged'],
+                          existsIf: 'data.value'
+                        }
+                      }
+                    });
+
+                    // must not exists
+                    this.is(undefined, node.satellite.test);
+                    
+                    // must not be created (no changes on update event)
+                    node.update({ value: true });
+                    this.is(undefined, node.satellite.test);
+
+                    // must be created
+                    node.setState(basis.data.STATE.READY, '1');
+                    this.is(true, !!node.satellite.test);
+                    this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+                    this.is(true, node.satellite.test.owner === node);
+
+                    // must not be destroyed (no changes on update event)
+                    var satelliteDestroyed = false;
+                    node.satellite.test.addHandler({
+                      destroy: function(){
+                        satelliteDestroyed = true;
+                      }
+                    });
+                    node.update({ value: false });
+                    this.is(true, !!node.satellite.test);
+                    this.is(true, node.satellite.test.owner === node);
+
+                    // must be destroyed
+                    node.setActive(!node.active);
+                    this.is(undefined, node.satellite.test);
+                    this.is(true, satelliteDestroyed);
+                  }
+                },
+                {
                   name: 'auto-create satellite can\'t be replaced',
                   test: function(){
                     var node = new basis.dom.wrapper.Node({

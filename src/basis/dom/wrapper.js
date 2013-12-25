@@ -315,8 +315,8 @@
 
           if (typeof events == 'string')
           {
-            events.split(/\s+/);
             var handler = {};
+            events = events.split(/\s+/);
 
             for (var i = 0, eventName; eventName = events[i]; i++)
             {
@@ -348,17 +348,13 @@
   var NULL_SATELLITE = Class.customExtendProperty({}, processSatelliteConfig);
 
   // satellite update handler
-  var SATELLITE_UPDATE = function(){
+  var SATELLITE_UPDATE = function(owner){
     // this -> {
-    //   owner: owner,
-    //   context: { 
-    //     name: satelliteName,
-    //     config: satelliteConfig
-    //   }
+    //   name: satelliteName,
+    //   config: satelliteConfig
     // }
-    var owner = this.owner;
-    var name = this.context.name;
-    var config = this.context.config;
+    var name = this.name;
+    var config = this.config;
 
     var exists = !config.existsIf || config.existsIf(owner);
     var satellite = owner.satellite[name];
@@ -766,16 +762,11 @@
             else
             {
               // auto-create satellite
-              var context = {
-                context: satellite,
-                owner: this
-              };
-
               if (satellite.handler)
-                this.addHandler(satellite.handler, context);
+                this.addHandler(satellite.handler, satellite);
 
               this.satellite.__auto__[name] = null;
-              SATELLITE_UPDATE.call(context);
+              SATELLITE_UPDATE.call(satellite, this);
             }
           }
         }

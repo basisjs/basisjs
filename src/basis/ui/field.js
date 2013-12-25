@@ -226,9 +226,7 @@
 
     satellite: {
       example: {
-        hook: {
-          exampleChanged: true
-        },
+        events: 'exampleChanged',
         existsIf: function(owner){
           return owner.example;
         },
@@ -248,9 +246,7 @@
         })
       },
       description: {
-        hook: {
-          descriptionChanged: true
-        },
+        events: 'descriptionChanged',
         existsIf: function(owner){
           return owner.description;
         },
@@ -559,9 +555,7 @@
 
     satellite: {
       counter: {
-        hook: {
-          maxLengthChanged: true
-        },
+        events: 'maxLengthChanged',
         existsIf: function(owner){
           return owner.maxLength > 0;
         },
