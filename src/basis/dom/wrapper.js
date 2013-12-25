@@ -66,11 +66,15 @@
   var childNodesDatasetMap = {};
 
   function warnOnDataSourceItemNodeDestoy(){
-    /** @cut */ basis.dev.warn(namespace + ': node can\'t be destroed as representing dataSource item, destroy delegate item or remove it from dataSource first');
+    /** @cut */ basis.dev.warn(namespace + ': node can\'t be destroyed as representing dataSource item, destroy delegate item or remove it from dataSource first');
+  }
+
+  function warnOnAutoSatelliteOwnerChange(){
+    /** @cut */ basis.dev.warn(namespace + ': satellite can\'t change owner as it auto-satellite');
   }
 
   function warnOnAutoSatelliteDestoy(){
-    /** @cut */ basis.dev.warn(namespace + ': satellite can\'t be destroed as it auto-create satellite, and could be destroyed on owner destroy');
+    /** @cut */ basis.dev.warn(namespace + ': satellite can\'t be destroyed as it auto-create satellite, and could be destroyed on owner destroy');
   }
 
   function lockDataSourceItemNode(node){
@@ -269,14 +273,28 @@
         isSatelliteConfig: true
       };
 
-      var instanceClass = AbstractNode;
+      var instanceClass;
 
       for (var key in value)
         switch (key)
         {
+          case 'instance':
+            if (value[key] instanceof AbstractNode)
+              config[key] = value[key];
+            else
+            {
+              /** @cut */ basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
+            }
+
+            break;
+
           case 'instanceOf':
             if (Class.isClass(value[key]) && value[key].isSubclassOf(AbstractNode))
               instanceClass = value[key];
+            else
+            {
+              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` value in satellite config must be a subclass of basis.dom.wrapper.AbstractNode');
+            }
             break;
 
           case 'existsIf':
@@ -287,7 +305,13 @@
             break;
         }
 
-      config.instanceOf = instanceClass;        
+      if (!config.instance)
+        config.instanceOf = instanceClass || AbstractNode;
+      else
+      {
+        /** @cut */ if (instanceClass)
+        /** @cut */   basis.dev.warn(namespace + ': `instanceOf` can\'t be set with `instance` value in satellite config, value ignored');
+      }
 
       if (handlerRequired)
       {
@@ -374,34 +398,52 @@
       }
       else
       {
-        var satelliteConfig = (
-          typeof config.config == 'function'
-            ? config.config(owner)
-            : config.config
-        ) || {};
+        satellite = config.instance;
 
-        satelliteConfig.owner = owner;
+        if (!satellite)
+        {
+          // create new satellite instance
+          var satelliteConfig = (
+            typeof config.config == 'function'
+              ? config.config(owner)
+              : config.config
+          ) || {};
+
+          satelliteConfig.owner = owner;
+
+          satellite = new config.instanceOf(satelliteConfig);
+          satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
+        }
 
         if (config.delegate)
-          satelliteConfig.delegate = config.delegate(owner);
+          satellite.setDelegate(config.delegate(owner));
 
         if (config.dataSource)
-          satelliteConfig.dataSource = config.dataSource(owner);
+          satellite.setDataSource(config.dataSource(owner));
 
-        satellite = new config.instanceOf(satelliteConfig);
         owner.satellite.__auto__[name].instance = satellite;
         owner.setSatellite(name, satellite, true);
-
-        satellite.destroy = warnOnAutoSatelliteDestoy;      // auto-create satellite marker, lock destroy method invocation
       }
     }
     else
     {
       if (satellite)
       {
+        if (config.instance)
+        {
+          satellite.setDelegate();
+          satellite.setDataSource();
+        }
+
         owner.satellite.__auto__[name].instance = null;
         owner.setSatellite(name, null, true);
       }
+    }
+  };
+
+  var AUTO_SATELLITE_INSTANCE_HANDLER = {
+    destroy: function(){
+      this.owner.setSatellite(this.name, null);
     }
   };
 
@@ -857,19 +899,25 @@
       if (owner && this.parentNode)
         throw EXCEPTION_PARENTNODE_OWNER_CONFLICT;
 
-      if (this.destroy === warnOnAutoSatelliteDestoy)
-      {
-        /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change it\'s owner');
-        return;
-      }
-
       var oldOwner = this.owner;
       if (oldOwner !== owner)
       {
         var listenHandler = this.listen.owner;
-        
+
+        // if (this.destroy === warnOnAutoSatelliteDestoy)
+        // {
+        //   /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change it\'s owner');
+        //   return;
+        // }
+
         if (oldOwner)
         {
+          if (this.ownerSatelliteName && oldOwner.satellite.__auto__ && this.ownerSatelliteName in oldOwner.satellite.__auto__)
+          {
+            /** @cut */ basis.dev.warn(namespace + ': auto-satellite can\'t change it\'s owner');
+            return;
+          }
+
           if (listenHandler)
             oldOwner.removeHandler(listenHandler, this);
 
@@ -905,23 +953,41 @@
       var preserveAuto = autoSet && autoConfig;
       
       if (preserveAuto)
+      {
         satellite = autoConfig.instance;
+        if (autoConfig.config.instance)
+        {
+          if (satellite)
+            delete autoConfig.config.instance.setOwner;
+        }
+      }
       else
+      {
         satellite = processSatelliteConfig(satellite);
 
-      if (oldSatellite !== satellite)
-      {
-        var satelliteListen = this.listen.satellite;
+        if (satellite && satellite.owner && auto && satellite.ownerSatelliteName && auto[satellite.ownerSatelliteName])
+        {
+          /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change name inside owner');
+          return;
+        }
 
         // if setSatellite was called not on auto-satellite update
-        if (!preserveAuto && autoConfig)
+        if (autoConfig)
         {
           // remove old auto-config
           delete auto[name];
 
+          if (autoConfig.config.instance)
+            autoConfig.config.instance.removeHandler(AUTO_SATELLITE_INSTANCE_HANDLER, autoConfig);
+
           if (autoConfig.config.handler)
             this.removeHandler(autoConfig.config.handler, autoConfig);
         }
+      }
+
+      if (oldSatellite !== satellite)
+      {
+        var satelliteListen = this.listen.satellite;
 
         if (oldSatellite)
         {
@@ -929,12 +995,10 @@
           delete this.satellite[name];
           oldSatellite.ownerSatelliteName = null;
 
-          if (autoConfig)
+          if (autoConfig && oldSatellite.destroy === warnOnAutoSatelliteDestoy)
           {
-            // auto satellite
-            if (oldSatellite.destroy === warnOnAutoSatelliteDestoy)
-              delete oldSatellite.destroy;
-            
+            // auto create satellite must be destroyed
+            delete oldSatellite.destroy;
             oldSatellite.destroy();
           }
           else
@@ -945,6 +1009,9 @@
 
             oldSatellite.setOwner(null);
           }
+
+          if (preserveAuto && !satellite && autoConfig.config.instance)
+            autoConfig.config.instance.setOwner = warnOnAutoSatelliteOwnerChange;
         }
 
         if (satellite)
@@ -954,6 +1021,7 @@
           {
             // auto-create satellite
             var autoConfig = {
+              owner: this,
               name: name,
               config: satellite,
               instance: null
@@ -962,6 +1030,12 @@
             // auto-create satellite
             if (satellite.handler)
               this.addHandler(satellite.handler, autoConfig);
+
+            if (satellite.instance)
+            {
+              satellite.instance.addHandler(AUTO_SATELLITE_INSTANCE_HANDLER, autoConfig);
+              satellite.instance.setOwner = warnOnAutoSatelliteOwnerChange;
+            }
 
             // create auto
             if (!auto)
@@ -975,12 +1049,23 @@
 
             return;
           }
-          
-          // link new satellite
-          satellite.setOwner(this);
 
-          if (satelliteListen)
-            satellite.addHandler(satelliteListen, this);
+          // link new satellite
+          if (satellite.owner !== this)
+          {
+            satellite.setOwner(this);
+            if (satelliteListen)
+              satellite.addHandler(satelliteListen, this);
+          }
+          else
+          {
+            // move satellite inside owner
+            if (satellite.ownerSatelliteName)
+            {
+              delete this.satellite[satellite.ownerSatelliteName];
+              this.emit_satelliteChanged(satellite.ownerSatelliteName, satellite);
+            }
+          }
 
           this.satellite[name] = satellite;
           satellite.ownerSatelliteName = name;
@@ -1043,22 +1128,25 @@
       var satellites = this.satellite;
       if (satellites)
       {
-        satellites.__auto__ = {};
+        var auto = satellites.__auto__;
+        delete satellites.__auto__;
+
+        for (var name in auto)
+          if (auto[name].config.instance && !auto[name].instance)
+            auto[name].config.instance.destroy();
 
         for (var name in satellites)
-          if (name != '__auto__')
-          {
-            var satellite = satellites[name];
+        {
+          var satellite = satellites[name];
 
-            // drop owner to avoid events and correct auto-satellite remove
-            satellite.owner = null;
+          // drop owner to avoid events and correct auto-satellite remove
+          satellite.owner = null;
 
-            // drop owner to avoid events and correct auto-satellite remove
-            if (satellite.destroy === warnOnAutoSatelliteDestoy)
-              delete satellite.destroy;
+          if (satellite.destroy === warnOnAutoSatelliteDestoy)
+            delete satellite.destroy;
 
-            satellite.destroy();
-          }
+          satellite.destroy();
+        }
 
         this.satellite = null;
       }

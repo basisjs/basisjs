@@ -527,6 +527,47 @@
                   }
                 },
                 {
+                  name: 'change satellite name on the same owner should not trigger ownerChanged event',
+                  test: function(){
+                    var ownerChangedEventCount = 0;
+                    var satelliteChangedEventCount = 0;
+                    var satellite = new basis.dom.wrapper.Node({
+                      handler: {
+                        ownerChanged: function(){
+                          ownerChangedEventCount++;
+                        }
+                      }
+                    });
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: satellite
+                      },
+                      listen: {
+                        satellite: {
+                          // just for add/remove listen
+                        }
+                      },
+                      handler: {
+                        satelliteChanged: function(){
+                          satelliteChangedEventCount++;
+                        }
+                      }
+                    });
+
+                    this.is(true, satellite.owner === node);
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(1, satelliteChangedEventCount);
+                    this.is(1, ownerChangedEventCount);
+                    
+                    node.setSatellite('newName', satellite);
+                    this.is(true, satellite.owner === node);
+                    this.is(undefined, node.satellite.test);
+                    this.is(true, node.satellite.newName === satellite);
+                    this.is(3, satelliteChangedEventCount);
+                    this.is(1, ownerChangedEventCount);
+                  }
+                },
+                {
                   name: 'destroy satellite on owner destroy',
                   test: function(){
                     var satellite = new basis.dom.wrapper.Node();
@@ -599,6 +640,24 @@
                   }
                 },
                 {
+                  name: 'auto-satellite with instance',
+                  test: function(){
+                    var satellite = new basis.dom.wrapper.Node();
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    this.is(true, 'test' in node.satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, node.satellite.test.owner === node);
+                  }
+                },
+                {
                   name: 'auto-create satellite with existsIf',
                   test: function(){
                     // use existsIf config
@@ -629,6 +688,242 @@
                     node.update({ value: false });
                     this.is(undefined, node.satellite.test);
                     this.is(true, satelliteDestroyed);
+                  }
+                },
+                {
+                  name: 'auto-satellite with instance and existsIf',
+                  test: function(){
+                    // use existsIf config
+                    var satelliteDestroyed = false;
+                    var satellite = new basis.dom.wrapper.Node({
+                      handler: {
+                        destroy: function(){
+                          satelliteDestroyed = true;
+                        }
+                      }
+                    })
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          existsIf: 'data.value',
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    // must not exists
+                    this.is(false, 'test' in node.satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(undefined, node.satellite.test);
+                    this.is(false, satelliteDestroyed);
+
+                    // must be created
+                    node.update({ value: true });
+                    this.is(true, 'test' in node.satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, satellite.owner === node);
+
+                    // must not be destroyed
+                    node.update({ value: false });
+                    this.is(undefined, node.satellite.test);
+                    this.is(false, satelliteDestroyed);
+                    this.is(false, 'test' in node.satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(true, satellite.owner !== node);
+                  }
+                },
+                {
+                  name: 'auto-create satellite with delegate/dataSource',
+                  test: function(){
+                    // use existsIf config
+                    var delegate = new basis.data.Object;
+                    var dataSource = new basis.data.Dataset;
+                    var node = new basis.dom.wrapper.Node({
+                      _delegate: delegate,
+                      _dataSource: dataSource,
+                      satellite: {
+                        test: {
+                          instanceOf: basis.dom.wrapper.Node,
+                          delegate: '_delegate',
+                          dataSource: '_dataSource'
+                        }
+                      }
+                    });
+
+                    var satellite = node.satellite.test;
+                    
+                    // must be created
+                    this.is(true, satellite.delegate === delegate);
+                    this.is(true, satellite.dataSource === dataSource);
+                  }
+                },
+                {
+                  name: 'auto-satellite with delegate/dataSource',
+                  test: function(){
+                    // use existsIf config
+                    var delegate = new basis.data.Object;
+                    var dataSource = new basis.data.Dataset;
+                    var node = new basis.dom.wrapper.Node({
+                      _delegate: delegate,
+                      _dataSource: dataSource,
+                      satellite: {
+                        test: {
+                          instance: new basis.dom.wrapper.Node(),
+                          delegate: '_delegate',
+                          dataSource: '_dataSource'
+                        }
+                      }
+                    });
+
+                    var satellite = node.satellite.test;
+                    
+                    // must be created
+                    this.is(true, satellite.delegate === delegate);
+                    this.is(true, satellite.dataSource === dataSource);
+                  }
+                },
+                {
+                  name: 'auto-satellite with delegate/dataSource and existsIf',
+                  test: function(){
+                    // use existsIf config
+                    var delegate = new basis.data.Object;
+                    var dataSource = new basis.data.Dataset;
+                    var satellite = new basis.dom.wrapper.Node();
+                    var node = new basis.dom.wrapper.Node({
+                      _delegate: delegate,
+                      _dataSource: dataSource,
+                      satellite: {
+                        test: {
+                          existsIf: 'data.value',
+                          instance: satellite,
+                          delegate: '_delegate',
+                          dataSource: '_dataSource'
+                        }
+                      }
+                    });
+                    
+                    // instance is not linked and delegate/dataSource is not set
+                    this.is(false, 'test' in node.satellite);
+                    this.is(true, satellite.owner === null);
+                    this.is(true, satellite.delegate === null);
+                    this.is(true, satellite.dataSource === null);
+
+                    // set delegate/dataSource when instance in use
+                    node.update({ value: true });
+                    this.is(true, 'test' in node.satellite);
+                    this.is(true, satellite.owner === node);
+                    this.is(true, satellite.delegate === delegate);
+                    this.is(true, satellite.dataSource === dataSource);
+
+                    // reset delegate/dataSource when instance not in use
+                    node.update({ value: false });
+                    this.is(false, 'test' in node.satellite);
+                    this.is(true, satellite.owner === null);
+                    this.is(true, satellite.delegate === null);
+                    this.is(true, satellite.dataSource === null);
+                  }
+                },
+                {
+                  name: 'auto-satellite must unlink from it\'s owner on destroy',
+                  test: function(){
+                    // use existsIf config
+                    var satelliteDestroyed = false;
+                    var satellite = new basis.dom.wrapper.Node({
+                      handler: {
+                        destroy: function(){
+                          satelliteDestroyed = true;
+                        }
+                      }
+                    })
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    // must not exists
+                    this.is(true, 'test' in node.satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(true, satellite.owner === node);
+                    this.is(false, satelliteDestroyed);
+
+                    // must unlink from owner
+                    satellite.destroy();
+                    this.is(false, 'test' in node.satellite);
+                    this.is(false, 'test' in node.satellite.__auto__);
+                    this.is(true, satelliteDestroyed);
+                    this.is(true, satellite.owner === null);
+                  }
+                },
+                {
+                  name: 'non-used auto-satellite with existsIf must be destroyed on owner destroy',
+                  test: function(){
+                    // use existsIf config
+                    var satelliteDestroyed = false;
+                    var satellite = new basis.dom.wrapper.Node({
+                      handler: {
+                        destroy: function(){
+                          satelliteDestroyed = true;
+                        }
+                      }
+                    })
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          existsIf: 'data.value',
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    // must not exists
+                    this.is(false, 'test' in node.satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(true, satellite.owner === null);
+                    this.is(false, satelliteDestroyed);
+
+                    // must unlink from owner
+                    satellite.destroy();
+                    this.is(false, 'test' in node.satellite);
+                    this.is(false, 'test' in node.satellite.__auto__);
+                    this.is(true, satelliteDestroyed);
+                    this.is(true, satellite.owner === null);
+                  }
+                },
+                {
+                  name: 'non-used auto-satellite must be destroyed on owner destroy',
+                  test: function(){
+                    // use existsIf config
+                    var satelliteDestroyed = false;
+                    var satellite = new basis.dom.wrapper.Node({
+                      handler: {
+                        destroy: function(){
+                          satelliteDestroyed = true;
+                        }
+                      }
+                    })
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          existsIf: 'data.value',
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    // must not exists
+                    this.is(false, 'test' in node.satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(true, satellite.owner === null);
+                    this.is(false, satelliteDestroyed);
+
+                    // must unlink from owner
+                    node.destroy();
+                    this.is(true, satelliteDestroyed);
+                    this.is(true, satellite.owner === null);
                   }
                 },
                 {
@@ -727,7 +1022,6 @@
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
 
-                    // auto-create satellite can't be replaced
                     var warn = basis.dev.warn;
                     var warning = false;
                     var satellite = node.satellite.test;
@@ -770,7 +1064,6 @@
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
 
-                    // auto-create satellite can't be replaced
                     var warn = basis.dev.warn;
                     var warning = false;
                     var newSatellite = new basis.dom.wrapper.AbstractNode;
@@ -919,7 +1212,7 @@
                   }
                 },
                 {
-                  name: 'auto-create satellite can\'t change owner',
+                  name: 'auto-create satellite can\'t reset owner',
                   test: function(){
                     var node = new basis.dom.wrapper.Node({
                       satellite: {
@@ -942,7 +1235,244 @@
 
                     this.is(true, !!warning); // should be warning
                     this.is(true, node.satellite.test === satellite);
+                    this.is(true, satellite.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-satellite can\'t reset owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          instance: new basis.dom.wrapper.Node()
+                        }
+                      }
+                    });
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      satellite.setOwner();
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, satellite.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-create satellite can\'t change owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {}
+                      }
+                    });
+                    var newOwner = new basis.dom.wrapper.Node();
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      satellite.setOwner(newOwner);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, satellite.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-satellite can\'t change owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          instance: new basis.dom.wrapper.Node()
+                        }
+                      }
+                    });
+                    var newOwner = new basis.dom.wrapper.Node();
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      satellite.setOwner(newOwner);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, satellite.owner === node);
+                  }
+                },
+                {
+                  name: 'non-used auto-satellite can\'t change owner',
+                  test: function(){
+                    var satellite = new basis.dom.wrapper.Node();
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          existsIf: 'data.value',
+                          instance: satellite
+                        }
+                      }
+                    });
+                    var newOwner = new basis.dom.wrapper.Node();
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      satellite.setOwner(newOwner);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(null, satellite.owner);
+                  }
+                },
+                {
+                  name: 'auto-create satellite can\'t moved to another owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {}
+                      }
+                    });
+                    var newOwner = new basis.dom.wrapper.Node();
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      newOwner.setSatellite('name', satellite);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, node.satellite.test === satellite);
                     this.is(true, node.satellite.test.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-satellite can\'t moved to another owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          instance: new basis.dom.wrapper.Node()
+                        }
+                      }
+                    });
+                    var newOwner = new basis.dom.wrapper.Node();
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      newOwner.setSatellite('name', satellite);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning); // should be warning
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, satellite.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-create satellite can\'t change name inside owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {}
+                      }
+                    });
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      node.setSatellite('name', satellite);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning);
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(false, node.satellite.name === satellite);
+                    this.is(false, 'name' in node.satellite.__auto__);
+                    this.is(true, satellite.owner === node);
+                  }
+                },
+                {
+                  name: 'auto-satellite can\'t change name inside owner',
+                  test: function(){
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          instance: new basis.dom.wrapper.Node()
+                        }
+                      }
+                    });
+
+                    var warn = basis.dev.warn;
+                    var warning = false;
+                    var satellite = node.satellite.test;
+                    try {
+                      basis.dev.warn = function(message){
+                        warning = message;
+                      };
+
+                      node.setSatellite('name', satellite);
+                    } finally {
+                      basis.dev.warn = warn;
+                    }
+
+                    this.is(true, !!warning);
+                    this.is(true, node.satellite.test === satellite);
+                    this.is(true, 'test' in node.satellite.__auto__);
+                    this.is(false, node.satellite.name === satellite);
+                    this.is(false, 'name' in node.satellite.__auto__);
+                    this.is(true, satellite.owner === node);
                   }
                 },
                 {
@@ -973,11 +1503,14 @@
                   }
                 },
                 {
-                  name: 'auto-create satellite must be destroyed with owner',
+                  name: 'all satellites must be destroyed with owner',
                   test: function(){
                     var node = new basis.dom.wrapper.Node({
                       satellite: {
                         autoCreateSatellite: {},
+                        autoSatellite: {
+                          instance: new basis.dom.wrapper.Node()
+                        },
                         regularSatellite: new basis.dom.wrapper.Node()
                       }
                     });
@@ -986,12 +1519,19 @@
                     var warning = false;
                     var autoCreateSatellite = node.satellite.autoCreateSatellite;
                     var autoCreateSatelliteDestroyed = false;
+                    var autoSatellite = node.satellite.autoSatellite;
+                    var autoSatelliteDestroyed = false;
                     var regularSatellite = node.satellite.autoCreateSatellite;
                     var regularSatelliteDestroyed = false;
                     
                     autoCreateSatellite.addHandler({
                       destroy: function(){
                         autoCreateSatelliteDestroyed = true;
+                      }
+                    });
+                    autoSatellite.addHandler({
+                      destroy: function(){
+                        autoSatelliteDestroyed = true;
                       }
                     });
                     regularSatellite.addHandler({
@@ -1012,9 +1552,11 @@
 
                     this.is(false, warning); // no warnings
                     this.is(true, autoCreateSatelliteDestroyed);
+                    this.is(true, autoSatelliteDestroyed);
                     this.is(true, regularSatelliteDestroyed);
                     this.is(null, node.satellite);
                     this.is(null, autoCreateSatellite.owner);
+                    this.is(null, autoSatellite.owner);
                     this.is(null, regularSatellite.owner);
                   }
                 }
