@@ -248,13 +248,13 @@
   //
 
   function processSatelliteConfig(result, extend){
-    for (var key in extend)
+    for (var name in extend)
     {
-      var config = extend[key];
+      var config = extend[name];
 
       if (config instanceof AbstractNode)
       {
-        result[key] = config;
+        result[name] = config;
         continue;
       }
 
@@ -263,13 +263,13 @@
           instanceOf: config
         };
 
-      if (config && typeof config == 'object')
+      if (config && config.constructor === Object)
       {
         var hookRequired = false;
         var instanceClass = config.instanceOf;
         var contextConfig = {};
         var context = {
-          key: key,
+          name: name,
           config: contextConfig
         };
 
@@ -292,21 +292,44 @@
 
         if (hookRequired)
         {
-          var hookSource = config.hook || { update: true };
-          var hook = {};
+          var events = config.events;
 
-          for (var hookKey in hookSource)
-            if (hookSource[hookKey])
+          if ('hook' in config)
+          {
+            if (!events)
             {
-              hook[hookKey] = SATELLITE_UPDATE;
-              context.hook = hook;
+              /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config is deprecated, use events property instead');
+              events = basis.object.keys(config.hook);
             }
+            else
+            {
+              /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config was ignored (events property used)');
+            }
+          }
+
+          if (events == null)
+            events = 'update';
+
+          if (Array.isArray(events))
+            events = events.join(' ');
+
+          if (typeof events == 'string')
+          {
+            events.split(/\s+/);
+            var handler = {};
+
+            for (var i = 0, eventName; eventName = events[i]; i++)
+            {
+              handler[eventName] = SATELLITE_UPDATE;
+              context.handler = handler;
+            }
+          }
         }
 
-        result[key] = context;
+        result[name] = context;
       }
       else
-        result[key] = null;
+        result[name] = null;
     }
   }
 
@@ -329,16 +352,16 @@
     // this -> {
     //   owner: owner,
     //   context: { 
-    //     key: satelliteName,
+    //     name: satelliteName,
     //     config: satelliteConfig
     //   }
     // }
     var owner = this.owner;
-    var key = this.context.key;
+    var name = this.context.name;
     var config = this.context.config;
 
     var exists = !config.existsIf || config.existsIf(owner);
-    var satellite = owner.satellite[key];
+    var satellite = owner.satellite[name];
 
     if (exists)
     {
@@ -367,27 +390,24 @@
           satelliteConfig.dataSource = config.dataSource(owner);
 
         satellite = new config.instanceOf(satelliteConfig);
-        owner.satellite.__auto__[key] = satellite;
-        owner.setSatellite(key, satellite);
+        owner.satellite.__auto__[name] = satellite;
+        owner.setSatellite(name, satellite);
 
         satellite.destroy = warnOnAutoSatelliteDestoy;      // auto-create satellite marker, lock setOwner, destroy
-                                                            // and owner.setSatellite(key, ..) methods invoke
+                                                            // and owner.setSatellite(name, ..) methods invoke
       }
     }
     else
     {
       if (satellite)
       {
-        owner.satellite.__auto__[key] = null;
+        owner.satellite.__auto__[name] = null;
         delete satellite.destroy;
 
         satellite.destroy();
       }
     }
   };
-
-  // default satellite hooks
-  var SATELLITE_OWNER_HOOK = oneFunctionProperty(SATELLITE_UPDATE, {});
 
 
  /**
@@ -651,7 +671,7 @@
 
    /**
     * @param {string} name Name of satellite
-    * @param {basis.data.AbstractData} oldSattelite Old satellite for key
+    * @param {basis.data.AbstractData} oldSattelite Old satellite for name
     */
     emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
 
@@ -751,8 +771,8 @@
                 owner: this
               };
 
-              if (satellite.hook)
-                this.addHandler(satellite.hook, context);
+              if (satellite.handler)
+                this.addHandler(satellite.handler, context);
 
               this.satellite.__auto__[name] = null;
               SATELLITE_UPDATE.call(context);
