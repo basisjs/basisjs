@@ -247,90 +247,93 @@
   // AbstractNode
   //
 
-  function processSatelliteConfig(result, extend){
-    for (var name in extend)
+  function processSatelliteConfig(value){
+    if (!value)
+      return null;
+
+    if (value.isSatelliteConfig)
+      return value;
+
+    if (value instanceof AbstractNode)
+      return value;
+    
+    if (Class.isClass(value))
+      value = {
+        instanceOf: value
+      };
+
+    if (value && value.constructor === Object)
     {
-      var config = extend[name];
+      var handlerRequired = false;
+      var config = {
+        isSatelliteConfig: true
+      };
 
-      if (config instanceof AbstractNode)
-      {
-        result[name] = config;
-        continue;
-      }
+      var instanceClass = AbstractNode;
 
-      if (Class.isClass(config))
-        config = {
-          instanceOf: config
-        };
-
-      if (config && config.constructor === Object)
-      {
-        var hookRequired = false;
-        var instanceClass = config.instanceOf;
-        var contextConfig = {};
-        var context = {
-          name: name,
-          config: contextConfig
-        };
-
-        if (!Class.isClass(instanceClass) || !instanceClass.isSubclassOf(AbstractData))
-          instanceClass = AbstractNode;
-
-        contextConfig.instanceOf = instanceClass;
-
-        if (typeof config.config)
-          contextConfig.config = config.config;
-
-        if ('existsIf' in config)
-          hookRequired = contextConfig.existsIf = getter(config.existsIf);
-
-        if ('delegate' in config)
-          hookRequired = contextConfig.delegate = getter(config.delegate);
-
-        if ('dataSource' in config)
-          hookRequired = contextConfig.dataSource = getter(config.dataSource);
-
-        if (hookRequired)
+      for (var key in value)
+        switch (key)
         {
-          var events = config.events;
+          case 'instanceOf':
+            if (Class.isClass(value[key]) && value[key].isSubclassOf(AbstractNode))
+              instanceClass = value[key];
+            break;
 
-          if ('hook' in config)
+          case 'existsIf':
+          case 'delegate':
+          case 'dataSource':
+            handlerRequired = true;
+            config[key] = getter(value[key]);
+            break;
+        }
+
+      config.instanceOf = instanceClass;        
+
+      if (handlerRequired)
+      {
+        var events = value.events;
+
+        if ('hook' in value)
+        {
+          if (!events)
           {
-            if (!events)
-            {
-              /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config is deprecated, use events property instead');
-              events = basis.object.keys(config.hook);
-            }
-            else
-            {
-              /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config was ignored (events property used)');
-            }
+            /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config is deprecated, use events property instead');
+            events = basis.object.keys(value.hook);
           }
-
-          if (events == null)
-            events = 'update';
-
-          if (Array.isArray(events))
-            events = events.join(' ');
-
-          if (typeof events == 'string')
+          else
           {
-            var handler = {};
-            events = events.split(/\s+/);
-
-            for (var i = 0, eventName; eventName = events[i]; i++)
-            {
-              handler[eventName] = SATELLITE_UPDATE;
-              context.handler = handler;
-            }
+            /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config was ignored (events property used)');
           }
         }
 
-        result[name] = context;
+        if (events == null)
+          events = 'update';
+
+        if (Array.isArray(events))
+          events = events.join(' ');
+
+        if (typeof events == 'string')
+        {
+          var handler = {};
+          events = events.split(/\s+/);
+
+          for (var i = 0, eventName; eventName = events[i]; i++)
+          {
+            handler[eventName] = SATELLITE_UPDATE;
+            config.handler = handler;
+          }
+        }
       }
-      else
-        result[name] = null;
+
+      return config;
     }
+
+    return null;
+  }
+
+  function extendSatelliteConfig(result, extend){
+    for (var name in extend)
+      result[name] = processSatelliteConfig(extend[name]);
   }
 
   // default satellite config map
@@ -341,11 +344,11 @@
     /** @cut */   break;
     /** @cut */ }
 
-    processSatelliteConfig(result, extend);
+    extendSatelliteConfig(result, extend);
   });
 
   // default satellite map
-  var NULL_SATELLITE = Class.customExtendProperty({}, processSatelliteConfig);
+  var NULL_SATELLITE = Class.customExtendProperty({}, extendSatelliteConfig);
 
   // satellite update handler
   var SATELLITE_UPDATE = function(owner){
@@ -386,21 +389,18 @@
           satelliteConfig.dataSource = config.dataSource(owner);
 
         satellite = new config.instanceOf(satelliteConfig);
-        owner.satellite.__auto__[name] = satellite;
-        owner.setSatellite(name, satellite);
+        owner.satellite.__auto__[name].instance = satellite;
+        owner.setSatellite(name, satellite, true);
 
-        satellite.destroy = warnOnAutoSatelliteDestoy;      // auto-create satellite marker, lock setOwner, destroy
-                                                            // and owner.setSatellite(name, ..) methods invoke
+        satellite.destroy = warnOnAutoSatelliteDestoy;      // auto-create satellite marker, lock destroy method invocation
       }
     }
     else
     {
       if (satellite)
       {
-        owner.satellite.__auto__[name] = null;
-        delete satellite.destroy;
-
-        satellite.destroy();
+        owner.satellite.__auto__[name].instance = null;
+        owner.setSatellite(name, null, true);
       }
     }
   };
@@ -456,12 +456,6 @@
         destroy: function(){
           if (!this.ownerSatelliteName)
             this.setOwner();
-          else
-          {
-            // destroy only if listener isn't auto-create satellite
-            if (this.destroy !== warnOnAutoSatelliteDestoy)
-              this.destroy();
-          }
         }
       }
     },
@@ -662,6 +656,7 @@
    /**
     * Key in owner.satellite map.
     * @type {string}
+    * @readonly
     */
     ownerSatelliteName: null, 
 
@@ -738,9 +733,7 @@
 
       // process satellites
       var satellites = this.satellite;
-      this.satellite = {
-        __auto__: {}
-      };
+      this.satellite = {};
       
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
@@ -751,25 +744,7 @@
 
       if (satellites !== NULL_SATELLITE)
         for (var name in satellites)
-        {
-          var satellite = satellites[name] || null;
-          if (satellite && typeof satellite == 'object')
-          {
-            if (satellite instanceof AbstractNode)
-            {
-              this.setSatellite(name, satellite);
-            }
-            else
-            {
-              // auto-create satellite
-              if (satellite.handler)
-                this.addHandler(satellite.handler, satellite);
-
-              this.satellite.__auto__[name] = null;
-              SATELLITE_UPDATE.call(satellite, this);
-            }
-          }
-        }
+          this.setSatellite(name, satellites[name]);
 
       // process owner
       var owner = this.owner;
@@ -892,22 +867,22 @@
       if (oldOwner !== owner)
       {
         var listenHandler = this.listen.owner;
-
-        if (listenHandler)
+        
+        if (oldOwner)
         {
-          if (oldOwner)
+          if (listenHandler)
             oldOwner.removeHandler(listenHandler, this);
 
-          if (owner)
-            owner.addHandler(listenHandler, this);
+          if (this.ownerSatelliteName)
+          {
+            this.owner = null; // set owner to null to prevent double event emit
+                               // and warnings on double removeHandler
+            oldOwner.setSatellite(this.ownerSatelliteName, null);
+          }
         }
 
-        if (oldOwner && this.ownerSatelliteName)
-        {
-          this.owner = null; // set owner to null to prevent double event emit
-                             // and warnings on double removeHandler
-          oldOwner.setSatellite(this.ownerSatelliteName, null);
-        }
+        if (owner && listenHandler)
+          owner.addHandler(listenHandler, this);
 
         this.owner = owner;
         this.emit_ownerChanged(oldOwner);
@@ -921,39 +896,88 @@
     * Set replace satellite with defined name for new one.
     * @param {string} name Satellite name.
     * @param {basis.data.Object} satellite New satellite node.
+    * @param {boolean} autoSet Method invoked by auto-create
     */
-    setSatellite: function(name, satellite){
-      var oldSatellite = this.satellite[name];
+    setSatellite: function(name, satellite, autoSet){
+      var oldSatellite = this.satellite[name] || null;
+      var auto = this.satellite.__auto__;
+      var autoConfig = auto && auto[name];
+      var preserveAuto = autoSet && autoConfig;
       
-      if (satellite instanceof AbstractData == false)
-        satellite = null;
+      if (preserveAuto)
+        satellite = autoConfig.instance;
+      else
+        satellite = processSatelliteConfig(satellite);
 
-      if (name in this.satellite.__auto__ && this.satellite.__auto__[name] !== satellite)
-      {
-        /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t be replaced');
-        return;
-      }
-
-      if (oldSatellite != satellite)
+      if (oldSatellite !== satellite)
       {
         var satelliteListen = this.listen.satellite;
 
+        // if setSatellite was called not on auto-satellite update
+        if (!preserveAuto && autoConfig)
+        {
+          // remove old auto-config
+          delete auto[name];
+
+          if (autoConfig.config.handler)
+            this.removeHandler(autoConfig.config.handler, autoConfig);
+        }
+
         if (oldSatellite)
         {
+          // unlink old satellite
           delete this.satellite[name];
           oldSatellite.ownerSatelliteName = null;
 
-          if (satelliteListen)
-            oldSatellite.removeHandler(satelliteListen, this);
+          if (autoConfig)
+          {
+            // auto satellite
+            if (oldSatellite.destroy === warnOnAutoSatelliteDestoy)
+              delete oldSatellite.destroy;
+            
+            oldSatellite.destroy();
+          }
+          else
+          {
+            // regular satellite
+            if (satelliteListen)
+              oldSatellite.removeHandler(satelliteListen, this);
 
-          if (oldSatellite instanceof AbstractNode)
             oldSatellite.setOwner(null);
+          }
         }
 
         if (satellite)
         {
-          if (satellite instanceof AbstractNode)
-            satellite.setOwner(this);
+          // check value is auto-config
+          if (satellite instanceof AbstractNode == false)
+          {
+            // auto-create satellite
+            var autoConfig = {
+              name: name,
+              config: satellite,
+              instance: null
+            };
+
+            // auto-create satellite
+            if (satellite.handler)
+              this.addHandler(satellite.handler, autoConfig);
+
+            // create auto
+            if (!auto)
+              auto = this.satellite.__auto__ = {};
+
+            auto[name] = autoConfig;
+            SATELLITE_UPDATE.call(autoConfig, this);
+
+            if (!autoConfig.instance && oldSatellite)
+              this.emit_satelliteChanged(name, oldSatellite);
+
+            return;
+          }
+          
+          // link new satellite
+          satellite.setOwner(this);
 
           if (satelliteListen)
             satellite.addHandler(satelliteListen, this);
@@ -1031,10 +1055,7 @@
 
             // drop owner to avoid events and correct auto-satellite remove
             if (satellite.destroy === warnOnAutoSatelliteDestoy)
-            {
-              satellites.__auto__[name] = null;
               delete satellite.destroy;
-            }
 
             satellite.destroy();
           }
@@ -1413,7 +1434,7 @@
       // check for dataSource
       if (this.dataSource)
       {
-        if (!isChildClassInstance || this.dataSourceMap_[newChild.delegate.basisObjectId] !== newChild)
+        if (!isChildClassInstance || !newChild.delegate || this.dataSourceMap_[newChild.delegate.basisObjectId] !== newChild)
           throw EXCEPTION_DATASOURCE_CONFLICT;
       }
 
