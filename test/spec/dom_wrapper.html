@@ -153,7 +153,7 @@
             else
             {
               if (child.previousSibling !== null)
-                return 'child #' + i + ' has wrong previousSibling ref, must be a null';
+                return 'child #' + i + ' has wrong previousSibling ref, should be a null';
             }
 
             if (i < childCount - 1)
@@ -164,7 +164,7 @@
             else
             {
               if (child.nextSibling !== null)
-                return 'child #' + i + ' has wrong nextSibling ref, must be a null';
+                return 'child #' + i + ' has wrong nextSibling ref, should be a null';
             }
             //if (child.document != node.document)
             //  return 'child #' + i + ' has wrong document ref';
@@ -213,7 +213,7 @@
               if (node.grouping.getGroupNode(child, true) !== child.groupNode)
                 return 'child node has wrong groupNode ref';
 
-            // after getGroupNode node.childNodes and groups must not be changed
+            // after getGroupNode node.childNodes and groups should not be changed
             var currentGroups = getGroups(node, true);
 
             if (childCount !== node.childNodes.length)
@@ -233,7 +233,7 @@
           {
             for (var i = 0, child; child = node.childNodes[i++];)
               if (child.groupNode !== null)
-                return 'child node has wrong groupNode ref, must be a null';
+                return 'child node has wrong groupNode ref, should be a null';
           }
         }
         else
@@ -245,7 +245,7 @@
         }
 
         if (node.dataSource !== null && node.dataSource instanceof basis.data.AbstractDataset === false)
-          return 'dataSource has wrong value (must be null or instance of basis.data.AbstractDataset)';
+          return 'dataSource has wrong value (should be null or instance of basis.data.AbstractDataset)';
 
         if (node.dataSource)
         {
@@ -293,12 +293,25 @@
           else
           {
             if (node.first !== null)
-              return 'wrong PartitionNode.first ref, must be a null';
+              return 'wrong PartitionNode.first ref, should be a null';
 
             if (node.last !== null)
-              return 'wrong PartitionNode.last ref, must be a null';
+              return 'wrong PartitionNode.last ref, should be a null';
           }
         }
+
+        if (node.satellite)
+          for (var name in node.satellite)
+            if (name != '__auto__')
+            {
+              var satellite = node.satellite[name];
+
+              if (satellite instanceof AbstractNode == false)
+                return 'satellite `' + name + '` has bad type';
+
+              if (satellite.owner !== node)
+                return 'satellite `' + name + '` has wrong owner reference';
+            }
 
         return false;
       }
@@ -669,16 +682,16 @@
                       }
                     });
 
-                    // must not exists
+                    // should not exists
                     this.is(undefined, node.satellite.test);
                     
-                    // must be created
+                    // should be created
                     node.update({ value: true });
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
                     this.is(true, node.satellite.test.owner === node);
 
-                    // must be destroyed
+                    // should be destroyed
                     var satelliteDestroyed = false;
                     node.satellite.test.addHandler({
                       destroy: function(){
@@ -688,6 +701,77 @@
                     node.update({ value: false });
                     this.is(undefined, node.satellite.test);
                     this.is(true, satelliteDestroyed);
+                  }
+                },
+                {
+                  name: 'auto-create satellite with config',
+                  test: function(){
+                    // config as object
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          config: {
+                            foo: 'bar'
+                          }
+                        }
+                      }
+                    });
+
+                    this.is(true, 'test' in node.satellite);
+                    this.is('bar', node.satellite.test.foo);
+                    
+                    // config as function
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          config: function(owner){
+                            return {
+                              ownerObjectId: owner.basisObjectId,
+                              foo: 'bar'
+                            };
+                          }
+                        }
+                      }
+                    });
+
+                    this.is(true, 'test' in node.satellite);
+                    this.is('bar', node.satellite.test.foo);
+                    this.is(node.basisObjectId, node.satellite.test.ownerObjectId);
+                  }
+                },
+                {
+                  name: 'auto-create satellite should be destroyed after satelliteChanged event on owner',
+                  test: function(){
+                    // use existsIf config
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          existsIf: 'data.value'
+                        }
+                      },
+                      data: {
+                        value: true
+                      }
+                    });
+                    
+                    // should be created
+                    this.is(true, 'test' in node.satellite);
+
+                    var events = [];
+                    node.satellite.test.addHandler({
+                      destroy: function(){
+                        events.push('destroy');
+                      }
+                    });
+                    node.addHandler({
+                      satelliteChanged: function(){
+                        events.push('satelliteChanged');
+                      }
+                    });
+
+                    node.update({ value: false });
+                    this.is(false, 'test' in node.satellite);
+                    this.is(['satelliteChanged', 'destroy'], events);
                   }
                 },
                 {
@@ -711,20 +795,20 @@
                       }
                     });
 
-                    // must not exists
+                    // should not exists
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(undefined, node.satellite.test);
                     this.is(false, satelliteDestroyed);
 
-                    // must be created
+                    // should be created
                     node.update({ value: true });
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, satellite.owner === node);
 
-                    // must not be destroyed
+                    // should not be destroyed
                     node.update({ value: false });
                     this.is(undefined, node.satellite.test);
                     this.is(false, satelliteDestroyed);
@@ -753,7 +837,52 @@
 
                     var satellite = node.satellite.test;
                     
-                    // must be created
+                    // should be created
+                    this.is(true, satellite.delegate === delegate);
+                    this.is(true, satellite.dataSource === dataSource);
+                  }
+                },
+                {
+                  name: 'auto-create satellite should be created with delegate/dataSource (set delegate/dataSource before postInit – templateUpdate issue)',
+                  test: function(){
+                    // use existsIf config
+                    var delegate = new basis.data.Object;
+                    var dataSource = new basis.data.Dataset;
+                    var delegateSet = false;
+                    var delegateSetBeforePostInit = false;
+                    var dataSourceSet = false;
+                    var dataSourceSetBeforePostInit = false;
+                    var node = new basis.dom.wrapper.Node({
+                      _delegate: delegate,
+                      _dataSource: dataSource,
+                      satellite: {
+                        test: {
+                          instanceOf: basis.dom.wrapper.Node.subclass({
+                            handler: {
+                              delegateChanged: function(){
+                                delegateSet = true;
+                              },
+                              dataSourceChanged: function(){
+                                dataSourceSet = true;
+                              }
+                            },
+                            postInit: function(){
+                              delegateSetBeforePostInit = delegateSet;
+                              dataSourceSetBeforePostInit = dataSourceSet;
+                              basis.dom.wrapper.Node.prototype.postInit.call(this);
+                            }
+                          }),
+                          delegate: '_delegate',
+                          dataSource: '_dataSource'
+                        }
+                      }
+                    });
+
+                    var satellite = node.satellite.test;
+                    
+                    // should be created
+                    this.is(true, delegateSetBeforePostInit);
+                    this.is(true, dataSourceSetBeforePostInit);
                     this.is(true, satellite.delegate === delegate);
                     this.is(true, satellite.dataSource === dataSource);
                   }
@@ -778,7 +907,7 @@
 
                     var satellite = node.satellite.test;
                     
-                    // must be created
+                    // should be created
                     this.is(true, satellite.delegate === delegate);
                     this.is(true, satellite.dataSource === dataSource);
                   }
@@ -825,7 +954,7 @@
                   }
                 },
                 {
-                  name: 'auto-satellite must unlink from it\'s owner on destroy',
+                  name: 'auto-satellite should unlink from it\'s owner on destroy',
                   test: function(){
                     // use existsIf config
                     var satelliteDestroyed = false;
@@ -844,13 +973,13 @@
                       }
                     });
 
-                    // must not exists
+                    // should not exists
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, satellite.owner === node);
                     this.is(false, satelliteDestroyed);
 
-                    // must unlink from owner
+                    // should unlink from owner
                     satellite.destroy();
                     this.is(false, 'test' in node.satellite);
                     this.is(false, 'test' in node.satellite.__auto__);
@@ -859,7 +988,7 @@
                   }
                 },
                 {
-                  name: 'non-used auto-satellite with existsIf must be destroyed on owner destroy',
+                  name: 'non-used auto-satellite with existsIf should be destroyed on owner destroy',
                   test: function(){
                     // use existsIf config
                     var satelliteDestroyed = false;
@@ -879,13 +1008,13 @@
                       }
                     });
 
-                    // must not exists
+                    // should not exists
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, satellite.owner === null);
                     this.is(false, satelliteDestroyed);
 
-                    // must unlink from owner
+                    // should unlink from owner
                     satellite.destroy();
                     this.is(false, 'test' in node.satellite);
                     this.is(false, 'test' in node.satellite.__auto__);
@@ -894,7 +1023,7 @@
                   }
                 },
                 {
-                  name: 'non-used auto-satellite must be destroyed on owner destroy',
+                  name: 'non-used auto-satellite should be destroyed on owner destroy',
                   test: function(){
                     // use existsIf config
                     var satelliteDestroyed = false;
@@ -914,13 +1043,13 @@
                       }
                     });
 
-                    // must not exists
+                    // should not exists
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, satellite.owner === null);
                     this.is(false, satelliteDestroyed);
 
-                    // must unlink from owner
+                    // should unlink from owner
                     node.destroy();
                     this.is(true, satelliteDestroyed);
                     this.is(true, satellite.owner === null);
@@ -939,20 +1068,20 @@
                       }
                     });
 
-                    // must not exists
+                    // should not exists
                     this.is(undefined, node.satellite.test);
                     
-                    // must not be created (no changes on update event)
+                    // should not be created (no changes on update event)
                     node.update({ value: true });
                     this.is(undefined, node.satellite.test);
 
-                    // must be created
+                    // should be created
                     node.setState(basis.data.STATE.READY, '1');
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
                     this.is(true, node.satellite.test.owner === node);
 
-                    // must not be destroyed (no changes on update event)
+                    // should not be destroyed (no changes on update event)
                     var satelliteDestroyed = false;
                     node.satellite.test.addHandler({
                       destroy: function(){
@@ -963,7 +1092,7 @@
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test.owner === node);
 
-                    // must be destroyed
+                    // should be destroyed
                     node.setActive(!node.active);
                     this.is(undefined, node.satellite.test);
                     this.is(true, satelliteDestroyed);
@@ -980,20 +1109,20 @@
                       }
                     });
 
-                    // must not exists
+                    // should not exists
                     this.is(undefined, node.satellite.test);
                     
-                    // must not be created (no changes on update event)
+                    // should not be created (no changes on update event)
                     node.update({ value: true });
                     this.is(undefined, node.satellite.test);
 
-                    // must be created
+                    // should be created
                     node.setState(basis.data.STATE.READY, '1');
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
                     this.is(true, node.satellite.test.owner === node);
 
-                    // must not be destroyed (no changes on update event)
+                    // should not be destroyed (no changes on update event)
                     var satelliteDestroyed = false;
                     node.satellite.test.addHandler({
                       destroy: function(){
@@ -1004,14 +1133,14 @@
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test.owner === node);
 
-                    // must be destroyed
+                    // should be destroyed
                     node.setActive(!node.active);
                     this.is(undefined, node.satellite.test);
                     this.is(true, satelliteDestroyed);
                   }
                 },
                 {
-                  name: 'auto-create satellite can be replaced, auto config must be dropped',
+                  name: 'auto-create satellite can be replaced, auto config should be dropped',
                   test: function(){
                     var node = new basis.dom.wrapper.Node({
                       satellite: {
@@ -1051,7 +1180,7 @@
                   }
                 },
                 {
-                  name: 'auto-create satellite can be replaced (not created), auto-config must be dropped',
+                  name: 'auto-create satellite can be replaced (not created), auto-config should be dropped',
                   test: function(){
                     var node = new basis.dom.wrapper.Node({
                       satellite: {
@@ -1503,7 +1632,7 @@
                   }
                 },
                 {
-                  name: 'all satellites must be destroyed with owner',
+                  name: 'all satellites should be destroyed with owner',
                   test: function(){
                     var node = new basis.dom.wrapper.Node({
                       satellite: {
@@ -1583,7 +1712,7 @@
                   }
                 },
                 {
-                  name: 'if dataSource in config, childNodes must be ignored',
+                  name: 'if dataSource in config, childNodes should be ignored',
                   test: function(){
                     var testSet = getTestSet();
                     var dataset = getDataset();
@@ -1599,7 +1728,7 @@
                   }
                 },
                 {
-                  name: 'if dataSource set than node modify methods must throw an exception and must not to change childNodes or dataSource',
+                  name: 'if dataSource set than node modify methods should throw an exception and should not to change childNodes or dataSource',
                   test: function(){
                     var dataset = getDataset();
                     var node = new Node({
@@ -1719,7 +1848,7 @@
                   }
                 },
                 {
-                  name: 'insertBefore(node/config) must throw exception if child with delegate->dataSource.item already exists',
+                  name: 'insertBefore(node/config) should throw exception if child with delegate->dataSource.item already exists',
                   test: function(){
                     var dataset = getDataset();
                     var node = new Node({

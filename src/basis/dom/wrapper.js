@@ -303,6 +303,10 @@
             handlerRequired = true;
             config[key] = getter(value[key]);
             break;
+
+          case 'config':
+            config[key] = value[key];
+            break;
         }
 
       if (!config.instance)
@@ -411,15 +415,23 @@
 
           satelliteConfig.owner = owner;
 
+          if (config.delegate)
+            satelliteConfig.delegate = config.delegate(owner);
+
+          if (config.dataSource)
+            satelliteConfig.dataSource = config.dataSource(owner);
+
           satellite = new config.instanceOf(satelliteConfig);
           satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
         }
+        else
+        {
+          if (config.delegate)
+            satellite.setDelegate(config.delegate(owner));
 
-        if (config.delegate)
-          satellite.setDelegate(config.delegate(owner));
-
-        if (config.dataSource)
-          satellite.setDataSource(config.dataSource(owner));
+          if (config.dataSource)
+            satellite.setDataSource(config.dataSource(owner));
+        }
 
         owner.satellite.__auto__[name].instance = satellite;
         owner.setSatellite(name, satellite, true);
@@ -988,6 +1000,7 @@
       if (oldSatellite !== satellite)
       {
         var satelliteListen = this.listen.satellite;
+        var destroySatellite;
 
         if (oldSatellite)
         {
@@ -997,9 +1010,7 @@
 
           if (autoConfig && oldSatellite.destroy === warnOnAutoSatelliteDestoy)
           {
-            // auto create satellite must be destroyed
-            delete oldSatellite.destroy;
-            oldSatellite.destroy();
+            destroySatellite = oldSatellite;
           }
           else
           {
@@ -1047,6 +1058,13 @@
             if (!autoConfig.instance && oldSatellite)
               this.emit_satelliteChanged(name, oldSatellite);
 
+            if (destroySatellite)
+            {
+              // auto create satellite must be destroyed
+              delete destroySatellite.destroy;
+              destroySatellite.destroy();
+            }
+
             return;
           }
 
@@ -1072,6 +1090,13 @@
         }
 
         this.emit_satelliteChanged(name, oldSatellite);
+
+        if (destroySatellite)
+        {
+          // auto create satellite must be destroyed
+          delete destroySatellite.destroy;
+          destroySatellite.destroy();
+        }
       }
     },    
 
