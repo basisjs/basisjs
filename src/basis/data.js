@@ -950,6 +950,12 @@
     return result;
   };
 
+  Value.factory = function(events, getter){
+    return function(object){
+      return Value.from(object, events, getter);
+    }
+  };
+
 
   //
   // Object
@@ -2104,6 +2110,9 @@
   function resolveDataset(context, fn, source, property){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
+
+    if (typeof source == 'function')
+      source = source.call(context, context);
    
     if (source instanceof DatasetWrapper)
     {
