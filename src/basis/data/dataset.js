@@ -734,13 +734,6 @@
     source: null,
 
    /**
-    * Map of source objects.
-    * @type {object}
-    * @private
-    */
-    sourceMap_: null,
-
-   /**
     * Fires when source changed.
     * @param {basis.data.AbstractDataset} oldSource Previous value for source property.
     * @event
@@ -749,9 +742,16 @@
 
    /**
     * Source wrapper
-    * @type {basis.data.DatasetWrapper}
+    * @type {basis.data.DatasetAdapter}
     */ 
-    sourceWrapper_: null,
+    sourceAdapter_: null,
+
+   /**
+    * Map of source objects.
+    * @type {object}
+    * @private
+    */
+    sourceMap_: null,
 
    /**
     * @inheritDoc
@@ -759,7 +759,8 @@
     listen: {
       source: {
         destroy: function(){
-          this.setSource();
+          if (!this.sourceAdapter_)
+            this.setSource();
         }
       }
     },
@@ -786,31 +787,7 @@
     * @param {basis.data.AbstractDataset} source
     */
     setSource: function(source){
-      var sourceWrapper = null;
-      var oldSourceWrapper = this.sourceWrapper_;
-
-      // dataset wrapper
-      if (source instanceof DatasetWrapper)
-      {
-        sourceWrapper = source;
-        source = sourceWrapper.dataset;
-      }
-
-      // link with dataset wrapper
-      if (oldSourceWrapper !== sourceWrapper)
-      {
-        if (oldSourceWrapper)
-          oldSourceWrapper.removeHandler(SOURCE_WRAPPER_HANDLER, this);
-
-        if (sourceWrapper)
-          sourceWrapper.addHandler(SOURCE_WRAPPER_HANDLER, this);
-
-        this.sourceWrapper_ = sourceWrapper;
-      }
-
-      // check source
-      if (source instanceof AbstractDataset == false)
-        source = null;      
+      source = basis.data.resolveDataset(this, this.setSource, source, 'sourceAdapter_');
 
       // sync with source
       if (this.source !== source)
