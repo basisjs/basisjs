@@ -704,6 +704,70 @@
                   }
                 },
                 {
+                  name: 'should be possible don\'t listen event by setting false/null/empty string/array to events setting',
+                  test: function(){
+                    // set null
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          events: null,
+                          existsIf: 'data.value'
+                        }
+                      }
+                    });
+
+                    this.is(undefined, node.satellite.test);
+                    this.is(true, !node.handler && !node.handler);
+                    node.update({ value: true });
+                    this.is(undefined, node.satellite.test);
+
+                    // set false
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          events: false,
+                          existsIf: 'data.value'
+                        }
+                      }
+                    });
+
+                    this.is(undefined, node.satellite.test);
+                    this.is(true, !node.handler);
+                    node.update({ value: true });
+                    this.is(undefined, node.satellite.test);
+
+                    // set empty string
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          events: '',
+                          existsIf: 'data.value'
+                        }
+                      }
+                    });
+
+                    this.is(undefined, node.satellite.test);
+                    this.is(true, !node.handler);
+                    node.update({ value: true });
+                    this.is(undefined, node.satellite.test);
+
+                    // set empty array
+                    var node = new basis.dom.wrapper.Node({
+                      satellite: {
+                        test: {
+                          events: [],
+                          existsIf: 'data.value'
+                        }
+                      }
+                    });
+
+                    this.is(undefined, node.satellite.test);
+                    this.is(true, !node.handler);
+                    node.update({ value: true });
+                    this.is(undefined, node.satellite.test);
+                  }
+                },
+                {
                   name: 'auto-create satellite with config',
                   test: function(){
                     // config as object

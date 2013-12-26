@@ -321,11 +321,11 @@
 
       if (handlerRequired)
       {
-        var events = value.events;
+        var events = 'events' in value ? value.events : 'update';
 
         if ('hook' in value)
         {
-          if (!events)
+          if ('events' in value == false)
           {
             /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config is deprecated, use events property instead');
             events = basis.object.keys(value.hook);
@@ -335,9 +335,6 @@
             /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config was ignored (events property used)');
           }
         }
-
-        if (events == null)
-          events = 'update';
 
         if (Array.isArray(events))
           events = events.join(' ');
