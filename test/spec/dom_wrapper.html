@@ -1783,7 +1783,7 @@
                     } catch(e){
                       exceptionHere = true;
                     }
-                    this.is(dataset, node.dataSource);
+                    this.is(true, node.dataSource === dataset);
                     this.is(itemCount, dataset.itemCount);
                     this.is(false, checkNode(node));
                     this.is(true, exceptionHere);
@@ -1794,7 +1794,7 @@
                     } catch(e){
                       exceptionHere = true;
                     }
-                    this.is(dataset, node.dataSource);
+                    this.is(true, node.dataSource === dataset);
                     this.is(itemCount, dataset.itemCount);
                     this.is(false, checkNode(node));
                     this.is(true, exceptionHere);
@@ -1805,7 +1805,7 @@
                     } catch(e){
                       exceptionHere = true;
                     }
-                    this.is(dataset, node.dataSource);
+                    this.is(true, node.dataSource === dataset);
                     this.is(itemCount, dataset.itemCount);
                     this.is(false, checkNode(node));
                     this.is(true, exceptionHere);
@@ -1816,8 +1816,70 @@
                     } catch(e){
                       exceptionHere = true;
                     }
-                    this.is(dataset, node.dataSource);
+                    this.is(true, node.dataSource === dataset);
                     this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+                  }
+                },
+                {
+                  name: 'node modify methods should throw an exception and should not to change childNodes or dataSource if dataSource adapter used',
+                  test: function(){
+                    var value = new basis.data.Value();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: value
+                    });
+
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_ !== null);
+                    this.is(true, node.dataSourceAdapter_.source === value);
+
+                    var exceptionHere = false;
+                    try {
+                      node.appendChild(new Node);
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_ !== null);
+                    this.is(true, node.dataSourceAdapter_.source === value);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    var exceptionHere = false;
+                    try {
+                      node.insertBefore(new Node);
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_ !== null);
+                    this.is(true, node.dataSourceAdapter_.source === value);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    var exceptionHere = false;
+                    try {
+                      node.removeChild(node.firstChild);
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_ !== null);
+                    this.is(true, node.dataSourceAdapter_.source === value);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    var exceptionHere = false;
+                    try {
+                      node.replaceChild(new Node, node.firstChild);
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_ !== null);
+                    this.is(true, node.dataSourceAdapter_.source === value);
                     this.is(false, checkNode(node));
                     this.is(true, exceptionHere);
                   }
@@ -1841,7 +1903,7 @@
                     } catch(e){
                       exceptionHere = true;
                     }
-                    this.is(dataset, node.dataSource);
+                    this.is(true, node.dataSource === dataset);
                     this.is(itemCount, dataset.itemCount);
                     this.is(false, checkNode(node));
                     this.is(true, exceptionHere);
@@ -1854,7 +1916,7 @@
                     } catch(e){
                       exceptionHere = true;
                     }
-                    this.is(dataset, node.dataSource);
+                    this.is(true, node.dataSource === dataset);
                     this.is(0, dataset.itemCount);
                     this.is(false, checkNode(node));
                     this.is(false, exceptionHere);
@@ -1880,6 +1942,32 @@
                     }
                     this.is(dataset, node.dataSource);
                     this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+                  }
+                },
+                {
+                  name: 'setChildNodes with no dataSource but with dataSource adapter',
+                  test: function(){
+                    var value = new basis.data.Value;
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: value
+                    });
+
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_ !== null);
+                    this.is(true, node.dataSourceAdapter_.source === value);
+
+                    var exceptionHere = false;
+                    try {
+                      node.setChildNodes([new Node]);
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_ !== null);
+                    this.is(true, node.dataSourceAdapter_.source === value);
                     this.is(false, checkNode(node));
                     this.is(true, exceptionHere);
                   }

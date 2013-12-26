@@ -601,6 +601,29 @@
                 this.is(true, obj.dataset === null);
                 this.is(true, obj.test === null);
               }
+            },
+            {
+              name: 'use basis.data.Value#as as value for resolveDataset',
+              test: function(){
+                var obj = {
+                  setDataset: function(val){
+                    this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                  }
+                };
+                var split = new basis.data.dataset.Split();
+                var selected = new basis.data.Value({ value: 'foo' });
+
+                obj.setDataset(selected.as(function(val){
+                  return split.getSubset(val, true);
+                }));
+
+                this.is(true, obj.dataset === split.getSubset('foo', true).dataset);
+                this.is(true, obj.dataset === basis.data.resolveDataset({}, null, split.getSubset('foo', true)));
+
+                selected.set('bar');
+                this.is(true, obj.dataset === split.getSubset('bar', true).dataset);
+                this.is(true, obj.dataset === basis.data.resolveDataset({}, null, split.getSubset('bar', true)));
+              }
             }
           ]
         }

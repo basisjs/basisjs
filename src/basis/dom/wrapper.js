@@ -54,6 +54,7 @@
   /** @const */ var EXCEPTION_BAD_CHILD_CLASS = namespace + ': Child node has wrong class';
   /** @const */ var EXCEPTION_NULL_CHILD = namespace + ': Child node is null';
   /** @const */ var EXCEPTION_DATASOURCE_CONFLICT = namespace + ': Operation is not allowed because node is under dataSource control';
+  /** @const */ var EXCEPTION_DATASOURCEADAPTER_CONFLICT = namespace + ': Operation is not allowed because node is under dataSource adapter control';
   /** @const */ var EXCEPTION_PARENTNODE_OWNER_CONFLICT = namespace + ': Node can\'t has owner and parentNode';
 
   /** @const */ var DELEGATE = {
@@ -1550,6 +1551,11 @@
         if (!isChildClassInstance || !newChild.delegate || this.dataSourceMap_[newChild.delegate.basisObjectId] !== newChild)
           throw EXCEPTION_DATASOURCE_CONFLICT;
       }
+      else
+      {
+        if (this.dataSourceAdapter_)
+          throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
+      }
 
       // construct new childClass instance if newChild is not instance of childClass
       if (!isChildClassInstance)
@@ -1862,8 +1868,16 @@
       if (oldChild instanceof this.childClass == false)
         throw EXCEPTION_BAD_CHILD_CLASS;
 
-      if (this.dataSource && this.dataSource.has(oldChild.delegate))
-        throw EXCEPTION_DATASOURCE_CONFLICT;
+      if (this.dataSource)
+      {
+        if (this.dataSource.has(oldChild.delegate))
+          throw EXCEPTION_DATASOURCE_CONFLICT;
+      }
+      else
+      {
+        if (this.dataSourceAdapter_)
+          throw EXCEPTION_DATASOURCEADAPTER_CONFLICT
+      }
 
       // update this
       var pos = this.childNodes.indexOf(oldChild);
@@ -1919,6 +1933,9 @@
     replaceChild: function(newChild, oldChild){
       if (this.dataSource)
         throw EXCEPTION_DATASOURCE_CONFLICT;
+
+      if (this.dataSourceAdapter_)
+        throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
 
       if (oldChild == null || oldChild.parentNode !== this)
         throw EXCEPTION_NODE_NOT_FOUND;
@@ -1993,7 +2010,7 @@
     * @params {Array.<Object>} childNodes
     */
     setChildNodes: function(newChildNodes, keepAlive){
-      if (!this.dataSource)
+      if (!this.dataSource && !this.dataSourceAdapter_)
         this.clear(keepAlive);
 
       if (newChildNodes)

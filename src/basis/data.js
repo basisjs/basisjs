@@ -2138,7 +2138,9 @@
       if (oldAdapter)
       {
         oldAdapter.source.removeHandler(oldAdapter.handler, oldAdapter);
-        if (oldAdapter.source instanceof Value)
+
+        // destroy nested adapter if exists
+        if (oldAdapter.adapter_)
           resolveDataset(oldAdapter, null, null, 'adapter_');
       }
    
