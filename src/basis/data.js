@@ -921,6 +921,9 @@
   Value.from = function(obj, events, getter){
     var result;
 
+    if (!obj || typeof obj != 'object')
+      return null;
+
     if (obj instanceof Emitter)
     {
       if (!getter)
