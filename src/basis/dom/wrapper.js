@@ -589,9 +589,9 @@
     emit_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
 
    /**
-    * @type {basis.data.DatasetWrapper}
+    * @type {basis.data.DatasetAdapter}
     */
-    dataSourceWrapper_: null,
+    dataSourceAdapter_: null,
 
    /**
     * Map dataSource members to child nodes.
@@ -2022,33 +2022,11 @@
     * @inheritDoc
     */
     setDataSource: function(dataSource){
-      var dataSourceWrapper = null;
-      var oldDataSourceWrapper = this.dataSourceWrapper_;
-
       if (!dataSource || !this.childClass)
         dataSource = null;
 
-      // dataset wrapper
-      if (dataSource instanceof DatasetWrapper)
-      {
-        dataSourceWrapper = dataSource;
-        dataSource = dataSourceWrapper.dataset;
-      }
-
-      if (oldDataSourceWrapper !== dataSourceWrapper)
-      {
-        if (oldDataSourceWrapper)
-          oldDataSourceWrapper.removeHandler(MIXIN_DATASOURCE_WRAPPER_HANDLER, this);
-
-        if (dataSourceWrapper)
-          dataSourceWrapper.addHandler(MIXIN_DATASOURCE_WRAPPER_HANDLER, this);
-
-        this.dataSourceWrapper_ = dataSourceWrapper;
-      }
-
       // dataset
-      if (dataSource instanceof AbstractDataset == false)
-        dataSource = null;
+      dataSource = basis.data.resolveDataset(this, this.setDataSource, dataSource, 'dataSourceAdapter_');
 
       if (this.dataSource !== dataSource)
       {

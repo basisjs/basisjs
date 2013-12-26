@@ -1712,6 +1712,43 @@
                   }
                 },
                 {
+                  name: 'DatasetWrapper instance as dataSource in config',
+                  test: function(){
+                    var testSet = getTestSet();
+                    var dataset = getDataset();
+                    var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: datasetWrapper
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(true, testSet.length > 0);
+                    this.is(dataset, node.dataSource);
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.length, dataset.itemCount);
+                  }
+                },
+                {
+                  name: 'Value instance as dataSource in config',
+                  test: function(){
+                    var testSet = getTestSet();
+                    var dataset = getDataset();
+                    var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+                    var value = new basis.data.Value({ value: datasetWrapper });
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: value
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(true, testSet.length > 0);
+                    this.is(dataset, node.dataSource);
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.length, dataset.itemCount);
+                  }
+                },
+                {
                   name: 'if dataSource in config, childNodes should be ignored',
                   test: function(){
                     var testSet = getTestSet();
@@ -1916,6 +1953,67 @@
                     this.is(false, checkNode(node));
                     this.is(dataset, node.dataSource);
                     this.is(dataset.itemCount, node.childNodes.length);
+                  }
+                },
+                {
+                  name: 'set/reset/set DatasetWrapper instance as dataSource',
+                  test: function(){
+                    var dataset = getDataset();
+                    var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+                    var node = new Node({
+                      childFactory: nodeFactory
+                    });
+
+                    node.setDataSource(datasetWrapper);
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+
+                    node.setDataSource();
+                    this.is(false, checkNode(node));
+                    this.is(null, node.dataSource);
+                    this.is(0, node.childNodes.length);
+
+                    node.setDataSource(datasetWrapper);
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+
+                    datasetWrapper.setDataset();
+                    this.is(false, checkNode(node));
+                    this.is(null, node.dataSource);
+                    this.is(0, node.childNodes.length)
+                  }
+                },
+                {
+                  name: 'set/reset/set Value instance as dataSource',
+                  test: function(){
+                    var dataset = getDataset();
+                    var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+                    var value = new basis.data.Value({ value: datasetWrapper });
+                    var node = new Node({
+                      childFactory: nodeFactory
+                    });
+
+                    node.setDataSource(value);
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+
+                    node.setDataSource();
+                    this.is(false, checkNode(node));
+                    this.is(null, node.dataSource);
+                    this.is(0, node.childNodes.length);
+
+                    node.setDataSource(value);
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+
+                    value.set();
+                    this.is(false, checkNode(node));
+                    this.is(null, node.dataSource);
+                    this.is(0, node.childNodes.length);
                   }
                 },
                 {

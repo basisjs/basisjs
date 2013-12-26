@@ -236,6 +236,228 @@
               }
             }
           ]
+        },
+        {
+          name: 'resolveDataset',
+          testcase: [
+            {
+              name: 'source dataset/null',
+              test: function(){
+                var log = [];
+                var obj = {
+                  log: function(){
+                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+                var adopted = basis.data.resolveDataset(obj, obj.log, dataset, 'test');
+
+                this.is(true, adopted === dataset);
+                this.is(false, 'test' in obj);
+                this.is([], log);
+
+                adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+
+                this.is(true, adopted === null);
+                this.is(false, 'test' in obj);
+                this.is([], log);
+              }
+            },
+            {
+              name: 'source DatasetWrapper',
+              test: function(){
+                var log = [];
+                var obj = {
+                  log: function(val){
+                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+                var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+                var adopted = basis.data.resolveDataset(obj, obj.log, datasetWrapper, 'test');
+
+                this.is(true, adopted === dataset);
+                this.is(true, 'test' in obj);
+                this.is([], log);
+
+                // change wrapper's dataset should add record to log
+                dataset = new basis.data.Dataset();
+                datasetWrapper.setDataset(dataset);
+
+                this.is(true, 'test' in obj);
+                this.is(1, log.length);
+                this.is(true, log[0] === dataset);
+
+                // reset dataset
+                datasetWrapper.setDataset();
+
+                this.is(true, 'test' in obj);
+                this.is(2, log.length);
+                this.is(true, log[1] === null);
+
+                // clean up
+                adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+
+                this.is(true, adopted === null);
+                this.is(null, obj.test);
+                this.is(2, log.length);
+
+                // change wrapper's dataset should change nothing
+                datasetWrapper.setDataset(new basis.data.Dataset());
+
+                this.is(null, obj.test);
+                this.is(2, log.length);
+              }
+            },
+            {
+              name: 'source Value',
+              test: function(){
+                var log = [];
+                var obj = {
+                  log: function(val){
+                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+                var value = new basis.data.Value({ value: dataset });
+                var adopted = basis.data.resolveDataset(obj, obj.log, value, 'test');
+
+                this.is(true, adopted === dataset);
+                this.is(true, 'test' in obj);
+                this.is([], log);
+
+                // change wrapper's dataset should add record to log
+                dataset = new basis.data.Dataset();
+                value.set(dataset);
+
+                this.is(true, 'test' in obj);
+                this.is(1, log.length);
+                this.is(true, log[0] === dataset);
+
+                // reset dataset
+                value.set(null);
+
+                this.is(true, 'test' in obj);
+                this.is(2, log.length);
+                this.is(true, log[1] === null);
+
+                // clean up
+                adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+
+                this.is(true, adopted === null);
+                this.is(null, obj.test);
+                this.is(2, log.length);
+
+                // change wrapper's dataset should change nothing
+                value.set(new basis.data.Dataset());
+
+                this.is(null, obj.test);
+                this.is(2, log.length);
+              }
+            },
+            {
+              name: 'source Value -> DatasetWrapper (wrapper changes)',
+              test: function(){
+                var log = [];
+                var obj = {
+                  log: function(val){
+                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+                var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+                var value = new basis.data.Value({ value: datasetWrapper });
+                var adopted = basis.data.resolveDataset(obj, obj.log, value, 'test');
+
+                this.is(true, adopted === dataset);
+                this.is(true, 'test' in obj);
+                this.is([], log);
+
+                // change wrapper's dataset should add record to log
+                dataset = new basis.data.Dataset();
+                datasetWrapper.setDataset(dataset);
+
+                this.is(true, 'test' in obj);
+                this.is(1, log.length);
+                this.is(true, log[0] === dataset);
+
+                // reset dataset
+                datasetWrapper.setDataset();
+
+                this.is(true, 'test' in obj);
+                this.is(2, log.length);
+                this.is(true, log[1] === null);
+
+                // clean up
+                adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+
+                this.is(true, adopted === null);
+                this.is(null, obj.test);
+                this.is(2, log.length);
+
+                // change wrapper's dataset should change nothing
+                datasetWrapper.setDataset(new basis.data.Dataset());
+
+                this.is(null, obj.test);
+                this.is(2, log.length);
+              }
+            },
+            {
+              name: 'source Value -> DatasetWrapper (value changes)',
+              test: function(){
+                var log = [];
+                var obj = {
+                  log: function(val){
+                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+                var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+                var value = new basis.data.Value({ value: datasetWrapper });
+                var adopted = basis.data.resolveDataset(obj, obj.log, value, 'test');
+
+                this.is(true, adopted === dataset);
+                this.is(true, 'test' in obj);
+                this.is([], log);
+
+                // change wrapper's dataset should add record to log
+                dataset = new basis.data.Dataset();
+                value.set(dataset);
+
+                this.is(true, 'test' in obj);
+                this.is(1, log.length);
+                this.is(true, log[0] === dataset);
+
+                // reset dataset
+                value.set(null);
+
+                this.is(true, 'test' in obj);
+                this.is(2, log.length);
+                this.is(true, log[1] === null);
+
+                // set dataset wrapper
+                value.set(datasetWrapper);
+
+                this.is(true, 'test' in obj);
+                this.is(3, log.length);
+                this.is(true, log[2] === datasetWrapper.dataset);
+
+                // clean up
+                adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+
+                this.is(true, adopted === null);
+                this.is(null, obj.test);
+                this.is(3, log.length);
+
+                // change wrapper's dataset should change nothing
+                datasetWrapper.setDataset(new basis.data.Dataset());
+                value.set(new basis.data.Dataset());
+
+                this.is(null, obj.test);
+                this.is(3, log.length);
+              }
+            }
+          ]
         }
       ];
 

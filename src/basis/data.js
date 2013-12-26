@@ -2064,6 +2064,75 @@
   });
 
 
+/**
+  * @class
+  */
+
+  var DatasetAdapter = function(context, fn, source, handler){
+    this.source = source;
+    this.handler = handler;
+    this.context = {
+      context: context,
+      fn: fn
+    };
+  };
+   
+  var DATASETWRAPPER_ADAPTER_HANDLER = {
+    datasetChanged: function(wrapper){
+      this.fn.call(this.context, wrapper);
+    },
+    destroy: function(){
+      this.fn.call(this.context, null);
+    }
+  };
+   
+  var VALUE_ADAPTER_HANDLER = {
+    change: function(value){
+      this.fn.call(this.context, value);
+    },
+    destroy: function(){
+      this.fn.call(this.context, null);
+    }
+  };
+   
+  function resolveDataset(context, fn, source, property){
+    var oldAdapter = context[property] || null;
+    var newAdapter = null;
+   
+    if (source instanceof DatasetWrapper)
+    {
+      newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
+      source = source.dataset;
+    }
+
+    if (source instanceof Value)
+    {
+      newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+      source = resolveDataset(newAdapter, fn, source.value, 'x');
+    }
+
+    if (source instanceof AbstractDataset == false)
+      source = null;
+   
+    if (property && oldAdapter !== newAdapter)
+    {
+      if (oldAdapter)
+      {
+        oldAdapter.source.removeHandler(oldAdapter.handler, oldAdapter.context);
+        if (oldAdapter.source instanceof Value)
+          resolveDataset(oldAdapter, null, null, 'x');
+      }
+   
+      if (newAdapter)
+        newAdapter.source.addHandler(newAdapter.handler, newAdapter.context);
+   
+      context[property] = newAdapter;
+    }
+   
+    return source;
+  }
+
+
   //
   // Accumulate dataset changes
   //
@@ -2211,9 +2280,11 @@
     AbstractDataset: AbstractDataset,
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
+    DatasetAdapter: DatasetAdapter,
 
     isConnected: isConnected,
     getDatasetDelta: getDatasetDelta,
+    resolveDataset: resolveDataset,
 
     wrapData: wrapData,
     wrapObject: wrapObject,
