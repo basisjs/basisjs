@@ -91,8 +91,13 @@
 
    /**
     * @inheritDocs
-    */ 
+    */
     value: 0,
+
+   /**
+    * @inheritDocs
+    */
+    setNullOnEmitterDestroy: false,    
    
    /**
     * @constructor

@@ -131,6 +131,38 @@
               }
             },
             {
+              name: 'value should be set to null if value instanceof basis.event.Emitter',
+              test: function(){
+                var emitter = new basis.event.Emitter;
+                var testValue = new basis.data.Value({ value: emitter });
+
+                this.is(true, testValue.value === emitter);
+                this.is(true, !!emitter.handler);
+
+                emitter.destroy();
+                this.is(null, testValue.value);
+                this.is(null, emitter.handler);
+              }
+            },
+            {
+              name: 'value should correct add/remove handler on value if value instanceof basis.event.Emitter',
+              test: function(){
+                var emitter = new basis.event.Emitter;
+                var testValue = new basis.data.Value({ value: null });
+
+                this.is(null, emitter.handler);
+                this.is(null, testValue.value);
+
+                testValue.set(emitter);
+                this.is(true, !!emitter.handler);
+                this.is(true, testValue.value === emitter);
+
+                testValue.set(null);
+                this.is(null, emitter.handler);
+                this.is(null, testValue.value);
+              }
+            },
+            {
               name: 'Value#as',
               test: function(){
                 var testValue = new basis.data.Value();

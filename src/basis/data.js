@@ -537,7 +537,12 @@
     destroy: function(object){
       this.value.unlink(object, this.fn);
     }
-  };  
+  };
+  var VALUE_EMMITER_DESTROY_HANDLER = { 
+    destroy: function(object){
+      this.set(null);
+    }
+  };
 
  /**
   * @class
@@ -593,7 +598,12 @@
    /**
     * @type {object}
     */
-    links_: null,    
+    links_: null,
+
+   /**
+    * @type {boolean}
+    */
+    setNullOnEmitterDestroy: true,
 
    /**
     * Settings for bindings.
@@ -619,6 +629,9 @@
       if (this.proxy)
         this.value = this.proxy(this.value);
 
+      if (this.setNullOnEmitterDestroy && this.value instanceof Emitter)
+        this.value.addHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
+
       this.initValue = this.value;
     },
 
@@ -635,6 +648,14 @@
 
       if (changed)
       {
+        if (this.setNullOnEmitterDestroy)
+        {
+          if (oldValue instanceof Emitter)
+            oldValue.removeHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
+          if (newValue instanceof Emitter)
+            newValue.addHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
+        }
+
         this.value = newValue;
 
         if (!this.locked)
@@ -873,6 +894,10 @@
     */
     destroy: function(){
       AbstractData.prototype.destroy.call(this);
+
+      // remove handler if value instanceof Emmiter
+      if (this.setNullOnEmitterDestroy && this.value instanceof Emitter)
+        this.value.removeHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
 
       // remove event handlers from all basis.event.Emitter instances
       var cursor = this;
