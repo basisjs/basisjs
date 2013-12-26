@@ -549,6 +549,58 @@
                 this.is(true, obj.dataset === null);
                 this.is(true, obj.test.source === value2);
               }
+            },
+            {
+              name: 'use function as value for resolveDataset',
+              test: function(){
+                var obj = {
+                  setDataset: function(val){
+                    this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+
+                obj.setDataset(function(){ return dataset });
+                this.is(true, obj.dataset === dataset);
+                this.is(false, 'test' in obj);
+              }
+            },
+            {
+              name: 'use basis.Token as value for resolveDataset',
+              test: function(){
+                var obj = {
+                  setDataset: function(val){
+                    this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+                var dataset2 = new basis.data.Dataset();
+                var token = new basis.Token(dataset);
+
+                obj.setDataset(token);
+                this.is(true, obj.dataset === dataset);
+                this.is(true, obj.test.source === basis.data.Value.from(token));
+
+                token.set(dataset2);
+                this.is(true, obj.dataset === dataset2);
+                this.is(true, obj.test.source === basis.data.Value.from(token));
+
+                token.set(null);
+                this.is(true, obj.dataset === null);
+                this.is(true, obj.test.source === basis.data.Value.from(token));
+
+                token.set(dataset2);
+                this.is(true, obj.dataset === dataset2);
+                this.is(true, obj.test.source === basis.data.Value.from(token));
+
+                obj.setDataset(null);
+                this.is(true, obj.dataset === null);
+                this.is(true, obj.test === null);
+
+                token.set(dataset);
+                this.is(true, obj.dataset === null);
+                this.is(true, obj.test === null);
+              }
             }
           ]
         }

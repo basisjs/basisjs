@@ -2085,10 +2085,11 @@
     this.handler = handler;
   };
 
+  DatasetAdapter.prototype.adapter_ = null;
   DatasetAdapter.prototype.proxy = function(){
     this.fn.call(this.context, this.source);
   };
-   
+
   var DATASETWRAPPER_ADAPTER_HANDLER = {
     datasetChanged: function(wrapper){
       this.fn.call(this.context, wrapper);
@@ -2097,7 +2098,7 @@
       this.fn.call(this.context, null);
     }
   };
-   
+
   var VALUE_ADAPTER_HANDLER = {
     change: function(value){
       this.fn.call(this.context, value);
@@ -2106,24 +2107,27 @@
       this.fn.call(this.context, null);
     }
   };
-   
+
   function resolveDataset(context, fn, source, property){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
     if (typeof source == 'function')
       source = source.call(context, context);
-   
+
     if (source instanceof DatasetWrapper)
     {
       newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
       source = source.dataset;
     }
 
+    if (source instanceof basis.Token)
+      source = Value.from(source);  // basis.Token -> basis.data.Value
+
     if (source instanceof Value)
     {
       newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-      source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'x');
+      source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
     }
 
     if (source instanceof AbstractDataset == false)
@@ -2135,7 +2139,7 @@
       {
         oldAdapter.source.removeHandler(oldAdapter.handler, oldAdapter);
         if (oldAdapter.source instanceof Value)
-          resolveDataset(oldAdapter, null, null, 'x');
+          resolveDataset(oldAdapter, null, null, 'adapter_');
       }
    
       if (newAdapter)
