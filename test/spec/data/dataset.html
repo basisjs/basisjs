@@ -493,7 +493,6 @@
             {
               name: 'common use-case of resolveDataset usage',
               test: function(){
-                var log = [];
                 var obj = {
                   setDataset: function(val){
                     this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
@@ -504,24 +503,51 @@
                 var value = new basis.data.Value({ value: dataset });
 
                 obj.setDataset(value);
-
-                this.is(true, obj.dataset === dataset);  // true
-                this.is(true, obj.test.source === value);  // true
+                this.is(true, obj.dataset === dataset);
+                this.is(true, obj.test.source === value);
 
                 value.set(null);
-
-                this.is(true, obj.dataset === null);  // true
-                this.is(true, obj.test.source === value);  // true
+                this.is(true, obj.dataset === null);
+                this.is(true, obj.test.source === value);
 
                 value.set(new basis.data.DatasetWrapper({ dataset: anotherDataset }));
-
-                this.is(true, obj.dataset === anotherDataset);  // true
-                this.is(true, obj.test.source === value);  // true
+                this.is(true, obj.dataset === anotherDataset);
+                this.is(true, obj.test.source === value);
 
                 value.value.setDataset(null);
+                this.is(true, obj.dataset === null);
+                this.is(true, obj.test.source === value);
+              }
+            },
+            {
+              name: 'common use-case of resolveDataset usage long chain',
+              test: function(){
+                var obj = {
+                  setDataset: function(val){
+                    this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+                var datasetWrapper1 = new basis.data.DatasetWrapper({ dataset: dataset });
+                var value1 = new basis.data.Value({ value: datasetWrapper1 });
+                var datasetWrapper2 = new basis.data.DatasetWrapper({ dataset: value1 });
+                var value2 = new basis.data.Value({ value: datasetWrapper2 });
 
-                this.is(true, obj.dataset === null);  // true
-                this.is(true, obj.test.source === value);  // true
+                obj.setDataset(value2);
+                this.is(true, obj.dataset === dataset);
+                this.is(true, obj.test.source === value2);
+
+                value1.set(null);
+                this.is(true, obj.dataset === null);
+                this.is(true, obj.test.source === value2);
+
+                value2.set(datasetWrapper1);
+                this.is(true, obj.dataset === dataset);
+                this.is(true, obj.test.source === value2);
+
+                value2.value.setDataset(null);
+                this.is(true, obj.dataset === null);
+                this.is(true, obj.test.source === value2);
               }
             }
           ]

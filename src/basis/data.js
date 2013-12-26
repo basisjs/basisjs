@@ -1546,6 +1546,11 @@
     dataset: null,
 
    /**
+    * @type {basis.data.DatasetAdapter}
+    */ 
+    datasetAdapter_: null,
+
+   /**
     * Fires when dataset was changed.
     * @param {basis.data.AbstractDataset} oldDataset
     * @event
@@ -1577,8 +1582,7 @@
     * @param {basis.data.AbstractDataset} dataset
     */
     setDataset: function(dataset){
-      if (dataset instanceof AbstractDataset == false)
-        dataset = null;
+      dataset = resolveDataset(this, this.setDataset, dataset, 'datasetAdapter_');
       
       if (this.dataset !== dataset)
       {
@@ -1643,7 +1647,7 @@
     * @destructor
     */
     destroy: function(){
-      if (this.dataset)
+      if (this.dataset || this.datasetAdapter_)
         this.setDataset();
 
       DataObject.prototype.destroy.call(this);
