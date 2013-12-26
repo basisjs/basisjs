@@ -2017,6 +2017,35 @@
                   }
                 },
                 {
+                  name: 'dynamic test for Value/DatasetWrapper as dataSource',
+                  test: function(){
+                    var dataset = new basis.data.Dataset();
+                    var anotherDataset = new basis.data.Dataset();
+                    var selectedDataset = new basis.data.Value({ value: dataset });
+                    var node = new basis.dom.wrapper.Node({
+                      dataSource: selectedDataset
+                    });
+
+                    this.is(true, node.dataSource === dataset);  // true
+                    this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
+
+                    selectedDataset.set(null);
+
+                    this.is(true, node.dataSource === null);  // true
+                    this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
+
+                    selectedDataset.set(new basis.data.DatasetWrapper({ dataset: anotherDataset }));
+
+                    this.is(true, node.dataSource === anotherDataset);  // true
+                    this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
+
+                    selectedDataset.value.setDataset(null);
+
+                    this.is(true, node.dataSource === null);  // true
+                    this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
+                  }
+                },
+                {
                   name: 'set/reset dataSource/childNodes',
                   test: function(){
                     var testSet = getTestSet();

@@ -269,7 +269,10 @@
                 var log = [];
                 var obj = {
                   log: function(val){
-                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                    log.push({
+                      context: this,
+                      value: basis.data.resolveDataset({}, function(){}, val)
+                    });
                   }
                 };
                 var dataset = new basis.data.Dataset();
@@ -278,6 +281,7 @@
 
                 this.is(true, adopted === dataset);
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === datasetWrapper);
                 this.is([], log);
 
                 // change wrapper's dataset should add record to log
@@ -285,15 +289,19 @@
                 datasetWrapper.setDataset(dataset);
 
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === datasetWrapper);
                 this.is(1, log.length);
-                this.is(true, log[0] === dataset);
+                this.is(obj, log[0].context);
+                this.is(true, log[0].value === dataset);
 
                 // reset dataset
                 datasetWrapper.setDataset();
 
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === datasetWrapper);
                 this.is(2, log.length);
-                this.is(true, log[1] === null);
+                this.is(obj, log[1].context);
+                this.is(true, log[1].value === null);
 
                 // clean up
                 adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
@@ -315,7 +323,10 @@
                 var log = [];
                 var obj = {
                   log: function(val){
-                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                    log.push({
+                      context: this,
+                      value: basis.data.resolveDataset({}, function(){}, val)
+                    });
                   }
                 };
                 var dataset = new basis.data.Dataset();
@@ -324,6 +335,7 @@
 
                 this.is(true, adopted === dataset);
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
                 this.is([], log);
 
                 // change wrapper's dataset should add record to log
@@ -331,15 +343,19 @@
                 value.set(dataset);
 
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
                 this.is(1, log.length);
-                this.is(true, log[0] === dataset);
+                this.is(obj, log[0].context);
+                this.is(true, log[0].value === dataset);
 
                 // reset dataset
                 value.set(null);
 
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
                 this.is(2, log.length);
-                this.is(true, log[1] === null);
+                this.is(obj, log[1].context);
+                this.is(true, log[1].value === null);
 
                 // clean up
                 adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
@@ -361,7 +377,10 @@
                 var log = [];
                 var obj = {
                   log: function(val){
-                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                    log.push({
+                      context: this,
+                      value: basis.data.resolveDataset({}, function(){}, val)
+                    });
                   }
                 };
                 var dataset = new basis.data.Dataset();
@@ -373,20 +392,24 @@
                 this.is(true, 'test' in obj);
                 this.is([], log);
 
+                // reset dataset
+                datasetWrapper.setDataset();
+
+                this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
+                this.is(1, log.length);
+                this.is(obj, log[0].context);
+                this.is(null, log[0].value);
+
                 // change wrapper's dataset should add record to log
                 dataset = new basis.data.Dataset();
                 datasetWrapper.setDataset(dataset);
 
                 this.is(true, 'test' in obj);
-                this.is(1, log.length);
-                this.is(true, log[0] === dataset);
-
-                // reset dataset
-                datasetWrapper.setDataset();
-
-                this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
                 this.is(2, log.length);
-                this.is(true, log[1] === null);
+                this.is(obj, log[1].context);
+                this.is(true, log[1].value === dataset);
 
                 // clean up
                 adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
@@ -408,7 +431,10 @@
                 var log = [];
                 var obj = {
                   log: function(val){
-                    log.push(basis.data.resolveDataset({}, function(){}, val));
+                    log.push({
+                      context: this,
+                      value: basis.data.resolveDataset({}, function(){}, val)
+                    });
                   }
                 };
                 var dataset = new basis.data.Dataset();
@@ -418,6 +444,7 @@
 
                 this.is(true, adopted === dataset);
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
                 this.is([], log);
 
                 // change wrapper's dataset should add record to log
@@ -425,22 +452,28 @@
                 value.set(dataset);
 
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
                 this.is(1, log.length);
-                this.is(true, log[0] === dataset);
+                this.is(obj, log[0].context);
+                this.is(true, log[0].value === dataset);
 
                 // reset dataset
                 value.set(null);
 
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
                 this.is(2, log.length);
-                this.is(true, log[1] === null);
+                this.is(obj, log[1].context);
+                this.is(null, log[1].value);
 
                 // set dataset wrapper
                 value.set(datasetWrapper);
 
                 this.is(true, 'test' in obj);
+                this.is(true, 'test' in obj && obj.test.source === value);
                 this.is(3, log.length);
-                this.is(true, log[2] === datasetWrapper.dataset);
+                this.is(obj, log[2].context);
+                this.is(true, log[2].value === datasetWrapper.dataset);
 
                 // clean up
                 adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
@@ -455,6 +488,40 @@
 
                 this.is(null, obj.test);
                 this.is(3, log.length);
+              }
+            },
+            {
+              name: 'common use-case of resolveDataset usage',
+              test: function(){
+                var log = [];
+                var obj = {
+                  setDataset: function(val){
+                    this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                  }
+                };
+                var dataset = new basis.data.Dataset();
+                var anotherDataset = new basis.data.Dataset();
+                var value = new basis.data.Value({ value: dataset });
+
+                obj.setDataset(value);
+
+                this.is(true, obj.dataset === dataset);  // true
+                this.is(true, obj.test.source === value);  // true
+
+                value.set(null);
+
+                this.is(true, obj.dataset === null);  // true
+                this.is(true, obj.test.source === value);  // true
+
+                value.set(new basis.data.DatasetWrapper({ dataset: anotherDataset }));
+
+                this.is(true, obj.dataset === anotherDataset);  // true
+                this.is(true, obj.test.source === value);  // true
+
+                value.value.setDataset(null);
+
+                this.is(true, obj.dataset === null);  // true
+                this.is(true, obj.test.source === value);  // true
               }
             }
           ]

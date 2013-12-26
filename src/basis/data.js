@@ -2069,12 +2069,14 @@
   */
 
   var DatasetAdapter = function(context, fn, source, handler){
+    this.context = context;
+    this.fn = fn;
     this.source = source;
     this.handler = handler;
-    this.context = {
-      context: context,
-      fn: fn
-    };
+  };
+
+  DatasetAdapter.prototype.proxy = function(){
+    this.fn.call(this.context, this.source);
   };
    
   var DATASETWRAPPER_ADAPTER_HANDLER = {
@@ -2108,7 +2110,7 @@
     if (source instanceof Value)
     {
       newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-      source = resolveDataset(newAdapter, fn, source.value, 'x');
+      source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'x');
     }
 
     if (source instanceof AbstractDataset == false)
@@ -2118,13 +2120,13 @@
     {
       if (oldAdapter)
       {
-        oldAdapter.source.removeHandler(oldAdapter.handler, oldAdapter.context);
+        oldAdapter.source.removeHandler(oldAdapter.handler, oldAdapter);
         if (oldAdapter.source instanceof Value)
           resolveDataset(oldAdapter, null, null, 'x');
       }
    
       if (newAdapter)
-        newAdapter.source.addHandler(newAdapter.handler, newAdapter.context);
+        newAdapter.source.addHandler(newAdapter.handler, newAdapter);
    
       context[property] = newAdapter;
     }
