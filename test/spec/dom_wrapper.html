@@ -1697,7 +1697,23 @@
                 {
                   name: 'dataSource in config',
                   test: function(){
-                    var testSet = getTestSet();
+                    var dataset = getDataset();
+                    var length = dataset.itemCount;
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(true, length > 0);
+                    this.is(true, node.dataSource === dataset);
+                    this.is(length, node.childNodes.length);
+                    this.is(length, dataset.itemCount);
+                  }
+                },
+                {
+                  name: 'dataSource should be drop on source destroy',
+                  test: function(){
                     var dataset = getDataset();
                     var node = new Node({
                       childFactory: nodeFactory,
@@ -1705,17 +1721,19 @@
                     });
 
                     this.is(false, checkNode(node));
-                    this.is(true, testSet.length > 0);
-                    this.is(dataset, node.dataSource);
-                    this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.length, dataset.itemCount);
+                    this.is(true, node.dataSource === dataset);
+
+                    dataset.destroy();
+
+                    this.is(false, checkNode(node));
+                    this.is(true, node.dataSource === null);
                   }
                 },
                 {
                   name: 'DatasetWrapper instance as dataSource in config',
                   test: function(){
-                    var testSet = getTestSet();
                     var dataset = getDataset();
+                    var length = dataset.itemCount;
                     var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
                     var node = new Node({
                       childFactory: nodeFactory,
@@ -1723,17 +1741,17 @@
                     });
 
                     this.is(false, checkNode(node));
-                    this.is(true, testSet.length > 0);
-                    this.is(dataset, node.dataSource);
-                    this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.length, dataset.itemCount);
+                    this.is(true, length > 0);
+                    this.is(true, node.dataSource === dataset);
+                    this.is(length, node.childNodes.length);
+                    this.is(length, dataset.itemCount);
                   }
                 },
                 {
                   name: 'Value instance as dataSource in config',
                   test: function(){
-                    var testSet = getTestSet();
                     var dataset = getDataset();
+                    var length = dataset.itemCount;
                     var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
                     var value = new basis.data.Value({ value: datasetWrapper });
                     var node = new Node({
@@ -1742,10 +1760,75 @@
                     });
 
                     this.is(false, checkNode(node));
-                    this.is(true, testSet.length > 0);
-                    this.is(dataset, node.dataSource);
-                    this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.length, dataset.itemCount);
+                    this.is(true, length > 0);
+                    this.is(true, node.dataSource === dataset);
+                    this.is(length, node.childNodes.length);
+                    this.is(length, dataset.itemCount);
+                  }
+                },
+                {
+                  name: 'dataSource adapter should be removed on destroy',
+                  test: function(){
+                    // non-empty dataSource
+                    var dataset = getDataset();
+                    var value = new basis.data.Value({ value: dataset });
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: value
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(true, node.dataSource === dataset);
+                    this.is(true, node.dataSourceAdapter_.source === value);
+
+                    node.destroy();
+
+                    this.is(null, node.dataSource);
+                    this.is(null, node.dataSourceAdapter_);
+
+                    // empty dataSource
+                    var value = new basis.data.Value();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: value
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_.source === value);
+
+                    node.destroy();
+
+                    this.is(null, node.dataSource);
+                    this.is(null, node.dataSourceAdapter_);
+                  }
+                },
+                {
+                  name: 'dataSource adapter shouldn\'t be removed on source destroy',
+                  test: function(){
+                    // non-empty dataSource
+                    var dataset = new basis.data.Dataset({
+                      handler: {
+                        destroy: function(){
+                          value.set(null);
+                        }
+                      }
+                    });
+                    var value = new basis.data.Value({ value: dataset });
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: value
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(true, node.dataSource === dataset);
+                    this.is(true, node.dataSourceAdapter_.source === value);
+
+                    dataset.destroy();
+                    this.is(null, node.dataSource);
+                    this.is(null, value.value);
+                    this.is(true, node.dataSourceAdapter_ !== null);
+                    this.is(true, node.dataSourceAdapter_ !== null && node.dataSourceAdapter_.source === value);
                   }
                 },
                 {
@@ -1760,8 +1843,25 @@
                     });
 
                     this.is(false, checkNode(node));
-                    this.is(dataset, node.dataSource);
+                    this.is(true, node.dataSource === dataset);
                     this.is(dataset.itemCount, node.childNodes.length);
+                  }
+                },
+                {
+                  name: 'if dataSource adapter in config, childNodes should be ignored',
+                  test: function(){
+                    var testSet = getTestSet();
+                    var value = new basis.data.Value();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      childNodes: testSet,
+                      dataSource: value
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(true, node.dataSource === null);
+                    this.is(true, node.dataSourceAdapter_ != null);
+                    this.is(true, node.firstChild == null);
                   }
                 },
                 {

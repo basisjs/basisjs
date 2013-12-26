@@ -56,6 +56,7 @@
   /** @const */ var EXCEPTION_DATASOURCE_CONFLICT = namespace + ': Operation is not allowed because node is under dataSource control';
   /** @const */ var EXCEPTION_DATASOURCEADAPTER_CONFLICT = namespace + ': Operation is not allowed because node is under dataSource adapter control';
   /** @const */ var EXCEPTION_PARENTNODE_OWNER_CONFLICT = namespace + ': Node can\'t has owner and parentNode';
+  /** @const */ var EXCEPTION_NO_CHILDCLASS = namespace + ': Node can\'t has children and dataSource as childClass isn\'t specified';
 
   /** @const */ var DELEGATE = {
     ANY: true,
@@ -1123,7 +1124,7 @@
       DataObject.prototype.destroy.call(this);
 
       // delete children
-      if (this.dataSource)
+      if (this.dataSource || this.dataSourceAdapter_)
       {
         // drop dataSource
         this.setDataSource();
@@ -1399,7 +1400,7 @@
       this.setChildNodesState(dataSource.state);
     },
     destroy: function(dataSource){
-      if (this.dataSource === dataSource)
+      if (!this.dataSourceAdapter_)
         this.setDataSource();
     }
   };
@@ -1531,7 +1532,7 @@
     */
     insertBefore: function(newChild, refChild){
       if (!this.childClass)
-        throw EXCEPTION_CANT_INSERT;
+        throw EXCEPTION_NO_CHILDCLASS;
 
       if (newChild.firstChild)
       {
@@ -2039,8 +2040,8 @@
     * @inheritDoc
     */
     setDataSource: function(dataSource){
-      if (!dataSource || !this.childClass)
-        dataSource = null;
+      if (!this.childClass)
+        throw EXCEPTION_NO_CHILDCLASS;
 
       // dataset
       dataSource = basis.data.resolveDataset(this, this.setDataSource, dataSource, 'dataSourceAdapter_');
