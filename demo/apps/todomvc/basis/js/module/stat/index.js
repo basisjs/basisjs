@@ -6,7 +6,6 @@ require('basis.data.index');
 //
 
 var Todo = require('app.type').Todo;
-var count = basis.data.index.count;
 
 
 //
@@ -21,20 +20,23 @@ var filters = new basis.ui.Node({
       url: 'url',
       title: 'title',
       selected: Todo.selected.compute(function(node, value){
-        return Todo[node.url || 'all'] === value;
+        return node.dataset === value;
       })
     }
   },
   childNodes: [
     {
+      dataset: Todo.all,
       url: '',
       title: 'All'
     },
     {
+      dataset: Todo.active,
       url: 'active',
       title: 'Active'
     },
     {
+      dataset: Todo.completed,
       url: 'completed',
       title: 'Completed'
     }
@@ -50,8 +52,8 @@ module.exports = new basis.ui.Node({
   template: resource('template/footer.tmpl'),
   binding: {
     filters: filters,
-    completed: count(Todo.completed),
-    active: count(Todo.active)
+    completed: basis.data.index.count(Todo.completed),
+    active: basis.data.index.count(Todo.active)
   },
   action: {
     clearCompleted: function(){

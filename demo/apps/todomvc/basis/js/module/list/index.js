@@ -55,7 +55,9 @@ var TodoView = basis.ui.Node.subclass({
 // Main view
 //
 
-var view = new basis.ui.Node({
+module.exports = new basis.ui.Node({
+  dataSource: Todo.selected,
+
   template: resource('template/list.tmpl'),
   binding: {
     noActive: basis.data.index.count(Todo.active).as(basis.bool.invert)
@@ -66,7 +68,9 @@ var view = new basis.ui.Node({
 
       // invert completed flag for dataset members
       dataset.forEach(function(item){
-        item.set_completed(!item.data.completed);
+        item.update({
+          completed: !item.data.completed
+        });
       });
     }
   },
@@ -76,7 +80,3 @@ var view = new basis.ui.Node({
 
   childClass: TodoView
 });
-
-Todo.selected.link(view, view.setDataSource);
-
-module.exports = view;
