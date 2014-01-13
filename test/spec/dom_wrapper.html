@@ -2782,6 +2782,37 @@
                       }
                     },
                     {
+                      name: 'set/remove grouping via setOwner',
+                      test: function(){
+                        var groupingDestroyed = false;
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet(),
+                          grouping: {
+                            autoDestroyWithNoOwner: false,
+                            handler: {
+                              destroy: function(){
+                                groupingDestroyed = true;
+                              }
+                            }
+                          }
+                        });
+                        var grouping = node.grouping;
+
+                        this.is(false, checkNode(node));
+                        this.is(false, checkNode(grouping));
+                        this.is(true, basis.Class.isClass(node.groupingClass));
+                        this.is(true, grouping instanceof node.groupingClass);
+                        this.is(true, grouping.owner === node);
+
+                        grouping.setOwner();
+                        this.is(false, checkNode(node));
+                        this.is(false, checkNode(grouping));
+                        this.is(false, groupingDestroyed);
+                        this.is(true, node.grouping === null);
+                      }
+                    },
+                    {
                       name: 'set grouping and clear childNodes',
                       test: function(){
                         var node = new Node({
@@ -3291,6 +3322,32 @@
 
                         node.setChildNodes();
                         this.is(false, checkNode(node));
+                      }
+                    },
+                    {
+                      name: 'set grouping and remove grouping with nullGroup',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          childNodes: basis.array.create(10, basis.fn.$self),
+                          grouping: {
+                            rule: 'data.value',
+                            dataSource: new basis.data.Dataset(),
+                            autoDestroyWithNoOwner: false
+                          }
+                        });
+                        var grouping = node.grouping;
+
+                        this.is(false, checkNode(node));
+                        this.is(false, checkNode(grouping));
+                        this.is(10, node.childNodes.length);
+                        this.is(10, grouping.nullGroup.nodes.length);
+
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
+                        this.is(false, checkNode(grouping));
+                        this.is(10, node.childNodes.length);
+                        this.is(0, grouping.nullGroup.nodes.length);
                       }
                     }
                   ]

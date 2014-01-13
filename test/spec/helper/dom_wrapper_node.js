@@ -135,9 +135,7 @@ function checkNode(node){
             return 'Wrong order: childs not reflect groups order';
 
       if (k != childCount)
-      {
         return 'Count of child in groups (' + k + ') is not equal to child count (' + childCount + ')';
-      }
 
       var childNodes = basis.array.from(node.childNodes);
 
@@ -255,8 +253,27 @@ function checkNode(node){
   //
   if (node instanceof basis.dom.wrapper.GroupingNode)
   {
-    if (node.owner && node.owner.grouping !== node)
-      return 'wrong GroupingNode.owner ref';
+    if (node.owner)
+    {
+      if (node.owner.grouping !== node)
+        return 'wrong GroupingNode.owner ref';
+    }
+    else
+    {
+      // for groupings with no owner - groups should be empty
+      if (node.nullGroup.nodes.length)
+        return 'nullGroup of grouping with no owner and no dataSource is not empty';
+
+      if (node.childNodes && node.childNodes.length)
+      {
+        if (!node.dataSource)
+          return 'grouping with no owner and no dataSource is not empty';
+
+        for (var group, i = 0; group = node.childNodes[i]; i++)
+          if (group.nodes.length)
+            return 'group #' + i + ' of grouping with no owner and no dataSource is not empty';
+      }
+    }
   }
 
   //

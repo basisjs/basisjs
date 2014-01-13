@@ -2144,7 +2144,6 @@
           
           if (!grouping)
           {
-
             if (this.firstChild)
             {
               // new order
@@ -2153,9 +2152,11 @@
               else
                 order = this.childNodes;
 
-              // reset reference to group node
-              for (var i = order.length; i-- > 0;)
-                order[i].groupNode = null;
+              // reset references and clear group nodes
+              oldGrouping.nullGroup.clear();
+              var groups = oldGrouping.childNodes.slice(0);
+              for (var i = 0; i < groups.length; i++)
+                groups[i].clear();
 
               // apply new order
               fastChildNodesOrder(this, order);
