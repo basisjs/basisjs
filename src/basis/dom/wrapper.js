@@ -422,6 +422,11 @@
 
           satellite = new config.instanceOf(satelliteConfig);
           satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
+
+          // this statement here, because owner set in config and no listen add in this case
+          // TODO: looks like a hack, fix it
+          if (owner.listen && owner.listen.satellite)
+            satellite.addHandler(owner.listen && owner.listen.satellite, owner);
         }
         else
         {

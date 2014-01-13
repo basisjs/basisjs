@@ -31,9 +31,27 @@ function checkOrder(nodes, host){
   }
 }
 
+function checkNodeListen(object, ref, handlerName){
+  var listenHandler = object.listen && object.listen[handlerName];
+  if (listenHandler)
+  {
+    // search for listen handler
+    var handler = basis.array.search(ref.debug_handlers(), true, function(item){
+      return item[0] === listenHandler && item[1] === object;
+    });
+
+    // error if no reference found
+    if (!handler)
+      return 'has no `' + handlerName + '` listen handler';
+  }
+}
+
 function checkNode(node){
   var res;
 
+  //
+  // children and order
+  //
   if (node.childNodes)
   {
     var childCount = node.childNodes.length;
@@ -53,9 +71,7 @@ function checkNode(node){
       if (i > 0)
       {
         if (child.previousSibling !== node.childNodes[i - 1])
-        {
           return 'child #' + i + ' has wrong previousSibling ref';
-        }
       }
       else
       {
@@ -73,10 +89,17 @@ function checkNode(node){
         if (child.nextSibling !== null)
           return 'child #' + i + ' has wrong nextSibling ref, should be a null';
       }
-      //if (child.document != node.document)
-      //  return 'child #' + i + ' has wrong document ref';
+
+      if (res = checkNodeListen(node, child, 'childNode'))
+        return 'child #' + i + ' ' + res;
+
+      if (res = checkNodeListen(child, node, 'parentNode'))
+        return 'parent of child #' + i + ' ' + res;
     }
 
+    //
+    // sorting
+    //
     if (node.sorting !== basis.fn.nullGetter)
     {
       if (node.grouping)
@@ -91,6 +114,9 @@ function checkNode(node){
           return 'Sorting: ' + res;
     }
 
+    //
+    // grouping
+    //
     if (node.grouping)
     {
       if (res = checkNode(node.grouping))
@@ -151,11 +177,14 @@ function checkNode(node){
       return 'Wrong lastChild ref';
   }
 
-  if (node.dataSource !== null && node.dataSource instanceof basis.data.AbstractDataset === false)
-    return 'dataSource has wrong value (should be null or instance of basis.data.AbstractDataset)';
-
-  if (node.dataSource)
+  //
+  // dataSource
+  //
+  if (node.dataSource !== null)
   {
+    if (node.dataSource instanceof basis.data.AbstractDataset === false)
+      return 'dataSource has wrong value (should be null or instance of basis.data.AbstractDataset)';
+
     if (node.dataSource.itemCount !== node.childNodes.length)
       return 'child node count (' + node.childNodes.length + ') is not equal to dataset item count (' + node.dataSource.itemCount + ')';
 
@@ -169,12 +198,70 @@ function checkNode(node){
     }
   }
 
+  //
+  // owner
+  //
+  if (node.owner !== null)
+  {
+    if (node.owner instanceof basis.dom.wrapper.AbstractNode == false)
+      return 'owner has bad type (should be an basis.dom.wrapper.AbstractNode instance)';
+
+    if (res = checkNodeListen(node, node.owner, 'owner'))
+      return 'owner ' + res;
+
+    if (node.ownerSatelliteName)
+    {
+      if (node.owner.satellite[node.ownerSatelliteName] !== node)
+        return 'bad value for ownerSatelliteName property, owner has no satellite with that name - `' + node.ownerSatelliteName + '`';
+    }
+  }
+  else
+  {
+    if (node.ownerSatelliteName)
+      return 'node should not has value for ownerSatelliteName property with no owner';
+  }
+
+  //
+  // satellite
+  //
+  if (node.satellite)
+  {
+    for (var name in node.satellite)
+      if (name != '__auto__')
+      {
+        var satellite = node.satellite[name];
+
+        if (satellite instanceof basis.dom.wrapper.AbstractNode == false)
+          return 'satellite `' + name + '` has bad type (should be an basis.dom.wrapper.AbstractNode instance)';
+
+        if (satellite.owner !== node)
+          return 'satellite `' + name + '` has wrong owner reference';
+
+        if (satellite.ownerSatelliteName !== name)
+          return 'satellite `' + name + '` has bad value for ownerSatelliteName property';
+
+        // owner listen satellite
+        if (res = checkNodeListen(node, satellite, 'satellite'))
+          return 'satellite `' + name + '` ' + res;
+
+        // satellite listen owner
+        if (res = checkNodeListen(satellite, node, 'owner'))
+          return 'satellite\'s `' + name + '` owner' + res;
+      }
+  }
+
+  //
+  // custom checks for GroupingNode instances
+  //
   if (node instanceof basis.dom.wrapper.GroupingNode)
   {
     if (node.owner && node.owner.grouping !== node)
-        return 'wrong GroupingNode.owner ref';
+      return 'wrong GroupingNode.owner ref';
   }
 
+  //
+  // custom checks for PartitionNode instances
+  //
   if (node instanceof basis.dom.wrapper.PartitionNode)
   {
     if (!node.nodes)
@@ -207,44 +294,11 @@ function checkNode(node){
     }
   }
 
-  if (node.owner)
-  {
-    if (node.owner instanceof basis.dom.wrapper.AbstractNode == false)
-      return 'owner has bad type (should be an basis.dom.wrapper.AbstractNode instance)';
-    if (node.ownerSatelliteName)
-    {
-      if (node.owner.satellite[node.ownerSatelliteName] !== node)
-        return 'bad value for ownerSatelliteName property, owner has no satellite with that name - `' + node.ownerSatelliteName + '`';
-    }
-  }
-  else
-  {
-    if (node.ownerSatelliteName)
-      return 'node should not has value for ownerSatelliteName property with no owner';
-  }
-
-  if (node.satellite)
-  {
-    for (var name in node.satellite)
-      if (name != '__auto__')
-      {
-        var satellite = node.satellite[name];
-
-        if (satellite instanceof basis.dom.wrapper.AbstractNode == false)
-          return 'satellite `' + name + '` has bad type (should be an basis.dom.wrapper.AbstractNode instance)';
-
-        if (satellite.owner !== node)
-          return 'satellite `' + name + '` has wrong owner reference';
-
-        if (satellite.ownerSatelliteName !== name)
-          return 'satellite `' + name + '` has bad value for ownerSatelliteName property';
-      }
-  }
-
   return false;
 }
 
 module.exports = {
   getGroups: getGroups,
+  checkNodeListen: checkNodeListen,
   checkNode: checkNode
 };

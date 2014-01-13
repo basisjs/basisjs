@@ -36,6 +36,14 @@
 
       var nsWrappers = basis.dom.wrapper;
       var Node = basis.dom.wrapper.Node;
+      Node.extend({
+        listen: basis.object.extend({
+          parentNode: {},
+          childNode: {},
+          satellite: {},
+          owner: {}
+        }, Node.prototype.listen)
+      });
 
       var domHelpers = basis.require('helper/dom_wrapper_node.js');
       var checkNode = domHelpers.checkNode;
@@ -204,6 +212,30 @@
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
+                  }
+                }
+              ]
+            },
+            {
+              name: 'Owner',
+              testcase: [
+                {
+                  name: 'drop owner on owner destroy',
+                  test: function(){
+                    var owner = new basis.dom.wrapper.Node();
+                    var node = new basis.dom.wrapper.Node({
+                      owner: owner
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(owner));
+                    this.is(true, node.owner === owner);
+
+                    owner.destroy();
+
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(owner));
+                    this.is(null, node.owner);
                   }
                 }
               ]
@@ -1457,7 +1489,6 @@
                         warning = message;
                       };
 
-                      debugger;
                       newOwner.setSatellite('name', satellite);
                     } finally {
                       basis.dev.warn = warn;
