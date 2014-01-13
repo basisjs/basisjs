@@ -272,6 +272,16 @@
 
 
  /**
+  * Partition node
+  */
+  function reinsertPartitionNodes(partition){
+    var nodes = partition.nodes;
+    if (nodes)
+      for (var i = nodes.length - 1, child; child = nodes[i]; i--)
+        child.parentNode.insertBefore(child, child.nextSibling);
+  }
+
+ /**
   * @type {number}
   */
   var focusTimer;
@@ -379,13 +389,6 @@
 
           this.template = null;
           this.setTemplate(template);
-
-          // if node has grouping move groups into template
-          if (this.grouping)
-          {
-            var childNodesElement = this.tmpl.groupsElement || this.childNodesElement;
-            childNodesElement.appendChild(nodeDocumentFragment);
-          }
           
           // release fragment
           fragments.push(nodeDocumentFragment);
@@ -424,20 +427,40 @@
         /** @cut */   delete this.noChildNodesElement_;
 
         if (this.grouping)
+        {
           this.grouping.syncDomRefs();
 
-        if (this instanceof PartitionNode)
-        {
-          var nodes = this.nodes;
-          if (nodes)
-            for (var i = nodes.length - 1, child; child = nodes[i]; i--)
-              child.parentNode.insertBefore(child, child.nextSibling);
+          // search for top grouping
+          var cursor = this;
+          while (cursor.grouping)
+            cursor = cursor.grouping;
+
+          // process grouping partition nodes
+          var topGrouping = cursor;
+          for (var groupNode = topGrouping.lastChild; groupNode; groupNode = groupNode.previousSibling)
+          {
+            if (groupNode instanceof PartitionNode)
+              // for basis.ui.PartitionNode instances we can move all partition nodes at once
+              // by moving partition container
+              topGrouping.insertBefore(groupNode, groupNode.nextSibling);
+            else
+              // for partitions with no DOM element move group nodes one by one
+              reinsertPartitionNodes(groupNode);
+          }
+
+          // move grouping null group nodes
+          reinsertPartitionNodes(topGrouping.nullGroup);
         }
         else
         {
+          // with no grouping scenario
           for (var child = this.lastChild; child; child = child.previousSibling)
             this.insertBefore(child, child.nextSibling);
         }
+
+        // partition nodes also moves their group nodes
+        if (this instanceof PartitionNode)
+          reinsertPartitionNodes(this);
 
         // insert content
         if (this.content)
@@ -737,7 +760,6 @@
     */
     groupingClass: Class.SELF,
 
-    nullElement: null,
     element: null,
     childNodesElement: null,
 
@@ -749,19 +771,8 @@
       DWGroupingNode.prototype.emit_ownerChanged.call(this, oldOwner);
     },
 
-    listen: {
-      owner: {
-        templateChanged: function(){
-          this.syncDomRefs();
-          for (var child = this.lastChild; child; child = child.previousSibling)
-            this.insertBefore(child, child.nextSibling);
-        }
-      }
-    },
-
     init: function(){
-      this.nullElement = document.createDocumentFragment();
-      this.element = this.childNodesElement = this.nullElement;
+      this.element = this.childNodesElement = document.createDocumentFragment();
       DWGroupingNode.prototype.init.call(this);
     },
 
@@ -771,10 +782,7 @@
       var element = null;
 
       if (owner)
-      {
         element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement;
-        element.appendChild(this.nullElement);
-      }
 
       do
       {
@@ -787,7 +795,6 @@
       DWGroupingNode.prototype.destroy.call(this);
       this.element = null;
       this.childNodesElement = null;
-      this.nullElement = null;
     }
   });
 
@@ -799,6 +806,7 @@
     className: namespace + '.Node',
 
     // those bindings here because PartitionNode has no select/unselect/disable/enable events for now
+    // TODO: move to proper place when PartitionNode will have those events
     binding: {
       selected: {
         events: 'select unselect',
