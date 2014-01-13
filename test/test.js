@@ -170,9 +170,7 @@
         var res = this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? (!this.warnings.length ? 'success' : 'warnings') : 'fault'))
 
         return DOM.createElement('.' + this.testType, 
-                 DOM.createElement('SPAN', this.testType),
-                 '\xA0',
-                 DOM.createElement('EM', this.name),
+                 DOM.createElement('I', this.name),
                  ': ',
                  DOM.createElement('SPAN.' + res,
                    res
@@ -485,7 +483,7 @@
         if (DOMFOR) DOM = DOMFOR;
         return DOM.createElement('.' + this.testType,
                  DOM.createElement('P.' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? 'success' : 'fault'))), 
-                   DOM.createElement('SPAN', this.testType),
+                   DOM.createElement('SPAN', this.testType == 'TestCase' ? 'Test group' : this.testType),
                    '\xA0',
                    DOM.createElement('EM', this.name),
                    (!this.success ? basis.string.format(' ({1} passed of {0})', this.testCount, this.successCount) : '') + ':'
