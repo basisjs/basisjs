@@ -393,7 +393,7 @@
             state: {
               events: 'stateChanged',
               getter: function(node){
-                return node.state != basis.data.STATE.ERROR && node.state.data != 'warnings' ? String(node.state) : 'warnings';
+                return node.state != basis.data.STATE.ERROR || node.state.data != 'warnings' ? String(node.state) : 'warnings';
               }
             },
             error: {
