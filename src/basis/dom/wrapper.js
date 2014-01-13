@@ -1071,6 +1071,11 @@
           if (satellite.owner !== this)
           {
             satellite.setOwner(this);
+
+            // if owner doesn't changed nothing to do
+            if (satellite.owner !== this)
+              return;
+
             if (satelliteListen)
               satellite.addHandler(satelliteListen, this);
           }
@@ -1165,6 +1170,7 @@
 
           // drop owner to avoid events and correct auto-satellite remove
           satellite.owner = null;
+          satellite.ownerSatelliteName = null;
 
           if (satellite.destroy === warnOnAutoSatelliteDestoy)
             delete satellite.destroy;

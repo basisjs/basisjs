@@ -37,6 +37,10 @@
       var nsWrappers = basis.dom.wrapper;
       var Node = basis.dom.wrapper.Node;
 
+      var domHelpers = basis.require('helper/dom_wrapper_node.js');
+      var checkNode = domHelpers.checkNode;
+      var getGroups = domHelpers.getGroups;
+
       var groupDatasetByGroupMap = {};
       var groupDatasetByGroup10 = new basis.data.Dataset({
         items: basis.array.create(10, function(idx){
@@ -94,227 +98,6 @@
       function nodeFactory(cfg){
         return new Node(cfg);
       };
-
-      function getGroups(node, withNull){
-        var res = basis.array.from(node.grouping.childNodes);
-        if (withNull)
-          res.unshift(node.grouping.nullGroup);
-        return res;
-      }
-
-      function checkOrder(nodes, host){
-        var sortingValue = host.sorting;
-        var desc = host.sortingDesc;
-
-        for (var i = 0; i < nodes.length; i++)
-          if (nodes[i].sortingValue !== (sortingValue(nodes[i]) || 0))
-            return 'Bad sortingValue';
-
-        if (!desc)
-        {
-          for (var i = 0; i < nodes.length - 1; i++)
-            if (nodes[i].sortingValue > nodes[i + 1].sortingValue)
-              return 'Wrong order';
-        }
-        else
-        {
-          for (var i = 0; i < nodes.length - 1; i++)
-            if (nodes[i].sortingValue < nodes[i + 1].sortingValue)
-              return 'Wrong order';
-        }
-      }
-
-      function checkNode(node){
-        var res;
-
-        if (node.childNodes)
-        {
-          var childCount = node.childNodes.length;
-
-          if (node.firstChild !== (node.childNodes[0] || null))
-            return 'Wrong firstChild ref';
-          if (node.lastChild !== (node.childNodes[childCount - 1] || null))
-            return 'Wrong lastChild ref';
-
-          for (var i = 0; i < childCount; i++)
-          {
-            var child = node.childNodes[i];
-
-            if (child.parentNode !== node)
-              return 'child #' + i + ' has wrong parentNode ref';
-
-            if (i > 0)
-            {
-              if (child.previousSibling !== node.childNodes[i - 1])
-              {
-                return 'child #' + i + ' has wrong previousSibling ref';
-              }
-            }
-            else
-            {
-              if (child.previousSibling !== null)
-                return 'child #' + i + ' has wrong previousSibling ref, should be a null';
-            }
-
-            if (i < childCount - 1)
-            {
-              if (child.nextSibling !== node.childNodes[i + 1])
-                return 'child #' + i + ' has wrong nextSibling ref';
-            }
-            else
-            {
-              if (child.nextSibling !== null)
-                return 'child #' + i + ' has wrong nextSibling ref, should be a null';
-            }
-            //if (child.document != node.document)
-            //  return 'child #' + i + ' has wrong document ref';
-          }
-
-          if (node.sorting !== basis.fn.nullGetter)
-          {
-            if (node.grouping)
-            {
-              var groups = getGroups(node, true);
-              for (var i = 0; i < groups.length; i++)
-                if (res = checkOrder(groups[i].nodes, node))
-                  return 'Sorting in group: ' + res;
-            }
-            else
-              if (res = checkOrder(node.childNodes, node))
-                return 'Sorting: ' + res;
-          }
-
-          if (node.grouping)
-          {
-            if (res = checkNode(node.grouping))
-              return res;
-
-            var groups = getGroups(node, true);
-            for (var i = 0; i < groups.length; i++)
-            {
-              if (res = checkNode(groups[i]))
-                return 'group #' + i + ': ' + res;
-            }
-
-            for (var i = 0, k = 0, group; group = groups[i++];)
-              for (var j = 0, groupNode; groupNode = group.nodes[j++];)
-                if (node.childNodes[k++] !== groupNode)
-                  return 'Wrong order: childs not reflect groups order';
-
-            if (k != childCount)
-            {
-              return 'Count of child in groups (' + k + ') is not equal to child count (' + childCount + ')';
-            }
-
-            var childNodes = basis.array.from(node.childNodes);
-
-            // check for child groupNode reference
-            for (var i = 0, child; child = node.childNodes[i++];)
-              if (node.grouping.getGroupNode(child, true) !== child.groupNode)
-                return 'child node has wrong groupNode ref';
-
-            // after getGroupNode node.childNodes and groups should not be changed
-            var currentGroups = getGroups(node, true);
-
-            if (childCount !== node.childNodes.length)
-              return 'childNodes broken after getGroupNode for childs';
-            if (currentGroups.length !== groups.length)
-              return 'groups broken after getGroupNode for childs';
-
-            for (var i = 0; i < childNodes.length; i++)
-              if (childNodes[i] !== node.childNodes[i])
-                return 'childNodes broken after getGroupNode for childs';
-
-            for (var i = 0; i < groups.length; i++)
-              if (groups[i] !== currentGroups[i])
-                return 'groups broken after getGroupNode for childs';
-          }
-          else
-          {
-            for (var i = 0, child; child = node.childNodes[i++];)
-              if (child.groupNode !== null)
-                return 'child node has wrong groupNode ref, should be a null';
-          }
-        }
-        else
-        {
-          if (node.firstChild !== null)
-            return 'Wrong firstChild ref';
-          if (node.lastChild !== null)
-            return 'Wrong lastChild ref';
-        }
-
-        if (node.dataSource !== null && node.dataSource instanceof basis.data.AbstractDataset === false)
-          return 'dataSource has wrong value (should be null or instance of basis.data.AbstractDataset)';
-
-        if (node.dataSource)
-        {
-          if (node.dataSource.itemCount !== node.childNodes.length)
-            return 'child node count (' + node.childNodes.length + ') is not equal to dataset item count (' + node.dataSource.itemCount + ')';
-
-          for (var i = 0, child; child = node.childNodes[i]; i++)
-          {
-            if (!child.delegate)
-              return 'child #' + i + ' has not delegate to dataSource member';
-
-            if (!node.dataSource.has(child.delegate))
-              return 'child #' + i + ' delegate not found in dataSource';
-          }
-        }
-
-        if (node instanceof nsWrappers.GroupingNode)
-        {
-          if (node.owner && node.owner.grouping !== node)
-              return 'wrong GroupingNode.owner ref';
-        }
-
-        if (node instanceof nsWrappers.PartitionNode)
-        {
-          if (!node.nodes)
-            return 'PartitionNode has no child nodes';
-
-          var nodeCount = node.nodes.length;
-
-          if (nodeCount)
-          {
-            if (node.first !== node.nodes[0])
-              return 'wrong PartitionNode.first ref';
-
-            if (node.last !== node.nodes[nodeCount - 1])
-              return 'wrong PartitionNode.last ref';
-
-            var hostNode = node.first.parentNode;
-            var childNodesIndex = hostNode.childNodes.indexOf(node.first);
-
-            for (var i = 0; i < node.nodes.length; i++)
-              if (node.nodes[i] !== hostNode.childNodes[childNodesIndex + i])
-                return 'wrong PartitionNode.nodes order';
-          }
-          else
-          {
-            if (node.first !== null)
-              return 'wrong PartitionNode.first ref, should be a null';
-
-            if (node.last !== null)
-              return 'wrong PartitionNode.last ref, should be a null';
-          }
-        }
-
-        if (node.satellite)
-          for (var name in node.satellite)
-            if (name != '__auto__')
-            {
-              var satellite = node.satellite[name];
-
-              if (satellite instanceof AbstractNode == false)
-                return 'satellite `' + name + '` has bad type';
-
-              if (satellite.owner !== node)
-                return 'satellite `' + name + '` has wrong owner reference';
-            }
-
-        return false;
-      }
 
       function checkDestroyedObject(object){
         var proto = object.constructor.prototype;
@@ -446,6 +229,9 @@
                     });
                     var node2 = new basis.dom.wrapper.Node();
 
+                    this.is(false, checkNode(node1));
+                    this.is(false, checkNode(node2));
+                    this.is(false, checkNode(satellite));
                     this.is(true, node1.satellite.example === satellite);
                     this.is(true, node1.satellite.example.owner === node1);
                     this.is(1, ownerChangedCount);
@@ -462,6 +248,9 @@
                       basis.dev.warn = warn;
                     }                    
 
+                    this.is(false, checkNode(node1));
+                    this.is(false, checkNode(node2));
+                    this.is(false, checkNode(satellite));
                     this.is(false, warning);
                     this.is(2, ownerChangedCount);
                     this.is(true, node1.satellite.example === undefined);
@@ -487,6 +276,9 @@
                     });
                     var node2 = new basis.dom.wrapper.Node();
 
+                    this.is(false, checkNode(node1));
+                    this.is(false, checkNode(node2));
+                    this.is(false, checkNode(satellite));
                     this.is(true, node1.satellite.example === satellite);
                     this.is(true, node1.satellite.example.owner === node1);
                     this.is(1, ownerChangedCount);
@@ -503,6 +295,9 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node1));
+                    this.is(false, checkNode(node2));
+                    this.is(false, checkNode(satellite));
                     this.is(false, warning);
                     this.is(2, ownerChangedCount);
                     this.is(true, node1.satellite.example === undefined);
@@ -519,6 +314,8 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, satellite.owner === node);
                     this.is(true, node.satellite.test === satellite);
                     
@@ -534,6 +331,8 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(false, warning);
                     this.is(null, satellite.owner);
                     this.is(undefined, node.satellite.test);
@@ -567,12 +366,16 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, satellite.owner === node);
                     this.is(true, node.satellite.test === satellite);
                     this.is(1, satelliteChangedEventCount);
                     this.is(1, ownerChangedEventCount);
                     
                     node.setSatellite('newName', satellite);
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, satellite.owner === node);
                     this.is(undefined, node.satellite.test);
                     this.is(true, node.satellite.newName === satellite);
@@ -590,6 +393,8 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, satellite.owner === node);
                     this.is(true, node.satellite.test === satellite);
 
@@ -602,6 +407,8 @@
 
                     node.destroy();
                     
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, satelliteDestroyed);
                     this.is(null, node.satellite);
                     this.is(null, satellite.owner);
@@ -628,10 +435,14 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(owner));
                     this.is(true, node.owner === owner);
 
                     owner.destroy();
                     
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(owner));
                     this.is(false, nodeDestroyed);
                     this.is(true, ownerDestroyed);
                     this.is(null, node.owner);
@@ -646,6 +457,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
                     this.is(true, node.satellite.test.owner === node);
@@ -664,6 +476,8 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, node.satellite.test === satellite);
@@ -683,10 +497,12 @@
                     });
 
                     // should not exists
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     
                     // should be created
                     node.update({ value: true });
+                    this.is(false, checkNode(node));
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
                     this.is(true, node.satellite.test.owner === node);
@@ -699,6 +515,7 @@
                       }
                     });
                     node.update({ value: false });
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     this.is(true, satelliteDestroyed);
                   }
@@ -716,6 +533,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     this.is(true, !node.handler && !node.handler);
                     node.update({ value: true });
@@ -731,6 +549,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     this.is(true, !node.handler);
                     node.update({ value: true });
@@ -746,6 +565,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     this.is(true, !node.handler);
                     node.update({ value: true });
@@ -761,6 +581,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     this.is(true, !node.handler);
                     node.update({ value: true });
@@ -781,6 +602,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is('bar', node.satellite.test.foo);
                     
@@ -798,6 +620,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is('bar', node.satellite.test.foo);
                     this.is(node.basisObjectId, node.satellite.test.ownerObjectId);
@@ -819,6 +642,7 @@
                     });
                     
                     // should be created
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
 
                     var events = [];
@@ -834,6 +658,7 @@
                     });
 
                     node.update({ value: false });
+                    this.is(false, checkNode(node));
                     this.is(false, 'test' in node.satellite);
                     this.is(['satelliteChanged', 'destroy'], events);
                   }
@@ -860,6 +685,8 @@
                     });
 
                     // should not exists
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(undefined, node.satellite.test);
@@ -867,6 +694,8 @@
 
                     // should be created
                     node.update({ value: true });
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, node.satellite.test === satellite);
@@ -874,6 +703,8 @@
 
                     // should not be destroyed
                     node.update({ value: false });
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(undefined, node.satellite.test);
                     this.is(false, satelliteDestroyed);
                     this.is(false, 'test' in node.satellite);
@@ -902,6 +733,8 @@
                     var satellite = node.satellite.test;
                     
                     // should be created
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, satellite.delegate === delegate);
                     this.is(true, satellite.dataSource === dataSource);
                   }
@@ -945,6 +778,8 @@
                     var satellite = node.satellite.test;
                     
                     // should be created
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, delegateSetBeforePostInit);
                     this.is(true, dataSourceSetBeforePostInit);
                     this.is(true, satellite.delegate === delegate);
@@ -972,6 +807,8 @@
                     var satellite = node.satellite.test;
                     
                     // should be created
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, satellite.delegate === delegate);
                     this.is(true, satellite.dataSource === dataSource);
                   }
@@ -997,6 +834,7 @@
                     });
                     
                     // instance is not linked and delegate/dataSource is not set
+                    this.is(false, checkNode(node));
                     this.is(false, 'test' in node.satellite);
                     this.is(true, satellite.owner === null);
                     this.is(true, satellite.delegate === null);
@@ -1004,6 +842,7 @@
 
                     // set delegate/dataSource when instance in use
                     node.update({ value: true });
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, satellite.owner === node);
                     this.is(true, satellite.delegate === delegate);
@@ -1011,6 +850,7 @@
 
                     // reset delegate/dataSource when instance not in use
                     node.update({ value: false });
+                    this.is(false, checkNode(node));
                     this.is(false, 'test' in node.satellite);
                     this.is(true, satellite.owner === null);
                     this.is(true, satellite.delegate === null);
@@ -1038,6 +878,8 @@
                     });
 
                     // should not exists
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, satellite.owner === node);
@@ -1045,6 +887,8 @@
 
                     // should unlink from owner
                     satellite.destroy();
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(false, 'test' in node.satellite);
                     this.is(false, 'test' in node.satellite.__auto__);
                     this.is(true, satelliteDestroyed);
@@ -1073,6 +917,8 @@
                     });
 
                     // should not exists
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, satellite.owner === null);
@@ -1080,6 +926,8 @@
 
                     // should unlink from owner
                     satellite.destroy();
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(false, 'test' in node.satellite);
                     this.is(false, 'test' in node.satellite.__auto__);
                     this.is(true, satelliteDestroyed);
@@ -1108,6 +956,8 @@
                     });
 
                     // should not exists
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, satellite.owner === null);
@@ -1115,12 +965,14 @@
 
                     // should unlink from owner
                     node.destroy();
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, satelliteDestroyed);
                     this.is(true, satellite.owner === null);
                   }
                 },
                 {
-                  name: 'auto-create satellite with existsIf and custom events',
+                  name: 'auto-create satellite with existsIf and custom events - events as string',
                   test: function(){
                     // events as string
                     var node = new basis.dom.wrapper.Node({
@@ -1133,14 +985,17 @@
                     });
 
                     // should not exists
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     
                     // should not be created (no changes on update event)
                     node.update({ value: true });
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
 
                     // should be created
                     node.setState(basis.data.STATE.READY, '1');
+                    this.is(false, checkNode(node));
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
                     this.is(true, node.satellite.test.owner === node);
@@ -1153,16 +1008,21 @@
                       }
                     });
                     node.update({ value: false });
+                    this.is(false, checkNode(node));
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test.owner === node);
 
                     // should be destroyed
                     node.setActive(!node.active);
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     this.is(true, satelliteDestroyed);
 
-                    /////////////////////////////////////////////
-
+                  }
+                },
+                {
+                  name: 'auto-create satellite with existsIf and custom events - events as array',
+                  test: function(){
                     // events as array
                     var node = new basis.dom.wrapper.Node({
                       satellite: {
@@ -1174,14 +1034,17 @@
                     });
 
                     // should not exists
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     
                     // should not be created (no changes on update event)
                     node.update({ value: true });
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
 
                     // should be created
                     node.setState(basis.data.STATE.READY, '1');
+                    this.is(false, checkNode(node));
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
                     this.is(true, node.satellite.test.owner === node);
@@ -1194,11 +1057,13 @@
                       }
                     });
                     node.update({ value: false });
+                    this.is(false, checkNode(node));
                     this.is(true, !!node.satellite.test);
                     this.is(true, node.satellite.test.owner === node);
 
                     // should be destroyed
                     node.setActive(!node.active);
+                    this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
                     this.is(true, satelliteDestroyed);
                   }
@@ -1212,6 +1077,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
 
@@ -1237,6 +1103,8 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(false, warning); // should not be warning
                     this.is(true, satelliteDestroyed);
                     this.is(true, node.satellite.test === newSatellite);
@@ -1254,6 +1122,7 @@
                       }
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
 
@@ -1270,6 +1139,8 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(newSatellite));
                     this.is(false, warning); // should be warning
                     this.is(true, node.satellite.test === newSatellite);
                     this.is(false, 'test' in node.satellite.__auto__);
@@ -1289,6 +1160,7 @@
 
                     node.setSatellite('test', {});
 
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
@@ -1303,6 +1175,7 @@
 
                     node.setSatellite('test', null);
 
+                    this.is(false, checkNode(node));
                     this.is(true, satelliteDestroyed);
                     this.is(undefined, node.satellite.test);
                     this.is(false, 'test' in node.satellite.__auto__);
@@ -1325,6 +1198,7 @@
                       existsIf: 'data.value'
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(0, satelliteChangedEventCount);
@@ -1333,6 +1207,7 @@
                       value: true
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
@@ -1349,6 +1224,7 @@
                       value: false
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(true, satelliteDestroyed);
                     this.is(undefined, node.satellite.test);
                     this.is(false, 'test' in node.satellite);
@@ -1370,6 +1246,7 @@
 
                     node.setSatellite('test', {});
 
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(1, satelliteChangedEventCount);
@@ -1387,10 +1264,10 @@
                       existsIf: 'data.value'
                     });
 
+                    this.is(false, checkNode(node));
                     this.is(2, satelliteChangedEventCount);
                     this.is(false, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
-
                     this.is(true, node.satellite.test !== satellite);
                     this.is(true, satelliteDestroyed);
 
@@ -1399,6 +1276,7 @@
                       value: 1
                     });                    
 
+                    this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
                     this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
@@ -1426,6 +1304,8 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning); // should be warning
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, satellite.owner === node);
@@ -1455,6 +1335,8 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning); // should be warning
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, satellite.owner === node);
@@ -1483,6 +1365,9 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
+                    this.is(false, checkNode(newOwner));
                     this.is(true, !!warning); // should be warning
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, satellite.owner === node);
@@ -1513,6 +1398,9 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(newOwner));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning); // should be warning
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, satellite.owner === node);
@@ -1544,6 +1432,9 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(newOwner));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning); // should be warning
                     this.is(null, satellite.owner);
                   }
@@ -1566,11 +1457,15 @@
                         warning = message;
                       };
 
+                      debugger;
                       newOwner.setSatellite('name', satellite);
                     } finally {
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(newOwner));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning); // should be warning
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, node.satellite.test.owner === node);
@@ -1601,6 +1496,9 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(newOwner));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning); // should be warning
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, satellite.owner === node);
@@ -1628,6 +1526,8 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning);
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
@@ -1660,6 +1560,8 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning);
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, 'test' in node.satellite.__auto__);
@@ -1690,6 +1592,8 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
+                    this.is(false, checkNode(satellite));
                     this.is(true, !!warning); // should be warning
                     this.is(true, node.satellite.test === satellite);
                     this.is(true, node.satellite.test.owner === node);
@@ -1743,6 +1647,7 @@
                       basis.dev.warn = warn;
                     }
 
+                    this.is(false, checkNode(node));
                     this.is(false, warning); // no warnings
                     this.is(true, autoCreateSatelliteDestroyed);
                     this.is(true, autoSatelliteDestroyed);
