@@ -1,6 +1,5 @@
 
   basis.require('basis.event');
-  basis.require('basis.dom');
   basis.require('basis.dom.wrapper');
   basis.require('basis.l10n');
   basis.require('basis.ui');
@@ -9,9 +8,10 @@
  /**
   * Table namespace
   *
-  * @see ./test/speed/table.html
+  * @see ./demo/defile/table.html
   * @see ./demo/common/match.html
   * @see ./demo/common/grouping.html
+  * @see ./test/speed/table.html
   *
   * @namespace basis.ui.table
   */
@@ -24,7 +24,6 @@
   //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
 
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
@@ -34,6 +33,7 @@
   var PartitionNode = basis.dom.wrapper.PartitionNode;
   var UINode = basis.ui.Node;
   var UIPartitionNode = basis.ui.PartitionNode;
+  var UIGroupingNode = basis.ui.GroupingNode;
 
 
   //
@@ -47,6 +47,7 @@
     Cell: resource('templates/table/Cell.tmpl'),
 
     Header: resource('templates/table/Header.tmpl'),
+    HeaderPartitionRow: resource('templates/table/HeaderPartitionRow.tmpl'),
     HeaderPartitionNode: resource('templates/table/HeaderPartitionNode.tmpl'),
     HeaderCell: resource('templates/table/HeaderCell.tmpl'),
     
@@ -67,60 +68,55 @@
 
     template: templates.HeaderPartitionNode,
     binding: {
-      title: 'data:'
+      title: 'data:',
+      colSpan: 'delegate.colSpan'
+    },
+
+    listen: {
+      delegate: {
+        colSpanChanged: function(){
+          this.updateBind('colSpan');
+        }
+      }
     }
   });
 
  /**
   * @class
   */
-  var HeaderGroupingNode = Class(GroupingNode, {
+  var HeaderGroupingNode = Class(UIGroupingNode, {
     className: namespace + '.HeaderGroupingNode',
-    emit_ownerChanged: function(oldOwner){
-      if (oldOwner && !this.owner)
-        DOM.remove(this.headerRow);
-
-      this.syncDomRefs();
-      
-      GroupingNode.prototype.emit_ownerChanged.call(this, oldOwner);
-    },
 
    /**
     * @inheritDoc
     */
-    childClass: {
-      className: namespace + '.HeaderPartitionNode',
-      init: function(){
-        PartitionNode.prototype.init.call(this);
-
-        this.cell = new HeaderPartitionNode({
-          delegate: this,
-          binding: this.binding || {}
-        });
-      },
+    childClass: PartitionNode.subclass({
+      className: namespace + '.AbstractHeaderPartitionNode',
+      colSpan: 1,
+      emit_colSpanChanged: basis.event.create('colSpanChanged'),
       emit_childNodesModified: function(delta){
-        var colSpan = 0;
-        if (this.nodes[0] && this.nodes[0] instanceof this.constructor)
-        {
-          for (var i = 0, node; node = this.nodes[i]; i++)
-            colSpan += node.cell.element.colSpan;
-        }
-        else
-          colSpan = this.nodes.length;
-
-        this.cell.element.colSpan = colSpan;
-
-        if (this.groupNode)
-          this.groupNode.emit_childNodesModified({});
-
         PartitionNode.prototype.emit_childNodesModified.call(this, delta);
+        this.updateColSpan();
       },
-      destroy: function(){
-        PartitionNode.prototype.destroy.call(this);
-        
-        this.cell.destroy();
+      listen: {
+        childNode: {
+          colSpanChanged: function(){
+            this.updateColSpan();
+          }
+        }
+      },
+      updateColSpan: function(){
+        var colSpan = this.nodes.reduce(function(res, node){
+          return res + (node instanceof HeaderGroupingNode.prototype.childClass ? node.colSpan : 1);
+        }, 0);
+
+        if (this.colSpan != colSpan)
+        {
+          this.colSpan = colSpan;
+          this.emit_colSpanChanged();
+        }
       }
-    },
+    }),
 
    /**
     * @inheritDoc
@@ -130,61 +126,52 @@
    /**
     * @inheritDoc
     */
-    init: function(){
-      GroupingNode.prototype.init.call(this);
-      this.nullElement = DOM.createFragment();
-      this.element = this.childNodesElement = this.headerRow = DOM.createElement('tr.Basis-Table-Header-GroupContent');
-    },
-
-   /**
-    * @inheritDoc
-    */
-    insertBefore: function(newChild, refChild){
-      newChild = GroupingNode.prototype.insertBefore.call(this, newChild, refChild);
-
-      var refElement = newChild.nextSibling && newChild.nextSibling.cell.element;
-      DOM.insert(this.headerRow, newChild.cell.element, DOM.INSERT_BEFORE, refElement);
-
-      return newChild;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    removeChild: function(oldChild){
-      DOM.remove(oldChild.cell.element);
-      GroupingNode.prototype.removeChild.call(oldChild);
-    },
-
-    syncDomRefs: function(){
-      var cursor = this;
-      var owner = this.owner;
-      var element = null;
-
-      if (owner)
-      {
-        element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement;
-        element.appendChild(this.nullElement);
+    satellite: {
+      partitionRow: {
+        dataSource: function(owner){
+          return owner.getChildNodesDataset();
+        },
+        instanceOf: basis.ui.Node.subclass({
+          template: templates.HeaderPartitionRow,
+          childClass: HeaderPartitionNode
+        })
       }
+    },
+
+   /**
+    * @inheritDoc
+    */
+    insertBefore: GroupingNode.prototype.insertBefore,
+
+   /**
+    * @inheritDoc
+    */
+    removeChild: GroupingNode.prototype.removeChild,
+
+   /**
+    * @inheritDoc
+    */
+    syncDomRefs: function(){
+      basis.ui.GroupingNode.prototype.syncDomRefs.call(this);
+
+      var cursor = this;
+      var element = this.owner ? (this.owner.tmpl && this.owner.tmpl.groupRowsElement) || this.owner.childNodesElement : null;
 
       do
       {
-        cursor.element = cursor.childNodesElement = element;
+        var rowElement = cursor.satellite.partitionRow.element;
+
         if (element)
-          DOM.insert(element, cursor.headerRow, DOM.INSERT_BEGIN);
+        {
+          element.insertBefore(rowElement, element.firstChild);
+        }
+        else
+        {
+          if (rowElement.parentNode)
+            rowElement.parentNode.removeChild(rowElement);
+        }
       }
       while (cursor = cursor.grouping);
-    },
-
-   /**
-    * @inheritDoc
-    */
-    destroy: function(){
-      GroupingNode.prototype.destroy.call(this);
-      this.headerRow = null;
-      this.element = null;
-      this.childNodesElement = null;
-      this.nullElement;
     }
   });
 
