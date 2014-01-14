@@ -1,0 +1,61 @@
+{
+    "requireCurlyBraces": ["do", "try", "catch"],
+
+    "requireSpaceAfterKeywords": ["if", "else", "for", "while", "do", "switch", "return", "try"],
+    "disallowSpaceAfterKeywords": ["catch"],
+
+    "requireParenthesesAroundIIFE": true,
+
+    "disallowSpacesInFunctionExpression": {
+        "beforeOpeningRoundBrace": true,
+        "beforeOpeningCurlyBrace": true
+    },
+
+    "disallowMultipleVarDecl": true,
+    "disallowEmptyBlocks": true,
+
+    "requireSpacesInsideObjectBrackets": "all",
+    "disallowSpacesInsideArrayBrackets": true,
+    "disallowSpacesInsideParentheses": true,
+
+    "disallowQuotedKeysInObjects": "allButReserved",
+    "disallowSpaceAfterObjectKeys": true,
+
+    "requireCommaBeforeLineBreak": true,
+
+    "requireRightStickedOperators": ["!"],
+    "disallowRightStickedOperators": ["?", "+", "/", "*", ":", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<=", ","],
+
+    "requireLeftStickedOperators": [","],   
+    "disallowLeftStickedOperators": ["?", "+", "/", "*", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<="],
+
+    "disallowSpaceAfterPrefixUnaryOperators": ["++", "--", "+", "-"],
+    "disallowSpaceBeforePostfixUnaryOperators": ["++", "--"],
+
+    "requireSpaceBeforeBinaryOperators": ["+", "-", "/", "*", "=", "==", "===", "!=", "!=="],
+    "requireSpaceAfterBinaryOperators": ["+", "-", "/", "*", "=", "==", "===", "!=", "!=="],
+
+    "disallowImplicitTypeConversion": ["string", "binary"],
+    "requireCamelCaseOrUpperCaseIdentifiers": true,
+
+    "disallowMultipleLineStrings": true,
+    "validateQuoteMarks": "'",
+
+    "disallowMixedSpacesAndTabs": true,
+    "disallowTrailingWhitespace": true,
+    "validateLineBreaks": "LF",
+    "requireLineFeedAtFileEnd": true,
+
+    "disallowKeywords": ["with", "eval"],
+    "requireKeywordsOnNewLine": ["if", "else", "while", "for", "do", "return", "swicth", "case", "try"],
+    "disallowKeywordsOnNewLine": [],
+    "requireCapitalizedConstructors": true,
+
+    "requireDotNotation": true,
+
+    "validateJSDoc": {
+        "checkParamNames": true,
+        "requireParamTypes": true,
+        "checkRedundantParams": true
+    }
+}

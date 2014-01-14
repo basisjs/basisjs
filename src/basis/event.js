@@ -86,8 +86,8 @@
 
             'function(' + slice.call(arguments, 1).join(', ') + '){' +
               eventFunction.toString()
-                .replace(/\beventName\b/g, "'" + eventName + "'")
-                .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + 
+                .replace(/\beventName\b/g, '"' + eventName + '"')
+                .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') +
             '}' +
 
           '\n\n}["' + namespace + '.events.' + eventName + '"];'
@@ -128,7 +128,7 @@
 
  /**
   * Base class for event dispatching. It provides interface for instance
-  * to add and remove handler for desired events, and call it when event happens. 
+  * to add and remove handler for desired events, and call it when event happens.
   * @class
   */
   var Emitter = Class(null, {
@@ -178,7 +178,7 @@
         basis.dev.warn(namespace + '.Emitter#addHandler: callbacks is not an object (', callbacks, ')');
 
       context = context || this;
-      
+
       // warn about duplicates
       if (DEVMODE)
       {
@@ -194,7 +194,7 @@
       }
 
       // add handler
-      this.handler = { 
+      this.handler = {
         callbacks: callbacks,
         context: context,
         handler: this.handler
@@ -254,7 +254,7 @@
       * Function that returns handler list as array.
       * WARN: This functionality is supported in development mode only.
       * @return {Array.<object>} List of handlers
-      */ 
+      */
       debug_handlers: function(){
         var result = [];
         var cursor = this;
@@ -286,4 +286,4 @@
     events: events,
 
     Emitter: Emitter
-  }; 
+  };

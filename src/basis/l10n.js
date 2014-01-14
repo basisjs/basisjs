@@ -43,13 +43,13 @@
 
  /**
   * @class
-  */ 
+  */
   var ComputeToken = Class(basis.Token, {
     className: namespace + '.ComputeToken',
 
    /**
     * @constructor
-    */ 
+    */
     init: function(value, token){
       token.computeTokens[this.basisObjectId] = this;
       this.token = token;
@@ -62,7 +62,7 @@
       return this.get();
     },
 
-    destroy: function(){    
+    destroy: function(){
       delete this.token.computeTokens[this.basisObjectId];
       this.token = null;
 
@@ -72,13 +72,13 @@
 
  /**
   * @class
-  */ 
+  */
   var Token = Class(basis.Token, {
     className: namespace + '.Token',
 
    /**
     * @type {number}
-    */ 
+    */
     index: NaN,
 
    /**
@@ -93,17 +93,17 @@
 
    /**
     * enum default, plural, markup
-    */ 
+    */
     type: 'default',
 
    /**
     *
-    */ 
+    */
     computeTokens: null,
 
    /**
     * @constructor
-    */ 
+    */
     init: function(dictionary, tokenName, type, value){
       basis.Token.prototype.init.call(this, value);
 
@@ -138,7 +138,7 @@
 
       this.computeGetMethod = get;
 
-      if ((this.type == 'plural' && Array.isArray(this.value)) 
+      if ((this.type == 'plural' && Array.isArray(this.value))
           || (this.type == 'default' && typeof this.value == 'object'))
         values = basis.object.slice(this.value, ownKeys(this.value));
 
@@ -231,7 +231,7 @@
 
    /**
     * @destructor
-    */ 
+    */
     destroy: function(){
       for (var key in this.computeTokens)
         this.computeTokens[key].destroy();
@@ -307,35 +307,35 @@
    /**
     * Token map.
     * @type {object}
-    */ 
+    */
     tokens: null,
 
    /**
     * @type {object}
     */
-    types: null, 
+    types: null,
 
    /**
     * Values by cultures
     * @type {object}
-    */ 
+    */
     cultureValues: null,
 
    /**
     * @type {number}
-    */ 
+    */
     index: NaN,
 
    /**
     * Token data source
     * @type {basis.resource}
     */
-    resource: null, 
+    resource: null,
 
    /**
     * @constructor
     * @param {basis.Resource} content Dictionary content (tokens source)
-    */ 
+    */
     init: function(content){
       this.tokens = {};
       this.types = {};
@@ -367,7 +367,7 @@
 
    /**
     * @param {object} data Object that contains new tokens data
-    */ 
+    */
     update: function(data){
       if (!data)
         data = {};
@@ -394,7 +394,7 @@
 
    /**
     * Sync token values according to current culture and it's fallback.
-    */ 
+    */
     syncValues: function(){
       for (var tokenName in this.tokens)
         this.tokens[tokenName].set(this.getValue(tokenName));
@@ -403,7 +403,7 @@
    /**
     * Get current value for tokenName according to current culture and it's fallback.
     * @param {string} tokenName
-    */ 
+    */
     getValue: function(tokenName){
       var fallback = cultureFallback[currentCulture] || [];
 
@@ -419,7 +419,7 @@
     * @param {string} culture Culture name
     * @param {string} tokenName Token name
     * @return {*}
-    */ 
+    */
     getCultureValue: function(culture, tokenName){
       return this.cultureValues[culture] && this.cultureValues[culture][tokenName];
     },
@@ -446,7 +446,7 @@
 
    /**
     * @destructor
-    */ 
+    */
     destroy: function(){
       this.tokens = null;
       this.cultureValues = null;
@@ -458,7 +458,7 @@
  /**
   * @param {basis.Resource|string} content
   * @return {basis.l10n.Dictionary}
-  */ 
+  */
   function resolveDictionary(content){
     var dictionary;
 
@@ -485,7 +485,7 @@
   }
 
  /**
-  * 
+  * Object that nodify about dictionary is created.
   */
   var createDictionaryNotifier = new basis.Token();
 
@@ -497,7 +497,7 @@
   var cultureList = [];
   var currentCulture = null;
   var cultures = {};
-  var cultureFallback = {}; 
+  var cultureFallback = {};
 
   // plural forms
   // source: http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html?id=l10n/pluralforms
@@ -570,27 +570,27 @@
 
   // populate pluralFormsMap
   [
-    /*  0 */ "ay bo cgg dz fa id ja jbo ka kk km ko ky lo ms my sah su th tt ug vi wo zh",
-    /*  1 */ "mk",
-    /*  2 */ "jv",
-    /*  3 */ "af an ast az bg bn brx ca da de doi el en eo es es-AR et eu ff fi fo fur fy gl gu ha he hi hne hu hy ia it kn ku lb mai ml mn mni mr nah nap nb ne nl nn no nso or pa pap pms ps pt rm rw sat sco sd se si so son sq sv sw ta te tk ur yo",
-    /*  4 */ "ach ak am arn br fil fr gun ln mfe mg mi oc pt-BR tg ti tr uz wa zh",
-    /*  5 */ "is",
-    /*  6 */ "csb",
-    /*  7 */ "lv",
-    /*  8 */ "lt",
-    /*  9 */ "be bs hr ru sr uk",
-    /* 10 */ "mnk",
-    /* 11 */ "ro",
-    /* 12 */ "pl",
-    /* 13 */ "cs sk",
-    /* 14 */ "cy",
-    /* 15 */ "kw",
-    /* 16 */ "sl",
-    /* 17 */ "mt",
-    /* 18 */ "gd",
-    /* 19 */ "ga",
-    /* 20 */ "ar"
+    /*  0 */ 'ay bo cgg dz fa id ja jbo ka kk km ko ky lo ms my sah su th tt ug vi wo zh',
+    /*  1 */ 'mk',
+    /*  2 */ 'jv',
+    /*  3 */ 'af an ast az bg bn brx ca da de doi el en eo es es-AR et eu ff fi fo fur fy gl gu ha he hi hne hu hy ia it kn ku lb mai ml mn mni mr nah nap nb ne nl nn no nso or pa pap pms ps pt rm rw sat sco sd se si so son sq sv sw ta te tk ur yo',
+    /*  4 */ 'ach ak am arn br fil fr gun ln mfe mg mi oc pt-BR tg ti tr uz wa zh',
+    /*  5 */ 'is',
+    /*  6 */ 'csb',
+    /*  7 */ 'lv',
+    /*  8 */ 'lt',
+    /*  9 */ 'be bs hr ru sr uk',
+    /* 10 */ 'mnk',
+    /* 11 */ 'ro',
+    /* 12 */ 'pl',
+    /* 13 */ 'cs sk',
+    /* 14 */ 'cy',
+    /* 15 */ 'kw',
+    /* 16 */ 'sl',
+    /* 17 */ 'mt',
+    /* 18 */ 'gd',
+    /* 19 */ 'ga',
+    /* 20 */ 'ar'
   ].forEach(function(langs, idx){
     langs.split(' ').forEach(function(lang){
       pluralFormsMap[lang] = this;
@@ -645,7 +645,7 @@
  /**
   * Returns current culture name.
   * @return {string} Current culture name.
-  */ 
+  */
   function getCulture(){
     return currentCulture;
   }
@@ -654,7 +654,7 @@
  /**
   * Set new culture.
   * @param {string} culture Culture name.
-  */ 
+  */
   function setCulture(culture){
     if (!culture)
       return;
@@ -680,7 +680,7 @@
  /**
   * Returns current culture list.
   * @return {Array.<string>}
-  */ 
+  */
   function getCultureList(){
     return cultureList.slice(0);
   }
@@ -719,7 +719,7 @@
 
       if (cultureRow.length > 2)
       {
-        /** @cut */ basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture+ '`; other cultures except first one was ignored');
+        /** @cut */ basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture + '`; other cultures except first one was ignored');
         cultureRow = cultureRow.slice(0, 2);
       }
 
@@ -760,7 +760,7 @@
   * @param {context=} context Context for callback
   * @param {boolean=} fire If true callback will be invoked with current
   *   culture name right after callback attachment.
-  */ 
+  */
   function onCultureChange(fn, context, fire){
     resolveCulture.attach(fn, context);
 
@@ -785,7 +785,7 @@
     ComputeToken: ComputeToken,
     Token: Token,
     token: resolveToken,
-    
+
     Dictionary: Dictionary,
     dictionary: resolveDictionary,
     /** dev */ getDictionaries: getDictionaries,

@@ -234,7 +234,7 @@
   }
 
   function addSub(object, mask){
-    var config = getMaskConfig(mask);    
+    var config = getMaskConfig(mask);
 
     for (var i = 0, action; action = config.actions[i]; i++)
       action(SUBSCRIPTION.link, object);
@@ -243,7 +243,7 @@
   }
 
   function remSub(object, mask){
-    var config = getMaskConfig(mask);    
+    var config = getMaskConfig(mask);
 
     for (var i = 0, action; action = config.actions[i++];)
       action(SUBSCRIPTION.unlink, object);
@@ -474,10 +474,10 @@
     * Rule to determine is sync required.
     */
     isSyncRequired: function(){
-      return this.subscriberCount > 0 && 
+      return this.subscriberCount > 0 &&
              (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED);
     },
-    
+
    /**
     * Change sync actions function.
     * @param {function|null} syncAction
@@ -502,7 +502,7 @@
         if (oldAction)
           this.removeHandler(this.syncEvents);
       }
-    },     
+    },
 
    /**
     * @destructor
@@ -533,12 +533,12 @@
   var valueSyncToken = function(value){
     this.set(this.fn(value));
   };
-  var VALUE_EMMITER_HANDLER = { 
+  var VALUE_EMMITER_HANDLER = {
     destroy: function(object){
       this.value.unlink(object, this.fn);
     }
   };
-  var VALUE_EMMITER_DESTROY_HANDLER = { 
+  var VALUE_EMMITER_DESTROY_HANDLER = {
     destroy: function(object){
       this.set(null);
     }
@@ -722,7 +722,7 @@
       if (!getComputeToken)
       {
         var tokenMap = {};
-        
+
         handler.destroy = function(object){
           delete tokenMap[object.basisObjectId];
           this.destroy(); // `this` is a token
@@ -760,7 +760,7 @@
           {
             // create token with computed value
             var token = new basis.Token(fn(object, hostValue.value));
-            
+
             // attach handler re-evaluate handler to object
             object.addHandler(handler, token);
 
@@ -789,7 +789,7 @@
     * @param {function(value)} fn
     * @param {boolean=} deferred
     * @return {basis.Token|basis.DeferredToken}
-    */ 
+    */
     as: function(fn, deferred){
       if (this.links_)
       {
@@ -820,7 +820,7 @@
       return this.as(fn, true);
     },
 
-   /* 
+   /**
     * @param {object} context Target object.
     * @param {string|function} fn Property or setter function.
     * @return {object} Returns object.
@@ -854,7 +854,7 @@
         fn: fn,
         links_: this.links_
       };
-      
+
       // add handler if object is basis.event.Emitter
       if (context instanceof Emitter)
         context.addHandler(VALUE_EMMITER_HANDLER, this.links_);
@@ -865,7 +865,7 @@
       return context;
     },
 
-   /* 
+   /**
     * @param {object} context Target object.
     * @param {string|function} fn Property or setter function.
     * @return {object} Returns object.
@@ -936,7 +936,7 @@
         this.set(getter(object)); // `this` is a token
       });
       var id = handler.events.concat(String(getter), obj.basisObjectId).join('_');
-      
+
       result = castValueMap[id];
       if (!result)
       {
@@ -998,13 +998,13 @@
   function isConnected(a, b){
     while (b && b !== a && b !== b.delegate)
       b = b.delegate;
-        
+
     return b === a;
   }
 
  /**
   * Apply changes for all delegate graph
-  */ 
+  */
   function applyDelegateChanges(object, oldRoot, oldTarget){
     var delegate = object.delegate;
 
@@ -1020,7 +1020,7 @@
     if (object.root !== oldRoot)
     {
       var rootListenHandler = object.listen.root;
-      
+
       if (rootListenHandler)
       {
         if (oldRoot && oldRoot !== object)
@@ -1037,7 +1037,7 @@
     if (object.target !== oldTarget)
     {
       var targetListenHandler = object.listen.target;
-      
+
       if (targetListenHandler)
       {
         if (oldTarget && oldTarget !== object)
@@ -1095,7 +1095,7 @@
 
    /**
     * @inheritDoc
-    */ 
+    */
     emit_stateChanged: function(oldState){
       AbstractData.prototype.emit_stateChanged.call(this, oldState);
 
@@ -1117,7 +1117,7 @@
 
    /**
     * @type {Array.<basis.data.Object>}
-    */ 
+    */
     delegates_: null,
 
    /**
@@ -1205,7 +1205,7 @@
     /** @cut */   // warn about it
     /** @cut */   if (syncAction && this.delegate)
     /** @cut */     basis.dev.warn(this.constructor.syncAction + ' instance has a delegate and syncAction - it may produce conflics with data & state');
-    /** @cut */   
+    /** @cut */
     /** @cut */   AbstractData.prototype.setSyncAction.call(this, syncAction);
     /** @cut */ },
 
@@ -1354,7 +1354,7 @@
     },
 
    /**
-    * Handle changing object data. Fires update event only if something was changed. 
+    * Handle changing object data. Fires update event only if something was changed.
     * @param {Object} data New values for object data holder (this.data).
     * @return {Object|boolean} Delta if object data (this.data) was updated or false otherwise.
     */
@@ -1581,7 +1581,7 @@
 
    /**
     * @type {basis.data.DatasetAdapter}
-    */ 
+    */
     datasetAdapter_: null,
 
    /**
@@ -1617,7 +1617,7 @@
     */
     setDataset: function(dataset){
       dataset = resolveDataset(this, this.setDataset, dataset, 'datasetAdapter_');
-      
+
       if (this.dataset !== dataset)
       {
         var listenHandler = this.listen.dataset;
@@ -1643,21 +1643,21 @@
 
    /**
     * Proxy method for contained dataset.
-    */ 
+    */
     has: function(object){
       return this.dataset ? this.dataset.has(object) : null;
     },
 
    /**
     * Proxy method for contained dataset.
-    */ 
+    */
     getItems: function(){
       return this.dataset ? this.dataset.getItems() : [];
     },
 
    /**
     * Proxy method for contained dataset.
-    */ 
+    */
     pick: function(){
       return this.dataset ? this.dataset.pick() : null;
     },
@@ -1667,11 +1667,11 @@
     */
     top: function(count){
       return this.dataset ? this.dataset.top(count) : [];
-    },   
+    },
 
    /**
     * Proxy method for contained dataset.
-    */ 
+    */
     forEach: function(fn){
       if (this.dataset)
         return this.dataset.forEach(fn);
@@ -1703,7 +1703,7 @@
     itemCount: 0,
 
    /**
-    * Set of members. 
+    * Set of members.
     * @private
     */
     items_: null,
@@ -1763,7 +1763,7 @@
       // drop cache
       this.cache_ = null;
 
-      // call event 
+      // call event
       events.itemsChanged.call(this, delta);
     },
 
@@ -1789,7 +1789,7 @@
 
    /**
     * Returns all items in dataset.
-    * @return {Array.<basis.data.Object>} 
+    * @return {Array.<basis.data.Object>}
     */
     getItems: function(){
       if (!this.cache_)
@@ -1812,7 +1812,7 @@
    /**
     * Returns some N items from dataset if exists.
     * @param {number} count Max length of resulting array.
-    * @return {Array.<basis.data.Object>} 
+    * @return {Array.<basis.data.Object>}
     */
     top: function(count){
       var result = [];
@@ -1828,7 +1828,7 @@
    /**
     * Call fn for every item in dataset.
     * @param {function(item)} fn
-    */ 
+    */
     forEach: function(fn){
       var items = this.getItems();
 
@@ -1839,7 +1839,7 @@
    /**
     * Do nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
     * TODO: remove method definition and method call in destroy method.
-    */ 
+    */
     clear: function(){
     },
 
@@ -2050,7 +2050,7 @@
           deleted.push(object);
         }
       }
-      
+
       // fire event if any changes
       if (delta = getDelta(inserted, deleted))
         this.emit_itemsChanged(delta);
@@ -2093,7 +2093,7 @@
         this.emit_itemsChanged(delta = {
           deleted: deleted
         });
-         
+
         this.members_ = {};
       }
 
@@ -2160,7 +2160,7 @@
 
     if (source instanceof AbstractDataset == false)
       source = null;
-   
+
     if (property && oldAdapter !== newAdapter)
     {
       if (oldAdapter)
@@ -2171,13 +2171,13 @@
         if (oldAdapter.adapter_)
           resolveDataset(oldAdapter, null, null, 'adapter_');
       }
-   
+
       if (newAdapter)
         newAdapter.source.addHandler(newAdapter.handler, newAdapter);
-   
+
       context[property] = newAdapter;
     }
-   
+
     return source;
   }
 
@@ -2255,7 +2255,7 @@
       flushAllDataset();
     }
 
-    return function(state) {
+    return function(state){
       if (state)
       {
         if (setStateCount == 0)
