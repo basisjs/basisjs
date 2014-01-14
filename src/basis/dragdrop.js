@@ -213,8 +213,8 @@
       if (element)
       {
         dragData.element = element;
-        dragData.box = basis.layout.getBoundingRect(element);  // relative to offsetParent?
-        dragData.viewport = basis.layout.getViewportRect(this.getBase());
+        dragData.box = getBoundingRect(element);  // relative to offsetParent?
+        dragData.viewport = getViewportRect(this.getBase());
       }
 
       DragDropElement.prototype.emit_start.call(this, dragData, event);
