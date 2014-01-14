@@ -131,11 +131,17 @@
         return item;
     },
     add: function(value, item){
-      var cur = this.items[value];
-      if (item && (!cur || cur === item))
+      if (item)
       {
-        this.items[value] = item;
-        return true;
+        var cur = this.items[value];
+
+        if (!cur)
+        {
+          this.items[value] = item;
+          cur = item;
+        }
+
+        return cur === item;
       }
     },
     remove: function(value, item){
@@ -555,12 +561,6 @@
 
         reader: function(data){
           return entityType.reader(data);
-        },
-        addField: function(key, wrapper){
-          entityType.addField(key, wrapper);
-        },
-        addCalcField: function(key, wrapper){
-          entityType.addCalcField(key, wrapper);
         },
         
         get: function(data){
@@ -996,6 +996,25 @@
     emit_rollbackUpdate: createEvent('rollbackUpdate')
   });
 
+  var detachTokenHandler = function(entity, token, fn){
+    token.deferred().detach(fn, entity);
+  };
+
+
+  var getTokenAttachHandlerCache = {};
+  var getTokenAttachHandler = function(key){
+    return getTokenAttachHandlerCache[key] || function(value){
+      var oldValue = this.data[key];
+      var delta = {};
+      if (value != oldValue)
+      {
+        this.data[key] = value;
+        delta[key] = oldValue;
+        this.emit_update(delta);
+      }
+    };
+  };
+
  /**
   * @class
   */
@@ -1020,6 +1039,32 @@
             // if no key that's a constrain, nothing to do
             if (key && newValue !== oldValue)
             {
+              if (oldValue)
+              {
+                var fieldHandler = entity.fieldHandlers_[key];
+                if (fieldHandler && fieldHandler.fn === detachTokenHandler)
+                {
+                  oldValue = fieldHandler.token;
+
+                  if (oldValue === newValue)
+                    continue;
+
+                  detachTokenHandler(entity, oldValue, fieldHandler.handler);
+                }
+              }
+
+              if (newValue && newValue instanceof basis.Token)
+              {
+                fieldHandler = {
+                  token: newValue,
+                  handler: getTokenAttachHandler(key),
+                  fn: detachTokenHandler
+                };
+                entity.fieldHandlers_[key] = fieldHandler;
+                newValue.deferred().attach(fieldHandler.handler, entity);
+                newValue = newValue.value;
+              }
+
               data[key] = newValue;
               delta[key] = oldValue;
               updated = true;
@@ -1084,6 +1129,7 @@
 
     return Class(BaseEntity, {
       className: namespace + '.Entity',
+      fieldHandlers_: null,
 
       extendConstructor_: false,
       init: function(data){
@@ -1102,8 +1148,8 @@
         /** @cut */     entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
 
         // copy default values
-        var value;
         var delta = {};
+        var value;
         for (var key in fields)
         {
           if (key in data)
@@ -1122,8 +1168,8 @@
 
           if (value && value !== this && value instanceof Emitter)
           {
-            if (value.addHandler(fieldDestroyHandlers[key], this))
-              this.fieldHandlers_[key] = true;
+            value.addHandler(fieldDestroyHandlers[key], this);
+            this.fieldHandlers_[key] = fieldDestroyHandlers[key];
           }
 
           this.data[key] = value;
@@ -1160,6 +1206,7 @@
 
         // main part
         var result;
+        var fieldHandler;
         var rollbackData = this.modified;
 
         if (valueWrapper === chooseArray && rollbackData && key in rollbackData)
@@ -1255,9 +1302,10 @@
           this.data[key] = newValue;
           
           // remove attached handler if exists
-          if (this.fieldHandlers_[key])
+          fieldHandler = this.fieldHandlers_[key];
+          if (fieldHandler)
           {
-            curValue.removeHandler(fieldDestroyHandlers[key], this);
+            curValue.removeHandler(fieldHandler, this);
             this.fieldHandlers_[key] = false;
           }
 
@@ -1265,8 +1313,9 @@
           // newValue !== this prevents recursion for self update
           if (newValue && newValue !== this && newValue instanceof Emitter)
           {
-            if (newValue.addHandler(fieldDestroyHandlers[key], this))
-              this.fieldHandlers_[key] = true;
+            fieldHandler = fieldDestroyHandlers[key];
+            newValue.addHandler(fieldHandler, this)
+            this.fieldHandlers_[key] = fieldHandler;
           }
 
           // prepare result
@@ -1410,8 +1459,16 @@
       destroy: function(){
         // unlink attached handlers
         for (var key in this.fieldHandlers_)
-          if (this.fieldHandlers_[key])
-            this.data[key].removeHandler(fieldDestroyHandlers[key], this);
+        {
+          var fieldHandler = this.fieldHandlers_[key];
+          if (fieldHandler)
+          {
+            if (fieldHandler.fn === detachTokenHandler)
+              detachTokenHandler(this, fieldHandler.token, fieldHandler.handler);
+            else
+              this.data[key].removeHandler(fieldHandler, this);
+          }
+        }
 
         this.fieldHandlers_ = NULL_INFO;
 

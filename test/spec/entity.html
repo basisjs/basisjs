@@ -1269,6 +1269,48 @@
                   }
                 }
               ]
+            },
+            {
+              name: 'special values',
+              testcase: [
+                {
+                  name: 'basis.Token as calc field value, part 1',
+                  test: function(){
+                    var token = new basis.Token(123);
+                    var T = basis.entity.createType({
+                      fields: {
+                        value: basis.entity.calc(function(){
+                          return token;
+                        })
+                      }
+                    });
+
+                    var instance = T({});
+
+                    this.is(123, instance.data.value);
+                    token.set(456);
+                    this.is(123, instance.data.value);
+
+                    return {
+                      token: token,
+                      instance: instance
+                    };
+                  }
+                },
+                {
+                  name: 'basis.Token as calc field value, part 2',
+                  test: function(prev){
+                    var token = prev.token;
+                    var instance = prev.instance;
+
+                    this.is(456, instance.data.value);
+
+                    this.is(false, token.deferred().handler === null);
+                    instance.destroy();
+                    this.is(true, token.deferred().handler === null);
+                  }
+                }
+              ]
             }
           ]
         }
