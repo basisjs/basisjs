@@ -281,8 +281,7 @@
           };*/
 
           Tester.result = this;
-
-          this.test.call(Tester);
+          Tester.prevData = this.test.call(Tester, Tester.prevData);
         } catch(e) {
           this.testCount++;
 
