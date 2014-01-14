@@ -707,15 +707,6 @@
   // Source dataset mixin
   //
 
-  var SOURCE_WRAPPER_HANDLER = {
-    datasetChanged: function(wrapper){
-      this.setSource(wrapper);
-    },
-    destroy: function(){
-      this.setSource();
-    }
-  };
-
  /**
   * @class
   */
