@@ -76,7 +76,7 @@
         if (appInjectPoint.type == 'container')
           node.appendChild(appEl)
         else
-          replaceNode(node, appEl);      
+          replaceNode(node, appEl);
       }
     };
 
@@ -109,7 +109,7 @@
 
         case 'init':
           appInit = typeof value == 'function' ? value : appInit;
-          break;          
+          break;
 
         default:
           ;;;basis.dev.warn('Unknown config property `' + key + '` for app, value:', value);

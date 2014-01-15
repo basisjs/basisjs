@@ -34,7 +34,7 @@ function pickHandler(){
   {
     endInspect();
     loadToken(token);
-  } 
+  }
 }
 
 function loadToken(token){
@@ -47,14 +47,14 @@ function loadToken(token){
     dictionaryName: basis.path.relative('/', dictionary.resource.url)
   };
 
-  transport.sendData('token', data);        
+  transport.sendData('token', data);
 }
 
 // dom mutation observer
 
 var observer = (function(){
   var names = ['MutationObserver', 'WebKitMutationObserver'];
-  
+
   for (var i = 0, name; name = names[i]; i++)
   {
     var ObserverClass = global[name];
@@ -63,7 +63,7 @@ var observer = (function(){
   }
 })();
 
-function startInspect(){ 
+function startInspect(){
   if (!inspectMode)
   {
     basis.cssom.classList(document.body).add('devpanel-inspectMode');
@@ -76,7 +76,7 @@ function startInspect(){
     DOM.event.captureEvent('mousedown', DOM.event.kill);
     DOM.event.captureEvent('mouseup', DOM.event.kill);
     DOM.event.captureEvent('contextmenu', endInspect);
-    DOM.event.captureEvent('click', pickHandler);    
+    DOM.event.captureEvent('click', pickHandler);
 
     transport.sendData('startInspect', 'l10n');
 
@@ -95,13 +95,13 @@ function endInspect(){
     if (observer)
       observer.disconnect();
 
-    basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
+    basis.cssom.classList(document.body).remove('devpanel-inspectMode');
 
     basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
     basis.dom.event.removeHandler(window, 'resize', updateOnResize);
     DOM.event.releaseEvent('mousedown');
     DOM.event.releaseEvent('mouseup');
-    DOM.event.releaseEvent('contextmenu');    
+    DOM.event.releaseEvent('contextmenu');
     DOM.event.releaseEvent('click');
 
     unhighlight();
@@ -192,7 +192,7 @@ function addTokenToHighlight(token, ref, domNode){
           outline: '1px solid ' + borderColor,
           top: document.body.scrollTop + rect.top + 'px',
           left: document.body.scrollLeft + rect.left + 'px',
-          width: rect.width + 'px', 
+          width: rect.width + 'px',
           height: rect.height + 'px'
         }
       }));
@@ -223,13 +223,13 @@ function domTreeHighlight(root){
       }
     }
 
-    if (child.nodeType == basis.dom.ELEMENT_NODE) 
+    if (child.nodeType == basis.dom.ELEMENT_NODE)
     {
       if (l10nRef = child.getAttribute('data-basisjs-l10n'))
         addTokenToHighlight(basis.l10n.token(l10nRef), child, child);
 
       domTreeHighlight(child);
-    }  
+    }
   }
 }
 

@@ -73,7 +73,7 @@
         canvasElement.width = this.width || 600;
         canvasElement.height = this.height || 400;
       }
-      
+
       this.context = canvasElement && canvasElement.getContext ? canvasElement.getContext('2d') : null;
 
       this.redrawRequest();
@@ -121,7 +121,7 @@
 
     init: function(){
       AbstractCanvas.prototype.init.call(this);
-     
+
       this.updateCount = 0;
       this.updateTimer_ = setInterval(this.draw.bind(this), 1000 / 60);
     },

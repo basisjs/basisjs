@@ -45,7 +45,7 @@
 
   function resetStyleAttr(extraStyle){
     return 'style="padding:0!important;margin:0!important;border:0!important;width:auto!important;height:0!important;font-size:0!important;' + (extraStyle || '') + '"';
-  }  
+  }
 
   function resetStyle(extraStyle){
     return '[' + resetStyleAttr(extraStyle) + ']';
@@ -107,10 +107,10 @@
 
       // measure row
       measureRow: cellSectionBuilder('measure'),
-      
+
       // header expander row
       headerExpandRow: cellSectionBuilder('header'),
-      
+
       // footer expander row
       footerExpandRow: cellSectionBuilder('footer')
     },
@@ -257,9 +257,6 @@
       basis.clearImmediate(this.timer_);
       this.timer_ = true; // prevent relayout call
 
-      this.section_measure_ = null;
-      this.section_header_ = null;
-      this.section_footer_ = null;
       this.columnWidthSync_ = null;
       this.shadowHeaderHtml_ = null;
       this.shadowFooterHtml_ = null;

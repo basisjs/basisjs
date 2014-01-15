@@ -16,27 +16,27 @@ var fileInspectror = resource('module/fileInspector/fileInspector.js');
 //
 var panel = new basis.ui.Node({
   container: document.body,
-  
+
   activated: false,
   themeName: basis.template.currentTheme().name,
   culture: basis.l10n.getCulture(),
-  
+
   template: resource('template/panel.tmpl'),
-  
+
   binding: {
     themeList: themeList,
-    cultureList: cultureList,    
+    cultureList: cultureList,
     activated: 'activated',
     themeName: 'themeName',
     cultureName: 'culture'
   },
-  
+
   action: {
     inspectTemplate: function(){
       basis.dom.event.captureEvent('click', function(){
         basis.dom.event.releaseEvent('click');
         templateInspector.startInspect();
-      });      
+      });
     },
     showThemes: function(){
       themeList.setDelegate(this);
@@ -107,7 +107,7 @@ if (typeof localStorage != 'undefined')
 {
   var position = (localStorage['basis-devpanel'] || '10;10').split(';');
   panel.element.style.left = position[0] + 'px';
-  panel.element.style.top = position[1] + 'px';  
+  panel.element.style.top = position[1] + 'px';
 }
 
 

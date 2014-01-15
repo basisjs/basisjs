@@ -27,7 +27,7 @@
 
   var getBoundingRect = basis.layout.getBoundingRect;
   var getViewportRect = basis.layout.getViewportRect;
-  
+
 
   //
   // Main part
@@ -42,7 +42,7 @@
   function resolveElement(value){
     return typeof value == 'string' ? document.getElementById(value) : value;
   }
-  
+
   function startDrag(event){
     if (dragElement)
       stopDrag();
@@ -100,7 +100,7 @@
       dragging = false;
       dragElement.emit_over(dragData, event);
     }
-    
+
     dragElement = null;
     dragData = null;
 
@@ -195,7 +195,7 @@
       cleaner.remove(this);
 
       Emitter.prototype.destroy.call(this);
-      
+
       this.setElement();
       this.setBase();
     }
@@ -206,7 +206,7 @@
   */
   var MoveableElement = DragDropElement.subclass({
     className: namespace + '.MoveableElement',
-    
+
     emit_start: function(dragData, event){
       var element = this.containerGetter(this, dragData.initX, dragData.initY);
 
@@ -227,7 +227,7 @@
       if (this.axisX)
       {
         var newLeft = dragData.box.left + dragData.deltaX;
-        
+
         if (this.fixLeft && newLeft < 0)
           newLeft = 0;
         else
@@ -240,7 +240,7 @@
       if (this.axisY)
       {
         var newTop = dragData.box.top + dragData.deltaY;
-       
+
         if (this.fixTop && newTop < 0)
           newTop = 0;
         else

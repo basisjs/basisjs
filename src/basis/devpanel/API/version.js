@@ -8,4 +8,4 @@ module.exports = {
       template: basis.template.DECLARATION_VERSION
     })
   }
-}
+};

@@ -55,7 +55,8 @@
     isSessionExpiredError: basis.fn.$false,
 
     init: function(){
-      ;;;if (this.requestClass) basis.dev.warn(namespace + '.Service#requestClass is not supported; set requestClass via transportClass')
+      /** @cut */ if (this.requestClass)
+      /** @cut */   basis.dev.warn(namespace + '.Service#requestClass is not supported; set requestClass via transportClass')
 
       Emitter.prototype.init.call(this);
 
@@ -119,7 +120,7 @@
       this.emit_sessionClose();
     },
 
-    freeze: function(){ 
+    freeze: function(){
       if (!this.sessionKey)
         return;
 
@@ -143,7 +144,7 @@
 
       this.emit_sessionUnfreeze();
     },
-    
+
     createTransport: function(config){
       return new this.transportClass(config);
     },

@@ -161,7 +161,6 @@
     };
   }
 
-  
 
   //
   // Boxes
@@ -196,7 +195,8 @@
     set: function(property, value){
       if (this.defined)
       {
-        switch(property.toLowerCase()){
+        switch (property.toLowerCase())
+        {
           case 'left':   this.left   = value; this.right  = this.left  + this.width; break;
           case 'right':  this.right  = value; this.left   = this.right - this.width; break;
           case 'width':  this.width  = value; this.right  = this.left  + this.width; break;
@@ -204,6 +204,7 @@
           case 'bottom': this.bottom = value; this.top    = this.bottom - this.height; break;
           case 'height': this.height = value; this.bottom = this.top    + this.height; break;
         }
+
         if (this.width <= 0 || this.height <= 0)
           this.reset();
       }
@@ -230,7 +231,7 @@
         box = new Box(box);
 
       return box.defined &&
-             box.right  > this.left && 
+             box.right  > this.left &&
              box.left   < this.right &&
              box.bottom > this.top &&
              box.top    < this.bottom;

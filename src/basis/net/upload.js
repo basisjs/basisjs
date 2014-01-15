@@ -37,7 +37,7 @@
   var FileUploader;
 
   if (fileAPISupport() && formDataSupport()) // XMLHttpRequest2
-  { 
+  {
     FileUploader = basis.net.Transport.subclass({
       className: namespace + '.FileUploader',
 
@@ -56,7 +56,7 @@
           }
           else
             formData.append(field.name, field.value);
-        }        
+        }
 
         var requestConfig = basis.object.extend({}, requestData);
 
@@ -65,11 +65,11 @@
           postBody: formData
         }));
       },
-      
+
       uploadFiles: function(url, files, fileParam){
         var formData = new FormData();
 
-        for (var i = 0, file; file = files[i]; i++) 
+        for (var i = 0, file; file = files[i]; i++)
           formData.append(fileParam || file.name, file);
 
         this.request({
@@ -89,9 +89,9 @@
     });
 
     var REQUEST_PROGRESS_HANDLER = function(event){
-      if (event.lengthComputable) 
+      if (event.lengthComputable)
         this.setState(basis.data.STATE.PROCESSING, { loaded: event.loaded, total: event.total });
-    } 
+    };
   }
   else //IFrame
   {

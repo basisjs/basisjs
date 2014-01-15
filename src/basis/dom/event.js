@@ -72,7 +72,8 @@
   };
 
  /**
-  * 
+  * @param {string} eventName
+  * @return {Array.<string>}
   */
   function browserEvents(eventName){
     return BROWSER_EVENTS[eventName] || [eventName];
@@ -96,7 +97,7 @@
         if (typeof event[name] != 'function' && name in this == false)
           this[name] = event[name];
 
-      basis.object.extend(this, { 
+      basis.object.extend(this, {
         event_: event,
 
         sender: sender(event),
@@ -141,7 +142,7 @@
   * @param {Node|string} ref
   * @return {Node}
   */
-  function getNode(ref){ 
+  function getNode(ref){
     return typeof ref == 'string' ? document.getElementById(ref) : ref;
   }
 
@@ -162,7 +163,7 @@
   * @param {Event} event
   */
   function cancelBubble(event){
-    if (event.stopPropagation) 
+    if (event.stopPropagation)
       event.stopPropagation();
     else
       event.cancelBubble = true;
@@ -173,7 +174,7 @@
   * @param {Event} event
   */
   function cancelDefault(event){
-    if (event.preventDefault) 
+    if (event.preventDefault)
       event.preventDefault();
     else
       event.returnValue = false;
@@ -240,7 +241,7 @@
     else
       if ('pageX' in event)                 // all others
         return event.pageX;
-      else                                  
+      else
         return 'clientX' in event ? event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft) : 0;
   }
 
@@ -255,7 +256,7 @@
     else                                  // all others
       if ('pageY' in event)
         return event.pageY;
-      else                                  
+      else
         return 'clientY' in event ? event.clientY + (document.documentElement.scrollTop || document.body.scrollTop) : 0;
   }
 
@@ -267,7 +268,7 @@
   function wheelDelta(event){
     var delta = 0;
 
-    if ('wheelDelta' in event) 
+    if ('wheelDelta' in event)
       delta = event.wheelDelta; // IE, webkit, opera
     else
       if (event.type == 'DOMMouseScroll')
@@ -323,7 +324,7 @@
 
  /**
   * @param {string} eventType
-  * @param {function(event)} handler 
+  * @param {function(event)} handler
   * @param {object=} thisObject Context for handler
   */
   function captureEvent(eventType, handler, thisObject){
@@ -352,7 +353,7 @@
  /**
   * Adds global handler for some event type.
   * @param {string} eventType
-  * @param {function(event)} handler 
+  * @param {function(event)} handler
   * @param {object=} thisObject Context for handler
   */
   function addGlobalHandler(eventType, handler, thisObject){
@@ -385,7 +386,7 @@
  /**
   * Removes global handler for eventType storage.
   * @param {string} eventType
-  * @param {function(event)} handler 
+  * @param {function(event)} handler
   * @param {object=} thisObject Context for handler
   */
   function removeGlobalHandler(eventType, handler, thisObject){
@@ -421,7 +422,7 @@
   * Adds handler for node for eventType events.
   * @param {Node|Window|string} node
   * @param {string} eventType
-  * @param {function(event)} handler 
+  * @param {function(event)} handler
   * @param {object=} thisObject Context for handler
   */
   function addHandler(node, eventType, handler, thisObject){
@@ -441,7 +442,7 @@
       handler: handler,
       thisObject: thisObject
     };
-      
+
     var handlers = node[EVENT_HOLDER];
     var eventTypeHandlers = handlers[eventType];
     if (!eventTypeHandlers)
@@ -467,10 +468,10 @@
           item.handler.call(item.thisObject, wrappedEvent);
       };
 
-      if (W3CSUPPORT) 
+      if (W3CSUPPORT)
         // W3C DOM event model
         node.addEventListener(eventType, eventTypeHandlers.fireEvent, false);
-      else 
+      else
         // old IE event model
         node.attachEvent('on' + eventType, eventTypeHandlers.fireEvent);
     }
@@ -556,7 +557,7 @@
         var eventTypeHandlers = handlers[eventType];
         if (eventTypeHandlers)
         {
-          if (node.removeEventListener) 
+          if (node.removeEventListener)
             node.removeEventListener(eventType, eventTypeHandlers.fireEvent, false);
           else
             node.detachEvent('on' + eventType, eventTypeHandlers.fireEvent);
@@ -568,7 +569,7 @@
   }
 
  /**
-  * Fires eventType 
+  * Fires eventType
   */
   function fireEvent(node, eventType, event){
     node = getNode(node);
@@ -581,13 +582,13 @@
   //
   // on document load event dispatcher
   //
-  
+
  /**
   * Attach unload handlers for page
-  * @param {function(event)} handler 
+  * @param {function(event)} handler
   * @param {object=} thisObject Context for handler
   */
-  function onUnload(handler, thisObject){ 
+  function onUnload(handler, thisObject){
     addHandler(global, 'unload', handler, thisObject);
   }
 
@@ -692,7 +693,7 @@
     addHandlers: addHandlers,
     removeHandler: removeHandler,
     clearHandlers: clearHandlers,
-    
+
     fireEvent: fireEvent,
 
     onUnload: onUnload,

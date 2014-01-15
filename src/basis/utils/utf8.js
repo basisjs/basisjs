@@ -41,7 +41,7 @@
   function toUTF16Bytes(input){
     return utf16.toBytes(utf16.fromUTF8(input));
   }
-  
+
   // utf16 string -> utf8 string
   function fromUTF16(input){
     return utf16.toUTF8(input);

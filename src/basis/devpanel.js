@@ -22,7 +22,7 @@ basis.ready(function(){
   basis.object.extend(basis.appCP, resource('devpanel/API/server.js').fetch());
   basis.object.extend(basis.appCP, resource('devpanel/API/file.js').fetch());
   basis.object.extend(basis.appCP, resource('devpanel/API/l10n.js').fetch());
-  basis.object.extend(basis.appCP, resource('devpanel/API/inspector.js').fetch());  
+  basis.object.extend(basis.appCP, resource('devpanel/API/inspector.js').fetch());
 
   console.log('basis devpanel inited');
 });
@@ -32,4 +32,4 @@ module.exports = {
     var fileInspector = resource('devpanel/module/fileInspector/fileInspector.js').fetch();
     fileInspector.open();
   }
-}
+};

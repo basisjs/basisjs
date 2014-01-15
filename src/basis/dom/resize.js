@@ -45,7 +45,7 @@
       'z-index: -1',
       ''
     ].join(' !important;'));
-    
+
     childA && el.appendChild(childA);
     childB && el.appendChild(childB);
 
@@ -123,11 +123,11 @@
             change = true;
             x = width;
           }
-          
+
           if (y != height)
           {
             first.style.height = (height || 1000000) - step + 'px';
-            last.style.height = height + step + 'px';      
+            last.style.height = height + step + 'px';
             change = true;
             y = height;
           }
@@ -144,7 +144,7 @@
         //addFlowListener(sensor, 'over', matchFlow);
         //addFlowListener(sensor, 'under', matchFlow);
         addFlowListener(sensor.firstElementChild, EVENT_OVERFLOW, matchFlow);
-        addFlowListener(sensor.lastElementChild, EVENT_UNDERFLOW, matchFlow);   
+        addFlowListener(sensor.lastElementChild, EVENT_UNDERFLOW, matchFlow);
         element.appendChild(sensor);
         matchFlow();
       }
@@ -171,7 +171,7 @@
         element.appendChild(sensor);
       }
     }
-    
+
     events.push({
       fn: fn,
       context: context || element
@@ -182,7 +182,7 @@
 
   function removeResizeListener(element, fn, context){
     var events = element.flowEvents_;
-    
+
     if (!events)
       return;
 

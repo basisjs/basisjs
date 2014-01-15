@@ -5,7 +5,7 @@
  /**
   * @namespace basis.cssom
   */
-  
+
   var namespace = this.path;
 
 
@@ -48,7 +48,7 @@
   //
   // shortcut
   //
-  
+
   function createRule(selector, styleSheet){
     return getStyleSheet(styleSheet, true).createRule(selector);
   }
@@ -80,7 +80,7 @@
   // working with stylesheets
   //
 
-  function StyleSheet_insertRule(rule, index){
+  function compatibleStyleSheetInsertRule(rule, index){
     // fetch selector and style from rule description
     var m = rule.match(/^([^{]+)\{(.*)\}\s*$/);
     if (m)
@@ -91,21 +91,20 @@
       return index - 1;
     }
 
-    ;;;throw new Error("Syntax error in CSS rule to be added");
+    ;;;throw new Error('Syntax error in CSS rule to be added');
   }
 
-  function StyleSheet_makeCompatible(style){
+  function makeStyleSheetCompatible(style){
     // FF throws exception if access to cssRules property until stylesheet isn't ready (loaded)
     try {
       if (!style.cssRules)
         style.cssRules = style.rules;
-    }
-    catch(e){
+    } catch(e){
     }
 
     // extend style sheet with methods according to W3C spec
     if (!style.insertRule)
-      style.insertRule = StyleSheet_insertRule;
+      style.insertRule = compatibleStyleSheetInsertRule;
 
     if (!style.deleteRule)
       style.deleteRule = style.removeRule;
@@ -127,7 +126,7 @@
 
     basis.doc.head.add(element);
 
-    return StyleSheet_makeCompatible(element.sheet || element.styleSheet);
+    return makeStyleSheetCompatible(element.sheet || element.styleSheet);
   }
 
  /**
@@ -433,7 +432,7 @@
     * Removes all style properties
     */
     clear: function(){
-      this.rule.style.cssText = "";
+      this.rule.style.cssText = '';
     },
 
    /**
@@ -452,7 +451,7 @@
   //
   // RuleSet
   //
-  
+
   function createRuleSetMethod(methodName){
     return function(){
       for (var i = 0, rule; rule = this.rules[i]; i++)
@@ -497,7 +496,7 @@
         this.owner.deleteRule(rule);
       }
     },
-    
+
     setProperty: createRuleSetMethod('setProperty'),
     setStyle: createRuleSetMethod('setStyle'),
     clear: createRuleSetMethod('clear'),
@@ -534,8 +533,10 @@
   var ClassList = Class(null, {
     className: namespace + '.ClassList',
 
-    init: function(element){ 
-      ;;;if (!element) throw new Error(namespace + '.classList: Element ' + element + ' not found!');
+    init: function(element){
+      if (!element)
+        throw namespace + '.classList: Element ' + element + ' not found!';
+
       this.element = element;
     },
 
@@ -560,7 +561,7 @@
 
       if (typeof searchFor != 'undefined')
         this.remove(prefix + searchFor);
-      
+
       if (typeof replaceFor != 'undefined')
         this.add(prefix + replaceFor);
     },
@@ -580,9 +581,9 @@
     item: function(index){
       return this.toString().trim().split(' ')[index];
     },
-    add: function(token){ 
+    add: function(token){
       var className = this.toString();
-      
+
       if (!className.match(tokenRegExp(token)))
         this.set_(className + ' ' + token);
     },
@@ -687,7 +688,7 @@
   }
   else
   {
-    classList = function(element){ 
+    classList = function(element){
       return new ClassList(typeof element == 'string' ? dom.get(element) : element);
     };
   }

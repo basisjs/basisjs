@@ -47,8 +47,8 @@
     "requireLineFeedAtFileEnd": true,
 
     "disallowKeywords": ["with", "eval"],
-    "requireKeywordsOnNewLine": ["if", "else", "while", "for", "do", "return", "swicth", "case", "try"],
-    "disallowKeywordsOnNewLine": [],
+    "requireKeywordsOnNewLine": ["if", "else", "while", "for", "do", "return", "swicth", "case", "try", "break"],
+    "disallowKeywordsOnNewLine": ["catch"],
     "requireCapitalizedConstructors": true,
 
     "requireDotNotation": true,

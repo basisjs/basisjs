@@ -63,7 +63,7 @@
 
   function versionToInt(version){
     var base = 1000000;
-    var part = String(version).split(".");
+    var part = String(version).split('.');
 
     for (var i = 0, result = 0; i < 4 && i < part.length; i++, base /= 100)
       result += part[i] * base;
@@ -81,7 +81,7 @@
     // calculate answer
     var m = forTest.match(/^([a-z]+)(([\d\.]+)([+-=]?))?$/i);
     if (m)
-    { 
+    {
       answers[forTest] = false;
 
       var name = m[1].toLowerCase();
@@ -109,18 +109,18 @@
 
   var cookies = {
     set: function(name, value, expire, path){
-      document.cookie = name + "=" + (value == null ? '' : escape(value)) +
-                        ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
-                        (expire ? ";expires=" + (new Date(Date.now() + expire * 1000)).toGMTString() : '');
+      document.cookie = name + '=' + (value == null ? '' : escape(value)) +
+                        ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
+                        (expire ? ';expires=' + (new Date(Date.now() + expire * 1000)).toGMTString() : '');
     },
 
     get: function(name){
-      var m = document.cookie.match(new RegExp("(^|;)\\s*" + name + "\\s*=\\s*(.*?)\\s*(;|$)"));
+      var m = document.cookie.match(new RegExp('(^|;)\\s*' + name + '\\s*=\\s*(.*?)\\s*(;|$)'));
       return m && unescape(m[2]);
     },
 
     remove: function(name, path){
-      document.cookie = name + "=;expires=" + (new Date(0)).toGMTString() + ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname));
+      document.cookie = name + '=;expires=' + (new Date(0)).toGMTString() + ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname));
     }
   };
 
@@ -131,7 +131,7 @@
 
   module.exports = {
     prettyName: browserPrettyName,
-    
+
     is: testBrowser,   // single test
     test: function(){  // multiple test
       return basis.array(arguments).some(testBrowser);

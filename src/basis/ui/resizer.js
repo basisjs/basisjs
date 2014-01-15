@@ -100,7 +100,7 @@
       var relToOffsetParent = cssPosition == 'absolute' || cssPosition == 'fixed';
       var parentNode = relToOffsetParent ? this.element.offsetParent || document.body : this.element.parentNode;
       var parentNodeSize;
-      
+
       if (dragData.delta == 'deltaY')
       {
         dragData.offsetStart = this.element.clientHeight
@@ -173,7 +173,7 @@
       this.resizer = dom.createElement('.Basis-Resizer');
       this.cursor = PROPERTY_CURSOR[this.property][1];
       this.resizer.style.cursor = this.cursor;
-      
+
       super_.init.call(this);
     },
     setElement: function(element){

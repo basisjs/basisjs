@@ -20,7 +20,7 @@
   // import names
   //
 
-  
+
   var document = global.document;
   var documentElement = document && document.documentElement;
   var Class = basis.Class;
@@ -201,13 +201,13 @@
 
       dir[0 + v] = FLIP[dir[0 + v]];
       dir[2 + v] = FLIP[dir[2 + v]];
-      
+
       this.setLayout(dir.join(' '));
     },
     rotate: function(offset){
       var dir = this.dir.split(' ');
       var result = [];
-      
+
       offset = ((offset % 4) + 4) % 4;
 
       if (!offset)
@@ -405,7 +405,7 @@
     },
     hide: function(){
       if (this.visible)
-      { 
+      {
         // set visible flag
         this.visible = false;
 
@@ -475,7 +475,7 @@
     },
 
     insertBefore: function(newChild, refChild){
-      if (UINode.prototype.insertBefore.call(this,newChild, refChild))
+      if (UINode.prototype.insertBefore.call(this, newChild, refChild))
         newChild.setZIndex(basis.ui.window ? basis.ui.window.getWindowTopZIndex() : 2001);
     },
     removeChild: function(popup){

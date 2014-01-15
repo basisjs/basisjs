@@ -9,7 +9,7 @@ var view = new Menu({
         basis.l10n.setCulture(this.pick().value);
       }
     }
-  },  
+  },
 
   childClass: {
     template: resource('template/cultureItem.tmpl'),
@@ -26,7 +26,7 @@ var view = new Menu({
         getter: function(object){
           return object.country ? 11 * (object.country.charCodeAt(1) - 65) : 1000;
         }
-      }       
+      }
     },
     action: {
       select: function(){

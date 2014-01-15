@@ -76,10 +76,12 @@
     if (!arr.length)  // empty array check
       return -1;
 
-    var pos, compareValue;
+    var pos;
+    var compareValue;
     var l = 0;
     var r = arr.length;
-    var lv, rv;
+    var lv;
+    var rv;
 
     // binary search
     do
@@ -346,7 +348,7 @@
           node.select();
         else
         {
-          if (this.selectedDate /*&& this.minDate <= this.selectedDate && this.selectedDate <= this.maxDate*/)
+          if (this.selectedDate) /*&& this.minDate <= this.selectedDate && this.selectedDate <= this.maxDate*/
             this.setViewDate(this.selectedDate);
           else
             this.selection.clear();
@@ -393,8 +395,10 @@
       this.setSelectedDate(selectedDate);
     },
 
-    getTitle: function(){},
-    getTabTitle: function(){},
+    getTitle: function(){
+    },
+    getTabTitle: function(){
+    },
 
     // nodes methods
 
@@ -428,7 +432,8 @@
     },
 
     // bild methods
-    getInitOffset: function(){}
+    getInitOffset: function(){
+    }
   });
 
  /**
@@ -641,14 +646,15 @@
           }
         }
       })
-    },   
+    },
 
     selection: true,
     childClass: CalendarSection,
-    childFactory: function(){},
+    childFactory: function(){
+    },
 
     date: null,
-    sections: ['Month', /*'Quarter', 'YearQuarters', */'Year', 'YearDecade'/*, 'Century'*/],
+    sections: ['Month', 'Year', 'YearDecade'], /*'Quarter', 'YearQuarters', 'Century'*/
 
     // enable/disable periods
     minDate: null,
@@ -801,7 +807,7 @@
         return false;
 
       // check for max date
-      if ( forward && this.maxDate && this.maxDate < date)
+      if (forward && this.maxDate && this.maxDate < date)
         return false;
 
       // check for map
@@ -812,7 +818,7 @@
           if (!forward && this.minDate)
             return this.isPeriodEnabled(this.minDate, date);
 
-          if ( forward && this.maxDate)
+          if (forward && this.maxDate)
             return this.isPeriodEnabled(date, this.maxDate);
         }
         else
@@ -879,8 +885,10 @@
         var s = unpackDate(periodStart);
         var e = unpackDate(periodEnd);
 
-        var year, month, mask;
         var monthIndex = s.month;
+        var year;
+        var month;
+        var mask;
 
         var cursor = new Date(s.year, s.month);
         var monthMark = 11 - s.month;

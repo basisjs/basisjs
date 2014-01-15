@@ -34,9 +34,11 @@
 
   var NULL_INFO = {};
 
-  // 
-  var isKeyType = { 'string': 1, 'number': 1 };
   var entityTypes = [];
+  var isKeyType = {
+    string: true,
+    number: true
+  };
 
   // buildin indexes
   var NumericId = function(value){
@@ -562,7 +564,7 @@
         addCalcField: function(key, wrapper){
           entityType.addCalcField(key, wrapper);
         },
-        
+
         get: function(data){
           return entityType.get(data);
         },
@@ -591,14 +593,14 @@
   function chooseArray(newArray, oldArray){
     if (!Array.isArray(newArray))
       return null;
-      
+
     if (!Array.isArray(oldArray) || newArray.length != oldArray.length)
       return newArray || null;
 
     for (var i = 0; i < newArray.length; i++)
       if (newArray[i] !== oldArray[i])
         return newArray;
-    
+
     return oldArray;
   }
 
@@ -890,7 +892,7 @@
         addField(this, key, config.fields[key]);
 
       for (var key in config.aliases)
-        addFieldAlias(this, key, config.aliases[key]);      
+        addFieldAlias(this, key, config.aliases[key]);
 
       if (config.constrains)
         config.constrains.forEach(function(item){
@@ -910,7 +912,7 @@
       // return null id data is not an object
       if (!data || data == null)
         return null;
-        
+
       // map data
       for (var key in data)
       {
@@ -977,7 +979,7 @@
   //
 
   function entityWarn(entity, message){
-    basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity); 
+    basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity);
   }
 
  /**
@@ -1059,7 +1061,7 @@
         updateIndex(entity, curId, newId);
       }
 
-      return updated;      
+      return updated;
     }
 
     function updateIndex(entity, curValue, newValue){
@@ -1253,7 +1255,7 @@
 
           // set new value for field
           this.data[key] = newValue;
-          
+
           // remove attached handler if exists
           if (this.fieldHandlers_[key])
           {
@@ -1377,7 +1379,7 @@
 
         for (var key in this.data)
           data[key] = undefined;
-        
+
         return this.update(data);
       },
       commit: function(data){
@@ -1428,7 +1430,7 @@
         });
 
         // clear links
-        this.data = NULL_INFO; 
+        this.data = NULL_INFO;
         this.modified = null;
       }
     });
@@ -1443,7 +1445,8 @@
   }
 
   function createType(configOrName, fields){
-    ;;;if (this instanceof createType) basis.dev.warn('`new` operator was used with basis.entity.createType, it\'s a mistake');
+    /** @cut */ if (this instanceof createType)
+    /** @cut */   basis.dev.warn('`new` operator was used with basis.entity.createType, it\'s a mistake');
 
     var config = configOrName || {};
 
@@ -1466,12 +1469,13 @@
   }
 
   function createSetType(nameOrWrapper, wrapper){
-    ;;;if (this instanceof createSetType) basis.dev.warn('`new` operator was used with basis.entity.createSetType, it\'s a mistake');
+    /** @cut */ if (this instanceof createSetType)
+    /** @cut */   basis.dev.warn('`new` operator was used with basis.entity.createSetType, it\'s a mistake');
 
     return arguments.length > 1
       ? new EntitySetWrapper(wrapper, nameOrWrapper)
       : new EntitySetWrapper(nameOrWrapper);
-  }  
+  }
 
   //
   // export names

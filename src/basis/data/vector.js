@@ -201,7 +201,7 @@
 
 
     //
-    // add create or update new member 
+    // add create or update new member
     //
 
     var newItem;
@@ -223,7 +223,7 @@
     }
     else
       newItem = newMember.item;
-   
+
     newMember[objectId] = sourceObjectInfo;
     newMember.count++;
 
@@ -308,13 +308,13 @@
           };
 
           sourceMap[objectId] = sourceObjectInfo;
-          
+
           member[objectId] = sourceObjectInfo;
           member.count++;
 
           // add handler
           object.addHandler(VECTOR_ITEM_HANDLER, this);
-          
+
           var updateData = {};
           for (var calcName in calcs)
           {
@@ -389,7 +389,7 @@
     className: namespace + '.Vector',
    /**
     * @type {Object}
-    */ 
+    */
     calcs: null,
     slots_: null,
 
@@ -400,7 +400,7 @@
 
       // destroy deleted
       if (delta.deleted)
-        delta.deleted.forEach(function(item){ 
+        delta.deleted.forEach(function(item){
           item.destroy();
         });
     },

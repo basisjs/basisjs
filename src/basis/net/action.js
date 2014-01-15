@@ -21,7 +21,7 @@
   // main part
   //
 
-  var nothingToDo = function(){};  
+  var nothingToDo = function(){};
 
   // default transport handler
   var CALLBACK_HANDLER = {
@@ -73,7 +73,7 @@
 
  /**
   * @function
-  */ 
+  */
   function resolveTransport(config){
     if (config.transport)
       return config.transport;

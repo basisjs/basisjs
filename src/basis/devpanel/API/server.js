@@ -14,5 +14,5 @@ module.exports = {
   serverStatus: function(){
     var isOnline = basis.devtools && basis.devtools.serverState && basis.devtools.serverState.data.isOnline;
     transport.sendData('serverStatus', isOnline || false);
-  }  
+  }
 };

@@ -59,7 +59,7 @@
     className: namespace + '.Blocker',
 
     template: templates.Blocker,
-    
+
     captureElement: null,
     capture: function(element, zIndex){
       this.captureElement = DOM.get(element || document.body);
@@ -81,7 +81,7 @@
 
     destroy: function(){
       this.release();
-      
+
       UINode.prototype.destroy.call(this);
     }
   });
@@ -116,7 +116,7 @@
     closed: true,
     moveable: true,
     zIndex: 0,
-    
+
     dde: null,
 
     title: dict.token('emptyTitle'),
@@ -366,7 +366,7 @@
     itemsChanged: function(){
       var selected = this.pick();
       var lastWin = windowManager.lastChild;
-      
+
       if (selected)
       {
         if (selected.parentNode == windowManager && selected != lastWin)
@@ -381,7 +381,7 @@
         if (lastWin)
           this.add([lastWin]);
       }
-    }      
+    }
   });
 
   basis.doc.body.ready(function(body){

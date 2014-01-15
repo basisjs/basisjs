@@ -4,7 +4,7 @@
 
   if ('getComputedStyle' in global)
   {
-    // Gecko's getComputedStyle returns computed values for top/bottom/left/right/height/width, but 
+    // Gecko's getComputedStyle returns computed values for top/bottom/left/right/height/width, but
     // according to W3C spec getComputedStyle should returns used values.
     //
     // https://developer.mozilla.org/en/DOM/window.getComputedStyle:
@@ -13,7 +13,7 @@
     //   after cascading and inheritance, but CSS 2.1 redefined computed values as pre-layout, and used
     //   values as post-layout. The getComputedStyle function returns the old meaning of computed values,
     //   now called used values. There is no DOM API to get CSS 2.1 computed values.
-    // 
+    //
     // This workaround helps fetch used values instead of computed.
     var GETCOMPUTEDSTYLE_BUGGY = {};
 
@@ -65,7 +65,7 @@
     var IS_PIXEL = /\dpx$/i;
 
     // css value to pixel convertor
-    var getPixelValue = function(element, value) {
+    var getPixelValue = function(element, value){
       if (IS_PIXEL.test(value))
         return parseInt(value, 10) + 'px';
 

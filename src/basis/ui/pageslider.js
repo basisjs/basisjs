@@ -8,7 +8,7 @@
 
  /**
   * @namespace basis.ui.pageslider
-  */ 
+  */
 
   var namespace = this.path;
 
@@ -35,7 +35,7 @@
   //
   // main part
   //
-  
+
   var PageSlider = PageControl.subclass({
     className: namespace + '.PageSlider',
 
@@ -118,7 +118,7 @@
           : currentPage.previousSibling;
       }
       else
-        if ((this.scroller.viewportX > (pagePosition + pageWidth / 2)) 
+        if ((this.scroller.viewportX > (pagePosition + pageWidth / 2))
             || (this.scroller.viewportX < (pagePosition - pageWidth / 2)))
         {
           pageScrollTo = this.scroller.viewportX - pagePosition > 0
@@ -136,7 +136,7 @@
       if (page && this.scroller)
       {
         page.select();
-        
+
         if (page.element.offsetWidth > 0)
           this.scroller.setPositionX(page.element.offsetLeft, !noSmooth);
       }
@@ -175,15 +175,15 @@
     selectNext: function(){
       if (this.rotate)
         this.adjustRotation(true);
-      
+
       this.scrollToPage(this.selection.pick().nextSibling);
     },
     selectPrev: function(){
       if (this.rotate)
-        this.adjustRotation(false);      
-      
+        this.adjustRotation(false);
+
       this.scrollToPage(this.selection.pick().previousSibling);
-    },    
+    },
 
     destroy: function(){
       PageControl.prototype.destroy.call(this);

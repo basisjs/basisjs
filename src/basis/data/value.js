@@ -26,7 +26,7 @@
   var Value = basis.data.Value;
   var STATE = basis.data.STATE;
 
- 
+
  /**
   * @class
   */
@@ -74,7 +74,7 @@
 
  /**
   * @class
-  */    
+  */
   var ObjectSet = Value.subclass({
     className: namespace + '.ObjectSet',
 
@@ -108,7 +108,7 @@
 
    /**
     * @type {Array.<basis.data.STATE>}
-    */ 
+    */
     statePriority: OBJECTSET_STATE_PRIORITY,
 
    /**
@@ -145,7 +145,7 @@
 
    /**
     * Adds one or more AbstractData instances to objects collection.
-    * @param {...basis.data.AbstractData}
+    * @param {...basis.data.AbstractData} objects
     */
     add: function(/* dataObject1 .. dataObjectN */){
       for (var i = 0, len = arguments.length; i < len; i++)
@@ -214,7 +214,7 @@
     unlock: function(){
       this.locked = false;
     },
-    
+
    /**
     * @private
     */

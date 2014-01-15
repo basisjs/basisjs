@@ -48,10 +48,10 @@
   var SOAP_BODY     = 'Body';
   var SOAP_FAULT    = 'Fault';
 
-  
+
  /**
   * @class SOAPRequest
-  */ 
+  */
 
   var SOAPRequest = Class(AjaxRequest, {
     className: namespace + '.SOAPRequest',
@@ -93,7 +93,7 @@
         code = codeElement ? codeElement.firstChild.nodeValue : 'UNKNOWN_ERROR';
         message = messageElement ? messageElement.firstChild.nodeValue : 'Unknown error';
       }
-      
+
       this.update({
         error: {
           code: code || 'TRANSPORT_ERROR',
@@ -108,13 +108,13 @@
         var xml = this.xhr.responseXML;
         if (!xml || xml === undefined || xml.documentElement === undefined)
         {
-          this.responseEnvelope = null;          
+          this.responseEnvelope = null;
         }
         else
         {
           // convert to native document for IE
           if (xml.xml && window.DOMParser)
-            xml = new DOMParser().parseFromString(xml.xml, "text/xml");
+            xml = new DOMParser().parseFromString(xml.xml, 'text/xml');
 
           this.responseEnvelope = new Envelope(xml.documentElement);
         }
@@ -151,7 +151,7 @@
 
       if (requestData.soapHeaderSections)
       {
-        var header = this.requestEnvelope.getHeader(true); 
+        var header = this.requestEnvelope.getHeader(true);
         for (var key in requestData.soapHeaderSections)
         {
           var section = requestData.soapHeaderSections[key];
@@ -346,7 +346,7 @@
         {
           var element = this.element.appendChild(Object2XML(this.element.ownerDocument, node, namespace, data[node]));
           if (XML.XMLNS.BAD_SUPPORT) // add namespace for bad browsers (xmlns attribute)
-            addNamespace(element, '', namespace); 
+            addNamespace(element, '', namespace);
         }
     },
     setSection: function(qname, data){
@@ -383,7 +383,7 @@
       this.element.appendChild(child);
 
       if (XML.XMLNS.BAD_SUPPORT) // add namespace for bad browsers (xmlns attribute)
-        addNamespace(child.element, '', method.namespace); 
+        addNamespace(child.element, '', method.namespace);
 
       if (encodingStyle)
         XML.setAttributeNodeNS(child, XML.createAttributeNS(document, 'encodingStyle', SOAP_ENCODING, encodingStyle));

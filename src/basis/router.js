@@ -135,7 +135,7 @@
       started = true;
       /** @cut */ if (ns.debug) basis.dev.log(namespace + ' started');
 
-      checkUrl();      
+      checkUrl();
     }
   }
 
@@ -197,7 +197,7 @@
             item.callback.leave.call(item.context);
             /** @cut */ log.push('\n', { type: 'leave', path: route.source, cb: item, route: route });
           }
-      }       
+      }
 
       // callback off for previous matched
       for (var i = 0, route; route = inserted[i]; i++)
@@ -253,7 +253,7 @@
         if (match = currentPath.match(route.regexp))
           matched[path] = match;
     }
-    
+
     config = {
       cb_: callback,
       context: context,
@@ -275,7 +275,7 @@
 
  /**
   * Remove handler for path
-  */ 
+  */
   function remove(path, callback, context){
     var route = routes[path];
 

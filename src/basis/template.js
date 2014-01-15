@@ -144,7 +144,7 @@
       pos = state.lastIndex;
 
       //stat[state] = (stat[state] || 0) + 1;
-      switch(state)
+      switch (state)
       {
         case TEXT:
 
@@ -382,7 +382,7 @@
 
     /** @cut */ if (lastTag.name)
     /** @cut */   result.warns.push('No close tag for <' + lastTag.name + '>');
-    /** @cut */ 
+    /** @cut */
     /** @cut */ if (!result.warns.length)
     /** @cut */   delete result.warns;
 
@@ -505,12 +505,12 @@
         var names = [];
         var expression = [];
         var map = {};
-        
+
         for (var j = 0; j < parts.length; j++)
           if (j % 2)
           {
             bindName = parts[j];
-            
+
             if (!map[bindName])
             {
               map[bindName] = names.length;
@@ -551,7 +551,7 @@
                 else
                   newValue.push(part);
               }
-              
+
               // set new value
               value = newValue.join(' ');
             }
@@ -582,7 +582,8 @@
             }
             else
             {
-              ;;;if (/\S/.test(value)) basis.dev.warn('Bad value for style attribute (value ignored):', value);
+              /** @cut */ if (/\S/.test(value))
+              /** @cut */   basis.dev.warn('Bad value for style attribute (value ignored):', value);
             }
 
             props.push('');
@@ -605,7 +606,7 @@
         binding: bindings,
         value: value,
         type: ATTR_TYPE_BY_NAME[name] || 2
-      };   
+      };
     }
 
     function attrs(token, declToken, optimizeSize){
@@ -640,7 +641,7 @@
         var item = [
           parsed.type,            // TOKEN_TYPE = 0
           parsed.binding,         // TOKEN_BINDINGS = 1
-          refList(attr)           // TOKEN_REFS = 2         
+          refList(attr)           // TOKEN_REFS = 2
         ];
 
         // ATTR_NAME = 3
@@ -718,7 +719,7 @@
         {
           ;;;template.warns.push('Instruction <b:' + token.name + '> has no attribute name');
           return;
-        }  
+        }
 
         if (!IDENT.test(attrs.name))
         {
@@ -917,7 +918,7 @@
                       var decl;
 
                       arrayAdd(template.deps, resource);
-                      
+
                       // prevent recursion
                       includeStack.push(resource);
 
@@ -939,7 +940,7 @@
 
                       if (decl.resources && 'no-style' in elAttrs == false)
                         addUnique(template.resources, decl.resources);
-                      
+
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
 
@@ -1012,9 +1013,9 @@
                                   tokenRef.owner.splice.apply(tokenRef.owner, [pos, rem].concat(process(child.childs, template, options) || []));
                                 }
                               }
-                            break;
+                              break;
 
-                            case 'prepend':                            
+                            case 'prepend':
                             case 'append':
                               var childAttrs = tokenAttrs(child);
                               var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
@@ -1030,33 +1031,33 @@
                                 else
                                   token.push.apply(token, childs);
                               }
-                            break;                            
+                              break;
 
                             case 'attr':
                             case 'set-attr':
                               modifyAttr(child, false, 'set');
-                            break;
+                              break;
 
                             case 'append-attr':
                               modifyAttr(child, false, 'append');
-                            break;
+                              break;
 
                             case 'remove-attr':
                               modifyAttr(child, false, 'remove');
-                            break;
+                              break;
 
                             case 'class':
                             case 'append-class':
                               modifyAttr(child, 'class', 'append');
-                            break;
+                              break;
 
                             case 'set-class':
                               modifyAttr(child, 'class', 'set');
-                            break;
+                              break;
 
                             case 'remove-class':
                               modifyAttr(child, 'class', 'remove');
-                            break;
+                              break;
 
                             case 'add-ref':
                               var childAttrs = tokenAttrs(child);
@@ -1066,7 +1067,7 @@
 
                               if (token && childAttrs.name)
                                 addTokenRef(token, childAttrs.name);
-                            break;
+                              break;
 
                             case 'remove-ref':
                               var childAttrs = tokenAttrs(child);
@@ -1076,9 +1077,9 @@
 
                               if (token)
                                 removeTokenRef(token, childAttrs.name || childAttrs.ref);
-                            break;
+                              break;
 
-                            default: 
+                            default:
                               ;;;template.warns.push('Unknown instruction tag <b:' + child.name + '>');
                           }
                         }
@@ -1141,7 +1142,7 @@
                 if (!parts[2])
                 {
                   // reset binding with no dictionary
-                  arrayRemove(refs, bindings);                  
+                  arrayRemove(refs, bindings);
                   if (refs.length == 0)
                     refs = null;
                   bindings = 0;
@@ -1355,7 +1356,7 @@
       if (!source.templateTokens)
       {
         ;;;source_ = source;
-        source = tokenize('' + source);
+        source = tokenize(String(source));
       }
       else
       {
@@ -1372,7 +1373,8 @@
         result.tokens = [[3, 0, 0, '']];
 
       // store source for debug
-      ;;;if (source_) result.tokens.source_ = source_;
+      /** @cut */ if (source_)
+      /** @cut */   result.tokens.source_ = source_;
 
       // normalize refs
       addTokenRef(result.tokens[0], 'element');
@@ -1381,7 +1383,9 @@
       // deal with defines
       result.unpredictable = !!applyDefines(result.tokens, result, options);
 
-      ;;;for (var key in result.defines) if (!result.defines[key].used) warns.push('Unused define for ' + key);
+      /** @cut */ for (var key in result.defines)
+      /** @cut */   if (!result.defines[key].used)
+      /** @cut */     warns.push('Unused define for ' + key);
 
       // delete unnecessary keys
       delete result.defines;
@@ -1428,7 +1432,8 @@
   function cloneDecl(array){
     var result = [];
 
-    ;;;if (array.source_) result.source_ = array.source_;
+    /** @cut */ if (array.source_)
+    /** @cut */   result.source_ = array.source_;
 
     for (var i = 0; i < array.length; i++)
       result.push(
@@ -1441,8 +1446,10 @@
   }
 
  /**
-  * @param {Template} template
+  * @param {*} source
+  * @param {string=} baseURI
   * @param {boolean=} clone
+  * @param {object=} options
   */
   function getDeclFromSource(source, baseURI, clone, options){
     var result = source;
@@ -1512,7 +1519,7 @@
       for (var i = 0, dep; dep = deps[i]; i++)
         dep.bindingBridge.detach(dep, buildTemplate, this);
     }
-    
+
     /** @cut for token type change in dev mode */
     /** @cut */ if (l10n)
     /** @cut */   for (var i = 0, item; item = l10n[i]; i++)
@@ -1547,7 +1554,9 @@
     // apply new values
     this.createInstance = funcs.createInstance;
     this.clearInstance = funcs.destroyInstance;
-    this.getBinding = function(){ return {names:funcs.keys} };
+    this.getBinding = function(){
+      return { names: funcs.keys };
+    };
     this.destroyBuilder = funcs.destroy;
 
     ;;;this.instances_ = funcs.instances_;
@@ -1583,7 +1592,7 @@
     {
       if (host.type == 'text/basis-template')
         return host.textContent || host.text;
-      
+
       ;;;basis.dev.warn('Template script element with wrong type', host.type);
 
       return '';
@@ -1611,7 +1620,7 @@
   *   // create a template
   *   var template = new basis.template.html.Template(
   *     '<li class="listitem item-{num}" title="Item #{num}: {title}">' +
-  *       '<a href="{url}">{title}</a>' + 
+  *       '<a href="{url}">{title}</a>' +
   *       '<span class="description">{description}</span>' +
   *     '</li>'
   *   );
@@ -1693,7 +1702,8 @@
             return;
           }
       },
-      get: function(){}
+      get: function(){
+      }
     },
 
    /**
@@ -1712,7 +1722,7 @@
 
    /**
     * Remove reference from DOM structure
-    * @param {object=} object Storage of DOM references.
+    * @param {object=} tmpl Storage of DOM references.
     */
     clearInstance: function(tmpl){
     },
@@ -1869,7 +1879,7 @@
       var events = config.events;
       if (events && events.length)
       {
-        this.ruleEvents = {};      
+        this.ruleEvents = {};
         for (var i = 0, eventName; eventName = events[i]; i++)
           this.ruleEvents[eventName] = true;
       }
@@ -1951,7 +1961,7 @@
     * @constructor
     * @param {*} value
     * @param {string} path
-    */ 
+    */
     init: function(value, path){
       this.path = path;
       basis.Token.prototype.init.call(this, '');
@@ -1968,7 +1978,7 @@
 
    /**
     * @inheritDocs
-    */ 
+    */
     set: function(){
       var content = getThemeSource(currentThemeName, this.path);
 
@@ -1994,7 +2004,7 @@
     destroy: function(){
       this.url = null;
       this.baseURI = null;
-      
+
       if (this.value && this.value.bindingBridge)
         this.value.bindingBridge.detach(this.value, this.apply, this);
 
@@ -2303,7 +2313,7 @@
 
       // clear templates
       for (var i = 0, template; template = templateList[i]; i++)
-        template.destroy();        
+        template.destroy();
 
       templateList = null;
     }

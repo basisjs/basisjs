@@ -79,7 +79,7 @@
   SUBSCRIPTION.addProperty('minuend');
   SUBSCRIPTION.addProperty('subtrahend');
 
-  
+
  /**
   * Returns delta object
   * @param {Array.<basis.data.Object>} inserted
@@ -103,7 +103,7 @@
  /**
   * Create ruleEvents property.
   * @param {function(sender, ..args)} fn
-  * @param {string|Array.<string>}
+  * @param {string|Array.<string>} events
   */
   function createRuleEvents(fn, events){
     return (function createRuleEvents__extend__(events){
@@ -128,14 +128,14 @@
 
  /**
   *
-  */ 
-  function createKeyMap(config, keyGetter, itemClass, subsetClass){
+  */
+  function createKeyMap(config, keyGetter, itemClass, SubsetClass){
     return new KeyObjectMap(extend({
       keyGetter: keyGetter,
       itemClass: itemClass,
       create: function(key, object){
         var obj = KeyObjectMap.prototype.create.call(this, key, object);
-        obj.setDataset(new subsetClass({
+        obj.setDataset(new SubsetClass({
           ruleValue: key
         }));
         return obj;
@@ -144,7 +144,7 @@
   }
 
   //
-  // Merge dataset 
+  // Merge dataset
   //
 
   var MERGE_DATASET_HANDLER = {
@@ -160,7 +160,7 @@
         for (var i = 0; object = delta.inserted[i]; i++)
         {
           objectId = object.basisObjectId;
-        
+
           // check: is this object already known
           if (memberMap[objectId])
           {
@@ -302,7 +302,7 @@
           (isMember
             ? inserted // not in items -> insert
             : deleted  // already in items -> delete
-          ).push(memberCounter.object); 
+          ).push(memberCounter.object);
 
         if (memberCounter.count == 0)
           delete memberMap[objectId];
@@ -501,7 +501,7 @@
         /* inserted */ delta.inserted && delta.inserted.filter(datasetAbsentFilter, this.subtrahend),
         /* deleted */  delta.deleted  && delta.deleted.filter(this.has, this)
       );
-      
+
       if (newDelta)
         this.emit_itemsChanged(newDelta);
     },
@@ -542,7 +542,7 @@
 
    /**
     * @type {basis.data.AbstractDataset}
-    */ 
+    */
     minuend: null,
 
    /**
@@ -734,7 +734,7 @@
    /**
     * Source wrapper
     * @type {basis.data.DatasetAdapter}
-    */ 
+    */
     sourceAdapter_: null,
 
    /**
@@ -841,7 +841,7 @@
 
   var MAPFILTER_SOURCEOBJECT_UPDATE = function(sourceObject){
     var newMember = this.map ? this.map(sourceObject) : object; // fetch new member ref
-    
+
     if (newMember instanceof DataObject == false || this.filter(newMember))
       newMember = null;
 
@@ -1270,7 +1270,7 @@
 
    /**
     * @constructor
-    */ 
+    */
     init: function(){
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
         this.keyMap = createKeyMap(this.keyMap, this.rule, this.subsetWrapperClass, this.subsetClass);
@@ -1307,7 +1307,7 @@
   // Slice
   //
 
-  function binarySearchPos(array, map){ 
+  function binarySearchPos(array, map){
     if (!array.length)  // empty array check
       return 0;
 
@@ -1320,7 +1320,7 @@
     var l = 0;
     var r = array.length - 1;
 
-    do 
+    do
     {
       pos = (l + r) >> 1;
 
@@ -1329,7 +1329,7 @@
 
       if (value < cmpValue)
         r = pos - 1;
-      else 
+      else
         if (value > cmpValue)
           l = pos + 1;
         else
@@ -1338,7 +1338,7 @@
           cmpId = item.object.basisObjectId;
           if (id < cmpId)
             r = pos - 1;
-          else 
+          else
             if (id > cmpId)
               l = pos + 1;
             else
@@ -1390,7 +1390,7 @@
       var sourceObjectInfo;
       var inserted = delta.inserted;
       var deleted = delta.deleted;
-     
+
       // delete comes first to reduce index size -> insert will be faster
       if (deleted)
       {
@@ -1663,7 +1663,6 @@
           }
         }
       }
-      
 
     for (var subsetId in oldList)
       if (!newList[subsetId])
@@ -1781,7 +1780,7 @@
     * @type {function}
     */
     subsetWrapperClass: DatasetWrapper,
-    
+
    /**
     * @type {function(basis.data.Object)}
     */
@@ -1811,7 +1810,7 @@
 
    /**
     * @constructor
-    */ 
+    */
     init: function(){
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
         this.keyMap = createKeyMap(this.keyMap, this.rule, this.subsetWrapperClass, this.subsetClass);

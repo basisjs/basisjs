@@ -187,10 +187,21 @@
         K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * C_2_POW_32);
         switch (i >> 4)
         {
-          case 0: I[i] = i; break;
-          case 1: I[i] = (i * 5 + 1) & 0x0F; break;
-          case 2: I[i] = (i * 3 + 5) & 0x0F; break;
-          case 3: I[i] = (i * 7) & 0x0F; break;
+          case 0:
+            I[i] = i;
+            break;
+
+          case 1:
+            I[i] = (i * 5 + 1) & 0x0F;
+            break;
+
+          case 2:
+            I[i] = (i * 3 + 5) & 0x0F;
+            break;
+
+          case 3:
+            I[i] = (i * 7) & 0x0F;
+            break;
         }
       }
     }

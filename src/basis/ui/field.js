@@ -70,7 +70,7 @@
     Combobox: resource('templates/field/Combobox.tmpl'),
     ComboboxItem: resource('templates/field/ComboboxItem.tmpl'),
     ComboboxDropdownList: resource('templates/field/ComboboxDropdownList.tmpl'),
-    
+
     MatchInput: resource('templates/field/MatchInput.tmpl')
   });
 
@@ -157,8 +157,11 @@
           event.preventDefault();
           this.commit();
         }
-        else if (event.key != event.KEY.TAB)
-          this.setValidity();
+        else
+        {
+          if (event.key != event.KEY.TAB)
+            this.setValidity();
+        }
       }
 
       events.fieldKeyup.call(this, event);
@@ -351,7 +354,7 @@
       for (var i = 0; i < this.validators.length; i++)
         if (error = this.validators[i](this))
         {
-          if (!onlyValid) 
+          if (!onlyValid)
             this.setValidity(VALIDITY_INVALID, error.message);
 
           return error;
@@ -519,7 +522,7 @@
 
  /**
   * @class
-  */  
+  */
   var Textarea = TextField.subclass({
     className: namespace + '.Textarea',
 
@@ -841,10 +844,10 @@
 
   var ComboboxPopupHandler = {
     show: function(){
-      this.updateBind('opened'); 
+      this.updateBind('opened');
     },
     hide: function(){
-      this.updateBind('opened'); 
+      this.updateBind('opened');
     }
   };
 
@@ -890,7 +893,7 @@
     className: namespace + '.Combobox',
 
     childClass: ComboboxItem,
-    
+
     emit_change: function(event){
       ComplexField.prototype.emit_change.call(this, event);
 
@@ -985,7 +988,7 @@
             next = basis.array.search(DOM.axis(cur || this.firstChild, DOM.AXIS_FOLLOWING_SIBLING), false, 'disabled');
           break;
 
-          case event.KEY.UP: 
+          case event.KEY.UP:
             if (event.altKey)
             {
               if (this.popup.visible)
@@ -1137,7 +1140,7 @@
         var textNodes = child._original || this.textNodeGetter(child);
 
         if (!Array.isArray(textNodes))
-          textNodes = [ textNodes ];
+          textNodes = [textNodes];
 
         child._original = textNodes;
 
@@ -1153,7 +1156,7 @@
           var p = textNode.nodeValue.split(this.rx);
           if (p.length > 1)
           {
-            if (!child._replaced) 
+            if (!child._replaced)
               child._replaced = {};
 
             DOM.replace(
@@ -1165,7 +1168,7 @@
           }
           else
             if (child._replaced && child._replaced[i])
-            { 
+            {
                DOM.replace(child._replaced[i], textNode);
                delete child._replaced[i];
             }
@@ -1200,8 +1203,8 @@
       this.textNodeGetter = getter(this.textNodeGetter || 'tmpl.titleText');
 
       if (typeof this.regexpGetter != 'function')
-        this.regexpGetter = function(value){ 
-          return new RegExp('(' + startPoints + ')(' + basis.string.forRegExp(value) + ')', 'i'); 
+        this.regexpGetter = function(value){
+          return new RegExp('(' + startPoints + ')(' + basis.string.forRegExp(value) + ')', 'i');
         };
 
       this.map = {};
@@ -1258,7 +1261,7 @@
       this.node.setMatchFunction(this.value ? this.matchFunction.bind(this) : null);
     }
   });
-  
+
  /**
   * @class
   */
@@ -1363,17 +1366,17 @@
   //
 
   var fieldType2Class = {
-    'hidden': Hidden,
-    'file': File,
-    'text': Text,
-    'password': Password,
-    'textarea': Textarea,
-    'checkbox': Checkbox,
-    'label': Label,
-    'select': Select,
-    'combobox': Combobox,
-    'radiogroup': RadioGroup,
-    'checkgroup': CheckGroup
+    hidden: Hidden,
+    file: File,
+    text: Text,
+    password: Password,
+    textarea: Textarea,
+    checkbox: Checkbox,
+    label: Label,
+    select: Select,
+    combobox: Combobox,
+    radiogroup: RadioGroup,
+    checkgroup: CheckGroup
   };
 
   function createField(config){
@@ -1396,7 +1399,8 @@
 
     create: createField,
     addFieldType: function(type, fieldClass){
-      ;;;if (!fieldClass.isSubclassOf(Field)) throw 'basis.ui.field.addFieldType: Class is not a subclass of Field';
+      if (!fieldClass.isSubclassOf(Field))
+        throw 'basis.ui.field.addFieldType: fieldClass is not a subclass of Field (ignored)';
 
       fieldType2Class[type] = fieldClass;
     },

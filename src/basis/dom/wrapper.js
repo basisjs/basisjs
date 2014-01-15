@@ -127,7 +127,8 @@
 
     desc = !!desc;
 
-    var pos, compareValue;
+    var pos;
+    var compareValue;
     var l = 0;
     var r = array.length - 1;
 
@@ -262,7 +263,7 @@
 
     if (value instanceof AbstractNode)
       return value;
-    
+
     if (Class.isClass(value))
       value = {
         instanceOf: value
@@ -541,7 +542,7 @@
    /**
     * This is a general event for notification of childs changes to the parent node.
     * It may be dispatched after a single modification to the childNodes or after
-    * multiple changes have occurred. 
+    * multiple changes have occurred.
     * @param {object} delta Delta of changes.
     * @event
     */
@@ -612,7 +613,7 @@
    /**
     * The parent of this node. All nodes may have a parent. However, if a node
     * has just been created and not yet added to the tree, or if it has been
-    * removed from the tree, this is null. 
+    * removed from the tree, this is null.
     * @type {basis.dom.wrapper.AbstractNode}
     * @readonly
     */
@@ -716,7 +717,7 @@
     * @type {string}
     * @readonly
     */
-    ownerSatelliteName: null, 
+    ownerSatelliteName: null,
 
    /**
     * @param {string} name Name of satellite
@@ -766,7 +767,7 @@
 
       // apply grouping on empty childNodes, because childNodes may contains
       // configs but not Node instances
-      var grouping = this.grouping;      
+      var grouping = this.grouping;
       if (grouping)
       {
         this.grouping = null;
@@ -792,7 +793,7 @@
       // process satellites
       var satellites = this.satellite;
       this.satellite = {};
-      
+
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
         /** @cut */ if (this.satelliteConfig !== this.constructor.prototype.satelliteConfig)
@@ -967,7 +968,7 @@
       var auto = this.satellite.__auto__;
       var autoConfig = auto && auto[name];
       var preserveAuto = autoSet && autoConfig;
-      
+
       if (preserveAuto)
       {
         satellite = autoConfig.instance;
@@ -1107,10 +1108,10 @@
           destroySatellite.destroy();
         }
       }
-    },    
+    },
 
    /**
-    * Returns 
+    * Returns
     * @return {basis.dom.wrapper.ChildNodesDataset}
     */
     getChildNodesDataset: function(){
@@ -1123,7 +1124,7 @@
     * @destructor
     */
     destroy: function(){
-      // This order of actions is better for perfomance: 
+      // This order of actions is better for perfomance:
       // inherit destroy -> clear childNodes -> remove from parent
       // DON'T CHANGE ORDER WITH NO ANALYZE AND TESTS
 
@@ -1313,7 +1314,7 @@
 
       this.nodes = null;
       this.first = null;
-      this.last = null;        
+      this.last = null;
     }
   });
 
@@ -1756,7 +1757,7 @@
           this.lastChild = prevSibling;
 
         // update previousSibling/firstChild
-        if (prevSibling) 
+        if (prevSibling)
         {
           prevSibling.nextSibling = nextSibling;
           newChild.previousSibling = null;
@@ -1790,9 +1791,9 @@
       // NOTE: we need insert into group here, because we create fake refChild if refChild doesn't exist
       if (currentNewChildGroup != group)
         group.insert(newChild, refChild);
-      
+
       // insert
-      if (refChild) 
+      if (refChild)
       {
         // search for refChild position
         // NOTE: if position is not equal -1 than position was found before (sorting, logN)
@@ -1818,7 +1819,7 @@
         childNodes.push(newChild);
 
         // create fake refChild, it helps with references updates
-        refChild = { 
+        refChild = {
           previousSibling: this.lastChild
         };
 
@@ -1895,7 +1896,7 @@
         throw EXCEPTION_NODE_NOT_FOUND;
 
       this.childNodes.splice(pos, 1);
-        
+
       // update oldChild and this.lastChild & this.firstChild
       oldChild.parentNode = null;
 
@@ -1906,11 +1907,11 @@
         this.lastChild = oldChild.previousSibling;
 
       // update previousSibling/firstChild
-      if (oldChild.previousSibling) 
-        oldChild.previousSibling.nextSibling = oldChild.nextSibling;      
+      if (oldChild.previousSibling)
+        oldChild.previousSibling.nextSibling = oldChild.nextSibling;
       else
         this.firstChild = oldChild.nextSibling;
-        
+
       oldChild.nextSibling = null;
       oldChild.previousSibling = null;
 
@@ -2016,7 +2017,8 @@
     },
 
    /**
-    * @params {Array.<Object>} childNodes
+    * @param {Array.<Object>} newChildNodes
+    * @param {boolean} keepAlive
     */
     setChildNodes: function(newChildNodes, keepAlive){
       if (!this.dataSource && !this.dataSourceAdapter_)
@@ -2141,7 +2143,7 @@
           // NOTE: important to reset grouping before owner reset for oldGrouping
           // otherwise groupingChanged event occur twice
           this.grouping = null;
-          
+
           if (!grouping)
           {
             if (this.firstChild)
@@ -2242,7 +2244,7 @@
             }
           }
           else
-          { 
+          {
             order = sortChildNodes(this);
           }
 
@@ -2302,15 +2304,15 @@
     },
 
    /**
-    * @param {string} key
-    * @param {basis.data.Object} oldSattelite Old satellite for key
+    * @param {string} name
+    * @param {basis.data.Object} oldSatellite Old satellite for key
     */
     emit_satelliteChanged: function(name, oldSatellite){
       AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
 
       if (this.satellite[name] instanceof Node)
         updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
-    },    
+    },
 
    /**
     * Occurs after selected property has been set to true.
@@ -2381,7 +2383,7 @@
     matched: true,
 
    /**
-    * Indicate node is disabled. Use isDisabled method to determine disabled 
+    * Indicate node is disabled. Use isDisabled method to determine disabled
     * node state instead of check for this property value (ancestor nodes may
     * be disabled and current node will be disabled too, but node disabled property
     * could has false value).
@@ -2469,11 +2471,11 @@
     select: function(multiple){
       var selected = this.selected;
       var selection = this.contextSelection;
-      
-      // here is no check for selected state, because parentNode.selection depends on it's 
+
+      // here is no check for selected state, because parentNode.selection depends on it's
       // mode may do some actions even with selected node
       if (selection)
-      { 
+      {
         if (!multiple)
         {
           // check for selectable in non-multiple mode, because if node is non-selectable
@@ -2620,7 +2622,7 @@
       this.unselect();
 
       this.contextSelection = null;
-      
+
       if (this.selection)
         this.setSelection();
 
@@ -2733,7 +2735,7 @@
         group = this.appendChild(
           isDelegate
             ? groupRef
-            : { 
+            : {
                 data: {
                   id: groupRef,
                   title: groupRef

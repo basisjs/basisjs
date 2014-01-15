@@ -32,7 +32,7 @@
   * @function createEvent
   */
 
-  function createTransportEvent(eventName) {
+  function createTransportEvent(eventName){
     var event = createEvent(eventName);
 
     return function transportEvent(){
@@ -45,7 +45,7 @@
     };
   }
 
-  function createRequestEvent(eventName) {
+  function createRequestEvent(eventName){
     var event = createEvent(eventName);
 
     return function requestEvent(){
@@ -118,7 +118,7 @@
       DataObject.prototype.init.call(this);
       this.influence = [];
     },
-    
+
     setInfluence: function(influence){
       this.influence = arrayFrom(influence);
     },
@@ -326,10 +326,10 @@
     if (ActiveXObject)
     {
       var progID = [
-        "MSXML2.XMLHTTP.6.0",
-        "MSXML2.XMLHTTP.3.0",
-        "MSXML2.XMLHTTP",
-        "Microsoft.XMLHTTP"
+        'MSXML2.XMLHTTP.6.0',
+        'MSXML2.XMLHTTP.3.0',
+        'MSXML2.XMLHTTP',
+        'Microsoft.XMLHTTP'
       ];
 
       for (var i = 0; XHRSupport = progID[i]; i++)
@@ -352,7 +352,7 @@
   function setRequestHeaders(request, requestData){
     var headers = {};
 
-    if (IS_METHOD_WITH_BODY.test(requestData.method)) 
+    if (IS_METHOD_WITH_BODY.test(requestData.method))
     {
       if (requestData.contentType != 'multipart/form-data')
         headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
@@ -395,7 +395,8 @@
 
     this.prevReadyState_ = readyState;
 
-    ;;;if (this.debug) basis.dev.log('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
+    /** @cut */ if (this.debug)
+    /** @cut */   basis.dev.log('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
 
     // dispatch self event
     this.emit_readyStateChanged(readyState);
@@ -555,7 +556,7 @@
     doRequest: function(){
       this.send(this.prepareRequestData(this.requestData));
     },
-    
+
     send: function(requestData){
       this.update({
         responseText: '',
@@ -599,21 +600,22 @@
       {
         if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
           // sending xmldocument content as string, otherwise IE override content-type header
-          postBody = postBody.xml;                   
+          postBody = postBody.xml;
         else
           if (typeof postBody == 'string')
             // ie stop send postBody when found \r
-            postBody = postBody.replace(/\r/g, ''); 
+            postBody = postBody.replace(/\r/g, '');
           else
             if (postBody == null || postBody == '')
               // IE doesn't accept null, undefined or '' post body
-              postBody = '[No data]';      
+              postBody = '[No data]';
       }
 
       // send data
       xhr.send(postBody);
 
-      ;;;if (this.debug) basis.dev.log('Request over, waiting for response');
+      /** @cut */ if (this.debug)
+      /** @cut */   basis.dev.log('Request over, waiting for response');
 
       return true;
     },
@@ -661,7 +663,7 @@
     },
 
     timeoutAbort: function(){
-      this.update({ 
+      this.update({
         error: {
           code: 'TIMEOUT_ERROR',
           message: 'Timeout error'

@@ -50,7 +50,7 @@
     HeaderPartitionRow: resource('templates/table/HeaderPartitionRow.tmpl'),
     HeaderPartitionNode: resource('templates/table/HeaderPartitionNode.tmpl'),
     HeaderCell: resource('templates/table/HeaderCell.tmpl'),
-    
+
     FooterCell: resource('templates/table/FooterCell.tmpl'),
     Footer: resource('templates/table/Footer.tmpl')
   });
@@ -205,7 +205,7 @@
             owner.setSorting(owner.sorting, !owner.sortingDesc);
         }
         else
-          this.select();         
+          this.select();
       }
     },
 
@@ -285,7 +285,7 @@
         var cells = [];
         var autoSorting = [];
         var ownerSorting = this.owner && this.owner.sorting;
-        
+
         for (var i = 0, colConfig; colConfig = this.structure[i]; i++)
         {
           var headerConfig = colConfig.header;
@@ -295,7 +295,7 @@
             headerConfig = {
               title: headerConfig
             };
-          
+
           if ('groupId' in colConfig)
             config.groupId = colConfig.groupId;
 
@@ -326,7 +326,7 @@
           {
             config.colSorting = sorting;
             config.defaultOrder = colConfig.defaultOrder;
-          
+
             if (colConfig.autosorting || sorting === ownerSorting)
               autoSorting.push(config);
           }
@@ -452,13 +452,13 @@
   */
   var Row = Class(UINode, {
     className: namespace + '.Row',
-    
+
     childClass: null,
     repaintCount: 0,
 
     template: templates.Row,
 
-    action: { 
+    action: {
       select: function(event){
         if (!this.isDisabled())
           this.select(event.ctrlKey || event.metaKey);
@@ -489,7 +489,7 @@
       }
     }
   });
-  
+
  /**
   * @class
   */
@@ -510,7 +510,7 @@
 
     columnCount: 0,
 
-    selection: true, 
+    selection: true,
     childClass: Row,
 
     groupingClass: {
@@ -565,7 +565,7 @@
 
           template +=
             cellTemplateRef
-              ? '<b:include src="' + cellTemplateRef + '">' + 
+              ? '<b:include src="' + cellTemplateRef + '">' +
                   (cell.templateRef ? '<b:add-ref name="' + cell.templateRef + '"/>' : '') +
                   (replaceContent
                     ? '<b:replace ref="content">' + replaceContent + '</b:replace>'
@@ -617,7 +617,7 @@
       this.header = null;
       this.footer = null;
     }
-  });    
+  });
 
 
   //

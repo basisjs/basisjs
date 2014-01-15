@@ -358,7 +358,7 @@
       },
 
      /**
-      * 
+      *
       */
       postInit: function(){
         super_.postInit.call(this);
@@ -389,11 +389,11 @@
 
           this.template = null;
           this.setTemplate(template);
-          
+
           // release fragment
           fragments.push(nodeDocumentFragment);
 
-          // process container 
+          // process container
           if (this.container)
           {
             this.container.appendChild(this.element);
@@ -471,12 +471,12 @@
         if (oldElement && oldElement !== this.element && oldElement.nodeType != 11) // 11 - DocumentFragment
         {
           var parentNode = oldElement && oldElement.parentNode;
-          
+
           if (parentNode)
           {
             if (this.owner && this.owner.tmpl)
               this.owner.tmpl.set(oldElement, this.element);
-            
+
             if (this.element.parentNode !== parentNode)
               parentNode.replaceChild(this.element, oldElement);
           }
@@ -535,7 +535,7 @@
 
      /**
       * @param {string} bindName
-      */ 
+      */
       updateBind: function(bindName){
         var binding = this.binding[bindName];
         var getter = binding && binding.getter;
@@ -664,7 +664,7 @@
 
         if (childElement.parentNode !== container || childElement.nextSibling !== refNode) // prevent dom update
           container.insertBefore(childElement, refNode);
-          
+
         return newChild;
       },
       removeChild: function(oldChild){
@@ -845,7 +845,7 @@
 
  /**
   * @class
-  */ 
+  */
   var ShadowNodeList = Node.subclass({
     className: namespace + '.ShadowNodeList',
 
