@@ -1831,6 +1831,182 @@
                     this.is(true, node.satellite.foo === satellite);
                     this.is(true, satellite.delegate === node);
                   }
+                },
+                {
+                  name: 'auto-create satellite should apply autoDelegate when no config.delegate',
+                  test: function(){
+                    var delegateChangedCount = 0;
+                    var object = new basis.data.Object();
+                    var node = new Node({
+                      data: {
+                        value: object
+                      },
+                      satellite: {
+                        foo: {
+                          events: 'update',
+                          existsIf: 'data.value',
+                          instanceOf: Node,
+                          config: {
+                            autoDelegate: true,
+                            handler: {
+                              delegateChanged: function(){
+                                delegateChangedCount++;
+                              }
+                            }
+                          }
+                        }
+                      }
+                    });
+
+                    this.is(true, node.data.value === object);
+                    this.is(true, 'foo' in node.satellite);
+                    this.is(true, node.satellite.foo.delegate === node);
+                    this.is(1, delegateChangedCount);
+
+                    node.update({ value: null });
+                    this.is(null, node.data.value);
+                    this.is(false, 'foo' in node.satellite);
+                    this.is(1, delegateChangedCount);
+
+                    node.update({ value: object });
+                    this.is(true, node.data.value === object);
+                    this.is(true, 'foo' in node.satellite);
+                    this.is(true, node.satellite.foo.delegate === node);
+                    this.is(2, delegateChangedCount);
+                  }
+                },
+                {
+                  name: 'auto-create satellite config delegate value should be used even if satellite has autoDelegate',
+                  test: function(){
+                    var delegateChangedCount = 0;
+                    var object = new basis.data.Object();
+                    var node = new Node({
+                      data: {
+                        value: object
+                      },
+                      satellite: {
+                        foo: {
+                          events: 'update',
+                          existsIf: 'data.value',
+                          delegate: 'data.value',
+                          instanceOf: Node,
+                          config: {
+                            autoDelegate: true,
+                            handler: {
+                              delegateChanged: function(){
+                                delegateChangedCount++;
+                              }
+                            }
+                          }
+                        }
+                      }
+                    });
+
+                    this.is(true, node.data.value === object);
+                    this.is(true, 'foo' in node.satellite);
+                    this.is(true, node.satellite.foo.delegate === object);
+                    this.is(1, delegateChangedCount);
+
+                    node.update({ value: null });
+                    this.is(null, node.data.value);
+                    this.is(false, 'foo' in node.satellite);
+                    this.is(1, delegateChangedCount);
+
+                    node.update({ value: object });
+                    this.is(true, node.data.value === object);
+                    this.is(true, 'foo' in node.satellite);
+                    this.is(true, node.satellite.foo.delegate === object);
+                    this.is(2, delegateChangedCount);
+                  }
+                },
+                {
+                  name: 'auto-satellite should apply autoDelegate when no config.delegate',
+                  test: function(){
+                    var delegateChangedCount = 0;
+                    var object = new basis.data.Object();
+                    var satellite = new Node({
+                      autoDelegate: true,
+                      handler: {
+                        delegateChanged: function(){
+                          delegateChangedCount++;
+                        }
+                      }
+                    });
+                    var node = new Node({
+                      data: {
+                        value: object
+                      },
+                      satellite: {
+                        foo: {
+                          events: 'update',
+                          existsIf: 'data.value',
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    this.is(true, node.data.value === object);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.delegate === node);
+                    this.is(1, delegateChangedCount);
+
+                    node.update({ value: null });
+                    this.is(null, node.data.value);
+                    this.is(false, 'foo' in node.satellite);
+                    this.is(true, satellite.delegate === null);
+                    this.is(2, delegateChangedCount);
+
+                    node.update({ value: object });
+                    this.is(true, node.data.value === object);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.delegate === node);
+                    this.is(3, delegateChangedCount);
+                  }
+                },
+                {
+                  name: 'auto-satellite config delegate value should be used even if satellite has autoDelegate',
+                  test: function(){
+                    var delegateChangedCount = 0;
+                    var object = new basis.data.Object();
+                    var satellite = new Node({
+                      autoDelegate: true,
+                      handler: {
+                        delegateChanged: function(){
+                          delegateChangedCount++;
+                        }
+                      }
+                    });
+                    var node = new Node({
+                      data: {
+                        value: object
+                      },
+                      satellite: {
+                        foo: {
+                          events: 'update',
+                          existsIf: 'data.value',
+                          delegate: 'data.value',
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    this.is(true, node.data.value === object);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.delegate === object);
+                    this.is(1, delegateChangedCount);
+
+                    node.update({ value: null });
+                    this.is(null, node.data.value);
+                    this.is(false, 'foo' in node.satellite);
+                    this.is(true, satellite.delegate === null);
+                    this.is(2, delegateChangedCount);
+
+                    node.update({ value: object });
+                    this.is(true, node.data.value === object);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.delegate === object);
+                    this.is(3, delegateChangedCount);
+                  }
                 }
               ]
             },

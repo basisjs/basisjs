@@ -416,7 +416,10 @@
           satelliteConfig.owner = owner;
 
           if (config.delegate)
+          {
+            satelliteConfig.autoDelegate = false;
             satelliteConfig.delegate = config.delegate(owner);
+          }
 
           if (config.dataSource)
             satelliteConfig.dataSource = config.dataSource(owner);
@@ -1079,7 +1082,16 @@
           // link new satellite
           if (satellite.owner !== this)
           {
-            satellite.setOwner(this);
+            if (autoConfig && autoConfig.config.delegate)
+            {
+              // ignore autoDelegate if satellite is auto-satellite and config has delegate setting
+              var autoDelegate = satellite.autoDelegate;
+              satellite.autoDelegate = false;
+              satellite.setOwner(this);
+              satellite.autoDelegate = autoDelegate;
+            }
+            else
+              satellite.setOwner(this);
 
             // if owner doesn't changed nothing to do
             if (satellite.owner !== this)
