@@ -8,7 +8,7 @@ var heatInspector = resource('inspector/heatmap.js').fetch();
 
 var themeList = resource('themeList.js').fetch();
 var cultureList = resource('cultureList.js').fetch();
-var fileInspectror = resource('module/fileInspector/fileInspector.js');
+//var fileInspector = resource('module/fileInspector/fileInspector.js');
 
 
 //
@@ -56,9 +56,9 @@ var panel = new basis.ui.Node({
         heatInspector.startInspect();
       });
     },
-    inspectFile: function(){
-      fileInspectror().toggle();
-    },
+    // inspectFile: function(){
+    //   fileInspector().toggle();
+    // },
     storePosition: function(event){
       if (localStorage){
         localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
