@@ -997,20 +997,27 @@
                           switch (child.name)
                           {
                             case 'replace':
+                            case 'remove':
                             case 'before':
                             case 'after':
+                              var replaceOrRemove = child.name == 'replace' || child.name == 'remove';
                               var childAttrs = tokenAttrs(child);
-                              var tokenRef = childAttrs.ref && tokenRefMap[childAttrs.ref];
+                              var ref = 'ref' in childAttrs || !replaceOrRemove ? childAttrs.ref : 'element';
+                              var tokenRef = ref && tokenRefMap[ref];
+
+                              //if (!tokenRef)
 
                               if (tokenRef)
                               {
                                 var pos = tokenRef.owner.indexOf(tokenRef.token);
-                                var rem;
                                 if (pos != -1)
                                 {
-                                  pos += child.name == 'after';
-                                  rem = child.name == 'replace';
-                                  tokenRef.owner.splice.apply(tokenRef.owner, [pos, rem].concat(process(child.childs, template, options) || []));
+                                  var args = [pos + (child.name == 'after'), replaceOrRemove];
+
+                                  if (child.name != 'remove')
+                                    args = args.concat(process(child.childs, template, options) || []);
+
+                                  tokenRef.owner.splice.apply(tokenRef.owner, args);
                                 }
                               }
                               break;
