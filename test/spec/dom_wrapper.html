@@ -143,7 +143,7 @@
                     this.is(false, checkNode(node));
 
                     var node = new Node({ data: { a: 1, b: 2 } });
-                    this.is({ a: 1, b: 2}, node.data);
+                    this.is({ a: 1, b: 2 }, node.data);
                   }
                 },
                 {
@@ -278,7 +278,7 @@
                       node2.setSatellite('somename', node1.satellite.example);
                     } finally {
                       basis.dev.warn = warn;
-                    }                    
+                    }
 
                     this.is(false, checkNode(node1));
                     this.is(false, checkNode(node2));
@@ -350,7 +350,7 @@
                     this.is(false, checkNode(satellite));
                     this.is(true, satellite.owner === node);
                     this.is(true, node.satellite.test === satellite);
-                    
+
                     var warn = basis.dev.warn;
                     var warning = false;
                     try {
@@ -404,7 +404,7 @@
                     this.is(true, node.satellite.test === satellite);
                     this.is(1, satelliteChangedEventCount);
                     this.is(1, ownerChangedEventCount);
-                    
+
                     node.setSatellite('newName', satellite);
                     this.is(false, checkNode(node));
                     this.is(false, checkNode(satellite));
@@ -438,7 +438,7 @@
                     });
 
                     node.destroy();
-                    
+
                     this.is(false, checkNode(node));
                     this.is(false, checkNode(satellite));
                     this.is(true, satelliteDestroyed);
@@ -472,7 +472,7 @@
                     this.is(true, node.owner === owner);
 
                     owner.destroy();
-                    
+
                     this.is(false, checkNode(node));
                     this.is(false, checkNode(owner));
                     this.is(false, nodeDestroyed);
@@ -531,7 +531,7 @@
                     // should not exists
                     this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
-                    
+
                     // should be created
                     node.update({ value: true });
                     this.is(false, checkNode(node));
@@ -637,7 +637,7 @@
                     this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
                     this.is('bar', node.satellite.test.foo);
-                    
+
                     // config as function
                     var node = new basis.dom.wrapper.Node({
                       satellite: {
@@ -672,7 +672,7 @@
                         value: true
                       }
                     });
-                    
+
                     // should be created
                     this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
@@ -763,7 +763,7 @@
                     });
 
                     var satellite = node.satellite.test;
-                    
+
                     // should be created
                     this.is(false, checkNode(node));
                     this.is(false, checkNode(satellite));
@@ -808,7 +808,7 @@
                     });
 
                     var satellite = node.satellite.test;
-                    
+
                     // should be created
                     this.is(false, checkNode(node));
                     this.is(false, checkNode(satellite));
@@ -837,7 +837,7 @@
                     });
 
                     var satellite = node.satellite.test;
-                    
+
                     // should be created
                     this.is(false, checkNode(node));
                     this.is(false, checkNode(satellite));
@@ -864,7 +864,7 @@
                         }
                       }
                     });
-                    
+
                     // instance is not linked and delegate/dataSource is not set
                     this.is(false, checkNode(node));
                     this.is(false, 'test' in node.satellite);
@@ -1019,7 +1019,7 @@
                     // should not exists
                     this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
-                    
+
                     // should not be created (no changes on update event)
                     node.update({ value: true });
                     this.is(false, checkNode(node));
@@ -1068,7 +1068,7 @@
                     // should not exists
                     this.is(false, checkNode(node));
                     this.is(undefined, node.satellite.test);
-                    
+
                     // should not be created (no changes on update event)
                     node.update({ value: true });
                     this.is(false, checkNode(node));
@@ -1306,7 +1306,7 @@
                     // satellite.test -> AbstractNode instance
                     node.update({
                       value: 1
-                    });                    
+                    });
 
                     this.is(false, checkNode(node));
                     this.is(true, 'test' in node.satellite);
@@ -1651,7 +1651,7 @@
                     var autoSatelliteDestroyed = false;
                     var regularSatellite = node.satellite.autoCreateSatellite;
                     var regularSatelliteDestroyed = false;
-                    
+
                     autoCreateSatellite.addHandler({
                       destroy: function(){
                         autoCreateSatelliteDestroyed = true;
@@ -1687,6 +1687,149 @@
                     this.is(null, autoCreateSatellite.owner);
                     this.is(null, autoSatellite.owner);
                     this.is(null, regularSatellite.owner);
+                  }
+                },
+                {
+                  name: 'instance with existsIf dataSource should not be reset if dataSource is not specified in auto-satellite config',
+                  test: function(){
+                    var dataset = new basis.data.Dataset();
+                    var satellite = new Node({
+                      dataSource: dataset
+                    });
+                    var node = new Node({
+                      data: {
+                        value: true
+                      },
+                      satellite: {
+                        foo: {
+                          events: 'update',
+                          existsIf: 'data.value',
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    this.is(true, node.data.value);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.dataSource === dataset);
+
+                    node.update({ value: false });
+                    this.is(false, node.data.value);
+                    this.is(false, 'foo' in node.satellite);
+                    this.is(true, satellite.dataSource === dataset);
+
+                    node.update({ value: true });
+                    this.is(true, node.data.value);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.dataSource === dataset);
+                  }
+                },
+                {
+                  name: 'instance with existsIf dataSource should be overrided by auto-satellite config value if specified',
+                  test: function(){
+                    var dataset = new basis.data.Dataset();
+                    var nodeDataset = new basis.data.Dataset();
+                    var satellite = new Node({
+                      dataSource: dataset
+                    });
+                    var node = new Node({
+                      data: {
+                        dataset: nodeDataset
+                      },
+                      satellite: {
+                        foo: {
+                          events: 'update',
+                          existsIf: 'data.dataset',
+                          dataSource: 'data.dataset',
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    this.is(true, node.data.dataset === nodeDataset);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.dataSource === nodeDataset);
+
+                    node.update({ dataset: null });
+                    this.is(true, node.data.dataset === null);
+                    this.is(false, 'foo' in node.satellite);
+                    this.is(true, satellite.dataSource === null);
+
+                    node.update({ dataset: nodeDataset });
+                    this.is(true, node.data.dataset === nodeDataset);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.dataSource === nodeDataset);
+                  }
+                },
+                {
+                  name: 'instance with existsIf delegate should not be reset if delegate is not specified in auto-satellite config',
+                  test: function(){
+                    var object = new basis.data.Object();
+                    var satellite = new Node({
+                      delegate: object
+                    });
+                    var node = new Node({
+                      data: {
+                        value: true
+                      },
+                      satellite: {
+                        foo: {
+                          events: 'update',
+                          existsIf: 'data.value',
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    this.is(true, node.data.value);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.delegate === object);
+
+                    node.update({ value: false });
+                    this.is(false, node.data.value);
+                    this.is(false, 'foo' in node.satellite);
+                    this.is(true, satellite.delegate === object);
+
+                    node.update({ value: true });
+                    this.is(true, node.data.value);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.delegate === object);
+                  }
+                },
+                {
+                  name: 'instance with existsIf delegate should be overrided by auto-satellite config value if specified',
+                  test: function(){
+                    var object = new basis.data.Object();
+                    var satellite = new Node({
+                      delegate: object
+                    });
+                    var node = new Node({
+                      data: {
+                        value: true
+                      },
+                      satellite: {
+                        foo: {
+                          events: 'update',
+                          existsIf: 'data.value',
+                          delegate: basis.fn.$self,
+                          instance: satellite
+                        }
+                      }
+                    });
+
+                    this.is(true, node.data.value);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.delegate === node);
+
+                    node.update({ value: false });
+                    this.is(false, node.data.value);
+                    this.is(false, 'foo' in node.satellite);
+                    this.is(true, satellite.delegate === null);
+
+                    node.update({ value: true });
+                    this.is(true, node.data.value);
+                    this.is(true, node.satellite.foo === satellite);
+                    this.is(true, satellite.delegate === node);
                   }
                 }
               ]
@@ -2080,11 +2223,11 @@
                       childFactory: nodeFactory,
                       dataSource: dataset
                     });
-                    
+
                     var itemCount = dataset.itemCount;
                     this.is(dataset, node.dataSource);
                     this.is(true, itemCount > 0);
-                    
+
                     var exceptionHere = false;
                     try {
                       node.insertBefore(dataset.pick());
@@ -2303,7 +2446,7 @@
 
                     var hasHandler = false;
                     var cursor = target;
-                    while(cursor = cursor.handler)
+                    while (cursor = cursor.handler)
                     {
                       if (cursor.context == targetNode)
                         hasHandler = true;
@@ -2329,7 +2472,7 @@
 
                     var hasHandler = false;
                     var cursor = target;
-                    while(cursor = cursor.handler)
+                    while (cursor = cursor.handler)
                     {
                       if (cursor.context == targetNode)
                         hasHandler = true;
@@ -2338,12 +2481,8 @@
                     this.is(true, !targetNode.delegate);
                     this.is(false, hasHandler);
                   }
-                }                
+                }
               ]
-            },
-            {
-              name: 'sorting',
-              testcase: []
             },
             {
               name: 'grouping',
@@ -2549,7 +2688,7 @@
                   name: 'setGrouping after create and update PartitionNode with delegate & subscription',
                   test: function(){
 
-                    var groupDelegateClass = Class(Node, {
+                    var GroupDelegateClass = Class(Node, {
                       emit_subscribersChanged: function(){
                         Node.prototype.emit_subscribersChanged.call(this);
                         if (this.subscriberCount)
@@ -2559,7 +2698,7 @@
 
                     var groupNodes = {};
                     for (var i = 1; i <= 4; i++)
-                      groupNodes[i] = new groupDelegateClass({
+                      groupNodes[i] = new GroupDelegateClass({
                         data: {
                           title_: -i,
                           title: i
@@ -3072,23 +3211,23 @@
 
                     child.update({ group: 2 });
                     this.is(1, node.childNodes.indexOf(child));
-                    this.is(false, checkNode(node));                    
+                    this.is(false, checkNode(node));
 
                     child.update({ group: 3 });
                     this.is(4, node.childNodes.indexOf(child));
-                    this.is(false, checkNode(node));                    
+                    this.is(false, checkNode(node));
 
                     child.update({ group: 4 });
                     this.is(7, node.childNodes.indexOf(child));
-                    this.is(false, checkNode(node));                    
+                    this.is(false, checkNode(node));
 
                     child.update({ group: 5 });
                     this.is(7, node.childNodes.indexOf(child));
-                    this.is(false, checkNode(node));                    
+                    this.is(false, checkNode(node));
 
                     child.update({ group: 1 });
                     this.is(0, node.childNodes.indexOf(child));
-                    this.is(false, checkNode(node));                    
+                    this.is(false, checkNode(node));
                   }
                 },
                 {
@@ -3359,7 +3498,6 @@
       ];
 
     })());
-
 
   </script>
 </body>

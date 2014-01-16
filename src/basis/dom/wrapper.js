@@ -448,8 +448,11 @@
       {
         if (config.instance)
         {
-          satellite.setDelegate();
-          satellite.setDataSource();
+          if (config.delegate)
+            satellite.setDelegate();
+
+          if (config.dataSource)
+            satellite.setDataSource();
         }
 
         owner.satellite.__auto__[name].instance = null;
