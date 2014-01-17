@@ -5,11 +5,30 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Basis Test Suite</title>
+  <style>
+    HTML,
+    BODY
+    {
+      overflow: hidden;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
 
-  <script type="text/javascript" src="../src/basis.js" data-basis-config="autoload: 'new_src/app'"></script>
+    #test-runner
+    {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
 </head>
 
 <body>
-
+  <iframe id="test-runner" src="lib/test-runner/index.html?../../new_spec/index.js">
+  </iframe>
 </body>
 </html>

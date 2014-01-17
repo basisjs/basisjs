@@ -1,65 +1,77 @@
-require('basis.date');
-
 module.exports = {
   name: 'Date',
-  testcase: [
+  init: function(){
+    var script = document.createElement('script');
+    script.setAttribute('src', '../../../src/_.js');
+    script.setAttribute('basis-config', 'extProto: true');
+    document.head.appendChild(script);
+
+    importScripts('../../../src/basis.js');
+    basis.require('basis.date');
+
+    function toUTC(date){
+      date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+      return date;
+    }
+  },
+  test: [
     {
       name: 'isLeapYear()',
       test: function(){
-        this.is(true, (new Date(2004, 1)).isLeapYear());
-        this.is(true, (new Date(2000, 1)).isLeapYear());
-        this.is(true, (new Date(1996, 1)).isLeapYear());
-        this.is(true, (new Date(1600, 1)).isLeapYear());
-        this.is(true, (new Date(2400, 1)).isLeapYear());
+        this.is(true, basis.date.isLeapYear(new Date(2004, 1)));
+        this.is(true, basis.date.isLeapYear(new Date(2000, 1)));
+        this.is(true, basis.date.isLeapYear(new Date(1996, 1)));
+        this.is(true, basis.date.isLeapYear(new Date(1600, 1)));
+        this.is(true, basis.date.isLeapYear(new Date(2400, 1)));
 
-        this.is(false, (new Date(1995, 1)).isLeapYear());
-        this.is(false, (new Date(1997, 1)).isLeapYear());
-        this.is(false, (new Date(1998, 1)).isLeapYear());
-        this.is(false, (new Date(1999, 1)).isLeapYear());
-        this.is(false, (new Date(1900, 1)).isLeapYear());
-        this.is(false, (new Date(2100, 1)).isLeapYear());
-        this.is(false, (new Date(2500, 1)).isLeapYear());
+        this.is(false, basis.date.isLeapYear(new Date(1995, 1)));
+        this.is(false, basis.date.isLeapYear(new Date(1997, 1)));
+        this.is(false, basis.date.isLeapYear(new Date(1998, 1)));
+        this.is(false, basis.date.isLeapYear(new Date(1999, 1)));
+        this.is(false, basis.date.isLeapYear(new Date(1900, 1)));
+        this.is(false, basis.date.isLeapYear(new Date(2100, 1)));
+        this.is(false, basis.date.isLeapYear(new Date(2500, 1)));
       }
     },
     {
       name: 'getMonthDayCount()',
       test: function(){
-        var D = new Date(2007, 0);
-        this.is(31, D.getMonthDayCount());
-        var D = new Date(2007, 1);
-        this.is(28, D.getMonthDayCount());
-        var D = new Date(2007, 2);
-        this.is(31, D.getMonthDayCount());
-        var D = new Date(2007, 3);
-        this.is(30, D.getMonthDayCount());
-        var D = new Date(2007, 4);
-        this.is(31, D.getMonthDayCount());
-        var D = new Date(2007, 5);
-        this.is(30, D.getMonthDayCount());
-        var D = new Date(2007, 6);
-        this.is(31, D.getMonthDayCount());
-        var D = new Date(2007, 7);
-        this.is(31, D.getMonthDayCount());
-        var D = new Date(2007, 8);
-        this.is(30, D.getMonthDayCount());
-        var D = new Date(2007, 9);
-        this.is(31, D.getMonthDayCount());
-        var D = new Date(2007, 10);
-        this.is(30, D.getMonthDayCount());
-        var D = new Date(2007, 11);
-        this.is(31, D.getMonthDayCount());
+        var d = new Date(2007, 0);
+        this.is(31, d.getMonthDayCount());
+        var d = new Date(2007, 1);
+        this.is(28, d.getMonthDayCount());
+        var d = new Date(2007, 2);
+        this.is(31, d.getMonthDayCount());
+        var d = new Date(2007, 3);
+        this.is(30, d.getMonthDayCount());
+        var d = new Date(2007, 4);
+        this.is(31, d.getMonthDayCount());
+        var d = new Date(2007, 5);
+        this.is(30, d.getMonthDayCount());
+        var d = new Date(2007, 6);
+        this.is(31, d.getMonthDayCount());
+        var d = new Date(2007, 7);
+        this.is(31, d.getMonthDayCount());
+        var d = new Date(2007, 8);
+        this.is(30, d.getMonthDayCount());
+        var d = new Date(2007, 9);
+        this.is(31, d.getMonthDayCount());
+        var d = new Date(2007, 10);
+        this.is(30, d.getMonthDayCount());
+        var d = new Date(2007, 11);
+        this.is(31, d.getMonthDayCount());
 
-        var D = new Date(2008, 1);
-        this.is(29, D.getMonthDayCount());
+        var d = new Date(2008, 1);
+        this.is(29, d.getMonthDayCount());
 
-        var D = new Date(2000, 1);
-        this.is(29, D.getMonthDayCount());
+        var d = new Date(2000, 1);
+        this.is(29, d.getMonthDayCount());
 
-        var D = new Date(2100, 1);
-        this.is(28, D.getMonthDayCount());
+        var d = new Date(2100, 1);
+        this.is(28, d.getMonthDayCount());
 
-        var D = new Date(2400, 1);
-        this.is(29, D.getMonthDayCount());
+        var d = new Date(2400, 1);
+        this.is(29, d.getMonthDayCount());
       }
     },
     {
@@ -138,11 +150,11 @@ module.exports = {
       test: function(){
         // Date constructor creates date instances in local time, but toISOString returns in UTC timezone,
         // so we need convert date to UTC before get ISO string
-        var D = toUTC(new Date(2007, 5, 20));
-        this.is('2007-06-20', D.toISODateString());
+        var d = toUTC(new Date(2007, 5, 20));
+        this.is('2007-06-20', d.toISODateString());
 
-        var D = toUTC(new Date(2007, 0, 1));
-        this.is('2007-01-01', D.toISODateString());
+        var d = toUTC(new Date(2007, 0, 1));
+        this.is('2007-01-01', d.toISODateString());
       }
     },
     {

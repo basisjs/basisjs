@@ -13,3 +13,6 @@ $RECYCLE.BIN/
 
 # other
 build/
+temp/
+tmp/
+test/lib/
