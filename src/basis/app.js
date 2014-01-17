@@ -30,7 +30,10 @@
   }
 
   var createApp = basis.fn.lazyInit(function(config){
+    var readyHandlers = [];
+    var inited = false;
     var app = {
+      inited: false,
       setTitle: function(title){
         if (title != appTitle)
         {
@@ -77,6 +80,15 @@
           node.appendChild(appEl)
         else
           replaceNode(node, appEl);
+      },
+      ready: function(fn, context){
+        if (inited)
+          fn.call(context, app);
+        else
+          readyHandlers.push({
+            fn: fn,
+            context: context
+          });
       }
     };
 
@@ -130,6 +142,15 @@
 
       appEl = null;
       app.setElement(insertEl);
+
+      // mark app as inited
+      inited = true;
+      app.inited = true;
+
+      // invoke ready handler
+      var handler;
+      while (handler = readyHandlers.shift())
+        handler.fn.call(handler.context, app);
     });
 
     return app;
