@@ -1,0 +1,189 @@
+require('basis.date');
+
+module.exports = {
+  name: 'Date',
+  testcase: [
+    {
+      name: 'isLeapYear()',
+      test: function(){
+        this.is(true, (new Date(2004, 1)).isLeapYear());
+        this.is(true, (new Date(2000, 1)).isLeapYear());
+        this.is(true, (new Date(1996, 1)).isLeapYear());
+        this.is(true, (new Date(1600, 1)).isLeapYear());
+        this.is(true, (new Date(2400, 1)).isLeapYear());
+
+        this.is(false, (new Date(1995, 1)).isLeapYear());
+        this.is(false, (new Date(1997, 1)).isLeapYear());
+        this.is(false, (new Date(1998, 1)).isLeapYear());
+        this.is(false, (new Date(1999, 1)).isLeapYear());
+        this.is(false, (new Date(1900, 1)).isLeapYear());
+        this.is(false, (new Date(2100, 1)).isLeapYear());
+        this.is(false, (new Date(2500, 1)).isLeapYear());
+      }
+    },
+    {
+      name: 'getMonthDayCount()',
+      test: function(){
+        var D = new Date(2007, 0);
+        this.is(31, D.getMonthDayCount());
+        var D = new Date(2007, 1);
+        this.is(28, D.getMonthDayCount());
+        var D = new Date(2007, 2);
+        this.is(31, D.getMonthDayCount());
+        var D = new Date(2007, 3);
+        this.is(30, D.getMonthDayCount());
+        var D = new Date(2007, 4);
+        this.is(31, D.getMonthDayCount());
+        var D = new Date(2007, 5);
+        this.is(30, D.getMonthDayCount());
+        var D = new Date(2007, 6);
+        this.is(31, D.getMonthDayCount());
+        var D = new Date(2007, 7);
+        this.is(31, D.getMonthDayCount());
+        var D = new Date(2007, 8);
+        this.is(30, D.getMonthDayCount());
+        var D = new Date(2007, 9);
+        this.is(31, D.getMonthDayCount());
+        var D = new Date(2007, 10);
+        this.is(30, D.getMonthDayCount());
+        var D = new Date(2007, 11);
+        this.is(31, D.getMonthDayCount());
+
+        var D = new Date(2008, 1);
+        this.is(29, D.getMonthDayCount());
+
+        var D = new Date(2000, 1);
+        this.is(29, D.getMonthDayCount());
+
+        var D = new Date(2100, 1);
+        this.is(28, D.getMonthDayCount());
+
+        var D = new Date(2400, 1);
+        this.is(29, D.getMonthDayCount());
+      }
+    },
+    {
+      name: 'diff()',
+      test: function(){
+        var d = new Date(2000, 0, 1);
+        this.is(0, d.diff('year', new Date(2000, 0, 1)));
+        this.is(0, d.diff('month', new Date(2000, 0, 1)));
+        this.is(0, d.diff('day', new Date(2000, 0, 1)));
+        this.is(0, d.diff('hour', new Date(2000, 0, 1)));
+        this.is(0, d.diff('minute', new Date(2000, 0, 1)));
+        this.is(0, d.diff('second', new Date(2000, 0, 1)));
+
+        this.is(0, d.diff('year', new Date(2000, 5, 14)));
+        this.is(1, d.diff('year', new Date(2001, 0, 1)));
+        this.is(2, d.diff('year', new Date(2002, 0, 1)));
+        this.is(2, d.diff('year', new Date(2002, 11, 31)));
+        this.is(102, d.diff('year', new Date(2102, 11, 31)));
+        this.is(-1, d.diff('year', new Date(1999, 0, 1)));
+        this.is(-2, d.diff('year', new Date(1998, 0, 1)));
+        this.is(-2, d.diff('year', new Date(1998, 11, 31)));
+        this.is(-102, d.diff('year', new Date(1898, 11, 31)));
+
+        this.is(0, d.diff('month', new Date(2000, 0, 2)));
+        this.is(1, d.diff('month', new Date(2000, 1, 1)));
+        this.is(1, d.diff('month', new Date(2000, 1, 28)));
+        this.is(17, d.diff('month', new Date(2001, 5, 15)));
+        this.is(125, d.diff('month', new Date(2010, 5, 15)));
+        this.is(-1, d.diff('month', new Date(1999, 11, 31)));
+        this.is(-1, d.diff('month', new Date(1999, 11, 1)));
+        this.is(-3, d.diff('month', new Date(1999, 9, 15)));
+        this.is(-123, d.diff('month', new Date(1989, 9, 15)));
+
+        this.is(0, d.diff('day', new Date(2000, 0, 1, 23, 59, 59)));
+        this.is(1, d.diff('day', new Date(2000, 0, 2)));
+        this.is(30, d.diff('day', new Date(2000, 0, 31)));
+        this.is(31, d.diff('day', new Date(2000, 1, 1)));
+        this.is(366, d.diff('day', new Date(2001, 0, 1)));
+        this.is(366 + 365, d.diff('day', new Date(2002, 0, 1)));
+        this.is(366 + 365 + 31, d.diff('day', new Date(2002, 1, 1)));
+        this.is(-1, d.diff('day', new Date(1999, 11, 31, 23, 59, 59)));
+        this.is(-31, d.diff('day', new Date(1999, 11, 1)));
+        this.is(-31 - 365, d.diff('day', new Date(1998, 11, 1)));
+        this.is(-31 - 365 - 16, d.diff('day', new Date(1998, 10, 15)));
+
+        this.is(0, d.diff('hour', new Date(2000, 0, 1, 0, 59, 59)));
+        this.is(1, d.diff('hour', new Date(2000, 0, 1, 1, 0, 0)));
+        this.is(1, d.diff('hour', new Date(2000, 0, 1, 1, 59, 59)));
+        this.is(24, d.diff('hour', new Date(2000, 0, 2)));
+        this.is(366 * 24, d.diff('hour', new Date(2001, 0, 1, 0, 59, 59)));
+        this.is(-1, d.diff('hour', new Date(1999, 11, 31, 23, 59, 59)));
+        this.is(-1 * 24 * 31, d.diff('hour', new Date(1999, 11, 1, 0, 0, 0)));
+        this.is(-(365 * 10 + 2 + 31) * 24, d.diff('hour', new Date(1989, 11, 1, 0, 0, 0)));
+
+        this.is(59, d.diff('minute', new Date(2000, 0, 1, 0, 59, 59)));
+        this.is(60, d.diff('minute', new Date(2000, 0, 1, 1, 0, 0)));
+        this.is(60 + 59, d.diff('minute', new Date(2000, 0, 1, 1, 59, 59)));
+        this.is(24 * 60, d.diff('minute', new Date(2000, 0, 2)));
+        this.is(366 * 24 * 60 + 59, d.diff('minute', new Date(2001, 0, 1, 0, 59, 59)));
+        this.is(-1, d.diff('minute', new Date(1999, 11, 31, 23, 59, 59)));
+        this.is(-1 * 24 * 31 * 60, d.diff('minute', new Date(1999, 11, 1, 0, 0, 0)));
+        this.is(-(365 * 10 + 2 + 31) * 24 * 60, d.diff('minute', new Date(1989, 11, 1, 0, 0, 0)));
+
+        this.is(59 * 60 + 59, d.diff('second', new Date(2000, 0, 1, 0, 59, 59)));
+        this.is(60 * 60, d.diff('second', new Date(2000, 0, 1, 1, 0, 0)));
+        this.is((60 + 59) * 60 + 59, d.diff('second', new Date(2000, 0, 1, 1, 59, 59)));
+        this.is(24 * 60 * 60, d.diff('second', new Date(2000, 0, 2)));
+        this.is((366 * 24 * 60 + 59) * 60 + 59, d.diff('second', new Date(2001, 0, 1, 0, 59, 59)));
+        this.is(-1, d.diff('second', new Date(1999, 11, 31, 23, 59, 59)));
+        this.is(-1 * 24 * 31 * 60 * 60, d.diff('second', new Date(1999, 11, 1, 0, 0, 0)));
+        this.is(-(365 * 10 + 2 + 31) * 24 * 60 * 60, d.diff('second', new Date(1989, 11, 1, 0, 0, 0)));
+      }
+    },
+    {
+      name: 'toISODateString()',
+      test: function(){
+        // Date constructor creates date instances in local time, but toISOString returns in UTC timezone,
+        // so we need convert date to UTC before get ISO string
+        var D = toUTC(new Date(2007, 5, 20));
+        this.is('2007-06-20', D.toISODateString());
+
+        var D = toUTC(new Date(2007, 0, 1));
+        this.is('2007-01-01', D.toISODateString());
+      }
+    },
+    {
+      name: 'toISOString()',
+      test: function(){
+        // Date constructor creates date instances in local time, but toISOString returns in UTC timezone,
+        // so we need convert date to UTC before get ISO string
+        this.is('2007-01-01T00:00:00.000Z', toUTC(new Date(2007, 0, 1)).toISOString());
+        this.is('2007-01-01T01:02:03.000Z', toUTC(new Date(2007, 0, 1, 1, 2, 3)).toISOString());
+        this.is('2007-01-01T01:02:03.123Z', toUTC(new Date(2007, 0, 1, 1, 2, 3, 123)).toISOString());
+        this.is('2008-01-01T01:02:03.123Z', toUTC(new Date(2007, 12, 1, 1, 2, 3, 123)).toISOString());
+      }
+    },
+    {
+      name: 'fromISOString()',
+      test: function(){
+        this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01'));
+        this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01T00:00:00'));
+        this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01T00:00:00.000'));
+        this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01 00:00:00'));
+        this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01 00:00:00.000'));
+        this.is(new Date(2007, 0, 1, 1, 2, 3), (new Date()).fromISOString('2007-01-01 01:02:03'));
+        this.is(new Date(2007, 0, 1, 1, 2, 3), (new Date()).fromISOString('2007-1-1 1:2:3'));
+        this.is(new Date(7, 0, 1, 1, 2, 3), (new Date()).fromISOString('07-1-1 1:2:3'));
+        this.is(new Date(2007, 0, 1, 23, 59, 59), (new Date()).fromISOString('2007-01-01 23:59:59'));
+      }
+    },
+    {
+      name: 'fromISOString() <-> toISOString()',
+      test: function(){
+        this.is('2007-01-01', (new Date()).fromISOString('2007-01-01').toISODateString());
+        this.is('2007-01-01T01:02:03.123Z', (new Date()).fromISOString('2007-01-01T01:02:03.123Z').toISOString());
+
+        var d = new Date();
+        var isoStr = d.toISOString();
+        var d2 = new Date();
+        d2.setHours(d2.getHours() + 1);
+        this.is(false, d2 - d == 0); // should be false, it diff date time
+        this.is(isoStr, d2.fromISOString(isoStr).toISOString());
+        this.is(true, d2 - d == 0);
+      }
+    }
+  ]
+};

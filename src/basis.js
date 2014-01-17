@@ -2251,7 +2251,7 @@
         cls.prototype[key] = (function(method, clsName){
           return function(){
             /** @cut */ if (config.extProto == 'warn')
-            /** @cut */   consoleMethods.warn(clsName + '#' + method + ' is not a standard method, and it\'s and will be removed soon; use basis.' + clsName.toLowerCase() + '.' + method + ' instead');
+            /** @cut */   consoleMethods.warn(clsName + '#' + method + ' is not a standard method and will be removed soon; use basis.' + clsName.toLowerCase() + '.' + method + ' instead');
 
             var args = [this];
             Array.prototype.push.apply(args, arguments);

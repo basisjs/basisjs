@@ -3,9 +3,9 @@ require('basis.dom.wrapper');
 
 var arrayFrom = basis.array.from;
 
-var ERROR_WRONG_ANSWER = 1;
-var ERROR_TYPE_MISSMATCH = 2;
-var ERROR_TEST_FAULT = 3;
+var ERROR_WRONG_ANSWER = 'ERROR_WRONG_ANSWER';
+var ERROR_TYPE_MISSMATCH = 'ERROR_TYPE_MISSMATCH';
+var ERROR_TEST_FAULT = 'ERROR_TEST_FAULT';
 
 function sliceOwnOnly(obj){
   var result = {};
@@ -24,7 +24,7 @@ function resolveError(answer, result){
   if (answer != null && result != null && answer.constructor !== result.constructor)
     return ERROR_TYPE_MISSMATCH;
 
-  if (!error && answer != result)
+  if (answer != result)
   {
     switch (typeof answer){
       case 'number':
@@ -98,7 +98,7 @@ var Test = basis.dom.wrapper.Node.subclass({
   init: function(){
     basis.dom.wrapper.Node.prototype.init.call(this);
 
-    var test = this.data.test;
+    var test = this.data.test || this.data.testcase;
     if (test)
     {
       if (basis.resource.isResource(test))
@@ -112,6 +112,9 @@ var Test = basis.dom.wrapper.Node.subclass({
   },
 
   childClass: basis.Class.SELF,
+  childFactory: function(cfg){
+    return new this.childClass({ data: cfg });
+  },
 
   reset: function(){
     this.setState(basis.data.STATE.UNDEFINED);
@@ -159,7 +162,7 @@ var Test = basis.dom.wrapper.Node.subclass({
       // basis.dev.error = _error;
     }
 
-    if (env.report.testCount != env.report.successCount)
+    if (!error && env.report.testCount != env.report.successCount)
       error = ERROR_TEST_FAULT;
 
     env.report.error = error;
@@ -170,6 +173,10 @@ var Test = basis.dom.wrapper.Node.subclass({
     report.update(env.report);
 
     this.setState(error ? basis.data.STATE.ERROR : basis.data.STATE.READY, report);
+
+    this.childNodes.forEach(function(test){
+      test.run();
+    });
 
     return prevData;
   }

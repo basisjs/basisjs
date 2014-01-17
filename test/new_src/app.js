@@ -20,7 +20,12 @@ basis.app.create({
       binding: {
         tests: new basis.ui.Node({
           childClass: {
-            template: '<li>{name}: {state} ({stateData})</li>',
+            childClass: basis.Class.SELF,
+            dataSource: basis.data.Value.factory('delegateChanged', function(node){
+              return node.delegate && node.delegate.getChildNodesDataset();
+            }),
+
+            template: '<li>{name}: {state} ({stateData})<ul{childNodesElement}/></li>',
             binding: {
               name: 'data:name',
               state: ['stateChanged', 'state'],
@@ -29,22 +34,7 @@ basis.app.create({
               }]
             }
           },
-          childNodes: [
-            {
-              name: 'test1',
-              test: function(){
-                this.is(1, 1);
-              }
-            },
-            {
-              name: 'test2',
-              test: function(){}
-            },
-            {
-              name: 'test3',
-              test: function(){}
-            }
-          ].map(function(item){
+          childNodes: require('./test-index.js').map(function(item){
             return new Test({
               data: item
             });

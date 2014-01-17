@@ -317,7 +317,7 @@
         Date.prototype[key] = (function(method, clsName){
           return function(){
             /** @cut */ if (basis.config.extProto == 'warn')
-            /** @cut */   basis.dev.warn('Date#' + method + ' is not a standard method, and it\'s and will be removed soon; use basis.date.' + method + ' instead');
+            /** @cut */   basis.dev.warn('Date#' + method + ' is not a standard method and will be removed soon; use basis.date.' + method + ' instead');
 
             var args = [this];
             Array.prototype.push.apply(args, arguments);
