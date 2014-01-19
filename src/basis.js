@@ -1942,7 +1942,10 @@
             }
           }
 
-          namespace = namespace.replace(/\./g, '_').replace(/\//g, '.');
+          namespace = namespace
+            .replace(/\./g, '_')
+            .replace(/^\//g, '')
+            .replace(/\//g, '.');
 
           if (implicitNamespace)
             namespace = 'implicit.' + namespace;
