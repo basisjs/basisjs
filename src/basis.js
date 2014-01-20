@@ -1734,6 +1734,12 @@
 
   var resourceCache = {};
   var resourceRequestCache = {};
+  var resourceUpdateNotifier = extend(new Token(), {
+    set: function(value){
+      this.value = value;
+      this.apply();
+    }
+  });
   /** @cut */ var resourceResolvingStack = [];
 
   // apply prefetched resources to cache
@@ -1830,6 +1836,9 @@
         resolved = true;
         resource.apply();
 
+        //resourceUpdateNotifier.value = resourceUrl;
+        //resourceUpdateNotifier.apply();
+
         /** @cut    recursion warning */
         /** @cut */ resourceResolvingStack.pop();
 
@@ -1853,17 +1862,22 @@
 
             if (contentWrapper)
             {
-              // don't wrap content if it isn't wrapped yet or wrapped but not updatable
-              if (!wrapped || !contentWrapper.updatable)
-                return;
-
-              content = contentWrapper(newContent, resourceUrl);
+              // wrap content only if it wrapped already and updatable
+              if (wrapped && contentWrapper.updatable)
+              {
+                content = contentWrapper(newContent, resourceUrl);
+                resource.apply();
+              }
             }
             else
+            {
               content = newContent;
+              resolved = true;
+              resource.apply();
+            }
 
-            resolved = true;
-            resource.apply();
+            resourceUpdateNotifier.value = resourceUrl;
+            resourceUpdateNotifier.apply();
           }
         },
         reload: function(){
@@ -1905,6 +1919,9 @@
   /** @cut */ var requires;
 
   extend(getResource, {
+    onUpdate: function(fn, context){
+      resourceUpdateNotifier.attach(fn, context);
+    },
     getFiles: function(){
       var result = [];
 

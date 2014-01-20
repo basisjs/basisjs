@@ -2,11 +2,11 @@ module.exports = {
   name: 'Date',
   init: function(){
     var script = document.createElement('script');
-    script.setAttribute('src', '../../../src/_.js');
+    script.setAttribute('src', '../../../../../src/basis.js');
     script.setAttribute('basis-config', 'extProto: true');
     document.head.appendChild(script);
 
-    importScripts('../../../src/basis.js');
+    importScripts('../../../../../src/basis.js');
     basis.require('basis.date');
 
     function toUTC(date){
@@ -37,7 +37,7 @@ module.exports = {
       name: 'getMonthDayCount()',
       test: function(){
         var d = new Date(2007, 0);
-        this.is(31, d.getMonthDayCount());
+        this.is(311, d.getMonthDayCount());
         var d = new Date(2007, 1);
         this.is(28, d.getMonthDayCount());
         var d = new Date(2007, 2);

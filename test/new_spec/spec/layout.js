@@ -1,13 +1,13 @@
 module.exports = {
   name: 'layout',
 
+  html: resource('layout.html').url,
   init: function(){
-    var script = document.createElement('script');
-    script.setAttribute('src', '../../../src/_.js');
-    script.setAttribute('basis-config', 'extProto: true');
-    document.head.appendChild(script);
+    if (basis.resource.onUpdate)
+      basis.resource.onUpdate(function(fn){
+        deprecateTestEnvironment();
+      });
 
-    importScripts('../../../src/basis.js');
     basis.require('basis.layout');
 
     var computedStyle = basis.require('basis.dom.computedStyle').get;
@@ -16,21 +16,8 @@ module.exports = {
       return document.getElementById(id);
     }
   },
-  html: resource('layout.html'),
-  css: resource('layout.css').get(true),
 
   test: [
-    {
-      name: 'Offset parent',
-      testcase: [
-        {
-          name: 'basic',
-          test: function(){
-
-          }
-        }
-      ]
-    },
     {
       name: 'Zero scroll',
       testcase: [
