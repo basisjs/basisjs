@@ -1,3 +1,5 @@
+[Версия на русском](README.ru.md) (более полная и подробная)
+
 Javascript framework to build single-page applications.
 
 ## Take a look

@@ -227,11 +227,34 @@ basis.template.setTheme('mytheme');
 </div>
 ```
 
+Словари описываются в формате `.json`, но файлы должны иметь расширение `.l10n`. Пример словаря (`dict.l10n`):
+
+```json
+{
+  "en-US": {
+    "header": "Hello world!",
+    "month": {
+      "jan": "January",
+      "feb": "February",
+      ...
+    }
+  },
+  "ru-RU": {
+    "header": "Привет мир!",
+    "month": {
+      "jan": "Январь",
+      "feb": "Февраль",
+      ...
+    }
+  }
+}
+```
+
 Шаблоны реагируют на изменение значений языковых токенов, и производят необходиыме изменения. Поэтому поддерживается живое редактирование локализации и переключение языка без перезагрузки страницы. Более подробно про локализацию можно прочитать в документации – [basis.l10n](https://github.com/basisjs/articles/blob/master/ru-RU/basis.l10n.md).
 
-Модули шаблонов и локализации могут быть использованы не только с `basis.js`, но и с другими библиотеками и фрейворками. Для этого можно использовать библиотеку [basis-templates](http://basisjs.com/templates/). Есть так же специальный [плагин для `backbone.js`](http://basisjs.com/templates/#bbt).
+Модули шаблонов и локализации могут быть использованы не только с `basis.js`, но и с другими библиотеками и фрейворками. Для этого можно использовать библиотеку [basis-templates](http://basisjs.com/templates/). Есть так же специальный [плагин](http://basisjs.com/templates/#bbt) для `backbone.js`.
 
-Помимо [документации](https://github.com/basisjs/articles/blob/master/ru-RU/basis.template.md) про основы шаблонов можно посмотреть в презентациях [Basis.js - почему я не бросил разрабатывать свой фреймворк](http://www.slideshare.net/basisjs/basisjs-fronttalks) и [Как построить DOM](http://www.slideshare.net/basisjs/dom-27356908) ([видео](http://www.youtube.com/watch?v=cVbbkwkhNQg)).
+Помимо [документации](https://github.com/basisjs/articles/blob/master/ru-RU/basis.template.md) про основы шаблонов можно посмотреть в презентациях «[Basis.js - почему я не бросил разрабатывать свой фреймворк](http://www.slideshare.net/basisjs/basisjs-fronttalks)» ([видео](http://www.youtube.com/watch?v=cVbbkwkhNQg)) и «[Как построить DOM](http://www.slideshare.net/basisjs/dom-27356908)».
 
 ### UI
 
@@ -266,15 +289,15 @@ var list = new basis.ui.Node({
 // выводим список компаний сгруппированных по городу и отсортированных
 // по имени, с возможностью выбора элемента по клику
 var companyView = new basis.ui.Node({
-  dataSource: companies,
-  selection: true,
-  sorting: 'data.name',
-  grouping: {
-    rule: 'data.city',
-    childClass: {
-      template:
-        '<div class="group">' +
-          '{title}:' +
+  dataSource: companies,          // набор, источник данных для дочерних узлов
+  selection: true,                // использовать выделение
+  sorting: 'data.name',           // сортировка по имени
+  grouping: {                     // группировка
+    rule: 'data.city',            // правило группировки
+    childClass: {                 // класс для группы
+      template:                   
+        '<div class="group">' +   // обычно шаблоны выносятся в отдельные файлы,
+          '{title}:' +            // здесь указаны в коде для наглядности
           '<ul{childNodesElement}/>'
         '</div>',
       binding: {
@@ -282,7 +305,7 @@ var companyView = new basis.ui.Node({
       }
     }
   },
-  childClass: {
+  childClass: {                   // класс для дочерних узлов – дополненый basis.ui.Node
     template: '<li event-click="select">{name} (city)</li>',
     binding: {
       name: 'data:',
