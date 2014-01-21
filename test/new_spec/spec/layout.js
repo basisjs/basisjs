@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'layout',
+  name: 'basis.layout',
 
   html: resource('layout.html').url,
   init: function(){
@@ -20,7 +20,7 @@ module.exports = {
   test: [
     {
       name: 'Zero scroll',
-      testcase: [
+      test: [
         {
           name: 'Reset scroll offset',
           test: function(){
@@ -85,7 +85,7 @@ module.exports = {
     },
     {
       name: 'Zero scroll + relative documentElement',
-      testcase: [
+      test: [
         {
           name: 'Set documentElement position relative',
           test: function(){
@@ -134,7 +134,7 @@ module.exports = {
     },
     {
       name: 'Zero scroll + relative body',
-      testcase: [
+      test: [
         {
           name: 'Set body position relative',
           test: function(){
@@ -183,7 +183,7 @@ module.exports = {
     },
     {
       name: 'Root scroll',
-      testcase: [
+      test: [
         {
           name: 'Set scroll offset 23x23',
           test: function(){
@@ -231,7 +231,7 @@ module.exports = {
     },
     {
       name: 'Root scroll + relative documentElement',
-      testcase: [
+      test: [
         {
           name: 'Set documentElement position relative',
           test: function(){
@@ -280,7 +280,7 @@ module.exports = {
     },
     {
       name: 'Root scroll + relative body',
-      testcase: [
+      test: [
         {
           name: 'Set body position relative',
           test: function(){
@@ -329,7 +329,7 @@ module.exports = {
     },
     {
       name: 'Root scroll + container scroll',
-      testcase: [
+      test: [
         {
           name: 'Set container scroll offset 11x11',
           test: function(){

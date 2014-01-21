@@ -3,13 +3,12 @@ module.exports = {
 
   init: function(){
     var script = document.createElement('script');
-    script.setAttribute('src', '../../../../../src/_.js');
-    script.setAttribute('basis-config', 'extProto: true');
+    script.setAttribute('src', '../../../../../../src/_.js');
+    script.setAttribute('basis-config', '');
     document.head.appendChild(script);
 
-    importScripts('../../../../../src/basis.js');
+    importScripts('../../../../../../src/basis.js');
     basis.require('basis.data');
-    importScripts('/__devsync__.js');
 
     if (basis.resource.onUpdate)
       basis.resource.onUpdate(function(fn){
@@ -67,10 +66,10 @@ module.exports = {
   test: [
     {
       name: 'UTF',
-      testcase: [
+      test: [
         {
           name: 'UTF8',
-          testcase: [
+          test: [
             {
               name: 'toBytes',
               test: function(){
@@ -147,7 +146,7 @@ module.exports = {
         },
         {
           name: 'UTF16',
-          testcase: [
+          test: [
             {
               name: 'toBytes',
               test: function(){
@@ -226,10 +225,10 @@ module.exports = {
     },
     {
       name: 'Hashes',
-      testcase: [
+      test: [
         {
           name: 'Base64',
-          testcase: [
+          test: [
             {
               name: 'encode',
               test: function(){
@@ -276,7 +275,7 @@ module.exports = {
     },
     {
       name: 'Array & String extension',
-      testcase: [
+      test: [
         {
           name: '.md5()',
           test: function(){

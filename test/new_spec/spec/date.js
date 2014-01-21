@@ -1,12 +1,13 @@
 module.exports = {
-  name: 'Date',
+  name: 'basis.date',
+
   init: function(){
     var script = document.createElement('script');
-    script.setAttribute('src', '../../../../../src/basis.js');
+    script.setAttribute('src', '../../../../../../src/_.js');
     script.setAttribute('basis-config', 'extProto: true');
     document.head.appendChild(script);
 
-    importScripts('../../../../../src/basis.js');
+    importScripts('../../../../../../src/basis.js');
     basis.require('basis.date');
 
     function toUTC(date){
@@ -14,6 +15,7 @@ module.exports = {
       return date;
     }
   },
+
   test: [
     {
       name: 'isLeapYear()',
