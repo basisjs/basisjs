@@ -190,12 +190,48 @@ console.log(sum.value);
 
 Поддерживается [механизм тем](https://github.com/basisjs/articles/blob/master/ru-RU/basis.template_theme.md). Тема – это набор шаблонов. В один момент времени может использоваться только одна тема. Темы наследуются и их можно переключать без перезагрузки страницы.
 
-Локализация
+```js
+// базовая тема
+basis.template.define({
+  'button': resource('button.tmpl'),
+  'buttonPanel': resource('buttonPanel.tmpl')
+});
 
-Библиотека
+// дополнительная тема, все темы по умолчанию наследуются от базовой
+basis.template.theme('mytheme').define({
+  'button': resource('mytheme/button.tmpl')
+});
 
-Ссылка на док/презентации
+// вместо конкретного описания или указания файла, в качестве значения шаблона
+// задается именовый шаблон; используемое описание будет зависеть от выбранной
+// темы и какое описание закрепленное за этим именем в этой теме
+var button = new basis.ui.Node({
+  template: basis.template.get('button')
+});
 
+basis.template.setTheme('mytheme');
+// button -> resource('mytheme/button.tmpl')
+// buttonPanel -> resource('buttonPanel.tmpl')
+```
+
+Шаблоны поддерживают локализацию. Они могут как использовать языковые токены, переданные в качестве значения для биндингов, так и самостоятельно подключать словари. Для подключения словаря используется специальный тег `<b:l10n>`, а для вставки значений в описании биндинга используется префикс `l10n:`.
+
+```html
+<b:l10n src="dict.l10n"/>
+<div>
+  <h1>{l10n:header}</h1>
+  <div class="date">{day} {l10n:month.{month}} {year}</div>
+  <div class="content">
+    {l10n:content}
+  </div>
+</div>
+```
+
+Шаблоны реагируют на изменение значений языковых токенов, и производят необходиыме изменения. Поэтому поддерживается живое редактирование локализации и переключение языка без перезагрузки страницы. Более подробно про локализацию можно прочитать в документации – [basis.l10n](https://github.com/basisjs/articles/blob/master/ru-RU/basis.l10n.md).
+
+Модули шаблонов и локализации могут быть использованы не только с `basis.js`, но и с другими библиотеками и фрейворками. Для этого можно использовать библиотеку [basis-templates](http://basisjs.com/templates/). Есть так же специальный [плагин для `backbone.js`](http://basisjs.com/templates/#bbt).
+
+Помимо [документации](https://github.com/basisjs/articles/blob/master/ru-RU/basis.template.md) про основы шаблонов можно посмотреть в презентациях [Basis.js - почему я не бросил разрабатывать свой фреймворк](http://www.slideshare.net/basisjs/basisjs-fronttalks) и [Как построить DOM](http://www.slideshare.net/basisjs/dom-27356908) ([видео](http://www.youtube.com/watch?v=cVbbkwkhNQg)).
 
 ### UI
 
@@ -273,7 +309,8 @@ companyView.setDataSource(top100Companies);
 * [Docs](http://basisjs.com/docs) – авто-документация, сгенерированная на основе структуры модулей и исходного кода;
 * [Demo](http://basisjs.com/demo) – набор демонстраций, которые могут быть примером.
 
-> basis create app
+    > basis create app
+
 
 ## Как использовать
 
