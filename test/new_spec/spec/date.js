@@ -1,6 +1,7 @@
 module.exports = {
   name: 'basis.date',
 
+  html: 'default',
   init: function(){
     var script = document.createElement('script');
     script.setAttribute('src', '../../../../../../src/_.js');
@@ -22,7 +23,7 @@ module.exports = {
       test: function(){
         this.is(true, basis.date.isLeapYear(new Date(2004, 1)));
         this.is(true, basis.date.isLeapYear(new Date(2000, 1)));
-        this.is(true, basis.date.isLeapYear(new Date(1996, 1)));
+        this.is(true, basis.date.isLeapYear(new Date(1996, x/1)));
         this.is(true, basis.date.isLeapYear(new Date(1600, 1)));
         this.is(true, basis.date.isLeapYear(new Date(2400, 1)));
 

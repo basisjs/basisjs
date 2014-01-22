@@ -1,7 +1,6 @@
 module.exports = {
   name: 'basis.entity',
 
-  html: resource('../env.html').url,
   init: function(){
     basis.require('basis.data');
     basis.require('basis.entity');
@@ -38,7 +37,7 @@ module.exports = {
   test: [
     {
       name: 'construct',
-      testcase: [
+      test: [
         {
           name: 'simple create',
           test: function(){
@@ -143,7 +142,7 @@ module.exports = {
               }
             });
 
-            // base test made in previous testcase
+            // base test made in previous test
 
             var entityA = EntityType({});
             this.is(1, EntityType.all.itemCount);
@@ -258,7 +257,7 @@ module.exports = {
     },
     {
       name: 'update with rollback',
-      testcase: [
+      test: [
         {
           name: 'with no id field',
           test: function(){
@@ -702,7 +701,7 @@ module.exports = {
     },
     {
       name: 'set with rollback',
-      testcase: [
+      test: [
         {
           name: 'with no id field',
           test: function(){
@@ -936,7 +935,7 @@ module.exports = {
     },
     {
       name: 'rollback',
-      testcase: [
+      test: [
         {
           name: 'with no id field, full rollback',
           test: function(){
@@ -1137,7 +1136,7 @@ module.exports = {
     },
     {
       name: 'field types',
-      testcase: [
+      test: [
         {
           name: 'Array',
           test: function(){

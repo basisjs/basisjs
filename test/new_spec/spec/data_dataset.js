@@ -53,7 +53,7 @@ module.exports = {
   test: [
     {
       name: 'Common',
-      testcase: [
+      test: [
         {
           name: 'accumulate events and updates',
           test: function(){
@@ -215,7 +215,7 @@ module.exports = {
     },
     {
       name: 'resolveDataset',
-      testcase: [
+      test: [
         {
           name: 'source dataset/null',
           test: function(){

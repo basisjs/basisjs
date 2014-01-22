@@ -1,7 +1,6 @@
 module.exports = {
   name: 'basis.dom.wrapper',
 
-  html: resource('../env.html').url,
   init: function(){
     basis.require('basis.dom');
     basis.require('basis.dom.wrapper');

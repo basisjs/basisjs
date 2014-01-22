@@ -324,11 +324,15 @@
 
       var currentTest;
 
+      var timer;
+      var processingQueueWrapper = new basis.data.DatasetWrapper({ dataset: processingQueue });
       var buttonPanel = new basis.ui.button.ButtonPanel({
         container: document.getElementById('Content'),
         childNodes: [
           {
-            delegate: processingQueue,
+            caption: 'Start',
+            click: runTesting,
+            delegate: processingQueueWrapper,
             listen: {
               delegate: {
                 itemsChanged: function(sender){
@@ -339,13 +343,19 @@
                 }
               }
             },
-            caption: 'Start',
-            click: runTesting
+            handler: {
+              disable: function(){
+                timer = new Date();
+              },
+              enable: function(){
+                console.log('time:', new Date - timer);
+              }
+            }
           },
           {
             caption: 'Stop',
             click: stopTesting,
-            delegate: processingQueue,
+            delegate: processingQueueWrapper,
             listen: {
               delegate: {
                 itemsChanged: function(sender){

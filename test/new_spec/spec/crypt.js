@@ -116,7 +116,7 @@ module.exports = {
                 var S = 'привет мир';
                 this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
-                var S = 'hello мир';
+                var S = 'hello мир'/dd;
                 this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
                 var S = '\t\r\nhello \rмир\n';
