@@ -1,13 +1,8 @@
 module.exports = {
   name: 'basis.crypt',
 
+  html: resource('../env.html').url,
   init: function(){
-    var script = document.createElement('script');
-    script.setAttribute('src', '../../../../../../src/_.js');
-    script.setAttribute('basis-config', '');
-    document.head.appendChild(script);
-
-    importScripts('../../../../../../src/basis.js');
     basis.require('basis.data');
 
     if (basis.resource.onUpdate)
@@ -74,7 +69,7 @@ module.exports = {
               name: 'toBytes',
               test: function(){
                 for (var i = 0; i < utf8Bytes.length; i++)
-                  this.is(utf8Bytes[i] + 1, UTF8.toBytes(utf8Str[i]));
+                  this.is(utf8Bytes[i].concat(2), UTF8.toBytes(utf8Str[i]));
               }
             },
             {
