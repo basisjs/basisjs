@@ -69,7 +69,7 @@ module.exports = {
               name: 'toBytes',
               test: function(){
                 for (var i = 0; i < utf8Bytes.length; i++)
-                  this.is(utf8Bytes[i].concat(2), UTF8.toBytes(utf8Str[i]));
+                  this.is(utf8Bytes[i], UTF8.toBytes(utf8Str[i]));
               }
             },
             {
@@ -116,7 +116,7 @@ module.exports = {
                 var S = 'привет мир';
                 this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
-                var S = 'hello мир'/dd;
+                var S = 'hello мир';
                 this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
                 var S = '\t\r\nhello \rмир\n';

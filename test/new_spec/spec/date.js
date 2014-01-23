@@ -23,7 +23,7 @@ module.exports = {
       test: function(){
         this.is(true, basis.date.isLeapYear(new Date(2004, 1)));
         this.is(true, basis.date.isLeapYear(new Date(2000, 1)));
-        this.is(true, basis.date.isLeapYear(new Date(1996, x/1)));
+        this.is(true, basis.date.isLeapYear(new Date(1996, 1)));
         this.is(true, basis.date.isLeapYear(new Date(1600, 1)));
         this.is(true, basis.date.isLeapYear(new Date(2400, 1)));
 
@@ -40,7 +40,7 @@ module.exports = {
       name: 'getMonthDayCount()',
       test: function(){
         var d = new Date(2007, 0);
-        this.is(311, d.getMonthDayCount());
+        this.is(31, d.getMonthDayCount());
         var d = new Date(2007, 1);
         this.is(28, d.getMonthDayCount());
         var d = new Date(2007, 2);
