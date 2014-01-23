@@ -11,7 +11,7 @@ module.exports = {
   test: [
     {
       name: 'Cookie',
-      testcase: [
+      test: [
         {
           name: 'set',
           test: function(){

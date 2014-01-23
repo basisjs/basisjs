@@ -65,7 +65,7 @@ module.exports = {
   test: [
     {
       name: 'Template update',
-      testcase: [
+      test: [
         {
           name: 'grouping, node template update',
           test: function(){

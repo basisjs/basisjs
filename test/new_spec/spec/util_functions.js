@@ -174,85 +174,85 @@ module.exports = {
             {
               name: 'flatten()',
               test: function(){
-                this.is([0, 1, 2, 3, 3.5, 4, 5, 6], [0, C, 3.5, D, 6].flatten());
+                this.is([0, 1, 2, 3, 3.5, 4, 5, 6], basis.array.flatten([0, C, 3.5, D, 6]));
 
                 var T = [1, 2, 3];
-                this.is([1, T, 2, 2, T, 3], [[1, T, 2], 2, [T, 3]].flatten());
+                this.is([1, T, 2, 2, T, 3], basis.array.flatten([[1, T, 2], 2, [T, 3]]));
 
                 var T = [];
-                this.is([1, 2], [1, T, 2].flatten());
-                this.is([1, T, 2], [1, [T], 2].flatten());
+                this.is([1, 2], basis.array.flatten([1, T, 2]));
+                this.is([1, T, 2], basis.array.flatten([1, [T], 2]));
               }
             },
             {
               name: 'repeat()',
               test: function(){
-                this.is([], [].repeat());
-                this.is([], [].repeat(0));
-                this.is([], [].repeat(3));
+                this.is([], basis.array.repeat([]));
+                this.is([], basis.array.repeat([], 0));
+                this.is([], basis.array.repeat([], 3));
 
-                this.is([], [1].repeat());
-                this.is([], [1].repeat(0));
-                this.is([1, 1, 1], [1].repeat(3));
+                this.is([], basis.array.repeat([1]));
+                this.is([], basis.array.repeat([1], 0));
+                this.is([1, 1, 1], basis.array.repeat([1], 3));
 
-                this.is([], [1, 2, 3].repeat());
-                this.is([], [1, 2, 3].repeat(0));
-                this.is([1, 2, 3, 1, 2, 3, 1, 2, 3], [1, 2, 3].repeat(3));
+                this.is([], basis.array.repeat([1, 2, 3]));
+                this.is([], basis.array.repeat([1, 2, 3], 0));
+                this.is([1, 2, 3, 1, 2, 3, 1, 2, 3], basis.array.repeat([1, 2, 3], 3));
               }
             },
             {
               name: 'search()',
               test: function(){
                 var T = [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 2, b: 1 }];
-                this.is(undefined, T.search(2));
-                this.is(T[1], T.search(T[1]));
-                this.is(T[1], T.search(1.0, basis.getter('value')));
-                this.is(undefined, T.search(1.5, basis.getter('value')));
-                this.is(undefined, T.search('2', basis.getter('value')));
-                this.is(T[2], T.search(2, basis.getter('value')));
-                this.is(T[T.length - 1], T.search(2, basis.getter('value'), 3));
-                this.is(T[T.length - 1], T.search(2, 'value', 3));
+                this.is(undefined, basis.array.search(T, 2));
+                this.is(T[1], basis.array.search(T, T[1]));
+                this.is(T[1], basis.array.search(T, 1.0, basis.getter('value')));
+                this.is(undefined, basis.array.search(T, 1.5, basis.getter('value')));
+                this.is(undefined, basis.array.search(T, '2', basis.getter('value')));
+                this.is(T[2], basis.array.search(T, 2, basis.getter('value')));
+                this.is(T[T.length - 1], basis.array.search(T, 2, basis.getter('value'), 3));
+                this.is(T[T.length - 1], basis.array.search(T, 2, 'value', 3));
 
                 var T = [];
                 T[3] = { value: 3 };
                 T[7] = { value: 5 };
                 T[9] = { value: 3 };
-                this.is(undefined, T.search(2));
-                this.is(undefined, T.search(2, basis.getter('value')));
-                this.is(T[3], T.search(3.0, basis.getter('value')));
-                this.is(undefined, T.search(1.5, basis.getter('value')));
-                this.is(undefined, T.search('3', basis.getter('value')));
-                this.is(T[3], T.search(3, basis.getter('value')));
-                this.is(T[9], T.search(3, basis.getter('value'), 4));
+                this.is(undefined, basis.array.search(T, 2));
+                this.is(undefined, basis.array.search(T, 2, basis.getter('value')));
+                this.is(T[3], basis.array.search(T, 3.0, basis.getter('value')));
+                this.is(undefined, basis.array.search(T, 1.5, basis.getter('value')));
+                this.is(undefined, basis.array.search(T, '3', basis.getter('value')));
+                this.is(T[3], basis.array.search(T, 3, basis.getter('value')));
+                this.is(T[9], basis.array.search(T, 3, basis.getter('value'), 4));
               }
             },
             {
               name: 'lastSearch()',
               test: function(){
                 var T = [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 2, b: 1 }];
-                this.is(undefined, T.lastSearch(2));
-                this.is(T[1], T.lastSearch(T[1]));
-                this.is(T[1], T.lastSearch(1.0, basis.getter('value')));
-                this.is(undefined, T.lastSearch(1.5, basis.getter('value')));
-                this.is(undefined, T.lastSearch('2', basis.getter('value')));
-                this.is(T[T.length - 1], T.lastSearch(2, basis.getter('value')));
-                this.is(T[2], T.lastSearch(2, basis.getter('value'), 3));
-                this.is(T[2], T.lastSearch(2, 'value', 3));
-                this.is(T[2], T.lastSearch(2, 'value', 4));
-                this.is(T[2], T.lastSearch(2, 'value', 5));
-                this.is(T[T.length - 1], T.lastSearch(2, 'value', 6));
+                this.is(undefined, basis.array.lastSearch(T, 2));
+                this.is(T[1], basis.array.lastSearch(T, T[1]));
+                this.is(T[1], basis.array.lastSearch(T, 1.0, basis.getter('value')));
+                this.is(undefined, basis.array.lastSearch(T, 1.5, basis.getter('value')));
+                this.is(undefined, basis.array.lastSearch(T, '2', basis.getter('value')));
+                this.is(T[T.length - 1], basis.array.lastSearch(T, 2, basis.getter('value')));
+                this.is(T[2], basis.array.lastSearch(T, 2, basis.getter('value'), 3));
+                this.is(T[2], basis.array.lastSearch(T, 2, 'value', 3));
+                this.is(T[2], basis.array.lastSearch(T, 2, 'value', 4));
+                this.is(T[2], basis.array.lastSearch(T, 2, 'value', 5));
+                this.is(T[T.length - 1], basis.array.lastSearch(T, 2, 'value', 6));
 
                 var T = [];
                 T[3] = { value: 3 };
                 T[7] = { value: 5 };
                 T[9] = { value: 3 };
-                this.is(undefined, T.lastSearch(2));
-                this.is(undefined, T.lastSearch(2, basis.getter('value')));
-                this.is(T[9], T.lastSearch(3.0, basis.getter('value')));
-                this.is(undefined, T.lastSearch(1.5, basis.getter('value')));
-                this.is(undefined, T.lastSearch('3', basis.getter('value')));
-                this.is(T[9], T.lastSearch(3, basis.getter('value')));
-                this.is(T[3], T.lastSearch(3, basis.getter('value'), 4));
+                this.is(undefined, basis.array.lastSearch(T, 2));
+                this.is(undefined, basis.array.lastSearch(T, 2, basis.getter('value')));
+                this.is(T[9], basis.array.lastSearch(T, 3.0, basis.getter('value')));
+                this.is(undefined, basis.array.lastSearch(T, 1.5, basis.getter('value')));
+                this.is(undefined, basis.array.lastSearch(T, '3', basis.getter('value')));
+                this.is(T[9], basis.array.lastSearch(T, 3, basis.getter('value')));
+                this.is(T[3], basis.array.lastSearch(T, 3, basis.getter('value'), 4));
               }
             }
           ]
@@ -264,27 +264,27 @@ module.exports = {
               name: 'add()',
               test: function(){
                 var T = [1, 2, 3, 4, 5];;
-                this.is(true,  T.add('3'));
-                this.is(false, T.add(3));
-                this.is(true,  T.add(7));
+                this.is(true,  basis.array.add(T, '3'));
+                this.is(false, basis.array.add(T, 3));
+                this.is(true,  basis.array.add(T, 7));
               }
             },
             {
               name: 'remove()',
               test: function(){
                 var T = [1, 2, 3, 4, 5];;
-                this.is(false, T.remove('3'));
-                this.is(true,  T.remove(3));
-                this.is(false, T.remove(7));
+                this.is(false, basis.array.remove(T, '3'));
+                this.is(true,  basis.array.remove(T, 3));
+                this.is(false, basis.array.remove(T, 7));
               }
             },
             {
               name: 'has()',
               test: function(){
                 var T = [1, 2, 3, 4, 5];
-                this.is(false, T.has('3'));
-                this.is(true,  T.has(3));
-                this.is(false, T.has(23));
+                this.is(false, basis.array.has(T, '3'));
+                this.is(true,  basis.array.has(T, 3));
+                this.is(false, basis.array.has(T, 23));
               }
             }
           ]
@@ -297,41 +297,44 @@ module.exports = {
         {
           name: 'toObject()',
           test: function(){
-            var fn = function(val){ return val; };
-            this.is({ a: 123, b: 234 }, '{ a: 123, b: 234 }'.toObject());
-            this.is([1, 2, 3, 4, 5], '[1, 2, 3, 4, 5]'.toObject());
-            this.is(fn.toString(), fn.toString().toObject().toString());
+            var fn = function(val){
+              return val;
+            };
+
+            this.is({ a: 123, b: 234 }, basis.string.toObject('{ a: 123, b: 234 }'));
+            this.is([1, 2, 3, 4, 5], basis.string.toObject('[1, 2, 3, 4, 5]'));
+            this.is(fn.toString(), basis.string.toObject(fn.toString()).toString());
           }
         },
         {
           name: 'repeat()',
           test: function(){
-            this.is('', ''.repeat());
-            this.is('', ''.repeat(0));
-            this.is('', ''.repeat(3));
+            this.is('', basis.string.repeat(''));
+            this.is('', basis.string.repeat('', 0));
+            this.is('', basis.string.repeat('', 3));
 
-            this.is('', 'a'.repeat());
-            this.is('', 'a'.repeat(0));
-            this.is('aaa', 'a'.repeat(3));
+            this.is('', basis.string.repeat('a'));
+            this.is('', basis.string.repeat('a', 0));
+            this.is('aaa', basis.string.repeat('a', 3));
 
-            this.is('', 'abc'.repeat());
-            this.is('', 'abc'.repeat(0));
-            this.is('abcabcabc', 'abc'.repeat(3));
+            this.is('', basis.string.repeat('abc'));
+            this.is('', basis.string.repeat('abc', 0));
+            this.is('abcabcabc', basis.string.repeat('abc', 3));
           }
         },
         {
           name: 'qw()',
           test: function(){
             var S = '  foo foo-bar foo:bar bar ';
-            this.is(['foo', 'foo-bar', 'foo:bar', 'bar'], S.qw());
+            this.is(['foo', 'foo-bar', 'foo:bar', 'bar'], basis.string.qw(S));
 
             var S = ' \t foo \n\n\nbar\r\n\r';
-            this.is(['foo', 'bar'], S.qw());
+            this.is(['foo', 'bar'], basis.string.qw(S));
 
-            this.is([], ''.qw());
+            this.is([], basis.string.qw(''));
 
             var S = ' \t \n\n\n \r\n\r';
-            this.is([], S.qw());
+            this.is([], basis.string.qw(S));
           }
         },
         {
@@ -378,42 +381,38 @@ module.exports = {
         {
           name: 'capitalize()',
           test: function(){
-            this.is('Foo', 'foo'.capitalize());
-            this.is('Foo', 'fOO'.capitalize());
-            this.is('Foobar', 'fooBar'.capitalize());
-            this.is('Foo-bar', 'foo-bar'.capitalize());
+            this.is('Foo', basis.string.capitalize('foo'));
+            this.is('Foo', basis.string.capitalize('fOO'));
+            this.is('Foobar', basis.string.capitalize('fooBar'));
+            this.is('Foo-bar', basis.string.capitalize('foo-bar'));
 
-            this.is('\u041F\u0440\u0438\u0432\u0435\u0442', '\u043F\u0440\u0438\u0432\u0435\u0442'.capitalize());
-            this.is('\u041F\u0440\u0438\u0432\u0435\u0442', '\u043F\u0440\u0438\u0412\u0435\u0442'.capitalize());
+            this.is('\u041F\u0440\u0438\u0432\u0435\u0442', basis.string.capitalize('\u043F\u0440\u0438\u0432\u0435\u0442'));
+            this.is('\u041F\u0440\u0438\u0432\u0435\u0442', basis.string.capitalize('\u043F\u0440\u0438\u0412\u0435\u0442'));
           }
         },
         {
           name: 'camelize()',
           test: function(){
-            this.is('foo', 'foo'.camelize());
-            this.is('fooBar', 'foo-bar'.camelize());
-            this.is('FooBar', '-foo-bar'.camelize());
-            this.is('Foo', '-foo'.camelize());
+            this.is('foo', basis.string.camelize('foo'));
+            this.is('fooBar', basis.string.camelize('foo-bar'));
+            this.is('FooBar', basis.string.camelize('-foo-bar'));
+            this.is('Foo', basis.string.camelize('-foo'));
 
-            this.is('\u043F\u0440\u0438\u0432\u0435\u0442', '\u043F\u0440\u0438\u0432\u0435\u0442'.camelize());
-            this.is('\u043F\u0440\u0438\u0412\u0435\u0442', '\u043F\u0440\u0438-\u0432\u0435\u0442'.camelize());
-            this.is('\u041F\u0440\u0438\u0412\u0435\u0442', '-\u043F\u0440\u0438-\u0432\u0435\u0442'.camelize());
-            this.is('\u041F\u0440\u0438', '-\u043F\u0440\u0438'.camelize());
+            this.is('\u043F\u0440\u0438\u0432\u0435\u0442', basis.string.camelize('\u043F\u0440\u0438\u0432\u0435\u0442'));
+            this.is('\u043F\u0440\u0438\u0412\u0435\u0442', basis.string.camelize('\u043F\u0440\u0438-\u0432\u0435\u0442'));
+            this.is('\u041F\u0440\u0438\u0412\u0435\u0442', basis.string.camelize('-\u043F\u0440\u0438-\u0432\u0435\u0442'));
+            this.is('\u041F\u0440\u0438', basis.string.camelize('-\u043F\u0440\u0438'));
           }
         },
         {
           name: 'dasherize()',
           test: function(){
-            this.is('foo', 'foo'.dasherize());
-            this.is('foo-bar', 'fooBar'.dasherize());
-            this.is('-foo-bar', 'FooBar'.dasherize());
-            this.is('-foo', 'Foo'.dasherize());
+            this.is('foo', basis.string.dasherize('foo'));
+            this.is('foo-bar', basis.string.dasherize('fooBar'));
+            this.is('-foo-bar', basis.string.dasherize('FooBar'));
+            this.is('-foo', basis.string.dasherize('Foo'));
 
-            // unicode unsupport
-            //this.is('\u043F\u0440\u0438\u0432\u0435\u0442', '\u043F\u0440\u0438\u0432\u0435\u0442'.dasherize());
-            //this.is('\u043F\u0440\u0438-\u0432\u0435\u0442', '\u043F\u0440\u0438\u0412\u0435\u0442'.dasherize());
-            //this.is('-\u043F\u0440\u0438-\u0432\u0435\u0442', '\u041F\u0440\u0438\u0412\u0435\u0442'.dasherize());
-            //this.is('-\u043F\u0440\u0438', '\u041F\u0440\u0438'.dasherize());
+            // unicode unsupported
           }
         }
       ]
@@ -425,106 +424,106 @@ module.exports = {
           name: 'group',
           test: function(){
             var N = 1;
-            this.is('1', N.group());
-            this.is('1', N.group(5));
+            this.is('1', basis.number.group(N));
+            this.is('1', basis.number.group(N, 5));
 
             var N = -1;
-            this.is('-1', N.group());
-            this.is('-1', N.group(5));
+            this.is('-1', basis.number.group(N));
+            this.is('-1', basis.number.group(N, 5));
 
             var N = 1234567890;
-            this.is('1 234 567 890', N.group());
-            this.is('12 34 56 78 90', N.group(2));
-            this.is('1 234 567 890', N.group(3));
-            this.is('12 3456 7890', N.group(4));
-            this.is('1234567890', N.group(10));
-            this.is('1234567890', N.group(15));
+            this.is('1 234 567 890', basis.number.group(N));
+            this.is('12 34 56 78 90', basis.number.group(N, 2));
+            this.is('1 234 567 890', basis.number.group(N, 3));
+            this.is('12 3456 7890', basis.number.group(N, 4));
+            this.is('1234567890', basis.number.group(N, 10));
+            this.is('1234567890', basis.number.group(N, 15));
 
-            this.is('1-234-567-890', N.group(undefined, '-'));
-            this.is('1-234-567-890', N.group(3, '-'));
+            this.is('1-234-567-890', basis.number.group(N, undefined, '-'));
+            this.is('1-234-567-890', basis.number.group(N, 3, '-'));
 
             var N = -1234567890;
-            this.is('-1 234 567 890', N.group());
-            this.is('-12 34 56 78 90', N.group(2));
-            this.is('-1 234 567 890', N.group(3));
-            this.is('-12 3456 7890', N.group(4));
-            this.is('-1234567890', N.group(10));
-            this.is('-1234567890', N.group(15));
+            this.is('-1 234 567 890', basis.number.group(N));
+            this.is('-12 34 56 78 90', basis.number.group(N, 2));
+            this.is('-1 234 567 890', basis.number.group(N, 3));
+            this.is('-12 3456 7890', basis.number.group(N, 4));
+            this.is('-1234567890', basis.number.group(N, 10));
+            this.is('-1234567890', basis.number.group(N, 15));
 
-            this.is('-1-234-567-890', N.group(undefined, '-'));
-            this.is('-1-234-567-890', N.group(3, '-'));
+            this.is('-1-234-567-890', basis.number.group(N, undefined, '-'));
+            this.is('-1-234-567-890', basis.number.group(N, 3, '-'));
 
             var N = 1.1;
-            this.is('1.1', N.group());
-            this.is('1.1', N.group(1));
-            this.is('1.1', N.group(2));
-            this.is('1.1', N.group(5));
+            this.is('1.1', basis.number.group(N));
+            this.is('1.1', basis.number.group(N, 1));
+            this.is('1.1', basis.number.group(N, 2));
+            this.is('1.1', basis.number.group(N, 5));
 
             var N = -1.1;
-            this.is('-1.1', N.group());
-            this.is('-1.1', N.group(1));
-            this.is('-1.1', N.group(2));
-            this.is('-1.1', N.group(5));
+            this.is('-1.1', basis.number.group(N));
+            this.is('-1.1', basis.number.group(N, 1));
+            this.is('-1.1', basis.number.group(N, 2));
+            this.is('-1.1', basis.number.group(N, 5));
 
             var N = 1234567890.12345;
-            this.is('1 234 567 890.12345', N.group());
-            this.is('12 34 56 78 90.12345', N.group(2));
-            this.is('1 234 567 890.12345', N.group(3));
-            this.is('1"234"567"890.12345', N.group(3, '"'));
-            this.is('12 3456 7890.12345', N.group(4));
-            this.is('1234567890.12345', N.group(10));
-            this.is('1234567890.12345', N.group(15));
+            this.is('1 234 567 890.12345', basis.number.group(N));
+            this.is('12 34 56 78 90.12345', basis.number.group(N, 2));
+            this.is('1 234 567 890.12345', basis.number.group(N, 3));
+            this.is('1"234"567"890.12345', basis.number.group(N, 3, '"'));
+            this.is('12 3456 7890.12345', basis.number.group(N, 4));
+            this.is('1234567890.12345', basis.number.group(N, 10));
+            this.is('1234567890.12345', basis.number.group(N, 15));
 
             var N = -1234567890.12345;
-            this.is('-1 234 567 890.12345', N.group());
-            this.is('-12 34 56 78 90.12345', N.group(2));
-            this.is('-1 234 567 890.12345', N.group(3));
-            this.is('-1"234"567"890.12345', N.group(3, '"'));
-            this.is('-12 3456 7890.12345', N.group(4));
-            this.is('-1234567890.12345', N.group(10));
-            this.is('-1234567890.12345', N.group(15));
+            this.is('-1 234 567 890.12345', basis.number.group(N));
+            this.is('-12 34 56 78 90.12345', basis.number.group(N, 2));
+            this.is('-1 234 567 890.12345', basis.number.group(N, 3));
+            this.is('-1"234"567"890.12345', basis.number.group(N, 3, '"'));
+            this.is('-12 3456 7890.12345', basis.number.group(N, 4));
+            this.is('-1234567890.12345', basis.number.group(N, 10));
+            this.is('-1234567890.12345', basis.number.group(N, 15));
           }
         },
         {
           name: 'lead()',
           test: function(){
             var N = 123;
-            this.is('123', N.lead());
-            this.is('123', N.lead(0));
-            this.is('123', N.lead(1));
-            this.is('123', N.lead(2));
-            this.is('123', N.lead(3));
-            this.is('00123', N.lead(5));
-            this.is('##123', N.lead(5, '#'));
+            this.is('123', basis.number.lead(N));
+            this.is('123', basis.number.lead(N, 0));
+            this.is('123', basis.number.lead(N, 1));
+            this.is('123', basis.number.lead(N, 2));
+            this.is('123', basis.number.lead(N, 3));
+            this.is('00123', basis.number.lead(N, 5));
+            this.is('##123', basis.number.lead(N, 5, '#'));
 
             var N = -123;
-            this.is('-123', N.lead());
-            this.is('-123', N.lead(0));
-            this.is('-123', N.lead(1));
-            this.is('-123', N.lead(2));
-            this.is('-123', N.lead(3));
-            this.is('-00123', N.lead(5));
-            this.is('-##123', N.lead(5, '#'));
+            this.is('-123', basis.number.lead(N));
+            this.is('-123', basis.number.lead(N, 0));
+            this.is('-123', basis.number.lead(N, 1));
+            this.is('-123', basis.number.lead(N, 2));
+            this.is('-123', basis.number.lead(N, 3));
+            this.is('-00123', basis.number.lead(N, 5));
+            this.is('-##123', basis.number.lead(N, 5, '#'));
 
             var N = 123.23;
-            this.is('123.23', N.lead());
-            this.is('123.23', N.lead(0));
-            this.is('123.23', N.lead(1));
-            this.is('123.23', N.lead(2));
-            this.is('123.23', N.lead(3));
-            this.is('000123.23', N.lead(6));
-            this.is('00000123.23', N.lead(8));
-            this.is('#####123.23', N.lead(8, '#'));
+            this.is('123.23', basis.number.lead(N));
+            this.is('123.23', basis.number.lead(N, 0));
+            this.is('123.23', basis.number.lead(N, 1));
+            this.is('123.23', basis.number.lead(N, 2));
+            this.is('123.23', basis.number.lead(N, 3));
+            this.is('000123.23', basis.number.lead(N, 6));
+            this.is('00000123.23', basis.number.lead(N, 8));
+            this.is('#####123.23', basis.number.lead(N, 8, '#'));
 
             var N = -123.23;
-            this.is('-123.23', N.lead());
-            this.is('-123.23', N.lead(0));
-            this.is('-123.23', N.lead(1));
-            this.is('-123.23', N.lead(2));
-            this.is('-123.23', N.lead(3));
-            this.is('-000123.23', N.lead(6));
-            this.is('-00000123.23', N.lead(8));
-            this.is('-#####123.23', N.lead(8, '#'));
+            this.is('-123.23', basis.number.lead(N));
+            this.is('-123.23', basis.number.lead(N, 0));
+            this.is('-123.23', basis.number.lead(N, 1));
+            this.is('-123.23', basis.number.lead(N, 2));
+            this.is('-123.23', basis.number.lead(N, 3));
+            this.is('-000123.23', basis.number.lead(N, 6));
+            this.is('-00000123.23', basis.number.lead(N, 8));
+            this.is('-#####123.23', basis.number.lead(N, 8, '#'));
           }
         }
       ]
