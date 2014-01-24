@@ -2,6 +2,7 @@ module.exports = {
   name: 'basis.data.Object',
 
   init: function(){
+    basis.require('basis.event');
     basis.require('basis.data');
 
     var nsData = basis.data;

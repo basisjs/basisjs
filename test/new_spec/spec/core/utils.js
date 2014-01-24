@@ -1,14 +1,6 @@
 module.exports = {
   name: 'Util functions',
 
-  init: function(){
-    var A = [1, 2, 3, 4, 5];
-    var B = [5, 4, 3, 2, 1];
-    var C = [1, 2, 3];
-    var D = [4, 5];
-    var E = [1, 2, 3, 2, 3, 2, 1];
-  },
-
   test: [
     {
       name: 'Array',
@@ -19,8 +11,9 @@ module.exports = {
             {
               name: 'basis.array.from()',
               test: function(){
-                this.is(A, basis.array.from(A));
-                this.is(false, A === basis.array.from(A));
+                var a = [1, 2, 3, 4, 5];
+                this.is(a, basis.array.from(a));
+                this.is(false, a === basis.array.from(a));
               }
             },
             {
@@ -46,122 +39,124 @@ module.exports = {
             {
               name: 'indexOf()',
               test: function(){
-                this.is(-1, E.indexOf());
-                this.is(2,  E.indexOf(3));
-                this.is(4,  E.indexOf(3, 3));
-                this.is(4,  E.indexOf(3, 4));
-                this.is(-1, E.indexOf(3, 5));
-                this.is(-1, E.indexOf('3'));
-                this.is(-1, E.indexOf(33));
+                var a = [1, 2, 3, 2, 3, 2, 1];
+
+                this.is(-1, a.indexOf());
+                this.is(2,  a.indexOf(3));
+                this.is(4,  a.indexOf(3, 3));
+                this.is(4,  a.indexOf(3, 4));
+                this.is(-1, a.indexOf(3, 5));
+                this.is(-1, a.indexOf('3'));
+                this.is(-1, a.indexOf(33));
               }
             },
             {
               name: 'lastIndexOf()',
               test: function(){
-                this.is(-1, E.lastIndexOf());
-                this.is(4,  E.lastIndexOf(3));
-                this.is(-1, E.lastIndexOf('3'));
-                this.is(-1, E.lastIndexOf(33));
+                var a = [1, 2, 3, 2, 3, 2, 1];
+
+                this.is(-1, a.lastIndexOf());
+                this.is(4,  a.lastIndexOf(3));
+                this.is(-1, a.lastIndexOf('3'));
+                this.is(-1, a.lastIndexOf(33));
               }
             },
             {
               name: 'forEach()',
               test: function(){
                 var tmp = '';
-                var T = basis.array.from(C);
+                var a = [1, 2, 3];
                 // must return array or undefined???
-                this.is(undefined, T.forEach(function(item){ tmp += item * 2; }));
-                this.is(C, T, true);
-
+                this.is(undefined, a.forEach(function(item){ tmp += item * 2; }));
+                this.is([1, 2, 3], a);
                 this.is('246', tmp);
 
-                var T = basis.array.from(C);
-                T.forEach(function(item, index, array){ array[index] *= 2; });
-                this.is([2, 4, 6], T);
+                a.forEach(function(item, index, array){ array[index] *= 2; });
+                this.is([2, 4, 6], a);
               }
             },
             {
               name: 'every()',
               test: function(){
-                var T = [1, 2, 3, 4, 5];
-                this.is(true,  T.every(function(item){ return item > 0; }));
-                this.is(A, T, true);
+                var a = [1, 2, 3, 4, 5];
+                this.is(true,  a.every(function(item){ return item > 0; }));
+                this.is([1, 2, 3, 4, 5], a);
 
-                this.is(false, T.every(function(item){ return item > 1; }));
+                this.is(false, a.every(function(item){ return item > 1; }));
 
-                T[100] = 1;
-                this.is(true, T.every(function(item){ return typeof item != 'undefined'; }));
+                a[100] = 1;
+                this.is(true, a.every(function(item){ return typeof item != 'undefined'; }));
 
                 var counter = 0;
-                this.is(true, T.every(function(item){ counter++; return true; }));
-                this.is(A.length + 1, counter);
+                this.is(true, a.every(function(item){ counter++; return true; }));
+                this.is(6, counter);
               }
             },
             {
               name: 'some()',
               test: function(){
-                var T = [1, 2, 3, 4, 5];
-                this.is(true,  T.some(function(item){ return item > 4; }));
-                this.is(A, T, true);
+                var a = [1, 2, 3, 4, 5];
+                this.is(true,  a.some(function(item){ return item > 4; }));
+                this.is([1, 2, 3, 4, 5], a);
 
-                this.is(false, T.some(function(item){ return item > 10; }));
+                this.is(false, a.some(function(item){ return item > 10; }));
 
-                T[100] = 1;
-                this.is(false, T.some(function(item){ return typeof item == 'undefined'; }));
+                a[100] = 1;
+                this.is(false, a.some(function(item){ return typeof item == 'undefined'; }));
 
                 var counter = 0;
-                this.is(false, T.some(function(item){ counter++; return false; }));
-                this.is(A.length + 1, counter);
+                this.is(false, a.some(function(item){ counter++; return false; }));
+                this.is(6, counter);
               }
             },
             {
               name: 'filter()',
               test: function(){
-                var T = [1, 2, 3, 4, 5];
-                this.is([1, 3, 5], T.filter(function(item){ return item % 2; }));
-                this.is(A, T, true);
+                var a = [1, 2, 3, 4, 5];
+                this.is([1, 3, 5], a.filter(function(item){ return item % 2; }));
+                this.is([1, 2, 3, 4, 5], a);
 
-                T[100] = 1;
-                this.is([1, 2, 3, 4, 5, 1], T.filter(basis.fn.$true));
-                this.is([1, 2, 3, 4, 5, 1], T.filter(basis.fn.$self));
+                a[100] = 1;
+                this.is([1, 2, 3, 4, 5, 1], a.filter(basis.fn.$true));
+                this.is([1, 2, 3, 4, 5, 1], a.filter(basis.fn.$self));
 
-                this.is([], T.filter(basis.fn.$false));
+                this.is([], a.filter(basis.fn.$false));
 
                 var counter = 0;
-                this.is([], T.filter(function(item){ counter++; }));
-                this.is(A.length + 1, counter);
+                this.is([], a.filter(function(item){ counter++; }));
+                this.is(6, counter);
               }
             },
             {
               name: 'map()',
               test: function(){
-                var T = basis.array.from(C);
-                this.is([2, 4, 6], T.map(function(item){ return item * 2; }));
-                this.is(T, C, true);
+                var a = [1, 2, 3];
+                this.is([2, 4, 6], a.map(function(item){ return item * 2; }));
+                this.is([1, 2, 3], a);
 
-                T[5] = 1;
-                this.is([2, 4, 6, undefined, undefined, 2], T.map(function(item){ return item * 2; }));
+                a[5] = 1;
+                this.is([2, 4, 6, undefined, undefined, 2], a.map(function(item){ return item * 2; }));
 
                 var counter = 0;
-                this.is([undefined, undefined, undefined, undefined, undefined, undefined], T.map(function(item){ counter++; }));
+                this.is([undefined, undefined, undefined, undefined, undefined, undefined], a.map(function(item){ counter++; }));
                 this.is(4, counter);
               }
             },
             {
               name: 'reduce()',
               test: function(){
-                var T = [0, 1, 2, 3, 4];
-                this.is(10, T.reduce(function(previousValue, currentValue, index, array){
+                var a = [0, 1, 2, 3, 4];
+                this.is(10, a.reduce(function(previousValue, currentValue, index, array){
                   return previousValue + currentValue;
                 }));
-                this.is([0, 1, 2, 3, 4], T);
+                this.is([0, 1, 2, 3, 4], a);
 
-                this.is(20, T.reduce(function(previousValue, currentValue, index, array){
+                this.is(20, a.reduce(function(previousValue, currentValue, index, array){
                   return previousValue + currentValue;
                 }, 10));
 
-                var T = [[0, 1], [2, 3], [4, 5]];
-                this.is([0, 1, 2, 3, 4, 5], T.reduce(function(a, b){
+                var a = [[0, 1], [2, 3], [4, 5]];
+                this.is([0, 1, 2, 3, 4, 5], a.reduce(function(a, b){
                   return a.concat(b);
                 }, []));
               }
@@ -174,14 +169,14 @@ module.exports = {
             {
               name: 'flatten()',
               test: function(){
-                this.is([0, 1, 2, 3, 3.5, 4, 5, 6], basis.array.flatten([0, C, 3.5, D, 6]));
+                this.is([0, 1, 2, 3, 3.5, 4, 5, 6], basis.array.flatten([0, [1, 2, 3], 3.5, [4, 5], 6]));
 
-                var T = [1, 2, 3];
-                this.is([1, T, 2, 2, T, 3], basis.array.flatten([[1, T, 2], 2, [T, 3]]));
+                var a = [1, 2, 3];
+                this.is([1, a, 2, 2, a, 3], basis.array.flatten([[1, a, 2], 2, [a, 3]]));
 
-                var T = [];
-                this.is([1, 2], basis.array.flatten([1, T, 2]));
-                this.is([1, T, 2], basis.array.flatten([1, [T], 2]));
+                var a = [];
+                this.is([1, 2], basis.array.flatten([1, a, 2]));
+                this.is([1, a, 2], basis.array.flatten([1, [a], 2]));
               }
             },
             {
@@ -203,56 +198,56 @@ module.exports = {
             {
               name: 'search()',
               test: function(){
-                var T = [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 2, b: 1 }];
-                this.is(undefined, basis.array.search(T, 2));
-                this.is(T[1], basis.array.search(T, T[1]));
-                this.is(T[1], basis.array.search(T, 1.0, basis.getter('value')));
-                this.is(undefined, basis.array.search(T, 1.5, basis.getter('value')));
-                this.is(undefined, basis.array.search(T, '2', basis.getter('value')));
-                this.is(T[2], basis.array.search(T, 2, basis.getter('value')));
-                this.is(T[T.length - 1], basis.array.search(T, 2, basis.getter('value'), 3));
-                this.is(T[T.length - 1], basis.array.search(T, 2, 'value', 3));
+                var a = [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 2, b: 1 }];
+                this.is(undefined, basis.array.search(a, 2));
+                this.is(a[1], basis.array.search(a, a[1]));
+                this.is(a[1], basis.array.search(a, 1.0, basis.getter('value')));
+                this.is(undefined, basis.array.search(a, 1.5, basis.getter('value')));
+                this.is(undefined, basis.array.search(a, '2', basis.getter('value')));
+                this.is(a[2], basis.array.search(a, 2, basis.getter('value')));
+                this.is(a[a.length - 1], basis.array.search(a, 2, basis.getter('value'), 3));
+                this.is(a[a.length - 1], basis.array.search(a, 2, 'value', 3));
 
-                var T = [];
-                T[3] = { value: 3 };
-                T[7] = { value: 5 };
-                T[9] = { value: 3 };
-                this.is(undefined, basis.array.search(T, 2));
-                this.is(undefined, basis.array.search(T, 2, basis.getter('value')));
-                this.is(T[3], basis.array.search(T, 3.0, basis.getter('value')));
-                this.is(undefined, basis.array.search(T, 1.5, basis.getter('value')));
-                this.is(undefined, basis.array.search(T, '3', basis.getter('value')));
-                this.is(T[3], basis.array.search(T, 3, basis.getter('value')));
-                this.is(T[9], basis.array.search(T, 3, basis.getter('value'), 4));
+                var a = [];
+                a[3] = { value: 3 };
+                a[7] = { value: 5 };
+                a[9] = { value: 3 };
+                this.is(undefined, basis.array.search(a, 2));
+                this.is(undefined, basis.array.search(a, 2, basis.getter('value')));
+                this.is(a[3], basis.array.search(a, 3.0, basis.getter('value')));
+                this.is(undefined, basis.array.search(a, 1.5, basis.getter('value')));
+                this.is(undefined, basis.array.search(a, '3', basis.getter('value')));
+                this.is(a[3], basis.array.search(a, 3, basis.getter('value')));
+                this.is(a[9], basis.array.search(a, 3, basis.getter('value'), 4));
               }
             },
             {
               name: 'lastSearch()',
               test: function(){
-                var T = [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 2, b: 1 }];
-                this.is(undefined, basis.array.lastSearch(T, 2));
-                this.is(T[1], basis.array.lastSearch(T, T[1]));
-                this.is(T[1], basis.array.lastSearch(T, 1.0, basis.getter('value')));
-                this.is(undefined, basis.array.lastSearch(T, 1.5, basis.getter('value')));
-                this.is(undefined, basis.array.lastSearch(T, '2', basis.getter('value')));
-                this.is(T[T.length - 1], basis.array.lastSearch(T, 2, basis.getter('value')));
-                this.is(T[2], basis.array.lastSearch(T, 2, basis.getter('value'), 3));
-                this.is(T[2], basis.array.lastSearch(T, 2, 'value', 3));
-                this.is(T[2], basis.array.lastSearch(T, 2, 'value', 4));
-                this.is(T[2], basis.array.lastSearch(T, 2, 'value', 5));
-                this.is(T[T.length - 1], basis.array.lastSearch(T, 2, 'value', 6));
+                var a = [{ value: 0 }, { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 2, b: 1 }];
+                this.is(undefined, basis.array.lastSearch(a, 2));
+                this.is(a[1], basis.array.lastSearch(a, a[1]));
+                this.is(a[1], basis.array.lastSearch(a, 1.0, basis.getter('value')));
+                this.is(undefined, basis.array.lastSearch(a, 1.5, basis.getter('value')));
+                this.is(undefined, basis.array.lastSearch(a, '2', basis.getter('value')));
+                this.is(a[a.length - 1], basis.array.lastSearch(a, 2, basis.getter('value')));
+                this.is(a[2], basis.array.lastSearch(a, 2, basis.getter('value'), 3));
+                this.is(a[2], basis.array.lastSearch(a, 2, 'value', 3));
+                this.is(a[2], basis.array.lastSearch(a, 2, 'value', 4));
+                this.is(a[2], basis.array.lastSearch(a, 2, 'value', 5));
+                this.is(a[a.length - 1], basis.array.lastSearch(a, 2, 'value', 6));
 
-                var T = [];
-                T[3] = { value: 3 };
-                T[7] = { value: 5 };
-                T[9] = { value: 3 };
-                this.is(undefined, basis.array.lastSearch(T, 2));
-                this.is(undefined, basis.array.lastSearch(T, 2, basis.getter('value')));
-                this.is(T[9], basis.array.lastSearch(T, 3.0, basis.getter('value')));
-                this.is(undefined, basis.array.lastSearch(T, 1.5, basis.getter('value')));
-                this.is(undefined, basis.array.lastSearch(T, '3', basis.getter('value')));
-                this.is(T[9], basis.array.lastSearch(T, 3, basis.getter('value')));
-                this.is(T[3], basis.array.lastSearch(T, 3, basis.getter('value'), 4));
+                var a = [];
+                a[3] = { value: 3 };
+                a[7] = { value: 5 };
+                a[9] = { value: 3 };
+                this.is(undefined, basis.array.lastSearch(a, 2));
+                this.is(undefined, basis.array.lastSearch(a, 2, basis.getter('value')));
+                this.is(a[9], basis.array.lastSearch(a, 3.0, basis.getter('value')));
+                this.is(undefined, basis.array.lastSearch(a, 1.5, basis.getter('value')));
+                this.is(undefined, basis.array.lastSearch(a, '3', basis.getter('value')));
+                this.is(a[9], basis.array.lastSearch(a, 3, basis.getter('value')));
+                this.is(a[3], basis.array.lastSearch(a, 3, basis.getter('value'), 4));
               }
             }
           ]
@@ -263,28 +258,28 @@ module.exports = {
             {
               name: 'add()',
               test: function(){
-                var T = [1, 2, 3, 4, 5];;
-                this.is(true,  basis.array.add(T, '3'));
-                this.is(false, basis.array.add(T, 3));
-                this.is(true,  basis.array.add(T, 7));
+                var a = [1, 2, 3, 4, 5];;
+                this.is(true,  basis.array.add(a, '3'));
+                this.is(false, basis.array.add(a, 3));
+                this.is(true,  basis.array.add(a, 7));
               }
             },
             {
               name: 'remove()',
               test: function(){
-                var T = [1, 2, 3, 4, 5];;
-                this.is(false, basis.array.remove(T, '3'));
-                this.is(true,  basis.array.remove(T, 3));
-                this.is(false, basis.array.remove(T, 7));
+                var a = [1, 2, 3, 4, 5];;
+                this.is(false, basis.array.remove(a, '3'));
+                this.is(true,  basis.array.remove(a, 3));
+                this.is(false, basis.array.remove(a, 7));
               }
             },
             {
               name: 'has()',
               test: function(){
-                var T = [1, 2, 3, 4, 5];
-                this.is(false, basis.array.has(T, '3'));
-                this.is(true,  basis.array.has(T, 3));
-                this.is(false, basis.array.has(T, 23));
+                var a = [1, 2, 3, 4, 5];
+                this.is(false, basis.array.has(a, '3'));
+                this.is(true,  basis.array.has(a, 3));
+                this.is(false, basis.array.has(a, 23));
               }
             }
           ]

@@ -1,7 +1,6 @@
 module.exports = {
   name: 'basis.crypt',
 
-  html: resource('../env.html').url,
   init: function(){
     basis.require('basis.data');
 

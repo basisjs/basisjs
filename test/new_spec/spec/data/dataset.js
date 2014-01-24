@@ -1,12 +1,10 @@
 module.exports = {
   name: 'basis.data datasets',
 
-  html: resource('../env.html').url,
   init: function(){
+    basis.require('basis.event');
     basis.require('basis.data');
     basis.require('basis.data.dataset');
-    basis.require('basis.ui');
-    basis.require('basis.event');
 
     (function(){
       var eventTypeFilter = function(event){ return event.type == this; };
