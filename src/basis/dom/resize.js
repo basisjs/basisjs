@@ -84,7 +84,7 @@
       // {
       //   element.onresize = function(e){
       //     events.forEach(function(handler){
-      //       handler.fn.call(handler.context);
+      //       handler.fn.call(handler.context, element);
       //     });
       //   };
       // }
@@ -134,7 +134,7 @@
 
           if (change)
             events.forEach(function(handler){
-              handler.fn.call(handler.context);
+              handler.fn.call(handler.context, element);
             });
         };
 
@@ -159,7 +159,7 @@
         };
         var handler = function(){
           events.forEach(function(handler){
-            handler.fn.call(handler.context);
+            handler.fn.call(handler.context, element);
           });
         };
 
