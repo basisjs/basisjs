@@ -1,3 +1,4 @@
+// test suite
 module.exports = {
   name: 'basis.js test suite',
   html: resource('env.html').url, // base env
@@ -20,3 +21,9 @@ module.exports = {
     require('spec/layout.js')
   ]
 };
+
+// it's a hack to mark basis.js to be updatable
+var xhr = new XMLHttpRequest();
+xhr.open('HEAD', '../../../src/basis.js', true);
+xhr.setRequestHeader('X-Basis-Resource', 1);
+xhr.send('');

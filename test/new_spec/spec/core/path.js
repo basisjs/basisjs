@@ -23,9 +23,24 @@ module.exports = {
         this.is('/a', basis.path.dirname('/a/b/'));
         this.is('/a', basis.path.dirname('/a/b'));
         this.is('/', basis.path.dirname('/a'));
+        this.is('a', basis.path.dirname('a/b/'));
+        this.is('a', basis.path.dirname('a/b'));
+        this.is('.', basis.path.dirname('a'));
         this.is('.', basis.path.dirname(''));
         this.is('/', basis.path.dirname('/'));
         this.is('/', basis.path.dirname('////'));
+        this.is('/', basis.path.dirname('/a/b/..'));
+        this.is('/', basis.path.dirname('/a/b/../'));
+        this.is('/', basis.path.dirname('/a/../b'));
+        this.is('/', basis.path.dirname('/a/../b/'));
+        this.is('/a', basis.path.dirname('/../a/b'));
+        this.is('/a', basis.path.dirname('/../a/b/'));
+        this.is('.', basis.path.dirname('a/b/..'));
+        this.is('.', basis.path.dirname('a/b/../'));
+        this.is('.', basis.path.dirname('a/../b'));
+        this.is('.', basis.path.dirname('a/../b/'));
+        this.is('a', basis.path.dirname('../a/b'));
+        this.is('a', basis.path.dirname('../a/b/'));
       }
     },
     {
@@ -89,6 +104,9 @@ module.exports = {
         this.is('/foo/bar/baz/asdf', basis.path.normalize('/foo/bar//baz/asdf/quux/..'));
         this.is('fixtures/b/c.js', basis.path.normalize('./fixtures///b/../b/c.js'));
         this.is('/bar', basis.path.normalize('/foo/../../../bar'));
+        this.is('/bar/baz', basis.path.normalize('/foo/../../../bar/baz'));
+        this.is('bar', basis.path.normalize('foo/../../../bar'));
+        this.is('bar/baz', basis.path.normalize('foo/../../../bar/baz'));
         this.is('a/b', basis.path.normalize('a//b//../b'));
         this.is('a/b/c', basis.path.normalize('a//b//./c'));
         this.is('a/b', basis.path.normalize('a//b//.'));
@@ -116,8 +134,8 @@ module.exports = {
         var tests = [
           [['/var/lib', '../', 'file/'], '/var/file'],
           [['/var/lib', '/../', 'file/'], '/file'],
-          [['a/b/c/', '../../..'], location.pathname],
-          [['.'], location.pathname],
+          [['a/b/c/', '../../..'], basis.path.dirname(location.pathname)],
+          [['.'], basis.path.dirname(location.pathname)],
           [['/some/dir', '.', '/absolute/'], '/absolute']
         ];
 

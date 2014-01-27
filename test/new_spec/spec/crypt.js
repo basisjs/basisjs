@@ -2,13 +2,6 @@ module.exports = {
   name: 'basis.crypt',
 
   init: function(){
-    basis.require('basis.data');
-
-    if (basis.resource.onUpdate)
-      basis.resource.onUpdate(function(fn){
-        deprecateTestEnvironment();
-      });
-
     basis.require('basis.crypt');
 
     var UTF16 = basis.utils.utf16;
