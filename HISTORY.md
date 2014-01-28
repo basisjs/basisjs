@@ -1,3 +1,81 @@
+## 1.1.0 (January 28, 2014)
+
+New namespaces:
+
+  - `basis.utils.benchmark` – utils for benchmarking, use new browser APIs when possible (speed tests was changed to use it)
+  - `basis.dom.computedStyle` – functions to get computed values for css properties
+  - `basis.dom.resize` – event-based element resize detection (other modules was refactored to use it)
+
+basis.event
+
+  - API: rename `basis.event.Emitter` methods `emit_debug` -> `debug_emit` and `handler_list` -> `debug_handlers`
+  - FIX: `basis.event.Emitter#removeHandler` method always warns when no handlers and handler didn't removed now
+  - FIX: warnings in `basis.event` show incorrect class in messages
+  - FIX: multiple call of `basis.event.Emitter#destroy` method is not fanal anymore and override destroy method not only in dev mode for behaviour consistence
+  
+basis.layout
+
+  - deprecate `basis.layout.Box`, `basis.layout.Viewport` and `basis.layout.addBlockResizeHandler`
+  - remove `basis.layout.Intersection`
+  - rework `basis.layout.VerticalPanelStack` and `basis.layout.VerticalPanel`
+  - new functions: `getOffsetParent`, `getTopLeftPoint`, `getBoundingRect` and `getViewportRect`
+  - add tests for new functions
+
+basis.l10n
+
+  - API: `basis.l10n.culture.set` is equivalent to `basis.l10n.setCulture` now
+  - FIX: `basis.l10n.setCulture` don't set culture as current if culture is not in the culture list
+  - FIX: prevent `basis.l10n.culture` to create new instances of `basis.l10n.Culture`
+  - API: allow to use `basis.resource` for `basis.l10n.dictionary` function
+  - NEW: experimental support for object as content for dictionary
+
+basis.data
+
+  - API: remove `basis.data.Object#isTarget`
+  - NEW: `basis.data.Value.from` function casts object properties to `basis.data.Value` (experimental)
+  - FIX: `basis.data.dataset.Slice` index order (finally)
+  - FIX: `basis.data.Value` destroy method doesn't remove listen handlers from linked emitter instances
+  - FIX: `basis.data.Value` set value to `null` when value is `basis.event.Emitter` and destroing 
+  - FIX: change destroy order for `basis.data.Object`
+  - NEW: `basis.data.resolveDataset` and `basis.data.DatasetAdapter` implemented
+  - NEW: `basis.data.DatasetWrapper#setDataset`, `basis.data.dataset.SourceDataset#setSource` and `basis.dom.wrapper.Node#setDataSource` methods are using `basis.data.resolveDataset` now
+  - `basis.data.Dataset#sync` and `basis.entity`'s datasets aggregate events on objects destroy
+
+basis.dom.wrapper satellites:
+
+  - API: `basis.dom.wrapper.Node#satelliteConfig` is now deprecated (`basis.dom.wrapper.Node#satellite` should be used instead)
+  - API: `events` property should be used instead of `hook` property in satellite config
+  - NEW: `basis.dom.wrapper.Node#setSatellite` accepts satellite config now
+  - NEW: `instance` property in satellite config
+  - fix various issues
+  - cover by tests
+
+Project maintenance:
+
+  - add `.gitignore`
+  - add `.jscs.json` to use with [JavaScript Code Style checker](https://github.com/mdevils/node-jscs), init clean up source code style, add own rule to check identifiers
+  - new readme (ru)
+
+Other changes:
+
+  - FIX: fix `basis.resource` and `basis.require` implicit namespace conversion from path
+  - NEW: `basis.app#ready` method implemented
+  - NEW: `basis.router` supports `\` and `|` (inside braces) in path as special symbols now
+  - FIX: `basis.net` don't replace semicolon prefixed names for `undefined` in url if no value in `routerParams`
+  - API: remove `basis.dom.event.Handler`
+  - NEW: `<b:remove>` instruction implemented in `basis.template`
+  - FIX: fix warnings and double event emit on `basis.dom.wrapper.AbstractNode#setOnwer`
+  - FIX: change `basis.ui.Node` destroy order
+  - API: set null to `basis.ui.Node#template` is not allowed now (only on node destroy)
+  - FIX: `basis.dom.wrapper` issue with non-empty groups on grouping reset
+  - delete deprecated `basis.html` namespace file
+  - rework `basis.ui.GroupingNode` and `basis.ui.PartitionNode` moving on template update 
+  - rework `basis.ui.table.HeaderGroupingNode`
+  - improve `basis.ui.scrolltable` by using `basis.dom.resize`
+  - various small fixes and improvements in `basis.ui.chart`
+  - temporary remove file inspector from `basis.devpanel`
+  - `TodoMVC` demo refactoring
+
 ## 1.0.0 (december 18, 2013)
 
 - FIX: template events for IE8 and below
