@@ -1,6 +1,6 @@
 
   basis.require('basis.dom');
-  basis.require('basis.dom.event');
+  basis.require('basis.dom.resize');
   basis.require('basis.cssom');
   basis.require('basis.layout');
   basis.require('basis.ui.table');
@@ -23,9 +23,9 @@
   var cssom = basis.cssom;
   var layout = basis.layout;
 
-  var sender = basis.dom.event.sender;
   var createArray = basis.array.create;
   var createElement = basis.dom.createElement;
+  var listenResize = basis.dom.resize.add;
 
   var Table = basis.ui.table.Table;
 
@@ -43,10 +43,12 @@
   // main part
   //
 
-  var IE8 = basis.ua.is('IE8');
+  function resetStyleAttr(extraStyle){
+    return 'style="padding:0!important;margin:0!important;border:0!important;width:auto!important;height:0!important;font-size:0!important;' + (extraStyle || '') + '"';
+  }
 
   function resetStyle(extraStyle){
-    return '[style="padding:0!important;margin:0!important;border:0!important;width:auto!important;height:0!important;font-size:0!important;' + (extraStyle || '') + '"]';
+    return '[' + resetStyleAttr(extraStyle) + ']';
   }
 
   function cellSectionBuilder(property){
@@ -68,21 +70,11 @@
   }
 
   // Cells proto
-  // TODO: remove reference to basis.dom.event, because future build improvement may hide basis from global scope
-  var measureCell = createElement('td' + resetStyle(),
-    createElement(resetStyle('position:relative!important'),
-      createElement('iframe[event-load="measureInit"]' +
-        resetStyle(
-          'width:100%!important;position:absolute!important;visibility:hidden!important;' +
-          // hack for IE via behavior - load event emulation
-          // FIXME: find to better way, but anyway don't access to basis via global scope (it may be removed on build)
-          'behavior:expression(basis.dom.event.fireEvent(window,\\"load\\",{type:\\"load\\",target:this}),(runtimeStyle.behavior=\\"none\\"))'
-        )
-      )
-    )
+  var measureCellProto = createElement('td' + resetStyle(),
+    createElement(resetStyle('position:relative!important'))
   );
 
-  var expanderCell = createElement('td' + resetStyle(),
+  var expanderCellProto = createElement('td' + resetStyle(),
     createElement(resetStyle())
   );
 
@@ -115,10 +107,10 @@
 
       // measure row
       measureRow: cellSectionBuilder('measure'),
-      
+
       // header expander row
       headerExpandRow: cellSectionBuilder('header'),
-      
+
       // footer expander row
       footerExpandRow: cellSectionBuilder('footer')
     },
@@ -131,9 +123,6 @@
           this.tmpl.headerOffset.style.left = scrollLeft;
           this.tmpl.footerOffset.style.left = scrollLeft;
         }
-      },
-      measureInit: function(event){
-        (sender(event).contentWindow.onresize = this.requestRelayout)();
       }
     },
 
@@ -165,17 +154,19 @@
       }, this);
 
       // column width sync cells
-      this.columnWidthSync_ = createArray(this.columnCount, function(){
-        return {
-          measure: measureCell.cloneNode(true),
-          header: expanderCell.cloneNode(true),
-          footer: expanderCell.cloneNode(true)
-        };
-      });
+      var columnWidthSync_ = [];
+      for (var i = 0; i < this.columnCount; i++)
+      {
+        var measureCell = measureCellProto.cloneNode(true);
+        listenResize(measureCell.firstChild, this.requestRelayout, this)
+        columnWidthSync_.push({
+          measure: measureCell,
+          header: expanderCellProto.cloneNode(true),
+          footer: expanderCellProto.cloneNode(true)
+        });
+      }
 
-      // FIXME: hack for ie, trigger relayout on create
-      if (IE8)
-        setTimeout(this.requestRelayout, 1);
+      this.columnWidthSync_ = columnWidthSync_;
     },
 
     templateSync: function(){
@@ -183,7 +174,7 @@
 
       // add block resize trigger
       if ('boundElement' in this.tmpl)
-        layout.addBlockResizeHandler(this.tmpl.boundElement, this.requestRelayout);
+        listenResize(this.tmpl.boundElement, this.requestRelayout, this);
 
       this.requestRelayout();
     },
@@ -266,9 +257,6 @@
       basis.clearImmediate(this.timer_);
       this.timer_ = true; // prevent relayout call
 
-      this.section_measure_ = null;
-      this.section_header_ = null;
-      this.section_footer_ = null;
       this.columnWidthSync_ = null;
       this.shadowHeaderHtml_ = null;
       this.shadowFooterHtml_ = null;

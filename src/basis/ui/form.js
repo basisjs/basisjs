@@ -43,7 +43,7 @@
   */
   var FormContent = UINode.subclass({
     className: namespace + '.FormContent',
-    
+
     template: templates.FormContent,
 
     childClass: field.Field,
@@ -111,7 +111,7 @@
         errors[0].field.focus();
         return errors;
       }
-      
+
       return true;
     },
     serialize: function(){

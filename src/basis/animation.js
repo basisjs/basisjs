@@ -21,7 +21,7 @@
   var setStyle = basis.cssom.setStyle;
   var createEvent = basis.event.create;
 
-  
+
   //
   // MAIN PART
   //
@@ -137,7 +137,7 @@
         this.started = false;
         this.set(1.0);
       }
-    },        
+    },
     destroy: function(){
       this.stop();
 

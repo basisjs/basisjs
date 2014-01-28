@@ -28,7 +28,7 @@
   //
 
   PARSER.add('js', (function(){
-    var keywords = 
+    var keywords =
       'break case catch continue ' +
       'default delete do else false ' +
       'for function if in instanceof ' +
@@ -131,7 +131,7 @@
   PARSER.add('css', (function(){
     var prefixes =
       '-webkit- -o- -ms- -moz- -khtml-';
-    var properties = 
+    var properties =
       'azimuth background-attachment background-color background-image background-position ' +
       'background-repeat background border-collapse border-color border-spacing border-style ' +
       'border-top border-right border-bottom border-left border-top-color border-right-color ' +
@@ -149,11 +149,11 @@
       'speak-numeral speak-punctuation speak speech-rate stress table-layout text-align ' +
       'text-decoration text-indent text-transform top unicode-bidi vertical-align visibility ' +
       'voice-family volume white-space widows width word-spacing z-index';
-    var css3properties = 
+    var css3properties =
       // CSS Transitions Module Level 3 (http://www.w3.org/TR/css3-transitions/)
       'transition transition-delay transition-duration transition-property transition-timing-function ' +
       // CSS 2D Transforms (http://www.w3.org/TR/css3-2d-transforms/)
-      'transform transform-origin ' + 
+      'transform transform-origin ' +
       // CSS Backgrounds and Borders Module Level 3 (http://www.w3.org/TR/css3-background/)
       'background-origin background-clip background-size ' +
       'border-image border-image-outset border-image-repeat border-image-slice border-image-source border-image-width ' +
@@ -339,7 +339,9 @@
 
       // fix empty strings
       text = text
-               .replace(/\n[ \t]+/g, function(m){ return m.replace(/\t/g, '  '); })
+               .replace(/\n[ \t]+/g, function(m){
+                  return m.replace(/\t/g, '  ');
+                })
                .replace(/\n[ \t]+\n/g, '\n\n');
 
       if (!options.keepFormat)
@@ -365,7 +367,7 @@
         return a + repeat('\xA0', b.length);
       });
 
-      return text; 
+      return text;
     }
 
     //  MAIN PART
@@ -384,13 +386,13 @@
     {
       res.push(
         '<div class="line ' + (i % 2 ? 'odd' : 'even') + lineClass + '">' +
-          '<span class="lineContent">' + 
+          '<span class="lineContent">' +
             (!options.noLineNumber
               ? '<input class="lineNumber" value="' + lead(i + 1, numberWidth) + '" type="none" unselectable="on" readonly="readonly" tabindex="-1" />' +
                 '<span class="over"></span>'
               : ''
             ) +
-            (lines[i] + '\r\n') + 
+            (lines[i] + '\r\n') +
           '</span>' +
         '</div>'
       );

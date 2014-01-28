@@ -30,7 +30,10 @@
   }
 
   var createApp = basis.fn.lazyInit(function(config){
+    var readyHandlers = [];
+    var inited = false;
     var app = {
+      inited: false,
       setTitle: function(title){
         if (title != appTitle)
         {
@@ -76,7 +79,16 @@
         if (appInjectPoint.type == 'container')
           node.appendChild(appEl)
         else
-          replaceNode(node, appEl);      
+          replaceNode(node, appEl);
+      },
+      ready: function(fn, context){
+        if (inited)
+          fn.call(context, app);
+        else
+          readyHandlers.push({
+            fn: fn,
+            context: context
+          });
       }
     };
 
@@ -109,7 +121,7 @@
 
         case 'init':
           appInit = typeof value == 'function' ? value : appInit;
-          break;          
+          break;
 
         default:
           ;;;basis.dev.warn('Unknown config property `' + key + '` for app, value:', value);
@@ -130,6 +142,15 @@
 
       appEl = null;
       app.setElement(insertEl);
+
+      // mark app as inited
+      inited = true;
+      app.inited = true;
+
+      // invoke ready handler
+      var handler;
+      while (handler = readyHandlers.shift())
+        handler.fn.call(handler.context, app);
     });
 
     return app;

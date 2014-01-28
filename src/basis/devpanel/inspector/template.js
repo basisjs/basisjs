@@ -39,8 +39,8 @@ function getOffsetRect(elem){
   var top  = box.top + scrollTop - clientTop;
   var left = box.left + scrollLeft - clientLeft;
 
-  return { 
-    top: Math.round(top), 
+  return {
+    top: Math.round(top),
     left: Math.round(left),
     width: box.width,
     height: box.height
@@ -78,7 +78,7 @@ var pickupTarget = new basis.data.value.Property(null, {
       var rect = getOffsetRect(tmpl.element);
       if (rect)
       {
-        basis.cssom.setStyle(overlay, {                              
+        basis.cssom.setStyle(overlay, {
           left: rect.left + 'px',
           top: rect.top + 'px',
           width: rect.width + 'px',
@@ -96,7 +96,7 @@ var pickupTarget = new basis.data.value.Property(null, {
       DOM.remove(overlay);
       DOM.event.releaseEvent('mousedown');
       DOM.event.releaseEvent('mouseup');
-      DOM.event.releaseEvent('contextmenu');    
+      DOM.event.releaseEvent('contextmenu');
       DOM.event.releaseEvent('click');
       inspectDepth = 0;
     }
@@ -114,13 +114,13 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     dir: 'left bottom left top',
     template: resource('template/template_hintPopup.tmpl'),
     autorotate: [
-      'left top left bottom', 
-      'left bottom left bottom', 
-      'left top left top', 
-      'right bottom right top', 
+      'left top left bottom',
+      'left bottom left bottom',
+      'left top left top',
+      'right bottom right top',
       'right top right bottom',
       'right bottom right bottom',
-      'right top right top' 
+      'right top right top'
     ],
     binding: {
       instanceName: {
@@ -181,12 +181,12 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
   });
 });
 
-function startInspect(){ 
+function startInspect(){
   if (!inspectMode)
   {
     DOM.event.addGlobalHandler('mousemove', mousemoveHandler);
     DOM.event.addGlobalHandler('mousewheel', mouseWheelHandler);
-    basis.cssom.classList(document.body).add('devpanel-inspectMode');    
+    basis.cssom.classList(document.body).add('devpanel-inspectMode');
     inspectMode = true;
     transport.sendData('startInspect', 'template');
   }
@@ -197,7 +197,7 @@ function endInspect(){
   {
     DOM.event.removeGlobalHandler('mousemove', mousemoveHandler);
     DOM.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
-    basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
+    basis.cssom.classList(document.body).remove('devpanel-inspectMode');
     inspectMode = false;
     transport.sendData('endInspect', 'template');
     pickupTarget.set();
@@ -231,11 +231,12 @@ function mousemoveHandler(){
 
   do {
     if (refId = cursor.basisTemplateId)
-    { 
+    {
       inspectDepth = 0;
       return pickupTarget.set(refId);
     }
-  } while (cursor = cursor.parentNode);
+  }
+  while (cursor = cursor.parentNode);
 
   pickupTarget.set();
 }
@@ -263,7 +264,8 @@ function mouseWheelHandler(){
 
       curDepth++;
     }
-  } while (cursor = cursor.parentNode);
+  }
+  while (cursor = cursor.parentNode);
 
   pickupTarget.set(lastRefId);
   inspectDepth = lastDepth;

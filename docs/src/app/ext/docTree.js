@@ -58,6 +58,8 @@
       args: function(node){
         if (/^(function|method|class|classMember)$/i.test(node.data.kind))
           return basis.dom.createElement('SPAN.args', '(' + app.core.getFunctionDescription(node.data.obj).args + ')');
+        if (node.data.kind == 'property')
+          return basis.dom.createElement('SPAN.value', (typeof node.data.obj == 'function' ? '<function>' : String(node.data.obj)));
       }
     }
   });

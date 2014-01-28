@@ -156,9 +156,9 @@
           }
         },
 
-        satelliteConfig: {
+        satellite: {
           indexes: {
-            hook: { rootChanged: true, update: false },
+            events: ['rootChanged', 'update'],
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },

@@ -1,15 +1,14 @@
 
   basis.require('basis.event');
-  basis.require('basis.dom.event');
-  basis.require('basis.dom.wrapper');
   basis.require('basis.dragdrop');
+  basis.require('basis.layout');
   basis.require('basis.ui');
 
 
  /**
   * @see ./demo/defile/paginator.html
   * @namespace basis.ui.paginator
-  */ 
+  */
   var namespace = this.path;
 
 
@@ -17,13 +16,11 @@
   // import names
   //
 
-  var Event = basis.dom.event;
-
   var createArray = basis.array.create;
   var createEvent = basis.event.create;
   var events = basis.event.events;
+  var getBoundingRect = basis.layout.getBoundingRect;
 
-  var Box = basis.layout.Box;
   var DragDropElement = basis.dragdrop.DragDropElement;
   var UINode = basis.ui.Node;
 
@@ -69,7 +66,7 @@
 
     action: {
       click: function(event){
-        Event.kill(event);
+        event.die();
         if (!this.isDisabled())
           this.click();
       }
@@ -181,13 +178,13 @@
     action: {
       jumpTo: function(event){
         var scrollbar = this.tmpl.scrollbar || this.element;
-        var pos = (event.mouseX - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
+        var pos = (event.mouseX - getBoundingRect(scrollbar).left) / scrollbar.offsetWidth;
 
         this.setSpanStartPage(Math.floor(pos * this.pageCount) - Math.floor(this.pageSpan / 2));
       },
       scroll: function(event){
         var delta = event.wheelDelta;
-        
+
         if (delta)
         {
           // set new offset
@@ -244,7 +241,7 @@
 
    /**
     * @inheritDoc
-    */ 
+    */
     templateSync: function(){
       UINode.prototype.templateSync.call(this);
 
@@ -276,7 +273,7 @@
       }
     },
 
-   /** 
+   /**
     * @param {number} pageSpan
     */
     setPageSpan: function(pageSpan){
@@ -287,7 +284,7 @@
       {
         // set new value
         this.pageSpan = newPageSpan;
-        
+
         // sync
         this.syncPages();
         this.updateSelection();
@@ -300,10 +297,10 @@
    /**
     * @param {number} activePage
     * @param {boolean} spotlight
-    */ 
+    */
     setActivePage: function(activePage, spotlight){
       var newActivePage = Math.ceil(activePage - this.pageOffset) || 0;
-      var oldActivePage = this.activePage;   
+      var oldActivePage = this.activePage;
 
       if (newActivePage != oldActivePage)
       {
@@ -319,14 +316,14 @@
 
    /**
     * @param {number} pageNumber
-    */ 
+    */
     spotlightPage: function(pageNumber){
       this.setSpanStartPage(pageNumber - Math.round(this.pageSpan / 2) + 1);
     },
 
    /**
     * @param {number} pageNumber
-    */ 
+    */
     setSpanStartPage: function(pageNumber){
       pageNumber = basis.number.fit(pageNumber, 0, this.pageCount < this.pageSpan ? 0 : this.pageCount - this.pageSpan);
 
@@ -344,7 +341,7 @@
     },
 
    /**
-    */ 
+    */
     updateSelection: function(){
       var node = basis.array.search(this.childNodes, this.activePage + this.pageOffset, 'pageNumber');
 
@@ -355,7 +352,7 @@
     },
 
    /**
-    */ 
+    */
     syncPages: function(){
       if (!this.pageSpan || !this.pageCount)
         this.clear();
@@ -367,9 +364,9 @@
         pages.push({
           pageNumber: this.pageOffset + this.spanStartPage_ + i
         });
-      
+
       this.setChildNodes(pages);
-      this.setSpanStartPage(this.spanStartPage_);      
+      this.setSpanStartPage(this.spanStartPage_);
     },
 
    /**

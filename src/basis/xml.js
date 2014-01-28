@@ -70,11 +70,11 @@
   var XMLProgId = 'native';
   var isNativeSupport = true;
 
-  var createDocument = function(){
+  var createDocument = (function(){
     var implementation = document.implementation;
     if (implementation && implementation.createDocument)
     {
-      return function(namespace, nodename){ 
+      return function(namespace, nodename){
         var result = implementation.createDocument(namespace, nodename, null);
         if (result.charset && result.charset != document.charset)
           result.charset = document.charset;
@@ -85,10 +85,10 @@
     if (window.ActiveXObject)
     {
       // http://blogs.msdn.com/xmlteam/archive/2006/10/23/using-the-right-version-of-msxml-in-internet-explorer.aspx
-      var progId = ["MSXML2.DOMDocument.6.0", "MSXML2.DOMDocument.3.0"];
+      var progId = ['MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.3.0'];
 
       for (var i = 0; i < progId.length; i++)
-        try { 
+        try {
           if (new ActiveXObject(progId[i]))
           {
             XMLProgId = progId[i];
@@ -104,7 +104,7 @@
 
     throw new Error('Browser doesn\'t support for XML document!');
 
-  }();
+  })();
 
 
   /*
@@ -188,7 +188,7 @@
   * @param {Node} node
   * @param {object} mapping
   * @return {object}
-  */ 
+  */
   function XML2Object(node, mapping){  // require for refactoring
     var nodeType = node.nodeType;
     var attributes = node.attributes;
@@ -219,25 +219,26 @@
       // single child node and not an element -> return child nodeValue
       if (firstChild.nodeType != ELEMENT_NODE && firstChild === node.lastChild)
         return firstChild.nodeValue;
-      else if (firstChild !== node.lastChild && firstChild.nodeType == TEXT_NODE)
-      {
-        var isSeparatedTextNode = true;
-        var result = '';
-        var cursor = firstChild;
-        do
+      else
+        if (firstChild !== node.lastChild && firstChild.nodeType == TEXT_NODE)
         {
-          if (cursor.nodeType !== TEXT_NODE)
+          var isSeparatedTextNode = true;
+          var result = '';
+          var cursor = firstChild;
+          do
           {
-            isSeparatedTextNode = false;
-            break;
+            if (cursor.nodeType !== TEXT_NODE)
+            {
+              isSeparatedTextNode = false;
+              break;
+            }
+            result += cursor.nodeValue;
           }
-          result += cursor.nodeValue;
-        }
-        while (cursor = cursor.nextSibling);
+          while (cursor = cursor.nextSibling);
 
-        if (isSeparatedTextNode)
-          return result;
-      }
+          if (isSeparatedTextNode)
+            return result;
+        }
     }
 
     var result = {};
@@ -328,8 +329,8 @@
   //
 
   function isPrimitiveObject(value){
-    return typeof value == 'string'   || typeof value == 'number' || 
-           typeof value == 'function' || typeof value == 'boolean' || 
+    return typeof value == 'string'   || typeof value == 'number' ||
+           typeof value == 'function' || typeof value == 'boolean' ||
            value.constructor === Date  || value.constructor === RegExp;
   }
 

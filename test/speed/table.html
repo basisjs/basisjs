@@ -73,9 +73,11 @@
       basis.require('basis.data.generator');
       basis.require('basis.ui.field');
       basis.require('basis.ui.table');
+      basis.require('basis.utils.benchmark');
 
       var DOM = basis.dom;
       var Event = basis.dom.event;
+      var getTime = basis.utils.benchmark.time;
 
       setRowCount = function(value){
         DOM.get('rowCount').value = value;
@@ -230,9 +232,9 @@
 
       var stringcache = [];
       function genRows(count){
-        var d1 = Date.now();
+        var d1 = getTime();
         TestTable.clear();
-        var clearTime = Date.now() - d1;
+        var clearTime = getTime(d1);
 
         var data = [];
         for (var i = 0; i < count; i++)
@@ -245,12 +247,11 @@
             }
           });
 
-        var d = Date.now();
+        var d = getTime();
 
         TestTable.setChildNodes(data);
 
-        var loadDataTime = Date.now() - d;
-        DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + (loadDataTime/1000).toFixed(3) + '</b> sec (' + ((clearTime)/1000).toFixed(3) + ')';
+        DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + (getTime(d) / 1000).toFixed(3) + '</b> sec (' + (clearTime / 1000).toFixed(3) + ')';
       };
       basis.ready(function(){
         setRowCount(10);

@@ -124,11 +124,13 @@
       basis.require('basis.dom.event');
       basis.require('basis.data.generator');
       basis.require('basis.ui.tree');
+      basis.require('basis.utils.benchmark');
 
       var DOM = basis.dom;
       var Event = basis.dom.event;
 
       var gString = basis.data.generator.string;
+      var getTime = basis.utils.benchmark.time;
 
       var Tree = basis.ui.tree.Tree;
       var TreeNode = basis.ui.tree.Node;
@@ -178,9 +180,9 @@
         if (DOM.get('firstRun'))
           DOM.remove(DOM.get('firstRun'));
 
-        var clearTime = new Date();
+        var clearTime = getTime();
         TestTree.clear();
-        DOM.get('clearTime').innerHTML = ' [clear time: ' + ((new Date() - clearTime)/1000).toFixed(3) + ']';
+        DOM.get('clearTime').innerHTML = ' [clear time: ' + (getTime(clearTime) / 1000).toFixed(3) + ']';
 
         var isRandomTitle = DOM.get('checkRandomNames').checked;
 
@@ -201,7 +203,7 @@
         }
 
         //if (console && console.profile) console.profile();
-        var timeStart = new Date();
+        var timeStart = getTime();
         var nodes = [TestTree];
         var cn = [];
         for (var i = 0; i < count; i++)
@@ -222,7 +224,7 @@
         }
         TestTree.setChildNodes(cn);
 
-        var time = ((new Date() - timeStart)/1000).toFixed(3);
+        var time = (getTime(timeStart) / 1000).toFixed(3);
         DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + time + '</b> sec';
 
         cn.length = 0;
@@ -243,26 +245,26 @@
           this.expandAll();
         },
         SelectionClear: function(){
-          d = new Date();
+          var d = getTime();
           this.selection.clear();
-          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + (getTime(d) / 1000).toFixed(3));
         },
         SelectAll: function(){
-          d = new Date();
+          var d = getTime();
           this.selection.set(DOM.axis(this, DOM.AXIS_DESCENDANT));
-          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + (getTime(d) / 1000).toFixed(3));
         },
         SelectionInverse: function(){
-          d = new Date();
+          var d = getTime();
           this.selection.set(DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ return !node.selected; }));
-          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + (getTime(d) / 1000).toFixed(3));
         },
         DeleteSelected: function(){
-          d = new Date();
+          var d = getTime();
           var items = this.selection.getItems();
           this.selection.clear();
           items.forEach(function(node){ node.destroy(); });
-          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + (getTime(d) / 1000).toFixed(3));
           //basis.array.from(this.selection.getItems()).forEach(function(node){ node.destroy(); });
         },
         RenameSelected: function(){

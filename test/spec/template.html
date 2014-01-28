@@ -76,7 +76,7 @@
                     basis.template.theme('base').define('test', basis.resource('foo/1.tmpl'));
                     basis.template.theme('custom').define('test', basis.resource('foo/custom/2.tmpl'));
                     basis.template.setTheme('base');
-                    
+
                     var tmpl = new basis.template.html.Template(basis.template.get('test'));
                     tmpl.createInstance(); // trigger for template parsing
                     this.is(1, tmpl.resources.length);
@@ -141,7 +141,7 @@
                         var a = createTemplate('<span class="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b} {b2}"></b:include>');
 
-                        this.is(text('<span class="a b b2"/>'), text(b, { b: 'b', b2: 'b2' }));                        
+                        this.is(text('<span class="a b b2"/>'), text(b, { b: 'b', b2: 'b2' }));
                       }
                     },
                     {
@@ -191,12 +191,12 @@
                       }
                     },
                     {
-                      name: 'nothing happen if no ref attribute',
+                      name: 'replace root element if no ref attribute',
                       test: function(){
                         var a = createTemplate('<span/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:replace>x</b:replace></b:include>');
 
-                        this.is(text('<span/>'), text(b));
+                        this.is(text('x'), text(b));
                       }
                     },
                     {
@@ -216,7 +216,7 @@
 
                         this.is(text('x'), text(b));
                       }
-                    },                    
+                    },
                     {
                       name: 'replace token with multiple nodes',
                       test: function(){
@@ -224,6 +224,83 @@
                         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:replace ref="foo"><br/>x<br/></b:replace></b:include>');
 
                         this.is(text('<span><br/>x<br/></span>'), text(b));
+                      }
+                    }
+                  ]
+                },
+                {
+                  name: '<b:remove>',
+                  testcase: [
+                    {
+                      name: 'nothing happen if no reference',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove ref="foo"/></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'remove element if no ref attribute',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove/></b:include>');
+
+                        this.is(text(''), text(b));
+                      }
+                    },
+                    {
+                      name: 'remove empty element token',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove ref="foo"/></b:include>');
+
+                        this.is(text('<span></span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'remove element token with nodes',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}><span/></span></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove ref="foo"/></b:include>');
+
+                        this.is(text('<span></span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'remove text token',
+                      test: function(){
+                        var a = createTemplate('<span>{foo}</span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove ref="foo"/></b:include>');
+
+                        this.is(text('<span></span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'remove comment token',
+                      test: function(){
+                        var a = createTemplate('<span><!--{foo}--></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove ref="foo"/></b:include>');
+
+                        this.is(text('<span></span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'remove root element',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove ref="element"/></b:include>');
+
+                        this.is(text(''), text(b));
+                      }
+                    },
+                    {
+                      name: 'remove content should be ignored',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove ref="foo">content</b:remove></b:include>');
+
+                        this.is(text('<span></span>'), text(b));
                       }
                     }
                   ]
@@ -266,7 +343,7 @@
 
                         this.is(text('x<span/>'), text(b));
                       }
-                    },                    
+                    },
                     {
                       name: 'before token with multiple nodes',
                       test: function(){
@@ -316,7 +393,7 @@
 
                         this.is(text('<span/>x'), text(b));
                       }
-                    },                    
+                    },
                     {
                       name: 'after token with multiple nodes',
                       test: function(){
@@ -380,7 +457,7 @@
 
                         this.is(text('<span>x<span/></span>'), text(b));
                       }
-                    },                
+                    },
                     {
                       name: 'prepend token with multiple nodes when no children',
                       test: function(){
@@ -389,7 +466,7 @@
 
                         this.is(text('<span><br/>x<br/></span>'), text(b));
                       }
-                    },                
+                    },
                     {
                       name: 'prepend token with multiple nodes',
                       test: function(){
@@ -453,7 +530,7 @@
 
                         this.is(text('<span><span/>x</span>'), text(b));
                       }
-                    },                
+                    },
                     {
                       name: 'append token with multiple nodes when no children',
                       test: function(){
@@ -462,7 +539,7 @@
 
                         this.is(text('<span><br/>x<br/></span>'), text(b));
                       }
-                    },                
+                    },
                     {
                       name: 'append token with multiple nodes',
                       test: function(){
@@ -598,7 +675,7 @@
 
                         this.is(text('<span/>'), text(b));
                         this.is(text('<span class="b"/>'), text(b, { b: 'b' }));
-                        
+
                         // several bindings
                         var c = createTemplate('<b:include src="#' + a.templateId + '"><b:class value="{b} {c}"/></b:include>');
                         this.is(text('<span/>'), text(c));
@@ -820,7 +897,7 @@
 
                         this.is(text('<span title="a"/>'), text(b));
                         this.is(text('<span title="a" class="b"/>'), text(b, { b: 'b' }));
-                        
+
                         // several bindings
                         var c = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="{b} {c}"/></b:include>');
                         this.is(text('<span title="a"/>'), text(c));

@@ -1,5 +1,5 @@
 
-  basis.require('basis.ua');
+  basis.require('basis.dom.event');
 
 
  /**
@@ -100,7 +100,7 @@
   * @param {Node} nodeA
   * @param {Node} nodeB
   * @return {number}
-  */ 
+  */
   var comparePosition;
 
   // init functions depends on browser support
@@ -120,7 +120,7 @@
 
       if (nodeA.document != nodeB.document)
         return POSITION_DISCONNECTED | POSITION_IMPLEMENTATION_SPECIFIC;
-      
+
       if (nodeA.sourceIndex > nodeB.sourceIndex)
         return POSITION_PRECEDING | (POSITION_CONTAINS * nodeB.contains(nodeA));
       else
@@ -132,7 +132,7 @@
   * Returns true if node is instance of Node.
   * @param {Node} node
   * @return {boolean}
-  */ 
+  */
   var isNode;
 
   if (typeof Node != 'undefined')
@@ -161,7 +161,7 @@
   * @param {Node|*} newNode Inserting node or object.
   * @param {Node=} refChild Child of node.
   * @return {Node}
-  */ 
+  */
   function handleInsert(node, newNode, refChild){
     return newNode != null
       ? node.insertBefore(isNode(newNode) ? newNode : createText(newNode), refChild || null)
@@ -213,10 +213,10 @@
       basis.object.extend(this,
         direction
         ? {
-            a: LAST_CHILD,        // nextChild  
+            a: LAST_CHILD,        // nextChild
             b: PREVIOUS_SIBLING,  // nextSibling
             c: NEXT_SIBLING,      // prevSibling
-            d: FIRST_CHILD        // prevChild  
+            d: FIRST_CHILD        // prevChild
           }
         : {
             a: FIRST_CHILD,       // nextChild
@@ -272,12 +272,12 @@
 
       if (!result)
         result = [];
-      
+
       this.reset();
-      
+
       while (node = this.next(filter))
         result.push(node);
-      
+
       return result;
     },
 
@@ -301,7 +301,7 @@
 
           node = cursor[this.b]; // next sibling
 
-          if (!node) 
+          if (!node)
             cursor = cursor[PARENT_NODE];
         }
       }
@@ -336,7 +336,7 @@
             cursor = cursor[PARENT_NODE];
 
         if (!cursor || cursor === this.root_)
-        { 
+        {
           cursor = null;
           break;
         }
@@ -422,8 +422,9 @@
   * @return {Array.<Node>}
   */
   function axis(root, axis, filter){
-    var walker, cursor;
     var result = [];
+    var walker;
+    var cursor;
 
     filter = typeof filter == 'string' ? getter(filter) : filter || basis.fn.$true;
 
@@ -431,7 +432,7 @@
       if (filter(root))
         result.push(root);
 
-    switch(axis)
+    switch (axis)
     {
       case AXIS_ANCESTOR:
       case AXIS_ANCESTOR_OR_SELF:
@@ -439,7 +440,7 @@
         while ((cursor = cursor[PARENT_NODE]) && cursor !== root.document)
           if (filter(cursor))
             result.push(cursor);
-      break;
+        break;
 
       case AXIS_CHILD:
         cursor = root[FIRST_CHILD];
@@ -449,7 +450,7 @@
             result.push(cursor);
           cursor = cursor[NEXT_SIBLING];
         }
-      break;
+        break;
 
       case AXIS_DESCENDANT:
       case AXIS_DESCENDANT_OR_SELF:
@@ -458,40 +459,40 @@
           walker = new TreeWalker(root);
           walker.nodes(filter, result);
         }
-      break;
+        break;
 
       case AXIS_FOLLOWING:
         walker = new TreeWalker(root, filter);
         walker.cursor_ = root[NEXT_SIBLING] || root[PARENT_NODE];
         while (cursor = walker.next())
           result.push(cursor);
-      break;
+        break;
 
       case AXIS_FOLLOWING_SIBLING:
         cursor = root;
         while (cursor = cursor[NEXT_SIBLING])
           if (filter(cursor))
              result.push(cursor);
-      break;
+        break;
 
       case AXIS_PARENT:
         if (filter(root[PARENT_NODE]))
           result.push(root[PARENT_NODE]);
-      break;
+        break;
 
       case AXIS_PRECEDING:
         walker = new TreeWalker(root, filter, TreeWalker.BACKWARD);
         walker.cursor_ = root[PREVIOUS_SIBLING] || root[PARENT_NODE];
         while (cursor = walker.next())
           result.push(cursor);
-      break;
+        break;
 
       case AXIS_PRECEDING_SIBLING:
         cursor = root;
         while (cursor = cursor[PREVIOUS_SIBLING])
           if (filter(cursor))
             result.push(cursor);
-      break;
+        break;
     }
 
     return result;
@@ -541,7 +542,7 @@
 
     for (var i = 0; i < len; i++)
       array.push(handleInsert(result, arguments[i]));
-    
+
     return result;
   }
 
@@ -585,7 +586,7 @@
 
     var elementName = 'div'; // modern browsers become case sensetive for tag names for xhtml
     var element;
-    
+
     // fetch tag name
     var m = description.match(/^([a-z0-9_\-]+)(.*)$/i);
     if (m)
@@ -609,7 +610,7 @@
         {
           throw new Error(
             'Create element error in basis.dom.createElement()' +
-            '\n\nDescription:\n> ' + description + 
+            '\n\nDescription:\n> ' + description +
             '\n\nProblem place:\n> ' + description.substr(0, m.index) + '-->' + description.substr(m.index) + '<--'
           );
         }
@@ -632,7 +633,7 @@
       if (IS_ATTRIBUTE_BUG_NAME && attributes.name && /^(input|textarea|select)$/i.test(elementName))
         elementName = '<' + elementName + ' name=' + attributes.name + '>';
     }
-      
+
     // create element
     element = document.createElement(elementName);
 
@@ -667,9 +668,6 @@
         for (var event in config)
           if (typeof config[event] == 'function')
             basis.dom.event.addHandler(element, event, config[event], element);
-          else
-            if (config[event] instanceof basis.dom.event.Handler)
-              basis.dom.event.addHandler(element, event, config[event].handler, config[event].thisObject);
       }
     }
 
@@ -713,7 +711,7 @@
 
     var isDOMLikeObject = !isNode(node);
     var result;
-    
+
     if (!source || !Array.isArray(source))
       result = isDOMLikeObject ? source && node.insertBefore(source, refChild) : handleInsert(node, source, refChild);
     else
@@ -790,10 +788,10 @@
   */
   function clear(node){
     node = get(node);
-  
+
     while (node[LAST_CHILD])
       node.removeChild(node[LAST_CHILD]);
-    
+
     return node;
   }
 
@@ -901,8 +899,8 @@
         // IE
         var range = input.createTextRange();
         range.collapse(true);
-        range.moveStart("character", start);
-        range.moveEnd("character", end - start);
+        range.moveStart('character', start);
+        range.moveEnd('character', end - start);
         range.select();
       }
   }
@@ -911,7 +909,7 @@
     if (document.selection)
     {
       var range = document.selection.createRange();
-      if (range.compareEndPoints("StartToEnd", range) != 0)
+      if (range.compareEndPoints('StartToEnd', range) != 0)
         range.collapse(isStart);
       return range.getBookmark().charCodeAt(2) - 2;
     }
@@ -971,7 +969,7 @@
     INSERT_BEGIN: INSERT_BEGIN,
     INSERT_END: INSERT_END,
     INSERT_BEFORE: INSERT_BEFORE,
-    INSERT_AFTER: INSERT_AFTER, 
+    INSERT_AFTER: INSERT_AFTER,
 
     // nodes order functions
     //sort: sort,
@@ -990,7 +988,7 @@
     //tags: tags,
     axis: axis,
     findAncestor: findAncestor,
-    
+
     // navigation
     //first: first,
     //last: last,
@@ -1007,7 +1005,7 @@
     createElement: createElement,
     createText: createText,
     createFragment: createFragment,
-    
+
     // DOM manipulate
     insert: insert,
     remove: remove,

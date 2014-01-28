@@ -16,7 +16,7 @@
       }
     },
 
-    satelliteConfig: {
+    satellite: {
       refList: {
         existsIf: basis.getter('data.refs'),
         delegate: basis.fn.$self,
@@ -82,7 +82,7 @@
       attributes: 'satellite:'
     },
 
-    satelliteConfig: {
+    satellite: {
       attributes: {
         existsIf: basis.getter('data.attrs'),
         instanceOf: basis.ui.Node.subclass({

@@ -99,7 +99,7 @@
   }
 
   function scrollToClassNode(){
-     var classNodeRect = new nsLayout.Box(classNode.tmpl.header, false, classMap.tmpl.scrollElement);
+     var classNodeRect = basis.layout.getBoundingRect(classNode.tmpl.header, classMap.tmpl.scrollElement);
 
      var x = classNodeRect.left - (classMap.element.offsetWidth / 2) + (classNodeRect.width / 2);
      var y = classNodeRect.top - (classMap.element.offsetHeight / 2) + (classNodeRect.height / 2);

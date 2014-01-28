@@ -12,7 +12,7 @@ basis.ready(function(){
         return document.title;
       }
     },
-    satelliteConfig: {
+    satellite: {
       sourceCode: {
         existsIf: function(){
           return !!document.getElementById('demo-javascript');

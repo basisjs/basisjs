@@ -29,7 +29,7 @@ var overlayContent = overlayNode.tmpl.content;
 
 var observer = (function(){
   var names = ['MutationObserver', 'WebKitMutationObserver'];
-  
+
   for (var i = 0, name; name = names[i]; i++)
   {
     var ObserverClass = global[name];
@@ -38,7 +38,7 @@ var observer = (function(){
   }
 })();
 
-function startInspect(){ 
+function startInspect(){
   if (!inspectMode)
   {
     basis.cssom.classList(document.body).add('devpanel-inspectMode');
@@ -68,11 +68,11 @@ function endInspect(){
     if (observer)
       observer.disconnect();
 
-    basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
+    basis.cssom.classList(document.body).remove('devpanel-inspectMode');
 
     basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
     basis.dom.event.removeHandler(window, 'resize', updateOnResize);
-    DOM.event.releaseEvent('contextmenu');    
+    DOM.event.releaseEvent('contextmenu');
 
     unhighlight();
     inspectMode = false;
@@ -107,7 +107,7 @@ function highlight(keepOverlay){
   var tokenElements = document.createDocumentFragment();
   var min = Infinity;
   var max = -Infinity;
-  
+
   for (var i = 0, data; data = elements[i]; i++)
   {
     min = Math.min(min, data.updates);
@@ -126,7 +126,7 @@ function highlight(keepOverlay){
         outline: '1px solid ' + borderColor,
         top: document.body.scrollTop + data.rect.top + 'px',
         left: document.body.scrollLeft + data.rect.left + 'px',
-        width: data.rect.width + 'px', 
+        width: data.rect.width + 'px',
         height: data.rect.height + 'px'
       }
     }, data.updates == 1 ? '' : data.updates));
@@ -204,7 +204,7 @@ function domTreeHighlight(root){
       }
     }
 
-    if (child.nodeType == basis.dom.ELEMENT_NODE) 
+    if (child.nodeType == basis.dom.ELEMENT_NODE)
       domTreeHighlight(child);
   }
 }

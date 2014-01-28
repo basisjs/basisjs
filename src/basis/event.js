@@ -23,7 +23,7 @@
   var NULL_HANDLER = {};
   var events = {};
   var warnOnDestroy = function(){
-    throw 'Object had been destroyed before. Destroy method must not be called more than once.';
+    /** @cut */ basis.dev.warn('Object had been destroyed before. Destroy method must not be called more than once.');
   };
 
 
@@ -70,8 +70,8 @@
         }
 
         // that feature available in development mode only
-        if (DEVMODE && this.emit_debug)
-          this.emit_debug({
+        if (DEVMODE && this.debug_emit)
+          this.debug_emit({
             sender: this,
             type: eventName,
             args: arguments
@@ -86,8 +86,8 @@
 
             'function(' + slice.call(arguments, 1).join(', ') + '){' +
               eventFunction.toString()
-                .replace(/\beventName\b/g, "'" + eventName + "'")
-                .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + 
+                .replace(/\beventName\b/g, '"' + eventName + '"')
+                .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') +
             '}' +
 
           '\n\n}["' + namespace + '.events.' + eventName + '"];'
@@ -128,7 +128,7 @@
 
  /**
   * Base class for event dispatching. It provides interface for instance
-  * to add and remove handler for desired events, and call it when event happens. 
+  * to add and remove handler for desired events, and call it when event happens.
   * @class
   */
   var Emitter = Class(null, {
@@ -175,10 +175,10 @@
     */
     addHandler: function(callbacks, context){
       if (DEVMODE && !callbacks)
-        basis.dev.warn(this.constructor.className + '#addHandler: callbacks is not an object (', callbacks, ')');
+        basis.dev.warn(namespace + '.Emitter#addHandler: callbacks is not an object (', callbacks, ')');
 
       context = context || this;
-      
+
       // warn about duplicates
       if (DEVMODE)
       {
@@ -187,14 +187,14 @@
         {
           if (cursor.callbacks === callbacks && cursor.context === context)
           {
-            basis.dev.warn(this.constructor.className + '#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
+            basis.dev.warn(namespace + '.Emitter#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
             break;
           }
         }
       }
 
       // add handler
-      this.handler = { 
+      this.handler = {
         callbacks: callbacks,
         context: context,
         handler: this.handler
@@ -227,8 +227,8 @@
         }
 
       // handler not found
-      if (DEVMODE && prev !== this)
-        basis.dev.warn(this.constructor.className + '#removeHandler: no handler removed');
+      if (DEVMODE)
+        basis.dev.warn(namespace + '.Emitter#removeHandler: no handler removed');
     },
 
    /**
@@ -236,8 +236,7 @@
     */
     destroy: function(){
       // warn on destroy method call (only in debug mode)
-      if (DEVMODE)
-        this.destroy = warnOnDestroy;
+      this.destroy = warnOnDestroy;
 
       // fire object destroy event handlers
       this.emit_destroy();
@@ -255,8 +254,8 @@
       * Function that returns handler list as array.
       * WARN: This functionality is supported in development mode only.
       * @return {Array.<object>} List of handlers
-      */ 
-      handler_list: function(){
+      */
+      debug_handlers: function(){
         var result = [];
         var cursor = this;
 
@@ -271,7 +270,7 @@
       * WARN: This functionality is supported in development mode only.
       * @type {function(event)}
       */
-      emit_debug: null
+      debug_emit: null
     });
   }
 
@@ -287,4 +286,4 @@
     events: events,
 
     Emitter: Emitter
-  }; 
+  };

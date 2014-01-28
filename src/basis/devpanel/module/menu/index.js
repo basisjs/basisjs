@@ -5,12 +5,12 @@ var templates = basis.template.define('app.menu', {
 
 module.exports = basis.ui.Node.subclass({
   opened: false,
-  
+
   template: templates.View,
   binding: {
     opened: 'opened'
   },
-  
+
   childClass: {
     template: templates.Item,
     action: {
@@ -30,7 +30,7 @@ module.exports = basis.ui.Node.subclass({
       }
       else
         this.hide();
-      
+
       if (oldDelegate)
       {
         oldDelegate.activated = false;

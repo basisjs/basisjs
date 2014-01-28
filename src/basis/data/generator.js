@@ -1,8 +1,8 @@
 
  /**
   * @namespace basis.data.generator
-  */ 
-  
+  */
+
   var namespace = this.path;
 
 
@@ -26,7 +26,10 @@
   function genNumber(precision, min, max){
     min = min || 0;
     max = max || 1;
-    if (min > max) return genNumber(precision, max, min);
+
+    if (min > max)
+      return genNumber(precision, max, min);
+
     return Number((min + Math.random() * (max - min)).toFixed(precision || 0));
   }
 
@@ -38,10 +41,14 @@
     if (arguments.length < 2) maxLen = 16;
     if (minLen <= 0) minLen = 0;
     if (maxLen <= 1) maxLen = 1;
+
     var len = Math.floor(minLen + Math.random() * (maxLen - minLen));
-    var result = '', base = ['a'.charCodeAt(), 'A'.charCodeAt()];
+    var result = '';
+    var base = ['a'.charCodeAt(), 'A'.charCodeAt()];
+
     for (var i = 0; i < len; i++)
       result += String.fromCharCode(Math.floor(Math.random() * 26) + base[Math.round(Math.random())]);
+
     return result;
   }
 

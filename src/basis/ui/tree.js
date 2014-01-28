@@ -140,7 +140,7 @@
     emit_expand: createEvent('expand'),
 
    /**
-    * Template for node element. 
+    * Template for node element.
     * @type {basis.template.Template}
     * @private
     */
@@ -273,7 +273,7 @@
     selection: true,
 
    /**
-    * Template for node element. 
+    * Template for node element.
     * @type {basis.template.Template}
     * @private
     */

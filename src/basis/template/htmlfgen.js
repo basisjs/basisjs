@@ -64,7 +64,7 @@
     function putBinding(binding){
       bindingList.push(binding);
     }
-  
+
     function processTokens(tokens, path, noTextBug){
       var localPath;
       var refs;
@@ -348,7 +348,7 @@
               varName = '$l10n_' + l10nBindSeed++;
               l10nBindings[l10nFullPath] = varName;
               l10nCompute.push('set("' + varName + '",' + varName + ')');
-              varList.push(varName + '=tools.l10nToken("' +l10nName + '").computeToken()');
+              varList.push(varName + '=tools.l10nToken("' + l10nName + '").computeToken()');
 
               bindCode = bindMap[l10nBinding];
               if (!bindCode)
@@ -380,7 +380,7 @@
               /** @cut */   'dom:' + domRef,
               /** @cut */   'val:' + bindVar,
               /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
-              /** @cut */ ] +'}');
+              /** @cut */ ] + '}');
 
               varList.push(bindVar + '=' + domRef);
               putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
@@ -454,7 +454,7 @@
           /** @cut */   'val:' + (bindCode.nodeBind ? varName : bindVar),
           /** @cut */   'updates:$$' + bindName,
           /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
-          /** @cut */ ] +'}');
+          /** @cut */ ] + '}');
 
           if (!bindCode.nodeBind)
           {
@@ -515,7 +515,7 @@
                   {
                     prefix = '';
                     valueExpr = 'value?"' + binding[6] + '":""';
-                    
+
                     if (binding[5])
                       defaultExpr = binding[6];
                   }
@@ -620,7 +620,9 @@
 
       return {
         /** @cut */ debugList: debugList,
-        keys: basis.object.keys(bindMap).filter(function(key){ return key.indexOf('@') == -1 }),
+        keys: basis.object.keys(bindMap).filter(function(key){
+          return key.indexOf('@') == -1
+        }),
         tools: toolsVarList,
         vars: varList,
         set: result.join(''),
@@ -633,7 +635,9 @@
   function compileFunction(args, body){
     /** @cut */ try {
       return new Function(args, body);
-    /** @cut */ } catch(e) { basis.dev.error('Can\'t build template function: ' + e + '\n', 'function(' + args +'){\n' + body + '\n}'); }
+    /** @cut */ } catch(e) {
+    /** @cut */   basis.dev.error('Can\'t build template function: ' + e + '\n', 'function(' + args + '){\n' + body + '\n}');
+    /** @cut */ }
   }
 
   var getFunctions = function(tokens, debug, uri, source, noTextBug){
@@ -662,7 +666,7 @@
       var code = [];
       for (var key in bindings.l10n)
         code.push(
-          'case"' + key +'":' +
+          'case"' + key + '":' +
             'if(value==null)value="{' + key + '}";' +
             '__l10n[token]=value;' +
             bindings.l10n[key].join('') +
@@ -678,7 +682,7 @@
             code.join('') +
           '}' +
         '}\n'
-        
+
         /** @cut */ + '//# sourceURL=' + basis.path.origin + uri + '_l10n\n'
         /** @cut */ + '//@ sourceURL=' + basis.path.origin + uri + '_l10n\n'
       );

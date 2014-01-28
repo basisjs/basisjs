@@ -16,7 +16,7 @@ function sendFile(file){
     // delete deps as it can has resource and ResourceWrapper which can't be serialized
     data.declaration.deps = [];
   }
-    
+
   sendData('updateFile', data);
 }
 
@@ -45,7 +45,7 @@ var FILE_LIST_HANDLER = {
         }
       }
     }
-        
+
     if (delta.deleted)
     {
       data.deleted = [];
@@ -59,7 +59,7 @@ var FILE_LIST_HANDLER = {
         }
       }
     }
-    
+
     if ((data.inserted && data.inserted.length) || (data.deleted && data.deleted.length))
       sendData('filesChanged', data);
   }
@@ -80,12 +80,12 @@ if (basis.devtools)
 module.exports = {
   getFileList: function(){
     if (basis.devtools)
-      sendData('filesChanged', { 
-        inserted: basis.devtools.files.getItems().map(function(file){ 
+      sendData('filesChanged', {
+        inserted: basis.devtools.files.getItems().map(function(file){
           return {
             filename: file.data.filename
           };
-        }) 
+        })
       });
   },
   createFile: function(filename){

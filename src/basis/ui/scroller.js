@@ -1,6 +1,7 @@
 
   basis.require('basis.event');
   basis.require('basis.dom.event');
+  basis.require('basis.dom.resize');
   basis.require('basis.cssom');
   basis.require('basis.ui');
   basis.require('basis.animation');
@@ -24,6 +25,7 @@
   var anim = basis.animation;
 
   var createEvent = basis.event.create;
+  var listenResize = basis.dom.resize.add;
 
   var Emitter = basis.event.Emitter;
   var UINode = basis.ui.Node;
@@ -53,13 +55,13 @@
   var TRANSFORM_SUPPORT = false;
   var TRANSFORM_3D_SUPPORT = false;
   var TRANSFORM_PROPERTY_NAME;
-  
+
   (function(){
     var style = document.createElement('div').style;
-    
+
     function testProps(properties){
       for (var i = 0, propertyName; propertyName = properties[i]; i++)
-        if (typeof style[propertyName] != 'undefined') 
+        if (typeof style[propertyName] != 'undefined')
           return propertyName;
 
       return false;
@@ -80,10 +82,10 @@
     if (TRANSFORM_SUPPORT)
     {
       var prop = testProps([
-        'perspectiveProperty', 
-        'WebkitPerspective', 
-        'MozPerspective', 
-        'OPerspective', 
+        'perspectiveProperty',
+        'WebkitPerspective',
+        'MozPerspective',
+        'OPerspective',
         'msPerspective'
       ]);
 
@@ -160,7 +162,7 @@
     setElement: function(element){
       if (this.targetElement && this.panning)
         this.removeTargetElementHandlers();
-      
+
       this.targetElement = element;
 
       if (this.targetElement && this.panning)
@@ -187,7 +189,7 @@
       Event.removeHandler(this.targetElement, 'mousedown', this.onMouseDown, this);
       Event.removeHandler(this.targetElement, 'touchstart', this.onMouseDown, this);
     },
-   
+
     updatePosition_styleTopLeft: function(){
       if (this.scrollX)
         this.targetElement.style.left = -this.viewportX + 'px';
@@ -223,7 +225,7 @@
         this.minScrollDeltaXReached = false;
         this.minScrollDeltaYReached = false;
       }
- 
+
       this.processInertia = false;
     },
 
@@ -286,7 +288,7 @@
 
       if (!deltaTime)
         return;
-     
+
       if (this.minScrollDeltaXReached || !this.minScrollDeltaYReached)
       {
 
@@ -318,7 +320,7 @@
             this.minScrollDeltaXReached = true;
 
           if (Math.abs(this.viewportTargetY - this.viewportY) > this.minScrollDelta)
-            this.minScrollDeltaYReached = true;          
+            this.minScrollDeltaYReached = true;
 
           if (this.minScrollDeltaYReached)
           {
@@ -345,7 +347,7 @@
       var deltaTime = timeNow - this.lastMotionUpdateTime;
       deltaTime = Math.max(10, deltaTime); // low-timer granularity compensation
       this.lastMotionUpdateTime = 0;
-      
+
       if (this.scrollX)
       {
         // 100msec is a full hold gesture that complete zeroes out the velocity to be used as inertia
@@ -462,7 +464,7 @@
 
     setPosition: function(positionX, positionY, instantly){
       this.setPositionX(positionX, !instantly);
-      this.setPositionY(positionY, !instantly);      
+      this.setPositionY(positionY, !instantly);
     },
 
     setPositionX: function(positionX, smooth){
@@ -504,7 +506,7 @@
     },
     addPositionY: function(addY, smooth){
       this.setPositionY(this.viewportY + addY, smooth);
-    },    
+    },
 
     getCurrentDirection: function(axis){
       return axis == 'x' ? this.currentDirectionX : this.currentDirectionY;
@@ -565,7 +567,7 @@
             this.realign();
 
           var scrollPosition = this.getScrollbarPosition();
- 
+
           if (scrollPosition > 1)
             scrollPosition = 1 + (scrollPosition - 1) * 3;
           if (scrollPosition < 0)
@@ -577,7 +579,7 @@
           var style = {};
           style[this.startProperty] = startPosition + 'px';
           style[this.endProperty] = endPosition + 'px';
-          
+
           cssom.setStyle(this.tmpl.trackElement, style);
         }
       }
@@ -606,7 +608,7 @@
       return this.owner.element.offsetWidth / (this.owner.maxPositionX - this.owner.minPositionX + this.owner.element.offsetWidth);
     },
     getScrollbarPosition: function(){
-      return (this.owner.scroller.viewportX - this.owner.minPositionX) / (this.owner.maxPositionX - this.owner.minPositionX);      
+      return (this.owner.scroller.viewportX - this.owner.minPositionX) / (this.owner.maxPositionX - this.owner.minPositionX);
     }
   });
 
@@ -625,7 +627,7 @@
       return this.owner.element.offsetHeight / (this.owner.maxPositionY - this.owner.minPositionY + this.owner.element.offsetHeight);
     },
     getScrollbarPosition: function(){
-      return (this.owner.scroller.viewportY - this.owner.minPositionY) / (this.owner.maxPositionY - this.owner.minPositionY);      
+      return (this.owner.scroller.viewportY - this.owner.minPositionY) / (this.owner.maxPositionY - this.owner.minPositionY);
     }
   });
 
@@ -641,7 +643,7 @@
     className: namespace + '.ScrollPanel',
 
     useScrollbars: true,
-    scrollX: true, 
+    scrollX: true,
     scrollY: true,
     wheelDelta: 40,
     inertia: true,
@@ -679,7 +681,7 @@
       }
     },
 
-    satelliteConfig: {
+    satellite: {
       horizontalScrollbar: {
         instanceOf: HorizontalScrollbar,
         existsIf: function(object){
@@ -734,7 +736,7 @@
       this.scroller.setElement(scrollElement);
 
       // add resize handler
-      basis.layout.addBlockResizeHandler(scrollElement, this.realign.bind(this));
+      listenResize(scrollElement, this.realign, this);
     },
 
     updatePosition: function(){
@@ -768,7 +770,7 @@
         this.emit_realign();
       }
     },
-    
+
     calcDimensions: function(){
       if (this.scrollX)
       {
@@ -802,7 +804,7 @@
     scrollX: false,
     scrollY: false,
     childTransform: basis.fn.$null,
-  
+
     selection: true,
 
     action: {
@@ -811,10 +813,10 @@
 
         var selected = this.selection.pick();
         var nextChild = delta == -1 ? selected.nextSibling : selected.previousSibling;
-        
+
         if (nextChild)
           nextChild.select();
-          
+
         Event.kill(event);
       }
     },
@@ -875,7 +877,7 @@
     setPosition: function(position, instantly){
       if (this.scrollX)
         this.scroller.setPositionX(position, !instantly);
-      else 
+      else
         this.scroller.setPositionY(position, !instantly);
     },
 
@@ -884,7 +886,7 @@
       var startPosition = (this.scrollX ? this.element.offsetWidth : this.element.offsetHeight) / 2;
 
       var newPosition = startPosition - childSize / 2 + this.calcExpectedPosition();
-  
+
       var childScrollTo = Math.max(0, Math.min(this.childNodes.length - 1, Math.round(newPosition / childSize)));
       this.scrollToChild(this.childNodes[childScrollTo]);
     },
@@ -902,7 +904,7 @@
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         closeness = i == closestChildPos ? 1 - offset : (i == closestChildPos + 1 ? offset : 0);
-        this.childTransform(child, closeness);  
+        this.childTransform(child, closeness);
       }
     },
 

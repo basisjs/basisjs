@@ -234,7 +234,7 @@
   }
 
   function addSub(object, mask){
-    var config = getMaskConfig(mask);    
+    var config = getMaskConfig(mask);
 
     for (var i = 0, action; action = config.actions[i]; i++)
       action(SUBSCRIPTION.link, object);
@@ -243,7 +243,7 @@
   }
 
   function remSub(object, mask){
-    var config = getMaskConfig(mask);    
+    var config = getMaskConfig(mask);
 
     for (var i = 0, action; action = config.actions[i++];)
       action(SUBSCRIPTION.unlink, object);
@@ -474,10 +474,10 @@
     * Rule to determine is sync required.
     */
     isSyncRequired: function(){
-      return this.subscriberCount > 0 && 
+      return this.subscriberCount > 0 &&
              (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED);
     },
-    
+
    /**
     * Change sync actions function.
     * @param {function|null} syncAction
@@ -502,7 +502,7 @@
         if (oldAction)
           this.removeHandler(this.syncEvents);
       }
-    },     
+    },
 
    /**
     * @destructor
@@ -533,11 +533,16 @@
   var valueSyncToken = function(value){
     this.set(this.fn(value));
   };
-  var VALUE_EMMITER_HANDLER = { 
+  var VALUE_EMMITER_HANDLER = {
     destroy: function(object){
       this.value.unlink(object, this.fn);
     }
-  };  
+  };
+  var VALUE_EMMITER_DESTROY_HANDLER = {
+    destroy: function(object){
+      this.set(null);
+    }
+  };
 
  /**
   * @class
@@ -593,7 +598,12 @@
    /**
     * @type {object}
     */
-    links_: null,    
+    links_: null,
+
+   /**
+    * @type {boolean}
+    */
+    setNullOnEmitterDestroy: true,
 
    /**
     * Settings for bindings.
@@ -619,6 +629,9 @@
       if (this.proxy)
         this.value = this.proxy(this.value);
 
+      if (this.setNullOnEmitterDestroy && this.value instanceof Emitter)
+        this.value.addHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
+
       this.initValue = this.value;
     },
 
@@ -635,6 +648,14 @@
 
       if (changed)
       {
+        if (this.setNullOnEmitterDestroy)
+        {
+          if (oldValue instanceof Emitter)
+            oldValue.removeHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
+          if (newValue instanceof Emitter)
+            newValue.addHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
+        }
+
         this.value = newValue;
 
         if (!this.locked)
@@ -701,7 +722,7 @@
       if (!getComputeToken)
       {
         var tokenMap = {};
-        
+
         handler.destroy = function(object){
           delete tokenMap[object.basisObjectId];
           this.destroy(); // `this` is a token
@@ -739,7 +760,7 @@
           {
             // create token with computed value
             var token = new basis.Token(fn(object, hostValue.value));
-            
+
             // attach handler re-evaluate handler to object
             object.addHandler(handler, token);
 
@@ -768,7 +789,7 @@
     * @param {function(value)} fn
     * @param {boolean=} deferred
     * @return {basis.Token|basis.DeferredToken}
-    */ 
+    */
     as: function(fn, deferred){
       if (this.links_)
       {
@@ -799,7 +820,7 @@
       return this.as(fn, true);
     },
 
-   /* 
+   /**
     * @param {object} context Target object.
     * @param {string|function} fn Property or setter function.
     * @return {object} Returns object.
@@ -833,7 +854,7 @@
         fn: fn,
         links_: this.links_
       };
-      
+
       // add handler if object is basis.event.Emitter
       if (context instanceof Emitter)
         context.addHandler(VALUE_EMMITER_HANDLER, this.links_);
@@ -844,7 +865,7 @@
       return context;
     },
 
-   /* 
+   /**
     * @param {object} context Target object.
     * @param {string|function} fn Property or setter function.
     * @return {object} Returns object.
@@ -872,14 +893,17 @@
     * @destructor
     */
     destroy: function(){
-      var cursor = this;
+      AbstractData.prototype.destroy.call(this);
+
+      // remove handler if value instanceof Emmiter
+      if (this.setNullOnEmitterDestroy && this.value instanceof Emitter)
+        this.value.removeHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
 
       // remove event handlers from all basis.event.Emitter instances
+      var cursor = this;
       while (cursor = cursor.links_)
-        if (cursor.object instanceof Emitter)
-          cursor.object.removeHandler(VALUE_EMMITER_HANDLER, cursor);
-
-      AbstractData.prototype.destroy.call(this);
+        if (cursor.context instanceof Emitter)
+          cursor.context.removeHandler(VALUE_EMMITER_HANDLER, cursor);
 
       this.proxy = null;
       this.initValue = null;
@@ -888,6 +912,77 @@
       this.links_ = null;
     }
   });
+
+  //
+  // cast to Value
+  //
+
+  var castValueMap = {};
+  Value.from = function(obj, events, getter){
+    var result;
+
+    if (!obj || typeof obj != 'object')
+      return null;
+
+    if (obj instanceof Emitter)
+    {
+      if (!getter)
+      {
+        getter = events;
+        events = null;
+      }
+
+      var handler = basis.event.createHandler(events, function(object){
+        this.set(getter(object)); // `this` is a token
+      });
+      var id = handler.events.concat(String(getter), obj.basisObjectId).join('_');
+
+      result = castValueMap[id];
+      if (!result)
+      {
+        getter = basis.getter(getter);
+        result = castValueMap[id] = new Value({
+          value: getter(obj)
+        });
+
+        handler.destroy = function(sender){
+          delete castValueMap[id];
+          this.destroy();
+        };
+
+        obj.addHandler(handler, result);
+      }
+    }
+
+    if (!result)
+    {
+      var id = obj.basisObjectId;
+      var bindingBridge = obj.bindingBridge;
+      if (id && bindingBridge)
+      {
+        result = castValueMap[id];
+        if (!result)
+        {
+          result = castValueMap[id] = new Value({
+            value: bindingBridge.get(obj)
+          });
+
+          bindingBridge.attach(obj, result.set, result);
+        }
+      }
+    }
+
+    if (!result)
+      throw 'Bad object type';
+
+    return result;
+  };
+
+  Value.factory = function(events, getter){
+    return function(object){
+      return Value.from(object, events, getter);
+    }
+  };
 
 
   //
@@ -903,13 +998,13 @@
   function isConnected(a, b){
     while (b && b !== a && b !== b.delegate)
       b = b.delegate;
-        
+
     return b === a;
   }
 
  /**
   * Apply changes for all delegate graph
-  */ 
+  */
   function applyDelegateChanges(object, oldRoot, oldTarget){
     var delegate = object.delegate;
 
@@ -925,7 +1020,7 @@
     if (object.root !== oldRoot)
     {
       var rootListenHandler = object.listen.root;
-      
+
       if (rootListenHandler)
       {
         if (oldRoot && oldRoot !== object)
@@ -942,7 +1037,7 @@
     if (object.target !== oldTarget)
     {
       var targetListenHandler = object.listen.target;
-      
+
       if (targetListenHandler)
       {
         if (oldTarget && oldTarget !== object)
@@ -1000,18 +1095,17 @@
 
    /**
     * @inheritDoc
-    */ 
+    */
     emit_stateChanged: function(oldState){
       AbstractData.prototype.emit_stateChanged.call(this, oldState);
 
       // delegate state changes
       var delegates = this.delegates_;
       if (delegates)
-        for (var i = 0, object; i < delegates.length; i++)
+        for (var i = 0; i < delegates.length; i++)
         {
-          object = delegates[i];
-          object.state = this.state;
-          object.emit_stateChanged(oldState);
+          delegates[i].state = this.state;
+          delegates[i].emit_stateChanged(oldState);
         }
     },
 
@@ -1023,7 +1117,7 @@
 
    /**
     * @type {Array.<basis.data.Object>}
-    */ 
+    */
     delegates_: null,
 
    /**
@@ -1032,14 +1126,6 @@
     * @event
     */
     emit_delegateChanged: createEvent('delegateChanged', 'oldDelegate'),
-
-   /**
-    * Flag to determine is this object target object or not. This property
-    * is readonly and can't be changed after init.
-    * @type {boolean}
-    * @readobly
-    */
-    isTarget: false,
 
    /**
     * Reference to root delegate if some object in delegate chain marked as targetPoint.
@@ -1086,8 +1172,7 @@
       {
         // assign a delegate
         this.delegate = null;
-
-        // TODO: what to do in case when this.isTarget is true 
+        this.target = null;
 
         // assign data & state to avoid update and stateChanged events
         this.data = delegate.data;
@@ -1102,8 +1187,15 @@
         if (!this.data)
           this.data = {};
 
-        // set target property to itself if isTarget property true
-        if (this.isTarget)
+        // TODO: remove in next releases
+        if ('isTarget' in this)
+        {
+          this.target = this;
+          /** @cut */ basis.dev.warn('basis.data.Object#isTarget is deprecated now, use basis.data.Object#target instead. Set any value to the property, but not a null, to mark object as target.');
+        }
+
+        // set target property to itself if target property is not null
+        if (this.target !== null)
           this.target = this;
       }
     },
@@ -1113,7 +1205,7 @@
     /** @cut */   // warn about it
     /** @cut */   if (syncAction && this.delegate)
     /** @cut */     basis.dev.warn(this.constructor.syncAction + ' instance has a delegate and syncAction - it may produce conflics with data & state');
-    /** @cut */   
+    /** @cut */
     /** @cut */   AbstractData.prototype.setSyncAction.call(this, syncAction);
     /** @cut */ },
 
@@ -1255,25 +1347,20 @@
     * @return {boolean} Current object state.
     */
     setState: function(state, data){
-      var root = this.target || this.root;
-
-      // set new state for root
-      if (root !== this)
-        return root.setState(state, data);
+      if (this.delegate)
+        return this.root.setState(state, data);
       else
         return AbstractData.prototype.setState.call(this, state, data);
     },
 
    /**
-    * Handle changing object data. Fires update event only if something was changed. 
+    * Handle changing object data. Fires update event only if something was changed.
     * @param {Object} data New values for object data holder (this.data).
     * @return {Object|boolean} Delta if object data (this.data) was updated or false otherwise.
     */
     update: function(data){
-      var root = this.target || this.root;
-
-      if (root !== this)
-        return root.update(data);
+      if (this.delegate)
+        return this.root.update(data);
 
       if (data)
       {
@@ -1281,14 +1368,12 @@
         var changed = false;
 
         for (var prop in data)
-        {
           if (this.data[prop] !== data[prop])
           {
             changed = true;
             delta[prop] = this.data[prop];
             this.data[prop] = data[prop];
           }
-        }
 
         if (changed)
         {
@@ -1304,6 +1389,10 @@
     * @destructor
     */
     destroy: function(){
+      // inherit
+      AbstractData.prototype.destroy.call(this);
+
+      // remove delegates
       var delegates = this.delegates_;
       if (delegates)
       {
@@ -1315,9 +1404,6 @@
       // drop delegate
       if (this.delegate)
         this.setDelegate();
-
-      // inherit
-      AbstractData.prototype.destroy.call(this);
 
       // drop data & state
       this.data = NULL_OBJECT;
@@ -1494,6 +1580,11 @@
     dataset: null,
 
    /**
+    * @type {basis.data.DatasetAdapter}
+    */
+    datasetAdapter_: null,
+
+   /**
     * Fires when dataset was changed.
     * @param {basis.data.AbstractDataset} oldDataset
     * @event
@@ -1525,9 +1616,8 @@
     * @param {basis.data.AbstractDataset} dataset
     */
     setDataset: function(dataset){
-      if (dataset instanceof AbstractDataset == false)
-        dataset = null;
-      
+      dataset = resolveDataset(this, this.setDataset, dataset, 'datasetAdapter_');
+
       if (this.dataset !== dataset)
       {
         var listenHandler = this.listen.dataset;
@@ -1553,21 +1643,21 @@
 
    /**
     * Proxy method for contained dataset.
-    */ 
+    */
     has: function(object){
       return this.dataset ? this.dataset.has(object) : null;
     },
 
    /**
     * Proxy method for contained dataset.
-    */ 
+    */
     getItems: function(){
       return this.dataset ? this.dataset.getItems() : [];
     },
 
    /**
     * Proxy method for contained dataset.
-    */ 
+    */
     pick: function(){
       return this.dataset ? this.dataset.pick() : null;
     },
@@ -1577,11 +1667,11 @@
     */
     top: function(count){
       return this.dataset ? this.dataset.top(count) : [];
-    },   
+    },
 
    /**
     * Proxy method for contained dataset.
-    */ 
+    */
     forEach: function(fn){
       if (this.dataset)
         return this.dataset.forEach(fn);
@@ -1591,7 +1681,7 @@
     * @destructor
     */
     destroy: function(){
-      if (this.dataset)
+      if (this.dataset || this.datasetAdapter_)
         this.setDataset();
 
       DataObject.prototype.destroy.call(this);
@@ -1613,7 +1703,7 @@
     itemCount: 0,
 
    /**
-    * Set of members. 
+    * Set of members.
     * @private
     */
     items_: null,
@@ -1673,7 +1763,7 @@
       // drop cache
       this.cache_ = null;
 
-      // call event 
+      // call event
       events.itemsChanged.call(this, delta);
     },
 
@@ -1699,7 +1789,7 @@
 
    /**
     * Returns all items in dataset.
-    * @return {Array.<basis.data.Object>} 
+    * @return {Array.<basis.data.Object>}
     */
     getItems: function(){
       if (!this.cache_)
@@ -1722,7 +1812,7 @@
    /**
     * Returns some N items from dataset if exists.
     * @param {number} count Max length of resulting array.
-    * @return {Array.<basis.data.Object>} 
+    * @return {Array.<basis.data.Object>}
     */
     top: function(count){
       var result = [];
@@ -1738,7 +1828,7 @@
    /**
     * Call fn for every item in dataset.
     * @param {function(item)} fn
-    */ 
+    */
     forEach: function(fn){
       var items = this.getItems();
 
@@ -1749,7 +1839,7 @@
    /**
     * Do nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
     * TODO: remove method definition and method call in destroy method.
-    */ 
+    */
     clear: function(){
     },
 
@@ -1960,7 +2050,7 @@
           deleted.push(object);
         }
       }
-      
+
       // fire event if any changes
       if (delta = getDelta(inserted, deleted))
         this.emit_itemsChanged(delta);
@@ -1977,9 +2067,11 @@
       var delta = this.set(items) || {};
       var deleted = delta.deleted;
 
+      setAccumulateState(true);
       if (deleted)
         for (var i = 0, object; object = deleted[i]; i++)
           object.destroy();
+      setAccumulateState(false);
 
       return delta.inserted;
     },
@@ -2001,13 +2093,93 @@
         this.emit_itemsChanged(delta = {
           deleted: deleted
         });
-         
+
         this.members_ = {};
       }
 
       return delta;
     }
   });
+
+
+/**
+  * @class
+  */
+
+  var DatasetAdapter = function(context, fn, source, handler){
+    this.context = context;
+    this.fn = fn;
+    this.source = source;
+    this.handler = handler;
+  };
+
+  DatasetAdapter.prototype.adapter_ = null;
+  DatasetAdapter.prototype.proxy = function(){
+    this.fn.call(this.context, this.source);
+  };
+
+  var DATASETWRAPPER_ADAPTER_HANDLER = {
+    datasetChanged: function(wrapper){
+      this.fn.call(this.context, wrapper);
+    },
+    destroy: function(){
+      this.fn.call(this.context, null);
+    }
+  };
+
+  var VALUE_ADAPTER_HANDLER = {
+    change: function(value){
+      this.fn.call(this.context, value);
+    },
+    destroy: function(){
+      this.fn.call(this.context, null);
+    }
+  };
+
+  function resolveDataset(context, fn, source, property){
+    var oldAdapter = context[property] || null;
+    var newAdapter = null;
+
+    if (typeof source == 'function')
+      source = source.call(context, context);
+
+    if (source instanceof DatasetWrapper)
+    {
+      newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
+      source = source.dataset;
+    }
+
+    if (source instanceof basis.Token)
+      source = Value.from(source);  // basis.Token -> basis.data.Value
+
+    if (source instanceof Value)
+    {
+      newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+      source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+    }
+
+    if (source instanceof AbstractDataset == false)
+      source = null;
+
+    if (property && oldAdapter !== newAdapter)
+    {
+      if (oldAdapter)
+      {
+        oldAdapter.source.removeHandler(oldAdapter.handler, oldAdapter);
+
+        // destroy nested adapter if exists
+        if (oldAdapter.adapter_)
+          resolveDataset(oldAdapter, null, null, 'adapter_');
+      }
+
+      if (newAdapter)
+        newAdapter.source.addHandler(newAdapter.handler, newAdapter);
+
+      context[property] = newAdapter;
+    }
+
+    return source;
+  }
 
 
   //
@@ -2083,7 +2255,7 @@
       flushAllDataset();
     }
 
-    return function(state) {
+    return function(state){
       if (state)
       {
         if (setStateCount == 0)
@@ -2157,9 +2329,11 @@
     AbstractDataset: AbstractDataset,
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
+    DatasetAdapter: DatasetAdapter,
 
     isConnected: isConnected,
     getDatasetDelta: getDatasetDelta,
+    resolveDataset: resolveDataset,
 
     wrapData: wrapData,
     wrapObject: wrapObject,

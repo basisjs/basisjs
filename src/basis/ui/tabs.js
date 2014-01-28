@@ -156,7 +156,7 @@
   */
   var Page = Class(UINode, {
     className: namespace + '.Page',
-    
+
     template: templates.Page
   });
 
@@ -166,7 +166,7 @@
   */
   var PageControl = Class(AbstractTabsControl, {
     className: namespace + '.PageControl',
-    
+
     template: templates.PageControl,
 
     childClass: Page
@@ -195,7 +195,7 @@
 
     childClass: TabSheet,
 
-    satelliteConfig: {
+    satellite: {
       shadowPages: basis.ui.ShadowNodeList.subclass({
         className: namespace + '.ShadowPages',
         getChildNodesElement: function(host){
@@ -217,7 +217,7 @@
   */
   var AccordionControl = Class(TabControl, {
     className: namespace + '.AccordionControl',
-    
+
     template: templates.AccordionControl,
 
     childClass: TabSheet
@@ -236,7 +236,7 @@
 
     PageControl: PageControl,
     Page: Page,
-    
+
     TabSheetControl: TabSheetControl,
     AccordionControl: AccordionControl,
     TabSheet: TabSheet

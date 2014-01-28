@@ -201,7 +201,7 @@
 
 
     //
-    // add create or update new member 
+    // add create or update new member
     //
 
     var newItem;
@@ -223,7 +223,7 @@
     }
     else
       newItem = newMember.item;
-   
+
     newMember[objectId] = sourceObjectInfo;
     newMember.count++;
 
@@ -308,13 +308,13 @@
           };
 
           sourceMap[objectId] = sourceObjectInfo;
-          
+
           member[objectId] = sourceObjectInfo;
           member.count++;
 
           // add handler
           object.addHandler(VECTOR_ITEM_HANDLER, this);
-          
+
           var updateData = {};
           for (var calcName in calcs)
           {
@@ -381,7 +381,7 @@
 
   var Item = Class(DataObject, {
     className: namespace + '.Item',
-    isTarget: true,
+    target: true,
     key: undefined
   });
 
@@ -389,7 +389,7 @@
     className: namespace + '.Vector',
    /**
     * @type {Object}
-    */ 
+    */
     calcs: null,
     slots_: null,
 
@@ -400,7 +400,7 @@
 
       // destroy deleted
       if (delta.deleted)
-        delta.deleted.forEach(function(item){ 
+        delta.deleted.forEach(function(item){
           item.destroy();
         });
     },
@@ -463,13 +463,13 @@
       if (newCalc && newCalc instanceof VectorFn == false)
         newCalc = sum(newCalc);
 
-	    var oldCalc = this.calcs[name];
+      var oldCalc = this.calcs[name];
       if (oldCalc != newCalc)
       {
         var sourceMap = this.sourceMap_;
 
-  	    if (newCalc)
-  	    {
+        if (newCalc)
+        {
           this.calcs[name] = newCalc;
 
           var newValues = {};

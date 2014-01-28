@@ -68,32 +68,27 @@
     else
     {
       var m = String(number).match(/0\.(0+)?[^0]/);
-      return -(m ? m[1].length : 0) - 1;
+      return (m ? -m[1].length : 0) - 1;
     }
+  }
+
+  function hex2(num){
+    var res = num.toString(16);
+    return res.length == 1 ? '0' + res : res;
   }
 
 
   //generate random color func
 
-  function generateColor(){
-    var golden_ratio_conjugate = 0.618033988749895;
-
-    var h = Math.random();
-    h += golden_ratio_conjugate;
-    h %= 1;
-
-    var rgb = hsv_to_rgb(h, 0.6, 0.95);
- 
-    return '#' + rgb[0].toString(16) + rgb[1].toString(16) + rgb[2].toString(16);
-  }
-  function hsv_to_rgb(h, s, v)
-  {
+  function hsv2rgb(h, s, v){
     var h1 = h * 6;
     var c = v * s;
     var x = c * (1 - Math.abs(h1 % 2 - 1));
+    var m = v - c;
     var rgb;
-    switch(Math.floor(h1))
-    { 
+
+    switch (Math.floor(h1))
+    {
       case 0: rgb = [c, x, 0]; break;
       case 1: rgb = [x, c, 0]; break;
       case 2: rgb = [0, c, x]; break;
@@ -101,12 +96,36 @@
       case 4: rgb = [x, 0, c]; break;
       case 5: rgb = [c, 0, x]; break;
     }
-    var m = v - c; 
+
     return [
-      Math.floor((rgb[0] + m) * 256), 
-      Math.floor((rgb[1] + m) * 256), 
-      Math.floor((rgb[2] + m) * 256) 
+      Math.floor((rgb[0] + m) * 256),
+      Math.floor((rgb[1] + m) * 256),
+      Math.floor((rgb[2] + m) * 256)
     ];
+  }
+
+  function generateColor(){
+    var GOLDEN_RATIO_CONJUGATE = 0.618033988749895;
+    var h = (Math.random() + GOLDEN_RATIO_CONJUGATE) % 1;
+
+    return '#' + hsv2rgb(h, 0.6, 0.95).map(hex2).join('');
+  }
+
+  function colorLuminance(hex, lum){
+    // validate hex string
+    hex = String(hex).replace(/[^0-9a-f]/gi, '');
+
+    if (hex.length == 3)
+      hex = hex.replace(/./g, '$&$&');
+
+    if (!lum)
+      lum = 0;
+
+    // convert to decimal and change luminosity
+    return '#' + hex.replace(/../g, function(m){
+      var val = parseInt(m, 16) * (1 + lum);
+      return hex2(Math.round(basis.number.fit(val, 0, 255)))
+    });
   }
 
 
@@ -240,7 +259,19 @@
     itemsChanged: function(object, delta){
       var key;
       var value;
-      var valuesDelta = [];
+      var valuesDelta = {};
+
+      if (delta.deleted)
+      {
+        for (var i = 0, child; child = delta.deleted[i]; i++)
+        {
+          key = this.keyGetter(child);
+          valuesDelta[key] = null;
+          this.valuesMap[key] = undefined;
+
+          child.removeHandler(SERIA_ITEM_HANDLER, this);
+        }
+      }
 
       if (delta.inserted)
         for (var i = 0, child; child = delta.inserted[i]; i++)
@@ -254,24 +285,12 @@
           child.addHandler(SERIA_ITEM_HANDLER, this);
         }
 
-      if (delta.deleted)
-      {
-        for (var i = 0, child; child = delta.deleted[i]; i++)
-        {
-          key = this.keyGetter(child);
-          valuesDelta[key] = null;
-          this.valuesMap[key] = 0;
-
-          child.removeHandler(SERIA_ITEM_HANDLER, this);
-        }
-      }
-
       this.emit_valuesChanged(valuesDelta);
-    } 
+    }
   };
 
   var SERIA_ITEM_HANDLER = {
-    update: function(object){ 
+    update: function(object){
       var key = this.keyGetter(object);
       var value = this.valueGetter(object);
 
@@ -293,7 +312,7 @@
 
     sourceGetter: getter('source'),
     keyGetter: getter(),
-    
+
     valueGetter: getter($const(0)),
     getValue: function(object, key){
       return this.source ? this.valuesMap[key] : this.valueGetter(object);
@@ -318,7 +337,7 @@
     init: function(){
       this.valuesMap = {};
 
-      Node.prototype.init.call(this);
+      AbstractNode.prototype.init.call(this);
 
       this.source = this.sourceGetter(this);
 
@@ -467,16 +486,16 @@
   var SeriesChart = Chart.subclass({
     className: namespace + '.SeriesChart',
 
-    childClass: SeriesChartNode,    
+    childClass: SeriesChartNode,
 
     keyGetter: $self,
     keyTitleGetter: function(object){
-      return this.keyGetter(object); 
+      return this.keyGetter(object);
     },
-    
+
     emit_childNodesModified: function(delta){
       Chart.prototype.emit_childNodesModified.call(this, delta);
-    
+
       if (delta.inserted)
         for (var i = 0, child; child = delta.inserted[i]; i++)
         {
@@ -493,7 +512,7 @@
         {
           if (this.series && this.series.childNodes)
             for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
-              child.values[seria.basisObjectId] = null;
+              child.values[seria.basisObjectId] = undefined;
 
           child.removeHandler(child.valueChangeEvents, this);
         }
@@ -510,7 +529,7 @@
         var series = [];
         for (var i = 0, seria; seria = this.series[i]; i++)
           series[i] = (typeof seria == 'function') ? { valueGetter: seria } : seria;
-        
+
         this.series = {
           childNodes: series
         };
@@ -524,8 +543,8 @@
     getValuesForSeria: function(seria){
       var values = [];
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        values.push(child.values[seria.basisObjectId] || 0);
-      
+        values.push(child.values[seria.basisObjectId]);
+
       return values;
     },
 
@@ -572,7 +591,7 @@
       var context = this.context;
 
       var TOP = 0;
-      var BOTTOM = 0;      
+      var BOTTOM = 0;
       var LEFT = 0;
       var RIGHT = 0;
       var WIDTH = context.canvas.width;
@@ -594,13 +613,13 @@
 
       var maxValue = this.getMaxGridValue();
       var minValue = this.getMinGridValue();
-      var gridPart = this.getGridPart(Math.max(Math.abs(minValue), Math.abs(maxValue))); 
+      var gridPart = this.getGridPart(minValue, maxValue);
 
       //correct min/max
-      if (Math.abs(minValue) > Math.abs(maxValue))
+      /*if (Math.abs(minValue) > Math.abs(maxValue))
         maxValue = Math.ceil(maxValue / gridPart) * gridPart;
-      else 
-        minValue = Math.floor(minValue / gridPart) * gridPart;
+      else
+        minValue = Math.floor(minValue / gridPart) * gridPart;*/
 
       var partCount = (maxValue - minValue) / gridPart;
 
@@ -620,9 +639,9 @@
       if (showValueAxis)
       {
         var valueLabels = this.invertAxis ? xLabels : yLabels;
-        
+
         var tw;
-        for (var i = 0; i < partCount + 1; i++)
+        for (var i = 0; i <= partCount; i++)
         {
           valueLabels[i] = basis.number.group(Math.round(minValue + gridPart * i));
           tw = context.measureText(valueLabels[i]).width;
@@ -720,7 +739,7 @@
 
       // xscale
       context.fillStyle = this.scaleXLabelColor;
-      var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : keysCount - (this.keyValuesOnEdges ? 1 : 0)); 
+      var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : keysCount - (this.keyValuesOnEdges ? 1 : 0));
       if (this.showXLabels)
       {
         var angle;
@@ -735,13 +754,13 @@
           var optimalLabelSpace = angle ? Math.min(textHeight / Math.sin(angle), maxXLabelWidth) : maxXLabelWidth;
           skipXLabelCount = Math.ceil((optimalLabelSpace + 3) / xStep) - 1;
         }
-        
+
         BOTTOM += Math.round(maxXLabelWidth * Math.sin(angle));
 
         skipScale = skipXLabelCount > 10 || xStep < 4;
-        context.textAlign = angle ? 'right' : 'center';        
+        context.textAlign = angle ? 'right' : 'center';
         context.beginPath();
-        
+
         var leftOffset = !this.keyValuesOnEdges && !this.invertAxis ? xStep / 2 : 0;
         for (var i = 0; i < xLabels.length; i++)
         {
@@ -756,20 +775,20 @@
             context.fillText(xLabels[i], 0, 0);
           }
           context.restore();
- 
+
           if (this.showScale && (!skipLabel || !skipScale))
           {
             context.moveTo(x, HEIGHT - BOTTOM + .5);
             context.lineTo(x, HEIGHT - BOTTOM + (skipLabel ? 3 : 5));
           }
         }
-        
+
         context.stroke();
         context.closePath();
       }
 
       // yscale
-      context.fillStyle = this.scaleYLabelColor;      
+      context.fillStyle = this.scaleYLabelColor;
       var yStep = (HEIGHT - TOP - BOTTOM) / (this.invertAxis ? keysCount - (this.keyValuesOnEdges ? 1 : 0) : partCount);
       if (this.showYLabels)
       {
@@ -780,9 +799,9 @@
         skipYLabelCount = Math.ceil(15 / yStep) - 1;
         //skipYLabelCount = 0;
         skipScale = skipYLabelCount > 10 || yStep < 4;
- 
-        context.beginPath();        
-        
+
+        context.beginPath();
+
         for (var i = 0, label; label = yLabels[i]; i++)
         {
           var labelY = Math.round(this.invertAxis ? (TOP + topOffset + i * yStep) : (HEIGHT - BOTTOM - topOffset - i * yStep)) + .5;
@@ -808,7 +827,8 @@
       {
         context.beginPath();
 
-        var labelX, labelY;
+        var labelX;
+        var labelY;
         var gridStep = this.invertAxis ? xStep : yStep;
         for (var i = 0; i < partCount; i++)
         {
@@ -847,13 +867,11 @@
         context.stroke();
         context.closePath();
       }
-      
+
       // Series
       var step = this.invertAxis ? yStep : xStep;
       for (var i = 0, seria; seria = series[i]; i++)
-      {
         this.drawSeria(this.getValuesForSeria(seria), seria.getColor(), i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM, skipXLabelCount);
-      }  
 
       //save chart data
       extend(this.clientRect, {
@@ -879,8 +897,11 @@
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         for (var j in child.values)
-          if (child.values[j] < min)
-            min = child.values[j];
+        {
+          var value = child.values[j];
+          if (!isNaN(value) && value < min)
+            min = value;
+        }
       }
       return min;
     },
@@ -889,8 +910,12 @@
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         for (var j in child.values)
-          if (child.values[j] > max)
-            max = child.values[j];
+        {
+          var value = child.values[j];
+          if (!isNaN(value) && value > max)
+            max = value;
+        }
+
       }
       return max;
     },
@@ -902,30 +927,31 @@
       var maxValue = this.max == 'auto' ? this.getMaxValue() : this.max;
       return Math.ceil(Math.ceil(maxValue) / Math.pow(10, getDegree(maxValue))) * Math.pow(10, getDegree(maxValue));
     },
-    getGridPart: function(maxGridValue){
-      var MIN_PART_COUNT = 5;
+    getGridPart: function(minGridValue, maxGridValue){
+      var MIN_PART_COUNT = 2;
       var MAX_PART_COUNT = 20;
 
-      var result;
       var maxDegree = getDegree(maxGridValue);
+      var range = maxGridValue - minGridValue;
+      var result;
 
       if (maxDegree == 0)
         result = maxGridValue;
 
-      if (maxGridValue % Math.pow(10, maxDegree) == 0)
+      if (!minGridValue && maxGridValue % Math.pow(10, maxDegree) == 0)
       {
         var res = maxGridValue / Math.pow(10, maxDegree);
-        if (res >= MIN_PART_COUNT)
+        if (res >= MIN_PART_COUNT && res <= MAX_PART_COUNT)
           result = res;
       }
 
       if (!result)
       {
         var count = 1;
-        var step;
-        var newVal;
-        var curVal = maxGridValue;
         var divisionCount = 0;
+        var curVal = range;
+        var newVal;
+        var step;
 
         while (count < MIN_PART_COUNT && divisionCount <= maxDegree)
         {
@@ -933,21 +959,25 @@
           {
             step = curVal / i;
             newVal = (curVal - step) / Math.pow(10, maxDegree - divisionCount);
-            if ((newVal - Math.floor(newVal) == 0) && (count*i < MAX_PART_COUNT))
+            if ((newVal % 1) == 0 && (count * i < MAX_PART_COUNT))
             {
               curVal = step;
               count *= i;
               break;
             }
-          } 
+          }
 
           divisionCount++;
         }
 
-        result = count;
+        if (count == 1)
+          result = basis.number.fit(getDegree(range), 4, MAX_PART_COUNT)
+        else
+          result = count;
       }
 
-      return maxGridValue / result;
+
+      return range / Math.max(MIN_PART_COUNT, result);
     },
 
     // abstract methods
@@ -957,7 +987,7 @@
 
   //
   // ChartSelection
-  // 
+  //
   var startItemPosition = -1;
   var addSelectionMode = true;
 
@@ -991,13 +1021,16 @@
       for (var i = 0, item, pos; item = applyItems[i]; i++)
         basis.array.remove(selectedItems, item);
     }
-    
+
     return selectedItems;
   }
 
   var CHART_ELEMENT_HANDLER = {
     mousedown: function(event){
-      var chart = this.owner; 
+      if (!event.mouseLeft)
+        return;
+
+      var chart = this.owner;
       var x = getChartXByMouseX(chart, Event.mouseX(event));
       var y = getChartYByMouseY(chart, Event.mouseY(event));
 
@@ -1006,7 +1039,7 @@
         for (var eventName in CHART_SELECTION_GLOBAL_HANDLER)
           Event.addGlobalHandler(eventName, CHART_SELECTION_GLOBAL_HANDLER[eventName], this);
 
-        addSelectionMode = event.mouseLeft;
+        addSelectionMode = true; //event.mouseLeft;
 
         var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
         startItemPosition = curItemPosition;
@@ -1021,11 +1054,11 @@
 
       chart.element.setAttribute('tabindex', 1);
       chart.element.focus();
-      
+
       event.die();
     },
     contextmenu: function(event){
-      event.die();
+      //event.die();
     },
     blur: function(){
       //lastItemPosition = -1;
@@ -1036,19 +1069,19 @@
 
   var CHART_SELECTION_GLOBAL_HANDLER = {
     mousemove: function(event){
-      var chart = this.owner; 
-      
+      var chart = this.owner;
+
       var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
-  
+
       var selectedItems = rebuildChartSelection(chart, curItemPosition, startItemPosition);
       this.draw(selectedItems);
     },
     mouseup: function(event){
-      var chart = this.owner; 
+      var chart = this.owner;
 
       var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
       var selectedItems = rebuildChartSelection(chart, curItemPosition, startItemPosition);
-      
+
       chart.selection.lastSelectedRange = {
         start: Math.min(curItemPosition, startItemPosition),
         end: Math.max(curItemPosition, startItemPosition)
@@ -1073,9 +1106,9 @@
     className: namespace + '.ChartSelection',
 
     style: {
-      fillStyle: '#dfdaff', 
+      fillStyle: '#dfdaff',
       strokeStyle: '#9a89ff',
-      alpha: '.7'
+      alpha: '.6'
     },
 
     template: templates.ChartSelection,
@@ -1101,7 +1134,7 @@
 
     emit_ownerChanged: function(oldOwner){
       AbstractCanvas.prototype.emit_ownerChanged.call(this, oldOwner);
-      
+
       if (oldOwner && oldOwner.selection)
         oldOwner.selection.removeHandler(CHART_SELECTION_HANDLER, this);
 
@@ -1131,8 +1164,11 @@
 
       this.reset();
 
-      this.context.save();
-      this.context.translate(this.clientRect.left, this.clientRect.top);
+      var context = this.context;
+
+      context.save();
+      context.translate(this.clientRect.left, this.clientRect.top);
+      context.globalAlpha = this.style.alpha;
 
       var selectionBarWidth = this.clientRect.width / (this.owner.childNodes.length - 1);
 
@@ -1144,7 +1180,8 @@
       for (var i = 0; i < selectedItems.length; i++)
         selectedItemsMap[selectedItems[i].basisObjectId] = true;
 
-      var left, right;
+      var left;
+      var right;
       var lastPos = -1;
 
       extend(this.context, this.style);
@@ -1161,10 +1198,10 @@
         {
           if (lastPos != -1)
           {
-            left = Math.round(lastPos * selectionBarWidth - (lastPos == i - 1 ? 1 : 0));
-            right = Math.round((i - 1) * selectionBarWidth + (lastPos == i - 1 ? 1 : 0));
-            this.context.fillRect(left + .5, .5, right - left, this.clientRect.height);
-            this.context.strokeRect(left + .5, .5, right - left, this.clientRect.height);
+            left = Math.round(lastPos * selectionBarWidth - (lastPos == i - 1));
+            right = Math.round((i - 1) * selectionBarWidth + (lastPos == i - 1));
+            context.fillRect(left + .5, .5, right - left, this.clientRect.height);
+            context.strokeRect(left + .5, .5, right - left, this.clientRect.height);
             lastPos = -1;
           }
         }
@@ -1226,14 +1263,14 @@
       }
 
       this.clientRect = this.owner.clientRect;
-      this.max = this.owner.maxValue;
+      //this.max = this.owner.maxValue;
     },
 
     updatePosition: function(mx, my){
       this.reset();
       this.recalc();
 
-      var canvasRect = new basis.layout.Box(this.element, false, this.owner.element.offsetParent);
+      var canvasRect = basis.layout.getBoundingRect(this.element, false, this.owner.element.offsetParent);
       var x = mx - canvasRect.left - this.clientRect.left;
       var y = my - canvasRect.top - this.clientRect.top;
 
@@ -1255,7 +1292,8 @@
       var TOP = this.clientRect.top;
       var WIDTH = this.clientRect.width;
       var HEIGHT = this.clientRect.height;
-      var MAX = this.max;
+      var MIN = this.owner ? this.owner.getMinGridValue() : this.min;
+      var MAX = this.owner ? this.owner.getMaxGridValue() : this.max;
 
       var series = this.owner.series.childNodes;
       var keyCount = this.owner.childNodes.length;
@@ -1270,8 +1308,8 @@
       context.stroke();
       context.closePath();
 
-      context.font = "10px tahoma";
-      context.textAlign = "center";
+      context.font = '10px tahoma';
+      context.textAlign = 'center';
       var keyText = this.owner.keyTitleGetter(this.owner.childNodes[keyPosition]);
       var keyTextWidth = context.measureText(keyText).width;
       var keyTextHeight = 10;
@@ -1284,9 +1322,9 @@
       context.lineTo(xPosition + Math.round(keyTextWidth / 2) + 5 + .5, HEIGHT + 4 + keyTextHeight + 5 + .5);
       context.lineTo(xPosition + Math.round(keyTextWidth / 2) + 5 + .5, HEIGHT + 4 + .5);
       context.lineTo(xPosition + 3 + .5, HEIGHT + 4 + .5);
-      context.lineTo(xPosition + .5, HEIGHT + 1);
+      context.lineTo(xPosition + .5, HEIGHT + 1 + .5);
       context.fillStyle = '#c29e22';
-      context.strokeStyle = '#070';
+      context.strokeStyle = colorLuminance('#c29e22', -.25);
       context.fill();
       context.stroke();
       context.closePath();
@@ -1312,9 +1350,9 @@
         var valueTextWidth = context.measureText(valueText).width;
 
         if (labelWidth < valueTextWidth)
-          labelWidth = valueTextWidth; 
+          labelWidth = valueTextWidth;
 
-        var valueY = Math.round((1 - value / MAX) * HEIGHT);
+        var valueY = Math.round(HEIGHT * (1 - (value - MIN) / (MAX - MIN)));
         var labelY = Math.max(labelHeight / 2, Math.min(valueY, HEIGHT - labelHeight / 2));
 
         labels.push({
@@ -1325,7 +1363,7 @@
         });
       }
 
-      // adjust label positions 
+      // adjust label positions
       labels = basis.array.sortAsObject(labels, 'valueY');
 
       var hasCrossing = true;
@@ -1367,10 +1405,10 @@
         context.lineWidth = 3;
         context.beginPath();
         context.arc(xPosition + .5, label.valueY + .5, pointWidth, 0, 2 * Math.PI);
-        context.stroke();         
+        context.stroke();
         context.fill();
         context.closePath();
-        
+
         var tongueSize = 10;
         context.beginPath();
         context.moveTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
@@ -1382,7 +1420,7 @@
         context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + .5, label.labelY + 5 + .5);
         context.lineTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
         context.fillStyle = label.color;
-        context.strokeStyle = '#444';
+        context.strokeStyle = colorLuminance(label.color, -.25);
         context.lineWidth = 1;
         context.stroke();
         context.fill();
@@ -1411,7 +1449,7 @@
       lineJoin: 'bevel'
     },
 
-    satelliteConfig: {
+    satellite: {
       chartViewer: {
         instanceOf: ChartViewer
       },
@@ -1429,61 +1467,81 @@
     },
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height, pointFrequency){
-
-      var points = [];
-      for (var i = 0; i < values.length; i++)
-      {
-        points.push({
-          x: i * step,
-          y: height * (1 - (values[i] - min) / (max - min))
-        });
-      }
-
       var context = this.context;
 
       if (!this.keyValuesOnEdges)
         left += step / 2;
 
-      this.style.strokeStyle = color;
-
       context.save();
+
       context.translate(left, top);
-      context.beginPath();
-
-      var x, y;
-      for (var i = 0; i < points.length; i++)
-      {
-        var x = points[i].x;
-        var y = points[i].y;
-        
-        if (i == 0)
-          context.moveTo(x, y);
-        else
-          context.lineTo(x, y);
-      }
-
+      context.fillStyle = color;
       extend(context, this.style);
-      context.stroke();
+      context.strokeStyle = color;
 
-      if (this.fillArea /*&& this.series.childNodes.length == 1*/)
+      var points = [];
+      var started = false;
+      var ended = false;
+      for (var i = 0; i <= values.length; i++) // <= for final stroke
       {
-        context.lineWidth = 0;
-        var zeroPosition = min < 0 ? Math.max(0, max) / (max - min) * height : height;
-        context.lineTo(width, zeroPosition);
-        context.lineTo(0, zeroPosition);
-        context.globalAlpha = .15;
-        context.fillStyle = color;
-        context.fill();
+        if (!isNaN(values[i]))
+        {
+          var x = i * step;
+          var y = height * (1 - (values[i] - min) / (max - min));
+          var point = [x, y];
+          if (!started)
+          {
+            started = point;
+            context.beginPath();
+            context.moveTo(x, y);
+          }
+          else
+            context.lineTo(x, y);
+
+          ended = point;
+          points.push({
+            x: x,
+            y: y
+          });
+        }
+        else
+        {
+          if (started)
+          {
+            if (started == ended)
+            {
+              started = [started[0] - context.lineWidth / 2 - .5, started[1]];
+              ended = [started[0] + context.lineWidth / 2 + .5, started[1]];
+              context.moveTo(started[0], started[1]);
+              context.lineTo(ended[0], ended[1]);
+            }
+
+            context.stroke();
+
+            // fill
+            if (this.fillArea)
+            {
+              context.lineTo(ended[0], height);
+              context.lineTo(started[0], height);
+
+              context.lineWidth = 0;
+              context.globalAlpha = .15;
+              context.fill();
+              context.globalAlpha = 1;
+            }
+
+            context.closePath();
+            started = false;
+            ended = false;
+          }
+        }
       }
 
-      context.closePath();
-
-      
       if (this.drawPoints)
       {
         var direction = 0;
         var angle = 0;
-        
+
         for (var i = 0; i < points.length; i++)
         {
           var x = points[i].x;
@@ -1504,20 +1562,18 @@
           {
             context.beginPath();
             context.arc(x, y, 4, 0, 2 * Math.PI, false);
-            context.globalAlpha = 1;
             context.fillStyle = color;
-            context.lineWidth = 2;
-            context.strokeStyle = 'white';
+            context.lineWidth = 1.5;
+            context.strokeStyle = 'rgba(255,255,255,.9)';
             context.fill();
             context.stroke();
-            context.closePath();      
+            context.closePath();
           }
 
           direction = nextDirection;
           angle = nextAngle;
         }
       }
-      
 
       context.restore();
     }
@@ -1546,8 +1602,8 @@
       var bars = this.owner.bars;
       var series = this.owner.series.childNodes;
       //var keys = this.owner.getKeys();
-            
-      var invertAxis = this.owner.invertAxis; 
+
+      var invertAxis = this.owner.invertAxis;
       var WIDTH = clientRect.width;
       var HEIGHT = clientRect.height;
 
@@ -1556,7 +1612,7 @@
       var barPosition = Math.floor(position / step);
 
       var keyTitle = this.owner.keyTitleGetter(this.owner.childNodes[barPosition]);
-      
+
       var legendText;
       var hoveredBar;
       var bar;
@@ -1580,17 +1636,17 @@
       var TOOLTIP_PADDING = 5;
 
       var tooltipText = keyTitle + ', ' + legendText + ', ' + basis.number.group(hoveredBar.value.toFixed(2));
-      context.font = "10px Tahoma";
-      
+      context.font = '10px Tahoma';
+
       var tooltipTextWidth = context.measureText(tooltipText).width;
-      var tooltipWidth = tooltipTextWidth + 2*TOOLTIP_PADDING;
-      var tooltipHeight = 10 + 2*TOOLTIP_PADDING;
+      var tooltipWidth = tooltipTextWidth + 2 * TOOLTIP_PADDING;
+      var tooltipHeight = 10 + 2 * TOOLTIP_PADDING;
 
       var tooltipX = Math.round(Math.max(0, Math.min(this.clientRect.width - tooltipWidth, x - tooltipWidth / 2)));
       var tooltipY = Math.round(y - tooltipHeight - 5);
 
       if (tooltipY < 0) //show under cursor
-        tooltipY = Math.round(y + 20); 
+        tooltipY = Math.round(y + 20);
 
       context.strokeStyle = 'black';
       context.lineWidth = 1.5;
@@ -1603,7 +1659,7 @@
       context.fillStyle = 'white';
       context.lineWidth = 1;
       context.shadowBlur = 3;
-      context.fillRect(tooltipX + .5, tooltipY + .5, tooltipWidth, tooltipHeight);        
+      context.fillRect(tooltipX + .5, tooltipY + .5, tooltipWidth, tooltipHeight);
       context.shadowBlur = 0;
       context.strokeRect(tooltipX + .5, tooltipY + .5, tooltipWidth, tooltipHeight);
 
@@ -1613,18 +1669,18 @@
       context.restore();
     }
   });
-  
+
 
   /**
    * @class
    */
   var BarChart = AxisChart.subclass({
     className: namespace + '.BarChart',
-    
+
     bars: null,
     keyValuesOnEdges: false,
 
-    satelliteConfig: {
+    satellite: {
       chartViewer: BarChartViewer
     },
 
@@ -1655,7 +1711,7 @@
       {
         bar = this.getBarRect(values[i], pos, i, min, max, step, width, height, zeroLinePosition);
 
-        bar.value = values[i];
+        bar.value = values[i] || 0;
         this.bars[pos].push(bar);
 
         bar.x = Math.round(bar.x);
@@ -1668,14 +1724,14 @@
 
       context.restore();
     },
-    getBarRect: function(value, seriaPos, barPos, min, max, step, width, height, zeroLinePosition){                                                                        
+    getBarRect: function(value, seriaPos, barPos, min, max, step, width, height, zeroLinePosition){
       var cnt = this.series.childNodes.length;
       var barSize = Math.round(0.7 * step / cnt);
 
       var bar = {};
       if (this.invertAxis)
       {
-        bar.height = barSize;          
+        bar.height = barSize;
         bar.y = step / 2 + barPos * step - bar.height * cnt / 2 + seriaPos * bar.height;
 
         var x = (value - min) / (max - min) * width;
@@ -1684,7 +1740,7 @@
       }
       else
       {
-        bar.width = barSize;          
+        bar.width = barSize;
         bar.x = step / 2 + barPos * step - bar.width * cnt / 2 + seriaPos * bar.width;
         var y = (value - min) / (max - min) * height;
         bar.height = (y - zeroLinePosition) * (value > 0 ? 1 : -1);
@@ -1695,7 +1751,7 @@
     },
     drawBar: function(bar){
       this.context.fillRect(bar.x + .5, bar.y + .5, bar.width, bar.height);
-      if(bar.width > 10 && bar.height > 10)
+      if (bar.width > 10 && bar.height > 10)
         this.context.strokeRect(bar.x + .5, bar.y + .5, bar.width, bar.height);
     }
   });
@@ -1714,7 +1770,8 @@
       {
         sum = 0;
         for (var j in child.values)
-          sum += child.values[j];
+          if (!isNaN(child.values[j]))
+            sum += child.values[j];
 
         if (sum > max || max == null)
           max = sum;
@@ -1726,10 +1783,10 @@
       var bar = {};
       var previousBar = seriaPos > 0 && this.bars[seriaPos - 1][barPos];
       var barSize = 0.7 * step;
-            
+
       if (this.invertAxis)
       {
-        bar.height = barSize;          
+        bar.height = barSize;
         bar.y = step / 2 + barPos * step - barSize / 2;
 
         bar.width = value / max * width;
@@ -1737,7 +1794,7 @@
       }
       else
       {
-        bar.width = barSize;          
+        bar.width = barSize;
         bar.x = step / 2 + barPos * step - bar.width / 2;
 
         bar.height = value / max * height;

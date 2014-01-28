@@ -272,6 +272,16 @@
 
 
  /**
+  * Partition node
+  */
+  function reinsertPartitionNodes(partition){
+    var nodes = partition.nodes;
+    if (nodes)
+      for (var i = nodes.length - 1, child; child = nodes[i]; i--)
+        child.parentNode.insertBefore(child, child.nextSibling);
+  }
+
+ /**
   * @type {number}
   */
   var focusTimer;
@@ -348,7 +358,7 @@
       },
 
      /**
-      * 
+      *
       */
       postInit: function(){
         super_.postInit.call(this);
@@ -380,17 +390,10 @@
           this.template = null;
           this.setTemplate(template);
 
-          // if node has grouping move groups into template
-          if (this.grouping)
-          {
-            var childNodesElement = this.tmpl.groupsElement || this.childNodesElement;
-            childNodesElement.appendChild(nodeDocumentFragment);
-          }
-          
           // release fragment
           fragments.push(nodeDocumentFragment);
 
-          // process container 
+          // process container
           if (this.container)
           {
             this.container.appendChild(this.element);
@@ -424,20 +427,40 @@
         /** @cut */   delete this.noChildNodesElement_;
 
         if (this.grouping)
+        {
           this.grouping.syncDomRefs();
 
-        if (this instanceof PartitionNode)
-        {
-          var nodes = this.nodes;
-          if (nodes)
-            for (var i = nodes.length - 1, child; child = nodes[i]; i--)
-              child.parentNode.insertBefore(child, child.nextSibling);
+          // search for top grouping
+          var cursor = this;
+          while (cursor.grouping)
+            cursor = cursor.grouping;
+
+          // process grouping partition nodes
+          var topGrouping = cursor;
+          for (var groupNode = topGrouping.lastChild; groupNode; groupNode = groupNode.previousSibling)
+          {
+            if (groupNode instanceof PartitionNode)
+              // for basis.ui.PartitionNode instances we can move all partition nodes at once
+              // by moving partition container
+              topGrouping.insertBefore(groupNode, groupNode.nextSibling);
+            else
+              // for partitions with no DOM element move group nodes one by one
+              reinsertPartitionNodes(groupNode);
+          }
+
+          // move grouping null group nodes
+          reinsertPartitionNodes(topGrouping.nullGroup);
         }
         else
         {
+          // with no grouping scenario
           for (var child = this.lastChild; child; child = child.previousSibling)
             this.insertBefore(child, child.nextSibling);
         }
+
+        // partition nodes also moves their group nodes
+        if (this instanceof PartitionNode)
+          reinsertPartitionNodes(this);
 
         // insert content
         if (this.content)
@@ -448,12 +471,12 @@
         if (oldElement && oldElement !== this.element && oldElement.nodeType != 11) // 11 - DocumentFragment
         {
           var parentNode = oldElement && oldElement.parentNode;
-          
+
           if (parentNode)
           {
             if (this.owner && this.owner.tmpl)
               this.owner.tmpl.set(oldElement, this.element);
-            
+
             if (this.element.parentNode !== parentNode)
               parentNode.replaceChild(this.element, oldElement);
           }
@@ -468,25 +491,34 @@
       */
       setTemplate: function(template){
         var curSwitcher = this.templateSwitcher_;
+        var switcher;
 
         // dance with template switcher
         if (template instanceof TemplateSwitcher)
         {
-          var switcher = template;
-          this.templateSwitcher_ = switcher;
-
+          switcher = template;
           template = switcher.resolve(this);
-
-          if (!curSwitcher)
-            this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
         }
-        
+
         // check template for correct class instance
         if (template instanceof HtmlTemplate == false)
           template = null;
 
+        if (!template)
+        {
+          /** @cut */ basis.dev.warn('basis.ui.Node#setTemplate: set null to template possible only on node destroy');
+          return;
+        }
+
+        if (switcher)
+        {
+          this.templateSwitcher_ = switcher;
+          if (!curSwitcher)
+            this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
+        }
+
         // drop template switcher if no template, or new template is not a result of switcher resolving
-        if (curSwitcher && (!template || curSwitcher.resolve(this) !== template))
+        if (curSwitcher && curSwitcher.resolve(this) !== template)
         {
           this.templateSwitcher_ = null;
           this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
@@ -495,32 +527,15 @@
         // apply new value
         if (this.template !== template)
         {
-          var oldTemplate = this.template;
-
           // set new template
           this.template = template;
-
-          if (template)
-            this.templateSync();
-          else
-          {
-            var oldElement = this.element;
-            oldTemplate.clearInstance(this.tmpl);
-
-            this.tmpl = null;
-            this.element = null;
-            this.childNodesElement = null;
-
-            var parentNode = oldElement && oldElement.parentNode;
-            if (parentNode && parentNode.nodeType == 1) // 1 – Element
-              parentNode.removeChild(oldElement);
-          }
+          this.templateSync();
         }
       },
 
      /**
       * @param {string} bindName
-      */ 
+      */
       updateBind: function(bindName){
         var binding = this.binding[bindName];
         var getter = binding && binding.getter;
@@ -592,9 +607,31 @@
       * @inheritDoc
       */
       destroy: function(){
+        var template = this.template;
+        var element = this.element;
+
+        // remove template switcher handler
+        if (this.templateSwitcher_)
+        {
+          this.templateSwitcher_ = null;
+          this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
+        }
+
+        // destroy template instance
+        template.clearInstance(this.tmpl);
+
+        // inherit
         super_.destroy.call(this);
 
-        this.setTemplate();
+        // reset DOM references
+        this.tmpl = null;
+        this.element = null;
+        this.childNodesElement = null;
+
+        // remove DOM node from it's parent, if parent is DOM element
+        var parentNode = element && element.parentNode;
+        if (parentNode && parentNode.nodeType == 1) // 1 – Element
+          parentNode.removeChild(element);
       }
     };
   };
@@ -627,7 +664,7 @@
 
         if (childElement.parentNode !== container || childElement.nextSibling !== refNode) // prevent dom update
           container.insertBefore(childElement, refNode);
-          
+
         return newChild;
       },
       removeChild: function(oldChild){
@@ -674,6 +711,8 @@
         var domFragment = document.createDocumentFragment();
         var target = this.grouping || this;
         var container = target.childNodesElement;
+
+        // set child nodes element points to DOM fragment
         target.childNodesElement = domFragment;
 
         // call inherit method
@@ -686,11 +725,8 @@
         // flush dom fragment nodes into container
         container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
 
-        // restore childNodesElement, but only if childNodesElement isn't changed during children insert,
-        // as example, by template switching on childNodesModified
-        // TODO: find better solution, movement template creation into postInit can solve that problem on init
-        if (target.childNodesElement === domFragment)
-          target.childNodesElement = container;
+        // restore childNodesElement
+        target.childNodesElement = container;
       }
     };
   };
@@ -724,7 +760,6 @@
     */
     groupingClass: Class.SELF,
 
-    nullElement: null,
     element: null,
     childNodesElement: null,
 
@@ -736,19 +771,8 @@
       DWGroupingNode.prototype.emit_ownerChanged.call(this, oldOwner);
     },
 
-    listen: {
-      owner: {
-        templateChanged: function(){
-          this.syncDomRefs();
-          for (var child = this.lastChild; child; child = child.previousSibling)
-            this.insertBefore(child, child.nextSibling);
-        }
-      }
-    },
-
     init: function(){
-      this.nullElement = document.createDocumentFragment();
-      this.element = this.childNodesElement = this.nullElement;
+      this.element = this.childNodesElement = document.createDocumentFragment();
       DWGroupingNode.prototype.init.call(this);
     },
 
@@ -758,10 +782,7 @@
       var element = null;
 
       if (owner)
-      {
         element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement;
-        element.appendChild(this.nullElement);
-      }
 
       do
       {
@@ -774,7 +795,6 @@
       DWGroupingNode.prototype.destroy.call(this);
       this.element = null;
       this.childNodesElement = null;
-      this.nullElement = null;
     }
   });
 
@@ -786,6 +806,7 @@
     className: namespace + '.Node',
 
     // those bindings here because PartitionNode has no select/unselect/disable/enable events for now
+    // TODO: move to proper place when PartitionNode will have those events
     binding: {
       selected: {
         events: 'select unselect',
@@ -824,7 +845,7 @@
 
  /**
   * @class
-  */ 
+  */
   var ShadowNodeList = Node.subclass({
     className: namespace + '.ShadowNodeList',
 

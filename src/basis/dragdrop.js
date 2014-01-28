@@ -1,7 +1,5 @@
 
   basis.require('basis.event');
-  basis.require('basis.ua');
-  basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.layout');
 
@@ -20,7 +18,6 @@
   var document = global.document;
   var cleaner = basis.cleaner;
 
-  var DOM = basis.dom;
   var Event = basis.dom.event;
   var addGlobalHandler = Event.addGlobalHandler;
   var removeGlobalHandler = Event.removeGlobalHandler;
@@ -28,21 +25,24 @@
   var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
-  var nsLayout = basis.layout;
-  var ua = basis.ua;
-  
+  var getBoundingRect = basis.layout.getBoundingRect;
+  var getViewportRect = basis.layout.getViewportRect;
+
 
   //
   // Main part
   //
 
   var SELECTSTART_SUPPORTED = Event.getEventInfo('selectstart').supported;
-  var defaultBaseElement = ua.is('IE7-') ? document.body : document.documentElement;
 
   var dragging;
   var dragElement;
   var dragData;
-  
+
+  function resolveElement(value){
+    return typeof value == 'string' ? document.getElementById(value) : value;
+  }
+
   function startDrag(event){
     if (dragElement)
       stopDrag();
@@ -100,7 +100,7 @@
       dragging = false;
       dragElement.emit_over(dragData, event);
     }
-    
+
     dragElement = null;
     dragData = null;
 
@@ -157,8 +157,8 @@
     },
 
     setElement: function(element, trigger){
-      this.element = DOM.get(element);
-      trigger = DOM.get(trigger) || this.element;
+      this.element = resolveElement(element);
+      trigger = resolveElement(trigger) || this.element;
 
       if (this.trigger !== trigger)
       {
@@ -172,7 +172,10 @@
       }
     },
     setBase: function(baseElement){
-      this.baseElement = DOM.get(baseElement) || defaultBaseElement;
+      this.baseElement = resolveElement(baseElement);
+    },
+    getBase: function(){
+      return this.baseElement || (document.compatMode == 'CSS1Compat' ? document.documentElement : document.body);
     },
 
     isDragging: function(){
@@ -192,7 +195,7 @@
       cleaner.remove(this);
 
       Emitter.prototype.destroy.call(this);
-      
+
       this.setElement();
       this.setBase();
     }
@@ -203,15 +206,15 @@
   */
   var MoveableElement = DragDropElement.subclass({
     className: namespace + '.MoveableElement',
-    
+
     emit_start: function(dragData, event){
       var element = this.containerGetter(this, dragData.initX, dragData.initY);
 
       if (element)
       {
         dragData.element = element;
-        dragData.box = new nsLayout.Box(element);
-        dragData.viewport = new nsLayout.Viewport(this.baseElement);
+        dragData.box = getBoundingRect(element);  // relative to offsetParent?
+        dragData.viewport = getViewportRect(this.getBase());
       }
 
       DragDropElement.prototype.emit_start.call(this, dragData, event);
@@ -224,7 +227,7 @@
       if (this.axisX)
       {
         var newLeft = dragData.box.left + dragData.deltaX;
-        
+
         if (this.fixLeft && newLeft < 0)
           newLeft = 0;
         else
@@ -237,7 +240,7 @@
       if (this.axisY)
       {
         var newTop = dragData.box.top + dragData.deltaY;
-       
+
         if (this.fixTop && newTop < 0)
           newTop = 0;
         else

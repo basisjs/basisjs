@@ -1,5 +1,15 @@
-basis.require('basis.ui');
-basis.require('app.type');
+require('basis.ui');
+
+//
+// Import names
+//
+
+var Todo = require('app.type').Todo;
+
+
+//
+// Main view
+//
 
 module.exports = new basis.ui.Node({
   template: resource('template/form.tmpl'),
@@ -19,7 +29,7 @@ module.exports = new basis.ui.Node({
         event.sender.value = '';
 
         // create new todo
-        app.type.Todo({
+        Todo({
           title: value
         });
       }

@@ -1,7 +1,7 @@
 /*
   Basis javascript library
   http://github.com/basisjs/basisjs
- 
+
   @license
   Dual licensed under the MIT or GPL Version 2 licenses.
 */
@@ -36,7 +36,7 @@
 ;(function(global){ // global is current context (`window` in browser and `global` on node.js)
   'use strict';
 
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
 
   var document = global.document;
   var Object_toString = Object.prototype.toString;
@@ -144,10 +144,10 @@
   * Merge several objects into new object and returns it.
   * @param {...*} args
   * @return {object}
-  */ 
+  */
   function merge(/* obj1 .. objN */){
     return arrayFrom(arguments).reduce(extend, {});
-  }  
+  }
 
  /**
   * Returns list of callback call result for every object's key-value pair.
@@ -228,7 +228,9 @@
   * @return {function()}
   */
   function $const(value){
-    return function(){ return value; };
+    return function(){
+      return value;
+    };
   }
 
  /**
@@ -318,7 +320,7 @@
         /** @cut */      return '"' + parts[w == 'foo' ? 0 : (w == 'bar' ? 1 : 2)] + '"';
         /** @cut */    })
         /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))(parts);
-        
+
         return fn;
       }
 
@@ -351,7 +353,9 @@
           // this function never used for getter before, wrap and cache it
 
           // wrap function to prevent function properties rewrite
-          func = function(object){ return path(object); };
+          func = function(object){
+            return path(object);
+          };
           func.base = path;
           func.__extend__ = getter;
 
@@ -405,7 +409,7 @@
           if (modType != 'object')
           {
             // only string, function and objects are support as modificator
-            ;;;consoleMethods.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
+            /** @cut */ consoleMethods.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
 
             return func;
           }
@@ -424,7 +428,7 @@
           result = function(object){
             return String_extensions.format(modificator, func(object));
           };
-        break;
+          break;
 
         case 'function':
           if (!modId)
@@ -437,7 +441,7 @@
           result = function(object){
             return modificator(func(object));
           };
-        break;
+          break;
 
         default: //case 'object':
           result = function(object){
@@ -499,14 +503,16 @@
   * @return {function()} Returns lazy function.
   */
   function lazyInit(init, thisObject){
-    var inited = 0, self, data;
+    var inited = 0;
+    var self;
+    var data;
     return self = function(){
       if (!inited++)
       {
         self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
         self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
         data = init.apply(thisObject || this, arguments);
-        ;;;if (typeof data == 'undefined') consoleMethods.warn('lazyInit function returns nothing:\n' + init);
+        /** @cut */ if (typeof data == 'undefined') consoleMethods.warn('lazyInit function returns nothing:\n' + init);
       }
       return data;
     };
@@ -519,14 +525,16 @@
   * @return {function()} Returns lazy function.
   */
   function lazyInitAndRun(init, run, thisObject){
-    var inited = 0, self, data;
+    var inited = 0;
+    var self;
+    var data;
     return self = function(){
       if (!inited++)
       {
         self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
         self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
         data = init.call(thisObject || this);
-        ;;;if (typeof data == 'undefined') consoleMethods.warn('lazyInitAndRun function returns nothing:\n' + init);
+        /** @cut */ if (typeof data == 'undefined') consoleMethods.warn('lazyInitAndRun function returns nothing:\n' + init);
       }
       run.apply(data, arguments);
       return data;
@@ -825,7 +833,7 @@
         *
         * @param {string} path
         * @return {string}
-        */ 
+        */
         normalize: function(path){
           // use link element as path resolver
           var result = [];
@@ -858,7 +866,7 @@
         *
         * @param {string} path
         * @return {string}
-        */ 
+        */
         dirname: function(path){
           return utils.normalize(path).replace(/\/[^\/]*$/, '');
         },
@@ -876,7 +884,7 @@
         *
         * @param {string} path
         * @return {string} Path extension with leading dot or empty string.
-        */ 
+        */
         extname: function(path){
           var ext = utils.normalize(path).match(/\.[^\\\/]*$/);
           return ext ? ext[0] : '';
@@ -893,7 +901,7 @@
         * @param {string} path
         * @param {string=} ext
         * @return {string}
-        */ 
+        */
         basename: function(path, ext){
           var filename = utils.normalize(path).match(/[^\\\/]*$/);
           filename = filename ? filename[0] : '';
@@ -1040,7 +1048,7 @@
         {
           try {
             extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
-          } catch (e) {
+          } catch(e) {
             ;;;consoleMethods.error('basis.js config parse fault: ' + e);
           }
 
@@ -1048,7 +1056,19 @@
           // TODO: remove this warning in later versions
           /** @cut */ if ('extClass' in config) consoleMethods.warn('extClass option in basis-config is not required, basis.js doesn\'t extend buildin classes by custom methods any more');
 
-          basisFilename = pathUtils.normalize(scriptEl.src)
+          var src = scriptEl.src;
+
+          // IE7 and lower doesn't absolutize src value
+          if (!/^[a-z]+:\/\//.test(src))
+          {
+            // absolutize src using anchor, IE absolutize href on <a> cloning
+            var anchor = document.createElement('a');
+            anchor.href = src;
+            src = anchor.cloneNode(false).href;  // NOTE: false is important here,
+                                                 // wrong href transformation otherwise
+          }
+
+          basisFilename = pathUtils.normalize(src);
           basisBaseURI = pathUtils.dirname(basisFilename);
 
           break;
@@ -1059,7 +1079,7 @@
     config.path = extend(config.path || {}, {
       basis: basisBaseURI
     });
-      
+
     var autoload = config.autoload;
     config.autoload = false;
     if (autoload)
@@ -1364,7 +1384,7 @@
         basisObjectId: 0,
 
         constructor: null,
-        
+
         init: function(){
         },
         postInit: function(){
@@ -1504,7 +1524,7 @@
 
    /**
     * @type {*}
-    */ 
+    */
     value: null,
 
    /**
@@ -1520,7 +1540,7 @@
    /**
     * Binding interface.
     * @type {object}
-    */ 
+    */
     bindingBridge: {
       attach: function(host, fn, context){
         host.attach(fn, context);
@@ -1535,7 +1555,7 @@
 
    /**
     * @constructor
-    */ 
+    */
     init: function(value){
       this.value = value;
     },
@@ -1551,7 +1571,7 @@
    /**
     * Set new value for token. Call apply method if value has been changed.
     * @param {*} value
-    */ 
+    */
     set: function(value){
       if (this.value !== value)
       {
@@ -1604,7 +1624,7 @@
 
    /**
     * Call every attached callbacks with current token value.
-    */ 
+    */
     apply: function(){
       var value = this.get();
       var cursor = this;
@@ -1620,18 +1640,18 @@
     */
     deferred: function(){
       var token = this.deferredToken;
-   
+
       if (!token)
       {
         token = this.deferredToken = new basis.DeferredToken(this.value);
         this.attach(token.set, token);
       }
-   
+
       return token;
     },
 
    /**
-    * Actually it's not require invoke destroy method for token, garbage 
+    * Actually it's not require invoke destroy method for token, garbage
     * collector have no problems to free token's memory when all references
     * to token are removed.
     * @destructor
@@ -1647,7 +1667,7 @@
       this.value = null;
       this.attach = $undef;
       this.detach = $undef;
-    }  
+    }
   });
 
   //
@@ -1657,33 +1677,33 @@
   var awaitToApply = (function(){
     var tokens = {};
     var timer;
-   
+
     function applyTokens(){
       var list = tokens;
-   
+
       // reset list & timer
       tokens = {};
       timer = null;
-   
+
       // call apply method for all tokens in the list
       for (var key in list)
         list[key].apply();
     }
-   
+
     return function(token){
       if (token.basisObjectId in tokens)
         return;
- 
+
       tokens[token.basisObjectId] = token;
- 
+
       if (!timer)
         setImmediate(applyTokens);
     }
   })();
-   
+
  /**
   * @class
-  */ 
+  */
   var DeferredToken = Token.subclass({
     className: 'basis.DeferredToken',
 
@@ -1701,7 +1721,7 @@
 
    /**
     * That method for DeferredToken returns token itself.
-    */ 
+    */
     deferred: function(){
       return this;
     }
@@ -1747,18 +1767,15 @@
           resourceContent = req.responseText;
         else
         {
-          ;;;consoleMethods.error('basis.resource: Unable to load ' + url + ' (status code ' + req.status + ')');
+          /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url + ' (status code ' + req.status + ')');
         }
       }
       else
       {
-        try
-        {
+        try {
           resourceContent = require('fs').readFileSync(url, 'utf-8');
-        }
-        catch (e)
-        {
-          ;;;consoleMethods.error('basis.resource: Unable to load ' + url, e);
+        } catch(e){
+          /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
       }
 
@@ -1893,7 +1910,7 @@
 
       for (var url in resourceCache)
         result.push(pathUtils.relative(url));
-      
+
       return result;
     },
     getSource: function(resourceUrl){
@@ -1903,13 +1920,13 @@
       return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
     },
     isResource: function(value){
-      return value && resourceCache[value.url] === value;
+      return value ? resourceCache[value.url] === value : false;
     },
     extensions: {
       '.js': function(content, filename){
         var namespace = filename2namespace[filename];
 
-        if (!namespace) 
+        if (!namespace)
         {
           var implicitNamespace = true;
           namespace = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
@@ -1925,7 +1942,10 @@
             }
           }
 
-          namespace = namespace.replace(/\./g, '_').replace(/\//g, '.');
+          namespace = namespace
+            .replace(/\./g, '_')
+            .replace(/^\//g, '')
+            .replace(/\//g, '.');
 
           if (implicitNamespace)
             namespace = 'implicit.' + namespace;
@@ -2009,7 +2029,7 @@
       /** @cut */       event.preventDefault()
       /** @cut */     }
       /** @cut */   })
-      /** @cut */ 
+      /** @cut */
       /** @cut */   var script = document.createElement('script');
       /** @cut */   script.src = sourceURL;
       /** @cut */   script.async = false;
@@ -2151,7 +2171,7 @@
 
 
  /**
-  * @param {string} namespace
+  * @param {string} filename
   * @name require
   */
   var requireNamespace = (function(){
@@ -2168,7 +2188,7 @@
           // patch node.js module._compile
           moduleProto._compile = function(content, filename){
             this.basis = basis;
-            content = 
+            content =
               'var node_require = require;\n' +
               'var basis = module.basis;\n' +
               'var resource = function(filename){ return basis.resource(__dirname + "/" + filename) };\n' +
@@ -2178,7 +2198,7 @@
           };
 
           var exports = require(requirePath + filename.replace(/\./g, '/'));
-          
+
           namespace.exports = exports;
           if (exports && exports.constructor === Object)
             complete(namespace, exports);
@@ -2448,6 +2468,7 @@
     *   // but if you need all items of array with filtered by condition use Array#filter method instead
     *   var result = list.filter(basis.getter('a == 1'));
     *
+    * @param {Array} this_
     * @param {*} value
     * @param {function(object)|string} getter_
     * @param {number=} offset
@@ -2463,6 +2484,7 @@
     },
 
    /**
+    * @param {Array} this_
     * @param {*} value
     * @param {function(object)|string} getter_
     * @param {number=} offset
@@ -2504,7 +2526,9 @@
                  v: getter_(item) // value
                };
              })                                                                           // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
-        .sort(comparator || function(a, b){ return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1)); })
+        .sort(comparator || function(a, b){
+          return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1));
+        })
         .map(function(item){
                return this_[item.i];
              }, this_);
@@ -2626,10 +2650,14 @@
       return this_.charAt(0).toUpperCase() + this_.substr(1).toLowerCase();
     },
     camelize: function(this_){
-      return this_.replace(/-(.)/g, function(m, chr){ return chr.toUpperCase(); });
+      return this_.replace(/-(.)/g, function(m, chr){
+        return chr.toUpperCase();
+      });
     },
     dasherize: function(this_){
-      return this_.replace(/[A-Z]/g, function(m){ return '-' + m.toLowerCase(); });
+      return this_.replace(/[A-Z]/g, function(m){
+        return '-' + m.toLowerCase();
+      });
     }
   };
 
@@ -2694,14 +2722,14 @@
     },
     lead: function(this_, len, leadChar){
       // convert to string and lead first digits by leadChar
-      return (this_ + '').replace(/\d+/, function(number){
+      return String(this_).replace(/\d+/, function(number){
         // substract number length from desired length converting len to Number and indicates how much leadChars we need to add
         // here is no isNaN(len) check, because comparation of NaN and a Number is always false
         return (len -= number.length - 1) > 1 ? new Array(len).join(leadChar || 0) + number : number;
       });
     },
     group: function(this_, len, splitter){
-      return (this_ + '').replace(/\d+/, function(number){
+      return String(this_).replace(/\d+/, function(number){
         return number.replace(/\d/g, function(m, pos){
           return !pos + (number.length - pos) % (len || 3) ? m : (splitter || ' ') + m;
         });
@@ -2742,7 +2770,7 @@
     * @return {number}
     */
     now: function(){
-      return +new Date();
+      return Number(new Date());
     }
   });
 
@@ -2758,7 +2786,7 @@
 
  /**
   * Attach document ready handlers
-  * @param {function()} handler 
+  * @param {function()} handler
   * @param {*} thisObject Context for handler
   */
   var ready = (function(){
@@ -2782,11 +2810,11 @@
     }
 
     // The DOM ready check for Internet Explorer
-    function doScrollCheck() {
+    function doScrollCheck(){
       try {
         // If IE is used, use the trick by Diego Perini
         // http://javascript.nwbox.com/IEContentLoaded/
-        document.documentElement.doScroll("left");
+        document.documentElement.doScroll('left');
         fireHandlers();
       } catch(e) {
         setTimeout(doScrollCheck, 1);
@@ -2840,7 +2868,7 @@
 
  /**
   * Document interface for safe add/remove nodes to/from head and body.
-  */  
+  */
   var documentInterface = (function(){
     var timer;
     var reference = {};
@@ -2933,7 +2961,7 @@
       body: {
         ready: function(fn, context){
           docReady('body', fn, context);
-        },        
+        },
         add: function(node, ref){
           add.call(['body', node, ref]);
         }
@@ -2965,10 +2993,10 @@
         if (typeof object.destroy == 'function')
         {
           try {
-            ;;;if (logDestroy) consoleMethods.log('destroy', '[' + String(object.className) + ']', object);
+            /** @cut */ if (logDestroy) consoleMethods.log('destroy', '[' + String(object.className) + ']', object);
             object.destroy();
           } catch(e) {
-            ;;;consoleMethods.warn(String(object), e);
+            /** @cut */ consoleMethods.warn(String(object), e);
           }
         }
         else
@@ -3084,7 +3112,7 @@
 
       // add element to document
       documentInterface.head.add(this.element);
-      
+
       // set css text after node inserted into document,
       // IE8 and lower crash otherwise (this.element.styleSheet is not defined)
       this.syncCssText();
@@ -3153,7 +3181,7 @@
             this.cssText = resource.get(true);
           }
 
-          documentInterface.head.ready(injectStyleToHead, this); 
+          documentInterface.head.ready(injectStyleToHead, this);
         }
 
         this.inUse += 1;
@@ -3288,7 +3316,7 @@
 
   // add dev namespace, host for special functionality in development environment
   getNamespace('basis.dev').extend(consoleMethods);
-  
+
 
   //
   // auto load section

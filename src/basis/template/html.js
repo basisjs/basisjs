@@ -22,7 +22,7 @@
   var camelize = basis.string.camelize;
   var l10nToken = basis.l10n.token;
   var getFunctions = basis.template.htmlfgen.getFunctions;
-  
+
   var TemplateSwitchConfig = basis.template.TemplateSwitchConfig;
   var TemplateSwitcher = basis.template.TemplateSwitcher;
   var Template = basis.template.Template;
@@ -139,7 +139,7 @@
   function createEventHandler(attrName){
    /**
     * @param {basis.dom.event.Event} event
-    */ 
+    */
     return function(event){
 
       // don't process right click - generaly FF problem
@@ -155,7 +155,7 @@
       while (attrCursor)
       {
         attr = attrCursor.getAttribute && attrCursor.getAttribute(attrName);
-        
+
         if (!bubble || typeof attr == 'string')
           break;
 
@@ -272,9 +272,9 @@
 
     for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
     {
-      switch(token[TOKEN_TYPE])
+      switch (token[TOKEN_TYPE])
       {
-        case TYPE_ELEMENT: 
+        case TYPE_ELEMENT:
           var tagName = token[ELEMENT_NAME];
           var parts = tagName.split(/:/);
 
@@ -459,7 +459,7 @@
     var bind_attrClass = CLASSLIST_SUPPORTED
       // classList supported
       ? function(domRef, oldClass, newValue, prefix, anim){
-          var newClass = newValue ? prefix + newValue : "";
+          var newClass = newValue ? prefix + newValue : '';
 
           if (newClass != oldClass)
           {
@@ -484,7 +484,7 @@
         }
       // old browsers are not support for classList
       : function(domRef, oldClass, newValue, prefix, anim){
-          var newClass = newValue ? prefix + newValue : "";
+          var newClass = newValue ? prefix + newValue : '';
 
           if (newClass != oldClass)
           {
@@ -509,13 +509,13 @@
                 basis.array.add(classList, newClass + '-anim');
                 basis.nextTick(function(){
                   var classList = (classNameIsObject ? domRef.className.baseVal : domRef.className).split(WHITESPACE);
-                  
+
                   basis.array.remove(classList, newClass + '-anim');
 
                   if (classNameIsObject)
                     domRef.className.baseVal = classList.join(' ');
                   else
-                    domRef.className = classList.join(' ');                  
+                    domRef.className = classList.join(' ');
                 });
               }
             }
@@ -568,14 +568,14 @@
 
    /**
     * @func
-    */ 
+    */
     function updateAttach(){
       this.set(this.name, this.value);
     }
 
    /**
     * @func
-    */ 
+    */
     function resolveValue(bindingName, value, Attaches){
       var bridge = value && value.bindingBridge;
       var oldAttach = this.attaches && this.attaches[bindingName];
@@ -812,7 +812,7 @@
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
           var instanceId = seed++;
           var instance = createInstance(instanceId, obj, onAction, onRebuild, bindings, bindingInterface);
-          
+
           instances[instanceId] = instance;
 
           return instance.tmpl;
@@ -828,13 +828,13 @@
               instance.bindingInterface.detach(instance.context, instance.handler, instance.tmpl.set);
 
             // detach attaches
-            for(var key in instance.attaches)
+            for (var key in instance.attaches)
               resolveValue.call(instance, key, null);
 
             delete instances[instanceId];
           }
         },
-        
+
         keys: fn.keys,
         /** @cut */ instances_: instances,
 
@@ -856,7 +856,7 @@
                 instance.bindingInterface.detach(instance.context, instance.handler, instance.tmpl.set);
 
               // detach attaches
-              for(var key in instance.attaches)
+              for (var key in instance.attaches)
                 resolveValue.call(key, null);
             }
           }
@@ -874,7 +874,7 @@
         }
       };
     };
-  })();  
+  })();
 
  /**
   * @class
@@ -903,7 +903,7 @@
     className: namespace + '.TemplateSwitcher',
 
     templateClass: HtmlTemplate
-  });  
+  });
 
 
   //

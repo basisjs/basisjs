@@ -28,7 +28,7 @@
       var eventsMap = {};
       var seed = 1;
 
-      proto.emit_debug = function(event){
+      proto.debug_emit = function(event){
         if (!this.testEventId_)
         {
           this.testEventId_ = seed++;
@@ -80,15 +80,15 @@
           while (cursor.delegate && cursor.delegate !== cursor)
           {
             cursor = cursor.delegate;
-            chain.push(cursor);
+            chain.unshift(cursor);
           }
 
-          var target = object.target;
-          var root = chain[chain.length - 1];
+          var target = null;
+          var root = chain[0];
 
           for (var i = 0, chainObject; chainObject = chain[i]; i++)
           {
-            if (chainObject.isTarget)
+            if (chainObject === chainObject.target)
               target = chainObject.target;
 
             if (chainObject.data !== object.data)
@@ -287,6 +287,53 @@
                         this.is({ x: 1, y: 2, z: 3 }, objectB.data);
                         this.is(1, eventCount(objectB, 'update'));
                         this.is(3, eventCount(objectB, 'delegateChanged'));
+                      }
+                    },
+                    {
+                      name: 'destroy',
+                      test: function(){
+                        var destroyCatched = 0;
+                        var a = new basis.data.Object({ target: true });
+                        var b = new basis.data.Object({
+                          delegate: a,
+                          listen: {
+                            delegate: {
+                              destroy: function(){
+                                destroyCatched++;
+                              }
+                            }
+                          }
+                        });
+                        var c = new basis.data.Object({
+                          delegate: b,
+                          listen: {
+                            root: {
+                              destroy: function(){
+                                destroyCatched++;
+                              }
+                            },
+                            target: {
+                              destroy: function(){
+                                destroyCatched++;
+                              }
+                            }
+                          }
+                        });
+
+                        a.setState(basis.data.STATE.READY, 'ok');
+                        this.is(String(basis.data.STATE.READY), String(c.state));
+                        this.is('ok', c.state.data);
+                        this.is(true, c.delegate === b);
+                        this.is(true, c.target === a);
+                        this.is(true, c.root === a);
+
+                        a.destroy();
+                        this.is(String(basis.data.STATE.READY), String(c.state));
+                        this.is('ok', c.state.data);
+                        this.is(null, c.target);
+                        this.is(true, c.root === b);
+                        this.is(null, b.delegate);
+                        this.is(3, destroyCatched);
                       }
                     }
                   ]

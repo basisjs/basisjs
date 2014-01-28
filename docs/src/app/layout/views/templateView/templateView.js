@@ -27,7 +27,7 @@
       template: 'satellite:'
     },
 
-    satelliteConfig: {
+    satellite: {
       viewOptions: {
         instanceOf: app.ext.view.ViewOptions,
         config: function(owner){

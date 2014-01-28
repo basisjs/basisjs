@@ -8,7 +8,7 @@
   });
 
   // utf16 string -> utf16 bytes array
-  function toBytes(input){  
+  function toBytes(input){
     var output = [];
     var len = input.length;
 
@@ -25,8 +25,9 @@
   function fromBytes(input){
     var output = '';
     var len = input.length;
-    var b1, b2;
     var i = 0;
+    var b1;
+    var b2;
 
     while (i < len)
     {
@@ -48,11 +49,11 @@
 
       if (c < 128)
         output += chars[c];
-      else 
+      else
         if (c < 2048)
           output += chars[(c >> 6) | 192] +
                     chars[(c & 63) | 128];
-        else 
+        else
           output += chars[(c >> 12) | 224] +
                     chars[((c >> 6) & 63) | 128] +
                     chars[(c & 63) | 128];
@@ -79,18 +80,20 @@
   function fromUTF8(input){
     var output = '';
     var len = input.length;
-    var c1, c2, c3;
     var i = 0;
+    var c1;
+    var c2;
+    var c3;
 
     while (i < len)
     {
       c1 = input.charCodeAt(i++);
-      if (c1 < 128) 
+      if (c1 < 128)
         output += chars[c1];
       else
       {
         c2 = input.charCodeAt(i++);
-        if (c1 & 32) 
+        if (c1 & 32)
         {
           c3 = input.charCodeAt(i++);
           output += String.fromCharCode(((c1 & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));

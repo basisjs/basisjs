@@ -4,13 +4,14 @@
   basis.require('basis.dom.event');
   basis.require('basis.layout');
   basis.require('basis.dragdrop');
+  basis.require('basis.ui');
 
 
  /**
   * @see ./demo/defile/slider.html
   * @namespace basis.ui.slider
-  */ 
-  
+  */
+
   var namespace = this.path;
 
 
@@ -23,11 +24,11 @@
 
   var events = basis.event.events;
   var createEvent = basis.event.create;
+  var getBoundingRect = basis.layout.getBoundingRect;
 
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var UINode = basis.ui.Node;
   var DragDropElement = basis.dragdrop.DragDropElement;
-  var Box = basis.layout.Box;
 
 
   //
@@ -153,7 +154,7 @@
 
   var eventToValue = function(event){
     var scrollbar = this.tmpl.scrollbar;
-    var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
+    var pos = (Event.mouseX(event) - getBoundingRect(scrollbar).left) / scrollbar.offsetWidth;
     this.setStepValue(pos * this.stepCount);
   };
 
@@ -222,37 +223,37 @@
         this.focus();
       },
       keyStep: function(event){
-        switch(Event.key(event))
+        switch (Event.key(event))
         {
           case Event.KEY.DOWN:
           case Event.KEY.LEFT:
           case KEY_MINUS:
           case KEY_KP_MINUS:
             this.stepDown();
-          break;
-          
+            break;
+
           case Event.KEY.UP:
           case Event.KEY.RIGHT:
           case KEY_PLUS:
           case KEY_KP_PLUS:
             this.stepUp();
-          break;
+            break;
 
           case Event.KEY.PAGEDOWN:
             this.stepDown(10);
-          break;
-          
+            break;
+
           case Event.KEY.PAGEUP:
             this.stepUp(10);
-          break;
-          
+            break;
+
           case Event.KEY.HOME:
             this.setValue(this.min);
-          break;
-          
+            break;
+
           case Event.KEY.END:
             this.setValue(this.max);
-          break;
+            break;
         }
       },
       wheelStep: function(event){
@@ -269,7 +270,7 @@
    /**
     * @inheritDoc
     */
-    satelliteConfig: {
+    satellite: {
       marks: UINode.subclass({
         className: namespace + '.MarkLayers',
         template: templates.MarkLayers,
@@ -374,7 +375,7 @@
    /**
     * @return {number}
     */
-    value2pos: function(value){     
+    value2pos: function(value){
       return (basis.number.fit(value, this.min, this.max) - this.min) / (this.max - this.min);
     },
 

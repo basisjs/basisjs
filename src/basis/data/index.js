@@ -17,7 +17,7 @@
   //
 
   var Class = basis.Class;
-  
+
   var DataObject = basis.data.Object;
   var KeyObjectMap = basis.data.KeyObjectMap;
   var AbstractDataset = basis.data.AbstractDataset;
@@ -31,7 +31,7 @@
   // Main part
   //
 
-  function binarySearchPos(array, value){ 
+  function binarySearchPos(array, value){
     if (!array.length)  // empty array check
       return 0;
 
@@ -40,18 +40,18 @@
     var l = 0;
     var r = array.length - 1;
 
-    do 
+    do
     {
       pos = (l + r) >> 1;
       cmpValue = array[pos] || 0;
 
       if (value < cmpValue)
         r = pos - 1;
-      else 
+      else
         if (value > cmpValue)
           l = pos + 1;
         else
-          return value == cmpValue ? pos : 0;  
+          return value == cmpValue ? pos : 0;
     }
     while (l <= r);
 
@@ -72,7 +72,7 @@
     autoDestroy: true,
 
    /**
-    * Map of current values 
+    * Map of current values
     * @type {Object}
     * @private
     */
@@ -91,9 +91,14 @@
 
    /**
     * @inheritDocs
-    */ 
+    */
     value: 0,
-   
+
+   /**
+    * @inheritDocs
+    */
+    setNullOnEmitterDestroy: false,
+
    /**
     * @constructor
     */
@@ -123,7 +128,7 @@
 
    /**
     * Normalize value to be computable.
-    */ 
+    */
     normalize: function(value){
       return Number(value) || 0;
     },
@@ -262,7 +267,7 @@
 
    /**
     * @inheritDocs
-    */ 
+    */
     value: undefined,
 
    /**
@@ -351,7 +356,7 @@
   // Index builder
   //
 
-  var indexConstructors_= {};
+  var indexConstructors_ = {};
 
   var DATASET_INDEX_HANDLER = {
     destroy: function(object){
@@ -385,7 +390,7 @@
 
     if (indexConstructor)
       return indexConstructor.owner;
-    
+
     //
     // Create new constructor
     //
@@ -534,7 +539,7 @@
       for (var indexId in indexes)
         applyIndexDelta(indexes[indexId], delta.inserted, delta.deleted);
     },
-    
+
     destroy: function(){
       var indexes = datasetIndexes[this.basisObjectId];
       for (var indexId in indexes)
@@ -551,7 +556,7 @@
  /**
   * @param {basis.data.AbstractDataset} dataset
   * @param {basis.data.index.IndexConstructor} indexConstructor
-  */ 
+  */
   function getDatasetIndex(dataset, indexConstructor){
     if (indexConstructor instanceof IndexConstructor == false)
       throw 'indexConstructor must be an instance of IndexConstructor';
@@ -585,7 +590,7 @@
       applyIndexDelta(index, dataset.getItems());
     }
 
-    return index; 
+    return index;
   }
 
  /**
@@ -624,9 +629,9 @@
     calc: basis.fn.$null
   });
 
-  var calcIndexPreset_seed = 1;
+  var calcIndexPresetSeed = 1;
   function getUniqueCalcIndexId(){
-    return 'calc-index-preset-' + basis.number.lead(calcIndexPreset_seed++, 8);
+    return 'calc-index-preset-' + basis.number.lead(calcIndexPresetSeed++, 8);
   }
 
   function percentOfRange(events, getter){
@@ -726,13 +731,13 @@
 
     emit_sourceChanged: function(oldSource){
       MapFilter.prototype.emit_sourceChanged.call(this, oldSource);
-      
+
       for (var indexName in this.indexes_)
       {
         var index = this.indexes_[indexName];
 
         if (oldSource)
-        { 
+        {
           this.removeIndex(indexName);
           removeDatasetIndex(oldSource, this.indexes[indexName]);
         }
@@ -812,7 +817,7 @@
           }
           else
           {
-            ;;;basis.dev.warn('Index `' + key + '` already exists');
+            /** @cut */ basis.dev.warn('Index `' + key + '` already exists');
             return;
           }
         }
@@ -837,12 +842,12 @@
         }
         else
         {
-          // warn
+          /** @cut */ basis.dev.warn('Index should be instance of `basis.data.index.Index`');
         }
       }
       else
       {
-        ;;;basis.dev.warn('Index `' + key + '` already exists');
+        /** @cut */ basis.dev.warn('Index `' + key + '` already exists');
       }
     },
 
@@ -927,11 +932,11 @@
             update = true;
           }
         }
-            
-        if (update)  
+
+        if (update)
           member.update(data);
       }
-    },  
+    },
 
     getMember: function(sourceObject){
       return this.keyMap.get(sourceObject, true);

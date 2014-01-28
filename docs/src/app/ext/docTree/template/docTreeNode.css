@@ -36,3 +36,10 @@
     color: #AAA;
     margin-left: 2px;
   }
+
+  .App-DocTreeNode .Type-Property .value
+  {
+    color: #AAA;
+    font-style: italic;
+    padding-left: 1ex;
+  }

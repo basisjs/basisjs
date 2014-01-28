@@ -5,10 +5,12 @@
     basis.require('basis.dom');
     basis.require('basis.dom.event');
     basis.require('basis.data');
+    basis.require('basis.utils.benchmark');
 
     var createElement = basis.dom.createElement;
     var DOM = basis.dom;
     var DataObject = basis.data.Object;
+    var time = basis.utils.benchmark.time;
 
     var TEST_REPEAT_COUNT = 3;
     var TEST_COUNT = 10000;
@@ -26,12 +28,7 @@
     var totalsDom;
 
     function speedTest(name, count, func){
-      var t = new Date();
-
-      for (var i = 0; i < count; i++)
-        func(i);
-
-      var res = new Date - t;
+      var res = basis.utils.benchmark.test(count, func);
       var stat = funcs[func] || (funcs[func] = {});
 
       if (!stat.name)

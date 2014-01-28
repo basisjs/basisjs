@@ -2,6 +2,6 @@
   <b:define name="disabled" type="bool"/>
   <b:define name="order" type="enum" values="desc asc"/>
 
-  <thead{groupsElement} class="Basis-Table-Header {disabled}">
-    <tr{childNodesElement|content} class="sort-order-{order}"/>
+  <thead{groupRowsElement} class="Basis-Table-Header {disabled}">
+    <tr{childNodesElement} class="sort-order-{order}"/>
   </thead>

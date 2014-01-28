@@ -17,7 +17,7 @@ function createDictionaryFileContent(data){
   {
     dictionaryData['_meta'] = {
       type: data.tokenTypes
-    } 
+    }
   }
   basis.object.extend(dictionaryData, data.cultureValues);
 
@@ -43,7 +43,7 @@ module.exports = {
 
     sendData('dictionaryList', data);
   },
-  
+
   setTokenCultureValue: function(namespace, name, culture, value){
     basis.l10n.dictionary('/' + namespace).setCultureValue(culture, name, value);
   },
@@ -58,7 +58,7 @@ module.exports = {
         tokenTypes: dict.types,
         cultureValues: dict.cultureValues
       });
-    }    
+    }
   },
 
   updateDictionary: function(data){
@@ -81,13 +81,13 @@ module.exports = {
           data.result = 'success';
           sendData('saveDictionary', data);
         }
-        
+
         if (this.state == STATE.ERROR)
         {
-          sendData('saveDictionary', { 
-            result: 'error', 
-            dictionary: data.dictionary, 
-            errorText: this.state.data 
+          sendData('saveDictionary', {
+            result: 'error',
+            dictionary: data.dictionary,
+            errorText: this.state.data
           });
         }
 

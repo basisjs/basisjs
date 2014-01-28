@@ -13,9 +13,9 @@ fileTree.selection.addHandler({
 module.exports = new basis.ui.Node({
   container: document.body,
   opened: false,
-  
+
   template: resource('template/fileInspector.tmpl'),
-  
+
   binding: {
     opened: 'opened',
     fileTree: fileTree,
@@ -33,7 +33,7 @@ module.exports = new basis.ui.Node({
   toggle: function(){
     if (this.opened)
       this.close();
-    else 
+    else
       this.open();
   },
   open: function(){

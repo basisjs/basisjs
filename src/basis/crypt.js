@@ -48,7 +48,9 @@
     if (Array.isArray(input))
       output = input.map(hex);
     else
-      output = String(input).split('').map(function(c){ return number2hex(c.charCodeAt(0)); });
+      output = String(input).split('').map(function(c){
+        return number2hex(c.charCodeAt(0));
+      });
 
     return output.join('');
   }
@@ -124,16 +126,16 @@
       var chunk = dwords.length >> 4;
       var W = new Array(80);
 
-      while (chunk--) 
+      while (chunk--)
       {
-        for(var i = 0; i < 16; i++) 
+        for (var i = 0; i < 16; i++)
           W[i] = dwords.pop();
-        for(var i = 16; i < 80; i++) 
+        for (var i = 16; i < 80; i++)
           W[i] = rotateLeft(W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16], 1);
 
-        for (var i = 0; i < 80; i++) 
+        for (var i = 0; i < 80; i++)
         {
-          S = Math.floor(i/20);
+          S = Math.floor(i / 20);
           H[4] = (rotateLeft(H[0], 5) + F[S](H[1], H[2], H[3]) + H[4] + W[i] + K[S]) & 0x0FFFFFFFF;
           H[1] = rotateLeft(H[1], 30);
           H.unshift(H.pop());
@@ -174,10 +176,10 @@
 
     function initConst(){
       S = flatten([
-        repeatArray([7,12,17,22], 4),
-        repeatArray([5,9,14,20], 4),
-        repeatArray([4,11,16,23], 4),
-        repeatArray([6,10,15,21], 4)
+        repeatArray([7, 12, 17, 22], 4),
+        repeatArray([5, 9, 14, 20], 4),
+        repeatArray([4, 11, 16, 23], 4),
+        repeatArray([6, 10, 15, 21], 4)
       ]);
 
       for (var i = 0; i < 64; i++)
@@ -185,10 +187,21 @@
         K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * C_2_POW_32);
         switch (i >> 4)
         {
-          case 0: I[i] = i; break;
-          case 1: I[i] = (i * 5 + 1) & 0x0F; break;
-          case 2: I[i] = (i * 3 + 5) & 0x0F; break;
-          case 3: I[i] = (i * 7) & 0x0F; break;
+          case 0:
+            I[i] = i;
+            break;
+
+          case 1:
+            I[i] = (i * 5 + 1) & 0x0F;
+            break;
+
+          case 2:
+            I[i] = (i * 3 + 5) & 0x0F;
+            break;
+
+          case 3:
+            I[i] = (i * 7) & 0x0F;
+            break;
         }
       }
     }
@@ -246,7 +259,7 @@
       // add length
       dwords.push((len << 3) & 0x0FFFFFFFF);
       dwords.push(len >>> 29);
-      
+
       // init arguments a, b, c, d
       var A = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476];
       var stored = arrayFrom(A);
@@ -278,12 +291,24 @@
   var cryptTarget = '';
 
   var cryptMethods = {
-    sha1: function(useUTF8){ return sha1(this, useUTF8); },
-    sha1hex: function(useUTF8){ return hex(sha1(this, useUTF8)); },
-    md5: function(useUTF8){ return md5(this, useUTF8); },
-    md5hex: function(useUTF8){ return hex(md5(this, useUTF8)); },
-    base64: function(useUTF8){ return base64.encode(this, useUTF8); },
-    hex: function(){ return hex(this); }
+    sha1: function(useUTF8){
+      return sha1(this, useUTF8);
+    },
+    sha1hex: function(useUTF8){
+      return hex(sha1(this, useUTF8));
+    },
+    md5: function(useUTF8){
+      return md5(this, useUTF8);
+    },
+    md5hex: function(useUTF8){
+      return hex(md5(this, useUTF8));
+    },
+    base64: function(useUTF8){
+      return base64.encode(this, useUTF8);
+    },
+    hex: function(){
+      return hex(this);
+    }
   };
 
   var context_ = {};
@@ -297,6 +322,11 @@
   function wrap(target){
     cryptTarget = target || '';
     return context_;
+  };
+
+  var a = {
+    a: 1,
+    b: 2,
   };
 
 
