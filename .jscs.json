@@ -35,8 +35,10 @@
     "requireSpaceBeforeBinaryOperators": ["+", "-", "/", "*", "=", "==", "===", "!=", "!=="],
     "requireSpaceAfterBinaryOperators": ["+", "-", "/", "*", "=", "==", "===", "!=", "!=="],
 
+    "requireOperatorBeforeLineBreak": ["+", "-", "/", "*", "&&", "||", "&", "|", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<="],
+
     "disallowImplicitTypeConversion": ["string", "binary"],
-    "requireCamelCaseOrUpperCaseIdentifiers": true,
+    "basisIdentifiersStyle": true,
 
     "disallowMultipleLineStrings": true,
     "validateQuoteMarks": "'",
@@ -57,5 +59,9 @@
         "checkParamNames": true,
         "requireParamTypes": true,
         "checkRedundantParams": true
-    }
+    },
+
+    "additionalRules": [
+        "test/jscs/*.js"
+    ]
 }

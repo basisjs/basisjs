@@ -463,13 +463,13 @@
       if (newCalc && newCalc instanceof VectorFn == false)
         newCalc = sum(newCalc);
 
-	    var oldCalc = this.calcs[name];
+      var oldCalc = this.calcs[name];
       if (oldCalc != newCalc)
       {
         var sourceMap = this.sourceMap_;
 
-  	    if (newCalc)
-  	    {
+        if (newCalc)
+        {
           this.calcs[name] = newCalc;
 
           var newValues = {};
