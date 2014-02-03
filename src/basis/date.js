@@ -300,10 +300,6 @@
       return this_;
     },
     format: dateFormat,
-    toFormat: function(this_, format, utc){
-      /** @cut */ basis.dev.warn('basis.date.toFormat is deprecated now, use basis.date.format instead.');
-      return dateFormat(this_, format, utc);
-    },
     fromISOString: function(this_, isoDateString){
       return this_.fromDate(fromISOString(isoDateString));
     }
