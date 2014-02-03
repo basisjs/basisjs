@@ -1187,13 +1187,6 @@
         if (!this.data)
           this.data = {};
 
-        // TODO: remove in next releases
-        if ('isTarget' in this)
-        {
-          this.target = this;
-          /** @cut */ basis.dev.warn('basis.data.Object#isTarget is deprecated now, use basis.data.Object#target instead. Set any value to the property, but not a null, to mark object as target.');
-        }
-
         // set target property to itself if target property is not null
         if (this.target !== null)
           this.target = this;
