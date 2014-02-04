@@ -1,0 +1,30 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>basis.js test suite</title>
+
+  <script src="../../src/basis.js"></script>
+</head>
+
+<body>
+  <script>
+    (function(){
+      var originalJsWrapper = basis.resource.extensions['.js'];
+      basis.resource.extensions['.js'] = function(content, url){
+        var exports = originalJsWrapper(content, url);
+        if (exports)
+          exports.filename_ = url;
+        return exports;
+      };
+    })();
+
+    function loadTests(loadTests){
+      loadTests(basis.require('./index.js'));
+    }
+  </script>
+</body>
+
+</html>

@@ -3,6 +3,7 @@ module.exports = {
   name: 'basis.js test suite',
   html: resource('env.html').url, // base env
   test: [
+    //require('spec/common/classes.js'),
     require('spec/core.js'),
     require('spec/date.js'),
     require('spec/crypt.js'),
