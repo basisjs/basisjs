@@ -360,6 +360,107 @@ module.exports = {
             this.is(false, basis.data.isConnected(objectB, objectA));
             this.is(false, basis.data.isConnected(objectB, objectC));
           }
+        },
+        {
+          name: 'delegates added on update should recieve just one update event',
+          test: function(){
+            var delegateEventCount = 0;
+            var object = new DataObject({
+              handler: {
+                update: function(){
+                  delegate.setDelegate(this);
+                }
+              }
+            });
+            var delegate = new DataObject({
+              handler: {
+                update: function(){
+                  delegateEventCount++;
+                }
+              }
+            })
+            
+            object.update({ foo: 1 });
+
+            this.is(1, delegateEventCount);
+          }
+        },
+        {
+          name: 'delegates removed on update should not recieve update event',
+          test: function(){
+            var delegateEventCount = 0;
+            var object = new DataObject({
+              handler: {
+                update: function(){
+                  delegate.setDelegate();
+                }
+              }
+            });
+            var delegate = new DataObject({
+              delegate: object,
+              handler: {
+                update: function(){
+                  delegateEventCount++;
+                }
+              }
+            })
+            
+            object.update({ foo: 1 });
+
+            this.is(0, delegateEventCount);
+          }
+        },
+        {
+          name: 'delegates added on stateChanged should recieve just one stateChanged event',
+          test: function(){
+            var delegateEventCount = 0;
+            var object = new DataObject({
+              state: basis.data.STATE.UNDEFINED,
+              handler: {
+                stateChanged: function(){
+                  delegate.setDelegate(this);
+                }
+              }
+            });
+            var delegate = new DataObject({
+              handler: {
+                stateChanged: function(){
+                  delegateEventCount++;
+                }
+              }
+            })
+            
+            object.setState(basis.data.STATE.READY);
+
+            this.is(1, delegateEventCount);
+          }
+        },
+        {
+          name: 'delegates removed on stateChanged should not recieve stateChanged event',
+          test: function(){
+            var delegateEventCount = 0;
+            var object = new DataObject({
+              state: basis.data.STATE.UNDEFINED,
+              handler: {
+                stateChanged: function(){
+                  delegate.setDelegate();
+                }
+              }
+            });
+            var delegate = new DataObject({
+              state: basis.data.STATE.UNDEFINED,
+              delegate: object,
+              handler: {
+                stateChanged: function(){
+                  delegateEventCount++;
+                }
+              }
+            })
+            
+            object.setState(basis.data.STATE.READY);
+
+            this.is(0, delegateEventCount);
+          }
         }
       ]
     },

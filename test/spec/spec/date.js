@@ -166,7 +166,7 @@ module.exports = {
         // Date constructor creates date instances in local time, but toISOString returns in UTC timezone,
         // so we need convert date to UTC before get ISO string
         this.is('2007-01-01T00:00:00.000Z', toUTC(new Date(2007, 0, 1)).toISOString());
-        this.is('2007-01-01T01:02:03.000Z', toUTC(new Date(2007, 0, 1, 1, 2, 3)).toISOString());
+        this.is('2007-01-01T02:02:03.000Z', toUTC(new Date(2007, 0, 1, 1, 2, 3)).toISOString());
         this.is('2007-01-01T01:02:03.123Z', toUTC(new Date(2007, 0, 1, 1, 2, 3, 123)).toISOString());
         this.is('2008-01-01T01:02:03.123Z', toUTC(new Date(2007, 12, 1, 1, 2, 3, 123)).toISOString());
       }
