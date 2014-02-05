@@ -1,8 +1,17 @@
 var assert = require('assert');
-var tokenHelper = require('../token-helper');
+
+/**
+ * Returns true if token is punctuator
+ *
+ * @param {Object} token
+ * @param {String} punctuator
+ * @returns {Boolean}
+ */
+function tokenIsPunctuator(token, punctuator) {
+    return token && token.type === 'Punctuator' && token.value === punctuator;
+};
 
 module.exports = function() {};
-
 module.exports.prototype = {
 
     configure: function(requireSemicolon) {
@@ -52,7 +61,7 @@ module.exports.prototype = {
             }
 
             // check token is semicolon
-            if (!tokenHelper.tokenIsPunctuator(token, ';')) {
+            if (!tokenIsPunctuator(token, ';')) {
                 errors.add(
                     'Missing semicolon after statement',
                     (token || node).loc.end
