@@ -846,7 +846,10 @@
           for (var i = 0; i < parts.length; i++)
           {
             if (parts[i] == '..')
-              result.pop();
+            {
+              if (result.length > 1 || result[0])
+                result.pop();
+            }
             else
             {
               if ((parts[i] || !i) && parts[i] != '.')
@@ -868,7 +871,8 @@
         * @return {string}
         */
         dirname: function(path){
-          return utils.normalize(path).replace(/\/[^\/]*$/, '');
+          var result = utils.normalize(path).replace(/\/([^\/]*)$|^[^\/]+$/, '');
+          return result || (path.charAt(0) == '/' ? '/' : '.');
         },
 
        /**
@@ -886,8 +890,8 @@
         * @return {string} Path extension with leading dot or empty string.
         */
         extname: function(path){
-          var ext = utils.normalize(path).match(/\.[^\\\/]*$/);
-          return ext ? ext[0] : '';
+          var ext = utils.normalize(path).match(/[^\/](\.[^\/\.]*)$/);
+          return ext ? ext[1] : '';
         },
 
        /**
@@ -987,11 +991,11 @@
           while (abs[i] == loc[i] && typeof loc[i] == 'string')
             i++;
 
-          var prefix = '';
+          var result = [];
           for (var j = loc.length - i; j > 0; j--)
-            prefix += '../';
+            result.push('..');
 
-          return prefix + abs.slice(i).join('/');
+          return result.concat(abs.slice(i)).join('/');
         }
       };
 
