@@ -42,6 +42,7 @@
 
     "disallowMultipleLineStrings": true,
     "validateQuoteMarks": "'",
+    "requireSemicolon": true,
 
     "disallowMixedSpacesAndTabs": true,
     "disallowTrailingWhitespace": true,
@@ -62,6 +63,6 @@
     },
 
     "additionalRules": [
-        "test/jscs/*.js"
+        "scripts/jscs/*.js"
     ]
 }

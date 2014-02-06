@@ -846,7 +846,10 @@
           for (var i = 0; i < parts.length; i++)
           {
             if (parts[i] == '..')
-              result.pop();
+            {
+              if (result.length > 1 || result[0])
+                result.pop();
+            }
             else
             {
               if ((parts[i] || !i) && parts[i] != '.')
@@ -868,7 +871,8 @@
         * @return {string}
         */
         dirname: function(path){
-          return utils.normalize(path).replace(/\/[^\/]*$/, '');
+          var result = utils.normalize(path).replace(/\/([^\/]*)$|^[^\/]+$/, '');
+          return result || (path.charAt(0) == '/' ? '/' : '.');
         },
 
        /**
@@ -886,8 +890,8 @@
         * @return {string} Path extension with leading dot or empty string.
         */
         extname: function(path){
-          var ext = utils.normalize(path).match(/\.[^\\\/]*$/);
-          return ext ? ext[0] : '';
+          var ext = utils.normalize(path).match(/[^\/](\.[^\/\.]*)$/);
+          return ext ? ext[1] : '';
         },
 
        /**
@@ -987,11 +991,11 @@
           while (abs[i] == loc[i] && typeof loc[i] == 'string')
             i++;
 
-          var prefix = '';
+          var result = [];
           for (var j = loc.length - i; j > 0; j--)
-            prefix += '../';
+            result.push('..');
 
-          return prefix + abs.slice(i).join('/');
+          return result.concat(abs.slice(i)).join('/');
         }
       };
 
@@ -1734,6 +1738,12 @@
 
   var resourceCache = {};
   var resourceRequestCache = {};
+  var resourceUpdateNotifier = extend(new Token(), {
+    set: function(value){
+      this.value = value;
+      this.apply();
+    }
+  });
   /** @cut */ var resourceResolvingStack = [];
 
   // apply prefetched resources to cache
@@ -1830,6 +1840,9 @@
         resolved = true;
         resource.apply();
 
+        //resourceUpdateNotifier.value = resourceUrl;
+        //resourceUpdateNotifier.apply();
+
         /** @cut    recursion warning */
         /** @cut */ resourceResolvingStack.pop();
 
@@ -1853,17 +1866,22 @@
 
             if (contentWrapper)
             {
-              // don't wrap content if it isn't wrapped yet or wrapped but not updatable
-              if (!wrapped || !contentWrapper.updatable)
-                return;
-
-              content = contentWrapper(newContent, resourceUrl);
+              // wrap content only if it wrapped already and updatable
+              if (wrapped && contentWrapper.updatable)
+              {
+                content = contentWrapper(newContent, resourceUrl);
+                resource.apply();
+              }
             }
             else
+            {
               content = newContent;
+              resolved = true;
+              resource.apply();
+            }
 
-            resolved = true;
-            resource.apply();
+            resourceUpdateNotifier.value = resourceUrl;
+            resourceUpdateNotifier.apply();
           }
         },
         reload: function(){
@@ -1905,6 +1923,9 @@
   /** @cut */ var requires;
 
   extend(getResource, {
+    onUpdate: function(fn, context){
+      resourceUpdateNotifier.attach(fn, context);
+    },
     getFiles: function(){
       var result = [];
 
@@ -2254,7 +2275,7 @@
         cls.prototype[key] = (function(method, clsName){
           return function(){
             /** @cut */ if (config.extProto == 'warn')
-            /** @cut */   consoleMethods.warn(clsName + '#' + method + ' is not a standard method, and it\'s and will be removed soon; use basis.' + clsName.toLowerCase() + '.' + method + ' instead');
+            /** @cut */   consoleMethods.warn(clsName + '#' + method + ' is not a standard method and will be removed soon; use basis.' + clsName.toLowerCase() + '.' + method + ' instead');
 
             var args = [this];
             Array.prototype.push.apply(args, arguments);

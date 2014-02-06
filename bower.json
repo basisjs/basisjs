@@ -8,6 +8,7 @@
     "docs",
     "demo",
     "test",
-    "tour"
+    "tour",
+    "scripts"
   ]
 }
