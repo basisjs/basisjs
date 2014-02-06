@@ -174,18 +174,19 @@
 
   var fromISOString = (function(){
     function fastDateParse(y, m, d, h, i, s, ms){
-      return new Date(y, m - 1, d, h || 0, (i || 0) - tz, s || 0, ms ? ms.substr(0, 3) : 0);
+      var date = new Date(y, m - 1, d, h || 0, 0, s || 0, ms ? ms.substr(0, 3) : 0);
+      date.setMinutes((i || 0) - tz - date.getTimezoneOffset());
+      return date;
     }
 
-    var tzoffset = (new Date).getTimezoneOffset();
     var tz;
-
     return function(isoDateString){
+      tz = 0;
       return fastDateParse.apply(
-        tz = tzoffset,
+        null,
         String(isoDateString || '')
           .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
-            tz += i ? h * 60 + i * 1 : h * 1;
+            tz = i ? h * 60 + i * 1 : h * 1;
             return pre;
           })
           .split(reIsoStringSplit)

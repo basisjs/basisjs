@@ -181,7 +181,9 @@ module.exports = {
         this.is(toUTC(new Date(2007, 0, 1, 1, 2, 3)), basis.date.fromISOString('2007-01-01 01:02:03'));
         this.is(toUTC(new Date(2007, 0, 1, 1, 2, 3)), basis.date.fromISOString('2007-1-1 1:2:3'));
         this.is(toUTC(new Date(7, 0, 1, 1, 2, 3)), basis.date.fromISOString('07-1-1 1:2:3'));
-        this.is(toUTC(new Date(2007, 0, 1, 23, 59, 59)), basis.date.fromISOString('2007-01-01 23:59:59'));
+        this.is(toUTC(new Date(2007, 0, 1, 23, 59, 59)), basis.date.fromISOString('2007-01-01 23:59:59Z'));
+        this.is(toUTC(new Date(2007, 0, 1, 22, 59, 59)), basis.date.fromISOString('2007-01-01 23:59:59+01:00'));
+        this.is(toUTC(new Date(2007, 0, 2, 0, 59, 59)), basis.date.fromISOString('2007-01-01 23:59:59-01:00'));
       }
     },
     {
