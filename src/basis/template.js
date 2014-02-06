@@ -2269,7 +2269,7 @@
         }
         return themeInterface;
       },
-      getSource: function(withFallback){
+      getSource: function(path, withFallback){
         return withFallback ? getThemeSource(name, path) : sources[path];
       },
       drop: function(path){
