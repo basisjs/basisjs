@@ -214,7 +214,14 @@ module.exports = {
         this.is(1, changeCount);
         this.is(2, testValue.value);
         this.is(true, testValue.locked === false);
-        this.is(true, testValue.lockValue_ === null);
+        this.is(true, testValue.lockedValue_ === null);
+
+        testValue.lock();
+        this.is(true, testValue.lockedValue_ === 2);
+        testValue.unlock();
+        this.is(2, testValue.value);
+        this.is(true, testValue.locked === false);
+        this.is(true, testValue.lockedValue_ === null);
       }
     }
   ]

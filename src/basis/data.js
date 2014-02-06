@@ -690,13 +690,13 @@
     unlock: function(){
       if (this.locked)
       {
+        var lockedValue = this.lockedValue_;
+
+        this.lockedValue_ = null;
         this.locked = false;
 
-        if (this.value !== this.lockedValue_)
-        {
-          this.emit_change(this.lockedValue_);
-          this.lockedValue_ = null;
-        }
+        if (this.value !== lockedValue)
+          this.emit_change(lockedValue);
       }
     },
 
