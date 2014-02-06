@@ -10,6 +10,7 @@
   // main part
   //
 
+  var ISO_FORMAT = '%Y-%M-%D' + 'T' + '%H:%I:%S.%Z' + 'Z';
   var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d+))?)?$/;
   var reFormat = /%([yYdDmMhHipPIsSzZ])/g;
   var reIsoStringSplit = /\D/;
@@ -193,7 +194,7 @@
   })();
 
   var toISOString = function(){
-    return dateFormat(this, '%Y-%M-%D' + 'T' + '%H:%I:%S.%Z' + 'Z', true);
+    return dateFormat(this, ISO_FORMAT, true);
   };
 
 
@@ -338,5 +339,8 @@
     dayNumToAbbr: dayNumToAbbr,
 
     format: dateFormat,
-    fromISOString: fromISOString
+    fromISOString: fromISOString,
+    toISOString: function(date){
+      return dateFormat(date, ISO_FORMAT, true);
+    }
   }, Date_extensions);

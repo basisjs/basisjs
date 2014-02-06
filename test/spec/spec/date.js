@@ -1,12 +1,11 @@
 module.exports = {
   name: 'basis.date',
 
-  html: __dirname + 'date.html',
   init: function(){
     basis.require('basis.date');
 
     function toUTC(date){
-      date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+      date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
       return date;
     }
   },
@@ -159,6 +158,11 @@ module.exports = {
       test: function(){
         // Date constructor creates date instances in local time, but toISOString returns in UTC timezone,
         // so we need convert date to UTC before get ISO string
+        this.is('2007-01-01T00:00:00.000Z', basis.date.toISOString(toUTC(new Date(2007, 0, 1))));
+        this.is('2007-01-01T01:02:03.000Z', basis.date.toISOString(toUTC(new Date(2007, 0, 1, 1, 2, 3))));
+        this.is('2007-01-01T01:02:03.123Z', basis.date.toISOString(toUTC(new Date(2007, 0, 1, 1, 2, 3, 123))));
+        this.is('2008-01-01T01:02:03.123Z', basis.date.toISOString(toUTC(new Date(2007, 12, 1, 1, 2, 3, 123))));
+
         this.is('2007-01-01T00:00:00.000Z', toUTC(new Date(2007, 0, 1)).toISOString());
         this.is('2007-01-01T01:02:03.000Z', toUTC(new Date(2007, 0, 1, 1, 2, 3)).toISOString());
         this.is('2007-01-01T01:02:03.123Z', toUTC(new Date(2007, 0, 1, 1, 2, 3, 123)).toISOString());
@@ -168,29 +172,32 @@ module.exports = {
     {
       name: 'fromISOString()',
       test: function(){
-        this.is(new Date(2007, 0, 1), basis.date.fromISOString('2007-01-01'));
-        this.is(new Date(2007, 0, 1), basis.date.fromISOString('2007-01-01T00:00:00'));
-        this.is(new Date(2007, 0, 1), basis.date.fromISOString('2007-01-01T00:00:00.000'));
-        this.is(new Date(2007, 0, 1), basis.date.fromISOString('2007-01-01 00:00:00'));
-        this.is(new Date(2007, 0, 1), basis.date.fromISOString('2007-01-01 00:00:00.000'));
-        this.is(new Date(2007, 0, 1, 1, 2, 3), basis.date.fromISOString('2007-01-01 01:02:03'));
-        this.is(new Date(2007, 0, 1, 1, 2, 3), basis.date.fromISOString('2007-1-1 1:2:3'));
-        this.is(new Date(7, 0, 1, 1, 2, 3), basis.date.fromISOString('07-1-1 1:2:3'));
-        this.is(new Date(2007, 0, 1, 23, 59, 59), basis.date.fromISOString('2007-01-01 23:59:59'));
+        //this.is(toUTC(new Date(2007, 0, 1)), new Date('2007-01-01'));
+        this.is(toUTC(new Date(2007, 0, 1)), basis.date.fromISOString('2007-01-01'));
+        this.is(toUTC(new Date(2007, 0, 1)), basis.date.fromISOString('2007-01-01T00:00:00'));
+        this.is(toUTC(new Date(2007, 0, 1)), basis.date.fromISOString('2007-01-01T00:00:00.000'));
+        this.is(toUTC(new Date(2007, 0, 1)), basis.date.fromISOString('2007-01-01 00:00:00'));
+        this.is(toUTC(new Date(2007, 0, 1)), basis.date.fromISOString('2007-01-01 00:00:00.000'));
+        this.is(toUTC(new Date(2007, 0, 1, 1, 2, 3)), basis.date.fromISOString('2007-01-01 01:02:03'));
+        this.is(toUTC(new Date(2007, 0, 1, 1, 2, 3)), basis.date.fromISOString('2007-1-1 1:2:3'));
+        this.is(toUTC(new Date(7, 0, 1, 1, 2, 3)), basis.date.fromISOString('07-1-1 1:2:3'));
+        this.is(toUTC(new Date(2007, 0, 1, 23, 59, 59)), basis.date.fromISOString('2007-01-01 23:59:59'));
       }
     },
     {
       name: 'fromISOString() <-> toISOString()',
       test: function(){
-        this.is('2007-01-01', basis.date.fromISOString('2007-01-01').toISODateString());
-        this.is('2007-01-01T01:02:03.123Z', basis.date.fromISOString('2007-01-01T01:02:03.123Z').toISOString());
+        this.is('2007-01-01', basis.date.toISODateString(basis.date.fromISOString('2007-01-01')));
+        this.is('2007-01-01T01:02:03.123Z', basis.date.toISOString(basis.date.fromISOString('2007-01-01T01:02:03.123Z')));
 
         var d = new Date();
-        var isoStr = d.toISOString();
+        var isoStr = basis.date.toISOString(d);
         var d2 = new Date();
         d2.setHours(d2.getHours() + 1);
         this.is(false, d2 - d == 0); // should be false, it diff date time
-        this.is(isoStr, d2.fromISOString(isoStr).toISOString());
+
+        var d2 = basis.date.fromISOString(isoStr);
+        this.is(isoStr, d2.toISOString());
         this.is(true, d2 - d == 0);
       }
     }

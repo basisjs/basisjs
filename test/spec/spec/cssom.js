@@ -93,7 +93,7 @@ module.exports = {
           test: function(){
             var el = document.body.appendChild(createElement('.test_clear2[style="padding:0 !important;border:none !important"]'));
 
-            rule = cssRule('.test_clear2');
+            var rule = cssRule('.test_clear2');
 
             rule.setStyle({ height: '100px !important' });
             this.is(100, el.offsetHeight);
