@@ -378,7 +378,9 @@ module.exports = {
                   delegateEventCount++;
                 }
               }
-            })
+            });
+
+            this.is(0, delegateEventCount);
             
             object.update({ foo: 1 });
 
@@ -403,7 +405,9 @@ module.exports = {
                   delegateEventCount++;
                 }
               }
-            })
+            });
+
+            this.is(0, delegateEventCount);
             
             object.update({ foo: 1 });
 
@@ -423,12 +427,15 @@ module.exports = {
               }
             });
             var delegate = new DataObject({
+              state: basis.data.STATE.UNDEFINED,
               handler: {
                 stateChanged: function(){
                   delegateEventCount++;
                 }
               }
-            })
+            });
+
+            this.is(0, delegateEventCount);
             
             object.setState(basis.data.STATE.READY);
 
@@ -455,7 +462,9 @@ module.exports = {
                   delegateEventCount++;
                 }
               }
-            })
+            });
+
+            this.is(0, delegateEventCount);
             
             object.setState(basis.data.STATE.READY);
 

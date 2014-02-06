@@ -1050,10 +1050,13 @@
       object.emit_targetChanged(oldTarget);
     }
 
-    var delegates = object.delegates_;
-    if (delegates)
-      for (var i = 0; i < delegates.length; i++)
-        applyDelegateChanges(delegates[i], oldRoot, oldTarget);
+    var cursor = object.delegates_;
+    while (cursor)
+    {
+      if (cursor.delegate)
+        applyDelegateChanges(cursor.delegate, oldRoot, oldTarget);
+      cursor = cursor.next;
+    }
   }
 
 
@@ -1084,29 +1087,37 @@
     * @event
     */
     emit_update: createEvent('update', 'delta') && function(delta){
+      var cursor = this.delegates_;
+
       events.update.call(this, delta);
 
       // delegate update event
-      var delegates = this.delegates_;
-      if (delegates)
-        for (var i = 0; i < delegates.length; i++)
-          delegates[i].emit_update(delta);
+      while (cursor)
+      {
+        if (cursor.delegate)
+          cursor.delegate.emit_update(delta);
+        cursor = cursor.next;
+      }
     },
 
    /**
     * @inheritDoc
     */
     emit_stateChanged: function(oldState){
+      var cursor = this.delegates_;
+
       AbstractData.prototype.emit_stateChanged.call(this, oldState);
 
       // delegate state changes
-      var delegates = this.delegates_;
-      if (delegates)
-        for (var i = 0; i < delegates.length; i++)
+      while (cursor)
+      {
+        if (cursor.delegate)
         {
-          delegates[i].state = this.state;
-          delegates[i].emit_stateChanged(oldState);
+          cursor.delegate.state = this.state;
+          cursor.delegate.emit_stateChanged(oldState);
         }
+        cursor = cursor.next;
+      }
     },
 
    /**
@@ -1270,12 +1281,22 @@
           if (delegateListenHandler)
             oldDelegate.removeHandler(delegateListenHandler, this);
 
-          if (oldDelegate.delegates_) // may be null on destroy
+          // remove this from oldDelegate delegates list
+          var cursor = oldDelegate.delegates_;
+          var prev = oldDelegate;
+          while (cursor)
           {
-            if (oldDelegate.delegates_.length != 1)
-              oldDelegate.delegates_.splice(oldDelegate.delegates_.indexOf(this), 1);
-            else
-              oldDelegate.delegates_ = null;
+            if (cursor.delegate === this)
+            {
+              cursor.delegate = null;
+              if (prev === oldDelegate)
+                oldDelegate.delegates_ = cursor.next;
+              else
+                prev.next = cursor.next;
+
+              break;
+            }
+            cursor = cursor.next
           }
         }
 
@@ -1284,10 +1305,10 @@
           // assign new delegate
           this.delegate = newDelegate;
 
-          if (newDelegate.delegates_)
-            newDelegate.delegates_.push(this);
-          else
-            newDelegate.delegates_ = [this];
+          newDelegate.delegates_ = {
+            delegate: this,
+            next: newDelegate.delegates_
+          };
 
           // calculate delta as difference between current data and delegate info
           for (var key in newDelegate.data)
@@ -1393,12 +1414,12 @@
       AbstractData.prototype.destroy.call(this);
 
       // remove delegates
-      var delegates = this.delegates_;
-      if (delegates)
+      var cursor = this.delegates_;
+      this.delegates_ = null;
+      while (cursor)
       {
-        this.delegates_ = null;
-        for (var i = delegates.length - 1; i >= 0; i--)
-          delegates[i].setDelegate();
+        cursor.delegate.setDelegate();
+        cursor = cursor.next;
       }
 
       // drop delegate
