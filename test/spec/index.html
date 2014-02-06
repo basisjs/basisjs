@@ -19,6 +19,19 @@
           exports.filename_ = url;
         return exports;
       };
+
+      // page reload on spec files update
+      // run in next tick, because at code run basisjs-tools file sync
+      // script is not loaded yet
+      basis.nextTick(function(){
+        if (typeof basisjsToolsFileSync != 'undefined')
+          basisjsToolsFileSync.notifications.attach(function(type, filename){
+            if (type == 'update' &&
+                basis.resource.exists(filename) &&
+                !/^\.\./.test(basis.path.relative(filename)))
+              location.reload();
+          });
+      });
     })();
 
     function loadTests(loadTests){

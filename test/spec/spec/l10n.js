@@ -1,7 +1,7 @@
 module.exports = {
   name: 'basis.l10n',
 
-  html: resource('l10n.html').url,
+  html: __dirname + 'l10n.html',  // to properly load .l10n file
   init: function(){
     basis.require('basis.l10n');
   },

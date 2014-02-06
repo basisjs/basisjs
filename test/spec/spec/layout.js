@@ -1,13 +1,8 @@
 module.exports = {
   name: 'basis.layout',
 
-  html: resource('layout.html').url,
+  html: __dirname + 'layout.html',
   init: function(){
-    if (basis.resource.onUpdate)
-      basis.resource.onUpdate(function(fn){
-        deprecateTestEnvironment();
-      });
-
     basis.require('basis.layout');
 
     var computedStyle = basis.require('basis.dom.computedStyle').get;

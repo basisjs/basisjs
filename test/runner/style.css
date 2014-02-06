@@ -266,10 +266,11 @@
 .Basis-SyntaxHighlight .error-line-details-item .expected,
 .Basis-SyntaxHighlight .error-line-details-item .actual
 {
-  color: black;
   display: block;
   overflow: hidden;
   padding: 0px 2px 0px 1em;
+  white-space: pre-wrap;
+  color: black;
 }
 .Basis-SyntaxHighlight .error-line-details-item .expected
 {

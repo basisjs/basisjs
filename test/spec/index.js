@@ -1,7 +1,7 @@
 // test suite
 module.exports = {
   name: 'basis.js test suite',
-  html: resource('env.html').url, // base env
+  html: __dirname + 'env.html', // base env
   test: [
     //require('spec/common/classes.js'),
     require('spec/core.js'),

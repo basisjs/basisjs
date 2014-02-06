@@ -1,7 +1,7 @@
 module.exports = {
   name: 'basis.template',
 
-  html: resource('template.html').url,
+  html: __dirname + 'template.html',
   init: function(){
     basis.require('basis.dom');
     basis.require('basis.template.html');

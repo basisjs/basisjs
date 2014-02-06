@@ -2133,6 +2133,7 @@ var __resources__ = {
       } else {
         test = function() {};
       }
+      if (!data.name) data.name = "Untitled test";
       var Class;
       var config = {
         data: data
@@ -2226,23 +2227,29 @@ var __resources__ = {
           var ast = astTools.parse(this.data.testSource);
           if (breakpointAt == "none") {
             astTools.traverseAst(ast, function(node) {
-              if (node.parentNode && (node.parentNode.type == "BlockStatement" || node.parentNode.type == "Program")) {
-                var firstToken = astTools.getNodeRangeTokens(node)[0];
-                firstToken.value = "__enterLine(" + (firstToken.loc.start.line - 1) + ");" + firstToken.value;
+              if (node.type == "FunctionExpression") {
+                var tokens = astTools.getNodeRangeTokens(node);
+                var orig = astTools.translateAst(ast, tokens[0].range[0], tokens[1].range[1]);
+                tokens[0].value = "__wrapFunctionExpression(" + tokens[0].value;
+                tokens[1].value += ", " + orig + ")";
+              }
+              if (node.type == "FunctionDeclaration") {
+                var tokens = astTools.getNodeRangeTokens(node.body);
+                tokens[0].value += "\ntry {\n";
+                tokens[1].value = "\n} catch(e) {" + "__exception(e);" + "throw e;" + "}\n" + tokens[1].value;
               }
               if (node.type == "CallExpression" && node.callee.type == "MemberExpression" && node.callee.object.type == "ThisExpression" && node.callee.computed == false && node.callee.property.type == "Identifier" && node.callee.property.name == "is") {
                 var token = astTools.getNodeRangeTokens(node)[0];
                 token.value = "__isFor([" + node.range + "], " + (node.loc.end.line - 1) + ") || " + token.value;
               }
-              if (node.type == "FunctionExpression" || node.type == "FunctionDeclaration") {
-                var tokens = astTools.getNodeRangeTokens(node.body);
-                tokens[0].value += "\ntry {\n";
-                tokens[1].value = "\n} catch(e) {" + "__exception(e);" + "throw e;" + "}\n" + tokens[1].value;
+              if (node.parentNode && (node.parentNode.type == "BlockStatement" || node.parentNode.type == "Program")) {
+                var firstToken = astTools.getNodeRangeTokens(node)[0];
+                firstToken.value = "__enterLine(" + (firstToken.loc.start.line - 1) + ");" + firstToken.value;
               }
             });
           }
           var wrapperSource = astTools.translateAst(ast, 0, ast.source.length);
-          this.testWrappedSources[breakpointAt] = "function(" + this.data.testArgs.concat("__isFor", "__enterLine", "__exception").join(", ") + "){\n" + wrapperSource + "\n}";
+          this.testWrappedSources[breakpointAt] = "function(" + this.data.testArgs.concat("__isFor", "__enterLine", "__exception", "__wrapFunctionExpression").join(", ") + "){\n" + wrapperSource + "\n}";
         }
         return this.testWrappedSources[breakpointAt];
       },
@@ -2283,7 +2290,7 @@ var __resources__ = {
                   __exception(e);
                 } finally {
                   if (async > 0) {
-                    if (--async) testDone();
+                    if (!--async) testDone();
                   }
                 }
               }
@@ -2321,6 +2328,18 @@ var __resources__ = {
         var __enterLine = function(line) {
           report.lastLine = line;
         };
+        var __wrapFunctionExpression = function(fn, orig) {
+          var wrappedFn = function() {
+            try {
+              return fn.apply(this, arguments);
+            } catch (e) {
+              __exception(e);
+              throw e;
+            }
+          };
+          wrappedFn.originalFn_ = orig;
+          return wrappedFn;
+        };
         var __exception = function(e) {
           if (report.exception) return;
           report.exception = e;
@@ -2354,7 +2373,7 @@ var __resources__ = {
           startTime = basis.utils.benchmark.time();
           var args = basis.array.create(this.data.testArgs.length);
           if (args.length) args[0] = asyncDone;
-          args.push(__isFor, __enterLine, __exception);
+          args.push(__isFor, __enterLine, __exception, __wrapFunctionExpression);
           try {
             testFn.apply(env, args);
           } catch (e) {
@@ -2399,7 +2418,7 @@ var __resources__ = {
               pending: pending == count,
               error: error ? ERROR_TEST_FAULT : null,
               testCount: count,
-              successCount: ready
+              successCount: ready + pending
             }
           }) ];
         });
@@ -2459,6 +2478,7 @@ var __resources__ = {
         case "string":
           return "'" + value.replace(/\'/g, "\\'") + "'";
         case "function":
+          if (value.originalFn_) value = value.originalFn_;
           value = String(value);
           return !linear ? value : value.replace(/\{([\r\n]|.)*\}/, "{..}");
         case "object":
@@ -2493,6 +2513,8 @@ var __resources__ = {
           if (actual !== actual && expected !== expected) return;
           return ERROR_WRONG_ANSWER;
         case "function":
+          if (expected.originalFn_) expected = expected.originalFn_;
+          if (actual.originalFn_) actual = actual.originalFn_;
           if (String(expected) == String(actual)) return;
           return ERROR_WRONG_ANSWER;
         default:
