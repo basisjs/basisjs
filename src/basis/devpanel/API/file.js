@@ -63,7 +63,7 @@ var FILE_LIST_HANDLER = {
     if ((data.inserted && data.inserted.length) || (data.deleted && data.deleted.length))
       sendData('filesChanged', data);
   }
-}
+};
 
 if (basis.devtools)
 {

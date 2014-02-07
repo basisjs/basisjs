@@ -124,7 +124,7 @@
     // convert to decimal and change luminosity
     return '#' + hex.replace(/../g, function(m){
       var val = parseInt(m, 16) * (1 + lum);
-      return hex2(Math.round(basis.number.fit(val, 0, 255)))
+      return hex2(Math.round(basis.number.fit(val, 0, 255)));
     });
   }
 
@@ -186,7 +186,7 @@
         {
           color = generateColor();
         }
-        while (this.usedColors[color])
+        while (this.usedColors[color]);
       }
       return color;
     }
@@ -971,7 +971,7 @@
         }
 
         if (count == 1)
-          result = basis.number.fit(getDegree(range), 4, MAX_PART_COUNT)
+          result = basis.number.fit(getDegree(range), 4, MAX_PART_COUNT);
         else
           result = count;
       }

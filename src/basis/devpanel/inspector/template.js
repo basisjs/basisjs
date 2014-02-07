@@ -149,7 +149,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           if (node.data.template)
           {
             var template = node.data.template;
-            var url = template.source.url ? basis.path.relative(template.source.url) : '[inline template]'
+            var url = template.source.url ? basis.path.relative(template.source.url) : '[inline template]';
             return url.charAt(0) == '.' ? basis.path.resolve(url) : url;
           }
         }

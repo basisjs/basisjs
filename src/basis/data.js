@@ -195,7 +195,7 @@
     return function(){
       fnA.apply(this, arguments);
       fnB.apply(this, arguments);
-    }
+    };
   }
 
   function getMaskConfig(mask){
@@ -772,12 +772,12 @@
           }
 
           return pair.token;
-        }
+        };
 
         getComputeToken.deferred = function(){
           return function(object){
             return getComputeToken(object).deferred();
-          }
+          };
         };
       }
 
@@ -981,7 +981,7 @@
   Value.factory = function(events, getter){
     return function(object){
       return Value.from(object, events, getter);
-    }
+    };
   };
 
 
@@ -1289,7 +1289,7 @@
 
               break;
             }
-            cursor = cursor.next
+            cursor = cursor.next;
           }
         }
 
@@ -2265,7 +2265,7 @@
     }
 
     function setAccumulateStateOff(){
-      proto.emit_itemsChanged = realEvent
+      proto.emit_itemsChanged = realEvent;
       flushAllDataset();
     }
 

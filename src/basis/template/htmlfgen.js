@@ -471,7 +471,7 @@
                 break;
               case TYPE_TEXT:
                 bindCode.push(domRef + '.nodeValue=value;');
-                break
+                break;
 
               // ignore bindings for comment, as we can't apply anything but Node to comment
             }
@@ -621,7 +621,7 @@
       return {
         /** @cut */ debugList: debugList,
         keys: basis.object.keys(bindMap).filter(function(key){
-          return key.indexOf('@') == -1
+          return key.indexOf('@') == -1;
         }),
         tools: toolsVarList,
         vars: varList,
@@ -629,7 +629,7 @@
         l10n: l10nMap,
         l10nCompute: l10nCompute
       };
-    }
+    };
   })();
 
   function compileFunction(args, body){
@@ -694,7 +694,7 @@
       'var getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
       'Attaches=function(){};' +
-      'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null' }) + '};' +
+      'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null'; }) + '};' +
       'return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){' +
         'var _=build(),' +
         paths.path.concat(bindings.vars) + ',' +
@@ -731,8 +731,8 @@
     );
 
     return result;
-  }
+  };
 
   module.exports = {
-  	getFunctions: getFunctions
+    getFunctions: getFunctions
   };

@@ -6,6 +6,6 @@ module.exports = {
     sendData('version', {
       l10n: 2,
       template: basis.template.DECLARATION_VERSION
-    })
+    });
   }
 };

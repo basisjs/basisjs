@@ -77,7 +77,7 @@
           return;
 
         if (appInjectPoint.type == 'container')
-          node.appendChild(appEl)
+          node.appendChild(appEl);
         else
           replaceNode(node, appEl);
       },

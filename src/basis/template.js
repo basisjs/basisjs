@@ -1126,7 +1126,7 @@
               bindings,                // TOKEN_BINDINGS = 1
               refs,                    // TOKEN_REFS = 2
               name(token)              // ELEMENT_NAME = 3
-            ]
+            ];
             item.push.apply(item, attrs(token, item, options.optimizeSize) || []);
             item.push.apply(item, process(token.childs, template, options) || []);
 

@@ -119,7 +119,7 @@
   var l10nTemplates = {};
   function getL10nTemplate(token){
     var template = basis.template.getL10nTemplate(token);
-    var id = template.templateId
+    var id = template.templateId;
     var htmlTemplate = l10nTemplates[id];
 
     if (!htmlTemplate)
@@ -216,7 +216,7 @@
         event = new domEvent.Event(event);
         event.type = origEventName;
         tmplEventListeners[origEventName](event);
-      }
+      };
       afterEventAction[origEventName] = function(event, cursor){
         cursor = cursor && cursor.parentNode;
         if (cursor)
@@ -226,7 +226,7 @@
           event.sender = cursor;
           tmplEventListeners[origEventName](event);
         }
-      }
+      };
     }
 
     function regEventHandler(eventName){
@@ -614,7 +614,7 @@
               }, bindings, bindingInterface);
               tmpl.element.toString = function(){
                 return value.value;
-              }
+              };
             }
 
             if (!this.attaches)
@@ -737,7 +737,7 @@
         }
 
         if (obj && set)
-          result.sync.call(set, obj)
+          result.sync.call(set, obj);
 
         if (!bindingInterface)
           return;

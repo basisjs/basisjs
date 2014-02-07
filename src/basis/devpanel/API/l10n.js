@@ -17,7 +17,7 @@ function createDictionaryFileContent(data){
   {
     dictionaryData['_meta'] = {
       type: data.tokenTypes
-    }
+    };
   }
   basis.object.extend(dictionaryData, data.cultureValues);
 
@@ -30,7 +30,7 @@ module.exports = {
     var data = {
       currentCulture: basis.l10n.getCulture(),
       cultureList: basis.l10n.getCultureList()
-    }
+    };
     sendData('cultureList', data);
   },
 
@@ -94,7 +94,7 @@ module.exports = {
         if (this.state == STATE.READY || this.state == STATE.ERROR)
           this.removeHandler(FILE_HANDLER);
       }
-    }
+    };
 
     file.addHandler(FILE_HANDLER);
     file.save(newContent);

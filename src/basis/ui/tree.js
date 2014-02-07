@@ -150,7 +150,7 @@
       title: {
         events: 'update',
         getter: function(node){
-          return node.data.title || '[no title]'
+          return node.data.title || '[no title]';
         }
       },
       collapsed: {

@@ -645,7 +645,7 @@
   function wrapEventFunction(fn){
     return function(event, arg){
       return fn(wrap(event), arg);
-    }
+    };
   }
 
 

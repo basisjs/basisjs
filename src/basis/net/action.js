@@ -129,7 +129,7 @@
       {
         ;;;basis.dev.warn(this + ' has not ready state. Operation aborted');
       }
-    }
+    };
   }
 
 

@@ -43,7 +43,7 @@
     millisecond: 'Milliseconds'
   }, function(key, name){
     GETTER[key] = function(date){
-      return date['get' + name]()
+      return date['get' + name]();
     };
     SETTER[key] = function(date, value){
       return date['set' + name](value);
@@ -191,7 +191,7 @@
           })
           .split(reIsoStringSplit)
       );
-    }
+    };
   })();
 
   var toISOString = function(){
@@ -320,7 +320,7 @@
             var args = [this];
             Array.prototype.push.apply(args, arguments);
             return Date_extensions[method].apply(Date_extensions, args);
-          }
+          };
         })(key);
     })();
 

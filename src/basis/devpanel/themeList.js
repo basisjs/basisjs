@@ -19,7 +19,7 @@ var view = new Menu({
     return {
       value: themeName,
       selected: basis.template.currentTheme().name == themeName
-    }
+    };
   })
 });
 

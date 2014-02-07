@@ -574,7 +574,7 @@
             // ie8 and lower, it's also more safe when Function.prototype.bind defined
             // by other libraries (like es5-shim)
           : function(){
-              Function.prototype.apply.call(console[methodName], console, arguments)
+              Function.prototype.apply.call(console[methodName], console, arguments);
             };
       });
 
@@ -666,7 +666,7 @@
           process.nextTick(function(){
             runTask(taskId);
           });
-        }
+        };
       }
       else
       {
@@ -802,7 +802,7 @@
         utils[method] = (function(method, path){
           return function(){
             return path[method].apply(path, arguments).replace(/\\/g, '/');
-          }
+          };
         })(method, require('path'));
 
       baseURI = utils.resolve('.') + '/';
@@ -1702,7 +1702,7 @@
 
       if (!timer)
         setImmediate(applyTokens);
-    }
+    };
   })();
 
  /**
@@ -2047,9 +2047,9 @@
       /** @cut */     {
       /** @cut */       global.removeEventListener('error', onerror);
       /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
-      /** @cut */       event.preventDefault()
+      /** @cut */       event.preventDefault();
       /** @cut */     }
-      /** @cut */   })
+      /** @cut */   });
       /** @cut */
       /** @cut */   var script = document.createElement('script');
       /** @cut */   script.src = sourceURL;
@@ -2113,7 +2113,7 @@
       for (var key in map)
       {
         var filename = pathUtils.resolve(key);
-        var namespace = map[key]
+        var namespace = map[key];
         filename2namespace[filename] = namespace;
         namespace2filename[namespace] = filename;
       }
@@ -2141,7 +2141,7 @@
 
     if (!namespace)
     {
-      namespace = namespaces[name] = new Namespace(name)
+      namespace = namespaces[name] = new Namespace(name);
 
       namespace.namespaces_ = {};
       namespace.namespaces_[name] = namespace;
@@ -2188,7 +2188,7 @@
     namespaces[path.join('.')] = cursor;
 
     return cursor;
-  }
+  };
 
 
  /**
@@ -2280,7 +2280,7 @@
             var args = [this];
             Array.prototype.push.apply(args, arguments);
             return extensions[method].apply(extensions, args);
-          }
+          };
         })(key, cls.name || cls.toString().match(/^\s*function\s*(\w*)\s*\(/)[1]);
   }
 
@@ -2645,7 +2645,7 @@
       return trimmed ? trimmed.split(/\s+/) : [];
     },
     forRegExp: function(this_){
-      return this_.replace(ESCAPE_FOR_REGEXP, "\\$1");
+      return this_.replace(ESCAPE_FOR_REGEXP, '\\$1');
     },
     format: function(this_, first){
       var data = arrayFrom(arguments, 1);
@@ -2934,7 +2934,7 @@
         parent.insertBefore(node, ref);
       }
       else
-        callbacks[name].push([add, [name, node, ref]])
+        callbacks[name].push([add, [name, node, ref]]);
     }
 
     function docReady(name, fn, context){

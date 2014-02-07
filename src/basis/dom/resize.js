@@ -154,7 +154,7 @@
         var init = function(){
           var win = sensor.contentWindow;
           win.onresize = handler;
-          win.document.body.onresize = handler
+          win.document.body.onresize = handler;
           handler();
         };
         var handler = function(){

@@ -56,7 +56,6 @@
     }
   };
 
-
  /**
   * @class
   */
@@ -194,7 +193,7 @@
         cursorOverrideRule = null;
       }
     }
-  }});
+  };});
 
 
   //

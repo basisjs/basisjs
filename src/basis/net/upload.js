@@ -192,4 +192,4 @@
   // exports
   module.exports = {
     FileUploader: FileUploader
-  }
+  };

@@ -1,7 +1,7 @@
 var templates = basis.template.define('app.menu', {
   View: resource('template/view.tmpl'),
   Item: resource('template/item.tmpl')
-})
+});
 
 module.exports = basis.ui.Node.subclass({
   opened: false,

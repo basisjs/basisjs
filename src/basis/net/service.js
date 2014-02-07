@@ -56,7 +56,7 @@
 
     init: function(){
       /** @cut */ if (this.requestClass)
-      /** @cut */   basis.dev.warn(namespace + '.Service#requestClass is not supported; set requestClass via transportClass')
+      /** @cut */   basis.dev.warn(namespace + '.Service#requestClass is not supported; set requestClass via transportClass');
 
       Emitter.prototype.init.call(this);
 

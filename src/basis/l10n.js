@@ -138,8 +138,8 @@
 
       this.computeGetMethod = get;
 
-      if ((this.type == 'plural' && Array.isArray(this.value))
-          || (this.type == 'default' && typeof this.value == 'object'))
+      if ((this.type == 'plural' && Array.isArray(this.value)) ||
+          (this.type == 'default' && typeof this.value == 'object'))
         values = basis.object.slice(this.value, ownKeys(this.value));
 
       for (var key in tokens)
@@ -214,7 +214,7 @@
         }
 
         return computeToken;
-      }
+      };
     },
 
     computeToken: function(value){
@@ -613,10 +613,11 @@
       if (!cultures[name])
         cultures[name] = this;
 
-      this.pluralForm = pluralForm
-        || pluralFormsMap[name]
-        || pluralFormsMap[name.split('-')[0]]
-        || pluralForms[0];
+      this.pluralForm =
+        pluralForm ||
+        pluralFormsMap[name] ||
+        pluralFormsMap[name.split('-')[0]] ||
+        pluralForms[0];
     },
 
     plural: function(value){

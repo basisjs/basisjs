@@ -41,7 +41,7 @@ var view = new Menu({
       value: culture,
       country: culture.split('-').pop(),
       selected: basis.l10n.getCulture() == culture
-    }
+    };
   })
 });
 

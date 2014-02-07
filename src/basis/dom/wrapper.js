@@ -1627,8 +1627,7 @@
           else
           {
             if (
-                (!nextSibling || (sortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue))
-                &&
+                (!nextSibling || (sortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue)) &&
                 (!prevSibling || (sortingDesc ? prevSibling.sortingValue >= newChildValue : prevSibling.sortingValue <= newChildValue))
                )
             {
@@ -1901,7 +1900,7 @@
       else
       {
         if (this.dataSourceAdapter_)
-          throw EXCEPTION_DATASOURCEADAPTER_CONFLICT
+          throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
       }
 
       // update this

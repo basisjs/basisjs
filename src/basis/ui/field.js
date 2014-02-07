@@ -884,7 +884,7 @@
     itemsChanged: function(selection){
       this.setDelegate(selection.pick());
     }
-  }
+  };
 
  /**
   * @class
