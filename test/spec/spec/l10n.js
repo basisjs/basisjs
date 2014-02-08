@@ -10,7 +10,7 @@ module.exports = {
     {
       name: 'fallback',
       test: function(){
-        var res = basis.require('./l10n.l10n');
+        var res = JSON.parse(basis.require('./l10n.l10n').resource.get(true));
         var dict = basis.l10n.dictionary('l10n.l10n');
         basis.l10n.setCulture('en-US');
         this.is('base', dict.token('value').value);
@@ -24,7 +24,7 @@ module.exports = {
         basis.l10n.setCulture('a');
         this.is('base', dict.token('value').value);
 
-        res['c'] = { value: 'c' };
+        res.c = { value: 'c' };
         dict.resource.update(JSON.stringify(res));
         basis.l10n.setCulture('c');
         this.is('c', dict.token('value').value);
@@ -33,7 +33,8 @@ module.exports = {
         this.is('c', dict.token('value').value);
         basis.l10n.setCulture('a');
         this.is('c', dict.token('value').value);
-        res['b'] = { value: 'b' };
+
+        res.b = { value: 'b' };
         dict.resource.update(JSON.stringify(res));
         this.is('b', dict.token('value').value);
         basis.l10n.setCulture('b');
@@ -41,7 +42,7 @@ module.exports = {
         basis.l10n.setCulture('c');
         this.is('c', dict.token('value').value);
 
-        res['a'] = { value: 'a' };
+        res.a = { value: 'a' };
         dict.resource.update(JSON.stringify(res));
         basis.l10n.setCulture('a');
         this.is('a', dict.token('value').value);
