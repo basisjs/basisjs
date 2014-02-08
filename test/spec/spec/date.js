@@ -32,42 +32,26 @@ module.exports = {
     {
       name: 'getMonthDayCount()',
       test: function(){
-        var d = new Date(2007, 0);
-        this.is(31, d.getMonthDayCount());
-        var d = new Date(2007, 1);
-        this.is(28, d.getMonthDayCount());
-        var d = new Date(2007, 2);
-        this.is(31, d.getMonthDayCount());
-        var d = new Date(2007, 3);
-        this.is(30, d.getMonthDayCount());
-        var d = new Date(2007, 4);
-        this.is(31, d.getMonthDayCount());
-        var d = new Date(2007, 5);
-        this.is(30, d.getMonthDayCount());
-        var d = new Date(2007, 6);
-        this.is(31, d.getMonthDayCount());
-        var d = new Date(2007, 7);
-        this.is(31, d.getMonthDayCount());
-        var d = new Date(2007, 8);
-        this.is(30, d.getMonthDayCount());
-        var d = new Date(2007, 9);
-        this.is(31, d.getMonthDayCount());
-        var d = new Date(2007, 10);
-        this.is(30, d.getMonthDayCount());
-        var d = new Date(2007, 11);
-        this.is(31, d.getMonthDayCount());
+        this.is(31, basis.date.getMonthDayCount(new Date(2007, 0)));
+        this.is(28, basis.date.getMonthDayCount(new Date(2007, 1)));
+        this.is(31, basis.date.getMonthDayCount(new Date(2007, 2)));
+        this.is(30, basis.date.getMonthDayCount(new Date(2007, 3)));
+        this.is(31, basis.date.getMonthDayCount(new Date(2007, 4)));
+        this.is(30, basis.date.getMonthDayCount(new Date(2007, 5)));
+        this.is(31, basis.date.getMonthDayCount(new Date(2007, 6)));
+        this.is(31, basis.date.getMonthDayCount(new Date(2007, 7)));
+        this.is(30, basis.date.getMonthDayCount(new Date(2007, 8)));
+        this.is(31, basis.date.getMonthDayCount(new Date(2007, 9)));
+        this.is(30, basis.date.getMonthDayCount(new Date(2007, 10)));
+        this.is(31, basis.date.getMonthDayCount(new Date(2007, 11)));
 
-        var d = new Date(2008, 1);
-        this.is(29, d.getMonthDayCount());
+        this.is(29, basis.date.getMonthDayCount(new Date(2008, 1)));
 
-        var d = new Date(2000, 1);
-        this.is(29, d.getMonthDayCount());
+        this.is(29, basis.date.getMonthDayCount(new Date(2000, 1)));
 
-        var d = new Date(2100, 1);
-        this.is(28, d.getMonthDayCount());
+        this.is(28, basis.date.getMonthDayCount(new Date(2100, 1)));
 
-        var d = new Date(2400, 1);
-        this.is(29, d.getMonthDayCount());
+        this.is(29, basis.date.getMonthDayCount(new Date(2400, 1)));
       }
     },
     {
