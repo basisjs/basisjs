@@ -1053,7 +1053,7 @@
           try {
             extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
           } catch(e) {
-            ;;;consoleMethods.error('basis.js config parse fault: ' + e);
+            /** @cut */ consoleMethods.error('basis.js config parse fault: ' + e);
           }
 
           // warn about extClass in basis-config, this option was introduced in 0.9.8 for preventing using custom methods via buildin clasess
@@ -1099,12 +1099,12 @@
         }
         else
         {
-          ;;;consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
+          /** @cut */ consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
         }
       }
       else
       {
-        ;;;consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
+        /** @cut */ consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
       }
     }
 
@@ -1312,7 +1312,7 @@
 
       // verbose name in dev
       // NOTE: this code makes Chrome and Firefox show class name in console
-      ;;;newClass = dev_verboseNameWrap(className, { instanceSeed: instanceSeed }, newClass);
+      /** @cut */ newClass = dev_verboseNameWrap(className, { instanceSeed: instanceSeed }, newClass);
 
       // add constructor property to prototype
       newProto.constructor = newClass;
@@ -1361,7 +1361,7 @@
           else
           {
             proto[key] = value;
-            //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
+            ///** @cut */ if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
           }
         }
       }
@@ -2025,7 +2025,7 @@
           content = String(content);
           result = basis.json.parse(content);
         } catch(e) {
-          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
+          /** @cut */ consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
         }
         return result || null;
       }
@@ -3007,7 +3007,7 @@
     var objects = [];
 
     function destroy(log){
-      ;;;var logDestroy = log && typeof log == 'boolean';
+      /** @cut */ var logDestroy = log && typeof log == 'boolean';
       result.globalDestroy = true;
       result.add = $undef;
       result.remove = $undef;
@@ -3055,8 +3055,8 @@
     };
 
     // for debug purposes
-    ;;;result.destroy_ = destroy;
-    ;;;result.objects_ = objects;
+    /** @cut */ result.destroy_ = destroy;
+    /** @cut */ result.objects_ = objects;
 
     return result;
   })();

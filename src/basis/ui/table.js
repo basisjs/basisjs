@@ -302,7 +302,7 @@
           // content in header config is deprecated
           if ('content' in headerConfig)
           {
-            ;;;basis.dev.warn('`content` property in header cell config is deprecated, use `title` instead');
+            /** @cut */ basis.dev.warn('`content` property in header cell config is deprecated, use `title` instead');
             config.title = headerConfig.content;
           }
 
@@ -407,7 +407,7 @@
             // content in footer config is deprecated
             if ('content' in footerConfig)
             {
-              ;;;basis.dev.warn('`content` property in footer cell config is deprecated, use `value` instead');
+              /** @cut */ basis.dev.warn('`content` property in footer cell config is deprecated, use `value` instead');
               config.value = footerConfig.content;
             }
 

@@ -127,7 +127,7 @@
       }
       else
       {
-        ;;;basis.dev.warn(this + ' has not ready state. Operation aborted');
+        /** @cut */ basis.dev.warn(this + ' has not ready state. Operation aborted');
       }
     };
   }

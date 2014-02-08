@@ -124,7 +124,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Attempt to add duplicate subscription');
+        /** @cut */ basis.dev.warn('Attempt to add duplicate subscription');
       }
     },
     unlink: function(type, from, to){
@@ -144,7 +144,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Trying remove non-exists subscription');
+        /** @cut */ basis.dev.warn('Trying remove non-exists subscription');
       }
     },
 
@@ -1245,7 +1245,7 @@
         if (newDelegate.delegate && isConnected(this, newDelegate))
         {
           // show warning in dev mode about new delegate ignore because it is already connected with object
-          ;;;basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
+          /** @cut */ basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
 
           // newDelegate can't be assigned
           return false;
@@ -1938,7 +1938,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -1984,7 +1984,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -2045,7 +2045,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -2258,7 +2258,7 @@
       urgentTimer = null;
       if (setStateCount)
       {
-        ;;;basis.dev.warn('(debug) Urgent flush dataset changes');
+        /** @cut */ basis.dev.warn('(debug) Urgent flush dataset changes');
         setStateCount = 0;
         setAccumulateStateOff();
       }

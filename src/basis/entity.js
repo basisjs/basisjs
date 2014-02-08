@@ -443,7 +443,7 @@
       return result;
     }
   };
-  ;;;EntitySetWrapper.className = namespace + '.EntitySetWrapper';
+  /** @cut */ EntitySetWrapper.className = namespace + '.EntitySetWrapper';
 
   //
   // EntitySetConstructor
@@ -582,7 +582,7 @@
     //else
     //  return namedEntityTypes.get(config);
   };
-  ;;;EntityTypeWrapper.className = namespace + '.EntityTypeWrapper';
+  /** @cut */ EntityTypeWrapper.className = namespace + '.EntityTypeWrapper';
 
   //
   // Entity type constructor
@@ -607,7 +607,7 @@
   function addField(entityType, key, config){
     if (entityType.all.itemCount)
     {
-      ;;;basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
+      /** @cut */ basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
       return;
     }
 
@@ -661,7 +661,7 @@
       // if type still is not a function - ignore it
       if (typeof config.type != 'function')
       {
-        ;;;basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
+        /** @cut */ basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
         config.type = $self;
       }
     }
@@ -722,19 +722,19 @@
         entityType.aliases[alias] = key;
       else
       {
-        ;;;basis.dev.warn('Alias `' + alias + '` already exists');
+        /** @cut */ basis.dev.warn('Alias `' + alias + '` already exists');
       }
     }
     else
     {
-      ;;;basis.dev.warn('Can\'t add alias `' + alias + '` for non-exists field `' + key + '`');
+      /** @cut */ basis.dev.warn('Can\'t add alias `' + alias + '` for non-exists field `' + key + '`');
     }
   }
 
   function addCalcField(entityType, key, wrapper){
     if (key && entityType.fields[key])
     {
-      ;;;basis.dev.warn('Field `' + key + '` had defined already');
+      /** @cut */ basis.dev.warn('Field `' + key + '` had defined already');
       return;
     }
 
@@ -772,7 +772,7 @@
 
       if (after > before)
       {
-        ;;;basis.dev.warn('Can\'t add calculate field `' + key + '`, because recursion');
+        /** @cut */ basis.dev.warn('Can\'t add calculate field `' + key + '`, because recursion');
         return;
       }
 
@@ -797,7 +797,7 @@
 
       // reg as field
       entityType.fields[key] = function(value, oldValue){
-        ;;;basis.dev.log('Calculate fields are readonly');
+        /** @cut */ basis.dev.log('Calculate fields are readonly');
         return oldValue;
       };
     }
@@ -1038,7 +1038,7 @@
           entityType.index.calcWrapper(newId, curId);
 
       } catch(e) {
-        ;;;entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
+        /** @cut */ entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
 
         // rollback all changes
         updated = false;
@@ -1156,7 +1156,7 @@
 
         if (!valueWrapper)
         {
-          ;;;entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
+          /** @cut */ entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
           return false;
         }
 

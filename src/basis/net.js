@@ -492,7 +492,7 @@
           var content = String(this.data.responseText);
           return basis.json.parse(content);
         } catch(e) {
-          ;;;consoleMethods.warn('basis.net: Can\'t parse JSON from ' + this.url, { url: url, content: content });
+          /** @cut */ consoleMethods.warn('basis.net: Can\'t parse JSON from ' + this.url, { url: url, content: content });
         }
       }
       else

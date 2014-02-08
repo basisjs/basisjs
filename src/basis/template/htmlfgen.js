@@ -317,7 +317,7 @@
 
         if (['set', 'templateId_'].indexOf(bindName) != -1)
         {
-          ;;;basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
+          /** @cut */ basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
           continue;
         }
 

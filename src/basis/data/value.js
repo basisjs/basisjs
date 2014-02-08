@@ -293,7 +293,7 @@
 
       if (typeof calc != 'function')
       {
-        ;;;basis.dev.warn(this.constructor.className + ': last argument of constructor must be a function');
+        /** @cut */ basis.dev.warn(this.constructor.className + ': last argument of constructor must be a function');
         calc = basis.fn.$undef;
       }
 

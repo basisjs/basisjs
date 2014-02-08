@@ -75,7 +75,7 @@
 
       if (!PROPERTY_DELTA[this.property])
       {
-        ;;;basis.dev.warn('Property to change `' + this.property + '` is unsupported');
+        /** @cut */ basis.dev.warn('Property to change `' + this.property + '` is unsupported');
         this.stop();
         return;
       }

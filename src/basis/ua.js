@@ -97,7 +97,7 @@
     }
     else
     {
-      ;;;basis.dev.warn('Bad browser version description in Browser.test() function: ' + forTest);
+      /** @cut */ basis.dev.warn('Bad browser version description in Browser.test() function: ' + forTest);
     }
 
     return false;

@@ -140,7 +140,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Preset `' + prefix + '` already exists, new definition ignored');
+          /** @cut */ basis.dev.warn('Preset `' + prefix + '` already exists, new definition ignored');
         }
       },
       process: function(key, value){

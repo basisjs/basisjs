@@ -101,7 +101,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Request ignored. Service have no session key');
+        /** @cut */ basis.dev.warn('Request ignored. Service have no session key');
       }
     },
 

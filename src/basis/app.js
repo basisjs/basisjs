@@ -124,7 +124,7 @@
           break;
 
         default:
-          ;;;basis.dev.warn('Unknown config property `' + key + '` for app, value:', value);
+          /** @cut */ basis.dev.warn('Unknown config property `' + key + '` for app, value:', value);
       }
     }
 

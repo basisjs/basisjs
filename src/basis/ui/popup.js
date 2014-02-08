@@ -377,7 +377,7 @@
         // error on relElement no assigned
         if (!this.relElement)
         {
-          ;;;basis.dev.warn('Popup#show(): relElement missed');
+          /** @cut */ basis.dev.warn('Popup#show(): relElement missed');
           return;
         }
 

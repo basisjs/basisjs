@@ -91,7 +91,7 @@
       return index - 1;
     }
 
-    ;;;throw new Error('Syntax error in CSS rule to be added');
+    /** @cut */ throw new Error('Syntax error in CSS rule to be added');
   }
 
   function makeStyleSheetCompatible(style){
@@ -240,7 +240,7 @@
         try {
           style.cssText = style.cssText.replace(new RegExp(rxText, 'i'), newValue);
         } catch(e) {
-          ;;;basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
+          /** @cut */ basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
         }
       }
     }
@@ -255,7 +255,7 @@
         try {
           node.style[mapping.key] = mapping.value;
         } catch(e) {
-          ;;;basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
+          /** @cut */ basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
         }
       }
       else

@@ -1485,7 +1485,7 @@
     if (!child)
       throw EXCEPTION_NULL_CHILD;
 
-    ;;;basis.dev.warn(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
+    /** @cut */ basis.dev.warn(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
     throw EXCEPTION_BAD_CHILD_CLASS;
   }
 
