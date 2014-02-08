@@ -33,7 +33,7 @@
     className: 'PrototypeProperty',
     nodeType: 'property',
 
-    template: resource('template/prototypeItem.tmpl'),
+    template: resource('./template/prototypeItem.tmpl'),
 
     binding: {
       jsdocs: 'satellite:',
@@ -87,7 +87,7 @@
   var PrototypeMethod = PrototypeItem.subclass({
     className: 'PrototypeMethod',
     nodeType: 'method',
-    template: resource('template/prototypeMethod.tmpl'),
+    template: resource('./template/prototypeMethod.tmpl'),
 
     binding: {
       args: function(node){
@@ -104,7 +104,7 @@
   */
   var PrototypeSpecialMethod = PrototypeMethod.subclass({
     className: 'PrototypeSpecialMethod',
-    template: resource('template/prototypeSpecialMethod.tmpl')
+    template: resource('./template/prototypeSpecialMethod.tmpl')
   });
 
  /**
@@ -167,7 +167,7 @@
   var viewPrototype = new View({
     title: 'Prototype',
     viewHeader: 'Prototype',
-    template: resource('template/prototypeView.tmpl'),
+    template: resource('./template/prototypeView.tmpl'),
 
     binding: {
       groupingType: {
@@ -229,7 +229,7 @@
       childClass: {
         className: namespace + '.ViewPrototypePartitionNode',
 
-        template: resource('template/prototypeViewGroup.tmpl'),
+        template: resource('./template/prototypeViewGroup.tmpl'),
 
         binding: {
           groupEmpty: {

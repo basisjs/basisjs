@@ -45,43 +45,43 @@
   var dict = basis.l10n.dictionary(__filename);
 
   var templates = basis.template.define(namespace, {
-    Example: resource('templates/field/Example.tmpl'),
-    Description: resource('templates/field/Description.tmpl'),
-    Counter: resource('templates/field/Counter.tmpl'),
+    Example: resource('./templates/field/Example.tmpl'),
+    Description: resource('./templates/field/Description.tmpl'),
+    Counter: resource('./templates/field/Counter.tmpl'),
 
-    Field: resource('templates/field/Field.tmpl'),
-    File: resource('templates/field/File.tmpl'),
-    Hidden: resource('templates/field/Hidden.tmpl'),
-    Text: resource('templates/field/Text.tmpl'),
-    Password: resource('templates/field/Password.tmpl'),
-    Textarea: resource('templates/field/Textarea.tmpl'),
-    Checkbox: resource('templates/field/Checkbox.tmpl'),
-    Label: resource('templates/field/Label.tmpl'),
+    Field: resource('./templates/field/Field.tmpl'),
+    File: resource('./templates/field/File.tmpl'),
+    Hidden: resource('./templates/field/Hidden.tmpl'),
+    Text: resource('./templates/field/Text.tmpl'),
+    Password: resource('./templates/field/Password.tmpl'),
+    Textarea: resource('./templates/field/Textarea.tmpl'),
+    Checkbox: resource('./templates/field/Checkbox.tmpl'),
+    Label: resource('./templates/field/Label.tmpl'),
 
-    RadioGroup: resource('templates/field/RadioGroup.tmpl'),
-    RadioGroupItem: resource('templates/field/RadioGroupItem.tmpl'),
+    RadioGroup: resource('./templates/field/RadioGroup.tmpl'),
+    RadioGroupItem: resource('./templates/field/RadioGroupItem.tmpl'),
 
-    CheckGroup: resource('templates/field/CheckGroup.tmpl'),
-    CheckGroupItem: resource('templates/field/CheckGroupItem.tmpl'),
+    CheckGroup: resource('./templates/field/CheckGroup.tmpl'),
+    CheckGroupItem: resource('./templates/field/CheckGroupItem.tmpl'),
 
-    Select: resource('templates/field/Select.tmpl'),
-    SelectItem: resource('templates/field/SelectItem.tmpl'),
+    Select: resource('./templates/field/Select.tmpl'),
+    SelectItem: resource('./templates/field/SelectItem.tmpl'),
 
-    Combobox: resource('templates/field/Combobox.tmpl'),
-    ComboboxItem: resource('templates/field/ComboboxItem.tmpl'),
-    ComboboxDropdownList: resource('templates/field/ComboboxDropdownList.tmpl'),
+    Combobox: resource('./templates/field/Combobox.tmpl'),
+    ComboboxItem: resource('./templates/field/ComboboxItem.tmpl'),
+    ComboboxDropdownList: resource('./templates/field/ComboboxDropdownList.tmpl'),
 
-    MatchInput: resource('templates/field/MatchInput.tmpl')
+    MatchInput: resource('./templates/field/MatchInput.tmpl')
   });
 
   basis.template.define(namespace + '.native', {
-    text: resource('templates/field/native-type-text.tmpl'),
-    password: resource('templates/field/native-type-password.tmpl'),
-    textarea: resource('templates/field/native-type-textarea.tmpl'),
-    checkbox: resource('templates/field/native-type-checkbox.tmpl'),
-    radio: resource('templates/field/native-type-radio.tmpl'),
-    select: resource('templates/field/native-type-select.tmpl'),
-    file: resource('templates/field/native-type-file.tmpl')
+    text: resource('./templates/field/native-type-text.tmpl'),
+    password: resource('./templates/field/native-type-password.tmpl'),
+    textarea: resource('./templates/field/native-type-textarea.tmpl'),
+    checkbox: resource('./templates/field/native-type-checkbox.tmpl'),
+    radio: resource('./templates/field/native-type-radio.tmpl'),
+    select: resource('./templates/field/native-type-select.tmpl'),
+    file: resource('./templates/field/native-type-file.tmpl')
   });
 
 

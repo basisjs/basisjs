@@ -25,16 +25,16 @@ basis.app.create({
     //
     // main part
     //
-    var prototypeMapPopup = resource('app/layout/prototypeMapPopup.js');
+    var prototypeMapPopup = resource('./app/layout/prototypeMapPopup.js');
 
-    var targetHeader = resource('app/layout/targetHeader.js')();
-    var targetContent = resource('app/layout/targetContent.js')();
+    var targetHeader = resource('./app/layout/targetHeader.js')();
+    var targetContent = resource('./app/layout/targetContent.js')();
 
     targetHeader.setDelegate(targetContent);
     targetHeader.setDataSource(targetContent.getChildNodesDataset());
 
-    var navTree = resource('app/layout/navTree.js')();
-    var searchTree = resource('app/layout/searchTree.js')();
+    var navTree = resource('./app/layout/navTree.js')();
+    var searchTree = resource('./app/layout/searchTree.js')();
 
     navTree.selection.addHandler({
       itemsChanged: function(){
@@ -68,7 +68,7 @@ basis.app.create({
     //
     // search input
     //
-    var searchInput = resource('app/layout/searchInput.js')();
+    var searchInput = resource('./app/layout/searchInput.js')();
     searchInput.matchFilter.node = searchTree;
     searchInput.matchFilter.addHandler({
       change: function(sender, oldValue){
@@ -197,7 +197,7 @@ basis.app.create({
     app.stat.initTime.set(new Date - initTime);
 
     return new basis.ui.Node({
-      template: resource('app.tmpl'),
+      template: resource('./app.tmpl'),
       binding: {
         sidebar: sidebar,
         content: contentLayout

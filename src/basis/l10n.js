@@ -267,7 +267,7 @@
       var parts = path.match(/^(.+?)@(.+)$/);
 
       if (parts)
-        return resolveDictionary(parts[2]).token(parts[1]);
+        return resolveDictionary(basis.path.resolve(parts[2])).token(parts[1]);
 
       /** @cut */ basis.dev.warn('basis.l10n.token accepts token references in format `token.path@path/to/dict.l10n` only');
     }

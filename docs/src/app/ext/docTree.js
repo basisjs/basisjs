@@ -41,7 +41,7 @@
     },
     childClass: {
       titleGetter: basis.getter('data.id', groupTitle),
-      template: resource('docTree/template/docTreePartitionNode.tmpl')
+      template: resource('./docTree/template/docTreePartitionNode.tmpl')
     }
   };
 
@@ -49,7 +49,7 @@
   * @class
   */
   var DocTreeNode = basis.ui.tree.Folder.subclass({
-    template: resource('docTree/template/docTreeNode.tmpl'),
+    template: resource('./docTree/template/docTreeNode.tmpl'),
 
     binding: {
       kind: function(node){
@@ -68,7 +68,7 @@
   * @class
   */
   var DocSearchTreeNode = DocTreeNode.subclass({
-    template: resource('docTree/template/docSearchTreeNode.tmpl'),
+    template: resource('./docTree/template/docSearchTreeNode.tmpl'),
 
     binding: {
       namespace: function(node){
@@ -88,7 +88,7 @@
   * @class
   */
   var DocBaseTreeFolder = DocTreeNode.subclass({
-    template: resource('docTree/template/docTreeFolder.tmpl'),
+    template: resource('./docTree/template/docTreeFolder.tmpl'),
 
     childFactory: function(config){
       var kind = config.delegate.data.kind;

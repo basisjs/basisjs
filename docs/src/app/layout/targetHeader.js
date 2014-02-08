@@ -1,11 +1,11 @@
 basis.require('basis.ui');
 basis.require('basis.ui.button');
 
-var viewPrototype = resource('views/prototype/prototype.js').fetch();
-var prototypeMapPopup = resource('prototypeMapPopup.js');
+var viewPrototype = resource('./views/prototype/prototype.js').fetch();
+var prototypeMapPopup = resource('./prototypeMapPopup.js');
 
 module.exports = new basis.ui.Node({
-  template: resource('template/targetHeader.tmpl'),
+  template: resource('./template/targetHeader.tmpl'),
   binding: {
     kind: 'data:',
     path: 'data:path || ""',

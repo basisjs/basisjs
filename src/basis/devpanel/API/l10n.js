@@ -3,7 +3,7 @@ basis.require('basis.data.value');
 
 var STATE = basis.data.STATE;
 
-var transport = resource('transport.js').fetch();
+var transport = resource('./transport.js').fetch();
 var sendData = transport.sendData;
 
 basis.l10n.onCultureChange(function(culture){
@@ -62,7 +62,7 @@ module.exports = {
   },
 
   updateDictionary: function(data){
-    basis.resource('/' + data.dictionary).update(createDictionaryFileContent(data));
+    basis.resource('.//' + data.dictionary).update(createDictionaryFileContent(data));
   },
 
   saveDictionary: function(data){

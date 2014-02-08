@@ -7,7 +7,7 @@
     title: 'Source code',
     viewHeader: 'Source code',
 
-    template: resource('template/sourceCode.tmpl'),
+    template: resource('./template/sourceCode.tmpl'),
 
     binding: {
       sourceCode: 'satellite:'

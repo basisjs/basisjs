@@ -3,12 +3,12 @@ basis.require('basis.data.index');
 basis.require('app.stat');
 basis.require('app.core');
 
-var viewInheritance = resource('views/inheritance/inheritance.js')();
-var viewSourceCode = resource('views/sourceCode/sourceCode.js')();
-var viewTemplate = resource('views/templateView/templateView.js')();
-var viewPrototype = resource('views/prototype/prototype.js')();
-var viewNamespaceMap = resource('views/namespaceMap/namespaceMap.js')();
-var viewDescription = resource('views/description/description.js')();
+var viewInheritance = resource('./views/inheritance/inheritance.js')();
+var viewSourceCode = resource('./views/sourceCode/sourceCode.js')();
+var viewTemplate = resource('./views/templateView/templateView.js')();
+var viewPrototype = resource('./views/prototype/prototype.js')();
+var viewNamespaceMap = resource('./views/namespaceMap/namespaceMap.js')();
+var viewDescription = resource('./views/description/description.js')();
 
 var VIEW_MAP = {
   'namespace':      [viewDescription, viewNamespaceMap],
@@ -25,7 +25,7 @@ var VIEW_MAP = {
 };
 
 module.exports = new basis.ui.Node({
-  template: resource('template/targetContent.tmpl'),
+  template: resource('./template/targetContent.tmpl'),
   binding: {
     indexPage: 'satellite:',
     hasDelegate: {
@@ -38,7 +38,7 @@ module.exports = new basis.ui.Node({
 
   satellite: {
     indexPage: new basis.ui.Node({
-      template: resource('template/targetContentEmpty.tmpl'),
+      template: resource('./template/targetContentEmpty.tmpl'),
       binding: {
         pageLoadTime: app.stat.pageLoadTime,
         moduleCount: basis.fn.$const(basis.object.iterate(basis.namespaces_, function(key, value){ return value.filename_ }).filter(Boolean).length),

@@ -1,8 +1,8 @@
 basis.require('basis.ui');
 
 // load our components as modules
-var editor = resource('editor.js').fetch();
-var list = resource('list.js').fetch();
+var editor = resource('./editor.js').fetch();
+var list = resource('./list.js').fetch();
 
 // link editor & list together
 // all we need to know, that both are basis.ui.Node, and list has selection
@@ -17,7 +17,7 @@ list.selection.addHandler({
 var view = new basis.ui.Node({
   container: document.body,
   template:
-    '<div>' + 
+    '<div>' +
       '<!--{editor}-->' +
       '<!--{list}-->' +
     '</div>',

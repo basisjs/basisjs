@@ -8,7 +8,7 @@ module.exports = {
 
     var createTemplate = function(source){
       return new basis.template.html.Template(source);
-    }
+    };
 
     var text = function(template, binding){
       if (typeof template == 'string')
@@ -29,7 +29,7 @@ module.exports = {
       }
 
       return res;
-    }
+    };
   },
 
   test: [
@@ -42,8 +42,8 @@ module.exports = {
             {
               name: 'Template baseURI on theme change, when templates on different locations',
               test: function(){
-                basis.template.theme('base').define('test', basis.resource('foo/1.tmpl'));
-                basis.template.theme('custom').define('test', basis.resource('foo/custom/2.tmpl'));
+                basis.template.theme('base').define('test', basis.resource('./foo/1.tmpl'));
+                basis.template.theme('custom').define('test', basis.resource('./foo/custom/2.tmpl'));
                 basis.template.setTheme('base');
 
                 var tmpl = new basis.template.html.Template(basis.template.get('test'));
@@ -87,7 +87,7 @@ module.exports = {
                       }
                     });*/
 
-                    this.is(text('<span title="a" class="b"/>'), text(b))
+                    this.is(text('<span title="a" class="b"/>'), text(b));
                   }
                 },
                 {
@@ -96,7 +96,7 @@ module.exports = {
                     var a = createTemplate('<span class="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
 
-                    this.is(text('<span class="a b"/>'), text(b))
+                    this.is(text('<span class="a b"/>'), text(b));
                   }
                 },
                 {
@@ -133,7 +133,7 @@ module.exports = {
                     var a = createTemplate('<span title="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
 
-                    this.is(text('<span title="a" id="b"/>'), text(b))
+                    this.is(text('<span title="a" id="b"/>'), text(b));
                   }
                 },
                 {
@@ -142,7 +142,7 @@ module.exports = {
                     var a = createTemplate('<span id="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
 
-                    this.is(text('<span id="b"/>'), text(b))
+                    this.is(text('<span id="b"/>'), text(b));
                   }
                 }
               ]
@@ -547,12 +547,12 @@ module.exports = {
                     var a = createTemplate('<span title="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-attr name="id" value="b"/></b:include>');
 
-                    this.is(text('<span title="a" id="b"/>'), text(b))
+                    this.is(text('<span title="a" id="b"/>'), text(b));
 
                     var a = createTemplate('<span title="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-attr name="title" value="b"/></b:include>');
 
-                    this.is(text('<span title="b"/>'), text(b))
+                    this.is(text('<span title="b"/>'), text(b));
                   }
                 },
                 {
@@ -582,12 +582,12 @@ module.exports = {
                 var a = createTemplate('<span title="a"/>');
                 var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="class"/></b:include>');
 
-                this.is(text('<span title="a"/>'), text(b))
+                this.is(text('<span title="a"/>'), text(b));
 
                 var a = createTemplate('<span title="a"/>');
                 var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="title"/></b:include>');
 
-                this.is(text('<span/>'), text(b))
+                this.is(text('<span/>'), text(b));
               }
             },
             {
@@ -768,7 +768,7 @@ module.exports = {
                     var a = createTemplate('<span title="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class name="title" value="b"/></b:include>');
 
-                    this.is(text('<span title="a" class="b"/>'), text(b))
+                    this.is(text('<span title="a" class="b"/>'), text(b));
                   }
                 },
                 {
@@ -777,7 +777,7 @@ module.exports = {
                     var a = createTemplate('<span title="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class/></b:include>');
 
-                    this.is(text('<span title="a"/>'), text(b))
+                    this.is(text('<span title="a"/>'), text(b));
                   }
                 },
                 {
@@ -786,7 +786,7 @@ module.exports = {
                     var a = createTemplate('{a}');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class value="b"/></b:include>');
 
-                    this.is(text('{a}'), text(b))
+                    this.is(text('{a}'), text(b));
                   }
                 },
                 {
@@ -795,7 +795,7 @@ module.exports = {
                     var a = createTemplate('<span>{reference}</span>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class ref="reference" value="b"/></b:include>');
 
-                    this.is(text('<span>{reference}</span>'), text(b))
+                    this.is(text('<span>{reference}</span>'), text(b));
                   }
                 }
               ]
@@ -948,7 +948,7 @@ module.exports = {
                     var a = createTemplate('<span title="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class name="title" value="b"/></b:include>');
 
-                    this.is(text('<span title="a" class="b"/>'), text(b))
+                    this.is(text('<span title="a" class="b"/>'), text(b));
                   }
                 },
                 {
@@ -957,7 +957,7 @@ module.exports = {
                     var a = createTemplate('<span title="a"/>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class/></b:include>');
 
-                    this.is(text('<span title="a"/>'), text(b))
+                    this.is(text('<span title="a"/>'), text(b));
                   }
                 },
                 {
@@ -966,7 +966,7 @@ module.exports = {
                     var a = createTemplate('{a}');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="b"/></b:include>');
 
-                    this.is(text('{a}'), text(b))
+                    this.is(text('{a}'), text(b));
                   }
                 },
                 {
@@ -975,7 +975,7 @@ module.exports = {
                     var a = createTemplate('<span>{reference}</span>');
                     var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class ref="reference" value="b"/></b:include>');
 
-                    this.is(text('<span>{reference}</span>'), text(b))
+                    this.is(text('<span>{reference}</span>'), text(b));
                   }
                 }
               ]

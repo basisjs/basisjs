@@ -1,6 +1,6 @@
 basis.require('basis.l10n');
 
-var Menu = resource('module/menu/index.js').fetch();
+var Menu = resource('./module/menu/index.js').fetch();
 
 var view = new Menu({
   selection: {
@@ -12,7 +12,7 @@ var view = new Menu({
   },
 
   childClass: {
-    template: resource('template/cultureItem.tmpl'),
+    template: resource('./template/cultureItem.tmpl'),
     binding: {
       title: 'title',
       spriteX: {

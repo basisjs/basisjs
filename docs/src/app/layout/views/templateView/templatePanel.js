@@ -5,7 +5,7 @@
   basis.require('app.view.templateView.bindings');*/
 
   //basis.require('app.views.templateView.tree');
-  var buildTemplateTree = resource('buildTemplateTree.js')();//app.view.templateView.tree.buildTemplate;
+  var buildTemplateTree = resource('./buildTemplateTree.js')();//app.view.templateView.tree.buildTemplate;
 
 
   function resolveFunction(fn){
@@ -45,7 +45,7 @@
       this.setChildNodes(binding);
     },
 
-    template: resource('template/bindingsPanel.tmpl'),
+    template: resource('./template/bindingsPanel.tmpl'),
 
     sorting: 'data.name',
 
@@ -53,7 +53,7 @@
       expanded: false,
       emit_toggle: basis.event.create('toggle'),
 
-      template: resource('template/bindingsPanelItem.tmpl'),
+      template: resource('./template/bindingsPanelItem.tmpl'),
 
       binding: {
         name: 'data:',
@@ -125,7 +125,7 @@
       }
     },
 
-    template: resource('template/actionsPanel.tmpl'),
+    template: resource('./template/actionsPanel.tmpl'),
 
     sorting: 'data.name',
 
@@ -133,7 +133,7 @@
       expanded: false,
       emit_toggle: basis.event.create('toggle'),
 
-      template: resource('template/actionsPanelItem.tmpl'),
+      template: resource('./template/actionsPanelItem.tmpl'),
 
       binding: {
         name: 'data:',
@@ -179,7 +179,7 @@
   * @class
   */
   var TemplatePanel = basis.ui.Node.subclass({
-    template: resource('template/templatePanel.tmpl'),
+    template: resource('./template/templatePanel.tmpl'),
 
     binding: {
       bindings: 'satellite:',

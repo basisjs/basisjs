@@ -112,7 +112,7 @@ var pickupTarget = new basis.data.value.Property(null, {
 var nodeInfoPopup = basis.fn.lazyInit(function(){
   return new basis.ui.popup.Balloon({
     dir: 'left bottom left top',
-    template: resource('template/template_hintPopup.tmpl'),
+    template: resource('./template/template_hintPopup.tmpl'),
     autorotate: [
       'left top left bottom',
       'left bottom left bottom',

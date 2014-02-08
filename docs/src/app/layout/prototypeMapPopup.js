@@ -6,14 +6,14 @@
 
   var classList = basis.cssom.classList;
 
-  var viewPrototype = resource('views/prototype/prototype.js');
-  var targetContent = resource('targetContent.js');
+  var viewPrototype = resource('./views/prototype/prototype.js');
+  var targetContent = resource('./targetContent.js');
   
   var prototypeDataset = viewPrototype().getChildNodesDataset();
 
 
   var prototypeMapPopupPanel = new basis.ui.Node({
-    template: resource('template/prototypeMapPopupPanel.tmpl'),
+    template: resource('./template/prototypeMapPopupPanel.tmpl'),
 
     binding: {
       matchInput: 'satellite:'
@@ -24,7 +24,7 @@
     },*/
 
     childClass: basis.ui.Node.subclass({
-      template: resource('template/prototypeMapPopupPanelItem.tmpl'),
+      template: resource('./template/prototypeMapPopupPanelItem.tmpl'),
 
       binding: {
         key: 'data:',

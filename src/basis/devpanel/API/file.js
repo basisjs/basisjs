@@ -1,7 +1,7 @@
 basis.require('basis.template');
 
 
-var transport = resource('transport.js').fetch();
+var transport = resource('./transport.js').fetch();
 var sendData = transport.sendData;
 
 var IS_FILE_ALLOWED_REGEX = /\.(tmpl|css|l10n)$/;

@@ -56,7 +56,7 @@ module.exports = {
       name: 'dictionary',
       test: function(){
         this.is(true, basis.l10n.dictionary('l10n.l10n') === basis.l10n.dictionary('l10n.l10n'));
-        this.is(true, basis.l10n.dictionary(basis.resource('l10n.l10n')) === basis.l10n.dictionary('l10n.l10n'));
+        this.is(true, basis.l10n.dictionary(basis.resource('./l10n.l10n')) === basis.l10n.dictionary('l10n.l10n'));
 
         var staticdata = { 'ru-RU': { test: 'Test' } };
         var dict = basis.l10n.dictionary(staticdata);

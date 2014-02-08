@@ -22,9 +22,9 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Button: resource('templates/button/Button.tmpl'),
-    ButtonPanel: resource('templates/button/ButtonPanel.tmpl'),
-    ButtonGroup: resource('templates/button/ButtonGroup.tmpl')
+    Button: resource('./templates/button/Button.tmpl'),
+    ButtonPanel: resource('./templates/button/ButtonPanel.tmpl'),
+    ButtonGroup: resource('./templates/button/ButtonGroup.tmpl')
   });
 
 

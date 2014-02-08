@@ -161,7 +161,7 @@ console.log(sum.value);
 Шаблоны могут содержать специальные теги. Например, тег `<b:style>` позволяет подключать файлы стилей. Стили подключаются только когда начинает использоваться шаблон. Обычно каждый шаблон имеет собственный файл стилей.
 
 ```html
-<b:style src="item.css"/>
+<b:style src="./item.css"/>
 <li{element} class="item item_{selected}" event-click="select">
   {title}
 </li>
@@ -170,10 +170,10 @@ console.log(sum.value);
 Так же можно подключать другие шаблоны и модифицировать их.
 
 ```html
-<b:style src="item.css"/>
+<b:style src="./item.css"/>
 <li{element} class="item item_{selected}" event-click="select">
   {title}
-  <b:include src="button.tmpl">
+  <b:include src="./button.tmpl">
     <b:set-attr name="event-click" value="remove"/>
     <b:replace ref="caption">
       Delete
@@ -193,13 +193,13 @@ console.log(sum.value);
 ```js
 // базовая тема
 basis.template.define({
-  'button': resource('button.tmpl'),
-  'buttonPanel': resource('buttonPanel.tmpl')
+  'button': resource('./button.tmpl'),
+  'buttonPanel': resource('./buttonPanel.tmpl')
 });
 
 // дополнительная тема, все темы по умолчанию наследуются от базовой
 basis.template.theme('mytheme').define({
-  'button': resource('mytheme/button.tmpl')
+  'button': resource('./mytheme/button.tmpl')
 });
 
 // вместо конкретного описания или указания файла, в качестве значения шаблона
@@ -210,14 +210,14 @@ var button = new basis.ui.Node({
 });
 
 basis.template.setTheme('mytheme');
-// button -> resource('mytheme/button.tmpl')
-// buttonPanel -> resource('buttonPanel.tmpl')
+// button -> resource('./mytheme/button.tmpl')
+// buttonPanel -> resource('./buttonPanel.tmpl')
 ```
 
 Шаблоны поддерживают локализацию. Они могут как использовать языковые токены, переданные в качестве значения для биндингов, так и самостоятельно подключать словари. Для подключения словаря используется специальный тег `<b:l10n>`, а для вставки значений в описании биндинга используется префикс `l10n:`.
 
 ```html
-<b:l10n src="dict.l10n"/>
+<b:l10n src="./dict.l10n"/>
 <div>
   <h1>{l10n:header}</h1>
   <div class="date">{day} {l10n:month.{month}} {year}</div>
@@ -353,7 +353,7 @@ companyView.setDataSource(top100Companies);
 <script>
   basis.require('basis.ui');
   var view = new basis.ui.Node({
-    template: basis.resource('path/to/template.tmpl'),
+    template: basis.resource('./path/to/template.tmpl'),
     ...
   });
 </script>

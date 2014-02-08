@@ -44,9 +44,9 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Popup: resource('templates/popup/Popup.tmpl'),
-    Balloon: resource('templates/popup/Balloon.tmpl'),
-    popupManager: resource('templates/popup/popupManager.tmpl')
+    Popup: resource('./templates/popup/Popup.tmpl'),
+    Balloon: resource('./templates/popup/Balloon.tmpl'),
+    popupManager: resource('./templates/popup/popupManager.tmpl')
   });
 
 

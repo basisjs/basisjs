@@ -23,34 +23,34 @@ module.exports = basis.app.create({
     // set up router
     basis.router.add(/^\/(active|completed)$/, {
       // Triggered every time when path starts to match the rule on change.
-      // Analogy with onmouseenter 
+      // Analogy with onmouseenter
       // No need to define it by default.
       enter: function(){
       },
 
-      // Triggered every time when path changes and path matches the rule. 
+      // Triggered every time when path changes and path matches the rule.
       match: function(kind){
         Todo.selected.set(Todo[kind]);
       },
 
       // Triggered every time when path stops to match the rule on change.
-      // Analogy with onmouseleave 
+      // Analogy with onmouseleave
       leave: function(){
         Todo.selected.set(Todo.all);
       }
     });
 
     // start router
-    basis.router.start();    
+    basis.router.start();
 
     // return app root node
     return new basis.ui.Node({
-      template: resource('app/template/layout.tmpl'),
+      template: resource('./app/template/layout.tmpl'),
       binding: {
         // nested views
-        form: resource('module/form/index.js'),
-        list: resource('module/list/index.js'),
-        stat: resource('module/stat/index.js'),
+        form: resource('./module/form/index.js'),
+        list: resource('./module/list/index.js'),
+        stat: resource('./module/stat/index.js'),
 
         // this is dynamic construction for !Todo.all.itemCount
         empty: basis.data.index.count(Todo.all).as(basis.bool.invert)

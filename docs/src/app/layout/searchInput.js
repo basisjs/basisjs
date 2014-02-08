@@ -50,7 +50,7 @@
 
 
   var searchInput = new SearchMatchInput({
-    template: resource('template/searchInput.tmpl'),
+    template: resource('./template/searchInput.tmpl'),
     action: {
       clear: function(){
         this.setValue('');

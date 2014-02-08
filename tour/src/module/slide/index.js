@@ -10,8 +10,8 @@ basis.require('basis.ui.menu');
 basis.require('basis.router');
 basis.require('app.type');
 
-var fileList = resource('module/fileList/index.js').fetch();
-var editor = resource('module/editor/index.js').fetch();
+var fileList = resource('./module/fileList/index.js').fetch();
+var editor = resource('./module/editor/index.js').fetch();
 var timer;
 
 fileList.selection.addHandler({
@@ -54,14 +54,14 @@ var langPopup = new basis.ui.menu.Menu({
 });
 
 var panels = new basis.layout.VerticalPanelStack({
-  template: resource('template/main-part.tmpl'),
+  template: resource('./template/main-part.tmpl'),
   autoDelegate: true,
   childClass: {
     autoDelegate: true
   },
   childNodes: [
     {
-      template: resource('template/header.tmpl'),
+      template: resource('./template/header.tmpl'),
       binding: {
         hasChanges: basis.data.index.count(changedFiles),
         lang: basis.l10n.culture
@@ -78,16 +78,16 @@ var panels = new basis.layout.VerticalPanelStack({
       }
     },
     {
-      template: resource('template/files.tmpl'),
+      template: resource('./template/files.tmpl'),
       childNodes: fileList
     },
     {
       flex: 1,
-      template: resource('template/code.tmpl'),
+      template: resource('./template/code.tmpl'),
       childNodes: editor
     },
     {
-      template: resource('template/preview.tmpl'),
+      template: resource('./template/preview.tmpl'),
       handler: {
         update: function(){
           updateSet.set(this.data.files ? this.data.files.getItems() : []);
@@ -136,7 +136,7 @@ var panels = new basis.layout.VerticalPanelStack({
 var view = new basis.ui.Node({
   autoDelegate: true,
 
-  template: resource('template/view.tmpl'),
+  template: resource('./template/view.tmpl'),
   binding: {
     title: 'data:',
     description: {

@@ -11,7 +11,7 @@ var inspectMode;
 var elements = [];
 
 var overlayNode = new basis.ui.Node({
-  template: resource('template/heat_overlay.tmpl'),
+  template: resource('./template/heat_overlay.tmpl'),
   action: {
     mouseover: function(e){
       basis.cssom.classList(overlayContent).add('hover');
