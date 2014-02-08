@@ -1739,6 +1739,7 @@
   var resourceCache = {};
   var resourceRequestCache = {};
   /** @cut */ var resourceResolvingStack = [];
+  /** @cut */ var requires;
   // var resourceUpdateNotifier = extend(new Token(), {
   //   set: function(value){
   //     this.value = value;
@@ -1748,10 +1749,11 @@
 
   // apply prefetched resources to cache
   (function(){
-    if (typeof __resources__ != 'undefined')
+    var map = typeof __resources__ != 'undefined' ? __resources__ : null;
+    if (map)
     {
-      for (var key in __resources__)
-        resourceRequestCache[pathUtils.resolve(key)] = __resources__[key];
+      for (var key in map)
+        resourceRequestCache[pathUtils.resolve(key)] = map[key];
 
       __resources__ = null; // reset prefetched to reduce memory leaks
     }
@@ -1922,9 +1924,6 @@
     return resourceCache[resourceUrl];
   };
 
-  var nsRootPath = slice(config.path);
-  /** @cut */ var requires;
-
   extend(getResource, {
     // onUpdate: function(fn, context){
     //   resourceUpdateNotifier.attach(fn, context);
@@ -2033,6 +2032,11 @@
     }
   });
 
+
+  // ================================
+  // script compilation and execution
+  //
+
   function compileFunction(sourceURL, args, body){
     try {
       return new Function(args, body
@@ -2112,9 +2116,12 @@
   var namespaces = {};
   var namespace2filename = {};
   var filename2namespace = {};
+  var nsRootPath = slice(config.path);
 
-  if (typeof __namespace_map__ != 'undefined')
-    (function(map){
+  (function(map){
+    var map = typeof __namespace_map__ != 'undefined' ? __namespace_map__ : null;
+    if (map)
+    {
       for (var key in map)
       {
         var filename = pathUtils.resolve(key);
@@ -2122,7 +2129,9 @@
         filename2namespace[filename] = namespace;
         namespace2filename[namespace] = filename;
       }
-    })(__namespace_map__);
+    }
+  })();
+
 
   var Namespace = Class(null, {
     className: 'basis.Namespace',
@@ -2140,6 +2149,24 @@
       return complete(this, names);
     }
   });
+
+  function resolveNSFilename(namespace){
+    var namespaceRoot = namespace.split('.')[0];
+    var filename = namespace.replace(/\./g, '/') + '.js';
+
+    if (namespace in namespace2filename == false)
+    {
+      if (namespaceRoot in nsRootPath == false)
+        nsRootPath[namespaceRoot] = pathUtils.baseURI;
+
+      if (namespaceRoot == namespace)
+        filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
+
+      namespace2filename[namespace] = nsRootPath[namespaceRoot] + filename;
+    }
+
+    return namespace2filename[namespace];
+  }
 
   function getRootNamespace(name){
     var namespace = namespaces[name];
@@ -2170,7 +2197,7 @@
   * @param {string} path
   * @return {basis.Namespace}
   */
-  var getNamespace = function(path){
+  function getNamespace(path){
     path = path.split('.');
 
     var rootNs = getRootNamespace(path[0]);
@@ -2193,7 +2220,7 @@
     namespaces[path.join('.')] = cursor;
 
     return cursor;
-  };
+  }
 
 
  /**
@@ -2247,21 +2274,14 @@
         if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
         {
           // namespace, like 'foo.bar.baz'
-          var namespace = filename;
-          var namespaceRoot = namespace.split('.')[0];
-
-          filename = namespace.replace(/\./g, '/') + '.js';
-
-          if (namespaceRoot == namespace)
-          {
-            nsRootPath[namespaceRoot] = nsRootPath[namespace] || pathUtils.baseURI;
-            filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
-          }
-
-          filename = (nsRootPath[namespaceRoot] || '') + filename;
+          filename = resolveNSFilename(filename);
         }
         else
         {
+          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
+          /** @cut */   consoleMethods.warn('Bad usage: require(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+          // regular filename
           filename = pathUtils.resolve(dirname, filename);
         }
 
@@ -3250,38 +3270,43 @@
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
 
+    // properties and settings
     version: VERSION,
 
     NODE_ENV: NODE_ENV,
     config: config,
     platformFeature: {},
 
-    path: pathUtils,
-
+    // modularity
+    resolveNSFilename: resolveNSFilename,
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
-    asset: function(url){
-      return url;
+    asset: function(url){   // NOTE: don't replace for $self, builder attach
+      return url;           // special handler for this function
     },
 
-    getter: getter,
-    ready: ready,
-
+    // timers
     setImmediate: setImmediate,
     clearImmediate: clearImmediate,
     nextTick: function(){
       setImmediate.apply(null, arguments);
     },
 
+    // classes
     Class: Class,
     Token: Token,
     DeferredToken: DeferredToken,
 
+    // util functions
+    getter: getter,
+    ready: ready,
+
     cleaner: cleaner,
     console: consoleMethods,
-
+    path: pathUtils,
     doc: documentInterface,
+
     object: {
       extend: extend,
       complete: complete,
