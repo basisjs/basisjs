@@ -2,12 +2,12 @@ basis.require('basis.ui');
 
 var List = basis.ui.Node.subclass({
   container: document.body,
-  template: resource('list.tmpl'),
+  template: resource('./list.tmpl'),
   binding: {
     header: 'header'
   },
   childClass: {
-    template: resource('item.tmpl'),
+    template: resource('./item.tmpl'),
     binding: {
       title: 'data:title'
     }

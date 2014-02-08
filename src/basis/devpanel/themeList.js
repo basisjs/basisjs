@@ -1,6 +1,6 @@
 basis.require('basis.template');
 
-var Menu = resource('module/menu/index.js').fetch();
+var Menu = resource('./module/menu/index.js').fetch();
 
 var view = new Menu({
   selection: {

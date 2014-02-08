@@ -5,14 +5,14 @@ basis.require('basis.ui');
 
 var DOM = basis.dom;
 
-var colorPicker = resource('colorPicker.js').fetch();
+var colorPicker = resource('./colorPicker.js').fetch();
 var transport = resource('../API/transport.js').fetch();
 
 var inspectMode;
 var elements = [];
 
 var overlayNode = new basis.ui.Node({
-  template: resource('template/l10n_overlay.tmpl'),
+  template: resource('./template/l10n_overlay.tmpl'),
   action: {
     mouseover: function(e){
       basis.cssom.classList(overlayContent).add('hover');

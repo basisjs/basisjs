@@ -2,13 +2,13 @@ basis.require('basis.ui');
 basis.require('basis.dragdrop');
 basis.require('basis.l10n');
 
-var l10nInspector = resource('inspector/l10n.js').fetch();
-var templateInspector = resource('inspector/template.js').fetch();
-var heatInspector = resource('inspector/heatmap.js').fetch();
+var l10nInspector = resource('./inspector/l10n.js').fetch();
+var templateInspector = resource('./inspector/template.js').fetch();
+var heatInspector = resource('./inspector/heatmap.js').fetch();
 
-var themeList = resource('themeList.js').fetch();
-var cultureList = resource('cultureList.js').fetch();
-//var fileInspector = resource('module/fileInspector/fileInspector.js');
+var themeList = resource('./themeList.js').fetch();
+var cultureList = resource('./cultureList.js').fetch();
+//var fileInspector = resource('./module/fileInspector/fileInspector.js');
 
 
 //
@@ -21,7 +21,7 @@ var panel = new basis.ui.Node({
   themeName: basis.template.currentTheme().name,
   culture: basis.l10n.getCulture(),
 
-  template: resource('template/panel.tmpl'),
+  template: resource('./template/panel.tmpl'),
 
   binding: {
     themeList: themeList,

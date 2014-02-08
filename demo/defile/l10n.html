@@ -57,7 +57,7 @@
     var testNode = new basis.ui.Node({
       container: document.getElementById('demo-container'),
       data: { count: 5 },
-      template: basis.resource('l10n.tmpl'),
+      template: basis.resource('./l10n.tmpl'),
       action: {
         dec: function(){
           this.update({ count: this.data.count - 1 });

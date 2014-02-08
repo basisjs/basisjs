@@ -1,3 +1,3 @@
 module.exports = {
-  Todo: require('type/todo.js')
+  Todo: require('./type/todo.js')
 };

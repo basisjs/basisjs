@@ -1,7 +1,7 @@
 basis.require('basis.ui');
 
 module.exports = new basis.ui.Node({
-  template: resource('editor.tmpl'),
+  template: resource('./editor.tmpl'),
   binding: {
     title: 'data:'
   },

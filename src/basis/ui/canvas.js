@@ -27,7 +27,7 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Canvas: resource('templates/canvas/Canvas.tmpl')
+    Canvas: resource('./templates/canvas/Canvas.tmpl')
   });
 
 

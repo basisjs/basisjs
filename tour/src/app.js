@@ -13,11 +13,11 @@ var view;
 module.exports = basis.app.create({
   init: function(){
     view = new basis.ui.Node({
-      template: resource('app/template/layout.tmpl'),
+      template: resource('./app/template/layout.tmpl'),
 
       selection: true,
       childClass: {
-        template: resource('app/template/page.tmpl'),
+        template: resource('./app/template/page.tmpl'),
         emit_select: function(){
           basis.ui.Node.prototype.emit_select.call(this);
 
@@ -39,12 +39,12 @@ module.exports = basis.app.create({
         {
           name: 'toc',
           selected: true,
-          lazyChildNodes: resource('module/toc/index.js')
+          lazyChildNodes: resource('./module/toc/index.js')
         },
         {
           name: 'slide',
           autoDelegate: true,
-          lazyChildNodes: resource('module/slide/index.js')
+          lazyChildNodes: resource('./module/slide/index.js')
         }
       ]
     });

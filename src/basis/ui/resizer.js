@@ -6,7 +6,7 @@
   basis.require('basis.ui');
 
   var styleRequired = basis.fn.runOnce(function(){
-    resource('templates/resizer/style.css')().startUse();
+    resource('./templates/resizer/style.css')().startUse();
   });
 
 

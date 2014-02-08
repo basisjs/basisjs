@@ -16,7 +16,7 @@
   var SourceCode = basis.Class(basis.ui.Node, {
     className: namespace + '.SourceCode',
 
-    template: resource('templates/highlight/SourceCode.tmpl'),
+    template: resource('./templates/highlight/SourceCode.tmpl'),
 
     binding: {
       code: {

@@ -41,18 +41,18 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Table: resource('templates/table/Table.tmpl'),
-    Body: resource('templates/table/Body.tmpl'),
-    Row: resource('templates/table/Row.tmpl'),
-    Cell: resource('templates/table/Cell.tmpl'),
+    Table: resource('./templates/table/Table.tmpl'),
+    Body: resource('./templates/table/Body.tmpl'),
+    Row: resource('./templates/table/Row.tmpl'),
+    Cell: resource('./templates/table/Cell.tmpl'),
 
-    Header: resource('templates/table/Header.tmpl'),
-    HeaderPartitionRow: resource('templates/table/HeaderPartitionRow.tmpl'),
-    HeaderPartitionNode: resource('templates/table/HeaderPartitionNode.tmpl'),
-    HeaderCell: resource('templates/table/HeaderCell.tmpl'),
+    Header: resource('./templates/table/Header.tmpl'),
+    HeaderPartitionRow: resource('./templates/table/HeaderPartitionRow.tmpl'),
+    HeaderPartitionNode: resource('./templates/table/HeaderPartitionNode.tmpl'),
+    HeaderCell: resource('./templates/table/HeaderCell.tmpl'),
 
-    FooterCell: resource('templates/table/FooterCell.tmpl'),
-    Footer: resource('templates/table/Footer.tmpl')
+    FooterCell: resource('./templates/table/FooterCell.tmpl'),
+    Footer: resource('./templates/table/Footer.tmpl')
   });
 
 

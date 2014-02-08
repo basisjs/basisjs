@@ -36,9 +36,9 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Scrollbar: resource('templates/scroller/Scrollbar.tmpl'),
-    ScrollPanel: resource('templates/scroller/ScrollPanel.tmpl'),
-    ScrollGalleryItem: resource('templates/scroller/ScrollGalleryItem.tmpl')
+    Scrollbar: resource('./templates/scroller/Scrollbar.tmpl'),
+    ScrollPanel: resource('./templates/scroller/ScrollPanel.tmpl'),
+    ScrollGalleryItem: resource('./templates/scroller/ScrollGalleryItem.tmpl')
   });
 
 

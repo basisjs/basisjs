@@ -21,7 +21,7 @@
         existsIf: basis.getter('data.refs'),
         delegate: basis.fn.$self,
         instanceOf: uiNode.subclass({
-          template: resource('template/tree/refList.tmpl'),
+          template: resource('./template/tree/refList.tmpl'),
           binding: {
             refs: 'data:'
           }
@@ -31,7 +31,7 @@
   });
 
   TemplateTreeNode.AttributeValueText = uiNode.subclass({
-    template: resource('template/tree/attributeText.tmpl'),
+    template: resource('./template/tree/attributeText.tmpl'),
 
     binding: {
       text: 'data:'
@@ -39,7 +39,7 @@
   });
 
   TemplateTreeNode.AttributeValueBinding = uiNode.subclass({
-    template: resource('template/tree/attributeBinding.tmpl'),
+    template: resource('./template/tree/attributeBinding.tmpl'),
 
     binding: {
       text: 'data:'
@@ -47,7 +47,7 @@
   });
 
   TemplateTreeNode.AttributeClassBinding = uiNode.subclass({
-    template: resource('template/tree/attributeClass.tmpl'),
+    template: resource('./template/tree/attributeClass.tmpl'),
 
     binding: {
       text: 'data:'
@@ -59,7 +59,7 @@
   */
   TemplateTreeNode.Attribute = TemplateTreeNode.subclass({
     className: namespace + '.TemplateTreeNode.Attribute',
-    template: resource('template/tree/attribute.tmpl'),
+    template: resource('./template/tree/attribute.tmpl'),
 
     binding: {
       isEvent: {
@@ -76,7 +76,7 @@
   */
   TemplateTreeNode.EmptyElement = TemplateTreeNode.subclass({
     className: namespace + '.TemplateTreeNode.EmptyElement',
-    template: resource('template/tree/emptyElement.tmpl'),
+    template: resource('./template/tree/emptyElement.tmpl'),
 
     binding: {
       attributes: 'satellite:'
@@ -103,7 +103,7 @@
   */
   TemplateTreeNode.Element = TemplateTreeNode.EmptyElement.subclass({
     className: namespace + '.TemplateTreeNode.Element',
-    template: resource('template/tree/element.tmpl')
+    template: resource('./template/tree/element.tmpl')
   });
 
  /**
@@ -111,7 +111,7 @@
   */
   TemplateTreeNode.Text = TemplateTreeNode.subclass({
     className: namespace + '.TemplateTreeNode.Text',
-    template: resource('template/tree/text.tmpl')
+    template: resource('./template/tree/text.tmpl')
   });
 
  /**
@@ -119,7 +119,7 @@
   */
   TemplateTreeNode.Comment = TemplateTreeNode.subclass({
     className: namespace + '.TemplateTreeNode.Comment',
-    template: resource('template/tree/comment.tmpl')
+    template: resource('./template/tree/comment.tmpl')
   });
 
   // token types

@@ -275,8 +275,8 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Panel: resource('ui/templates/layout/VerticalPanel.tmpl'),
-    Stack: resource('ui/templates/layout/VerticalPanelStack.tmpl')
+    Panel: resource('./ui/templates/layout/VerticalPanel.tmpl'),
+    Stack: resource('./ui/templates/layout/VerticalPanelStack.tmpl')
   });
 
  /**

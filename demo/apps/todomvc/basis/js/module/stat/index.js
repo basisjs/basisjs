@@ -13,9 +13,9 @@ var Todo = require('app.type').Todo;
 //
 
 var filters = new basis.ui.Node({
-  template: resource('template/filters.tmpl'),  
+  template: resource('./template/filters.tmpl'),
   childClass: {
-    template: resource('template/filter-button.tmpl'),
+    template: resource('./template/filter-button.tmpl'),
     binding: {
       url: 'url',
       title: 'title',
@@ -49,7 +49,7 @@ var filters = new basis.ui.Node({
 //
 
 module.exports = new basis.ui.Node({
-  template: resource('template/footer.tmpl'),
+  template: resource('./template/footer.tmpl'),
   binding: {
     filters: filters,
     completed: basis.data.index.count(Todo.completed),

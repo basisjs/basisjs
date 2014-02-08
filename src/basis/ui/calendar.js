@@ -53,10 +53,10 @@
   var dict = basis.l10n.dictionary(__filename);
 
   var templates = basis.template.define(namespace, {
-    Calendar: resource('templates/calendar/Calendar.tmpl'),
-    Section: resource('templates/calendar/Section.tmpl'),
-    SectionMonth: resource('templates/calendar/SectionMonth.tmpl'),
-    Node: resource('templates/calendar/Node.tmpl')
+    Calendar: resource('./templates/calendar/Calendar.tmpl'),
+    Section: resource('./templates/calendar/Section.tmpl'),
+    SectionMonth: resource('./templates/calendar/SectionMonth.tmpl'),
+    Node: resource('./templates/calendar/Node.tmpl')
   });
 
   //

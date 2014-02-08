@@ -193,13 +193,13 @@ console.log(sum.value);
 ```js
 // базовая тема
 basis.template.define({
-  'button': resource('button.tmpl'),
-  'buttonPanel': resource('buttonPanel.tmpl')
+  'button': resource('./button.tmpl'),
+  'buttonPanel': resource('./buttonPanel.tmpl')
 });
 
 // дополнительная тема, все темы по умолчанию наследуются от базовой
 basis.template.theme('mytheme').define({
-  'button': resource('mytheme/button.tmpl')
+  'button': resource('./mytheme/button.tmpl')
 });
 
 // вместо конкретного описания или указания файла, в качестве значения шаблона
@@ -210,8 +210,8 @@ var button = new basis.ui.Node({
 });
 
 basis.template.setTheme('mytheme');
-// button -> resource('mytheme/button.tmpl')
-// buttonPanel -> resource('buttonPanel.tmpl')
+// button -> resource('./mytheme/button.tmpl')
+// buttonPanel -> resource('./buttonPanel.tmpl')
 ```
 
 Шаблоны поддерживают локализацию. Они могут как использовать языковые токены, переданные в качестве значения для биндингов, так и самостоятельно подключать словари. Для подключения словаря используется специальный тег `<b:l10n>`, а для вставки значений в описании биндинга используется префикс `l10n:`.
@@ -353,7 +353,7 @@ companyView.setDataSource(top100Companies);
 <script>
   basis.require('basis.ui');
   var view = new basis.ui.Node({
-    template: basis.resource('path/to/template.tmpl'),
+    template: basis.resource('./path/to/template.tmpl'),
     ...
   });
 </script>

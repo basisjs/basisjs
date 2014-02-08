@@ -2,11 +2,11 @@ basis.require('basis.ui');
 
 var list = new basis.ui.Node({
   container: document.body,
-  template: resource('list.tmpl'),
+  template: resource('./list.tmpl'),
 
   selection: true,
   childClass: {
-    template: resource('item.tmpl'),
+    template: resource('./item.tmpl'),
     binding: {
       title: 'title'
     }

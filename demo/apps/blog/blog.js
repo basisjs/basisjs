@@ -34,7 +34,7 @@ basis.ready(function(){
 
   var times = [getTime()];
 
-  var postsData = resource('blog_posts.js').fetch();
+  var postsData = resource('./blog_posts.js').fetch();
 
   times.push([getTime(), 'generate posts']);
 
@@ -75,19 +75,19 @@ basis.ready(function(){
   blogThreadPage.addHandler({
     sourceChanged: function(ds){
       this.setPageCount(ds.source ? Math.ceil(ds.source.itemCount / POST_PER_PAGE) : 0);
-      this.setActivePage(1, true)
+      this.setActivePage(1, true);
     }
   }, paginator);
 
   var postList = new basis.ui.Node({
-    template: resource('template/blog-thread.tmpl'),
+    template: resource('./template/blog-thread.tmpl'),
 
     dataSource: blogThreadPage,
-    
+
     sorting: 'data.pubDate',
     sortingDesc: true,
     childClass: {
-      template: resource('template/post.tmpl'),
+      template: resource('./template/post.tmpl'),
 
       binding: {
         id: 'data:',
@@ -116,7 +116,7 @@ basis.ready(function(){
           },
           delegate: basis.fn.$self,
           instanceOf: basis.ui.Node.subclass({
-            template: resource('template/tagList.tmpl'),
+            template: resource('./template/tagList.tmpl'),
 
             templateUpdate: function(){
               this.setChildNodes(this.data.tags.map(function(tag){
@@ -127,7 +127,7 @@ basis.ready(function(){
             },
 
             childClass: {
-              template: resource('template/tag.tmpl'),
+              template: resource('./template/tag.tmpl'),
 
               binding: {
                 title: 'data:'
@@ -156,10 +156,10 @@ basis.ready(function(){
 
   var categoryList = new basis.ui.Node({
     dataSource: postByCategory,
-    template: resource('template/categoryList.tmpl'),
+    template: resource('./template/categoryList.tmpl'),
 
     childClass: {
-      template: resource('template/category.tmpl'),
+      template: resource('./template/category.tmpl'),
 
       binding: {
         title: 'data:'
@@ -192,7 +192,7 @@ basis.ready(function(){
       childClass: {
         collapsed: true,
 
-        template: resource('template/archiveYear.tmpl'),
+        template: resource('./template/archiveYear.tmpl'),
 
         binding: {
           collapsed: function(node){
@@ -208,10 +208,10 @@ basis.ready(function(){
         }
       }
     },
-    template: resource('template/archive.tmpl'),
+    template: resource('./template/archive.tmpl'),
 
     childClass: {
-      template: resource('template/archiveMonth.tmpl'),
+      template: resource('./template/archiveMonth.tmpl'),
 
       binding: {
         count: 'delegate.itemCount',
@@ -258,12 +258,12 @@ basis.ready(function(){
   var tagCloud = new basis.ui.Node({
     dataSource: cloudCalcs,
     sorting: 'data.title',
-    template: resource('template/tagCloud.tmpl'),
+    template: resource('./template/tagCloud.tmpl'),
 
     childClass: {
       active: true,
 
-      template: resource('template/tagCloudTag.tmpl'),
+      template: resource('./template/tagCloudTag.tmpl'),
 
       binding: {
         title: 'data.source.data.title',
@@ -288,7 +288,7 @@ basis.ready(function(){
   var app = new basis.ui.Node({
     container: document.body,
 
-    template: resource('template/app.tmpl'),
+    template: resource('./template/app.tmpl'),
 
     binding: {
       paginator: 'satellite:',

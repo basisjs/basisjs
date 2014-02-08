@@ -12,10 +12,10 @@
   // Classes
   //
   var JsDocLinksPanel = basis.ui.Node.subclass({
-    template: resource('jsdoc/template/jsdocLinksPanel.tmpl'),
+    template: resource('./jsdoc/template/jsdocLinksPanel.tmpl'),
 
     childClass: {
-      template: resource('jsdoc/template/jsdocLinksPanelItem.tmpl'),
+      template: resource('./jsdoc/template/jsdocLinksPanelItem.tmpl'),
 
       binding: {
         title: {
@@ -34,7 +34,7 @@
     active: true,
     codeElement: null,
 
-    template: resource('jsdoc/template/jsdocPanel.tmpl'),
+    template: resource('./jsdoc/template/jsdocPanel.tmpl'),
     binding: {
       codeElement: 'codeElement'
     },

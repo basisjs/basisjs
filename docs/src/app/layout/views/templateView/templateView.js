@@ -2,7 +2,7 @@
   basis.require('app.ext.view');
   //basis.require('app.views.templateView.templatePanel');
 
-  var TemplatePanel = resource('templatePanel.js')();
+  var TemplatePanel = resource('./templatePanel.js')();
 
   var classList = basis.cssom.classList;
   var Template = basis.template.html.Template;
@@ -21,7 +21,7 @@
       return hasTemplate({ data: data });
     },
 
-    template: resource('template/templateView.tmpl'),
+    template: resource('./template/templateView.tmpl'),
 
     binding: {
       template: 'satellite:'
@@ -35,7 +35,7 @@
             title: 'References',
             showMode: '',
 
-            template: resource('template/viewOptionList.tmpl'),
+            template: resource('./template/viewOptionList.tmpl'),
             binding: {
               show: function(node){
                 return node.showMode;

@@ -37,7 +37,7 @@ function sdf(){
 }
 
 var editorView = new basis.ui.Node({
-  template: resource('template/editor.tmpl'),
+  template: resource('./template/editor.tmpl'),
   binding: {
     content: 'data:',
     editor: function(){
