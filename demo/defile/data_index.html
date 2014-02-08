@@ -102,7 +102,7 @@
     var Slider = basis.ui.slider.Slider;
     var UINode = basis.ui.Node;
 
-    Math.seedrandom("basis");
+    Math.seedrandom('basis');
 
     var createDataItem = (function(){
       var seed = 0;
@@ -188,7 +188,7 @@
             value: new basis.data.value.Expression(
               basis.data.index.min(dataset, 'data.value'),
               basis.data.index.max(dataset, 'data.value'),
-              function(min, max) {
+              function(min, max){
                 return 'min/max: ' + min + '/' + max;
               }
             )
@@ -251,7 +251,7 @@
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },
-            instanceOf: nsData.Object.subclass({
+            instanceOf: basis.dom.wrapper.AbstractNode.subclass({
               active: true,
               emit_update: function(delta){
                 nsData.Object.prototype.emit_update.call(this, delta);
@@ -298,7 +298,7 @@
             data[this.propName] = this.value;
             this.update(data);
           }
-        }        
+        }
       }),
       childNodes: [
         {
@@ -311,9 +311,6 @@
         }
       ]
     });
-
-
-    
   </script>
 </body>
 
