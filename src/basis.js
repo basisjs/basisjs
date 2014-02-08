@@ -2002,7 +2002,7 @@
 
         return namespaces[namespace].exports;
       }, {
-        permanent: false
+        permanent: true
       }),
 
       '.css': function(content, url){
