@@ -1799,6 +1799,9 @@
   * @name resource
   */
   var getResource = function(resourceUrl){
+    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
+    /** @cut */   consoleMethods.warn('Bad usage: basis.resource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
     resourceUrl = pathUtils.resolve(resourceUrl);
 
     if (!resourceCache[resourceUrl])
@@ -2087,6 +2090,9 @@
         sourceURL,
         baseURL,
         function(relativePath){
+          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(relativePath))
+          /** @cut */   consoleMethods.warn('Bad usage: resource(\'' + relativePath + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
           return getResource(baseURL + relativePath);
         },
         function(relativePath, base){

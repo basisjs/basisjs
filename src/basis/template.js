@@ -854,7 +854,12 @@
                 case 'resource':
                 case 'style':
                   if (elAttrs.src)
+                  {
+                    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
+                    /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
                     template.resources.push(path.resolve(template.baseURI + elAttrs.src));
+                  }
                 break;
 
                 case 'l10n':
@@ -862,7 +867,12 @@
                   /** @cut */   template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
 
                   if (elAttrs.src)
+                  {
+                    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
+                    /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
                     template.dictURI = path.relative(basis.path.baseURI, template.baseURI + elAttrs.src);
+                  }
                 break;
 
                 case 'define':
@@ -904,7 +914,12 @@
                     else if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
                       resource = getSourceByPath(url);
                     else
+                    {
+                      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+                      /** @cut */   basis.dev.warn('Bad usage: <b:include src=\"' + url + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
                       resource = basis.resource(path.resolve(template.baseURI + url));
+                    }
 
                     if (!resource)
                     {
