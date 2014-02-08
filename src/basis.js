@@ -1032,7 +1032,7 @@
   var config = (function(){
     var basisBaseURI = '';
     var config = {
-      extProto: 'warn'
+      extProto: false
     };
 
     if (NODE_ENV)
