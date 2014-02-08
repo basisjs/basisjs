@@ -2022,9 +2022,13 @@
 
   function getSourceByPath(){
     var path = basis.array(arguments).join('.');
-    var source = sourceByPath[path];
+    var source;
 
-    if (!source)
+    if (path in source)
+    {
+      source = sourceByPath[path];
+    }
+    else
     {
       source = new SourceWrapper('', path);
       sourceByPath[path] = source;
@@ -2197,7 +2201,7 @@
         result.source = themes[name].fallback.source;
         return result;
       },
-      define: function(what, wherewith){
+      define: function(what, wherewith, noSync){
         if (typeof what == 'function')
           what = what();
 
@@ -2215,7 +2219,7 @@
 
             for (var key in dictionary)
               if (dictionary.hasOwnProperty(key))
-                result[key] = addSource(namespace + '.' + key, dictionary[key]);
+                result[key] = addSource(namespace + '.' + key, dictionary[key], noSync);
 
             return result;
           }
@@ -2233,7 +2237,7 @@
               // what -> path
               // wherewith -> source
 
-              return addSource(what, wherewith);
+              return addSource(what, wherewith, noSync);
             }
           }
         }
@@ -2246,7 +2250,7 @@
 
             for (var path in dictionary)
               if (dictionary.hasOwnProperty(path))
-                addSource(path, dictionary[path]);
+                addSource(path, dictionary[path], noSync);
 
             return themeInterface;
           }
@@ -2272,11 +2276,11 @@
       getSource: function(path, withFallback){
         return withFallback ? getThemeSource(name, path) : sources[path];
       },
-      drop: function(path){
+      drop: function(path, noSync){
         if (sources.hasOwnProperty(path))
         {
           delete sources[path];
-          if (themeHasEffect(name))
+          if (!noSync && themeHasEffect(name))
             syncCurrentThemePath(path);
         }
       }
@@ -2302,6 +2306,229 @@
 
     if (fire)
       fn.call(context, currentThemeName);
+  }
+
+
+  //
+  // template package
+  //
+
+  var packages = [];
+  var packageByUrl = {};
+
+  basis.resource.extensions['.templates'] = function(content, url){
+    var content = basis.resource.extensions['.json'](content, url);
+    var pkg = resolvePackage(url);
+    pkg.update(content);
+    return pkg;
+  };
+
+  function resolvePackage(value){
+    var pkg;
+
+    if (typeof value == 'string')
+    {
+      var location = value;
+      var extname = basis.path.extname(location);
+
+      if (extname != '.templates')
+        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.templates');
+
+      value = basis.resource(location);
+    }
+
+    if (basis.resource.isResource(value))
+      pkg = packageByUrl[value.url];
+
+    return pkg || new Package(value);
+  }
+
+ /**
+  * @class
+  */
+  var Package = Class(null, {
+    className: namespace + '.Package',
+
+   /**
+    * Token map.
+    * @type {object}
+    */
+    names: null,
+
+   /**
+    * Values by theme
+    * @type {object}
+    */
+    themeSources: null,
+
+   /**
+    * @type {number}
+    */
+    index: NaN,
+
+   /**
+    * Token data source
+    * @type {basis.resource}
+    */
+    resource: null,
+
+   /**
+    * @constructor
+    * @param {basis.Resource|object} data
+    */
+    init: function(data){
+      this.names = {};
+      this.themeSources = {};
+
+      // add to dictionary list
+      this.index = packages.push(this) - 1;
+
+      if (basis.resource.isResource(data))
+      {
+        var resource = data;
+
+        // attach to resource
+        this.resource = resource;
+        this.id = resource.url;
+
+        // notify dictionary created
+        if (!packageByUrl[resource.url])
+          packageByUrl[resource.url] = this;
+
+        resource.fetch();
+      }
+      else
+      {
+        this.id = this.index;
+        this.update(data || {});
+      }
+    },
+
+   /**
+    * @param {object} data Object that contains new template content
+    */
+    update: function(data){
+      var updatePaths = {};
+
+      if (!data)
+        data = {};
+
+      // drop old content
+      for (var themeName in this.themeSources)
+      {
+        var theme = getTheme(themeName);
+        var templates = this.themeSources[themeName];
+
+        for (var name in templates)
+        {
+          var path = name + '@' + this.id;
+
+          updatePaths[path] = true;
+          theme.drop(path, true);
+        }
+      }
+
+      // reset old data
+      this.themeSources = {};
+
+      // add new content
+      for (var themeName in data)
+      {
+        var theme = getTheme(themeName);
+        var templates = data[themeName];
+
+        this.themeSources[themeName] = {};
+
+        for (var name in templates)
+          if (!/^_|_$/.test(name)) // ignore names with underscore in the begining or ending
+          {
+            var path = name + '@' + this.id;
+            var source = templates[name];
+
+            updatePaths[path] = truel
+
+            if (typeof source == 'string')
+              source = basis.resource(source);
+
+            if (sourceByPath)
+              theme.define(path, source, true);
+          }
+      }
+
+      // sync names
+      for (var path in updatePaths)
+        syncCurrentThemePath(path);
+    },
+
+   /**
+    * Sync token values according to current culture and it's fallback.
+    */
+    syncValues: function(){
+      for (var templateName in this.tokens)
+        this.tokens[templateName].set(this.getValue(templateName));
+    },
+
+   /**
+    * Get current value for templateName according to current culture and it's fallback.
+    * @param {string} templateName
+    */
+    getValue: function(templateName){
+      var fallback = cultureFallback[currentTheme] || [];
+
+      for (var i = 0, cultureName; cultureName = fallback[i]; i++)
+      {
+        var cultureValues = this.cultureValues[cultureName];
+        if (cultureValues && templateName in cultureValues)
+          return cultureValues[templateName];
+      }
+    },
+
+   /**
+    * @param {string} culture Theme name
+    * @param {string} templateName Template name
+    * @return {*}
+    */
+    getThemeSource: function(themeName, templateName){
+      return this.themeSources[themeName] && this.themeSources[themeName][templateName];
+    },
+
+   /**
+    * @param {string} templateName Token name
+    * @return {basis.l10n.Token}
+    */
+    get: function(name){
+      return getSourceByPath(name + '@' + this.id);
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      this.tokens = null;
+      this.cultureValues = null;
+
+      basis.array.remove(packages, this);
+    }
+  });
+
+ /**
+  * @param {basis.Resource|string} content
+  * @return {basis.l10n.Dictionary}
+  */
+  function resolveDictionary(content){
+    var dictionary;
+
+    if (typeof content == 'string')
+    {
+      var location = content;
+      var extname = basis.path.extname(location);
+      content = basis.resource(extname != '.l10n' ? basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n' : location);
+    }
+
+    if (basis.resource.isResource(content))
+      dictionary = packageByUrl[content.url];
+
+    return dictionary || new Dictionary(content);
   }
 
 
