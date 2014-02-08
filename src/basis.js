@@ -1738,13 +1738,13 @@
 
   var resourceCache = {};
   var resourceRequestCache = {};
-  var resourceUpdateNotifier = extend(new Token(), {
-    set: function(value){
-      this.value = value;
-      this.apply();
-    }
-  });
   /** @cut */ var resourceResolvingStack = [];
+  // var resourceUpdateNotifier = extend(new Token(), {
+  //   set: function(value){
+  //     this.value = value;
+  //     this.apply();
+  //   }
+  // });
 
   // apply prefetched resources to cache
   (function(){
@@ -1843,8 +1843,8 @@
         resolved = true;
         resource.apply();
 
-        //resourceUpdateNotifier.value = resourceUrl;
-        //resourceUpdateNotifier.apply();
+        // resourceUpdateNotifier.value = resourceUrl;
+        // resourceUpdateNotifier.apply();
 
         /** @cut    recursion warning */
         /** @cut */ resourceResolvingStack.pop();
@@ -1883,8 +1883,8 @@
               resource.apply();
             }
 
-            resourceUpdateNotifier.value = resourceUrl;
-            resourceUpdateNotifier.apply();
+            // resourceUpdateNotifier.value = resourceUrl;
+            // resourceUpdateNotifier.apply();
           }
         },
         reload: function(){
@@ -1926,9 +1926,9 @@
   /** @cut */ var requires;
 
   extend(getResource, {
-    onUpdate: function(fn, context){
-      resourceUpdateNotifier.attach(fn, context);
-    },
+    // onUpdate: function(fn, context){
+    //   resourceUpdateNotifier.attach(fn, context);
+    // },
     getFiles: function(){
       var result = [];
 
@@ -1946,6 +1946,7 @@
     isResource: function(value){
       return value ? resourceCache[value.url] === value : false;
     },
+
     extensions: {
       '.js': extend(function(content, filename){
         var namespace = filename2namespace[filename];
@@ -2340,8 +2341,8 @@
     {
       var len = object.length;
 
-                                       // Safari 5.1 has a bug, typeof for node collection returns `function`
-      if (typeof len == 'undefined' || Object_toString.call(object) == '[object Function]')
+      if (typeof len == 'undefined' ||
+          Object_toString.call(object) == '[object Function]') // Safari 5.1 has a bug, typeof for node collection returns `function`
         return [object];
 
       if (!offset)
