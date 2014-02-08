@@ -1866,8 +1866,8 @@
 
             if (contentWrapper)
             {
-              // wrap content only if it wrapped already and updatable
-              if (wrapped && contentWrapper.updatable)
+              // wrap content only if it wrapped already and non-updatable
+              if (wrapped && !contentWrapper.permanent)
               {
                 content = contentWrapper(newContent, resourceUrl);
                 resource.apply();
@@ -1902,7 +1902,7 @@
           {
             fn.call(context, resource());
 
-            if (contentWrapper && !contentWrapper.updatable)
+            if (contentWrapper && contentWrapper.permanent)
               return;
           }
 
@@ -1944,7 +1944,7 @@
       return value ? resourceCache[value.url] === value : false;
     },
     extensions: {
-      '.js': function(content, filename){
+      '.js': extend(function(content, filename){
         var namespace = filename2namespace[filename];
 
         if (!namespace)
@@ -1998,9 +1998,11 @@
         }
 
         return namespaces[namespace].exports;
-      },
+      }, {
+        permanent: false
+      }),
 
-      '.css': extend(function(content, url){
+      '.css': function(content, url){
         var resource = CssResource.resources[url];
 
         if (!resource)
@@ -2009,11 +2011,9 @@
           resource.updateCssText(content);
 
         return resource;
-      }, {
-        updatable: true
-      }),
+      },
 
-      '.json': extend(function(content, url){
+      '.json': function(content, url){
         if (typeof content == 'object')
           return content;
 
@@ -2025,9 +2025,7 @@
           ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
         }
         return result || null;
-      }, {
-        updatable: true
-      })
+      }
     }
   });
 
