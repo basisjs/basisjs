@@ -1738,6 +1738,7 @@
 
   var resourceCache = {};
   var resourceRequestCache = {};
+  var resourcePatch = {};
   /** @cut */ var resourceResolvingStack = [];
   /** @cut */ var requires;
   // var resourceUpdateNotifier = extend(new Token(), {
@@ -1758,6 +1759,14 @@
       __resources__ = null; // reset prefetched to reduce memory leaks
     }
   })();
+
+  function applyResourcePatches(resource){
+    var patches = resourcePatch[resource.url];
+
+    if (patches)
+      for (var i = 0; i < patches.length; i++)
+        patches[i](resource.get(), resource.url);
+  }
 
   var getResourceContent = function(url, ignoreCache){
     if (ignoreCache || !resourceRequestCache.hasOwnProperty(url))
@@ -1843,6 +1852,7 @@
 
         // mark as resolved and apply binded functions
         resolved = true;
+        applyResourcePatches(resource);
         resource.apply();
 
         // resourceUpdateNotifier.value = resourceUrl;
@@ -1862,6 +1872,9 @@
         toString: function(){
           return '[basis.resource ' + resourceUrl + ']';
         },
+        isResolved: function(){
+          return resolved;
+        },
         update: function(newContent){
           newContent = String(newContent);
 
@@ -1875,6 +1888,7 @@
               if (wrapped && !contentWrapper.permanent)
               {
                 content = contentWrapper(newContent, resourceUrl);
+                applyResourcePatches(resource);
                 resource.apply();
               }
             }
@@ -1882,6 +1896,7 @@
             {
               content = newContent;
               resolved = true;
+              applyResourcePatches(resource);
               resource.apply();
             }
 
@@ -1928,6 +1943,37 @@
     // onUpdate: function(fn, context){
     //   resourceUpdateNotifier.attach(fn, context);
     // },
+    isResource: function(value){
+      return value ? resourceCache[value.url] === value : false;
+    },
+    isResolved: function(resourceUrl){
+      var resource = getResource.get(resourceUrl);
+
+      return resource ? resource.isResolved() : false;
+    },
+    exists: function(resourceUrl){
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
+      /** @cut */   consoleMethods.warn('Bad usage: basis.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+      return resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
+    },
+    get: function(resourceUrl){
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
+      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.get(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+      resourceUrl = pathUtils.resolve(resourceUrl);
+
+      if (!getResource.exists(resourceUrl))
+        return null;
+
+      return getResource(resourceUrl);
+    },
+    getSource: function(resourceUrl){
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
+      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.getSource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+      return getResourceContent(pathUtils.resolve(resourceUrl));
+    },
     getFiles: function(){
       var result = [];
 
@@ -1935,15 +1981,6 @@
         result.push(pathUtils.relative(url));
 
       return result;
-    },
-    getSource: function(resourceUrl){
-      return getResourceContent(pathUtils.resolve(resourceUrl));
-    },
-    exists: function(resourceUrl){
-      return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
-    },
-    isResource: function(value){
-      return value ? resourceCache[value.url] === value : false;
     },
 
     extensions: {
@@ -2289,6 +2326,33 @@
       };
     }
   })();
+
+
+  function patch(filename, patchFn){
+    if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
+    {
+      // namespace, like 'foo.bar.baz'
+      filename = resolveNSFilename(filename);
+    }
+    else
+    {
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
+      /** @cut */   consoleMethods.warn('Bad usage: basis.patch(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+      // regular filename
+      filename = pathUtils.resolve(filename);
+    }
+
+    if (!resourcePatch[filename])
+      resourcePatch[filename] = [patchFn];
+    else
+      resourcePatch[filename].push(patchFn);
+
+    // if resource exists and resolved -> apply patch
+    var resource = getResource.get(filename);
+    if (resource && resource.isResolved())
+      patchFn(resource.get(), resource.url);
+  }
 
   //
   // Buildin classes extension
@@ -3279,6 +3343,7 @@
 
     // modularity
     resolveNSFilename: resolveNSFilename,
+    patch: patch,
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
