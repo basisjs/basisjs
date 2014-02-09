@@ -969,15 +969,24 @@
         *
         * If `to` argument omitted than resolve `from` relative to current baseURI.
         *
+        * Function also could be used with Array#map method as well. In this case
+        * every array member resolves to current baseURI.
+        *
         * @example
         *   basis.path.relative('/data/orandea/test/aaa', '/data/orandea/impl/bbb');
         *   // returns '../../impl/bbb'
+        *
+        *   ['foo', '/a/b/bar', 'a/b/baz'].map(basis.path.relative);
+        *   // if baseURI is '/a/b' it produces
+        *   // ['../../foo', 'bar', '../../a/b/baz']
         *
         * @param {string} from
         * @param {string=} to
         * @return {string}
         */
         relative: function(from, to){
+          // it makes function useful with array iterate methods, i.e.
+          // ['foo', 'bar'].map(basis.path.relative)
           if (typeof to != 'string')
           {
             to = from;
@@ -1736,8 +1745,8 @@
   // Resources
   //
 
-  var resourceCache = {};
-  var resourceRequestCache = {};
+  var resources = {};
+  var resourceContentCache = {};
   var resourcePatch = {};
   /** @cut */ var resourceResolvingStack = [];
   /** @cut */ var requires;
@@ -1754,7 +1763,7 @@
     if (map)
     {
       for (var key in map)
-        resourceRequestCache[pathUtils.resolve(key)] = map[key];
+        resourceContentCache[pathUtils.resolve(key)] = map[key];
 
       __resources__ = null; // reset prefetched to reduce memory leaks
     }
@@ -1769,7 +1778,7 @@
   }
 
   var getResourceContent = function(url, ignoreCache){
-    if (ignoreCache || !resourceRequestCache.hasOwnProperty(url))
+    if (ignoreCache || !resourceContentCache.hasOwnProperty(url))
     {
       var resourceContent = '';
 
@@ -1800,10 +1809,10 @@
         }
       }
 
-      resourceRequestCache[url] = resourceContent;
+      resourceContentCache[url] = resourceContent;
     }
 
-    return resourceRequestCache[url];
+    return resourceContentCache[url];
   };
 
  /**
@@ -1815,7 +1824,7 @@
 
     resourceUrl = pathUtils.resolve(resourceUrl);
 
-    if (!resourceCache[resourceUrl])
+    if (!resources[resourceUrl])
     {
       var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
       var resolved = false;
@@ -1878,9 +1887,9 @@
         update: function(newContent){
           newContent = String(newContent);
 
-          if (!resolved || newContent != resourceRequestCache[resourceUrl])
+          if (!resolved || newContent != resourceContentCache[resourceUrl])
           {
-            resourceRequestCache[resourceUrl] = newContent;
+            resourceContentCache[resourceUrl] = newContent;
 
             if (contentWrapper)
             {
@@ -1905,7 +1914,7 @@
           }
         },
         reload: function(){
-          var oldContent = resourceRequestCache[resourceUrl];
+          var oldContent = resourceContentCache[resourceUrl];
           var newContent = getResourceContent(resourceUrl, true);
 
           if (newContent != oldContent)
@@ -1933,10 +1942,10 @@
       }));
 
       // cache result
-      resourceCache[resourceUrl] = resource;
+      resources[resourceUrl] = resource;
     }
 
-    return resourceCache[resourceUrl];
+    return resources[resourceUrl];
   };
 
   extend(getResource, {
@@ -1944,7 +1953,7 @@
     //   resourceUpdateNotifier.attach(fn, context);
     // },
     isResource: function(value){
-      return value ? resourceCache[value.url] === value : false;
+      return value ? resources[value.url] === value : false;
     },
     isResolved: function(resourceUrl){
       var resource = getResource.get(resourceUrl);
@@ -1953,9 +1962,9 @@
     },
     exists: function(resourceUrl){
       /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-      return resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
+      return resources.hasOwnProperty(pathUtils.resolve(resourceUrl));
     },
     get: function(resourceUrl){
       /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
@@ -1968,19 +1977,8 @@
 
       return getResource(resourceUrl);
     },
-    getSource: function(resourceUrl){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.getSource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-      return getResourceContent(pathUtils.resolve(resourceUrl));
-    },
     getFiles: function(){
-      var result = [];
-
-      for (var url in resourceCache)
-        result.push(pathUtils.relative(url));
-
-      return result;
+      return keys(resources).map(pathUtils.relative);
     },
 
     extensions: {

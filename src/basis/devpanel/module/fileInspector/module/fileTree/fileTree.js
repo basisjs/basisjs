@@ -25,7 +25,7 @@ function extractPath(path){
       name: basis.path.basename(path),
       folder: folder,
       isFolder: isFolder,
-      code: !isFolder ? basis.resource.getSource(path) : null
+      code: !isFolder ? basis.resource(path).get(true) : null
     }));
 
     fileMap[path] = true;
