@@ -62,7 +62,7 @@ module.exports = {
   },
 
   updateDictionary: function(data){
-    basis.resource('.//' + data.dictionary).update(createDictionaryFileContent(data));
+    basis.resource('/' + data.dictionary).update(createDictionaryFileContent(data));
   },
 
   saveDictionary: function(data){

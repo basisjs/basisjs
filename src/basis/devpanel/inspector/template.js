@@ -57,9 +57,14 @@ function pickHandler(event){
     var source = template.source;
 
     if (source.url && template.source instanceof basis.template.L10nProxyToken == false)
-      transport.sendData('pickTemplate', {
-        filename: source.url
-      });
+    {
+      if (typeof basis.devtools.openFile && (event.ctrlKey || event.metaKey))
+        basis.devtools.openFile(source.url);
+      else
+        transport.sendData('pickTemplate', {
+          filename: source.url
+        });
+    }
     else
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
