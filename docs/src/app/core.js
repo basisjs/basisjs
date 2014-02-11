@@ -2,7 +2,7 @@
   basis.require('basis.event');
   basis.require('basis.data');
   basis.require('basis.entity');
-  basis.require('basis.net');
+  basis.require('basis.net.ajax');
   basis.require('app.stat');
 
   // import names
@@ -11,7 +11,6 @@
 
   var nsData = basis.data;
   var nsEntity = basis.entity;
-  var nsAjax = basis.net;
 
 
   // main part
@@ -657,7 +656,7 @@
     loaded: {},
     curResource: null,
     transport: basis.fn.lazyInit(function(){
-      var transport = new nsAjax.Transport();
+      var transport = new basis.net.ajax.Transport();
 
       transport.addHandler({
         failure: function(){
@@ -704,7 +703,7 @@
     }
   };
 
-  basis.source_ = basis.net.request(basis.filename_);
+  basis.source_ = basis.net.ajax.request(basis.filename_);
   var resolveQueue = basis.object.values(basis.namespaces_).concat(basis).map(function(ns){
     if (ns.source_)
       return {

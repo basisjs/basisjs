@@ -51,11 +51,11 @@
 
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.data');
-    basis.require('basis.net');
+    basis.require('basis.net.ajax');
     basis.require('basis.ui');
     basis.require('basis.ui.button');
 
-    var titleResolver = new basis.net.Transport({
+    var titleResolver = new basis.net.ajax.Transport({
       poolLimit: 1,
       poolHashGetter: function(requestData){
         return requestData.url;
@@ -86,7 +86,7 @@
       template: '<ul class="demo-list"/>',
 
       syncAction: function(){
-        basis.net.request('../index.html', function(data){
+        basis.net.ajax.request('../index.html', function(data){
           var items = [];
 
           data.replace(/url:\s*\'([^\']+)\'/g, function(m, url){

@@ -1,6 +1,6 @@
 
   basis.require('basis.data');
-  basis.require('basis.net');
+  basis.require('basis.net.ajax');
 
  /**
   * @namespace basis.net.action
@@ -84,8 +84,8 @@
     if (config.createTransport)
       return config.createTransport(config);
 
-    // fallback, create instance of basis.net.Transport by default, if no other options
-    return new basis.net.Transport(config);
+    // fallback, create instance of basis.net.ajax.Transport by default, if no other options
+    return new basis.net.ajax.Transport(config);
   }
 
  /**

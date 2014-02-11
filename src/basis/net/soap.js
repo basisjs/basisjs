@@ -1,7 +1,7 @@
 
   basis.require('basis.dom');
   basis.require('basis.xml');
-  basis.require('basis.net');
+  basis.require('basis.net.ajax');
 
 
  /**
@@ -29,8 +29,8 @@
   var createElementNS = XML.createElementNS;
   var NAMESPACE = XML.NAMESPACE;
 
-  var AjaxTransport = basis.net.AjaxTransport;
-  var AjaxRequest = basis.net.AjaxRequest;
+  var AjaxTransport = basis.net.ajax.Transport;
+  var AjaxRequest = basis.net.ajax.Request;
 
   //
   // Main part

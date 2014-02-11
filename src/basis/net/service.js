@@ -1,6 +1,6 @@
 
   basis.require('basis.event');
-  basis.require('basis.net');
+  basis.require('basis.net.ajax');
   basis.require('basis.net.action');
 
 
@@ -19,7 +19,7 @@
   var createAction = basis.net.action.create;
 
   var Emitter = basis.event.Emitter;
-  var AjaxTransport = basis.net.AjaxTransport;
+  var AjaxTransport = basis.net.ajax.Transport;
 
 
  /**
