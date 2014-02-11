@@ -26,15 +26,17 @@
     element.addEventListener(type, fn, false);
   };
 
-  function createDiv(style){
+  function createDiv(role, style){
     var el = document.createElement('div');
+    if (role)
+      el.setAttribute('data-dev-role', role);
     if (style)
       el.setAttribute('style', style);
     return el;
   }
 
-  function createFitDiv(childA, childB){
-    var el = createDiv([
+  function createFitDiv(childA, childB, role){
+    var el = createDiv(role, [
       'position: absolute',
       'visibility: hidden',
       'top: 0',
@@ -54,9 +56,12 @@
 
   var overflowSensorProto = createFitDiv(
         createFitDiv(createDiv()),
-        createFitDiv(createDiv())
+        createFitDiv(createDiv()),
+        'basis.dom.resize.sensor'
       );
+
   var iframeSensorProto = document.createElement('iframe');
+  iframeSensorProto.setAttribute('data-dev-role', 'basis.dom.resize.sensor');
   iframeSensorProto.setAttribute('style', [
     'position: absolute',
     //'visibility: hidden',  // visibility: hidden prevent onresize events in Firefox
@@ -70,6 +75,7 @@
     ''
   ].join(' !important;'));
 
+
   function addResizeListener(element, fn, context){
     var events = element.flowEvents_;
 
@@ -78,7 +84,7 @@
 
     if (!events.resizeSensor_)
     {
-      // onresize doesn't fire when element inserted in document
+      // onresize doesn't fire when element insert into document
       // using iframe is better
       // if (false && 'onresize' in element)
       // {
