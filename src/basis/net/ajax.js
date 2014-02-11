@@ -7,6 +7,7 @@
   var namespace = this.path;
 
   var ua = basis.ua;
+  var escapeValue = global.encodeURIComponent;
   var extend = basis.object.extend;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
@@ -25,7 +26,6 @@
   var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.split(' ');
   var IS_POST_REGEXP = /POST/i;
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
-  var escapeValue = encodeURIComponent;
 
 
  /**
@@ -97,7 +97,6 @@
   * @function readyStateChangeHandler
   */
   function readyStateChangeHandler(readyState){
-    var transport = this.transport;
     var xhr = this.xhr;
     var newState;
 
@@ -417,6 +416,7 @@
     contentType: 'application/x-www-form-urlencoded',
     encoding: null,
     requestHeaders: basis.Class.extensibleProperty(),
+    params: null,
 
     init: function(){
       AbstractTransport.prototype.init.call(this);

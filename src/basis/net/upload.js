@@ -26,7 +26,7 @@
     frame.style.position = 'absolute';
     frame.style.left = '-2000px';
     frame.style.top = '-2000px';
-    frame.name = frame.id = 'f' + Math.floor(Math.random() * 99999);
+    frame.name = frame.id = 'f' + parseInt(Math.random() * 10e10);
     frame.src = 'about:blank';
 
     return frame;
