@@ -1,6 +1,7 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.data.value');
+basis.require('basis.layout');
 basis.require('basis.ui');
 basis.require('basis.ui.popup');
 
@@ -23,29 +24,6 @@ var overlay = DOM.createElement({
     background: 'rgba(110,163,217,0.7)'
   }
 });
-
-function getOffsetRect(elem){
-  var box = elem.getBoundingClientRect();
-
-  var body = document.body;
-  var docElem = document.documentElement;
-
-  var scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
-  var scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
-
-  var clientTop = docElem.clientTop || body.clientTop || 0;
-  var clientLeft = docElem.clientLeft || body.clientLeft || 0;
-
-  var top  = box.top + scrollTop - clientTop;
-  var left = box.left + scrollLeft - clientLeft;
-
-  return {
-    top: Math.round(top),
-    left: Math.round(left),
-    width: box.width,
-    height: box.height
-  };
-}
 
 function pickHandler(event){
   DOM.event.kill(event);
@@ -80,7 +58,7 @@ var pickupTarget = new basis.data.value.Property(null, {
 
     if (tmpl)
     {
-      var rect = getOffsetRect(tmpl.element);
+      var rect = basis.layout.getBoundingRect(tmpl.element);
       if (rect)
       {
         basis.cssom.setStyle(overlay, {
