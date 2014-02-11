@@ -80,34 +80,43 @@
     return offsetParent || documentElement;
   }
 
+  function getPageOffset(){
+    var top = 0;
+    var left = 0;
+
+    if (document.compatMode == 'CSS1Compat')
+    {
+      top = global.pageYOffset || documentElement.scrollTop;
+      left = global.pageXOffset || documentElement.scrollLeft;
+    }
+    else
+    {
+      // IE6 and lower
+      var body = document.body;
+      if (element !== body)
+      {
+        top = body.scrollTop - body.clientTop;
+        left = body.scrollLeft - body.clientLeft;
+      }
+    }
+
+    return {
+      x: left,
+      y: top
+    };
+  }
+
   function getTopLeftPoint(element){
     var left = 0;
     var top = 0;
 
     if (element && element.getBoundingClientRect)
     {
-      // Internet Explorer, FF3, Opera9.50 sheme
       var box = element.getBoundingClientRect();
+      var offset = getPageOffset();
 
-      top = box.top;
-      left = box.left;
-
-      // offset fix
-      if (document.compatMode == 'CSS1Compat')
-      {
-        top += (global.pageYOffset || documentElement.scrollTop);
-        left += (global.pageXOffset || documentElement.scrollLeft);
-      }
-      else
-      {
-        // IE6 and lower
-        var body = document.body;
-        if (element !== body)
-        {
-          top += body.scrollTop - body.clientTop;
-          left += body.scrollLeft - body.clientLeft;
-        }
-      }
+      top = box.top + offset.y;
+      left = box.left + offset.x;
     }
 
     return {
@@ -117,27 +126,43 @@
   }
 
   function getBoundingRect(element, relElement){
-    var point = getTopLeftPoint(element);
-    var top = point.top;
-    var left = point.left;
-    var width = element.offsetWidth;
-    var height = element.offsetHeight;
-
-    // coords relative of relElement
-    if (relElement)
+    var top = 0;
+    var left = 0;
+    var right = 0;
+    var bottom = 0;
+    
+    if (element && element.getBoundingClientRect)
     {
-      var relPoint = getTopLeftPoint(relElement);
-      top -= relPoint.top;
-      left -= relPoint.left;
+      var rect = element.getBoundingClientRect();
+      var offset;
+
+      // coords relative of relElement
+      if (relElement && relElement.getBoundingClientRect)
+      {
+        var relRect = relElement.getBoundingClientRect();
+        offset = {
+          x: -relRect.left,
+          y: -relRect.top
+        };
+      }
+      else
+      {
+        offset = getPageOffset() 
+      }
+
+      top = rect.top + offset.y;
+      left = rect.left + offset.x;
+      right = rect.right + offset.x;
+      bottom = rect.bottom + offset.y;
     }
 
     return {
       top: top,
       left: left,
-      bottom: top + height,
-      right: left + width,
-      width: width,
-      height: height
+      right: right,
+      bottom: bottom,
+      width: right - left,
+      height: bottom - top
     };
   }
 
