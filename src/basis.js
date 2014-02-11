@@ -1842,7 +1842,7 @@
         /** @cut    recursion warning */
         /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
         /** @cut */ if (idx != -1)
-        /** @cut */   basis.dev.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+        /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
         /** @cut */ resourceResolvingStack.push(resourceUrl);
 
         // if resource type has wrapper - wrap it, or use url content as result
@@ -2087,7 +2087,7 @@
       /** @cut */     if (event.filename == pathUtils.origin + sourceURL)
       /** @cut */     {
       /** @cut */       global.removeEventListener('error', onerror);
-      /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
+      /** @cut */       consoleMethods.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
       /** @cut */       event.preventDefault();
       /** @cut */     }
       /** @cut */   });
@@ -2101,7 +2101,7 @@
 
       // don't throw new exception, just output error message and return undefined
       // in this case more chances for other modules continue to work
-      basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 1) : '') + ': ' + e);
+      consoleMethods.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 1) : '') + ': ' + e);
     }
   }
 
