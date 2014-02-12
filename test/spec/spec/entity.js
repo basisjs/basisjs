@@ -1139,102 +1139,301 @@ module.exports = {
       test: [
         {
           name: 'Array',
-          test: function(){
-            var T = basis.entity.createType({
-              fields: {
-                array: Array
+          test: [
+            {
+              name: 'undefined by default',
+              test: function(){
+                var T = basis.entity.createType({
+                  fields: {
+                    array: Array
+                  }
+                });
+                var obj = T({});
+
+                this.is(null, obj.data.array);
               }
-            });
+            },
+            {
+              name: 'set array',
+              test: function(){
+                var a = [1, 2, 3];
+                var b = [1, 2, 3];
+                var c = [4, 5, 6];
 
-            var a = [1, 2, 3];
-            var b = [1, 2, 3];
-            var c = [4, 5, 6];
+                var T = basis.entity.createType({
+                  fields: {
+                    array: Array
+                  }
+                });
+                var obj = T({ array: a });
 
-            // undefined by default
-            var obj = T({});
-            this.is(null, obj.data.array);
+                this.is(a, obj.data.array);
 
-            // set array
-            var obj = T({ array: a });
-            this.is(a, obj.data.array);
+                this.is(false, obj.set('array', a));
+                this.is(a, obj.data.array);
 
-            this.is(false, obj.set('array', a));
-            this.is(a, obj.data.array);
+                this.is(false, obj.set('array', b));
+                this.is(a, obj.data.array);
 
-            this.is(false, obj.set('array', b));
-            this.is(a, obj.data.array);
+                this.is('object', typeof obj.set('array', c));
+                this.is(c, obj.data.array);
 
-            this.is('object', typeof obj.set('array', c));
-            this.is(c, obj.data.array);
+                this.is('object', typeof obj.set('array', b));
+                this.is(b, obj.data.array);
 
-            this.is('object', typeof obj.set('array', b));
-            this.is(b, obj.data.array);
+                this.is(false, obj.set('array', a));
+                this.is(b, obj.data.array);
 
-            this.is(false, obj.set('array', a));
-            this.is(b, obj.data.array);
+                this.is('object', typeof obj.set('array', null));
+                this.is(null, obj.data.array);
 
-            this.is('object', typeof obj.set('array', null));
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', a));
+                this.is(a, obj.data.array);
+              }
+            },
+            {
+              name: 'everything non-array become null',
+              test: function(){
+                var a = [1, 2, 3];
 
-            this.is('object', typeof obj.set('array', a));
-            this.is(a, obj.data.array);
+                var T = basis.entity.createType({
+                  fields: {
+                    array: Array
+                  }
+                });
+                var obj = T({ array: a });
 
-            // everything non-array become null
-            this.is('object', typeof obj.set('array', null));
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', null));
+                this.is(null, obj.data.array);
 
-            this.is('object', typeof obj.set('array', a));
-            this.is('object', typeof obj.set('array', undefined));
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', a));
+                this.is('object', typeof obj.set('array', undefined));
+                this.is(null, obj.data.array);
 
-            this.is('object', typeof obj.set('array', a));
-            this.is('object', typeof obj.set('array', true));
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', a));
+                this.is('object', typeof obj.set('array', true));
+                this.is(null, obj.data.array);
 
-            this.is('object', typeof obj.set('array', a));
-            this.is('object', typeof obj.set('array', 'whatever'));
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', a));
+                this.is('object', typeof obj.set('array', 'whatever'));
+                this.is(null, obj.data.array);
 
-            this.is('object', typeof obj.set('array', a));
-            this.is('object', typeof obj.set('array', 123));
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', a));
+                this.is('object', typeof obj.set('array', 123));
+                this.is(null, obj.data.array);
 
-            this.is('object', typeof obj.set('array', a));
-            this.is('object', typeof obj.set('array', {}));
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', a));
+                this.is('object', typeof obj.set('array', {}));
+                this.is(null, obj.data.array);
 
-            this.is('object', typeof obj.set('array', a));
-            this.is('object', typeof obj.set('array', function(){}));
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', a));
+                this.is('object', typeof obj.set('array', function(){}));
+                this.is(null, obj.data.array);
 
-            this.is(false, obj.set('array', 'whatever'));
-            this.is(null, obj.data.array);
+                this.is(false, obj.set('array', 'whatever'));
+                this.is(null, obj.data.array);
+              }
+            },
+            {
+              name: 'update with rollback',
+              test: function(){
+                var a = [1, 2, 3];
+                var b = [1, 2, 3];
+                var c = [4, 5, 6];
 
-            // update with rollback
-            var obj = T({ array: a });
-            this.is(a, obj.data.array);
+                var T = basis.entity.createType({
+                  fields: {
+                    array: Array
+                  }
+                });
+                var obj = T({ array: a });
 
-            this.is(false, obj.set('array', b, true));
-            this.is(null, obj.modified);
+                this.is(a, obj.data.array);
 
-            this.is('object', typeof obj.set('array', c, true));
-            this.is({ array: a }, obj.modified);
-            this.is(true, (obj.modified && obj.modified.array) === a);
+                this.is(false, obj.set('array', b, true));
+                this.is(null, obj.modified);
 
-            this.is('object', typeof obj.set('array', b, true));
-            this.is(null, obj.modified);
-            this.is(true, obj.data.array === a);
+                this.is('object', typeof obj.set('array', c, true));
+                this.is({ array: a }, obj.modified);
+                this.is(true, (obj.modified && obj.modified.array) === a);
 
-            // update to null with rollback
-            this.is('object', typeof obj.set('array', null, true));
-            this.is({ array: a }, obj.modified);
-            this.is(true, (obj.modified && obj.modified.array) === a);
-            this.is(null, obj.data.array);
+                this.is('object', typeof obj.set('array', b, true));
+                this.is(null, obj.modified);
+                this.is(true, obj.data.array === a);
+              }
+            },
+            {
+              name: 'update to null with rollback',
+              test: function(){
+                var a = [1, 2, 3];
+                var b = [1, 2, 3];
 
-            this.is('object', typeof obj.set('array', b, true));
-            this.is(null, obj.modified);
-            this.is(true, obj.data.array === a);
-          }
+                var T = basis.entity.createType({
+                  fields: {
+                    array: Array
+                  }
+                });
+                var obj = T({ array: a });
+
+                this.is('object', typeof obj.set('array', null, true));
+                this.is({ array: a }, obj.modified);
+                this.is(true, (obj.modified && obj.modified.array) === a);
+                this.is(null, obj.data.array);
+
+                this.is('object', typeof obj.set('array', b, true));
+                this.is(null, obj.modified);
+                this.is(true, obj.data.array === a);
+              }
+            }
+          ]
+        },
+        {
+          name: 'enum',
+          test: [
+            {
+              name: 'default value',
+              test: [
+                {
+                  name: 'if no defValue get first variant as default',
+                  test: function(){
+                    var T = basis.entity.createType({
+                      fields: {
+                        enum: ['a', 'b']
+                      }
+                    });
+
+                    this.is('a', T({}).data.enum);
+                    this.is('b', T({ enum: 'b' }).data.enum);
+                  }
+                },
+                {
+                  name: 'take in account defValue as default value',
+                  test: function(){
+                    var T = basis.entity.createType({
+                      fields: {
+                        enum: {
+                          type: ['a', 'b'],
+                          defValue: 'b'
+                        }
+                      }
+                    });
+
+                    this.is('b', T({}).data.enum);
+                    this.is('a', T({ enum: 'a' }).data.enum);
+                  }
+                },
+                {
+                  name: 'ignore defValue if value not in the list',
+                  test: function(){
+                    var T = basis.entity.createType({
+                      fields: {
+                        enum: {
+                          type: ['a', 'b'],
+                          defValue: 'c'
+                        }
+                      }
+                    });
+
+                    this.is('a', T({}).data.enum);
+                    this.is('b', T({ enum: 'b' }).data.enum);
+
+                    var T2 = basis.entity.createType({
+                      fields: {
+                        enum: {
+                          type: ['1', '2'],
+                          defValue: 2
+                        }
+                      }
+                    });
+                    this.is('1', T2({}).data.enum);
+                    this.is('2', T2({ enum: '2' }).data.enum);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'set',
+              test: [
+                {
+                  name: 'only value from list can be set',
+                  test: function(){
+                    var T = basis.entity.createType({
+                      fields: {
+                        enum: ['a', 'b']
+                      }
+                    });
+
+                    this.is('b', T({ enum: 'b' }).data.enum);
+                    this.is('a', T({ enum: 'c' }).data.enum);
+
+                    var obj = T({ enum: 'b' });
+                    this.is(false, obj.set('enum', 'c'));
+                    this.is(true, obj.set('enum', 'a') !== false);
+                    this.is('a', obj.data.enum);
+                  }
+                },
+                {
+                  name: 'should not coerce values',
+                  test: function(){
+                    var T = basis.entity.createType({
+                      fields: {
+                        enum: ['1', '2']
+                      }
+                    });
+
+                    this.is('1', T({ enum: 2 }).data.enum);
+                    this.is('2', T({ enum: '2' }).data.enum);
+
+                    var obj = T({ enum: '1' });
+                    this.is(false, obj.set('enum', 2));
+                    this.is(true, obj.set('enum', '2') !== false);
+                    this.is('2', obj.data.enum);
+                  }
+                },
+                {
+                  name: 'changes of source array should not affect values list',
+                  test: function(){
+                    var variants = ['a', 'b'];
+                    var T = basis.entity.createType({
+                      fields: {
+                        enum: variants
+                      }
+                    });
+
+                    variants.push('c');
+                    this.is(['a', 'b', 'c'], variants);
+
+                    this.is('a', T({ }).data.enum);
+                    this.is('a', T({ enum: 'c' }).data.enum);
+
+                    variants.length = 0;
+                    this.is([], variants);
+
+                    var obj = T({ });
+                    this.is('a', T({ }).data.enum);
+                    this.is(false, obj.set('enum', 'c'));
+                    this.is(true, obj.set('enum', 'b') !== false);
+                    this.is('b', obj.data.enum);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'one value treats as constant',
+              test: function(){
+                var T = basis.entity.createType({
+                  fields: {
+                    enum: ['value']
+                  }
+                });
+                var obj = T({});
+
+                this.is('value', obj.data.enum);
+                this.is(false, obj.set('enum', 123));
+                this.is('value', obj.data.enum);
+              }
+            }
+          ]
         }
       ]
     }

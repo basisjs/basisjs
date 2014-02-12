@@ -666,16 +666,24 @@
         /** @cut */ if (!values.length)
         /** @cut */   basis.dev.warn('Empty array set as type definition for ' + entityType.name + '#field.' + key + ', is it a bug?');
 
-        config.type = function(value, oldValue){
-          var exists = values.indexOf(value) != -1;
+        if (values.length == 1)
+        {
+          config.type = basis.fn.$const(values[0]);
+          config.defValue = values[0];
+        }
+        else
+        {
+          config.type = function(value, oldValue){
+            var exists = values.indexOf(value) != -1;
 
-          /** @cut */ if (!exists)
-          /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + key + ', new value ignored.');
+            /** @cut */ if (!exists)
+            /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + key + ', new value ignored.');
 
-          return exists ? value : oldValue;
-        };
+            return exists ? value : oldValue;
+          };
 
-        config.defValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
+          config.defValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
+        }
       }
 
       if (config.type === Array)
@@ -988,7 +996,7 @@
           }
 
           slot = this.slots[id] = new Slot({
-            delegate: this.get(id),
+            delegate: this.get(id) || null,
             data: data
           });
         }
