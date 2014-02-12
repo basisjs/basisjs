@@ -45,7 +45,9 @@ module.exports = {
     })();
 
     var nsData = basis.data;
-    var DataObject = nsData.Object;
+    var DataObject = basis.data.Object;
+    var Dataset = basis.data.Dataset;
+    var SourceDataset = basis.data.dataset.SourceDataset;
   },
 
   test: [
@@ -207,6 +209,48 @@ module.exports = {
             // correct sorting and all index value must be 2
             this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
             this.is(basis.array.create(10, 2), slice.index_.map(function(i){ return i.value }));
+          }
+        }
+      ]
+    },
+    {
+      name: 'SourceDataset',
+      test: [
+        {
+          name: 'source and active',
+          test: function(){
+            var warn = basis.dev.warn;
+            var warning = false;
+            var dataset = new Dataset();
+            var sourceDataset = new SourceDataset({
+              active: true,
+              source: dataset
+            });
+
+            try {
+              basis.dev.warn = function(message){
+                warning = message;
+              };
+
+              this.is(1, dataset.debug_handlers().length);
+              this.is(1, sourceDataset.debug_handlers().length);
+
+              sourceDataset.setSource();
+              this.is(0, dataset.debug_handlers().length);
+              this.is(1, sourceDataset.debug_handlers().length);
+
+              sourceDataset.setSource(dataset);
+              this.is(1, dataset.debug_handlers().length);
+              this.is(1, sourceDataset.debug_handlers().length);
+
+              sourceDataset.setActive(false);
+              this.is(1, dataset.debug_handlers().length);
+              this.is(0, sourceDataset.debug_handlers().length);
+            } finally {
+              basis.dev.warn = warn;
+            }
+
+            this.is(false, warning);
           }
         }
       ]

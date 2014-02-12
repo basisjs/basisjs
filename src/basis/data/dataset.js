@@ -762,15 +762,14 @@
     init: function(){
       this.sourceMap_ = {};
 
-      var source = this.source;
-      if (source)
-        this.source = null;     // NOTE: reset source before inherit -> prevent double subscription activation
-                                // when this.active == true and source is assigned
-
       AbstractDataset.prototype.init.call(this);
 
+      var source = this.source;
       if (source)
+      {
+        this.source = null;
         this.setSource(source);
+      }
     },
 
    /**
