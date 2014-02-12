@@ -398,7 +398,7 @@
       var result = function(data, entitySet){
         if (data != null)
         {
-          if (!(entitySet instanceof EntitySet))
+          if (entitySet instanceof EntitySet == false)
             entitySet = entitySetType.createEntitySet();
 
           entitySet.set(data instanceof Dataset ? data.getItems() : arrayFrom(data));
@@ -429,6 +429,10 @@
         extend: function(){
           return entitySetClass.extend.apply(entitySetClass, arguments);
         },
+        extendClass: function(){
+          entitySetClass.extend.apply(entitySetClass, arguments);
+          return result;
+        },
         reader: function(data){
           if (Array.isArray(data))
           {
@@ -437,6 +441,14 @@
           }
 
           return data;
+        },
+        extendReader: function(extReader){
+          var reader = result.reader;
+          result.reader = function(data){
+            if (Array.isArray(data))
+              extReader(data);
+            return reader(data);
+          };
         }
       });
 
@@ -574,6 +586,17 @@
 
         extend: function(){
           return entityClass.extend.apply(entityClass, arguments);
+        },
+        extendClass: function(){
+          return entityClass.extend.apply(entityClass, arguments);
+        },
+        extendReader: function(extReader){
+          var reader = result.reader;
+          result.reader = function(data){
+            if (data && typeof data == 'object')
+              extReader(data);
+            return reader(data);
+          };
         }
       });
 
@@ -1486,8 +1509,14 @@
     createType: createType,
     createSetType: createSetType,
     validate: validateScheme,
+
     getTypeByName: function(typeName){
       return namedTypes[typeName];
+    },
+    get: function(typeName, id){
+      var type = namedTypes[typeName];
+      if (type)
+        return type.get(id);
     },
 
     NumericId: NumericId,
