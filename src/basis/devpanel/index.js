@@ -14,6 +14,21 @@ var cultureList = resource('./cultureList.js').fetch();
 //
 // panel
 //
+
+var isOnline;
+
+if (typeof basisjsToolsFileSync != 'undefined')
+{
+  // new basisjs-tools
+  isOnline = new basis.Token(false);
+  basisjsToolsFileSync.isOnline.attach(isOnline.set, isOnline);
+}
+else
+{
+  // old basisjs-tools
+  isOnline = basis.devtools && basis.data.Value.from(basis.devtools.serverState, 'update', 'data.isOnline');
+}
+
 var panel = new basis.ui.Node({
   container: document.body,
 
@@ -28,7 +43,8 @@ var panel = new basis.ui.Node({
     cultureList: cultureList,
     activated: 'activated',
     themeName: 'themeName',
-    cultureName: 'culture'
+    cultureName: 'culture',
+    isOnline: isOnline
   },
 
   action: {

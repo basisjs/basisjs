@@ -26,12 +26,10 @@ function createDictionaryFileContent(data){
 
 module.exports = {
   loadCultureList: function(){
-
-    var data = {
+    sendData('cultureList', {
       currentCulture: basis.l10n.getCulture(),
       cultureList: basis.l10n.getCultureList()
-    };
-    sendData('cultureList', data);
+    });
   },
 
   loadDictionaryList: function(){
