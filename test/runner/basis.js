@@ -1,15 +1,15 @@
-// resources (39):
+// resources (40):
 //  [string] [inline unknown#1] -> 0.css
 //  [string] core/env/iframe_inject.code -> 0.code
-//  [array] reporter/module/toc/template/toc-item.tmpl -> 0.tmpl
-//  [array] reporter/module/toc/template/toc.tmpl -> 1.tmpl
-//  [array] reporter/app/template/test-source.tmpl -> 2.tmpl
-//  [array] reporter/app/template/test.tmpl -> 3.tmpl
-//  [array] reporter/app/template/test-suite.tmpl -> 4.tmpl
-//  [array] reporter/app/template/test-case.tmpl -> 5.tmpl
-//  [array] reporter/module/test-tree/template/view.tmpl -> 6.tmpl
-//  [array] reporter/template/view.tmpl -> 7.tmpl
-//  [function] ../bower_components/basisjs/src/basis/template/htmlfgen.js -> a.js
+//  [array] reporter/template/view.tmpl -> 8.tmpl
+//  [array] reporter/module/toc/template/toc-item.tmpl -> 1.tmpl
+//  [array] reporter/module/toc/template/toc.tmpl -> 2.tmpl
+//  [array] core/env/iframe.tmpl -> 0.tmpl
+//  [array] reporter/app/template/test.tmpl -> 4.tmpl
+//  [array] reporter/app/template/test-suite.tmpl -> 5.tmpl
+//  [array] reporter/app/template/test-case.tmpl -> 6.tmpl
+//  [array] reporter/module/test-tree/template/view.tmpl -> 7.tmpl
+//  [array] reporter/app/template/test-source.tmpl -> 3.tmpl
 //  [string] core.js -> b.js
 //  [function] core/runner.js -> c.js
 //  [function] ../bower_components/basisjs/src/basis/data/dataset.js -> d.js
@@ -18,26 +18,27 @@
 //  [function] ../bower_components/basisjs/src/basis/utils/benchmark.js -> g.js
 //  [function] core/test.js -> h.js
 //  [function] core/utils.js -> p.js
+//  [function] ../bower_components/basisjs/src/basis/utils/info.js -> i.js
 //  [function] ../bower_components/basisjs/src/basis/app.js -> 1.js
-//  [function] core/env.js -> j.js
 //  [function] core/env/iframe.js -> q.js
 //  [function] reporter/app.js -> 0.js
+//  [function] ../bower_components/basisjs/src/basis/ui.js -> 2.js
 //  [function] core/ast.js -> k.js
 //  [function] ../bower_components/esprima/esprima.js -> l.js
 //  [function] reporter/module/toc/index.js -> r.js
-//  [function] ../bower_components/basisjs/src/basis/ui.js -> 2.js
 //  [function] ../bower_components/basisjs/src/basis/l10n.js -> 3.js
+//  [function] ../bower_components/basisjs/src/basis/event.js -> 4.js
 //  [function] reporter/module/test-tree/index.js -> s.js
 //  [function] reporter/app/test.js -> m.js
 //  [function] reporter/app/highlight.js -> n.js
 //  [function] ../bower_components/jsdiff/diff.js -> o.js
-//  [function] ../bower_components/basisjs/src/basis/event.js -> 4.js
 //  [function] ../bower_components/basisjs/src/basis/data.js -> 5.js
 //  [function] ../bower_components/basisjs/src/basis/dom/wrapper.js -> 6.js
 //  [function] ../bower_components/basisjs/src/basis/template.js -> 7.js
 //  [function] ../bower_components/basisjs/src/basis/template/html.js -> 8.js
 //  [function] ../bower_components/basisjs/src/basis/dom/event.js -> 9.js
-//  [function] ../bower_components/basisjs/src/basis/utils/info.js -> i.js
+//  [function] ../bower_components/basisjs/src/basis/template/htmlfgen.js -> a.js
+//  [function] core/env.js -> j.js
 //
 // filelist (4): 
 //   reporter/app.js
@@ -51,397 +52,15 @@ var __namespace_map__ = {"0.js":"app","1.js":"basis.app","2.js":"basis.ui","3.js
 var __resources__ = {
   "0.css": "",
   "0.code": "function importScripts(){\n  function importScript(url){\n    var req = new XMLHttpRequest();\n    req.open('GET', url, false);\n    req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());\n    req.send(null);\n\n    if (req.status >= 200 && req.status < 400)\n      (window.execScript || function(fn){\n        window['eval'].call(window, fn);\n      })(req.responseText);\n    else\n      throw 'Can\\'t load script: ' + url;\n  }\n\n  for (var i = 0; i < arguments.length; i++)\n    importScript(arguments[i])\n}\n\nfunction __initTestEnvironment(initCode, deprecateTestEnvironment){\n  // basis.js default behaviour\n  if (typeof basisjsToolsFileSync != 'undefined')\n    basisjsToolsFileSync.notifications.attach(function(type, filename){\n      if (typeof basis == 'undefined')\n        return; // no basis.js available\n\n      if (type == 'update' && (\n            (basis.filename_ == filename) ||\n            (basis.resource && basis.resource.exists(filename))\n         ))\n        deprecateTestEnvironment();\n    });\n\n  // fallback deprecate function\n  if (typeof deprecateTestEnvironment != 'function')\n    deprecateTestEnvironment = function(){};\n\n  // main part\n  return eval(initCode + ';(function(__code){\\n' +\n  '  return eval(\"(\" + __code + \")\");' +\n  '})');\n}\n",
-  "0.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-toc-item_", "selected" ] ], 0, "app-toc-item" ], [ 6, "click", "select" ], [ 6, "dblclick", "pickup" ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__progress_", "state" ] ], 0, "app-toc-item__progress" ], [ 5, [ [ [ "progress" ], [ 0, "%" ], "width" ] ], 0 ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__state-", "state" ], [ "app-toc-item__state-", "pending" ] ], 0, "app-toc-item__state" ], [ 3, 1, [ "stateMessage" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-toc-item__name" ], [ 3, 1, [ "name" ] ] ] ] ],
-  "1.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, 0, 0, "app-toc" ], [ 8, 1, [ "levelUp" ] ], [ 8, 1, [ "faultTests" ] ] ] ],
-  "2.tmpl": [ [ 1, 1, [ "code", "element" ], "pre", [ 4, 0, 0, "Basis-SyntaxHighlight" ], [ 3, 1, [ "sourceCode" ] ] ] ],
-  "3.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ] ] ],
-  "4.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-suite" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-suite__content" ] ] ] ],
-  "5.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-case" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 8, 1, [ "source" ] ] ], [ 8, 0, 0, '<b:after ref="stateMessage">\n       {errorMessage}\n  </b:after>' ] ],
-  "6.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-tree_", "hasDelegate" ] ], 0, "app-test-tree" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__header" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__buttons" ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-tree__button-pickup_", "type" ] ], 0, "app-test-tree__button app-test-tree__button-pickup" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-tree__caption" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-tree__content" ] ], [ 8, 1, [ "sourceCode" ] ] ] ],
-  "7.tmpl": [ [ 1, 0, [ "element" ], "div", [ 2, 0, 0, "id", "layout" ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "header-caption" ], [ 3, 0, 0, "Basis.js test runner" ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-buttons" ], [ 1, 0, 0, "button", [ 4, 0, 0, "header-button" ], [ 6, "click", "run" ], [ 3, 0, 0, "run" ] ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-test-suite-location" ], [ 3, 1, [ "name" ] ], [ 3, 0, 0, " " ], [ 3, 1, [ "done" ] ], [ 3, 0, 0, " / " ], [ 3, 1, [ "total" ] ], [ 3, 0, 0, " (" ], [ 3, 1, [ "assert" ] ], [ 3, 0, 0, ") (time: " ], [ 3, 1, [ "time" ] ], [ 3, 0, 0, " ms)" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "sidebar" ], [ 8, 1, [ "toc" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "content" ], [ 8, 1, [ "tests" ] ] ] ] ],
-  "a.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("7.js");
-    var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
-    var TYPE_ATTRIBUTE = basis.template.TYPE_ATTRIBUTE;
-    var TYPE_TEXT = basis.template.TYPE_TEXT;
-    var TYPE_COMMENT = basis.template.TYPE_COMMENT;
-    var TOKEN_TYPE = basis.template.TOKEN_TYPE;
-    var TOKEN_BINDINGS = basis.template.TOKEN_BINDINGS;
-    var TOKEN_REFS = basis.template.TOKEN_REFS;
-    var ATTR_NAME = basis.template.ATTR_NAME;
-    var ATTR_NAME_BY_TYPE = basis.template.ATTR_NAME_BY_TYPE;
-    var ELEMENT_NAME = basis.template.ELEMENT_NAME;
-    var ELEMENT_ATTRS = basis.template.ELEMENT_ATTRS;
-    var ELEMENT_CHILDS = basis.template.ELEMENT_CHILDS;
-    var TEXT_VALUE = basis.template.TEXT_VALUE;
-    var COMMENT_VALUE = basis.template.COMMENT_VALUE;
-    var tmplFunctions = {};
-    var inlineSeed = 1;
-    var buildPathes = function() {
-      var PATH_REF_NAME = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-      var pathList;
-      var refList;
-      var bindingList;
-      var markedElementList;
-      var rootPath;
-      function putRefs(refs, pathIdx) {
-        for (var i = 0, refName; refName = refs[i]; i++) if (refName.indexOf(":") == -1) refList.push(refName + ":" + pathIdx);
-      }
-      function putPath(path) {
-        var len = pathList.length;
-        var pathRef = PATH_REF_NAME[len] || "r" + len;
-        pathList.push(pathRef + "=" + path);
-        return pathRef;
-      }
-      function putBinding(binding) {
-        bindingList.push(binding);
-      }
-      function processTokens(tokens, path, noTextBug) {
-        var localPath;
-        var refs;
-        var myRef;
-        var explicitRef;
-        var bindings;
-        for (var i = 0, cp = 0, closeText = 0, token; token = tokens[i]; i++, cp++, explicitRef = false) {
-          if (!i) localPath = path + ".firstChild"; else {
-            if (!tokens[i + 1]) localPath = path + ".lastChild"; else {
-              if (token[TOKEN_TYPE] == tokens[i - 1][TOKEN_TYPE] && token[TOKEN_TYPE] == TYPE_TEXT) closeText++;
-              localPath = path + ".childNodes[" + (noTextBug ? cp : cp + (closeText ? " + " + closeText + " * TEXT_BUG" : "")) + "]";
-            }
-          }
-          if (refs = token[TOKEN_REFS]) {
-            explicitRef = true;
-            localPath = putPath(localPath);
-            putRefs(refs, localPath);
-          }
-          if (token[TOKEN_BINDINGS]) {
-            if (token[TOKEN_BINDINGS] && typeof token[TOKEN_BINDINGS] == "number") token[TOKEN_BINDINGS] = token[TOKEN_REFS][token[TOKEN_BINDINGS] - 1];
-            if (!explicitRef) {
-              explicitRef = true;
-              localPath = putPath(localPath);
-            }
-            putBinding([ token[TOKEN_TYPE], localPath, token[TOKEN_BINDINGS] ]);
-          }
-          if (token[TOKEN_TYPE] == TYPE_ELEMENT) {
-            myRef = -1;
-            if (path == rootPath) markedElementList.push(localPath + ".basisTemplateId");
-            if (!explicitRef) {
-              localPath = putPath(localPath);
-              myRef = pathList.length;
-            }
-            var attrs = [];
-            var children = [];
-            for (var j = ELEMENT_ATTRS, t; t = token[j]; j++) if (t[TOKEN_TYPE] == TYPE_ELEMENT || t[TOKEN_TYPE] == TYPE_TEXT || t[TOKEN_TYPE] == TYPE_COMMENT) children.push(t); else attrs.push(t);
-            for (var j = 0, attr; attr = attrs[j]; j++) {
-              if (attr[TOKEN_TYPE] == 6) continue;
-              var attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
-              if (refs = attr[TOKEN_REFS]) {
-                explicitRef = true;
-                putRefs(refs, putPath(localPath + '.getAttributeNode("' + attrName + '")'));
-              }
-              if (bindings = attr[TOKEN_BINDINGS]) {
-                explicitRef = true;
-                switch (attrName) {
-                  case "class":
-                    for (var k = 0, binding; binding = bindings[k]; k++) putBinding([ 2, localPath, binding[1], attrName, binding[0] ].concat(binding.slice(2)));
-                    break;
-                  case "style":
-                    for (var k = 0, property; property = bindings[k]; k++) for (var m = 0, bindName; bindName = property[0][m]; m++) putBinding([ 2, localPath, bindName, attrName, property[0], property[1], property[2] ]);
-                    break;
-                  default:
-                    for (var k = 0, bindName; bindName = bindings[0][k]; k++) putBinding([ 2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME] ]);
-                }
-              }
-            }
-            if (children.length) processTokens(children, localPath, noTextBug);
-            if (!explicitRef && myRef == pathList.length) pathList.pop();
-          }
-        }
-      }
-      return function(tokens, path, noTextBug) {
-        pathList = [];
-        refList = [];
-        bindingList = [];
-        markedElementList = [];
-        rootPath = path || "_";
-        processTokens(tokens, rootPath, noTextBug);
-        return {
-          path: pathList,
-          ref: refList,
-          binding: bindingList,
-          markedElementList: markedElementList
-        };
-      };
-    }();
-    var buildBindings = function() {
-      var L10N_BINDING = /\.\{([a-zA-Z_][a-zA-Z0-9_\-]*)\}/;
-      var SPECIAL_ATTR_MAP = {
-        disabled: "*",
-        checked: [ "input" ],
-        value: [ "input", "textarea" ],
-        minlength: [ "input" ],
-        maxlength: [ "input" ],
-        readonly: [ "input" ],
-        selected: [ "option" ],
-        multiple: [ "select" ]
-      };
-      var SPECIAL_ATTR_SINGLE = {
-        disabled: true,
-        checked: true,
-        selected: true,
-        readonly: true,
-        multiple: true
-      };
-      var bindFunctions = {
-        1: "bind_element",
-        3: "bind_textNode",
-        8: "bind_comment"
-      };
-      function buildAttrExpression(binding, special, l10n) {
-        var expression = [];
-        var symbols = binding[5];
-        var dictionary = binding[4];
-        var exprVar;
-        var colonPos;
-        for (var j = 0; j < symbols.length; j++) {
-          if (typeof symbols[j] == "string") expression.push('"' + symbols[j].replace(/"/g, '\\"') + '"'); else {
-            exprVar = dictionary[symbols[j]];
-            colonPos = exprVar.indexOf(":");
-            if (colonPos == -1) {
-              expression.push(special == "l10n" ? '"{' + exprVar + '}"' : special == "bool" ? "(__" + exprVar + '||"")' : "__" + exprVar);
-            } else {
-              var bindingName = null;
-              var l10nPath = exprVar.substr(colonPos + 1).replace(L10N_BINDING, function(m, name) {
-                bindingName = name;
-                return "";
-              });
-              if (bindingName) expression.push(l10n[exprVar.substr(colonPos + 1)]); else expression.push('__l10n["' + l10nPath + '"]');
-            }
-          }
-        }
-        if (expression.length == 1) expression.push('""');
-        return expression.join("+");
-      }
-      return function(bindings) {
-        function putBindCode(type) {
-          toolsUsed[type] = true;
-          bindCode.push(bindVar + "=" + type + "(" + basis.array(arguments, 1) + ");");
-        }
-        var bindMap = {};
-        var bindCode;
-        var bindVar;
-        var varList = [];
-        var result = [];
-        var varName;
-        var l10nMap;
-        var l10nCompute = [];
-        var l10nBindings = {};
-        var l10nBindSeed = 1;
-        var toolsUsed = {
-          resolve: true
-        };
-        var specialAttr;
-        var debugList = [];
-        for (var i = 0, binding; binding = bindings[i]; i++) {
-          var bindType = binding[0];
-          var domRef = binding[1];
-          var bindName = binding[2];
-          if ([ "set", "templateId_" ].indexOf(bindName) != -1) {
-            basis.dev.warn("binding name `" + bindName + "` is prohibited, binding ignored");
-            continue;
-          }
-          var namePart = bindName.split(":");
-          var anim = namePart[0] == "anim";
-          if (anim) bindName = namePart[1];
-          bindCode = bindMap[bindName];
-          bindVar = "_" + i;
-          varName = "__" + bindName;
-          if (namePart[0] == "l10n" && namePart[1]) {
-            var l10nFullPath = namePart[1];
-            var l10nBinding = null;
-            var l10nName = l10nFullPath.replace(L10N_BINDING, function(m, name) {
-              l10nBinding = name;
-              return "";
-            });
-            if (l10nBinding) {
-              if (l10nFullPath in l10nBindings == false) {
-                varName = "$l10n_" + l10nBindSeed++;
-                l10nBindings[l10nFullPath] = varName;
-                l10nCompute.push('set("' + varName + '",' + varName + ")");
-                varList.push(varName + '=tools.l10nToken("' + l10nName + '").computeToken()');
-                bindCode = bindMap[l10nBinding];
-                if (!bindCode) {
-                  bindCode = bindMap[l10nBinding] = [];
-                  varList.push("__" + l10nBinding);
-                }
-                bindCode.push(varName + ".set(__" + l10nBinding + ");");
-              }
-              bindName = l10nBindings[l10nFullPath];
-              bindVar = "_" + i;
-              varName = "__" + bindName;
-              bindCode = bindMap[bindName];
-              if (!bindCode) {
-                bindCode = bindMap[bindName] = [];
-                varList.push(varName);
-              }
-              if (bindType == TYPE_TEXT) {
-                debugList.push("{" + [ 'binding:"' + bindName + '"', "dom:" + domRef, "val:" + bindVar, 'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value' ] + "}");
-                varList.push(bindVar + "=" + domRef);
-                putBindCode(bindFunctions[bindType], domRef, bindVar, "value");
-              } else {
-                attrName = '"' + binding[ATTR_NAME] + '"';
-                debugList.push("{" + [ 'binding:"' + l10nFullPath + '"', "dom:" + domRef, "attr:" + attrName, "val:" + bindVar, 'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value' ] + "}");
-                varList.push(bindVar);
-                putBindCode("bind_attr", domRef, attrName, bindVar, buildAttrExpression(binding, false, l10nBindings));
-              }
-              continue;
-            }
-            if (!l10nMap) l10nMap = {};
-            if (!bindMap[l10nName]) {
-              bindMap[l10nName] = [];
-              l10nMap[l10nName] = [];
-            }
-            bindCode = bindMap[l10nName];
-            bindCode.l10n = true;
-            if (bindType == TYPE_TEXT) {
-              debugList.push("{" + [ 'binding:"' + l10nFullPath + '"', "dom:" + domRef, 'val:__l10n["' + l10nName + '"]', 'attachment:l10nToken("' + l10nName + '")' ] + "}");
-              toolsUsed.l10nToken = true;
-              l10nMap[l10nName].push(domRef + ".nodeValue=value;");
-              bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"]' + (l10nBinding ? "[__" + l10nBinding + "]" : "") + ";");
-              continue;
-            } else {
-              l10nMap[l10nName].push("bind_attr(" + [ domRef, '"' + binding[ATTR_NAME] + '"', "NaN", buildAttrExpression(binding, "l10n", l10nBindings) ] + ");");
-            }
-          }
-          if (!bindCode) {
-            bindCode = bindMap[bindName] = [];
-            varList.push(varName);
-          }
-          if (bindType != TYPE_ATTRIBUTE) {
-            debugList.push("{" + [ 'binding:"' + bindName + '"', "dom:" + domRef, "val:" + (bindCode.nodeBind ? varName : bindVar), "updates:$$" + bindName, 'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value' ] + "}");
-            if (!bindCode.nodeBind) {
-              varList.push(bindVar + "=" + domRef);
-              putBindCode(bindFunctions[bindType], domRef, bindVar, "value");
-              bindCode.nodeBind = bindVar;
-            } else {
-              switch (bindType) {
-                case TYPE_ELEMENT:
-                  putBindCode(bindFunctions[bindType], domRef, domRef, "value!==null?String(value):null");
-                  break;
-                case TYPE_TEXT:
-                  bindCode.push(domRef + ".nodeValue=value;");
-                  break;
-              }
-            }
-          } else {
-            var attrName = binding[ATTR_NAME];
-            debugList.push("{" + [ 'binding:"' + bindName + '"', "dom:" + domRef, 'attr:"' + attrName + '"', "val:" + bindVar, 'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value' ] + "}");
-            switch (attrName) {
-              case "class":
-                var defaultExpr = "";
-                var valueExpr = "value";
-                var prefix = binding[4];
-                var bindingLength = binding.length;
-                if (bindingLength >= 6) {
-                  if (bindingLength == 6 || typeof binding[6] == "string") {
-                    if (bindingLength == 6) {
-                      valueExpr = 'value?"' + bindName + '":""';
-                      if (binding[5]) defaultExpr = prefix + bindName;
-                    } else {
-                      prefix = "";
-                      valueExpr = 'value?"' + binding[6] + '":""';
-                      if (binding[5]) defaultExpr = binding[6];
-                    }
-                  } else {
-                    if (!binding[6].length) continue;
-                    if (bindingLength == 7) {
-                      valueExpr = binding[6].map(function(val) {
-                        return 'value=="' + val + '"';
-                      }).join("||") + '?value:""';
-                      if (binding[5]) defaultExpr = prefix + binding[6][binding[5] - 1];
-                    } else {
-                      prefix = "";
-                      valueExpr = binding[6].map(function(val, idx) {
-                        return 'value=="' + val + '"?"' + this[idx] + '"';
-                      }, binding[7]).join(":") + ':""';
-                      if (binding[5]) defaultExpr = binding[7][binding[5] - 1];
-                    }
-                  }
-                } else {
-                  valueExpr = 'typeof value=="string"||typeof value=="number"?value:(value?"' + bindName + '":"")';
-                }
-                varList.push(bindVar + '="' + defaultExpr + '"');
-                putBindCode("bind_attrClass", domRef, bindVar, valueExpr, '"' + prefix + '"', anim);
-                break;
-              case "style":
-                varList.push(bindVar + '=""');
-                putBindCode("bind_attrStyle", domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding, false, l10nBindings));
-                break;
-              default:
-                specialAttr = SPECIAL_ATTR_MAP[attrName];
-                varList.push(bindVar + "=" + buildAttrExpression(binding, "l10n", l10nBindings));
-                putBindCode("bind_attr", domRef, '"' + attrName + '"', bindVar, specialAttr && SPECIAL_ATTR_SINGLE[attrName] ? buildAttrExpression(binding, "bool", l10nBindings) + '?"' + attrName + '":""' : buildAttrExpression(binding, false, l10nBindings));
-                if (specialAttr && (specialAttr == "*" || specialAttr.indexOf(binding[6].toLowerCase()) != -1)) bindCode.push("if(" + domRef + "." + attrName + "!=" + bindVar + ")" + domRef + "." + attrName + "=" + (SPECIAL_ATTR_SINGLE[attrName] ? "!!" + bindVar : bindVar) + ";");
-            }
-          }
-        }
-        result.push(";function set(bindName,value){" + 'if(typeof bindName=="string")' + "value=resolve.call(instance,bindName,value,Attaches);" + "switch(bindName){");
-        for (var bindName in bindMap) {
-          if (bindName.indexOf("@") == -1) varList.push("$$" + bindName + "=0");
-          result.push('case"' + bindName + '":' + (bindMap[bindName].nodeBind ? "case " + bindMap[bindName].nodeBind + ":" : "") + (bindMap[bindName].l10n ? bindMap[bindName].join("") : "if(__" + bindName + "!==value)" + "{" + "$$" + bindName + "++;" + "__" + bindName + "=value;" + bindMap[bindName].join("") + "}") + "break;");
-        }
-        result.push("}}");
-        var toolsVarList = [];
-        for (var key in toolsUsed) toolsVarList.push(key + "=tools." + key);
-        return {
-          debugList: debugList,
-          keys: basis.object.keys(bindMap).filter(function(key) {
-            return key.indexOf("@") == -1;
-          }),
-          tools: toolsVarList,
-          vars: varList,
-          set: result.join(""),
-          l10n: l10nMap,
-          l10nCompute: l10nCompute
-        };
-      };
-    }();
-    function compileFunction(args, body) {
-      try {
-        return new Function(args, body);
-      } catch (e) {
-        basis.dev.error("Can't build template function: " + e + "\n", "function(" + args + "){\n" + body + "\n}");
-      }
-    }
-    var getFunctions = function(tokens, debug, uri, source, noTextBug) {
-      var fn = tmplFunctions[uri && basis.path.relative(uri)];
-      if (fn) return fn;
-      var paths = buildPathes(tokens, "_", noTextBug);
-      var bindings = buildBindings(paths.binding);
-      var objectRefs = paths.markedElementList.join("=");
-      var createInstance;
-      var fnBody;
-      var result = {
-        keys: bindings.keys,
-        l10nKeys: basis.object.keys(bindings.l10n)
-      };
-      if (!uri) uri = basis.path.baseURI + "inline_template" + inlineSeed++ + ".tmpl";
-      if (bindings.l10n) {
-        var code = [];
-        for (var key in bindings.l10n) code.push('case"' + key + '":' + 'if(value==null)value="{' + key + '}";' + "__l10n[token]=value;" + bindings.l10n[key].join("") + "break;");
-        result.createL10nSync = compileFunction([ "_", "__l10n", "bind_attr", "TEXT_BUG" ], (source ? "/*\n" + source + "\n*/\n" : "") + "var " + paths.path + ";" + "return function(token, value){" + "switch(token){" + code.join("") + "}" + "}\n" + "//# sourceURL=" + basis.path.origin + uri + "_l10n\n" + "//@ sourceURL=" + basis.path.origin + uri + "_l10n\n");
-      }
-      result.createInstance = compileFunction([ "tid", "map", "build", "tools", "__l10n", "TEXT_BUG" ], (source ? "/*\n" + source + "\n*/\n" : "") + "var getBindings=tools.createBindingFunction([" + bindings.keys.map(function(key) {
-        return '"' + key + '"';
-      }) + "])," + (bindings.tools.length ? bindings.tools + "," : "") + "Attaches=function(){};" + "Attaches.prototype={" + bindings.keys.map(function(key) {
-        return key + ":null";
-      }) + "};" + "return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){" + "var _=build()," + paths.path.concat(bindings.vars) + "," + "instance={" + "context:obj," + "action:onAction," + "rebuild:onRebuild," + (debug ? "debug:function debug(){return[" + bindings.debugList + "]}," : "") + "handler:null," + "bindings:bindings," + "bindingInterface:bindingInterface," + "attaches:null," + "tmpl:{" + [ paths.ref, "templateId_:id", "set:set" ] + "}" + "}" + (objectRefs ? ";if(obj||onAction)" + objectRefs + "=(id<<12)|tid" : "") + bindings.set + ";instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null" + ";" + bindings.l10nCompute + ";return instance" + "\n//# sourceURL=" + basis.path.origin + uri + "\n//@ sourceURL=" + basis.path.origin + uri + "\n" + "}");
-      return result;
-    };
-    module.exports = {
-      getFunctions: getFunctions
-    };
-  },
+  "8.tmpl": [ [ 1, 0, [ "element" ], "div", [ 2, 0, 0, "id", "layout" ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "header-caption" ], [ 3, 0, 0, "Basis.js test runner" ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-buttons" ], [ 1, 0, 0, "button", [ 4, 0, 0, "header-button" ], [ 6, "click", "run" ], [ 3, 0, 0, "run" ] ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-test-suite-location" ], [ 3, 1, [ "name" ] ], [ 3, 0, 0, " " ], [ 3, 1, [ "done" ] ], [ 3, 0, 0, " / " ], [ 3, 1, [ "total" ] ], [ 3, 0, 0, " (" ], [ 3, 1, [ "assert" ] ], [ 3, 0, 0, ") (time: " ], [ 3, 1, [ "time" ] ], [ 3, 0, 0, " ms)" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "sidebar" ], [ 8, 1, [ "toc" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "content" ], [ 8, 1, [ "tests" ] ] ] ] ],
+  "1.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-toc-item_", "selected" ] ], 0, "app-toc-item" ], [ 6, "click", "select" ], [ 6, "dblclick", "pickup" ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__progress_", "state" ] ], 0, "app-toc-item__progress" ], [ 5, [ [ [ "progress" ], [ 0, "%" ], "width" ] ], 0 ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__state-", "state" ], [ "app-toc-item__state-", "pending" ] ], 0, "app-toc-item__state" ], [ 3, 1, [ "stateMessage" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-toc-item__name" ], [ 3, 1, [ "name" ] ] ] ] ],
+  "2.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, 0, 0, "app-toc" ], [ 8, 1, [ "levelUp" ] ], [ 8, 1, [ "faultTests" ] ] ] ],
+  "0.tmpl": [ [ 1, 0, [ "element" ], "iframe", [ 2, [ [ "src" ], [ 0 ] ], 0, "src", "{src}" ], [ 6, "load", "ready" ], [ 5, 0, 0, "width: 10px;height: 10px;top: -100px;position: absolute;border: none;opacity: 0.0001;" ] ] ],
+  "4.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ] ] ],
+  "5.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-suite" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-suite__content" ] ] ] ],
+  "6.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-case" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 8, 1, [ "source" ] ] ], [ 8, 0, 0, '<b:after ref="stateMessage">\n       {errorMessage}\n  </b:after>' ] ],
+  "7.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-tree_", "hasDelegate" ] ], 0, "app-test-tree" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__header" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__buttons" ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-tree__button-pickup_", "type" ] ], 0, "app-test-tree__button app-test-tree__button-pickup" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-tree__caption" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-tree__content" ] ], [ 8, 1, [ "sourceCode" ] ] ] ],
+  "3.tmpl": [ [ 1, 1, [ "code", "element" ], "pre", [ 4, 0, 0, "Basis-SyntaxHighlight" ], [ 3, 1, [ "sourceCode" ] ] ] ],
   "b.js": "/* Javascript file /Users/rdvornov/Desktop/git/test-runner/src/core.js not found */",
   "c.js": function(exports, module, basis, global, __filename, __dirname) {
     basis.require("5.js");
@@ -2227,6 +1846,7 @@ var __resources__ = {
           var ast = astTools.parse(this.data.testSource);
           if (breakpointAt == "none") {
             astTools.traverseAst(ast, function(node) {
+              if (node.type == "Program") return;
               if (node.type == "FunctionExpression") {
                 var tokens = astTools.getNodeRangeTokens(node);
                 var orig = astTools.translateAst(ast, tokens[0].range[0], tokens[1].range[1]);
@@ -2238,18 +1858,28 @@ var __resources__ = {
                 tokens[0].value += "\ntry {\n";
                 tokens[1].value = "\n} catch(e) {" + "__exception(e);" + "throw e;" + "}\n" + tokens[1].value;
               }
-              if (node.type == "CallExpression" && node.callee.type == "MemberExpression" && node.callee.object.type == "ThisExpression" && node.callee.computed == false && node.callee.property.type == "Identifier" && node.callee.property.name == "is") {
-                var token = astTools.getNodeRangeTokens(node)[0];
-                token.value = "__isFor([" + node.range + "], " + (node.loc.end.line - 1) + ") || " + token.value;
+              if (node.type == "CallExpression") {
+                if (node.parentNode.type == "ExpressionStatement") {
+                  var token = astTools.getNodeRangeTokens(node)[0];
+                  token.value = "__isFor([" + node.range + "], " + (node.loc.end.line - 1) + ") || " + token.value;
+                  if (node.arguments.length == 1 && node.arguments[0].type == "BinaryExpression" && node.arguments[0].operator.match(/^(===?)$/)) {
+                    var leftToken = astTools.getNodeRangeTokens(node.arguments[0].left);
+                    var rightToken = astTools.getNodeRangeTokens(node.arguments[0].right);
+                    leftToken[0].value = '__actual("' + node.arguments[0].operator + '",' + leftToken[0].value;
+                    leftToken[1].value += ")";
+                    rightToken[0].value = "__expected(" + rightToken[0].value;
+                    rightToken[1].value += ")";
+                  }
+                }
               }
-              if (node.parentNode && (node.parentNode.type == "BlockStatement" || node.parentNode.type == "Program")) {
+              if (node.parentNode.type == "BlockStatement" || node.parentNode.type == "Program") {
                 var firstToken = astTools.getNodeRangeTokens(node)[0];
                 firstToken.value = "__enterLine(" + (firstToken.loc.start.line - 1) + ");" + firstToken.value;
               }
             });
           }
           var wrapperSource = astTools.translateAst(ast, 0, ast.source.length);
-          this.testWrappedSources[breakpointAt] = "function(" + this.data.testArgs.concat("__isFor", "__enterLine", "__exception", "__wrapFunctionExpression").join(", ") + "){\n" + wrapperSource + "\n}";
+          this.testWrappedSources[breakpointAt] = "function(" + this.data.testArgs.concat("assert", "__isFor", "__enterLine", "__exception", "__wrapFunctionExpression", "__actual", "__expected").join(", ") + "){\n" + wrapperSource + "\n}";
         }
         return this.testWrappedSources[breakpointAt];
       },
@@ -2266,6 +1896,9 @@ var __resources__ = {
         var timeoutTimer;
         var async = this.data.async ? 1 : 0;
         var isNode = null;
+        var implicitCompare;
+        var actual_;
+        var expected_;
         var report = {
           test: null,
           testSource: this.data.testSource,
@@ -2296,8 +1929,20 @@ var __resources__ = {
               }
             }.bind(this));
           },
-          is: function(expected, actual) {
-            var error = utils.compareValues(expected, actual);
+          is: function(expected, actual, deep) {
+            var error;
+            if (arguments.length == 1) {
+              error = utils.isTruthy(expected);
+              if (implicitCompare) {
+                actual = actual_;
+                expected = expected_;
+              } else {
+                actual = expected;
+                expected = true;
+              }
+            } else {
+              error = utils.compareValues(expected, actual, deep);
+            }
             if (error) {
               if (isNode) {
                 var line = isNode.line;
@@ -2308,15 +1953,28 @@ var __resources__ = {
                   node: isNode,
                   error: error,
                   expected: utils.makeStaticCopy(expected),
-                  expectedStr: utils.value2string(expected),
+                  expectedStr: utils.value2string(expected, false, deep),
                   actual: utils.makeStaticCopy(actual),
-                  actualStr: utils.value2string(actual)
+                  actualStr: utils.value2string(actual, false, deep)
                 });
               }
-            } else report.successCount++;
+            }
+            implicitCompare = false;
+            actual_ = undefined;
+            expected_ = undefined;
+            report.successCount += !error;
             report.testCount++;
           },
           report: report
+        };
+        var __actual = function(operator, value) {
+          implicitCompare = operator;
+          actual_ = value;
+          return value;
+        };
+        var __expected = function(value) {
+          expected_ = value;
+          return value;
         };
         var __isFor = function(range, line) {
           report.lastLine = line;
@@ -2371,9 +2029,24 @@ var __resources__ = {
         if (this.data.pending) return testDone();
         this.getEnvRunner(true).run(this.getSourceCode(), this, function(testFn) {
           startTime = basis.utils.benchmark.time();
+          var assert = env.is.bind(env);
+          assert.exception = assert.throws = function(fn) {
+            try {
+              report.exception = true;
+              fn();
+              assert(false);
+            } catch (e) {
+              assert(true);
+            } finally {
+              report.exception = false;
+            }
+          };
+          assert.deep = function(expected, actual) {
+            assert(expected, actual, true);
+          };
           var args = basis.array.create(this.data.testArgs.length);
           if (args.length) args[0] = asyncDone;
-          args.push(__isFor, __enterLine, __exception, __wrapFunctionExpression);
+          args.push(assert, __isFor, __enterLine, __exception, __wrapFunctionExpression, __actual, __expected);
           try {
             testFn.apply(env, args);
           } catch (e) {
@@ -2469,7 +2142,7 @@ var __resources__ = {
       if (value && typeof value == "object") return Array.isArray(value) ? arrayFrom(value) : sliceOwnOnly(value);
       return value;
     }
-    function value2string(value, linear) {
+    function value2string(value, linear, deep) {
       switch (typeof value) {
         case "boolean":
         case "number":
@@ -2483,12 +2156,14 @@ var __resources__ = {
           return !linear ? value : value.replace(/\{([\r\n]|.)*\}/, "{..}");
         case "object":
           if (value === null) return "null";
-          if (Array.isArray(value)) return "[" + value.map(value2string).join(", ") + "]";
+          if (Array.isArray(value)) return "[" + value.map(function(val) {
+            return value2string(val, !deep, deep);
+          }).join(", ") + "]";
           if (OBJECT_TOSTRING.call(value) === "[object Date]" || OBJECT_TOSTRING.call(value) === "[object RegExp]") return String(value);
           if (value && value.constructor === Number) debugger;
           if (!linear) {
             var res = [];
-            for (var key in value) if (value.hasOwnProperty(key)) res.push(key + ": " + value2string(value[key], true));
+            for (var key in value) if (value.hasOwnProperty(key)) res.push(key + ": " + value2string(value[key], !deep, deep));
             if (!res.length && value.valueOf() !== value) {
               var m = value.constructor.toString().match(/function (Number|String|Boolean)/);
               if (m) return "new Object(" + value2string(value.valueOf()) + ")";
@@ -2499,7 +2174,11 @@ var __resources__ = {
           return "unknown type `" + typeof value + "`";
       }
     }
-    function compareValues(actual, expected) {
+    function isTruthy(value) {
+      if (!value) return ERROR_WRONG_ANSWER;
+    }
+    function compareValues(actual, expected, deep) {
+      var error;
       if (actual === expected) return;
       if (typeof actual != typeof expected) return ERROR_TYPE_MISSMATCH;
       if (actual != null && expected != null && actual.constructor !== expected.constructor) return ERROR_TYPE_MISSMATCH;
@@ -2522,10 +2201,30 @@ var __resources__ = {
           if (String(expected) != String(actual)) return ERROR_WRONG_ANSWER;
           if (actual && "length" in actual) {
             if (actual.length != expected.length) return ERROR_WRONG_ANSWER;
-            for (var i = 0; i < actual.length; i++) if (actual[i] !== expected[i]) return ERROR_WRONG_ANSWER;
+            for (var i = 0; i < actual.length; i++) {
+              if (actual[i] !== expected[i]) {
+                if (deep && !actual.__antirecursion__) {
+                  actual.__antirecursion__ = true;
+                  error = compareValues(actual[i], expected[i], deep);
+                  delete actual.__antirecursion__;
+                  if (error) return error;
+                  continue;
+                }
+                return ERROR_WRONG_ANSWER;
+              }
+            }
           } else {
-            for (var i in actual) if (!(i in expected) || actual[i] !== expected[i]) return ERROR_WRONG_ANSWER;
-            for (var i in expected) if (!(i in actual) || actual[i] !== expected[i]) return ERROR_WRONG_ANSWER;
+            for (var i in actual) if (i in expected == false || actual[i] !== expected[i]) {
+              if (deep && i in expected && !actual.__antirecursion__) {
+                actual.__antirecursion__ = true;
+                error = compareValues(actual[i], expected[i], deep);
+                delete actual.__antirecursion__;
+                if (error) return error;
+                continue;
+              }
+              return ERROR_WRONG_ANSWER;
+            }
+            for (var i in expected) if (i in actual == false) return ERROR_WRONG_ANSWER;
           }
       }
     }
@@ -2546,7 +2245,41 @@ var __resources__ = {
       makeStaticCopy: makeStaticCopy,
       value2string: value2string,
       compareValues: compareValues,
+      isTruthy: isTruthy,
       getFnInfo: getFnInfo
+    };
+  },
+  "i.js": function(exports, module, basis, global, __filename, __dirname) {
+    function resolveGetter(getter) {
+      if (getter.basisGetterId_ > 0) {
+        var result = "getter(";
+        if (typeof getter.base == "string") result += '"' + getter.base.replace(/"/g, '\\"') + '"'; else {
+          if (!getter.mod) return resolveGetter(getter.base); else result += resolveGetter(getter.base);
+        }
+        if (getter.mod) {
+          if (typeof getter.mod == "string") result += ', "' + getter.mod.replace(/"/g, '\\"') + '"'; else result += ", " + resolveGetter(getter.mod);
+        }
+        return result + ")";
+      } else return Function.prototype.toString.call(getter);
+    }
+    function functionInfo(fn) {
+      var source = Function.prototype.toString.call(fn);
+      var m = source.match(/^\s*function(\s+\S+)?\s*\((\s*(?:\S+|\/\*[^*]+\*\/)(\s*(?:,\s*\S+|\/\*[^*]+\*\/))*\s*)?\)/);
+      var body = source.replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, "");
+      var getter = resolveGetter(fn);
+      var args = (m && m[2] || "").replace(/\s*,\s*/g, ", ");
+      if (!m) basis.dev.log("Function parse error: " + source);
+      return {
+        source: source,
+        name: (m && m[1] || "anonymous").trim(),
+        fullname: name + "(" + args + ")",
+        args: args,
+        body: body,
+        getter: getter != source ? getter : false
+      };
+    }
+    module.exports = {
+      fn: functionInfo
     };
   },
   "1.js": function(exports, module, basis, global, __filename, __dirname) {
@@ -2650,19 +2383,6 @@ var __resources__ = {
       create: createApp
     };
   },
-  "j.js": function(exports, module, basis, global, __filename, __dirname) {
-    var document = global.document;
-    var EnvClass;
-    if (document) EnvClass = basis.resource("q.js").fetch();
-    module.exports = {
-      create: function(init, html) {
-        return new EnvClass({
-          initEnv: init,
-          html: html
-        });
-      }
-    };
-  },
   "q.js": function(exports, module, basis, global, __filename, __dirname) {
     basis.require("i.js");
     basis.require("2.js");
@@ -2679,7 +2399,7 @@ var __resources__ = {
         basis.ui.Node.prototype.postInit.call(this);
         basis.doc.body.add(this.element);
       },
-      template: '<iframe src="{src}"' + ' event-load="ready"' + ' style="width: 10px; height: 10px; top: -100px; position: absolute; border: none; opacity: 0.0001"/>',
+      template: basis.template.get("#1"),
       binding: {
         src: function(node) {
           if (node.html && node.html != "default") return node.html;
@@ -2752,7 +2472,7 @@ var __resources__ = {
       }
     }, toc);
     var view = new basis.ui.Node({
-      template: basis.template.get("#8"),
+      template: basis.template.get("#9"),
       action: {
         reset: function() {
           toc.setDelegate(rootTestSuite);
@@ -2812,6 +2532,496 @@ var __resources__ = {
         basis.doc.body.add(view.element);
       });
     }
+  },
+  "2.js": function(exports, module, basis, global, __filename, __dirname) {
+    basis.require("3.js");
+    basis.require("5.js");
+    basis.require("6.js");
+    basis.require("7.js");
+    basis.require("8.js");
+    var namespace = this.path;
+    var document = global.document;
+    var Class = basis.Class;
+    var createEvent = basis.event.create;
+    var HtmlTemplate = basis.template.html.Template;
+    var TemplateSwitcher = basis.template.TemplateSwitcher;
+    var DWNode = basis.dom.wrapper.Node;
+    var DWPartitionNode = basis.dom.wrapper.PartitionNode;
+    var DWGroupingNode = basis.dom.wrapper.GroupingNode;
+    var bindingSeed = 1;
+    var unknownEventBindingCheck = {};
+    function extendBinding(binding, extension) {
+      binding.bindingId = bindingSeed++;
+      for (var key in extension) {
+        var def = null;
+        var value = extension[key];
+        if (Node && value instanceof Node || basis.resource.isResource(value)) {
+          def = {
+            events: "satelliteChanged",
+            getter: function(key, satellite) {
+              var resource = typeof satellite == "function" ? satellite : null;
+              var init = function(node) {
+                init = false;
+                if (resource) {
+                  satellite = resource();
+                  if (satellite instanceof Node == false) return;
+                  resource = null;
+                }
+                node.setSatellite(key, satellite);
+                if (node.satellite[key] !== satellite) basis.dev.warn("basis.ui.binding: implicit satellite `" + key + "` attach to owner failed");
+              };
+              return function(node) {
+                if (init) init(node);
+                return resource || (node.satellite[key] ? node.satellite[key].element : null);
+              };
+            }(key, value)
+          };
+        } else {
+          if (value) {
+            if (typeof value == "string") value = BINDING_PRESET.process(key, value); else if (value.bindingBridge) value = basis.fn.$const(value);
+            if (typeof value != "object") {
+              def = {
+                getter: typeof value == "function" ? value : basis.getter(value)
+              };
+            } else if (Array.isArray(value)) {
+              def = {
+                events: value[0],
+                getter: basis.getter(value[1])
+              };
+            } else {
+              def = {
+                events: value.events,
+                getter: basis.getter(value.getter)
+              };
+            }
+          }
+        }
+        binding[key] = def;
+      }
+    }
+    var BINDING_PRESET = function() {
+      var presets = {};
+      var prefixRegExp = /^([a-z_][a-z0-9_]*):(.*)/i;
+      return {
+        add: function(prefix, func) {
+          if (!presets[prefix]) {
+            presets[prefix] = func;
+          } else {
+            basis.dev.warn("Preset `" + prefix + "` already exists, new definition ignored");
+          }
+        },
+        process: function(key, value) {
+          var preset;
+          var m = value.match(prefixRegExp);
+          if (m) {
+            preset = presets[m[1]];
+            value = m[2] || key;
+          }
+          return preset ? preset(value) : value;
+        }
+      };
+    }();
+    BINDING_PRESET.add("data", function(path) {
+      return {
+        events: "update",
+        getter: "data." + path
+      };
+    });
+    BINDING_PRESET.add("satellite", function(satelliteName) {
+      return {
+        events: "satelliteChanged",
+        getter: function(node) {
+          return node.satellite[satelliteName] ? node.satellite[satelliteName].element : null;
+        }
+      };
+    });
+    var TEMPLATE_BINDING = Class.customExtendProperty({
+      state: {
+        events: "stateChanged",
+        getter: function(node) {
+          return String(node.state);
+        }
+      },
+      childNodesState: {
+        events: "childNodesStateChanged",
+        getter: function(node) {
+          return String(node.childNodesState);
+        }
+      },
+      childCount: {
+        events: "childNodesModified",
+        getter: function(node) {
+          return node.childNodes ? node.childNodes.length : 0;
+        }
+      },
+      hasChildren: {
+        events: "childNodesModified",
+        getter: function(node) {
+          return !!node.firstChild;
+        }
+      },
+      empty: {
+        events: "childNodesModified",
+        getter: function(node) {
+          return !node.firstChild;
+        }
+      }
+    }, extendBinding);
+    var BINDING_TEMPLATE_INTERFACE = {
+      attach: function(object, handler, context) {
+        object.addHandler(handler, context);
+      },
+      detach: function(object, handler, context) {
+        object.removeHandler(handler, context);
+      }
+    };
+    var TEMPLATE_ACTION = Class.extensibleProperty({
+      select: function(event) {
+        if (this.isDisabled()) return;
+        if (this.contextSelection && this.contextSelection.multiple) this.select(event.ctrlKey || event.metaKey); else this.select();
+      }
+    });
+    var TEMPLATE_SWITCHER_HANDLER = {
+      "*": function(event) {
+        var switcher = this.templateSwitcher_;
+        if (switcher && switcher.ruleEvents && switcher.ruleEvents[event.type]) this.setTemplate(switcher.resolve(this));
+      }
+    };
+    var TEMPLATE = new HtmlTemplate("<div/>");
+    var fragments = [];
+    function getDocumentFragment() {
+      return fragments.pop() || document.createDocumentFragment();
+    }
+    function reinsertPartitionNodes(partition) {
+      var nodes = partition.nodes;
+      if (nodes) for (var i = nodes.length - 1, child; child = nodes[i]; i--) child.parentNode.insertBefore(child, child.nextSibling);
+    }
+    var focusTimer;
+    var TemplateMixin = function(super_) {
+      return {
+        template: TEMPLATE,
+        emit_templateChanged: createEvent("templateChanged"),
+        templateSwitcher_: null,
+        binding: TEMPLATE_BINDING,
+        action: TEMPLATE_ACTION,
+        tmpl: null,
+        element: null,
+        childNodesElement: null,
+        emit_update: function(delta) {
+          this.templateUpdate(this.tmpl, "update", delta);
+          super_.emit_update.call(this, delta);
+        },
+        init: function() {
+          this.element = this.childNodesElement = getDocumentFragment();
+          super_.init.call(this);
+        },
+        postInit: function() {
+          super_.postInit.call(this);
+          var template = this.template;
+          if (template) {
+            var nodeDocumentFragment = this.element;
+            var bindingId = this.constructor.basisClassId_ + "_" + this.binding.bindingId;
+            if (bindingId in unknownEventBindingCheck == false) {
+              unknownEventBindingCheck[bindingId] = true;
+              for (var bindName in this.binding) {
+                var events = this.binding[bindName] && this.binding[bindName].events;
+                if (events) {
+                  events = String(events).trim().split(/\s+|\s*,\s*/);
+                  for (var i = 0, eventName; eventName = events[i]; i++) if ("emit_" + eventName in this == false) basis.dev.warn("basis.ui: binding `" + bindName + "` has unknown event `" + eventName + "` for " + this.constructor.className);
+                }
+              }
+            }
+            this.template = null;
+            this.setTemplate(template);
+            fragments.push(nodeDocumentFragment);
+            if (this.container) {
+              this.container.appendChild(this.element);
+              this.container = null;
+            }
+          }
+        },
+        templateSync: function() {
+          var oldElement = this.element;
+          var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
+          var noChildNodesElement;
+          if (tmpl.childNodesHere) {
+            tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
+            tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;
+          }
+          this.tmpl = tmpl;
+          this.element = tmpl.element;
+          this.childNodesElement = tmpl.childNodesElement || tmpl.element;
+          noChildNodesElement = this.childNodesElement.nodeType != 1;
+          if (noChildNodesElement) this.childNodesElement = document.createDocumentFragment();
+          if (noChildNodesElement) this.noChildNodesElement_ = true; else delete this.noChildNodesElement_;
+          if (this.grouping) {
+            this.grouping.syncDomRefs();
+            var cursor = this;
+            while (cursor.grouping) cursor = cursor.grouping;
+            var topGrouping = cursor;
+            for (var groupNode = topGrouping.lastChild; groupNode; groupNode = groupNode.previousSibling) {
+              if (groupNode instanceof PartitionNode) topGrouping.insertBefore(groupNode, groupNode.nextSibling); else reinsertPartitionNodes(groupNode);
+            }
+            reinsertPartitionNodes(topGrouping.nullGroup);
+          } else {
+            for (var child = this.lastChild; child; child = child.previousSibling) this.insertBefore(child, child.nextSibling);
+          }
+          if (this instanceof PartitionNode) reinsertPartitionNodes(this);
+          if (this.content) (tmpl.content || tmpl.element).appendChild(this.content.nodeType ? this.content : document.createTextNode(this.content));
+          this.templateUpdate(this.tmpl);
+          if (oldElement && oldElement !== this.element && oldElement.nodeType != 11) {
+            var parentNode = oldElement && oldElement.parentNode;
+            if (parentNode) {
+              if (this.owner && this.owner.tmpl) this.owner.tmpl.set(oldElement, this.element);
+              if (this.element.parentNode !== parentNode) parentNode.replaceChild(this.element, oldElement);
+            }
+          }
+          this.emit_templateChanged();
+        },
+        setTemplate: function(template) {
+          var curSwitcher = this.templateSwitcher_;
+          var switcher;
+          if (template instanceof TemplateSwitcher) {
+            switcher = template;
+            template = switcher.resolve(this);
+          }
+          if (template instanceof HtmlTemplate == false) template = null;
+          if (!template) {
+            basis.dev.warn("basis.ui.Node#setTemplate: set null to template possible only on node destroy");
+            return;
+          }
+          if (switcher) {
+            this.templateSwitcher_ = switcher;
+            if (!curSwitcher) this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
+          }
+          if (curSwitcher && curSwitcher.resolve(this) !== template) {
+            this.templateSwitcher_ = null;
+            this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
+          }
+          if (this.template !== template) {
+            this.template = template;
+            this.templateSync();
+          }
+        },
+        updateBind: function(bindName) {
+          var binding = this.binding[bindName];
+          var getter = binding && binding.getter;
+          if (getter && this.tmpl) this.tmpl.set(bindName, getter(this));
+        },
+        templateAction: function(actionName, event) {
+          var action = this.action[actionName];
+          if (action) action.call(this, event);
+          if (!action) basis.dev.warn("template call `" + actionName + "` action, but it isn't defined in action list");
+        },
+        templateUpdate: function(tmpl, eventName, delta) {},
+        focus: function(select) {
+          var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
+          if (focusElement) {
+            if (focusTimer) focusTimer = basis.clearImmediate(focusTimer);
+            focusTimer = basis.setImmediate(function() {
+              try {
+                focusElement.focus();
+                if (select) focusElement.select();
+              } catch (e) {}
+            });
+          }
+        },
+        blur: function() {
+          var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
+          if (focusElement) try {
+            focusElement.blur();
+          } catch (e) {}
+        },
+        destroy: function() {
+          var template = this.template;
+          var element = this.element;
+          if (this.templateSwitcher_) {
+            this.templateSwitcher_ = null;
+            this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
+          }
+          template.clearInstance(this.tmpl);
+          super_.destroy.call(this);
+          this.tmpl = null;
+          this.element = null;
+          this.childNodesElement = null;
+          var parentNode = element && element.parentNode;
+          if (parentNode && parentNode.nodeType == 1) parentNode.removeChild(element);
+        }
+      };
+    };
+    var ContainerTemplateMixin = function(super_) {
+      return {
+        insertBefore: function(newChild, refChild) {
+          if (this.noChildNodesElement_) {
+            delete this.noChildNodesElement_;
+            basis.dev.warn("basis.ui: Template has no childNodesElement container, but insertBefore method called; probably it's a bug");
+          }
+          newChild = super_.insertBefore.call(this, newChild, refChild);
+          var target = newChild.groupNode || this;
+          var container = target.childNodesElement || this.childNodesElement;
+          var nextSibling = newChild.nextSibling;
+          var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
+          var childElement = newChild.element;
+          var refNode = insertPoint || container.insertPoint || null;
+          if (childElement.parentNode !== container || childElement.nextSibling !== refNode) container.insertBefore(childElement, refNode);
+          return newChild;
+        },
+        removeChild: function(oldChild) {
+          super_.removeChild.call(this, oldChild);
+          var element = oldChild.element;
+          var parent = element.parentNode;
+          if (parent) parent.removeChild(element);
+          return oldChild;
+        },
+        clear: function(alive) {
+          if (alive) {
+            var node = this.firstChild;
+            while (node) {
+              var element = node.element;
+              var parent = element.parentNode;
+              if (parent) parent.removeChild(element);
+              node = node.nextSibling;
+            }
+          }
+          super_.clear.call(this, alive);
+        },
+        setChildNodes: function(childNodes, keepAlive) {
+          if (this.noChildNodesElement_) {
+            delete this.noChildNodesElement_;
+            basis.dev.warn("basis.ui: Template has no childNodesElement container, but setChildNodes method called; probably it's a bug");
+          }
+          var domFragment = document.createDocumentFragment();
+          var target = this.grouping || this;
+          var container = target.childNodesElement;
+          target.childNodesElement = domFragment;
+          super_.setChildNodes.call(this, childNodes, keepAlive);
+          container.insertBefore(domFragment, container.insertPoint || null);
+          target.childNodesElement = container;
+        }
+      };
+    };
+    var PartitionNode = Class(DWPartitionNode, TemplateMixin, {
+      className: namespace + ".PartitionNode",
+      binding: {
+        title: "data:"
+      }
+    });
+    var GroupingNode = Class(DWGroupingNode, ContainerTemplateMixin, {
+      className: namespace + ".GroupingNode",
+      childClass: PartitionNode,
+      groupingClass: Class.SELF,
+      element: null,
+      childNodesElement: null,
+      emit_ownerChanged: function(oldOwner) {
+        this.syncDomRefs();
+        DWGroupingNode.prototype.emit_ownerChanged.call(this, oldOwner);
+      },
+      init: function() {
+        this.element = this.childNodesElement = document.createDocumentFragment();
+        DWGroupingNode.prototype.init.call(this);
+      },
+      syncDomRefs: function() {
+        var cursor = this;
+        var owner = this.owner;
+        var element = null;
+        if (owner) element = owner.tmpl && owner.tmpl.groupsElement || owner.childNodesElement;
+        do {
+          cursor.element = cursor.childNodesElement = element;
+        } while (cursor = cursor.grouping);
+      },
+      destroy: function() {
+        DWGroupingNode.prototype.destroy.call(this);
+        this.element = null;
+        this.childNodesElement = null;
+      }
+    });
+    var Node = Class(DWNode, TemplateMixin, ContainerTemplateMixin, {
+      className: namespace + ".Node",
+      binding: {
+        selected: {
+          events: "select unselect",
+          getter: function(node) {
+            return node.selected;
+          }
+        },
+        unselected: {
+          events: "select unselect",
+          getter: function(node) {
+            return !node.selected;
+          }
+        },
+        disabled: {
+          events: "disable enable",
+          getter: function(node) {
+            return node.disabled || node.contextDisabled;
+          }
+        },
+        enabled: {
+          events: "disable enable",
+          getter: function(node) {
+            return !(node.disabled || node.contextDisabled);
+          }
+        }
+      },
+      childClass: Class.SELF,
+      childFactory: function(config) {
+        return new this.childClass(config);
+      },
+      groupingClass: GroupingNode
+    });
+    var ShadowNodeList = Node.subclass({
+      className: namespace + ".ShadowNodeList",
+      emit_ownerChanged: function(oldOwner) {
+        Node.prototype.emit_ownerChanged.call(this, oldOwner);
+        this.setDataSource(this.owner && this.owner.getChildNodesDataset());
+      },
+      getChildNodesElement: function(owner) {
+        return owner.childNodesElement;
+      },
+      listen: {
+        owner: {
+          templateChanged: function() {
+            this.childNodes.forEach(function(child) {
+              this.appendChild(child.element);
+            }, this.getChildNodesElement(this.owner) || this.owner.element);
+          }
+        }
+      },
+      childClass: {
+        className: namespace + ".ShadowNode",
+        getElement: function(node) {
+          return node.element;
+        },
+        templateSync: function() {
+          Node.prototype.templateSync.call(this);
+          var newElement = this.getElement(this.delegate);
+          if (newElement) {
+            newElement.basisTemplateId = this.delegate.element.basisTemplateId;
+            this.element = newElement;
+          }
+        },
+        listen: {
+          delegate: {
+            templateChanged: function() {
+              var oldElement = this.element;
+              var oldElementParent = oldElement.parentNode;
+              var newElement = this.getElement(this.delegate);
+              if (newElement) newElement.basisTemplateId = this.delegate.element.basisTemplateId;
+              this.element = newElement || this.tmpl.element;
+              if (oldElementParent) oldElementParent.replaceChild(this.element, oldElement);
+            }
+          }
+        }
+      }
+    });
+    module.exports = {
+      BINDING_PRESET: BINDING_PRESET,
+      Node: Node,
+      PartitionNode: PartitionNode,
+      GroupingNode: GroupingNode,
+      ShadowNodeList: ShadowNodeList,
+      ShadowNode: ShadowNodeList.prototype.childClass
+    };
   },
   "k.js": function(exports, module, basis, global, __filename, __dirname) {
     var esprima = basis.require("l.js");
@@ -3096,7 +3306,7 @@ var __resources__ = {
         return "01234567".indexOf(ch) >= 0;
       }
       function isWhiteSpace(ch) {
-        return ch === " " || ch === "	" || ch === "" || ch === "\f" || ch === " " || ch.charCodeAt(0) >= 5760 && " ᠎             　﻿".indexOf(ch) >= 0;
+        return ch === " " || ch === " " || ch === "" || ch === "\f" || ch === " " || ch.charCodeAt(0) >= 5760 && " ᠎             　﻿".indexOf(ch) >= 0;
       }
       function isLineTerminator(ch) {
         return ch === "\n" || ch === "\r" || ch === "\u2028" || ch === "\u2029";
@@ -3629,7 +3839,7 @@ var __resources__ = {
                   str += "\r";
                   break;
                 case "t":
-                  str += "	";
+                  str += "  ";
                   break;
                 case "u":
                 case "x":
@@ -6009,7 +6219,7 @@ var __resources__ = {
     var runner = basis.require("c.js");
     var TestSuite = basis.require("h.js").TestSuite;
     var Item = basis.ui.Node.subclass({
-      template: basis.template.get("#1"),
+      template: basis.template.get("#2"),
       binding: {
         name: "data:",
         progress: [ "stateChanged", function(node) {
@@ -6046,7 +6256,7 @@ var __resources__ = {
       dataSource: basis.data.Value.factory("rootChanged", function(node) {
         return node.root.getChildNodesDataset();
       }),
-      template: basis.template.get("#2"),
+      template: basis.template.get("#3"),
       binding: {
         faultTests: "satellite:",
         levelUp: "satellite:"
@@ -6097,496 +6307,6 @@ var __resources__ = {
       if (!view.selection.itemCount) view.satellite.faultTests.select();
     });
     module.exports = view;
-  },
-  "2.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("3.js");
-    basis.require("5.js");
-    basis.require("6.js");
-    basis.require("7.js");
-    basis.require("8.js");
-    var namespace = this.path;
-    var document = global.document;
-    var Class = basis.Class;
-    var createEvent = basis.event.create;
-    var HtmlTemplate = basis.template.html.Template;
-    var TemplateSwitcher = basis.template.TemplateSwitcher;
-    var DWNode = basis.dom.wrapper.Node;
-    var DWPartitionNode = basis.dom.wrapper.PartitionNode;
-    var DWGroupingNode = basis.dom.wrapper.GroupingNode;
-    var bindingSeed = 1;
-    var unknownEventBindingCheck = {};
-    function extendBinding(binding, extension) {
-      binding.bindingId = bindingSeed++;
-      for (var key in extension) {
-        var def = null;
-        var value = extension[key];
-        if (Node && value instanceof Node || basis.resource.isResource(value)) {
-          def = {
-            events: "satelliteChanged",
-            getter: function(key, satellite) {
-              var resource = typeof satellite == "function" ? satellite : null;
-              var init = function(node) {
-                init = false;
-                if (resource) {
-                  satellite = resource();
-                  if (satellite instanceof Node == false) return;
-                  resource = null;
-                }
-                node.setSatellite(key, satellite);
-                if (node.satellite[key] !== satellite) basis.dev.warn("basis.ui.binding: implicit satellite `" + key + "` attach to owner failed");
-              };
-              return function(node) {
-                if (init) init(node);
-                return resource || (node.satellite[key] ? node.satellite[key].element : null);
-              };
-            }(key, value)
-          };
-        } else {
-          if (value) {
-            if (typeof value == "string") value = BINDING_PRESET.process(key, value); else if (value.bindingBridge) value = basis.fn.$const(value);
-            if (typeof value != "object") {
-              def = {
-                getter: typeof value == "function" ? value : basis.getter(value)
-              };
-            } else if (Array.isArray(value)) {
-              def = {
-                events: value[0],
-                getter: basis.getter(value[1])
-              };
-            } else {
-              def = {
-                events: value.events,
-                getter: basis.getter(value.getter)
-              };
-            }
-          }
-        }
-        binding[key] = def;
-      }
-    }
-    var BINDING_PRESET = function() {
-      var presets = {};
-      var prefixRegExp = /^([a-z_][a-z0-9_]*):(.*)/i;
-      return {
-        add: function(prefix, func) {
-          if (!presets[prefix]) {
-            presets[prefix] = func;
-          } else {
-            basis.dev.warn("Preset `" + prefix + "` already exists, new definition ignored");
-          }
-        },
-        process: function(key, value) {
-          var preset;
-          var m = value.match(prefixRegExp);
-          if (m) {
-            preset = presets[m[1]];
-            value = m[2] || key;
-          }
-          return preset ? preset(value) : value;
-        }
-      };
-    }();
-    BINDING_PRESET.add("data", function(path) {
-      return {
-        events: "update",
-        getter: "data." + path
-      };
-    });
-    BINDING_PRESET.add("satellite", function(satelliteName) {
-      return {
-        events: "satelliteChanged",
-        getter: function(node) {
-          return node.satellite[satelliteName] ? node.satellite[satelliteName].element : null;
-        }
-      };
-    });
-    var TEMPLATE_BINDING = Class.customExtendProperty({
-      state: {
-        events: "stateChanged",
-        getter: function(node) {
-          return String(node.state);
-        }
-      },
-      childNodesState: {
-        events: "childNodesStateChanged",
-        getter: function(node) {
-          return String(node.childNodesState);
-        }
-      },
-      childCount: {
-        events: "childNodesModified",
-        getter: function(node) {
-          return node.childNodes ? node.childNodes.length : 0;
-        }
-      },
-      hasChildren: {
-        events: "childNodesModified",
-        getter: function(node) {
-          return !!node.firstChild;
-        }
-      },
-      empty: {
-        events: "childNodesModified",
-        getter: function(node) {
-          return !node.firstChild;
-        }
-      }
-    }, extendBinding);
-    var BINDING_TEMPLATE_INTERFACE = {
-      attach: function(object, handler, context) {
-        object.addHandler(handler, context);
-      },
-      detach: function(object, handler, context) {
-        object.removeHandler(handler, context);
-      }
-    };
-    var TEMPLATE_ACTION = Class.extensibleProperty({
-      select: function(event) {
-        if (this.isDisabled()) return;
-        if (this.contextSelection && this.contextSelection.multiple) this.select(event.ctrlKey || event.metaKey); else this.select();
-      }
-    });
-    var TEMPLATE_SWITCHER_HANDLER = {
-      "*": function(event) {
-        var switcher = this.templateSwitcher_;
-        if (switcher && switcher.ruleEvents && switcher.ruleEvents[event.type]) this.setTemplate(switcher.resolve(this));
-      }
-    };
-    var TEMPLATE = new HtmlTemplate("<div/>");
-    var fragments = [];
-    function getDocumentFragment() {
-      return fragments.pop() || document.createDocumentFragment();
-    }
-    function reinsertPartitionNodes(partition) {
-      var nodes = partition.nodes;
-      if (nodes) for (var i = nodes.length - 1, child; child = nodes[i]; i--) child.parentNode.insertBefore(child, child.nextSibling);
-    }
-    var focusTimer;
-    var TemplateMixin = function(super_) {
-      return {
-        template: TEMPLATE,
-        emit_templateChanged: createEvent("templateChanged"),
-        templateSwitcher_: null,
-        binding: TEMPLATE_BINDING,
-        action: TEMPLATE_ACTION,
-        tmpl: null,
-        element: null,
-        childNodesElement: null,
-        emit_update: function(delta) {
-          this.templateUpdate(this.tmpl, "update", delta);
-          super_.emit_update.call(this, delta);
-        },
-        init: function() {
-          this.element = this.childNodesElement = getDocumentFragment();
-          super_.init.call(this);
-        },
-        postInit: function() {
-          super_.postInit.call(this);
-          var template = this.template;
-          if (template) {
-            var nodeDocumentFragment = this.element;
-            var bindingId = this.constructor.basisClassId_ + "_" + this.binding.bindingId;
-            if (bindingId in unknownEventBindingCheck == false) {
-              unknownEventBindingCheck[bindingId] = true;
-              for (var bindName in this.binding) {
-                var events = this.binding[bindName] && this.binding[bindName].events;
-                if (events) {
-                  events = String(events).trim().split(/\s+|\s*,\s*/);
-                  for (var i = 0, eventName; eventName = events[i]; i++) if ("emit_" + eventName in this == false) basis.dev.warn("basis.ui: binding `" + bindName + "` has unknown event `" + eventName + "` for " + this.constructor.className);
-                }
-              }
-            }
-            this.template = null;
-            this.setTemplate(template);
-            fragments.push(nodeDocumentFragment);
-            if (this.container) {
-              this.container.appendChild(this.element);
-              this.container = null;
-            }
-          }
-        },
-        templateSync: function() {
-          var oldElement = this.element;
-          var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
-          var noChildNodesElement;
-          if (tmpl.childNodesHere) {
-            tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
-            tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;
-          }
-          this.tmpl = tmpl;
-          this.element = tmpl.element;
-          this.childNodesElement = tmpl.childNodesElement || tmpl.element;
-          noChildNodesElement = this.childNodesElement.nodeType != 1;
-          if (noChildNodesElement) this.childNodesElement = document.createDocumentFragment();
-          if (noChildNodesElement) this.noChildNodesElement_ = true; else delete this.noChildNodesElement_;
-          if (this.grouping) {
-            this.grouping.syncDomRefs();
-            var cursor = this;
-            while (cursor.grouping) cursor = cursor.grouping;
-            var topGrouping = cursor;
-            for (var groupNode = topGrouping.lastChild; groupNode; groupNode = groupNode.previousSibling) {
-              if (groupNode instanceof PartitionNode) topGrouping.insertBefore(groupNode, groupNode.nextSibling); else reinsertPartitionNodes(groupNode);
-            }
-            reinsertPartitionNodes(topGrouping.nullGroup);
-          } else {
-            for (var child = this.lastChild; child; child = child.previousSibling) this.insertBefore(child, child.nextSibling);
-          }
-          if (this instanceof PartitionNode) reinsertPartitionNodes(this);
-          if (this.content) (tmpl.content || tmpl.element).appendChild(this.content.nodeType ? this.content : document.createTextNode(this.content));
-          this.templateUpdate(this.tmpl);
-          if (oldElement && oldElement !== this.element && oldElement.nodeType != 11) {
-            var parentNode = oldElement && oldElement.parentNode;
-            if (parentNode) {
-              if (this.owner && this.owner.tmpl) this.owner.tmpl.set(oldElement, this.element);
-              if (this.element.parentNode !== parentNode) parentNode.replaceChild(this.element, oldElement);
-            }
-          }
-          this.emit_templateChanged();
-        },
-        setTemplate: function(template) {
-          var curSwitcher = this.templateSwitcher_;
-          var switcher;
-          if (template instanceof TemplateSwitcher) {
-            switcher = template;
-            template = switcher.resolve(this);
-          }
-          if (template instanceof HtmlTemplate == false) template = null;
-          if (!template) {
-            basis.dev.warn("basis.ui.Node#setTemplate: set null to template possible only on node destroy");
-            return;
-          }
-          if (switcher) {
-            this.templateSwitcher_ = switcher;
-            if (!curSwitcher) this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
-          }
-          if (curSwitcher && curSwitcher.resolve(this) !== template) {
-            this.templateSwitcher_ = null;
-            this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
-          }
-          if (this.template !== template) {
-            this.template = template;
-            this.templateSync();
-          }
-        },
-        updateBind: function(bindName) {
-          var binding = this.binding[bindName];
-          var getter = binding && binding.getter;
-          if (getter && this.tmpl) this.tmpl.set(bindName, getter(this));
-        },
-        templateAction: function(actionName, event) {
-          var action = this.action[actionName];
-          if (action) action.call(this, event);
-          if (!action) basis.dev.warn("template call `" + actionName + "` action, but it isn't defined in action list");
-        },
-        templateUpdate: function(tmpl, eventName, delta) {},
-        focus: function(select) {
-          var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
-          if (focusElement) {
-            if (focusTimer) focusTimer = basis.clearImmediate(focusTimer);
-            focusTimer = basis.setImmediate(function() {
-              try {
-                focusElement.focus();
-                if (select) focusElement.select();
-              } catch (e) {}
-            });
-          }
-        },
-        blur: function() {
-          var focusElement = this.tmpl ? this.tmpl.focus || this.element : null;
-          if (focusElement) try {
-            focusElement.blur();
-          } catch (e) {}
-        },
-        destroy: function() {
-          var template = this.template;
-          var element = this.element;
-          if (this.templateSwitcher_) {
-            this.templateSwitcher_ = null;
-            this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
-          }
-          template.clearInstance(this.tmpl);
-          super_.destroy.call(this);
-          this.tmpl = null;
-          this.element = null;
-          this.childNodesElement = null;
-          var parentNode = element && element.parentNode;
-          if (parentNode && parentNode.nodeType == 1) parentNode.removeChild(element);
-        }
-      };
-    };
-    var ContainerTemplateMixin = function(super_) {
-      return {
-        insertBefore: function(newChild, refChild) {
-          if (this.noChildNodesElement_) {
-            delete this.noChildNodesElement_;
-            basis.dev.warn("basis.ui: Template has no childNodesElement container, but insertBefore method called; probably it's a bug");
-          }
-          newChild = super_.insertBefore.call(this, newChild, refChild);
-          var target = newChild.groupNode || this;
-          var container = target.childNodesElement || this.childNodesElement;
-          var nextSibling = newChild.nextSibling;
-          var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
-          var childElement = newChild.element;
-          var refNode = insertPoint || container.insertPoint || null;
-          if (childElement.parentNode !== container || childElement.nextSibling !== refNode) container.insertBefore(childElement, refNode);
-          return newChild;
-        },
-        removeChild: function(oldChild) {
-          super_.removeChild.call(this, oldChild);
-          var element = oldChild.element;
-          var parent = element.parentNode;
-          if (parent) parent.removeChild(element);
-          return oldChild;
-        },
-        clear: function(alive) {
-          if (alive) {
-            var node = this.firstChild;
-            while (node) {
-              var element = node.element;
-              var parent = element.parentNode;
-              if (parent) parent.removeChild(element);
-              node = node.nextSibling;
-            }
-          }
-          super_.clear.call(this, alive);
-        },
-        setChildNodes: function(childNodes, keepAlive) {
-          if (this.noChildNodesElement_) {
-            delete this.noChildNodesElement_;
-            basis.dev.warn("basis.ui: Template has no childNodesElement container, but setChildNodes method called; probably it's a bug");
-          }
-          var domFragment = document.createDocumentFragment();
-          var target = this.grouping || this;
-          var container = target.childNodesElement;
-          target.childNodesElement = domFragment;
-          super_.setChildNodes.call(this, childNodes, keepAlive);
-          container.insertBefore(domFragment, container.insertPoint || null);
-          target.childNodesElement = container;
-        }
-      };
-    };
-    var PartitionNode = Class(DWPartitionNode, TemplateMixin, {
-      className: namespace + ".PartitionNode",
-      binding: {
-        title: "data:"
-      }
-    });
-    var GroupingNode = Class(DWGroupingNode, ContainerTemplateMixin, {
-      className: namespace + ".GroupingNode",
-      childClass: PartitionNode,
-      groupingClass: Class.SELF,
-      element: null,
-      childNodesElement: null,
-      emit_ownerChanged: function(oldOwner) {
-        this.syncDomRefs();
-        DWGroupingNode.prototype.emit_ownerChanged.call(this, oldOwner);
-      },
-      init: function() {
-        this.element = this.childNodesElement = document.createDocumentFragment();
-        DWGroupingNode.prototype.init.call(this);
-      },
-      syncDomRefs: function() {
-        var cursor = this;
-        var owner = this.owner;
-        var element = null;
-        if (owner) element = owner.tmpl && owner.tmpl.groupsElement || owner.childNodesElement;
-        do {
-          cursor.element = cursor.childNodesElement = element;
-        } while (cursor = cursor.grouping);
-      },
-      destroy: function() {
-        DWGroupingNode.prototype.destroy.call(this);
-        this.element = null;
-        this.childNodesElement = null;
-      }
-    });
-    var Node = Class(DWNode, TemplateMixin, ContainerTemplateMixin, {
-      className: namespace + ".Node",
-      binding: {
-        selected: {
-          events: "select unselect",
-          getter: function(node) {
-            return node.selected;
-          }
-        },
-        unselected: {
-          events: "select unselect",
-          getter: function(node) {
-            return !node.selected;
-          }
-        },
-        disabled: {
-          events: "disable enable",
-          getter: function(node) {
-            return node.disabled || node.contextDisabled;
-          }
-        },
-        enabled: {
-          events: "disable enable",
-          getter: function(node) {
-            return !(node.disabled || node.contextDisabled);
-          }
-        }
-      },
-      childClass: Class.SELF,
-      childFactory: function(config) {
-        return new this.childClass(config);
-      },
-      groupingClass: GroupingNode
-    });
-    var ShadowNodeList = Node.subclass({
-      className: namespace + ".ShadowNodeList",
-      emit_ownerChanged: function(oldOwner) {
-        Node.prototype.emit_ownerChanged.call(this, oldOwner);
-        this.setDataSource(this.owner && this.owner.getChildNodesDataset());
-      },
-      getChildNodesElement: function(owner) {
-        return owner.childNodesElement;
-      },
-      listen: {
-        owner: {
-          templateChanged: function() {
-            this.childNodes.forEach(function(child) {
-              this.appendChild(child.element);
-            }, this.getChildNodesElement(this.owner) || this.owner.element);
-          }
-        }
-      },
-      childClass: {
-        className: namespace + ".ShadowNode",
-        getElement: function(node) {
-          return node.element;
-        },
-        templateSync: function() {
-          Node.prototype.templateSync.call(this);
-          var newElement = this.getElement(this.delegate);
-          if (newElement) {
-            newElement.basisTemplateId = this.delegate.element.basisTemplateId;
-            this.element = newElement;
-          }
-        },
-        listen: {
-          delegate: {
-            templateChanged: function() {
-              var oldElement = this.element;
-              var oldElementParent = oldElement.parentNode;
-              var newElement = this.getElement(this.delegate);
-              if (newElement) newElement.basisTemplateId = this.delegate.element.basisTemplateId;
-              this.element = newElement || this.tmpl.element;
-              if (oldElementParent) oldElementParent.replaceChild(this.element, oldElement);
-            }
-          }
-        }
-      }
-    });
-    module.exports = {
-      BINDING_PRESET: BINDING_PRESET,
-      Node: Node,
-      PartitionNode: PartitionNode,
-      GroupingNode: GroupingNode,
-      ShadowNodeList: ShadowNodeList,
-      ShadowNode: ShadowNodeList.prototype.childClass
-    };
   },
   "3.js": function(exports, module, basis, global, __filename, __dirname) {
     basis.require("4.js");
@@ -6956,11 +6676,137 @@ var __resources__ = {
       onCultureChange: onCultureChange
     };
   },
+  "4.js": function(exports, module, basis, global, __filename, __dirname) {
+    var namespace = this.path;
+    var Class = basis.Class;
+    var extend = basis.object.extend;
+    var slice = Array.prototype.slice;
+    var DEVMODE = false || true;
+    var NULL_HANDLER = {};
+    var events = {};
+    var warnOnDestroy = function() {
+      basis.dev.warn("Object had been destroyed before. Destroy method must not be called more than once.");
+    };
+    function createDispatcher(eventName) {
+      var eventFunction = events[eventName];
+      if (!eventFunction) {
+        eventFunction = function() {
+          var cursor = this;
+          var args;
+          var fn;
+          while (cursor = cursor.handler) {
+            fn = cursor.callbacks[eventName];
+            if (typeof fn == "function") {
+              if (!args) {
+                args = [ this ];
+                for (var i = 0; i < arguments.length; i++) args.push(arguments[i]);
+              }
+              fn.apply(cursor.context || this, args);
+            }
+            fn = cursor.callbacks["*"];
+            if (typeof fn == "function") fn.call(cursor.context || this, {
+              sender: this,
+              type: eventName,
+              args: arguments
+            });
+          }
+          if (DEVMODE && this.debug_emit) this.debug_emit({
+            sender: this,
+            type: eventName,
+            args: arguments
+          });
+        };
+        if (DEVMODE) {
+          eventFunction = (new Function("slice, DEVMODE", 'return {"' + namespace + ".events." + eventName + '":\n\n      ' + "function(" + slice.call(arguments, 1).join(", ") + "){" + eventFunction.toString().replace(/\beventName\b/g, '"' + eventName + '"').replace(/^function[^(]*\(\)[^{]*\{|\}$/g, "") + "}" + '\n\n}["' + namespace + ".events." + eventName + '"];'))(slice, DEVMODE);
+        }
+        events[eventName] = eventFunction;
+      }
+      return eventFunction;
+    }
+    function createHandler(events, eventCallback) {
+      var handler = {
+        events: []
+      };
+      if (events) {
+        events = String(events).trim().split(/\s+|\s*,\s*/).sort();
+        handler = {
+          events: events
+        };
+        for (var i = 0, eventName; eventName = events[i]; i++) if (eventName != "destroy") handler[eventName] = eventCallback;
+      }
+      return handler;
+    }
+    var Emitter = Class(null, {
+      className: namespace + ".Emitter",
+      extendConstructor_: true,
+      handler: null,
+      emit_destroy: createDispatcher("destroy"),
+      listen: Class.nestedExtendProperty(),
+      init: function() {
+        if (this.handler && !this.handler.callbacks) this.handler = {
+          callbacks: this.handler,
+          context: this,
+          handler: null
+        };
+      },
+      addHandler: function(callbacks, context) {
+        if (DEVMODE && !callbacks) basis.dev.warn(namespace + ".Emitter#addHandler: callbacks is not an object (", callbacks, ")");
+        context = context || this;
+        if (DEVMODE) {
+          var cursor = this;
+          while (cursor = cursor.handler) {
+            if (cursor.callbacks === callbacks && cursor.context === context) {
+              basis.dev.warn(namespace + ".Emitter#addHandler: add duplicate event callbacks", callbacks, "to Emitter instance:", this);
+              break;
+            }
+          }
+        }
+        this.handler = {
+          callbacks: callbacks,
+          context: context,
+          handler: this.handler
+        };
+      },
+      removeHandler: function(callbacks, context) {
+        var cursor = this;
+        var prev;
+        context = context || this;
+        while (prev = cursor, cursor = cursor.handler) if (cursor.callbacks === callbacks && cursor.context === context) {
+          cursor.callbacks = NULL_HANDLER;
+          prev.handler = cursor.handler;
+          return;
+        }
+        if (DEVMODE) basis.dev.warn(namespace + ".Emitter#removeHandler: no handler removed");
+      },
+      destroy: function() {
+        this.destroy = warnOnDestroy;
+        this.emit_destroy();
+        this.handler = null;
+      }
+    });
+    if (DEVMODE) {
+      Emitter.extend({
+        debug_handlers: function() {
+          var result = [];
+          var cursor = this;
+          while (cursor = cursor.handler) result.push([ cursor.callbacks, cursor.context ]);
+          return result;
+        },
+        debug_emit: null
+      });
+    }
+    module.exports = {
+      create: createDispatcher,
+      createHandler: createHandler,
+      events: events,
+      Emitter: Emitter
+    };
+  },
   "s.js": function(exports, module, basis, global, __filename, __dirname) {
     var coreTest = basis.require("h.js");
     var appTest = basis.require("m.js");
     var view = new appTest.TestSuiteNode({
-      template: basis.template.get("#7"),
+      template: basis.template.get("#8"),
       binding: {
         sourceCode: "satellite:",
         type: [ "rootChanged", function(node) {
@@ -7005,7 +6851,7 @@ var __resources__ = {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
     var CodeView = basis.ui.Node.subclass({
-      template: basis.template.get("#3"),
+      template: basis.template.get("#4"),
       binding: {
         sourceCode: "codeElement"
       },
@@ -7057,7 +6903,7 @@ var __resources__ = {
       }
     });
     var TestNode = basis.ui.Node.subclass({
-      template: basis.template.get("#4"),
+      template: basis.template.get("#5"),
       binding: {
         name: "data:",
         hasOwnEnvironment: [ "rootChanged", function(node) {
@@ -7100,14 +6946,14 @@ var __resources__ = {
       dataSource: basis.data.Value.factory("rootChanged", function(node) {
         return node.root.getChildNodesDataset();
       }),
-      template: basis.template.get("#5"),
+      template: basis.template.get("#6"),
       childClass: TestNode,
       childFactory: function(config) {
         if (config.delegate.root instanceof TestCase) return new TestCaseNode(config); else return new TestSuiteNode(config);
       }
     });
     var TestCaseNode = TestNode.subclass({
-      template: basis.template.get("#6"),
+      template: basis.template.get("#7"),
       binding: {
         source: "satellite:"
       },
@@ -7395,8 +7241,8 @@ var __resources__ = {
           var ret = [];
           ret.push("Index: " + fileName);
           ret.push("===================================================================");
-          ret.push("--- " + fileName + (typeof oldHeader === "undefined" ? "" : "	" + oldHeader));
-          ret.push("+++ " + fileName + (typeof newHeader === "undefined" ? "" : "	" + newHeader));
+          ret.push("--- " + fileName + (typeof oldHeader === "undefined" ? "" : " " + oldHeader));
+          ret.push("+++ " + fileName + (typeof newHeader === "undefined" ? "" : " " + newHeader));
           var diff = LineDiff.diff(oldStr, newStr);
           if (!diff[diff.length - 1].value) {
             diff.pop();
@@ -7542,132 +7388,6 @@ var __resources__ = {
     if (typeof module !== "undefined") {
       module.exports = JsDiff;
     }
-  },
-  "4.js": function(exports, module, basis, global, __filename, __dirname) {
-    var namespace = this.path;
-    var Class = basis.Class;
-    var extend = basis.object.extend;
-    var slice = Array.prototype.slice;
-    var DEVMODE = false || true;
-    var NULL_HANDLER = {};
-    var events = {};
-    var warnOnDestroy = function() {
-      basis.dev.warn("Object had been destroyed before. Destroy method must not be called more than once.");
-    };
-    function createDispatcher(eventName) {
-      var eventFunction = events[eventName];
-      if (!eventFunction) {
-        eventFunction = function() {
-          var cursor = this;
-          var args;
-          var fn;
-          while (cursor = cursor.handler) {
-            fn = cursor.callbacks[eventName];
-            if (typeof fn == "function") {
-              if (!args) {
-                args = [ this ];
-                for (var i = 0; i < arguments.length; i++) args.push(arguments[i]);
-              }
-              fn.apply(cursor.context || this, args);
-            }
-            fn = cursor.callbacks["*"];
-            if (typeof fn == "function") fn.call(cursor.context || this, {
-              sender: this,
-              type: eventName,
-              args: arguments
-            });
-          }
-          if (DEVMODE && this.debug_emit) this.debug_emit({
-            sender: this,
-            type: eventName,
-            args: arguments
-          });
-        };
-        if (DEVMODE) {
-          eventFunction = (new Function("slice, DEVMODE", 'return {"' + namespace + ".events." + eventName + '":\n\n      ' + "function(" + slice.call(arguments, 1).join(", ") + "){" + eventFunction.toString().replace(/\beventName\b/g, '"' + eventName + '"').replace(/^function[^(]*\(\)[^{]*\{|\}$/g, "") + "}" + '\n\n}["' + namespace + ".events." + eventName + '"];'))(slice, DEVMODE);
-        }
-        events[eventName] = eventFunction;
-      }
-      return eventFunction;
-    }
-    function createHandler(events, eventCallback) {
-      var handler = {
-        events: []
-      };
-      if (events) {
-        events = String(events).trim().split(/\s+|\s*,\s*/).sort();
-        handler = {
-          events: events
-        };
-        for (var i = 0, eventName; eventName = events[i]; i++) if (eventName != "destroy") handler[eventName] = eventCallback;
-      }
-      return handler;
-    }
-    var Emitter = Class(null, {
-      className: namespace + ".Emitter",
-      extendConstructor_: true,
-      handler: null,
-      emit_destroy: createDispatcher("destroy"),
-      listen: Class.nestedExtendProperty(),
-      init: function() {
-        if (this.handler && !this.handler.callbacks) this.handler = {
-          callbacks: this.handler,
-          context: this,
-          handler: null
-        };
-      },
-      addHandler: function(callbacks, context) {
-        if (DEVMODE && !callbacks) basis.dev.warn(namespace + ".Emitter#addHandler: callbacks is not an object (", callbacks, ")");
-        context = context || this;
-        if (DEVMODE) {
-          var cursor = this;
-          while (cursor = cursor.handler) {
-            if (cursor.callbacks === callbacks && cursor.context === context) {
-              basis.dev.warn(namespace + ".Emitter#addHandler: add duplicate event callbacks", callbacks, "to Emitter instance:", this);
-              break;
-            }
-          }
-        }
-        this.handler = {
-          callbacks: callbacks,
-          context: context,
-          handler: this.handler
-        };
-      },
-      removeHandler: function(callbacks, context) {
-        var cursor = this;
-        var prev;
-        context = context || this;
-        while (prev = cursor, cursor = cursor.handler) if (cursor.callbacks === callbacks && cursor.context === context) {
-          cursor.callbacks = NULL_HANDLER;
-          prev.handler = cursor.handler;
-          return;
-        }
-        if (DEVMODE) basis.dev.warn(namespace + ".Emitter#removeHandler: no handler removed");
-      },
-      destroy: function() {
-        this.destroy = warnOnDestroy;
-        this.emit_destroy();
-        this.handler = null;
-      }
-    });
-    if (DEVMODE) {
-      Emitter.extend({
-        debug_handlers: function() {
-          var result = [];
-          var cursor = this;
-          while (cursor = cursor.handler) result.push([ cursor.callbacks, cursor.context ]);
-          return result;
-        },
-        debug_emit: null
-      });
-    }
-    module.exports = {
-      create: createDispatcher,
-      createHandler: createHandler,
-      events: events,
-      Emitter: Emitter
-    };
   },
   "5.js": function(exports, module, basis, global, __filename, __dirname) {
     basis.require("4.js");
@@ -11462,7 +11182,8 @@ var __resources__ = {
       "#5": basis.resource("4.tmpl"),
       "#6": basis.resource("5.tmpl"),
       "#7": basis.resource("6.tmpl"),
-      "#8": basis.resource("7.tmpl")
+      "#8": basis.resource("7.tmpl"),
+      "#9": basis.resource("8.tmpl")
     });
   },
   "8.js": function(exports, module, basis, global, __filename, __dirname) {
@@ -12314,37 +12035,400 @@ var __resources__ = {
       wrap: wrap
     };
   },
-  "i.js": function(exports, module, basis, global, __filename, __dirname) {
-    function resolveGetter(getter) {
-      if (getter.basisGetterId_ > 0) {
-        var result = "getter(";
-        if (typeof getter.base == "string") result += '"' + getter.base.replace(/"/g, '\\"') + '"'; else {
-          if (!getter.mod) return resolveGetter(getter.base); else result += resolveGetter(getter.base);
+  "a.js": function(exports, module, basis, global, __filename, __dirname) {
+    basis.require("7.js");
+    var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
+    var TYPE_ATTRIBUTE = basis.template.TYPE_ATTRIBUTE;
+    var TYPE_TEXT = basis.template.TYPE_TEXT;
+    var TYPE_COMMENT = basis.template.TYPE_COMMENT;
+    var TOKEN_TYPE = basis.template.TOKEN_TYPE;
+    var TOKEN_BINDINGS = basis.template.TOKEN_BINDINGS;
+    var TOKEN_REFS = basis.template.TOKEN_REFS;
+    var ATTR_NAME = basis.template.ATTR_NAME;
+    var ATTR_NAME_BY_TYPE = basis.template.ATTR_NAME_BY_TYPE;
+    var ELEMENT_NAME = basis.template.ELEMENT_NAME;
+    var ELEMENT_ATTRS = basis.template.ELEMENT_ATTRS;
+    var ELEMENT_CHILDS = basis.template.ELEMENT_CHILDS;
+    var TEXT_VALUE = basis.template.TEXT_VALUE;
+    var COMMENT_VALUE = basis.template.COMMENT_VALUE;
+    var tmplFunctions = {};
+    var inlineSeed = 1;
+    var buildPathes = function() {
+      var PATH_REF_NAME = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+      var pathList;
+      var refList;
+      var bindingList;
+      var markedElementList;
+      var rootPath;
+      function putRefs(refs, pathIdx) {
+        for (var i = 0, refName; refName = refs[i]; i++) if (refName.indexOf(":") == -1) refList.push(refName + ":" + pathIdx);
+      }
+      function putPath(path) {
+        var len = pathList.length;
+        var pathRef = PATH_REF_NAME[len] || "r" + len;
+        pathList.push(pathRef + "=" + path);
+        return pathRef;
+      }
+      function putBinding(binding) {
+        bindingList.push(binding);
+      }
+      function processTokens(tokens, path, noTextBug) {
+        var localPath;
+        var refs;
+        var myRef;
+        var explicitRef;
+        var bindings;
+        for (var i = 0, cp = 0, closeText = 0, token; token = tokens[i]; i++, cp++, explicitRef = false) {
+          if (!i) localPath = path + ".firstChild"; else {
+            if (!tokens[i + 1]) localPath = path + ".lastChild"; else {
+              if (token[TOKEN_TYPE] == tokens[i - 1][TOKEN_TYPE] && token[TOKEN_TYPE] == TYPE_TEXT) closeText++;
+              localPath = path + ".childNodes[" + (noTextBug ? cp : cp + (closeText ? " + " + closeText + " * TEXT_BUG" : "")) + "]";
+            }
+          }
+          if (refs = token[TOKEN_REFS]) {
+            explicitRef = true;
+            localPath = putPath(localPath);
+            putRefs(refs, localPath);
+          }
+          if (token[TOKEN_BINDINGS]) {
+            if (token[TOKEN_BINDINGS] && typeof token[TOKEN_BINDINGS] == "number") token[TOKEN_BINDINGS] = token[TOKEN_REFS][token[TOKEN_BINDINGS] - 1];
+            if (!explicitRef) {
+              explicitRef = true;
+              localPath = putPath(localPath);
+            }
+            putBinding([ token[TOKEN_TYPE], localPath, token[TOKEN_BINDINGS] ]);
+          }
+          if (token[TOKEN_TYPE] == TYPE_ELEMENT) {
+            myRef = -1;
+            if (path == rootPath) markedElementList.push(localPath + ".basisTemplateId");
+            if (!explicitRef) {
+              localPath = putPath(localPath);
+              myRef = pathList.length;
+            }
+            var attrs = [];
+            var children = [];
+            for (var j = ELEMENT_ATTRS, t; t = token[j]; j++) if (t[TOKEN_TYPE] == TYPE_ELEMENT || t[TOKEN_TYPE] == TYPE_TEXT || t[TOKEN_TYPE] == TYPE_COMMENT) children.push(t); else attrs.push(t);
+            for (var j = 0, attr; attr = attrs[j]; j++) {
+              if (attr[TOKEN_TYPE] == 6) continue;
+              var attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
+              if (refs = attr[TOKEN_REFS]) {
+                explicitRef = true;
+                putRefs(refs, putPath(localPath + '.getAttributeNode("' + attrName + '")'));
+              }
+              if (bindings = attr[TOKEN_BINDINGS]) {
+                explicitRef = true;
+                switch (attrName) {
+                  case "class":
+                    for (var k = 0, binding; binding = bindings[k]; k++) putBinding([ 2, localPath, binding[1], attrName, binding[0] ].concat(binding.slice(2)));
+                    break;
+                  case "style":
+                    for (var k = 0, property; property = bindings[k]; k++) for (var m = 0, bindName; bindName = property[0][m]; m++) putBinding([ 2, localPath, bindName, attrName, property[0], property[1], property[2] ]);
+                    break;
+                  default:
+                    for (var k = 0, bindName; bindName = bindings[0][k]; k++) putBinding([ 2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME] ]);
+                }
+              }
+            }
+            if (children.length) processTokens(children, localPath, noTextBug);
+            if (!explicitRef && myRef == pathList.length) pathList.pop();
+          }
         }
-        if (getter.mod) {
-          if (typeof getter.mod == "string") result += ', "' + getter.mod.replace(/"/g, '\\"') + '"'; else result += ", " + resolveGetter(getter.mod);
-        }
-        return result + ")";
-      } else return Function.prototype.toString.call(getter);
-    }
-    function functionInfo(fn) {
-      var source = Function.prototype.toString.call(fn);
-      var m = source.match(/^\s*function(\s+\S+)?\s*\((\s*(?:\S+|\/\*[^*]+\*\/)(\s*(?:,\s*\S+|\/\*[^*]+\*\/))*\s*)?\)/);
-      var body = source.replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, "");
-      var getter = resolveGetter(fn);
-      var args = (m && m[2] || "").replace(/\s*,\s*/g, ", ");
-      if (!m) basis.dev.log("Function parse error: " + source);
-      return {
-        source: source,
-        name: (m && m[1] || "anonymous").trim(),
-        fullname: name + "(" + args + ")",
-        args: args,
-        body: body,
-        getter: getter != source ? getter : false
+      }
+      return function(tokens, path, noTextBug) {
+        pathList = [];
+        refList = [];
+        bindingList = [];
+        markedElementList = [];
+        rootPath = path || "_";
+        processTokens(tokens, rootPath, noTextBug);
+        return {
+          path: pathList,
+          ref: refList,
+          binding: bindingList,
+          markedElementList: markedElementList
+        };
       };
+    }();
+    var buildBindings = function() {
+      var L10N_BINDING = /\.\{([a-zA-Z_][a-zA-Z0-9_\-]*)\}/;
+      var SPECIAL_ATTR_MAP = {
+        disabled: "*",
+        checked: [ "input" ],
+        value: [ "input", "textarea" ],
+        minlength: [ "input" ],
+        maxlength: [ "input" ],
+        readonly: [ "input" ],
+        selected: [ "option" ],
+        multiple: [ "select" ]
+      };
+      var SPECIAL_ATTR_SINGLE = {
+        disabled: true,
+        checked: true,
+        selected: true,
+        readonly: true,
+        multiple: true
+      };
+      var bindFunctions = {
+        1: "bind_element",
+        3: "bind_textNode",
+        8: "bind_comment"
+      };
+      function buildAttrExpression(binding, special, l10n) {
+        var expression = [];
+        var symbols = binding[5];
+        var dictionary = binding[4];
+        var exprVar;
+        var colonPos;
+        for (var j = 0; j < symbols.length; j++) {
+          if (typeof symbols[j] == "string") expression.push('"' + symbols[j].replace(/"/g, '\\"') + '"'); else {
+            exprVar = dictionary[symbols[j]];
+            colonPos = exprVar.indexOf(":");
+            if (colonPos == -1) {
+              expression.push(special == "l10n" ? '"{' + exprVar + '}"' : special == "bool" ? "(__" + exprVar + '||"")' : "__" + exprVar);
+            } else {
+              var bindingName = null;
+              var l10nPath = exprVar.substr(colonPos + 1).replace(L10N_BINDING, function(m, name) {
+                bindingName = name;
+                return "";
+              });
+              if (bindingName) expression.push(l10n[exprVar.substr(colonPos + 1)]); else expression.push('__l10n["' + l10nPath + '"]');
+            }
+          }
+        }
+        if (expression.length == 1) expression.push('""');
+        return expression.join("+");
+      }
+      return function(bindings) {
+        function putBindCode(type) {
+          toolsUsed[type] = true;
+          bindCode.push(bindVar + "=" + type + "(" + basis.array(arguments, 1) + ");");
+        }
+        var bindMap = {};
+        var bindCode;
+        var bindVar;
+        var varList = [];
+        var result = [];
+        var varName;
+        var l10nMap;
+        var l10nCompute = [];
+        var l10nBindings = {};
+        var l10nBindSeed = 1;
+        var toolsUsed = {
+          resolve: true
+        };
+        var specialAttr;
+        var debugList = [];
+        for (var i = 0, binding; binding = bindings[i]; i++) {
+          var bindType = binding[0];
+          var domRef = binding[1];
+          var bindName = binding[2];
+          if ([ "set", "templateId_" ].indexOf(bindName) != -1) {
+            basis.dev.warn("binding name `" + bindName + "` is prohibited, binding ignored");
+            continue;
+          }
+          var namePart = bindName.split(":");
+          var anim = namePart[0] == "anim";
+          if (anim) bindName = namePart[1];
+          bindCode = bindMap[bindName];
+          bindVar = "_" + i;
+          varName = "__" + bindName;
+          if (namePart[0] == "l10n" && namePart[1]) {
+            var l10nFullPath = namePart[1];
+            var l10nBinding = null;
+            var l10nName = l10nFullPath.replace(L10N_BINDING, function(m, name) {
+              l10nBinding = name;
+              return "";
+            });
+            if (l10nBinding) {
+              if (l10nFullPath in l10nBindings == false) {
+                varName = "$l10n_" + l10nBindSeed++;
+                l10nBindings[l10nFullPath] = varName;
+                l10nCompute.push('set("' + varName + '",' + varName + ")");
+                varList.push(varName + '=tools.l10nToken("' + l10nName + '").computeToken()');
+                bindCode = bindMap[l10nBinding];
+                if (!bindCode) {
+                  bindCode = bindMap[l10nBinding] = [];
+                  varList.push("__" + l10nBinding);
+                }
+                bindCode.push(varName + ".set(__" + l10nBinding + ");");
+              }
+              bindName = l10nBindings[l10nFullPath];
+              bindVar = "_" + i;
+              varName = "__" + bindName;
+              bindCode = bindMap[bindName];
+              if (!bindCode) {
+                bindCode = bindMap[bindName] = [];
+                varList.push(varName);
+              }
+              if (bindType == TYPE_TEXT) {
+                debugList.push("{" + [ 'binding:"' + bindName + '"', "dom:" + domRef, "val:" + bindVar, 'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value' ] + "}");
+                varList.push(bindVar + "=" + domRef);
+                putBindCode(bindFunctions[bindType], domRef, bindVar, "value");
+              } else {
+                attrName = '"' + binding[ATTR_NAME] + '"';
+                debugList.push("{" + [ 'binding:"' + l10nFullPath + '"', "dom:" + domRef, "attr:" + attrName, "val:" + bindVar, 'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value' ] + "}");
+                varList.push(bindVar);
+                putBindCode("bind_attr", domRef, attrName, bindVar, buildAttrExpression(binding, false, l10nBindings));
+              }
+              continue;
+            }
+            if (!l10nMap) l10nMap = {};
+            if (!bindMap[l10nName]) {
+              bindMap[l10nName] = [];
+              l10nMap[l10nName] = [];
+            }
+            bindCode = bindMap[l10nName];
+            bindCode.l10n = true;
+            if (bindType == TYPE_TEXT) {
+              debugList.push("{" + [ 'binding:"' + l10nFullPath + '"', "dom:" + domRef, 'val:__l10n["' + l10nName + '"]', 'attachment:l10nToken("' + l10nName + '")' ] + "}");
+              toolsUsed.l10nToken = true;
+              l10nMap[l10nName].push(domRef + ".nodeValue=value;");
+              bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"]' + (l10nBinding ? "[__" + l10nBinding + "]" : "") + ";");
+              continue;
+            } else {
+              l10nMap[l10nName].push("bind_attr(" + [ domRef, '"' + binding[ATTR_NAME] + '"', "NaN", buildAttrExpression(binding, "l10n", l10nBindings) ] + ");");
+            }
+          }
+          if (!bindCode) {
+            bindCode = bindMap[bindName] = [];
+            varList.push(varName);
+          }
+          if (bindType != TYPE_ATTRIBUTE) {
+            debugList.push("{" + [ 'binding:"' + bindName + '"', "dom:" + domRef, "val:" + (bindCode.nodeBind ? varName : bindVar), "updates:$$" + bindName, 'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value' ] + "}");
+            if (!bindCode.nodeBind) {
+              varList.push(bindVar + "=" + domRef);
+              putBindCode(bindFunctions[bindType], domRef, bindVar, "value");
+              bindCode.nodeBind = bindVar;
+            } else {
+              switch (bindType) {
+                case TYPE_ELEMENT:
+                  putBindCode(bindFunctions[bindType], domRef, domRef, "value!==null?String(value):null");
+                  break;
+                case TYPE_TEXT:
+                  bindCode.push(domRef + ".nodeValue=value;");
+                  break;
+              }
+            }
+          } else {
+            var attrName = binding[ATTR_NAME];
+            debugList.push("{" + [ 'binding:"' + bindName + '"', "dom:" + domRef, 'attr:"' + attrName + '"', "val:" + bindVar, 'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value' ] + "}");
+            switch (attrName) {
+              case "class":
+                var defaultExpr = "";
+                var valueExpr = "value";
+                var prefix = binding[4];
+                var bindingLength = binding.length;
+                if (bindingLength >= 6) {
+                  if (bindingLength == 6 || typeof binding[6] == "string") {
+                    if (bindingLength == 6) {
+                      valueExpr = 'value?"' + bindName + '":""';
+                      if (binding[5]) defaultExpr = prefix + bindName;
+                    } else {
+                      prefix = "";
+                      valueExpr = 'value?"' + binding[6] + '":""';
+                      if (binding[5]) defaultExpr = binding[6];
+                    }
+                  } else {
+                    if (!binding[6].length) continue;
+                    if (bindingLength == 7) {
+                      valueExpr = binding[6].map(function(val) {
+                        return 'value=="' + val + '"';
+                      }).join("||") + '?value:""';
+                      if (binding[5]) defaultExpr = prefix + binding[6][binding[5] - 1];
+                    } else {
+                      prefix = "";
+                      valueExpr = binding[6].map(function(val, idx) {
+                        return 'value=="' + val + '"?"' + this[idx] + '"';
+                      }, binding[7]).join(":") + ':""';
+                      if (binding[5]) defaultExpr = binding[7][binding[5] - 1];
+                    }
+                  }
+                } else {
+                  valueExpr = 'typeof value=="string"||typeof value=="number"?value:(value?"' + bindName + '":"")';
+                }
+                varList.push(bindVar + '="' + defaultExpr + '"');
+                putBindCode("bind_attrClass", domRef, bindVar, valueExpr, '"' + prefix + '"', anim);
+                break;
+              case "style":
+                varList.push(bindVar + '=""');
+                putBindCode("bind_attrStyle", domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding, false, l10nBindings));
+                break;
+              default:
+                specialAttr = SPECIAL_ATTR_MAP[attrName];
+                varList.push(bindVar + "=" + buildAttrExpression(binding, "l10n", l10nBindings));
+                putBindCode("bind_attr", domRef, '"' + attrName + '"', bindVar, specialAttr && SPECIAL_ATTR_SINGLE[attrName] ? buildAttrExpression(binding, "bool", l10nBindings) + '?"' + attrName + '":""' : buildAttrExpression(binding, false, l10nBindings));
+                if (specialAttr && (specialAttr == "*" || specialAttr.indexOf(binding[6].toLowerCase()) != -1)) bindCode.push("if(" + domRef + "." + attrName + "!=" + bindVar + ")" + domRef + "." + attrName + "=" + (SPECIAL_ATTR_SINGLE[attrName] ? "!!" + bindVar : bindVar) + ";");
+            }
+          }
+        }
+        result.push(";function set(bindName,value){" + 'if(typeof bindName=="string")' + "value=resolve.call(instance,bindName,value,Attaches);" + "switch(bindName){");
+        for (var bindName in bindMap) {
+          if (bindName.indexOf("@") == -1) varList.push("$$" + bindName + "=0");
+          result.push('case"' + bindName + '":' + (bindMap[bindName].nodeBind ? "case " + bindMap[bindName].nodeBind + ":" : "") + (bindMap[bindName].l10n ? bindMap[bindName].join("") : "if(__" + bindName + "!==value)" + "{" + "$$" + bindName + "++;" + "__" + bindName + "=value;" + bindMap[bindName].join("") + "}") + "break;");
+        }
+        result.push("}}");
+        var toolsVarList = [];
+        for (var key in toolsUsed) toolsVarList.push(key + "=tools." + key);
+        return {
+          debugList: debugList,
+          keys: basis.object.keys(bindMap).filter(function(key) {
+            return key.indexOf("@") == -1;
+          }),
+          tools: toolsVarList,
+          vars: varList,
+          set: result.join(""),
+          l10n: l10nMap,
+          l10nCompute: l10nCompute
+        };
+      };
+    }();
+    function compileFunction(args, body) {
+      try {
+        return new Function(args, body);
+      } catch (e) {
+        basis.dev.error("Can't build template function: " + e + "\n", "function(" + args + "){\n" + body + "\n}");
+      }
     }
+    var getFunctions = function(tokens, debug, uri, source, noTextBug) {
+      var fn = tmplFunctions[uri && basis.path.relative(uri)];
+      if (fn) return fn;
+      var paths = buildPathes(tokens, "_", noTextBug);
+      var bindings = buildBindings(paths.binding);
+      var objectRefs = paths.markedElementList.join("=");
+      var createInstance;
+      var fnBody;
+      var result = {
+        keys: bindings.keys,
+        l10nKeys: basis.object.keys(bindings.l10n)
+      };
+      if (!uri) uri = basis.path.baseURI + "inline_template" + inlineSeed++ + ".tmpl";
+      if (bindings.l10n) {
+        var code = [];
+        for (var key in bindings.l10n) code.push('case"' + key + '":' + 'if(value==null)value="{' + key + '}";' + "__l10n[token]=value;" + bindings.l10n[key].join("") + "break;");
+        result.createL10nSync = compileFunction([ "_", "__l10n", "bind_attr", "TEXT_BUG" ], (source ? "/*\n" + source + "\n*/\n" : "") + "var " + paths.path + ";" + "return function(token, value){" + "switch(token){" + code.join("") + "}" + "}\n" + "//# sourceURL=" + basis.path.origin + uri + "_l10n\n" + "//@ sourceURL=" + basis.path.origin + uri + "_l10n\n");
+      }
+      result.createInstance = compileFunction([ "tid", "map", "build", "tools", "__l10n", "TEXT_BUG" ], (source ? "/*\n" + source + "\n*/\n" : "") + "var getBindings=tools.createBindingFunction([" + bindings.keys.map(function(key) {
+        return '"' + key + '"';
+      }) + "])," + (bindings.tools.length ? bindings.tools + "," : "") + "Attaches=function(){};" + "Attaches.prototype={" + bindings.keys.map(function(key) {
+        return key + ":null";
+      }) + "};" + "return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){" + "var _=build()," + paths.path.concat(bindings.vars) + "," + "instance={" + "context:obj," + "action:onAction," + "rebuild:onRebuild," + (debug ? "debug:function debug(){return[" + bindings.debugList + "]}," : "") + "handler:null," + "bindings:bindings," + "bindingInterface:bindingInterface," + "attaches:null," + "tmpl:{" + [ paths.ref, "templateId_:id", "set:set" ] + "}" + "}" + (objectRefs ? ";if(obj||onAction)" + objectRefs + "=(id<<12)|tid" : "") + bindings.set + ";instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null" + ";" + bindings.l10nCompute + ";return instance" + "\n//# sourceURL=" + basis.path.origin + uri + "\n//@ sourceURL=" + basis.path.origin + uri + "\n" + "}");
+      return result;
+    };
     module.exports = {
-      fn: functionInfo
+      getFunctions: getFunctions
+    };
+  },
+  "j.js": function(exports, module, basis, global, __filename, __dirname) {
+    var document = global.document;
+    var EnvClass;
+    if (document) EnvClass = basis.resource("q.js").fetch();
+    module.exports = {
+      create: function(init, html) {
+        return new EnvClass({
+          initEnv: init,
+          html: html
+        });
+      }
     };
   }
 };
