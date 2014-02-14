@@ -41,6 +41,11 @@ module.exports = {
         this.is('.', basis.path.dirname('a/../b/'));
         this.is('a', basis.path.dirname('../a/b'));
         this.is('a', basis.path.dirname('../a/b/'));
+
+        this.is('/', basis.path.dirname('c:'));
+        this.is('/', basis.path.dirname('c:/asd'));
+        this.is('/', basis.path.dirname('c:/asd/'));
+        this.is('/asd', basis.path.dirname('c:/asd/asd'));
       }
     },
     {
@@ -101,46 +106,97 @@ module.exports = {
     {
       name: 'normalize',
       test: function(){
+        this.is('', basis.path.normalize(''));
+        this.is('', basis.path.normalize('.'));
+        this.is('/', basis.path.normalize('/'));
+
         this.is('/foo/bar/baz/asdf', basis.path.normalize('/foo/bar//baz/asdf/quux/..'));
         this.is('fixtures/b/c.js', basis.path.normalize('./fixtures///b/../b/c.js'));
         this.is('/bar', basis.path.normalize('/foo/../../../bar'));
         this.is('/bar/baz', basis.path.normalize('/foo/../../../bar/baz'));
+        this.is('/bar', basis.path.normalize('/../../../bar'));
+        this.is('/', basis.path.normalize('/../../../'));
+        this.is('/', basis.path.normalize('/foo/../../../'));
         this.is('bar', basis.path.normalize('foo/../../../bar'));
+        this.is('', basis.path.normalize('foo/../../../'));
         this.is('bar/baz', basis.path.normalize('foo/../../../bar/baz'));
+        this.is('/bar', basis.path.normalize('/foo/../../../bar/'));
+        this.is('/bar/baz', basis.path.normalize('/foo/../../../bar/baz/'));
+        this.is('bar', basis.path.normalize('foo/../../../bar'));
+        this.is('bar/baz', basis.path.normalize('foo/../../../bar/baz/'));
         this.is('a/b', basis.path.normalize('a//b//../b'));
         this.is('a/b/c', basis.path.normalize('a//b//./c'));
         this.is('a/b', basis.path.normalize('a//b//.'));
+        this.is('a/b', basis.path.normalize('a/b/'));
+
+        this.is('/', basis.path.normalize('http://'));
+        this.is('/', basis.path.normalize('http:'));
+
+        this.is('/', basis.path.normalize('http://localhost'));
+        this.is('/asd', basis.path.normalize('http://localhost/asd'));
+        this.is('/asd', basis.path.normalize('http://localhost/asd/'));
+        this.is('/', basis.path.normalize('http://localhost/asd/../..'));
+        this.is('/foo', basis.path.normalize('http://localhost/asd//../../../foo'));
+        this.is('/asd/asd', basis.path.normalize('http://localhost/asd/asd'));
+
+        this.is('/', basis.path.normalize('http://user@localhost:8080'));
+        this.is('/asd', basis.path.normalize('http://user@localhost:8080/asd'));
+        this.is('/asd', basis.path.normalize('http://user@localhost:8080/asd/'));
+        this.is('/', basis.path.normalize('http://user@localhost:8080/asd/../../'));
+        this.is('/foo', basis.path.normalize('http://user@localhost:8080/asd//../../../foo'));
+        this.is('/asd/asd', basis.path.normalize('http://user@localhost:8080/asd/asd'));
+
+        this.is('/', basis.path.normalize('c:'));
+        this.is('/asd', basis.path.normalize('c:/asd'));
+        this.is('/asd', basis.path.normalize('c:/asd/'));
+        this.is('/', basis.path.normalize('c:/asd/../..'));
+        this.is('/foo', basis.path.normalize('c:/asd//../../foo'));
+        this.is('/asd/asd', basis.path.normalize('c:/asd/asd'));
       }
     },
     {
       name: 'relative',
       test: function(){
-        tests = [
-          ['/var/lib', '/var', '..'],
-          ['/var/lib', '/bin', '../../bin'],
-          ['/var/lib', '/var/lib', ''],
-          ['/var/lib', '/var/apache', '../apache'],
-          ['/var/', '/var/lib', 'lib'],
-          ['/', '/var/lib', 'var/lib']
-        ];
+        assert(basis.path.relative('foo', 'foo') == '');
+        assert(basis.path.relative('foo/bar', 'foo/bar') == '');
+        assert(basis.path.relative('', '') == '');
+        assert(basis.path.relative('/', '/') == '');
+        assert(basis.path.relative('.', '.') == '');
+        assert(basis.path.relative('./', '.') == '');
+        assert(basis.path.relative('.', './') == '');
 
-        for (var i = 0, test; test = tests[i]; i++)
-          this.is(test[2], basis.path.relative(test[0], test[1]));
+        assert(basis.path.relative('/var/lib', '/var') == '..');
+        assert(basis.path.relative('/var/lib', '/bin') == '../../bin');
+        assert(basis.path.relative('/var/lib', '/var/lib') == '');
+        assert(basis.path.relative('/var/lib', '/var/apache') == '../apache');
+        assert(basis.path.relative('/var/', '/var/lib') == 'lib');
+        assert(basis.path.relative('/', '/var/lib') == 'var/lib');
+        assert(basis.path.relative('/var/foo', '/') == '../..');
+        assert(basis.path.relative('/foo', '/var') == '../var');
+
+        assert(basis.path.relative('foo/bar', '/foo/lib') == '/foo/lib');
+        assert(basis.path.relative('/foo/bar', 'foo/lib') == '/foo/bar');
+        assert(basis.path.relative('foo/bar', '/') == '/');
+        assert(basis.path.relative('/', 'foo/lib') == '/');
+
+        assert(basis.path.relative('foo/bar', 'foo/lib') == '../lib');
+        assert(basis.path.relative('foo/bar', 'for/lib') == '../../for/lib');
+        assert(basis.path.relative('foo/bar', 'bar/lib') == '../../bar/lib');
+        assert(basis.path.relative('foo/bar', 'foo/bar/baz') == 'baz');
+        assert(basis.path.relative('foo/bar', 'foo') == '..');
+
+        assert(basis.path.relative('..', 'bar') == '../bar');
+        assert(basis.path.relative('bar', '..') == '..');
       }
     },
     {
       name: 'resolve',
       test: function(){
-        var tests = [
-          [['/var/lib', '../', 'file/'], '/var/file'],
-          [['/var/lib', '/../', 'file/'], '/file'],
-          [['a/b/c/', '../../..'], basis.path.dirname(location.pathname)],
-          [['.'], basis.path.dirname(location.pathname)],
-          [['/some/dir', '.', '/absolute/'], '/absolute']
-        ];
-
-        for (var i = 0, test; test = tests[i]; i++)
-          this.is(test[1], basis.path.resolve.apply(null, test[0]));
+        assert(basis.path.resolve('/var/lib', '../', 'file/') == '/var/file');
+        assert(basis.path.resolve('/var/lib', '/../', 'file/') == '/file');
+        assert(basis.path.resolve('a/b/c/', '../../..') == basis.path.baseURI.replace(/\/$/, ''));
+        assert(basis.path.resolve('.') == basis.path.baseURI.replace(/\/$/, ''));
+        assert(basis.path.resolve('/some/dir', '.', '/absolute/') == '/absolute');
       }
     }
   ]

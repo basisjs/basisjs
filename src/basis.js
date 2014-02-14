@@ -783,237 +783,236 @@
   * @namespace basis.path
   */
   var pathUtils = (function(){
+    var ABSOLUTE_RX = /^([^\/]+:|\/)/;
+    var PROTOCOL_RX = /^[a-zA-Z0-9\-]+:\/?/;
+    var ORIGIN_RX = /^(?:[a-zA-Z0-9\-]+:)?\/\/[^\/]+\/?/;
+    var SEARCH_HASH_RX = /[\?#].*$/;
+
+    var utils = {};
     var origin = '';
     var baseURI;
-    var utils = {};
 
     if (NODE_ENV)
     {
-      var methods = [
-        'normalize',
-        'dirname',
-        'extname',
-        'basename',
-        'resolve',
-        'relative'
-      ];
-
-      for (var i = 0, method; method = methods[i]; i++)
-        utils[method] = (function(method, path){
-          return function(){
-            return path[method].apply(path, arguments).replace(/\\/g, '/');
-          };
-        })(method, require('path'));
-
-      baseURI = utils.resolve('.') + '/';
+      var path = require('path').resolve('.').replace(/\\/g, '/');
+      baseURI = path.replace(/^[^\/]*/, '');
+      origin = path.replace(/\/.*/, '');
     }
     else
     {
-      var ABSOLUTE_RX = /^([^\/]+:|\/)/;
-      var ORIGIN_RX = /^([a-zA-Z0-9\-]+:)?\/\/[^\/]+/;
-      var SEARCH_HASH_RX = /[\?#].*$/;
-
-      utils = {
-       /**
-        * Normalize a string path, taking care of '..' and '.' parts.
-        * When multiple slashes are found, they're replaced by a single one;
-        * when the path contains a trailing slash, it is preserved.
-        *
-        * Origin is not includes in result path.
-        *
-        * @example
-        *   basis.path.normalize('/foo/bar//baz/asdf/quux/..');
-        *   // returns '/foo/bar/baz/asdf'
-        *
-        *   basis.path.normalize('http://example.com:8080/foo//..//bar/');
-        *   // returns '/bar'
-        *
-        *   basis.path.normalize('//localhost/foo/./..//bar/');
-        *   // returns '/bar'
-        *
-        * @param {string} path
-        * @return {string}
-        */
-        normalize: function(path){
-          // use link element as path resolver
-          var result = [];
-          var parts = (path || '')
-                .replace(ORIGIN_RX, '')         // but cut off origin
-                .replace(SEARCH_HASH_RX, '')    // cut off query search and hash
-                .split('/');                    // split by `/`
-
-          // process path parts
-          for (var i = 0; i < parts.length; i++)
-          {
-            if (parts[i] == '..')
-            {
-              if (result.length > 1 || result[0])
-                result.pop();
-            }
-            else
-            {
-              if ((parts[i] || !i) && parts[i] != '.')
-                result.push(parts[i]);
-            }
-          }
-
-          return result.join('/');
-        },
-
-       /**
-        * Return the directory name of a path. Similar to node.js path.dirname
-        * or the Unix dirname command.
-        *
-        * @example
-        *   basis.path.dirname('/foo/bar/baz/whatever'); // returns '/foo/bar/baz'
-        *
-        * @param {string} path
-        * @return {string}
-        */
-        dirname: function(path){
-          var result = utils.normalize(path).replace(/\/([^\/]*)$|^[^\/]+$/, '');
-          return result || (path.charAt(0) == '/' ? '/' : '.');
-        },
-
-       /**
-        * Return the extension of the path, from the last '.' to end of string
-        * in the last portion of the path. If there is no '.' in the last
-        * portion of the path or the first character of it is '.', then it
-        * returns an empty string.
-        *
-        * @example
-        *   basis.path.extname('index.html'); // returns '.html'
-        *   basis.path.extname('index.');     // returns '.'
-        *   basis.path.extname('index');      // returns ''
-        *
-        * @param {string} path
-        * @return {string} Path extension with leading dot or empty string.
-        */
-        extname: function(path){
-          var ext = utils.normalize(path).match(/[^\/](\.[^\/\.]*)$/);
-          return ext ? ext[1] : '';
-        },
-
-       /**
-        * Return the last portion of a path. Similar to node.js path.basename
-        * or the Unix basename command.
-        *
-        * @example
-        *   basis.path.basename('/foo/bar/baz.html');          // returns 'baz.html'
-        *   basis.path.basename('/foo/bar/baz.html', '.html'); // returns 'baz'
-        *
-        * @param {string} path
-        * @param {string=} ext
-        * @return {string}
-        */
-        basename: function(path, ext){
-          var filename = utils.normalize(path).match(/[^\\\/]*$/);
-          filename = filename ? filename[0] : '';
-
-          if (ext == utils.extname(filename))
-            filename = filename.substring(0, filename.length - ext.length);
-
-          return filename;
-        },
-
-       /**
-        * Resolves to to an absolute path.
-        *
-        * If to isn't already absolute from arguments are prepended in right
-        * to left order, until an absolute path is found. If after using all
-        * from paths still no absolute path is found, the current location is
-        * used as well. The resulting path is normalized, and trailing slashes
-        * are removed unless the path gets resolved to the root directory.
-        * Non-string arguments are ignored.
-        *
-        * @example
-        *   basis.path.resolve('/foo/bar', './baz');
-        *   // returns '/foo/bar/baz'
-        *
-        *   basis.path.resolve('/foo/bar', '/demo/file/');
-        *   // returns '/demo/file'
-        *
-        *   basis.path.resolve('foo', 'bar/baz/', '../gif/image.gif');
-        *   // if current location is /demo, it returns '/demo/foo/bar/gif/image.gif'
-        *
-        * @param {..string=} from
-        * @param {string} to
-        * @return {string}
-        */
-        resolve: function(from, to){
-          var args = arrayFrom(arguments).reverse();
-          var path = [];
-          var absoluteFound = false;
-
-          for (var i = 0; !absoluteFound && i < args.length; i++)
-            if (typeof args[i] == 'string')
-            {
-              path.unshift(args[i]);
-              absoluteFound = ABSOLUTE_RX.test(args[i]);
-            }
-
-          if (!absoluteFound)
-            path.unshift(baseURI == '/' ? '' : baseURI);
-
-          return utils.normalize(path.join('/'));
-        },
-
-       /**
-        * Solve the relative path from from to to.
-        *
-        * At times we have two absolute paths, and we need to derive the
-        * relative path from one to the other. This is actually the reverse
-        * transform of {basis.path.resolve}, which means we see that:
-        *
-        *   basis.path.resolve(from, basis.path.relative(from, to)) == basis.path.resolve(to)
-        *
-        * If `to` argument omitted than resolve `from` relative to current baseURI.
-        *
-        * Function also could be used with Array#map method as well. In this case
-        * every array member resolves to current baseURI.
-        *
-        * @example
-        *   basis.path.relative('/data/orandea/test/aaa', '/data/orandea/impl/bbb');
-        *   // returns '../../impl/bbb'
-        *
-        *   ['foo', '/a/b/bar', 'a/b/baz'].map(basis.path.relative);
-        *   // if baseURI is '/a/b' it produces
-        *   // ['../../foo', 'bar', '../../a/b/baz']
-        *
-        * @param {string} from
-        * @param {string=} to
-        * @return {string}
-        */
-        relative: function(from, to){
-          // it makes function useful with array iterate methods, i.e.
-          // ['foo', 'bar'].map(basis.path.relative)
-          if (typeof to != 'string')
-          {
-            to = from;
-            from = baseURI;
-          }
-
-          var abs = utils.normalize(to).split(/\//);
-          var loc = utils.normalize(from).split(/\//);
-          var i = 0;
-
-          while (abs[i] == loc[i] && typeof loc[i] == 'string')
-            i++;
-
-          var result = [];
-          for (var j = loc.length - i; j > 0; j--)
-            result.push('..');
-
-          return result.concat(abs.slice(i)).join('/');
-        }
-      };
-
       baseURI = location.pathname.replace(/[^\/]+$/, '');
       origin = location.protocol + '//' + location.host;
     }
 
-    utils.baseURI = baseURI;
-    utils.origin = origin;
+    utils = {
+      baseURI: baseURI,
+      origin: origin,
+
+     /**
+      * Normalize a string path, taking care of '..' and '.' parts.
+      * When multiple slashes are found, they're replaced by a single one;
+      * when the path contains a trailing slash, it is preserved.
+      *
+      * Origin is not includes in result path.
+      *
+      * @example
+      *   basis.path.normalize('/foo/bar//baz/asdf/quux/..');
+      *   // returns '/foo/bar/baz/asdf'
+      *
+      *   basis.path.normalize('http://example.com:8080/foo//..//bar/');
+      *   // returns '/bar'
+      *
+      *   basis.path.normalize('//localhost/foo/./..//bar/');
+      *   // returns '/bar'
+      *
+      * @param {string} path
+      * @return {string}
+      */
+      normalize: function(path){
+        path = (path || '')
+              .replace(PROTOCOL_RX, '/')
+              .replace(ORIGIN_RX, '/')        // but cut off origin
+              .replace(SEARCH_HASH_RX, '');   // cut off query search and hash
+
+        // use link element as path resolver
+        var result = [];
+        var parts = path.split('/');             // split
+
+        // process path parts
+        for (var i = 0; i < parts.length; i++)
+        {
+          if (parts[i] == '..')
+          {
+            if (result.length > 1 || result[0])
+              result.pop();
+          }
+          else
+          {
+            if ((parts[i] || !i) && parts[i] != '.')
+              result.push(parts[i]);
+          }
+        }
+
+        return result.join('/') ||
+               (path[0] === '/' ? '/' : '');
+      },
+
+     /**
+      * Return the directory name of a path. Similar to node.js path.dirname
+      * or the Unix dirname command.
+      *
+      * @example
+      *   basis.path.dirname('/foo/bar/baz/whatever'); // returns '/foo/bar/baz'
+      *
+      * @param {string} path
+      * @return {string}
+      */
+      dirname: function(path){
+        var result = utils.normalize(path);
+        return result.replace(/\/([^\/]*)$|^[^\/]+$/, '') ||
+               (result[0] == '/' ? '/' : '.');
+      },
+
+     /**
+      * Return the extension of the path, from the last '.' to end of string
+      * in the last portion of the path. If there is no '.' in the last
+      * portion of the path or the first character of it is '.', then it
+      * returns an empty string.
+      *
+      * @example
+      *   basis.path.extname('index.html'); // returns '.html'
+      *   basis.path.extname('index.');     // returns '.'
+      *   basis.path.extname('index');      // returns ''
+      *
+      * @param {string} path
+      * @return {string} Path extension with leading dot or empty string.
+      */
+      extname: function(path){
+        var ext = utils.normalize(path).match(/[^\/](\.[^\/\.]*)$/);
+        return ext ? ext[1] : '';
+      },
+
+     /**
+      * Return the last portion of a path. Similar to node.js path.basename
+      * or the Unix basename command.
+      *
+      * @example
+      *   basis.path.basename('/foo/bar/baz.html');          // returns 'baz.html'
+      *   basis.path.basename('/foo/bar/baz.html', '.html'); // returns 'baz'
+      *
+      * @param {string} path
+      * @param {string=} ext
+      * @return {string}
+      */
+      basename: function(path, ext){
+        var filename = utils.normalize(path).match(/[^\\\/]*$/);
+        filename = filename ? filename[0] : '';
+
+        if (ext == utils.extname(filename))
+          filename = filename.substring(0, filename.length - ext.length);
+
+        return filename;
+      },
+
+     /**
+      * Resolves to to an absolute path.
+      *
+      * If to isn't already absolute from arguments are prepended in right
+      * to left order, until an absolute path is found. If after using all
+      * from paths still no absolute path is found, the current location is
+      * used as well. The resulting path is normalized, and trailing slashes
+      * are removed unless the path gets resolved to the root directory.
+      * Non-string arguments are ignored.
+      *
+      * @example
+      *   basis.path.resolve('/foo/bar', './baz');
+      *   // returns '/foo/bar/baz'
+      *
+      *   basis.path.resolve('/foo/bar', '/demo/file/');
+      *   // returns '/demo/file'
+      *
+      *   basis.path.resolve('foo', 'bar/baz/', '../gif/image.gif');
+      *   // if current location is /demo, it returns '/demo/foo/bar/gif/image.gif'
+      *
+      * @param {..string=} from
+      * @param {string} to
+      * @return {string}
+      */
+      resolve: function(from, to){
+        var args = arrayFrom(arguments).reverse();
+        var path = [];
+        var absoluteFound = false;
+
+        for (var i = 0; !absoluteFound && i < args.length; i++)
+          if (typeof args[i] == 'string')
+          {
+            path.unshift(args[i]);
+            absoluteFound = ABSOLUTE_RX.test(args[i]);
+          }
+
+        if (!absoluteFound)
+          path.unshift(baseURI == '/' ? '' : baseURI);
+
+        return utils.normalize(path.join('/'));
+      },
+
+     /**
+      * Solve the relative path from from to to.
+      *
+      * At times we have two absolute paths, and we need to derive the
+      * relative path from one to the other. This is actually the reverse
+      * transform of {basis.path.resolve}, which means we see that:
+      *
+      *   basis.path.resolve(from, basis.path.relative(from, to)) == basis.path.resolve(to)
+      *
+      * If `to` argument omitted than resolve `from` relative to current baseURI.
+      *
+      * Function also could be used with Array#map method as well. In this case
+      * every array member resolves to current baseURI.
+      *
+      * @example
+      *   basis.path.relative('/data/orandea/test/aaa', '/data/orandea/impl/bbb');
+      *   // returns '../../impl/bbb'
+      *
+      *   ['foo', '/a/b/bar', 'a/b/baz'].map(basis.path.relative);
+      *   // if baseURI is '/a/b' it produces
+      *   // ['../../foo', 'bar', '../../a/b/baz']
+      *
+      * @param {string} from
+      * @param {string=} to
+      * @return {string}
+      */
+      relative: function(from, to){
+        // it makes function useful with array iterate methods, i.e.
+        // ['foo', 'bar'].map(basis.path.relative)
+        if (typeof to != 'string')
+        {
+          to = from;
+          from = baseURI;
+        }
+
+        from = utils.normalize(from);
+        to = utils.normalize(to);
+
+        if (from[0] == '/' && to[0] != '/')
+          return from;
+        if (to[0] == '/' && from[0] != '/')
+          return to;
+
+        var base = from.replace(/^\/$/, '').split(/\//);
+        var path = to.replace(/^\/$/, '').split(/\//);
+        var result = [];
+        var i = 0;
+
+        while (path[i] == base[i] && typeof base[i] == 'string')
+          i++;
+
+        for (var j = base.length - i; j > 0; j--)
+          result.push('..');
+
+        return result.concat(path.slice(i).filter(Boolean)).join('/');
+      }
+    };
 
     return utils;
   })();
@@ -2265,7 +2264,6 @@
   var requireNamespace = (function(){
     if (NODE_ENV)
     {
-      var requirePath = pathUtils.dirname(module.filename) + '/';
       var moduleProto = module.constructor.prototype;
       return function(filename, dirname){
         if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == '.js')
@@ -2285,7 +2283,7 @@
             _compile.call(extend(this, namespace), content, filename);
           };
 
-          var exports = require(requirePath + filename.replace(/\./g, '/'));
+          var exports = require(__dirname + '/' + filename.replace(/\./g, '/'));
 
           namespace.exports = exports;
           if (exports && exports.constructor === Object)
