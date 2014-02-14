@@ -59,3 +59,4 @@ basis.require('basis.ui.pageslider');
 basis.require('basis.ui.canvas');
 basis.require('basis.ui.chart');
 basis.require('basis.ui.code');
+basis.require('basis.ui.panel');

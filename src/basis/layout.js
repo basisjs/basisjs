@@ -1,8 +1,5 @@
 
   basis.require('basis.dom.computedStyle');
-  basis.require('basis.dom.resize');
-  basis.require('basis.template');
-  basis.require('basis.ui');
   basis.require('basis.dom');
 
 
@@ -22,53 +19,12 @@
 
   var extend = basis.object.extend;
   var computedStyle = basis.dom.computedStyle.get;
-  var listenResize = basis.dom.resize.add;
 
   var Class = basis.Class;
-  var UINode = basis.ui.Node;
 
 
   //
   // Main part
-  //
-
-  // tests
-
-  var testElement = document.createElement('div');
-  var SUPPORT_ONRESIZE = typeof testElement.onresize != 'undefined';
-  var SUPPORT_DISPLAYBOX = (function(){
-    var prefixes = ['', '-webkit-'];
-
-    for (var i = 0; i < prefixes.length; i++)
-      try
-      {
-        // Opera tries to use -webkit-box but doesn't set "-webkit-box-orient" dynamically for cssRule
-        if (prefixes[i] == '-webkit-' && 'WebkitBoxOrient' in testElement.style == false)
-          continue;
-
-        var value = prefixes[i] + 'box';
-        testElement.style.display = value;
-        if (testElement.style.display == value)
-          return true;
-      } catch(e) {}
-
-    return false;
-  })();
-
-
-  //
-  // helpers
-  //
-
-  function getHeight(element){
-    return element.clientHeight
-      - parseInt(basis.dom.computedStyle.get(element, 'padding-top'))
-      - parseInt(basis.dom.computedStyle.get(element, 'padding-bottom'));
-  }
-
-
-  //
-  // main functions
   //
 
   function getOffsetParent(node){
@@ -130,7 +86,7 @@
     var left = 0;
     var right = 0;
     var bottom = 0;
-    
+
     if (element && element.getBoundingClientRect)
     {
       var rect = element.getBoundingClientRect();
@@ -147,7 +103,7 @@
       }
       else
       {
-        offset = getPageOffset() 
+        offset = getPageOffset();
       }
 
       top = rect.top + offset.y;
@@ -296,99 +252,6 @@
 
 
   //
-  // Vertical stack panel
-  //
-
-  var templates = basis.template.define(namespace, {
-    Panel: resource('./ui/templates/layout/VerticalPanel.tmpl'),
-    Stack: resource('./ui/templates/layout/VerticalPanelStack.tmpl')
-  });
-
- /**
-  * @class
-  */
-  var VerticalPanel = Class(UINode, {
-    className: namespace + '.VerticalPanel',
-
-    template: templates.Panel,
-    binding: {
-      height: 'height',
-      isFlex: function(node){
-        return !!node.flex;
-      },
-      flexboxSupported: function(){
-        return SUPPORT_DISPLAYBOX;
-      }
-    },
-
-    flex: 0,
-    height: 'auto',
-
-    setHeight: function(height){
-      this.height = height;
-      this.updateBind('height');
-    }
-  });
-
- /**
-  * @class
-  */
-  var VerticalPanelStack = Class(UINode, {
-    className: namespace + '.VerticalPanelStack',
-
-    template: templates.Stack,
-    binding: {
-      flexboxSupported: function(){
-        return SUPPORT_DISPLAYBOX;
-      }
-    },
-
-    childClass: VerticalPanel,
-
-    templateSync: function(){
-      UINode.prototype.templateSync.call(this);
-
-      if (!SUPPORT_DISPLAYBOX)
-      {
-        listenResize(this.element, this.realign, this);
-        listenResize(this.childNodesElement, this.realign, this);
-      }
-    },
-    realign: function(){
-      if (SUPPORT_DISPLAYBOX || !this.tmpl)
-        return;
-
-      var contentHeight = this.childNodesElement.offsetHeight;
-      var availHeight = getHeight(this.element);
-      var delta = availHeight - contentHeight;
-
-      if (!delta)
-        return;
-
-      var flexNodes = [];
-      var flexHeight = delta;
-
-      for (var i = 0, node; node = this.childNodes[i]; i++)
-      {
-        if (node.flex)
-        {
-          flexNodes.push(node);
-          flexHeight += getHeight(node.element);
-        }
-      }
-
-      while (node = flexNodes.shift())
-      {
-        var height = Math.max(0, parseInt(flexHeight / (flexNodes.length + 1)));
-        flexHeight -= height;
-
-        node.setHeight(height);
-      }
-    }
-  });
-
-
-  //
   // export names
   //
 
@@ -400,9 +263,6 @@
     getTopLeftPoint: getTopLeftPoint,
     getBoundingRect: getBoundingRect,
     getViewportRect: getViewportRect,
-
-    VerticalPanel: VerticalPanel,
-    VerticalPanelStack: VerticalPanelStack,
 
     addBlockResizeHandler: function(element, fn){
       /** @cut */ basis.dev.warn('`basis.layout.addBlockResizeHandler` is deprecated now, use basis.dom.resize.add/basis.dom.resize.remove functions instead.');

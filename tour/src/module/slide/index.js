@@ -2,8 +2,8 @@ basis.require('basis.l10n');
 basis.require('basis.data');
 basis.require('basis.data.dataset');
 basis.require('basis.data.index');
-basis.require('basis.layout');
 basis.require('basis.ui');
+basis.require('basis.ui.panel');
 basis.require('basis.ui.tabs');
 basis.require('basis.ui.resizer');
 basis.require('basis.ui.menu');
@@ -49,11 +49,11 @@ var langPopup = new basis.ui.menu.Menu({
     return {
       caption: lang,
       lang: lang
-    }
+    };
   })
 });
 
-var panels = new basis.layout.VerticalPanelStack({
+var panels = new basis.ui.panel.VerticalPanelStack({
   template: resource('./template/main-part.tmpl'),
   autoDelegate: true,
   childClass: {
@@ -103,7 +103,7 @@ var panels = new basis.layout.VerticalPanelStack({
 
         timer = setTimeout(this.run.bind(this), 500);
       },
-      run: function (){
+      run: function(){
         timer = clearTimeout(timer);
         this.tmpl.launcher.src = 'launcher.html';
 
@@ -143,7 +143,7 @@ var view = new basis.ui.Node({
       events: 'update',
       getter: function(node){
         return node.data.id
-          ? basis.l10n.dictionary('slide/' + node.data.id + '/description.l10n').token('text')
+          ? basis.l10n.dictionary('./slide/' + node.data.id + '/description.l10n').token('text')
           : null;
       }
     },
