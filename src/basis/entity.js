@@ -613,6 +613,35 @@
 
   var fieldDestroyHandlers = {};
 
+  function getDefaultBuilder(defaults){
+    var obj = [];
+    var values = [];
+    var args = [];
+
+    for (var key in defaults)
+      if (defaults.hasOwnProperty(key))
+      {
+        var name = 'v' + obj.length;
+        var value = defaults[key];
+
+        args.push(name);
+        values.push(value);
+        obj.push('"' + key + '": ' +
+          (typeof value == 'function'
+            ? 'data && "' + key + '" in data == false ? ' + name + '(data) : data["' + key + '"]'
+            : name)
+        );
+      }
+
+    return (new Function(args,
+      'return function(data){' +
+        'return {' + 
+          obj +
+        '};' +
+      '};'
+    )).apply(null, values);
+  }
+
   function chooseArray(newArray, oldArray){
     if (!Array.isArray(newArray))
       return null;
@@ -910,7 +939,7 @@
       }
 
       // create entity class
-      this.entityClass = createEntityClass(this, this.all, this.fields, this.defaults, this.slots);
+      this.entityClass = createEntityClass(this, this.all, this.fields, this.slots);
       this.entityClass.extend({
         entityType: this,
         type: wrapper,
@@ -929,6 +958,8 @@
         config.constrains.forEach(function(item){
           addCalcField(this, null, item);
         }, this);
+
+      this.entityClass.prototype.getDefaults = getDefaultBuilder(this.defaults);
 
       // reg entity type
       entityTypes.push(this);
@@ -1032,7 +1063,7 @@
  /**
   * @class
   */
-  var createEntityClass = function(entityType, all, fields, defaults, slots){
+  var createEntityClass = function(entityType, all, fields, slots){
 
     function calc(entity, delta, rollbackDelta){
       var calcs = entityType.calcs;
@@ -1122,7 +1153,7 @@
       init: function(data){
         // ignore delegate and data
         this.delegate = null;
-        this.data = {};
+        this.data = this.getDefaults(data);
 
         // inherit
         BaseEntity.prototype.init.call(this);
@@ -1139,19 +1170,11 @@
         var delta = {};
         for (var key in fields)
         {
-          if (key in data)
-          {
-            delta[key] = defaults[key];
-            value = fields[key](data[key]);
-          }
-          else
-          {
-            delta[key] = undefined;
-            value = defaults[key];
+          value = this.data[key];
+          delta[key] = undefined;
 
-            if (typeof value == 'function')
-              value = value(data);
-          }
+          if (key in data)
+            value = fields[key](data[key], value);
 
           if (value && value !== this && value instanceof Emitter)
           {
@@ -1402,8 +1425,11 @@
 
         return update ? delta : false;
       },
+      getDefaults: function(){ // will be overrided
+        return {};
+      },
       reset: function(){
-        this.update(defaults);
+        this.update(this.getDefaults(this.data));
       },
       clear: function(){
         var data = {};

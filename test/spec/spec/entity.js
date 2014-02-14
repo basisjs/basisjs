@@ -251,6 +251,22 @@ module.exports = {
             // #4
             var entity = Type({ a: 2, b: 3 });
             this.is({ a: 2, b: 3, c: 5, calcWithDefault: 10 }, entity.data);
+
+            // =========================
+
+            var callCount = 0;
+            var Type2 = basis.entity.createType(null, {
+              a: {
+                defValue: function(initData){
+                  callCount++;
+                }
+              }
+            });
+
+            Type2({});
+            assert(callCount == 1);
+            Type2({ a: 123 });
+            assert(callCount == 1);
           }
         }
       ]
