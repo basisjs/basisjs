@@ -34,7 +34,6 @@ var panel = new basis.ui.Node({
 
   activated: false,
   themeName: basis.template.currentTheme().name,
-  culture: basis.l10n.getCulture(),
 
   template: resource('./template/panel.tmpl'),
 
@@ -43,7 +42,7 @@ var panel = new basis.ui.Node({
     cultureList: cultureList,
     activated: 'activated',
     themeName: 'themeName',
-    cultureName: 'culture',
+    cultureName: basis.l10n.culture,
     isOnline: isOnline
   },
 
@@ -105,13 +104,6 @@ themeList.selection.addHandler({
     var theme = this.pick();
     panel.themeName = theme.value;
     panel.updateBind('themeName');
-  }
-});
-
-cultureList.selection.addHandler({
-  itemsChanged: function(object, delta){
-    panel.culture = this.pick().value;
-    panel.updateBind('cultureName');
   }
 });
 
