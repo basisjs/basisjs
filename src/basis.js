@@ -1976,8 +1976,8 @@
 
       return getResource(resourceUrl);
     },
-    getFiles: function(){
-      return keys(resources).map(pathUtils.relative);
+    getFiles: function(cache){
+      return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
     },
 
     extensions: {
