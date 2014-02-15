@@ -25,6 +25,6 @@ module.exports = {
 
 // it's a hack to mark basis.js to be updatable
 var xhr = new XMLHttpRequest();
-xhr.open('HEAD', '../../../src/basis.js', true);
+xhr.open('HEAD', '../src/basis.js', true);
 xhr.setRequestHeader('X-Basis-Resource', 1);
 xhr.send('');

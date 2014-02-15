@@ -196,7 +196,6 @@ module.exports = {
           test: function(){
             var el = $('test1');
             var box = basis.layout.getBoundingRect(el);
-            var rect = el.getBoundingClientRect();
 
             this.is(15, box.top);
             this.is(15, box.left);

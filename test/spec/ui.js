@@ -5,7 +5,7 @@ module.exports = {
     basis.require('basis.ui');
     basis.require('basis.dom');
 
-    var domHelpers = basis.require('../spec/helper/dom_wrapper_node.js');
+    var domHelpers = basis.require('./helpers/dom_wrapper_node.js');
 
     function getTestNodes(count){
       return basis.data.wrap(basis.array.create(count || 10, basis.fn.$self), true);

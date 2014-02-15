@@ -19,7 +19,7 @@ module.exports = {
       }, Node.prototype.listen)
     });
 
-    var domHelpers = basis.require('../spec/helper/dom_wrapper_node.js');
+    var domHelpers = basis.require('./helpers/dom_wrapper_node.js');
     var checkNode = domHelpers.checkNode;
     var getGroups = domHelpers.getGroups;
 
