@@ -95,14 +95,17 @@
     if (SELECTSTART_SUPPORTED)
       removeGlobalHandler('selectstart', Event.kill);
 
-    if (dragging)
-    {
-      dragging = false;
-      dragElement.emit_over(dragData, event);
-    }
+    var element = dragElement;
+    var data = dragData;
 
     dragElement = null;
     dragData = null;
+
+    if (dragging)
+    {
+      dragging = false;
+      element.emit_over(data, event);
+    }
 
     event.die();
   }
