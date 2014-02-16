@@ -28,7 +28,9 @@
 .devpanel-inspectMode .Basis-DevPanel
 {
   opacity: 1;
-  box-shadow: 0 0 10px 0 rgba(0,0,0, .3), 0 0 0px 1px rgba(255, 255, 255, 0.5) inset;
+  box-shadow:
+    0 0 7px 0 rgba(0, 0, 0, .3),
+    0 0 0px 1px rgba(255, 255, 255, 0.5) inset;
 }
 
 .Basis-DevPanel_isOnline
@@ -79,7 +81,6 @@
   background-image: url(img/folder.png);
 }
 
-
 .Basis-DevPanel-DragTrigger
 {
   display: inline-block;
@@ -88,4 +89,3 @@
   cursor: move;
   background: url(img/drag.png) no-repeat 2px center;
 }
-
