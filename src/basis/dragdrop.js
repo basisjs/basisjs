@@ -45,7 +45,14 @@
 
   function startDrag(event){
     if (dragElement)
-      stopDrag();
+      return;
+
+    // Some browsers (IE, Opera) wrongly fires mousedown event on scrollbars,
+    // but not mouseup. This check helps ignore that events.
+    var viewport = getViewportRect(event.sender);
+    if (event.mouseX < viewport.left || event.mouseX > viewport.right ||
+        event.mouseY < viewport.top || event.mouseY > viewport.bottom)
+      return;
 
     dragElement = this;
     dragData = {
@@ -57,9 +64,13 @@
     };
 
     // add global handlers
-    addGlobalHandler('mousedown', stopDrag);
     addGlobalHandler('mousemove', onDrag);
     addGlobalHandler('mouseup', stopDrag);
+
+    // recover mode: if mouseup missed for some reason, new mousedown stops dragging
+    addGlobalHandler('mousedown', stopDrag);
+
+    // avoid text selection in IE
     if (SELECTSTART_SUPPORTED)
       addGlobalHandler('selectstart', Event.kill);
 
@@ -89,15 +100,18 @@
 
   function stopDrag(event){
     // remove global handlers
-    removeGlobalHandler('mousedown', stopDrag);
     removeGlobalHandler('mousemove', onDrag);
     removeGlobalHandler('mouseup', stopDrag);
+    removeGlobalHandler('mousedown', stopDrag);
+
     if (SELECTSTART_SUPPORTED)
       removeGlobalHandler('selectstart', Event.kill);
 
+    // store current values for event emit
     var element = dragElement;
     var data = dragData;
 
+    // reset values
     dragElement = null;
     dragData = null;
 
