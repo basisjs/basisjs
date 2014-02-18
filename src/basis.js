@@ -3045,11 +3045,11 @@
     }
 
     function checkParents(){
-      if (getParent('head') && getParent('body'))
-        clearInterval(timer);
+      if (timer && getParent('head') && getParent('body'))
+        timer = clearInterval(timer);
     }
 
-    if (document)
+    if (document && (!getParent('head') || !getParent('body')))
     {
       timer = setInterval(checkParents, 5);
       ready(checkParents);
