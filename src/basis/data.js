@@ -1534,20 +1534,27 @@
   * @return {object|undefined}
   */
   function getDatasetDelta(a, b){
-    var inserted = [];
-    var deleted = [];
-
     if (!a || !a.itemCount)
     {
-      if (b)
-        inserted = b.getItems();
+      if (b && b.itemCount)
+        return {
+          inserted: b.getItems()
+        };
     }
     else
     {
       if (!b || !b.itemCount)
-        deleted = a.getItems();
+      {
+        if (a.itemCount)
+          return {
+            deleted: a.getItems()
+          };
+      }
       else
       {
+        var inserted = [];
+        var deleted = [];
+
         for (var key in a.items_)
         {
           var item = a.items_[key];
@@ -1561,10 +1568,10 @@
           if (item.basisObjectId in a.items_ == false)
             inserted.push(item);
         }
+
+        return getDelta(inserted, deleted);
       }
     }
-
-    return getDelta(inserted, deleted);
   }
 
 
@@ -1775,7 +1782,7 @@
       this.itemCount += insertCount - deleteCount;
 
       // drop cache
-      this.cache_ = null;
+      this.cache_ = insertCount == this.itemCount ? delta.inserted : null;
 
       // call event
       events.itemsChanged.call(this, delta);
