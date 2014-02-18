@@ -17,6 +17,25 @@
     // This workaround helps fetch used values instead of computed.
     var GETCOMPUTEDSTYLE_BUGGY = {};
 
+    // test for computedStyle is buggy, run once on first computedStyle invoke
+    var testForBuggyProperties = basis.fn.runOnce(function(){
+      var testElement = document.createElement('div');
+      testElement.setAttribute('style', 'position:absolute;top:auto!important');
+      basis.doc.body.add(testElement);
+
+      if (computedStyle(testElement, 'top') != 'auto')
+        GETCOMPUTEDSTYLE_BUGGY = {
+          top: true,
+          bottom: true,
+          left: true,
+          right: true,
+          height: true,
+          width: true
+        };
+
+      basis.doc.remove(testElement);
+    });
+
     // getComputedStyle function using W3C spec
     computedStyle = function(element, styleProp){
       var style = global.getComputedStyle(element, null);
@@ -24,6 +43,8 @@
 
       if (style)
       {
+        testForBuggyProperties();
+
         if (GETCOMPUTEDSTYLE_BUGGY[styleProp] && style.position != 'static')
         {
           var display = element.style.display;
@@ -39,25 +60,6 @@
         return res;
       }
     };
-
-    // test for computed style bug
-    basis.doc.body.ready(function(){
-      var element = document.createElement('div');
-      element.setAttribute('style', 'position:absolute;top:auto!important');
-      basis.doc.body.add(element);
-
-      if (computedStyle(element, 'top') != 'auto')
-        GETCOMPUTEDSTYLE_BUGGY = {
-          top: true,
-          bottom: true,
-          left: true,
-          right: true,
-          height: true,
-          width: true
-        };
-
-      basis.doc.remove(element);
-    });
   }
   else
   {
