@@ -323,6 +323,35 @@ module.exports = {
             assert({ foo: 3, bar: 3, baz: 3, asd: 4 }, instance.data);
             assert({ foo: 3, bar: 3, baz: 'a' }, a.data);
             assert({ foo: 'b', bar: 'b', baz: 3, asd: 4 }, b.data);
+          },
+        },
+        {
+          name: 'un-existent fields',
+          test: function(){
+            var a = new basis.data.Object({
+              data: {
+                foo: 1
+              }
+            });
+            var instance = new Merge({
+              config: {
+                'foo': 'a',
+                'bar': 'a'
+              },
+              sources: {
+                a: a
+              }
+            });
+
+            assert(instance.data.foo === 1);
+            assert(instance.data.bar === undefined);
+            assert('bar' in instance.data == false);
+            assert(a.data.bar === undefined);
+            assert('bar' in a.data == false);
+
+            assert(instance.update({ baz: 123 }) === false);
+            assert('baz' in instance.data === false);
+            assert('baz' in a.data === false);
           }
         },
         {
@@ -364,6 +393,11 @@ module.exports = {
             // set wrong value for enum field, should not change
             assert(false, instance.update({ enum: 4 }));
             assert(instance.data.enum === 2);
+            assert(entity.data, instance.data);
+
+            // set correct value for enum field, should change
+            assert(false, instance.update({ nonexists: 123 }));
+            assert('nonexists' in instance.data === false);
             assert(entity.data, instance.data);
           }
         },
