@@ -99,10 +99,16 @@ var Merge = basis.data.Object.subclass({
   handlers: null,
 
   init: function(){
-    basis.data.Object.prototype.init.call(this);
-
     var data = this.data;
+    var sources = this.sources;
+
+    /** @cut */ if (this.delegate)
+    /** @cut */   basis.dev.warn(this.constructor.className + ' can\'t has a delegate');
+
     this.data = {};
+    this.delegate = null;
+
+    basis.data.Object.prototype.init.call(this);
 
     if (data)
       for (var key in data)
@@ -111,8 +117,6 @@ var Merge = basis.data.Object.subclass({
         if (name == '-')
           this.data[key] = data[key];
       }
-
-    var sources = this.sources;
 
     this.sources = {};
     this.handlers = {};
