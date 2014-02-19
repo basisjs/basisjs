@@ -355,6 +355,21 @@ module.exports = {
           }
         },
         {
+          name: 'change field of not set source',
+          test: function(){
+            var instance = new Merge({
+              config: {
+                'foo': 'a'
+              }
+            });
+
+            assert('foo' in instance.data == false);
+
+            assert(instance.update({ foo: 123 }) === false);
+            assert('foo' in instance.data === false);
+          }
+        },
+        {
           name: 'merge & entity',
           test: function(){
             var Type = basis.entity.createType(null, {
