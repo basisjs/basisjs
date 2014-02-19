@@ -16,16 +16,16 @@ var MERGER_SOURCE_HANDLER = {
   update: function(sender, senderDelta){
     var data = {};
 
-    if (this.name == this.host.config.defaultSource)
+    if (this.name == this.host.fields.defaultSource)
     {
       for (var key in senderDelta)
-        if (key in this.host.config.sourceField == false)
+        if (key in this.host.fields.sourceField == false)
           data[key] = sender.data[key];
     }
     else
     {
       for (var key in senderDelta)
-        if (this.host.config.sourceField[key] == this.name)
+        if (this.host.fields.sourceField[key] == this.name)
           data[key] = sender.data[key];
     }
 
@@ -37,21 +37,21 @@ var MERGER_SOURCE_HANDLER = {
   }
 };
 
-var configExtend = function(config){
+var fieldsExtend = function(fields){
   var sources = {};
   var result = {
     defaultSource: false,
     sourceField: {},
     sources: {},
-    __extend__: configExtend
+    __extend__: fieldsExtend
   };
 
-  if (config['*'])
-    result.defaultSource = config['*'];
+  if (fields['*'])
+    result.defaultSource = fields['*'];
 
-  for (var field in config)
+  for (var field in fields)
   {
-    var name = config[field];
+    var name = fields[field];
 
     if (name == result.defaultSource)
     {
@@ -68,19 +68,15 @@ var configExtend = function(config){
   }
 
   for (var name in sources)
-    result.sources[name] = {
-      getData: generateGetData(sources[name])
-    };
+    result.sources[name] = generateGetData(sources[name]);
 
   if (result.defaultSource)
-    result.sources[result.defaultSource] = {
-      getData: function(data){
-        var res = {};
-        for (var key in data)
-          if (key in result.sourceField == false)
-            res[key] = data[key];
-        return res;
-      }
+    result.sources[result.defaultSource] = function(data){
+      var res = {};
+      for (var key in data)
+        if (key in result.sourceField == false)
+          res[key] = data[key];
+      return res;
     };
 
   return result;
@@ -92,7 +88,9 @@ var configExtend = function(config){
 var Merge = basis.data.Object.subclass({
   className: namespace + '.Merge',
 
-  config: configExtend({}),
+  fields: fieldsExtend({
+    '*': '-'
+  }),
 
   emit_sourceChanged: basis.event.create('sourceChanged', 'name', 'oldSource'),
   delta_: null,
@@ -102,6 +100,17 @@ var Merge = basis.data.Object.subclass({
 
   init: function(){
     basis.data.Object.prototype.init.call(this);
+
+    var data = this.data;
+    this.data = {};
+
+    if (data)
+      for (var key in data)
+      {
+        var name = this.fields.sourceField[key] || this.fields.defaultSource;
+        if (name == '-')
+          this.data[key] = data[key];
+      }
 
     var sources = this.sources;
 
@@ -120,7 +129,7 @@ var Merge = basis.data.Object.subclass({
     {
       for (var key in data)
       {
-        var name = this.config.sourceField[key] || this.config.defaultSource;
+        var name = this.fields.sourceField[key] || this.fields.defaultSource;
 
         if (!name)
         {
@@ -148,7 +157,14 @@ var Merge = basis.data.Object.subclass({
 
     for (var key in data)
     {
-      var name = this.config.sourceField[key] || this.config.defaultSource;
+      var name = this.fields.sourceField[key] || this.fields.defaultSource;
+
+      if (name == '-')
+      {
+        delta[key] = this.data[key];
+        this.data[key] = data[key];
+        continue;
+      }
 
       if (!name)
       {
@@ -228,7 +244,7 @@ var Merge = basis.data.Object.subclass({
         source.addHandler(MERGER_SOURCE_HANDLER, this.handlers[name]);
 
         // apply new source data
-        this.update(this.config.sources[name].getData(source.data));
+        this.update(this.fields.sources[name](source.data));
       }
 
       this.emit_sourceChanged(name, oldSource);
@@ -242,7 +258,7 @@ var Merge = basis.data.Object.subclass({
     if (!sources)
       sources = {};
 
-    for (var name in this.config.sources)
+    for (var name in this.fields.sources)
       this.setSource(name, sources[name]);
   },
 

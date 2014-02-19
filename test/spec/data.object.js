@@ -14,9 +14,8 @@ module.exports = {
           name: 'empty',
           test: function(){
             var MyMerge = Merge.subclass({
-              config: {
+              fields: {
                 foo: 'a',
-                bar: 'a',
                 '*': 'b'
               }
             });
@@ -29,7 +28,7 @@ module.exports = {
           name: '1 sources',
           test: function(){
             var MyMerge = Merge.subclass({
-              config: {
+              fields: {
                 foo: 'a',
                 bar: 'a',
                 '*': 'b'
@@ -61,13 +60,6 @@ module.exports = {
         {
           name: '2 sources',
           test: function(){
-            var MyMerge = Merge.subclass({
-              config: {
-                foo: 'a',
-                bar: 'a',
-                '*': 'b'
-              }
-            });
             var a = new DataObject({
               data: {
                 foo: 'a',
@@ -83,7 +75,12 @@ module.exports = {
               }
             });
 
-            var instance = new MyMerge({
+            var instance = new Merge({
+              fields: {
+                foo: 'a',
+                bar: 'a',
+                '*': 'b'
+              },
               sources: {
                 a: a,
                 b: b
@@ -91,6 +88,76 @@ module.exports = {
             });
 
             assert({ foo: 'a', bar: 'a', baz: 'b' }, instance.data);
+          }
+        },
+        {
+          name: 'no sources, no field fields',
+          test: function(){
+            var instance = new Merge({
+              data: {
+                foo: 1,
+                bar: 2
+              }
+            });
+
+            assert({ foo: 1, bar: 2 }, instance.data);
+
+            var instance = new Merge({
+              fields: {
+                '*': '-'
+              },
+              data: {
+                foo: 1,
+                bar: 2
+              }
+            });
+
+            assert({ foo: 1, bar: 2 }, instance.data);
+          }
+        },
+        {
+          name: 'no sources, own properties',
+          test: function(){
+            var instance = new Merge({
+              fields: {
+                foo: '-',
+                bar: '-'
+              },
+              data: {
+                foo: 1,
+                bar: 2,
+                baz: 3
+              }
+            });
+
+            assert({ foo: 1, bar: 2 }, instance.data);
+          }
+        },
+        {
+          name: 'no sources, own properties',
+          test: function(){
+            var instance = new Merge({
+              fields: {
+                foo: '-',
+                bar: 'a'
+              },
+              data: {
+                foo: 1,
+                bar: 2,
+                baz: 3
+              },
+              sources: {
+                a: new basis.data.Object({
+                  data: {
+                    foo: 'a',
+                    bar: 'a',
+                    baz: 'a'
+                  }
+                })
+              }
+            });
+
+            assert({ foo: 1, bar: 'a' }, instance.data);
           }
         }
       ]
@@ -101,15 +168,14 @@ module.exports = {
         {
           name: 'set for empty merge and reset',
           test: function(){
-            var MyMerge = Merge.subclass({
-              config: {
+            var instance = new Merge({
+              fields: {
                 foo: 'a',
                 bar: 'a',
                 '*': 'b'
               }
             });
 
-            var instance = new MyMerge();
             instance.setSources({
               a: new DataObject({
                 data: {
@@ -126,7 +192,6 @@ module.exports = {
                 }
               })
             });
-
             assert({ foo: 'a', bar: 'a', baz: 'b' }, instance.data);
 
             instance.setSources();
@@ -138,15 +203,13 @@ module.exports = {
         {
           name: 'swap sources',
           test: function(){
-            var MyMerge = Merge.subclass({
-              config: {
+            var instance = new Merge({
+              fields: {
                 foo: 'a',
                 bar: 'a',
                 '*': 'b'
               }
             });
-
-            var instance = new MyMerge();
             var a = new DataObject({
               data: {
                 foo: 'a',
@@ -162,10 +225,7 @@ module.exports = {
               }
             });
 
-            instance.setSources({
-              a: a,
-              b: b
-            });
+            instance.setSources({ a: a, b: b });
             assert({ foo: 'a', bar: 'a', baz: 'b' }, instance.data);
 
             instance.setSources({ a: b, b: a });
@@ -175,13 +235,6 @@ module.exports = {
         {
           name: 'source destroy',
           test: function(){
-            var MyMerge = Merge.subclass({
-              config: {
-                foo: 'a',
-                bar: 'a'
-              }
-            });
-
             var source = new DataObject({
               data: {
                 foo: 'a',
@@ -189,7 +242,11 @@ module.exports = {
                 baz: 'a'
               }
             });
-            var instance = new MyMerge({
+            var instance = new Merge({
+              fields: {
+                foo: 'a',
+                bar: 'a'
+              },
               sources: {
                 a: source
               }
@@ -202,6 +259,41 @@ module.exports = {
             assert({ foo: 'a', bar: 'a' }, instance.data);
             assert(instance.sources.a === null);
           }
+        },
+        {
+          name: 'source and own properties',
+          test: function(){
+            var source = new DataObject({
+              data: {
+                foo: 'a',
+                bar: 'a',
+                baz: 'a'
+              }
+            });
+            var instance = new Merge({
+              fields: {
+                foo: 'a',
+                bar: '-'
+              },
+              sources: {
+                a: source
+              }
+            });
+
+            assert({ foo: 'a' }, instance.data);
+
+            var instance = new Merge({
+              fields: {
+                foo: 'a',
+                bar: '-'
+              }
+            });
+
+            assert({ }, instance.data);
+
+            instance.setSource('a', source);
+            assert({ foo: 'a' }, instance.data);
+          }
         }
       ]
     },
@@ -211,14 +303,6 @@ module.exports = {
         {
           name: 'source -> merge',
           test: function(){
-            var MyMerge = Merge.subclass({
-              config: {
-                foo: 'a',
-                bar: 'a',
-                '*': 'b'
-              }
-            });
-
             var a = new DataObject({
               data: {
                 foo: 'a',
@@ -233,7 +317,12 @@ module.exports = {
                 baz: 'b'
               }
             });
-            var instance = new MyMerge({
+            var instance = new Merge({
+              fields: {
+                foo: 'a',
+                bar: 'a',
+                '*': 'b'
+              },
               sources: {
                 a: a,
                 b: b
@@ -266,14 +355,6 @@ module.exports = {
         {
           name: 'merge -> sources',
           test: function(){
-            var MyMerge = Merge.subclass({
-              config: {
-                foo: 'a',
-                bar: 'a',
-                '*': 'b'
-              }
-            });
-
             var a = new DataObject({
               data: {
                 foo: 'a',
@@ -288,7 +369,12 @@ module.exports = {
                 baz: 'b'
               }
             });
-            var instance = new MyMerge({
+            var instance = new Merge({
+              fields: {
+                foo: 'a',
+                bar: 'a',
+                '*': 'b'
+              },
               sources: {
                 a: a,
                 b: b
@@ -334,9 +420,9 @@ module.exports = {
               }
             });
             var instance = new Merge({
-              config: {
-                'foo': 'a',
-                'bar': 'a'
+              fields: {
+                foo: 'a',
+                bar: 'a'
               },
               sources: {
                 a: a
@@ -358,8 +444,8 @@ module.exports = {
           name: 'change field of not set source',
           test: function(){
             var instance = new Merge({
-              config: {
-                'foo': 'a'
+              fields: {
+                foo: 'a'
               }
             });
 
@@ -367,6 +453,40 @@ module.exports = {
 
             assert(instance.update({ foo: 123 }) === false);
             assert('foo' in instance.data === false);
+          }
+        },
+        {
+          name: 'source & own properties',
+          test: function(){
+            var source = new basis.data.Object({
+              data: {
+                foo: 'a',
+                bar: 'a',
+                baz: 'a'
+              }
+            });
+            var instance = new Merge({
+              fields: {
+                foo: 'a',
+                bar: '-'
+              },
+              sources: {
+                a: source
+              },
+              data: {
+                foo: 'own',
+                bar: 'own',
+                baz: 'own'
+              }
+            });
+
+            assert({ foo: 'a', bar: 'own' }, instance.data);
+
+            assert({ bar: 'own' }, instance.update({ bar: 123 }));
+            assert({ foo: 'a', bar: 123 }, instance.data);
+
+            source.update({ foo: 2, bar: 2, baz: 2 });
+            assert({ foo: 2, bar: 123 }, instance.data);
           }
         },
         {
@@ -379,7 +499,7 @@ module.exports = {
 
             var entity = Type({});
             var instance = new Merge({
-              config: {
+              fields: {
                 '*': 'a'
               },
               sources: {
@@ -426,7 +546,7 @@ module.exports = {
             var lockIdEntity = Type({ id: 1 });
             var entity = Type({});
             var instance = new Merge({
-              config: {
+              fields: {
                 '*': 'a'
               },
               sources: {
@@ -458,7 +578,7 @@ module.exports = {
 
             var entity = Type({ id: 1 });
             var instance = new Merge({
-              config: {
+              fields: {
                 '*': 'a'
               },
               sources: {
