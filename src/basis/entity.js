@@ -612,6 +612,7 @@
   //
 
   var fieldDestroyHandlers = {};
+  var defaultsBuilderFactory = {};
 
   function getDefaultBuilder(defaults){
     var obj = [];
@@ -626,20 +627,26 @@
 
         args.push(name);
         values.push(value);
-        obj.push('"' + key + '": ' +
+        obj.push('"' + key + '":' +
           (typeof value == 'function'
-            ? 'data && "' + key + '" in data == false ? ' + name + '(data) : data["' + key + '"]'
+            ? 'data&&"' + key + '" in data==false?' + name + '(data):data["' + key + '"]'
             : name)
         );
       }
 
-    return (new Function(args,
-      'return function(data){' +
-        'return {' + 
-          obj +
-        '};' +
-      '};'
-    )).apply(null, values);
+    var code = obj.sort().join(',');
+    var fn = defaultsBuilderFactory[code];
+
+    if (!fn)
+      fn = defaultsBuilderFactory[code] = new Function(args,
+        'return function(data){' +
+          'return {' +
+            code +
+          '};' +
+        '};'
+      );
+
+    return fn.apply(null, values);
   }
 
   function chooseArray(newArray, oldArray){
