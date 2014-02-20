@@ -67,8 +67,11 @@
     },
 
     isSuccessful: function(){
+      if (!AjaxRequest.prototype.isSuccessful.call(this))
+        return false;
+
       var xml = this.xhr.responseXML;
-      return AjaxRequest.prototype.isSuccessful.call(this) && (xml !== undefined && xml !== null && xml.documentElement !== undefined);
+      return xml !== undefined && xml !== null && xml.documentElement !== undefined;
     },
 
     init: function(){

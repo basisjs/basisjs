@@ -63,31 +63,58 @@
 
   })();
 
+
  /**
   * Sets transport request headers
   * @private
   */
-  function setRequestHeaders(request, requestData){
+  function setRequestHeaders(xhr, requestData){
     var headers = {};
 
     if (IS_METHOD_WITH_BODY.test(requestData.method))
     {
-      if (requestData.contentType != 'multipart/form-data')
-        headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
-
-      if (ua.test('gecko'))
-        headers['Connection'] = 'close';
+      headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
     }
     else
+    {
       if (ua.test('ie')) // disable IE caching
-        headers['If-Modified-Since'] = 'Thu, 01 Jan 1970 00:00:00 GMT'; // new Date(0).toGMTString() is not correct here;
-                                                                        // IE returns date string with no leading zero and IIS may parse
-                                                                        // date wrong and response with code 400
+      {
+        // new Date(0).toGMTString() is not correct here;
+        // IE returns date string with no leading zero and IIS may parse
+        // date wrong and response with code 400
+        headers['If-Modified-Since'] = 'Thu, 01 Jan 1970 00:00:00 GMT';
+      }
+    }
 
     basis.object.iterate(extend(headers, requestData.headers), function(key, value){
       if (value != null && typeof value != 'function')
         this.setRequestHeader(key, value);
-    }, request);
+    }, xhr);
+  }
+
+
+ /**
+  * Set requestType
+  */
+  function setResponseType(xhr, requestData){
+    if (requestData.responseType && requestData.asynchronous && 'responseType' in xhr)
+      try {
+        xhr.responseType = requestData.responseType;
+      } catch(e) {
+        /** @cut */ basis.dev.warn('Can\'t set resposeType `' + requestData.responseType + '` to XMLHttpRequest', requestData);
+      }
+  }
+
+
+ /**
+  * safe parse json
+  */
+  function safeJsonParse(content){
+    try {
+      return basis.json.parse(content);
+    } catch(e) {
+      /** @cut */ basis.dev.warn('basis.net.ajax: Can\'t parse JSON from ' + this.url, { url: url, content: content });
+    }
   }
 
 
@@ -99,6 +126,8 @@
   function readyStateChangeHandler(readyState){
     var xhr = this.xhr;
     var newState;
+    var newStateData;
+    var aborted;
 
     if (!xhr)
       return;
@@ -125,7 +154,11 @@
       // clean event handler
       xhr.onreadystatechange = basis.fn.$undef;
 
-      if (typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders()))
+      aborted = xhr.status == 0;
+      if (!aborted && !xhr.responseType)
+        aborted = typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders());
+
+      if (aborted)
       {
         this.emit_abort();
         newState = this.stateOnAbort;
@@ -137,15 +170,16 @@
         // dispatch events
         if (this.isSuccessful())
         {
-          this.emit_success(this.getResponseData());
           newState = STATE.READY;
+
+          this.emit_success(this.getResponseData(xhr));
         }
         else
         {
-          this.processErrorResponse();
-
-          this.emit_failure(this.data.error);
           newState = STATE.ERROR;
+          newStateData = this.processErrorResponse(xhr);
+
+          this.emit_failure(newStateData);
         }
       }
 
@@ -156,13 +190,13 @@
       newState = STATE.PROCESSING;
 
     // set new state
-    this.setState(newState, this.data.error);
+    this.setState(newState, newStateData);
   }
 
-  /**
-   * @class AjaxRequest
-   */
 
+ /**
+  * @class
+  */
   var Request = AbstractRequest.subclass({
     className: namespace + '.Request',
 
@@ -184,45 +218,33 @@
     },
 
     isSuccessful: function(){
-      try {
-        var status = this.xhr.status;
-        return (status == undefined)
-            || (status == 0)
-            || (status >= 200 && status < 300);
-      } catch(e) {}
-      return false;
+      var status = this.xhr.status;
+      return (status >= 200 && status < 300) || status == 304;
     },
 
     processResponse: function(){
       this.update({
         contentType: this.xhr.getResponseHeader('content-type'),
-        responseText: this.xhr.responseText,
-        responseXML: this.xhr.responseXML,
         status: this.xhr.status
       });
     },
 
-    getResponseData: function(){
-      if (/^application\/json/i.test(this.data.contentType))
-      {
-        try {
-          var content = String(this.data.responseText);
-          return basis.json.parse(content);
-        } catch(e) {
-          /** @cut */ consoleMethods.warn('basis.net: Can\'t parse JSON from ' + this.url, { url: url, content: content });
-        }
-      }
-      else
-        return this.data.responseText;
+    getResponseData: function(xhr){
+      if (!xhr.responseType)
+        if (this.responseType == 'json' || /^application\/json/i.test(this.data.contentType))
+          return safeJsonParse(xhr.responseText);
+
+      if ('response' in xhr)
+        return xhr.response;
+
+      return xhr.responseText;
     },
 
-    processErrorResponse: function(){
-      this.update({
-        error: {
-          code: 'SERVER_ERROR',
-          msg: this.xhr.responseText
-        }
-      });
+    processErrorResponse: function(xhr){
+      return {
+        code: 'SERVER_ERROR',
+        msg: xhr.responseText
+      };
     },
 
     prepare: basis.fn.$true,
@@ -276,10 +298,8 @@
 
     send: function(requestData){
       this.update({
-        responseText: '',
-        responseXML: '',
-        status: '',
-        error: ''
+        contentType: '',
+        status: ''
       });
 
       // create new XMLHTTPRequest instance for gecko browsers in asynchronous mode
@@ -302,6 +322,10 @@
 
       // open XMLHttpRequest
       xhr.open(requestData.method, requestData.requestUrl, requestData.asynchronous);
+
+      // set response type
+      setResponseType(xhr, requestData);
+      this.responseType = requestData.responseType || '';
 
       // set headers
       setRequestHeaders(xhr, requestData);
@@ -416,6 +440,7 @@
     contentType: 'application/x-www-form-urlencoded',
     encoding: null,
     requestHeaders: basis.Class.extensibleProperty(),
+    responseType: '',
     params: null,
 
     init: function(){
@@ -442,23 +467,22 @@
     },
 
     prepareRequestData: function(requestData){
-      var url = requestData.url || this.url;
-
-      if (!url)
+      if (!requestData.url && !this.url)
         throw new Error('URL is not defined');
 
       extend(requestData, {
-        requestUrl: url,
-        url: url,
-        method: requestData.method || this.method,
-        contentType: requestData.contentType || this.contentType,
-        encoding: requestData.encoding || this.encoding,
-        asynchronous: this.asynchronous,
         headers: objectMerge(this.requestHeaders, requestData.headers),
-        postBody: requestData.postBody || this.postBody,
-        params: objectMerge(this.params, requestData.params),
-        routerParams: requestData.routerParams,
-        influence: requestData.influence
+        params: objectMerge(this.params, requestData.params)
+      });
+
+      basis.object.complete(requestData, {
+        asynchronous: this.asynchronous,
+        url: this.url,
+        method: this.method,
+        contentType: this.contentType,
+        encoding: this.encoding,
+        postBody: this.postBody,
+        responseType: this.responseType
       });
 
       return requestData;
@@ -467,7 +491,7 @@
 
 
   //
-  // exports 
+  // exports
   //
 
   module.exports = {
