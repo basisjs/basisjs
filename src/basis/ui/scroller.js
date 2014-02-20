@@ -481,6 +481,7 @@
         this.viewportX = positionX;
         this.viewportTargetX = positionX;
         this.updateElementPosition();
+        this.emit_updatePosition(Date.now(), this.viewportX, this.viewportY);
       }
     },
 
@@ -498,6 +499,7 @@
         this.viewportY = positionY;
         this.viewportTargetY = positionY;
         this.updateElementPosition();
+        this.emit_updatePosition(Date.now(), this.viewportX, this.viewportY);
       }
     },
 
