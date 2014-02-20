@@ -129,7 +129,7 @@
     },
     get: function(value, checkType){
       var item = this.items[value];
-      if (!checkType || item instanceof checkType)
+      if (item && (!checkType || item.entityType === checkType))
         return item;
     },
     add: function(value, item){
@@ -494,7 +494,7 @@
               entity.update(data);
           }
           else
-            entity = new entityClass(data || {});
+            entity = new EntityClass(data || {});
 
           return entity;
         };
@@ -524,6 +524,9 @@
                 return;
               }
 
+              if (entity = entityType.index.get(data, entityType))
+                return entity;
+
               idValue = data;
               data = {};
               data[idField] = idValue;
@@ -535,22 +538,22 @@
               else
                 if (idField)
                   idValue = data[idField];
-            }
 
-            if (idValue != null)
-              entity = entityType.index.get(idValue, entityType.entityClass);
+              if (idValue != null)
+                entity = entityType.index.get(idValue, entityType);
+            }
 
             if (entity && entity.entityType === entityType)
               entity.update(data);
             else
-              entity = new entityClass(data);
+              entity = new EntityClass(data);
 
             return entity;
           }
         };
 
       var entityType = new EntityTypeConstructor(config || {}, result);
-      var entityClass = entityType.entityClass;
+      var EntityClass = entityType.entityClass;
 
       // resolve type by name
       resolveType(entityType.name, result);
@@ -585,10 +588,10 @@
         },
 
         extend: function(){
-          return entityClass.extend.apply(entityClass, arguments);
+          return EntityClass.extend.apply(EntityClass, arguments);
         },
         extendClass: function(){
-          return entityClass.extend.apply(entityClass, arguments);
+          return EntityClass.extend.apply(EntityClass, arguments);
         },
         extendReader: function(extReader){
           var reader = result.reader;
@@ -674,9 +677,9 @@
     entityType.aliases[key] = key;
 
     // normalize config
-    if (typeof config == 'string'
-        || Array.isArray(config)
-        || (typeof config == 'function' && config.calc !== config))
+    if (typeof config == 'string' ||
+        Array.isArray(config) ||
+        (typeof config == 'function' && config.calc !== config))
     {
       config = {
         type: config
@@ -998,7 +1001,7 @@
     get: function(entityOrData){
       var id = this.getId(entityOrData);
       if (id != null)
-        return this.index.get(id, this.entityClass);
+        return this.index.get(id, this);
     },
     getId: function(entityOrData){
       if ((this.idField || this.compositeKey) && entityOrData != null)
