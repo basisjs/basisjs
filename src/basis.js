@@ -3422,7 +3422,9 @@
     json: {
       parse: typeof JSON != 'undefined'
         ? JSON.parse
-        : String_extensions.toObject
+        : function(str){
+            return String_extensions.toObject(str, true);
+          }
     }
   });
 
