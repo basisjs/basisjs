@@ -179,6 +179,14 @@
           newState = STATE.ERROR;
           newStateData = this.processErrorResponse(xhr);
 
+          // NOTE: for backward capability of deprecated behaviour
+          // should be removed in future
+          if (!newStateData && this.data.error)
+          {
+            /** @cut */ basis.dev.warn('Request#processErrorResponse should not update request data, but returns error data. Please, fix your method implementation, as data updating is deprecated behaviour.');
+            newStateData = this.data.error;
+          }
+
           this.emit_failure(newStateData);
         }
       }
