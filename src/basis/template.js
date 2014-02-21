@@ -854,7 +854,7 @@
                 case 'resource':
                 case 'style':
                   /** @cut */ if (token.name == 'resource')
-                  /** @cut */   basis.dev.warn('<b:resource> is deprecated and will be removed in next minor release. Use <b:style> instead.');
+                  /** @cut */   basis.dev.warn('<b:resource> is deprecated and will be removed in next minor release. Use <b:style> instead.' + (template.sourceUrl ? ' File: ' + template.sourceUrl : ''));
 
                   if (elAttrs.src)
                   {
