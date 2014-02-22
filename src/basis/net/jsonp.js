@@ -103,7 +103,7 @@
         else
         {
           newState = STATE.ERROR;
-          newStateData = this.processErrorResponse();
+          newStateData = this.getResponseError();
 
           this.emit_failure(newStateData);
         }
@@ -154,7 +154,7 @@
       return this.data.data;
     },
 
-    processErrorResponse: function(){
+    getResponseError: function(){
       return {
         code: 'ERROR',
         msg: 'ERROR'

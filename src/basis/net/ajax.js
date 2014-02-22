@@ -177,13 +177,13 @@
         else
         {
           newState = STATE.ERROR;
-          newStateData = this.processErrorResponse();
+          newStateData = this.getResponseError();
 
           // NOTE: for backward capability of deprecated behaviour
           // should be removed in future
           if (!newStateData && this.data.error)
           {
-            /** @cut */ basis.dev.warn('Request#processErrorResponse should not update request data, but returns error data. Please, fix your method implementation, as data updating is deprecated behaviour.');
+            /** @cut */ basis.dev.warn('Request#getResponseError should not update request data, but returns error data. Please, fix your method implementation, as data updating is deprecated behaviour.');
             newStateData = this.data.error;
           }
 
@@ -250,7 +250,14 @@
       return xhr.responseText;
     },
 
+   /**
+    * @deprecated
+    */
     processErrorResponse: function(){
+      /** @cut */ basis.dev.warn(namespace + '.Request#processErrorResponse is deprecated now, use Request#getResponseError instead');
+      return this.getResponseError();
+    },
+    getResponseError: function(){
       return {
         code: 'SERVER_ERROR',
         msg: this.xhr.responseText

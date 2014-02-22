@@ -81,7 +81,7 @@
 
     processResponse: basis.fn.$undef,
 
-    processErrorResponse: function(){
+    getResponseError: function(){
       this.parseResponseXML();
 
       var code;
@@ -97,12 +97,10 @@
         message = messageElement ? messageElement.firstChild.nodeValue : 'Unknown error';
       }
 
-      this.update({
-        error: {
-          code: code || 'TRANSPORT_ERROR',
-          message: message
-        }
-      });
+      return {
+        code: code || 'TRANSPORT_ERROR',
+        message: message
+      };
     },
 
     parseResponseXML: function(){
