@@ -172,12 +172,12 @@
         {
           newState = STATE.READY;
 
-          this.emit_success(this.getResponseData(xhr));
+          this.emit_success(this.getResponseData());
         }
         else
         {
           newState = STATE.ERROR;
-          newStateData = this.processErrorResponse(xhr);
+          newStateData = this.processErrorResponse();
 
           // NOTE: for backward capability of deprecated behaviour
           // should be removed in future
@@ -237,7 +237,9 @@
       });
     },
 
-    getResponseData: function(xhr){
+    getResponseData: function(){
+      var xhr = this.xhr;
+
       if (!xhr.responseType)
         if (this.responseType == 'json' || /^application\/json/i.test(this.data.contentType))
           return safeJsonParse(xhr.responseText);
@@ -248,10 +250,10 @@
       return xhr.responseText;
     },
 
-    processErrorResponse: function(xhr){
+    processErrorResponse: function(){
       return {
         code: 'SERVER_ERROR',
-        msg: xhr.responseText
+        msg: this.xhr.responseText
       };
     },
 
