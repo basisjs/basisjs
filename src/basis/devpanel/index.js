@@ -20,7 +20,7 @@ var isOnline;
 if (typeof basisjsToolsFileSync != 'undefined')
 {
   // new basisjs-tools
-  isOnline = new basis.Token(false);
+  isOnline = new basis.Token(basisjsToolsFileSync.isOnline.value);
   basisjsToolsFileSync.isOnline.attach(isOnline.set, isOnline);
 }
 else
