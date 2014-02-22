@@ -14,6 +14,7 @@
 
   var Class = basis.Class;
 
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
   var keys = basis.object.keys;
   var extend = basis.object.extend;
   var complete = basis.object.complete;
@@ -122,18 +123,20 @@
     calcWrapper: function(newValue, oldValue){
       var value = this.fn(newValue, oldValue);
 
-      if (value !== oldValue && this.items[value])
+      if (value !== oldValue && hasOwnProperty.call(this.items, value))
         throw 'Duplicate value for index [' + oldValue + ' -> ' + newValue + ']';
 
       return value;
     },
     get: function(value, checkType){
-      var item = this.items[value];
+      var item = hasOwnProperty.call(this.items, value) && this.items[value];
+
       if (item && (!checkType || item.entityType === checkType))
         return item;
     },
     add: function(value, item){
-      var cur = this.items[value];
+      var cur = hasOwnProperty.call(this.items, value) && this.items[value];
+
       if (item && (!cur || cur === item))
       {
         this.items[value] = item;
@@ -623,7 +626,7 @@
     var args = [];
 
     for (var key in defaults)
-      if (defaults.hasOwnProperty(key))
+      if (hasOwnProperty.call(defaults, key))
       {
         var name = 'v' + obj.length;
         var value = defaults[key];
@@ -1025,7 +1028,7 @@
       var id = this.getId(data);
       if (id != null)
       {
-        var slot = this.slots[id];
+        var slot = hasOwnProperty.call(this.slots, id) && this.slots[id];
         if (!slot)
         {
           if (isKeyType[typeof data])
@@ -1143,7 +1146,7 @@
       if (curValue != null)
       {
         index.remove(curValue, entity);
-        if (slots[curValue])
+        if (hasOwnProperty.call(slots, curValue))
           slots[curValue].setDelegate();
       }
 
@@ -1151,7 +1154,7 @@
       if (newValue != null)
       {
         index.add(newValue, entity);
-        if (slots[newValue])
+        if (hasOwnProperty.call(slots, newValue))
           slots[newValue].setDelegate(entity);
       }
     }
