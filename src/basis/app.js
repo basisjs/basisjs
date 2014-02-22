@@ -67,7 +67,7 @@
 
         if (!appInjectPoint)
           appInjectPoint = {
-            type: 'container',
+            type: 'append',
             node: document.body
           };
 
@@ -76,7 +76,7 @@
         if (!node)
           return;
 
-        if (appInjectPoint.type == 'container')
+        if (appInjectPoint.type == 'append')
           node.appendChild(appEl);
         else
           replaceNode(node, appEl);
@@ -103,7 +103,7 @@
 
         case 'container':
           appInjectPoint = {
-            type: 'insert',
+            type: 'append',
             node: value
           };
           break;
