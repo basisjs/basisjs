@@ -1568,6 +1568,27 @@
     },
 
    /**
+    * Set new rule and orderDesc
+    */
+    setRule: function(rule, orderDesc){
+      rule = getter(rule);
+      this.orderDesc = !!orderDesc;
+
+      if (this.rule != rule)
+      {
+        var index = this.index_;
+
+        for (var i = 0; i < index.length; i++)
+          index[i].value = rule(index[i].object);
+
+        this.rule = rule;
+        index.sort(sliceIndexSort);
+      }
+
+      return this.applyRule();
+    },
+
+   /**
     * Recompute slice.
     * @return {Object} Delta of member changes.
     */
