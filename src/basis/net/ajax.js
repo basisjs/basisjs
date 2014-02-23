@@ -260,7 +260,9 @@
     getResponseError: function(){
       return {
         code: 'SERVER_ERROR',
-        msg: this.xhr.responseText
+        msg: !this.responseType
+          ? this.xhr.responseText
+          : this.xhr.response || this.xhr.statusText || 'Error'
       };
     },
 
