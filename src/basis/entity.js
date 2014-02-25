@@ -974,6 +974,12 @@
 
       this.entityClass.prototype.getDefaults = getDefaultBuilder(this.defaults);
 
+      // create initDelta
+      var initDelta = {};
+      for (var key in this.defaults)
+        initDelta[key] = undefined;
+      this.entityClass.prototype.initDelta = initDelta;
+
       // reg entity type
       entityTypes.push(this);
     },
@@ -1180,25 +1186,22 @@
 
         // copy default values
         var value;
-        var delta = {};
         for (var key in fields)
         {
           value = this.data[key];
-          delta[key] = undefined;
 
           if (key in data)
-            value = fields[key](data[key], value);
-
-          if (value && value !== this && value instanceof Emitter)
           {
-            if (value.addHandler(fieldDestroyHandlers[key], this))
-              this.fieldHandlers_[key] = true;
+            value = fields[key](data[key], value);
+            this.data[key] = value;
           }
 
-          this.data[key] = value;
+          if (value && value !== this && value instanceof Emitter)
+            if (value.addHandler(fieldDestroyHandlers[key], this))
+              this.fieldHandlers_[key] = true;
         }
 
-        calc(this, delta);
+        calc(this, this.initDelta);
 
         // reg entity in all entity type instances list
         all.emit_itemsChanged({
