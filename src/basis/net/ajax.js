@@ -109,11 +109,11 @@
  /**
   * safe parse json
   */
-  function safeJsonParse(content){
+  function safeJsonParse(url, content){
     try {
       return basis.json.parse(content);
     } catch(e) {
-      /** @cut */ basis.dev.warn('basis.net.ajax: Can\'t parse JSON from ' + this.url, { url: url, content: content });
+      /** @cut */ basis.dev.warn('basis.net.ajax: Can\'t parse JSON from ' + url, { url: url, content: content });
     }
   }
 
@@ -242,7 +242,7 @@
 
       if (!xhr.responseType)
         if (this.responseType == 'json' || /^application\/json/i.test(this.data.contentType))
-          return safeJsonParse(xhr.responseText);
+          return safeJsonParse(this.requestData.url, xhr.responseText);
 
       if ('response' in xhr)
         return xhr.response;
