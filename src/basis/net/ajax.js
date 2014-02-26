@@ -8,6 +8,7 @@
 
   var ua = basis.ua;
   var escapeValue = global.encodeURIComponent;
+  var FormData = global.FormData;
   var extend = basis.object.extend;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
@@ -73,7 +74,10 @@
 
     if (IS_METHOD_WITH_BODY.test(requestData.method))
     {
-      headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
+      // when send a FormData instance, browsers serialize it and
+      // set correct content-type header with boundary
+      if (!FormData || requestData.postBody instanceof FormData == false)
+        headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
     }
     else
     {
