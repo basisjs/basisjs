@@ -2132,7 +2132,7 @@
           /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(relativePath))
           /** @cut */   consoleMethods.warn('Bad usage: resource(\'' + relativePath + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-          return getResource(baseURL + relativePath);
+          return getResource(pathUtils.resolve(baseURL, relativePath));
         },
         function(relativePath, base){
           return requireNamespace(relativePath, base || baseURL);
