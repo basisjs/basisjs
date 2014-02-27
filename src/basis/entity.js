@@ -618,33 +618,34 @@
   //
 
   var fieldDestroyHandlers = {};
-  var defaultsBuilderFactory = {};
+  var dataBuilderFactory = {};
 
-  function getDefaultBuilder(defaults){
+  function getDataBuilder(defaults, fields){
+    var args = ['has'];
+    var values = [hasOwnProperty];
     var obj = [];
-    var values = [];
-    var args = [];
 
     for (var key in defaults)
       if (hasOwnProperty.call(defaults, key))
       {
         var name = 'v' + obj.length;
+        var fname = 'f' + obj.length;
         var value = defaults[key];
 
-        args.push(name);
-        values.push(value);
+        args.push(name, fname);
+        values.push(value, fields[key]);
         obj.push('"' + key + '":' +
-          (typeof value == 'function'
-            ? 'data&&"' + key + '" in data==false?' + name + '(data):data["' + key + '"]'
-            : name)
+          'has.call(data,"' + key + '")' +
+            '?' + fname + '(data["' + key + '"],' + name + ')' +
+            ':' + name + (typeof value == 'function' ? '(data)' : '')
         );
       }
 
     var code = obj.sort().join(',');
-    var fn = defaultsBuilderFactory[code];
+    var fn = dataBuilderFactory[code];
 
     if (!fn)
-      fn = defaultsBuilderFactory[code] = new Function(args,
+      fn = dataBuilderFactory[code] = new Function(args,
         'return function(data){' +
           'return {' +
             code +
@@ -972,7 +973,7 @@
           addCalcField(this, null, item);
         }, this);
 
-      this.entityClass.prototype.getDefaults = getDefaultBuilder(this.defaults);
+      this.entityClass.prototype.generateData = getDataBuilder(this.defaults, this.fields);
 
       // create initDelta
       var initDelta = {};
@@ -1172,7 +1173,7 @@
       init: function(data){
         // ignore delegate and data
         this.delegate = null;
-        this.data = this.getDefaults(data);
+        this.data = this.generateData(data);
 
         // inherit
         BaseEntity.prototype.init.call(this);
@@ -1186,15 +1187,9 @@
 
         // copy default values
         var value;
-        for (var key in fields)
+        for (var key in this.data)
         {
           value = this.data[key];
-
-          if (key in data)
-          {
-            value = fields[key](data[key], value);
-            this.data[key] = value;
-          }
 
           if (value && value !== this && value instanceof Emitter)
             if (value.addHandler(fieldDestroyHandlers[key], this))
@@ -1441,11 +1436,11 @@
 
         return update ? delta : false;
       },
-      getDefaults: function(){ // will be overrided
+      generateData: function(){ // will be overrided
         return {};
       },
       reset: function(){
-        this.update(this.getDefaults(this.data));
+        this.update(this.generateData({}));
       },
       clear: function(){
         var data = {};
