@@ -1,7 +1,4 @@
 
-  basis.require('basis.cssom');
-
-
  /**
   * @namespace basis.utils.highlight
   */
