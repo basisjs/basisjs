@@ -576,12 +576,6 @@
         reader: function(data){
           return entityType.reader(data);
         },
-        addField: function(key, wrapper){
-          entityType.addField(key, wrapper);
-        },
-        addCalcField: function(key, wrapper){
-          entityType.addCalcField(key, wrapper);
-        },
 
         get: function(data){
           return entityType.get(data);
@@ -619,6 +613,10 @@
 
   var fieldDestroyHandlers = {};
   var dataBuilderFactory = {};
+  var calcFieldWrapper = function(value, oldValue){
+    /** @cut */ basis.dev.warn('Calculate fields are readonly');
+    return oldValue;
+  };
 
   function getDataBuilder(defaults, fields){
     var args = ['has'];
@@ -670,15 +668,9 @@
     return oldArray;
   }
 
-  function addField(entityType, key, config){
-    if (entityType.all.itemCount)
-    {
-      /** @cut */ basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
-      return;
-    }
-
+  function addField(entityType, name, config){
     // registrate alias
-    entityType.aliases[key] = key;
+    entityType.aliases[name] = name;
 
     // normalize config
     if (typeof config == 'string' ||
@@ -699,7 +691,7 @@
     if ('type' in config)
     {
       if (typeof config.type == 'string')
-        config.type = getTypeByName(config.type, entityType.fields, key);
+        config.type = getTypeByName(config.type, entityType.fields, name);
 
       // if type is array convert it into enum
       if (Array.isArray(config.type))
@@ -707,7 +699,7 @@
         var values = config.type.slice(); // make copy of array to make it stable
 
         /** @cut */ if (!values.length)
-        /** @cut */   basis.dev.warn('Empty array set as type definition for ' + entityType.name + '#field.' + key + ', is it a bug?');
+        /** @cut */   basis.dev.warn('Empty array set as type definition for ' + entityType.name + '#field.' + name + ', is it a bug?');
 
         if (values.length == 1)
         {
@@ -720,7 +712,7 @@
             var exists = values.indexOf(value) != -1;
 
             /** @cut */ if (!exists)
-            /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + key + ', new value ignored.');
+            /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ', new value ignored.');
 
             return exists ? value : oldValue;
           };
@@ -735,7 +727,7 @@
       // if type still is not a function - ignore it
       if (typeof config.type != 'function')
       {
-        /** @cut */ basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
+        /** @cut */ basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + name + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
         config.type = $self;
       }
     }
@@ -750,7 +742,7 @@
       if (!entityType.index)
         entityType.index = new Index(String);
 
-      entityType.idFields[key] = true;
+      entityType.idFields[name] = true;
 
       if (entityType.idField || entityType.compositeKey)
       {
@@ -759,59 +751,45 @@
       }
       else
       {
-        entityType.idField = key;
+        entityType.idField = name;
       }
     }
 
     if (config.calc)
-      addCalcField(entityType, key, config.calc);
+    {
+      addCalcField(entityType, name, config.calc);
+      entityType.fields[name] = calcFieldWrapper;
+    }
     else
-      entityType.fields[key] = wrapper;
+      entityType.fields[name] = wrapper;
 
-    entityType.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
+    entityType.defaults[name] = 'defValue' in config ? config.defValue : wrapper();
 
-    entityType.entityClass.prototype['get_' + key] = function(real){
-      if (real && this.modified && key in this.modified)
-        return this.modified[key];
-
-      return this.data[key];
-    };
-
-    entityType.entityClass.prototype['set_' + key] = function(value, rollback){
-      return this.set(key, value, rollback);
-    };
-
-    if (!fieldDestroyHandlers[key])
-      fieldDestroyHandlers[key] = {
+    if (!fieldDestroyHandlers[name])
+      fieldDestroyHandlers[name] = {
         destroy: function(){
-          this.set(key, null);
+          this.set(name, null);
         }
       };
   }
 
-  function addFieldAlias(entityType, alias, key){
-    if (key in entityType.fields)
+  function addFieldAlias(entityType, alias, name){
+    if (name in entityType.fields == false)
     {
-      if (alias in entityType.aliases == false)
-        entityType.aliases[alias] = key;
-      else
-      {
-        /** @cut */ basis.dev.warn('Alias `' + alias + '` already exists');
-      }
-    }
-    else
-    {
-      /** @cut */ basis.dev.warn('Can\'t add alias `' + alias + '` for non-exists field `' + key + '`');
-    }
-  }
-
-  function addCalcField(entityType, key, wrapper){
-    if (key && entityType.fields[key])
-    {
-      /** @cut */ basis.dev.warn('Field `' + key + '` had defined already');
+      /** @cut */ basis.dev.warn('Can\'t add alias `' + alias + '` for non-exists field `' + name + '`');
       return;
     }
 
+    if (alias in entityType.aliases)
+    {
+      /** @cut */ basis.dev.warn('Alias `' + alias + '` already exists');
+      return;
+    }
+      
+    entityType.aliases[alias] = name;
+  }
+
+  function addCalcField(entityType, name, wrapper){
     if (!entityType.calcs)
       entityType.calcs = [];
 
@@ -833,12 +811,12 @@
         if (calcArgs.indexOf(calc.key) != -1)
           after = i + 1;
 
-    if (key)
+    if (name)
     {
       // natural calc field
-      calcConfig.key = key;
+      calcConfig.key = name;
       for (var i = 0, calc; calc = calcs[i]; i++)
-        if (calc.args.indexOf(key) != -1)
+        if (calc.args.indexOf(name) != -1)
         {
           before = i;
           break;
@@ -846,15 +824,15 @@
 
       if (after > before)
       {
-        /** @cut */ basis.dev.warn('Can\'t add calculate field `' + key + '`, because recursion');
+        /** @cut */ basis.dev.warn('Can\'t add calculate field `' + name + '`, because recursion');
         return;
       }
 
-      if (entityType.idField && key == entityType.idField)
+      if (entityType.idField && name == entityType.idField)
         entityType.compositeKey = wrapper;
 
       // resolve calc dependencies
-      deps[key] = calcArgs.reduce(function(res, ref){
+      deps[name] = calcArgs.reduce(function(res, ref){
         var items = deps[ref] || [ref];
         for (var i = 0; i < items.length; i++)
           basis.array.add(res, items[i]);
@@ -864,16 +842,10 @@
       // update other registered calcs dependencies
       for (var ref in deps)
       {
-        var idx = deps[ref].indexOf(key);
+        var idx = deps[ref].indexOf(name);
         if (idx != -1)
-          Array.prototype.splice.apply(deps[ref], [idx, 1].concat(deps[key]));
+          Array.prototype.splice.apply(deps[ref], [idx, 1].concat(deps[name]));
       }
-
-      // reg as field
-      entityType.fields[key] = function(value, oldValue){
-        /** @cut */ basis.dev.log('Calculate fields are readonly');
-        return oldValue;
-      };
     }
     else
     {
@@ -882,6 +854,21 @@
     }
 
     calcs.splice(Math.min(before, after), 0, calcConfig);
+  }
+
+  function getFieldGetter(name){
+    return function(real){
+      if (real && this.modified && name in this.modified)
+        return this.modified[name];
+
+      return this.data[name];
+    };
+  }
+
+  function getFieldSetter(name){
+    return function(value, rollback){
+      return this.set(name, value, rollback);
+    };
   }
 
 
@@ -952,15 +939,6 @@
         }, this);
       }
 
-      // create entity class
-      this.entityClass = createEntityClass(this, this.all, this.fields, this.slots);
-      this.entityClass.extend({
-        entityType: this,
-        type: wrapper,
-        typeName: this.name,
-        state: config.state || this.entityClass.prototype.state
-      });
-
       // define fields, aliases and constrains
       for (var key in config.fields)
         addField(this, key, config.fields[key]);
@@ -973,13 +951,28 @@
           addCalcField(this, null, item);
         }, this);
 
-      this.entityClass.prototype.generateData = getDataBuilder(this.defaults, this.fields);
-
       // create initDelta
       var initDelta = {};
       for (var key in this.defaults)
         initDelta[key] = undefined;
-      this.entityClass.prototype.initDelta = initDelta;
+
+      // create entity class
+      this.entityClass = createEntityClass(this, this.all, this.fields, this.slots);
+      this.entityClass.extend({
+        entityType: this,
+        type: wrapper,
+        typeName: this.name,
+        state: config.state || this.entityClass.prototype.state,
+        generateData: getDataBuilder(this.defaults, this.fields),
+        initDelta: initDelta
+      });
+
+      for (var name in this.fields)
+      {
+        this.entityClass.prototype['get_' + name] = getFieldGetter(name);
+        if (this.fields[name] !== calcFieldWrapper)
+          this.entityClass.prototype['set_' + name] = getFieldSetter(name);
+      }
 
       // reg entity type
       entityTypes.push(this);
