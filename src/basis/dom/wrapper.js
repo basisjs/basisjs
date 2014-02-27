@@ -1872,7 +1872,7 @@
         updateNodeDisableContext(newChild, this.disabled || this.contextDisabled);
 
         // re-match
-        if (newChild.match)
+        if ((newChild.underMatch_ || this.matchFunction) && newChild.match)
           newChild.match(this.matchFunction);
 
         // delegate parentNode automatically, if necessary
