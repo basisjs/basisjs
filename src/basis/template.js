@@ -1376,7 +1376,17 @@
       };
 
       // resolve l10n dictionary url
-      result.dictURI = sourceUrl ? basis.path.relative(basis.path.baseURI, result.baseURI + basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n') : baseURI || '';
+      result.dictURI = sourceUrl
+        ? basis.path.resolve(sourceUrl)
+        : baseURI || '';
+
+      // normalize dictionary ext name
+      if (result.dictURI)
+      {
+        var extname = basis.path.extname(result.dictURI);
+        if (extname && extname != '.l10n')
+          result.dictURI = result.dictURI.substr(0, result.dictURI.length - extname.length) + '.l10n';
+      }
 
       if (!source.templateTokens)
       {
