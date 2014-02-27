@@ -399,7 +399,7 @@
     var bind_node = W3C_DOM_NODE_SUPPORTED
       // W3C DOM way
       ? function(domRef, oldNode, newValue){
-          var newNode = newValue instanceof Node && !newValue.basisNodeInUse ? newValue : domRef;
+          var newNode = newValue && newValue instanceof Node ? newValue : domRef;
 
           if (newNode !== oldNode)
             oldNode.parentNode.replaceChild(newNode, oldNode);
@@ -408,7 +408,7 @@
         }
       // Old browsers way (IE6-8 and other)
       : function(domRef, oldNode, newValue){
-          var newNode = newValue && typeof newValue == 'object' && !newValue.basisNodeInUse ? newValue : domRef;
+          var newNode = newValue && typeof newValue == 'object' ? newValue : domRef;
 
           if (newNode !== oldNode)
           {
