@@ -798,7 +798,6 @@
 
       // process satellites
       var satellites = this.satellite;
-      this.satellite = {};
 
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
@@ -808,8 +807,11 @@
       }
 
       if (satellites !== NULL_SATELLITE)
+      {
+        this.satellite = NULL_SATELLITE;
         for (var name in satellites)
           this.setSatellite(name, satellites[name]);
+      }
 
       // process owner
       var owner = this.owner;
@@ -1061,7 +1063,11 @@
 
             // create auto
             if (!auto)
+            {
+              if (this.satellite === NULL_SATELLITE)
+                this.satellite = {};
               auto = this.satellite.__auto__ = {};
+            }
 
             auto[name] = autoConfig;
             SATELLITE_UPDATE.call(autoConfig, this);
@@ -1109,6 +1115,9 @@
               this.emit_satelliteChanged(satellite.ownerSatelliteName, satellite);
             }
           }
+
+          if (this.satellite == NULL_SATELLITE)
+            this.satellite = {};
 
           this.satellite[name] = satellite;
           satellite.ownerSatelliteName = name;
@@ -1176,7 +1185,7 @@
 
       // destroy satellites
       var satellites = this.satellite;
-      if (satellites)
+      if (satellites !== NULL_SATELLITE)
       {
         var auto = satellites.__auto__;
         delete satellites.__auto__;
