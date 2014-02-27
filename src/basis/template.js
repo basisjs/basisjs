@@ -874,7 +874,7 @@
                     /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
                     /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-                    template.dictURI = path.relative(basis.path.baseURI, template.baseURI + elAttrs.src);
+                    template.dictURI = path.resolve(template.baseURI, elAttrs.src);
                   }
                 break;
 
