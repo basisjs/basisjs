@@ -108,10 +108,11 @@
   //
 
   var cookies = {
-    set: function(name, value, expire, path){
+    set: function(name, value, expire, path, domain){
       document.cookie = name + '=' + (value == null ? '' : escape(value)) +
                         ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
-                        (expire ? ';expires=' + (new Date(Date.now() + expire * 1000)).toGMTString() : '');
+                        (expire ? ';expires=' + (new Date(Date.now() + expire * 1000)).toGMTString() : '') + 
+                        (domain ? ';domain=' + domain : '');
     },
 
     get: function(name){
@@ -119,8 +120,8 @@
       return m && unescape(m[2]);
     },
 
-    remove: function(name, path){
-      document.cookie = name + '=;expires=' + (new Date(0)).toGMTString() + ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname));
+    remove: function(name, path, domain){
+      document.cookie = name + '=;expires=' + (new Date(0)).toGMTString() + ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) + (domain ? ';domain=' + domain : '');
     }
   };
 
