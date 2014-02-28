@@ -589,9 +589,24 @@
 
       result.push(
         ';function set(bindName,value){' +
-          'if(typeof bindName=="string")' +
-            'value=resolve.call(instance,bindName,value,Attaches);' +
-          'switch(bindName){'
+        'if(typeof bindName!="string")'
+      );
+      for (var bindName in bindMap)
+        if (bindMap[bindName].nodeBind)
+        {
+          result.push(
+            'if(bindName===' + bindMap[bindName].nodeBind + ')' +
+              'bindName="' + bindName + '";' +
+            'else '
+          );
+        }
+      result.push(
+        'return;'
+      );
+
+      result.push(
+        'value=resolve.call(instance,bindName,value,Attaches);' +
+        'switch(bindName){'
       );
 
       for (var bindName in bindMap)
@@ -599,7 +614,6 @@
         /** @cut */ if (bindName.indexOf('@') == -1) varList.push('$$' + bindName + '=0');
         result.push(
           'case"' + bindName + '":' +
-          (bindMap[bindName].nodeBind ? 'case ' + bindMap[bindName].nodeBind + ':' : '') +
           (bindMap[bindName].l10n
             ? bindMap[bindName].join('')
             : 'if(__' + bindName + '!==value)' +
