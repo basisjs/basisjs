@@ -364,6 +364,11 @@
       result[name] = processSatelliteConfig(extend[name]);
   }
 
+  function applySatellites(node, satellites){
+    for (var name in satellites)
+      node.setSatellite(name, satellites[name]);
+  }
+
   // default satellite config map
   var NULL_SATELLITE_CONFIG = Class.customExtendProperty({}, function(result, extend){
     /** @cut */ for (var key in extend)
@@ -809,8 +814,7 @@
       if (satellites !== NULL_SATELLITE)
       {
         this.satellite = NULL_SATELLITE;
-        for (var name in satellites)
-          this.setSatellite(name, satellites[name]);
+        applySatellites(this, satellites);
       }
 
       // process owner
