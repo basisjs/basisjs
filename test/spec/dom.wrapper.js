@@ -678,7 +678,7 @@ module.exports = {
                   satelliteDestroyed = true;
                 }
               }
-            })
+            });
             var node = new basis.dom.wrapper.Node({
               satellite: {
                 test: {
@@ -872,7 +872,7 @@ module.exports = {
                   satelliteDestroyed = true;
                 }
               }
-            })
+            });
             var node = new basis.dom.wrapper.Node({
               satellite: {
                 test: {
@@ -910,7 +910,7 @@ module.exports = {
                   satelliteDestroyed = true;
                 }
               }
-            })
+            });
             var node = new basis.dom.wrapper.Node({
               satellite: {
                 test: {
@@ -949,7 +949,7 @@ module.exports = {
                   satelliteDestroyed = true;
                 }
               }
-            })
+            });
             var node = new basis.dom.wrapper.Node({
               satellite: {
                 test: {
@@ -1979,6 +1979,28 @@ module.exports = {
             this.is(true, satellite.delegate === object);
             this.is(3, delegateChangedCount);
           }
+        },
+        {
+          name: 'instances and classes should be able to reset satellite',
+          test: function(){
+            var MyNode = Node.subclass({
+              satellite: {
+                foo: Node
+              }
+            });
+
+            var foo = new MyNode();
+            var bar = new MyNode({
+              satellite: {
+                foo: null
+              }
+            });
+
+            assert(foo.satellite.foo instanceof Node);
+
+            assert(bar.satellite.foo === undefined);
+            assert('foo' in bar.satellite == false);
+          }
         }
       ]
     },
@@ -2461,7 +2483,7 @@ module.exports = {
             datasetWrapper.setDataset();
             this.is(false, checkNode(node));
             this.is(null, node.dataSource);
-            this.is(0, node.childNodes.length)
+            this.is(0, node.childNodes.length);
           }
         },
         {

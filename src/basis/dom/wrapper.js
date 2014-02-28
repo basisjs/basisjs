@@ -366,7 +366,8 @@
 
   function applySatellites(node, satellites){
     for (var name in satellites)
-      node.setSatellite(name, satellites[name]);
+      if (satellites[name] && typeof satellites[name] == 'object')
+        node.setSatellite(name, satellites[name]);
   }
 
   // default satellite config map
