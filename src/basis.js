@@ -649,12 +649,11 @@
       })();
 
       // by default
-      var defaultAddToQueue = function(taskId){
+      var addToQueue = function(taskId){
         setTimeout(function(){
           runTask(taskId);
         }, 0);
       };
-      var addToQueue = defaultAddToQueue;
 
       //
       // implement platform specific solution
@@ -674,9 +673,11 @@
         {
           addToQueue = function(taskId){
             var channel = new global.MessageChannel();
-            channel.port1.onmessage = function(){
+            var setImmediateHandler = function(){
               runTask(taskId);
             };
+
+            channel.port1.onmessage = setImmediateHandler;
             channel.port2.postMessage(''); // broken in Opera if no value
           };
         }
@@ -700,7 +701,7 @@
           if (postMessageSupported)
           {
             // postMessage scheme
-            var handleMessage = function(event){
+            var setImmediateHandler = function(event){
               if (event && event.source == global)
               {
                 var taskId = String(event.data).split(MESSAGE_NAME)[1];
@@ -711,9 +712,9 @@
             };
 
             if (global.addEventListener)
-              global.addEventListener('message', handleMessage, true);
+              global.addEventListener('message', setImmediateHandler, true);
             else
-              global.attachEvent('onmessage', handleMessage);
+              global.attachEvent('onmessage', setImmediateHandler);
 
             // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
             // invoking our onGlobalMessage listener above.
@@ -731,6 +732,7 @@
             {
               // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
               // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
+              var defaultAddToQueue = addToQueue;
               addToQueue = function beforeHeadReady(taskId){
                 if (typeof documentInterface != 'undefined')
                 {
@@ -1773,7 +1775,10 @@
 
     if (patches)
       for (var i = 0; i < patches.length; i++)
+      {
+        /** @cut */ consoleMethods.info('Apply patch for ' + resource.url);
         patches[i](resource.get(), resource.url);
+      }
   }
 
   var getResourceContent = function(url, ignoreCache){
@@ -2905,12 +2910,16 @@
     var fired = !document || isReady();
     var deferredHandler;
 
+    function runReadyHandler(handler){
+      handler.callback.call(handler.context);
+    }
+
     function fireHandlers(){
       if (isReady())
         if (!fired++)
           while (deferredHandler)
           {
-            deferredHandler.callback.call(deferredHandler.context);
+            runReadyHandler(deferredHandler);
             deferredHandler = deferredHandler.next;
           }
     }
@@ -2967,7 +2976,10 @@
         };
       }
       else
-        callback.call(context);
+        runReadyHandler({
+          callback: callback,
+          context: context
+        });
     };
   })();
 
