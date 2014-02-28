@@ -69,3 +69,11 @@
     width: 100%;
     padding: 1.25em 0;
   }
+
+  .Basis-Calendar-Node.month,
+  .Basis-Calendar-Node.year,
+  .Basis-Calendar-Node.decade,
+  .Basis-Calendar-Node.quarter
+  {
+    
+  }
