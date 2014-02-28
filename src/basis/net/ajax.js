@@ -113,7 +113,7 @@
  /**
   * safe parse json
   */
-  function safeJsonParse(url, content){
+  function safeJsonParse(content, url){
     try {
       return basis.json.parse(content);
     } catch(e) {
@@ -246,7 +246,7 @@
 
       if (!xhr.responseType)
         if (this.responseType == 'json' || /^application\/json/i.test(this.data.contentType))
-          return safeJsonParse(this.requestData.url, xhr.responseText);
+          return safeJsonParse(xhr.responseText, this.requestData.url);
 
       if ('response' in xhr)
         return xhr.response;
