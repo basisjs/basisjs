@@ -1834,6 +1834,7 @@
       var resolved = false;
       var wrapped = false;
       var content;
+      /** @cut */ var wrappedContent;
 
       var resource = function(){
         // if resource resolved, just return content
@@ -1856,6 +1857,7 @@
           {
             wrapped = true;
             content = contentWrapper(urlContent, resourceUrl);
+            /** @cut */ wrappedContent = urlContent;
           }
         }
         else
@@ -1888,6 +1890,9 @@
         isResolved: function(){
           return resolved;
         },
+        /** @cut */ hasChanges: function(){
+        /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
+        /** @cut */ },
         update: function(newContent){
           newContent = String(newContent);
 
