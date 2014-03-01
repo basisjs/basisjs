@@ -2580,6 +2580,13 @@
   });
 
 
+  module.constructor.extend({
+    template: function(name){
+      return resolvePackage(this.filename).get(name);
+    }
+  });
+
+
   //
   // export names
   //

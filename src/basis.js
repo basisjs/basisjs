@@ -2029,10 +2029,11 @@
           /** @cut */ var savedRequires = requires;
           /** @cut */ requires = [];
 
-          ns.exports = runScriptInContext({
-            path: ns.path,
-            exports: ns.exports
-          }, filename, content).exports;
+          var module = new Module(filename);
+          module.namespace = ns.name;
+          module.exports = ns.exports;
+
+          ns.exports = runScriptInContext(module, filename, content).exports;
 
           if (ns.exports && ns.exports.constructor === Object)
             complete(ns, ns.exports);
@@ -2177,6 +2178,21 @@
   })();
 
 
+ /**
+  * @class
+  */
+  var Module = Class(null, {
+    className: 'basis.Module',
+    filename: null,
+    init: function(filename){
+      this.filename = filename;
+    }
+  });
+
+
+ /**
+  * @class
+  */
   var Namespace = Class(null, {
     className: 'basis.Namespace',
     init: function(name){
@@ -2193,6 +2209,7 @@
       return complete(this, names);
     }
   });
+
 
   function resolveNSFilename(namespace){
     var namespaceRoot = namespace.split('.')[0];
