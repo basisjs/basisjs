@@ -71,7 +71,7 @@ var panel = new basis.ui.Node({
   action: {
     inspectTemplate: function(){
       cultureList.setDelegate();
-      themeList.setDelegate();      
+      themeList.setDelegate();
       basis.dom.event.captureEvent('click', function(){
         basis.dom.event.releaseEvent('click');
         templateInspector().startInspect();
@@ -93,7 +93,7 @@ var panel = new basis.ui.Node({
     },
     inspectHeat: function(){
       cultureList.setDelegate();
-      themeList.setDelegate();      
+      themeList.setDelegate();
       basis.dom.event.captureEvent('click', function(){
         basis.dom.event.releaseEvent('click');
         heatInspector().startInspect();
@@ -112,7 +112,7 @@ var panel = new basis.ui.Node({
   satellite: {
     reloadRequired: {
       instance: new basis.ui.Node({
-        template: resource('template/reloadRequired.tmpl'),
+        template: resource('./template/reloadRequired.tmpl'),
         binding: {
           visible: permamentFilesCount.as(Boolean),
           count: permamentFilesCount
