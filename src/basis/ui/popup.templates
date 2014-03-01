@@ -1,0 +1,7 @@
+{
+  "base": {
+    "Popup": "./templates/popup/Popup.tmpl",
+    "Balloon": "./templates/popup/Balloon.tmpl",
+    "popupManager": "./templates/popup/popupManager.tmpl"
+  }
+}

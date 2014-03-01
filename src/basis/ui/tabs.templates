@@ -1,0 +1,14 @@
+{
+  "base": {
+    "TabControl": "./templates/tabs/TabControl.tmpl",
+    "TabGroup": "./templates/tabs/TabGroup.tmpl",
+    "Tab": "./templates/tabs/Tab.tmpl",
+
+    "PageControl": "./templates/tabs/PageControl.tmpl",
+    "Page": "./templates/tabs/Page.tmpl",
+
+    "TabSheetControl": "./templates/tabs/TabSheetControl.tmpl",
+    "TabSheet": "./templates/tabs/TabSheet.tmpl",
+    "AccordionControl": "./templates/tabs/AccordionControl.tmpl"
+  }
+}

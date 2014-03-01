@@ -28,7 +28,7 @@
   * @namespace basis.ui.tree
   */
 
-  var namespace = this.path;
+  var namespace = module.namespace;
 
 
   //
@@ -43,18 +43,6 @@
   var UINode = basis.ui.Node;
   var UIPartitionNode = basis.ui.PartitionNode;
   var UIGroupingNode = basis.ui.GroupingNode;
-
-
-  //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Tree: resource('./templates/tree/Tree.tmpl'),
-    PartitionNode: resource('./templates/tree/PartitionNode.tmpl'),
-    Node: resource('./templates/tree/Node.tmpl'),
-    Folder: resource('./templates/tree/Folder.tmpl')
-  });
 
 
   //
@@ -104,16 +92,16 @@
  /**
   * @class
   */
-  var PartitionNode = Class(UIPartitionNode, {
+  var PartitionNode = UIPartitionNode.subclass({
     className: namespace + '.PartitionNode',
 
-    template: templates.PartitionNode
+    template: module.template('PartitionNode')
   });
 
  /**
   * @class
   */
-  var GroupingNode = Class(UIGroupingNode, {
+  var GroupingNode = UIGroupingNode.subclass({
     className: namespace + '.GroupingNode',
 
     childClass: PartitionNode
@@ -123,7 +111,7 @@
   * Base child class for {basis.ui.tree.Tree}
   * @class
   */
-  var Node = Class(UINode, ExpandCollapseMixin, {
+  var Node = UINode.subclass(ExpandCollapseMixin, {
     className: namespace + '.Node',
 
    /**
@@ -139,13 +127,7 @@
     emit_collapse: createEvent('collapse'),
     emit_expand: createEvent('expand'),
 
-   /**
-    * Template for node element.
-    * @type {basis.template.Template}
-    * @private
-    */
-    template: templates.Node,
-
+    template: module.template('Node'),
     binding: {
       title: {
         events: 'update',
@@ -180,7 +162,7 @@
   * @class
   * @extends {basis.ui.tree.Node}
   */
-  var Folder = Class(Node, {
+  var Folder = Node.subclass({
     className: namespace + '.Folder',
 
    /**
@@ -196,7 +178,7 @@
    /**
     * @inheritDoc
     */
-    template: templates.Folder,
+    template: module.template('Folder'),
 
    /**
     * @type {boolean}
@@ -264,20 +246,18 @@
  /**
   * @class
   */
-  var Tree = Class(UINode, ExpandCollapseMixin, {
+  var Tree = UINode.subclass(ExpandCollapseMixin, {
     className: namespace + '.Tree',
 
    /**
     * @inheritDoc
     */
-    selection: true,
+    template: module.template('Tree'),
 
    /**
-    * Template for node element.
-    * @type {basis.template.Template}
-    * @private
+    * @inheritDoc
     */
-    template: templates.Tree,
+    selection: true,
 
    /**
     * @inheritDoc

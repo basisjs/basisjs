@@ -1,0 +1,8 @@
+{
+  "base": {
+    "Calendar": "./templates/calendar/Calendar.tmpl",
+    "Section": "./templates/calendar/Section.tmpl",
+    "SectionMonth": "./templates/calendar/SectionMonth.tmpl",
+    "Node": "./templates/calendar/Node.tmpl"
+  }
+}

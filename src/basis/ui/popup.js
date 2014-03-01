@@ -4,7 +4,6 @@
   basis.require('basis.dom.event');
   basis.require('basis.cssom');
   basis.require('basis.layout');
-  basis.require('basis.l10n');
   basis.require('basis.ui');
 
 
@@ -23,11 +22,9 @@
 
   var document = global.document;
   var documentElement = document && document.documentElement;
-  var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
   var cssom = basis.cssom;
-  var layout = basis.layout;
 
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
@@ -37,17 +34,6 @@
   var getViewportRect = basis.layout.getViewportRect;
 
   var UINode = basis.ui.Node;
-
-
-  //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Popup: resource('./templates/popup/Popup.tmpl'),
-    Balloon: resource('./templates/popup/Balloon.tmpl'),
-    popupManager: resource('./templates/popup/popupManager.tmpl')
-  });
 
 
   //
@@ -113,10 +99,10 @@
  /**
   * @class
   */
-  var Popup = Class(UINode, {
+  var Popup = UINode.subclass({
     className: namespace + '.Popup',
 
-    template: templates.Popup,
+    template: module.template('Popup'),
     binding: {
       visible: {
         events: 'show hide',
@@ -254,12 +240,9 @@
         var pointY = dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()];
 
         if (
-            (dir[2] != LEFT && pointX < (width >> (dir[2] == CENTER)))
-            ||
-            (dir[2] != RIGHT && (viewport.width - pointX + viewport.left) < (width >> (dir[2] == CENTER)))
-            ||
-            (dir[3] != TOP && pointY < (height >> (dir[3] == CENTER)))
-            ||
+            (dir[2] != LEFT && pointX < (width >> (dir[2] == CENTER))) ||
+            (dir[2] != RIGHT && (viewport.width - pointX + viewport.left) < (width >> (dir[2] == CENTER))) ||
+            (dir[3] != TOP && pointY < (height >> (dir[3] == CENTER))) ||
             (dir[3] != BOTTOM && (viewport.height - pointY + viewport.top) < (height >> (dir[3] == CENTER)))
            )
           return false;
@@ -429,10 +412,10 @@
  /**
   * @class
   */
-  var Balloon = Class(Popup, {
+  var Balloon = Popup.subclass({
     className: namespace + '.Balloon',
 
-    template: templates.Balloon
+    template: module.template('Balloon')
   });
 
 
@@ -444,7 +427,7 @@
   // which makes popup visible can also hide it (as click outside of popup).
 
   var popupManager = new UINode({
-    template: templates.popupManager,
+    template: module.template('popupManager'),
 
     selection: true,
 
@@ -557,7 +540,7 @@
   });
 
   basis.doc.body.ready(function(body){
-    DOM.insert(body, popupManager.element, DOM.INSERT_BEGIN);
+    body.insertBefore(popupManager.element, body.firstChild);
     popupManager.realignAll();
   });
 

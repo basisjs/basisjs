@@ -1,9 +1,7 @@
 
-  basis.require('basis.event');
   basis.require('basis.date');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.data.value');
+  basis.require('basis.event');
+  basis.require('basis.data');
   basis.require('basis.ui');
   basis.require('basis.l10n');
 
@@ -13,22 +11,17 @@
   * @namespace basis.ui.calendar
   */
 
-  var namespace = this.path;
+  var namespace = module.namespace;
 
 
   //
   // import names
   //
 
-  var Class = basis.Class;
-  var DOM = basis.dom;
-
-  var arrayFrom = basis.array.from;
-  var getter = basis.getter;
   var createEvent = basis.event.create;
-  var l10nToken = basis.l10n.token;
+  var monthNumToRef = basis.date.monthNumToAbbr;
 
-  var Property = basis.data.value.Property;
+  var Value = basis.data.Value;
   var UINode = basis.ui.Node;
 
 
@@ -43,8 +36,6 @@
   var FORWARD = true;
   var BACKWARD = false;
 
-  var monthNumToRef = basis.date.monthNumToAbbr;
-
 
   //
   // definitions
@@ -52,12 +43,6 @@
 
   var dict = basis.l10n.dictionary(__filename);
 
-  var templates = basis.template.define(namespace, {
-    Calendar: resource('./templates/calendar/Calendar.tmpl'),
-    Section: resource('./templates/calendar/Section.tmpl'),
-    SectionMonth: resource('./templates/calendar/SectionMonth.tmpl'),
-    Node: resource('./templates/calendar/Node.tmpl')
-  });
 
   //
   // Tools
@@ -188,7 +173,7 @@
  /**
   * @class
   */
-  var CalendarNode = Class(UINode, {
+  var CalendarNode = UINode.subclass({
     className: namespace + '.Calendar.Node',
 
     childClass: null,
@@ -200,10 +185,10 @@
     emit_select: function(){
       UINode.prototype.emit_select.call(this);
 
-      DOM.focus(this.element);
+      this.focus();
     },
 
-    template: templates.Node,
+    template: module.template('Node'),
     binding: {
       nodePeriodName: 'nodePeriodName',
       title: {
@@ -281,13 +266,13 @@
  /**
   * @class
   */
-  var CalendarSection = Class(UINode, {
+  var CalendarSection = UINode.subclass({
     className: namespace + '.CalendarSection',
 
     emit_periodChanged: createEvent('periodChanged'),
     emit_selectedDateChanged: createEvent('selectedDateChanged'),
 
-    template: templates.Section,
+    template: module.template('Section'),
 
     binding: {
       sectionName: 'sectionName',
@@ -415,12 +400,12 @@
 
     prevPeriod: function(){
       if (this.isPrevPeriodEnabled)
-        this.setPeriod(getPeriod(this.periodName, new Date(+this.periodStart - 1)));
+        this.setPeriod(getPeriod(this.periodName, new Date(Number(this.periodStart) - 1)));
     },
 
     nextPeriod: function(){
       if (this.isNextPeriodEnabled)
-        this.setPeriod(getPeriod(this.periodName, new Date(+this.periodEnd + 1)));
+        this.setPeriod(getPeriod(this.periodName, new Date(Number(this.periodEnd) + 1)));
     },
 
     setViewDate: function(date){
@@ -439,7 +424,7 @@
  /**
   * @class
   */
-  CalendarSection.Month = Class(CalendarSection, {
+  CalendarSection.Month = CalendarSection.subclass({
     className: namespace + '.CalendarSection.Month',
 
     sectionName: 'Month',
@@ -456,7 +441,7 @@
       return 1 + (basis.date.set(new Date(date), DAY, 1).getDay() + 5) % 7;
     },
 
-    template: templates.SectionMonth,
+    template: module.template('SectionMonth'),
     binding: {
       year: {
         events: 'periodChanged',
@@ -473,7 +458,7 @@
  /**
   * @class
   */
-  CalendarSection.Year = Class(CalendarSection, {
+  CalendarSection.Year = CalendarSection.subclass({
     className:  namespace + '.CalendarSection.Year',
 
     sectionName: 'Year',
@@ -496,7 +481,7 @@
  /**
   * @class
   */
-  CalendarSection.YearDecade = Class(CalendarSection, {
+  CalendarSection.YearDecade = CalendarSection.subclass({
     className: namespace + '.CalendarSection.YearDecade',
 
     sectionName: 'YearDecade',
@@ -519,7 +504,7 @@
  /**
   * @class
   */
-  CalendarSection.Century = Class(CalendarSection, {
+  CalendarSection.Century = CalendarSection.subclass({
     className: namespace + '.CalendarSection.Century',
 
     sectionName: 'Century',
@@ -543,7 +528,7 @@
  /**
   * @class
   */
-  CalendarSection.YearQuarters = Class(CalendarSection, {
+  CalendarSection.YearQuarters = CalendarSection.subclass({
     className: namespace + '.CalendarSection.YearQuarter',
 
     sectionName: 'YearQuarter',
@@ -558,7 +543,7 @@
  /**
   * @class
   */
-  CalendarSection.Quarter = Class(CalendarSection, {
+  CalendarSection.Quarter = CalendarSection.subclass({
     className: namespace + '.CalendarSection.Quarter',
 
     sectionName: 'Quarter',
@@ -582,7 +567,7 @@
  /**
   * @class
   */
-  var Calendar = Class(UINode, {
+  var Calendar = UINode.subclass({
     className: namespace + '.Calendar',
 
     emit_change: createEvent('change'),
@@ -604,7 +589,7 @@
         this.firstChild.select();
     },
 
-    template: templates.Calendar,
+    template: module.template('Calendar'),
     binding: {
       today: function(){
         return basis.date.format(new Date(), '%D.%M.%Y');
@@ -670,8 +655,8 @@
       // dates
       var now = new Date();
 
-      this.selectedDate = new Property(new Date(this.date || now));
-      this.date = new Property(new Date(this.date || now));
+      this.selectedDate = new Value({ value: new Date(this.date || now) });
+      this.date = new Value({ value: new Date(this.date || now) });
 
       // inherit
       UINode.prototype.init.call(this);
@@ -858,17 +843,16 @@
     isPeriodEnabled: function(periodStart, periodEnd){
 
       function checkMapDays(mode, month, sday, tday){
-        var result;
+        // first month: check only for last days
         if (!mode)
-          // first month:  check only for last days
-          result = month >> sday;
-        else if (mode == 1)
-          // last month:   check only for first days
-          result = month & DAY_COUNT_MASK[tday + 1]; // MAX_DAY_MASK >> 31 - tday
-        else
-          // middle month: check full month
-          result = month;
-        return result;
+          return month >> sday;
+
+        // last month: check only for first days
+        if (mode == 1)
+          return month & DAY_COUNT_MASK[tday + 1]; // MAX_DAY_MASK >> 31 - tday
+
+        // middle month: check full month
+        return month;
       }
 
       // check for min/max dates
@@ -902,10 +886,8 @@
           if (monthCount == 0)
           {
             // check for day period
-            return !(year  = map[s.year])     // full year enabled, return true
-                   ||
-                   !(month = year[s.month])   // full month enabled, return true
-                   ||
+            return !(year  = map[s.year]) ||    // full year enabled, return true
+                   !(month = year[s.month]) ||  // full month enabled, return true
                    (((month ^ MAX_DAY_MASK) >> s.day) & DAY_COUNT_MASK[e.day - s.day + 1]);  // MAX_DAY_MASK >> 31 - (t.day - s.day + 1)
           }
 
@@ -945,10 +927,8 @@
           //
           if (monthCount == 0)
             // check for day period
-            return (year  = map[s.year])      // year absent return false
-                   &&
-                   (month = year[s.month])    // month absent return false
-                   &&
+            return (year  = map[s.year]) &&     // year absent return false
+                   (month = year[s.month]) &&   // month absent return false
                    ((month >> s.day) & DAY_COUNT_MASK[e.day - s.day + 1]);  // MAX_DAY_MASK >> 31 - (t.day - s.day + 1)
 
           //

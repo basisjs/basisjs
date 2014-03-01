@@ -1,0 +1,7 @@
+{
+  "base": {
+    "Button": "./templates/button/Button.tmpl",
+    "ButtonPanel": "./templates/button/ButtonPanel.tmpl",
+    "ButtonGroup": "./templates/button/ButtonGroup.tmpl"
+  }
+}

@@ -1,7 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.wrapper');
   basis.require('basis.ui');
 
 
@@ -10,37 +7,14 @@
   * @namespace basis.ui.tabs
   */
 
-  var namespace = this.path;
+  var namespace = module.namespace;
 
 
   //
   // import names
   //
 
-  var getter = basis.getter;
-
-  var Class = basis.Class;
-  var DOM = basis.dom;
-
   var UINode = basis.ui.Node;
-
-
-  //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    TabControl: resource('./templates/tabs/TabControl.tmpl'),
-    TabGroup: resource('./templates/tabs/TabGroup.tmpl'),
-    Tab: resource('./templates/tabs/Tab.tmpl'),
-
-    PageControl: resource('./templates/tabs/PageControl.tmpl'),
-    Page: resource('./templates/tabs/Page.tmpl'),
-
-    TabSheetControl: resource('./templates/tabs/TabSheetControl.tmpl'),
-    TabSheet: resource('./templates/tabs/TabSheet.tmpl'),
-    AccordionControl: resource('./templates/tabs/AccordionControl.tmpl')
-  });
 
 
   //
@@ -60,7 +34,7 @@
  /**
   * @class
   */
-  var AbstractTabsControl = Class(UINode, {
+  var AbstractTabsControl = UINode.subclass({
     className: namespace + '.AbstractTabsControl',
 
     selection: true,
@@ -103,10 +77,10 @@
  /**
   * @class
   */
-  var Tab = Class(UINode, {
+  var Tab = UINode.subclass({
     className: namespace + '.Tab',
 
-    template: templates.Tab,
+    template: module.template('Tab'),
     binding: {
       title: 'data:'
     },
@@ -132,10 +106,10 @@
  /**
   * @class
   */
-  var TabControl = Class(AbstractTabsControl, {
+  var TabControl = AbstractTabsControl.subclass({
     className: namespace + '.TabControl',
 
-    template: templates.TabControl,
+    template: module.template('TabControl'),
 
     childClass: Tab,
 
@@ -145,7 +119,7 @@
       childClass: {
         className: namespace + '.TabGroup',
 
-        template: templates.TabGroup
+        template: module.template('TabGroup')
       }
     }
   });
@@ -154,20 +128,20 @@
  /**
   * @class
   */
-  var Page = Class(UINode, {
+  var Page = UINode.subclass({
     className: namespace + '.Page',
 
-    template: templates.Page
+    template: module.template('Page')
   });
 
 
  /**
   * @class
   */
-  var PageControl = Class(AbstractTabsControl, {
+  var PageControl = AbstractTabsControl.subclass({
     className: namespace + '.PageControl',
 
-    template: templates.PageControl,
+    template: module.template('PageControl'),
 
     childClass: Page
   });
@@ -176,10 +150,10 @@
  /**
   * @class
   */
-  var TabSheet = Class(Tab, {
+  var TabSheet = Tab.subclass({
     className: namespace + '.TabSheet',
 
-    template: templates.TabSheet,
+    template: module.template('TabSheet'),
 
     childClass: UINode
   });
@@ -188,10 +162,10 @@
  /**
   * @class
   */
-  var TabSheetControl = Class(TabControl, {
+  var TabSheetControl = TabControl.subclass({
     className: namespace + '.TabSheetControl',
 
-    template: templates.TabSheetControl,
+    template: module.template('TabSheetControl'),
 
     childClass: TabSheet,
 
@@ -215,10 +189,10 @@
  /**
   * @class
   */
-  var AccordionControl = Class(TabControl, {
+  var AccordionControl = TabControl.subclass({
     className: namespace + '.AccordionControl',
 
-    template: templates.AccordionControl,
+    template: module.template('AccordionControl'),
 
     childClass: TabSheet
   });

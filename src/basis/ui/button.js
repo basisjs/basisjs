@@ -7,7 +7,7 @@
   * @namespace basis.ui.button
   */
 
-  var namespace = this.path;
+  var namespace = module.namespace;
 
 
   //
@@ -15,17 +15,6 @@
   //
 
   var Node = basis.ui.Node;
-
-
-  //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Button: resource('./templates/button/Button.tmpl'),
-    ButtonPanel: resource('./templates/button/ButtonPanel.tmpl'),
-    ButtonGroup: resource('./templates/button/ButtonGroup.tmpl')
-  });
 
 
   //
@@ -39,7 +28,7 @@
     className: namespace + '.Button',
 
     // template, binding & action
-    template: templates.Button,
+    template: module.template('Button'),
     binding: {
       caption: 'caption'
     },
@@ -79,10 +68,11 @@
   var ButtonPanel = Node.subclass({
     className: namespace + '.ButtonPanel',
 
-    template: templates.ButtonPanel,
+    template: module.template('ButtonPanel'),
 
     childClass: Button,
 
+    grouping: {}, // use grouping by default
     groupingClass: {
       className: namespace + '.ButtonGroupingNode',
 
@@ -92,12 +82,9 @@
 
       childClass: {
         className: namespace + '.ButtonGroup',
-
-        template: templates.ButtonGroup
+        template: module.template('ButtonGroup')
       }
-    },
-
-    grouping: {} // use grouping by default
+    }
   });
 
 
