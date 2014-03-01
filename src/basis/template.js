@@ -175,16 +175,20 @@
               refs: ['l10n:' + m[3]],
               value: '{l10n:' + m[3] + '}'
             });
+            break;
           }
-          else if (m[2] == '{')
+
+          if (m[2] == '{')
           {
             bufferPos = pos - 1;
             lastTag.childs.push(token = {
               type: TYPE_TEXT
             });
             state = REFERENCE;
+            break;
           }
-          else if (m[4])
+
+          if (m[4])
           {
             if (m[4] == '/')
             {
@@ -208,8 +212,10 @@
                 state = COMMENT;
               }
             }
+            break;
           }
-          else if (m[2]) // m[2] == '<' open tag
+
+          if (m[2]) // m[2] == '<' open tag
           {
             parseTag = true;
             tagStack.push(lastTag);
@@ -222,6 +228,7 @@
             lastTag = token;
 
             state = TAG_NAME;
+            break;
           }
 
           break;
@@ -323,12 +330,16 @@
               pos -= m[2].length - 1;
               token.value = source.substring(bufferPos, pos);
               state = TEXT;
+              break;
             }
-            else if (token.type == TYPE_COMMENT)
+
+            if (token.type == TYPE_COMMENT)
             {
               state = COMMENT;
+              break;
             }
-            else if (token.type == TYPE_ATTRIBUTE && source[pos] == '=')
+
+            if (token.type == TYPE_ATTRIBUTE && source[pos] == '=')
             {
               pos++;
               state = ATTRIBUTE_VALUE;
@@ -914,14 +925,19 @@
 
                     if (isTemplateRef)
                       resource = templateList[url];
-                    else if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
-                      resource = getSourceByPath(url);
                     else
                     {
-                      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
-                      /** @cut */   basis.dev.warn('Bad usage: <b:include src=\"' + url + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+                      if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
+                      {
+                        resource = getSourceByPath(url);
+                      }
+                      else
+                      {
+                        /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+                        /** @cut */   basis.dev.warn('Bad usage: <b:include src=\"' + url + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-                      resource = basis.resource(path.resolve(template.baseURI + url));
+                        resource = basis.resource(path.resolve(template.baseURI + url));
+                      }
                     }
 
                     if (!resource)
@@ -1854,37 +1870,6 @@
   });
 
 
-
-// template: basis.template.wrapper(
-//   '<b:class value="..."/>'
-// )
-
-// var TemplateWrapper = Class(Template, {
-//   source_: '',
-//   template: null,
-//   init: function(source, template){
-//     Template.prototype.init.call(this);
-//     this.setTemplate(template);
-//   },
-//   setTemplate: function(template){
-//     if (this.template !== template)
-//       this.template = template;
-//       this.setSource(??)
-//   },
-//   setSource: function(source){
-//     if (this.source_ != source)
-//     {
-//       var newSource =
-//         '<b:include src="#' + this.template.templateId + '">' +
-//           source +
-//         '</b:include>';
-
-//       Template.prototype.setSource.call(this, newSource);
-//     }
-//   }
-// });
-
-
  /**
   * @class
   */
@@ -2048,11 +2033,25 @@
   });
 
 
+  var sourceReferenceByPath = {};
   function getSourceByPath(){
     var path = basis.array(arguments).join('.');
     var source;
 
-    if (path in source)
+    if (path.indexOf('@') == -1)
+    {
+      if (path in sourceReferenceByPath == false)
+      {
+        var parts = path.split('.');
+        var templateName = parts.pop();
+        var url = basis.resolveNSFilename(parts.join('.')).replace(/\.js$/, '.templates');
+        sourceReferenceByPath[path] = templateName + '@' + url;
+      }
+
+      path = sourceReferenceByPath[path];
+    }
+
+    if (path in sourceByPath)
     {
       source = sourceByPath[path];
     }
@@ -2171,6 +2170,13 @@
     var addSource = function(path, source){
       if (path in sources == false)
       {
+        if (path.indexOf('@') == -1)
+        {
+          var oldPath = path;
+          path = path.replace(/^(.+?)\.([^\.]+)$/, '$2@$1');
+          sourceReferenceByPath[oldPath] = path;
+        }
+
         sources[path] = source;
 
         if (themeHasEffect(name))
@@ -2229,7 +2235,12 @@
         result.source = themes[name].fallback.source;
         return result;
       },
+      defineSource: function(path, source, noSync){
+        return addSource(path, source, noSync);
+      },
       define: function(what, wherewith, noSync){
+        /** @cut */ basis.dev.warn('basis.template.define is deprecated, use `.templates` resources instead');
+
         if (typeof what == 'function')
           what = what();
 
@@ -2315,7 +2326,7 @@
     });
 
     themes[name].fallback = extendFallback(name, []);
-    sourceList.push(themes['base'].sources);
+    sourceList.push(themes.base.sources);
 
     return themeInterface;
   }
@@ -2360,7 +2371,7 @@
       var extname = basis.path.extname(location);
 
       if (extname != '.templates')
-        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.templates');
+        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.templates';
 
       value = basis.resource(location);
     }
@@ -2401,6 +2412,12 @@
     resource: null,
 
    /**
+    * Base URI of package (commonly resource location).
+    * @type {string}
+    */
+    baseURI: '',
+
+   /**
     * @constructor
     * @param {basis.Resource|object} data
     */
@@ -2418,6 +2435,7 @@
         // attach to resource
         this.resource = resource;
         this.id = resource.url;
+        this.baseURI = basis.path.dirname(resource.url);
 
         // notify dictionary created
         if (!packageByUrl[resource.url])
@@ -2428,6 +2446,7 @@
       else
       {
         this.id = this.index;
+        this.baseURI = basis.path.baseURI;
         this.update(data || {});
       }
     },
@@ -2463,23 +2482,25 @@
       for (var themeName in data)
       {
         var theme = getTheme(themeName);
-        var templates = data[themeName];
+        var dataTemplates = data[themeName];
+        var templates = {};
 
-        this.themeSources[themeName] = {};
+        this.themeSources[themeName] = templates;
 
-        for (var name in templates)
+        for (var name in dataTemplates)
           if (!/^_|_$/.test(name)) // ignore names with underscore in the begining or ending
           {
             var path = name + '@' + this.id;
-            var source = templates[name];
+            var source = dataTemplates[name];
 
-            updatePaths[path] = truel
+            updatePaths[path] = true;
+            templates[name] = source;
 
             if (typeof source == 'string')
-              source = basis.resource(source);
+              source = basis.resource(basis.path.resolve(this.baseURI, source));
 
             if (sourceByPath)
-              theme.define(path, source, true);
+              theme.defineSource(path, source, true);
           }
       }
 
@@ -2489,40 +2510,17 @@
     },
 
    /**
-    * Sync token values according to current culture and it's fallback.
+    * @param {string} theme Theme name
+    * @param {string} name Template name
+    * @return {...}
     */
-    syncValues: function(){
-      for (var templateName in this.tokens)
-        this.tokens[templateName].set(this.getValue(templateName));
+    getThemeSource: function(theme, name){
+      return this.themeSources[theme] && this.themeSources[theme][name];
     },
 
    /**
-    * Get current value for templateName according to current culture and it's fallback.
-    * @param {string} templateName
-    */
-    getValue: function(templateName){
-      var fallback = cultureFallback[currentTheme] || [];
-
-      for (var i = 0, cultureName; cultureName = fallback[i]; i++)
-      {
-        var cultureValues = this.cultureValues[cultureName];
-        if (cultureValues && templateName in cultureValues)
-          return cultureValues[templateName];
-      }
-    },
-
-   /**
-    * @param {string} culture Theme name
-    * @param {string} templateName Template name
-    * @return {*}
-    */
-    getThemeSource: function(themeName, templateName){
-      return this.themeSources[themeName] && this.themeSources[themeName][templateName];
-    },
-
-   /**
-    * @param {string} templateName Token name
-    * @return {basis.l10n.Token}
+    * @param {string} name Token name
+    * @return {...}
     */
     get: function(name){
       return getSourceByPath(name + '@' + this.id);
@@ -2532,8 +2530,8 @@
     * @destructor
     */
     destroy: function(){
-      this.tokens = null;
-      this.cultureValues = null;
+      this.names = null;
+      this.themeSources = null;
 
       basis.array.remove(packages, this);
     }
@@ -2646,5 +2644,7 @@
     get: getSourceByPath,
     getPathList: function(){
       return basis.object.keys(sourceByPath);
-    }
+    },
+
+    templates: resolvePackage
   };
