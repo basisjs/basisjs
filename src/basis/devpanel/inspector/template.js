@@ -1,6 +1,7 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.data.value');
+basis.require('basis.layout');
 basis.require('basis.ui');
 basis.require('basis.ui.popup');
 
@@ -24,29 +25,6 @@ var overlay = DOM.createElement({
   }
 });
 
-function getOffsetRect(elem){
-  var box = elem.getBoundingClientRect();
-
-  var body = document.body;
-  var docElem = document.documentElement;
-
-  var scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
-  var scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
-
-  var clientTop = docElem.clientTop || body.clientTop || 0;
-  var clientLeft = docElem.clientLeft || body.clientLeft || 0;
-
-  var top  = box.top + scrollTop - clientTop;
-  var left = box.left + scrollLeft - clientLeft;
-
-  return {
-    top: Math.round(top),
-    left: Math.round(left),
-    width: box.width,
-    height: box.height
-  };
-}
-
 function pickHandler(event){
   DOM.event.kill(event);
 
@@ -57,9 +35,14 @@ function pickHandler(event){
     var source = template.source;
 
     if (source.url && template.source instanceof basis.template.L10nProxyToken == false)
-      transport.sendData('pickTemplate', {
-        filename: source.url
-      });
+    {
+      if (basis.devtools && typeof basis.devtools.openFile && (event.ctrlKey || event.metaKey))
+        basis.devtools.openFile(source.url);
+      else
+        transport.sendData('pickTemplate', {
+          filename: source.url
+        });
+    }
     else
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
@@ -75,7 +58,7 @@ var pickupTarget = new basis.data.value.Property(null, {
 
     if (tmpl)
     {
-      var rect = getOffsetRect(tmpl.element);
+      var rect = basis.layout.getBoundingRect(tmpl.element);
       if (rect)
       {
         basis.cssom.setStyle(overlay, {
@@ -112,7 +95,7 @@ var pickupTarget = new basis.data.value.Property(null, {
 var nodeInfoPopup = basis.fn.lazyInit(function(){
   return new basis.ui.popup.Balloon({
     dir: 'left bottom left top',
-    template: resource('template/template_hintPopup.tmpl'),
+    template: resource('./template/template_hintPopup.tmpl'),
     autorotate: [
       'left top left bottom',
       'left bottom left bottom',

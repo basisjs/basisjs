@@ -30,8 +30,8 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Paginator: resource('templates/paginator/Paginator.tmpl'),
-    PaginatorNode: resource('templates/paginator/PaginatorNode.tmpl')
+    Paginator: resource('./templates/paginator/Paginator.tmpl'),
+    PaginatorNode: resource('./templates/paginator/PaginatorNode.tmpl')
   });
 
 

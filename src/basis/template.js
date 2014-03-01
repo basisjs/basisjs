@@ -717,13 +717,13 @@
 
         if (!attrs.name)
         {
-          ;;;template.warns.push('Instruction <b:' + token.name + '> has no attribute name');
+          /** @cut */ template.warns.push('Instruction <b:' + token.name + '> has no attribute name');
           return;
         }
 
         if (!IDENT.test(attrs.name))
         {
-          ;;;template.warns.push('Bad attribute name `' + attrs.name + '`');
+          /** @cut */ template.warns.push('Bad attribute name `' + attrs.name + '`');
           return;
         }
 
@@ -829,7 +829,7 @@
           }
           else
           {
-            ;;;template.warns.push('Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')');
+            /** @cut */ template.warns.push('Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')');
           }
         }
       }
@@ -853,8 +853,16 @@
               {
                 case 'resource':
                 case 'style':
+                  /** @cut */ if (token.name == 'resource')
+                  /** @cut */   basis.dev.warn('<b:resource> is deprecated and will be removed in next minor release. Use <b:style> instead.' + (template.sourceUrl ? ' File: ' + template.sourceUrl : ''));
+
                   if (elAttrs.src)
+                  {
+                    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
+                    /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
                     template.resources.push(path.resolve(template.baseURI + elAttrs.src));
+                  }
                 break;
 
                 case 'l10n':
@@ -862,7 +870,12 @@
                   /** @cut */   template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
 
                   if (elAttrs.src)
-                    template.dictURI = path.relative(basis.path.baseURI, template.baseURI + elAttrs.src);
+                  {
+                    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
+                    /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+                    template.dictURI = path.resolve(template.baseURI, elAttrs.src);
+                  }
                 break;
 
                 case 'define':
@@ -904,7 +917,12 @@
                     else if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
                       resource = getSourceByPath(url);
                     else
+                    {
+                      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+                      /** @cut */   basis.dev.warn('Bad usage: <b:include src=\"' + url + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
                       resource = basis.resource(path.resolve(template.baseURI + url));
+                    }
 
                     if (!resource)
                     {
@@ -1087,7 +1105,7 @@
                               break;
 
                             default:
-                              ;;;template.warns.push('Unknown instruction tag <b:' + child.name + '>');
+                              /** @cut */ template.warns.push('Unknown instruction tag <b:' + child.name + '>');
                           }
                         }
                         else
@@ -1324,7 +1342,7 @@
               }
               else
               {
-                ;;;template.warns.push('Unpredictable value `' + bindName + '` in class binding: ' + bind[0] + '{' + bind[1] + '}');
+                /** @cut */ template.warns.push('Unpredictable value `' + bindName + '` in class binding: ' + bind[0] + '{' + bind[1] + '}');
                 unpredictable++;
               }
             }
@@ -1342,7 +1360,7 @@
     return function makeDeclaration(source, baseURI, options, sourceUrl){
       options = options || {};
       var warns = [];
-      ;;;var source_;
+      /** @cut */ var source_;
 
       // result object
       var result = {
@@ -1358,11 +1376,21 @@
       };
 
       // resolve l10n dictionary url
-      result.dictURI = sourceUrl ? basis.path.relative(basis.path.baseURI, result.baseURI + basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n') : baseURI || '';
+      result.dictURI = sourceUrl
+        ? basis.path.resolve(sourceUrl)
+        : baseURI || '';
+
+      // normalize dictionary ext name
+      if (result.dictURI)
+      {
+        var extname = basis.path.extname(result.dictURI);
+        if (extname && extname != '.l10n')
+          result.dictURI = result.dictURI.substr(0, result.dictURI.length - extname.length) + '.l10n';
+      }
 
       if (!source.templateTokens)
       {
-        ;;;source_ = source;
+        /** @cut */ source_ = source;
         source = tokenize(String(source));
       }
       else
@@ -1566,8 +1594,8 @@
     };
     this.destroyBuilder = funcs.destroy;
 
-    ;;;this.instances_ = funcs.instances_;
-    ;;;this.decl_ = decl;
+    /** @cut */ this.instances_ = funcs.instances_;
+    /** @cut */ this.decl_ = decl;
 
     // apply resources
     var declResources = decl.resources && decl.resources.length > 0 ? decl.resources : null;
@@ -1600,12 +1628,12 @@
       if (host.type == 'text/basis-template')
         return host.textContent || host.text;
 
-      ;;;basis.dev.warn('Template script element with wrong type', host.type);
+      /** @cut */ basis.dev.warn('Template script element with wrong type', host.type);
 
       return '';
     }
 
-    ;;;basis.dev.warn('Template script element with id `' + sourceId + '` not found');
+    /** @cut */ basis.dev.warn('Template script element with id `' + sourceId + '` not found');
 
     return '';
   }
@@ -1772,7 +1800,7 @@
                 source = getSourceByPath(source);
                 break;
               default:
-                ;;;basis.dev.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.');
+                /** @cut */ basis.dev.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.');
             }
           }
         }
@@ -1820,8 +1848,8 @@
       this.resources = null;
       this.source = null;
 
-      ;;;this.instances_ = null;
-      ;;;this.decl_ = null;
+      /** @cut */ this.instances_ = null;
+      /** @cut */ this.decl_ = null;
     }
   });
 
@@ -2111,7 +2139,7 @@
   }
 
   function syncCurrentTheme(changed){
-    ;;;basis.dev.log('re-apply templates');
+    /** @cut */ basis.dev.log('re-apply templates');
 
     for (var path in sourceByPath)
       syncCurrentThemePath(path);
@@ -2167,7 +2195,7 @@
           if (themes[name].fallback.source != newFallback.source)
           {
             themes[name].fallback.source = newFallback.source;
-            ;;;basis.dev.log('fallback changed');
+            /** @cut */ basis.dev.log('fallback changed');
             for (var themeName in themes)
             {
               var curFallback = themes[themeName].fallback;
@@ -2256,7 +2284,7 @@
           }
           else
           {
-            ;;;basis.dev.warn('Wrong first argument for basis.template.Theme#define');
+            /** @cut */ basis.dev.warn('Wrong first argument for basis.template.Theme#define');
           }
         }
       },
@@ -2269,7 +2297,7 @@
           for (var i = 0, handler; handler = themeChangeHandlers[i]; i++)
             handler.fn.call(handler.context, name);
 
-          ;;;basis.dev.info('Template theme switched to `' + name + '`');
+          /** @cut */ basis.dev.info('Template theme switched to `' + name + '`');
         }
         return themeInterface;
       },

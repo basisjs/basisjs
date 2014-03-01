@@ -1,4 +1,4 @@
-var transport = resource('transport.js').fetch();
+var transport = resource('./transport.js').fetch();
 var sendData = transport.sendData;
 
 module.exports = {

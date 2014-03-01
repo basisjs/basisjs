@@ -15,7 +15,7 @@ var File = basis.entity.createType('File', {
 
 File.extend({
   syncAction: function(){
-    var res = basis.resource('slide/' + this.data.filename);
+    var res = basis.resource('./slide/' + this.data.filename);
     res.ready(this.set_content, this);
     this.set('content', res.get(true));
 

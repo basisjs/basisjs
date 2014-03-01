@@ -28,7 +28,7 @@
   });
 
   var ClsNode = basis.ui.Node.subclass({
-    template: resource('template/classMapNode.tmpl'),
+    template: resource('./template/classMapNode.tmpl'),
 
     binding: {
       path: 'data:',
@@ -62,7 +62,7 @@
 
   var viewClassMap = new app.ext.view.View({
     viewHeader: 'ClassMap',
-    template: resource('template/classMap.tmpl'),
+    template: resource('./template/classMap.tmpl'),
 
     childNodes: classMap
   });

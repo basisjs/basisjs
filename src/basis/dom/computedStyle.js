@@ -15,15 +15,37 @@
     //   now called used values. There is no DOM API to get CSS 2.1 computed values.
     //
     // This workaround helps fetch used values instead of computed.
-    var GETCOMPUTEDSTYLE_BUGGY = {};
+    var GETCOMPUTEDSTYLE_BUGGY = {
+      top: true,
+      bottom: true,
+      left: true,
+      right: true,
+      height: true,
+      width: true
+    };
+
+    // test for computedStyle is buggy, run once on first computedStyle invoke
+    var testForBuggyProperties = basis.fn.runOnce(function(){
+      var testElement = document.createElement('div');
+      testElement.setAttribute('style', 'position:absolute;top:auto!important');
+      basis.doc.body.add(testElement);
+
+      if (global.getComputedStyle(testElement).top == 'auto')
+        GETCOMPUTEDSTYLE_BUGGY = {};
+
+      basis.doc.remove(testElement);
+    });
 
     // getComputedStyle function using W3C spec
     computedStyle = function(element, styleProp){
-      var style = global.getComputedStyle(element, null);
+      var style = global.getComputedStyle(element);
       var res;
 
       if (style)
       {
+        if (styleProp in GETCOMPUTEDSTYLE_BUGGY)
+          testForBuggyProperties();
+
         if (GETCOMPUTEDSTYLE_BUGGY[styleProp] && style.position != 'static')
         {
           var display = element.style.display;
@@ -39,25 +61,6 @@
         return res;
       }
     };
-
-    // test for computed style bug
-    basis.doc.body.ready(function(){
-      var element = document.createElement('div');
-      element.setAttribute('style', 'position:absolute;top:auto!important');
-      basis.doc.body.add(element);
-
-      if (computedStyle(element, 'top') != 'auto')
-        GETCOMPUTEDSTYLE_BUGGY = {
-          top: true,
-          bottom: true,
-          left: true,
-          right: true,
-          height: true,
-          width: true
-        };
-
-      basis.doc.remove(element);
-    });
   }
   else
   {

@@ -25,13 +25,13 @@
 <body>
   <script type="text/javascript">
     basis.require('basis.ui.code');
-    basis.require('basis.net');
+    basis.require('basis.net.ajax');
 
     var line = parseInt((location.hash || '').replace(/^#/, ''));
     var filename = ((location.search || '').match(/[\?\&]file=([^&]+)/) || [])[1];
     if (filename)
     {
-      (new basis.net.Transport({
+      basis.net.ajax.request({
         url: filename,
         handler: {
           complete: function(sender, req){
@@ -60,7 +60,7 @@
             }
           }
         }
-      })).request();
+      });
     }
   </script>
 </body>

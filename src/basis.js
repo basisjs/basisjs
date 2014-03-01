@@ -649,12 +649,11 @@
       })();
 
       // by default
-      var defaultAddToQueue = function(taskId){
+      var addToQueue = function(taskId){
         setTimeout(function(){
           runTask(taskId);
         }, 0);
       };
-      var addToQueue = defaultAddToQueue;
 
       //
       // implement platform specific solution
@@ -674,9 +673,11 @@
         {
           addToQueue = function(taskId){
             var channel = new global.MessageChannel();
-            channel.port1.onmessage = function(){
+            var setImmediateHandler = function(){
               runTask(taskId);
             };
+
+            channel.port1.onmessage = setImmediateHandler;
             channel.port2.postMessage(''); // broken in Opera if no value
           };
         }
@@ -700,7 +701,7 @@
           if (postMessageSupported)
           {
             // postMessage scheme
-            var handleMessage = function(event){
+            var setImmediateHandler = function(event){
               if (event && event.source == global)
               {
                 var taskId = String(event.data).split(MESSAGE_NAME)[1];
@@ -711,9 +712,9 @@
             };
 
             if (global.addEventListener)
-              global.addEventListener('message', handleMessage, true);
+              global.addEventListener('message', setImmediateHandler, true);
             else
-              global.attachEvent('onmessage', handleMessage);
+              global.attachEvent('onmessage', setImmediateHandler);
 
             // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
             // invoking our onGlobalMessage listener above.
@@ -731,6 +732,7 @@
             {
               // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
               // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
+              var defaultAddToQueue = addToQueue;
               addToQueue = function beforeHeadReady(taskId){
                 if (typeof documentInterface != 'undefined')
                 {
@@ -783,228 +785,236 @@
   * @namespace basis.path
   */
   var pathUtils = (function(){
+    var ABSOLUTE_RX = /^([^\/]+:|\/)/;
+    var PROTOCOL_RX = /^[a-zA-Z0-9\-]+:\/?/;
+    var ORIGIN_RX = /^(?:[a-zA-Z0-9\-]+:)?\/\/[^\/]+\/?/;
+    var SEARCH_HASH_RX = /[\?#].*$/;
+
+    var utils = {};
     var origin = '';
     var baseURI;
-    var utils = {};
 
     if (NODE_ENV)
     {
-      var methods = [
-        'normalize',
-        'dirname',
-        'extname',
-        'basename',
-        'resolve',
-        'relative'
-      ];
-
-      for (var i = 0, method; method = methods[i]; i++)
-        utils[method] = (function(method, path){
-          return function(){
-            return path[method].apply(path, arguments).replace(/\\/g, '/');
-          };
-        })(method, require('path'));
-
-      baseURI = utils.resolve('.') + '/';
+      var path = require('path').resolve('.').replace(/\\/g, '/');
+      baseURI = path.replace(/^[^\/]*/, '');
+      origin = path.replace(/\/.*/, '');
     }
     else
     {
-      var ABSOLUTE_RX = /^([^\/]+:|\/)/;
-      var ORIGIN_RX = /^([a-zA-Z0-9\-]+:)?\/\/[^\/]+/;
-      var SEARCH_HASH_RX = /[\?#].*$/;
-
-      utils = {
-       /**
-        * Normalize a string path, taking care of '..' and '.' parts.
-        * When multiple slashes are found, they're replaced by a single one;
-        * when the path contains a trailing slash, it is preserved.
-        *
-        * Origin is not includes in result path.
-        *
-        * @example
-        *   basis.path.normalize('/foo/bar//baz/asdf/quux/..');
-        *   // returns '/foo/bar/baz/asdf'
-        *
-        *   basis.path.normalize('http://example.com:8080/foo//..//bar/');
-        *   // returns '/bar'
-        *
-        *   basis.path.normalize('//localhost/foo/./..//bar/');
-        *   // returns '/bar'
-        *
-        * @param {string} path
-        * @return {string}
-        */
-        normalize: function(path){
-          // use link element as path resolver
-          var result = [];
-          var parts = (path || '')
-                .replace(ORIGIN_RX, '')         // but cut off origin
-                .replace(SEARCH_HASH_RX, '')    // cut off query search and hash
-                .split('/');                    // split by `/`
-
-          // process path parts
-          for (var i = 0; i < parts.length; i++)
-          {
-            if (parts[i] == '..')
-            {
-              if (result.length > 1 || result[0])
-                result.pop();
-            }
-            else
-            {
-              if ((parts[i] || !i) && parts[i] != '.')
-                result.push(parts[i]);
-            }
-          }
-
-          return result.join('/');
-        },
-
-       /**
-        * Return the directory name of a path. Similar to node.js path.dirname
-        * or the Unix dirname command.
-        *
-        * @example
-        *   basis.path.dirname('/foo/bar/baz/whatever'); // returns '/foo/bar/baz'
-        *
-        * @param {string} path
-        * @return {string}
-        */
-        dirname: function(path){
-          var result = utils.normalize(path).replace(/\/([^\/]*)$|^[^\/]+$/, '');
-          return result || (path.charAt(0) == '/' ? '/' : '.');
-        },
-
-       /**
-        * Return the extension of the path, from the last '.' to end of string
-        * in the last portion of the path. If there is no '.' in the last
-        * portion of the path or the first character of it is '.', then it
-        * returns an empty string.
-        *
-        * @example
-        *   basis.path.extname('index.html'); // returns '.html'
-        *   basis.path.extname('index.');     // returns '.'
-        *   basis.path.extname('index');      // returns ''
-        *
-        * @param {string} path
-        * @return {string} Path extension with leading dot or empty string.
-        */
-        extname: function(path){
-          var ext = utils.normalize(path).match(/[^\/](\.[^\/\.]*)$/);
-          return ext ? ext[1] : '';
-        },
-
-       /**
-        * Return the last portion of a path. Similar to node.js path.basename
-        * or the Unix basename command.
-        *
-        * @example
-        *   basis.path.basename('/foo/bar/baz.html');          // returns 'baz.html'
-        *   basis.path.basename('/foo/bar/baz.html', '.html'); // returns 'baz'
-        *
-        * @param {string} path
-        * @param {string=} ext
-        * @return {string}
-        */
-        basename: function(path, ext){
-          var filename = utils.normalize(path).match(/[^\\\/]*$/);
-          filename = filename ? filename[0] : '';
-
-          if (ext == utils.extname(filename))
-            filename = filename.substring(0, filename.length - ext.length);
-
-          return filename;
-        },
-
-       /**
-        * Resolves to to an absolute path.
-        *
-        * If to isn't already absolute from arguments are prepended in right
-        * to left order, until an absolute path is found. If after using all
-        * from paths still no absolute path is found, the current location is
-        * used as well. The resulting path is normalized, and trailing slashes
-        * are removed unless the path gets resolved to the root directory.
-        * Non-string arguments are ignored.
-        *
-        * @example
-        *   basis.path.resolve('/foo/bar', './baz');
-        *   // returns '/foo/bar/baz'
-        *
-        *   basis.path.resolve('/foo/bar', '/demo/file/');
-        *   // returns '/demo/file'
-        *
-        *   basis.path.resolve('foo', 'bar/baz/', '../gif/image.gif');
-        *   // if current location is /demo, it returns '/demo/foo/bar/gif/image.gif'
-        *
-        * @param {..string=} from
-        * @param {string} to
-        * @return {string}
-        */
-        resolve: function(from, to){
-          var args = arrayFrom(arguments).reverse();
-          var path = [];
-          var absoluteFound = false;
-
-          for (var i = 0; !absoluteFound && i < args.length; i++)
-            if (typeof args[i] == 'string')
-            {
-              path.unshift(args[i]);
-              absoluteFound = ABSOLUTE_RX.test(args[i]);
-            }
-
-          if (!absoluteFound)
-            path.unshift(baseURI == '/' ? '' : baseURI);
-
-          return utils.normalize(path.join('/'));
-        },
-
-       /**
-        * Solve the relative path from from to to.
-        *
-        * At times we have two absolute paths, and we need to derive the
-        * relative path from one to the other. This is actually the reverse
-        * transform of {basis.path.resolve}, which means we see that:
-        *
-        *   basis.path.resolve(from, basis.path.relative(from, to)) == basis.path.resolve(to)
-        *
-        * If `to` argument omitted than resolve `from` relative to current baseURI.
-        *
-        * @example
-        *   basis.path.relative('/data/orandea/test/aaa', '/data/orandea/impl/bbb');
-        *   // returns '../../impl/bbb'
-        *
-        * @param {string} from
-        * @param {string=} to
-        * @return {string}
-        */
-        relative: function(from, to){
-          if (typeof to != 'string')
-          {
-            to = from;
-            from = baseURI;
-          }
-
-          var abs = utils.normalize(to).split(/\//);
-          var loc = utils.normalize(from).split(/\//);
-          var i = 0;
-
-          while (abs[i] == loc[i] && typeof loc[i] == 'string')
-            i++;
-
-          var result = [];
-          for (var j = loc.length - i; j > 0; j--)
-            result.push('..');
-
-          return result.concat(abs.slice(i)).join('/');
-        }
-      };
-
       baseURI = location.pathname.replace(/[^\/]+$/, '');
       origin = location.protocol + '//' + location.host;
     }
 
-    utils.baseURI = baseURI;
-    utils.origin = origin;
+    utils = {
+      baseURI: baseURI,
+      origin: origin,
+
+     /**
+      * Normalize a string path, taking care of '..' and '.' parts.
+      * When multiple slashes are found, they're replaced by a single one;
+      * when the path contains a trailing slash, it is preserved.
+      *
+      * Origin is not includes in result path.
+      *
+      * @example
+      *   basis.path.normalize('/foo/bar//baz/asdf/quux/..');
+      *   // returns '/foo/bar/baz/asdf'
+      *
+      *   basis.path.normalize('http://example.com:8080/foo//..//bar/');
+      *   // returns '/bar'
+      *
+      *   basis.path.normalize('//localhost/foo/./..//bar/');
+      *   // returns '/bar'
+      *
+      * @param {string} path
+      * @return {string}
+      */
+      normalize: function(path){
+        path = (path || '')
+              .replace(PROTOCOL_RX, '/')
+              .replace(ORIGIN_RX, '/')        // but cut off origin
+              .replace(SEARCH_HASH_RX, '');   // cut off query search and hash
+
+        // use link element as path resolver
+        var result = [];
+        var parts = path.split('/');             // split
+
+        // process path parts
+        for (var i = 0; i < parts.length; i++)
+        {
+          if (parts[i] == '..')
+          {
+            if (result.length > 1 || result[0])
+              result.pop();
+          }
+          else
+          {
+            if ((parts[i] || !i) && parts[i] != '.')
+              result.push(parts[i]);
+          }
+        }
+
+        return result.join('/') ||
+               (path[0] === '/' ? '/' : '');
+      },
+
+     /**
+      * Return the directory name of a path. Similar to node.js path.dirname
+      * or the Unix dirname command.
+      *
+      * @example
+      *   basis.path.dirname('/foo/bar/baz/whatever'); // returns '/foo/bar/baz'
+      *
+      * @param {string} path
+      * @return {string}
+      */
+      dirname: function(path){
+        var result = utils.normalize(path);
+        return result.replace(/\/([^\/]*)$|^[^\/]+$/, '') ||
+               (result[0] == '/' ? '/' : '.');
+      },
+
+     /**
+      * Return the extension of the path, from the last '.' to end of string
+      * in the last portion of the path. If there is no '.' in the last
+      * portion of the path or the first character of it is '.', then it
+      * returns an empty string.
+      *
+      * @example
+      *   basis.path.extname('index.html'); // returns '.html'
+      *   basis.path.extname('index.');     // returns '.'
+      *   basis.path.extname('index');      // returns ''
+      *
+      * @param {string} path
+      * @return {string} Path extension with leading dot or empty string.
+      */
+      extname: function(path){
+        var ext = utils.normalize(path).match(/[^\/](\.[^\/\.]*)$/);
+        return ext ? ext[1] : '';
+      },
+
+     /**
+      * Return the last portion of a path. Similar to node.js path.basename
+      * or the Unix basename command.
+      *
+      * @example
+      *   basis.path.basename('/foo/bar/baz.html');          // returns 'baz.html'
+      *   basis.path.basename('/foo/bar/baz.html', '.html'); // returns 'baz'
+      *
+      * @param {string} path
+      * @param {string=} ext
+      * @return {string}
+      */
+      basename: function(path, ext){
+        var filename = utils.normalize(path).match(/[^\\\/]*$/);
+        filename = filename ? filename[0] : '';
+
+        if (ext == utils.extname(filename))
+          filename = filename.substring(0, filename.length - ext.length);
+
+        return filename;
+      },
+
+     /**
+      * Resolves to to an absolute path.
+      *
+      * If to isn't already absolute from arguments are prepended in right
+      * to left order, until an absolute path is found. If after using all
+      * from paths still no absolute path is found, the current location is
+      * used as well. The resulting path is normalized, and trailing slashes
+      * are removed unless the path gets resolved to the root directory.
+      * Non-string arguments are ignored.
+      *
+      * @example
+      *   basis.path.resolve('/foo/bar', './baz');
+      *   // returns '/foo/bar/baz'
+      *
+      *   basis.path.resolve('/foo/bar', '/demo/file/');
+      *   // returns '/demo/file'
+      *
+      *   basis.path.resolve('foo', 'bar/baz/', '../gif/image.gif');
+      *   // if current location is /demo, it returns '/demo/foo/bar/gif/image.gif'
+      *
+      * @param {..string=} from
+      * @param {string} to
+      * @return {string}
+      */
+      resolve: function(from, to){
+        var args = arrayFrom(arguments).reverse();
+        var path = [];
+        var absoluteFound = false;
+
+        for (var i = 0; !absoluteFound && i < args.length; i++)
+          if (typeof args[i] == 'string')
+          {
+            path.unshift(args[i]);
+            absoluteFound = ABSOLUTE_RX.test(args[i]);
+          }
+
+        if (!absoluteFound)
+          path.unshift(baseURI == '/' ? '' : baseURI);
+
+        return utils.normalize(path.join('/'));
+      },
+
+     /**
+      * Solve the relative path from from to to.
+      *
+      * At times we have two absolute paths, and we need to derive the
+      * relative path from one to the other. This is actually the reverse
+      * transform of {basis.path.resolve}, which means we see that:
+      *
+      *   basis.path.resolve(from, basis.path.relative(from, to)) == basis.path.resolve(to)
+      *
+      * If `to` argument omitted than resolve `from` relative to current baseURI.
+      *
+      * Function also could be used with Array#map method as well. In this case
+      * every array member resolves to current baseURI.
+      *
+      * @example
+      *   basis.path.relative('/data/orandea/test/aaa', '/data/orandea/impl/bbb');
+      *   // returns '../../impl/bbb'
+      *
+      *   ['foo', '/a/b/bar', 'a/b/baz'].map(basis.path.relative);
+      *   // if baseURI is '/a/b' it produces
+      *   // ['../../foo', 'bar', '../../a/b/baz']
+      *
+      * @param {string} from
+      * @param {string=} to
+      * @return {string}
+      */
+      relative: function(from, to){
+        // it makes function useful with array iterate methods, i.e.
+        // ['foo', 'bar'].map(basis.path.relative)
+        if (typeof to != 'string')
+        {
+          to = from;
+          from = baseURI;
+        }
+
+        from = utils.normalize(from);
+        to = utils.normalize(to);
+
+        if (from[0] == '/' && to[0] != '/')
+          return from;
+        if (to[0] == '/' && from[0] != '/')
+          return to;
+
+        var base = from.replace(/^\/$/, '').split(/\//);
+        var path = to.replace(/^\/$/, '').split(/\//);
+        var result = [];
+        var i = 0;
+
+        while (path[i] == base[i] && typeof base[i] == 'string')
+          i++;
+
+        for (var j = base.length - i; j > 0; j--)
+          result.push('..');
+
+        return result.concat(path.slice(i).filter(Boolean)).join('/');
+      }
+    };
 
     return utils;
   })();
@@ -1032,7 +1042,7 @@
   var config = (function(){
     var basisBaseURI = '';
     var config = {
-      extProto: 'warn'
+      extProto: false
     };
 
     if (NODE_ENV)
@@ -1053,7 +1063,7 @@
           try {
             extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
           } catch(e) {
-            ;;;consoleMethods.error('basis.js config parse fault: ' + e);
+            /** @cut */ consoleMethods.error('basis.js config parse fault: ' + e);
           }
 
           // warn about extClass in basis-config, this option was introduced in 0.9.8 for preventing using custom methods via buildin clasess
@@ -1099,12 +1109,12 @@
         }
         else
         {
-          ;;;consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
+          /** @cut */ consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
         }
       }
       else
       {
-        ;;;consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
+        /** @cut */ consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
       }
     }
 
@@ -1312,7 +1322,7 @@
 
       // verbose name in dev
       // NOTE: this code makes Chrome and Firefox show class name in console
-      ;;;newClass = dev_verboseNameWrap(className, { instanceSeed: instanceSeed }, newClass);
+      /** @cut */ newClass = dev_verboseNameWrap(className, { instanceSeed: instanceSeed }, newClass);
 
       // add constructor property to prototype
       newProto.constructor = newClass;
@@ -1361,7 +1371,7 @@
           else
           {
             proto[key] = value;
-            //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
+            ///** @cut */ if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
           }
         }
       }
@@ -1736,29 +1746,43 @@
   // Resources
   //
 
-  var resourceCache = {};
-  var resourceRequestCache = {};
-  var resourceUpdateNotifier = extend(new Token(), {
-    set: function(value){
-      this.value = value;
-      this.apply();
-    }
-  });
+  var resources = {};
+  var resourceContentCache = {};
+  var resourcePatch = {};
   /** @cut */ var resourceResolvingStack = [];
+  /** @cut */ var requires;
+  // var resourceUpdateNotifier = extend(new Token(), {
+  //   set: function(value){
+  //     this.value = value;
+  //     this.apply();
+  //   }
+  // });
 
   // apply prefetched resources to cache
   (function(){
-    if (typeof __resources__ != 'undefined')
+    var map = typeof __resources__ != 'undefined' ? __resources__ : null;
+    if (map)
     {
-      for (var key in __resources__)
-        resourceRequestCache[pathUtils.resolve(key)] = __resources__[key];
+      for (var key in map)
+        resourceContentCache[pathUtils.resolve(key)] = map[key];
 
       __resources__ = null; // reset prefetched to reduce memory leaks
     }
   })();
 
+  function applyResourcePatches(resource){
+    var patches = resourcePatch[resource.url];
+
+    if (patches)
+      for (var i = 0; i < patches.length; i++)
+      {
+        /** @cut */ consoleMethods.info('Apply patch for ' + resource.url);
+        patches[i](resource.get(), resource.url);
+      }
+  }
+
   var getResourceContent = function(url, ignoreCache){
-    if (ignoreCache || !resourceRequestCache.hasOwnProperty(url))
+    if (ignoreCache || !resourceContentCache.hasOwnProperty(url))
     {
       var resourceContent = '';
 
@@ -1789,24 +1813,28 @@
         }
       }
 
-      resourceRequestCache[url] = resourceContent;
+      resourceContentCache[url] = resourceContent;
     }
 
-    return resourceRequestCache[url];
+    return resourceContentCache[url];
   };
 
  /**
   * @name resource
   */
   var getResource = function(resourceUrl){
+    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
+    /** @cut */   consoleMethods.warn('Bad usage: basis.resource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
     resourceUrl = pathUtils.resolve(resourceUrl);
 
-    if (!resourceCache[resourceUrl])
+    if (!resources[resourceUrl])
     {
       var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
       var resolved = false;
       var wrapped = false;
       var content;
+      /** @cut */ var wrappedContent;
 
       var resource = function(){
         // if resource resolved, just return content
@@ -1819,7 +1847,7 @@
         /** @cut    recursion warning */
         /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
         /** @cut */ if (idx != -1)
-        /** @cut */   basis.dev.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+        /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
         /** @cut */ resourceResolvingStack.push(resourceUrl);
 
         // if resource type has wrapper - wrap it, or use url content as result
@@ -1829,6 +1857,7 @@
           {
             wrapped = true;
             content = contentWrapper(urlContent, resourceUrl);
+            /** @cut */ wrappedContent = urlContent;
           }
         }
         else
@@ -1838,10 +1867,11 @@
 
         // mark as resolved and apply binded functions
         resolved = true;
+        applyResourcePatches(resource);
         resource.apply();
 
-        //resourceUpdateNotifier.value = resourceUrl;
-        //resourceUpdateNotifier.apply();
+        // resourceUpdateNotifier.value = resourceUrl;
+        // resourceUpdateNotifier.apply();
 
         /** @cut    recursion warning */
         /** @cut */ resourceResolvingStack.pop();
@@ -1857,19 +1887,26 @@
         toString: function(){
           return '[basis.resource ' + resourceUrl + ']';
         },
+        isResolved: function(){
+          return resolved;
+        },
+        /** @cut */ hasChanges: function(){
+        /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
+        /** @cut */ },
         update: function(newContent){
           newContent = String(newContent);
 
-          if (!resolved || newContent != resourceRequestCache[resourceUrl])
+          if (!resolved || newContent != resourceContentCache[resourceUrl])
           {
-            resourceRequestCache[resourceUrl] = newContent;
+            resourceContentCache[resourceUrl] = newContent;
 
             if (contentWrapper)
             {
-              // wrap content only if it wrapped already and updatable
-              if (wrapped && contentWrapper.updatable)
+              // wrap content only if it wrapped already and non-updatable
+              if (wrapped && !contentWrapper.permanent)
               {
                 content = contentWrapper(newContent, resourceUrl);
+                applyResourcePatches(resource);
                 resource.apply();
               }
             }
@@ -1877,15 +1914,16 @@
             {
               content = newContent;
               resolved = true;
+              applyResourcePatches(resource);
               resource.apply();
             }
 
-            resourceUpdateNotifier.value = resourceUrl;
-            resourceUpdateNotifier.apply();
+            // resourceUpdateNotifier.value = resourceUrl;
+            // resourceUpdateNotifier.apply();
           }
         },
         reload: function(){
-          var oldContent = resourceRequestCache[resourceUrl];
+          var oldContent = resourceContentCache[resourceUrl];
           var newContent = getResourceContent(resourceUrl, true);
 
           if (newContent != oldContent)
@@ -1902,7 +1940,7 @@
           {
             fn.call(context, resource());
 
-            if (contentWrapper && !contentWrapper.updatable)
+            if (contentWrapper && contentWrapper.permanent)
               return;
           }
 
@@ -1913,38 +1951,47 @@
       }));
 
       // cache result
-      resourceCache[resourceUrl] = resource;
+      resources[resourceUrl] = resource;
     }
 
-    return resourceCache[resourceUrl];
+    return resources[resourceUrl];
   };
 
-  var nsRootPath = slice(config.path);
-  /** @cut */ var requires;
-
   extend(getResource, {
-    onUpdate: function(fn, context){
-      resourceUpdateNotifier.attach(fn, context);
+    // onUpdate: function(fn, context){
+    //   resourceUpdateNotifier.attach(fn, context);
+    // },
+    isResource: function(value){
+      return value ? resources[value.url] === value : false;
     },
-    getFiles: function(){
-      var result = [];
+    isResolved: function(resourceUrl){
+      var resource = getResource.get(resourceUrl);
 
-      for (var url in resourceCache)
-        result.push(pathUtils.relative(url));
-
-      return result;
-    },
-    getSource: function(resourceUrl){
-      return getResourceContent(pathUtils.resolve(resourceUrl));
+      return resource ? resource.isResolved() : false;
     },
     exists: function(resourceUrl){
-      return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
+      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+      return resources.hasOwnProperty(pathUtils.resolve(resourceUrl));
     },
-    isResource: function(value){
-      return value ? resourceCache[value.url] === value : false;
+    get: function(resourceUrl){
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
+      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.get(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+      resourceUrl = pathUtils.resolve(resourceUrl);
+
+      if (!getResource.exists(resourceUrl))
+        return null;
+
+      return getResource(resourceUrl);
     },
+    getFiles: function(cache){
+      return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
+    },
+
     extensions: {
-      '.js': function(content, filename){
+      '.js': extend(function(content, filename){
         var namespace = filename2namespace[filename];
 
         if (!namespace)
@@ -1998,9 +2045,11 @@
         }
 
         return namespaces[namespace].exports;
-      },
+      }, {
+        permanent: true
+      }),
 
-      '.css': extend(function(content, url){
+      '.css': function(content, url){
         var resource = CssResource.resources[url];
 
         if (!resource)
@@ -2009,11 +2058,9 @@
           resource.updateCssText(content);
 
         return resource;
-      }, {
-        updatable: true
-      }),
+      },
 
-      '.json': extend(function(content, url){
+      '.json': function(content, url){
         if (typeof content == 'object')
           return content;
 
@@ -2022,14 +2069,17 @@
           content = String(content);
           result = basis.json.parse(content);
         } catch(e) {
-          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
+          /** @cut */ consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
         }
         return result || null;
-      }, {
-        updatable: true
-      })
+      }
     }
   });
+
+
+  // ================================
+  // script compilation and execution
+  //
 
   function compileFunction(sourceURL, args, body){
     try {
@@ -2046,7 +2096,7 @@
       /** @cut */     if (event.filename == pathUtils.origin + sourceURL)
       /** @cut */     {
       /** @cut */       global.removeEventListener('error', onerror);
-      /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
+      /** @cut */       consoleMethods.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
       /** @cut */       event.preventDefault();
       /** @cut */     }
       /** @cut */   });
@@ -2060,7 +2110,7 @@
 
       // don't throw new exception, just output error message and return undefined
       // in this case more chances for other modules continue to work
-      basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 1) : '') + ': ' + e);
+      consoleMethods.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 1) : '') + ': ' + e);
     }
   }
 
@@ -2089,7 +2139,10 @@
         sourceURL,
         baseURL,
         function(relativePath){
-          return getResource(baseURL + relativePath);
+          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(relativePath))
+          /** @cut */   consoleMethods.warn('Bad usage: resource(\'' + relativePath + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+          return getResource(pathUtils.resolve(baseURL, relativePath));
         },
         function(relativePath, base){
           return requireNamespace(relativePath, base || baseURL);
@@ -2107,9 +2160,12 @@
   var namespaces = {};
   var namespace2filename = {};
   var filename2namespace = {};
+  var nsRootPath = slice(config.path);
 
-  if (typeof __namespace_map__ != 'undefined')
-    (function(map){
+  (function(map){
+    var map = typeof __namespace_map__ != 'undefined' ? __namespace_map__ : null;
+    if (map)
+    {
       for (var key in map)
       {
         var filename = pathUtils.resolve(key);
@@ -2117,7 +2173,9 @@
         filename2namespace[filename] = namespace;
         namespace2filename[namespace] = filename;
       }
-    })(__namespace_map__);
+    }
+  })();
+
 
   var Namespace = Class(null, {
     className: 'basis.Namespace',
@@ -2135,6 +2193,24 @@
       return complete(this, names);
     }
   });
+
+  function resolveNSFilename(namespace){
+    var namespaceRoot = namespace.split('.')[0];
+    var filename = namespace.replace(/\./g, '/') + '.js';
+
+    if (namespace in namespace2filename == false)
+    {
+      if (namespaceRoot in nsRootPath == false)
+        nsRootPath[namespaceRoot] = pathUtils.baseURI;
+
+      if (namespaceRoot == namespace)
+        filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
+
+      namespace2filename[namespace] = nsRootPath[namespaceRoot] + filename;
+    }
+
+    return namespace2filename[namespace];
+  }
 
   function getRootNamespace(name){
     var namespace = namespaces[name];
@@ -2165,7 +2241,7 @@
   * @param {string} path
   * @return {basis.Namespace}
   */
-  var getNamespace = function(path){
+  function getNamespace(path){
     path = path.split('.');
 
     var rootNs = getRootNamespace(path[0]);
@@ -2188,7 +2264,7 @@
     namespaces[path.join('.')] = cursor;
 
     return cursor;
-  };
+  }
 
 
  /**
@@ -2198,7 +2274,6 @@
   var requireNamespace = (function(){
     if (NODE_ENV)
     {
-      var requirePath = pathUtils.dirname(module.filename) + '/';
       var moduleProto = module.constructor.prototype;
       return function(filename, dirname){
         if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == '.js')
@@ -2218,7 +2293,7 @@
             _compile.call(extend(this, namespace), content, filename);
           };
 
-          var exports = require(requirePath + filename.replace(/\./g, '/'));
+          var exports = require(__dirname + '/' + filename.replace(/\./g, '/'));
 
           namespace.exports = exports;
           if (exports && exports.constructor === Object)
@@ -2242,21 +2317,14 @@
         if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
         {
           // namespace, like 'foo.bar.baz'
-          var namespace = filename;
-          var namespaceRoot = namespace.split('.')[0];
-
-          filename = namespace.replace(/\./g, '/') + '.js';
-
-          if (namespaceRoot == namespace)
-          {
-            nsRootPath[namespaceRoot] = nsRootPath[namespace] || pathUtils.baseURI;
-            filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
-          }
-
-          filename = (nsRootPath[namespaceRoot] || '') + filename;
+          filename = resolveNSFilename(filename);
         }
         else
         {
+          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
+          /** @cut */   consoleMethods.warn('Bad usage: require(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+          // regular filename
           filename = pathUtils.resolve(dirname, filename);
         }
 
@@ -2264,6 +2332,33 @@
       };
     }
   })();
+
+
+  function patch(filename, patchFn){
+    if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
+    {
+      // namespace, like 'foo.bar.baz'
+      filename = resolveNSFilename(filename);
+    }
+    else
+    {
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
+      /** @cut */   consoleMethods.warn('Bad usage: basis.patch(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+      // regular filename
+      filename = pathUtils.resolve(filename);
+    }
+
+    if (!resourcePatch[filename])
+      resourcePatch[filename] = [patchFn];
+    else
+      resourcePatch[filename].push(patchFn);
+
+    // if resource exists and resolved -> apply patch
+    var resource = getResource.get(filename);
+    if (resource && resource.isResolved())
+      patchFn(resource.get(), resource.url);
+  }
 
   //
   // Buildin classes extension
@@ -2336,8 +2431,8 @@
     {
       var len = object.length;
 
-                                       // Safari 5.1 has a bug, typeof for node collection returns `function`
-      if (typeof len == 'undefined' || Object_toString.call(object) == '[object Function]')
+      if (typeof len == 'undefined' ||
+          Object_toString.call(object) == '[object Function]') // Safari 5.1 has a bug, typeof for node collection returns `function`
         return [object];
 
       if (!offset)
@@ -2820,12 +2915,16 @@
     var fired = !document || isReady();
     var deferredHandler;
 
+    function runReadyHandler(handler){
+      handler.callback.call(handler.context);
+    }
+
     function fireHandlers(){
       if (isReady())
         if (!fired++)
           while (deferredHandler)
           {
-            deferredHandler.callback.call(deferredHandler.context);
+            runReadyHandler(deferredHandler);
             deferredHandler = deferredHandler.next;
           }
     }
@@ -2882,7 +2981,10 @@
         };
       }
       else
-        callback.call(context);
+        runReadyHandler({
+          callback: callback,
+          context: context
+        });
     };
   })();
 
@@ -2960,11 +3062,11 @@
     }
 
     function checkParents(){
-      if (getParent('head') && getParent('body'))
-        clearInterval(timer);
+      if (timer && getParent('head') && getParent('body'))
+        timer = clearInterval(timer);
     }
 
-    if (document)
+    if (document && (!getParent('head') || !getParent('body')))
     {
       timer = setInterval(checkParents, 5);
       ready(checkParents);
@@ -3003,7 +3105,7 @@
     var objects = [];
 
     function destroy(log){
-      ;;;var logDestroy = log && typeof log == 'boolean';
+      /** @cut */ var logDestroy = log && typeof log == 'boolean';
       result.globalDestroy = true;
       result.add = $undef;
       result.remove = $undef;
@@ -3051,8 +3153,8 @@
     };
 
     // for debug purposes
-    ;;;result.destroy_ = destroy;
-    ;;;result.objects_ = objects;
+    /** @cut */ result.destroy_ = destroy;
+    /** @cut */ result.objects_ = objects;
 
     return result;
   })();
@@ -3245,38 +3347,44 @@
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
 
+    // properties and settings
     version: VERSION,
 
     NODE_ENV: NODE_ENV,
     config: config,
     platformFeature: {},
 
-    path: pathUtils,
-
+    // modularity
+    resolveNSFilename: resolveNSFilename,
+    patch: patch,
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
-    asset: function(url){
-      return url;
+    asset: function(url){   // NOTE: don't replace for $self, builder attach
+      return url;           // special handler for this function
     },
 
-    getter: getter,
-    ready: ready,
-
+    // timers
     setImmediate: setImmediate,
     clearImmediate: clearImmediate,
     nextTick: function(){
       setImmediate.apply(null, arguments);
     },
 
+    // classes
     Class: Class,
     Token: Token,
     DeferredToken: DeferredToken,
 
+    // util functions
+    getter: getter,
+    ready: ready,
+
     cleaner: cleaner,
     console: consoleMethods,
-
+    path: pathUtils,
     doc: documentInterface,
+
     object: {
       extend: extend,
       complete: complete,
@@ -3331,7 +3439,9 @@
     json: {
       parse: typeof JSON != 'undefined'
         ? JSON.parse
-        : String_extensions.toObject
+        : function(str){
+            return String_extensions.toObject(str, true);
+          }
     }
   });
 

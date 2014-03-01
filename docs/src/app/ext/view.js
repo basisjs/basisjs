@@ -5,8 +5,8 @@
   var namespace = module.path;
 
   var templates = basis.template.define('app', {
-    ViewOption: resource('view/template/viewOption.tmpl'),
-    ViewOptionList: resource('view/template/viewOptionList.tmpl'),
+    ViewOption: resource('./view/template/viewOption.tmpl'),
+    ViewOptionList: resource('./view/template/viewOptionList.tmpl'),
   });
 
   //

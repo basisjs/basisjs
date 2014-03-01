@@ -15,7 +15,7 @@ var Todo = require('app.type').Todo;
 var TodoView = basis.ui.Node.subclass({
   editing: false,
 
-  template: resource('template/item.tmpl'),
+  template: resource('./template/item.tmpl'),
   binding: {
     title: 'data:',
     completed: 'data:',
@@ -58,7 +58,7 @@ var TodoView = basis.ui.Node.subclass({
 module.exports = new basis.ui.Node({
   dataSource: Todo.selected,
 
-  template: resource('template/list.tmpl'),
+  template: resource('./template/list.tmpl'),
   binding: {
     noActive: basis.data.index.count(Todo.active).as(basis.bool.invert)
   },

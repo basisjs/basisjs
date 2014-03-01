@@ -1,0 +1,52 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>basis.layout</title>
+
+  <style type="text/css">
+    BODY,
+    HTML
+    {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+    }
+
+    HTML
+    {
+      padding: 1px 3px;
+      border: solid white;
+      border-width: 3px 5px;
+      margin: 7px 7px;
+    }
+
+    BODY
+    {
+      padding: 5px 7px;        /*        9 */
+      border: solid white;     /*        7 */
+      border-width: 7px 9px;   /*        5 */
+      margin: 9px 11px;        /* 11 9 7 x */
+    }
+  </style>
+  <script src="../../src/basis.js" data-basis-config></script>
+</head>
+
+<body>
+  <!-- page client box expander -->
+  <div style="position: absolute; top: 200%; left: 125%; width: 10px; height: 10px; background: green; background: rgba(0,160,0,.5)"></div>
+
+  <div id="container">
+    <div id="test1" style="position: absolute; top: 15px; left: 15px; width: 10px; height: 10px; background: red; background: rgba(255,0,0,.5)"></div>
+    <div id="test3" style="position: fixed; top: 15px; left: 15px; width: 10px; height: 10px; background: red; background: rgba(255,0,0,.5)"></div>
+  </div>
+
+  <div id="test2_container" style="position: absolute; top: 50px; left: 215px; height: 100px; width: 100px; background: blue; background: rgba(0, 0, 255, .5); margin: 3px; border: 5px solid white; padding: 7px; overflow: auto; visibility: hidden">
+    <div id="test2" style="position: absolute; top: 15px; left: 15px; width: 10px; height: 10px; background: red; background: rgba(255,0,0,.5)"></div>
+    <!-- block client box expander -->
+    <div style="position: absolute; top: 200%; left: 200%;">x</div>
+  </div>
+</body>
+</html>

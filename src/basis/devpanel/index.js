@@ -2,58 +2,101 @@ basis.require('basis.ui');
 basis.require('basis.dragdrop');
 basis.require('basis.l10n');
 
-var l10nInspector = resource('inspector/l10n.js').fetch();
-var templateInspector = resource('inspector/template.js').fetch();
-var heatInspector = resource('inspector/heatmap.js').fetch();
+var l10nInspector = resource('./inspector/l10n.js');
+var templateInspector = resource('./inspector/template.js');
+var heatInspector = resource('./inspector/heatmap.js');
 
-var themeList = resource('themeList.js').fetch();
-var cultureList = resource('cultureList.js').fetch();
-//var fileInspector = resource('module/fileInspector/fileInspector.js');
+var themeList = resource('./themeList.js').fetch();
+var cultureList = resource('./cultureList.js').fetch();
+//var fileInspector = resource('./module/fileInspector/fileInspector.js');
 
 
 //
 // panel
 //
+
+var isOnline;
+var permamentFiles = [];
+var permamentFilesCount = new basis.data.Value(0);
+
+if (typeof basisjsToolsFileSync != 'undefined')
+{
+  // new basisjs-tools
+  isOnline = new basis.Token(basisjsToolsFileSync.isOnline.value);
+  basisjsToolsFileSync.isOnline.attach(isOnline.set, isOnline);
+
+  basisjsToolsFileSync.notifications.attach(function(eventName, filename){
+    var ext = basis.path.extname(filename);
+
+    if (eventName == 'new' || ext in basis.resource.extensions == false)
+      return;
+
+    if (basis.resource.extensions[ext].permanent && basis.resource.isResolved(filename))
+    {
+      basis.setImmediate(function(){
+        if (basis.resource(filename).hasChanges())
+          basis.array.add(permamentFiles, filename);
+        else
+          basis.array.remove(permamentFiles, filename);
+
+        permamentFilesCount.set(permamentFiles.length);
+      });
+    }
+  });
+}
+else
+{
+  // old basisjs-tools
+  isOnline = basis.devtools && basis.data.Value.from(basis.devtools.serverState, 'update', 'data.isOnline');
+}
+
 var panel = new basis.ui.Node({
   container: document.body,
 
   activated: false,
   themeName: basis.template.currentTheme().name,
-  culture: basis.l10n.getCulture(),
 
-  template: resource('template/panel.tmpl'),
+  template: resource('./template/panel.tmpl'),
 
   binding: {
-    themeList: themeList,
-    cultureList: cultureList,
     activated: 'activated',
     themeName: 'themeName',
-    cultureName: 'culture'
+    themeList: themeList,
+    cultureName: basis.l10n.culture,
+    cultureList: cultureList,
+    isOnline: isOnline,
+    reloadRequired: 'satellite:'
   },
 
   action: {
     inspectTemplate: function(){
+      cultureList.setDelegate();
+      themeList.setDelegate();
       basis.dom.event.captureEvent('click', function(){
         basis.dom.event.releaseEvent('click');
-        templateInspector.startInspect();
+        templateInspector().startInspect();
       });
     },
     showThemes: function(){
       themeList.setDelegate(this);
     },
     inspectl10n: function(){
+      cultureList.setDelegate();
+      themeList.setDelegate();
       basis.dom.event.captureEvent('click', function(){
         basis.dom.event.releaseEvent('click');
-        l10nInspector.startInspect();
+        l10nInspector().startInspect();
       });
     },
     showCultures: function(){
       cultureList.setDelegate(this);
     },
     inspectHeat: function(){
+      cultureList.setDelegate();
+      themeList.setDelegate();
       basis.dom.event.captureEvent('click', function(){
         basis.dom.event.releaseEvent('click');
-        heatInspector.startInspect();
+        heatInspector().startInspect();
       });
     },
     // inspectFile: function(){
@@ -63,6 +106,23 @@ var panel = new basis.ui.Node({
       if (localStorage){
         localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
       }
+    }
+  },
+
+  satellite: {
+    reloadRequired: {
+      instance: new basis.ui.Node({
+        template: resource('./template/reloadRequired.tmpl'),
+        binding: {
+          visible: permamentFilesCount.as(Boolean),
+          count: permamentFilesCount
+        },
+        action: {
+          reload: function(){
+            global.location.reload();
+          }
+        }
+      })
     }
   },
 
@@ -89,13 +149,6 @@ themeList.selection.addHandler({
     var theme = this.pick();
     panel.themeName = theme.value;
     panel.updateBind('themeName');
-  }
-});
-
-cultureList.selection.addHandler({
-  itemsChanged: function(object, delta){
-    panel.culture = this.pick().value;
-    panel.updateBind('cultureName');
   }
 });
 

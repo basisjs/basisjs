@@ -35,7 +35,7 @@
   //
 
   var templates = basis.template.define(namespace, {
-    ScrollTable: resource('templates/scrolltable/ScrollTable.tmpl')
+    ScrollTable: resource('./templates/scrolltable/ScrollTable.tmpl')
   });
 
 

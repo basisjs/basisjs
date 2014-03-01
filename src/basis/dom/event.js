@@ -242,7 +242,10 @@
       if ('pageX' in event)                 // all others
         return event.pageX;
       else
-        return 'clientX' in event ? event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft) : 0;
+        return 'clientX' in event
+          ? event.clientX +
+              (document.compatMode == 'CSS1Compat' ? document.documentElement.scrollLeft : document.body.scrollLeft)
+          : 0;
   }
 
  /**
@@ -257,7 +260,10 @@
       if ('pageY' in event)
         return event.pageY;
       else
-        return 'clientY' in event ? event.clientY + (document.documentElement.scrollTop || document.body.scrollTop) : 0;
+        return 'clientY' in event
+          ? event.clientY +
+              (document.compatMode == 'CSS1Compat' ? document.documentElement.scrollTop : document.body.scrollTop)
+          : 0;
   }
 
  /**

@@ -23,7 +23,7 @@
   });
 
   var ViewNSNode = basis.ui.Node.subclass({
-    template: resource('template/namespaceNode.tmpl'),
+    template: resource('./template/namespaceNode.tmpl'),
 
     binding: {
       path: 'data:className',
@@ -63,7 +63,7 @@
     viewHeader: 'Namespace class map',
     title: 'Namespace class map',
 
-    template: resource('template/namespaceMap.tmpl'),
+    template: resource('./template/namespaceMap.tmpl'),
 
     binding: {
       classMap: 'satellite:'

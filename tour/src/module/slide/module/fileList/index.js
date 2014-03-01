@@ -10,12 +10,12 @@ module.exports = new basis.ui.tabs.TabControl({
     }
   },
 
-  template: resource('template/list.tmpl'),
+  template: resource('./template/list.tmpl'),
 
   childClass: {
     active: true,
 
-    template: resource('template/item.tmpl'),
+    template: resource('./template/item.tmpl'),
     binding: {
       title: 'data:name',
       modified: function(node){

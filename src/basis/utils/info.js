@@ -35,7 +35,7 @@
   */
   function functionInfo(fn){
     var source = Function.prototype.toString.call(fn);
-    var m = source.match(/^\s*function(\s+\S+)?\s*\((\s*(?:\S+|\/\*[^*]+\*\/)(\s*(?:,\s*\S+|\/\*[^*]+\*\/))*\s*)?\)/);
+    var m = source.match(/^\s*function(\s+\S+)?\s*\((\s*(?:\S+|\/\*[^*]+\*\/)(\s*(?:,\s*\S+|\/\*[^*]+\*\/))*\s*)?(?:[\r\n]+[^\)]*)?\)/);
     var body = source.replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
     var getter = resolveGetter(fn);
     var args = (m && m[2] || '').replace(/\s*,\s*/g, ', ');

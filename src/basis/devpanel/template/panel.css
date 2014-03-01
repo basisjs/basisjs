@@ -1,37 +1,42 @@
 .Basis-DevPanel
 {
   position: fixed;
+  z-index: 10001;
   left: 10px;
   top: 10px;
-  /*padding: 10px 0;*/
-  /*width: 40px;*/
-  display: inline-block;
+  padding: 1px;
 
-  z-index: 10001;
-  
-  background: #4B77CC;
-  border: 1px solid #4B77CC;
   opacity: 0.5;
+  background: #999;
+  border: 1px solid #666;
   border-radius: 5px;
-  box-shadow: 0 0 10px 0 rgba(0,0,0, .3), 0 0 1px 1px rgba(255, 255, 255, 0.5) inset;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.75);
   
   font-family: Arial;
+  font-size: 12px;
   color: white;
   text-align: center;
   
   cursor: pointer;
-  
-  padding: 1px;
-  background: -webkit-linear-gradient(top, #89ACF0, #4B77CC);
 
-  font-size: 12px;
+    -webkit-transition: box-shadow .15s, background .15s, opacity .15s, border-color .15s;
+  transition: box-shadow .15s, background .15s, opacity .15s, border-color .15s;
 }
 
 .Basis-DevPanel:hover,
-.Basis-DevPanel.activated,
+.Basis-DevPanel_activated,
 .devpanel-inspectMode .Basis-DevPanel
 {
   opacity: 1;
+  box-shadow:
+    0 0 7px 0 rgba(0, 0, 0, .3),
+    0 0 0px 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+.Basis-DevPanel_isOnline
+{
+  background: #4B77CC;
+  border-color: #4B77CC;
 }
 
 .devpanel-inspectMode .Basis-DevPanel
@@ -56,7 +61,7 @@
 }
 .Basis-DevPanel-Button:hover
 {
-  background-color: rgba(120, 161, 240, 0.8);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 .Basis-DevPanel-Button:last-child
 {
@@ -76,7 +81,6 @@
   background-image: url(img/folder.png);
 }
 
-
 .Basis-DevPanel-DragTrigger
 {
   display: inline-block;
@@ -85,4 +89,3 @@
   cursor: move;
   background: url(img/drag.png) no-repeat 2px center;
 }
-

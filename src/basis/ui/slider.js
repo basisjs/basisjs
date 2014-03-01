@@ -36,10 +36,10 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Slider: resource('templates/slider/Slider.tmpl'),
-    MarkLayers: resource('templates/slider/MarkLayers.tmpl'),
-    MarkLayer: resource('templates/slider/MarkLayer.tmpl'),
-    Mark: resource('templates/slider/Mark.tmpl')
+    Slider: resource('./templates/slider/Slider.tmpl'),
+    MarkLayers: resource('./templates/slider/MarkLayers.tmpl'),
+    MarkLayer: resource('./templates/slider/MarkLayer.tmpl'),
+    Mark: resource('./templates/slider/Mark.tmpl')
   });
 
 

@@ -19,7 +19,7 @@ var codeNode = new basis.ui.code.SourceCode({
 
 
 module.exports = new basis.ui.Node({
-  template: resource('template/fileView.tmpl'),
+  template: resource('./template/fileView.tmpl'),
   binding: {
     code: codeNode,
     hasCode: {

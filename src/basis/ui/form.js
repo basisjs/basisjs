@@ -33,8 +33,8 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Form: resource('templates/form/Form.tmpl'),
-    FormContent: resource('templates/form/FormContent.tmpl')
+    Form: resource('./templates/form/Form.tmpl'),
+    FormContent: resource('./templates/form/FormContent.tmpl')
   });
 
 

@@ -124,7 +124,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Attempt to add duplicate subscription');
+        /** @cut */ basis.dev.warn('Attempt to add duplicate subscription');
       }
     },
     unlink: function(type, from, to){
@@ -144,7 +144,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Trying remove non-exists subscription');
+        /** @cut */ basis.dev.warn('Trying remove non-exists subscription');
       }
     },
 
@@ -921,7 +921,7 @@
   Value.from = function(obj, events, getter){
     var result;
 
-    if (!obj || typeof obj != 'object')
+    if (!obj)
       return null;
 
     if (obj instanceof Emitter)
@@ -1245,7 +1245,7 @@
         if (newDelegate.delegate && isConnected(this, newDelegate))
         {
           // show warning in dev mode about new delegate ignore because it is already connected with object
-          ;;;basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
+          /** @cut */ basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
 
           // newDelegate can't be assigned
           return false;
@@ -1534,20 +1534,27 @@
   * @return {object|undefined}
   */
   function getDatasetDelta(a, b){
-    var inserted = [];
-    var deleted = [];
-
     if (!a || !a.itemCount)
     {
-      if (b)
-        inserted = b.getItems();
+      if (b && b.itemCount)
+        return {
+          inserted: b.getItems()
+        };
     }
     else
     {
       if (!b || !b.itemCount)
-        deleted = a.getItems();
+      {
+        if (a.itemCount)
+          return {
+            deleted: a.getItems()
+          };
+      }
       else
       {
+        var inserted = [];
+        var deleted = [];
+
         for (var key in a.items_)
         {
           var item = a.items_[key];
@@ -1561,10 +1568,10 @@
           if (item.basisObjectId in a.items_ == false)
             inserted.push(item);
         }
+
+        return getDelta(inserted, deleted);
       }
     }
-
-    return getDelta(inserted, deleted);
   }
 
 
@@ -1775,7 +1782,7 @@
       this.itemCount += insertCount - deleteCount;
 
       // drop cache
-      this.cache_ = null;
+      this.cache_ = insertCount == this.itemCount ? delta.inserted : null;
 
       // call event
       events.itemsChanged.call(this, delta);
@@ -1938,7 +1945,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -1984,7 +1991,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -2045,7 +2052,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -2258,7 +2265,7 @@
       urgentTimer = null;
       if (setStateCount)
       {
-        ;;;basis.dev.warn('(debug) Urgent flush dataset changes');
+        /** @cut */ basis.dev.warn('(debug) Urgent flush dataset changes');
         setStateCount = 0;
         setAccumulateStateOff();
       }

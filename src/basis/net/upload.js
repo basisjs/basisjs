@@ -1,7 +1,12 @@
 
-  basis.require('basis.net');
+  basis.require('basis.net.ajax');
+
 
   var namespace = this.path;
+
+  var AbstractTransport = basis.net.AbstractTransport;
+  var AbstractRequest = basis.net.AbstractRequest;
+  var AjaxTransport = basis.net.ajax.Transport;
 
 
   // features support detection
@@ -21,7 +26,7 @@
     frame.style.position = 'absolute';
     frame.style.left = '-2000px';
     frame.style.top = '-2000px';
-    frame.name = frame.id = 'f' + Math.floor(Math.random() * 99999);
+    frame.name = frame.id = 'f' + parseInt(Math.random() * 10e10);
     frame.src = 'about:blank';
 
     return frame;
@@ -38,7 +43,7 @@
 
   if (fileAPISupport() && formDataSupport()) // XMLHttpRequest2
   {
-    FileUploader = basis.net.Transport.subclass({
+    FileUploader = AjaxTransport.subclass({
       className: namespace + '.FileUploader',
 
       method: 'POST',
@@ -80,11 +85,11 @@
 
       emit_start: function(request){
         basis.dom.event.addHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
-        basis.net.Transport.prototype.emit_start.call(this, request);
+        AjaxTransport.prototype.emit_start.call(this, request);
       },
       emit_complete: function(request){
         basis.dom.event.removeHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
-        basis.net.Transport.prototype.emit_complete.call(this, request);
+        AjaxTransport.prototype.emit_complete.call(this, request);
       }
     });
 
@@ -95,14 +100,14 @@
   }
   else //IFrame
   {
-    var IFrameRequest = basis.net.AbstractRequest.subclass({
+    var IFrameRequest = AbstractRequest.subclass({
       className: namespace + '.IFrameRequest',
 
       state: basis.data.STATE.UNDEFINED,
       inprogress: false,
 
       init: function(){
-        basis.net.AbstractRequest.prototype.init.call(this);
+        AbstractRequest.prototype.init.call(this);
 
         this.frame = createIFrame();
 
@@ -173,11 +178,11 @@
         this.removeFrame();
         delete this.frame;
 
-        basis.net.AbstractRequest.prototype.destroy.call();
+        AbstractRequest.prototype.destroy.call();
       }
     });
 
-    FileUploader = basis.net.AbstractTransport.subclass({
+    FileUploader = AbstractTransport.subclass({
       className: namespace + '.FileUploader',
 
       requestClass: IFrameRequest,

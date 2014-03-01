@@ -50,10 +50,10 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Tree: resource('templates/tree/Tree.tmpl'),
-    PartitionNode: resource('templates/tree/PartitionNode.tmpl'),
-    Node: resource('templates/tree/Node.tmpl'),
-    Folder: resource('templates/tree/Folder.tmpl')
+    Tree: resource('./templates/tree/Tree.tmpl'),
+    PartitionNode: resource('./templates/tree/PartitionNode.tmpl'),
+    Node: resource('./templates/tree/Node.tmpl'),
+    Folder: resource('./templates/tree/Folder.tmpl')
   });
 
 

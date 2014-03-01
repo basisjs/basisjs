@@ -8,7 +8,7 @@
   module.exports = new app.ext.view.View({
     title: 'Description',
     viewHeader: 'Description',
-    template: resource('template/jsdocView.tmpl'),
+    template: resource('./template/jsdocView.tmpl'),
 
     binding: {
       docsView: 'satellite:content'

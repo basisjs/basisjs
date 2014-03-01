@@ -7,6 +7,7 @@ basis.require('basis.layout');
 basis.require('app.stat');
 basis.require('app.core');
 basis.require('basis.l10n');
+basis.require('basis.ui.panel');
 
 basis.l10n.setCultureList('en-US/ru-RU ru-RU'); // en-US temporary fallback on ru-RU
 basis.l10n.enableMarkup = true;
@@ -20,21 +21,21 @@ basis.app.create({
     basis.object.extend(app, this);
 
     // import names
-    var VerticalPanelStack = basis.layout.VerticalPanelStack;
+    var VerticalPanelStack = basis.ui.panel.VerticalPanelStack;
 
     //
     // main part
     //
-    var prototypeMapPopup = resource('app/layout/prototypeMapPopup.js');
+    var prototypeMapPopup = resource('./app/layout/prototypeMapPopup.js');
 
-    var targetHeader = resource('app/layout/targetHeader.js')();
-    var targetContent = resource('app/layout/targetContent.js')();
+    var targetHeader = resource('./app/layout/targetHeader.js')();
+    var targetContent = resource('./app/layout/targetContent.js')();
 
     targetHeader.setDelegate(targetContent);
     targetHeader.setDataSource(targetContent.getChildNodesDataset());
 
-    var navTree = resource('app/layout/navTree.js')();
-    var searchTree = resource('app/layout/searchTree.js')();
+    var navTree = resource('./app/layout/navTree.js')();
+    var searchTree = resource('./app/layout/searchTree.js')();
 
     navTree.selection.addHandler({
       itemsChanged: function(){
@@ -68,7 +69,7 @@ basis.app.create({
     //
     // search input
     //
-    var searchInput = resource('app/layout/searchInput.js')();
+    var searchInput = resource('./app/layout/searchInput.js')();
     searchInput.matchFilter.node = searchTree;
     searchInput.matchFilter.addHandler({
       change: function(sender, oldValue){
@@ -108,14 +109,14 @@ basis.app.create({
 
     var sidebar = new VerticalPanelStack({
       container: basis.dom.get('Layout'),
-      template: '<b:include src="basis.layout.Stack" id="Sidebar"/>',
+      template: '<b:include src="basis.ui.panel.Stack" id="Sidebar"/>',
       childNodes: [
         {
-          template: '<b:include src="basis.layout.Panel" id="Toolbar"/>',
+          template: '<b:include src="basis.ui.panel.Panel" id="Toolbar"/>',
           childNodes: searchInput
         },
         {
-          template: '<b:include src="basis.layout.Panel" id="SidebarContent"/>',
+          template: '<b:include src="basis.ui.panel.Panel" id="SidebarContent"/>',
           flex: 1,
           childNodes: sidebarPages
         }
@@ -124,13 +125,13 @@ basis.app.create({
 
     var contentLayout = new VerticalPanelStack({
       container: basis.dom.get('Layout'),
-      template: '<b:include src="basis.layout.Stack" id="Content"/>',
+      template: '<b:include src="basis.ui.panel.Stack" id="Content"/>',
       childNodes: [
         {
-          template: '<b:include src="basis.layout.Panel" id="ContentHeader"/>',
+          template: '<b:include src="basis.ui.panel.Panel" id="ContentHeader"/>',
           content: targetHeader.element
         },
-        { 
+        {
           flex: 1,
           content: targetContent.element
         }
@@ -197,7 +198,7 @@ basis.app.create({
     app.stat.initTime.set(new Date - initTime);
 
     return new basis.ui.Node({
-      template: resource('app.tmpl'),
+      template: resource('./app.tmpl'),
       binding: {
         sidebar: sidebar,
         content: contentLayout

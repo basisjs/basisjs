@@ -399,7 +399,7 @@
     var bind_node = W3C_DOM_NODE_SUPPORTED
       // W3C DOM way
       ? function(domRef, oldNode, newValue){
-          var newNode = newValue instanceof Node && !newValue.basisNodeInUse ? newValue : domRef;
+          var newNode = newValue && newValue instanceof Node ? newValue : domRef;
 
           if (newNode !== oldNode)
             oldNode.parentNode.replaceChild(newNode, oldNode);
@@ -408,7 +408,7 @@
         }
       // Old browsers way (IE6-8 and other)
       : function(domRef, oldNode, newValue){
-          var newNode = newValue && typeof newValue == 'object' && !newValue.basisNodeInUse ? newValue : domRef;
+          var newNode = newValue && typeof newValue == 'object' ? newValue : domRef;
 
           if (newNode !== oldNode)
           {
@@ -667,6 +667,13 @@
       };
     }
 
+    function makeHandler(events, getters){
+      for (var name in events)
+        events[name] = createBindingUpdater(events[name], getters);
+
+      return name ? events : null;
+    }
+
    /**
     * @func
     */
@@ -692,8 +699,6 @@
           var names = [];
           var getters = {};
           var events = {};
-          var handler = {};
-          var hasEvents = false;
 
           for (var i = 0, bindingName; bindingName = keys[i]; i++)
           {
@@ -720,16 +725,10 @@
             }
           }
 
-          for (var eventName in events)
-          {
-            hasEvents = true;
-            handler[eventName] = createBindingUpdater(events[eventName], getters);
-          }
-
           result = {
             names: names,
             sync: createBindingUpdater(names, getters),
-            handler: hasEvents ? handler : null
+            handler: makeHandler(events, getters)
           };
 
           if (cacheId)

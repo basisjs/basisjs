@@ -48,9 +48,9 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Chart: resource('templates/chart/Chart.tmpl'),
-    ChartSelection: resource('templates/chart/ChartSelection.tmpl'),
-    ChartViewer: resource('templates/chart/ChartViewer.tmpl')
+    Chart: resource('./templates/chart/Chart.tmpl'),
+    ChartSelection: resource('./templates/chart/ChartSelection.tmpl'),
+    ChartViewer: resource('./templates/chart/ChartViewer.tmpl')
   });
 
 
