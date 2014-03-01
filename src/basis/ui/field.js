@@ -814,6 +814,10 @@
 
     template: templates.Select,
 
+    templateSync: function(){
+      ComplexField.prototype.templateSync.call(this);
+      this.syncFieldValue_();
+    },
     syncFieldValue_: function(){
       if (this.tmpl && this.tmpl.field)
       {
