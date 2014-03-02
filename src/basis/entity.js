@@ -785,7 +785,7 @@
       /** @cut */ basis.dev.warn('Alias `' + alias + '` already exists');
       return;
     }
-      
+
     entityType.aliases[alias] = name;
   }
 
@@ -920,9 +920,10 @@
 
       // wrapper and all instances set
       this.wrapper = wrapper;
-      this.all = new ReadOnlyEntitySet(basis.object.complete({
-        wrapper: wrapper
-      }, config.all));
+      if ('all' in config == false || config.all || config.singleton)
+        this.all = new ReadOnlyEntitySet(basis.object.complete({
+          wrapper: wrapper
+        }, config.all));
 
       // singleton
       this.singleton = !!config.singleton;
@@ -1174,9 +1175,9 @@
         // inherit
         BaseEntity.prototype.init.call(this);
 
-        ///** @cut */ for (var key in data)
-        ///** @cut */   if (key in fields == false)
-        ///** @cut */     entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
+        /** @cut */ for (var key in data)
+        /** @cut */   if (key in fields == false)
+        /** @cut */     entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
 
         // copy default values
         var value;
@@ -1196,9 +1197,10 @@
         calc(this, this.initDelta);
 
         // reg entity in all entity type instances list
-        all.emit_itemsChanged({
-          inserted: [this]
-        });
+        if (all)
+          all.emit_itemsChanged({
+            inserted: [this]
+          });
       },
       toString: function(){
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
@@ -1495,9 +1497,10 @@
         DataObject.prototype.destroy.call(this);
 
         // delete from all entity type list (is it right order?)
-        all.emit_itemsChanged({
-          deleted: [this]
-        });
+        if (all)
+          all.emit_itemsChanged({
+            deleted: [this]
+          });
 
         // clear links
         this.data = NULL_INFO;
