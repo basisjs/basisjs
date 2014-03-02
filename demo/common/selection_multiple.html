@@ -67,7 +67,7 @@
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.ui');
     basis.require('basis.ui.tree');
-    
+
     var Selection = basis.dom.wrapper.Selection;
 
     //
@@ -169,12 +169,16 @@
     new basis.ui.Node({
       container: document.getElementById('demo-container'),
 
-      childNodes: selections,
+      childNodes: selections.map(function(sel){
+        return new basis.data.DatasetWrapper({
+          dataset: sel
+        });
+      }),
       childClass: {
         template:
           '<div>{name}: {items}</div>',
         binding: {
-          name: 'delegate.name',
+          name: 'delegate.dataset.name',
           items: function(node){
             return node.delegate.getItems().map(basis.getter('data.title')).join(', ') || '{no items}';
           }

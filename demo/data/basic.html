@@ -44,24 +44,15 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.dom');
-    basis.require('basis.event');
     basis.require('basis.data');
     basis.require('basis.data.value');
-    basis.require('basis.dom.wrapper');
     basis.require('basis.ui.button');
-    basis.require('basis.data.value');
 
-    var DOM = basis.dom;
-    var nsData = basis.data;
-    var nsWrappers = basis.dom.wrapper;
-    var nsButton = basis.ui.button;
-    
-    var property1 = new nsData.value.Property(0);
-    var property2 = new nsData.value.Property(0);
+    var value1 = new basis.data.Value({ value: 0 });
+    var value2 = new basis.data.Value({ value: 0 });
 
-    var dataObjectSet = new nsData.value.ObjectSet({
-      objects: [property1, property2],
+    var dataObjectSet = new basis.data.value.ObjectSet({
+      objects: [value1, value2],
       calculateValue: function(){
         return this.objects.reduce(function(value, object){
           return value + object.value;
@@ -70,42 +61,43 @@
     });
 
     // patch Value to compute changes count
+    var old_emit_change = basis.data.Value.prototype.emit_change;
     basis.data.Value.extend({
       updateCount: 0,
       emit_change: function(){
         this.updateCount += 1;
-        basis.event.events.change.apply(this, arguments);
+        old_emit_change.apply(this, arguments);
       }
     });
 
-    var container = DOM.get('demo-container');
-    new nsButton.ButtonPanel({
+    var container = document.getElementById('demo-container');
+    new basis.ui.button.ButtonPanel({
       container: container,
       childNodes: [
         {
-          caption: 'Add 1 to property1',
+          caption: 'Add 1 to value1',
           click: function(){
-            property1.set(property1.value + 1);
+            value1.set(value1.value + 1);
           }
         },
         {
-          caption: 'Add 1 to property1 and than sub 1 ',
+          caption: 'Add 1 to value1 and than sub 1 ',
           click: function(){
-            property1.set(property1.value + 1);
-            property1.set(property1.value - 1);
+            value1.set(value1.value + 1);
+            value1.set(value1.value - 1);
           }
         },
         {
-          caption: 'Add 1 to property2',
+          caption: 'Add 1 to value2',
           click: function(){
-            property2.set(property2.value + 1);
+            value2.set(value2.value + 1);
           }
         },
         {
-          caption: 'Add 1 to property1 & property2',
+          caption: 'Add 1 to value1 & value2',
           click: function(){
-            property1.set(property1.value + 1);
-            property2.set(property2.value + 1);
+            value1.set(value1.value + 1);
+            value2.set(value2.value + 1);
           }
         }
       ]
@@ -115,7 +107,6 @@
       container: container,
       childClass: {
         template:
-          '<b:define name="value" type="bool"/>' +
           '<div>' +
             '{name}: {value} (update count: {updateCount})' +
           '</div>',
@@ -127,21 +118,21 @@
       },
       childNodes: [
         {
-          name: 'Property1.value',
-          value: property1,
-          updateCount: new basis.data.value.Expression(property1, function(){
-            return property1.updateCount;
+          name: 'value1.value',
+          value: value1,
+          updateCount: new basis.data.value.Expression(value1, function(){
+            return value1.updateCount;
           })
         },
         {
-          name: 'Property2.value',
-          value: property2,
-          updateCount: new basis.data.value.Expression(property2, function(){
-            return property2.updateCount;
+          name: 'value2.value',
+          value: value2,
+          updateCount: new basis.data.value.Expression(value2, function(){
+            return value2.updateCount;
           })
         },
         {
-          name: 'ObjectSet.value (sum of property1.value & property2.value)',
+          name: 'ObjectSet.value (sum of value1.value & value2.value)',
           value: dataObjectSet,
           updateCount: new basis.data.value.Expression(dataObjectSet, function(){
             return dataObjectSet.updateCount;
