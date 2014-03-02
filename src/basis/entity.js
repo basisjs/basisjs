@@ -1073,6 +1073,7 @@
     emit_rollbackUpdate: createEvent('rollbackUpdate')
   });
 
+
  /**
   * @class
   */
@@ -1163,6 +1164,8 @@
       className: namespace + '.Entity',
 
       extendConstructor_: false,
+      fieldHandlers_: null,
+
       init: function(data){
         // ignore delegate and data
         this.delegate = null;
@@ -1171,12 +1174,9 @@
         // inherit
         BaseEntity.prototype.init.call(this);
 
-        // set up some properties
-        this.fieldHandlers_ = {};
-
-        /** @cut */ for (var key in data)
-        /** @cut */   if (key in fields == false)
-        /** @cut */     entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
+        ///** @cut */ for (var key in data)
+        ///** @cut */   if (key in fields == false)
+        ///** @cut */     entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
 
         // copy default values
         var value;
@@ -1185,8 +1185,12 @@
           value = this.data[key];
 
           if (value && value !== this && value instanceof Emitter)
-            if (value.addHandler(fieldDestroyHandlers[key], this))
-              this.fieldHandlers_[key] = true;
+          {
+            value.addHandler(fieldDestroyHandlers[key], this);
+            if (!this.fieldHandlers_)
+              this.fieldHandlers_ = {};
+            this.fieldHandlers_[key] = true;
+          }
         }
 
         calc(this, this.initDelta);
@@ -1229,9 +1233,9 @@
         var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
                                         // that why we fetch it again after valueWrapper call
 
-        var valueChanged = newValue !== curValue
+        var valueChanged = newValue !== curValue &&
                            // date comparison fix;
-                           && (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
+                           (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
 
         // if value changed:
         // - update index for id field
@@ -1315,7 +1319,7 @@
           this.data[key] = newValue;
 
           // remove attached handler if exists
-          if (this.fieldHandlers_[key])
+          if (this.fieldHandlers_ && this.fieldHandlers_[key])
           {
             curValue.removeHandler(fieldDestroyHandlers[key], this);
             this.fieldHandlers_[key] = false;
@@ -1325,8 +1329,10 @@
           // newValue !== this prevents recursion for self update
           if (newValue && newValue !== this && newValue instanceof Emitter)
           {
-            if (newValue.addHandler(fieldDestroyHandlers[key], this))
-              this.fieldHandlers_[key] = true;
+            newValue.addHandler(fieldDestroyHandlers[key], this);
+            if (!this.fieldHandlers_)
+              this.fieldHandlers_ = {};
+            this.fieldHandlers_[key] = true;
           }
 
           // prepare result
@@ -1472,11 +1478,14 @@
       },
       destroy: function(){
         // unlink attached handlers
-        for (var key in this.fieldHandlers_)
-          if (this.fieldHandlers_[key])
-            this.data[key].removeHandler(fieldDestroyHandlers[key], this);
+        if (this.fieldHandlers_)
+        {
+          for (var key in this.fieldHandlers_)
+            if (this.fieldHandlers_[key])
+              this.data[key].removeHandler(fieldDestroyHandlers[key], this);
 
-        this.fieldHandlers_ = NULL_INFO;
+          this.fieldHandlers_ = null;
+        }
 
         // delete from index
         if (this.__id__ != null)
