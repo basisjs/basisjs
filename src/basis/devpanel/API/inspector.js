@@ -1,11 +1,9 @@
-var transport = resource('./transport.js').fetch();
-
-var l10nInspector = resource('../inspector/l10n.js').fetch();
-var templateInspector = resource('../inspector/template.js').fetch();
+var transport = require('./transport.js');
+var l10nInspector = require('../inspector/l10n.js');
+var templateInspector = require('../inspector/template.js');
 
 module.exports = {
   getInspectMode: function(){
-    var mode = false;
     if (l10nInspector.isActive())
       transport.sendData('startInspect', 'l10n');
 

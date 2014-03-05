@@ -7,8 +7,6 @@ basis.require('basis.ui');
 var document = global.document;
 var DOM = basis.dom;
 
-//var transport = resource('../API/transport.js').fetch();
-
 var inspectMode;
 var elements = [];
 
@@ -24,8 +22,8 @@ var overlayNode = new basis.ui.Node({
   }
 });
 
-var overlay = overlayNode.tmpl.element;
-var overlayContent = overlayNode.tmpl.content;
+var overlay = overlayNode.element;
+var overlayContent = overlayNode.tmpl.content || overlay;
 
 // dom mutation observer
 
@@ -52,8 +50,6 @@ function startInspect(){
     basis.dom.event.addHandler(window, 'resize', updateOnResize);
     DOM.event.captureEvent('contextmenu', endInspect);
 
-    //transport.sendData('startInspect', 'l10n');
-
     if (observer)
       observer.observe(document.body, {
         subtree: true,
@@ -78,8 +74,6 @@ function endInspect(){
 
     unhighlight();
     inspectMode = false;
-
-    //transport.sendData('endInspect', 'l10n');
   }
 }
 

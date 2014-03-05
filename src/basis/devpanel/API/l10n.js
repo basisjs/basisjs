@@ -1,10 +1,7 @@
 basis.require('basis.l10n');
-basis.require('basis.data.value');
 
 var STATE = basis.data.STATE;
-
-var transport = resource('./transport.js').fetch();
-var sendData = transport.sendData;
+var sendData = require('./transport.js').sendData;
 
 basis.l10n.onCultureChange(function(culture){
   sendData('cultureChanged', culture);
@@ -14,11 +11,10 @@ function createDictionaryFileContent(data){
   var dictionaryData = {};
 
   if (data.tokenTypes)
-  {
     dictionaryData['_meta'] = {
       type: data.tokenTypes
     };
-  }
+
   basis.object.extend(dictionaryData, data.cultureValues);
 
   return JSON.stringify(dictionaryData, undefined, 2);
@@ -48,15 +44,14 @@ module.exports = {
 
   loadDictionaryTokens: function(dictionaryName){
     var dict = basis.l10n.dictionary('/' + dictionaryName);
+
     if (dict)
-    {
       sendData('dictionaryTokens', {
         dictionary: dictionaryName,
         tokenKeys: basis.object.keys(dict.tokens),
         tokenTypes: dict.types,
         cultureValues: dict.cultureValues
       });
-    }
   },
 
   updateDictionary: function(data){
@@ -69,11 +64,8 @@ module.exports = {
     if (!basisjsTools)
       return;
 
-    var newContent = createDictionaryFileContent(data);
-
     // saving
     var file = basisjsTools.getFile('/' + data.dictionary, true);
-
     var FILE_HANDLER = {
       stateChanged: function(){
         if (this.state == STATE.READY)
@@ -97,6 +89,6 @@ module.exports = {
     };
 
     file.addHandler(FILE_HANDLER);
-    file.save(newContent);
+    file.save(createDictionaryFileContent(data));
   }
 };

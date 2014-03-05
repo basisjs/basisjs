@@ -1,9 +1,8 @@
-var transport = resource('./transport.js').fetch();
-var sendData = transport.sendData;
+var transport = require('./transport.js');
 
 module.exports = {
   getVersion: function(){
-    sendData('version', {
+    transport.sendData('version', {
       l10n: 2,
       template: basis.template.DECLARATION_VERSION
     });

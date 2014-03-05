@@ -1,15 +1,15 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
-basis.require('basis.data.value');
 basis.require('basis.layout');
 basis.require('basis.ui');
 basis.require('basis.ui.popup');
 
+var document = global.document;
 var DOM = basis.dom;
-var transport = resource('../API/transport.js').fetch();
+var transport = require('../API/transport.js');
 
-var inspectMode;
 var inspectDepth = 0;
+var inspectMode;
 
 var overlay = DOM.createElement({
   css: {
@@ -60,35 +60,37 @@ function pickHandler(event){
   }
 }
 
-var pickupTarget = new basis.data.value.Property(null, {
-  change: function(){
-    var tmpl = this.value ? basis.template.resolveTmplById(this.value) : null;
+var pickupTarget = new basis.data.Value({
+  handler: {
+    change: function(){
+      var tmpl = this.value ? basis.template.resolveTmplById(this.value) : null;
 
-    if (tmpl)
-    {
-      var rect = basis.layout.getBoundingRect(tmpl.element);
-      if (rect)
+      if (tmpl)
       {
-        basis.cssom.setStyle(overlay, {
-          left: rect.left + 'px',
-          top: rect.top + 'px',
-          width: rect.width + 'px',
-          height: rect.height + 'px'
-        });
-        document.body.appendChild(overlay);
+        var rect = basis.layout.getBoundingRect(tmpl.element);
+        if (rect)
+        {
+          basis.cssom.setStyle(overlay, {
+            left: rect.left + 'px',
+            top: rect.top + 'px',
+            width: rect.width + 'px',
+            height: rect.height + 'px'
+          });
+          document.body.appendChild(overlay);
+        }
       }
-    }
-    else
-    {
-      DOM.remove(overlay);
-      inspectDepth = 0;
-    }
+      else
+      {
+        DOM.remove(overlay);
+        inspectDepth = 0;
+      }
 
-    nodeInfoPopup().update({
-      tmpl: tmpl,
-      template: tmpl && basis.template.resolveTemplateById(this.value),
-      object: tmpl && basis.template.resolveObjectById(this.value)
-    });
+      nodeInfoPopup().update({
+        tmpl: tmpl,
+        template: tmpl && basis.template.resolveTemplateById(this.value),
+        object: tmpl && basis.template.resolveObjectById(this.value)
+      });
+    }
   }
 });
 
@@ -231,7 +233,6 @@ function mouseWheelHandler(event){
   var cursor = sender;
 
   var tempDepth = inspectDepth + delta;
-
   var curDepth = 0;
   var lastRefId;
   var lastDepth;
