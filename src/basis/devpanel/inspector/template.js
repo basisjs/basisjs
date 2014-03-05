@@ -42,8 +42,10 @@ function pickHandler(event){
 
     if (source.url && template.source instanceof basis.template.L10nProxyToken == false)
     {
-      if (basis.devtools && typeof basis.devtools.openFile && (event.ctrlKey || event.metaKey))
-        basis.devtools.openFile(source.url);
+      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+
+      if (basisjsTools && typeof basisjsTools.openFile == 'function' && (event.ctrlKey || event.metaKey))
+        basisjsTools.openFile(source.url);
       else
         transport.sendData('pickTemplate', {
           filename: source.url

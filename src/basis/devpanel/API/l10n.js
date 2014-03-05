@@ -64,13 +64,15 @@ module.exports = {
   },
 
   saveDictionary: function(data){
-    if (!basis.devtools)
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+
+    if (!basisjsTools)
       return;
 
     var newContent = createDictionaryFileContent(data);
 
     // saving
-    var file = basis.devtools.getFile('/' + data.dictionary, true);
+    var file = basisjsTools.getFile('/' + data.dictionary, true);
 
     var FILE_HANDLER = {
       stateChanged: function(){

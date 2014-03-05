@@ -9,8 +9,9 @@ basis.ready(function(){
   // prepare API object
   basis.appCP = {
     getFileGraph: function(){
-      if (basis.devtools)
-        basis.devtools.getFileGraph(function(err, data){
+      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+      if (basisjsTools)
+        basisjsTools.getFileGraph(function(err, data){
           transport.sendData('fileGraph', {
             err: err,
             data: data

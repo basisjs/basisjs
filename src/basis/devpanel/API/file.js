@@ -79,28 +79,51 @@ if (basis.devtools)
 //
 module.exports = {
   getFileList: function(){
-    if (basis.devtools)
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+
+    if (basisjsTools)
       sendData('filesChanged', {
-        inserted: basis.devtools.files.getItems().map(function(file){
-          return {
-            filename: file.data.filename
-          };
-        })
+        inserted: !basis.devtools
+          // new basisjs-tools
+          ? basisjsTools.getFiles().map(function(file){
+              return {
+                filename: file.filename
+              };
+            })
+          // old basisjs-tools
+          : basisjsTools.files.getItems().map(function(file){
+              return {
+                filename: file.data.filename
+              };
+            })
       });
   },
   createFile: function(filename){
-    basis.devtools.createFile(filename);
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+
+    if (basisjsTools)
+      basisjsTools.createFile(filename);
   },
   readFile: function(filename){
-    var file = basis.devtools.getFile(filename, true);
-    if (file.data.content)
-      sendFile(file);
-    else
-      file.read();
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+
+    if (basisjsTools)
+    {
+      var file = basisjsTools.getFile(filename, true);
+      if (file.data.content)
+        sendFile(file);
+      else
+        file.read();
+    }
   },
   saveFile: function(filename, content){
-    var file = basis.devtools.getFile(filename);
-    if (file)
-      file.save(content);
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+    
+    if (basisjsTools)
+    {
+      var file = basisjsTools.getFile(filename);
+      if (file)
+        file.save(content);
+    }
   }
 };
