@@ -26,7 +26,13 @@ var overlay = DOM.createElement({
 });
 
 function pickHandler(event){
-  DOM.event.kill(event);
+  event.die();
+
+  if (event.mouseRight)
+  {
+    endInspect();
+    return;
+  }
 
   var template = pickupTarget.value ? basis.template.resolveTemplateById(pickupTarget.value) : null;
 
@@ -68,19 +74,11 @@ var pickupTarget = new basis.data.value.Property(null, {
           height: rect.height + 'px'
         });
         document.body.appendChild(overlay);
-        DOM.event.captureEvent('mousedown', DOM.event.kill);
-        DOM.event.captureEvent('mouseup', DOM.event.kill);
-        DOM.event.captureEvent('contextmenu', endInspect);
-        DOM.event.captureEvent('click', pickHandler);
       }
     }
     else
     {
       DOM.remove(overlay);
-      DOM.event.releaseEvent('mousedown');
-      DOM.event.releaseEvent('mouseup');
-      DOM.event.releaseEvent('contextmenu');
-      DOM.event.releaseEvent('click');
       inspectDepth = 0;
     }
 
@@ -169,6 +167,11 @@ function startInspect(){
   {
     DOM.event.addGlobalHandler('mousemove', mousemoveHandler);
     DOM.event.addGlobalHandler('mousewheel', mouseWheelHandler);
+    DOM.event.captureEvent('mousedown', DOM.event.kill);
+    DOM.event.captureEvent('mouseup', DOM.event.kill);
+    DOM.event.captureEvent('contextmenu', endInspect);
+    DOM.event.captureEvent('click', pickHandler);
+
     basis.cssom.classList(document.body).add('devpanel-inspectMode');
     inspectMode = true;
     transport.sendData('startInspect', 'template');
@@ -180,6 +183,11 @@ function endInspect(){
   {
     DOM.event.removeGlobalHandler('mousemove', mousemoveHandler);
     DOM.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
+    DOM.event.releaseEvent('mousedown');
+    DOM.event.releaseEvent('mouseup');
+    DOM.event.releaseEvent('contextmenu');
+    DOM.event.releaseEvent('click');
+
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');
     inspectMode = false;
     transport.sendData('endInspect', 'template');
@@ -191,42 +199,33 @@ var lastMouseX;
 var lastMouseY;
 var DEPTH_MODE_MOVE_THRESHOLD = 8;
 
-function mousemoveHandler(){
-  var mouseX = DOM.event.mouseX(event);
-  var mouseY = DOM.event.mouseY(event);
-
-  if (inspectDepth)
-  {
-    var realMove = !lastMouseX
-                   || Math.abs(mouseX - lastMouseX) > DEPTH_MODE_MOVE_THRESHOLD
-                   || Math.abs(mouseY - lastMouseY) > DEPTH_MODE_MOVE_THRESHOLD;
-
-    if (!realMove)
-      return;
-  }
-
-  lastMouseX = mouseX;
-  lastMouseY = mouseY;
-
-  var sender = DOM.event.sender(event);
-  var cursor = sender;
+function mousemoveHandler(event){
+  var dx = Math.abs(event.mouseX - lastMouseX);
+  var dy = Math.abs(event.mouseY - lastMouseY);
+  var cursor = event.sender;
   var refId;
+
+  if (inspectDepth && lastMouseX && dx < DEPTH_MODE_MOVE_THRESHOLD && dy < DEPTH_MODE_MOVE_THRESHOLD)
+    return;
+
+  lastMouseX = event.mouseX;
+  lastMouseY = event.mouseY;
 
   do {
     if (refId = cursor.basisTemplateId)
     {
       inspectDepth = 0;
-      return pickupTarget.set(refId);
+      break;
     }
   }
   while (cursor = cursor.parentNode);
 
-  pickupTarget.set();
+  pickupTarget.set(refId);
 }
 
-function mouseWheelHandler(){
-  var delta = DOM.event.wheelDelta(event);
-  var sender = DOM.event.sender(event);
+function mouseWheelHandler(event){
+  var delta = event.wheelDelta;
+  var sender = event.sender;
   var cursor = sender;
 
   var tempDepth = inspectDepth + delta;
@@ -253,7 +252,7 @@ function mouseWheelHandler(){
   pickupTarget.set(lastRefId);
   inspectDepth = lastDepth;
 
-  DOM.event.kill(event);
+  event.die();
 }
 
 //
