@@ -27,11 +27,9 @@
 
   var DataObject = basis.data.Object;
   var Slot = basis.data.Slot;
-  var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
   var Subset = basis.data.dataset.Subset;
   var Split = basis.data.dataset.Split;
-  var STATE = basis.data.STATE;
 
   var NULL_INFO = {};
 
@@ -109,7 +107,7 @@
   // Index
   //
 
-  var Index = basis.Class(null, {
+  var Index = Class(null, {
     className: namespace + '.Index',
 
     items: null,
