@@ -2088,11 +2088,11 @@
       var delta = this.set(items) || {};
       var deleted = delta.deleted;
 
-      setAccumulateState(true);
+      Dataset.setAccumulateState(true);
       if (deleted)
         for (var i = 0, object; object = deleted[i]; i++)
           object.destroy();
-      setAccumulateState(false);
+      Dataset.setAccumulateState(false);
 
       return delta.inserted;
     },
