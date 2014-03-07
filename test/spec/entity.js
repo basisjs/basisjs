@@ -1154,6 +1154,38 @@ module.exports = {
       name: 'field types',
       test: [
         {
+          name: 'entity',
+          test: [
+            {
+              name: 'by name',
+              test: [
+                {
+                  name: 'use name after type declared',
+                  test: function(){
+                    var Type1 = basis.entity.createType('fieldTypeTest-declaredTypeName', { value: Number });
+                    var Type2 = basis.entity.createType(null, { nested: 'fieldTypeTest-declaredTypeName' });
+                    var instance = Type2({ nested: { value: 123 } });
+
+                    assert(typeof instance.data.nested != 'undefined');
+                    assert(instance.data.nested.data.value == 123);;
+                  }
+                },
+                {
+                  name: 'use name before type declared',
+                  test: function(){
+                    var Type1 = basis.entity.createType(null, { nested: 'fieldTypeTest-nonDeclaredTypeName' });
+                    var Type2 = basis.entity.createType('fieldTypeTest-nonDeclaredTypeName', { value: Number });
+                    var instance = Type1({ nested: { value: 123 } });
+
+                    assert(typeof instance.data.nested != 'undefined');
+                    assert(instance.data.nested.data.value == 123);;
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
           name: 'Array',
           test: [
             {
