@@ -508,6 +508,9 @@
     * @destructor
     */
     destroy: function(){
+      // inherit
+      Emitter.prototype.destroy.call(this);
+
       // remove subscriptions if necessary
       if (this.active)
       {
@@ -515,9 +518,6 @@
         for (var i = 0, action; action = config.actions[i]; i++)
           action(SUBSCRIPTION.unlink, this);
       }
-
-      // inherit
-      Emitter.prototype.destroy.call(this);
 
       this.state = STATE.UNDEFINED;
     }

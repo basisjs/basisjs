@@ -2651,6 +2651,62 @@ module.exports = {
             this.is(true, !targetNode.delegate);
             this.is(false, hasHandler);
           }
+        },
+        {
+          name: 'dataSource via Value.factory and subscription on node destroy',
+          test: function(){
+            var dataset = new basis.data.Dataset;
+            var node = new Node({
+              active: true,
+              dataSource: basis.data.Value.factory(function(){
+                return dataset;
+              })
+            });
+
+            assert(dataset.subscriberCount == 1);
+            assert(node.dataSource === dataset);
+
+            var warn = basis.dev.warn;
+            var warning = false;
+            try {
+              basis.dev.warn = function(message){
+                warning = message;
+              };
+
+              node.destroy();
+            } finally {
+              basis.dev.warn = warn;
+            }
+
+            assert(warning === false);
+          }
+        },
+        {
+          name: 'dataSource via Value.factory and subscription on node destroy',
+          test: function(){
+            var dataset = new basis.data.Dataset;
+            var node = new Node({
+              active: true,
+              dataSource: dataset
+            });
+
+            assert(dataset.subscriberCount == 1);
+            assert(node.dataSource === dataset);
+
+            var warn = basis.dev.warn;
+            var warning = false;
+            try {
+              basis.dev.warn = function(message){
+                warning = message;
+              };
+
+              node.destroy();
+            } finally {
+              basis.dev.warn = warn;
+            }
+
+            assert(warning === false);
+          }
         }
       ]
     },
