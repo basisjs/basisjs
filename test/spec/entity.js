@@ -1167,7 +1167,7 @@ module.exports = {
                     var instance = Type2({ nested: { value: 123 } });
 
                     assert(typeof instance.data.nested != 'undefined');
-                    assert(instance.data.nested.data.value == 123);;
+                    assert(instance.data.nested.data.value == 123);
                   }
                 },
                 {
@@ -1178,7 +1178,7 @@ module.exports = {
                     var instance = Type1({ nested: { value: 123 } });
 
                     assert(typeof instance.data.nested != 'undefined');
-                    assert(instance.data.nested.data.value == 123);;
+                    assert(instance.data.nested.data.value == 123);
                   }
                 }
               ]

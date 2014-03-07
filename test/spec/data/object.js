@@ -381,7 +381,7 @@ module.exports = {
             });
 
             this.is(0, delegateEventCount);
-            
+
             object.update({ foo: 1 });
 
             this.is(1, delegateEventCount);
@@ -408,7 +408,7 @@ module.exports = {
             });
 
             this.is(0, delegateEventCount);
-            
+
             object.update({ foo: 1 });
 
             this.is(0, delegateEventCount);
@@ -436,7 +436,7 @@ module.exports = {
             });
 
             this.is(0, delegateEventCount);
-            
+
             object.setState(basis.data.STATE.READY);
 
             this.is(1, delegateEventCount);
@@ -465,7 +465,7 @@ module.exports = {
             });
 
             this.is(0, delegateEventCount);
-            
+
             object.setState(basis.data.STATE.READY);
 
             this.is(0, delegateEventCount);
