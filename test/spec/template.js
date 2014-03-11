@@ -578,17 +578,36 @@ module.exports = {
             },
             {
               name: '<b:remove-attr>',
-              test: function(){
-                var a = createTemplate('<span title="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="class"/></b:include>');
+              test: [
+                {
+                  name: 'common attrs',
+                  test: function(){
+                    var a = createTemplate('<span title="a"/>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="class"/></b:include>');
 
-                this.is(text('<span title="a"/>'), text(b));
+                    this.is(text('<span title="a"/>'), text(b));
 
-                var a = createTemplate('<span title="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="title"/></b:include>');
+                    var a = createTemplate('<span title="a"/>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="title"/></b:include>');
 
-                this.is(text('<span/>'), text(b));
-              }
+                    this.is(text('<span/>'), text(b));
+                  }
+                },
+                {
+                  name: 'special attrs',
+                  test: function(){
+                    var a = createTemplate('<span{field} event-click="click" style="width:100px;"/>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="event-click" ref="field"/></b:include>');
+
+                    this.is(text('<span{field} style="width:100px;"/>'), text(b));
+
+                    var a = createTemplate('<span{field} style="width:100px;"/>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="style" ref="field"/></b:include>');
+
+                    this.is(text('<span{field}/>'), text(b));
+                  }
+                }
+              ]
             },
             {
               name: '<b:class>/<b:append-class>',
