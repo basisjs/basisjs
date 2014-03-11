@@ -7,151 +7,151 @@ module.exports = {
     {
       name: 'basename',
       test: function(){
-        this.is('test-path.js', basis.path.basename('some/path/test-path.js'));
-        this.is('test-path', basis.path.basename('some/path/test-path.js', '.js'));
-        this.is('', basis.path.basename(''));
-        this.is('basename.ext', basis.path.basename('/dir/basename.ext'));
-        this.is('basename.ext', basis.path.basename('/basename.ext'));
-        this.is('basename.ext', basis.path.basename('basename.ext'));
-        this.is('basename.ext', basis.path.basename('basename.ext/'));
-        this.is('basename.ext', basis.path.basename('basename.ext//'));
+        assert(basis.path.basename('some/path/test-path.js') == 'test-path.js');
+        assert(basis.path.basename('some/path/test-path.js', '.js') == 'test-path');
+        assert(basis.path.basename('') == '');
+        assert(basis.path.basename('/dir/basename.ext') == 'basename.ext');
+        assert(basis.path.basename('/basename.ext') == 'basename.ext');
+        assert(basis.path.basename('basename.ext') == 'basename.ext');
+        assert(basis.path.basename('basename.ext/') == 'basename.ext');
+        assert(basis.path.basename('basename.ext//') == 'basename.ext');
       }
     },
     {
       name: 'dirname',
       test: function(){
-        this.is('/a', basis.path.dirname('/a/b/'));
-        this.is('/a', basis.path.dirname('/a/b'));
-        this.is('/', basis.path.dirname('/a'));
-        this.is('a', basis.path.dirname('a/b/'));
-        this.is('a', basis.path.dirname('a/b'));
-        this.is('.', basis.path.dirname('a'));
-        this.is('.', basis.path.dirname(''));
-        this.is('/', basis.path.dirname('/'));
-        this.is('/', basis.path.dirname('////'));
-        this.is('/', basis.path.dirname('/a/b/..'));
-        this.is('/', basis.path.dirname('/a/b/../'));
-        this.is('/', basis.path.dirname('/a/../b'));
-        this.is('/', basis.path.dirname('/a/../b/'));
-        this.is('/a', basis.path.dirname('/../a/b'));
-        this.is('/a', basis.path.dirname('/../a/b/'));
-        this.is('.', basis.path.dirname('a/b/..'));
-        this.is('.', basis.path.dirname('a/b/../'));
-        this.is('.', basis.path.dirname('a/../b'));
-        this.is('.', basis.path.dirname('a/../b/'));
-        this.is('a', basis.path.dirname('../a/b'));
-        this.is('a', basis.path.dirname('../a/b/'));
+        assert(basis.path.dirname('/a/b/') == '/a');
+        assert(basis.path.dirname('/a/b') == '/a');
+        assert(basis.path.dirname('/a') == '/');
+        assert(basis.path.dirname('a/b/') == 'a');
+        assert(basis.path.dirname('a/b') == 'a');
+        assert(basis.path.dirname('a') == '.');
+        assert(basis.path.dirname('') == '.');
+        assert(basis.path.dirname('/') == '/');
+        assert(basis.path.dirname('////') == '/');
+        assert(basis.path.dirname('/a/b/..') == '/');
+        assert(basis.path.dirname('/a/b/../') == '/');
+        assert(basis.path.dirname('/a/../b') == '/');
+        assert(basis.path.dirname('/a/../b/') == '/');
+        assert(basis.path.dirname('/../a/b') == '/a');
+        assert(basis.path.dirname('/../a/b/') == '/a');
+        assert(basis.path.dirname('a/b/..') == '.');
+        assert(basis.path.dirname('a/b/../') == '.');
+        assert(basis.path.dirname('a/../b') == '.');
+        assert(basis.path.dirname('a/../b/') == '.');
+        assert(basis.path.dirname('../a/b') == 'a');
+        assert(basis.path.dirname('../a/b/') == 'a');
 
-        this.is('/', basis.path.dirname('c:'));
-        this.is('/', basis.path.dirname('c:/asd'));
-        this.is('/', basis.path.dirname('c:/asd/'));
-        this.is('/asd', basis.path.dirname('c:/asd/asd'));
+        assert(basis.path.dirname('c:') == '/');
+        assert(basis.path.dirname('c:/asd') == '/');
+        assert(basis.path.dirname('c:/asd/') == '/');
+        assert(basis.path.dirname('c:/asd/asd') == '/asd');
       }
     },
     {
       name: 'extname',
       test: function(){
-        this.is('', basis.path.extname(''));
-        this.is('', basis.path.extname('/path/to/file'));
-        this.is('.ext', basis.path.extname('/path/to/file.ext'));
-        this.is('.ext', basis.path.extname('/path.to/file.ext'));
-        this.is('', basis.path.extname('/path.to/file'));
-        this.is('', basis.path.extname('/path.to/.file'));
-        this.is('.ext', basis.path.extname('/path.to/.file.ext'));
-        this.is('.ext', basis.path.extname('/path/to/f.ext'));
-        this.is('.ext', basis.path.extname('/path/to/..ext'));
-        this.is('', basis.path.extname('file'));
-        this.is('.ext', basis.path.extname('file.ext'));
-        this.is('', basis.path.extname('.file'));
-        this.is('.ext', basis.path.extname('.file.ext'));
-        this.is('', basis.path.extname('/file'));
-        this.is('.ext', basis.path.extname('/file.ext'));
-        this.is('', basis.path.extname('/.file'));
-        this.is('.ext', basis.path.extname('/.file.ext'));
-        this.is('.ext', basis.path.extname('.path/file.ext'));
-        this.is('.ext', basis.path.extname('file.ext.ext'));
-        this.is('.', basis.path.extname('file.'));
-        this.is('', basis.path.extname('.'));
-        this.is('', basis.path.extname('./'));
-        this.is('.ext', basis.path.extname('.file.ext'));
-        this.is('', basis.path.extname('.file'));
-        this.is('.', basis.path.extname('.file.'));
-        this.is('.', basis.path.extname('.file..'));
-        this.is('', basis.path.extname('..'));
-        this.is('', basis.path.extname('../'));
-        this.is('.ext', basis.path.extname('..file.ext'));
-        this.is('.file', basis.path.extname('..file'));
-        this.is('.', basis.path.extname('..file.'));
-        this.is('.', basis.path.extname('..file..'));
-        this.is('.', basis.path.extname('...'));
-        this.is('.ext', basis.path.extname('...ext'));
-        this.is('.', basis.path.extname('....'));
-        this.is('.ext', basis.path.extname('file.ext/'));
-        this.is('.ext', basis.path.extname('file.ext//'));
-        this.is('', basis.path.extname('file/'));
-        this.is('', basis.path.extname('file//'));
-        this.is('.', basis.path.extname('file./'));
-        this.is('.', basis.path.extname('file.//'));
+        assert(basis.path.extname('') == '');
+        assert(basis.path.extname('/path/to/file') == '');
+        assert(basis.path.extname('/path/to/file.ext') == '.ext');
+        assert(basis.path.extname('/path.to/file.ext') == '.ext');
+        assert(basis.path.extname('/path.to/file') == '');
+        assert(basis.path.extname('/path.to/.file') == '');
+        assert(basis.path.extname('/path.to/.file.ext') == '.ext');
+        assert(basis.path.extname('/path/to/f.ext') == '.ext');
+        assert(basis.path.extname('/path/to/..ext') == '.ext');
+        assert(basis.path.extname('file') == '');
+        assert(basis.path.extname('file.ext') == '.ext');
+        assert(basis.path.extname('.file') == '');
+        assert(basis.path.extname('.file.ext') == '.ext');
+        assert(basis.path.extname('/file') == '');
+        assert(basis.path.extname('/file.ext') == '.ext');
+        assert(basis.path.extname('/.file') == '');
+        assert(basis.path.extname('/.file.ext') == '.ext');
+        assert(basis.path.extname('.path/file.ext') == '.ext');
+        assert(basis.path.extname('file.ext.ext') == '.ext');
+        assert(basis.path.extname('file.') == '.');
+        assert(basis.path.extname('.') == '');
+        assert(basis.path.extname('./') == '');
+        assert(basis.path.extname('.file.ext') == '.ext');
+        assert(basis.path.extname('.file') == '');
+        assert(basis.path.extname('.file.') == '.');
+        assert(basis.path.extname('.file..') == '.');
+        assert(basis.path.extname('..') == '');
+        assert(basis.path.extname('../') == '');
+        assert(basis.path.extname('..file.ext') == '.ext');
+        assert(basis.path.extname('..file') == '.file');
+        assert(basis.path.extname('..file.') == '.');
+        assert(basis.path.extname('..file..') == '.');
+        assert(basis.path.extname('...') == '.');
+        assert(basis.path.extname('...ext') == '.ext');
+        assert(basis.path.extname('....') == '.');
+        assert(basis.path.extname('file.ext/') == '.ext');
+        assert(basis.path.extname('file.ext//') == '.ext');
+        assert(basis.path.extname('file/') == '');
+        assert(basis.path.extname('file//') == '');
+        assert(basis.path.extname('file./') == '.');
+        assert(basis.path.extname('file.//') == '.');
 
-        this.is('', basis.path.extname('.\\'));
-        this.is('.\\', basis.path.extname('..\\'));
-        this.is('.ext\\', basis.path.extname('file.ext\\'));
-        this.is('.ext\\\\', basis.path.extname('file.ext\\\\'));
-        this.is('', basis.path.extname('file\\'));
-        this.is('', basis.path.extname('file\\\\'));
-        this.is('.\\', basis.path.extname('file.\\'));
-        this.is('.\\\\', basis.path.extname('file.\\\\'));
+        assert(basis.path.extname('.\\') == '');
+        assert(basis.path.extname('..\\') == '.\\');
+        assert(basis.path.extname('file.ext\\') == '.ext\\');
+        assert(basis.path.extname('file.ext\\\\') == '.ext\\\\');
+        assert(basis.path.extname('file\\') == '');
+        assert(basis.path.extname('file\\\\') == '');
+        assert(basis.path.extname('file.\\') == '.\\');
+        assert(basis.path.extname('file.\\\\') == '.\\\\');
       }
     },
     {
       name: 'normalize',
       test: function(){
-        this.is('', basis.path.normalize(''));
-        this.is('', basis.path.normalize('.'));
-        this.is('/', basis.path.normalize('/'));
+        assert(basis.path.normalize('') == '');
+        assert(basis.path.normalize('.') == '');
+        assert(basis.path.normalize('/') == '/');
 
-        this.is('/foo/bar/baz/asdf', basis.path.normalize('/foo/bar//baz/asdf/quux/..'));
-        this.is('fixtures/b/c.js', basis.path.normalize('./fixtures///b/../b/c.js'));
-        this.is('/bar', basis.path.normalize('/foo/../../../bar'));
-        this.is('/bar/baz', basis.path.normalize('/foo/../../../bar/baz'));
-        this.is('/bar', basis.path.normalize('/../../../bar'));
-        this.is('/', basis.path.normalize('/../../../'));
-        this.is('/', basis.path.normalize('/foo/../../../'));
-        this.is('bar', basis.path.normalize('foo/../../../bar'));
-        this.is('', basis.path.normalize('foo/../../../'));
-        this.is('bar/baz', basis.path.normalize('foo/../../../bar/baz'));
-        this.is('/bar', basis.path.normalize('/foo/../../../bar/'));
-        this.is('/bar/baz', basis.path.normalize('/foo/../../../bar/baz/'));
-        this.is('bar', basis.path.normalize('foo/../../../bar'));
-        this.is('bar/baz', basis.path.normalize('foo/../../../bar/baz/'));
-        this.is('a/b', basis.path.normalize('a//b//../b'));
-        this.is('a/b/c', basis.path.normalize('a//b//./c'));
-        this.is('a/b', basis.path.normalize('a//b//.'));
-        this.is('a/b', basis.path.normalize('a/b/'));
+        assert(basis.path.normalize('/foo/bar//baz/asdf/quux/..') == '/foo/bar/baz/asdf');
+        assert(basis.path.normalize('./fixtures///b/../b/c.js') == 'fixtures/b/c.js');
+        assert(basis.path.normalize('/foo/../../../bar') == '/bar');
+        assert(basis.path.normalize('/foo/../../../bar/baz') == '/bar/baz');
+        assert(basis.path.normalize('/../../../bar') == '/bar');
+        assert(basis.path.normalize('/../../../') == '/');
+        assert(basis.path.normalize('/foo/../../../') == '/');
+        assert(basis.path.normalize('foo/../../../bar') == 'bar');
+        assert(basis.path.normalize('foo/../../../') == '');
+        assert(basis.path.normalize('foo/../../../bar/baz') == 'bar/baz');
+        assert(basis.path.normalize('/foo/../../../bar/') == '/bar');
+        assert(basis.path.normalize('/foo/../../../bar/baz/') == '/bar/baz');
+        assert(basis.path.normalize('foo/../../../bar') == 'bar');
+        assert(basis.path.normalize('foo/../../../bar/baz/') == 'bar/baz');
+        assert(basis.path.normalize('a//b//../b') == 'a/b');
+        assert(basis.path.normalize('a//b//./c') == 'a/b/c');
+        assert(basis.path.normalize('a//b//.') == 'a/b');
+        assert(basis.path.normalize('a/b/') == 'a/b');
 
-        this.is('/', basis.path.normalize('http://'));
-        this.is('/', basis.path.normalize('http:'));
+        assert(basis.path.normalize('http://') == '/');
+        assert(basis.path.normalize('http:') == '/');
 
-        this.is('/', basis.path.normalize('http://localhost'));
-        this.is('/asd', basis.path.normalize('http://localhost/asd'));
-        this.is('/asd', basis.path.normalize('http://localhost/asd/'));
-        this.is('/', basis.path.normalize('http://localhost/asd/../..'));
-        this.is('/foo', basis.path.normalize('http://localhost/asd//../../../foo'));
-        this.is('/asd/asd', basis.path.normalize('http://localhost/asd/asd'));
+        assert(basis.path.normalize('http://localhost') == '/');
+        assert(basis.path.normalize('http://localhost/asd') == '/asd');
+        assert(basis.path.normalize('http://localhost/asd/') == '/asd');
+        assert(basis.path.normalize('http://localhost/asd/../..') == '/');
+        assert(basis.path.normalize('http://localhost/asd//../../../foo') == '/foo');
+        assert(basis.path.normalize('http://localhost/asd/asd') == '/asd/asd');
 
-        this.is('/', basis.path.normalize('http://user@localhost:8080'));
-        this.is('/asd', basis.path.normalize('http://user@localhost:8080/asd'));
-        this.is('/asd', basis.path.normalize('http://user@localhost:8080/asd/'));
-        this.is('/', basis.path.normalize('http://user@localhost:8080/asd/../../'));
-        this.is('/foo', basis.path.normalize('http://user@localhost:8080/asd//../../../foo'));
-        this.is('/asd/asd', basis.path.normalize('http://user@localhost:8080/asd/asd'));
+        assert(basis.path.normalize('http://user@localhost:8080') == '/');
+        assert(basis.path.normalize('http://user@localhost:8080/asd') == '/asd');
+        assert(basis.path.normalize('http://user@localhost:8080/asd/') == '/asd');
+        assert(basis.path.normalize('http://user@localhost:8080/asd/../../') == '/');
+        assert(basis.path.normalize('http://user@localhost:8080/asd//../../../foo') == '/foo');
+        assert(basis.path.normalize('http://user@localhost:8080/asd/asd') == '/asd/asd');
 
-        this.is('/', basis.path.normalize('c:'));
-        this.is('/asd', basis.path.normalize('c:/asd'));
-        this.is('/asd', basis.path.normalize('c:/asd/'));
-        this.is('/', basis.path.normalize('c:/asd/../..'));
-        this.is('/foo', basis.path.normalize('c:/asd//../../foo'));
-        this.is('/asd/asd', basis.path.normalize('c:/asd/asd'));
+        assert(basis.path.normalize('c:') == '/');
+        assert(basis.path.normalize('c:/asd') == '/asd');
+        assert(basis.path.normalize('c:/asd/') == '/asd');
+        assert(basis.path.normalize('c:/asd/../..') == '/');
+        assert(basis.path.normalize('c:/asd//../../foo') == '/foo');
+        assert(basis.path.normalize('c:/asd/asd') == '/asd/asd');
       }
     },
     {
