@@ -1154,10 +1154,10 @@ module.exports = {
       name: 'field types',
       test: [
         {
-          name: 'entity',
+          name: 'entity wrapper',
           test: [
             {
-              name: 'by name',
+              name: 'entity type by name',
               test: [
                 {
                   name: 'use name after type declared',
@@ -1179,6 +1179,37 @@ module.exports = {
 
                     assert(typeof instance.data.nested != 'undefined');
                     assert(instance.data.nested.data.value == 123);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'entity set type by name',
+              test: [
+                {
+                  name: 'use name after type declared',
+                  test: function(){
+                    var Type1 = basis.entity.createType(null, { value: Number });
+                    var SetType1 = basis.entity.createSetType('fieldSetTypeTest-declaredTypeName', Type1);
+                    var Type2 = basis.entity.createType(null, { items: 'fieldSetTypeTest-declaredTypeName' });
+                    var instance = Type2({ items: [{ value: 123 }] });
+
+                    assert(typeof instance.data.items != 'undefined');
+                    assert(instance.data.items.itemCount == 1);
+                    assert(instance.data.items.pick().data.value == 123);
+                  }
+                },
+                {
+                  name: 'use name before type declared',
+                  test: function(){
+                    var Type1 = basis.entity.createType(null, { value: Number });
+                    var Type2 = basis.entity.createType(null, { items: 'fieldSetTypeTest-nonDeclaredTypeName' });
+                    var SetType1 = basis.entity.createSetType('fieldSetTypeTest-nonDeclaredTypeName', Type1);
+                    var instance = Type2({ items: [{ value: 123 }] });
+
+                    assert(typeof instance.data.items != 'undefined');
+                    assert(instance.data.items.itemCount == 1);
+                    assert(instance.data.items.pick().data.value == 123);
                   }
                 }
               ]

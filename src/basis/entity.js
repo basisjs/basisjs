@@ -72,10 +72,10 @@
     {
       for (var i = 0, def; def = list[i]; i++)
       {
-        var typeClass = def[0];
+        var typeHost = def[0];
         var fieldName = def[1];
 
-        typeClass[fieldName] = type;
+        typeHost[fieldName] = type;
       }
 
       delete deferredTypeDef[typeName];
@@ -84,7 +84,7 @@
     namedTypes[typeName] = type;
   }
 
-  function getTypeByName(typeName, typeClass, field){
+  function getTypeByName(typeName, typeHost, field){
     if (namedTypes[typeName])
       return namedTypes[typeName];
 
@@ -93,9 +93,15 @@
     if (!list)
       list = deferredTypeDef[typeName] = [];
 
-    list.push([typeClass, field]);
+    list.push([typeHost, field]);
 
-    return TYPE_DEFINITION_PLACEHOLDER;
+    return function(value, oldValue){
+      var Type = namedTypes[typeName];
+      if (Type)
+        return Type(value, oldValue);
+      /** @cut */ else if (arguments.length) // don't warn on default value calculation
+      /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for ' + field + ', but function called');
+    };
   }
 
   function validateScheme(){
