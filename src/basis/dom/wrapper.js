@@ -2118,7 +2118,7 @@
         if (dataSource)
         {
           this.dataSourceMap_ = {};
-          this.setChildNodesState(dataSource.state);
+          this.setChildNodesState(dataSource.state, dataSource.state.data);
 
           if (listenHandler)
           {
