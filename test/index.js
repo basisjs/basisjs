@@ -19,7 +19,8 @@ module.exports = {
     require('./spec/ui.js'),
     require('./spec/dom.js'),
     require('./spec/cssom.js'),
-    require('./spec/layout.js')
+    require('./spec/layout.js'),
+    require('./spec/utils.info.js')
   ]
 };
 
