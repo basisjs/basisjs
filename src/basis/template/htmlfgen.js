@@ -739,8 +739,7 @@
 
         ';return instance' +
 
-        /** @cut */ '\n//# sourceURL=' + basis.path.origin + uri +
-        /** @cut */ '\n//@ sourceURL=' + basis.path.origin + uri + '\n' +
+        /** @cut */ '\n//# sourceURL=' + basis.path.origin + uri + '\n' +
       '}'
     );
 

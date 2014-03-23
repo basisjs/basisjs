@@ -1657,7 +1657,7 @@
 
       if (!token)
       {
-        token = this.deferredToken = new basis.DeferredToken(this.value);
+        token = this.deferredToken = new DeferredToken(this.value);
         this.attach(token.set, token);
       }
 
@@ -2084,7 +2084,6 @@
   function compileFunction(sourceURL, args, body){
     try {
       return new Function(args, body
-        /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
         /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
       );
     } catch(e) {
