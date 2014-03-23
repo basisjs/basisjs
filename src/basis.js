@@ -2084,7 +2084,7 @@
   function compileFunction(sourceURL, args, body){
     try {
       return new Function(args, body
-        /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
+        /** @cut */ + '\n\n//# sourceURL=' + pathUtils.origin + sourceURL
       );
     } catch(e) {
       /** @cut */ if (document && 'line' in e == false && 'addEventListener' in global)

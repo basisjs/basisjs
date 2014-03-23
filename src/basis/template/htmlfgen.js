@@ -688,22 +688,21 @@
         );
 
       result.createL10nSync = compileFunction(['_', '__l10n', 'bind_attr', 'TEXT_BUG'],
-        /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
+        /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
         'var ' + paths.path + ';' +
         'return function(token, value){' +
           'switch(token){' +
             code.join('') +
           '}' +
-        '}\n'
+        '}'
 
-        /** @cut */ + '//# sourceURL=' + basis.path.origin + uri + '_l10n\n'
-        /** @cut */ + '//@ sourceURL=' + basis.path.origin + uri + '_l10n\n'
+        /** @cut */ + '\n\n//# sourceURL=' + basis.path.origin + uri + '_l10n'
       );
     }
 
     result.createInstance = compileFunction(['tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG'],
-      /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
+      /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
       'var getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
@@ -738,9 +737,9 @@
         ';' + bindings.l10nCompute +
 
         ';return instance' +
-
-        /** @cut */ '\n//# sourceURL=' + basis.path.origin + uri + '\n' +
       '}'
+
+      /** @cut */ + '\n\n//# sourceURL=' + basis.path.origin + uri
     );
 
     return result;
