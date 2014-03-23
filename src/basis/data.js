@@ -755,11 +755,12 @@
 
           var objectId = object.basisObjectId;
           var pair = tokenMap[objectId];
+          var value = fn(object, hostValue.value);
 
           if (!pair)
           {
             // create token with computed value
-            var token = new basis.Token(fn(object, hostValue.value));
+            var token = new basis.Token(value);
 
             // attach handler re-evaluate handler to object
             object.addHandler(handler, token);
@@ -769,6 +770,11 @@
               token: token,
               object: object
             };
+          }
+          else
+          {
+            // recalc value
+            pair.token.set(value);
           }
 
           return pair.token;
