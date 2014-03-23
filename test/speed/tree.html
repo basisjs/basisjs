@@ -46,10 +46,6 @@
       float: left;
       padding: 2px;
     }
-    .break
-    {
-      clear: both;
-    }
     #firstRun
     {
       color: #A0A0A0;
@@ -62,6 +58,10 @@
     .clear
     {
       clear: both;
+    }
+    .Basis-ButtonPanel
+    {
+      float: left;
     }
   </style>
   <!--[if lt IE 7]>
@@ -124,6 +124,7 @@
       basis.require('basis.dom.event');
       basis.require('basis.data.generator');
       basis.require('basis.ui.tree');
+      basis.require('basis.ui.button');
       basis.require('basis.utils.benchmark');
 
       var DOM = basis.dom;
@@ -137,19 +138,25 @@
       var TreeFolder = basis.ui.tree.Folder;
 
       function setNodeCount(value){
+        value = Number(value) || 0;
+        genNodes(Number(value));
         DOM.get('nodeCount').value = value;
-        if (isNaN(value)) 
-          DOM.get('time').innerHTML = '<span style="color: red">&quot;<b>' + value + '</b>&quot; is not a number</span>';
-        else 
-          genNodes(Number(value)); 
       }
 
-      DOM.insert(DOM.get('nodeCount').parentNode, [1, 10, 100, 250, 500, 1000, 2000, 5000].map(function(item){ 
-        var btn = DOM.createElement('button', item); 
-        Event.addHandler(btn, 'click', function(){ setNodeCount(item); });
-        Event.onUnload(function(){ Event.clearHandlers(btn); });
-        return btn;
-      }), DOM.INSERT_BEFORE, DOM.get('nodeCount'));
+      var genButtonPanel = new basis.ui.button.ButtonPanel({
+        container: document.getElementById('nodeCount').parentNode,
+        childNodes: [1, 10, 100, 250, 500, 1000, 2000, 5000].map(function(count){
+          return {
+            caption: count,
+            groupId: 1,
+            click: function(){
+              setNodeCount(count);
+            }
+          };
+        })
+      });
+
+      DOM.insert(DOM.get('nodeCount').parentNode, genButtonPanel.element, DOM.INSERT_BEFORE, DOM.get('nodeCount'));
 
       // create tree (reference allowed in global scope)
       TestTree = new Tree({
@@ -167,9 +174,8 @@
         }
       });
       DOM.insert(TestTree.element, DOM.createElement('#firstRun', '[empty tree]'));
-      DOM.insert('TreeContainer', DOM.createElement('.break'));
 
-      TestTree.selection.addHandler({ 
+      TestTree.selection.addHandler({
         change: function(){
           var count = this.itemCount;
           DOM.get('in_selection').innerHTML = '<b>' + count + '</b> item(s)';
@@ -180,22 +186,20 @@
         if (DOM.get('firstRun'))
           DOM.remove(DOM.get('firstRun'));
 
+        var isRandomTitle = DOM.get('checkRandomNames').checked;
         var clearTime = getTime();
         TestTree.clear();
-        DOM.get('clearTime').innerHTML = ' [clear time: ' + (getTime(clearTime) / 1000).toFixed(3) + ']';
-
-        var isRandomTitle = DOM.get('checkRandomNames').checked;
+        clearTime = getTime(clearTime);
 
         // generate data
         var data = [];
         var title = basis.string.repeat('very very long title ', 10);
         for (var i = 0; i < count; i++)
         {
-          var val = Math.round(Math.random() * 10);
           data.push({
             data: {
-              id: 'tree_node' + i,
-              value: val,
+              id: i,
+              value: Math.round(Math.random() * 10),
               title: title
             }
           });
@@ -203,37 +207,38 @@
         }
 
         //if (console && console.profile) console.profile();
-        var timeStart = getTime();
+        var createTime = getTime();
         var nodes = [TestTree];
         var cn = [];
         for (var i = 0; i < count; i++)
         {
-          var kind = i % 2 ? TreeFolder : TreeNode;
+          var NodeClass = i % 2 ? TreeFolder : TreeNode;
           // create node
-          var node = new kind(data[i]);
+          var node = new NodeClass(data[i]);
 
           // add node to tree
           var refNode = nodes[(i * count * 173) % nodes.length];
-          if (refNode == TestTree)
+          if (refNode === TestTree)
             cn.push(node);
           else
             refNode.insertBefore(node);
-            
-          if (kind == TreeFolder)
+
+          if (NodeClass == TreeFolder)
             nodes.push(node);
         }
         TestTree.setChildNodes(cn);
+        createTime = (getTime(createTime) / 1000).toFixed(3);
 
-        var time = (getTime(timeStart) / 1000).toFixed(3);
-        DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + time + '</b> sec';
+        DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + createTime + '</b> sec';
+        DOM.get('clearTime').innerHTML = ' [clear time: ' + (clearTime / 1000).toFixed(3) + ']';
 
         cn.length = 0;
         nodes.length = 0;
       };
 
       var buttons = {
-        Generate: function(){ 
-          setNodeCount(DOM.get('nodeCount').value); 
+        Generate: function(){
+          setNodeCount(DOM.get('nodeCount').value);
         },
         ClearTree: function(){
           this.clear();
@@ -273,8 +278,8 @@
           }, DOM.get('selected_name').value);
         },
         SetValueSelected: function(){
-          this.selection.getItems().forEach(function(node){ 
-            node.update({ value: this }); 
+          this.selection.getItems().forEach(function(node){
+            node.update({ value: this });
             var txt = node.title.firstChild.nextSibling;
             if (txt && txt.nodeValue.indexOf('value:') != -1)
               txt.nodeValue = basis.string.format(' [value: {0}]', this);

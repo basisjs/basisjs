@@ -508,6 +508,9 @@
     * @destructor
     */
     destroy: function(){
+      // inherit
+      Emitter.prototype.destroy.call(this);
+
       // remove subscriptions if necessary
       if (this.active)
       {
@@ -515,9 +518,6 @@
         for (var i = 0, action; action = config.actions[i]; i++)
           action(SUBSCRIPTION.unlink, this);
       }
-
-      // inherit
-      Emitter.prototype.destroy.call(this);
 
       this.state = STATE.UNDEFINED;
     }
@@ -755,11 +755,12 @@
 
           var objectId = object.basisObjectId;
           var pair = tokenMap[objectId];
+          var value = fn(object, hostValue.value);
 
           if (!pair)
           {
             // create token with computed value
-            var token = new basis.Token(fn(object, hostValue.value));
+            var token = new basis.Token(value);
 
             // attach handler re-evaluate handler to object
             object.addHandler(handler, token);
@@ -769,6 +770,11 @@
               token: token,
               object: object
             };
+          }
+          else
+          {
+            // recalc value
+            pair.token.set(value);
           }
 
           return pair.token;
@@ -1534,20 +1540,27 @@
   * @return {object|undefined}
   */
   function getDatasetDelta(a, b){
-    var inserted = [];
-    var deleted = [];
-
     if (!a || !a.itemCount)
     {
-      if (b)
-        inserted = b.getItems();
+      if (b && b.itemCount)
+        return {
+          inserted: b.getItems()
+        };
     }
     else
     {
       if (!b || !b.itemCount)
-        deleted = a.getItems();
+      {
+        if (a.itemCount)
+          return {
+            deleted: a.getItems()
+          };
+      }
       else
       {
+        var inserted = [];
+        var deleted = [];
+
         for (var key in a.items_)
         {
           var item = a.items_[key];
@@ -1561,10 +1574,10 @@
           if (item.basisObjectId in a.items_ == false)
             inserted.push(item);
         }
+
+        return getDelta(inserted, deleted);
       }
     }
-
-    return getDelta(inserted, deleted);
   }
 
 
@@ -1775,7 +1788,7 @@
       this.itemCount += insertCount - deleteCount;
 
       // drop cache
-      this.cache_ = null;
+      this.cache_ = insertCount == this.itemCount ? delta.inserted : null;
 
       // call event
       events.itemsChanged.call(this, delta);
@@ -2081,11 +2094,11 @@
       var delta = this.set(items) || {};
       var deleted = delta.deleted;
 
-      setAccumulateState(true);
+      Dataset.setAccumulateState(true);
       if (deleted)
         for (var i = 0, object; object = deleted[i]; i++)
           object.destroy();
-      setAccumulateState(false);
+      Dataset.setAccumulateState(false);
 
       return delta.inserted;
     },

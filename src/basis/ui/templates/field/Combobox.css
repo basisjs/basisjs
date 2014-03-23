@@ -18,6 +18,10 @@
     text-decoration: none;
     outline: none;
   }
+  .Basis-DropdownList-opened
+  {
+
+  }
 
   .Basis-DropdownList:focus .Basis-DropdownList-Caption
   {
@@ -84,6 +88,11 @@
 
   /* popup */
 
+  .Basis-DropdownList-PopupContent
+  {
+    
+  }
+
   .Basis-DropdownList-Popup
   {
     padding: 0 !important;
@@ -130,11 +139,3 @@
     background: none !important;
     cursor: default;
   }
-
-  .Basis-DropdownList-Popup .Basis-PartitionNode-Title
-  {
-    background: #F0F0F0;
-    padding: .3em 6px .35em;
-    font-weight: bold;
-  }
-

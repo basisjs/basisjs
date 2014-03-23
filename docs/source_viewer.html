@@ -1,4 +1,3 @@
-
 <!doctype html>
 
 <html>
@@ -29,39 +28,32 @@
 
     var line = parseInt((location.hash || '').replace(/^#/, ''));
     var filename = ((location.search || '').match(/[\?\&]file=([^&]+)/) || [])[1];
-    if (filename)
-    {
-      basis.net.ajax.request({
-        url: filename,
-        handler: {
-          complete: function(sender, req){
-            //t = new Date;
-            var node = new basis.ui.code.SourceCode({
-              container: document.body,
-              lang: 'js',
-              normalize: false,
-              data: {
-                code: req.data.responseText//.replace(/^\s*\n/, function(m){ return '.' + m })
-              }
-            });
 
-            //alert(new Date - t)
-            if (!isNaN(line))
-            {
-              var lineElement = node.element.childNodes[line - 1];
-              if (lineElement)
-              {
-                lineElement.className += ' selected';
-                basis.nextTick(function(){
-                  document.documentElement.scrollTop =
-                  document.body.scrollTop = lineElement.offsetTop - 200;
-                });
-              }
-            }
+    if (filename)
+      basis.net.ajax.request(filename, function(data){
+        var node = new basis.ui.code.SourceCode({
+          container: document.body,
+          lang: 'js',
+          normalize: false,
+          data: {
+            code: data
+          }
+        });
+
+        if (!isNaN(line))
+        {
+          var lineElement = node.element.childNodes[line - 1];
+          if (lineElement)
+          {
+            lineElement.className += ' selected';
+            basis.nextTick(function updateScroll(){
+              var offset = lineElement.offsetTop - 200;
+              document.documentElement.scrollTop = offset;
+              document.body.scrollTop = offset;
+            });
           }
         }
       });
-    }
   </script>
 </body>
 

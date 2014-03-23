@@ -10,6 +10,19 @@
   display: block;
 }
 
+.Basis-Field.focused,
+.Basis-Field.indeterminate,
+.Basis-Field.valid,
+.Basis-Field.invalid,
+.Basis-Field__indeterminate,
+.Basis-Field__valid,
+.Basis-Field-Title,
+.Basis-Field-Description,
+.Basis-Field-Label
+{
+  /* to avoid warnings */
+}
+
 .Basis-Field TEXTAREA,
 .Basis-Field .native-type-text,
 .Basis-Field .native-type-password
@@ -41,4 +54,14 @@
 {
   display: inline-block;
   vertical-align: middle;
+}
+
+.Basis-CheckGroup-Item,
+.Basis-RadioGroup-Item,
+.Basis-Select,
+.Basis-Select-Item,
+.Basis-MatchInput,
+.native-type-file
+{
+
 }

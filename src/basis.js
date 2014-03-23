@@ -649,12 +649,11 @@
       })();
 
       // by default
-      var defaultAddToQueue = function(taskId){
+      var addToQueue = function(taskId){
         setTimeout(function(){
           runTask(taskId);
         }, 0);
       };
-      var addToQueue = defaultAddToQueue;
 
       //
       // implement platform specific solution
@@ -674,9 +673,11 @@
         {
           addToQueue = function(taskId){
             var channel = new global.MessageChannel();
-            channel.port1.onmessage = function(){
+            var setImmediateHandler = function(){
               runTask(taskId);
             };
+
+            channel.port1.onmessage = setImmediateHandler;
             channel.port2.postMessage(''); // broken in Opera if no value
           };
         }
@@ -700,7 +701,7 @@
           if (postMessageSupported)
           {
             // postMessage scheme
-            var handleMessage = function(event){
+            var setImmediateHandler = function(event){
               if (event && event.source == global)
               {
                 var taskId = String(event.data).split(MESSAGE_NAME)[1];
@@ -711,9 +712,9 @@
             };
 
             if (global.addEventListener)
-              global.addEventListener('message', handleMessage, true);
+              global.addEventListener('message', setImmediateHandler, true);
             else
-              global.attachEvent('onmessage', handleMessage);
+              global.attachEvent('onmessage', setImmediateHandler);
 
             // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
             // invoking our onGlobalMessage listener above.
@@ -731,6 +732,7 @@
             {
               // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
               // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
+              var defaultAddToQueue = addToQueue;
               addToQueue = function beforeHeadReady(taskId){
                 if (typeof documentInterface != 'undefined')
                 {
@@ -1655,7 +1657,7 @@
 
       if (!token)
       {
-        token = this.deferredToken = new basis.DeferredToken(this.value);
+        token = this.deferredToken = new DeferredToken(this.value);
         this.attach(token.set, token);
       }
 
@@ -1773,7 +1775,10 @@
 
     if (patches)
       for (var i = 0; i < patches.length; i++)
+      {
+        /** @cut */ consoleMethods.info('Apply patch for ' + resource.url);
         patches[i](resource.get(), resource.url);
+      }
   }
 
   var getResourceContent = function(url, ignoreCache){
@@ -1829,6 +1834,7 @@
       var resolved = false;
       var wrapped = false;
       var content;
+      /** @cut */ var wrappedContent;
 
       var resource = function(){
         // if resource resolved, just return content
@@ -1851,6 +1857,7 @@
           {
             wrapped = true;
             content = contentWrapper(urlContent, resourceUrl);
+            /** @cut */ wrappedContent = urlContent;
           }
         }
         else
@@ -1883,6 +1890,9 @@
         isResolved: function(){
           return resolved;
         },
+        /** @cut */ hasChanges: function(){
+        /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
+        /** @cut */ },
         update: function(newContent){
           newContent = String(newContent);
 
@@ -2074,8 +2084,7 @@
   function compileFunction(sourceURL, args, body){
     try {
       return new Function(args, body
-        /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
-        /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
+        /** @cut */ + '\n\n//# sourceURL=' + pathUtils.origin + sourceURL
       );
     } catch(e) {
       /** @cut */ if (document && 'line' in e == false && 'addEventListener' in global)
@@ -2132,7 +2141,7 @@
           /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(relativePath))
           /** @cut */   consoleMethods.warn('Bad usage: resource(\'' + relativePath + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-          return getResource(baseURL + relativePath);
+          return getResource(pathUtils.resolve(baseURL, relativePath));
         },
         function(relativePath, base){
           return requireNamespace(relativePath, base || baseURL);
@@ -2905,12 +2914,16 @@
     var fired = !document || isReady();
     var deferredHandler;
 
+    function runReadyHandler(handler){
+      handler.callback.call(handler.context);
+    }
+
     function fireHandlers(){
       if (isReady())
         if (!fired++)
           while (deferredHandler)
           {
-            deferredHandler.callback.call(deferredHandler.context);
+            runReadyHandler(deferredHandler);
             deferredHandler = deferredHandler.next;
           }
     }
@@ -2967,7 +2980,10 @@
         };
       }
       else
-        callback.call(context);
+        runReadyHandler({
+          callback: callback,
+          context: context
+        });
     };
   })();
 
@@ -3045,11 +3061,11 @@
     }
 
     function checkParents(){
-      if (getParent('head') && getParent('body'))
-        clearInterval(timer);
+      if (timer && getParent('head') && getParent('body'))
+        timer = clearInterval(timer);
     }
 
-    if (document)
+    if (document && (!getParent('head') || !getParent('body')))
     {
       timer = setInterval(checkParents, 5);
       ready(checkParents);
@@ -3422,7 +3438,9 @@
     json: {
       parse: typeof JSON != 'undefined'
         ? JSON.parse
-        : String_extensions.toObject
+        : function(str){
+            return String_extensions.toObject(str, true);
+          }
     }
   });
 

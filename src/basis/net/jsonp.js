@@ -7,7 +7,7 @@
 
   var document = global.document;
   var escapeValue = global.encodeURIComponent;
-  var extend = basis.object.extend;  
+  var extend = basis.object.extend;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
   var createTransportEvent = basis.net.createTransportEvent;
@@ -53,6 +53,7 @@
   */
   function readyStateChangeHandler(readyState, abort){
     var newState;
+    var newStateData;
     var error = false;
 
     if (typeof readyState != 'number')
@@ -64,7 +65,7 @@
     if (readyState == this.prevReadyState_)
       return;
 
-    this.prevReadyState_ = readyState;    
+    this.prevReadyState_ = readyState;
 
     // dispatch self event
     this.emit_readyStateChanged(readyState);
@@ -72,7 +73,7 @@
     if (readyState == STATE_DONE)
     {
       this.clearTimeout();
-      
+
       // handle memory leak in IE
       this.script.onload = this.script.onreadystatechange = null;
 
@@ -95,15 +96,16 @@
         // dispatch events
         if (this.isSuccessful() && !error)
         {
-          this.emit_success(this.getResponseData());
           newState = STATE.READY;
+
+          this.emit_success(this.getResponseData());
         }
         else
         {
-          this.processErrorResponse();
-
-          this.emit_failure(this.data.error);
           newState = STATE.ERROR;
+          newStateData = this.getResponseError();
+
+          this.emit_failure(newStateData);
         }
       }
 
@@ -116,7 +118,7 @@
       newState = STATE.PROCESSING;
 
     // set new state
-    this.setState(newState, this.data.error);
+    this.setState(newState, newStateData);
   }
 
   /**
@@ -152,13 +154,11 @@
       return this.data.data;
     },
 
-    processErrorResponse: function(){
-      this.update({
-        error: {
-          code: 'ERROR',
-          msg: 'ERROR'
-        }
-      });
+    getResponseError: function(){
+      return {
+        code: 'ERROR',
+        msg: 'ERROR'
+      };
     },
 
     prepare: basis.fn.$true,
@@ -169,7 +169,7 @@
 
       // make a copy
       requestData = objectSlice(requestData);
-      this.callback = getCallback();      
+      this.callback = getCallback();
 
       for (var key in requestData.params)
       {
@@ -220,7 +220,7 @@
       });
 
       // set up transport
-      this.script = script;      
+      this.script = script;
       script.async = true;
       script.src = requestData.requestUrl;
       script.charset = requestData.encoding;
@@ -330,7 +330,6 @@
         throw new Error('URL is not defined');
 
       extend(requestData, {
-        requestUrl: url,
         url: url,
         encoding: requestData.encoding || this.encoding,
         params: objectMerge(this.params, requestData.params),
@@ -345,7 +344,7 @@
 
 
   //
-  // exports 
+  // exports
   //
 
   module.exports = {

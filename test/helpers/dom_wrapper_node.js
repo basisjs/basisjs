@@ -225,7 +225,7 @@ function checkNode(node){
   if (node.satellite)
   {
     for (var name in node.satellite)
-      if (name != '__auto__')
+      if (name != '__auto__' && name != '__extend__')
       {
         var satellite = node.satellite[name];
 

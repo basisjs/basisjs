@@ -76,7 +76,7 @@
     // Data generation
     //
 
-    Math.seedrandom("tag cloud");
+    Math.seedrandom('tag cloud');
     var words = (
       'Lorem ipsum dolor sit amet consectetur adipisicing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ' +
       'Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat ' +
@@ -93,7 +93,7 @@
 
       return res;
     }
-    
+
     var data = new basis.data.Dataset({
       items: basis.array.create(256, function(idx){
         return new basis.data.Object({
@@ -101,7 +101,7 @@
             id: idx,
             tags: genTags(1, 6)
           }
-        })
+        });
       })
     });
 
@@ -134,8 +134,8 @@
 
       childClass: {
         fontSize: 0,
-        
-        template: 
+
+        template:
           '<span class="tag" style="font-size: {fontSize}">' +
             '{title}' +
             '<sub>{count}</sub>' +
@@ -158,14 +158,14 @@
 
         satellite: {
           indexes: {
-            events: ['rootChanged', 'update'],
+            events: 'rootChanged',
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },
-            instanceOf: basis.data.Object.subclass({
+            instanceOf: basis.dom.wrapper.AbstractNode.subclass({
               active: true,
               emit_update: function(delta){
-                basis.data.Object.prototype.emit_update.call(this, delta);
+                basis.dom.wrapper.AbstractNode.prototype.emit_update.call(this, delta);
 
                 this.owner.fontSize = basis.string.format('{0:.2}%', 50 + 200 * this.data.percentOfRange);
                 this.owner.updateBind('fontSize');
