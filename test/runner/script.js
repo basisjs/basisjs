@@ -1,5 +1,5 @@
 // resources (40):
-//  [string] [inline unknown#1] -> 0.css
+//  [string] [unknown#1] -> 0.css
 //  [string] core/env/iframe_inject.code -> 0.code
 //  [array] reporter/template/view.tmpl -> 8.tmpl
 //  [array] reporter/module/toc/template/toc-item.tmpl -> 1.tmpl
@@ -46,28 +46,28 @@
 //   ../bower_components/esprima/esprima.js
 //   ../bower_components/jsdiff/diff.js
 (function(){
-'use strict';
+"use strict";
 
 var __namespace_map__ = {"0.js":"app","1.js":"basis.app","2.js":"basis.ui","3.js":"basis.l10n","4.js":"basis.event","5.js":"basis.data","6.js":"basis.dom.wrapper","7.js":"basis.template","8.js":"basis.template.html","9.js":"basis.dom.event","a.js":"basis.template.htmlfgen","b.js":"core","c.js":"core.runner","d.js":"basis.data.dataset","e.js":"basis.data.index","f.js":"basis.data.value","g.js":"basis.utils.benchmark","h.js":"core.test","i.js":"basis.utils.info","j.js":"core.env","k.js":"core.ast","l.js":"esprima","m.js":"app.test","n.js":"app.highlight","o.js":"diff"};
 var __resources__ = {
   "0.css": "",
-  "0.code": "function importScripts(){\n  function importScript(url){\n    var req = new XMLHttpRequest();\n    req.open('GET', url, false);\n    req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());\n    req.send(null);\n\n    if (req.status >= 200 && req.status < 400)\n      (window.execScript || function(fn){\n        window['eval'].call(window, fn);\n      })(req.responseText);\n    else\n      throw 'Can\\'t load script: ' + url;\n  }\n\n  for (var i = 0; i < arguments.length; i++)\n    importScript(arguments[i])\n}\n\nfunction __initTestEnvironment(initCode, deprecateTestEnvironment){\n  // basis.js default behaviour\n  if (typeof basisjsToolsFileSync != 'undefined')\n    basisjsToolsFileSync.notifications.attach(function(type, filename){\n      if (typeof basis == 'undefined')\n        return; // no basis.js available\n\n      if (type == 'update' && (\n            (basis.filename_ == filename) ||\n            (basis.resource && basis.resource.exists(filename))\n         ))\n        deprecateTestEnvironment();\n    });\n\n  // fallback deprecate function\n  if (typeof deprecateTestEnvironment != 'function')\n    deprecateTestEnvironment = function(){};\n\n  // main part\n  return eval(initCode + ';(function(__code){\\n' +\n  '  return eval(\"(\" + __code + \")\");' +\n  '})');\n}\n",
+  "0.code": "function importScripts(){\r\n  function importScript(url){\r\n    var req = new XMLHttpRequest();\r\n    req.open('GET', url, false);\r\n    req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());\r\n    req.send(null);\r\n\r\n    if (req.status >= 200 && req.status < 400)\r\n      (window.execScript || function(fn){\r\n        window['eval'].call(window, fn);\r\n      })(req.responseText);\r\n    else\r\n      throw 'Can\\'t load script: ' + url;\r\n  }\r\n\r\n  for (var i = 0; i < arguments.length; i++)\r\n    importScript(arguments[i])\r\n}\r\n\r\nfunction __initTestEnvironment(initCode, deprecateTestEnvironment){\r\n  // basis.js default behaviour\r\n  if (typeof basisjsToolsFileSync != 'undefined')\r\n    basisjsToolsFileSync.notifications.attach(function(type, filename){\r\n      if (typeof basis == 'undefined')\r\n        return; // no basis.js available\r\n\r\n      if (type == 'update' && (\r\n            (basis.filename_ == filename) ||\r\n            (basis.resource && basis.resource.exists(filename))\r\n         ))\r\n        deprecateTestEnvironment();\r\n    });\r\n\r\n  // fallback deprecate function\r\n  if (typeof deprecateTestEnvironment != 'function')\r\n    deprecateTestEnvironment = function(){};\r\n\r\n  // main part\r\n  return eval(initCode + ';(function(__code){\\n' +\r\n  '  return eval(\"(\" + __code + \")\");' +\r\n  '})');\r\n}\r\n",
   "8.tmpl": [ [ 1, 0, [ "element" ], "div", [ 2, 0, 0, "id", "layout" ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "header-caption" ], [ 3, 0, 0, "Basis.js test runner" ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-buttons" ], [ 1, 0, 0, "button", [ 4, 0, 0, "header-button" ], [ 6, "click", "run" ], [ 3, 0, 0, "run" ] ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-test-suite-location" ], [ 3, 1, [ "name" ] ], [ 3, 0, 0, " " ], [ 3, 1, [ "done" ] ], [ 3, 0, 0, " / " ], [ 3, 1, [ "total" ] ], [ 3, 0, 0, " (" ], [ 3, 1, [ "assert" ] ], [ 3, 0, 0, ") (time: " ], [ 3, 1, [ "time" ] ], [ 3, 0, 0, " ms)" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "sidebar" ], [ 8, 1, [ "toc" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "content" ], [ 8, 1, [ "tests" ] ] ] ] ],
   "1.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-toc-item_", "selected" ] ], 0, "app-toc-item" ], [ 6, "click", "select" ], [ 6, "dblclick", "pickup" ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__progress_", "state" ] ], 0, "app-toc-item__progress" ], [ 5, [ [ [ "progress" ], [ 0, "%" ], "width" ] ], 0 ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__state-", "state" ], [ "app-toc-item__state-", "pending" ] ], 0, "app-toc-item__state" ], [ 3, 1, [ "stateMessage" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-toc-item__name" ], [ 3, 1, [ "name" ] ] ] ] ],
   "2.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, 0, 0, "app-toc" ], [ 8, 1, [ "levelUp" ] ], [ 8, 1, [ "faultTests" ] ] ] ],
-  "0.tmpl": [ [ 1, 0, [ "element" ], "iframe", [ 2, [ [ "src" ], [ 0 ] ], 0, "src", "{src}" ], [ 6, "load", "ready" ], [ 5, 0, 0, "width: 10px;height: 10px;top: -100px;position: absolute;border: none;opacity: 0.0001;" ] ] ],
+  "0.tmpl": [ [ 1, 0, [ "element" ], "iframe", [ 2, [ [ "src" ], [ 0 ] ], 0, "src", "{src}" ], [ 6, "load", "ready" ], [ 5, 0, 0, "width: 10px; height: 10px; top: -100px; position: absolute; border: none; opacity: 0.0001;" ] ] ],
   "4.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ] ] ],
   "5.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-suite" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-suite__content" ] ] ] ],
-  "6.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-case" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 8, 1, [ "source" ] ] ], [ 8, 0, 0, '<b:after ref="stateMessage">\n       {errorMessage}\n  </b:after>' ] ],
+  "6.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-case" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 8, 1, [ "source" ] ] ], [ 8, 0, 0, '<b:after ref="stateMessage">\r\n       {errorMessage}\r\n  </b:after>' ] ],
   "7.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-tree_", "hasDelegate" ] ], 0, "app-test-tree" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__header" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__buttons" ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-tree__button-pickup_", "type" ] ], 0, "app-test-tree__button app-test-tree__button-pickup" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-tree__caption" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-tree__content" ] ], [ 8, 1, [ "sourceCode" ] ] ] ],
   "3.tmpl": [ [ 1, 1, [ "code", "element" ], "pre", [ 4, 0, 0, "Basis-SyntaxHighlight" ], [ 3, 1, [ "sourceCode" ] ] ] ],
-  "b.js": "/* Javascript file /Users/rdvornov/Desktop/git/test-runner/src/core.js not found */",
-  "c.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("5.js");
-    basis.require("d.js");
-    basis.require("e.js");
-    basis.require("g.js");
-    var TestCase = basis.require("h.js").TestCase;
+  "b.js": "/* Javascript file C:/usr/local/Apache2/htdocs/git/test-runner/src/core.js not found */",
+  "c.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./5.js");
+    basis.require("./d.js");
+    basis.require("./e.js");
+    basis.require("./g.js");
+    var TestCase = basis.require("./h.js").TestCase;
     var testsToRun = new basis.data.Dataset;
     var awaitProcessingTests = new basis.data.Dataset({
       listen: {
@@ -171,9 +171,9 @@ var __resources__ = {
       stop: stop
     };
   },
-  "d.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("4.js");
-    basis.require("5.js");
+  "d.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./4.js");
+    basis.require("./5.js");
     var namespace = this.path;
     var Class = basis.Class;
     var oneFunctionProperty = Class.oneFunctionProperty;
@@ -496,10 +496,12 @@ var __resources__ = {
       },
       init: function() {
         this.sourceMap_ = {};
-        var source = this.source;
-        if (source) this.source = null;
         AbstractDataset.prototype.init.call(this);
-        if (source) this.setSource(source);
+        var source = this.source;
+        if (source) {
+          this.source = null;
+          this.setSource(source);
+        }
       },
       setSource: function(source) {
         source = basis.data.resolveDataset(this, this.setSource, source, "sourceAdapter_");
@@ -858,6 +860,17 @@ var __resources__ = {
       setLimit: function(limit) {
         return this.setRange(this.offset, limit);
       },
+      setRule: function(rule, orderDesc) {
+        rule = getter(rule);
+        this.orderDesc = !!orderDesc;
+        if (this.rule != rule) {
+          var index = this.index_;
+          for (var i = 0; i < index.length; i++) index[i].value = rule(index[i].object);
+          this.rule = rule;
+          index.sort(sliceIndexSort);
+        }
+        return this.applyRule();
+      },
       applyRule: function() {
         var start = this.offset;
         var end = start + this.limit;
@@ -1015,10 +1028,10 @@ var __resources__ = {
       Cloud: Cloud
     };
   },
-  "e.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("5.js");
-    basis.require("d.js");
-    basis.require("f.js");
+  "e.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./5.js");
+    basis.require("./d.js");
+    basis.require("./f.js");
     var namespace = this.path;
     var Class = basis.Class;
     var DataObject = basis.data.Object;
@@ -1549,9 +1562,9 @@ var __resources__ = {
       IndexMap: IndexMap
     };
   },
-  "f.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("4.js");
-    basis.require("5.js");
+  "f.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./4.js");
+    basis.require("./5.js");
     var namespace = this.path;
     var getter = basis.getter;
     var cleaner = basis.cleaner;
@@ -1712,7 +1725,7 @@ var __resources__ = {
       Expression: Expression
     };
   },
-  "g.js": function(exports, module, basis, global, __filename, __dirname) {
+  "g.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     var host = typeof performance !== "undefined" ? performance : Date;
     var nowMethod = "webkitNow" in host ? "webkitNow" : "now";
     module.exports = {
@@ -1726,16 +1739,16 @@ var __resources__ = {
       }
     };
   },
-  "h.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("5.js");
-    basis.require("f.js");
-    basis.require("e.js");
-    basis.require("d.js");
-    basis.require("6.js");
-    basis.require("g.js");
-    var utils = basis.require("p.js");
-    var envFactory = basis.require("j.js");
-    var astTools = basis.require("k.js");
+  "h.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./5.js");
+    basis.require("./f.js");
+    basis.require("./e.js");
+    basis.require("./d.js");
+    basis.require("./6.js");
+    basis.require("./g.js");
+    var utils = basis.require("./p.js");
+    var envFactory = basis.require("./j.js");
+    var astTools = basis.require("./k.js");
     var ERROR_TEST_FAULT = "ERROR_TEST_FAULT";
     var ERROR_EMPTY = "ERROR_EMPTY";
     var ERROR_TEST_CRASH = "ERROR_TEST_CRASH";
@@ -2127,8 +2140,8 @@ var __resources__ = {
       create: createTestFactory
     };
   },
-  "p.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("i.js");
+  "p.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./i.js");
     var arrayFrom = basis.array.from;
     var OBJECT_TOSTRING = Object.prototype.toString;
     var ERROR_WRONG_ANSWER = "ERROR_WRONG_ANSWER";
@@ -2249,7 +2262,7 @@ var __resources__ = {
       getFnInfo: getFnInfo
     };
   },
-  "i.js": function(exports, module, basis, global, __filename, __dirname) {
+  "i.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     function resolveGetter(getter) {
       if (getter.basisGetterId_ > 0) {
         var result = "getter(";
@@ -2262,19 +2275,109 @@ var __resources__ = {
         return result + ")";
       } else return Function.prototype.toString.call(getter);
     }
+    function tokenizeFunctionSource(source) {
+      var chars = source.split("");
+      var res = [];
+      var last = 0;
+      var j;
+      function store(type, pos) {
+        if (arguments.length != 2) pos = i;
+        if (last != pos) {
+          res.push([ type || "content", source.substring(last, pos) ]);
+          last = pos;
+        }
+      }
+      for (var i = 0; i < chars.length; i++) {
+        var ch = chars[i];
+        switch (ch) {
+          case "/":
+            j = i + 1;
+            if (chars[j] === "/") {
+              store();
+              while (j < chars.length && chars[j] !== "\n" && chars[j] !== "\r") j++;
+              store("comment", j);
+              i = last - 1;
+              break;
+            }
+            if (chars[j] == "*") {
+              store();
+              j = j + 1;
+              while (j < chars.length && !(chars[j] === "*" && chars[j + 1] === "/")) j++;
+              store("comment", j + 2);
+              i = last - 1;
+              break;
+            }
+            break;
+          case '"':
+          case "'":
+            store();
+            j = i;
+            while (true) {
+              j++;
+              if (chars[j] == "\\") {
+                j++;
+              } else {
+                if (chars[j] == ch) break;
+              }
+            }
+            store("string", j + 1);
+            i = last - 1;
+            break;
+          case "(":
+          case "{":
+            store();
+            last = i + 1;
+            res.push([ "open", ch ]);
+            break;
+          case ")":
+          case "}":
+            store();
+            last = i + 1;
+            res.push([ "close", ch ]);
+            break;
+          default:
+            if (/\s/.test(ch)) {
+              store();
+              j = i + 1;
+              while (j < chars.length && /\s/.test(chars[j])) j++;
+              store("space", j);
+              i = last - 1;
+            }
+        }
+      }
+      store();
+      console.log(JSON.stringify(res, null, 2));
+      return res;
+    }
     function functionInfo(fn) {
-      var source = Function.prototype.toString.call(fn);
-      var m = source.match(/^\s*function(\s+\S+)?\s*\((\s*(?:\S+|\/\*[^*]+\*\/)(\s*(?:,\s*\S+|\/\*[^*]+\*\/))*\s*)?\)/);
-      var body = source.replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, "");
       var getter = resolveGetter(fn);
-      var args = (m && m[2] || "").replace(/\s*,\s*/g, ", ");
-      if (!m) basis.dev.log("Function parse error: " + source);
+      var source = Function.prototype.toString.call(fn);
+      var tokens = tokenizeFunctionSource(source);
+      var name = "anonymous";
+      var argsContext = false;
+      var wasContent = true;
+      var args = [];
+      var token;
+      while (token = tokens.shift()) {
+        if (token[1] == "{") break;
+        if (token[0] == "content") {
+          wasContent = true;
+          if (argsContext) args.push(token[1]); else {
+            if (token[1] != "function") name = token[1];
+          }
+        } else {
+          if (!argsContext) argsContext = wasContent && token[1] == "(";
+        }
+      }
+      while (token = tokens.pop()) if (token[1] == "}") break;
+      for (var i = 0; i < tokens.length; i++) tokens[i] = tokens[i][1];
+      args = args.join("").trim().replace(/\s*,\s*/g, ", ");
       return {
         source: source,
-        name: (m && m[1] || "anonymous").trim(),
+        name: name,
         fullname: name + "(" + args + ")",
         args: args,
-        body: body,
+        body: tokens.join(""),
         getter: getter != source ? getter : false
       };
     }
@@ -2282,7 +2385,7 @@ var __resources__ = {
       fn: functionInfo
     };
   },
-  "1.js": function(exports, module, basis, global, __filename, __dirname) {
+  "1.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     var document = global.document || {
       title: "unknown"
     };
@@ -2322,12 +2425,12 @@ var __resources__ = {
             return;
           } else appEl = newAppEl;
           if (!appInjectPoint) appInjectPoint = {
-            type: "container",
+            type: "append",
             node: document.body
           };
           var node = resolveNode(appInjectPoint.node);
           if (!node) return;
-          if (appInjectPoint.type == "container") node.appendChild(appEl); else replaceNode(node, appEl);
+          if (appInjectPoint.type == "append") node.appendChild(appEl); else replaceNode(node, appEl);
         },
         ready: function(fn, context) {
           if (inited) fn.call(context, app); else readyHandlers.push({
@@ -2344,7 +2447,7 @@ var __resources__ = {
             break;
           case "container":
             appInjectPoint = {
-              type: "insert",
+              type: "append",
               node: value
             };
             break;
@@ -2383,9 +2486,9 @@ var __resources__ = {
       create: createApp
     };
   },
-  "q.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("i.js");
-    basis.require("2.js");
+  "q.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./i.js");
+    basis.require("./2.js");
     function runInContext(contextWindow, code) {
       (contextWindow.execScript || function(code) {
         contextWindow["eval"].call(contextWindow, code);
@@ -2403,14 +2506,14 @@ var __resources__ = {
       binding: {
         src: function(node) {
           if (node.html && node.html != "default") return node.html;
-          return basis.path.resolve(basis.require("j.js").baseURI || "", "res/_OXc_YC-JNYkD4Cy89EBCg.html");
+          return basis.path.resolve(basis.require("./j.js").baseURI || "", "res/2NM1dsdOx8Ioc7cT_94Adw.html");
         }
       },
       action: {
         ready: function() {
           var frameWindow = this.element.contentWindow;
           var initCode = "";
-          var code = basis.resource("0.code").fetch();
+          var code = basis.resource("./0.code").fetch();
           if (typeof code == "function") code = basis.utils.info.fn(code).body;
           runInContext(frameWindow, code);
           if (typeof this.initEnv == "function") initCode = basis.utils.info.fn(this.initEnv).body;
@@ -2434,12 +2537,12 @@ var __resources__ = {
     });
     module.exports = FrameEnv;
   },
-  "0.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("1.js");
-    basis.require("2.js");
-    var runner = basis.require("c.js");
-    var toc = basis.require("r.js");
-    var testDetails = basis.require("s.js");
+  "0.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./1.js");
+    basis.require("./2.js");
+    var runner = basis.require("./c.js");
+    var toc = basis.require("./r.js");
+    var testDetails = basis.require("./s.js");
     var rootTestSuite = new basis.data.Object({
       getChildNodesDataset: function() {}
     });
@@ -2497,7 +2600,7 @@ var __resources__ = {
         if (Array.isArray(data)) data = {
           test: data
         };
-        var rootTest = basis.require("h.js").create(data);
+        var rootTest = basis.require("./h.js").create(data);
         var marker = location.hash.substr(1);
         var testByFilename;
         if (marker) testByFilename = findTest(rootTest, marker);
@@ -2518,7 +2621,7 @@ var __resources__ = {
                 }.bind(value));
                 break;
               case "baseURI":
-                basis.require("j.js").baseURI = value;
+                basis.require("./j.js").baseURI = value;
                 break;
             }
           }
@@ -2533,12 +2636,12 @@ var __resources__ = {
       });
     }
   },
-  "2.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("3.js");
-    basis.require("5.js");
-    basis.require("6.js");
-    basis.require("7.js");
-    basis.require("8.js");
+  "2.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./3.js");
+    basis.require("./5.js");
+    basis.require("./6.js");
+    basis.require("./7.js");
+    basis.require("./8.js");
     var namespace = this.path;
     var document = global.document;
     var Class = basis.Class;
@@ -3023,8 +3126,8 @@ var __resources__ = {
       ShadowNode: ShadowNodeList.prototype.childClass
     };
   },
-  "k.js": function(exports, module, basis, global, __filename, __dirname) {
-    var esprima = basis.require("l.js");
+  "k.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    var esprima = basis.require("./l.js");
     var TRAVERSE_ABORT = 1;
     var TRAVERSE_STOP_DEEP = 2;
     var NODE_BRANCHES = {
@@ -3165,7 +3268,7 @@ var __resources__ = {
       getNodeRangeTokens: getNodeRangeTokens
     };
   },
-  "l.js": function(exports, module, basis, global, __filename, __dirname) {
+  "l.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     (function(root, factory) {
       "use strict";
       if (typeof define === "function" && define.amd) {
@@ -3306,7 +3409,7 @@ var __resources__ = {
         return "01234567".indexOf(ch) >= 0;
       }
       function isWhiteSpace(ch) {
-        return ch === " " || ch === " " || ch === "" || ch === "\f" || ch === " " || ch.charCodeAt(0) >= 5760 && " ᠎             　﻿".indexOf(ch) >= 0;
+        return ch === " " || ch === "	" || ch === "" || ch === "\f" || ch === " " || ch.charCodeAt(0) >= 5760 && " ᠎             　﻿".indexOf(ch) >= 0;
       }
       function isLineTerminator(ch) {
         return ch === "\n" || ch === "\r" || ch === "\u2028" || ch === "\u2029";
@@ -3839,7 +3942,7 @@ var __resources__ = {
                   str += "\r";
                   break;
                 case "t":
-                  str += "  ";
+                  str += "	";
                   break;
                 case "u":
                 case "x":
@@ -6214,10 +6317,10 @@ var __resources__ = {
       }();
     });
   },
-  "r.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("2.js");
-    var runner = basis.require("c.js");
-    var TestSuite = basis.require("h.js").TestSuite;
+  "r.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./2.js");
+    var runner = basis.require("./c.js");
+    var TestSuite = basis.require("./h.js").TestSuite;
     var Item = basis.ui.Node.subclass({
       template: basis.template.get("#2"),
       binding: {
@@ -6308,13 +6411,15 @@ var __resources__ = {
     });
     module.exports = view;
   },
-  "3.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("4.js");
+  "3.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./4.js");
     var namespace = this.path;
     var Class = basis.Class;
-    var hasOwnProperty = Object.prototype.hasOwnProperty;
     var Emitter = basis.event.Emitter;
-    basis.resource.extensions[".l10n"] = basis.resource.extensions[".json"];
+    var hasOwnProperty = Object.prototype.hasOwnProperty;
+    basis.resource.extensions[".l10n"] = function(content, url) {
+      return resolveDictionary(url).update(basis.resource.extensions[".json"](content, url));
+    };
     function ownKeys(object) {
       var result = [];
       for (var key in object) if (hasOwnProperty.call(object, key)) result.push(key);
@@ -6437,13 +6542,13 @@ var __resources__ = {
         return tokenIndex[parseInt(path.substr(1), 36)];
       } else {
         var parts = path.match(/^(.+?)@(.+)$/);
-        if (parts) return resolveDictionary(parts[2]).token(parts[1]);
+        if (parts) return resolveDictionary(basis.path.resolve(parts[2])).token(parts[1]);
         basis.dev.warn("basis.l10n.token accepts token references in format `token.path@path/to/dict.l10n` only");
       }
     }
     var dictionaries = [];
-    var dictionaryByLocation = {};
-    var dictionaryUpdateListeners = [];
+    var dictionaryByUrl = {};
+    var createDictionaryNotifier = new basis.Token;
     function walkTokens(dictionary, culture, tokens, path) {
       var cultureValues = dictionary.cultureValues[culture];
       path = path ? path + "." : "";
@@ -6467,13 +6572,13 @@ var __resources__ = {
         this.cultureValues = {};
         this.index = dictionaries.push(this) - 1;
         if (basis.resource.isResource(content)) {
-          this.resource = content;
-          this.update(content());
-          content.attach(this.update, this);
-          if (!dictionaryByLocation[content.url]) {
-            dictionaryByLocation[content.url] = this;
-            createDictionaryNotifier.set(content.url);
+          var resource = content;
+          this.resource = resource;
+          if (!dictionaryByUrl[resource.url]) {
+            dictionaryByUrl[resource.url] = this;
+            createDictionaryNotifier.set(resource.url);
           }
+          resource.fetch();
         } else {
           basis.dev.warn("Use object as content of dictionary is experimental and not production-ready");
           this.update(content || {});
@@ -6489,6 +6594,7 @@ var __resources__ = {
         this.types = data._meta && data._meta.type || {};
         for (var key in this.tokens) this.tokens[key].setType(this.types[key]);
         this.syncValues();
+        return this;
       },
       syncValues: function() {
         for (var tokenName in this.tokens) this.tokens[tokenName].set(this.getValue(tokenName));
@@ -6514,22 +6620,26 @@ var __resources__ = {
         this.tokens = null;
         this.cultureValues = null;
         basis.array.remove(dictionaries, this);
+        if (this.resource) {
+          delete dictionaryByUrl[this.resource.url];
+          this.resource = null;
+        }
       }
     });
-    function resolveDictionary(content) {
+    function resolveDictionary(source) {
       var dictionary;
-      if (typeof content == "string") {
-        var location = content;
+      if (typeof source == "string") {
+        var location = source;
         var extname = basis.path.extname(location);
-        content = basis.resource(extname != ".l10n" ? basis.path.dirname(location) + "/" + basis.path.basename(location, extname) + ".l10n" : location);
+        if (extname != ".l10n") location = basis.path.dirname(location) + "/" + basis.path.basename(location, extname) + ".l10n";
+        source = basis.resource(location);
       }
-      if (basis.resource.isResource(content)) dictionary = dictionaryByLocation[content.url];
-      return dictionary || new Dictionary(content);
+      if (basis.resource.isResource(source)) dictionary = dictionaryByUrl[source.url];
+      return dictionary || new Dictionary(source);
     }
     function getDictionaries() {
       return dictionaries.slice(0);
     }
-    var createDictionaryNotifier = new basis.Token;
     var cultureList = [];
     var currentCulture = null;
     var cultures = {};
@@ -6676,12 +6786,11 @@ var __resources__ = {
       onCultureChange: onCultureChange
     };
   },
-  "4.js": function(exports, module, basis, global, __filename, __dirname) {
+  "4.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     var namespace = this.path;
     var Class = basis.Class;
     var extend = basis.object.extend;
     var slice = Array.prototype.slice;
-    var DEVMODE = false || true;
     var NULL_HANDLER = {};
     var events = {};
     var warnOnDestroy = function() {
@@ -6704,21 +6813,25 @@ var __resources__ = {
               fn.apply(cursor.context || this, args);
             }
             fn = cursor.callbacks["*"];
-            if (typeof fn == "function") fn.call(cursor.context || this, {
-              sender: this,
-              type: eventName,
-              args: arguments
-            });
+            if (typeof fn == "function") {
+              if (!args) {
+                args = [ this ];
+                for (var i = 0; i < arguments.length; i++) args.push(arguments[i]);
+              }
+              fn.call(cursor.context || this, {
+                sender: this,
+                type: eventName,
+                args: args
+              });
+            }
           }
-          if (DEVMODE && this.debug_emit) this.debug_emit({
+          if (this.debug_emit) this.debug_emit({
             sender: this,
             type: eventName,
             args: arguments
           });
         };
-        if (DEVMODE) {
-          eventFunction = (new Function("slice, DEVMODE", 'return {"' + namespace + ".events." + eventName + '":\n\n      ' + "function(" + slice.call(arguments, 1).join(", ") + "){" + eventFunction.toString().replace(/\beventName\b/g, '"' + eventName + '"').replace(/^function[^(]*\(\)[^{]*\{|\}$/g, "") + "}" + '\n\n}["' + namespace + ".events." + eventName + '"];'))(slice, DEVMODE);
-        }
+        eventFunction = (new Function("slice", 'return {"' + namespace + ".events." + eventName + '":\n\n      ' + "function(" + slice.call(arguments, 1).join(", ") + "){" + eventFunction.toString().replace(/\beventName\b/g, '"' + eventName + '"').replace(/^function[^(]*\(\)[^{]*\{|\}$/g, "") + "}" + '\n\n}["' + namespace + ".events." + eventName + '"];'))(slice);
         events[eventName] = eventFunction;
       }
       return eventFunction;
@@ -6742,6 +6855,13 @@ var __resources__ = {
       handler: null,
       emit_destroy: createDispatcher("destroy"),
       listen: Class.nestedExtendProperty(),
+      debug_handlers: function() {
+        var result = [];
+        var cursor = this;
+        while (cursor = cursor.handler) result.push([ cursor.callbacks, cursor.context ]);
+        return result;
+      },
+      debug_emit: null,
       init: function() {
         if (this.handler && !this.handler.callbacks) this.handler = {
           callbacks: this.handler,
@@ -6750,15 +6870,13 @@ var __resources__ = {
         };
       },
       addHandler: function(callbacks, context) {
-        if (DEVMODE && !callbacks) basis.dev.warn(namespace + ".Emitter#addHandler: callbacks is not an object (", callbacks, ")");
+        if (!callbacks) basis.dev.warn(namespace + ".Emitter#addHandler: callbacks is not an object (", callbacks, ")");
         context = context || this;
-        if (DEVMODE) {
-          var cursor = this;
-          while (cursor = cursor.handler) {
-            if (cursor.callbacks === callbacks && cursor.context === context) {
-              basis.dev.warn(namespace + ".Emitter#addHandler: add duplicate event callbacks", callbacks, "to Emitter instance:", this);
-              break;
-            }
+        var cursor = this;
+        while (cursor = cursor.handler) {
+          if (cursor.callbacks === callbacks && cursor.context === context) {
+            basis.dev.warn(namespace + ".Emitter#addHandler: add duplicate event callbacks", callbacks, "to Emitter instance:", this);
+            break;
           }
         }
         this.handler = {
@@ -6776,7 +6894,7 @@ var __resources__ = {
           prev.handler = cursor.handler;
           return;
         }
-        if (DEVMODE) basis.dev.warn(namespace + ".Emitter#removeHandler: no handler removed");
+        basis.dev.warn(namespace + ".Emitter#removeHandler: no handler removed");
       },
       destroy: function() {
         this.destroy = warnOnDestroy;
@@ -6784,17 +6902,6 @@ var __resources__ = {
         this.handler = null;
       }
     });
-    if (DEVMODE) {
-      Emitter.extend({
-        debug_handlers: function() {
-          var result = [];
-          var cursor = this;
-          while (cursor = cursor.handler) result.push([ cursor.callbacks, cursor.context ]);
-          return result;
-        },
-        debug_emit: null
-      });
-    }
     module.exports = {
       create: createDispatcher,
       createHandler: createHandler,
@@ -6802,9 +6909,9 @@ var __resources__ = {
       Emitter: Emitter
     };
   },
-  "s.js": function(exports, module, basis, global, __filename, __dirname) {
-    var coreTest = basis.require("h.js");
-    var appTest = basis.require("m.js");
+  "s.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    var coreTest = basis.require("./h.js");
+    var appTest = basis.require("./m.js");
     var view = new appTest.TestSuiteNode({
       template: basis.template.get("#8"),
       binding: {
@@ -6840,13 +6947,13 @@ var __resources__ = {
     });
     module.exports = view;
   },
-  "m.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("5.js");
-    basis.require("2.js");
+  "m.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./5.js");
+    basis.require("./2.js");
     var document = global.document;
-    var highlight = basis.require("n.js");
-    var TestCase = basis.require("h.js").TestCase;
-    var strDiff = basis.require("o.js");
+    var highlight = basis.require("./n.js");
+    var TestCase = basis.require("./h.js").TestCase;
+    var strDiff = basis.require("./o.js");
     function htmlEscape(str) {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
@@ -6975,7 +7082,7 @@ var __resources__ = {
       CodeView: CodeView
     };
   },
-  "n.js": function(exports, module, basis, global, __filename, __dirname) {
+  "n.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     var lead = basis.number.lead;
     var repeat = basis.string.repeat;
     var keywords = "break case catch continue " + "default delete do else false " + "for function if in instanceof " + "new null return super switch " + "this throw true try typeof var while with";
@@ -7066,7 +7173,7 @@ var __resources__ = {
     }
     module.exports = highlight;
   },
-  "o.js": function(exports, module, basis, global, __filename, __dirname) {
+  "o.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     var JsDiff = function() {
       function clonePath(path) {
         return {
@@ -7241,8 +7348,8 @@ var __resources__ = {
           var ret = [];
           ret.push("Index: " + fileName);
           ret.push("===================================================================");
-          ret.push("--- " + fileName + (typeof oldHeader === "undefined" ? "" : " " + oldHeader));
-          ret.push("+++ " + fileName + (typeof newHeader === "undefined" ? "" : " " + newHeader));
+          ret.push("--- " + fileName + (typeof oldHeader === "undefined" ? "" : "	" + oldHeader));
+          ret.push("+++ " + fileName + (typeof newHeader === "undefined" ? "" : "	" + newHeader));
           var diff = LineDiff.diff(oldStr, newStr);
           if (!diff[diff.length - 1].value) {
             diff.pop();
@@ -7389,8 +7496,8 @@ var __resources__ = {
       module.exports = JsDiff;
     }
   },
-  "5.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("4.js");
+  "5.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./4.js");
     var namespace = this.path;
     var Class = basis.Class;
     var cleaner = basis.cleaner;
@@ -7607,11 +7714,11 @@ var __resources__ = {
         }
       },
       destroy: function() {
+        Emitter.prototype.destroy.call(this);
         if (this.active) {
           var config = getMaskConfig(this.subscribeTo);
           for (var i = 0, action; action = config.actions[i]; i++) action(SUBSCRIPTION.unlink, this);
         }
-        Emitter.prototype.destroy.call(this);
         this.state = STATE.UNDEFINED;
       }
     });
@@ -7686,11 +7793,10 @@ var __resources__ = {
       },
       unlock: function() {
         if (this.locked) {
+          var lockedValue = this.lockedValue_;
+          this.lockedValue_ = null;
           this.locked = false;
-          if (this.value !== this.lockedValue_) {
-            this.emit_change(this.lockedValue_);
-            this.lockedValue_ = null;
-          }
+          if (this.value !== lockedValue) this.emit_change(lockedValue);
         }
       },
       compute: function(events, fn) {
@@ -7731,13 +7837,16 @@ var __resources__ = {
             if (object instanceof basis.event.Emitter == false) basis.dev.warn("basis.data.Value#compute: object must be an instanceof basis.event.Emitter");
             var objectId = object.basisObjectId;
             var pair = tokenMap[objectId];
+            var value = fn(object, hostValue.value);
             if (!pair) {
-              var token = new basis.Token(fn(object, hostValue.value));
+              var token = new basis.Token(value);
               object.addHandler(handler, token);
               pair = tokenMap[objectId] = {
                 token: token,
                 object: object
               };
+            } else {
+              pair.token.set(value);
             }
             return pair.token;
           };
@@ -7809,7 +7918,7 @@ var __resources__ = {
     var castValueMap = {};
     Value.from = function(obj, events, getter) {
       var result;
-      if (!obj || typeof obj != "object") return null;
+      if (!obj) return null;
       if (obj instanceof Emitter) {
         if (!getter) {
           getter = events;
@@ -7881,24 +7990,33 @@ var __resources__ = {
         }
         object.emit_targetChanged(oldTarget);
       }
-      var delegates = object.delegates_;
-      if (delegates) for (var i = 0; i < delegates.length; i++) applyDelegateChanges(delegates[i], oldRoot, oldTarget);
+      var cursor = object.delegates_;
+      while (cursor) {
+        if (cursor.delegate) applyDelegateChanges(cursor.delegate, oldRoot, oldTarget);
+        cursor = cursor.next;
+      }
     }
     var DataObject = Class(AbstractData, {
       className: namespace + ".Object",
       subscribeTo: SUBSCRIPTION.DELEGATE + SUBSCRIPTION.TARGET,
       data: null,
       emit_update: createEvent("update", "delta") && function(delta) {
+        var cursor = this.delegates_;
         events.update.call(this, delta);
-        var delegates = this.delegates_;
-        if (delegates) for (var i = 0; i < delegates.length; i++) delegates[i].emit_update(delta);
+        while (cursor) {
+          if (cursor.delegate) cursor.delegate.emit_update(delta);
+          cursor = cursor.next;
+        }
       },
       emit_stateChanged: function(oldState) {
+        var cursor = this.delegates_;
         AbstractData.prototype.emit_stateChanged.call(this, oldState);
-        var delegates = this.delegates_;
-        if (delegates) for (var i = 0; i < delegates.length; i++) {
-          delegates[i].state = this.state;
-          delegates[i].emit_stateChanged(oldState);
+        while (cursor) {
+          if (cursor.delegate) {
+            cursor.delegate.state = this.state;
+            cursor.delegate.emit_stateChanged(oldState);
+          }
+          cursor = cursor.next;
         }
       },
       delegate: null,
@@ -7947,13 +8065,23 @@ var __resources__ = {
           var delegateListenHandler = this.listen.delegate;
           if (oldDelegate) {
             if (delegateListenHandler) oldDelegate.removeHandler(delegateListenHandler, this);
-            if (oldDelegate.delegates_) {
-              if (oldDelegate.delegates_.length != 1) oldDelegate.delegates_.splice(oldDelegate.delegates_.indexOf(this), 1); else oldDelegate.delegates_ = null;
+            var cursor = oldDelegate.delegates_;
+            var prev = oldDelegate;
+            while (cursor) {
+              if (cursor.delegate === this) {
+                cursor.delegate = null;
+                if (prev === oldDelegate) oldDelegate.delegates_ = cursor.next; else prev.next = cursor.next;
+                break;
+              }
+              cursor = cursor.next;
             }
           }
           if (newDelegate) {
             this.delegate = newDelegate;
-            if (newDelegate.delegates_) newDelegate.delegates_.push(this); else newDelegate.delegates_ = [ this ];
+            newDelegate.delegates_ = {
+              delegate: this,
+              next: newDelegate.delegates_
+            };
             for (var key in newDelegate.data) if (key in oldData === false) {
               dataChanged = true;
               delta[key] = undefined;
@@ -8000,10 +8128,11 @@ var __resources__ = {
       },
       destroy: function() {
         AbstractData.prototype.destroy.call(this);
-        var delegates = this.delegates_;
-        if (delegates) {
-          this.delegates_ = null;
-          for (var i = delegates.length - 1; i >= 0; i--) delegates[i].setDelegate();
+        var cursor = this.delegates_;
+        this.delegates_ = null;
+        while (cursor) {
+          cursor.delegate.setDelegate();
+          cursor = cursor.next;
         }
         if (this.delegate) this.setDelegate();
         this.data = NULL_OBJECT;
@@ -8070,12 +8199,18 @@ var __resources__ = {
       if (result) return delta;
     }
     function getDatasetDelta(a, b) {
-      var inserted = [];
-      var deleted = [];
       if (!a || !a.itemCount) {
-        if (b) inserted = b.getItems();
+        if (b && b.itemCount) return {
+          inserted: b.getItems()
+        };
       } else {
-        if (!b || !b.itemCount) deleted = a.getItems(); else {
+        if (!b || !b.itemCount) {
+          if (a.itemCount) return {
+            deleted: a.getItems()
+          };
+        } else {
+          var inserted = [];
+          var deleted = [];
           for (var key in a.items_) {
             var item = a.items_[key];
             if (item.basisObjectId in b.items_ == false) deleted.push(item);
@@ -8084,9 +8219,9 @@ var __resources__ = {
             var item = b.items_[key];
             if (item.basisObjectId in a.items_ == false) inserted.push(item);
           }
+          return getDelta(inserted, deleted);
         }
       }
-      return getDelta(inserted, deleted);
     }
     var DatasetWrapper = Class(DataObject, {
       className: namespace + ".DatasetWrapper",
@@ -8174,7 +8309,7 @@ var __resources__ = {
           }
         }
         this.itemCount += insertCount - deleteCount;
-        this.cache_ = null;
+        this.cache_ = insertCount == this.itemCount ? delta.inserted : null;
         events.itemsChanged.call(this, delta);
       },
       init: function() {
@@ -8320,9 +8455,9 @@ var __resources__ = {
       sync: function(items) {
         var delta = this.set(items) || {};
         var deleted = delta.deleted;
-        setAccumulateState(true);
+        Dataset.setAccumulateState(true);
         if (deleted) for (var i = 0, object; object = deleted[i]; i++) object.destroy();
-        setAccumulateState(false);
+        Dataset.setAccumulateState(false);
         return delta.inserted;
       },
       clear: function() {
@@ -8495,9 +8630,9 @@ var __resources__ = {
       wrap: wrap
     };
   },
-  "6.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("4.js");
-    basis.require("5.js");
+  "6.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./4.js");
+    basis.require("./5.js");
     var namespace = this.path;
     var Class = basis.Class;
     var complete = basis.object.complete;
@@ -8680,6 +8815,9 @@ var __resources__ = {
     function extendSatelliteConfig(result, extend) {
       for (var name in extend) result[name] = processSatelliteConfig(extend[name]);
     }
+    function applySatellites(node, satellites) {
+      for (var name in satellites) if (satellites[name] && typeof satellites[name] == "object") node.setSatellite(name, satellites[name]);
+    }
     var NULL_SATELLITE_CONFIG = Class.customExtendProperty({}, function(result, extend) {
       for (var key in extend) {
         basis.dev.warn("basis.dom.wrapper.AbstractNode#satelliteConfig is deprecated now, use basis.dom.wrapper.AbstractNode#satellite instead");
@@ -8816,12 +8954,14 @@ var __resources__ = {
           }
         }
         var satellites = this.satellite;
-        this.satellite = {};
         if (this.satelliteConfig !== NULL_SATELLITE_CONFIG) {
           if (this.satelliteConfig !== this.constructor.prototype.satelliteConfig) basis.dev.warn("basis.dom.wrapper.AbstractNode#satelliteConfig is deprecated now, use basis.dom.wrapper.AbstractNode#satellite instead");
           satellites = basis.object.merge(satellites, this.satelliteConfig);
         }
-        if (satellites !== NULL_SATELLITE) for (var name in satellites) this.setSatellite(name, satellites[name]);
+        if (satellites !== NULL_SATELLITE) {
+          this.satellite = NULL_SATELLITE;
+          applySatellites(this, satellites);
+        }
         var owner = this.owner;
         if (owner) {
           this.owner = null;
@@ -8919,7 +9059,10 @@ var __resources__ = {
                 satellite.instance.addHandler(AUTO_SATELLITE_INSTANCE_HANDLER, autoConfig);
                 satellite.instance.setOwner = warnOnAutoSatelliteOwnerChange;
               }
-              if (!auto) auto = this.satellite.__auto__ = {};
+              if (!auto) {
+                if (this.satellite === NULL_SATELLITE) this.satellite = {};
+                auto = this.satellite.__auto__ = {};
+              }
               auto[name] = autoConfig;
               SATELLITE_UPDATE.call(autoConfig, this);
               if (!autoConfig.instance && oldSatellite) this.emit_satelliteChanged(name, oldSatellite);
@@ -8944,6 +9087,7 @@ var __resources__ = {
                 this.emit_satelliteChanged(satellite.ownerSatelliteName, satellite);
               }
             }
+            if (this.satellite == NULL_SATELLITE) this.satellite = {};
             this.satellite[name] = satellite;
             satellite.ownerSatelliteName = name;
           }
@@ -8973,7 +9117,7 @@ var __resources__ = {
         }
         if (this.owner) this.setOwner();
         var satellites = this.satellite;
-        if (satellites) {
+        if (satellites !== NULL_SATELLITE) {
           var auto = satellites.__auto__;
           delete satellites.__auto__;
           for (var name in auto) if (auto[name].config.instance && !auto[name].instance) auto[name].config.instance.destroy();
@@ -9089,7 +9233,7 @@ var __resources__ = {
         if (this.destroyDataSourceMember && deleted.length) for (var i = 0, item; item = deleted[i]; i++) item.destroy();
       },
       stateChanged: function(dataSource) {
-        this.setChildNodesState(dataSource.state);
+        this.setChildNodesState(dataSource.state, dataSource.state.data);
       },
       destroy: function(dataSource) {
         if (!this.dataSourceAdapter_) this.setDataSource();
@@ -9294,7 +9438,7 @@ var __resources__ = {
         if (!isInside) {
           updateNodeContextSelection(newChild, newChild.contextSelection, this.selection || this.contextSelection, true);
           updateNodeDisableContext(newChild, this.disabled || this.contextDisabled);
-          if (newChild.match) newChild.match(this.matchFunction);
+          if ((newChild.underMatch_ || this.matchFunction) && newChild.match) newChild.match(this.matchFunction);
           if (newChild.autoDelegate == DELEGATE.PARENT || newChild.autoDelegate === DELEGATE.ANY) newChild.setDelegate(this);
           if (!this.dataSource) this.emit_childNodesModified({
             inserted: [ newChild ]
@@ -9394,7 +9538,7 @@ var __resources__ = {
           this.dataSource = dataSource;
           if (dataSource) {
             this.dataSourceMap_ = {};
-            this.setChildNodesState(dataSource.state);
+            this.setChildNodesState(dataSource.state, dataSource.state.data);
             if (listenHandler) {
               dataSource.addHandler(listenHandler, this);
               if (dataSource.itemCount && listenHandler.itemsChanged) {
@@ -9848,8 +9992,8 @@ var __resources__ = {
       nullSelection: new AbstractDataset
     };
   },
-  "7.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("3.js");
+  "7.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./3.js");
     var namespace = this.path;
     var Class = basis.Class;
     var cleaner = basis.cleaner;
@@ -9872,6 +10016,7 @@ var __resources__ = {
     var TOKEN_REFS = 2;
     var ATTR_NAME = 3;
     var ATTR_VALUE = 4;
+    var ATTR_EVENT_RX = /^event-(.+)$/;
     var ATTR_NAME_BY_TYPE = {
       4: "class",
       5: "style"
@@ -9879,6 +10024,12 @@ var __resources__ = {
     var ATTR_TYPE_BY_NAME = {
       "class": TYPE_ATTRIBUTE_CLASS,
       style: TYPE_ATTRIBUTE_STYLE
+    };
+    var ATTR_VALUE_INDEX = {
+      2: ATTR_VALUE,
+      4: ATTR_VALUE - 1,
+      5: ATTR_VALUE - 1,
+      6: 2
     };
     var ELEMENT_NAME = 3;
     var ELEMENT_ATTRS = 4;
@@ -10199,8 +10350,8 @@ var __resources__ = {
               } else {
                 if (/\S/.test(value)) basis.dev.warn("Bad value for style attribute (value ignored):", value);
               }
-              props.push("");
-              value = props.join(";");
+              value = props.join("; ");
+              if (value) value += ";";
               break;
             default:
               parts = value.split(ATTR_BINDING);
@@ -10228,7 +10379,7 @@ var __resources__ = {
             }
             continue;
           }
-          if (m = attr.name.match(/^event-(.+)$/)) {
+          if (m = attr.name.match(ATTR_EVENT_RX)) {
             result.push(m[1] == attr.value ? [ TYPE_ATTRIBUTE_EVENT, m[1] ] : [ TYPE_ATTRIBUTE_EVENT, m[1], attr.value ]);
             continue;
           }
@@ -10280,15 +10431,20 @@ var __resources__ = {
           if (includedToken) {
             if (includedToken.token[TOKEN_TYPE] == TYPE_ELEMENT) {
               var itAttrs = includedToken.token;
-              var itType = ATTR_TYPE_BY_NAME[attrs.name];
-              var valueIdx = ATTR_VALUE - !!itType;
+              var isEvent = attrs.name.match(ATTR_EVENT_RX);
+              var itType = isEvent ? TYPE_ATTRIBUTE_EVENT : ATTR_TYPE_BY_NAME[attrs.name] || TYPE_ATTRIBUTE;
+              var valueIdx = ATTR_VALUE_INDEX[itType] || ATTR_VALUE;
               var itAttrToken = itAttrs && arraySearch(itAttrs, attrs.name, function(token) {
-                return itType ? ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] : token[ATTR_NAME];
-              });
+                if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT) return "event-" + token[1];
+                return ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] || token[ATTR_NAME];
+              }, ELEMENT_ATTRS);
               if (!itAttrToken && action != "remove") {
-                itAttrToken = [ itType || TYPE_ATTRIBUTE, 0, 0 ];
-                if (!itType) itAttrToken.push(attrs.name);
-                itAttrToken.push("");
+                if (isEvent) {
+                  itAttrToken = [ itType, isEvent[1] ];
+                } else {
+                  itAttrToken = [ itType, 0, 0, itType == TYPE_ATTRIBUTE ? attrs.name : "" ];
+                  if (itType == TYPE_ATTRIBUTE) itAttrToken.push("");
+                }
                 if (!itAttrs) {
                   itAttrs = [];
                   includedToken.token.push(itAttrs);
@@ -10298,6 +10454,10 @@ var __resources__ = {
               var classOrStyle = attrs.name == "class" || attrs.name == "style";
               switch (action) {
                 case "set":
+                  if (itAttrToken[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT) {
+                    if (attrs.value == isEvent[1]) itAttrToken.length = 2; else itAttrToken[valueIdx] = attrs.value;
+                    return;
+                  }
                   var parsed = processAttr(attrs.name, attrs.value);
                   itAttrToken[TOKEN_BINDINGS] = parsed.binding;
                   if (!options.optimizeSize || !itAttrToken[TOKEN_BINDINGS] || classOrStyle) itAttrToken[valueIdx] = parsed.value || ""; else itAttrToken.length = valueIdx;
@@ -10308,19 +10468,38 @@ var __resources__ = {
                   break;
                 case "append":
                   var parsed = processAttr(attrs.name, attrs.value);
-                  if (parsed.binding) {
-                    var attrBindings = itAttrToken[TOKEN_BINDINGS];
-                    if (attrBindings) {
-                      if (attrs.name == "style") {
-                        var filter = {};
-                        for (var i = 0, newBinding; newBinding = parsed.binding[i]; i++) filter[newBinding[2]] = true;
-                        for (var i = 0, k = 0, oldBinding; oldBinding = attrBindings[i]; i++) if (!filter[oldBinding[2]]) attrBindings[k++] = oldBinding;
-                        attrBindings.length = k;
+                  if (!isEvent) {
+                    if (parsed.binding) {
+                      var attrBindings = itAttrToken[TOKEN_BINDINGS];
+                      if (attrBindings) {
+                        switch (attrs.name) {
+                          case "style":
+                            var oldBindingMap = {};
+                            for (var i = 0, oldBinding; oldBinding = attrBindings[i]; i++) oldBindingMap[oldBinding[2]] = i;
+                            for (var i = 0, newBinding; newBinding = parsed.binding[i]; i++) if (newBinding[2] in oldBindingMap) attrBindings[oldBindingMap[newBinding[2]]] = newBinding; else attrBindings.push(newBinding);
+                            break;
+                          case "class":
+                            attrBindings.push.apply(attrBindings, parsed.binding);
+                            break;
+                          default:
+                            parsed.binding[0].forEach(function(name) {
+                              arrayAdd(this, name);
+                            }, attrBindings[0]);
+                            for (var i = 0; i < parsed.binding[1].length; i++) {
+                              var value = parsed.binding[1][i];
+                              if (typeof value == "number") value = attrBindings[0].indexOf(parsed.binding[0][value]);
+                              attrBindings[1].push(value);
+                            }
+                        }
+                      } else {
+                        itAttrToken[TOKEN_BINDINGS] = parsed.binding;
+                        if (!classOrStyle) itAttrToken[TOKEN_BINDINGS][1].unshift(itAttrToken[valueIdx]);
                       }
-                      attrBindings.push.apply(attrBindings, parsed.binding);
-                    } else itAttrToken[TOKEN_BINDINGS] = parsed.binding;
+                    } else {
+                      if (!classOrStyle && itAttrToken[TOKEN_BINDINGS]) itAttrToken[TOKEN_BINDINGS][1].push(attrs.value);
+                    }
                   }
-                  if (parsed.value) itAttrToken[valueIdx] += (itAttrToken[valueIdx] && attrs.name == "class" ? " " : "") + parsed.value;
+                  if (parsed.value) itAttrToken[valueIdx] = (itAttrToken[valueIdx] || "") + (itAttrToken[valueIdx] && (isEvent || classOrStyle) ? " " : "") + parsed.value;
                   if (classOrStyle) if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx]) {
                     arrayRemove(itAttrs, itAttrToken);
                     return;
@@ -10346,11 +10525,18 @@ var __resources__ = {
                 switch (token.name) {
                   case "resource":
                   case "style":
-                    if (elAttrs.src) template.resources.push(path.resolve(template.baseURI + elAttrs.src));
+                    if (token.name == "resource") basis.dev.warn("<b:resource> is deprecated and will be removed in next minor release. Use <b:style> instead." + (template.sourceUrl ? " File: " + template.sourceUrl : ""));
+                    if (elAttrs.src) {
+                      if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src)) basis.dev.warn("Bad usage: <b:" + token.name + ' src="' + elAttrs.src + '"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+                      template.resources.push(path.resolve(template.baseURI + elAttrs.src));
+                    }
                     break;
                   case "l10n":
                     if (template.l10nResolved) template.warns.push("<b:l10n> must be declared before any `l10n:` token (instruction ignored)");
-                    if (elAttrs.src) template.dictURI = path.relative(basis.path.baseURI, template.baseURI + elAttrs.src);
+                    if (elAttrs.src) {
+                      if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src)) basis.dev.warn("Bad usage: <b:" + token.name + ' src="' + elAttrs.src + '"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+                      template.dictURI = path.resolve(template.baseURI, elAttrs.src);
+                    }
                     break;
                   case "define":
                     if ("name" in elAttrs && !template.defines[elAttrs.name]) {
@@ -10380,7 +10566,10 @@ var __resources__ = {
                       var isTemplateRef = /^#\d+$/.test(templateSrc);
                       var url = isTemplateRef ? templateSrc.substr(1) : templateSrc;
                       var resource;
-                      if (isTemplateRef) resource = templateList[url]; else if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url)) resource = getSourceByPath(url); else resource = basis.resource(path.resolve(template.baseURI + url));
+                      if (isTemplateRef) resource = templateList[url]; else if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url)) resource = getSourceByPath(url); else {
+                        if (!/^(\.\/|\.\.|\/)/.test(url)) basis.dev.warn('Bad usage: <b:include src="' + url + '"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+                        resource = basis.resource(path.resolve(template.baseURI + url));
+                      }
                       if (!resource) {
                         template.warns.push('<b:include src="' + templateSrc + '"> is not resolved, instruction ignored');
                         basis.dev.warn('<b:include src="' + templateSrc + '"> is not resolved, instruction ignored');
@@ -10644,7 +10833,11 @@ var __resources__ = {
           unpredictable: true,
           warns: warns
         };
-        result.dictURI = sourceUrl ? basis.path.relative(basis.path.baseURI, result.baseURI + basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + ".l10n") : baseURI || "";
+        result.dictURI = sourceUrl ? basis.path.resolve(sourceUrl) : baseURI || "";
+        if (result.dictURI) {
+          var extname = basis.path.extname(result.dictURI);
+          if (extname && extname != ".l10n") result.dictURI = result.dictURI.substr(0, result.dictURI.length - extname.length) + ".l10n";
+        }
         if (!source.templateTokens) {
           source_ = source;
           source = tokenize(String(source));
@@ -11091,7 +11284,7 @@ var __resources__ = {
           }
           return themeInterface;
         },
-        getSource: function(withFallback) {
+        getSource: function(path, withFallback) {
           return withFallback ? getThemeSource(name, path) : sources[path];
         },
         drop: function(path) {
@@ -11175,22 +11368,22 @@ var __resources__ = {
       }
     };
     getTheme("base").define({
-      "#1": basis.resource("0.tmpl"),
-      "#2": basis.resource("1.tmpl"),
-      "#3": basis.resource("2.tmpl"),
-      "#4": basis.resource("3.tmpl"),
-      "#5": basis.resource("4.tmpl"),
-      "#6": basis.resource("5.tmpl"),
-      "#7": basis.resource("6.tmpl"),
-      "#8": basis.resource("7.tmpl"),
-      "#9": basis.resource("8.tmpl")
+      "#1": basis.resource("./0.tmpl"),
+      "#2": basis.resource("./1.tmpl"),
+      "#3": basis.resource("./2.tmpl"),
+      "#4": basis.resource("./3.tmpl"),
+      "#5": basis.resource("./4.tmpl"),
+      "#6": basis.resource("./5.tmpl"),
+      "#7": basis.resource("./6.tmpl"),
+      "#8": basis.resource("./7.tmpl"),
+      "#9": basis.resource("./8.tmpl")
     });
   },
-  "8.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("9.js");
-    basis.require("3.js");
-    basis.require("7.js");
-    basis.require("a.js");
+  "8.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./9.js");
+    basis.require("./3.js");
+    basis.require("./7.js");
+    basis.require("./a.js");
     var namespace = this.path;
     var document = global.document;
     var domEvent = basis.dom.event;
@@ -11404,11 +11597,11 @@ var __resources__ = {
       var W3C_DOM_NODE_SUPPORTED = typeof Node == "function" && document instanceof Node;
       var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
       var bind_node = W3C_DOM_NODE_SUPPORTED ? function(domRef, oldNode, newValue) {
-        var newNode = newValue instanceof Node && !newValue.basisNodeInUse ? newValue : domRef;
+        var newNode = newValue && newValue instanceof Node ? newValue : domRef;
         if (newNode !== oldNode) oldNode.parentNode.replaceChild(newNode, oldNode);
         return newNode;
       } : function(domRef, oldNode, newValue) {
-        var newNode = newValue && typeof newValue == "object" && !newValue.basisNodeInUse ? newValue : domRef;
+        var newNode = newValue && typeof newValue == "object" ? newValue : domRef;
         if (newNode !== oldNode) {
           try {
             oldNode.parentNode.replaceChild(newNode, oldNode);
@@ -11548,6 +11741,10 @@ var __resources__ = {
           for (var i = 0, bindingName; bindingName = names[i]; i++) this(bindingName, getters[bindingName](object));
         };
       }
+      function makeHandler(events, getters) {
+        for (var name in events) events[name] = createBindingUpdater(events[name], getters);
+        return name ? events : null;
+      }
       function createBindingFunction(keys) {
         var bindingCache = {};
         return function getBinding(bindings, obj, set, bindingInterface) {
@@ -11559,8 +11756,6 @@ var __resources__ = {
             var names = [];
             var getters = {};
             var events = {};
-            var handler = {};
-            var hasEvents = false;
             for (var i = 0, bindingName; bindingName = keys[i]; i++) {
               var binding = bindings[bindingName];
               var getter = binding && binding.getter;
@@ -11575,14 +11770,10 @@ var __resources__ = {
                 }
               }
             }
-            for (var eventName in events) {
-              hasEvents = true;
-              handler[eventName] = createBindingUpdater(events[eventName], getters);
-            }
             result = {
               names: names,
               sync: createBindingUpdater(names, getters),
-              handler: hasEvents ? handler : null
+              handler: makeHandler(events, getters)
             };
             if (cacheId) bindingCache[cacheId] = result;
           }
@@ -11703,7 +11894,7 @@ var __resources__ = {
       resolveTmplById: resolveTmplById
     });
   },
-  "9.js": function(exports, module, basis, global, __filename, __dirname) {
+  "9.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     var namespace = this.path;
     var document = global.document;
     var $null = basis.fn.$null;
@@ -11828,10 +12019,10 @@ var __resources__ = {
       if (typeof event.which == "number") return event.which == button.VALUE; else return !!(event.button & button.BIT);
     }
     function mouseX(event) {
-      if (event.changedTouches) return event.changedTouches[0].pageX; else if ("pageX" in event) return event.pageX; else return "clientX" in event ? event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft) : 0;
+      if (event.changedTouches) return event.changedTouches[0].pageX; else if ("pageX" in event) return event.pageX; else return "clientX" in event ? event.clientX + (document.compatMode == "CSS1Compat" ? document.documentElement.scrollLeft : document.body.scrollLeft) : 0;
     }
     function mouseY(event) {
-      if (event.changedTouches) return event.changedTouches[0].pageY; else if ("pageY" in event) return event.pageY; else return "clientY" in event ? event.clientY + (document.documentElement.scrollTop || document.body.scrollTop) : 0;
+      if (event.changedTouches) return event.changedTouches[0].pageY; else if ("pageY" in event) return event.pageY; else return "clientY" in event ? event.clientY + (document.compatMode == "CSS1Compat" ? document.documentElement.scrollTop : document.body.scrollTop) : 0;
     }
     function wheelDelta(event) {
       var delta = 0;
@@ -12035,8 +12226,8 @@ var __resources__ = {
       wrap: wrap
     };
   },
-  "a.js": function(exports, module, basis, global, __filename, __dirname) {
-    basis.require("7.js");
+  "a.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
+    basis.require("./7.js");
     var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
     var TYPE_ATTRIBUTE = basis.template.TYPE_ATTRIBUTE;
     var TYPE_TEXT = basis.template.TYPE_TEXT;
@@ -12361,10 +12552,15 @@ var __resources__ = {
             }
           }
         }
-        result.push(";function set(bindName,value){" + 'if(typeof bindName=="string")' + "value=resolve.call(instance,bindName,value,Attaches);" + "switch(bindName){");
+        result.push(";function set(bindName,value){" + 'if(typeof bindName!="string")');
+        for (var bindName in bindMap) if (bindMap[bindName].nodeBind) {
+          result.push("if(bindName===" + bindMap[bindName].nodeBind + ")" + 'bindName="' + bindName + '";' + "else ");
+        }
+        result.push("return;");
+        result.push("value=resolve.call(instance,bindName,value,Attaches);" + "switch(bindName){");
         for (var bindName in bindMap) {
           if (bindName.indexOf("@") == -1) varList.push("$$" + bindName + "=0");
-          result.push('case"' + bindName + '":' + (bindMap[bindName].nodeBind ? "case " + bindMap[bindName].nodeBind + ":" : "") + (bindMap[bindName].l10n ? bindMap[bindName].join("") : "if(__" + bindName + "!==value)" + "{" + "$$" + bindName + "++;" + "__" + bindName + "=value;" + bindMap[bindName].join("") + "}") + "break;");
+          result.push('case"' + bindName + '":' + (bindMap[bindName].l10n ? bindMap[bindName].join("") : "if(__" + bindName + "!==value)" + "{" + "$$" + bindName + "++;" + "__" + bindName + "=value;" + bindMap[bindName].join("") + "}") + "break;");
         }
         result.push("}}");
         var toolsVarList = [];
@@ -12405,23 +12601,23 @@ var __resources__ = {
       if (bindings.l10n) {
         var code = [];
         for (var key in bindings.l10n) code.push('case"' + key + '":' + 'if(value==null)value="{' + key + '}";' + "__l10n[token]=value;" + bindings.l10n[key].join("") + "break;");
-        result.createL10nSync = compileFunction([ "_", "__l10n", "bind_attr", "TEXT_BUG" ], (source ? "/*\n" + source + "\n*/\n" : "") + "var " + paths.path + ";" + "return function(token, value){" + "switch(token){" + code.join("") + "}" + "}\n" + "//# sourceURL=" + basis.path.origin + uri + "_l10n\n" + "//@ sourceURL=" + basis.path.origin + uri + "_l10n\n");
+        result.createL10nSync = compileFunction([ "_", "__l10n", "bind_attr", "TEXT_BUG" ], (source ? "\n// " + source.split(/\r\n?|\n\r?/).join("\n// ") + "\n\n" : "") + "var " + paths.path + ";" + "return function(token, value){" + "switch(token){" + code.join("") + "}" + "}" + "\n\n//# sourceURL=" + basis.path.origin + uri + "_l10n");
       }
-      result.createInstance = compileFunction([ "tid", "map", "build", "tools", "__l10n", "TEXT_BUG" ], (source ? "/*\n" + source + "\n*/\n" : "") + "var getBindings=tools.createBindingFunction([" + bindings.keys.map(function(key) {
+      result.createInstance = compileFunction([ "tid", "map", "build", "tools", "__l10n", "TEXT_BUG" ], (source ? "\n// " + source.split(/\r\n?|\n\r?/).join("\n// ") + "\n\n" : "") + "var getBindings=tools.createBindingFunction([" + bindings.keys.map(function(key) {
         return '"' + key + '"';
       }) + "])," + (bindings.tools.length ? bindings.tools + "," : "") + "Attaches=function(){};" + "Attaches.prototype={" + bindings.keys.map(function(key) {
         return key + ":null";
-      }) + "};" + "return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){" + "var _=build()," + paths.path.concat(bindings.vars) + "," + "instance={" + "context:obj," + "action:onAction," + "rebuild:onRebuild," + (debug ? "debug:function debug(){return[" + bindings.debugList + "]}," : "") + "handler:null," + "bindings:bindings," + "bindingInterface:bindingInterface," + "attaches:null," + "tmpl:{" + [ paths.ref, "templateId_:id", "set:set" ] + "}" + "}" + (objectRefs ? ";if(obj||onAction)" + objectRefs + "=(id<<12)|tid" : "") + bindings.set + ";instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null" + ";" + bindings.l10nCompute + ";return instance" + "\n//# sourceURL=" + basis.path.origin + uri + "\n//@ sourceURL=" + basis.path.origin + uri + "\n" + "}");
+      }) + "};" + "return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){" + "var _=build()," + paths.path.concat(bindings.vars) + "," + "instance={" + "context:obj," + "action:onAction," + "rebuild:onRebuild," + (debug ? "debug:function debug(){return[" + bindings.debugList + "]}," : "") + "handler:null," + "bindings:bindings," + "bindingInterface:bindingInterface," + "attaches:null," + "tmpl:{" + [ paths.ref, "templateId_:id", "set:set" ] + "}" + "}" + (objectRefs ? ";if(obj||onAction)" + objectRefs + "=(id<<12)|tid" : "") + bindings.set + ";instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null" + ";" + bindings.l10nCompute + ";return instance" + "}" + "\n\n//# sourceURL=" + basis.path.origin + uri);
       return result;
     };
     module.exports = {
       getFunctions: getFunctions
     };
   },
-  "j.js": function(exports, module, basis, global, __filename, __dirname) {
+  "j.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     var document = global.document;
     var EnvClass;
-    if (document) EnvClass = basis.resource("q.js").fetch();
+    if (document) EnvClass = basis.resource("./q.js").fetch();
     module.exports = {
       create: function(init, html) {
         return new EnvClass({
@@ -12728,12 +12924,11 @@ var __resources__ = {
         }
       };
     }();
-    var defaultAddToQueue = function(taskId) {
+    var addToQueue = function(taskId) {
       setTimeout(function() {
         runTask(taskId);
       }, 0);
     };
-    var addToQueue = defaultAddToQueue;
     if (global.process && typeof process.nextTick == "function") {
       addToQueue = function(taskId) {
         process.nextTick(function() {
@@ -12744,9 +12939,10 @@ var __resources__ = {
       if (global.MessageChannel) {
         addToQueue = function(taskId) {
           var channel = new global.MessageChannel;
-          channel.port1.onmessage = function() {
+          var setImmediateHandler = function() {
             runTask(taskId);
           };
+          channel.port1.onmessage = setImmediateHandler;
           channel.port2.postMessage("");
         };
       } else {
@@ -12760,13 +12956,13 @@ var __resources__ = {
           global.onmessage = oldOnMessage;
         }
         if (postMessageSupported) {
-          var handleMessage = function(event) {
+          var setImmediateHandler = function(event) {
             if (event && event.source == global) {
               var taskId = String(event.data).split(MESSAGE_NAME)[1];
               if (taskId) runTask(taskId);
             }
           };
-          if (global.addEventListener) global.addEventListener("message", handleMessage, true); else global.attachEvent("onmessage", handleMessage);
+          if (global.addEventListener) global.addEventListener("message", setImmediateHandler, true); else global.attachEvent("onmessage", setImmediateHandler);
           addToQueue = function(taskId) {
             global.postMessage(MESSAGE_NAME + taskId, "*");
           };
@@ -12775,6 +12971,7 @@ var __resources__ = {
             return document.createElement("script");
           };
           if (document && "onreadystatechange" in createScript()) {
+            var defaultAddToQueue = addToQueue;
             addToQueue = function beforeHeadReady(taskId) {
               if (typeof documentInterface != "undefined") {
                 addToQueue = defaultAddToQueue;
@@ -12800,75 +12997,80 @@ var __resources__ = {
   })();
   var NODE_ENV = typeof process == "object" && Object_toString.call(process) == "[object process]";
   var pathUtils = function() {
+    var ABSOLUTE_RX = /^([^\/]+:|\/)/;
+    var PROTOCOL_RX = /^[a-zA-Z0-9\-]+:\/?/;
+    var ORIGIN_RX = /^(?:[a-zA-Z0-9\-]+:)?\/\/[^\/]+\/?/;
+    var SEARCH_HASH_RX = /[\?#].*$/;
+    var utils = {};
     var origin = "";
     var baseURI;
-    var utils = {};
     if (NODE_ENV) {
-      var methods = [ "normalize", "dirname", "extname", "basename", "resolve", "relative" ];
-      for (var i = 0, method; method = methods[i]; i++) utils[method] = function(method, path) {
-        return function() {
-          return path[method].apply(path, arguments).replace(/\\/g, "/");
-        };
-      }(method, require("path"));
-      baseURI = utils.resolve(".") + "/";
+      var path = require("path").resolve(".").replace(/\\/g, "/");
+      baseURI = path.replace(/^[^\/]*/, "");
+      origin = path.replace(/\/.*/, "");
     } else {
-      var ABSOLUTE_RX = /^([^\/]+:|\/)/;
-      var ORIGIN_RX = /^([a-zA-Z0-9\-]+:)?\/\/[^\/]+/;
-      var SEARCH_HASH_RX = /[\?#].*$/;
-      utils = {
-        normalize: function(path) {
-          var result = [];
-          var parts = (path || "").replace(ORIGIN_RX, "").replace(SEARCH_HASH_RX, "").split("/");
-          for (var i = 0; i < parts.length; i++) {
-            if (parts[i] == "..") result.pop(); else {
-              if ((parts[i] || !i) && parts[i] != ".") result.push(parts[i]);
-            }
-          }
-          return result.join("/");
-        },
-        dirname: function(path) {
-          return utils.normalize(path).replace(/\/[^\/]*$/, "");
-        },
-        extname: function(path) {
-          var ext = utils.normalize(path).match(/\.[^\\\/]*$/);
-          return ext ? ext[0] : "";
-        },
-        basename: function(path, ext) {
-          var filename = utils.normalize(path).match(/[^\\\/]*$/);
-          filename = filename ? filename[0] : "";
-          if (ext == utils.extname(filename)) filename = filename.substring(0, filename.length - ext.length);
-          return filename;
-        },
-        resolve: function(from, to) {
-          var args = arrayFrom(arguments).reverse();
-          var path = [];
-          var absoluteFound = false;
-          for (var i = 0; !absoluteFound && i < args.length; i++) if (typeof args[i] == "string") {
-            path.unshift(args[i]);
-            absoluteFound = ABSOLUTE_RX.test(args[i]);
-          }
-          if (!absoluteFound) path.unshift(baseURI == "/" ? "" : baseURI);
-          return utils.normalize(path.join("/"));
-        },
-        relative: function(from, to) {
-          if (typeof to != "string") {
-            to = from;
-            from = baseURI;
-          }
-          var abs = utils.normalize(to).split(/\//);
-          var loc = utils.normalize(from).split(/\//);
-          var i = 0;
-          while (abs[i] == loc[i] && typeof loc[i] == "string") i++;
-          var prefix = "";
-          for (var j = loc.length - i; j > 0; j--) prefix += "../";
-          return prefix + abs.slice(i).join("/");
-        }
-      };
       baseURI = location.pathname.replace(/[^\/]+$/, "");
       origin = location.protocol + "//" + location.host;
     }
-    utils.baseURI = baseURI;
-    utils.origin = origin;
+    utils = {
+      baseURI: baseURI,
+      origin: origin,
+      normalize: function(path) {
+        path = (path || "").replace(PROTOCOL_RX, "/").replace(ORIGIN_RX, "/").replace(SEARCH_HASH_RX, "");
+        var result = [];
+        var parts = path.split("/");
+        for (var i = 0; i < parts.length; i++) {
+          if (parts[i] == "..") {
+            if (result.length > 1 || result[0]) result.pop();
+          } else {
+            if ((parts[i] || !i) && parts[i] != ".") result.push(parts[i]);
+          }
+        }
+        return result.join("/") || (path[0] === "/" ? "/" : "");
+      },
+      dirname: function(path) {
+        var result = utils.normalize(path);
+        return result.replace(/\/([^\/]*)$|^[^\/]+$/, "") || (result[0] == "/" ? "/" : ".");
+      },
+      extname: function(path) {
+        var ext = utils.normalize(path).match(/[^\/](\.[^\/\.]*)$/);
+        return ext ? ext[1] : "";
+      },
+      basename: function(path, ext) {
+        var filename = utils.normalize(path).match(/[^\\\/]*$/);
+        filename = filename ? filename[0] : "";
+        if (ext == utils.extname(filename)) filename = filename.substring(0, filename.length - ext.length);
+        return filename;
+      },
+      resolve: function(from, to) {
+        var args = arrayFrom(arguments).reverse();
+        var path = [];
+        var absoluteFound = false;
+        for (var i = 0; !absoluteFound && i < args.length; i++) if (typeof args[i] == "string") {
+          path.unshift(args[i]);
+          absoluteFound = ABSOLUTE_RX.test(args[i]);
+        }
+        if (!absoluteFound) path.unshift(baseURI == "/" ? "" : baseURI);
+        return utils.normalize(path.join("/"));
+      },
+      relative: function(from, to) {
+        if (typeof to != "string") {
+          to = from;
+          from = baseURI;
+        }
+        from = utils.normalize(from);
+        to = utils.normalize(to);
+        if (from[0] == "/" && to[0] != "/") return from;
+        if (to[0] == "/" && from[0] != "/") return to;
+        var base = from.replace(/^\/$/, "").split(/\//);
+        var path = to.replace(/^\/$/, "").split(/\//);
+        var result = [];
+        var i = 0;
+        while (path[i] == base[i] && typeof base[i] == "string") i++;
+        for (var j = base.length - i; j > 0; j--) result.push("..");
+        return result.concat(path.slice(i).filter(Boolean)).join("/");
+      }
+    };
     return utils;
   }();
   var basisFilename = "";
@@ -12882,7 +13084,7 @@ var __resources__ = {
     },
     extProto: false,
     exports: true,
-    autoload: "0.js"
+    autoload: "./0.js"
   };
   var Class = function() {
     var instanceSeed = {
@@ -13098,7 +13300,7 @@ var __resources__ = {
     deferred: function() {
       var token = this.deferredToken;
       if (!token) {
-        token = this.deferredToken = new basis.DeferredToken(this.value);
+        token = this.deferredToken = new DeferredToken(this.value);
         this.attach(token.set, token);
       }
       return token;
@@ -13141,17 +13343,27 @@ var __resources__ = {
       return this;
     }
   });
-  var resourceCache = {};
-  var resourceRequestCache = {};
+  var resources = {};
+  var resourceContentCache = {};
+  var resourcePatch = {};
   var resourceResolvingStack = [];
+  var requires;
   (function() {
-    if (typeof __resources__ != "undefined") {
-      for (var key in __resources__) resourceRequestCache[pathUtils.resolve(key)] = __resources__[key];
+    var map = typeof __resources__ != "undefined" ? __resources__ : null;
+    if (map) {
+      for (var key in map) resourceContentCache[pathUtils.resolve(key)] = map[key];
       __resources__ = null;
     }
   })();
+  function applyResourcePatches(resource) {
+    var patches = resourcePatch[resource.url];
+    if (patches) for (var i = 0; i < patches.length; i++) {
+      consoleMethods.info("Apply patch for " + resource.url);
+      patches[i](resource.get(), resource.url);
+    }
+  }
   var getResourceContent = function(url, ignoreCache) {
-    if (ignoreCache || !resourceRequestCache.hasOwnProperty(url)) {
+    if (ignoreCache || !resourceContentCache.hasOwnProperty(url)) {
       var resourceContent = "";
       if (!NODE_ENV) {
         var req = new XMLHttpRequest;
@@ -13169,32 +13381,36 @@ var __resources__ = {
           consoleMethods.error("basis.resource: Unable to load " + url, e);
         }
       }
-      resourceRequestCache[url] = resourceContent;
+      resourceContentCache[url] = resourceContent;
     }
-    return resourceRequestCache[url];
+    return resourceContentCache[url];
   };
   var getResource = function(resourceUrl) {
+    if (!/^(\.\/|\.\.|\/)/.test(resourceUrl)) consoleMethods.warn("Bad usage: basis.resource('" + resourceUrl + "').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.");
     resourceUrl = pathUtils.resolve(resourceUrl);
-    if (!resourceCache[resourceUrl]) {
+    if (!resources[resourceUrl]) {
       var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
       var resolved = false;
       var wrapped = false;
       var content;
+      var wrappedContent;
       var resource = function() {
         if (resolved) return content;
         var urlContent = getResourceContent(resourceUrl);
         var idx = resourceResolvingStack.indexOf(resourceUrl);
-        if (idx != -1) basis.dev.warn("basis.resource recursion:", resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(" -> "));
+        if (idx != -1) consoleMethods.warn("basis.resource recursion:", resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(" -> "));
         resourceResolvingStack.push(resourceUrl);
         if (contentWrapper) {
           if (!wrapped) {
             wrapped = true;
             content = contentWrapper(urlContent, resourceUrl);
+            wrappedContent = urlContent;
           }
         } else {
           content = urlContent;
         }
         resolved = true;
+        applyResourcePatches(resource);
         resource.apply();
         resourceResolvingStack.pop();
         return content;
@@ -13207,20 +13423,32 @@ var __resources__ = {
         toString: function() {
           return "[basis.resource " + resourceUrl + "]";
         },
+        isResolved: function() {
+          return resolved;
+        },
+        hasChanges: function() {
+          return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
+        },
         update: function(newContent) {
           newContent = String(newContent);
-          if (!resolved || newContent != resourceRequestCache[resourceUrl]) {
-            resourceRequestCache[resourceUrl] = newContent;
+          if (!resolved || newContent != resourceContentCache[resourceUrl]) {
+            resourceContentCache[resourceUrl] = newContent;
             if (contentWrapper) {
-              if (!wrapped || !contentWrapper.updatable) return;
-              content = contentWrapper(newContent, resourceUrl);
-            } else content = newContent;
-            resolved = true;
-            resource.apply();
+              if (wrapped && !contentWrapper.permanent) {
+                content = contentWrapper(newContent, resourceUrl);
+                applyResourcePatches(resource);
+                resource.apply();
+              }
+            } else {
+              content = newContent;
+              resolved = true;
+              applyResourcePatches(resource);
+              resource.apply();
+            }
           }
         },
         reload: function() {
-          var oldContent = resourceRequestCache[resourceUrl];
+          var oldContent = resourceContentCache[resourceUrl];
           var newContent = getResourceContent(resourceUrl, true);
           if (newContent != oldContent) {
             resolved = false;
@@ -13233,35 +13461,39 @@ var __resources__ = {
         ready: function(fn, context) {
           if (resolved) {
             fn.call(context, resource());
-            if (contentWrapper && !contentWrapper.updatable) return;
+            if (contentWrapper && contentWrapper.permanent) return;
           }
           resource.attach(fn, context);
           return resource;
         }
       }));
-      resourceCache[resourceUrl] = resource;
+      resources[resourceUrl] = resource;
     }
-    return resourceCache[resourceUrl];
+    return resources[resourceUrl];
   };
-  var nsRootPath = slice(config.path);
-  var requires;
   extend(getResource, {
-    getFiles: function() {
-      var result = [];
-      for (var url in resourceCache) result.push(pathUtils.relative(url));
-      return result;
+    isResource: function(value) {
+      return value ? resources[value.url] === value : false;
     },
-    getSource: function(resourceUrl) {
-      return getResourceContent(pathUtils.resolve(resourceUrl));
+    isResolved: function(resourceUrl) {
+      var resource = getResource.get(resourceUrl);
+      return resource ? resource.isResolved() : false;
     },
     exists: function(resourceUrl) {
-      return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
+      if (!/^(\.\/|\.\.|\/)/.test(resourceUrl)) consoleMethods.warn("Bad usage: basis.resource.exists('" + resourceUrl + "').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.");
+      return resources.hasOwnProperty(pathUtils.resolve(resourceUrl));
     },
-    isResource: function(value) {
-      return value ? resourceCache[value.url] === value : false;
+    get: function(resourceUrl) {
+      if (!/^(\.\/|\.\.|\/)/.test(resourceUrl)) consoleMethods.warn("Bad usage: basis.resource.get('" + resourceUrl + "').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.");
+      resourceUrl = pathUtils.resolve(resourceUrl);
+      if (!getResource.exists(resourceUrl)) return null;
+      return getResource(resourceUrl);
+    },
+    getFiles: function(cache) {
+      return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
     },
     extensions: {
-      ".js": function(content, filename) {
+      ".js": extend(function(content, filename) {
         var namespace = filename2namespace[filename];
         if (!namespace) {
           var implicitNamespace = true;
@@ -13293,15 +13525,15 @@ var __resources__ = {
           requires = savedRequires;
         }
         return namespaces[namespace].exports;
-      },
-      ".css": extend(function(content, url) {
+      }, {
+        permanent: true
+      }),
+      ".css": function(content, url) {
         var resource = CssResource.resources[url];
         if (!resource) resource = new CssResource(url); else resource.updateCssText(content);
         return resource;
-      }, {
-        updatable: true
-      }),
-      ".json": extend(function(content, url) {
+      },
+      ".json": function(content, url) {
         if (typeof content == "object") return content;
         var result;
         try {
@@ -13314,20 +13546,18 @@ var __resources__ = {
           });
         }
         return result || null;
-      }, {
-        updatable: true
-      })
+      }
     }
   });
   function compileFunction(sourceURL, args, body) {
     try {
-      return new Function(args, body + "\n//@ sourceURL=" + pathUtils.origin + sourceURL + "\n//# sourceURL=" + pathUtils.origin + sourceURL + "\n");
+      return new Function(args, body + "\n\n//# sourceURL=" + pathUtils.origin + sourceURL);
     } catch (e) {
       if (document && "line" in e == false && "addEventListener" in global) {
         global.addEventListener("error", function onerror(event) {
           if (event.filename == pathUtils.origin + sourceURL) {
             global.removeEventListener("error", onerror);
-            console.error("Compilation error at " + event.filename + ":" + event.lineno + ": " + e);
+            consoleMethods.error("Compilation error at " + event.filename + ":" + event.lineno + ": " + e);
             event.preventDefault();
           }
         });
@@ -13337,7 +13567,7 @@ var __resources__ = {
         document.head.appendChild(script);
         document.head.removeChild(script);
       }
-      basis.dev.error("Compilation error at " + sourceURL + ("line" in e ? ":" + (e.line - 1) : "") + ": " + e);
+      consoleMethods.error("Compilation error at " + sourceURL + ("line" in e ? ":" + (e.line - 1) : "") + ": " + e);
     }
   }
   var runScriptInContext = function(context, sourceURL, sourceCode) {
@@ -13346,7 +13576,8 @@ var __resources__ = {
     if (!context.exports) context.exports = {};
     if (typeof compiledSourceCode != "function") compiledSourceCode = compileFunction(sourceURL, [ "exports", "module", "basis", "global", "__filename", "__dirname", "resource", "require" ], '"use strict";\n' + sourceCode);
     if (typeof compiledSourceCode == "function") compiledSourceCode.call(context.exports, context.exports, context, basis, global, sourceURL, baseURL, function(relativePath) {
-      return getResource(baseURL + relativePath);
+      if (!/^(\.\/|\.\.|\/)/.test(relativePath)) consoleMethods.warn("Bad usage: resource('" + relativePath + "').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.");
+      return getResource(pathUtils.resolve(baseURL, relativePath));
     }, function(relativePath, base) {
       return requireNamespace(relativePath, base || baseURL);
     });
@@ -13355,14 +13586,18 @@ var __resources__ = {
   var namespaces = {};
   var namespace2filename = {};
   var filename2namespace = {};
-  if (typeof __namespace_map__ != "undefined") (function(map) {
-    for (var key in map) {
-      var filename = pathUtils.resolve(key);
-      var namespace = map[key];
-      filename2namespace[filename] = namespace;
-      namespace2filename[namespace] = filename;
+  var nsRootPath = slice(config.path);
+  (function(map) {
+    var map = typeof __namespace_map__ != "undefined" ? __namespace_map__ : null;
+    if (map) {
+      for (var key in map) {
+        var filename = pathUtils.resolve(key);
+        var namespace = map[key];
+        filename2namespace[filename] = namespace;
+        namespace2filename[namespace] = filename;
+      }
     }
-  })(__namespace_map__);
+  })();
   var Namespace = Class(null, {
     className: "basis.Namespace",
     init: function(name) {
@@ -13379,6 +13614,16 @@ var __resources__ = {
       return complete(this, names);
     }
   });
+  function resolveNSFilename(namespace) {
+    var namespaceRoot = namespace.split(".")[0];
+    var filename = namespace.replace(/\./g, "/") + ".js";
+    if (namespace in namespace2filename == false) {
+      if (namespaceRoot in nsRootPath == false) nsRootPath[namespaceRoot] = pathUtils.baseURI;
+      if (namespaceRoot == namespace) filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
+      namespace2filename[namespace] = nsRootPath[namespaceRoot] + filename;
+    }
+    return namespace2filename[namespace];
+  }
   function getRootNamespace(name) {
     var namespace = namespaces[name];
     if (!namespace) {
@@ -13389,7 +13634,7 @@ var __resources__ = {
     }
     return namespace;
   }
-  var getNamespace = function(path) {
+  function getNamespace(path) {
     path = path.split(".");
     var rootNs = getRootNamespace(path[0]);
     var cursor = rootNs;
@@ -13403,10 +13648,9 @@ var __resources__ = {
     }
     namespaces[path.join(".")] = cursor;
     return cursor;
-  };
+  }
   var requireNamespace = function() {
     if (NODE_ENV) {
-      var requirePath = pathUtils.dirname(module.filename) + "/";
       var moduleProto = module.constructor.prototype;
       return function(filename, dirname) {
         if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == ".js") {
@@ -13417,7 +13661,7 @@ var __resources__ = {
             content = "var node_require = require;\n" + "var basis = module.basis;\n" + 'var resource = function(filename){ return basis.resource(__dirname + "/" + filename) };\n' + "var require = function(filename, baseURI){ return basis.require(filename, baseURI || __dirname) };\n" + content;
             _compile.call(extend(this, namespace), content, filename);
           };
-          var exports = require(requirePath + filename.replace(/\./g, "/"));
+          var exports = require(__dirname + "/" + filename.replace(/\./g, "/"));
           namespace.exports = exports;
           if (exports && exports.constructor === Object) complete(namespace, exports);
           moduleProto._compile = _compile;
@@ -13430,25 +13674,30 @@ var __resources__ = {
     } else {
       return function(filename, dirname) {
         if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != ".js") {
-          var namespace = filename;
-          var namespaceRoot = namespace.split(".")[0];
-          filename = namespace.replace(/\./g, "/") + ".js";
-          if (namespaceRoot == namespace) {
-            nsRootPath[namespaceRoot] = nsRootPath[namespace] || pathUtils.baseURI;
-            filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
-          }
-          filename = (nsRootPath[namespaceRoot] || "") + filename;
+          filename = resolveNSFilename(filename);
         } else {
+          if (!/^(\.\/|\.\.|\/)/.test(filename)) consoleMethods.warn("Bad usage: require('" + filename + "').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.");
           filename = pathUtils.resolve(dirname, filename);
         }
         return getResource(filename).fetch();
       };
     }
   }();
+  function patch(filename, patchFn) {
+    if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != ".js") {
+      filename = resolveNSFilename(filename);
+    } else {
+      if (!/^(\.\/|\.\.|\/)/.test(filename)) consoleMethods.warn("Bad usage: basis.patch('" + filename + "').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.");
+      filename = pathUtils.resolve(filename);
+    }
+    if (!resourcePatch[filename]) resourcePatch[filename] = [ patchFn ]; else resourcePatch[filename].push(patchFn);
+    var resource = getResource.get(filename);
+    if (resource && resource.isResolved()) patchFn(resource.get(), resource.url);
+  }
   function extendProto(cls, extensions) {
     if (config.extProto) for (var key in extensions) cls.prototype[key] = function(method, clsName) {
       return function() {
-        if (config.extProto == "warn") consoleMethods.warn(clsName + "#" + method + " is not a standard method, and it's and will be removed soon; use basis." + clsName.toLowerCase() + "." + method + " instead");
+        if (config.extProto == "warn") consoleMethods.warn(clsName + "#" + method + " is not a standard method and will be removed soon; use basis." + clsName.toLowerCase() + "." + method + " instead");
         var args = [ this ];
         Array.prototype.push.apply(args, arguments);
         return extensions[method].apply(extensions, args);
@@ -13734,9 +13983,12 @@ var __resources__ = {
     }
     var fired = !document || isReady();
     var deferredHandler;
+    function runReadyHandler(handler) {
+      handler.callback.call(handler.context);
+    }
     function fireHandlers() {
       if (isReady()) if (!(fired++)) while (deferredHandler) {
-        deferredHandler.callback.call(deferredHandler.context);
+        runReadyHandler(deferredHandler);
         deferredHandler = deferredHandler.next;
       }
     }
@@ -13767,7 +14019,10 @@ var __resources__ = {
           context: context,
           next: deferredHandler
         };
-      } else callback.call(context);
+      } else runReadyHandler({
+        callback: callback,
+        context: context
+      });
     };
   }();
   var documentInterface = function() {
@@ -13813,9 +14068,9 @@ var __resources__ = {
       if (node && node.parentNode && node.parentNode.nodeType == 1) node.parentNode.removeChild(node);
     }
     function checkParents() {
-      if (getParent("head") && getParent("body")) clearInterval(timer);
+      if (timer && getParent("head") && getParent("body")) timer = clearInterval(timer);
     }
-    if (document) {
+    if (document && (!getParent("head") || !getParent("body"))) {
       timer = setInterval(checkParents, 5);
       ready(checkParents);
     }
@@ -13979,15 +14234,14 @@ var __resources__ = {
     NODE_ENV: NODE_ENV,
     config: config,
     platformFeature: {},
-    path: pathUtils,
+    resolveNSFilename: resolveNSFilename,
+    patch: patch,
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
     asset: function(url) {
       return url;
     },
-    getter: getter,
-    ready: ready,
     setImmediate: setImmediate,
     clearImmediate: clearImmediate,
     nextTick: function() {
@@ -13996,8 +14250,11 @@ var __resources__ = {
     Class: Class,
     Token: Token,
     DeferredToken: DeferredToken,
+    getter: getter,
+    ready: ready,
     cleaner: cleaner,
     console: consoleMethods,
+    path: pathUtils,
     doc: documentInterface,
     object: {
       extend: extend,
@@ -14044,7 +14301,9 @@ var __resources__ = {
       }
     },
     json: {
-      parse: typeof JSON != "undefined" ? JSON.parse : String_extensions.toObject
+      parse: typeof JSON != "undefined" ? JSON.parse : function(str) {
+        return String_extensions.toObject(str, true);
+      }
     }
   });
   getNamespace("basis.dev").extend(consoleMethods);
