@@ -6,9 +6,36 @@
     border: 1px solid #CCC;
     box-shadow: 1px 1px 5px rgba(0,0,0,.2);
   }
+  .Basis-Popup.visible,
+  .Basis-Popup.hidden
+  {
+
+  }
 
   .Basis-Popup-Content
   {
     min-height: 1em;
     min-width: 100px;
+  }
+
+  .popup-v-left-top,
+  .popup-v-right-top,
+  .popup-v-center-top,
+  .popup-v-left-center,
+  .popup-v-right-center,
+  .popup-v-center-center,
+  .popup-v-left-bottom,
+  .popup-v-right-bottom,
+  .popup-v-center-bottom,
+  .popup-h-left-top,
+  .popup-h-right-top,
+  .popup-h-center-top,
+  .popup-h-left-center,
+  .popup-h-right-center,
+  .popup-h-center-center,
+  .popup-h-left-bottom,
+  .popup-h-right-bottom,
+  .popup-h-center-bottom
+  {
+
   }

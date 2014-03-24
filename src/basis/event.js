@@ -18,8 +18,6 @@
   // Main part
   //
 
-  /** @const */ var DEVMODE = false /** @cut */ || true;
-
   var NULL_HANDLER = {};
   var events = {};
   var warnOnDestroy = function(){
@@ -50,7 +48,8 @@
           {
             if (!args)
             {
-              // it should be better for browser optimizations (instead of [this].concat(slice.call(arguments)))
+              // it should be better for browser optimizations
+              // (instead of [this].concat(slice.call(arguments)))
               args = [this];
               for (var i = 0; i < arguments.length; i++)
                 args.push(arguments[i]);
@@ -62,37 +61,45 @@
           // any event callback call
           fn = cursor.callbacks['*'];
           if (typeof fn == 'function')
+          {
+            if (!args)
+            {
+              // it should be better for browser optimizations
+              // (instead of [this].concat(slice.call(arguments)))
+              args = [this];
+              for (var i = 0; i < arguments.length; i++)
+                args.push(arguments[i]);
+            }
+
             fn.call(cursor.context || this, {
               sender: this,
               type: eventName,
-              args: arguments
+              args: args
             });
+          }
         }
 
-        // that feature available in development mode only
-        if (DEVMODE && this.debug_emit)
-          this.debug_emit({
-            sender: this,
-            type: eventName,
-            args: arguments
-          });
+        // feature available in development mode only
+        /** @cut */ if (this.debug_emit)
+        /** @cut */   this.debug_emit({
+        /** @cut */     sender: this,
+        /** @cut */     type: eventName,
+        /** @cut */     args: arguments
+        /** @cut */   });
       };
 
       // function wrapper for more verbose in development mode
-      if (DEVMODE)
-      {
-        eventFunction = new Function('slice, DEVMODE',
-          'return {"' + namespace + '.events.' + eventName + '":\n\n      ' +
-
-            'function(' + slice.call(arguments, 1).join(', ') + '){' +
-              eventFunction.toString()
-                .replace(/\beventName\b/g, '"' + eventName + '"')
-                .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') +
-            '}' +
-
-          '\n\n}["' + namespace + '.events.' + eventName + '"];'
-        )(slice, DEVMODE);
-      }
+      /** @cut */ eventFunction = new Function('slice',
+      /** @cut */   'return {"' + namespace + '.events.' + eventName + '":\n\n      ' +
+      /** @cut */
+      /** @cut */     'function(' + slice.call(arguments, 1).join(', ') + '){' +
+      /** @cut */       eventFunction.toString()
+      /** @cut */         .replace(/\beventName\b/g, '"' + eventName + '"')
+      /** @cut */         .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') +
+      /** @cut */     '}' +
+      /** @cut */
+      /** @cut */   '\n\n}["' + namespace + '.events.' + eventName + '"];'
+      /** @cut */ )(slice);
 
       events[eventName] = eventFunction;
     }
@@ -157,6 +164,28 @@
     listen: Class.nestedExtendProperty(),
 
    /**
+    * Function that returns handler list as array.
+    * WARN: This functionality is supported in development mode only.
+    * @return {Array.<object>} List of handlers
+    */
+    /** @cut */ debug_handlers: function(){
+    /** @cut */   var result = [];
+    /** @cut */   var cursor = this;
+    /** @cut */
+    /** @cut */   while (cursor = cursor.handler)
+    /** @cut */     result.push([cursor.callbacks, cursor.context]);
+    /** @cut */
+    /** @cut */   return result;
+    /** @cut */ },
+
+   /**
+    * Function that call on any event. Use it for debug purposes.
+    * WARN: This functionality is supported in development mode only.
+    * @type {function(event)}
+    */
+    /** @cut */ debug_emit: null,
+
+   /**
     * @constructor
     */
     init: function(){
@@ -174,24 +203,21 @@
     * @param {object=} context Context object.
     */
     addHandler: function(callbacks, context){
-      if (DEVMODE && !callbacks)
-        basis.dev.warn(namespace + '.Emitter#addHandler: callbacks is not an object (', callbacks, ')');
+      /** @cut */ if (!callbacks)
+      /** @cut */   basis.dev.warn(namespace + '.Emitter#addHandler: callbacks is not an object (', callbacks, ')');
 
       context = context || this;
 
       // warn about duplicates
-      if (DEVMODE)
-      {
-        var cursor = this;
-        while (cursor = cursor.handler)
-        {
-          if (cursor.callbacks === callbacks && cursor.context === context)
-          {
-            basis.dev.warn(namespace + '.Emitter#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
-            break;
-          }
-        }
-      }
+      /** @cut */ var cursor = this;
+      /** @cut */ while (cursor = cursor.handler)
+      /** @cut */ {
+      /** @cut */   if (cursor.callbacks === callbacks && cursor.context === context)
+      /** @cut */   {
+      /** @cut */     basis.dev.warn(namespace + '.Emitter#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
+      /** @cut */     break;
+      /** @cut */   }
+      /** @cut */ }
 
       // add handler
       this.handler = {
@@ -227,8 +253,7 @@
         }
 
       // handler not found
-      if (DEVMODE)
-        basis.dev.warn(namespace + '.Emitter#removeHandler: no handler removed');
+      /** @cut */ basis.dev.warn(namespace + '.Emitter#removeHandler: no handler removed');
     },
 
    /**
@@ -245,35 +270,6 @@
       this.handler = null;
     }
   });
-
-
-  if (DEVMODE)
-  {
-    Emitter.extend({
-     /**
-      * Function that returns handler list as array.
-      * WARN: This functionality is supported in development mode only.
-      * @return {Array.<object>} List of handlers
-      */
-      debug_handlers: function(){
-        var result = [];
-        var cursor = this;
-
-        while (cursor = cursor.handler)
-          result.push([cursor.callbacks, cursor.context]);
-
-        return result;
-      },
-
-     /**
-      * Function that call on any event. Use it for debug purposes.
-      * WARN: This functionality is supported in development mode only.
-      * @type {function(event)}
-      */
-      debug_emit: null
-    });
-  }
-
 
   //
   // export names

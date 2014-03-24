@@ -42,6 +42,7 @@
 
     "disallowMultipleLineStrings": true,
     "validateQuoteMarks": "'",
+    "requireSemicolon": true,
 
     "disallowMixedSpacesAndTabs": true,
     "disallowTrailingWhitespace": true,
@@ -49,7 +50,7 @@
     "requireLineFeedAtFileEnd": true,
 
     "disallowKeywords": ["with", "eval"],
-    "requireKeywordsOnNewLine": ["if", "else", "while", "for", "do", "return", "swicth", "case", "try", "break"],
+    "requireKeywordsOnNewLine": ["if", "else", "while", "for", "do", "return", "switch", "case", "try", "break"],
     "disallowKeywordsOnNewLine": ["catch"],
     "requireCapitalizedConstructors": true,
 
@@ -62,6 +63,6 @@
     },
 
     "additionalRules": [
-        "test/jscs/*.js"
+        "scripts/jscs/*.js"
     ]
 }

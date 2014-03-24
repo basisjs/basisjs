@@ -6,7 +6,7 @@
   basis.require('basis.ui');
 
   var styleRequired = basis.fn.runOnce(function(){
-    resource('templates/resizer/style.css')().startUse();
+    resource('./templates/resizer/style.css')().startUse();
   });
 
 
@@ -56,7 +56,6 @@
     }
   };
 
-
  /**
   * @class
   */
@@ -76,7 +75,7 @@
 
       if (!PROPERTY_DELTA[this.property])
       {
-        ;;;basis.dev.warn('Property to change `' + this.property + '` is unsupported');
+        /** @cut */ basis.dev.warn('Property to change `' + this.property + '` is unsupported');
         this.stop();
         return;
       }
@@ -194,7 +193,7 @@
         cursorOverrideRule = null;
       }
     }
-  }});
+  };});
 
 
   //

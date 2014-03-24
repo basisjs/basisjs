@@ -9,7 +9,7 @@
 
   var InheritanceItem = basis.ui.Node.subclass({
     className: module.path + '.InheritanceItem',
-    template: resource('template/inheritanceItem.tmpl'),
+    template: resource('./template/inheritanceItem.tmpl'),
 
     binding: {
       className: 'data:title',
@@ -31,7 +31,7 @@
 
     childClass: InheritanceItem,
 
-    template: resource('template/inheritanceView.tmpl'),
+    template: resource('./template/inheritanceView.tmpl'),
     binding: {
       show_namespace: {
         events: 'groupingChanged',
@@ -43,7 +43,7 @@
 
     groupingClass: {
       childClass: {
-        template: resource('template/inheritanceGroup.tmpl'),
+        template: resource('./template/inheritanceGroup.tmpl'),
 
         binding: {
           title: 'data:'

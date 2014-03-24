@@ -98,7 +98,7 @@
 
     basis.ready(function(){
       try {
-        basis.resource('main.js').fetch();
+        basis.resource('./main.js').fetch();
       } catch(e) {
         console.warn(e.message || e);
       }

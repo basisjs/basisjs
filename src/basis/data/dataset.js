@@ -362,7 +362,7 @@
       }
       else
       {
-        ;;;basis.dev.warn(this.constructor.className + '.addSource: source isn\'t instance of AbstractDataset');
+        /** @cut */ basis.dev.warn(this.constructor.className + '.addSource: source isn\'t instance of AbstractDataset');
       }
     },
 
@@ -395,7 +395,7 @@
       }
       else
       {
-        ;;;basis.dev.warn(this.constructor.className + '.removeSource: source isn\'t in dataset source list');
+        /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source isn\'t in dataset source list');
       }
     },
 
@@ -417,7 +417,7 @@
         }
         else
         {
-          ;;;basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of AbstractDataset', source);
+          /** @cut */ basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of AbstractDataset', source);
         }
       }
 
@@ -762,15 +762,14 @@
     init: function(){
       this.sourceMap_ = {};
 
-      var source = this.source;
-      if (source)
-        this.source = null;     // NOTE: reset source before inherit -> prevent double subscription activation
-                                // when this.active == true and source is assigned
-
       AbstractDataset.prototype.init.call(this);
 
+      var source = this.source;
       if (source)
+      {
+        this.source = null;
         this.setSource(source);
+      }
     },
 
    /**
@@ -1566,6 +1565,27 @@
     */
     setLimit: function(limit){
       return this.setRange(this.offset, limit);
+    },
+
+   /**
+    * Set new rule and orderDesc
+    */
+    setRule: function(rule, orderDesc){
+      rule = getter(rule);
+      this.orderDesc = !!orderDesc;
+
+      if (this.rule != rule)
+      {
+        var index = this.index_;
+
+        for (var i = 0; i < index.length; i++)
+          index[i].value = rule(index[i].object);
+
+        this.rule = rule;
+        index.sort(sliceIndexSort);
+      }
+
+      return this.applyRule();
     },
 
    /**

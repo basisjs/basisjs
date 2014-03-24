@@ -1,8 +1,8 @@
 basis.require('basis.ui');
 basis.require('basis.ui.resizer');
 
-var fileTree = resource('module/fileTree/fileTree.js').fetch();
-var fileView = resource('module/fileView/fileView.js').fetch();
+var fileTree = resource('./module/fileTree/fileTree.js').fetch();
+var fileView = resource('./module/fileView/fileView.js').fetch();
 
 fileTree.selection.addHandler({
   itemsChanged: function(object){
@@ -14,7 +14,7 @@ module.exports = new basis.ui.Node({
   container: document.body,
   opened: false,
 
-  template: resource('template/fileInspector.tmpl'),
+  template: resource('./template/fileInspector.tmpl'),
 
   binding: {
     opened: 'opened',

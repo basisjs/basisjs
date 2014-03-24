@@ -2,7 +2,7 @@
   basis.require('basis.event');
   basis.require('basis.data');
   basis.require('basis.entity');
-  basis.require('basis.net');
+  basis.require('basis.net.ajax');
   basis.require('app.stat');
 
   // import names
@@ -11,8 +11,7 @@
 
   var nsData = basis.data;
   var nsEntity = basis.entity;
-  var nsAjax = basis.net;
-  
+
 
   // main part
 
@@ -77,7 +76,7 @@
       }
     }
   }
-  
+
   function processAwaitingJsDocs(){
     var keys = basis.object.keys(awaitingUpdateQueue);
     for (var k = 0; k < keys.length; k++)
@@ -253,7 +252,7 @@
 
   var walkThroughCount = 0;
   var clsSeed = 1;
-  
+
   var clsList = [{
     docsUid_: 0,
     docsLevel_: 0,
@@ -296,7 +295,7 @@
 
     if (deep > 8)
     {
-      ;;;basis.dev.log('Deep more than 8 for path:', path);
+      /** @cut */ basis.dev.log('Deep more than 8 for path:', path);
       return;
     }
 
@@ -341,7 +340,7 @@
 
       if (mapDO[fullPath])
       {
-        ;;;basis.dev.log('double scan: ', fullPath);
+        /** @cut */ basis.dev.log('double scan: ', fullPath);
         continue;
       }
 
@@ -657,7 +656,7 @@
     loaded: {},
     curResource: null,
     transport: basis.fn.lazyInit(function(){
-      var transport = new nsAjax.Transport();
+      var transport = new basis.net.ajax.Transport();
 
       transport.addHandler({
         failure: function(){
@@ -665,9 +664,9 @@
           if (++curResource.attemptCount < RESOURCE_ATTEMPT_LOAD)
             this.queue.push(curResource);
         },
-        success: function(sender, req){
+        success: function(sender, req, data){
           var curResource = this.curResource;
-          curResource.text = req.data.responseText;
+          curResource.text = data;
           sourceParser[curResource.kind](curResource);
         },
         complete: function(){
@@ -704,7 +703,7 @@
     }
   };
 
-  basis.source_ = basis.net.request(basis.filename_);
+  basis.source_ = basis.net.ajax.request(basis.filename_);
   var resolveQueue = basis.object.values(basis.namespaces_).concat(basis).map(function(ns){
     if (ns.source_)
       return {

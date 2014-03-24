@@ -317,7 +317,7 @@
 
         if (['set', 'templateId_'].indexOf(bindName) != -1)
         {
-          ;;;basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
+          /** @cut */ basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
           continue;
         }
 
@@ -471,7 +471,7 @@
                 break;
               case TYPE_TEXT:
                 bindCode.push(domRef + '.nodeValue=value;');
-                break
+                break;
 
               // ignore bindings for comment, as we can't apply anything but Node to comment
             }
@@ -589,9 +589,24 @@
 
       result.push(
         ';function set(bindName,value){' +
-          'if(typeof bindName=="string")' +
-            'value=resolve.call(instance,bindName,value,Attaches);' +
-          'switch(bindName){'
+        'if(typeof bindName!="string")'
+      );
+      for (var bindName in bindMap)
+        if (bindMap[bindName].nodeBind)
+        {
+          result.push(
+            'if(bindName===' + bindMap[bindName].nodeBind + ')' +
+              'bindName="' + bindName + '";' +
+            'else '
+          );
+        }
+      result.push(
+        'return;'
+      );
+
+      result.push(
+        'value=resolve.call(instance,bindName,value,Attaches);' +
+        'switch(bindName){'
       );
 
       for (var bindName in bindMap)
@@ -599,7 +614,6 @@
         /** @cut */ if (bindName.indexOf('@') == -1) varList.push('$$' + bindName + '=0');
         result.push(
           'case"' + bindName + '":' +
-          (bindMap[bindName].nodeBind ? 'case ' + bindMap[bindName].nodeBind + ':' : '') +
           (bindMap[bindName].l10n
             ? bindMap[bindName].join('')
             : 'if(__' + bindName + '!==value)' +
@@ -621,7 +635,7 @@
       return {
         /** @cut */ debugList: debugList,
         keys: basis.object.keys(bindMap).filter(function(key){
-          return key.indexOf('@') == -1
+          return key.indexOf('@') == -1;
         }),
         tools: toolsVarList,
         vars: varList,
@@ -629,7 +643,7 @@
         l10n: l10nMap,
         l10nCompute: l10nCompute
       };
-    }
+    };
   })();
 
   function compileFunction(args, body){
@@ -674,27 +688,26 @@
         );
 
       result.createL10nSync = compileFunction(['_', '__l10n', 'bind_attr', 'TEXT_BUG'],
-        /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
+        /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
         'var ' + paths.path + ';' +
         'return function(token, value){' +
           'switch(token){' +
             code.join('') +
           '}' +
-        '}\n'
+        '}'
 
-        /** @cut */ + '//# sourceURL=' + basis.path.origin + uri + '_l10n\n'
-        /** @cut */ + '//@ sourceURL=' + basis.path.origin + uri + '_l10n\n'
+        /** @cut */ + '\n\n//# sourceURL=' + basis.path.origin + uri + '_l10n'
       );
     }
 
     result.createInstance = compileFunction(['tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG'],
-      /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
+      /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
       'var getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
       'Attaches=function(){};' +
-      'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null' }) + '};' +
+      'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null'; }) + '};' +
       'return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){' +
         'var _=build(),' +
         paths.path.concat(bindings.vars) + ',' +
@@ -724,15 +737,14 @@
         ';' + bindings.l10nCompute +
 
         ';return instance' +
-
-        /** @cut */ '\n//# sourceURL=' + basis.path.origin + uri +
-        /** @cut */ '\n//@ sourceURL=' + basis.path.origin + uri + '\n' +
       '}'
+
+      /** @cut */ + '\n\n//# sourceURL=' + basis.path.origin + uri
     );
 
     return result;
-  }
+  };
 
   module.exports = {
-  	getFunctions: getFunctions
+    getFunctions: getFunctions
   };

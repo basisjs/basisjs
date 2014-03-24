@@ -1,17 +1,17 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
+basis.require('basis.layout');
 basis.require('basis.ui');
 
+var document = global.document;
 var DOM = basis.dom;
-
-//var transport = resource('../API/transport.js').fetch();
 
 var inspectMode;
 var elements = [];
 
 var overlayNode = new basis.ui.Node({
-  template: resource('template/heat_overlay.tmpl'),
+  template: resource('./template/heat_overlay.tmpl'),
   action: {
     mouseover: function(e){
       basis.cssom.classList(overlayContent).add('hover');
@@ -22,8 +22,8 @@ var overlayNode = new basis.ui.Node({
   }
 });
 
-var overlay = overlayNode.tmpl.element;
-var overlayContent = overlayNode.tmpl.content;
+var overlay = overlayNode.element;
+var overlayContent = overlayNode.tmpl.content || overlay;
 
 // dom mutation observer
 
@@ -50,8 +50,6 @@ function startInspect(){
     basis.dom.event.addHandler(window, 'resize', updateOnResize);
     DOM.event.captureEvent('contextmenu', endInspect);
 
-    //transport.sendData('startInspect', 'l10n');
-
     if (observer)
       observer.observe(document.body, {
         subtree: true,
@@ -76,14 +74,13 @@ function endInspect(){
 
     unhighlight();
     inspectMode = false;
-
-    //transport.sendData('endInspect', 'l10n');
   }
 }
 
 function updateOnScroll(event){
-  overlayContent.style.top = -document.body.scrollTop + 'px';
-  overlayContent.style.left = -document.body.scrollLeft + 'px';
+  var scrollElement = document.compatMode == 'CSS1Compat' ? document.documentElement : document.body;
+  overlayContent.style.top = -scrollElement.scrollTop + 'px';
+  overlayContent.style.left = -scrollElement.scrollLeft + 'px';
 
   if (event && event.target !== document)
     highlight(true);
@@ -124,8 +121,8 @@ function highlight(keepOverlay){
       css: {
         backgroundColor: bgColor,
         outline: '1px solid ' + borderColor,
-        top: document.body.scrollTop + data.rect.top + 'px',
-        left: document.body.scrollLeft + data.rect.left + 'px',
+        top: data.rect.top + 'px',
+        left: data.rect.left + 'px',
         width: data.rect.width + 'px',
         height: data.rect.height + 'px'
       }
@@ -183,12 +180,12 @@ function domTreeHighlight(root){
             switch (domNode.nodeType)
             {
               case 1:
-                rect = domNode.getBoundingClientRect();
+                rect = basis.layout.getBoundingRect(domNode);
                 break;
               case 3:
                 var range = document.createRange();
                 range.selectNodeContents(domNode);
-                rect = range.getBoundingClientRect();
+                rect = basis.layout.getBoundingRect(range);
                 break;
             }
           }

@@ -19,13 +19,13 @@ function extractPath(path){
   if (!fileMap[path])
   {
     var folder = basis.path.relative(basis.path.dirname(path));
-    var isFolder = !basis.path.extname(path)
+    var isFolder = !basis.path.extname(path);
     fileSet.add(basis.data.wrapObject({
       path: path,
       name: basis.path.basename(path),
       folder: folder,
       isFolder: isFolder,
-      code: !isFolder ? basis.resource.getSource(path) : null
+      code: !isFolder ? basis.resource(path).get(true) : null
     }));
 
     fileMap[path] = true;
@@ -33,16 +33,16 @@ function extractPath(path){
     // extract containing folder
     if (folder)
       extractPath(folder);
-  }  
+  }
 }
 
 //
 // tree
 //
 var treeChildFactory = function(config){
-  var childClass = config.delegate.data.isFolder ? TreeFolder : TreeNode;
-  return new childClass(config);
-}
+  var ChildClass = config.delegate.data.isFolder ? TreeFolder : TreeNode;
+  return new ChildClass(config);
+};
 
 var TreeNode = basis.ui.tree.Node.subclass({
   binding: {
@@ -52,7 +52,7 @@ var TreeNode = basis.ui.tree.Node.subclass({
 
 var TreeFolder = basis.ui.tree.Folder.subclass({
   collapsed: true,
-  childFactory: treeChildFactory,  
+  childFactory: treeChildFactory,
 
   sorting: function(object){
     return (object.data.isFolder ? 0 : 1) + '_' + object.data.path;
@@ -67,7 +67,7 @@ var TreeFolder = basis.ui.tree.Folder.subclass({
       this.toggle();
     }
   },
-  
+
   init: function(){
     basis.ui.tree.Folder.prototype.init.call(this);
     this.setDataSource(fileGroup.getSubset(this.data.path, true));
@@ -75,7 +75,7 @@ var TreeFolder = basis.ui.tree.Folder.subclass({
 });
 
 module.exports = new basis.ui.tree.Tree({
-  dataSource: fileGroup.getSubset("", true),
+  dataSource: fileGroup.getSubset('', true),
   childFactory: treeChildFactory
 });
 

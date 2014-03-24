@@ -30,8 +30,8 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Paginator: resource('templates/paginator/Paginator.tmpl'),
-    PaginatorNode: resource('templates/paginator/PaginatorNode.tmpl')
+    Paginator: resource('./templates/paginator/Paginator.tmpl'),
+    PaginatorNode: resource('./templates/paginator/PaginatorNode.tmpl')
   });
 
 
@@ -146,7 +146,7 @@
         events: 'pageCountChanged activePageChanged',
         getter: function(node){
           var activePage = basis.number.fit(node.activePage, 0, node.pageCount - 1);
-          return percent(activePage / Math.max(node.pageCount - 1, 1))
+          return percent(activePage / Math.max(node.pageCount - 1, 1));
         }
       },
       scrollThumbWrapperWidth: {

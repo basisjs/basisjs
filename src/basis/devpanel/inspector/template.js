@@ -1,14 +1,15 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
-basis.require('basis.data.value');
+basis.require('basis.layout');
 basis.require('basis.ui');
 basis.require('basis.ui.popup');
 
+var document = global.document;
 var DOM = basis.dom;
-var transport = resource('../API/transport.js').fetch();
+var transport = require('../API/transport.js');
 
-var inspectMode;
 var inspectDepth = 0;
+var inspectMode;
 
 var overlay = DOM.createElement({
   css: {
@@ -24,31 +25,14 @@ var overlay = DOM.createElement({
   }
 });
 
-function getOffsetRect(elem){
-  var box = elem.getBoundingClientRect();
-
-  var body = document.body;
-  var docElem = document.documentElement;
-
-  var scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
-  var scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
-
-  var clientTop = docElem.clientTop || body.clientTop || 0;
-  var clientLeft = docElem.clientLeft || body.clientLeft || 0;
-
-  var top  = box.top + scrollTop - clientTop;
-  var left = box.left + scrollLeft - clientLeft;
-
-  return {
-    top: Math.round(top),
-    left: Math.round(left),
-    width: box.width,
-    height: box.height
-  };
-}
-
 function pickHandler(event){
-  DOM.event.kill(event);
+  event.die();
+
+  if (event.mouseRight)
+  {
+    endInspect();
+    return;
+  }
 
   var template = pickupTarget.value ? basis.template.resolveTemplateById(pickupTarget.value) : null;
 
@@ -57,9 +41,16 @@ function pickHandler(event){
     var source = template.source;
 
     if (source.url && template.source instanceof basis.template.L10nProxyToken == false)
-      transport.sendData('pickTemplate', {
-        filename: source.url
-      });
+    {
+      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+
+      if (basisjsTools && typeof basisjsTools.openFile == 'function' && (event.ctrlKey || event.metaKey))
+        basisjsTools.openFile(source.url);
+      else
+        transport.sendData('pickTemplate', {
+          filename: source.url
+        });
+    }
     else
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
@@ -69,50 +60,44 @@ function pickHandler(event){
   }
 }
 
-var pickupTarget = new basis.data.value.Property(null, {
-  change: function(){
-    var tmpl = this.value ? basis.template.resolveTmplById(this.value) : null;
+var pickupTarget = new basis.data.Value({
+  handler: {
+    change: function(){
+      var tmpl = this.value ? basis.template.resolveTmplById(this.value) : null;
 
-    if (tmpl)
-    {
-      var rect = getOffsetRect(tmpl.element);
-      if (rect)
+      if (tmpl)
       {
-        basis.cssom.setStyle(overlay, {
-          left: rect.left + 'px',
-          top: rect.top + 'px',
-          width: rect.width + 'px',
-          height: rect.height + 'px'
-        });
-        document.body.appendChild(overlay);
-        DOM.event.captureEvent('mousedown', DOM.event.kill);
-        DOM.event.captureEvent('mouseup', DOM.event.kill);
-        DOM.event.captureEvent('contextmenu', endInspect);
-        DOM.event.captureEvent('click', pickHandler);
+        var rect = basis.layout.getBoundingRect(tmpl.element);
+        if (rect)
+        {
+          basis.cssom.setStyle(overlay, {
+            left: rect.left + 'px',
+            top: rect.top + 'px',
+            width: rect.width + 'px',
+            height: rect.height + 'px'
+          });
+          document.body.appendChild(overlay);
+        }
       }
-    }
-    else
-    {
-      DOM.remove(overlay);
-      DOM.event.releaseEvent('mousedown');
-      DOM.event.releaseEvent('mouseup');
-      DOM.event.releaseEvent('contextmenu');
-      DOM.event.releaseEvent('click');
-      inspectDepth = 0;
-    }
+      else
+      {
+        DOM.remove(overlay);
+        inspectDepth = 0;
+      }
 
-    nodeInfoPopup().update({
-      tmpl: tmpl,
-      template: tmpl && basis.template.resolveTemplateById(this.value),
-      object: tmpl && basis.template.resolveObjectById(this.value)
-    });
+      nodeInfoPopup().update({
+        tmpl: tmpl,
+        template: tmpl && basis.template.resolveTemplateById(this.value),
+        object: tmpl && basis.template.resolveObjectById(this.value)
+      });
+    }
   }
 });
 
 var nodeInfoPopup = basis.fn.lazyInit(function(){
   return new basis.ui.popup.Balloon({
     dir: 'left bottom left top',
-    template: resource('template/template_hintPopup.tmpl'),
+    template: resource('./template/template_hintPopup.tmpl'),
     autorotate: [
       'left top left bottom',
       'left bottom left bottom',
@@ -149,7 +134,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           if (node.data.template)
           {
             var template = node.data.template;
-            var url = template.source.url ? basis.path.relative(template.source.url) : '[inline template]'
+            var url = template.source.url ? basis.path.relative(template.source.url) : '[inline template]';
             return url.charAt(0) == '.' ? basis.path.resolve(url) : url;
           }
         }
@@ -186,6 +171,11 @@ function startInspect(){
   {
     DOM.event.addGlobalHandler('mousemove', mousemoveHandler);
     DOM.event.addGlobalHandler('mousewheel', mouseWheelHandler);
+    DOM.event.captureEvent('mousedown', DOM.event.kill);
+    DOM.event.captureEvent('mouseup', DOM.event.kill);
+    DOM.event.captureEvent('contextmenu', endInspect);
+    DOM.event.captureEvent('click', pickHandler);
+
     basis.cssom.classList(document.body).add('devpanel-inspectMode');
     inspectMode = true;
     transport.sendData('startInspect', 'template');
@@ -197,6 +187,11 @@ function endInspect(){
   {
     DOM.event.removeGlobalHandler('mousemove', mousemoveHandler);
     DOM.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
+    DOM.event.releaseEvent('mousedown');
+    DOM.event.releaseEvent('mouseup');
+    DOM.event.releaseEvent('contextmenu');
+    DOM.event.releaseEvent('click');
+
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');
     inspectMode = false;
     transport.sendData('endInspect', 'template');
@@ -208,46 +203,36 @@ var lastMouseX;
 var lastMouseY;
 var DEPTH_MODE_MOVE_THRESHOLD = 8;
 
-function mousemoveHandler(){
-  var mouseX = DOM.event.mouseX(event);
-  var mouseY = DOM.event.mouseY(event);
-
-  if (inspectDepth)
-  {
-    var realMove = !lastMouseX
-                   || Math.abs(mouseX - lastMouseX) > DEPTH_MODE_MOVE_THRESHOLD
-                   || Math.abs(mouseY - lastMouseY) > DEPTH_MODE_MOVE_THRESHOLD;
-
-    if (!realMove)
-      return;
-  }
-
-  lastMouseX = mouseX;
-  lastMouseY = mouseY;
-
-  var sender = DOM.event.sender(event);
-  var cursor = sender;
+function mousemoveHandler(event){
+  var dx = Math.abs(event.mouseX - lastMouseX);
+  var dy = Math.abs(event.mouseY - lastMouseY);
+  var cursor = event.sender;
   var refId;
+
+  if (inspectDepth && lastMouseX && dx < DEPTH_MODE_MOVE_THRESHOLD && dy < DEPTH_MODE_MOVE_THRESHOLD)
+    return;
+
+  lastMouseX = event.mouseX;
+  lastMouseY = event.mouseY;
 
   do {
     if (refId = cursor.basisTemplateId)
     {
       inspectDepth = 0;
-      return pickupTarget.set(refId);
+      break;
     }
   }
   while (cursor = cursor.parentNode);
 
-  pickupTarget.set();
+  pickupTarget.set(refId);
 }
 
-function mouseWheelHandler(){
-  var delta = DOM.event.wheelDelta(event);
-  var sender = DOM.event.sender(event);
+function mouseWheelHandler(event){
+  var delta = event.wheelDelta;
+  var sender = event.sender;
   var cursor = sender;
 
   var tempDepth = inspectDepth + delta;
-
   var curDepth = 0;
   var lastRefId;
   var lastDepth;
@@ -270,7 +255,7 @@ function mouseWheelHandler(){
   pickupTarget.set(lastRefId);
   inspectDepth = lastDepth;
 
-  DOM.event.kill(event);
+  event.die();
 }
 
 //

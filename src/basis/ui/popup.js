@@ -44,9 +44,9 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Popup: resource('templates/popup/Popup.tmpl'),
-    Balloon: resource('templates/popup/Balloon.tmpl'),
-    popupManager: resource('templates/popup/popupManager.tmpl')
+    Popup: resource('./templates/popup/Popup.tmpl'),
+    Balloon: resource('./templates/popup/Balloon.tmpl'),
+    popupManager: resource('./templates/popup/popupManager.tmpl')
   });
 
 
@@ -377,7 +377,7 @@
         // error on relElement no assigned
         if (!this.relElement)
         {
-          ;;;basis.dev.warn('Popup#show(): relElement missed');
+          /** @cut */ basis.dev.warn('Popup#show(): relElement missed');
           return;
         }
 

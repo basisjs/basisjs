@@ -1,6 +1,6 @@
 
   basis.require('basis.event');
-  basis.require('basis.net');
+  basis.require('basis.net.ajax');
   basis.require('basis.net.action');
 
 
@@ -19,7 +19,7 @@
   var createAction = basis.net.action.create;
 
   var Emitter = basis.event.Emitter;
-  var AjaxTransport = basis.net.AjaxTransport;
+  var AjaxTransport = basis.net.ajax.Transport;
 
 
  /**
@@ -56,7 +56,7 @@
 
     init: function(){
       /** @cut */ if (this.requestClass)
-      /** @cut */   basis.dev.warn(namespace + '.Service#requestClass is not supported; set requestClass via transportClass')
+      /** @cut */   basis.dev.warn(namespace + '.Service#requestClass is not supported; set requestClass via transportClass');
 
       Emitter.prototype.init.call(this);
 
@@ -101,7 +101,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Request ignored. Service have no session key');
+        /** @cut */ basis.dev.warn('Request ignored. Service have no session key');
       }
     },
 

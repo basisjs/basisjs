@@ -1,54 +1,40 @@
 basis.require('basis.l10n');
+basis.require('basis.data');
 
-var Menu = resource('module/menu/index.js').fetch();
+var Menu = require('./module/menu/index.js');
 
-var view = new Menu({
-  selection: {
-    handler: {
-      itemsChanged: function(){
-        basis.l10n.setCulture(this.pick().value);
-      }
-    }
-  },
-
+module.exports = new Menu({
   childClass: {
-    template: resource('template/cultureItem.tmpl'),
+    template: resource('./template/cultureItem.tmpl'),
     binding: {
-      title: 'title',
+      title: 'value',
+      selected: basis.data.Value.from(basis.l10n.culture).compute(function(node, value){
+        return node.value == value;
+      }),
       spriteX: {
         events: 'update',
-        getter: function(object){
-          return object.country ? 16 * (object.country.charCodeAt(0) - 65) : 1000;
+        getter: function(node){
+          return node.country ? 16 * (node.country.charCodeAt(0) - 65) : 1000;
         }
       },
       spriteY: {
         events: 'update',
-        getter: function(object){
-          return object.country ? 11 * (object.country.charCodeAt(1) - 65) : 1000;
+        getter: function(node){
+          return node.country ? 11 * (node.country.charCodeAt(1) - 65) : 1000;
         }
       }
     },
     action: {
       select: function(){
-        this.select();
+        basis.l10n.setCulture(this.value);
       }
     }
   },
+
   childNodes: basis.l10n.getCultureList().map(function(culture){
     return {
-      groupId: 'general',
-      title: culture,
       value: culture,
-      country: culture.split('-').pop(),
-      selected: basis.l10n.getCulture() == culture
-    }
+      country: culture.split('-').pop()
+    };
   })
 });
-
-basis.l10n.onCultureChange(function(culture){
-  var item = this.getChild(culture, 'value');
-  if (item)
-    item.select();
-}, view, true);
-
-module.exports = view;

@@ -30,16 +30,16 @@
   //
 
   var templates = basis.template.define(namespace, {
-    TabControl: resource('templates/tabs/TabControl.tmpl'),
-    TabGroup: resource('templates/tabs/TabGroup.tmpl'),
-    Tab: resource('templates/tabs/Tab.tmpl'),
+    TabControl: resource('./templates/tabs/TabControl.tmpl'),
+    TabGroup: resource('./templates/tabs/TabGroup.tmpl'),
+    Tab: resource('./templates/tabs/Tab.tmpl'),
 
-    PageControl: resource('templates/tabs/PageControl.tmpl'),
-    Page: resource('templates/tabs/Page.tmpl'),
+    PageControl: resource('./templates/tabs/PageControl.tmpl'),
+    Page: resource('./templates/tabs/Page.tmpl'),
 
-    TabSheetControl: resource('templates/tabs/TabSheetControl.tmpl'),
-    TabSheet: resource('templates/tabs/TabSheet.tmpl'),
-    AccordionControl: resource('templates/tabs/AccordionControl.tmpl')
+    TabSheetControl: resource('./templates/tabs/TabSheetControl.tmpl'),
+    TabSheet: resource('./templates/tabs/TabSheet.tmpl'),
+    AccordionControl: resource('./templates/tabs/AccordionControl.tmpl')
   });
 
 

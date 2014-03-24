@@ -1,12 +1,15 @@
-
-  .Basis-VerticalPanelStack__Content
-  {
-    overflow: hidden;
-    position: relative;
-  }
-  .Basis-VerticalPanelStack__Content_flexboxSupported
-  {
-    height: 100%; 
-    display: -webkit-box;
-    -webkit-box-orient: vertical;    
-  }
+.Basis-VerticalPanelStack
+{
+  
+}
+.Basis-VerticalPanelStack__Content
+{
+  overflow: hidden;
+  position: relative;
+}
+.Basis-VerticalPanelStack__Content_flexboxSupported
+{
+  height: 100%; 
+  display: -webkit-box;
+  -webkit-box-orient: vertical;    
+}

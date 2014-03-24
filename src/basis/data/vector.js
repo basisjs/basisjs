@@ -485,7 +485,7 @@
                 item: member.item,
                 count: 0,
                 value: 0
-              }
+              };
             }
 
             member.count = (newValues[key].count += 1);

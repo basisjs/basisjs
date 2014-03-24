@@ -35,7 +35,7 @@
   //
 
   var templates = basis.template.define(namespace, {
-    ScrollTable: resource('templates/scrolltable/ScrollTable.tmpl')
+    ScrollTable: resource('./templates/scrolltable/ScrollTable.tmpl')
   });
 
 
@@ -60,7 +60,7 @@
           owner.columnWidthSync_.map(basis.getter(property))
         )
       ));
-    }
+    };
   }
 
   function replaceTemplateNode(owner, refName, newNode){
@@ -158,7 +158,7 @@
       for (var i = 0; i < this.columnCount; i++)
       {
         var measureCell = measureCellProto.cloneNode(true);
-        listenResize(measureCell.firstChild, this.requestRelayout, this)
+        listenResize(measureCell.firstChild, this.requestRelayout, this);
         columnWidthSync_.push({
           measure: measureCell,
           header: expanderCellProto.cloneNode(true),

@@ -124,7 +124,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Attempt to add duplicate subscription');
+        /** @cut */ basis.dev.warn('Attempt to add duplicate subscription');
       }
     },
     unlink: function(type, from, to){
@@ -144,7 +144,7 @@
       }
       else
       {
-        ;;;basis.dev.warn('Trying remove non-exists subscription');
+        /** @cut */ basis.dev.warn('Trying remove non-exists subscription');
       }
     },
 
@@ -195,7 +195,7 @@
     return function(){
       fnA.apply(this, arguments);
       fnB.apply(this, arguments);
-    }
+    };
   }
 
   function getMaskConfig(mask){
@@ -508,6 +508,9 @@
     * @destructor
     */
     destroy: function(){
+      // inherit
+      Emitter.prototype.destroy.call(this);
+
       // remove subscriptions if necessary
       if (this.active)
       {
@@ -515,9 +518,6 @@
         for (var i = 0, action; action = config.actions[i]; i++)
           action(SUBSCRIPTION.unlink, this);
       }
-
-      // inherit
-      Emitter.prototype.destroy.call(this);
 
       this.state = STATE.UNDEFINED;
     }
@@ -690,13 +690,13 @@
     unlock: function(){
       if (this.locked)
       {
+        var lockedValue = this.lockedValue_;
+
+        this.lockedValue_ = null;
         this.locked = false;
 
-        if (this.value !== this.lockedValue_)
-        {
-          this.emit_change(this.lockedValue_);
-          this.lockedValue_ = null;
-        }
+        if (this.value !== lockedValue)
+          this.emit_change(lockedValue);
       }
     },
 
@@ -755,11 +755,12 @@
 
           var objectId = object.basisObjectId;
           var pair = tokenMap[objectId];
+          var value = fn(object, hostValue.value);
 
           if (!pair)
           {
             // create token with computed value
-            var token = new basis.Token(fn(object, hostValue.value));
+            var token = new basis.Token(value);
 
             // attach handler re-evaluate handler to object
             object.addHandler(handler, token);
@@ -770,14 +771,19 @@
               object: object
             };
           }
+          else
+          {
+            // recalc value
+            pair.token.set(value);
+          }
 
           return pair.token;
-        }
+        };
 
         getComputeToken.deferred = function(){
           return function(object){
             return getComputeToken(object).deferred();
-          }
+          };
         };
       }
 
@@ -921,7 +927,7 @@
   Value.from = function(obj, events, getter){
     var result;
 
-    if (!obj || typeof obj != 'object')
+    if (!obj)
       return null;
 
     if (obj instanceof Emitter)
@@ -981,7 +987,7 @@
   Value.factory = function(events, getter){
     return function(object){
       return Value.from(object, events, getter);
-    }
+    };
   };
 
 
@@ -1050,10 +1056,13 @@
       object.emit_targetChanged(oldTarget);
     }
 
-    var delegates = object.delegates_;
-    if (delegates)
-      for (var i = 0; i < delegates.length; i++)
-        applyDelegateChanges(delegates[i], oldRoot, oldTarget);
+    var cursor = object.delegates_;
+    while (cursor)
+    {
+      if (cursor.delegate)
+        applyDelegateChanges(cursor.delegate, oldRoot, oldTarget);
+      cursor = cursor.next;
+    }
   }
 
 
@@ -1084,29 +1093,37 @@
     * @event
     */
     emit_update: createEvent('update', 'delta') && function(delta){
+      var cursor = this.delegates_;
+
       events.update.call(this, delta);
 
       // delegate update event
-      var delegates = this.delegates_;
-      if (delegates)
-        for (var i = 0; i < delegates.length; i++)
-          delegates[i].emit_update(delta);
+      while (cursor)
+      {
+        if (cursor.delegate)
+          cursor.delegate.emit_update(delta);
+        cursor = cursor.next;
+      }
     },
 
    /**
     * @inheritDoc
     */
     emit_stateChanged: function(oldState){
+      var cursor = this.delegates_;
+
       AbstractData.prototype.emit_stateChanged.call(this, oldState);
 
       // delegate state changes
-      var delegates = this.delegates_;
-      if (delegates)
-        for (var i = 0; i < delegates.length; i++)
+      while (cursor)
+      {
+        if (cursor.delegate)
         {
-          delegates[i].state = this.state;
-          delegates[i].emit_stateChanged(oldState);
+          cursor.delegate.state = this.state;
+          cursor.delegate.emit_stateChanged(oldState);
         }
+        cursor = cursor.next;
+      }
     },
 
    /**
@@ -1187,13 +1204,6 @@
         if (!this.data)
           this.data = {};
 
-        // TODO: remove in next releases
-        if ('isTarget' in this)
-        {
-          this.target = this;
-          /** @cut */ basis.dev.warn('basis.data.Object#isTarget is deprecated now, use basis.data.Object#target instead. Set any value to the property, but not a null, to mark object as target.');
-        }
-
         // set target property to itself if target property is not null
         if (this.target !== null)
           this.target = this;
@@ -1241,7 +1251,7 @@
         if (newDelegate.delegate && isConnected(this, newDelegate))
         {
           // show warning in dev mode about new delegate ignore because it is already connected with object
-          ;;;basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
+          /** @cut */ basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
 
           // newDelegate can't be assigned
           return false;
@@ -1270,12 +1280,22 @@
           if (delegateListenHandler)
             oldDelegate.removeHandler(delegateListenHandler, this);
 
-          if (oldDelegate.delegates_) // may be null on destroy
+          // remove this from oldDelegate delegates list
+          var cursor = oldDelegate.delegates_;
+          var prev = oldDelegate;
+          while (cursor)
           {
-            if (oldDelegate.delegates_.length != 1)
-              oldDelegate.delegates_.splice(oldDelegate.delegates_.indexOf(this), 1);
-            else
-              oldDelegate.delegates_ = null;
+            if (cursor.delegate === this)
+            {
+              cursor.delegate = null;
+              if (prev === oldDelegate)
+                oldDelegate.delegates_ = cursor.next;
+              else
+                prev.next = cursor.next;
+
+              break;
+            }
+            cursor = cursor.next;
           }
         }
 
@@ -1284,10 +1304,10 @@
           // assign new delegate
           this.delegate = newDelegate;
 
-          if (newDelegate.delegates_)
-            newDelegate.delegates_.push(this);
-          else
-            newDelegate.delegates_ = [this];
+          newDelegate.delegates_ = {
+            delegate: this,
+            next: newDelegate.delegates_
+          };
 
           // calculate delta as difference between current data and delegate info
           for (var key in newDelegate.data)
@@ -1393,12 +1413,12 @@
       AbstractData.prototype.destroy.call(this);
 
       // remove delegates
-      var delegates = this.delegates_;
-      if (delegates)
+      var cursor = this.delegates_;
+      this.delegates_ = null;
+      while (cursor)
       {
-        this.delegates_ = null;
-        for (var i = delegates.length - 1; i >= 0; i--)
-          delegates[i].setDelegate();
+        cursor.delegate.setDelegate();
+        cursor = cursor.next;
       }
 
       // drop delegate
@@ -1520,20 +1540,27 @@
   * @return {object|undefined}
   */
   function getDatasetDelta(a, b){
-    var inserted = [];
-    var deleted = [];
-
     if (!a || !a.itemCount)
     {
-      if (b)
-        inserted = b.getItems();
+      if (b && b.itemCount)
+        return {
+          inserted: b.getItems()
+        };
     }
     else
     {
       if (!b || !b.itemCount)
-        deleted = a.getItems();
+      {
+        if (a.itemCount)
+          return {
+            deleted: a.getItems()
+          };
+      }
       else
       {
+        var inserted = [];
+        var deleted = [];
+
         for (var key in a.items_)
         {
           var item = a.items_[key];
@@ -1547,10 +1574,10 @@
           if (item.basisObjectId in a.items_ == false)
             inserted.push(item);
         }
+
+        return getDelta(inserted, deleted);
       }
     }
-
-    return getDelta(inserted, deleted);
   }
 
 
@@ -1761,7 +1788,7 @@
       this.itemCount += insertCount - deleteCount;
 
       // drop cache
-      this.cache_ = null;
+      this.cache_ = insertCount == this.itemCount ? delta.inserted : null;
 
       // call event
       events.itemsChanged.call(this, delta);
@@ -1924,7 +1951,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -1970,7 +1997,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -2031,7 +2058,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -2067,11 +2094,11 @@
       var delta = this.set(items) || {};
       var deleted = delta.deleted;
 
-      setAccumulateState(true);
+      Dataset.setAccumulateState(true);
       if (deleted)
         for (var i = 0, object; object = deleted[i]; i++)
           object.destroy();
-      setAccumulateState(false);
+      Dataset.setAccumulateState(false);
 
       return delta.inserted;
     },
@@ -2244,14 +2271,14 @@
       urgentTimer = null;
       if (setStateCount)
       {
-        ;;;basis.dev.warn('(debug) Urgent flush dataset changes');
+        /** @cut */ basis.dev.warn('(debug) Urgent flush dataset changes');
         setStateCount = 0;
         setAccumulateStateOff();
       }
     }
 
     function setAccumulateStateOff(){
-      proto.emit_itemsChanged = realEvent
+      proto.emit_itemsChanged = realEvent;
       flushAllDataset();
     }
 

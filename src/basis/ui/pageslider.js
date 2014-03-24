@@ -28,7 +28,7 @@
   //
 
   var templates = basis.template.define(namespace, {
-    PageSlider: resource('templates/pageslider/PageSlider.tmpl')
+    PageSlider: resource('./templates/pageslider/PageSlider.tmpl')
   });
 
 

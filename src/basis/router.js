@@ -23,6 +23,7 @@
 
   var CHECK_INTERVAL = 50;
 
+  var arrayFrom = basis.array.from;
   var routes = {};
   var matched = {};
   var started = false;
@@ -190,7 +191,7 @@
       // callback off for previous matched
       for (var i = 0, route; route = deleted[i]; i++)
       {
-        var callbacks = basis.array.from(route.callbacks);
+        var callbacks = arrayFrom(route.callbacks);
         for (var j = 0, item; item = callbacks[j]; j++)
           if (item.callback.leave)
           {
@@ -202,7 +203,7 @@
       // callback off for previous matched
       for (var i = 0, route; route = inserted[i]; i++)
       {
-        var callbacks = basis.array.from(route.callbacks);
+        var callbacks = arrayFrom(route.callbacks);
         for (var j = 0, item; item = callbacks[j]; j++)
           if (item.callback.enter)
           {
@@ -215,8 +216,8 @@
       for (var path in matched)
       {
         var route = routes[path];
-        var args = basis.array.from(matched[path], 1);
-        var callbacks = basis.array.from(route.callbacks);
+        var args = arrayFrom(matched[path], 1);
+        var callbacks = arrayFrom(route.callbacks);
 
         for (var i = 0, item; item = callbacks[i]; i++)
           if (item.callback.match)
@@ -237,7 +238,6 @@
   function add(path, callback, context){
     var route = routes[path];
     var config;
-    var match;
 
     if (!route)
     {
@@ -249,9 +249,12 @@
           : path
       };
 
-      if (currentPath)
-        if (match = currentPath.match(route.regexp))
+      if (typeof currentPath == 'string')
+      {
+        var match = currentPath.match(route.regexp);
+        if (match)
           matched[path] = match;
+      }
     }
 
     config = {
@@ -264,12 +267,12 @@
 
     route.callbacks.push(config);
 
-    if (match = matched[path])
+    if (path in matched)
     {
       if (config.callback.enter)
         config.callback.enter.call(context);
       if (config.callback.match)
-        config.callback.match.apply(context, basis.array.from(match, 1));
+        config.callback.match.apply(context, arrayFrom(matched[path], 1));
     }
   }
 

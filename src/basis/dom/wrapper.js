@@ -364,6 +364,12 @@
       result[name] = processSatelliteConfig(extend[name]);
   }
 
+  function applySatellites(node, satellites){
+    for (var name in satellites)
+      if (satellites[name] && typeof satellites[name] == 'object')
+        node.setSatellite(name, satellites[name]);
+  }
+
   // default satellite config map
   var NULL_SATELLITE_CONFIG = Class.customExtendProperty({}, function(result, extend){
     /** @cut */ for (var key in extend)
@@ -798,7 +804,6 @@
 
       // process satellites
       var satellites = this.satellite;
-      this.satellite = {};
 
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
@@ -808,8 +813,10 @@
       }
 
       if (satellites !== NULL_SATELLITE)
-        for (var name in satellites)
-          this.setSatellite(name, satellites[name]);
+      {
+        this.satellite = NULL_SATELLITE;
+        applySatellites(this, satellites);
+      }
 
       // process owner
       var owner = this.owner;
@@ -1061,7 +1068,11 @@
 
             // create auto
             if (!auto)
+            {
+              if (this.satellite === NULL_SATELLITE)
+                this.satellite = {};
               auto = this.satellite.__auto__ = {};
+            }
 
             auto[name] = autoConfig;
             SATELLITE_UPDATE.call(autoConfig, this);
@@ -1109,6 +1120,9 @@
               this.emit_satelliteChanged(satellite.ownerSatelliteName, satellite);
             }
           }
+
+          if (this.satellite == NULL_SATELLITE)
+            this.satellite = {};
 
           this.satellite[name] = satellite;
           satellite.ownerSatelliteName = name;
@@ -1176,7 +1190,7 @@
 
       // destroy satellites
       var satellites = this.satellite;
-      if (satellites)
+      if (satellites !== NULL_SATELLITE)
       {
         var auto = satellites.__auto__;
         delete satellites.__auto__;
@@ -1421,7 +1435,7 @@
           item.destroy();
     },
     stateChanged: function(dataSource){
-      this.setChildNodesState(dataSource.state);
+      this.setChildNodesState(dataSource.state, dataSource.state.data);
     },
     destroy: function(dataSource){
       if (!this.dataSourceAdapter_)
@@ -1485,7 +1499,7 @@
     if (!child)
       throw EXCEPTION_NULL_CHILD;
 
-    ;;;basis.dev.warn(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
+    /** @cut */ basis.dev.warn(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
     throw EXCEPTION_BAD_CHILD_CLASS;
   }
 
@@ -1627,8 +1641,7 @@
           else
           {
             if (
-                (!nextSibling || (sortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue))
-                &&
+                (!nextSibling || (sortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue)) &&
                 (!prevSibling || (sortingDesc ? prevSibling.sortingValue >= newChildValue : prevSibling.sortingValue <= newChildValue))
                )
             {
@@ -1864,7 +1877,7 @@
         updateNodeDisableContext(newChild, this.disabled || this.contextDisabled);
 
         // re-match
-        if (newChild.match)
+        if ((newChild.underMatch_ || this.matchFunction) && newChild.match)
           newChild.match(this.matchFunction);
 
         // delegate parentNode automatically, if necessary
@@ -1901,7 +1914,7 @@
       else
       {
         if (this.dataSourceAdapter_)
-          throw EXCEPTION_DATASOURCEADAPTER_CONFLICT
+          throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
       }
 
       // update this
@@ -2105,7 +2118,7 @@
         if (dataSource)
         {
           this.dataSourceMap_ = {};
-          this.setChildNodesState(dataSource.state);
+          this.setChildNodesState(dataSource.state, dataSource.state.data);
 
           if (listenHandler)
           {

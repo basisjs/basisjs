@@ -12,7 +12,7 @@ var Todo = require('app.type').Todo;
 //
 
 module.exports = new basis.ui.Node({
-  template: resource('template/form.tmpl'),
+  template: resource('./template/form.tmpl'),
   action: {
     create: function(event){
       // do action only when enter key pressed

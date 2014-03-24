@@ -1,18 +1,20 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
+basis.require('basis.layout');
 basis.require('basis.ui');
 
+var document = global.document;
 var DOM = basis.dom;
 
-var colorPicker = resource('colorPicker.js').fetch();
-var transport = resource('../API/transport.js').fetch();
+var colorPicker = require('./colorPicker.js');
+var transport = require('../API/transport.js');
 
-var inspectMode;
 var elements = [];
+var inspectMode;
 
 var overlayNode = new basis.ui.Node({
-  template: resource('template/l10n_overlay.tmpl'),
+  template: resource('./template/l10n_overlay.tmpl'),
   action: {
     mouseover: function(e){
       basis.cssom.classList(overlayContent).add('hover');
@@ -26,10 +28,8 @@ var overlayNode = new basis.ui.Node({
 var overlay = overlayNode.tmpl.element;
 var overlayContent = overlayNode.tmpl.content;
 
-function pickHandler(){
-  var sender = DOM.event.sender(event);
-
-  var token = sender.token;
+function pickHandler(event){
+  var token = event.sender.token;
   if (token)
   {
     endInspect();
@@ -71,8 +71,8 @@ function startInspect(){
     inspectMode = true;
     highlight();
 
-    basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
-    basis.dom.event.addHandler(window, 'resize', updateOnResize);
+    DOM.event.addGlobalHandler('scroll', updateOnScroll);
+    DOM.event.addHandler(window, 'resize', updateOnResize);
     DOM.event.captureEvent('mousedown', DOM.event.kill);
     DOM.event.captureEvent('mouseup', DOM.event.kill);
     DOM.event.captureEvent('contextmenu', endInspect);
@@ -97,8 +97,8 @@ function endInspect(){
 
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');
 
-    basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
-    basis.dom.event.removeHandler(window, 'resize', updateOnResize);
+    DOM.event.removeGlobalHandler('scroll', updateOnScroll);
+    DOM.event.removeHandler(window, 'resize', updateOnResize);
     DOM.event.releaseEvent('mousedown');
     DOM.event.releaseEvent('mouseup');
     DOM.event.releaseEvent('contextmenu');
@@ -111,8 +111,9 @@ function endInspect(){
 }
 
 function updateOnScroll(event){
-  overlayContent.style.top = -document.body.scrollTop + 'px';
-  overlayContent.style.left = -document.body.scrollLeft + 'px';
+  var scrollElement = document.compatMode == 'CSS1Compat' ? document.documentElement : document.body;
+  overlayContent.style.top = -scrollElement.scrollTop + 'px';
+  overlayContent.style.left = -scrollElement.scrollLeft + 'px';
 
   if (event && event.target !== document)
     highlight(true);
@@ -163,7 +164,6 @@ function updateHighlight(records){
     }
 }
 
-
 function addTokenToHighlight(token, ref, domNode){
   if (token instanceof basis.l10n.Token && token.dictionary)
   {
@@ -171,13 +171,13 @@ function addTokenToHighlight(token, ref, domNode){
 
     if (ref && ref.nodeType == 1)
     {
-      rect = ref.getBoundingClientRect();
+      rect = basis.layout.getBoundingRect(ref);
     }
     else
     {
       var range = document.createRange();
       range.selectNodeContents(domNode);
-      rect = range.getBoundingClientRect();
+      rect = basis.layout.getBoundingRect(range);
     }
 
     if (rect)
@@ -190,8 +190,8 @@ function addTokenToHighlight(token, ref, domNode){
         css: {
           backgroundColor: bgColor,
           outline: '1px solid ' + borderColor,
-          top: document.body.scrollTop + rect.top + 'px',
-          left: document.body.scrollLeft + rect.left + 'px',
+          top: rect.top + 'px',
+          left: rect.left + 'px',
           width: rect.width + 'px',
           height: rect.height + 'px'
         }

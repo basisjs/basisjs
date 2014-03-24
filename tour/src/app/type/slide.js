@@ -18,7 +18,7 @@ var Slide = basis.entity.createType('Slide', {
 // sync data
 //
 
-var slideIndex = basis.resource('slide/index.json');
+var slideIndex = basis.resource('./slide/index.json');
 slideIndex.ready(function(data){
   var prev = null;
   var next = null;

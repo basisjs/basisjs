@@ -1,6 +1,6 @@
 {
   "name": "basisjs",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "src/basis.js",
   "ignore": [
     ".*",
@@ -8,6 +8,7 @@
     "docs",
     "demo",
     "test",
-    "tour"
+    "tour",
+    "scripts"
   ]
 }

@@ -14,12 +14,15 @@
   //
 
   var Class = basis.Class;
-  var hasOwnProperty = Object.prototype.hasOwnProperty;
   var Emitter = basis.event.Emitter;
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 
   // process .l10n files as .json
-  basis.resource.extensions['.l10n'] = basis.resource.extensions['.json'];
+  basis.resource.extensions['.l10n'] = function(content, url){
+    return resolveDictionary(url).update(basis.resource.extensions['.json'](content, url));
+  };
+
 
   // get own object keys
   function ownKeys(object){
@@ -138,8 +141,8 @@
 
       this.computeGetMethod = get;
 
-      if ((this.type == 'plural' && Array.isArray(this.value))
-          || (this.type == 'default' && typeof this.value == 'object'))
+      if ((this.type == 'plural' && Array.isArray(this.value)) ||
+          (this.type == 'default' && typeof this.value == 'object'))
         values = basis.object.slice(this.value, ownKeys(this.value));
 
       for (var key in tokens)
@@ -214,7 +217,7 @@
         }
 
         return computeToken;
-      }
+      };
     },
 
     computeToken: function(value){
@@ -264,7 +267,7 @@
       var parts = path.match(/^(.+?)@(.+)$/);
 
       if (parts)
-        return resolveDictionary(parts[2]).token(parts[1]);
+        return resolveDictionary(basis.path.resolve(parts[2])).token(parts[1]);
 
       /** @cut */ basis.dev.warn('basis.l10n.token accepts token references in format `token.path@path/to/dict.l10n` only');
     }
@@ -276,8 +279,11 @@
   //
 
   var dictionaries = [];
-  var dictionaryByLocation = {};
-  var dictionaryUpdateListeners = [];
+  var dictionaryByUrl = {};
+
+  // Object that notify about dictionary is created
+  var createDictionaryNotifier = new basis.Token();
+
 
   function walkTokens(dictionary, culture, tokens, path){
     var cultureValues = dictionary.cultureValues[culture];
@@ -346,17 +352,19 @@
 
       if (basis.resource.isResource(content))
       {
-        // attach to resource
-        this.resource = content;
-        this.update(content());
-        content.attach(this.update, this);
+        var resource = content;
+
+        this.resource = resource;
 
         // notify dictionary created
-        if (!dictionaryByLocation[content.url])
+        if (!dictionaryByUrl[resource.url])
         {
-          dictionaryByLocation[content.url] = this;
-          createDictionaryNotifier.set(content.url);
+          dictionaryByUrl[resource.url] = this;
+          createDictionaryNotifier.set(resource.url);
         }
+
+        // fetch resource content and attach listener on content update
+        resource.fetch();
       }
       else
       {
@@ -390,6 +398,8 @@
 
       // update values
       this.syncValues();
+
+      return this;
     },
 
    /**
@@ -450,7 +460,14 @@
     destroy: function(){
       this.tokens = null;
       this.cultureValues = null;
+
       basis.array.remove(dictionaries, this);
+
+      if (this.resource)
+      {
+        delete dictionaryByUrl[this.resource.url];
+        this.resource = null;
+      }
     }
   });
 
@@ -459,20 +476,24 @@
   * @param {basis.Resource|string} content
   * @return {basis.l10n.Dictionary}
   */
-  function resolveDictionary(content){
+  function resolveDictionary(source){
     var dictionary;
 
-    if (typeof content == 'string')
+    if (typeof source == 'string')
     {
-      var location = content;
+      var location = source;
       var extname = basis.path.extname(location);
-      content = basis.resource(extname != '.l10n' ? basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n' : location);
+
+      if (extname != '.l10n')
+        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n';
+
+      source = basis.resource(location);
     }
 
-    if (basis.resource.isResource(content))
-      dictionary = dictionaryByLocation[content.url];
+    if (basis.resource.isResource(source))
+      dictionary = dictionaryByUrl[source.url];
 
-    return dictionary || new Dictionary(content);
+    return dictionary || new Dictionary(source);
   }
 
 
@@ -483,11 +504,6 @@
   function getDictionaries(){
     return dictionaries.slice(0);
   }
-
- /**
-  * Object that nodify about dictionary is created.
-  */
-  var createDictionaryNotifier = new basis.Token();
 
 
   //
@@ -613,10 +629,11 @@
       if (!cultures[name])
         cultures[name] = this;
 
-      this.pluralForm = pluralForm
-        || pluralFormsMap[name]
-        || pluralFormsMap[name.split('-')[0]]
-        || pluralForms[0];
+      this.pluralForm =
+        pluralForm ||
+        pluralFormsMap[name] ||
+        pluralFormsMap[name.split('-')[0]] ||
+        pluralForms[0];
     },
 
     plural: function(value){

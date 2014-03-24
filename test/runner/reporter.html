@@ -1,0 +1,48 @@
+<!doctype html>
+
+<html>
+
+<head><meta name="build" content="20140324160302" />
+  <meta charset="utf-8" />
+  <title>Basis Test Suite</title>
+
+  <link rel="stylesheet" type="text/css" media="all" href="style.css?BywF0Hpfq0kPMswOreRtfA" />
+
+  <script type="text/javascript">
+    var startTime = new Date;
+  </script>
+  <script type="text/javascript" src="script.js?RrqxcXQtlYwywsdGshhQYw"></script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    (function() {
+      var app = basis.require("./0.js");
+      var params = location.search.replace(/^\?/, "").split("&").reduce(function(res, pair) {
+        var parts = pair.split("=");
+        res[parts.shift()] = parts.join("=");
+        return res;
+      }, {});
+      if (!params.page) {
+        document.write("Test suite is not specified. Add to page url `?page=path/to/test-suite.html`");
+      } else {
+        var iframe = document.createElement("iframe");
+        iframe.src = params.page;
+        iframe.className = "hide-frame";
+        iframe.onload = function() {
+          if (typeof this.contentWindow.loadTests == "function") {
+            var t = new Date;
+            this.contentWindow.loadTests(app.loadTests);
+            document.title = new Date - t + "/" + (new Date - startTime);
+          }
+        };
+        basis.doc.body.add(iframe);
+        app.setup({
+          element: document.body,
+          baseURI: basis.path.baseURI
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

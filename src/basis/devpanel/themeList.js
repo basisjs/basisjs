@@ -1,6 +1,6 @@
 basis.require('basis.template');
 
-var Menu = resource('module/menu/index.js').fetch();
+var Menu = require('./module/menu/index.js');
 
 var view = new Menu({
   selection: {
@@ -19,7 +19,7 @@ var view = new Menu({
     return {
       value: themeName,
       selected: basis.template.currentTheme().name == themeName
-    }
+    };
   })
 });
 

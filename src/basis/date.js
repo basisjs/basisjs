@@ -10,6 +10,7 @@
   // main part
   //
 
+  var ISO_FORMAT = '%Y-%M-%D' + 'T' + '%H:%I:%S.%Z' + 'Z';
   var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d+))?)?$/;
   var reFormat = /%([yYdDmMhHipPIsSzZ])/g;
   var reIsoStringSplit = /\D/;
@@ -42,7 +43,7 @@
     millisecond: 'Milliseconds'
   }, function(key, name){
     GETTER[key] = function(date){
-      return date['get' + name]()
+      return date['get' + name]();
     };
     SETTER[key] = function(date, value){
       return date['set' + name](value);
@@ -173,27 +174,28 @@
 
   var fromISOString = (function(){
     function fastDateParse(y, m, d, h, i, s, ms){
-      return new Date(y, m - 1, d, h || 0, (i || 0) - tz, s || 0, ms ? ms.substr(0, 3) : 0);
+      var date = new Date(y, m - 1, d, h || 0, 0, s || 0, ms ? ms.substr(0, 3) : 0);
+      date.setMinutes((i || 0) - tz - date.getTimezoneOffset());
+      return date;
     }
 
-    var tzoffset = (new Date).getTimezoneOffset();
     var tz;
-
     return function(isoDateString){
+      tz = 0;
       return fastDateParse.apply(
-        tz = tzoffset,
+        null,
         String(isoDateString || '')
           .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
-            tz += i ? h * 60 + i * 1 : h * 1;
+            tz = i ? h * 60 + i * 1 : h * 1;
             return pre;
           })
           .split(reIsoStringSplit)
       );
-    }
+    };
   })();
 
   var toISOString = function(){
-    return dateFormat(this, '%Y-%M-%D' + 'T' + '%H:%I:%S.%Z' + 'Z', true);
+    return dateFormat(this, ISO_FORMAT, true);
   };
 
 
@@ -300,10 +302,6 @@
       return this_;
     },
     format: dateFormat,
-    toFormat: function(this_, format, utc){
-      /** @cut */ basis.dev.warn('basis.date.toFormat is deprecated now, use basis.date.format instead.');
-      return dateFormat(this_, format, utc);
-    },
     fromISOString: function(this_, isoDateString){
       return this_.fromDate(fromISOString(isoDateString));
     }
@@ -317,12 +315,12 @@
         Date.prototype[key] = (function(method, clsName){
           return function(){
             /** @cut */ if (basis.config.extProto == 'warn')
-            /** @cut */   basis.dev.warn('Date#' + method + ' is not a standard method, and it\'s and will be removed soon; use basis.date.' + method + ' instead');
+            /** @cut */   basis.dev.warn('Date#' + method + ' is not a standard method and will be removed soon; use basis.date.' + method + ' instead');
 
             var args = [this];
             Array.prototype.push.apply(args, arguments);
             return Date_extensions[method].apply(Date_extensions, args);
-          }
+          };
         })(key);
     })();
 
@@ -342,5 +340,8 @@
     dayNumToAbbr: dayNumToAbbr,
 
     format: dateFormat,
-    fromISOString: fromISOString
+    fromISOString: fromISOString,
+    toISOString: function(date){
+      return dateFormat(date, ISO_FORMAT, true);
+    }
   }, Date_extensions);

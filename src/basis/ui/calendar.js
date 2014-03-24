@@ -26,7 +26,6 @@
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
   var createEvent = basis.event.create;
-  var l10nToken = basis.l10n.token;
 
   var Property = basis.data.value.Property;
   var UINode = basis.ui.Node;
@@ -53,10 +52,10 @@
   var dict = basis.l10n.dictionary(__filename);
 
   var templates = basis.template.define(namespace, {
-    Calendar: resource('templates/calendar/Calendar.tmpl'),
-    Section: resource('templates/calendar/Section.tmpl'),
-    SectionMonth: resource('templates/calendar/SectionMonth.tmpl'),
-    Node: resource('templates/calendar/Node.tmpl')
+    Calendar: resource('./templates/calendar/Calendar.tmpl'),
+    Section: resource('./templates/calendar/Section.tmpl'),
+    SectionMonth: resource('./templates/calendar/SectionMonth.tmpl'),
+    Node: resource('./templates/calendar/Node.tmpl')
   });
 
   //
@@ -135,7 +134,7 @@
       return dict.token('quarter');
     },
     month: function(period){
-      return dict.token('monthShort.' + monthNumToRef[period.periodStart.getMonth()]);
+      return dict.token('monthShort').token(monthNumToRef[period.periodStart.getMonth()]);
     },
     day: function(period){
       return period.periodStart.getDate();

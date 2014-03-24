@@ -18,7 +18,7 @@ var editor = new basis.ui.Node({
 
 var list = new basis.ui.Node({
   container: document.body,
-  template: resource('list.tmpl'),
+  template: resource('./list.tmpl'),
 
   selection: {
     handler: {
@@ -30,7 +30,7 @@ var list = new basis.ui.Node({
     }
   },
   childClass: {
-    template: resource('item.tmpl'),
+    template: resource('./item.tmpl'),
     binding: {
       title: 'data:'
     }

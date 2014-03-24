@@ -1,11 +1,11 @@
 basis.require('basis.ui');
 
 module.exports = new basis.ui.Node({
-  template: resource('list.tmpl'),
+  template: resource('./list.tmpl'),
 
   selection: true,
   childClass: {
-    template: resource('item.tmpl'),
+    template: resource('./item.tmpl'),
     binding: {
       title: 'data:'
     }

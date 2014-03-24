@@ -29,10 +29,10 @@
   //
 
   var templates = basis.template.define(namespace, {
-    MenuItem: resource('templates/menu/MenuItem.tmpl'),
-    MenuItemSet: resource('templates/menu/MenuItemSet.tmpl'),
-    PartitionNode: resource('templates/menu/PartitionNode.tmpl'),
-    Menu: resource('templates/menu/Menu.tmpl')
+    MenuItem: resource('./templates/menu/MenuItem.tmpl'),
+    MenuItemSet: resource('./templates/menu/MenuItemSet.tmpl'),
+    PartitionNode: resource('./templates/menu/PartitionNode.tmpl'),
+    Menu: resource('./templates/menu/Menu.tmpl')
   });
 
 

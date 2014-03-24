@@ -13,7 +13,10 @@
   /*
    * HEADER
    */
+  .Basis-Calendar-Header
+  {
 
+  }
   .Basis-Calendar-ButtonPrevPeriod,
   .Basis-Calendar-ButtonNextPeriod
   {
@@ -92,6 +95,10 @@
     padding-bottom: 4px;
     margin: 0 -5px;
   }
+  .Basis-Calendar-Content
+  {
+
+  }
 
   /*
    *  FOOTER
@@ -110,6 +117,10 @@
     border-radius: 0 0 3px 3px;
   }
 
+  .Basis-Calendar-Footer-Date
+  {
+    
+  }
   .Basis-Calendar-Footer-Label
   {
     padding-right: 1ex;

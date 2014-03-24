@@ -1,0 +1,16 @@
+.Devpanel-ReloadRequired
+{
+  display: none;
+  position: absolute;
+  border-radius: 4px;
+  background: orange;
+  width: 100%;
+  left: 0;
+  top: 100%;
+  padding: 3px 1px;
+  margin: 3px -1px -1px;
+}
+.Devpanel-ReloadRequired_visible
+{
+  display: block;
+}

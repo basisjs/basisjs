@@ -28,27 +28,164 @@
       return Function.prototype.toString.call(getter);
   }
 
+  function tokenizeFunctionSource(source){
+    var chars = source.split('');
+    var res = [];
+    var last = 0;
+    var j;
+
+    function store(type, pos){
+      if (arguments.length != 2)
+        pos = i;
+
+      if (last != pos)
+      {
+        res.push([type || 'content', source.substring(last, pos)]);
+        last = pos;
+      }
+    }
+
+    for (var i = 0; i < chars.length; i++)
+    {
+      var ch = chars[i];
+      switch (ch)
+      {
+        case '/':
+          j = i + 1;
+          if (chars[j] === '/')
+          {
+            store();
+            // rewind to end of line
+            while (j < chars.length && chars[j] !== '\n' && chars[j] !== '\r')
+              j++;
+
+            store('comment', j);
+            i = last - 1;
+            break;
+          }
+
+          if (chars[j] == '*')
+          {
+            store();
+            j = j + 1;
+            while (j < chars.length && !(chars[j] === '*' && chars[j + 1] === '/'))
+              j++;
+
+            store('comment', j + 2);
+            i = last - 1;
+            break;
+          }
+
+          break;
+        case '"':
+        case '\'':
+          store();
+          j = i;
+          while (true)
+          {
+            j++;
+            if (chars[j] == '\\')
+            {
+              j++;
+            }
+            else
+            {
+              if (chars[j] == ch)
+                break;
+            }
+          }
+
+          store('string', j + 1);
+          i = last - 1;
+          break;
+
+        case '(':
+        case '{':
+          store();
+          last = i + 1;
+          res.push(['open', ch]);
+          break;
+
+        case ')':
+        case '}':
+          store();
+          last = i + 1;
+          res.push(['close', ch]);
+          break;
+
+        default:
+          if (/\s/.test(ch))
+          {
+            store();
+            j = i + 1;
+            while (j < chars.length && /\s/.test(chars[j]))
+              j++;
+
+            store('space', j);
+            i = last - 1;
+          }
+      }
+    }
+    store();
+
+    //if (source != res.map(function(x){return x[1]}).join(''))
+    //  basis.dev.warn('Wrong parsing', source);
+
+    return res;
+  }
 
  /**
   * @param {function} fn Function to analyze
   * @return {object} Info about function
   */
   function functionInfo(fn){
-    var source = Function.prototype.toString.call(fn);
-    var m = source.match(/^\s*function(\s+\S+)?\s*\((\s*(?:\S+|\/\*[^*]+\*\/)(\s*(?:,\s*\S+|\/\*[^*]+\*\/))*\s*)?\)/);
-    var body = source.replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
     var getter = resolveGetter(fn);
-    var args = (m && m[2] || '').replace(/\s*,\s*/g, ', ')
+    var source = Function.prototype.toString.call(fn);
+    var tokens = tokenizeFunctionSource(source);
+    var name = 'anonymous';
+    var argsContext = false;
+    var wasContent = true;
+    var args = [];
+    var token;
 
-    if (!m)
-      basis.dev.log('Function parse error: ' + source);
+    while (token = tokens.shift())
+    {
+      if (token[1] == '{')
+        break;
+
+      if (token[0] == 'content')
+      {
+        wasContent = true;
+        if (argsContext)
+          args.push(token[1]);
+        else
+        {
+          if (token[1] != 'function')
+            name = token[1];
+        }
+      }
+      else
+      {
+        if (!argsContext)
+          argsContext = wasContent && token[1] == '(';
+      }
+    }
+
+    while (token = tokens.pop())
+      if (token[1] == '}')
+        break;
+
+    for (var i = 0; i < tokens.length; i++)
+      tokens[i] = tokens[i][1];
+
+    args = args.join('').trim().replace(/\s*,\s*/g, ', ');
 
     return {
       source: source,
-      name: (m && m[1] || 'anonymous').trim(),
+      name: name,
       fullname: name + '(' + args + ')',
       args: args,
-      body: body,
+      body: tokens.join(''),
       getter: getter != source ? getter : false
     };
   }
