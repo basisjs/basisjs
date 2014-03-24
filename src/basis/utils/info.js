@@ -68,7 +68,7 @@
           {
             store();
             j = j + 1;
-            while (j < chars.length && chars[j] !== '*' && chars[j + 1] !== '/')
+            while (j < chars.length && !(chars[j] === '*' && chars[j + 1] === '/'))
               j++;
 
             store('comment', j + 2);

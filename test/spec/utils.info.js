@@ -88,6 +88,20 @@ module.exports = {
                   // function(){}
                   return "sdf\"asda";
                 }
+              },
+              // endless loop issue
+              function(){
+                var a = createTemplate('<span title="a"/>');
+                var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
+
+                /*nestedTemplate({
+                  include: '<span title="a"/>',
+                  attrs: {
+                    class: 'b'
+                  }
+                });*/
+
+                this.is(text('<span title="a" class="b"/>'), text(b));
               }
             ];
 
