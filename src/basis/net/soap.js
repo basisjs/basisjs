@@ -388,7 +388,7 @@
         addNamespace(child.element, '', method.namespace); 
 
       if (encodingStyle)
-        XML.setAttributeNodeNS(child, XML.createAttributeNS(document, 'encodingStyle', SOAP_ENCODING, encodingStyle));
+        XML.setAttributeNS(child, 'encodingStyle', SOAP_ENCODING, encodingStyle);
     }
   });
 
