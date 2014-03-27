@@ -1,3 +1,8 @@
+## 1.2.1 (March 27, 2014)
+
+- remove usage of `createAttributeNS` and `setAttributeNodeNS` DOM methods in `basis.xml` and `basis.net.soap` as candidates for remove from DOM level 4 (methods are removed in Chrome 35 canary already, [more details](https://groups.google.com/a/chromium.org/forum/#!topic/blink-dev/jS7iCEmoWfQ))
+- FIX: `basis.data.Object` instance didn't remove back reference to object that stop delegates it in some cases (issue #12)
+
 ## 1.2.0 (March 24, 2014)
 
 Core
