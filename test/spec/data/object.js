@@ -362,6 +362,21 @@ module.exports = {
           }
         },
         {
+          name: 'removing delegate should not affect to other storing delegates',
+          test: function(){
+            var a = new DataObject;
+            var b = new DataObject;
+            var c = new DataObject;
+
+            a.setDelegate(c);
+            b.setDelegate(c);
+
+            a.setDelegate();
+
+            this.is(true, c.delegates_&& c.delegates_.delegate === b);
+          }
+        },
+        {
           name: 'delegates added on update should recieve just one update event',
           test: function(){
             var delegateEventCount = 0;
