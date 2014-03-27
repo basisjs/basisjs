@@ -1138,6 +1138,24 @@
     delegates_: null,
 
    /**
+    * Function that returns object that delegates current one.
+    * WARN: This functionality is supported in development mode only.
+    * @return {Array.<object>} List of objects.
+    */
+    /** @cut */ debug_delegates: function(){
+    /** @cut */   var cursor = this.delegates_;
+    /** @cut */   var result = [];
+    /** @cut */
+    /** @cut */   while (cursor)
+    /** @cut */   {
+    /** @cut */     result.push(cursor.delegate);
+    /** @cut */     cursor = cursor.next;
+    /** @cut */   }
+    /** @cut */
+    /** @cut */   return result;
+    /** @cut */ },
+
+   /**
     * Fires when delegate was changed.
     * @param {basis.data.Object} oldDelegate Object delegate before changes.
     * @event
@@ -1295,6 +1313,7 @@
 
               break;
             }
+            prev = cursor;
             cursor = cursor.next;
           }
         }

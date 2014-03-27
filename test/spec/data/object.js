@@ -362,7 +362,7 @@ module.exports = {
           }
         },
         {
-          name: 'removing delegate should not affect to other storing delegates',
+          name: 'delegate drop should not affect other storing delegates (issue #12)',
           test: function(){
             var a = new DataObject;
             var b = new DataObject;
@@ -370,10 +370,16 @@ module.exports = {
 
             a.setDelegate(c);
             b.setDelegate(c);
+            var delegates = c.debug_delegates();
+            assert(delegates.length == 2);
+            assert(basis.array.has(delegates, a) == true);
+            assert(basis.array.has(delegates, b) == true);
 
             a.setDelegate();
-
-            this.is(true, c.delegates_&& c.delegates_.delegate === b);
+            var delegates = c.debug_delegates();
+            assert(delegates.length == 1);
+            assert(basis.array.has(delegates, a) == false);
+            assert(basis.array.has(delegates, b) == true);
           }
         },
         {
