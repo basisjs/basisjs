@@ -119,8 +119,6 @@ for config_file_name in config_file_names:
             "git", "tag", "-a", "v" + version, '-m', tag_message
         ], cwd=repository_location)
 
-        call(['cp', '-r', repository_location, '/Users/bait/built_basis_lib/'])
-
         call([
             "git", "push",
         ], cwd=repository_location)
