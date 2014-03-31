@@ -4,8 +4,17 @@ import tempfile
 import subprocess
 import os
 import json
+import optparse
 
-BASIS_REPO = 'git@github.com:baitcode/basisjs.git'
+parser = optparse.OptionParser()
+parser.add_option(
+    '-d', '--debug-dir', dest='debug_dir', default=None
+)
+(options, args) = parser.parse_args()
+
+debug_dir = options.debug_dir
+is_debug = bool(debug_dir)
+
 PRECOMPILED_REPO = ''
 CONFIG_DIR = 'scripts/configs/'
 BASIS_REPO_TEMPLATE_NAME = 'https://github.com/basisjs/{repository}.git'
@@ -15,7 +24,7 @@ repo_root = os.path.abspath(
 )
 
 bower_json_path = os.path.join(repo_root, 'bower.json')
-print bower_json_path
+
 with open(bower_json_path) as f:
     bower_conf = json.loads(f.read())
     version = bower_conf['version']
@@ -44,7 +53,6 @@ def copy_built_files(output_script):
         if os.path.isdir(output_file_path):
             command.append('-r')
 
-        print output_file_name, html_file_name
         if output_file_name == html_file_name:
             continue
 
@@ -98,11 +106,13 @@ for config_file_name in config_file_names:
         ])
         copy_built_files(output_script)
 
-        # call([
-        #     'basis', '--config-file', config_path, 'build', '--output', output_location, '-p'
-        # ])
+        call([
+            'basis', '--config-file', config_path, 'build', '--output', output_location, '-p'
+        ])
         copy_built_files(output_script.replace('.js', '.min.js'))
 
+        if is_debug:
+            call(['cp', '-r', output_location, debug_dir])
 
         # Not good. Should build tree of files instead and check each file
         call(["git", "add", "."], cwd=repository_location)
@@ -119,9 +129,10 @@ for config_file_name in config_file_names:
             "git", "tag", "-a", "v" + version, '-m', tag_message
         ], cwd=repository_location)
 
-        call([
-            "git", "push",
-        ], cwd=repository_location)
+        if not is_debug:
+            call([
+                "git", "push",
+            ], cwd=repository_location)
 
 
 
