@@ -72,7 +72,7 @@ for config_file_name in config_file_names:
         repository = config['build'].get(
             'repository',
             BASIS_REPO_TEMPLATE_NAME.format(
-                repository=config_file_name
+                repository=os.path.splitext(config_file_name)[0]
             )
         )
 
