@@ -43,7 +43,7 @@ def call(args, **kwargs):
     print u'---------------------------------------------'
 
 
-def copy_built_files(output_script):
+def copy_built_files(output_script, repository_location):
     global output_file_name, command, output_file_path, rename
     for output_file_name in os.listdir(output_location):
         command = ['cp']
@@ -104,15 +104,15 @@ for config_file_name in config_file_names:
         call([
             'basis', '--config-file', config_path, 'build', '--output', output_location,
         ])
-        copy_built_files(output_script)
+        copy_built_files(output_script, repository_location)
 
         call([
             'basis', '--config-file', config_path, 'build', '--output', output_location, '-p'
         ])
-        copy_built_files(output_script.replace('.js', '.min.js'))
+        copy_built_files(output_script.replace('.js', '.min.js'), repository_location)
 
         if is_debug:
-            call(['cp', '-r', output_location, debug_dir])
+            call(['cp', '-r', repository_location, debug_dir])
 
         # Not good. Should build tree of files instead and check each file
         call(["git", "add", "."], cwd=repository_location)
