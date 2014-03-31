@@ -16,7 +16,7 @@ debug_dir = options.debug_dir
 is_debug = bool(debug_dir)
 
 PRECOMPILED_REPO = ''
-CONFIG_DIR = 'scripts/configs/'
+CONFIG_DIR = 'scripts/release-configs/'
 BASIS_REPO_TEMPLATE_NAME = 'https://github.com/basisjs/{repository}.git'
 
 repo_root = os.path.abspath(
@@ -39,8 +39,10 @@ config_file_names = os.listdir(configs_dir)
 def call(args, **kwargs):
     print u'EXCECUTING: ', u' '.join(args)
     print u'---------------------------------------------'
-    subprocess.check_call(args, **kwargs)
+    result = subprocess.check_output(args, **kwargs)
+    print result
     print u'---------------------------------------------'
+    return result
 
 
 def copy_built_files(output_script, repository_location):
@@ -121,9 +123,18 @@ for config_file_name in config_file_names:
             version=version
         )
 
-        call([
-            "git", "commit", "-am", tag_message,
-        ], cwd=repository_location)
+        try:
+            call([
+                "git", "commit", "-am", tag_message,
+            ], cwd=repository_location)
+        except subprocess.CalledProcessError as e:
+            if "nothing to commit" in e.output:
+                print "No changes, nothing to commit {}".format(
+                    config_file_name
+                )
+                continue
+            raise
+
 
         call([
             "git", "tag", "-a", "v" + version, '-m', tag_message
@@ -133,7 +144,6 @@ for config_file_name in config_file_names:
             call([
                 "git", "push",
             ], cwd=repository_location)
-
-
-
-
+            call([
+                "git", "push", "--tags",
+            ], cwd=repository_location)

@@ -1,0 +1,7 @@
+{
+  "build": {
+    "file": "./basis-templates.html",
+    "output": "build.tmp",
+    "outputScript": "basis-templates.js"
+  }
+}
