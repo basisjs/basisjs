@@ -1,7 +1,5 @@
 
   basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
   basis.require('basis.layout');
   basis.require('basis.dragdrop');
   basis.require('basis.ui');
@@ -18,9 +16,6 @@
   //
   // import names
   //
-
-  var DOM = basis.dom;
-  var Event = basis.dom.event;
 
   var events = basis.event.events;
   var createEvent = basis.event.create;
@@ -154,7 +149,7 @@
 
   var eventToValue = function(event){
     var scrollbar = this.tmpl.scrollbar;
-    var pos = (Event.mouseX(event) - getBoundingRect(scrollbar).left) / scrollbar.offsetWidth;
+    var pos = (event.mouseX - getBoundingRect(scrollbar).left) / scrollbar.offsetWidth;
     this.setStepValue(pos * this.stepCount);
   };
 
@@ -223,47 +218,47 @@
         this.focus();
       },
       keyStep: function(event){
-        switch (Event.key(event))
+        switch (event.key)
         {
-          case Event.KEY.DOWN:
-          case Event.KEY.LEFT:
+          case event.KEY.DOWN:
+          case event.KEY.LEFT:
           case KEY_MINUS:
           case KEY_KP_MINUS:
             this.stepDown();
             break;
 
-          case Event.KEY.UP:
-          case Event.KEY.RIGHT:
+          case event.KEY.UP:
+          case event.KEY.RIGHT:
           case KEY_PLUS:
           case KEY_KP_PLUS:
             this.stepUp();
             break;
 
-          case Event.KEY.PAGEDOWN:
+          case event.KEY.PAGEDOWN:
             this.stepDown(10);
             break;
 
-          case Event.KEY.PAGEUP:
+          case event.KEY.PAGEUP:
             this.stepUp(10);
             break;
 
-          case Event.KEY.HOME:
+          case event.KEY.HOME:
             this.setValue(this.min);
             break;
 
-          case Event.KEY.END:
+          case event.KEY.END:
             this.setValue(this.max);
             break;
         }
       },
       wheelStep: function(event){
-        if (Event.wheelDelta(event) < 0)
+        if (event.wheelDelta < 0)
           this.stepDown();
         else
           this.stepUp();
 
         // prevent page scrolling
-        Event.cancelDefault(event);
+        event.cancelDefault();
       }
     },
 
@@ -424,7 +419,8 @@
         this.value = this.normalize(this.min + stepValue * this.step);
         this.stepValue = stepValue;
 
-        this.emit_change(oldValue);
+        if (oldValue != this.value)
+          this.emit_change(oldValue);
       }
     },
 
