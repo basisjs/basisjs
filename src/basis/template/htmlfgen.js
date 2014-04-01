@@ -672,6 +672,10 @@
       l10nKeys: basis.object.keys(bindings.l10n)
     };
 
+    if (tokens.length == 1)
+      paths.path[0] = 'a=_';
+    //console.log('multi root fragment:', tokens.length > 1);
+
     /** @cut */ if (!uri)
     /** @cut */   uri = basis.path.baseURI + 'inline_template' + (inlineSeed++) + '.tmpl';
 

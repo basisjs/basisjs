@@ -334,6 +334,10 @@
       }
     }
 
+    // if there is only one root node, document fragment isn't required
+    if (!parent && tokens.length == 1)
+      result = result.firstChild;
+
     return result;
   };
 
