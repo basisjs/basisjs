@@ -705,7 +705,7 @@
       );
     }
 
-    result.createInstance = compileFunction(['tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG'],
+    result.createInstance = compileFunction(['tid', 'map', 'proto', 'tools', '__l10n', 'TEXT_BUG'],
       /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
       'var getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
@@ -713,7 +713,7 @@
       'Attaches=function(){};' +
       'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null'; }) + '};' +
       'return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){' +
-        'var _=build(),' +
+        'var _=proto.cloneNode(true),' +
         paths.path.concat(bindings.vars) + ',' +
         'instance={' +
           'context:obj,' +

@@ -665,9 +665,31 @@
     * @func
     */
     function createBindingUpdater(names, getters){
-      return function bindingUpdater(object){
-        for (var i = 0, bindingName; bindingName = names[i]; i++)
-          this(bindingName, getters[bindingName](object));
+      var name1 = names[0];
+      var name2 = names[1];
+      var getter1 = getters[name1];
+      var getter2 = getters[name2];
+
+      switch (names.length) {
+        case 1: 
+          return function bindingUpdater1(object){
+            this(name1, getter1(object));
+          };
+
+        case 2: 
+          return function bindingUpdater2(object){
+            this(name1, getter1(object));
+            this(name2, getter2(object));
+          };
+
+        default:
+          var getters_ = names.map(function(name){
+            return getters[name];
+          });
+          return function bindingUpdaterN(object){
+            for (var i = 0; i < names.length; i++)
+              this(names[i], getters_[i](object));
+          };
       };
     }
 
@@ -774,10 +796,6 @@
       var seed = 0;
 
       var proto = buildHtml(tokens);
-      var build = function(){
-        return proto.cloneNode(true);
-      };
-
       var id = this.templateId;
       templates[id] = {
         template: this,
@@ -809,7 +827,7 @@
           }
       }
 
-      createInstance = fn.createInstance(id, instances, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
+      createInstance = fn.createInstance(id, instances, proto, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
 
       return {
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
@@ -868,7 +886,6 @@
             delete templates[id];
 
           fn = null;
-          build = null;
           proto = null;
           l10nMap = null;
           l10nLinks = null;
