@@ -3,7 +3,7 @@
 
 
  /**
-  * @namespace basis.data
+  * @namespace basis.data.object
   */
 
   var namespace = this.path;

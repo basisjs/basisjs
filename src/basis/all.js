@@ -26,6 +26,7 @@ basis.require('basis.utils.utf8');
 basis.require('basis.utils.utf16');
 basis.require('basis.utils.benchmark');
 basis.require('basis.data');
+basis.require('basis.data.object');
 basis.require('basis.data.dataset');
 basis.require('basis.data.generator');
 basis.require('basis.data.value');
