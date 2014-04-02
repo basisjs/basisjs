@@ -315,7 +315,7 @@
         var domRef = binding[1];
         var bindName = binding[2];
 
-        if (['set', 'templateId_'].indexOf(bindName) != -1)
+        if (['get', 'set', 'templateId_'].indexOf(bindName) != -1)
         {
           /** @cut */ basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
           continue;
@@ -672,9 +672,9 @@
       l10nKeys: basis.object.keys(bindings.l10n)
     };
 
+    // if only one root node, than document fragment isn't used
     if (tokens.length == 1)
       paths.path[0] = 'a=_';
-    //console.log('multi root fragment:', tokens.length > 1);
 
     /** @cut */ if (!uri)
     /** @cut */   uri = basis.path.baseURI + 'inline_template' + (inlineSeed++) + '.tmpl';
@@ -737,7 +737,7 @@
         bindings.set +
 
         // sync template with bindings
-        ';instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null' +
+        ';if(bindings)instance.handler=getBindings(bindings,obj,set,bindingInterface)' +
         ';' + bindings.l10nCompute +
 
         ';return instance' +
