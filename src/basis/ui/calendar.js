@@ -120,7 +120,7 @@
       return dict.token('quarter');
     },
     month: function(period){
-      return dict.token('monthShort.' + monthNumToRef[period.periodStart.getMonth()]);
+      return dict.token('monthShort').token(monthNumToRef[period.periodStart.getMonth()]);
     },
     day: function(period){
       return period.periodStart.getDate();

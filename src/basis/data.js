@@ -508,6 +508,9 @@
     * @destructor
     */
     destroy: function(){
+      // inherit
+      Emitter.prototype.destroy.call(this);
+
       // remove subscriptions if necessary
       if (this.active)
       {
@@ -515,9 +518,6 @@
         for (var i = 0, action; action = config.actions[i]; i++)
           action(SUBSCRIPTION.unlink, this);
       }
-
-      // inherit
-      Emitter.prototype.destroy.call(this);
 
       this.state = STATE.UNDEFINED;
     }
@@ -755,11 +755,12 @@
 
           var objectId = object.basisObjectId;
           var pair = tokenMap[objectId];
+          var value = fn(object, hostValue.value);
 
           if (!pair)
           {
             // create token with computed value
-            var token = new basis.Token(fn(object, hostValue.value));
+            var token = new basis.Token(value);
 
             // attach handler re-evaluate handler to object
             object.addHandler(handler, token);
@@ -769,6 +770,11 @@
               token: token,
               object: object
             };
+          }
+          else
+          {
+            // recalc value
+            pair.token.set(value);
           }
 
           return pair.token;
@@ -1132,6 +1138,24 @@
     delegates_: null,
 
    /**
+    * Function that returns object that delegates current one.
+    * WARN: This functionality is supported in development mode only.
+    * @return {Array.<object>} List of objects.
+    */
+    /** @cut */ debug_delegates: function(){
+    /** @cut */   var cursor = this.delegates_;
+    /** @cut */   var result = [];
+    /** @cut */
+    /** @cut */   while (cursor)
+    /** @cut */   {
+    /** @cut */     result.push(cursor.delegate);
+    /** @cut */     cursor = cursor.next;
+    /** @cut */   }
+    /** @cut */
+    /** @cut */   return result;
+    /** @cut */ },
+
+   /**
     * Fires when delegate was changed.
     * @param {basis.data.Object} oldDelegate Object delegate before changes.
     * @event
@@ -1289,6 +1313,7 @@
 
               break;
             }
+            prev = cursor;
             cursor = cursor.next;
           }
         }
@@ -2088,11 +2113,11 @@
       var delta = this.set(items) || {};
       var deleted = delta.deleted;
 
-      setAccumulateState(true);
+      Dataset.setAccumulateState(true);
       if (deleted)
         for (var i = 0, object; object = deleted[i]; i++)
           object.destroy();
-      setAccumulateState(false);
+      Dataset.setAccumulateState(false);
 
       return delta.inserted;
     },

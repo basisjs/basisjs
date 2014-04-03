@@ -1,5 +1,3 @@
-basis.require('basis.dom');
-
 var transferDiv;
 var transferDataEvent;
 
@@ -10,7 +8,7 @@ module.exports = document.createEvent
         transferDataEvent.initEvent('devpanelData', false, false);
 
         transferDiv = document.body.appendChild(
-          basis.dom.createElement('pre#devpanelSharedDom[style="position: absolute; left: -2000px"]')
+          require('basis.dom').createElement('pre#devpanelSharedDom[style="position: absolute; left: -2000px"]')
         );
 
         // dispatch init

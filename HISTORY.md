@@ -1,3 +1,113 @@
+## 1.2.1 (March 27, 2014)
+
+- remove usage of `createAttributeNS` and `setAttributeNodeNS` DOM methods in `basis.xml` and `basis.net.soap` as candidates for remove from DOM level 4 (methods are removed in Chrome 35 canary already, [more details](https://groups.google.com/a/chromium.org/forum/#!topic/blink-dev/jS7iCEmoWfQ))
+- FIX: `basis.data.Object` instance didn't remove back reference to object that stop delegates it in some cases (issue #12)
+
+## 1.2.0 (March 24, 2014)
+
+Core
+
+  - API: don't extend buildin classes prototypes by default (i.e. `extProto: false`)
+  - API: warn when filenames using with no `./`, `/` or `..` prefix
+  - API: all resource extensions are updatable by default now, to supress that use `permanent` property equals `true` (`.js` extension does)
+  - NEW: `basis.resource.get`, `basis.resurce.isResolved` functions and `basis.Resource#isResolved` method implemented
+  - NEW: `basis.resolveNSFilename` function to get filename by namespace name
+  - NEW: `basis.patch` function for resource patching implemenented
+  - FIX: a ton of bugs in `basis.path` (fully covered by tests now)
+  - FIX: local `resource` function wrongly resolves absolute path as relative
+  - FIX: make `basis.json.parse` throw an exception when `JSON.parse` fallback using (to be consistent with `JSON.parse`)
+  - IMPROVEMENT: set checkers for `<head>` and `<body>`, only if one of them is not available (speedup app load)
+
+Dev panel
+
+  - NEW: open template file in external editor by `ctrl`+`click` (windows) or `cmd`+`click` (mac) in template select mode (works only if `basisjs-tools` supports it and using external editor is setting up)
+  - NEW: panel now become gray when `dev-server` offline and blue when online
+  - NEW: notify about permanent resource updates that require page reload
+  - FIX: show correct state of `dev-server` online status on startup
+  - FIX: bug with exit from template select mode
+  - IMPROVEMENT: make `devpanel` works with new `basisjs-tools` when `basis.data` module is not loaded (robust)
+  - various code and style improvements
+
+Data
+
+  - NEW: very promising `basis.data.object.Merge` class implemented (new namespace `basis.data.object`)
+  - API: remove deprecated `basis.data.Object#isTarget` property fallback
+  - API: remove `typeof` check in `basis.data.Value.from` to be usable with functions that have binding bridge (like `basis.Resource` or `basis.l10n.culture`)
+  - FIX: reset `basis.data.Value#lockedValue` on `basis.data.Value#unlock` method call (avoid memory leaks)
+  - FIX: `basis.data.Object` trigger unecessary events for dynamically added or removed delegates on `update` and `stateChanged` events
+  - FIX: issue with dependent values that destroing on source destroy and subscription
+  - FIX: repair broken `basis.data.Dataset#sync` method
+  - NEW: implement `basis.data.dataset.Slice#setRule` method
+  - IMPROVEMENT: use `delta.inserted` as cache if possible (performance, memory consumption)
+
+basis.entity
+
+  - NEW: `basis.entity.get` helper implemented to get instance by type name and id pair
+  - NEW: `extendClass` and `extendReader` helpers implemented for `basis.entity.EntityType` and `basis.entity.EntitySetType`
+  - NEW: make creation of `all` instance dataset optional (set `all: false` in type config to prevent `all` creation)
+  - FIX: fix issues with defaults on `basis.entity.Entity` creation
+  - FIX: issue when `Object.prototype` property names are using as index value
+  - FIX: remove missed `Type#addField` and `Type#addCalcField` methods (not working since `1.0` through)
+  - FIX: bug by using named types with later declaration in field definitions
+  - IMPROVEMENT: improve entity instance creation (performance, 3x-5x faster now)
+  - IMPROVEMENT: rework getting type instance via wrapper by `number` or `string` id i.e. `EntityType(id)` (performance)
+  - IMPROVEMENT: entity instances init `fieldHandlers_` property on demand (memory consumption)
+  - IMPROVEMENT: treats enum fields with one variant as constant value (performance)
+  - IMPROVEMENT: reduce defaults builder function creation, speed up creation a lot of similar types (performance)
+  - various code improvements
+
+Template
+
+  - FIX: dictionary path resolving (build issue)
+  - FIX: `<b:l10n>` relative path resolving (build issue) 
+  - FIX: `<b:remove-attr>` and `<b:append-attr>` didn't work on some attributes
+  - FIX: `style` processing attribute issues
+  - FIX: crash when template source contains `*/` (couldn't be compiled in dev mode)
+  - FIX: clean up almost all warnings in default templates
+  - warn on using deprecated `<b:resource>` (will be removed in next release)
+
+UI
+
+  - FIX: `basis.dom.wrapper.childNodesState` state data is not set propertly in some cases
+  - IMPROVEMENT: `basis.dom.wrapper` init `satellite` property on demand (memory consumption)
+  - IMPROVEMENT: `basis.dom.wrapper` call `match` method of `newChild` on insert only if required (performance)
+  - FIX: add missed `updatePosition` event emit in `basis.ui.scroller.Scroller#setPositionX` and `basis.ui.scroller.Scroller#setPositionY` methods
+  - FIX: sync `basis.ui.field.Select` value on template init
+
+Net
+
+  - API: `AjaxTransport`, `AjaxRequest` classed and `request` helper moved from `basis.net` to new `basis.net.ajax` namespace (patched)
+  - NEW: `basis.net.ajax` support for `responseType` added
+  - API: `basis.net.ajax.Request` instances don't store `resposeText`, `responseXML` and `error` in `data` anymore (memory consumption)
+  - API: method `processErrorResponse` renamed to `getResponseError`
+  - NEW: `JSONP` support added via new `basis.net.jsonp` namespace that provides `Transport` and `Request` classes and `request` helper (similar to `basis.net.ajax`)
+
+Project maintenance
+
+  - brand new test runner (it became [separate project](https://github.com/basisjs/test-runner))
+  - test suite has been updated, many new tests added
+
+Other changes
+
+  - FIX: remove usage of `body.scrollTop` and `body.scrollLeft` in standarts mode, to avoid warnings on `webkit`
+  - FIX: remove old `//@ sourceURL` syntax
+  - FIX: `basis.date.fromISOString` timezone issue
+  - FIX: missed `basis.date.toISOString` added
+  - API: `basis.date.toFormat` fallback was removed
+  - API: `.l10n` resources return dictionary instead of `json` object now
+  - FIX: `basis.app` always replaces container, but not append
+  - FIX: `basis.router` issue when callbacks on empty path don't invoke if added after router start
+  - NEW: `domain` parameter added for `basis.ua.cookies.set` and `basis.ua.cookies.remove`
+  - NEW: `basis.dom.resize` adds `basis-dev-role` attribute for sensor elements
+  - NEW: make `basis.layout.getBoundingRect` works with `Range` instances
+  - API: move `VerticalPanel` and `VerticalPanelStack` classes from `basis.layout` to new namespace `basis.ui.panel` (patched)
+  - API: remove deprecated `Box`, `Viewport` and `addBlockResizeHandler` from `basis.layout` (patched)
+  - API: `basis.dragdrop.DragDropElement#isDragging` method returns `false` inside `over` event handlers now (returns `true` before)
+  - IMPROVEMENT: rewrite some hot functions to be optimized by V8 (performance)
+  - IMPROVEMENT: `basis.dragdrop` ignore `mousedown` event occur on scrollbars now (robust)
+  - IMPROVEMENT: rework `basis.utils.info.fn` function source parsing from regexp to tokenize to be stable in any cases (robust)
+  - IMPROVEMENT: test `getComputedStyle` for bugs on demand, when first `basis.dom.computedStyle.get` invoke and only on first buggy property request (speedup page load, avoid layout and style calculations)
+
 ## 1.1.0 (January 28, 2014)
 
 New namespaces:

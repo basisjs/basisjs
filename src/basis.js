@@ -36,7 +36,7 @@
 ;(function(global){ // global is current context (`window` in browser and `global` on node.js)
   'use strict';
 
-  var VERSION = '1.2.0-dev';
+  var VERSION = '1.3.0-dev';
 
   var document = global.document;
   var Object_toString = Object.prototype.toString;
@@ -632,17 +632,15 @@
 
           if (task)
           {
-            try {
-              if (typeof task.fn == 'function')
-                task.fn.apply(undefined, task.args);
-              else
-              {
-                (global.execScript || function(fn){
-                  global['eval'].call(global, fn);
-                })(String(task.fn));
-              }
-            } finally {
-              delete taskById[id];
+            delete taskById[id];
+
+            if (typeof task.fn == 'function')
+              task.fn.apply(undefined, task.args);
+            else
+            {
+              (global.execScript || function(fn){
+                global['eval'].call(global, fn);
+              })(String(task.fn));
             }
           }
         };
@@ -742,12 +740,13 @@
                     addToQueue = function(taskId){
                       var scriptEl = createScript();
                       scriptEl.onreadystatechange = function(){
-                        runTask(taskId);
-
                         scriptEl.onreadystatechange = null;
                         //scriptEl.parentNode.removeChild(scriptEl);
                         documentInterface.remove(scriptEl);
                         scriptEl = null;
+
+                        // should be called last as exception possible
+                        runTask(taskId);
                       };
                       //document.documentElement.appendChild(scriptEl);
                       documentInterface.head.add(scriptEl);
@@ -1657,7 +1656,7 @@
 
       if (!token)
       {
-        token = this.deferredToken = new basis.DeferredToken(this.value);
+        token = this.deferredToken = new DeferredToken(this.value);
         this.attach(token.set, token);
       }
 
@@ -2085,8 +2084,7 @@
   function compileFunction(sourceURL, args, body){
     try {
       return new Function(args, body
-        /** @cut */ + '\n//@ sourceURL=' + pathUtils.origin + sourceURL
-        /** @cut */ + '\n//# sourceURL=' + pathUtils.origin + sourceURL + '\n'
+        /** @cut */ + '\n\n//# sourceURL=' + pathUtils.origin + sourceURL
       );
     } catch(e) {
       /** @cut */ if (document && 'line' in e == false && 'addEventListener' in global)

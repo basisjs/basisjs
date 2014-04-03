@@ -315,7 +315,7 @@
         var domRef = binding[1];
         var bindName = binding[2];
 
-        if (['set', 'templateId_'].indexOf(bindName) != -1)
+        if (['get', 'set', 'templateId_'].indexOf(bindName) != -1)
         {
           /** @cut */ basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
           continue;
@@ -672,6 +672,10 @@
       l10nKeys: basis.object.keys(bindings.l10n)
     };
 
+    // if only one root node, than document fragment isn't used
+    if (tokens.length == 1)
+      paths.path[0] = 'a=_';
+
     /** @cut */ if (!uri)
     /** @cut */   uri = basis.path.baseURI + 'inline_template' + (inlineSeed++) + '.tmpl';
 
@@ -688,29 +692,28 @@
         );
 
       result.createL10nSync = compileFunction(['_', '__l10n', 'bind_attr', 'TEXT_BUG'],
-        /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
+        /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
         'var ' + paths.path + ';' +
         'return function(token, value){' +
           'switch(token){' +
             code.join('') +
           '}' +
-        '}\n'
+        '}'
 
-        /** @cut */ + '//# sourceURL=' + basis.path.origin + uri + '_l10n\n'
-        /** @cut */ + '//@ sourceURL=' + basis.path.origin + uri + '_l10n\n'
+        /** @cut */ + '\n\n//# sourceURL=' + basis.path.origin + uri + '_l10n'
       );
     }
 
-    result.createInstance = compileFunction(['tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG'],
-      /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
+    result.createInstance = compileFunction(['tid', 'map', 'proto', 'tools', '__l10n', 'TEXT_BUG'],
+      /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
       'var getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
       'Attaches=function(){};' +
       'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null'; }) + '};' +
       'return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){' +
-        'var _=build(),' +
+        'var _=proto.cloneNode(true),' +
         paths.path.concat(bindings.vars) + ',' +
         'instance={' +
           'context:obj,' +
@@ -734,14 +737,13 @@
         bindings.set +
 
         // sync template with bindings
-        ';instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null' +
+        ';if(bindings)instance.handler=getBindings(bindings,obj,set,bindingInterface)' +
         ';' + bindings.l10nCompute +
 
         ';return instance' +
-
-        /** @cut */ '\n//# sourceURL=' + basis.path.origin + uri +
-        /** @cut */ '\n//@ sourceURL=' + basis.path.origin + uri + '\n' +
       '}'
+
+      /** @cut */ + '\n\n//# sourceURL=' + basis.path.origin + uri
     );
 
     return result;

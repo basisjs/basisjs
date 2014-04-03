@@ -11,6 +11,7 @@ module.exports = {
     require('./spec/router.js'),
     require('./spec/l10n.js'),
     require('./spec/data.js'),
+    require('./spec/data.object.js'),
     require('./spec/data.value.js'),
     require('./spec/data.vector.js'),
     require('./spec/entity.js'),
@@ -19,7 +20,8 @@ module.exports = {
     require('./spec/ui.js'),
     require('./spec/dom.js'),
     require('./spec/cssom.js'),
-    require('./spec/layout.js')
+    require('./spec/layout.js'),
+    require('./spec/utils.info.js')
   ]
 };
 

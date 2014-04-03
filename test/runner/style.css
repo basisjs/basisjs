@@ -20,7 +20,7 @@
       height: 10px;
       width: 10px;
     }
-  /*@import url(/Users/rdvornov/Desktop/git/test-runner/src/reporter/module/toc/template/toc-item.css);*/
+  /*@import url(C:/usr/local/Apache2/htdocs/git/test-runner/src/reporter/module/toc/template/toc-item.css);*/
 
 .app-toc-item
 {
@@ -133,13 +133,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/*@import url(/Users/rdvornov/Desktop/git/test-runner/src/reporter/module/toc/template/toc.css);*/
+/*@import url(C:/usr/local/Apache2/htdocs/git/test-runner/src/reporter/module/toc/template/toc.css);*/
 
 .app-toc
 {
   padding: 10px 8px 10px 4px;
 }
-/*@import url(/Users/rdvornov/Desktop/git/test-runner/src/reporter/app/template/test-source.css);*/
+/*@import url(C:/usr/local/Apache2/htdocs/git/test-runner/src/reporter/app/template/test-source.css);*/
 
 .Basis-SyntaxHighlight
 {
@@ -307,7 +307,7 @@
 {
   color: #CCC;
 }
-/*@import url(/Users/rdvornov/Desktop/git/test-runner/src/reporter/app/template/test.css);*/
+/*@import url(C:/usr/local/Apache2/htdocs/git/test-runner/src/reporter/app/template/test.css);*/
 
 .app-test
 {
@@ -370,7 +370,7 @@
 {
   border: 1px solid green;
 }
-/*@import url(/Users/rdvornov/Desktop/git/test-runner/src/reporter/app/template/test-suite.css);*/
+/*@import url(C:/usr/local/Apache2/htdocs/git/test-runner/src/reporter/app/template/test-suite.css);*/
 
 .app-test-suite
 {
@@ -381,13 +381,13 @@
 {
   padding-left: 24px;
 }
-/*@import url(/Users/rdvornov/Desktop/git/test-runner/src/reporter/app/template/test-case.css);*/
+/*@import url(C:/usr/local/Apache2/htdocs/git/test-runner/src/reporter/app/template/test-case.css);*/
 
 .app-test-case .app-test__select-button
 {
   display: none;
 }
-/*@import url(/Users/rdvornov/Desktop/git/test-runner/src/reporter/module/test-tree/template/view.css);*/
+/*@import url(C:/usr/local/Apache2/htdocs/git/test-runner/src/reporter/module/test-tree/template/view.css);*/
 
 .app-test-tree
 {
@@ -442,7 +442,7 @@
 {
   margin-bottom: 0;
 }
-/*@import url(/Users/rdvornov/Desktop/git/test-runner/src/reporter/template/view.css);*/
+/*@import url(C:/usr/local/Apache2/htdocs/git/test-runner/src/reporter/template/view.css);*/
 
 #layout
 {

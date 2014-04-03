@@ -664,9 +664,9 @@
           if (++curResource.attemptCount < RESOURCE_ATTEMPT_LOAD)
             this.queue.push(curResource);
         },
-        success: function(sender, req){
+        success: function(sender, req, data){
           var curResource = this.curResource;
-          curResource.text = req.data.responseText;
+          curResource.text = data;
           sourceParser[curResource.kind](curResource);
         },
         complete: function(){

@@ -5,11 +5,10 @@
 <head>
   <meta charset="utf-8">
   <title>basis.js test suite</title>
-
-  <script src="../src/basis.js"></script>
 </head>
 
 <body>
+  <script src="../src/basis.js"></script>
   <script>
     if (this.top === this)
       location.href = 'runner/reporter.html?page=../index.html';
@@ -26,7 +25,7 @@
       // page reload on spec files update
       // run in next tick, because at code run basisjs-tools file sync
       // script is not loaded yet
-      basis.nextTick(function(){
+      basis.ready(function(){
         if (typeof basisjsToolsFileSync != 'undefined')
           basisjsToolsFileSync.notifications.attach(function(type, filename){
             if (type == 'update' &&

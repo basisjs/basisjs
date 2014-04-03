@@ -1,3 +1,7 @@
+require('basis.ui');
+require('basis.template');
+require('basis.dom.event');
+
 var templates = basis.template.define('app.menu', {
   View: resource('./template/view.tmpl'),
   Item: resource('./template/item.tmpl')
@@ -12,12 +16,7 @@ module.exports = basis.ui.Node.subclass({
   },
 
   childClass: {
-    template: templates.Item,
-    action: {
-      select: function(){
-        this.select();
-      }
-    }
+    template: templates.Item
   },
 
   handler: {

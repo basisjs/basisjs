@@ -47,6 +47,7 @@
   /** @const */ var ATTR_NAME = 3;
   /** @const */ var ATTR_VALUE = 4;
 
+  var ATTR_EVENT_RX = /^event-(.+)$/;
   var ATTR_NAME_BY_TYPE = {
     4: 'class',
     5: 'style'
@@ -54,6 +55,12 @@
   var ATTR_TYPE_BY_NAME = {
     'class': TYPE_ATTRIBUTE_CLASS,
     'style': TYPE_ATTRIBUTE_STYLE
+  };
+  var ATTR_VALUE_INDEX = {
+    2: ATTR_VALUE,
+    4: ATTR_VALUE - 1,
+    5: ATTR_VALUE - 1,
+    6: 2
   };
 
   /** @const */ var ELEMENT_NAME = 3;
@@ -597,8 +604,9 @@
               /** @cut */   basis.dev.warn('Bad value for style attribute (value ignored):', value);
             }
 
-            props.push('');
-            value = props.join(';');
+            value = props.join('; ');
+            if (value)
+              value += ';';
             break;
 
           default:
@@ -642,7 +650,7 @@
           continue;
         }
 
-        if (m = attr.name.match(/^event-(.+)$/))
+        if (m = attr.name.match(ATTR_EVENT_RX))
         {
           result.push(m[1] == attr.value ? [TYPE_ATTRIBUTE_EVENT, m[1]] : [TYPE_ATTRIBUTE_EVENT, m[1], attr.value]);
           continue;
@@ -715,6 +723,12 @@
         arrayAdd(array, items[i]);
     }
 
+    function unshiftUnique(array, items){
+      for (var i = 0; i < items.length; i++)
+        if (array.indexOf(items[i]) == -1)
+          array.unshift(items[i]);
+    }
+
     //
     // main function
     //
@@ -744,22 +758,37 @@
           if (includedToken.token[TOKEN_TYPE] == TYPE_ELEMENT)
           {
             var itAttrs = includedToken.token;
-            var itType = ATTR_TYPE_BY_NAME[attrs.name];
-            var valueIdx = ATTR_VALUE - !!itType;
+            var isEvent = attrs.name.match(ATTR_EVENT_RX);
+            var itType = isEvent ? TYPE_ATTRIBUTE_EVENT : ATTR_TYPE_BY_NAME[attrs.name] || TYPE_ATTRIBUTE;
+            var valueIdx = ATTR_VALUE_INDEX[itType] || ATTR_VALUE;
             var itAttrToken = itAttrs && arraySearch(itAttrs, attrs.name, function(token){
-              return itType ? ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] : token[ATTR_NAME];
-            });
+              if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
+                return 'event-' + token[1];
+
+              return ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] || token[ATTR_NAME];
+            }, ELEMENT_ATTRS);
 
             if (!itAttrToken && action != 'remove')
             {
-              itAttrToken = [
-                itType || TYPE_ATTRIBUTE,
-                0,
-                0
-              ];
-              if (!itType)
-                itAttrToken.push(attrs.name);
-              itAttrToken.push('');
+              if (isEvent)
+              {
+                itAttrToken = [
+                  itType,
+                  isEvent[1]
+                ];
+              }
+              else
+              {
+                itAttrToken = [
+                  itType,
+                  0,
+                  0,
+                  itType == TYPE_ATTRIBUTE ? attrs.name : ''
+                ];
+
+                if (itType == TYPE_ATTRIBUTE)
+                  itAttrToken.push('');
+              }
 
               if (!itAttrs)
               {
@@ -773,6 +802,17 @@
             var classOrStyle = attrs.name == 'class' || attrs.name == 'style';
             switch (action){
               case 'set':
+                // event-* attribute special case
+                if (itAttrToken[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
+                {
+                  if (attrs.value == isEvent[1])
+                    itAttrToken.length = 2;
+                  else
+                    itAttrToken[valueIdx] = attrs.value;
+                  return;
+                }
+
+                // other attributes
                 var parsed = processAttr(attrs.name, attrs.value);
 
                 itAttrToken[TOKEN_BINDINGS] = parsed.binding;
@@ -794,33 +834,68 @@
               case 'append':
                 var parsed = processAttr(attrs.name, attrs.value);
 
-                if (parsed.binding)
+                if (!isEvent)
                 {
-                  var attrBindings = itAttrToken[TOKEN_BINDINGS];
-                  if (attrBindings)
+                  if (parsed.binding)
                   {
-                    if (attrs.name == 'style')
+                    var attrBindings = itAttrToken[TOKEN_BINDINGS];
+                    if (attrBindings)
                     {
-                      var filter = {};
+                      switch (attrs.name)
+                      {
+                        case 'style':
+                          var oldBindingMap = {};
 
-                      for (var i = 0, newBinding; newBinding = parsed.binding[i]; i++)
-                        filter[newBinding[2]] = true;
+                          for (var i = 0, oldBinding; oldBinding = attrBindings[i]; i++)
+                            oldBindingMap[oldBinding[2]] = i;
 
-                      for (var i = 0, k = 0, oldBinding; oldBinding = attrBindings[i]; i++)
-                        if (!filter[oldBinding[2]])
-                          attrBindings[k++] = oldBinding;
+                          for (var i = 0, newBinding; newBinding = parsed.binding[i]; i++)
+                            if (newBinding[2] in oldBindingMap)
+                              attrBindings[oldBindingMap[newBinding[2]]] = newBinding;
+                            else
+                              attrBindings.push(newBinding);
 
-                      attrBindings.length = k;
+                          break;
+
+                        case 'class':
+                          attrBindings.push.apply(attrBindings, parsed.binding);
+                          break;
+
+                        default:
+                          parsed.binding[0].forEach(function(name){
+                            arrayAdd(this, name);
+                          }, attrBindings[0]);
+
+                          for (var i = 0; i < parsed.binding[1].length; i++)
+                          {
+                            var value = parsed.binding[1][i];
+
+                            if (typeof value == 'number')
+                              value = attrBindings[0].indexOf(parsed.binding[0][value]);
+
+                            attrBindings[1].push(value)
+                          }
+                      }
                     }
-
-                    attrBindings.push.apply(attrBindings, parsed.binding);
+                    else
+                    {
+                      itAttrToken[TOKEN_BINDINGS] = parsed.binding;
+                      if (!classOrStyle)
+                        itAttrToken[TOKEN_BINDINGS][1].unshift(itAttrToken[valueIdx]);
+                    }
                   }
                   else
-                    itAttrToken[TOKEN_BINDINGS] = parsed.binding;
+                  {
+                    if (!classOrStyle && itAttrToken[TOKEN_BINDINGS])
+                      itAttrToken[TOKEN_BINDINGS][1].push(attrs.value);
+                  }
                 }
 
                 if (parsed.value)
-                  itAttrToken[valueIdx] += (itAttrToken[valueIdx] && attrs.name == 'class' ? ' ' : '') + parsed.value;
+                  itAttrToken[valueIdx] =
+                    (itAttrToken[valueIdx] || '') +
+                    (itAttrToken[valueIdx] && (isEvent || classOrStyle) ? ' ' : '') +
+                    parsed.value;
 
                 if (classOrStyle)
                   if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
@@ -973,7 +1048,7 @@
                       includeStack.pop();
 
                       if (decl.resources && 'no-style' in elAttrs == false)
-                        addUnique(template.resources, decl.resources);
+                        unshiftUnique(template.resources, decl.resources);
 
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);

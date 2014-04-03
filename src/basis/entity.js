@@ -27,11 +27,9 @@
 
   var DataObject = basis.data.Object;
   var Slot = basis.data.Slot;
-  var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
   var Subset = basis.data.dataset.Subset;
   var Split = basis.data.dataset.Split;
-  var STATE = basis.data.STATE;
 
   var NULL_INFO = {};
 
@@ -74,10 +72,10 @@
     {
       for (var i = 0, def; def = list[i]; i++)
       {
-        var typeClass = def[0];
+        var typeHost = def[0];
         var fieldName = def[1];
 
-        typeClass[fieldName] = type;
+        typeHost[fieldName] = type;
       }
 
       delete deferredTypeDef[typeName];
@@ -86,7 +84,7 @@
     namedTypes[typeName] = type;
   }
 
-  function getTypeByName(typeName, typeClass, field){
+  function getTypeByName(typeName, typeHost, field){
     if (namedTypes[typeName])
       return namedTypes[typeName];
 
@@ -95,9 +93,15 @@
     if (!list)
       list = deferredTypeDef[typeName] = [];
 
-    list.push([typeClass, field]);
+    list.push([typeHost, field]);
 
-    return TYPE_DEFINITION_PLACEHOLDER;
+    return function(value, oldValue){
+      var Type = namedTypes[typeName];
+      if (Type)
+        return Type(value, oldValue);
+      /** @cut */ else if (arguments.length) // don't warn on default value calculation
+      /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for ' + field + ', but function called');
+    };
   }
 
   function validateScheme(){
@@ -109,7 +113,7 @@
   // Index
   //
 
-  var Index = basis.Class(null, {
+  var Index = Class(null, {
     className: namespace + '.Index',
 
     items: null,
@@ -785,7 +789,7 @@
       /** @cut */ basis.dev.warn('Alias `' + alias + '` already exists');
       return;
     }
-      
+
     entityType.aliases[alias] = name;
   }
 
@@ -920,9 +924,10 @@
 
       // wrapper and all instances set
       this.wrapper = wrapper;
-      this.all = new ReadOnlyEntitySet(basis.object.complete({
-        wrapper: wrapper
-      }, config.all));
+      if ('all' in config == false || config.all || config.singleton)
+        this.all = new ReadOnlyEntitySet(basis.object.complete({
+          wrapper: wrapper
+        }, config.all));
 
       // singleton
       this.singleton = !!config.singleton;
@@ -1073,6 +1078,7 @@
     emit_rollbackUpdate: createEvent('rollbackUpdate')
   });
 
+
  /**
   * @class
   */
@@ -1163,6 +1169,8 @@
       className: namespace + '.Entity',
 
       extendConstructor_: false,
+      fieldHandlers_: null,
+
       init: function(data){
         // ignore delegate and data
         this.delegate = null;
@@ -1170,9 +1178,6 @@
 
         // inherit
         BaseEntity.prototype.init.call(this);
-
-        // set up some properties
-        this.fieldHandlers_ = {};
 
         /** @cut */ for (var key in data)
         /** @cut */   if (key in fields == false)
@@ -1185,16 +1190,21 @@
           value = this.data[key];
 
           if (value && value !== this && value instanceof Emitter)
-            if (value.addHandler(fieldDestroyHandlers[key], this))
-              this.fieldHandlers_[key] = true;
+          {
+            value.addHandler(fieldDestroyHandlers[key], this);
+            if (!this.fieldHandlers_)
+              this.fieldHandlers_ = {};
+            this.fieldHandlers_[key] = true;
+          }
         }
 
         calc(this, this.initDelta);
 
         // reg entity in all entity type instances list
-        all.emit_itemsChanged({
-          inserted: [this]
-        });
+        if (all)
+          all.emit_itemsChanged({
+            inserted: [this]
+          });
       },
       toString: function(){
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
@@ -1229,9 +1239,9 @@
         var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
                                         // that why we fetch it again after valueWrapper call
 
-        var valueChanged = newValue !== curValue
+        var valueChanged = newValue !== curValue &&
                            // date comparison fix;
-                           && (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
+                           (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
 
         // if value changed:
         // - update index for id field
@@ -1315,7 +1325,7 @@
           this.data[key] = newValue;
 
           // remove attached handler if exists
-          if (this.fieldHandlers_[key])
+          if (this.fieldHandlers_ && this.fieldHandlers_[key])
           {
             curValue.removeHandler(fieldDestroyHandlers[key], this);
             this.fieldHandlers_[key] = false;
@@ -1325,8 +1335,10 @@
           // newValue !== this prevents recursion for self update
           if (newValue && newValue !== this && newValue instanceof Emitter)
           {
-            if (newValue.addHandler(fieldDestroyHandlers[key], this))
-              this.fieldHandlers_[key] = true;
+            newValue.addHandler(fieldDestroyHandlers[key], this);
+            if (!this.fieldHandlers_)
+              this.fieldHandlers_ = {};
+            this.fieldHandlers_[key] = true;
           }
 
           // prepare result
@@ -1472,11 +1484,14 @@
       },
       destroy: function(){
         // unlink attached handlers
-        for (var key in this.fieldHandlers_)
-          if (this.fieldHandlers_[key])
-            this.data[key].removeHandler(fieldDestroyHandlers[key], this);
+        if (this.fieldHandlers_)
+        {
+          for (var key in this.fieldHandlers_)
+            if (this.fieldHandlers_[key])
+              this.data[key].removeHandler(fieldDestroyHandlers[key], this);
 
-        this.fieldHandlers_ = NULL_INFO;
+          this.fieldHandlers_ = null;
+        }
 
         // delete from index
         if (this.__id__ != null)
@@ -1486,9 +1501,10 @@
         DataObject.prototype.destroy.call(this);
 
         // delete from all entity type list (is it right order?)
-        all.emit_itemsChanged({
-          deleted: [this]
-        });
+        if (all)
+          all.emit_itemsChanged({
+            deleted: [this]
+          });
 
         // clear links
         this.data = NULL_INFO;

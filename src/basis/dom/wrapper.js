@@ -1435,7 +1435,7 @@
           item.destroy();
     },
     stateChanged: function(dataSource){
-      this.setChildNodesState(dataSource.state);
+      this.setChildNodesState(dataSource.state, dataSource.state.data);
     },
     destroy: function(dataSource){
       if (!this.dataSourceAdapter_)
@@ -2118,7 +2118,7 @@
         if (dataSource)
         {
           this.dataSourceMap_ = {};
-          this.setChildNodesState(dataSource.state);
+          this.setChildNodesState(dataSource.state, dataSource.state.data);
 
           if (listenHandler)
           {
