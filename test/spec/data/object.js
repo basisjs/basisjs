@@ -362,6 +362,27 @@ module.exports = {
           }
         },
         {
+          name: 'delegate drop should not affect other storing delegates (issue #12)',
+          test: function(){
+            var a = new DataObject;
+            var b = new DataObject;
+            var c = new DataObject;
+
+            a.setDelegate(c);
+            b.setDelegate(c);
+            var delegates = c.debug_delegates();
+            assert(delegates.length == 2);
+            assert(basis.array.has(delegates, a) == true);
+            assert(basis.array.has(delegates, b) == true);
+
+            a.setDelegate();
+            var delegates = c.debug_delegates();
+            assert(delegates.length == 1);
+            assert(basis.array.has(delegates, a) == false);
+            assert(basis.array.has(delegates, b) == true);
+          }
+        },
+        {
           name: 'delegates added on update should recieve just one update event',
           test: function(){
             var delegateEventCount = 0;

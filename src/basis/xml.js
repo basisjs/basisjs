@@ -125,41 +125,21 @@
    *  attribute
    */
 
-  function createAttributeNS(document, nodename, namespace, value){
-    var attr;
-    if (namespace)
-      attr = isNativeSupport
-               ? document.createAttributeNS(namespace, nodename)
-               : document.createNode(2, nodename, namespace);
+  function setAttributeNS(element, name, namespace, value){
+    if (element.setAttributeNS)
+    {
+      element.setAttributeNS(namespace, name, value);
+    }
     else
-      attr = document.createAttribute(nodename);
-
-    attr.nodeValue = value;
-    return attr;
+    {
+      var attr = document.createNode(2, name, namespace);
+      attr.nodeValue = value;
+      element.setAttributeNode(attr)
+    }
   }
-
-  function setAttributeNodeNS(element, attr){
-    return element.setAttributeNodeNS
-             ? element.setAttributeNodeNS(attr)
-             : element.setAttributeNode(attr);
-  }
-
-  /*function removeAttributeNodeNS(element, attr){
-    return element.removeAttributeNodeNS
-             ? element.removeAttributeNodeNS(attr)
-             : element.removeAttributeNode(attr);
-  }*/
 
   function addNamespace(element, prefix, namespace){
-    setAttributeNodeNS(
-      element,
-      createAttributeNS(
-        element.ownerDocument,
-        XMLNS.PREFIX + (prefix ? ':' + prefix : ''),
-        XMLNS.NAMESPACE,
-        namespace
-      )
-    );
+    setAttributeNS(element, XMLNS.PREFIX + (prefix ? ':' + prefix : ''), XMLNS.NAMESPACE, namespace);
   }
 
   /*
@@ -341,73 +321,62 @@
   * @param {string=} namespace
   * @param {object|string} content
   */
-  function Object2XML(document, nodeName, namespace, content){
-    if (String(nodeName).charAt(0) == '@')
+  function Object2XML(document, nodeName, namespace, content, element){
+    var result = createElementNS(document, nodeName.toString(),
+                   (content && content.xmlns) || nodeName.namespace || namespace
+                 );
+
+    if (typeof content == 'undefined' || content === null)
     {
-      return content == null
-               ? content
-               : createAttributeNS(document, nodeName.substr(1), /*namespace*/ '', String(content));
+      setAttributeNS(result, XSI_NIL_LOCALPART, XSI_NAMESPACE, 'true');
     }
     else
     {
-      var result = createElementNS(
-                     document,
-                     nodeName.toString(),
-                     (content && content.xmlns) || nodeName.namespace || namespace
-                   );
-      if (typeof content == 'undefined' || content === null)
+      if (isPrimitiveObject(content))
       {
-        setAttributeNodeNS(
-          result,
-          createAttributeNS(document,
-            XSI_NIL_LOCALPART,
-            XSI_NAMESPACE,
-            'true'
-          )
-        );
+        result.appendChild(createText(document, content));
       }
       else
       {
-        if (isPrimitiveObject(content))
-        {
-          result.appendChild(createText(document, content));
-        }
-        else
-        {
-          var ns = content.xmlns || namespace;
+        var ns = content.xmlns || namespace;
 
-          if (content.xmlns && XMLNS.BAD_SUPPORT)
-            addNamespace(result, '', ns);
+        if (content.xmlns && XMLNS.BAD_SUPPORT)
+          addNamespace(result, '', ns);
 
-          for (var prop in content)
+        for (var prop in content)
+        {
+          var value = content[prop];
+
+          if (prop == 'xmlns' || typeof value == 'function')
+            continue;
+
+          if (value && Array.isArray(value))
           {
-            var value = content[prop];
+            for (var i = 0; i < value.length; i++)
+              result.appendChild(Object2XML(document, prop, ns, value[i]));
+          }
+          else
+          {
+            if (value && typeof value == 'object' && value.toString !== Object.prototype.toString)
+              value = value.toString();
 
-            if (prop == 'xmlns' || typeof value == 'function')
-              continue;
-
-            if (value && Array.isArray(value))
+            if (prop.charAt(0) == '@')
             {
-              for (var i = 0; i < value.length; i++)
-                result.appendChild(Object2XML(document, prop, ns, value[i]));
+              if (value != null)
+                setAttributeNS(result, prop.substr(1), /*namespace*/ '', String(value));
             }
             else
             {
-              if (value && typeof value == 'object' && value.toString !== Object.prototype.toString)
-                value = value.toString();
-
-              var node = Object2XML(document, prop, ns, value);
+              var node = Object2XML(document, prop, ns, value, element);
               if (node)
-                if (node.nodeType == ATTRIBUTE_NODE)
-                  setAttributeNodeNS(result, node);
-                else
-                  result.appendChild(node);
+                result.appendChild(node);
             }
           }
         }
       }
-      return result;
     }
+
+    return result;
   }
 
   function getElementsByTagNameNS(element, name, namespace){
@@ -458,14 +427,10 @@
     },
     XMLNS: XMLNS,
     QName: QName,
-    //XMLElement: XMLElement,
     getElementsByTagNameNS: getElementsByTagNameNS,
     addNamespace: addNamespace,
     createDocument: createDocument,
     createElementNS: createElementNS,
-    createAttributeNS: createAttributeNS,
-    setAttributeNodeNS: setAttributeNodeNS,
-    //removeAttributeNodeNS: removeAttributeNodeNS,
     createText: createText,
     createCDATA: createCDATA,
     XML2Object: XML2Object,

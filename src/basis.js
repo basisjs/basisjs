@@ -632,17 +632,15 @@
 
           if (task)
           {
-            try {
-              if (typeof task.fn == 'function')
-                task.fn.apply(undefined, task.args);
-              else
-              {
-                (global.execScript || function(fn){
-                  global['eval'].call(global, fn);
-                })(String(task.fn));
-              }
-            } finally {
-              delete taskById[id];
+            delete taskById[id];
+
+            if (typeof task.fn == 'function')
+              task.fn.apply(undefined, task.args);
+            else
+            {
+              (global.execScript || function(fn){
+                global['eval'].call(global, fn);
+              })(String(task.fn));
             }
           }
         };
@@ -742,12 +740,13 @@
                     addToQueue = function(taskId){
                       var scriptEl = createScript();
                       scriptEl.onreadystatechange = function(){
-                        runTask(taskId);
-
                         scriptEl.onreadystatechange = null;
                         //scriptEl.parentNode.removeChild(scriptEl);
                         documentInterface.remove(scriptEl);
                         scriptEl = null;
+
+                        // should be called last as exception possible
+                        runTask(taskId);
                       };
                       //document.documentElement.appendChild(scriptEl);
                       documentInterface.head.add(scriptEl);
