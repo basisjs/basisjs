@@ -2044,7 +2044,7 @@
       {
         var parts = path.split('.');
         var templateName = parts.pop();
-        var url = basis.resolveNSFilename(parts.join('.')).replace(/\.js$/, '.templates');
+        var url = basis.resolveNSFilename(parts.join('.')).replace(/\.js$/, '.theme');
         sourceReferenceByPath[path] = templateName + '@' + url;
       }
 
@@ -2239,7 +2239,7 @@
         return addSource(path, source, noSync);
       },
       define: function(what, wherewith, noSync){
-        /** @cut */ basis.dev.warn('basis.template.define is deprecated, use `.templates` resources instead');
+        /** @cut */ basis.dev.warn('basis.template.define is deprecated, use `.theme` resources instead');
 
         if (typeof what == 'function')
           what = what();
@@ -2355,7 +2355,7 @@
   var packages = [];
   var packageByUrl = {};
 
-  basis.resource.extensions['.templates'] = function(content, url){
+  basis.resource.extensions['.theme'] = function(content, url){
     var content = basis.resource.extensions['.json'](content, url);
     var pkg = resolvePackage(url);
     pkg.update(content);
@@ -2370,8 +2370,8 @@
       var location = value;
       var extname = basis.path.extname(location);
 
-      if (extname != '.templates')
-        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.templates';
+      if (extname != '.theme')
+        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.theme';
 
       value = basis.resource(location);
     }
