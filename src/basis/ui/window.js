@@ -1,7 +1,5 @@
 
   basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
   basis.require('basis.cssom');
   basis.require('basis.l10n');
   basis.require('basis.ui');
@@ -22,8 +20,6 @@
   //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
-  var Event = basis.dom.event;
   var cssom = basis.cssom;
 
   var arrayFrom = basis.array.from;
@@ -32,20 +28,7 @@
   var UINode = basis.ui.Node;
   var ButtonPanel = basis.ui.button.ButtonPanel;
 
-
-  //
-  // definitions
-  //
-
   var dict = basis.l10n.dictionary(__filename);
-
-  var templates = basis.template.define(namespace, {
-    Blocker: resource('./templates/window/Blocker.tmpl'),
-    Window: resource('./templates/window/Window.tmpl'),
-    TitleButton: resource('./templates/window/TitleButton.tmpl'),
-    ButtonPanel: resource('./templates/window/ButtonPanel.tmpl'),
-    windowManager: resource('./templates/window/windowManager.tmpl')
-  });
 
 
   //
@@ -58,22 +41,25 @@
   var Blocker = Class(UINode, {
     className: namespace + '.Blocker',
 
-    template: templates.Blocker,
+    template: module.template('Blocker'),
 
     captureElement: null,
     capture: function(element, zIndex){
-      this.captureElement = DOM.get(element || document.body);
+      this.captureElement = element == 'string'
+        ? document.getElementById(element)
+        : element || document.body;
+
       if (this.captureElement)
       {
-        DOM.insert(this.captureElement, this.element);
+        this.captureElement.appendChild(this.element);
         this.element.style.zIndex = zIndex || 1000;
       }
     },
     release: function(){
       if (this.captureElement)
       {
-        if (this.element.parentNode == this.captureElement)
-          DOM.remove(this.element);
+        if (this.element.parentNode === this.captureElement)
+          this.captureElement.removeChild(this.element);
 
         this.captureElement = null;
       }
@@ -121,7 +107,7 @@
 
     title: dict.token('emptyTitle'),
 
-    template: templates.Window,
+    template: module.template('Window'),
     binding: {
       title: 'title',
       titleButtons: 'satellite:',
@@ -153,7 +139,7 @@
     buttonPanelClass: ButtonPanel.subclass({
       className: namespace + '.ButtonPanel',
 
-      template: templates.ButtonPanel,
+      template: module.template('ButtonPanel'),
       listen: {
         owner: {
           select: function(){
@@ -172,7 +158,7 @@
         instanceOf: UINode.subclass({
           className: namespace + '.TitleButton',
 
-          template: templates.TitleButton,
+          template: module.template('TitleButton'),
           action: {
             close: function(){
               this.owner.close();
@@ -244,7 +230,7 @@
           this.dde.setElement(this.element, this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element);
 
         if (this.buttonPanel)
-          DOM.insert(this.tmpl.content || this.element, this.buttonPanel.element);
+          (this.tmpl.content || this.element).appendChild(this.buttonPanel.element);
       }
 
       this.realign();
@@ -331,7 +317,7 @@
   //
 
   var windowManager = new UINode({
-    template: templates.windowManager,
+    template: module.template('windowManager'),
     selection: true,
     blocker: basis.fn.lazyInit(function(){
       return new Blocker();
@@ -385,7 +371,7 @@
   });
 
   basis.doc.body.ready(function(body){
-    DOM.insert(body, windowManager.element, DOM.INSERT_BEGIN);
+    body.insertBefore(windowManager.element, body.firstChild);
     for (var node = windowManager.firstChild; node; node = node.nextSibling)
       node.realign();
   });

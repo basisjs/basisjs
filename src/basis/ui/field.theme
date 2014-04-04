@@ -1,0 +1,31 @@
+{
+  "base": {
+    "Example": "./templates/field/Example.tmpl",
+    "Description": "./templates/field/Description.tmpl",
+    "Counter": "./templates/field/Counter.tmpl",
+
+    "Field": "./templates/field/Field.tmpl",
+    "File": "./templates/field/File.tmpl",
+    "Hidden": "./templates/field/Hidden.tmpl",
+    "Text": "./templates/field/Text.tmpl",
+    "Password": "./templates/field/Password.tmpl",
+    "Textarea": "./templates/field/Textarea.tmpl",
+    "Checkbox": "./templates/field/Checkbox.tmpl",
+    "Label": "./templates/field/Label.tmpl",
+
+    "RadioGroup": "./templates/field/RadioGroup.tmpl",
+    "RadioGroupItem": "./templates/field/RadioGroupItem.tmpl",
+
+    "CheckGroup": "./templates/field/CheckGroup.tmpl",
+    "CheckGroupItem": "./templates/field/CheckGroupItem.tmpl",
+
+    "Select": "./templates/field/Select.tmpl",
+    "SelectItem": "./templates/field/SelectItem.tmpl",
+
+    "Combobox": "./templates/field/Combobox.tmpl",
+    "ComboboxItem": "./templates/field/ComboboxItem.tmpl",
+    "ComboboxDropdownList": "./templates/field/ComboboxDropdownList.tmpl",
+
+    "MatchInput": "./templates/field/MatchInput.tmpl"
+  }
+}

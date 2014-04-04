@@ -1,0 +1,8 @@
+{
+  "base": {
+    "MenuItem": "./templates/menu/MenuItem.tmpl",
+    "MenuItemSet": "./templates/menu/MenuItemSet.tmpl",
+    "PartitionNode": "./templates/menu/PartitionNode.tmpl",
+    "Menu": "./templates/menu/Menu.tmpl"
+  }
+}

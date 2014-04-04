@@ -1,0 +1,5 @@
+{
+  "base": {
+    "ScrollTable": "./templates/scrolltable/ScrollTable.tmpl"
+  }
+}

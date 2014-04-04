@@ -27,18 +27,6 @@
 
 
   //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Slider: resource('./templates/slider/Slider.tmpl'),
-    MarkLayers: resource('./templates/slider/MarkLayers.tmpl'),
-    MarkLayer: resource('./templates/slider/MarkLayer.tmpl'),
-    Mark: resource('./templates/slider/Mark.tmpl')
-  });
-
-
-  //
   // main part
   //
 
@@ -58,7 +46,7 @@
   var Mark = UINode.subclass({
     className: namespace + '.Mark',
 
-    template: templates.Mark,
+    template: module.template('Mark'),
 
     pos: 0,
     caption: '\xA0',
@@ -86,7 +74,7 @@
   var MarkLayer = UINode.subclass({
     className: namespace + '.MarkLayer',
 
-    template: templates.MarkLayer,
+    template: module.template('MarkLayer'),
 
     childClass: Mark,
 
@@ -184,7 +172,7 @@
     stepCount: NaN,
     stepValue: NaN,
 
-    template: templates.Slider,
+    template: module.template('Slider'),
     binding: {
       marks: 'satellite:',
       thumbPos: {
@@ -268,7 +256,7 @@
     satellite: {
       marks: UINode.subclass({
         className: namespace + '.MarkLayers',
-        template: templates.MarkLayers,
+        template: module.template('MarkLayers'),
         childClass: MarkLayer
       })
     },

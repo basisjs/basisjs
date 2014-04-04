@@ -26,16 +26,6 @@
 
 
   //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Paginator: resource('./templates/paginator/Paginator.tmpl'),
-    PaginatorNode: resource('./templates/paginator/PaginatorNode.tmpl')
-  });
-
-
-  //
   // main part
   //
 
@@ -53,7 +43,7 @@
 
     emit_pageNumberChanged: createEvent('pageNumberChanged', 'oldPageNumber'),
 
-    template: templates.PaginatorNode,
+    template: module.template('PaginatorNode'),
 
     binding: {
       pageNumber: {
@@ -114,7 +104,7 @@
   var Paginator = UINode.subclass({
     className: namespace + '.Paginator',
 
-    template: templates.Paginator,
+    template: module.template('Paginator'),
     binding: {
       noScroll: {
         events: 'pageCountChanged pageSpanChanged',

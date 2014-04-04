@@ -1,0 +1,6 @@
+{
+  "base": {
+    "Paginator": "./templates/paginator/Paginator.tmpl",
+    "PaginatorNode": "./templates/paginator/PaginatorNode.tmpl"
+  }
+}

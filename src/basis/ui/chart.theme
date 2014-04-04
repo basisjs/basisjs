@@ -1,0 +1,7 @@
+{
+  "base": {
+    "Chart": "./templates/chart/Chart.tmpl",
+    "ChartSelection": "./templates/chart/ChartSelection.tmpl",
+    "ChartViewer": "./templates/chart/ChartViewer.tmpl"
+  }
+}

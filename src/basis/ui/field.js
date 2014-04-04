@@ -44,46 +44,6 @@
 
   var dict = basis.l10n.dictionary(__filename);
 
-  var templates = basis.template.define(namespace, {
-    Example: resource('./templates/field/Example.tmpl'),
-    Description: resource('./templates/field/Description.tmpl'),
-    Counter: resource('./templates/field/Counter.tmpl'),
-
-    Field: resource('./templates/field/Field.tmpl'),
-    File: resource('./templates/field/File.tmpl'),
-    Hidden: resource('./templates/field/Hidden.tmpl'),
-    Text: resource('./templates/field/Text.tmpl'),
-    Password: resource('./templates/field/Password.tmpl'),
-    Textarea: resource('./templates/field/Textarea.tmpl'),
-    Checkbox: resource('./templates/field/Checkbox.tmpl'),
-    Label: resource('./templates/field/Label.tmpl'),
-
-    RadioGroup: resource('./templates/field/RadioGroup.tmpl'),
-    RadioGroupItem: resource('./templates/field/RadioGroupItem.tmpl'),
-
-    CheckGroup: resource('./templates/field/CheckGroup.tmpl'),
-    CheckGroupItem: resource('./templates/field/CheckGroupItem.tmpl'),
-
-    Select: resource('./templates/field/Select.tmpl'),
-    SelectItem: resource('./templates/field/SelectItem.tmpl'),
-
-    Combobox: resource('./templates/field/Combobox.tmpl'),
-    ComboboxItem: resource('./templates/field/ComboboxItem.tmpl'),
-    ComboboxDropdownList: resource('./templates/field/ComboboxDropdownList.tmpl'),
-
-    MatchInput: resource('./templates/field/MatchInput.tmpl')
-  });
-
-  basis.template.define(namespace + '.native', {
-    text: resource('./templates/field/native-type-text.tmpl'),
-    password: resource('./templates/field/native-type-password.tmpl'),
-    textarea: resource('./templates/field/native-type-textarea.tmpl'),
-    checkbox: resource('./templates/field/native-type-checkbox.tmpl'),
-    radio: resource('./templates/field/native-type-radio.tmpl'),
-    select: resource('./templates/field/native-type-select.tmpl'),
-    file: resource('./templates/field/native-type-file.tmpl')
-  });
-
 
   //
   // main part
@@ -184,7 +144,7 @@
     // template
     //
 
-    template: templates.Field,
+    template: module.template('Field'),
     binding: {
       focused: {
         events: 'fieldFocus fieldBlur',
@@ -235,7 +195,7 @@
         },
         instanceOf: UINode.subclass({
           className: namespace + '.Example',
-          template: templates.Example,
+          template: module.template('Example'),
           binding: {
             example: 'owner.example'
           },
@@ -255,7 +215,7 @@
         },
         instanceOf: UINode.subclass({
           className: namespace + '.Description',
-          template: templates.Description,
+          template: module.template('Description'),
           binding: {
             description: 'owner.description'
           },
@@ -388,7 +348,7 @@
   var File = Field.subclass({
     className: namespace + '.File',
 
-    template: templates.File
+    template: module.template('File')
   });
 
  /**
@@ -497,7 +457,7 @@
 
     focusable: false,
 
-    template: templates.Hidden
+    template: module.template('Hidden')
   });
 
  /**
@@ -506,7 +466,7 @@
   var Text = TextField.subclass({
     className: namespace + '.Text',
 
-    template: templates.Text
+    template: module.template('Text')
   });
 
 
@@ -516,7 +476,7 @@
   var Password = TextField.subclass({
     className: namespace + '.Password',
 
-    template: templates.Password
+    template: module.template('Password')
   });
 
 
@@ -540,7 +500,7 @@
           TextField.prototype.emit_fieldFocus.call(this, event);
         },
 
-    template: templates.Textarea,
+    template: module.template('Textarea'),
 
     binding: {
       availChars: {
@@ -565,7 +525,7 @@
         instanceOf: UINode.subclass({
           className: namespace + '.Counter',
 
-          template: templates.Counter,
+          template: module.template('Counter'),
           binding: {
             availChars: function(node){
               return node.owner.symbolsLeft;
@@ -611,7 +571,7 @@
 
     value: false,
 
-    template: templates.Checkbox,
+    template: module.template('Checkbox'),
 
     binding: {
       checked: {
@@ -643,7 +603,7 @@
 
     focusable: false,
 
-    template: templates.Label
+    template: module.template('Label')
   });
 
 
@@ -768,12 +728,12 @@
   var RadioGroup = ComplexField.subclass({
     className: namespace + '.RadioGroup',
 
-    template: templates.RadioGroup,
+    template: module.template('RadioGroup'),
 
     childClass: {
       className: namespace + '.RadioGroupItem',
 
-      template: templates.RadioGroupItem
+      template: module.template('RadioGroupItem')
     }
   });
 
@@ -788,7 +748,7 @@
   var CheckGroup = ComplexField.subclass({
     className: namespace + '.CheckGroup',
 
-    template: templates.CheckGroup,
+    template: module.template('CheckGroup'),
 
     selection: {
       multiple: true
@@ -797,7 +757,7 @@
     childClass: {
       className: namespace + '.CheckGroupItem',
 
-      template: templates.CheckGroupItem
+      template: module.template('CheckGroupItem')
     }
   });
 
@@ -812,7 +772,7 @@
   var Select = ComplexField.subclass({
     className: namespace + '.Select',
 
-    template: templates.Select,
+    template: module.template('Select'),
 
     templateSync: function(){
       ComplexField.prototype.templateSync.call(this);
@@ -837,7 +797,7 @@
     childClass: {
       className: namespace + '.SelectItem',
 
-      template: templates.SelectItem
+      template: module.template('SelectItem')
     }
   });
 
@@ -861,7 +821,7 @@
   var ComboboxItem = ComplexFieldItem.subclass({
     className: namespace + '.ComboboxItem',
 
-    template: templates.ComboboxItem,
+    template: module.template('ComboboxItem'),
 
     binding: {
       title: function(node){
@@ -917,7 +877,7 @@
     popup: null,
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
-      template: templates.ComboboxDropdownList,
+      template: module.template('ComboboxDropdownList'),
       autorotate: 1,
       templateSync: function(){
         Popup.prototype.templateSync.call(this);
@@ -928,7 +888,7 @@
     }),
     property: null,
 
-    template: templates.Combobox,
+    template: module.template('Combobox'),
 
     binding: {
       captionItem: 'satellite:',
@@ -1272,7 +1232,7 @@
   var MatchInput = Text.subclass({
     className: namespace + '.MatchInput',
 
-    template: templates.MatchInput,
+    template: module.template('MatchInput'),
 
     matchFilterClass: MatchFilter,
 

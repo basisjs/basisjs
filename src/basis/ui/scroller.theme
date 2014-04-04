@@ -1,0 +1,7 @@
+{
+  "base": {
+    "Scrollbar": "./templates/scroller/Scrollbar.tmpl",
+    "ScrollPanel": "./templates/scroller/ScrollPanel.tmpl",
+    "ScrollGalleryItem": "./templates/scroller/ScrollGalleryItem.tmpl"
+  }
+}

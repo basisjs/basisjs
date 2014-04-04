@@ -1,7 +1,5 @@
 
   basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
   basis.require('basis.ui');
   basis.require('basis.ui.field');
 
@@ -18,24 +16,11 @@
   // import names
   //
 
-  var DOM = basis.dom;
-  var domEvent = basis.dom.event;
-  var field = basis.ui.field;
-
   var createEvent = basis.event.create;
   var events = basis.event.events;
+  var field = basis.ui.field;
 
   var UINode = basis.ui.Node;
-
-
-  //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Form: resource('./templates/form/Form.tmpl'),
-    FormContent: resource('./templates/form/FormContent.tmpl')
-  });
 
 
  /**
@@ -44,7 +29,7 @@
   var FormContent = UINode.subclass({
     className: namespace + '.FormContent',
 
-    template: templates.FormContent,
+    template: module.template('FormContent'),
 
     childClass: field.Field,
     childFactory: field.create,
@@ -139,7 +124,7 @@
     formEnctype: '',
     formMethod: 'POST',
 
-    template: templates.Form,
+    template: module.template('Form'),
 
     binding: {
       target: 'formTarget',
@@ -154,7 +139,7 @@
       },
       validate: function(event){
         if (this.validate() !== true)
-          domEvent.cancelDefault(event);
+          event.preventDefault();
       }
     },
 

@@ -37,26 +37,6 @@
 
 
   //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Table: resource('./templates/table/Table.tmpl'),
-    Body: resource('./templates/table/Body.tmpl'),
-    Row: resource('./templates/table/Row.tmpl'),
-    Cell: resource('./templates/table/Cell.tmpl'),
-
-    Header: resource('./templates/table/Header.tmpl'),
-    HeaderPartitionRow: resource('./templates/table/HeaderPartitionRow.tmpl'),
-    HeaderPartitionNode: resource('./templates/table/HeaderPartitionNode.tmpl'),
-    HeaderCell: resource('./templates/table/HeaderCell.tmpl'),
-
-    FooterCell: resource('./templates/table/FooterCell.tmpl'),
-    Footer: resource('./templates/table/Footer.tmpl')
-  });
-
-
-  //
   // Table header
   //
 
@@ -66,7 +46,7 @@
   var HeaderPartitionNode = Class(UINode, {
     className: namespace + '.HeaderPartitionNode',
 
-    template: templates.HeaderPartitionNode,
+    template: module.template('HeaderPartitionNode'),
     binding: {
       title: 'data:',
       colSpan: 'delegate.colSpan'
@@ -132,7 +112,7 @@
           return owner.getChildNodesDataset();
         },
         instanceOf: basis.ui.Node.subclass({
-          template: templates.HeaderPartitionRow,
+          template: module.template('HeaderPartitionRow'),
           childClass: HeaderPartitionNode
         })
       }
@@ -185,7 +165,7 @@
     defaultOrder: false,
     title: '\xA0',
 
-    template: templates.HeaderCell,
+    template: module.template('HeaderCell'),
 
     binding: {
       sortable: function(node){
@@ -245,7 +225,7 @@
     childClass: HeaderCell,
     groupingClass: HeaderGroupingNode,
 
-    template: templates.Header,
+    template: module.template('Header'),
     binding: {
       order: function(node){
         return node.owner.sortingDesc ? 'desc' : 'asc';
@@ -356,7 +336,7 @@
 
     value: '',
 
-    template: templates.FooterCell,
+    template: module.template('FooterCell'),
     binding: {
       colSpan: 'colSpan',
       value: function(node){
@@ -377,7 +357,7 @@
   var Footer = Class(UINode, {
     className: namespace + '.Footer',
 
-    template: templates.Footer,
+    template: module.template('Footer'),
 
     childClass: FooterCell,
 
@@ -456,7 +436,7 @@
     childClass: null,
     repaintCount: 0,
 
-    template: templates.Row,
+    template: module.template('Row'),
 
     action: {
       select: function(event){
@@ -474,7 +454,7 @@
 
     collapsed: false,
 
-    template: templates.Body,
+    template: module.template('Body'),
 
     binding: {
       collapsed: function(node){
@@ -496,7 +476,7 @@
   var Table = Class(UINode, {
     className: namespace + '.Table',
 
-    template: templates.Table,
+    template: module.template('Table'),
     binding: {
       header: 'satellite:',
       footer: 'satellite:'

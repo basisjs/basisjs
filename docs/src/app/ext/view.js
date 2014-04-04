@@ -4,11 +4,6 @@
 
   var namespace = module.path;
 
-  var templates = basis.template.define('app', {
-    ViewOption: resource('./view/template/viewOption.tmpl'),
-    ViewOptionList: resource('./view/template/viewOptionList.tmpl'),
-  });
-
   //
   // classes
   //
@@ -34,7 +29,7 @@
   var ViewOption = basis.ui.Node.subclass({
     className: namespace + '.ViewOption',
 
-    template: templates.ViewOption,
+    template: module.template('ViewOption'),
 
     binding: {
       title: 'title'
@@ -53,7 +48,7 @@
   var ViewOptions = basis.ui.Node.subclass({
     className: namespace + '.ViewOptions',
 
-    template: templates.ViewOptionList,
+    template: module.template('ViewOptionList'),
     binding: {
       title: 'title'
     },

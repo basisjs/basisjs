@@ -1,6 +1,4 @@
 
-  basis.require('basis.dom');
-  basis.require('basis.cssom');
   basis.require('basis.ui');
   basis.require('basis.ui.tabs');
   basis.require('basis.ui.scroller');
@@ -17,19 +15,8 @@
   // import names
   //
 
-  var cssom = basis.cssom;
-
   var PageControl = basis.ui.tabs.PageControl;
   var Scroller = basis.ui.scroller.Scroller;
-
-
-  //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    PageSlider: resource('./templates/pageslider/PageSlider.tmpl')
-  });
 
 
   //
@@ -39,7 +26,7 @@
   var PageSlider = PageControl.subclass({
     className: namespace + '.PageSlider',
 
-    template: templates.PageSlider,
+    template: module.template('PageSlider'),
 
     listen: {
       selection: {
@@ -63,9 +50,7 @@
       PageControl.prototype.emit_childNodesModified.call(this, delta);
 
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        cssom.setStyle(child.element, {
-          left: (100 * i) + '%'
-        });
+        child.element.style.left = (100 * i) + '%';
     },
 
     init: function(){

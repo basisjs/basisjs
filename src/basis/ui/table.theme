@@ -1,0 +1,16 @@
+{
+  "base": {
+    "Table": "./templates/table/Table.tmpl",
+    "Body": "./templates/table/Body.tmpl",
+    "Row": "./templates/table/Row.tmpl",
+    "Cell": "./templates/table/Cell.tmpl",
+
+    "Header": "./templates/table/Header.tmpl",
+    "HeaderPartitionRow": "./templates/table/HeaderPartitionRow.tmpl",
+    "HeaderPartitionNode": "./templates/table/HeaderPartitionNode.tmpl",
+    "HeaderCell": "./templates/table/HeaderCell.tmpl",
+
+    "FooterCell": "./templates/table/FooterCell.tmpl",
+    "Footer": "./templates/table/Footer.tmpl"
+  }
+}

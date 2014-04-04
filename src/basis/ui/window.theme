@@ -1,0 +1,9 @@
+{
+  "base": {
+    "Blocker": "./templates/window/Blocker.tmpl",
+    "Window": "./templates/window/Window.tmpl",
+    "TitleButton": "./templates/window/TitleButton.tmpl",
+    "ButtonPanel": "./templates/window/ButtonPanel.tmpl",
+    "windowManager": "./templates/window/windowManager.tmpl"
+  }
+}

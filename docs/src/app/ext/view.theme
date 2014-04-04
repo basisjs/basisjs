@@ -1,0 +1,6 @@
+{
+  "base": {
+    "ViewOption": "./view/template/viewOption.tmpl",
+    "ViewOptionList": "./view/template/viewOptionList.tmpl"
+  }
+}

@@ -44,17 +44,6 @@
 
 
   //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Chart: resource('./templates/chart/Chart.tmpl'),
-    ChartSelection: resource('./templates/chart/ChartSelection.tmpl'),
-    ChartViewer: resource('./templates/chart/ChartViewer.tmpl')
-  });
-
-
-  //
   // Main part
   //
 
@@ -211,7 +200,7 @@
 
     childClass: ChartNode,
 
-    template: templates.Chart,
+    template: module.template('Chart'),
     binding: {
       chartSelection: 'satellite:',
       chartViewer: 'satellite:'
@@ -1111,7 +1100,7 @@
       alpha: '.6'
     },
 
-    template: templates.ChartSelection,
+    template: module.template('ChartSelection'),
 
     listen: {
       owner: {
@@ -1217,7 +1206,7 @@
   var ChartViewer = AbstractCanvas.subclass({
     className: namespace + '.ChartViewer',
 
-    template: templates.ChartViewer,
+    template: module.template('ChartViewer'),
 
     action: {
       move: function(event){

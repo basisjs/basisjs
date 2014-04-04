@@ -1,0 +1,8 @@
+{
+  "base": {
+    "Slider": "./templates/slider/Slider.tmpl",
+    "MarkLayers": "./templates/slider/MarkLayers.tmpl",
+    "MarkLayer": "./templates/slider/MarkLayer.tmpl",
+    "Mark": "./templates/slider/Mark.tmpl"
+  }
+}

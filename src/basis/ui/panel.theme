@@ -1,0 +1,6 @@
+{
+  "base": {
+    "Panel": "./templates/layout/VerticalPanel.tmpl",
+    "Stack": "./templates/layout/VerticalPanelStack.tmpl"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "base": {
+    "Form": "./templates/form/Form.tmpl",
+    "FormContent": "./templates/form/FormContent.tmpl"
+  }
+}

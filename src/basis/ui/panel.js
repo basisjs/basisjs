@@ -11,13 +11,20 @@
 
   var namespace = this.path;
 
+
+  //
+  // import names
+  //
+
   var document = global.document;
   var listenResize = basis.dom.resize.add;
   var computedStyle = basis.dom.computedStyle.get;
   var UINode = basis.ui.Node;
 
 
-  // tests
+  //
+  // main part
+  //
 
   var testElement = document.createElement('div');
   var SUPPORT_ONRESIZE = typeof testElement.onresize != 'undefined';
@@ -40,24 +47,12 @@
     return false;
   })();
 
-
-  //
-  // helpers
-  //
-
   function getHeight(element){
     return element.clientHeight
       - parseInt(computedStyle(element, 'padding-top'))
       - parseInt(computedStyle(element, 'padding-bottom'));
   }
-  //
-  // Vertical stack panel
-  //
 
-  var templates = basis.template.define(namespace, {
-    Panel: resource('./templates/layout/VerticalPanel.tmpl'),
-    Stack: resource('./templates/layout/VerticalPanelStack.tmpl')
-  });
 
  /**
   * @class
@@ -65,7 +60,7 @@
   var VerticalPanel = UINode.subclass({
     className: namespace + '.VerticalPanel',
 
-    template: templates.Panel,
+    template: module.template('Panel'),
     binding: {
       height: 'height',
       isFlex: function(node){
@@ -91,7 +86,7 @@
   var VerticalPanelStack = UINode.subclass({
     className: namespace + '.VerticalPanelStack',
 
-    template: templates.Stack,
+    template: module.template('Stack'),
     binding: {
       flexboxSupported: function(){
         return SUPPORT_DISPLAYBOX;
@@ -141,6 +136,11 @@
       }
     }
   });
+
+
+  //
+  // export
+  //
 
   module.exports = {
     VerticalPanel: VerticalPanel,

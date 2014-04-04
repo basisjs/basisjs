@@ -1,0 +1,11 @@
+{
+  "base": {
+    "text": "../templates/field/native-type-text.tmpl",
+    "password": "../templates/field/native-type-password.tmpl",
+    "textarea": "../templates/field/native-type-textarea.tmpl",
+    "checkbox": "../templates/field/native-type-checkbox.tmpl",
+    "radio": "../templates/field/native-type-radio.tmpl",
+    "select": "../templates/field/native-type-select.tmpl",
+    "file": "../templates/field/native-type-file.tmpl"
+  }
+}

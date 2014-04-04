@@ -23,15 +23,6 @@
 
 
   //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Canvas: resource('./templates/canvas/Canvas.tmpl')
-  });
-
-
-  //
   // Main part
   //
 
@@ -61,7 +52,7 @@
   var AbstractCanvas = Node.subclass({
     className: namespace + '.AbstractCanvas',
 
-    template: templates.Canvas,
+    template: module.template('Canvas'),
 
     templateSync: function(){
       Node.prototype.templateSync.call(this);

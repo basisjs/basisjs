@@ -1,6 +1,6 @@
 basis.require('basis.template');
 
-var Menu = require('./module/menu/index.js');
+var Menu = require('./component/menu.js');
 
 var view = new Menu({
   selection: {

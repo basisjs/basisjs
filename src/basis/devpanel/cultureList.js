@@ -1,7 +1,7 @@
 basis.require('basis.l10n');
 basis.require('basis.data');
 
-var Menu = require('./module/menu/index.js');
+var Menu = require('./component/menu.js');
 
 module.exports = new Menu({
   childClass: {

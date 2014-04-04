@@ -25,18 +25,6 @@
 
 
   //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    MenuItem: resource('./templates/menu/MenuItem.tmpl'),
-    MenuItemSet: resource('./templates/menu/MenuItemSet.tmpl'),
-    PartitionNode: resource('./templates/menu/PartitionNode.tmpl'),
-    Menu: resource('./templates/menu/Menu.tmpl')
-  });
-
-
-  //
   // main part
   //
 
@@ -48,7 +36,7 @@
 
     childClass: Class.SELF,
 
-    template: templates.MenuItem,
+    template: module.template('MenuItem'),
     binding: {
       caption: 'caption'
     },
@@ -84,7 +72,7 @@
   var MenuItemSet = Class(MenuItem, {
     className: namespace + '.MenuItemSet',
 
-    template: templates.MenuItemSet
+    template: module.template('MenuItemSet')
   });
 
  /**
@@ -93,7 +81,7 @@
   var MenuPartitionNode = Class(UIPartitionNode, {
     className: namespace + '.PartitionNode',
 
-    template: templates.PartitionNode
+    template: module.template('PartitionNode')
   });
 
  /**
@@ -111,7 +99,7 @@
   var Menu = Class(Popup, {
     className: namespace + '.Menu',
 
-    template: templates.Menu,
+    template: module.template('Menu'),
 
     defaultDir: [DIR.LEFT, DIR.BOTTOM, DIR.LEFT, DIR.TOP].join(' '),
 

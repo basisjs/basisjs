@@ -2120,13 +2120,18 @@
         var parts = path.split('.');
         var templateName = parts.pop();
         var url = basis.resolveNSFilename(parts.join('.')).replace(/\.js$/, '.theme');
+
+        // resolve package on demand
+        if (url in packageByUrl == false)
+          resolvePackage(url);
+
         sourceReferenceByPath[path] = templateName + '@' + url;
       }
 
       path = sourceReferenceByPath[path];
     }
 
-    if (path in sourceByPath)
+    if (sourceByPath[path] instanceof SourceWrapper)
     {
       source = sourceByPath[path];
     }
@@ -2442,6 +2447,9 @@
 
     if (typeof value == 'string')
     {
+      if (packageByUrl[value] instanceof Package)
+        return packageByUrl[value];
+
       var location = value;
       var extname = basis.path.extname(location);
 
@@ -2612,25 +2620,16 @@
     }
   });
 
- /**
-  * @param {basis.Resource|string} content
-  * @return {basis.l10n.Dictionary}
-  */
-  function resolveDictionary(content){
-    var dictionary;
 
-    if (typeof content == 'string')
-    {
-      var location = content;
-      var extname = basis.path.extname(location);
-      content = basis.resource(extname != '.l10n' ? basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n' : location);
+  //
+  // extend basis.Module by template method
+  //
+
+  module.constructor.extend({
+    template: function(name){
+      return resolvePackage(this.filename).get(name);
     }
-
-    if (basis.resource.isResource(content))
-      dictionary = packageByUrl[content.url];
-
-    return dictionary || new Dictionary(content);
-  }
+  });
 
 
   //
@@ -2651,13 +2650,6 @@
         template.destroy();
 
       templateList = null;
-    }
-  });
-
-
-  module.constructor.extend({
-    template: function(name){
-      return resolvePackage(this.filename).get(name);
     }
   });
 
@@ -2728,5 +2720,6 @@
       return basis.object.keys(sourceByPath);
     },
 
+    Package: Package,
     templates: resolvePackage
   };

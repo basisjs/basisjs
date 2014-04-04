@@ -31,15 +31,6 @@
 
 
   //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    ScrollTable: resource('./templates/scrolltable/ScrollTable.tmpl')
-  });
-
-
-  //
   // main part
   //
 
@@ -101,7 +92,7 @@
    /**
     * @inheritDoc
     */
-    template: templates.ScrollTable,
+    template: module.template('ScrollTable'),
     binding: {
       fitToContainer: 'fitToContainer',
 

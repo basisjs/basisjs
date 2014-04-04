@@ -32,17 +32,6 @@
 
 
   //
-  // definitions
-  //
-
-  var templates = basis.template.define(namespace, {
-    Scrollbar: resource('./templates/scroller/Scrollbar.tmpl'),
-    ScrollPanel: resource('./templates/scroller/ScrollPanel.tmpl'),
-    ScrollGalleryItem: resource('./templates/scroller/ScrollGalleryItem.tmpl')
-  });
-
-
-  //
   // Main part
   //
 
@@ -262,8 +251,8 @@
       this.panningActive = true;
       this.isMoved = false;
 
-      this.lastMouseX = Event.mouseX(event);
-      this.lastMouseY = Event.mouseY(event);
+      this.lastMouseX = event.mouseX;
+      this.lastMouseY = event.mouseY;
 
       this.lastMotionUpdateTime = Date.now();
 
@@ -273,7 +262,7 @@
       Event.addGlobalHandler('touchend', this.onMouseUp, this);
 
       //Event.cancelBubble(event);
-      Event.cancelDefault(event);
+      event.preventDefault();
     },
 
     onMouseMove: function(event){
@@ -292,7 +281,7 @@
       if (this.minScrollDeltaXReached || !this.minScrollDeltaYReached)
       {
 
-        var curMouseX = Event.mouseX(event);
+        var curMouseX = event.mouseX;
         var deltaX = this.lastMouseX - curMouseX;
         this.lastMouseX = curMouseX;
         this.viewportTargetX += deltaX;
@@ -303,7 +292,7 @@
 
       if (this.minScrollDeltaYReached || !this.minScrollDeltaXReached)
       {
-        var curMouseY = Event.mouseY(event);
+        var curMouseY = event.mouseY;
         var deltaY = this.lastMouseY - curMouseY;
         this.lastMouseY = curMouseY;
         this.viewportTargetY += deltaY;
@@ -336,7 +325,7 @@
         }
       }
 
-      Event.cancelDefault(event);
+      event.preventDefault();
     },
 
     onMouseUp: function(event){
@@ -554,7 +543,7 @@
 
     orientation: '',
 
-    template: templates.Scrollbar,
+    template: module.template('Scrollbar'),
     binding: {
       orientation: 'orientation'
     },
@@ -654,7 +643,7 @@
     emit_realign: createEvent('realign'),
     emit_updatePosition: createEvent('updatePosition'),
 
-    template: templates.ScrollPanel,
+    template: module.template('ScrollPanel'),
 
     binding: {
       horizontalScrollbar: 'satellite:',
@@ -836,7 +825,7 @@
     childClass: UINode.subclass({
       className: namespace + '.ScrollGalleryItem',
 
-      template: templates.ScrollGalleryItem,
+      template: module.template('ScrollGalleryItem'),
 
       action: {
         select: function(){
