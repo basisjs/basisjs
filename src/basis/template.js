@@ -1019,15 +1019,13 @@
                       continue;
                     }
 
-                    if (includeStack.indexOf(resource) == -1) // prevent recursion
+                    // prevent recursion
+                    if (includeStack.indexOf(resource) == -1)
                     {
                       var decl;
 
                       if (!isDocumentIdRef)
                         arrayAdd(template.deps, resource);
-
-                      // prevent recursion
-                      includeStack.push(resource);
 
                       if (isTemplateRef)
                       {
@@ -1041,9 +1039,6 @@
                       {
                         decl = getDeclFromSource(resource, resource.url ? path.dirname(resource.url) + '/' : '', true, options);
                       }
-
-                      // prevent recursion
-                      includeStack.pop();
 
                       if (decl.resources && 'no-style' in elAttrs == false)
                         unshiftUnique(template.resources, decl.resources);
@@ -1217,7 +1212,7 @@
                       /** @cut */   return res.url || '[inline template]';
                       /** @cut */ });
                       /** @cut */ template.warns.push('Recursion: ', stack.join(' -> '));
-                      /** @cut */ basis.dev.warn('Recursion in template ' + (template.sourceUrl || '[inline template]') + ': ', stack.join(' -> '));
+                      /** @cut */ basis.dev.warn('Recursion in template: ', stack.join(' -> '));
                     }
                   }
 
@@ -1446,7 +1441,7 @@
       return unpredictable;
     }
 
-    return function makeDeclaration(source, baseURI, options, sourceUrl){
+    return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
       options = options || {};
       var warns = [];
       /** @cut */ var source_;
@@ -1489,8 +1484,16 @@
           warns.push.apply(warns, source.warns);
       }
 
+      // prevent recursion
+      if (sourceOrigin)
+        includeStack.push(sourceOrigin);
+
       // main task
       result.tokens = process(source, result, options);
+
+      // prevent recursion
+      if (sourceOrigin)
+        includeStack.pop();
 
       // there must be at least one token in result
       if (!result.tokens)
@@ -1609,7 +1612,7 @@
     }
 
     if (typeof result == 'string')
-      result = makeDeclaration(result, baseURI, options, sourceUrl);
+      result = makeDeclaration(result, baseURI, options, sourceUrl, source);
 
     return result;
   }
