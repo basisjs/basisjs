@@ -2291,28 +2291,38 @@ var __resources__ = {
         var ch = chars[i];
         switch (ch) {
           case "/":
-            j = i + 1;
-            if (chars[j] === "/") {
-              store();
+            store();
+            j = i;
+            if (chars[j + 1] === "/") {
+              j = j + 2;
               while (j < chars.length && chars[j] !== "\n" && chars[j] !== "\r") j++;
               store("comment", j);
               i = last - 1;
               break;
             }
-            if (chars[j] == "*") {
-              store();
-              j = j + 1;
+            if (chars[j + 1] == "*") {
+              j = j + 2;
               while (j < chars.length && !(chars[j] === "*" && chars[j + 1] === "/")) j++;
               store("comment", j + 2);
               i = last - 1;
               break;
             }
+            while (j < chars.length) {
+              j++;
+              if (chars[j] == "\\") {
+                j++;
+              } else {
+                if (chars[j] == ch) break;
+              }
+            }
+            store("regexp", j + 1);
+            i = last - 1;
             break;
           case '"':
           case "'":
             store();
             j = i;
-            while (true) {
+            while (j < chars.length) {
               j++;
               if (chars[j] == "\\") {
                 j++;
@@ -2346,7 +2356,6 @@ var __resources__ = {
         }
       }
       store();
-      console.log(JSON.stringify(res, null, 2));
       return res;
     }
     function functionInfo(fn) {
@@ -8021,6 +8030,15 @@ var __resources__ = {
       },
       delegate: null,
       delegates_: null,
+      debug_delegates: function() {
+        var cursor = this.delegates_;
+        var result = [];
+        while (cursor) {
+          result.push(cursor.delegate);
+          cursor = cursor.next;
+        }
+        return result;
+      },
       emit_delegateChanged: createEvent("delegateChanged", "oldDelegate"),
       target: null,
       emit_targetChanged: createEvent("targetChanged", "oldTarget"),
@@ -8073,6 +8091,7 @@ var __resources__ = {
                 if (prev === oldDelegate) oldDelegate.delegates_ = cursor.next; else prev.next = cursor.next;
                 break;
               }
+              prev = cursor;
               cursor = cursor.next;
             }
           }
@@ -11567,6 +11586,7 @@ var __resources__ = {
             break;
         }
       }
+      if (!parent && tokens.length == 1) result = result.firstChild;
       return result;
     };
     function resolveTemplateById(refId) {
@@ -11737,9 +11757,28 @@ var __resources__ = {
         return value;
       }
       function createBindingUpdater(names, getters) {
-        return function bindingUpdater(object) {
-          for (var i = 0, bindingName; bindingName = names[i]; i++) this(bindingName, getters[bindingName](object));
-        };
+        var name1 = names[0];
+        var name2 = names[1];
+        var getter1 = getters[name1];
+        var getter2 = getters[name2];
+        switch (names.length) {
+          case 1:
+            return function bindingUpdater1(object) {
+              this(name1, getter1(object));
+            };
+          case 2:
+            return function bindingUpdater2(object) {
+              this(name1, getter1(object));
+              this(name2, getter2(object));
+            };
+          default:
+            var getters_ = names.map(function(name) {
+              return getters[name];
+            });
+            return function bindingUpdaterN(object) {
+              for (var i = 0; i < names.length; i++) this(names[i], getters_[i](object));
+            };
+        }
       }
       function makeHandler(events, getters) {
         for (var name in events) events[name] = createBindingUpdater(events[name], getters);
@@ -11803,9 +11842,6 @@ var __resources__ = {
         var l10nLinks = [];
         var seed = 0;
         var proto = buildHtml(tokens);
-        var build = function() {
-          return proto.cloneNode(true);
-        };
         var id = this.templateId;
         templates[id] = {
           template: this,
@@ -11828,7 +11864,7 @@ var __resources__ = {
             link = null;
           }
         }
-        createInstance = fn.createInstance(id, instances, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
+        createInstance = fn.createInstance(id, instances, proto, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
         return {
           createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface) {
             var instanceId = seed++;
@@ -11859,7 +11895,6 @@ var __resources__ = {
             }
             if (templates[id] && templates[id].instances === instances) delete templates[id];
             fn = null;
-            build = null;
             proto = null;
             l10nMap = null;
             l10nLinks = null;
@@ -12413,7 +12448,7 @@ var __resources__ = {
           var bindType = binding[0];
           var domRef = binding[1];
           var bindName = binding[2];
-          if ([ "set", "templateId_" ].indexOf(bindName) != -1) {
+          if ([ "get", "set", "templateId_" ].indexOf(bindName) != -1) {
             basis.dev.warn("binding name `" + bindName + "` is prohibited, binding ignored");
             continue;
           }
@@ -12597,17 +12632,18 @@ var __resources__ = {
         keys: bindings.keys,
         l10nKeys: basis.object.keys(bindings.l10n)
       };
+      if (tokens.length == 1) paths.path[0] = "a=_";
       if (!uri) uri = basis.path.baseURI + "inline_template" + inlineSeed++ + ".tmpl";
       if (bindings.l10n) {
         var code = [];
         for (var key in bindings.l10n) code.push('case"' + key + '":' + 'if(value==null)value="{' + key + '}";' + "__l10n[token]=value;" + bindings.l10n[key].join("") + "break;");
         result.createL10nSync = compileFunction([ "_", "__l10n", "bind_attr", "TEXT_BUG" ], (source ? "\n// " + source.split(/\r\n?|\n\r?/).join("\n// ") + "\n\n" : "") + "var " + paths.path + ";" + "return function(token, value){" + "switch(token){" + code.join("") + "}" + "}" + "\n\n//# sourceURL=" + basis.path.origin + uri + "_l10n");
       }
-      result.createInstance = compileFunction([ "tid", "map", "build", "tools", "__l10n", "TEXT_BUG" ], (source ? "\n// " + source.split(/\r\n?|\n\r?/).join("\n// ") + "\n\n" : "") + "var getBindings=tools.createBindingFunction([" + bindings.keys.map(function(key) {
+      result.createInstance = compileFunction([ "tid", "map", "proto", "tools", "__l10n", "TEXT_BUG" ], (source ? "\n// " + source.split(/\r\n?|\n\r?/).join("\n// ") + "\n\n" : "") + "var getBindings=tools.createBindingFunction([" + bindings.keys.map(function(key) {
         return '"' + key + '"';
       }) + "])," + (bindings.tools.length ? bindings.tools + "," : "") + "Attaches=function(){};" + "Attaches.prototype={" + bindings.keys.map(function(key) {
         return key + ":null";
-      }) + "};" + "return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){" + "var _=build()," + paths.path.concat(bindings.vars) + "," + "instance={" + "context:obj," + "action:onAction," + "rebuild:onRebuild," + (debug ? "debug:function debug(){return[" + bindings.debugList + "]}," : "") + "handler:null," + "bindings:bindings," + "bindingInterface:bindingInterface," + "attaches:null," + "tmpl:{" + [ paths.ref, "templateId_:id", "set:set" ] + "}" + "}" + (objectRefs ? ";if(obj||onAction)" + objectRefs + "=(id<<12)|tid" : "") + bindings.set + ";instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null" + ";" + bindings.l10nCompute + ";return instance" + "}" + "\n\n//# sourceURL=" + basis.path.origin + uri);
+      }) + "};" + "return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){" + "var _=proto.cloneNode(true)," + paths.path.concat(bindings.vars) + "," + "instance={" + "context:obj," + "action:onAction," + "rebuild:onRebuild," + (debug ? "debug:function debug(){return[" + bindings.debugList + "]}," : "") + "handler:null," + "bindings:bindings," + "bindingInterface:bindingInterface," + "attaches:null," + "tmpl:{" + [ paths.ref, "templateId_:id", "set:set" ] + "}" + "}" + (objectRefs ? ";if(obj||onAction)" + objectRefs + "=(id<<12)|tid" : "") + bindings.set + ";if(bindings)instance.handler=getBindings(bindings,obj,set,bindingInterface)" + ";" + bindings.l10nCompute + ";return instance" + "}" + "\n\n//# sourceURL=" + basis.path.origin + uri);
       return result;
     };
     module.exports = {
@@ -12631,7 +12667,7 @@ var __resources__ = {
 
 (function(global) {
   "use strict";
-  var VERSION = "1.2.0-dev";
+  var VERSION = "1.2.2-dev";
   var document = global.document;
   var Object_toString = Object.prototype.toString;
   function extend(dest, source) {
@@ -12912,14 +12948,11 @@ var __resources__ = {
       return function(id) {
         var task = taskById[id];
         if (task) {
-          try {
-            if (typeof task.fn == "function") task.fn.apply(undefined, task.args); else {
-              (global.execScript || function(fn) {
-                global["eval"].call(global, fn);
-              })(String(task.fn));
-            }
-          } finally {
-            delete taskById[id];
+          delete taskById[id];
+          if (typeof task.fn == "function") task.fn.apply(undefined, task.args); else {
+            (global.execScript || function(fn) {
+              global["eval"].call(global, fn);
+            })(String(task.fn));
           }
         }
       };
@@ -12979,10 +13012,10 @@ var __resources__ = {
                   addToQueue = function(taskId) {
                     var scriptEl = createScript();
                     scriptEl.onreadystatechange = function() {
-                      runTask(taskId);
                       scriptEl.onreadystatechange = null;
                       documentInterface.remove(scriptEl);
                       scriptEl = null;
+                      runTask(taskId);
                     };
                     documentInterface.head.add(scriptEl);
                   };
