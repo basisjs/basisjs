@@ -1,3 +1,13 @@
+## 1.2.2 (April 9, 2014)
+
+- FIX: `basis.ui.field.validator.Url` domains could starts with digit now
+- FIX: `basis.ui.slider.Slider` doesn't fire `change` event when value isn't changed now
+- FIX: `basis.utils.info.fn` freeze (endless loop) on function source parsing when source has a RegExp
+- IMPROVEMENT: `basis.template.html` doesn't use `DocumentFragment` wrapper for base DOM structure (performance)
+- use `.jscsrc` instead of `.jscs.json` config file for `jscs`
+- `basis.template.html` reserve `get` as prohibited binding name
+- other small fixes and improvements
+
 ## 1.2.1 (March 27, 2014)
 
 - remove usage of `createAttributeNS` and `setAttributeNodeNS` DOM methods in `basis.xml` and `basis.net.soap` as candidates for remove from DOM level 4 (methods are removed in Chrome 35 canary already, [more details](https://groups.google.com/a/chromium.org/forum/#!topic/blink-dev/jS7iCEmoWfQ))
