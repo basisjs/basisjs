@@ -58,6 +58,12 @@ module.exports = {
               function(
                 /**/){
 
+              },
+              function(){
+                return "12\"'3";
+              },
+              function(){
+                return /\"\//.test('asd');
               }
             ];
 
