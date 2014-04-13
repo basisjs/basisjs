@@ -45,7 +45,7 @@
       }
     }
 
-    for (var i = 0; i < chars.length; i++)
+    for (var i = 0; i < chars.length; i++) main_loop:
     {
       var ch = chars[i];
       switch (ch)
@@ -82,6 +82,10 @@
           while (j < chars.length)
           {
             j++;
+
+            if (chars[j] == '\n') 
+              break main_loop;
+
             if (chars[j] == '\\')
             {
               j++;
@@ -147,8 +151,8 @@
     }
     store();
 
-    //if (source != res.map(function(x){return x[1]}).join(''))
-    //  basis.dev.warn('Wrong parsing', source);
+    // if (source != res.map(function(x){return x[1]}).join(''))
+    //   basis.dev.warn('Wrong parsing', source);
 
     return res;
   }
