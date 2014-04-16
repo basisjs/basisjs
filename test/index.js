@@ -13,6 +13,7 @@ module.exports = {
     require('./spec/data.js'),
     require('./spec/data.object.js'),
     require('./spec/data.value.js'),
+    require('./spec/data.index.js'),
     require('./spec/data.vector.js'),
     require('./spec/entity.js'),
     require('./spec/dom.wrapper.js'),
