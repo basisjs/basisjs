@@ -943,12 +943,6 @@
     },
 
     destroy: function(){
-      this.timer_ = clearTimeout(this.timer_);
-      this.calcs = null;
-      this.indexUpdated = null;
-      this.memberSourceMap = null;
-      this.indexesBind_ = null;
-
       this.keyMap.destroy();
       this.keyMap = null;
 
@@ -956,6 +950,14 @@
         this.removeIndex(indexName);
 
       MapFilter.prototype.destroy.call(this);
+
+      this.timer_ = basis.clearImmediate(this.timer_);
+      this.calcs = null;
+      this.indexes = null;
+      this.indexes_ = null;
+      this.indexValues = null;
+      this.memberSourceMap = null;
+      this.indexesBind_ = null;
     }
   });
 
