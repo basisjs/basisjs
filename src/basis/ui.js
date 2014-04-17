@@ -341,15 +341,6 @@
      /**
       * @inheritDoc
       */
-      emit_update: function(delta){
-        this.templateUpdate(this.tmpl, 'update', delta);
-
-        super_.emit_update.call(this, delta);
-      },
-
-     /**
-      * @inheritDoc
-      */
       init: function(){
         this.element = this.childNodesElement = getDocumentFragment();
 
@@ -466,8 +457,6 @@
         if (this.content)
           (tmpl.content || tmpl.element).appendChild(this.content.nodeType ? this.content : document.createTextNode(this.content));
 
-        this.templateUpdate(this.tmpl);
-
         if (oldElement && oldElement !== this.element && oldElement.nodeType != 11) // 11 - DocumentFragment
         {
           var parentNode = oldElement && oldElement.parentNode;
@@ -557,16 +546,6 @@
 
         /** @cut */ if (!action)
         /** @cut */   basis.dev.warn('template call `' + actionName + '` action, but it isn\'t defined in action list');
-      },
-
-     /**
-      * Template update function. It calls on init and on update event by default.
-      * @param {object} tmpl
-      * @param {string} eventName
-      * @param {object} delta
-      */
-      templateUpdate: function(tmpl, eventName, delta){
-        /* nothing to do, override it in sub classes */
       },
 
      /**
