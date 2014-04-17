@@ -453,10 +453,6 @@
         if (this instanceof PartitionNode)
           reinsertPartitionNodes(this);
 
-        // insert content
-        if (this.content)
-          (tmpl.content || tmpl.element).appendChild(this.content.nodeType ? this.content : document.createTextNode(this.content));
-
         if (oldElement && oldElement !== this.element && oldElement.nodeType != 11) // 11 - DocumentFragment
         {
           var parentNode = oldElement && oldElement.parentNode;

@@ -1062,7 +1062,6 @@
 
       // create items popup
       this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
-        content: this.childNodesElement,
         handler: {
           context: this,
           callbacks: ComboboxPopupHandler

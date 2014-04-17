@@ -82,8 +82,6 @@
 
   <script type="text/javascript" id="demo-javascript">
 
-    basis.require('basis.dom');
-    basis.require('basis.cssom');
     basis.require('basis.data');
     basis.require('basis.data.index');
     basis.require('basis.ui.button');
@@ -91,10 +89,8 @@
     basis.require('basis.ui.slider');
 
     // import names
-    var DOM = basis.dom;
     var nsData = basis.data;
     var nsDataIndex = basis.data.index;
-    var cssom = basis.cssom;
 
     var getter = basis.getter;
     var ButtonPanel = basis.ui.button.ButtonPanel;
@@ -131,7 +127,7 @@
     });
 
     new ButtonPanel({
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       childNodes: [
         {
           caption: 'add',
@@ -178,7 +174,7 @@
 
     var count = 0;
     var table = new Table({
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       dataSource: dataset,
       structure: [
         {
@@ -277,7 +273,7 @@
     });
 
     var recordPanel = new UINode({
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       template: '<div id="RecordPanel" class="{hasDelegate}"/>',
       binding: {
         hasDelegate: {

@@ -82,7 +82,7 @@
     basis.require('basis.ui.popup');
     basis.require('basis.ui.menu');
     basis.require('basis.ui.button');
-    
+
     // import names
     var getter = basis.getter;
 
@@ -101,10 +101,14 @@
     var popup = new Popup({
       dir: 'left bottom left top',
       autorotate: true,
-      content: 'Lorem ipsum dolor sit amet, discere admodum scribentur no qui. \
-        Ius reque idque dolore ad, appetere perfecto nec ad. Inimicus patrioque hendrerit est cu, his no accumsan nominavi, dico ipsum adipiscing cum eu. \
-        Nec ex meis noluisse percipitur, vix omnes noluisse posidonium ut. \
-        Duo et deseruisse honestatis, nemore aliquip ad pri. Cum quem porro delicata te.'
+      childNodes: [
+        {
+          template: 'Lorem ipsum dolor sit amet, discere admodum scribentur no qui. ' +
+            'Ius reque idque dolore ad, appetere perfecto nec ad. Inimicus patrioque hendrerit est cu, his no accumsan nominavi, dico ipsum adipiscing cum eu. ' +
+            'Nec ex meis noluisse percipitur, vix omnes noluisse posidonium ut. ' +
+            'Duo et deseruisse honestatis, nemore aliquip ad pri. Cum quem porro delicata te.'
+        }
+      ]
     });
 
     new Button({
@@ -121,10 +125,14 @@
     var balloon = new Balloon({
       dir: 'center bottom left top',
       autorotate: true,
-      content: 'Lorem ipsum dolor sit amet, discere admodum scribentur no qui. \
-        Ius reque idque dolore ad, appetere perfecto nec ad. Inimicus patrioque hendrerit est cu, his no accumsan nominavi, dico ipsum adipiscing cum eu. \
-        Nec ex meis noluisse percipitur, vix omnes noluisse posidonium ut.\
-        Duo et deseruisse honestatis, nemore aliquip ad pri. Cum quem porro delicata te.'
+      childNodes: [
+        {
+          template: 'Lorem ipsum dolor sit amet, discere admodum scribentur no qui. ' +
+            'Ius reque idque dolore ad, appetere perfecto nec ad. Inimicus patrioque hendrerit est cu, his no accumsan nominavi, dico ipsum adipiscing cum eu. ' +
+            'Nec ex meis noluisse percipitur, vix omnes noluisse posidonium ut.' +
+            'Duo et deseruisse honestatis, nemore aliquip ad pri. Cum quem porro delicata te.'
+        }
+      ]
     });
 
     new Button({

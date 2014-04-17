@@ -176,7 +176,7 @@ basis.app.create({
     basis.dom.event.addGlobalHandler('click', function(event){
       if (!event.mouseLeft)
         return;
-      
+
       var sender = event.sender;
 
       if (sender.tagName != 'A')
