@@ -230,6 +230,9 @@
     */
     sources: null,
 
+    sourceValues_: null, //[{ value: xx, dataset: d1 }, { value: y, dataset: d2 }, { value: z: dataset: d1 }]
+    sourcesMap_: null, //{ d1.basisObjectId: 2, d2.basisObjectId: 1 }
+
    /**
     * @type {function(count:number, sourceCount:number):boolean}
     */
@@ -254,7 +257,11 @@
 
       // init part
       var sources = this.sources;
+
       this.sources = [];
+      this.sourcesMap_ = {};
+      this.sourceValues_ = [];
+
       if (sources)
         sources.forEach(this.addSource, this);
     },
@@ -316,54 +323,127 @@
     },
 
    /**
+    * Adds new dataset.
+    * @param {basis.data.AbstractDataset=} dataset
+    * @private
+    */
+    addDataset_: function(dataset){
+      this.sources.push(dataset);
+      // add event listeners to source
+      if (this.listen.source)
+        dataset.addHandler(this.listen.source, this);
+
+      // process new dataset objects and update member map
+      var memberMap = this.members_;
+      for (var objectId in dataset.items_)
+      {
+        // check: is this object already known
+        if (memberMap[objectId])
+        {
+          // item exists -> increase dataset links count
+          memberMap[objectId].count++;
+        }
+        else
+        {
+          // add to source map
+          memberMap[objectId] = {
+            count: 1,
+            object: dataset.items_[objectId]
+          };
+        }
+      }
+
+      return true;
+    },
+   /**
+    * Adds new dataset.
+    * @param {basis.data.AbstractDataset=} dataset
+    * @private
+    */
+    removeDataset_: function(dataset){
+      basis.array.remove(this.sources, dataset);
+
+      // remove event listeners from dataset
+      if (this.listen.source)
+        dataset.removeHandler(this.listen.source, this);
+
+      // process removing dataset objects and update member map
+      var memberMap = this.members_;
+      for (var objectId in dataset.items_)
+        memberMap[objectId].count--;
+    },
+   /**
+    * Update dataset value by source.
+    * @param {basis.data.AbstractDataset=} source
+    * @private
+    */
+    updateDataset_: function(source){
+      // this -> sourceInfo
+      var merge = this.owner;
+      var sourcesMap_ = merge.sourcesMap_;
+      var dataset = basis.data.resolveDataset(this, merge.updateDataset_, source, 'adapter');
+      var inserted;
+      var deleted;
+
+      if (this.dataset === dataset)
+        return;
+
+      if (dataset)
+      {
+        var count = (sourcesMap_[dataset.basisObjectId] || 0) + 1;
+        sourcesMap_[dataset.basisObjectId] = count;
+        if (count == 1)
+        {
+          merge.addDataset_(dataset);
+          inserted = [dataset];
+        }
+      }
+
+      if (this.dataset)
+      {
+        var count = (sourcesMap_[this.dataset.basisObjectId] || 0) - 1;
+        sourcesMap_[this.dataset.basisObjectId] = count;
+        if (count == 0)
+        {
+          merge.removeDataset_(this.dataset);
+          deleted = [this.dataset];
+        }
+      }
+
+      this.dataset = dataset;
+
+      // build delta and fire event
+      merge.applyRule();
+
+      // fire sources changes event
+      merge.emit_sourcesChanged(getDelta(inserted, deleted));
+    },
+
+   /**
     * Add source from sources list.
     * @param {basis.data.AbstractDataset} source
     * @return {boolean} Returns true if new source added.
     */
     addSource: function(source){
-      if (source instanceof AbstractDataset)
+      if (!source)
       {
-        if (basis.array.add(this.sources, source))
-        {
-          // add event listeners to source
-          if (this.listen.source)
-            source.addHandler(this.listen.source, this);
-
-          // process new source objects and update member map
-          var memberMap = this.members_;
-          for (var objectId in source.items_)
-          {
-            // check: is this object already known
-            if (memberMap[objectId])
-            {
-              // item exists -> increase source links count
-              memberMap[objectId].count++;
-            }
-            else
-            {
-              // add to source map
-              memberMap[objectId] = {
-                count: 1,
-                object: source.items_[objectId]
-              };
-            }
-          }
-
-          // build delta and fire event
-          this.applyRule();
-
-          // fire sources changes event
-          this.emit_sourcesChanged({
-            inserted: [source]
-          });
-
-          return true;
-        }
+        /** @cut */ basis.dev.warn(this.constructor.className + '.addSource: value should be a dataset instance or to be able to resolve in dataset');
+        return;
       }
-      else
-      {
-        /** @cut */ basis.dev.warn(this.constructor.className + '.addSource: source isn\'t instance of AbstractDataset');
-      }
+
+      for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
+        if (sourceInfo.source === source)
+          break;
+
+      var sourceInfo = {
+        owner: this,
+        source: source,
+        adapter: null,
+        dataset: null
+      };
+
+      this.sourceValues_.push(sourceInfo);
+      this.updateDataset_.call(sourceInfo, source);
     },
 
    /**
@@ -372,31 +452,15 @@
     * @return {boolean} Returns true if source removed.
     */
     removeSource: function(source){
-      if (basis.array.remove(this.sources, source))
-      {
-        // remove event listeners from source
-        if (this.listen.source)
-          source.removeHandler(this.listen.source, this);
+      for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
+        if (sourceInfo.source === source)
+        {
+          this.updateDataset_.call(sourceInfo, null);
+          this.sourceValues_.splice(i, 1);
+          return;
+        }
 
-        // process removing source objects and update member map
-        var memberMap = this.members_;
-        for (var objectId in source.items_)
-          memberMap[objectId].count--;
-
-        // build delta and fire event
-        this.applyRule();
-
-        // fire sources changes event
-        this.emit_sourcesChanged({
-          deleted: [source]
-        });
-
-        return true;
-      }
-      else
-      {
-        /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source isn\'t in dataset source list');
-      }
+      /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source isn\'t in dataset source list');
     },
 
    /**

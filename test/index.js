@@ -12,6 +12,7 @@ module.exports = {
     require('./spec/l10n.js'),
     require('./spec/data.js'),
     require('./spec/data.object.js'),
+    require('./spec/data.dataset.js'),
     require('./spec/data.value.js'),
     require('./spec/data.index.js'),
     require('./spec/data.vector.js'),
