@@ -1,8 +1,8 @@
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.layout');
-basis.require('basis.ui');
+require('basis.dom');
+require('basis.dom.event');
+require('basis.cssom');
+require('basis.layout');
+require('basis.ui');
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
@@ -11,8 +11,6 @@ var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var DOM = basis.dom;
-
 var colorPicker = require('./colorPicker.js');
 var transport = require('../api/transport.js');
 
@@ -77,12 +75,12 @@ function startInspect(){
     inspectMode = true;
     highlight();
 
-    DOM.event.addGlobalHandler('scroll', updateOnScroll);
-    DOM.event.addHandler(window, 'resize', updateOnResize);
-    DOM.event.captureEvent('mousedown', DOM.event.kill);
-    DOM.event.captureEvent('mouseup', DOM.event.kill);
-    DOM.event.captureEvent('contextmenu', endInspect);
-    DOM.event.captureEvent('click', pickHandler);
+    basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
+    basis.dom.event.addHandler(window, 'resize', updateOnResize);
+    inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);
+    inspectBasisEvent.captureEvent('mouseup', basis.dom.event.kill);
+    inspectBasisEvent.captureEvent('contextmenu', endInspect);
+    inspectBasisEvent.captureEvent('click', pickHandler);
 
     transport.sendData('startInspect', 'l10n');
 
@@ -103,12 +101,12 @@ function endInspect(){
 
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');
 
-    DOM.event.removeGlobalHandler('scroll', updateOnScroll);
-    DOM.event.removeHandler(window, 'resize', updateOnResize);
-    DOM.event.releaseEvent('mousedown');
-    DOM.event.releaseEvent('mouseup');
-    DOM.event.releaseEvent('contextmenu');
-    DOM.event.releaseEvent('click');
+    basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
+    basis.dom.event.removeHandler(window, 'resize', updateOnResize);
+    inspectBasisEvent.releaseEvent('mousedown');
+    inspectBasisEvent.releaseEvent('mouseup');
+    inspectBasisEvent.releaseEvent('contextmenu');
+    inspectBasisEvent.releaseEvent('click');
 
     unhighlight();
     inspectMode = false;
@@ -140,7 +138,7 @@ function highlight(keepOverlay){
   domTreeHighlight(document.body);
 
   if (!keepOverlay)
-    DOM.insert(document.body, overlay);
+    basis.dom.insert(document.body, overlay);
 }
 
 function unhighlight(keepOverlay){
@@ -149,13 +147,13 @@ function unhighlight(keepOverlay){
   while (node = elements.pop())
   {
     node.token = null;
-    DOM.remove(node);
+    basis.dom.remove(node);
   }
 
   if (!keepOverlay)
   {
     basis.cssom.classList(overlayContent).remove('hover');
-    DOM.remove(overlay);
+    basis.dom.remove(overlay);
   }
 }
 

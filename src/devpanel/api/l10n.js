@@ -1,4 +1,4 @@
-basis.require('basis.data');
+require('basis.data');
 
 var STATE = basis.data.STATE;
 var sendData = require('./transport.js').sendData;

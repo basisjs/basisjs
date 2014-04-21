@@ -1,8 +1,8 @@
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.layout');
-basis.require('basis.ui');
+require('basis.dom');
+require('basis.dom.event');
+require('basis.cssom');
+require('basis.layout');
+require('basis.ui');
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
@@ -10,8 +10,6 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').mar
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var DOM = basis.dom;
-
 var inspectMode;
 var elements = [];
 
@@ -137,20 +135,16 @@ function highlight(keepOverlay){
   overlayContent.appendChild(tokenElements);
 
   if (!keepOverlay)
-    DOM.insert(document.body, overlay);
-}
+
 
 function unhighlight(keepOverlay){
   var data;
 
   while (data = elements.pop())
-    DOM.remove(data.element);
-
   if (!keepOverlay)
   {
     basis.cssom.classList(overlayContent).remove('hover');
-    DOM.remove(overlay);
-  }
+  
 }
 
 function updateHighlight(records){

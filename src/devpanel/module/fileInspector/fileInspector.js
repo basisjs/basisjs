@@ -1,5 +1,5 @@
-basis.require('basis.ui');
-basis.require('basis.ui.resizer');
+require('basis.ui');
+require('basis.ui.resizer');
 
 var fileTree = resource('./module/fileTree/fileTree.js').fetch();
 var fileView = resource('./module/fileView/fileView.js').fetch();

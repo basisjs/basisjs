@@ -1,8 +1,8 @@
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.layout');
-basis.require('basis.ui');
-basis.require('basis.ui.popup');
+require('basis.dom');
+require('basis.dom.event');
+require('basis.layout');
+require('basis.ui');
+require('basis.ui.popup');
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
@@ -10,13 +10,12 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').mar
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var DOM = basis.dom;
 var transport = require('../api/transport.js');
 
 var inspectDepth = 0;
 var inspectMode;
 
-var overlay = DOM.createElement({
+var overlay = basis.dom.createElement({
   css: {
     pointerEvents: 'none',
     transition: 'all .05s',
@@ -86,7 +85,7 @@ var pickupTarget = new basis.data.Value({
       }
       else
       {
-        DOM.remove(overlay);
+        basis.dom.remove(overlay);
         inspectDepth = 0;
       }
 

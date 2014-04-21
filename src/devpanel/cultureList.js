@@ -1,4 +1,4 @@
-basis.require('basis.data');
+require('basis.data');
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');

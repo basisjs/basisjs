@@ -1,5 +1,6 @@
-basis.require('basis.ui');
-basis.require('basis.dragdrop');
+require('basis.data');
+require('basis.ui');
+require('basis.dragdrop');
 
 var inspectBasis = require('devpanel').inspectBasis;
 inspectBasis.require('basis.l10n');
@@ -32,13 +33,13 @@ if (typeof basisjsToolsFileSync != 'undefined')
   basisjsToolsFileSync.notifications.attach(function(eventName, filename){
     var ext = basis.path.extname(filename);
 
-    if (eventName == 'new' || ext in basis.resource.extensions == false)
+    if (eventName == 'new' || ext in inspectBasis.resource.extensions == false)
       return;
 
-    if (basis.resource.extensions[ext].permanent && basis.resource.isResolved(filename))
+    if (inspectBasis.resource.extensions[ext].permanent && inspectBasis.resource.isResolved(filename))
     {
       basis.setImmediate(function(){
-        if (basis.resource(filename).hasChanges())
+        if (inspectBasis.resource(filename).hasChanges())
           basis.array.add(permamentFiles, filename);
         else
           basis.array.remove(permamentFiles, filename);
