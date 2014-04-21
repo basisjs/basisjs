@@ -197,9 +197,6 @@
 
       // build delta and fire event
       this.applyRule(updated);
-    },
-    destroy: function(source){
-      this.removeSource(source);
     }
   };
 
@@ -244,7 +241,12 @@
     * @inheritDoc
     */
     listen: {
-      source: MERGE_DATASET_HANDLER
+      source: MERGE_DATASET_HANDLER,
+      sourceValue: {
+        destroy: function(sender){
+          this.removeSource(sender);
+        }
+      }
     },
 
    /**
@@ -355,6 +357,7 @@
 
       return true;
     },
+
    /**
     * Adds new dataset.
     * @param {basis.data.AbstractDataset=} dataset
@@ -372,6 +375,7 @@
       for (var objectId in dataset.items_)
         memberMap[objectId].count--;
     },
+
    /**
     * Update dataset value by source.
     * @param {basis.data.AbstractDataset=} source
@@ -384,6 +388,7 @@
       var dataset = basis.data.resolveDataset(this, merge.updateDataset_, source, 'adapter');
       var inserted;
       var deleted;
+      var delta;
 
       if (this.dataset === dataset)
         return;
@@ -416,7 +421,20 @@
       merge.applyRule();
 
       // fire sources changes event
-      merge.emit_sourcesChanged(getDelta(inserted, deleted));
+      if (delta = getDelta(inserted, deleted))
+        merge.emit_sourcesChanged(delta);
+
+      return delta;
+    },
+
+   /**
+    * Returns array of source values.
+    * @return {Array}
+    */
+    getSourceValues: function(){
+      return this.sourceValues_.map(function(item){
+        return item.source;
+      });
     },
 
    /**
@@ -425,7 +443,7 @@
     * @return {boolean} Returns true if new source added.
     */
     addSource: function(source){
-      if (!source)
+      if (!source || (typeof source != 'object' && typeof source != 'function'))
       {
         /** @cut */ basis.dev.warn(this.constructor.className + '.addSource: value should be a dataset instance or to be able to resolve in dataset');
         return;
@@ -433,7 +451,7 @@
 
       for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
         if (sourceInfo.source === source)
-          break;
+          return;
 
       var sourceInfo = {
         owner: this,
@@ -460,7 +478,7 @@
           return;
         }
 
-      /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source isn\'t in dataset source list');
+      /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source value isn\'t found in source list');
     },
 
    /**

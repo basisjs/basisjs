@@ -58,6 +58,23 @@ module.exports = {
 
       return false;
     }
+
+    function catchWarnings(fn){
+      var warn = basis.dev.warn;
+      var warnings = [];
+
+      try {
+        basis.dev.warn = function(message){
+          warnings.push(message);
+        };
+
+        fn();
+      } finally {
+        basis.dev.warn = warn;
+      }
+
+      return warnings.length ? warnings : false;
+    }
   },
   test: [
     {
@@ -116,6 +133,7 @@ module.exports = {
               ]
             });
 
+            assert(merge.getSourceValues().length == 1);
             assert(merge.itemCount == 10);
             assert(merge.sources.length == 1);
             assert(checkValues(merge, range(1, 10)) == false);
@@ -149,6 +167,7 @@ module.exports = {
               ]
             });
 
+            assert(merge.getSourceValues().length == 1);
             assert(merge.itemCount == 10);
             assert(merge.sources.length == 1);
             assert(checkValues(merge, range(1, 10)) == false);
@@ -168,9 +187,30 @@ module.exports = {
               ]
             });
 
+            assert(merge.getSourceValues().length == 2);
             assert(merge.itemCount == 10);
             assert(merge.sources.length == 1);
             assert(checkValues(merge, range(1, 10)) == false);
+          }
+        },
+        {
+          name: 'create with wrong values',
+          test: function(){
+            var merge;
+
+            var warnings = catchWarnings(function(){
+              merge = new Merge({
+                sources: [
+                  null,
+                  123
+                ]
+              });
+            });
+
+            assert(warnings.length == 2);
+            assert(merge.getSourceValues().length == 0);
+            assert(merge.itemCount == 0);
+            assert(merge.sources.length == 0);
           }
         }
       ]
@@ -205,6 +245,7 @@ module.exports = {
             merge.addSource(dataset);
             merge.addSource(dataset);
 
+            assert(merge.getSourceValues().length == 1);
             assert(merge.itemCount == 10);
             assert(checkValues(merge, range(1, 10)) == false);
             assert(merge.sources.length == 1);
@@ -227,6 +268,22 @@ module.exports = {
           }
         },
         {
+          name: 'add wrong values',
+          test: function(){
+            var merge = new Merge();
+
+            var warnings = catchWarnings(function(){
+              merge.addSource(null);
+              merge.addSource(123);
+            });
+
+            assert(warnings.length == 2);
+            assert(merge.getSourceValues().length == 0);
+            assert(merge.itemCount == 0);
+            assert(merge.sources.length == 0);
+          }
+        },
+        {
           name: 'add value and dataset',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
@@ -240,6 +297,7 @@ module.exports = {
             merge.addSource(dataset);
             merge.addSource(value);
 
+            assert(merge.getSourceValues().length == 2);
             assert(merge.itemCount == 10);
             assert(checkValues(merge, range(1, 10)) == false);
             assert(merge.sources.length == 1);
@@ -298,7 +356,9 @@ module.exports = {
             var dataset = new Dataset({ items: generate(1, 10) });
             var value = new basis.data.Value({ value: dataset });
             var merge = new Merge({
-              sources: [value]
+              sources: [
+                value
+              ]
             });
 
             assert(merge.itemCount == 10);
@@ -317,6 +377,43 @@ module.exports = {
             assert(merge.itemCount == 10);
             assert(checkValues(merge, range(1, 10)) == false);
             assert(merge.sources.length == 1);
+          }
+        },
+        {
+          name: 'destroy dataset',
+          test: function(){
+            var dataset = new Dataset({ items: generate(1, 10) });
+            var merge = new Merge({
+              sources: [
+                dataset
+              ]
+            });
+
+            // destroy dataset
+            dataset.destroy();
+
+            assert(merge.getSourceValues().length == 0);
+            assert(merge.itemCount == 0);
+            assert(merge.sources.length == 0);
+          }
+        },
+        {
+          name: 'destroy value',
+          test: function(){
+            var dataset = new Dataset({ items: generate(1, 10) });
+            var value = new basis.data.Value({ value: dataset });
+            var merge = new Merge({
+              sources: [
+                value
+              ]
+            });
+
+            // destroy dataset
+            value.destroy();
+
+            assert(merge.getSourceValues().length == 0);
+            assert(merge.itemCount == 0);
+            assert(merge.sources.length == 0);
           }
         }
       ]
@@ -341,10 +438,15 @@ module.exports = {
           }
         },
         {
-          name: 'remove non-existing dataset',
+          name: 'remove dataset added twice',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var merge = new Merge({});
+            var merge = new Merge({
+              sources: [
+                dataset,
+                dataset
+              ]
+            });
 
             merge.removeSource(dataset);
 
@@ -353,22 +455,22 @@ module.exports = {
           }
         },
         {
-          name: 'add value',
+          name: 'remove non-existing dataset',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
-            var merge = new Merge();
+            var merge = new Merge({});
 
-            merge.addSource(value);
+            var warnings = catchWarnings(function(){
+              merge.removeSource(dataset);
+            });
 
-            assert(merge.itemCount == 10);
-            assert(checkValues(merge, range(1, 10)) == false);
-            assert(merge.sources.length == 1);
-            assert(cmpDS(merge, dataset) == false);
+            assert(warnings.length == 1);
+            assert(merge.itemCount == 0);
+            assert(merge.sources.length == 0);
           }
         },
         {
-          name: 'add value and dataset',
+          name: 'try to remove resolved dataset',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
             var value = new basis.data.Value({ value: dataset });
@@ -378,13 +480,33 @@ module.exports = {
               ]
             });
 
-            merge.addSource(dataset);
-            merge.addSource(value);
+            var warnings = catchWarnings(function(){
+              merge.removeSource(dataset);
+            });
 
+            assert(warnings.length == 1);
             assert(merge.itemCount == 10);
             assert(checkValues(merge, range(1, 10)) == false);
             assert(merge.sources.length == 1);
             assert(cmpDS(merge, dataset) == false);
+          }
+        },
+        {
+          name: 'remove value',
+          test: function(){
+            var dataset = new Dataset({ items: generate(1, 10) });
+            var value = new basis.data.Value({ value: dataset });
+            var merge = new Merge({
+              sources: [
+                value,
+                value
+              ]
+            });
+
+            merge.removeSource(value);
+
+            assert(merge.itemCount == 0);
+            assert(merge.sources.length == 0);
           }
         }
       ]
