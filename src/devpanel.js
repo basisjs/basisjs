@@ -42,6 +42,7 @@ basis.nextTick(function(){
       require('./devpanel/api/server.js'),
       require('./devpanel/api/file.js'),
       require('./devpanel/api/l10n.js'),
+      require('./devpanel/api/ui.js'),
       require('./devpanel/api/inspector.js')
     );
 
