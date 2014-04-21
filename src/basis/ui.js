@@ -33,6 +33,15 @@
   // main part
   //
 
+
+  //
+  // debug
+  //
+
+  /** @cut */ var instances = {};
+  /** @cut */ var notifier = new basis.Token();
+
+
   //
   // Binding
   //
@@ -391,6 +400,9 @@
             this.container = null;
           }
         }
+
+        /** @cut */ instances[this.basisObjectId] = this;
+        /** @cut */ notifier.set({ action: 'create', instance: this });
       },
 
       templateSync: function(){
@@ -582,6 +594,9 @@
       * @inheritDoc
       */
       destroy: function(){
+        /** @cut */ delete instances[this.basisObjectId];
+        /** @cut */ notifier.set({ action: 'destroy', instance: this });
+
         var template = this.template;
         var element = this.element;
 
@@ -887,6 +902,11 @@
   //
 
   module.exports = {
+    /** @cut */ debug_notifier: notifier,
+    /** @cut */ debug_getInstances: function(){
+    /** @cut */   return basis.object.values(instances);
+    /** @cut */ },
+
     BINDING_PRESET: BINDING_PRESET,
 
     Node: Node,

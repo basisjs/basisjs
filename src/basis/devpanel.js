@@ -26,6 +26,7 @@ basis.ready(function(){
     require('./devpanel/API/server.js'),
     require('./devpanel/API/file.js'),
     require('./devpanel/API/l10n.js'),
+    require('./devpanel/API/ui.js'),
     require('./devpanel/API/inspector.js')
   );
 
