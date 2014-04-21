@@ -1,4 +1,5 @@
 var transport = require('./transport.js');
+var inspectBasis = require('devpanel').inspectBasis;
 
 // new basisjs-tools
 if (typeof basisjsToolsFileSync != 'undefined')
@@ -10,8 +11,8 @@ if (typeof basisjsToolsFileSync != 'undefined')
 else
 {
   // old basisjs-tools
-  if (basis.devtools)
-    basis.devtools.serverState.addHandler({
+  if (inspectBasis.devtools)
+    inspectBasis.devtools.serverState.addHandler({
       update: function(object, delta){
         if ('isOnline' in delta)
           transport.sendData('serverStatus', this.data.isOnline);
@@ -28,9 +29,9 @@ module.exports = {
       isOnline = basisjsToolsFileSync.isOnline.value;
     }
     else
-      if (basis.devtools)
+      if (inspectBasis.devtools)
       {
-        isOnline = basis.devtools.serverState && basis.devtools.serverState.data.isOnline;
+        isOnline = inspectBasis.devtools.serverState && inspectBasis.devtools.serverState.data.isOnline;
       }
 
     transport.sendData('serverStatus', isOnline || false);

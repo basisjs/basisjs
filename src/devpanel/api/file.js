@@ -1,8 +1,7 @@
-basis.require('basis.template');
-
-
 var transport = require('./transport.js');
 var sendData = transport.sendData;
+var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisTemplate = inspectBasis.require('basis.template');
 
 var IS_FILE_ALLOWED_REGEX = /\.(tmpl|css|l10n)$/;
 
@@ -11,7 +10,7 @@ function sendFile(file){
 
   if (basis.path.extname(file.data.filename) == '.tmpl' && file.data.content)
   {
-    data.declaration = basis.template.makeDeclaration(file.data.content, basis.path.dirname(basis.path.resolve(file.data.filename)) + '/', {}, file.data.filename);
+    data.declaration = inspectBasisTemplate.makeDeclaration(file.data.content, basis.path.dirname(basis.path.resolve(file.data.filename)) + '/', {}, file.data.filename);
     data.resources = data.declaration.resources;
     // delete deps as it can has resource and ResourceWrapper which can't be serialized
     data.declaration.deps = [];
@@ -65,9 +64,9 @@ var FILE_LIST_HANDLER = {
   }
 };
 
-if (basis.devtools)
+if (inspectBasis.devtools)
 {
-  var files = basis.devtools.files;
+  var files = inspectBasis.devtools.files;
   files.addHandler(FILE_LIST_HANDLER);
   FILE_LIST_HANDLER.itemsChanged.call(files, files, {
     inserted: files.getItems()
@@ -79,11 +78,11 @@ if (basis.devtools)
 //
 module.exports = {
   getFileList: function(){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
 
     if (basisjsTools)
       sendData('filesChanged', {
-        inserted: !basis.devtools
+        inserted: !inspectBasis.devtools
           // new basisjs-tools
           ? basisjsTools.getFiles().map(function(file){
               return {
@@ -99,26 +98,26 @@ module.exports = {
       });
   },
   createFile: function(filename){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
 
     if (basisjsTools)
       basisjsTools.createFile(filename);
   },
   readFile: function(filename){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
 
     if (basisjsTools)
     {
       var file = basisjsTools.getFile(filename, true);
-      if (file.data.content)
+      if (typeof file.data.content == 'string')
         sendFile(file);
       else
         file.read();
     }
   },
   saveFile: function(filename, content){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
-    
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+
     if (basisjsTools)
     {
       var file = basisjsTools.getFile(filename);

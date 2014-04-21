@@ -23,6 +23,7 @@
   var createEvent = basis.event.create;
 
   var HtmlTemplate = basis.template.html.Template;
+  var htmlTemplateIdMarker = basis.template.html.marker;
   var TemplateSwitcher = basis.template.TemplateSwitcher;
   var DWNode = basis.dom.wrapper.Node;
   var DWPartitionNode = basis.dom.wrapper.PartitionNode;
@@ -857,7 +858,7 @@
 
         if (newElement)
         {
-          newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
+          newElement[htmlTemplateIdMarker] = this.delegate.element[htmlTemplateIdMarker]; // to make events work
           this.element = newElement;
         }
       },
@@ -869,7 +870,7 @@
             var newElement = this.getElement(this.delegate);
 
             if (newElement)
-              newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
+              newElement[htmlTemplateIdMarker] = this.delegate.element[htmlTemplateIdMarker]; // to make events work
 
             this.element = newElement || this.tmpl.element;
 

@@ -4,9 +4,14 @@ basis.require('basis.layout');
 basis.require('basis.ui');
 basis.require('basis.ui.popup');
 
+var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisTemplate = inspectBasis.require('basis.template');
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisEvent = inspectBasis.require('basis.dom.event');
+
 var document = global.document;
 var DOM = basis.dom;
-var transport = require('../API/transport.js');
+var transport = require('../api/transport.js');
 
 var inspectDepth = 0;
 var inspectMode;
@@ -34,15 +39,15 @@ function pickHandler(event){
     return;
   }
 
-  var template = pickupTarget.value ? basis.template.resolveTemplateById(pickupTarget.value) : null;
+  var template = pickupTarget.value ? inspectBasisTemplate.resolveTemplateById(pickupTarget.value) : null;
 
   if (template)
   {
     var source = template.source;
 
-    if (source.url && template.source instanceof basis.template.L10nProxyToken == false)
+    if (source.url && template.source instanceof inspectBasisTemplate.L10nProxyToken == false)
     {
-      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
 
       if (basisjsTools && typeof basisjsTools.openFile == 'function' && (event.ctrlKey || event.metaKey))
         basisjsTools.openFile(source.url);
@@ -63,7 +68,7 @@ function pickHandler(event){
 var pickupTarget = new basis.data.Value({
   handler: {
     change: function(){
-      var tmpl = this.value ? basis.template.resolveTmplById(this.value) : null;
+      var tmpl = this.value ? inspectBasisTemplate.resolveTmplById(this.value) : null;
 
       if (tmpl)
       {
@@ -87,8 +92,8 @@ var pickupTarget = new basis.data.Value({
 
       nodeInfoPopup().update({
         tmpl: tmpl,
-        template: tmpl && basis.template.resolveTemplateById(this.value),
-        object: tmpl && basis.template.resolveObjectById(this.value)
+        template: tmpl && inspectBasisTemplate.resolveTemplateById(this.value),
+        object: tmpl && inspectBasisTemplate.resolveObjectById(this.value)
       });
     }
   }
@@ -145,7 +150,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           if (node.data.template)
           {
             var source = node.data.template.source;
-            return source instanceof basis.template.SourceWrapper ? source.path : '';
+            return source instanceof inspectBasisTemplate.SourceWrapper ? source.path : '';
           }
         }
       }
@@ -169,12 +174,12 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 function startInspect(){
   if (!inspectMode)
   {
-    DOM.event.addGlobalHandler('mousemove', mousemoveHandler);
-    DOM.event.addGlobalHandler('mousewheel', mouseWheelHandler);
-    DOM.event.captureEvent('mousedown', DOM.event.kill);
-    DOM.event.captureEvent('mouseup', DOM.event.kill);
-    DOM.event.captureEvent('contextmenu', endInspect);
-    DOM.event.captureEvent('click', pickHandler);
+    basis.dom.event.addGlobalHandler('mousemove', mousemoveHandler);
+    basis.dom.event.addGlobalHandler('mousewheel', mouseWheelHandler);
+    inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);
+    inspectBasisEvent.captureEvent('mouseup', basis.dom.event.kill);
+    inspectBasisEvent.captureEvent('contextmenu', endInspect);
+    inspectBasisEvent.captureEvent('click', pickHandler);
 
     basis.cssom.classList(document.body).add('devpanel-inspectMode');
     inspectMode = true;
@@ -185,12 +190,12 @@ function startInspect(){
 function endInspect(){
   if (inspectMode)
   {
-    DOM.event.removeGlobalHandler('mousemove', mousemoveHandler);
-    DOM.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
-    DOM.event.releaseEvent('mousedown');
-    DOM.event.releaseEvent('mouseup');
-    DOM.event.releaseEvent('contextmenu');
-    DOM.event.releaseEvent('click');
+    basis.dom.event.removeGlobalHandler('mousemove', mousemoveHandler);
+    basis.dom.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
+    inspectBasisEvent.releaseEvent('mousedown');
+    inspectBasisEvent.releaseEvent('mouseup');
+    inspectBasisEvent.releaseEvent('contextmenu');
+    inspectBasisEvent.releaseEvent('click');
 
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');
     inspectMode = false;
@@ -216,7 +221,7 @@ function mousemoveHandler(event){
   lastMouseY = event.mouseY;
 
   do {
-    if (refId = cursor.basisTemplateId)
+    if (refId = cursor[inspectBasisTemplateMarker])
     {
       inspectDepth = 0;
       break;
@@ -239,7 +244,7 @@ function mouseWheelHandler(event){
   var refId;
 
   do {
-    if (refId = cursor.basisTemplateId)
+    if (refId = cursor[inspectBasisTemplateMarker])
     {
       lastRefId = refId;
       lastDepth = curDepth;

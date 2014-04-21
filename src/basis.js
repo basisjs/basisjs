@@ -1059,6 +1059,8 @@
         var configAttrNode = scriptEl.getAttributeNode('data-basis-config') || scriptEl.getAttributeNode('basis-config');
         if (configAttrNode)
         {
+          scriptEl.removeAttribute('basis-config');
+          scriptEl.removeAttribute('data-basis-config');
           try {
             extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
           } catch(e) {
@@ -1765,7 +1767,7 @@
       for (var key in map)
         resourceContentCache[pathUtils.resolve(key)] = map[key];
 
-      __resources__ = null; // reset prefetched to reduce memory leaks
+      //__resources__ = null; // reset prefetched to reduce memory leaks
     }
   })();
 

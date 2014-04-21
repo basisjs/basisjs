@@ -4,6 +4,11 @@ basis.require('basis.cssom');
 basis.require('basis.layout');
 basis.require('basis.ui');
 
+var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisTemplate = inspectBasis.require('basis.template');
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisEvent = inspectBasis.require('basis.dom.event');
+
 var document = global.document;
 var DOM = basis.dom;
 
@@ -48,7 +53,7 @@ function startInspect(){
 
     basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
     basis.dom.event.addHandler(window, 'resize', updateOnResize);
-    DOM.event.captureEvent('contextmenu', endInspect);
+    inspectBasisEvent.captureEvent('contextmenu', endInspect);
 
     if (observer)
       observer.observe(document.body, {
@@ -70,7 +75,7 @@ function endInspect(){
 
     basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
     basis.dom.event.removeHandler(window, 'resize', updateOnResize);
-    DOM.event.releaseEvent('contextmenu');
+    inspectBasisEvent.releaseEvent('contextmenu');
 
     unhighlight();
     inspectMode = false;
@@ -150,9 +155,9 @@ function unhighlight(keepOverlay){
 
 function updateHighlight(records){
   for (var i = 0; i < records.length; i++)
-    if (records[i].target != overlayContent
-        && records[i].target.parentNode != overlayContent
-        && records[i].target.id != 'devpanelSharedDom')
+    if (records[i].target != overlayContent &&
+        records[i].target.parentNode != overlayContent &&
+        records[i].target.id != 'devpanelSharedDom')
     {
       highlight(true);
       break;
@@ -162,9 +167,9 @@ function updateHighlight(records){
 function domTreeHighlight(root){
   for (var i = 0, child; child = root.childNodes[i]; i++)
   {
-    if (child.basisTemplateId)
+    if (child[inspectBasisTemplateMarker])
     {
-      var debugInfo = basis.template.getDebugInfoById(child.basisTemplateId);
+      var debugInfo = inspectBasisTemplate.getDebugInfoById(child[inspectBasisTemplateMarker]);
       if (debugInfo)
       {
         for (var j = 0, binding; binding = debugInfo[j]; j++)

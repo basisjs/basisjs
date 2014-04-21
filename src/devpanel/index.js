@@ -1,6 +1,10 @@
 basis.require('basis.ui');
 basis.require('basis.dragdrop');
-basis.require('basis.l10n');
+
+var inspectBasis = require('devpanel').inspectBasis;
+inspectBasis.require('basis.l10n');
+inspectBasis.require('basis.template');
+inspectBasis.require('basis.dom.event');
 
 var l10nInspector = resource('./inspector/l10n.js');
 var templateInspector = resource('./inspector/template.js');
@@ -47,14 +51,14 @@ if (typeof basisjsToolsFileSync != 'undefined')
 else
 {
   // old basisjs-tools
-  isOnline = basis.devtools && basis.data.Value.from(basis.devtools.serverState, 'update', 'data.isOnline');
+  isOnline = inspectBasis.devtools && basis.data.Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
 }
 
 var panel = new basis.ui.Node({
   container: document.body,
 
   activated: false,
-  themeName: basis.template.currentTheme().name,
+  themeName: inspectBasis.template.currentTheme().name,
 
   template: resource('./template/panel.tmpl'),
 
@@ -62,7 +66,7 @@ var panel = new basis.ui.Node({
     activated: 'activated',
     themeName: 'themeName',
     themeList: themeList,
-    cultureName: basis.l10n.culture,
+    cultureName: inspectBasis.l10n.culture,
     cultureList: cultureList,
     isOnline: isOnline,
     reloadRequired: 'satellite:'
@@ -72,8 +76,8 @@ var panel = new basis.ui.Node({
     inspectTemplate: function(){
       cultureList.setDelegate();
       themeList.setDelegate();
-      basis.dom.event.captureEvent('click', function(){
-        basis.dom.event.releaseEvent('click');
+      inspectBasis.dom.event.captureEvent('click', function(){
+        inspectBasis.dom.event.releaseEvent('click');
         templateInspector().startInspect();
       });
     },
@@ -83,8 +87,8 @@ var panel = new basis.ui.Node({
     inspectl10n: function(){
       cultureList.setDelegate();
       themeList.setDelegate();
-      basis.dom.event.captureEvent('click', function(){
-        basis.dom.event.releaseEvent('click');
+      inspectBasis.dom.event.captureEvent('click', function(){
+        inspectBasis.dom.event.releaseEvent('click');
         l10nInspector().startInspect();
       });
     },
@@ -94,8 +98,8 @@ var panel = new basis.ui.Node({
     inspectHeat: function(){
       cultureList.setDelegate();
       themeList.setDelegate();
-      basis.dom.event.captureEvent('click', function(){
-        basis.dom.event.releaseEvent('click');
+      inspectBasis.dom.event.captureEvent('click', function(){
+        inspectBasis.dom.event.releaseEvent('click');
         heatInspector().startInspect();
       });
     },

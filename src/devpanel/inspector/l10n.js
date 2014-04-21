@@ -4,11 +4,17 @@ basis.require('basis.cssom');
 basis.require('basis.layout');
 basis.require('basis.ui');
 
+var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisTemplate = inspectBasis.require('basis.template');
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisL10n = inspectBasis.require('basis.l10n');
+var inspectBasisEvent = inspectBasis.require('basis.dom.event');
+
 var document = global.document;
 var DOM = basis.dom;
 
 var colorPicker = require('./colorPicker.js');
-var transport = require('../API/transport.js');
+var transport = require('../api/transport.js');
 
 var elements = [];
 var inspectMode;
@@ -39,7 +45,7 @@ function pickHandler(event){
 
 function loadToken(token){
   var dictionary = token.dictionary;
-  var cultureList = basis.l10n.getCultureList();
+  var cultureList = inspectBasisL10n.getCultureList();
 
   var data = {
     cultureList: cultureList,
@@ -155,9 +161,9 @@ function unhighlight(keepOverlay){
 
 function updateHighlight(records){
   for (var i = 0; i < records.length; i++)
-    if (records[i].target != overlayContent
-        && records[i].target.parentNode != overlayContent
-        && records[i].target.id != 'devpanelSharedDom')
+    if (records[i].target != overlayContent &&
+        records[i].target.parentNode != overlayContent &&
+        records[i].target.id != 'devpanelSharedDom')
     {
       highlight(true);
       break;
@@ -165,7 +171,7 @@ function updateHighlight(records){
 }
 
 function addTokenToHighlight(token, ref, domNode){
-  if (token instanceof basis.l10n.Token && token.dictionary)
+  if (token instanceof inspectBasisL10n.Token && token.dictionary)
   {
     var rect;
 
@@ -206,16 +212,16 @@ function addTokenToHighlight(token, ref, domNode){
 function domTreeHighlight(root){
   for (var i = 0, child, l10nRef; child = root.childNodes[i]; i++)
   {
-    if (child.basisTemplateId)
+    if (child[inspectBasisTemplateMarker])
     {
-      var debugInfo = basis.template.getDebugInfoById(child.basisTemplateId);
+      var debugInfo = inspectBasisTemplate.getDebugInfoById(child[inspectBasisTemplateMarker]);
       if (debugInfo)
       {
         for (var j = 0, binding; binding = debugInfo[j]; j++)
         {
           var token = binding.attachment;
 
-          if (token instanceof basis.l10n.ComputeToken)
+          if (token instanceof inspectBasisL10n.ComputeToken)
             token = token.token;
 
           addTokenToHighlight(token, binding.val, binding.dom);
@@ -226,7 +232,7 @@ function domTreeHighlight(root){
     if (child.nodeType == basis.dom.ELEMENT_NODE)
     {
       if (l10nRef = child.getAttribute('data-basisjs-l10n'))
-        addTokenToHighlight(basis.l10n.token(l10nRef), child, child);
+        addTokenToHighlight(inspectBasisL10n.token(l10nRef), child, child);
 
       domTreeHighlight(child);
     }

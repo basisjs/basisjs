@@ -65,7 +65,7 @@
       bindingList.push(binding);
     }
 
-    function processTokens(tokens, path, noTextBug){
+    function processTokens(tokens, path, noTextBug, templateMarker){
       var localPath;
       var refs;
       var myRef;
@@ -117,7 +117,7 @@
           myRef = -1;
 
           if (path == rootPath)
-            markedElementList.push(localPath + '.basisTemplateId');
+            markedElementList.push(localPath + '.' + templateMarker);
 
           if (!explicitRef)
           {
@@ -180,14 +180,14 @@
       }
     }
 
-    return function(tokens, path, noTextBug){
+    return function(tokens, path, noTextBug, templateMarker){
       pathList = [];
       refList = [];
       bindingList = [];
       markedElementList = [];
       rootPath = path || '_';
 
-      processTokens(tokens, rootPath, noTextBug);
+      processTokens(tokens, rootPath, noTextBug, templateMarker);
 
       return {
         path: pathList,
@@ -654,7 +654,7 @@
     /** @cut */ }
   }
 
-  var getFunctions = function(tokens, debug, uri, source, noTextBug){
+  var getFunctions = function(tokens, debug, uri, source, noTextBug, templateMarker){
     // try get functions from cache by templateId
     var fn = tmplFunctions[uri && basis.path.relative(uri)];
 
@@ -662,7 +662,7 @@
       return fn;
 
     // build functions
-    var paths = buildPathes(tokens, '_', noTextBug);
+    var paths = buildPathes(tokens, '_', noTextBug, templateMarker);
     var bindings = buildBindings(paths.binding);
     var objectRefs = paths.markedElementList.join('=');
     var createInstance;

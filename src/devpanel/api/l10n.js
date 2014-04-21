@@ -1,9 +1,12 @@
-basis.require('basis.l10n');
+basis.require('basis.data');
 
 var STATE = basis.data.STATE;
 var sendData = require('./transport.js').sendData;
 
-basis.l10n.onCultureChange(function(culture){
+var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisL10n = inspectBasis.require('basis.l10n');
+
+inspectBasisL10n.onCultureChange(function(culture){
   sendData('cultureChanged', culture);
 });
 
@@ -23,14 +26,14 @@ function createDictionaryFileContent(data){
 module.exports = {
   loadCultureList: function(){
     sendData('cultureList', {
-      currentCulture: basis.l10n.getCulture(),
-      cultureList: basis.l10n.getCultureList()
+      currentCulture: inspectBasisL10n.getCulture(),
+      cultureList: inspectBasisL10n.getCultureList()
     });
   },
 
   loadDictionaryList: function(){
     var data = [];
-    var dictionaries = basis.l10n.getDictionaries();
+    var dictionaries = inspectBasisL10n.getDictionaries();
 
     for (var i = 0, dict; dict = dictionaries[i]; i++)
       data.push(basis.path.relative('/', dict.resource.url));
@@ -39,11 +42,11 @@ module.exports = {
   },
 
   setTokenCultureValue: function(namespace, name, culture, value){
-    basis.l10n.dictionary('/' + namespace).setCultureValue(culture, name, value);
+    inspectBasisL10n.dictionary('/' + namespace).setCultureValue(culture, name, value);
   },
 
   loadDictionaryTokens: function(dictionaryName){
-    var dict = basis.l10n.dictionary('/' + dictionaryName);
+    var dict = inspectBasisL10n.dictionary('/' + dictionaryName);
 
     if (dict)
       sendData('dictionaryTokens', {
@@ -55,11 +58,11 @@ module.exports = {
   },
 
   updateDictionary: function(data){
-    basis.resource('/' + data.dictionary).update(createDictionaryFileContent(data));
+    inspectBasis.resource('/' + data.dictionary).update(createDictionaryFileContent(data));
   },
 
   saveDictionary: function(data){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
 
     if (!basisjsTools)
       return;

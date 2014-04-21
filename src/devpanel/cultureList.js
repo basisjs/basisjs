@@ -1,6 +1,7 @@
-basis.require('basis.l10n');
 basis.require('basis.data');
 
+var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var Menu = require('./module/menu/index.js');
 
 module.exports = new Menu({
@@ -8,7 +9,7 @@ module.exports = new Menu({
     template: resource('./template/cultureItem.tmpl'),
     binding: {
       title: 'value',
-      selected: basis.data.Value.from(basis.l10n.culture).compute(function(node, value){
+      selected: basis.data.Value.from(inspectBasisL10n.culture).compute(function(node, value){
         return node.value == value;
       }),
       spriteX: {
@@ -26,12 +27,12 @@ module.exports = new Menu({
     },
     action: {
       select: function(){
-        basis.l10n.setCulture(this.value);
+        inspectBasisL10n.setCulture(this.value);
       }
     }
   },
 
-  childNodes: basis.l10n.getCultureList().map(function(culture){
+  childNodes: inspectBasisL10n.getCultureList().map(function(culture){
     return {
       value: culture,
       country: culture.split('-').pop()

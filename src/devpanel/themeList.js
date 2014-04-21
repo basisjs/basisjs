@@ -1,12 +1,12 @@
-basis.require('basis.template');
-
+var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisTemplate = inspectBasis.require('basis.template');
 var Menu = require('./module/menu/index.js');
 
 var view = new Menu({
   selection: {
     handler: {
       itemsChanged: function(){
-        basis.template.setTheme(this.pick().value);
+        inspectBasisTemplate.setTheme(this.pick().value);
       }
     }
   },
@@ -15,15 +15,15 @@ var view = new Menu({
       title: 'value'
     }
   },
-  childNodes: basis.template.getThemeList().map(function(themeName){
+  childNodes: inspectBasisTemplate.getThemeList().map(function(themeName){
     return {
       value: themeName,
-      selected: basis.template.currentTheme().name == themeName
+      selected: inspectBasisTemplate.currentTheme().name == themeName
     };
   })
 });
 
-basis.template.onThemeChange(function(themeName){
+inspectBasisTemplate.onThemeChange(function(themeName){
   var item = view.getChild(themeName, 'value');
   if (item)
     item.select();
