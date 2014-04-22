@@ -1,0 +1,24 @@
+<b:style src="./item.css"/>
+<b:define name="nestedViewCount" type="bool"/>
+<b:define name="satelliteName" type="bool"/>
+<b:define name="namespace" type="bool"/>
+
+<div class="basisjs-devpanel-ui-view-item">
+  <div class="basisjs-devpanel-ui-view-item__title" event-click="toggle">
+    <div class="basisjs-devpanel-ui-view-item__expander basisjs-devpanel-ui-view-item__expander_{nestedViewCount}"/>
+    <span class="basisjs-devpanel-ui-view-item__satelliteName basisjs-devpanel-ui-view-item__satelliteName_{satelliteName}">
+      {satelliteName}
+    </span>
+    <span class="basisjs-devpanel-ui-view-item__namespace basisjs-devpanel-ui-view-item__namespace_{namespace}">
+      {namespace}.
+    </span>
+    {name}
+    <span class="basisjs-devpanel-ui-view-item__id">
+      #{id}
+    </span>
+    <span class="basisjs-devpanel-ui-view-item__count basisjs-devpanel-ui-view-item__count_{nestedViewCount}">
+      {nestedViewCount}
+    </span>
+  </div>
+  <div{childNodesElement} class="basisjs-devpanel-ui-view-item__content"/>
+</div>

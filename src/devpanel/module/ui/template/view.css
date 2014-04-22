@@ -1,0 +1,16 @@
+.basisjs-devpanel-ui-view
+{
+  position: fixed;
+  z-index: 1000;
+  top: 10px;
+  right: 10px;
+  width: 300px;
+  bottom: 10px;
+  background: rgba(255,255,255,.9);
+  overflow: auto;
+  overflow-x: hidden;
+  padding: 4px;
+  font-family: Arial, Tahoma, Verdana, sans-serif !important;
+  font-size: 12px;
+  line-height: 14px;
+}

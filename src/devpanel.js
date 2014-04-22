@@ -48,6 +48,28 @@ basis.nextTick(function(){
 
     // init interface
     require('./devpanel/index.js');
+    // temporary here
+    require('./devpanel/module/ui/index.js');
+
+    // setup live update
+    if (inspectBasis.devtools)
+    {
+      var FILE_HANDLER = {
+        update: function(sender, delta){
+          if ('filename' in delta || 'content' in delta)
+            if (!basis.resource.isDefined || basis.resource.isDefined(this.data.filename, true))
+              basis.resource(this.data.filename).update(this.data.content);
+        }
+      };
+      inspectBasis.devtools.files.addHandler({
+        itemsChanged: function(sender, delta){
+          if (delta.inserted)
+            delta.inserted.forEach(function(file){
+              file.addHandler(FILE_HANDLER);
+            });
+        }
+      });
+    }
 
     basis.dev.log('basis devpanel inited');
   });
