@@ -764,7 +764,11 @@
 
     init: function(){
       this.element = this.childNodesElement = document.createDocumentFragment();
+
       DWGroupingNode.prototype.init.call(this);
+
+      /** @cut */ instances[this.basisObjectId] = this;
+      /** @cut */ notifier.set({ action: 'create', instance: this });
     },
 
     syncDomRefs: function(){
@@ -783,7 +787,11 @@
     },
 
     destroy: function(){
+      /** @cut */ delete instances[this.basisObjectId];
+      /** @cut */ notifier.set({ action: 'destroy', instance: this });
+
       DWGroupingNode.prototype.destroy.call(this);
+
       this.element = null;
       this.childNodesElement = null;
     }

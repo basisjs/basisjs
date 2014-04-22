@@ -12,11 +12,6 @@ var config = { data: null };
 var updateObj = { parent: null, satelliteName: null };
 
 var allInstances = new basis.data.Dataset();
-var splitByParent = new basis.data.dataset.Split({
-  source: allInstances,
-  rule: 'data.parent'
-});
-var rootInstances = splitByParent.getSubset(null, true);
 
 function updateInfo(){
   var queue = updateInfoQueue;
@@ -85,7 +80,5 @@ inspectBasisUI.debug_getInstances().map(function(instance){
 });
 
 module.exports = {
-  allInstances: allInstances,
-  rootInstances: rootInstances,
-  splitByParent: splitByParent
+  instances: allInstances
 };
