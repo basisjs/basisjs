@@ -9,7 +9,7 @@ var updateInfoQueue = {};
 var updateInfoTimer_ = null;
 
 var config = { data: null };
-var updateObj = { parent: null, satelliteName: null };
+var updateObj = { parent: null, satelliteName: null, groupNode: null, grouping: null };
 
 var allInstances = new basis.data.Dataset();
 
@@ -27,6 +27,8 @@ function updateInfo(){
     var instance = model.data.instance;
     var parent = instance.parentNode || instance.owner;
     updateObj.parent = parent && parent.basisObjectId;  // reuse updateObj to less GC
+    updateObj.groupNode = instance.groupNode && instance.groupNode.basisObjectId;  // reuse updateObj to less GC
+    updateObj.grouping = instance.grouping && instance.grouping.basisObjectId;
     updateObj.satelliteName = instance.ownerSatelliteName;
     instances[id].update(updateObj);
     models.push(model);
@@ -45,6 +47,7 @@ function processEvent(event){
 
       // reuse config for less garbage
       config.data = {
+        id: instance.basisObjectId,
         instance: instance,
         parent: null
       };
@@ -80,5 +83,6 @@ inspectBasisUI.debug_getInstances().map(function(instance){
 });
 
 module.exports = {
+  instanceMap: instances,
   instances: allInstances
 };
