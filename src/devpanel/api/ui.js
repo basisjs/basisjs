@@ -84,9 +84,6 @@ inspectBasisUI.debug_getInstances().map(function(instance){
   });
 });
 
-window.rootInstances = rootInstances;
-window.splitByParent = splitByParent;
-
 module.exports = {
   allInstances: allInstances,
   rootInstances: rootInstances,
