@@ -1,4 +1,5 @@
 require('basis.data.index');
+require('basis.layout');
 require('basis.ui');
 
 var uiInfo = require('devpanel.api.ui');
@@ -6,6 +7,42 @@ var instanceMap = uiInfo.instanceMap;
 var splitByParent = new basis.data.dataset.Split({
   source: uiInfo.instances,
   rule: 'data.parent'
+});
+
+var hoverTimer;
+var hoverView = new basis.data.Value();
+var overlay = document.createElement('div');
+overlay.style.position = 'absolute';
+overlay.style.background = 'red';
+overlay.style.transition = 'all .05s';
+overlay.style.zIndex = 10000;
+overlay.style.background = 'rgba(110, 163, 217, .7)';
+overlay.style.pointerEvents = 'none';
+var hoverEl = new basis.data.Value({
+  handler: {
+    change: function(){
+      if (this.value)
+      {
+        var rect = basis.layout.getBoundingRect(this.value);
+        if (rect)
+        {
+          overlay.style.left = rect.left + 'px';
+          overlay.style.top = rect.top + 'px';
+          overlay.style.width = rect.width + 'px';
+          overlay.style.height = rect.height + 'px';
+          document.body.appendChild(overlay);
+          return;
+        }
+      }
+
+      if (overlay.parentNode)
+        overlay.parentNode.removeChild(overlay);
+    }
+  }
+});
+
+hoverView.link(hoverEl, function(value){
+  this.set(value ? value.data.instance.element : null);
 });
 
 var ViewNode = basis.ui.Node.subclass({
@@ -25,6 +62,15 @@ var ViewNode = basis.ui.Node.subclass({
       this.collapsed = !this.collapsed;
       this.updateBind('collapsed');
       this.setDataSource(!this.collapsed ? this.subset : null);
+    },
+    enter: function(event){
+      hoverView.set(this);
+      clearTimeout(hoverTimer);
+    },
+    leave: function(){
+      hoverTimer = setTimeout(function(){
+        hoverView.set(null);
+      }, 50);
     }
   },
   childClass: basis.Class.SELF,
@@ -44,7 +90,6 @@ var ViewNode = basis.ui.Node.subclass({
         isGroup: {
           events: 'update',
           getter: function(node){
-            console.log(node);
             return node.data.id > 0;
           }
         }
@@ -75,7 +120,7 @@ var ViewNode = basis.ui.Node.subclass({
   },
 
   emit_update: function(delta){
-    basis.ui.Node.emit_update.call(this, delta);
+    basis.ui.Node.prototype.emit_update.call(this, delta);
 
     if ('grouping' in delta)
     {

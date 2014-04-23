@@ -21,15 +21,27 @@ function updateInfo(){
   updateInfoTimer_ = null;
 
   console.log('updateInfo');
+
   for (var id in queue)
   {
-    var model = queue[id];
+    var instance = instances[id].data.instance;
+    if (instance.firstChild)
+      instance.childNodes.forEach(function(child){
+        queue[child.basisObjectId] = true;
+      });
+  }
+
+  for (var id in queue)
+  {
+    var model = instances[id];
     var instance = model.data.instance;
     var parent = instance.parentNode || instance.owner;
+
     updateObj.parent = parent && parent.basisObjectId;  // reuse updateObj to less GC
     updateObj.groupNode = instance.groupNode && instance.groupNode.basisObjectId;  // reuse updateObj to less GC
     updateObj.grouping = instance.grouping && instance.grouping.basisObjectId;
     updateObj.satelliteName = instance.ownerSatelliteName;
+
     instances[id].update(updateObj);
     models.push(model);
   }
@@ -47,16 +59,14 @@ function processEvent(event){
 
       // reuse config for less garbage
       config.data = {
-        id: instance.basisObjectId,
+        id: id,
         instance: instance,
         parent: null
       };
 
-      var model = new basis.data.Object(config);
+      instances[id] = new basis.data.Object(config);
 
-      instances[id] = model;
-      updateInfoQueue[id] = model;
-
+      updateInfoQueue[id] = true;
       if (!updateInfoTimer_)
         updateInfoTimer_ = basis.setImmediate(updateInfo);
 
@@ -73,6 +83,17 @@ function processEvent(event){
       break;
   }
 }
+
+inspectBasisUI.GroupingNode.prototype.debug_emit =
+inspectBasisUI.Node.prototype.debug_emit = function(event){
+  var id = event.sender.basisObjectId;
+
+  if (id in instances)
+    updateInfoQueue[id] = true;
+
+  if (!updateInfoTimer_)
+    updateInfoTimer_ = basis.setImmediate(updateInfo);
+};
 
 inspectBasisUI.debug_notifier.attach(processEvent);
 inspectBasisUI.debug_getInstances().map(function(instance){
