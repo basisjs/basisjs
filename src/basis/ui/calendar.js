@@ -1,9 +1,6 @@
 
   basis.require('basis.event');
   basis.require('basis.date');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.data.value');
   basis.require('basis.ui');
   basis.require('basis.l10n');
 
@@ -21,13 +18,11 @@
   //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
 
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
   var createEvent = basis.event.create;
 
-  var Property = basis.data.value.Property;
   var UINode = basis.ui.Node;
 
 
@@ -198,8 +193,7 @@
     emit_periodChanged: createEvent('periodChanged'),
     emit_select: function(){
       UINode.prototype.emit_select.call(this);
-
-      DOM.focus(this.element);
+      this.focus();
     },
 
     template: templates.Node,
@@ -208,23 +202,19 @@
       title: {
         events: 'periodChanged',
         getter: function(node){
-          return PERIOD_TITLE[node.nodePeriodName](node);
+          return node.parentNode && PERIOD_TITLE[node.nodePeriodName](node);
         }
       },
       before: {
         events: 'periodChanged',
         getter: function(node){
-          return node.parentNode && node.periodStart < node.parentNode.periodStart
-            ? 'before'
-            : '';
+          return node.parentNode && node.periodStart < node.parentNode.periodStart;
         }
       },
       after: {
         events: 'periodChanged',
         getter: function(node){
-          return node.parentNode && node.periodEnd > node.parentNode.periodEnd
-            ? 'after'
-            : '';
+          return node.parentNode && node.periodEnd > node.parentNode.periodEnd;
         }
       }
     },
@@ -243,10 +233,7 @@
         this.periodStart = period.periodStart;
         this.periodEnd = period.periodEnd;
 
-        if (this.isPeriodEnabled(this.periodStart, this.periodEnd))
-          this.enable();
-        else
-          this.disable();
+        this.setDisabled(!this.isPeriodEnabled(this.periodStart, this.periodEnd));
 
         if (selectedDate)
         {
@@ -261,17 +248,31 @@
     }
   });
 
-  function getPeriods(){
+  function getPeriods(section){
     // update nodes
-    var nodePeriod = getPeriod(this.nodePeriodName, basis.date.add(new Date(this.periodStart), this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(this.periodStart) || 0)));
     var result = [];
+    var nodePeriod = getPeriod(
+      section.nodePeriodName,
+      basis.date.add(
+        new Date(section.periodStart),
+        section.nodePeriodUnit,
+        -section.nodePeriodUnitCount * section.getInitOffset(section.periodStart)
+      )
+    );
 
-    for (var i = 0; i < this.nodeCount; i++)
+    for (var i = 0; i < section.nodeCount; i++)
     {
       result.push(nodePeriod);
 
       // move to next period
-      nodePeriod = getPeriod(this.nodePeriodName, basis.date.add(new Date(nodePeriod.periodStart), this.nodePeriodUnit, this.nodePeriodUnitCount));
+      nodePeriod = getPeriod(
+        section.nodePeriodName,
+        basis.date.add(
+          new Date(nodePeriod.periodStart),
+          section.nodePeriodUnit,
+          section.nodePeriodUnitCount
+        )
+      );
     }
 
     return result;
@@ -287,19 +288,18 @@
     emit_selectedDateChanged: createEvent('selectedDateChanged'),
 
     template: templates.Section,
-
     binding: {
       sectionName: 'sectionName',
       title: {
         events: 'periodChanged',
         getter: function(node){
-          return node.getTitle(node.periodStart) || '-';
+          return node.getTitle(node.periodStart);
         }
       },
       tabTitle: {
         events: 'selectedDateChanged',
         getter: function(node){
-          return node.getTabTitle(node.selectedDate) || '-';
+          return node.getTabTitle(node.selectedDate);
         }
       }
     },
@@ -307,12 +307,58 @@
     childClass: CalendarNode,
 
     // dates
-
     minDate: null,
     maxDate: null,
 
     periodStart: null,
     periodEnd: null,
+    selectedDate: null,
+
+    // period
+
+    isPrevPeriodEnabled: true,
+    isNextPeriodEnabled: true,
+
+    periodName: 'period',
+
+    // nodes properties
+
+    nodeCount: 12,
+    nodePeriodName: '-',
+    nodePeriodUnit: '-',
+    nodePeriodUnitCount: 1,
+
+    selection: true,
+
+    init: function(){
+      this.childNodes = getPeriods(this).map(function(period){
+        return {
+          isPeriodEnabled: this.isPeriodEnabled,
+          nodePeriodName: this.nodePeriodName
+        };
+      }, this);
+
+      UINode.prototype.init.call(this);
+
+      var selectedDate = this.selectedDate || new Date;
+      this.selectedDate = null;
+      this.setViewDate(selectedDate);
+      this.setSelectedDate(selectedDate);
+    },
+
+    // nodes methods
+
+    getNodeByDate: function(date){
+      if (date && this.periodStart <= date && date <= this.periodEnd)
+      {
+        var pos = binarySearchIntervalPos(this.childNodes, date);
+        if (pos != -1)
+          return this.childNodes[pos];
+      }
+
+      return null;
+    },
+
     setPeriod: function(period, rebuild){
       if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
@@ -322,7 +368,7 @@
         this.periodStart = period.periodStart;
         this.periodEnd = period.periodEnd;
 
-        var periods = getPeriods.call(this);
+        var periods = getPeriods(this);
 
         this.minDate = periods[0].periodStart;
         this.maxDate = periods[periods.length - 1].periodEnd;
@@ -335,7 +381,6 @@
       }
     },
 
-    selectedDate: null,
     setSelectedDate: function(date){
       if (this.selectedDate - date)
       {
@@ -357,69 +402,14 @@
       }
     },
 
-    // period
-
-    isPrevPeriodEnabled: true,
-    isNextPeriodEnabled: true,
-
-    periodName: 'period',
-
-    // nodes properties
-
-    nodeCount: 12,
-    nodePeriodName: '-',
-    nodePeriodUnit: '-',
-    nodePeriodUnitCount: 1,
-
-    selection: true,
-
-    init: function(){
-      var selectedDate = this.selectedDate || new Date;
-      this.selectedDate = null;
-
-      this.setViewDate(selectedDate);
-
-      this.childNodes = getPeriods.call(this).map(function(period){
-        return {
-          isPeriodEnabled: this.isPeriodEnabled,
-          disabled: !this.isPeriodEnabled(period.periodStart, period.periodEnd),
-          nodePeriodName: this.nodePeriodName,
-          periodStart: period.periodStart,
-          periodEnd: period.periodEnd
-        };
-      }, this);
-
-      UINode.prototype.init.call(this);
-
-      this.setSelectedDate(selectedDate);
-    },
-
-    getTitle: function(){
-    },
-    getTabTitle: function(){
-    },
-
-    // nodes methods
-
-    getNodeByDate: function(date){
-      if (date && this.periodStart <= date && date <= this.periodEnd)
-      {
-        var pos = binarySearchIntervalPos(this.childNodes, date);
-        if (pos != -1)
-          return this.childNodes[pos];
-      }
-
-      return null;
-    },
-
     prevPeriod: function(){
       if (this.isPrevPeriodEnabled)
-        this.setPeriod(getPeriod(this.periodName, new Date(+this.periodStart - 1)));
+        this.setPeriod(getPeriod(this.periodName, new Date(Number(this.periodStart) - 1)));
     },
 
     nextPeriod: function(){
       if (this.isNextPeriodEnabled)
-        this.setPeriod(getPeriod(this.periodName, new Date(+this.periodEnd + 1)));
+        this.setPeriod(getPeriod(this.periodName, new Date(Number(this.periodEnd) + 1)));
     },
 
     setViewDate: function(date){
@@ -432,6 +422,14 @@
 
     // bild methods
     getInitOffset: function(){
+      return 0;
+    },
+
+    getTitle: function(){
+      return '-';
+    },
+    getTabTitle: function(){
+      return '-';
     }
   });
 
@@ -669,8 +667,8 @@
       // dates
       var now = new Date();
 
-      this.selectedDate = new Property(new Date(this.date || now));
-      this.date = new Property(new Date(this.date || now));
+      this.selectedDate = new basis.data.Value({ value: new Date(this.date || now) });
+      this.date = new basis.data.Value({ value: new Date(this.date || now) });
 
       // inherit
       UINode.prototype.init.call(this);
