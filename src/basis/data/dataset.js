@@ -227,8 +227,9 @@
     */
     sources: null,
 
-    sourceValues_: null, //[{ value: xx, dataset: d1 }, { value: y, dataset: d2 }, { value: z: dataset: d1 }]
-    sourcesMap_: null, //{ d1.basisObjectId: 2, d2.basisObjectId: 1 }
+    sourceValues_: null,
+    sourcesMap_: null,
+    sourceDelta_: null,
 
    /**
     * @type {function(count:number, sourceCount:number):boolean}
@@ -265,7 +266,7 @@
       this.sourceValues_ = [];
 
       if (sources)
-        sources.forEach(this.addSource, this);
+        this.setSources(sources);
     },
 
    /**
@@ -422,7 +423,23 @@
 
       // fire sources changes event
       if (delta = getDelta(inserted, deleted))
-        merge.emit_sourcesChanged(delta);
+      {
+        if (merge.sourceDelta_)
+        {
+          if (delta.inserted)
+            delta.inserted.forEach(function(source){
+              if (!basis.array.remove(this.deleted, source))
+                basis.array.add(this.inserted, source);
+            }, merge.sourceDelta_);
+          if (delta.deleted)
+            delta.deleted.forEach(function(source){
+              if (!basis.array.remove(this.inserted, source))
+                basis.array.add(this.deleted, source);
+            }, merge.sourceDelta_);
+        }
+        else
+          merge.emit_sourcesChanged(delta);
+      }
 
       return delta;
     },
@@ -462,6 +479,9 @@
 
       this.sourceValues_.push(sourceInfo);
       this.updateDataset_.call(sourceInfo, source);
+
+      if (this.listen.sourceValue && source instanceof basis.event.Emitter)
+        source.addHandler(this.listen.sourceValue, this);
     },
 
    /**
@@ -473,6 +493,9 @@
       for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
         if (sourceInfo.source === source)
         {
+          if (this.listen.sourceValue && source instanceof basis.event.Emitter)
+            source.removeHandler(this.listen.sourceValue, this);
+
           this.updateDataset_.call(sourceInfo, null);
           this.sourceValues_.splice(i, 1);
           return;
@@ -483,19 +506,30 @@
 
    /**
     * Synchonize sources list according new list.
-    * TODO: optimize, reduce emit_sourcesChanged and emit_itemsChanged count
-    * TODO: returns delta of source list changes
     * @param {Array.<basis.data.AbstractDataset>} sources
     */
     setSources: function(sources){
-      var exists = arrayFrom(this.sources); // clone list
+      var exists = this.sourceValues_.map(function(sourceInfo){
+        return sourceInfo.source;
+      });
+      var inserted = [];
+      var deleted = [];
+      var delta;
 
-      for (var i = 0, source; source = sources[i]; i++)
+      if (!sources)
+        sources = [];
+
+      this.sourceDelta_ = {
+        inserted: inserted,
+        deleted: deleted
+      };
+
+      for (var i = 0; i < sources.length; i++)
       {
-        if (source instanceof AbstractDataset)
+        var source = sources[i];
+        if (!basis.array.remove(exists, source))
         {
-          if (!basis.array.remove(exists, source))
-            this.addSource(source);
+          this.addSource(source);
         }
         else
         {
@@ -504,14 +538,19 @@
       }
 
       exists.forEach(this.removeSource, this);
+
+      this.sourceDelta_ = null;
+      if (delta = getDelta(inserted, deleted))
+        this.emit_sourcesChanged(delta);
+
+      return delta;
     },
 
    /**
     * Remove all sources. All members are removing as side effect.
-    * TODO: optimize, reduce emit_sourcesChanged and emit_itemsChanged count
     */
     clear: function(){
-      arrayFrom(this.sources).forEach(this.removeSource, this);
+      this.setSources();
     },
 
    /**
