@@ -1,3 +1,14 @@
+## 1.2.3 (April 24, 2014)
+
+- FIX: one more fix for `basis.utils.info.fn` function parsing 
+- FIX: bug with processing of zero values in `basis.ui.chart.SeriesChart` series
+- FIX: `basis.data.index.IndexMap#destroy` method (issue #15)
+- FIX: `basis.devpanel` crash on inspecting SVG elements
+- FIX: one more fix for `basis.ui.field` fix URL validator (regexp)
+- FIX: hide `basis.devpanel` in print styles
+- FIX: rework `basis.ui.calendar.CalendarNode` creation to work `before` and `after` bindings propertly (issue #16)
+- FIX: `basis.layout.getViewportRect` adds page scroll offset twice
+
 ## 1.2.2 (April 9, 2014)
 
 - FIX: `basis.ui.field.validator.Url` domains could starts with digit now

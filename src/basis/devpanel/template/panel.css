@@ -89,3 +89,10 @@
   cursor: move;
   background: url(img/drag.png) no-repeat 2px center;
 }
+
+@media print {
+  .Basis-DevPanel
+  {
+    display: none;
+  }
+}

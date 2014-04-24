@@ -220,6 +220,20 @@ module.exports = {
             this.is(15 + 23, box.top);
             this.is(15 + 23, box.left);
           }
+        },
+        {
+          name: 'Test #4',
+          test: function(){
+            var el = $('test3');
+            var viewport = basis.layout.getViewportRect(el);
+
+            this.is(23 + 15, viewport.top);
+            this.is(23 + 15 + 10, viewport.bottom);
+            this.is(23 + 15, viewport.left);
+            this.is(23 + 15 + 10, viewport.right);
+            this.is(10, viewport.width);
+            this.is(10, viewport.height);
+          }
         }
       ]
     },

@@ -285,6 +285,7 @@ module.exports = {
           }
         }
       ]
-    }
+    },
+    require('./ui/calendar.js')
   ]
 };

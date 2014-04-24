@@ -108,6 +108,10 @@ module.exports = {
                 });*/
 
                 this.is(text('<span title="a" class="b"/>'), text(b));
+              },
+              function(){
+                var a = /regexp/;
+                var b = not / a / regexp;
               }
             ];
 
@@ -117,6 +121,7 @@ module.exports = {
               assert('', info.args);
               assert(info.name == 'anonymous');
               assert(info.getter == false);
+              assert(info.body == functions[i].toString().replace(/^[^\{]+\{/, '').replace(/\}[^}]*$/, ''));
             }
           }
         },

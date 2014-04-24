@@ -51,17 +51,17 @@
 var __namespace_map__ = {"0.js":"app","1.js":"basis.app","2.js":"basis.ui","3.js":"basis.l10n","4.js":"basis.event","5.js":"basis.data","6.js":"basis.dom.wrapper","7.js":"basis.template","8.js":"basis.template.html","9.js":"basis.dom.event","a.js":"basis.template.htmlfgen","b.js":"core","c.js":"core.runner","d.js":"basis.data.dataset","e.js":"basis.data.index","f.js":"basis.data.value","g.js":"basis.utils.benchmark","h.js":"core.test","i.js":"basis.utils.info","j.js":"core.env","k.js":"core.ast","l.js":"esprima","m.js":"app.test","n.js":"app.highlight","o.js":"diff"};
 var __resources__ = {
   "0.css": "",
-  "0.code": "function importScripts(){\r\n  function importScript(url){\r\n    var req = new XMLHttpRequest();\r\n    req.open('GET', url, false);\r\n    req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());\r\n    req.send(null);\r\n\r\n    if (req.status >= 200 && req.status < 400)\r\n      (window.execScript || function(fn){\r\n        window['eval'].call(window, fn);\r\n      })(req.responseText);\r\n    else\r\n      throw 'Can\\'t load script: ' + url;\r\n  }\r\n\r\n  for (var i = 0; i < arguments.length; i++)\r\n    importScript(arguments[i])\r\n}\r\n\r\nfunction __initTestEnvironment(initCode, deprecateTestEnvironment){\r\n  // basis.js default behaviour\r\n  if (typeof basisjsToolsFileSync != 'undefined')\r\n    basisjsToolsFileSync.notifications.attach(function(type, filename){\r\n      if (typeof basis == 'undefined')\r\n        return; // no basis.js available\r\n\r\n      if (type == 'update' && (\r\n            (basis.filename_ == filename) ||\r\n            (basis.resource && basis.resource.exists(filename))\r\n         ))\r\n        deprecateTestEnvironment();\r\n    });\r\n\r\n  // fallback deprecate function\r\n  if (typeof deprecateTestEnvironment != 'function')\r\n    deprecateTestEnvironment = function(){};\r\n\r\n  // main part\r\n  return eval(initCode + ';(function(__code){\\n' +\r\n  '  return eval(\"(\" + __code + \")\");' +\r\n  '})');\r\n}\r\n",
+  "0.code": "function importScripts(){\n  function importScript(url){\n    var req = new XMLHttpRequest();\n    req.open('GET', url, false);\n    req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());\n    req.send(null);\n\n    if (req.status >= 200 && req.status < 400)\n      (window.execScript || function(fn){\n        window['eval'].call(window, fn);\n      })(req.responseText);\n    else\n      throw 'Can\\'t load script: ' + url;\n  }\n\n  for (var i = 0; i < arguments.length; i++)\n    importScript(arguments[i])\n}\n\nfunction __initTestEnvironment(initCode, deprecateTestEnvironment){\n  // basis.js default behaviour\n  if (typeof basisjsToolsFileSync != 'undefined')\n    basisjsToolsFileSync.notifications.attach(function(type, filename){\n      if (typeof basis == 'undefined')\n        return; // no basis.js available\n\n      if (type == 'update' && (\n            (basis.filename_ == filename) ||\n            (basis.resource && basis.resource.exists(filename))\n         ))\n        deprecateTestEnvironment();\n    });\n\n  // fallback deprecate function\n  if (typeof deprecateTestEnvironment != 'function')\n    deprecateTestEnvironment = function(){};\n\n  // main part\n  return eval(initCode + ';(function(__code){\\n' +\n  '  return eval(\"(\" + __code + \")\");' +\n  '})');\n}\n",
   "8.tmpl": [ [ 1, 0, [ "element" ], "div", [ 2, 0, 0, "id", "layout" ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "header-caption" ], [ 3, 0, 0, "Basis.js test runner" ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-buttons" ], [ 1, 0, 0, "button", [ 4, 0, 0, "header-button" ], [ 6, "click", "run" ], [ 3, 0, 0, "run" ] ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-test-suite-location" ], [ 3, 1, [ "name" ] ], [ 3, 0, 0, " " ], [ 3, 1, [ "done" ] ], [ 3, 0, 0, " / " ], [ 3, 1, [ "total" ] ], [ 3, 0, 0, " (" ], [ 3, 1, [ "assert" ] ], [ 3, 0, 0, ") (time: " ], [ 3, 1, [ "time" ] ], [ 3, 0, 0, " ms)" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "sidebar" ], [ 8, 1, [ "toc" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "content" ], [ 8, 1, [ "tests" ] ] ] ] ],
   "1.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-toc-item_", "selected" ] ], 0, "app-toc-item" ], [ 6, "click", "select" ], [ 6, "dblclick", "pickup" ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__progress_", "state" ] ], 0, "app-toc-item__progress" ], [ 5, [ [ [ "progress" ], [ 0, "%" ], "width" ] ], 0 ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__state-", "state" ], [ "app-toc-item__state-", "pending" ] ], 0, "app-toc-item__state" ], [ 3, 1, [ "stateMessage" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-toc-item__name" ], [ 3, 1, [ "name" ] ] ] ] ],
   "2.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, 0, 0, "app-toc" ], [ 8, 1, [ "levelUp" ] ], [ 8, 1, [ "faultTests" ] ] ] ],
   "0.tmpl": [ [ 1, 0, [ "element" ], "iframe", [ 2, [ [ "src" ], [ 0 ] ], 0, "src", "{src}" ], [ 6, "load", "ready" ], [ 5, 0, 0, "width: 10px; height: 10px; top: -100px; position: absolute; border: none; opacity: 0.0001;" ] ] ],
   "4.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ] ] ],
   "5.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-suite" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-suite__content" ] ] ] ],
-  "6.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-case" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 8, 1, [ "source" ] ] ], [ 8, 0, 0, '<b:after ref="stateMessage">\r\n       {errorMessage}\r\n  </b:after>' ] ],
+  "6.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-case" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 8, 1, [ "source" ] ] ], [ 8, 0, 0, '<b:after ref="stateMessage">\n       {errorMessage}\n  </b:after>' ] ],
   "7.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-tree_", "hasDelegate" ] ], 0, "app-test-tree" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__header" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__buttons" ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-tree__button-pickup_", "type" ] ], 0, "app-test-tree__button app-test-tree__button-pickup" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-tree__caption" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-tree__content" ] ], [ 8, 1, [ "sourceCode" ] ] ] ],
   "3.tmpl": [ [ 1, 1, [ "code", "element" ], "pre", [ 4, 0, 0, "Basis-SyntaxHighlight" ], [ 3, 1, [ "sourceCode" ] ] ] ],
-  "b.js": "/* Javascript file C:/usr/local/Apache2/htdocs/git/test-runner/src/core.js not found */",
+  "b.js": "/* Javascript file /Users/rdvornov/Desktop/git/test-runner/src/core.js not found */",
   "c.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     basis.require("./5.js");
     basis.require("./d.js");
@@ -2181,7 +2181,7 @@ var __resources__ = {
               var m = value.constructor.toString().match(/function (Number|String|Boolean)/);
               if (m) return "new Object(" + value2string(value.valueOf()) + ")";
             }
-            return "{ " + res.join(", ") + " }";
+            return "{ " + (res.length ? res.join(", ") + " " : "") + "}";
           } else return "{object}";
         default:
           return "unknown type `" + typeof value + "`";
@@ -2287,7 +2287,7 @@ var __resources__ = {
           last = pos;
         }
       }
-      for (var i = 0; i < chars.length; i++) {
+      for (var i = 0; i < chars.length; i++) main_loop : {
         var ch = chars[i];
         switch (ch) {
           case "/":
@@ -2309,6 +2309,7 @@ var __resources__ = {
             }
             while (j < chars.length) {
               j++;
+              if (chars[j] == "\n") break main_loop;
               if (chars[j] == "\\") {
                 j++;
               } else {
@@ -2515,7 +2516,7 @@ var __resources__ = {
       binding: {
         src: function(node) {
           if (node.html && node.html != "default") return node.html;
-          return basis.path.resolve(basis.require("./j.js").baseURI || "", "res/2NM1dsdOx8Ioc7cT_94Adw.html");
+          return basis.path.resolve(basis.require("./j.js").baseURI || "", "res/_OXc_YC-JNYkD4Cy89EBCg.html");
         }
       },
       action: {
@@ -12667,7 +12668,7 @@ var __resources__ = {
 
 (function(global) {
   "use strict";
-  var VERSION = "1.2.2-dev";
+  var VERSION = "1.2.2";
   var document = global.document;
   var Object_toString = Object.prototype.toString;
   function extend(dest, source) {

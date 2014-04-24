@@ -438,7 +438,7 @@
         key = this.keyGetter(child);
         if (key in delta)
         {
-          if (delta[key])
+	  if (basis.fn.$isNotNull(delta[key]))
             child.values[seria.basisObjectId] = delta[key];
           else
             delete child.values[seria.basisObjectId];
