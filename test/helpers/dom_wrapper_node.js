@@ -180,8 +180,8 @@ function checkNode(node){
   //
   if (node.dataSource !== null)
   {
-    if (node.dataSource instanceof basis.data.AbstractDataset === false)
-      return 'dataSource has wrong value (should be null or instance of basis.data.AbstractDataset)';
+    if (node.dataSource instanceof basis.data.ReadOnlyDataset === false)
+      return 'dataSource has wrong value (should be null or instance of basis.data.ReadOnlyDataset)';
 
     if (node.dataSource.itemCount !== node.childNodes.length)
       return 'child node count (' + node.childNodes.length + ') is not equal to dataset item count (' + node.dataSource.itemCount + ')';

@@ -1,7 +1,7 @@
 module.exports = {
   name: 'basis.data.dataset.Merge',
   init: function(){
-    var AbstractDataset = basis.require('basis.data').AbstractDataset;
+    var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
     var Dataset = basis.require('basis.data').Dataset;
     var Merge = basis.require('basis.data.dataset').Merge;
 
@@ -38,10 +38,10 @@ module.exports = {
     }
 
     function cmpDS(set1, set2){
-      if (set1 instanceof AbstractDataset == false)
-        return 'set1 is not an instance of basis.data.AbstractDataset';
-      if (set2 instanceof AbstractDataset == false)
-        return 'set2 is not an instance of basis.data.AbstractDataset';
+      if (set1 instanceof ReadOnlyDataset == false)
+        return 'set1 is not an instance of basis.data.ReadOnlyDataset';
+      if (set2 instanceof ReadOnlyDataset == false)
+        return 'set2 is not an instance of basis.data.ReadOnlyDataset';
 
       var items1 = set1.getItems().map(function(item){ return item.basisObjectId; }).sort();
       var items2 = set2.getItems().map(function(item){ return item.basisObjectId; }).sort();

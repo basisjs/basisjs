@@ -38,7 +38,7 @@
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
   var DataObject = basis.data.Object;
   var KeyObjectMap = basis.data.KeyObjectMap;
-  var AbstractDataset = basis.data.AbstractDataset;
+  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
   var Dataset = basis.data.Dataset;
   var DatasetWrapper = basis.data.DatasetWrapper;
 
@@ -204,7 +204,7 @@
  /**
   * @class
   */
-  var Merge = Class(AbstractDataset, {
+  var Merge = Class(ReadOnlyDataset, {
     className: namespace + '.Merge',
 
    /**
@@ -214,7 +214,7 @@
 
    /**
     * Fires when source set changed.
-    * @param {basis.data.AbstractDataset} dataset
+    * @param {basis.data.ReadOnlyDataset} dataset
     * @param {object} delta Delta of changes. Must have property `inserted`
     * or `deleted`, or both of them. `inserted` property is array of new sources
     * and `deleted` property is array of removed sources.
@@ -223,7 +223,7 @@
     emit_sourcesChanged: createEvent('sourcesChanged', 'delta'),
 
    /**
-    * @type {Array.<basis.data.AbstractDataset>}
+    * @type {Array.<basis.data.ReadOnlyDataset>}
     */
     sources: null,
 
@@ -251,12 +251,12 @@
     },
 
    /**
-    * @config {Array.<basis.data.AbstractDataset>} sources Set of source datasets for aggregate.
+    * @config {Array.<basis.data.ReadOnlyDataset>} sources Set of source datasets for aggregate.
     * @constructor
     */
     init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       // init part
       var sources = this.sources;
@@ -327,7 +327,7 @@
 
    /**
     * Adds new dataset.
-    * @param {basis.data.AbstractDataset=} dataset
+    * @param {basis.data.ReadOnlyDataset=} dataset
     * @private
     */
     addDataset_: function(dataset){
@@ -361,7 +361,7 @@
 
    /**
     * Adds new dataset.
-    * @param {basis.data.AbstractDataset=} dataset
+    * @param {basis.data.ReadOnlyDataset=} dataset
     * @private
     */
     removeDataset_: function(dataset){
@@ -379,7 +379,7 @@
 
    /**
     * Update dataset value by source.
-    * @param {basis.data.AbstractDataset=} source
+    * @param {basis.data.ReadOnlyDataset=} source
     * @private
     */
     updateDataset_: function(source){
@@ -456,7 +456,7 @@
 
    /**
     * Add source from sources list.
-    * @param {basis.data.AbstractDataset} source
+    * @param {basis.data.ReadOnlyDataset} source
     * @return {boolean} Returns true if new source added.
     */
     addSource: function(source){
@@ -486,7 +486,7 @@
 
    /**
     * Removes source from sources list.
-    * @param {basis.data.AbstractDataset} source
+    * @param {basis.data.ReadOnlyDataset} source
     * @return {boolean} Returns true if source removed.
     */
     removeSource: function(source){
@@ -506,7 +506,7 @@
 
    /**
     * Synchonize sources list according new list.
-    * @param {Array.<basis.data.AbstractDataset>} sources
+    * @param {Array.<basis.data.ReadOnlyDataset>} sources
     */
     setSources: function(sources){
       var exists = this.sourceValues_.map(function(sourceInfo){
@@ -533,7 +533,7 @@
         }
         else
         {
-          /** @cut */ basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of AbstractDataset', source);
+          /** @cut */ basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of ReadOnlyDataset', source);
         }
       }
 
@@ -558,7 +558,7 @@
     */
     destroy: function(){
       // inherit
-      AbstractDataset.prototype.destroy.call(this);
+      ReadOnlyDataset.prototype.destroy.call(this);
 
       this.sources = null;
     }
@@ -653,7 +653,7 @@
  /**
   * @class
   */
-  var Subtract = Class(AbstractDataset, {
+  var Subtract = Class(ReadOnlyDataset, {
     className: namespace + '.Subtract',
 
    /**
@@ -662,25 +662,25 @@
     subscribeTo: SUBSCRIPTION.MINUEND + SUBSCRIPTION.SUBTRAHEND,
 
    /**
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     minuend: null,
 
    /**
     * Fires when minuend changed.
-    * @param {basis.data.AbstractDataset} oldMinuend Value of {basis.data.dataset.Subtract#minuend} before changes.
+    * @param {basis.data.ReadOnlyDataset} oldMinuend Value of {basis.data.dataset.Subtract#minuend} before changes.
     * @event
     */
     emit_minuendChanged: createEvent('minuendChanged', 'oldMinuend'),
 
    /**
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     subtrahend: null,
 
    /**
     * Fires when subtrahend changed.
-    * @param {basis.data.AbstractDataset} oldSubtrahend Value of {basis.data.dataset.Subtract#subtrahend} before changes.
+    * @param {basis.data.ReadOnlyDataset} oldSubtrahend Value of {basis.data.dataset.Subtract#subtrahend} before changes.
     * @event
     */
     emit_subtrahendChanged: createEvent('subtrahendChanged', 'oldSubtrahend'),
@@ -698,7 +698,7 @@
     */
     init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       // init part
       var minuend = this.minuend;
@@ -713,18 +713,18 @@
 
    /**
     * Set new minuend & subtrahend.
-    * @param {basis.data.AbstractDataset=} minuend
-    * @param {basis.data.AbstractDataset=} subtrahend
+    * @param {basis.data.ReadOnlyDataset=} minuend
+    * @param {basis.data.ReadOnlyDataset=} subtrahend
     * @return {object|boolean} Delta if changes happend
     */
     setOperands: function(minuend, subtrahend){
       var delta;
       var operandsChanged = false;
 
-      if (minuend instanceof AbstractDataset == false)
+      if (minuend instanceof ReadOnlyDataset == false)
         minuend = null;
 
-      if (subtrahend instanceof AbstractDataset == false)
+      if (subtrahend instanceof ReadOnlyDataset == false)
         subtrahend = null;
 
       var oldMinuend = this.minuend;
@@ -800,7 +800,7 @@
     },
 
    /**
-    * @param {basis.data.AbstractDataset} minuend
+    * @param {basis.data.ReadOnlyDataset} minuend
     * @return {Object} Delta if changes happend
     */
     setMinuend: function(minuend){
@@ -808,7 +808,7 @@
     },
 
    /**
-    * @param {basis.data.AbstractDataset} subtrahend
+    * @param {basis.data.ReadOnlyDataset} subtrahend
     * @return {Object} Delta if changes happend
     */
     setSubtrahend: function(subtrahend){
@@ -831,7 +831,7 @@
  /**
   * @class
   */
-  var SourceDataset = Class(AbstractDataset, {
+  var SourceDataset = Class(ReadOnlyDataset, {
     className: namespace + '.SourceDataset',
 
    /**
@@ -841,13 +841,13 @@
 
    /**
     * Data source.
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     source: null,
 
    /**
     * Fires when source changed.
-    * @param {basis.data.AbstractDataset} oldSource Previous value for source property.
+    * @param {basis.data.ReadOnlyDataset} oldSource Previous value for source property.
     * @event
     */
     emit_sourceChanged: createEvent('sourceChanged', 'oldSource'),
@@ -883,7 +883,7 @@
     init: function(){
       this.sourceMap_ = {};
 
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       var source = this.source;
       if (source)
@@ -895,7 +895,7 @@
 
    /**
     * Set new source dataset.
-    * @param {basis.data.AbstractDataset} source
+    * @param {basis.data.ReadOnlyDataset} source
     */
     setSource: function(source){
       source = basis.data.resolveDataset(this, this.setSource, source, 'sourceAdapter_');
@@ -948,7 +948,7 @@
     */
     destroy: function(){
       // inherit
-      AbstractDataset.prototype.destroy.call(this);
+      ReadOnlyDataset.prototype.destroy.call(this);
 
       this.sourceMap_ = null;
     }
@@ -1333,9 +1333,9 @@
 
    /**
     * Class for subset
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
-    subsetClass: AbstractDataset,
+    subsetClass: ReadOnlyDataset,
 
    /**
     * Class for subset wrapper
@@ -1914,7 +1914,7 @@
     * Class for subset
     * @type {function}
     */
-    subsetClass: AbstractDataset,
+    subsetClass: ReadOnlyDataset,
 
    /**
     * Class for subset wrapper

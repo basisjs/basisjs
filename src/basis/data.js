@@ -10,7 +10,7 @@
   *   {basis.data.STATE}, {basis.data.SUBSCRIPTION}
   * - Classes:
   *   {basis.data.Object}, {basis.data.KeyObjectMap},
-  *   {basis.data.AbstractDataset}, {basis.data.Dataset}
+  *   {basis.data.ReadOnlyDataset}, {basis.data.Dataset}
   *
   * @namespace basis.data
   */
@@ -1621,7 +1621,7 @@
     },
 
    /**
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     dataset: null,
 
@@ -1632,7 +1632,7 @@
 
    /**
     * Fires when dataset was changed.
-    * @param {basis.data.AbstractDataset} oldDataset
+    * @param {basis.data.ReadOnlyDataset} oldDataset
     * @event
     */
     emit_datasetChanged: createEvent('datasetChanged', 'oldDataset'),
@@ -1659,7 +1659,7 @@
     },
 
    /**
-    * @param {basis.data.AbstractDataset} dataset
+    * @param {basis.data.ReadOnlyDataset} dataset
     */
     setDataset: function(dataset){
       dataset = resolveDataset(this, this.setDataset, dataset, 'datasetAdapter_');
@@ -1738,8 +1738,8 @@
  /**
   * @class
   */
-  var AbstractDataset = Class(AbstractData, {
-    className: namespace + '.AbstractDataset',
+  var ReadOnlyDataset = Class(AbstractData, {
+    className: namespace + '.ReadOnlyDataset',
 
    /**
     * Cardinality of set.
@@ -1910,7 +1910,7 @@
  /**
   * @class
   */
-  var Dataset = Class(AbstractDataset, {
+  var Dataset = Class(ReadOnlyDataset, {
     className: namespace + '.Dataset',
 
    /**
@@ -1929,7 +1929,7 @@
     */
     init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       var items = this.items;
       if (items)
@@ -2204,7 +2204,7 @@
       source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
     }
 
-    if (source instanceof AbstractDataset == false)
+    if (source instanceof ReadOnlyDataset == false)
       source = null;
 
     if (property && oldAdapter !== newAdapter)
@@ -2233,7 +2233,7 @@
   //
 
   Dataset.setAccumulateState = (function(){
-    var proto = AbstractDataset.prototype;
+    var proto = ReadOnlyDataset.prototype;
     var realEvent = proto.emit_itemsChanged;
     var setStateCount = 0;
     var urgentTimer;
@@ -2372,7 +2372,7 @@
 
     KeyObjectMap: KeyObjectMap,
 
-    AbstractDataset: AbstractDataset,
+    ReadOnlyDataset: ReadOnlyDataset,
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
     DatasetAdapter: DatasetAdapter,
