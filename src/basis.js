@@ -3328,6 +3328,10 @@
         if (!this.inUse)
         {
           this.cssText = this.resource.get(true);
+
+          /** @cut add source url for debug */
+          /** @cut */ this.cssText += '\n/*# sourceURL=' + pathUtils.origin + this.resource.url + ' */';
+
           documentInterface.head.ready(injectStyleToHead, this);
         }
 
