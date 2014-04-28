@@ -83,7 +83,8 @@
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
   var BREAK_TAG_PARSE = /^/g;
   var TAG_IGNORE_CONTENT = {
-    text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g
+    text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g,
+    style: /((?:.|[\r\n])*?)(?:<\/b:style>|$)/g
   };
 
   var quoteUnescape = /\\"/g;
@@ -363,6 +364,7 @@
           break;
 
         case TAG_IGNORE_CONTENT.text:
+        case TAG_IGNORE_CONTENT.style:
           lastTag.childs.push({
             type: TYPE_TEXT,
             value: m[1]
@@ -937,6 +939,11 @@
                     /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
                     template.resources.push(path.resolve(template.baseURI + elAttrs.src));
+                  }
+                  else
+                  {
+                    var text = token.childs[0];
+                    template.resources.push(basis.resource.virtual('css', text ? text.value : '').url);
                   }
                 break;
 
