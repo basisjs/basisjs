@@ -227,6 +227,9 @@
       }
     },
 
+    isPeriodEnabled: function(){
+      return true;
+    },
     setPeriod: function(period, selectedDate, rebuild){
       if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
@@ -333,7 +336,6 @@
     init: function(){
       this.childNodes = getPeriods(this).map(function(period){
         return {
-          isPeriodEnabled: this.isPeriodEnabled,
           nodePeriodName: this.nodePeriodName
         };
       }, this);
@@ -359,6 +361,9 @@
       return null;
     },
 
+    isPeriodEnabled: function(){
+      return true;
+    },
     setPeriod: function(period, rebuild){
       if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
@@ -587,8 +592,13 @@
       if (delta.inserted)
         for (var i = 0, section; section = delta.inserted[i++];)
         {
+          section.isPeriodEnabled = this.isPeriodEnabled;
+          section.childNodes.forEach(function(child){
+            child.isPeriodEnabled = this.isPeriodEnabled;
+          }, this);
           section.setViewDate(this.date.value);
           this.selectedDate.link(section, section.setSelectedDate);
+          section.rebuild();
         }
 
       if (delta.deleted)
@@ -647,11 +657,23 @@
 
     selection: true,
     childClass: CalendarSection,
-    childFactory: function(){
+    childFactory: function(nameOrClass){
+      var SectionClass = nameOrClass;
+
+      if (typeof nameOrClass == 'string')
+        SectionClass = CalendarSection[nameOrClass];
+
+      if (!basis.Class.isClass(SectionClass) || !SectionClass.isSubclassOf(CalendarSection))
+      {
+        /** @cut */ basis.dev.warn(nameOrClass + ' is not a valid value for child of basis.ui.calendat.Calendar');
+        return;
+      }
+
+      return new SectionClass();
     },
 
     date: null,
-    sections: ['Month', 'Year', 'YearDecade'], /*'Quarter', 'YearQuarters', 'Century'*/
+    childNodes: ['Month', 'Year', 'YearDecade'], /*'Quarter', 'YearQuarters', 'Century'*/
 
     // enable/disable periods
     minDate: null,
@@ -670,18 +692,17 @@
       this.selectedDate = new basis.data.Value({ value: new Date(this.date || now) });
       this.date = new basis.data.Value({ value: new Date(this.date || now) });
 
+      // insert sections
+      this.isPeriodEnabled = this.isPeriodEnabled.bind(this);
+
       // inherit
       UINode.prototype.init.call(this);
 
-      // insert sections
-      this.isPeriodEnabled = this.isPeriodEnabled.bind(this);
       if (this.sections)
-        this.setChildNodes(this.sections.map(function(sectionClass){
-          return new CalendarSection[sectionClass]({
-            isPeriodEnabled: this.isPeriodEnabled,
-            selectedDate: this.selectedDate.value
-          });
-        }, this));
+      {
+        /** @cut */ basis.dev.warn('basis.ui.calendar.Calendar#sections is deprecated, use childNodes instead');
+        this.setChildNodes(this.sections);
+      }
     },
 
     setMinDate: function(date){
