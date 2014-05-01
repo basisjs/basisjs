@@ -51,17 +51,17 @@
 var __namespace_map__ = {"0.js":"app","1.js":"basis.app","2.js":"basis.ui","3.js":"basis.l10n","4.js":"basis.event","5.js":"basis.data","6.js":"basis.dom.wrapper","7.js":"basis.template","8.js":"basis.template.html","9.js":"basis.dom.event","a.js":"basis.template.htmlfgen","b.js":"core","c.js":"core.runner","d.js":"basis.data.dataset","e.js":"basis.data.index","f.js":"basis.data.value","g.js":"basis.utils.benchmark","h.js":"core.test","i.js":"basis.utils.info","j.js":"core.env","k.js":"core.ast","l.js":"esprima","m.js":"app.test","n.js":"app.highlight","o.js":"diff"};
 var __resources__ = {
   "0.css": "",
-  "0.code": "function importScripts(){\r\n  function importScript(url){\r\n    var req = new XMLHttpRequest();\r\n    req.open('GET', url, false);\r\n    req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());\r\n    req.send(null);\r\n\r\n    if (req.status >= 200 && req.status < 400)\r\n      (window.execScript || function(fn){\r\n        window['eval'].call(window, fn);\r\n      })(req.responseText);\r\n    else\r\n      throw 'Can\\'t load script: ' + url;\r\n  }\r\n\r\n  for (var i = 0; i < arguments.length; i++)\r\n    importScript(arguments[i])\r\n}\r\n\r\nfunction __initTestEnvironment(initCode, deprecateTestEnvironment){\r\n  // basis.js default behaviour\r\n  if (typeof basisjsToolsFileSync != 'undefined')\r\n    basisjsToolsFileSync.notifications.attach(function(type, filename){\r\n      if (typeof basis == 'undefined')\r\n        return; // no basis.js available\r\n\r\n      if (type == 'update' && (\r\n            (basis.filename_ == filename) ||\r\n            (basis.resource && basis.resource.exists(filename))\r\n         ))\r\n        deprecateTestEnvironment();\r\n    });\r\n\r\n  // fallback deprecate function\r\n  if (typeof deprecateTestEnvironment != 'function')\r\n    deprecateTestEnvironment = function(){};\r\n\r\n  // main part\r\n  return eval(initCode + ';(function(__code){\\n' +\r\n  '  return eval(\"(\" + __code + \")\");' +\r\n  '})');\r\n}\r\n",
+  "0.code": "function importScripts(){\n  function importScript(url){\n    var req = new XMLHttpRequest();\n    req.open('GET', url, false);\n    req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());\n    req.send(null);\n\n    if (req.status >= 200 && req.status < 400)\n      (window.execScript || function(fn){\n        window['eval'].call(window, fn);\n      })(req.responseText);\n    else\n      throw 'Can\\'t load script: ' + url;\n  }\n\n  for (var i = 0; i < arguments.length; i++)\n    importScript(arguments[i])\n}\n\nfunction __initTestEnvironment(initCode, deprecateTestEnvironment){\n  // basis.js default behaviour\n  if (typeof basisjsToolsFileSync != 'undefined')\n    basisjsToolsFileSync.notifications.attach(function(type, filename){\n      if (typeof basis == 'undefined')\n        return; // no basis.js available\n\n      if (type == 'update' && (\n            (basis.filename_ == filename) ||\n            (basis.resource && basis.resource.exists(filename))\n         ))\n        deprecateTestEnvironment();\n    });\n\n  // fallback deprecate function\n  if (typeof deprecateTestEnvironment != 'function')\n    deprecateTestEnvironment = function(){};\n\n  // main part\n  return eval(initCode + ';(function(__code){\\n' +\n  '  return eval(\"(\" + __code + \")\");' +\n  '})');\n}\n",
   "8.tmpl": [ [ 1, 0, [ "element" ], "div", [ 2, 0, 0, "id", "layout" ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "header-caption" ], [ 3, 0, 0, "Basis.js test runner" ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-buttons" ], [ 1, 0, 0, "button", [ 4, 0, 0, "header-button" ], [ 6, "click", "run" ], [ 3, 0, 0, "run" ] ] ], [ 1, 0, 0, "div", [ 4, 0, 0, "header-test-suite-location" ], [ 3, 1, [ "name" ] ], [ 3, 0, 0, " " ], [ 3, 1, [ "done" ] ], [ 3, 0, 0, " / " ], [ 3, 1, [ "total" ] ], [ 3, 0, 0, " (" ], [ 3, 1, [ "assert" ] ], [ 3, 0, 0, ") (time: " ], [ 3, 1, [ "time" ] ], [ 3, 0, 0, " ms)" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "sidebar" ], [ 8, 1, [ "toc" ] ] ], [ 1, 0, 0, "div", [ 2, 0, 0, "id", "content" ], [ 8, 1, [ "tests" ] ] ] ] ],
   "1.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-toc-item_", "selected" ] ], 0, "app-toc-item" ], [ 6, "click", "select" ], [ 6, "dblclick", "pickup" ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__progress_", "state" ] ], 0, "app-toc-item__progress" ], [ 5, [ [ [ "progress" ], [ 0, "%" ], "width" ] ], 0 ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-toc-item__state-", "state" ], [ "app-toc-item__state-", "pending" ] ], 0, "app-toc-item__state" ], [ 3, 1, [ "stateMessage" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-toc-item__name" ], [ 3, 1, [ "name" ] ] ] ] ],
   "2.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, 0, 0, "app-toc" ], [ 8, 1, [ "levelUp" ] ], [ 8, 1, [ "faultTests" ] ] ] ],
   "0.tmpl": [ [ 1, 0, [ "element" ], "iframe", [ 2, [ [ "src" ], [ 0 ] ], 0, "src", "{src}" ], [ 6, "load", "ready" ], [ 5, 0, 0, "width: 10px; height: 10px; top: -100px; position: absolute; border: none; opacity: 0.0001;" ] ] ],
   "4.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ] ] ],
   "5.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-suite" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-suite__content" ] ] ] ],
-  "6.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-case" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 8, 1, [ "source" ] ] ], [ 8, 0, 0, '<b:after ref="stateMessage">\r\n       {errorMessage}\r\n  </b:after>' ] ],
+  "6.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-", "hasOwnEnvironment" ] ], 0, "app-test app-test-case" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-header" ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test__select-button" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-name" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 8, 1, [ "source" ] ] ], [ 8, 0, 0, '<b:after ref="stateMessage">\n       {errorMessage}\n  </b:after>' ] ],
   "7.tmpl": [ [ 1, 0, [ "element" ], "div", [ 4, [ [ "app-test-tree_", "hasDelegate" ] ], 0, "app-test-tree" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__header" ], [ 1, 0, 0, "div", [ 4, 0, 0, "app-test-tree__buttons" ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-tree__button-pickup_", "type" ] ], 0, "app-test-tree__button app-test-tree__button-pickup" ], [ 6, "click", "select" ], [ 3, 0, 0, "pick up" ] ] ], [ 1, 0, 0, "span", [ 4, 0, 0, "app-test-tree__caption" ], [ 3, 1, [ "name" ] ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-splitter_", "state" ] ], 0, "app-test-splitter" ], [ 3, 0, 0, " — " ] ], [ 1, 0, 0, "span", [ 4, [ [ "app-test-state_state-", "state" ], [ "app-test-state_", "pending" ] ], 0, "app-test-state" ], [ 3, 1, [ "stateMessage" ] ] ] ], [ 1, 1, [ "childNodesElement" ], "div", [ 4, 0, 0, "app-test-tree__content" ] ], [ 8, 1, [ "sourceCode" ] ] ] ],
   "3.tmpl": [ [ 1, 1, [ "code", "element" ], "pre", [ 4, 0, 0, "Basis-SyntaxHighlight" ], [ 3, 1, [ "sourceCode" ] ] ] ],
-  "b.js": "/* Javascript file C:/usr/local/Apache2/htdocs/git/test-runner/src/core.js not found */",
+  "b.js": "/* Javascript file /Users/rdvornov/Desktop/git/test-runner/src/core.js not found */",
   "c.js": function(exports, module, basis, global, __filename, __dirname, require, resource) {
     basis.require("./5.js");
     basis.require("./d.js");
@@ -2181,7 +2181,7 @@ var __resources__ = {
               var m = value.constructor.toString().match(/function (Number|String|Boolean)/);
               if (m) return "new Object(" + value2string(value.valueOf()) + ")";
             }
-            return "{ " + res.join(", ") + " }";
+            return "{ " + (res.length ? res.join(", ") + " " : "") + "}";
           } else return "{object}";
         default:
           return "unknown type `" + typeof value + "`";
@@ -2287,32 +2287,43 @@ var __resources__ = {
           last = pos;
         }
       }
-      for (var i = 0; i < chars.length; i++) {
+      for (var i = 0; i < chars.length; i++) main_loop : {
         var ch = chars[i];
         switch (ch) {
           case "/":
-            j = i + 1;
-            if (chars[j] === "/") {
-              store();
+            store();
+            j = i;
+            if (chars[j + 1] === "/") {
+              j = j + 2;
               while (j < chars.length && chars[j] !== "\n" && chars[j] !== "\r") j++;
               store("comment", j);
               i = last - 1;
               break;
             }
-            if (chars[j] == "*") {
-              store();
-              j = j + 1;
+            if (chars[j + 1] == "*") {
+              j = j + 2;
               while (j < chars.length && !(chars[j] === "*" && chars[j + 1] === "/")) j++;
               store("comment", j + 2);
               i = last - 1;
               break;
             }
+            while (j < chars.length) {
+              j++;
+              if (chars[j] == "\n") break main_loop;
+              if (chars[j] == "\\") {
+                j++;
+              } else {
+                if (chars[j] == ch) break;
+              }
+            }
+            store("regexp", j + 1);
+            i = last - 1;
             break;
           case '"':
           case "'":
             store();
             j = i;
-            while (true) {
+            while (j < chars.length) {
               j++;
               if (chars[j] == "\\") {
                 j++;
@@ -2346,7 +2357,6 @@ var __resources__ = {
         }
       }
       store();
-      console.log(JSON.stringify(res, null, 2));
       return res;
     }
     function functionInfo(fn) {
@@ -2506,7 +2516,7 @@ var __resources__ = {
       binding: {
         src: function(node) {
           if (node.html && node.html != "default") return node.html;
-          return basis.path.resolve(basis.require("./j.js").baseURI || "", "res/2NM1dsdOx8Ioc7cT_94Adw.html");
+          return basis.path.resolve(basis.require("./j.js").baseURI || "", "res/_OXc_YC-JNYkD4Cy89EBCg.html");
         }
       },
       action: {
@@ -8021,6 +8031,15 @@ var __resources__ = {
       },
       delegate: null,
       delegates_: null,
+      debug_delegates: function() {
+        var cursor = this.delegates_;
+        var result = [];
+        while (cursor) {
+          result.push(cursor.delegate);
+          cursor = cursor.next;
+        }
+        return result;
+      },
       emit_delegateChanged: createEvent("delegateChanged", "oldDelegate"),
       target: null,
       emit_targetChanged: createEvent("targetChanged", "oldTarget"),
@@ -8073,6 +8092,7 @@ var __resources__ = {
                 if (prev === oldDelegate) oldDelegate.delegates_ = cursor.next; else prev.next = cursor.next;
                 break;
               }
+              prev = cursor;
               cursor = cursor.next;
             }
           }
@@ -11567,6 +11587,7 @@ var __resources__ = {
             break;
         }
       }
+      if (!parent && tokens.length == 1) result = result.firstChild;
       return result;
     };
     function resolveTemplateById(refId) {
@@ -11737,9 +11758,28 @@ var __resources__ = {
         return value;
       }
       function createBindingUpdater(names, getters) {
-        return function bindingUpdater(object) {
-          for (var i = 0, bindingName; bindingName = names[i]; i++) this(bindingName, getters[bindingName](object));
-        };
+        var name1 = names[0];
+        var name2 = names[1];
+        var getter1 = getters[name1];
+        var getter2 = getters[name2];
+        switch (names.length) {
+          case 1:
+            return function bindingUpdater1(object) {
+              this(name1, getter1(object));
+            };
+          case 2:
+            return function bindingUpdater2(object) {
+              this(name1, getter1(object));
+              this(name2, getter2(object));
+            };
+          default:
+            var getters_ = names.map(function(name) {
+              return getters[name];
+            });
+            return function bindingUpdaterN(object) {
+              for (var i = 0; i < names.length; i++) this(names[i], getters_[i](object));
+            };
+        }
       }
       function makeHandler(events, getters) {
         for (var name in events) events[name] = createBindingUpdater(events[name], getters);
@@ -11803,9 +11843,6 @@ var __resources__ = {
         var l10nLinks = [];
         var seed = 0;
         var proto = buildHtml(tokens);
-        var build = function() {
-          return proto.cloneNode(true);
-        };
         var id = this.templateId;
         templates[id] = {
           template: this,
@@ -11828,7 +11865,7 @@ var __resources__ = {
             link = null;
           }
         }
-        createInstance = fn.createInstance(id, instances, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
+        createInstance = fn.createInstance(id, instances, proto, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
         return {
           createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface) {
             var instanceId = seed++;
@@ -11859,7 +11896,6 @@ var __resources__ = {
             }
             if (templates[id] && templates[id].instances === instances) delete templates[id];
             fn = null;
-            build = null;
             proto = null;
             l10nMap = null;
             l10nLinks = null;
@@ -12413,7 +12449,7 @@ var __resources__ = {
           var bindType = binding[0];
           var domRef = binding[1];
           var bindName = binding[2];
-          if ([ "set", "templateId_" ].indexOf(bindName) != -1) {
+          if ([ "get", "set", "templateId_" ].indexOf(bindName) != -1) {
             basis.dev.warn("binding name `" + bindName + "` is prohibited, binding ignored");
             continue;
           }
@@ -12597,17 +12633,18 @@ var __resources__ = {
         keys: bindings.keys,
         l10nKeys: basis.object.keys(bindings.l10n)
       };
+      if (tokens.length == 1) paths.path[0] = "a=_";
       if (!uri) uri = basis.path.baseURI + "inline_template" + inlineSeed++ + ".tmpl";
       if (bindings.l10n) {
         var code = [];
         for (var key in bindings.l10n) code.push('case"' + key + '":' + 'if(value==null)value="{' + key + '}";' + "__l10n[token]=value;" + bindings.l10n[key].join("") + "break;");
         result.createL10nSync = compileFunction([ "_", "__l10n", "bind_attr", "TEXT_BUG" ], (source ? "\n// " + source.split(/\r\n?|\n\r?/).join("\n// ") + "\n\n" : "") + "var " + paths.path + ";" + "return function(token, value){" + "switch(token){" + code.join("") + "}" + "}" + "\n\n//# sourceURL=" + basis.path.origin + uri + "_l10n");
       }
-      result.createInstance = compileFunction([ "tid", "map", "build", "tools", "__l10n", "TEXT_BUG" ], (source ? "\n// " + source.split(/\r\n?|\n\r?/).join("\n// ") + "\n\n" : "") + "var getBindings=tools.createBindingFunction([" + bindings.keys.map(function(key) {
+      result.createInstance = compileFunction([ "tid", "map", "proto", "tools", "__l10n", "TEXT_BUG" ], (source ? "\n// " + source.split(/\r\n?|\n\r?/).join("\n// ") + "\n\n" : "") + "var getBindings=tools.createBindingFunction([" + bindings.keys.map(function(key) {
         return '"' + key + '"';
       }) + "])," + (bindings.tools.length ? bindings.tools + "," : "") + "Attaches=function(){};" + "Attaches.prototype={" + bindings.keys.map(function(key) {
         return key + ":null";
-      }) + "};" + "return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){" + "var _=build()," + paths.path.concat(bindings.vars) + "," + "instance={" + "context:obj," + "action:onAction," + "rebuild:onRebuild," + (debug ? "debug:function debug(){return[" + bindings.debugList + "]}," : "") + "handler:null," + "bindings:bindings," + "bindingInterface:bindingInterface," + "attaches:null," + "tmpl:{" + [ paths.ref, "templateId_:id", "set:set" ] + "}" + "}" + (objectRefs ? ";if(obj||onAction)" + objectRefs + "=(id<<12)|tid" : "") + bindings.set + ";instance.handler=bindings?getBindings(bindings,obj,set,bindingInterface):null" + ";" + bindings.l10nCompute + ";return instance" + "}" + "\n\n//# sourceURL=" + basis.path.origin + uri);
+      }) + "};" + "return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){" + "var _=proto.cloneNode(true)," + paths.path.concat(bindings.vars) + "," + "instance={" + "context:obj," + "action:onAction," + "rebuild:onRebuild," + (debug ? "debug:function debug(){return[" + bindings.debugList + "]}," : "") + "handler:null," + "bindings:bindings," + "bindingInterface:bindingInterface," + "attaches:null," + "tmpl:{" + [ paths.ref, "templateId_:id", "set:set" ] + "}" + "}" + (objectRefs ? ";if(obj||onAction)" + objectRefs + "=(id<<12)|tid" : "") + bindings.set + ";if(bindings)instance.handler=getBindings(bindings,obj,set,bindingInterface)" + ";" + bindings.l10nCompute + ";return instance" + "}" + "\n\n//# sourceURL=" + basis.path.origin + uri);
       return result;
     };
     module.exports = {
@@ -12631,7 +12668,7 @@ var __resources__ = {
 
 (function(global) {
   "use strict";
-  var VERSION = "1.2.0-dev";
+  var VERSION = "1.2.2";
   var document = global.document;
   var Object_toString = Object.prototype.toString;
   function extend(dest, source) {
@@ -12912,14 +12949,11 @@ var __resources__ = {
       return function(id) {
         var task = taskById[id];
         if (task) {
-          try {
-            if (typeof task.fn == "function") task.fn.apply(undefined, task.args); else {
-              (global.execScript || function(fn) {
-                global["eval"].call(global, fn);
-              })(String(task.fn));
-            }
-          } finally {
-            delete taskById[id];
+          delete taskById[id];
+          if (typeof task.fn == "function") task.fn.apply(undefined, task.args); else {
+            (global.execScript || function(fn) {
+              global["eval"].call(global, fn);
+            })(String(task.fn));
           }
         }
       };
@@ -12979,10 +13013,10 @@ var __resources__ = {
                   addToQueue = function(taskId) {
                     var scriptEl = createScript();
                     scriptEl.onreadystatechange = function() {
-                      runTask(taskId);
                       scriptEl.onreadystatechange = null;
                       documentInterface.remove(scriptEl);
                       scriptEl = null;
+                      runTask(taskId);
                     };
                     documentInterface.head.add(scriptEl);
                   };

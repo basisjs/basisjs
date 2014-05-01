@@ -38,7 +38,7 @@
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
   var DataObject = basis.data.Object;
   var KeyObjectMap = basis.data.KeyObjectMap;
-  var AbstractDataset = basis.data.AbstractDataset;
+  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
   var Dataset = basis.data.Dataset;
   var DatasetWrapper = basis.data.DatasetWrapper;
 
@@ -197,9 +197,6 @@
 
       // build delta and fire event
       this.applyRule(updated);
-    },
-    destroy: function(source){
-      this.removeSource(source);
     }
   };
 
@@ -207,7 +204,7 @@
  /**
   * @class
   */
-  var Merge = Class(AbstractDataset, {
+  var Merge = Class(ReadOnlyDataset, {
     className: namespace + '.Merge',
 
    /**
@@ -217,7 +214,7 @@
 
    /**
     * Fires when source set changed.
-    * @param {basis.data.AbstractDataset} dataset
+    * @param {basis.data.ReadOnlyDataset} dataset
     * @param {object} delta Delta of changes. Must have property `inserted`
     * or `deleted`, or both of them. `inserted` property is array of new sources
     * and `deleted` property is array of removed sources.
@@ -226,9 +223,13 @@
     emit_sourcesChanged: createEvent('sourcesChanged', 'delta'),
 
    /**
-    * @type {Array.<basis.data.AbstractDataset>}
+    * @type {Array.<basis.data.ReadOnlyDataset>}
     */
     sources: null,
+
+    sourceValues_: null,
+    sourcesMap_: null,
+    sourceDelta_: null,
 
    /**
     * @type {function(count:number, sourceCount:number):boolean}
@@ -241,22 +242,31 @@
     * @inheritDoc
     */
     listen: {
-      source: MERGE_DATASET_HANDLER
+      source: MERGE_DATASET_HANDLER,
+      sourceValue: {
+        destroy: function(sender){
+          this.removeSource(sender);
+        }
+      }
     },
 
    /**
-    * @config {Array.<basis.data.AbstractDataset>} sources Set of source datasets for aggregate.
+    * @config {Array.<basis.data.ReadOnlyDataset>} sources Set of source datasets for aggregate.
     * @constructor
     */
     init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       // init part
       var sources = this.sources;
+
       this.sources = [];
+      this.sourcesMap_ = {};
+      this.sourceValues_ = [];
+
       if (sources)
-        sources.forEach(this.addSource, this);
+        this.setSources(sources);
     },
 
    /**
@@ -316,120 +326,231 @@
     },
 
    /**
+    * Adds new dataset.
+    * @param {basis.data.ReadOnlyDataset=} dataset
+    * @private
+    */
+    addDataset_: function(dataset){
+      this.sources.push(dataset);
+      // add event listeners to source
+      if (this.listen.source)
+        dataset.addHandler(this.listen.source, this);
+
+      // process new dataset objects and update member map
+      var memberMap = this.members_;
+      for (var objectId in dataset.items_)
+      {
+        // check: is this object already known
+        if (memberMap[objectId])
+        {
+          // item exists -> increase dataset links count
+          memberMap[objectId].count++;
+        }
+        else
+        {
+          // add to source map
+          memberMap[objectId] = {
+            count: 1,
+            object: dataset.items_[objectId]
+          };
+        }
+      }
+
+      return true;
+    },
+
+   /**
+    * Adds new dataset.
+    * @param {basis.data.ReadOnlyDataset=} dataset
+    * @private
+    */
+    removeDataset_: function(dataset){
+      basis.array.remove(this.sources, dataset);
+
+      // remove event listeners from dataset
+      if (this.listen.source)
+        dataset.removeHandler(this.listen.source, this);
+
+      // process removing dataset objects and update member map
+      var memberMap = this.members_;
+      for (var objectId in dataset.items_)
+        memberMap[objectId].count--;
+    },
+
+   /**
+    * Update dataset value by source.
+    * @param {basis.data.ReadOnlyDataset=} source
+    * @private
+    */
+    updateDataset_: function(source){
+      // this -> sourceInfo
+      var merge = this.owner;
+      var sourcesMap_ = merge.sourcesMap_;
+      var dataset = basis.data.resolveDataset(this, merge.updateDataset_, source, 'adapter');
+      var inserted;
+      var deleted;
+      var delta;
+
+      if (this.dataset === dataset)
+        return;
+
+      if (dataset)
+      {
+        var count = (sourcesMap_[dataset.basisObjectId] || 0) + 1;
+        sourcesMap_[dataset.basisObjectId] = count;
+        if (count == 1)
+        {
+          merge.addDataset_(dataset);
+          inserted = [dataset];
+        }
+      }
+
+      if (this.dataset)
+      {
+        var count = (sourcesMap_[this.dataset.basisObjectId] || 0) - 1;
+        sourcesMap_[this.dataset.basisObjectId] = count;
+        if (count == 0)
+        {
+          merge.removeDataset_(this.dataset);
+          deleted = [this.dataset];
+        }
+      }
+
+      this.dataset = dataset;
+
+      // build delta and fire event
+      merge.applyRule();
+
+      // fire sources changes event
+      if (delta = getDelta(inserted, deleted))
+      {
+        if (merge.sourceDelta_)
+        {
+          if (delta.inserted)
+            delta.inserted.forEach(function(source){
+              if (!basis.array.remove(this.deleted, source))
+                basis.array.add(this.inserted, source);
+            }, merge.sourceDelta_);
+          if (delta.deleted)
+            delta.deleted.forEach(function(source){
+              if (!basis.array.remove(this.inserted, source))
+                basis.array.add(this.deleted, source);
+            }, merge.sourceDelta_);
+        }
+        else
+          merge.emit_sourcesChanged(delta);
+      }
+
+      return delta;
+    },
+
+   /**
+    * Returns array of source values.
+    * @return {Array}
+    */
+    getSourceValues: function(){
+      return this.sourceValues_.map(function(item){
+        return item.source;
+      });
+    },
+
+   /**
     * Add source from sources list.
-    * @param {basis.data.AbstractDataset} source
+    * @param {basis.data.ReadOnlyDataset} source
     * @return {boolean} Returns true if new source added.
     */
     addSource: function(source){
-      if (source instanceof AbstractDataset)
+      if (!source || (typeof source != 'object' && typeof source != 'function'))
       {
-        if (basis.array.add(this.sources, source))
-        {
-          // add event listeners to source
-          if (this.listen.source)
-            source.addHandler(this.listen.source, this);
-
-          // process new source objects and update member map
-          var memberMap = this.members_;
-          for (var objectId in source.items_)
-          {
-            // check: is this object already known
-            if (memberMap[objectId])
-            {
-              // item exists -> increase source links count
-              memberMap[objectId].count++;
-            }
-            else
-            {
-              // add to source map
-              memberMap[objectId] = {
-                count: 1,
-                object: source.items_[objectId]
-              };
-            }
-          }
-
-          // build delta and fire event
-          this.applyRule();
-
-          // fire sources changes event
-          this.emit_sourcesChanged({
-            inserted: [source]
-          });
-
-          return true;
-        }
+        /** @cut */ basis.dev.warn(this.constructor.className + '.addSource: value should be a dataset instance or to be able to resolve in dataset');
+        return;
       }
-      else
-      {
-        /** @cut */ basis.dev.warn(this.constructor.className + '.addSource: source isn\'t instance of AbstractDataset');
-      }
+
+      for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
+        if (sourceInfo.source === source)
+          return;
+
+      var sourceInfo = {
+        owner: this,
+        source: source,
+        adapter: null,
+        dataset: null
+      };
+
+      this.sourceValues_.push(sourceInfo);
+      this.updateDataset_.call(sourceInfo, source);
+
+      if (this.listen.sourceValue && source instanceof basis.event.Emitter)
+        source.addHandler(this.listen.sourceValue, this);
     },
 
    /**
     * Removes source from sources list.
-    * @param {basis.data.AbstractDataset} source
+    * @param {basis.data.ReadOnlyDataset} source
     * @return {boolean} Returns true if source removed.
     */
     removeSource: function(source){
-      if (basis.array.remove(this.sources, source))
-      {
-        // remove event listeners from source
-        if (this.listen.source)
-          source.removeHandler(this.listen.source, this);
+      for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
+        if (sourceInfo.source === source)
+        {
+          if (this.listen.sourceValue && source instanceof basis.event.Emitter)
+            source.removeHandler(this.listen.sourceValue, this);
 
-        // process removing source objects and update member map
-        var memberMap = this.members_;
-        for (var objectId in source.items_)
-          memberMap[objectId].count--;
+          this.updateDataset_.call(sourceInfo, null);
+          this.sourceValues_.splice(i, 1);
+          return;
+        }
 
-        // build delta and fire event
-        this.applyRule();
-
-        // fire sources changes event
-        this.emit_sourcesChanged({
-          deleted: [source]
-        });
-
-        return true;
-      }
-      else
-      {
-        /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source isn\'t in dataset source list');
-      }
+      /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source value isn\'t found in source list');
     },
 
    /**
     * Synchonize sources list according new list.
-    * TODO: optimize, reduce emit_sourcesChanged and emit_itemsChanged count
-    * TODO: returns delta of source list changes
-    * @param {Array.<basis.data.AbstractDataset>} sources
+    * @param {Array.<basis.data.ReadOnlyDataset>} sources
     */
     setSources: function(sources){
-      var exists = arrayFrom(this.sources); // clone list
+      var exists = this.sourceValues_.map(function(sourceInfo){
+        return sourceInfo.source;
+      });
+      var inserted = [];
+      var deleted = [];
+      var delta;
 
-      for (var i = 0, source; source = sources[i]; i++)
+      if (!sources)
+        sources = [];
+
+      this.sourceDelta_ = {
+        inserted: inserted,
+        deleted: deleted
+      };
+
+      for (var i = 0; i < sources.length; i++)
       {
-        if (source instanceof AbstractDataset)
+        var source = sources[i];
+        if (!basis.array.remove(exists, source))
         {
-          if (!basis.array.remove(exists, source))
-            this.addSource(source);
+          this.addSource(source);
         }
         else
         {
-          /** @cut */ basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of AbstractDataset', source);
+          /** @cut */ basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of ReadOnlyDataset', source);
         }
       }
 
       exists.forEach(this.removeSource, this);
+
+      this.sourceDelta_ = null;
+      if (delta = getDelta(inserted, deleted))
+        this.emit_sourcesChanged(delta);
+
+      return delta;
     },
 
    /**
     * Remove all sources. All members are removing as side effect.
-    * TODO: optimize, reduce emit_sourcesChanged and emit_itemsChanged count
     */
     clear: function(){
-      arrayFrom(this.sources).forEach(this.removeSource, this);
+      this.setSources();
     },
 
    /**
@@ -437,7 +558,7 @@
     */
     destroy: function(){
       // inherit
-      AbstractDataset.prototype.destroy.call(this);
+      ReadOnlyDataset.prototype.destroy.call(this);
 
       this.sources = null;
     }
@@ -532,7 +653,7 @@
  /**
   * @class
   */
-  var Subtract = Class(AbstractDataset, {
+  var Subtract = Class(ReadOnlyDataset, {
     className: namespace + '.Subtract',
 
    /**
@@ -541,25 +662,25 @@
     subscribeTo: SUBSCRIPTION.MINUEND + SUBSCRIPTION.SUBTRAHEND,
 
    /**
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     minuend: null,
 
    /**
     * Fires when minuend changed.
-    * @param {basis.data.AbstractDataset} oldMinuend Value of {basis.data.dataset.Subtract#minuend} before changes.
+    * @param {basis.data.ReadOnlyDataset} oldMinuend Value of {basis.data.dataset.Subtract#minuend} before changes.
     * @event
     */
     emit_minuendChanged: createEvent('minuendChanged', 'oldMinuend'),
 
    /**
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     subtrahend: null,
 
    /**
     * Fires when subtrahend changed.
-    * @param {basis.data.AbstractDataset} oldSubtrahend Value of {basis.data.dataset.Subtract#subtrahend} before changes.
+    * @param {basis.data.ReadOnlyDataset} oldSubtrahend Value of {basis.data.dataset.Subtract#subtrahend} before changes.
     * @event
     */
     emit_subtrahendChanged: createEvent('subtrahendChanged', 'oldSubtrahend'),
@@ -577,7 +698,7 @@
     */
     init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       // init part
       var minuend = this.minuend;
@@ -592,18 +713,18 @@
 
    /**
     * Set new minuend & subtrahend.
-    * @param {basis.data.AbstractDataset=} minuend
-    * @param {basis.data.AbstractDataset=} subtrahend
+    * @param {basis.data.ReadOnlyDataset=} minuend
+    * @param {basis.data.ReadOnlyDataset=} subtrahend
     * @return {object|boolean} Delta if changes happend
     */
     setOperands: function(minuend, subtrahend){
       var delta;
       var operandsChanged = false;
 
-      if (minuend instanceof AbstractDataset == false)
+      if (minuend instanceof ReadOnlyDataset == false)
         minuend = null;
 
-      if (subtrahend instanceof AbstractDataset == false)
+      if (subtrahend instanceof ReadOnlyDataset == false)
         subtrahend = null;
 
       var oldMinuend = this.minuend;
@@ -679,7 +800,7 @@
     },
 
    /**
-    * @param {basis.data.AbstractDataset} minuend
+    * @param {basis.data.ReadOnlyDataset} minuend
     * @return {Object} Delta if changes happend
     */
     setMinuend: function(minuend){
@@ -687,7 +808,7 @@
     },
 
    /**
-    * @param {basis.data.AbstractDataset} subtrahend
+    * @param {basis.data.ReadOnlyDataset} subtrahend
     * @return {Object} Delta if changes happend
     */
     setSubtrahend: function(subtrahend){
@@ -710,7 +831,7 @@
  /**
   * @class
   */
-  var SourceDataset = Class(AbstractDataset, {
+  var SourceDataset = Class(ReadOnlyDataset, {
     className: namespace + '.SourceDataset',
 
    /**
@@ -720,13 +841,13 @@
 
    /**
     * Data source.
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     source: null,
 
    /**
     * Fires when source changed.
-    * @param {basis.data.AbstractDataset} oldSource Previous value for source property.
+    * @param {basis.data.ReadOnlyDataset} oldSource Previous value for source property.
     * @event
     */
     emit_sourceChanged: createEvent('sourceChanged', 'oldSource'),
@@ -762,7 +883,7 @@
     init: function(){
       this.sourceMap_ = {};
 
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       var source = this.source;
       if (source)
@@ -774,7 +895,7 @@
 
    /**
     * Set new source dataset.
-    * @param {basis.data.AbstractDataset} source
+    * @param {basis.data.ReadOnlyDataset} source
     */
     setSource: function(source){
       source = basis.data.resolveDataset(this, this.setSource, source, 'sourceAdapter_');
@@ -827,7 +948,7 @@
     */
     destroy: function(){
       // inherit
-      AbstractDataset.prototype.destroy.call(this);
+      ReadOnlyDataset.prototype.destroy.call(this);
 
       this.sourceMap_ = null;
     }
@@ -1212,9 +1333,9 @@
 
    /**
     * Class for subset
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
-    subsetClass: AbstractDataset,
+    subsetClass: ReadOnlyDataset,
 
    /**
     * Class for subset wrapper
@@ -1793,7 +1914,7 @@
     * Class for subset
     * @type {function}
     */
-    subsetClass: AbstractDataset,
+    subsetClass: ReadOnlyDataset,
 
    /**
     * Class for subset wrapper

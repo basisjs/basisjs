@@ -68,7 +68,8 @@
       },
       flexboxSupported: function(){
         return SUPPORT_DISPLAYBOX;
-      }
+      },
+      content: 'content'
     },
 
     flex: 0,

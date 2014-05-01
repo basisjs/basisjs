@@ -45,16 +45,19 @@
       }
     }
 
-    for (var i = 0; i < chars.length; i++)
+    for (var i = 0; i < chars.length; i++) main_loop:
     {
       var ch = chars[i];
       switch (ch)
       {
         case '/':
-          j = i + 1;
-          if (chars[j] === '/')
+          store();
+          j = i;
+
+          if (chars[j + 1] === '/')
           {
-            store();
+            j = j + 2;
+
             // rewind to end of line
             while (j < chars.length && chars[j] !== '\n' && chars[j] !== '\r')
               j++;
@@ -64,10 +67,10 @@
             break;
           }
 
-          if (chars[j] == '*')
+          if (chars[j + 1] == '*')
           {
-            store();
-            j = j + 1;
+            j = j + 2;
+
             while (j < chars.length && !(chars[j] === '*' && chars[j + 1] === '/'))
               j++;
 
@@ -76,12 +79,32 @@
             break;
           }
 
+          while (j < chars.length)
+          {
+            j++;
+
+            if (chars[j] == '\n') 
+              break main_loop;
+
+            if (chars[j] == '\\')
+            {
+              j++;
+            }
+            else
+            {
+              if (chars[j] == ch)
+                break;
+            }
+          }
+          store('regexp', j + 1);
+          i = last - 1;
+
           break;
         case '"':
         case '\'':
           store();
           j = i;
-          while (true)
+          while (j < chars.length)
           {
             j++;
             if (chars[j] == '\\')
@@ -128,8 +151,8 @@
     }
     store();
 
-    //if (source != res.map(function(x){return x[1]}).join(''))
-    //  basis.dev.warn('Wrong parsing', source);
+    // if (source != res.map(function(x){return x[1]}).join(''))
+    //   basis.dev.warn('Wrong parsing', source);
 
     return res;
   }

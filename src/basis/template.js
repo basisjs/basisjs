@@ -83,7 +83,8 @@
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
   var BREAK_TAG_PARSE = /^/g;
   var TAG_IGNORE_CONTENT = {
-    text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g
+    text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g,
+    style: /((?:.|[\r\n])*?)(?:<\/b:style>|$)/g
   };
 
   var quoteUnescape = /\\"/g;
@@ -374,6 +375,7 @@
           break;
 
         case TAG_IGNORE_CONTENT.text:
+        case TAG_IGNORE_CONTENT.style:
           lastTag.childs.push({
             type: TYPE_TEXT,
             value: m[1]
@@ -949,6 +951,11 @@
 
                     template.resources.push(path.resolve(template.baseURI + elAttrs.src));
                   }
+                  else
+                  {
+                    var text = token.childs[0];
+                    template.resources.push(basis.resource.virtual('css', text ? text.value : '').url);
+                  }
                 break;
 
                 case 'l10n':
@@ -995,19 +1002,30 @@
                   if (templateSrc)
                   {
                     var isTemplateRef = /^#\d+$/.test(templateSrc);
+                    var isDocumentIdRef = /^id:/.test(templateSrc);
                     var url = isTemplateRef ? templateSrc.substr(1) : templateSrc;
                     var resource;
 
                     if (isTemplateRef)
+                    {
+                      // <b:include src="#123"/>
                       resource = templateList[url];
+                    }
+                    else if (isDocumentIdRef)
+                    {
+                      // <b:include src="id:foo"/>
+                      resource = resolveSourceByDocumentId(url.substr(3));
+                    }
                     else
                     {
                       if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
                       {
+                        // <b:include src="foo.bar.baz"/>
                         resource = getSourceByPath(url);
                       }
                       else
                       {
+                        // <b:include src="./path/to/file.tmpl"/>
                         /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
                         /** @cut */   basis.dev.warn('Bad usage: <b:include src=\"' + url + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
@@ -1022,14 +1040,13 @@
                       continue;
                     }
 
-                    if (includeStack.indexOf(resource) == -1) // prevent recursion
+                    // prevent recursion
+                    if (includeStack.indexOf(resource) == -1)
                     {
                       var decl;
 
-                      arrayAdd(template.deps, resource);
-
-                      // prevent recursion
-                      includeStack.push(resource);
+                      if (!isDocumentIdRef)
+                        arrayAdd(template.deps, resource);
 
                       if (isTemplateRef)
                       {
@@ -1043,9 +1060,6 @@
                       {
                         decl = getDeclFromSource(resource, resource.url ? path.dirname(resource.url) + '/' : '', true, options);
                       }
-
-                      // prevent recursion
-                      includeStack.pop();
 
                       if (decl.resources && 'no-style' in elAttrs == false)
                         unshiftUnique(template.resources, decl.resources);
@@ -1219,7 +1233,7 @@
                       /** @cut */   return res.url || '[inline template]';
                       /** @cut */ });
                       /** @cut */ template.warns.push('Recursion: ', stack.join(' -> '));
-                      /** @cut */ basis.dev.warn('Recursion in template ' + (template.sourceUrl || '[inline template]') + ': ', stack.join(' -> '));
+                      /** @cut */ basis.dev.warn('Recursion in template: ', stack.join(' -> '));
                     }
                   }
 
@@ -1448,7 +1462,7 @@
       return unpredictable;
     }
 
-    return function makeDeclaration(source, baseURI, options, sourceUrl){
+    return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
       options = options || {};
       var warns = [];
       /** @cut */ var source_;
@@ -1491,8 +1505,16 @@
           warns.push.apply(warns, source.warns);
       }
 
+      // prevent recursion
+      if (sourceOrigin)
+        includeStack.push(sourceOrigin);
+
       // main task
       result.tokens = process(source, result, options);
+
+      // prevent recursion
+      if (sourceOrigin)
+        includeStack.pop();
 
       // there must be at least one token in result
       if (!result.tokens)
@@ -1611,7 +1633,7 @@
     }
 
     if (typeof result == 'string')
-      result = makeDeclaration(result, baseURI, options, sourceUrl);
+      result = makeDeclaration(result, baseURI, options, sourceUrl, source);
 
     return result;
   }
@@ -1711,28 +1733,41 @@
   // source from script by id
   //
 
-  function sourceById(sourceId){
-    var host = document.getElementById(sourceId);
+  var sourceByDocumentIdResolvers = {};
 
-    if (host && host.tagName == 'SCRIPT')
+  function getTemplateByDocumentId(id){
+    var resolver = resolveSourceByDocumentId(id);
+
+    if (resolver.template)
+      return resolver.template;
+
+    var host = document.getElementById(id);
+    var source = '';
+
+    if (host && host.tagName == 'SCRIPT' && host.type == 'text/basis-template')
+      source = host.textContent || host.text;
+    /** @cut */ else
+    /** @cut */   if (!host)
+    /** @cut */     basis.dev.warn('Template script element with id `' + sourceId + '` not found');
+    /** @cut */   else
+    /** @cut */     basis.dev.warn('Template should be declared in <script type="text/basis-template"> element (id `' + sourceId + '`)');
+
+    return resolver.template = new Template(source);
+  };
+
+  function resolveSourceByDocumentId(sourceId){
+    var resolver = sourceByDocumentIdResolvers[sourceId];
+
+    if (!resolver)
     {
-      if (host.type == 'text/basis-template')
-        return host.textContent || host.text;
-
-      /** @cut */ basis.dev.warn('Template script element with wrong type', host.type);
-
-      return '';
+      resolver = sourceByDocumentIdResolvers[sourceId] = function(){
+        return getTemplateByDocumentId(sourceId).source;
+      };
+      /** @cut */ resolver.id = sourceId;
+      /** @cut */ resolver.url = '<script id="' + sourceId + '"/>';
     }
 
-    /** @cut */ basis.dev.warn('Template script element with id `' + sourceId + '` not found');
-
-    return '';
-  }
-
-  function resolveSourceById(sourceId){
-    return function(){
-      return sourceById(sourceId);
-    };
+    return resolver;
   }
 
  /**
@@ -1878,7 +1913,7 @@
                 break;
               case 'id':
                 // source from script element
-                source = resolveSourceById(source);
+                source = resolveSourceByDocumentId(source);
                 break;
               case 'tokens':
                 source = basis.string.toObject(source);
@@ -2346,7 +2381,7 @@
           {
             if (arguments.length == 1)
             {
-              // define(path): Template  === getTempalteByPath(path)
+              // define(path): Template  === getTemplateByPath(path)
 
               return getSourceByPath(what);
             }

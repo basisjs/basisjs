@@ -19,9 +19,12 @@ module.exports = {
         for (var key in binding)
           tmpl.set(key, binding[key]);
 
-      var fragment = tmpl.element.parentNode;
-      var cursor = fragment.firstChild;
+      var cursor = tmpl.element;
       var res = '';
+
+      if (cursor.parentNode && cursor.parentNode.nodeType == 11) // DocumentFragment
+        cursor = cursor.parentNode.firstChild;
+
       while (cursor)
       {
         res += basis.dom.outerHTML(cursor);

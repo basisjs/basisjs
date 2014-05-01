@@ -49,7 +49,7 @@ module.exports = {
             });
 
             this.is(true, EntityType.all !== null);
-            this.is(true, EntityType.all instanceof nsData.AbstractDataset);
+            this.is(true, EntityType.all instanceof nsData.ReadOnlyDataset);
 
             var entityA = EntityType();
             this.is(undefined, entityA);
@@ -81,7 +81,7 @@ module.exports = {
             });
 
             this.is(true, EntityType.all !== null);
-            this.is(true, EntityType.all instanceof nsData.AbstractDataset);
+            this.is(true, EntityType.all instanceof nsData.ReadOnlyDataset);
 
             var entityA = EntityType();
             this.is(undefined, entityA);

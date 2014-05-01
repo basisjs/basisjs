@@ -44,7 +44,7 @@
   }
 
   function startDrag(event){
-    if (dragElement)
+    if (dragElement || this.ignoreTarget(event.sender, event))
       return;
 
     // Some browsers (IE, Opera) wrongly fires mousedown event on scrollbars,
@@ -149,6 +149,9 @@
     axisYproxy: basis.fn.$self,
 
     startRule: basis.fn.$true,
+    ignoreTarget: function(target, event){
+      return /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName);
+    },
 
     prepareDrag: function(){},
     emit_start: createEvent('start'), // occure on first mouse move

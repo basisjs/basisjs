@@ -20,7 +20,7 @@
 
   var DataObject = basis.data.Object;
   var KeyObjectMap = basis.data.KeyObjectMap;
-  var AbstractDataset = basis.data.AbstractDataset;
+  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
   var DatasetWrapper = basis.data.DatasetWrapper;
 
   var Value = basis.data.Value;
@@ -417,7 +417,7 @@
     return function(events, getter){
       var dataset;
 
-      if (events instanceof AbstractDataset || events instanceof DatasetWrapper)
+      if (events instanceof ReadOnlyDataset || events instanceof DatasetWrapper)
       {
         dataset = events;
         events = getter;
@@ -554,7 +554,7 @@
  var datasetIndexes = {};
 
  /**
-  * @param {basis.data.AbstractDataset} dataset
+  * @param {basis.data.ReadOnlyDataset} dataset
   * @param {basis.data.index.IndexConstructor} indexConstructor
   */
   function getDatasetIndex(dataset, indexConstructor){
@@ -594,7 +594,7 @@
   }
 
  /**
-  * @param {basis.data.AbstractDataset} dataset
+  * @param {basis.data.ReadOnlyDataset} dataset
   * @param {basis.data.index.Index} index
   */
   function removeDatasetIndex(dataset, index){
@@ -943,12 +943,6 @@
     },
 
     destroy: function(){
-      this.timer_ = clearTimeout(this.timer_);
-      this.calcs = null;
-      this.indexUpdated = null;
-      this.memberSourceMap = null;
-      this.indexesBind_ = null;
-
       this.keyMap.destroy();
       this.keyMap = null;
 
@@ -956,6 +950,14 @@
         this.removeIndex(indexName);
 
       MapFilter.prototype.destroy.call(this);
+
+      this.timer_ = basis.clearImmediate(this.timer_);
+      this.calcs = null;
+      this.indexes = null;
+      this.indexes_ = null;
+      this.indexValues = null;
+      this.memberSourceMap = null;
+      this.indexesBind_ = null;
     }
   });
 

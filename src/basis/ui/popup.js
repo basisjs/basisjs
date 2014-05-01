@@ -145,6 +145,7 @@
 
     visible: false,
     autorotate: false,
+    autoRealign: true,
     zIndex: 0,
 
     dir: '',
@@ -486,7 +487,8 @@
     },
     realignAll: function(){
       for (var popup = this.firstChild; popup; popup = popup.nextSibling)
-        popup.realign();
+        if (popup.autoRealign)
+          popup.realign();
     },
     clear: function(){
       if (this.firstChild)
