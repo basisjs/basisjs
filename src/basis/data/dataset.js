@@ -627,7 +627,8 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      this.setOperands(null, this.subtrahend);
+      if (!this.minuendAdapter_)
+        this.setMinuend(null);
     }
   };
 
@@ -645,7 +646,8 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      this.setOperands(this.minuend, null);
+      if (!this.subtrahendAdapter_)
+        this.setSubtrahend(null);
     }
   };
 
@@ -667,6 +669,12 @@
     minuend: null,
 
    /**
+    * Minuend wrapper
+    * @type {basis.data.DatasetAdapter}
+    */
+    minuendAdapter_: null,
+
+   /**
     * Fires when minuend changed.
     * @param {basis.data.ReadOnlyDataset} oldMinuend Value of {basis.data.dataset.Subtract#minuend} before changes.
     * @event
@@ -677,6 +685,12 @@
     * @type {basis.data.ReadOnlyDataset}
     */
     subtrahend: null,
+
+   /**
+    * Subtrahend wrapper
+    * @type {basis.data.DatasetAdapter}
+    */
+    subtrahendAdapter_: null,
 
    /**
     * Fires when subtrahend changed.
@@ -721,11 +735,8 @@
       var delta;
       var operandsChanged = false;
 
-      if (minuend instanceof ReadOnlyDataset == false)
-        minuend = null;
-
-      if (subtrahend instanceof ReadOnlyDataset == false)
-        subtrahend = null;
+      minuend = basis.data.resolveDataset(this, this.setMinuend, minuend, 'minuendAdapter_');
+      subtrahend = basis.data.resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendAdapter_');
 
       var oldMinuend = this.minuend;
       var oldSubtrahend = this.subtrahend;
@@ -804,7 +815,10 @@
     * @return {Object} Delta if changes happend
     */
     setMinuend: function(minuend){
-      return this.setOperands(minuend, this.subtrahend);
+      return this.setOperands(
+        minuend,
+        this.subtrahendAdapter_ ? this.subtrahendAdapter_.source : this.subtrahend
+      );
     },
 
    /**
@@ -812,7 +826,10 @@
     * @return {Object} Delta if changes happend
     */
     setSubtrahend: function(subtrahend){
-      return this.setOperands(this.minuend, subtrahend);
+      return this.setOperands(
+        this.minuendAdapter_ ? this.minuendAdapter_.source : this.minuend,
+        subtrahend
+      );
     },
 
    /**
