@@ -2148,10 +2148,9 @@
   });
 
 
-/**
+ /**
   * @class
   */
-
   var DatasetAdapter = function(context, fn, source, handler){
     this.context = context;
     this.fn = fn;
@@ -2159,14 +2158,41 @@
     this.handler = handler;
   };
 
-  DatasetAdapter.prototype.adapter_ = null;
-  DatasetAdapter.prototype.proxy = function(){
+  DatasetAdapter.prototype = {
+    context: null,
+    fn: null,
+    source: null,
+    handler: null,
+    adapter_: null,
+    attachMethod: 'addHandler',
+    detachMethod: 'removeHandler',
+    proxy: function(){
+      this.fn.call(this.context, this.source);
+    }
+  };
+
+ /**
+  * Binding bridge dataset adapter
+  * @class
+  */
+  var BBDatasetAdapter = function(){
+    DatasetAdapter.apply(this, arguments);
+  };
+  BBDatasetAdapter.prototype = new DatasetWrapper();
+  BBDatasetAdapter.prototype.attachMethod = 'attach';
+  BBDatasetAdapter.prototype.detachMethod = 'detach';
+
+  //
+  // adapter handlers
+  //
+
+  var TOKEN_ADAPTER_HANDLER = function(){
     this.fn.call(this.context, this.source);
   };
 
   var DATASETWRAPPER_ADAPTER_HANDLER = {
-    datasetChanged: function(wrapper){
-      this.fn.call(this.context, wrapper);
+    datasetChanged: function(){
+      this.fn.call(this.context, this.source);
     },
     destroy: function(){
       this.fn.call(this.context, null);
@@ -2174,14 +2200,17 @@
   };
 
   var VALUE_ADAPTER_HANDLER = {
-    change: function(value){
-      this.fn.call(this.context, value);
+    change: function(){
+      this.fn.call(this.context, this.source);
     },
     destroy: function(){
       this.fn.call(this.context, null);
     }
   };
 
+ /**
+  * Resolve dataset from source value.
+  */
   function resolveDataset(context, fn, source, property){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
@@ -2189,19 +2218,25 @@
     if (typeof source == 'function')
       source = source.call(context, context);
 
-    if (source instanceof DatasetWrapper)
+    if (source)
     {
-      newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
-      source = source.dataset;
-    }
-
-    if (source instanceof basis.Token)
-      source = Value.from(source);  // basis.Token -> basis.data.Value
-
-    if (source instanceof Value)
-    {
-      newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-      source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+      if (source instanceof DatasetWrapper)
+      {
+        newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
+        source = source.dataset;
+      }
+      else
+        if (source instanceof Value)
+        {
+          newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+          source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+        }
+        else
+          if (source.bindingBridge)
+          {
+            newAdapter = new BBDatasetAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+            source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+          }
     }
 
     if (source instanceof ReadOnlyDataset == false)
@@ -2211,7 +2246,7 @@
     {
       if (oldAdapter)
       {
-        oldAdapter.source.removeHandler(oldAdapter.handler, oldAdapter);
+        oldAdapter.source[oldAdapter.detachMethod](oldAdapter.handler, oldAdapter);
 
         // destroy nested adapter if exists
         if (oldAdapter.adapter_)
@@ -2219,7 +2254,7 @@
       }
 
       if (newAdapter)
-        newAdapter.source.addHandler(newAdapter.handler, newAdapter);
+        newAdapter.source[newAdapter.attachMethod](newAdapter.handler, newAdapter);
 
       context[property] = newAdapter;
     }

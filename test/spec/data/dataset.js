@@ -590,7 +590,7 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
               }
             };
             var dataset = new basis.data.Dataset();
@@ -599,19 +599,19 @@ module.exports = {
 
             obj.setDataset(token);
             this.is(true, obj.dataset === dataset);
-            this.is(true, obj.test.source === basis.data.Value.from(token));
+            this.is(true, obj.test.source === token);
 
             token.set(dataset2);
             this.is(true, obj.dataset === dataset2);
-            this.is(true, obj.test.source === basis.data.Value.from(token));
+            this.is(true, obj.test.source === token);
 
             token.set(null);
             this.is(true, obj.dataset === null);
-            this.is(true, obj.test.source === basis.data.Value.from(token));
+            this.is(true, obj.test.source === token);
 
             token.set(dataset2);
             this.is(true, obj.dataset === dataset2);
-            this.is(true, obj.test.source === basis.data.Value.from(token));
+            this.is(true, obj.test.source === token);
 
             obj.setDataset(null);
             this.is(true, obj.dataset === null);
