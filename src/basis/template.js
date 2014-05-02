@@ -82,6 +82,7 @@
   var REFERENCE = /([a-z_][a-z0-9_]*)(\||\}\s*)/ig;
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
   var BREAK_TAG_PARSE = /^/g;
+  var SINGLETON_TAG = /^(area|base|br|col|command|embed|hr|img|input|link|meta|param|source)$/i;
   var TAG_IGNORE_CONTENT = {
     text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g,
     style: /((?:.|[\r\n])*?)(?:<\/b:style>|$)/g
@@ -285,14 +286,23 @@
           {
             parseTag = false;
 
-            if (m[3] == '/>') // otherwise m[3] == '>'
+            if (m[3] == '/>' ||
+                (!lastTag.prefix && SINGLETON_TAG.test(lastTag.name)))
+            {
+              /** @cut */ if (m[3] != '/>')
+              /** @cut */   result.warns.push('Tag <' + lastTag.name + '> doesn\'t closed explicit (use `/>` as tag ending)');
+
               lastTag = tagStack.pop();
+            }
             else
+            {
+              // otherwise m[3] == '>'
               if (lastTag.prefix == 'b' && lastTag.name in TAG_IGNORE_CONTENT)
               {
                 state = TAG_IGNORE_CONTENT[lastTag.name];
                 break;
               }
+            }
 
             state = TEXT;
             break;
@@ -864,7 +874,7 @@
                             if (typeof value == 'number')
                               value = attrBindings[0].indexOf(parsed.binding[0][value]);
 
-                            attrBindings[1].push(value)
+                            attrBindings[1].push(value);
                           }
                       }
                     }
@@ -1484,12 +1494,10 @@
         /** @cut */ source_ = source;
         source = tokenize(String(source));
       }
-      else
-      {
-        // add tokenizer warnings if any
-        if (source.warns)
-          warns.push.apply(warns, source.warns);
-      }
+
+      // add tokenizer warnings if any
+      if (source.warns)
+        warns.push.apply(warns, source.warns);
 
       // prevent recursion
       if (sourceOrigin)
