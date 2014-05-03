@@ -1660,19 +1660,29 @@
 
         if (result.isolate)
           for (var i = 0, url; url = result.resources[i]; i++)
-          {
-            var resource = basis.resource.virtual('css', '');
-            basis.resource(url).ready(function(cssResource){
-              resource.update(
-                isolateCss(cssResource.resource.get(true), result.isolate)
-              );
-            }).fetch();
-            basis.object.extend(resource.fetch(), {
-              url: url + '?isolate-prefix=' + result.isolate,
-              baseURI: basis.path.dirname(url) + '/'
-            });
-            result.resources[i] = resource.url;
-          }
+            result.resources[i] = (function(url){
+              var sourceResource = basis.resource(url).ready(function(cssResource){
+                var cssText = isolateCss(cssResource.cssText, result.isolate);
+
+                /** @cut */ if (typeof btoa == 'function')
+                /** @cut */   cssText += '\n/*# sourceMappingURL=data:application/json;base64,' +
+                /** @cut */     btoa('{"version":3,"sources":["' + basis.path.origin + url + '"],' +
+                /** @cut */     '"mappings":"AAAA' + basis.string.repeat(';AACA', cssText.split('\n').length) +
+                /** @cut */     '"}') + ' */';
+
+                resource.update(cssText);
+              });
+
+              var resource = basis.resource.virtual('css', '').ready(function(cssResource){
+                sourceResource();
+                basis.object.extend(cssResource, {
+                  url: url + '?isolate-prefix=' + result.isolate,
+                  baseURI: basis.path.dirname(url) + '/'
+                });
+              });
+
+              return resource.url;
+            })(url);
       }
 
       /** @cut */ for (var key in result.defines)

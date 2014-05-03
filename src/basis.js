@@ -1906,7 +1906,7 @@
             // wrap content only if it wrapped already and non-updatable
             if (wrapped && !contentWrapper.permanent)
             {
-              content = contentWrapper(newContent, resourceUrl);
+              content = contentWrapper(newContent, resourceUrl, content);
               applyResourcePatches(resource);
               resource.apply();
             }
@@ -2083,15 +2083,13 @@
         permanent: true
       }),
 
-      '.css': function(content, url){
-        var resource = CssResource.resources[url];
+      '.css': function(content, url, cssResource){
+        if (!cssResource)
+          cssResource = new CssResource(url);
 
-        if (!resource)
-          resource = new CssResource(url);
-        else
-          resource.updateCssText(content);
+        cssResource.updateCssText(content);
 
-        return resource;
+        return cssResource;
       },
 
       '.json': function(content, url){
@@ -3198,9 +3196,6 @@
   //
 
   var CssResource = (function(){
-    var cssResources = {};
-    var cleanupDom = true; // is require remove style node on CssResource destroy or not
-
     // Test for appendChild bugs (old IE browsers has a problem with append textNode into <style>)
     var STYLE_APPEND_BUGGY = (function(){
       try {
@@ -3211,18 +3206,6 @@
         return true;
       }
     })();
-
-    // cleanup on page unload
-    cleaner.add({
-      destroy: function(){
-        cleanupDom = false; // don't need remove unused style on global destroy
-
-        for (var url in cssResources)
-          cssResources[url].destroy();
-
-        cssResources = null;
-      }
-    });
 
 
    /**
@@ -3261,7 +3244,7 @@
         this.element = document.createElement('style');
 
         if (!STYLE_APPEND_BUGGY)
-          this.textNode = this.element.appendChild(document.createTextNode(''));
+          this.element.appendChild(document.createTextNode(''));
 
         /** @cut */ this.element.setAttribute('src', this.url);
       }
@@ -3280,31 +3263,27 @@
    /**
     * @class
     */
-    var CssResource = Class(null, {
+    return Class(null, {
       className: 'basis.CssResource',
 
       inUse: 0,
 
       url: '',
       baseURI: '',
-      cssText: '',
+      cssText: undefined,
 
-      resource: null,
       element: null,
-      textNode: null,
 
       init: function(url){
-        this.resource = getResource(url);
         this.url = url;
         this.baseURI = pathUtils.dirname(url) + '/';
-
-        cssResources[url] = this;
       },
 
       updateCssText: function(cssText){
         if (this.cssText != cssText)
         {
           this.cssText = cssText;
+
           if (this.inUse && this.element)
           {
             setBase(this.baseURI);
@@ -3314,29 +3293,24 @@
         }
       },
 
-      syncCssText: function(){
-        if (this.textNode)
-        {
-          // W3C browsers
-          this.textNode.nodeValue = this.cssText;
-        }
-        else
-        {
-          // old IE
-          this.element.styleSheet.cssText = this.cssText;
-        }
-      },
+      syncCssText: STYLE_APPEND_BUGGY
+        // old IE
+        ? function(){
+            this.element.styleSheet.cssText = this.cssText;
+          }
+        // W3C browsers
+        : function(){
+            var cssText = this.cssText;
+
+            /** @cut add source url for debug */
+            /** @cut */ cssText += '\n/*# sourceURL=' + pathUtils.origin + this.url + ' */';
+
+            this.element.firstChild.nodeValue = cssText;
+          },
 
       startUse: function(){
         if (!this.inUse)
-        {
-          this.cssText = this.resource.get(true);
-
-          /** @cut add source url for debug */
-          /** @cut */ this.cssText += '\n/*# sourceURL=' + pathUtils.origin + this.url + ' */';
-
           documentInterface.head.ready(injectStyleToHead, this);
-        }
 
         this.inUse += 1;
       },
@@ -3354,19 +3328,13 @@
       },
 
       destroy: function(){
-        if (this.element && cleanupDom)
+        if (this.element)
           documentInterface.remove(this.element);
 
         this.element = null;
-        this.textNode = null;
-        this.resource = null;
         this.cssText = null;
       }
     });
-
-    CssResource.resources = cssResources;
-
-    return CssResource;
   })();
 
 
