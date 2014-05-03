@@ -36,6 +36,7 @@ module.exports = {
   },
 
   test: [
+    require('./template/isolate.js'),
     {
       name: 'Source',
       test: [

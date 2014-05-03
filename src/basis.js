@@ -1900,6 +1900,9 @@
 
           if (contentWrapper)
           {
+            if (!wrapped && isVirtual)
+              content = newContent;
+
             // wrap content only if it wrapped already and non-updatable
             if (wrapped && !contentWrapper.permanent)
             {
@@ -3260,7 +3263,7 @@
         if (!STYLE_APPEND_BUGGY)
           this.textNode = this.element.appendChild(document.createTextNode(''));
 
-        /** @cut */ this.element.setAttribute('src', pathUtils.relative(this.url));
+        /** @cut */ this.element.setAttribute('src', this.url);
       }
 
       // add element to document
@@ -3330,7 +3333,7 @@
           this.cssText = this.resource.get(true);
 
           /** @cut add source url for debug */
-          /** @cut */ this.cssText += '\n/*# sourceURL=' + pathUtils.origin + this.resource.url + ' */';
+          /** @cut */ this.cssText += '\n/*# sourceURL=' + pathUtils.origin + this.url + ' */';
 
           documentInterface.head.ready(injectStyleToHead, this);
         }

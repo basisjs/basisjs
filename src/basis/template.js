@@ -29,6 +29,7 @@
   var tmplFilesMap = {};
 
   var DECLARATION_VERSION = 2;
+  var BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   // token types
   /** @const */ var TYPE_ELEMENT = 1;
@@ -460,6 +461,120 @@
 
     return template;
   }
+
+  function genIsolateMarker(){
+    function base62(n){
+      var result = '';
+      do
+      {
+        result += BASE62.charAt(n % 62);
+        n = parseInt(n / 62, 10);
+      }
+      while (n);
+      return result;
+    }
+
+    return (
+      base62(parseInt(Math.random() * 1e9, 10)) +
+      base62(Date.now() % 1e9)
+    );
+  }
+
+  function isolateCss(css, prefix){
+    function addMatch(prefix){
+      if (i > lastMatchPos)
+      {
+        result.push(
+          (prefix || '') +
+          css.substring(lastMatchPos, i)
+        );
+        lastMatchPos = i;
+      }
+    }
+
+    var result = [];
+    var sym = css.split('');
+    var len = sym.length;
+    var lastMatchPos = 0;
+    var blockScope = false;
+    var strSym;
+
+    if (!prefix)
+      prefix = genIsolateMarker();
+
+    for (var i = 0; i < len; i++)
+    {
+      switch (sym[i])
+      {
+        case '\'':
+        case '\"':
+          strSym = sym[i];
+          //addMatch();
+
+          while (++i < len)
+          {
+            if (sym[i] == '\\')
+              i++;
+            else
+              if (sym[i] == strSym)
+              {
+                i++;
+                //addMatch('string');
+                break;
+              }
+          }
+
+          break;
+
+        case '/':
+          if (sym[i + 1] == '*')
+          {
+            //addMatch();
+            i++;
+
+            while (++i < len)
+              if (sym[i] == '*' && sym[i + 1] == '/')
+              {
+                i += 2;
+                //addMatch('comment');
+                break;
+              }
+          }
+
+          break;
+
+        case '{':
+          blockScope = true;
+          break;
+
+        case '}':
+          blockScope = false;
+          break;
+
+        case '.':
+          if (!blockScope)
+          {
+            i++;
+            addMatch();
+
+            while (++i < len)
+              if (!/[a-z0-9\-\_]/.test(sym[i]))
+              {
+                addMatch(prefix);
+                i -= 1;
+                break;
+              }
+          }
+
+          break;
+      }
+    }
+
+    addMatch();
+
+    return result.join('');
+  }
+
 
  /**
   * make compiled version of template
@@ -957,6 +1072,11 @@
                   }
                 break;
 
+                case 'isolate':
+                  if (!template.isolate)
+                    template.isolate = elAttrs.prefix || options.isolate || genIsolateMarker();
+                break;
+
                 case 'l10n':
                   /** @cut */ if (template.l10nResolved)
                   /** @cut */   template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
@@ -1416,12 +1536,22 @@
           var bindings = token[TOKEN_BINDINGS];
           var valueIdx = ATTR_VALUE - (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_CLASS);
 
+          if (template.isolate)
+          {
+            var valueIndex = ATTR_VALUE_INDEX[token[TOKEN_TYPE]];
+            if (token[valueIndex])
+              token[valueIndex] = token[valueIndex].replace(/(^|\s+)/g, '$1' + template.isolate);
+          }
+
           if (bindings)
           {
             var newAttrValue = (token[valueIdx] || '').trim().split(' ');
 
             for (var k = 0, bind; bind = bindings[k]; k++)
             {
+              if (template.isolate)
+                bind[0] = template.isolate + bind[0];
+
               if (bind.length > 2)  // bind already processed
                 continue;
 
@@ -1473,7 +1603,8 @@
         /** @cut for token type change in dev mode */ l10n: [],
         defines: {},
         unpredictable: true,
-        warns: warns
+        warns: warns,
+        isolate: false
       };
 
       // resolve l10n dictionary url
@@ -1522,8 +1653,27 @@
       addTokenRef(result.tokens[0], 'element');
       normalizeRefs(result.tokens, result.dictURI);
 
-      // deal with defines
-      result.unpredictable = !!applyDefines(result.tokens, result, options);
+      if (includeStack.length == 0)
+      {
+        // deal with defines
+        result.unpredictable = !!applyDefines(result.tokens, result, options);
+
+        if (result.isolate)
+          for (var i = 0, url; url = result.resources[i]; i++)
+          {
+            var resource = basis.resource.virtual('css', '');
+            basis.resource(url).ready(function(cssResource){
+              resource.update(
+                isolateCss(cssResource.resource.get(true), result.isolate)
+              );
+            }).fetch();
+            basis.object.extend(resource.fetch(), {
+              url: url + '?isolate-prefix=' + result.isolate,
+              baseURI: basis.path.dirname(url) + '/'
+            });
+            result.resources[i] = resource.url;
+          }
+      }
 
       /** @cut */ for (var key in result.defines)
       /** @cut */   if (!result.defines[key].used)
@@ -1540,24 +1690,22 @@
     };
   })();
 
-  //
-  //
-  //
 
-  var usableResources = {
-    '.css': true
-  };
+  //
+  //
+  //
 
   function startUseResource(uri){
-    if (usableResources[path.extname(uri)])
-      basis.resource(uri)().startUse();
+    var resource = basis.resource(uri);
+    if (resource.type == '.css')
+      resource.fetch().startUse();
   }
 
   function stopUseResource(uri){
-    if (usableResources[path.extname(uri)])
-      basis.resource(uri)().stopUse();
+    var resource = basis.resource(uri);
+    if (resource.type == '.css')
+      resource.fetch().stopUse();
   }
-
 
 
  /**
@@ -1646,7 +1794,7 @@
   * @func
   */
   function buildTemplate(){
-    var decl = getDeclFromSource(this.source, this.baseURI);
+    var decl = getDeclFromSource(this.source, this.baseURI, false, { isolate: 'i' + this.templateId + '--' });
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens, this);  // makeFunctions
     var deps = this.deps_;
@@ -2516,6 +2664,7 @@
 
     // for debug purposes
     tokenize: tokenize,
+    isolateCss: isolateCss,
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     getL10nTemplate: getL10nTemplate,
