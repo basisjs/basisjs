@@ -474,10 +474,10 @@
       return result;
     }
 
-    return (
+    return 'i' + (
       base62(parseInt(Math.random() * 1e9, 10)) +
       base62(Date.now() % 1e9)
-    );
+    ) + '__';
   }
 
   function isolateCss(css, prefix){
@@ -1661,6 +1661,14 @@
         if (result.isolate)
           for (var i = 0, url; url = result.resources[i]; i++)
             result.resources[i] = (function(url){
+              var resource = basis.resource.virtual('css', '').ready(function(cssResource){
+                sourceResource();
+                basis.object.extend(cssResource, {
+                  url: url + '?isolate-prefix=' + result.isolate,
+                  baseURI: basis.path.dirname(url) + '/'
+                });
+              });
+
               var sourceResource = basis.resource(url).ready(function(cssResource){
                 var cssText = isolateCss(cssResource.cssText, result.isolate);
 
@@ -1671,14 +1679,6 @@
                 /** @cut */     '"}') + ' */';
 
                 resource.update(cssText);
-              });
-
-              var resource = basis.resource.virtual('css', '').ready(function(cssResource){
-                sourceResource();
-                basis.object.extend(cssResource, {
-                  url: url + '?isolate-prefix=' + result.isolate,
-                  baseURI: basis.path.dirname(url) + '/'
-                });
               });
 
               return resource.url;
@@ -1804,7 +1804,7 @@
   * @func
   */
   function buildTemplate(){
-    var decl = getDeclFromSource(this.source, this.baseURI, false, { isolate: 'i' + this.templateId + '--' });
+    var decl = getDeclFromSource(this.source, this.baseURI, false, { isolate: 'i' + this.templateId + '__' });
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens, this);  // makeFunctions
     var deps = this.deps_;
