@@ -1183,6 +1183,9 @@
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
 
+                      if (decl.isolate && !template.isolate)
+                        template.isolate = options.isolate || genIsolateMarker();
+
                       /** @cut */ if (decl.l10n)
                       /** @cut */   addUnique(template.l10n, decl.l10n);
 

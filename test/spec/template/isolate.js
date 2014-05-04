@@ -49,6 +49,124 @@ module.exports = {
 
         assert(tmpl.element.className == 'xxx--test xxx--test_selected');
       }
+    },
+    {
+      name: '<b:isolate> and style',
+      test: [
+        {
+          name: 'inline style',
+          test: function(){
+            var template = new Template(
+              '<b:isolate prefix="xxx--"/>' +
+              '<b:style>' +
+                '.isolate_and_inline_style { width: 33px; }' +
+                '.isolate_and_inline_style_selected { height: 33px; }' +
+              '</b:style>' +
+              '<div class="isolate_and_inline_style isolate_and_inline_style_{selected}"/>'
+            );
+            var tmpl = template.createInstance();
+            tmpl.set('selected', 'selected');
+            document.body.appendChild(tmpl.element);
+
+            assert(tmpl.element.className == 'xxx--isolate_and_inline_style xxx--isolate_and_inline_style_selected');
+            assert(tmpl.element.offsetWidth == 33);
+            assert(tmpl.element.offsetHeight == 33);
+          }
+        },
+        {
+          name: 'inline style',
+          test: function(){
+            var template = new Template(
+              '<b:style src="../fixture/isolate_style.css"/>' +
+              '<b:isolate prefix="xxx--"/>' +
+              '<div class="isolate_and_style isolate_and_style_{selected}"/>'
+            );
+            var tmpl = template.createInstance();
+            tmpl.set('selected', 'selected');
+            document.body.appendChild(tmpl.element);
+
+            assert(tmpl.element.className == 'xxx--isolate_and_style xxx--isolate_and_style_selected');
+            assert(tmpl.element.offsetWidth == 33);
+            assert(tmpl.element.offsetHeight == 33);
+          }
+        }
+      ]
+    },
+    {
+      name: 'inherit isolate from nested <b:include>',
+      test: [
+        {
+          name: 'one level',
+          test: function(){
+            var templateA = new Template(
+              '<b:isolate prefix="xxx--"/>' +
+              '<div class="test test_{selected}"/>'
+            );
+            var templateB = new Template(
+              '<div class="outer outer_{selected}">' +
+                '<b:include src="#' + templateA.templateId + '">' +
+              '</div>'
+            );
+            var tmpl = templateB.createInstance();
+            tmpl.set('selected', 'selected');
+
+            var className = tmpl.element.className;
+            assert(className != 'outer outer_selected');
+            assert(/\Bouter\b/.test(className));
+            assert(/\Bouter_selected\b/.test(className));
+            // should be prefix
+            assert(/^(\S+)outer \1outer_selected$/.test(className));
+            // isolate prefix should be ignored
+            assert(className != 'xxx--outer xxx--outer_selected');
+
+            var className = tmpl.element.firstChild.className;
+            assert(className != 'test test_selected');
+            assert(/\Btest\b/.test(className));
+            assert(/\Btest_selected\b/.test(className));
+            // should be prefix
+            assert(/^(\S+)test \1test_selected$/.test(className));
+            // isolate prefix should be ignored
+            assert(className != 'xxx--test xxx--test_selected');
+          }
+        },
+        {
+          name: 'two levels',
+          test: function(){
+            var templateA = new Template(
+              '<b:isolate prefix="xxx--"/>' +
+              '<div class="test test_{selected}"/>'
+            );
+            var templateB = new Template(
+              '<b:include src="#' + templateA.templateId + '">'
+            );
+            var templateC = new Template(
+              '<div class="outer outer_{selected}">' +
+                '<b:include src="#' + templateB.templateId + '">' +
+              '</div>'
+            );
+            var tmpl = templateC.createInstance();
+            tmpl.set('selected', 'selected');
+
+            var className = tmpl.element.className;
+            assert(className != 'outer outer_selected');
+            assert(/\Bouter\b/.test(className));
+            assert(/\Bouter_selected\b/.test(className));
+            // should be prefix
+            assert(/^(\S+)outer \1outer_selected$/.test(className));
+            // isolate prefix should be ignored
+            assert(className != 'xxx--outer xxx--outer_selected');
+
+            var className = tmpl.element.firstChild.className;
+            assert(className != 'test test_selected');
+            assert(/\Btest\b/.test(className));
+            assert(/\Btest_selected\b/.test(className));
+            // should be prefix
+            assert(/^(\S+)test \1test_selected$/.test(className));
+            // isolate prefix should be ignored
+            assert(className != 'xxx--test xxx--test_selected');
+          }
+        }
+      ]
     }
   ]
 };
