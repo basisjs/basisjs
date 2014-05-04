@@ -839,16 +839,39 @@
         arrayAdd(array, items[i]);
     }
 
-    function unshiftUnique(array, items){
-      for (var i = 0; i < items.length; i++)
-        if (array.indexOf(items[i]) == -1)
-          array.unshift(items[i]);
+    function addResources(array, items, prefix){
+      for (var i = 0, item; item = items[i]; i++)
+      {
+        item[1] = prefix + item[1];
+        array.unshift(item);
+      }
+    }
+
+    function addResource(template, token, src, isolatePrefix){
+      if (src)
+      {
+        /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(src))
+        /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+        template.resources.push([
+          path.resolve(template.baseURI + src),
+          isolatePrefix
+        ]);
+      }
+      else
+      {
+        var text = token.childs[0];
+        template.resources.push([
+          basis.resource.virtual('css', text ? text.value : '').url,
+          isolatePrefix
+        ]);
+      }
     }
 
     //
     // main function
     //
-    function process(tokens, template, options){
+    function process(tokens, template, options, context){
 
       function modifyAttr(token, name, action){
         var attrs = tokenAttrs(token);
@@ -1058,18 +1081,7 @@
                   /** @cut */ if (token.name == 'resource')
                   /** @cut */   basis.dev.warn('<b:resource> is deprecated and will be removed in next minor release. Use <b:style> instead.' + (template.sourceUrl ? ' File: ' + template.sourceUrl : ''));
 
-                  if (elAttrs.src)
-                  {
-                    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
-                    /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-                    template.resources.push(path.resolve(template.baseURI + elAttrs.src));
-                  }
-                  else
-                  {
-                    var text = token.childs[0];
-                    template.resources.push(basis.resource.virtual('css', text ? text.value : '').url);
-                  }
+                  addResource(template, token, elAttrs.src, (context && context.isolate) || '');
                 break;
 
                 case 'isolate':
@@ -1159,6 +1171,7 @@
                     // prevent recursion
                     if (includeStack.indexOf(resource) == -1)
                     {
+                      var isolatePrefix = 'isolate' in elAttrs ? elAttrs.isolate || genIsolateMarker() : '';
                       var decl;
 
                       if (!isDocumentIdRef)
@@ -1178,13 +1191,10 @@
                       }
 
                       if (decl.resources && 'no-style' in elAttrs == false)
-                        unshiftUnique(template.resources, decl.resources);
+                        addResources(template.resources, decl.resources, isolatePrefix);
 
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
-
-                      if (decl.isolate && !template.isolate)
-                        template.isolate = options.isolate || genIsolateMarker();
 
                       /** @cut */ if (decl.l10n)
                       /** @cut */   addUnique(template.l10n, decl.l10n);
@@ -1238,6 +1248,10 @@
                         {
                           switch (child.name)
                           {
+                            case 'style':
+                              addResource(template, child, tokenAttrs(child).src, isolatePrefix);
+                              break;
+
                             case 'replace':
                             case 'remove':
                             case 'before':
@@ -1338,6 +1352,14 @@
 
                       if (tokenRefMap.element)
                         removeTokenRef(tokenRefMap.element.token, 'element');
+
+                      // isolate
+                      if (isolatePrefix)
+                        isolateTokens(decl.tokens, isolatePrefix);
+                      else
+                        // inherit isolate from nested template
+                        if (decl.isolate && !template.isolate)
+                          template.isolate = options.isolate || genIsolateMarker();
 
                       //resources.push.apply(resources, tokens.resources);
                       result.push.apply(result, decl.tokens);
@@ -1537,14 +1559,7 @@
         if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_CLASS || (token[TOKEN_TYPE] == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
         {
           var bindings = token[TOKEN_BINDINGS];
-          var valueIdx = ATTR_VALUE - (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_CLASS);
-
-          if (template.isolate)
-          {
-            var valueIndex = ATTR_VALUE_INDEX[token[TOKEN_TYPE]];
-            if (token[valueIndex])
-              token[valueIndex] = token[valueIndex].replace(/(^|\s+)/g, '$1' + template.isolate);
-          }
+          var valueIdx = ATTR_VALUE_INDEX[token[TOKEN_TYPE]];
 
           if (bindings)
           {
@@ -1552,9 +1567,6 @@
 
             for (var k = 0, bind; bind = bindings[k]; k++)
             {
-              if (template.isolate)
-                bind[0] = template.isolate + bind[0];
-
               if (bind.length > 2)  // bind already processed
                 continue;
 
@@ -1589,6 +1601,28 @@
       }
 
       return unpredictable;
+    }
+
+    function isolateTokens(tokens, isolate, stIdx){
+      for (var i = stIdx || 0, token; token = tokens[i]; i++)
+      {
+        var tokenType = token[TOKEN_TYPE];
+        if (tokenType == TYPE_ELEMENT)
+          isolateTokens(token, isolate, ELEMENT_ATTRS);
+
+        if (tokenType == TYPE_ATTRIBUTE_CLASS || (tokenType == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
+        {
+          var bindings = token[TOKEN_BINDINGS];
+          var valueIndex = ATTR_VALUE_INDEX[tokenType];
+
+          if (token[valueIndex])
+            token[valueIndex] = token[valueIndex].replace(/(^|\s+)/g, '$1' + isolate);
+
+          if (bindings)
+            for (var k = 0, bind; bind = bindings[k]; k++)
+              bind[0] = isolate + bind[0];
+        }
+      }
     }
 
     return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
@@ -1662,30 +1696,47 @@
         result.unpredictable = !!applyDefines(result.tokens, result, options);
 
         if (result.isolate)
-          for (var i = 0, url; url = result.resources[i]; i++)
-            result.resources[i] = (function(url){
-              var resource = basis.resource.virtual('css', '').ready(function(cssResource){
-                sourceResource();
-                basis.object.extend(cssResource, {
-                  url: url + '?isolate-prefix=' + result.isolate,
-                  baseURI: basis.path.dirname(url) + '/'
-                });
+        {
+          isolateTokens(result.tokens, result.isolate);
+          for (var i = 0, item; item = result.resources[i]; i++)
+            item[1] = result.isolate + item[1];
+        }
+
+        result.resources = result.resources
+          // remove duplicates
+          .filter(function(item, idx, array){
+            return !basis.array.search(array, String(item), String, idx + 1);
+          })
+          // isolate
+          .map(function(item){
+            var url = item[0];
+            var isolate = item[1];
+
+            if (!isolate)
+              return url;
+
+            var resource = basis.resource.virtual('css', '').ready(function(cssResource){
+              sourceResource();
+              basis.object.extend(cssResource, {
+                url: url + '?isolate-prefix=' + isolate,
+                baseURI: basis.path.dirname(url) + '/'
               });
+            });
 
-              var sourceResource = basis.resource(url).ready(function(cssResource){
-                var cssText = isolateCss(cssResource.cssText, result.isolate);
+            var sourceResource = basis.resource(url).ready(function(cssResource){
+              var cssText = isolateCss(cssResource.cssText, isolate);
 
-                /** @cut */ if (typeof btoa == 'function')
-                /** @cut */   cssText += '\n/*# sourceMappingURL=data:application/json;base64,' +
-                /** @cut */     btoa('{"version":3,"sources":["' + basis.path.origin + url + '"],' +
-                /** @cut */     '"mappings":"AAAA' + basis.string.repeat(';AACA', cssText.split('\n').length) +
-                /** @cut */     '"}') + ' */';
+              /** @cut */ if (typeof btoa == 'function')
+              /** @cut */   cssText += '\n/*# sourceMappingURL=data:application/json;base64,' +
+              /** @cut */     btoa('{"version":3,"sources":["' + basis.path.origin + url + '"],' +
+              /** @cut */     '"mappings":"AAAA' + basis.string.repeat(';AACA', cssText.split('\n').length) +
+              /** @cut */     '"}') + ' */';
 
-                resource.update(cssText);
-              });
+              resource.update(cssText);
+            });
 
-              return resource.url;
-            })(url);
+            return resource.url;
+          });
       }
 
       /** @cut */ for (var key in result.defines)
