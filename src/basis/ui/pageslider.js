@@ -31,6 +31,10 @@
     PageSlider: resource('./templates/pageslider/PageSlider.tmpl')
   });
 
+  var DIRECTIONS  = {
+    HORIZONTAL:'horizontal',
+    VERTICAL:'vertical'
+  };
 
   //
   // main part
@@ -40,7 +44,7 @@
     className: namespace + '.PageSlider',
 
     template: templates.PageSlider,
-
+    direction: DIRECTIONS.HORIZONTAL,
     listen: {
       selection: {
         itemsChanged: function(selection, delta){
@@ -62,17 +66,24 @@
     emit_childNodesModified: function(delta){
       PageControl.prototype.emit_childNodesModified.call(this, delta);
 
-      for (var i = 0, child; child = this.childNodes[i]; i++)
-        cssom.setStyle(child.element, {
+      for (var i = 0, child; child = this.childNodes[i]; i++) {
+        var style = this.isHorizontal() ? {
           left: (100 * i) + '%'
-        });
-    },
+        } : {
+          top: (100 * i) + '%'
+        };
+        cssom.setStyle(child.element, style);
+      }
 
+    },
+    isHorizontal: function() {
+      return this.direction === DIRECTIONS.HORIZONTAL;
+    },
     init: function(){
       PageControl.prototype.init.call(this);
-
       this.scroller = new Scroller(basis.object.extend({
-        scrollY: false,
+        scrollY: !this.isHorizontal(),
+        scrollX: this.isHorizontal(),
         minScrollDelta: 10,
         handler: {
           context: this,
@@ -107,21 +118,25 @@
       if (!currentPage)
         return;
 
-      var pageWidth = currentPage.element.offsetWidth;
-      var pagePosition = currentPage.element.offsetLeft;
+      var currentElement = currentPage.element;
+      var pageSize = this.isHorizontal() ? currentElement.offsetWidth : currentElement.offsetHeight;
+      var pagePosition = this.isHorizontal() ? currentElement.offsetLeft : currentElement.offsetTop;
       var pageScrollTo;
 
-      if (this.scroller.currentVelocityX)
+      var scroller = this.scroller;
+      var currentVelocity = this.isHorizontal() ? scroller.currentVelocityX : scroller.currentVelocityY;
+      var viewPort = this.isHorizontal() ? scroller.viewportX : scroller.viewportY;
+      if (currentVelocity)
       {
-        pageScrollTo = this.scroller.currentVelocityX > 0
+        pageScrollTo = currentVelocity > 0
           ? currentPage.nextSibling
           : currentPage.previousSibling;
       }
       else
-        if ((this.scroller.viewportX > (pagePosition + pageWidth / 2))
-            || (this.scroller.viewportX < (pagePosition - pageWidth / 2)))
+        if ((viewPort > (pagePosition + pageSize / 2))
+            || (viewPort < (pagePosition - pageSize / 2)))
         {
-          pageScrollTo = this.scroller.viewportX - pagePosition > 0
+          pageScrollTo = viewPort - pagePosition > 0
             ? currentPage.nextSibling
             : currentPage.previousSibling;
         }
@@ -137,8 +152,17 @@
       {
         page.select();
 
-        if (page.element.offsetWidth > 0)
-          this.scroller.setPositionX(page.element.offsetLeft, !noSmooth);
+        var element = page.element;
+        var offsetSize = this.isHorizontal() ? element.offsetWidth : element.offsetHeight;
+        if (offsetSize > 0)
+        {
+          var offsetPosition = this.isHorizontal() ? element.offsetLeft : element.offsetTop;
+          if (this.isHorizontal())
+            this.scroller.setPositionX(offsetPosition, !noSmooth);
+          else
+            this.scroller.setPositionY(offsetPosition, !noSmooth);
+        }
+
       }
     },
 
@@ -152,23 +176,29 @@
 
       var delta = (leftToRight ? Math.ceil(childCount / 2) - 1 : Math.round(childCount / 2)) - index;
 
-      var childWidth = this.firstChild.element.offsetWidth;
+      var firstElement = this.firstChild.element;
+      var childSize = this.isHorizontal() ? firstElement.offsetWidth : firstElement.offsetHeight;
 
       for (var i = 0; i < Math.abs(delta); i++)
       {
         if (delta > 0)
         {
           this.insertBefore(this.lastChild, this.firstChild);
-          shiftLength += childWidth;
+          shiftLength += childSize;
         }
         else
         {
           this.appendChild(this.firstChild);
-          shiftLength -= childWidth;
+          shiftLength -= childSize;
         }
       }
 
-      this.scroller.addPositionX(shiftLength);
+      if (this.isHorizontal())
+        this.scroller.addPositionX(shiftLength);
+      else
+        this.scroller.addPositionY(shiftLength);
+
+
       this.emit_childNodesModified({});
     },
 
@@ -199,5 +229,6 @@
   //
 
   module.exports = {
-    PageSlider: PageSlider
+    PageSlider: PageSlider,
+    DIRECTIONS: DIRECTIONS
   };

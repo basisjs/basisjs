@@ -41,6 +41,8 @@
       font-size: 80%;
       font-weight: normal;
       background: #EEE;
+      position:relative;
+      z-index: 1;
       margin: 0;
       padding: 2px;
       text-align: center;
@@ -339,28 +341,40 @@
     // Page Slider
     //
 
-    new PageSlider({
-      template: '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>',
-      container: createBlock('Page Slider', 'short'),
-
-      childClass: {
+    var childClassSettings = {
         template:
-          '<b:include src="basis.ui.tabs.Page">' +
-            '<b:append ref="content">' +
-              '<div class="PageContent">' +
-                '{text}' +
-              '</div>' +
-            '</b:append>' +
-          '</b:include>',
+            '<b:include src="basis.ui.tabs.Page">' +
+                    '<b:append ref="content">' +
+                        '<div class="PageContent">' +
+                            '{text}' +
+                        '</div>' +
+                    '</b:append>' +
+            '</b:include>',
         binding: {
-          text: 'text'
+            text: 'text'
         }
-      },
-      childNodes: [
+    };
+    var childNodesData = [
         { text: 'Page 1' },
         { text: 'Page 2' },
         { text: 'Page 3' }
-      ]
+    ];
+    var pageSliderTemplate = '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>';
+
+    var DIRECTIONS = basis.ui.pageslider.DIRECTIONS;
+    new PageSlider({
+        template: pageSliderTemplate,
+        container: createBlock('Horizontal Page Slider', 'short'),
+        childClass: childClassSettings,
+        childNodes: childNodesData
+    });
+
+    new PageSlider({
+        template: pageSliderTemplate,
+        container: createBlock('Vertical Page Slider', 'short'),
+        direction: DIRECTIONS.VERTICAL,
+        childClass: childClassSettings,
+        childNodes: childNodesData
     });
 
     //
