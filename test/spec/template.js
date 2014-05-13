@@ -1401,6 +1401,132 @@ module.exports = {
             assert(instance.element.style.display == 'inline');
 
           }
+        },
+        {
+          name: 'b:show',
+          test: [
+            {
+              name: 'when value for binding is not set yet, element should be invisible',
+              test: function(){
+                var t = createTemplate('<span b:show="{foo}"/>');
+                assert(t.createInstance().element.style.display == 'none');
+
+                var t = createTemplate('<span b:show="{foo}{bar}"/>');
+                assert(t.createInstance().element.style.display == 'none');
+              }
+            },
+            {
+              name: 'single binding',
+              test: function(){
+                var t = createTemplate('<span b:show="{foo}"/>');
+                var instance = t.createInstance();
+
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', false);
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', true);
+                assert(instance.element.style.display == '');
+              }
+            },
+            {
+              name: 'expression',
+              test: function(){
+                var t = createTemplate('<span b:show="{foo}{bar}"/>');
+                var instance = t.createInstance();
+
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', 0);  // 0 + undefined -> false
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', 1);  // 0 + 1 -> true
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', -1); // 0 + -1 -> true
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 1);  // 1 + -1 -> false
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', 1);  // 1 + 1 -> true
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', -1);  // 1 + -1 -> false
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', 0);  // 1 + 0 -> true
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 0);  // 0 + 0 -> false
+                assert(instance.element.style.display == 'none');
+              }
+            }
+          ]
+        },
+        {
+          name: 'b:hide',
+          test: [
+            {
+              name: 'when value for binding is not set yet, element should visible',
+              test: function(){
+                var t = createTemplate('<span b:hide="{foo}"/>');
+                assert(t.createInstance().element.style.display == '');
+
+                var t = createTemplate('<span b:hide="{foo}{bar}"/>');
+                assert(t.createInstance().element.style.display == '');
+              }
+            },
+            {
+              name: 'single binding',
+              test: function(){
+                var t = createTemplate('<span b:hide="{foo}"/>');
+                var instance = t.createInstance();
+
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', true);
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', false);
+                assert(instance.element.style.display == '');
+              }
+            },
+            {
+              name: 'expression',
+              test: function(){
+                var t = createTemplate('<span b:hide="{foo}{bar}"/>');
+                var instance = t.createInstance();
+
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 0);  // 0 + undefined -> false
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', 1);  // 0 + 1 -> true
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', -1); // 0 + -1 -> true
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', 1);  // 1 + -1 -> false
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', 1);  // 1 + 1 -> true
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', -1);  // 1 + -1 -> false
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', 0);  // 1 + 0 -> true
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', 0);  // 0 + 0 -> false
+                assert(instance.element.style.display == '');
+              }
+            }
+          ]
         }
       ]
     }

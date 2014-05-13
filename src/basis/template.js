@@ -633,35 +633,35 @@
       return array;
     }
 
+    function buildAttrExpression(parts){
+      var bindName;
+      var names = [];
+      var expression = [];
+      var map = {};
+
+      for (var j = 0; j < parts.length; j++)
+        if (j % 2)
+        {
+          bindName = parts[j];
+
+          if (!map[bindName])
+          {
+            map[bindName] = names.length;
+            names.push(bindName);
+          }
+
+          expression.push(map[bindName]);
+        }
+        else
+        {
+          if (parts[j])
+            expression.push(untoken(parts[j]));
+        }
+
+      return [names, expression];
+    }
+
     function processAttr(name, value){
-      function buildExpression(parts){
-        var bindName;
-        var names = [];
-        var expression = [];
-        var map = {};
-
-        for (var j = 0; j < parts.length; j++)
-          if (j % 2)
-          {
-            bindName = parts[j];
-
-            if (!map[bindName])
-            {
-              map[bindName] = names.length;
-              names.push(bindName);
-            }
-
-            expression.push(map[bindName]);
-          }
-          else
-          {
-            if (parts[j])
-              expression.push(untoken(parts[j]));
-          }
-
-        return [names, expression];
-      }
-
       var bindings = 0;
       var parts;
       var m;
@@ -706,7 +706,7 @@
                 var valueParts = value.split(STYLE_ATTR_BINDING);
                 if (valueParts.length > 1)
                 {
-                  var expr = buildExpression(valueParts);
+                  var expr = buildAttrExpression(valueParts);
                   expr.push(propertyName);
                   bindings.push(expr);
                 }
@@ -728,7 +728,7 @@
           default:
             parts = value.split(ATTR_BINDING);
             if (parts.length > 1)
-              bindings = buildExpression(parts);
+              bindings = buildAttrExpression(parts);
             else
               value = untoken(value);
         }
@@ -747,6 +747,8 @@
     function attrs(token, declToken, optimizeSize){
       var attrs = token.attrs;
       var result = [];
+      var styleAttr;
+      var display;
       var m;
 
       for (var i = 0, attr; attr = attrs[i]; i++)
@@ -760,7 +762,12 @@
               var refs = (attr.value || '').trim().split(/\s+/);
               for (var j = 0; j < refs.length; j++)
                 addTokenRef(declToken, refs[j]);
-            break;
+              break;
+
+            case 'show':
+            case 'hide':
+              display = attr;
+              break;
           }
 
           continue;
@@ -787,7 +794,30 @@
         if (parsed.value && (!optimizeSize || !parsed.binding || parsed.type != 2))
           item.push(parsed.value);
 
+        if (parsed.type == TYPE_ATTRIBUTE_STYLE)
+          styleAttr = item;
+
         result.push(item);
+      }
+
+      if (display)
+      {
+        if (!styleAttr)
+        {
+          styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
+          result.push(styleAttr);
+        }
+
+        if (!styleAttr[1])
+          styleAttr[1] = [];
+
+        if (display.name == 'show')
+          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
+
+        styleAttr[1].push(
+          buildAttrExpression(display.value.split(ATTR_BINDING))
+            .concat('display', display.name)
+        );
       }
 
       return result.length ? result : 0;

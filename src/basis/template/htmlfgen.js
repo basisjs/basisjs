@@ -164,7 +164,7 @@
                   {
                     attrExprId++;
                     for (var m = 0, bindName; bindName = property[0][m]; m++)
-                      putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2], attrExprId]);
+                      putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2], property[3], attrExprId]);
                   }
                 break;
 
@@ -571,16 +571,21 @@
               break;
 
             case 'style':
+              var expr = buildAttrExpression(binding, false, l10nBindings);
+
               // resolve expression bind var
-              attrExprId = binding[7];
+              attrExprId = binding[8];
               if (!attrExprMap[attrExprId])
               {
                 attrExprMap[attrExprId] = bindVar;
                 varList.push(bindVar + '=""');
               }
 
+              if (binding[7])
+                expr = expr.replace(/\+""$/, '') + (binding[7] == 'hide' ? '?"none":""' : '?"":"none"');
+
               bindVar = attrExprMap[attrExprId];
-              putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding, false, l10nBindings));
+              putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, expr);
 
               break;
 
