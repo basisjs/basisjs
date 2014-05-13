@@ -3281,8 +3281,13 @@
       syncCssText: function(){
         if (this.textNode)
         {
+          var cssText = this.cssText;
+
+          /** @cut add source url for debug */
+          /** @cut */ cssText += '\n/*# sourceURL=' + pathUtils.origin + this.resource.url + ' */';
+
           // W3C browsers
-          this.textNode.nodeValue = this.cssText;
+          this.textNode.nodeValue = cssText;
         }
         else
         {
