@@ -45,6 +45,7 @@
     var bindingList;
     var markedElementList;
     var rootPath;
+    var attrExprId;
 
     function putRefs(refs, pathIdx){
       for (var i = 0, refName; refName = refs[i]; i++)
@@ -160,13 +161,17 @@
 
                 case 'style':
                   for (var k = 0, property; property = bindings[k]; k++)
+                  {
+                    attrExprId++;
                     for (var m = 0, bindName; bindName = property[0][m]; m++)
-                      putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2]]);
+                      putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2], attrExprId]);
+                  }
                 break;
 
                 default:
+                  attrExprId++;
                   for (var k = 0, bindName; bindName = bindings[0][k]; k++)
-                    putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]);
+                    putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME], attrExprId]);
               }
             }
           }
@@ -186,6 +191,7 @@
       bindingList = [];
       markedElementList = [];
       rootPath = path || '_';
+      attrExprId = 0;
 
       processTokens(tokens, rootPath, noTextBug);
 
@@ -303,11 +309,13 @@
       var l10nCompute = [];
       var l10nBindings = {};
       var l10nBindSeed = 1;
+      var specialAttr;
+      var attrExprId;
+      var attrExprMap = {};
+      /** @cut */ var debugList = [];
       var toolsUsed = {
         resolve: true
       };
-      var specialAttr;
-      /** @cut */ var debugList = [];
 
       for (var i = 0, binding; binding = bindings[i]; i++)
       {
@@ -563,7 +571,15 @@
               break;
 
             case 'style':
-              varList.push(bindVar + '=""');
+              // resolve expression bind var
+              attrExprId = binding[7];
+              if (!attrExprMap[attrExprId])
+              {
+                attrExprMap[attrExprId] = bindVar;
+                varList.push(bindVar + '=""');
+              }
+
+              bindVar = attrExprMap[attrExprId];
               putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding, false, l10nBindings));
 
               break;
@@ -571,7 +587,15 @@
             default:
               specialAttr = SPECIAL_ATTR_MAP[attrName];
 
-              varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n', l10nBindings));
+              // resolve expression bind var
+              attrExprId = binding[7];
+              if (!attrExprMap[attrExprId])
+              {
+                varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n', l10nBindings));
+                attrExprMap[attrExprId] = bindVar;
+              }
+
+              bindVar = attrExprMap[attrExprId];
               putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar,
                 specialAttr && SPECIAL_ATTR_SINGLE[attrName]
                   ? buildAttrExpression(binding, 'bool', l10nBindings) + '?"' + attrName + '":""'
