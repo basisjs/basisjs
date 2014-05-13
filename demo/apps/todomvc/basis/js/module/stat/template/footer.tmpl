@@ -1,6 +1,6 @@
-<b:define name="completed" type="bool"/>
+<b:define name="hidden" type="bool"/>
 
-<footer id="footer" b:show="{completed}{active}">
+<footer id="footer" class="{hidden}">
   <span id="todo-count">
     <strong>{active}</strong> {l10n:itemsLeft.{active}} left
   </span>
