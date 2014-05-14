@@ -2002,10 +2002,177 @@
 
 
   //
+  // Extract
+  //
+
+  var EXTRACT_DATASET_ITEMSCHANGED = function(dataset, delta){
+    var inserted = delta.inserted;
+    var deleted = delta.deleted;
+    var delta;
+
+    if (inserted)
+      inserted = extractAdd(this, inserted);
+
+    if (deleted)
+      deleted = extractRemove(this, deleted);
+
+    if (delta = getDelta(inserted, deleted))
+      this.emit_itemsChanged(delta);
+  };
+
+  var EXTRACT_SOURCEOBJECT_UPDATE = function(sourceObject){
+    var sourceObjectInfo = this.sourceMap_[sourceObject.basisObjectId];
+    var newValue = this.rule(sourceObject) || null;
+    var oldValue = sourceObjectInfo.value;
+    var inserted;
+    var deleted;
+    var delta;
+
+    if (newValue === oldValue)
+      return;
+
+    if (newValue instanceof DataObject || newValue instanceof ReadOnlyDataset)
+      inserted = extractAdd(this, newValue);
+
+    if (oldValue)
+      deleted = extractRemove(this, oldValue);
+
+    // update value
+    sourceObjectInfo.value = newValue;
+
+    if (delta = getDelta(inserted, deleted))
+      this.emit_itemsChanged(delta);
+  };
+
+  var EXTRACT_DATASET_HANDLER = {
+    itemsChanged: EXTRACT_DATASET_ITEMSCHANGED
+  };
+
+  function extractAdd(dataset, items){
+    var sourceMap = dataset.sourceMap_;
+    var members = dataset.members_;
+    var queue = arrayFrom(items);
+    var inserted = [];
+
+    for (var i = 0; i < queue.length; i++)
+    {
+      var item = queue[i];
+      var sourceObjectId = item.basisObjectId;
+
+      if (sourceMap[sourceObjectId])
+      {
+        sourceMap[sourceObjectId].refCount++;
+        continue;
+      }
+
+      var memberInfo;
+      var sourceObjectInfo = sourceMap[sourceObjectId] = {
+        source: item,
+        refCount: 1,
+        value: null
+      };
+
+      if (item instanceof DataObject)
+      {
+        var value = dataset.rule(item) || null;
+
+        if (value instanceof DataObject || value instanceof ReadOnlyDataset)
+        {
+          queue.push(value);
+          sourceObjectInfo.value = value;
+        }
+
+        members[sourceObjectId] = sourceObjectInfo;
+        inserted.push(item);
+
+        if (dataset.ruleEvents)
+          item.addHandler(dataset.ruleEvents, dataset);
+      }
+      else
+      {
+        // if not an object -> dataset
+        item.addHandler(EXTRACT_DATASET_HANDLER, dataset);
+
+        if (item.itemCount)
+          queue.push.apply(queue, item.getItems());
+      }
+    }
+
+    return inserted;
+  }
+
+  function extractRemove(dataset, items){
+    var sourceMap = dataset.sourceMap_;
+    var members = dataset.members_;
+    var queue = arrayFrom(items);
+    var deleted = [];
+
+    for (var i = 0; i < queue.length; i++)
+    {
+      var item = queue[i];
+      var sourceObjectId = item.basisObjectId;
+      var sourceObjectInfo = sourceMap[sourceObjectId];
+
+      if (--sourceObjectInfo.refCount == 0)
+      {
+        if (item instanceof DataObject)
+        {
+          delete members[sourceObjectId];
+          deleted.push(item);
+
+          if (dataset.ruleEvents)
+            item.removeHandler(dataset.ruleEvents, dataset);
+
+          if (sourceObjectInfo.value)
+            queue.push(sourceObjectInfo.value);
+        }
+        else
+        {
+          // if not an object -> dataset
+          item.removeHandler(EXTRACT_DATASET_HANDLER, dataset);
+
+          if (item.itemCount)
+            queue.push.apply(queue, item.getItems());  // getItems may deffer from inserted
+        }
+
+        delete sourceMap[sourceObjectId];
+      }
+    }
+
+    return deleted;
+  }
+
+ /**
+  * @class
+  */
+  var Extract = SourceDataset.subclass({
+    className: namespace + '.Extract',
+
+   /**
+    * Nothing return by default. Behave like proxy.
+    */
+    rule: basis.getter(function(){}),
+
+   /**
+    * Events list when dataset should recompute rule for source item.
+    */
+    ruleEvents: createRuleEvents(EXTRACT_SOURCEOBJECT_UPDATE, 'update'),
+
+   /**
+    * @inheritDoc
+    */
+    listen: {
+      source: EXTRACT_DATASET_HANDLER
+    }
+  });
+
+
+  //
   // export names
   //
 
   module.exports = {
+    getDelta: getDelta,
     createRuleEvents: createRuleEvents,
 
     // operable datasets
@@ -2019,6 +2186,7 @@
     MapFilter: MapFilter,
     Subset: Subset,
     Split: Split,
+    Extract: Extract,
 
     // other
     Slice: Slice,
