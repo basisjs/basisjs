@@ -2019,7 +2019,7 @@
 
     virtual: function(type, content){
       return createResource(
-        pathUtils.normalize(pathUtils.baseURI + '/virtualResource' + (virtualResourceSeed++) + '.' + type),
+        pathUtils.normalize((pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/virtualResource' + (virtualResourceSeed++) + '.' + type),
         content
       );
     },
