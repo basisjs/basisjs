@@ -2293,32 +2293,61 @@
       var deleted = delta.deleted;
       var cache = eventCache[datasetId];
 
-      if (inserted && deleted)
+      if ((inserted && deleted) || (cache && cache.mixed))
       {
         if (cache)
         {
           delete eventCache[datasetId];
           flushCache(cache);
         }
+
         realEvent.call(dataset, delta);
         return;
       }
 
-      var mode = inserted ? 'inserted' : 'deleted';
       if (cache)
       {
+        var mode = inserted ? 'inserted' : 'deleted';
         var array = cache[mode];
         if (!array)
-          flushCache(cache);
-        else
         {
-          array.push.apply(array, inserted || deleted);
-          return;
+          var from = inserted ? cache.deleted : cache.inserted;
+          var fromMap = {};
+          var opositeSource = inserted || deleted;
+          var oposite = [];
+
+          for (var i = 0; i < from.length; i++)
+            fromMap[from[i].basisObjectId] = from[i];
+
+          for (var i = 0; i < opositeSource.length; i++)
+          {
+            var id = opositeSource[i].basisObjectId;
+            if (id in fromMap == false)
+              oposite.push(opositeSource[i]);
+            else
+              fromMap[id] = null;
+          }
+
+          for (var i = 0, k = 0; i < from.length; i++)
+            if (fromMap[from[i].basisObjectId])
+              from[k++] = from[i];
+          from.length = 0;
+
+          cache[mode] = oposite;
+          cache.mixed = true;
         }
+        else
+          array.push.apply(array, inserted || deleted);
+
+        return;
       }
 
-      eventCache[datasetId] = delta;
-      delta.dataset = dataset;
+      eventCache[datasetId] = {
+        inserted: inserted,
+        deleted: deleted,
+        dataset: dataset,
+        mixed: false
+      };
     }
 
     function urgentFlush(){
