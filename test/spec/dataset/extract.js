@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'basis.data.dataset.extract.Extract',
+  name: 'basis.data.dataset.Extract',
   init: function(){
     var helpers = basis.require('./spec/dataset/helpers.js');
     var range = helpers.range;

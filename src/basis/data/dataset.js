@@ -9,7 +9,7 @@
   *   {basis.data.dataset.Merge}, {basis.data.dataset.Subtract},
   *   {basis.data.dataset.MapFilter}, {basis.data.dataset.Subset},
   *   {basis.data.dataset.Split}, {basis.data.dataset.Slice}
-  *   {basis.data.dataset.Cloud}
+  *   {basis.data.dataset.Cloud}, {basis.data.dataset.Extract}
   *
   * @see ./demo/defile/dataset.html
   *
@@ -106,7 +106,7 @@
   * @param {string|Array.<string>} events
   */
   function createRuleEvents(fn, events){
-    return (function createRuleEvents__extend__(events){
+    return (function createRuleEventsExtend(events){
       if (!events)
         return null;
 
@@ -121,7 +121,7 @@
       }
 
       return extend(basis.event.createHandler(events, fn), {
-        __extend__: createRuleEvents__extend__
+        __extend__: createRuleEventsExtend
       });
     })(events);
   }
@@ -308,11 +308,15 @@
         memberCounter = memberMap[objectId];
         isMember = sourceCount && memberCounter.count && rule(memberCounter.count, sourceCount);
 
-        if (isMember != !!this.items_[objectId])
-          (isMember
-            ? inserted // not in items -> insert
-            : deleted  // already in items -> delete
-          ).push(memberCounter.object);
+        if (isMember != objectId in this.items_)
+        {
+          if (isMember)
+            // not in items -> insert
+            inserted.push(memberCounter.object);
+          else
+            // already in items -> delete
+            deleted.push(memberCounter.object);
+        }
 
         if (memberCounter.count == 0)
           delete memberMap[objectId];
@@ -424,21 +428,25 @@
       // fire sources changes event
       if (delta = getDelta(inserted, deleted))
       {
-        if (merge.sourceDelta_)
+        var setSourcesTransaction = merge.sourceDelta_;
+        if (setSourcesTransaction)
         {
           if (delta.inserted)
             delta.inserted.forEach(function(source){
               if (!basis.array.remove(this.deleted, source))
                 basis.array.add(this.inserted, source);
-            }, merge.sourceDelta_);
+            }, setSourcesTransaction);
+
           if (delta.deleted)
             delta.deleted.forEach(function(source){
               if (!basis.array.remove(this.inserted, source))
                 basis.array.add(this.deleted, source);
-            }, merge.sourceDelta_);
+            }, setSourcesTransaction);
         }
         else
+        {
           merge.emit_sourcesChanged(delta);
+        }
       }
 
       return delta;
@@ -928,6 +936,7 @@
         if (listenHandler)
         {
           var itemsChangedHandler = listenHandler.itemsChanged;
+
           if (oldSource)
           {
             oldSource.removeHandler(listenHandler, this);
@@ -2058,6 +2067,30 @@
     }
   };
 
+  function hasExtractSourceRef(extract, object, marker){
+    var sourceObjectInfo = extract.sourceMap_[object.basisObjectId];
+
+    if (sourceObjectInfo && sourceObjectInfo.visited !== marker)
+    {
+      // use two loops as more efficient way, if object has a source reference
+      // going in deep is not required
+
+      // search for source reference
+      for (var cursor = sourceObjectInfo; cursor = cursor.ref;)
+        if (cursor.object === extract.source)
+          return true;
+
+      // object has no source object, go in deep
+      sourceObjectInfo.visited = marker; // mark object info by unique for search marker,
+                                         // to not check object more than once
+
+      // recursive search for source reference
+      for (var cursor = sourceObjectInfo; cursor = cursor.ref;)
+        if (hasExtractSourceRef(extract, cursor.object, marker || {}))
+          return true;
+    }
+  }
+
   function addToExtract(extract, items, ref){
     var sourceMap = extract.sourceMap_;
     var members = extract.members_;
@@ -2200,32 +2233,8 @@
       }
       else
       {
-        // happen only for cycles
-        var findSourceRef = function(object, marker){
-          var sourceObjectInfo = sourceMap[object.basisObjectId];
-
-          if (sourceObjectInfo && sourceObjectInfo.visited !== marker)
-          {
-            // use two loops as more efficient way, if object has a source reference
-            // going in deep is not required
-
-            // search for source reference
-            for (var cursor = sourceObjectInfo; cursor = cursor.ref;)
-              if (cursor.object === extract.source)
-                return true;
-
-            // object has no source object, go in deep
-            sourceObjectInfo.visited = marker; // mark object info by unique for search marker,
-                                               // to not check object more than once
-
-            // recursive search for source reference
-            for (var cursor = sourceObjectInfo; cursor = cursor.ref;)
-              if (findSourceRef(cursor.object, marker || {}))
-                return true;
-          }
-        };
-
-        if (sourceObjectValue && !findSourceRef(item))
+        // happen for multiple references and cycles
+        if (sourceObjectValue && !hasExtractSourceRef(extract, item))
         {
           sourceObjectInfo.value = null;
           queue.push({
