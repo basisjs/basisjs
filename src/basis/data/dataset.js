@@ -2005,21 +2005,6 @@
   // Extract
   //
 
-  var EXTRACT_DATASET_ITEMSCHANGED = function(dataset, delta){
-    var inserted = delta.inserted;
-    var deleted = delta.deleted;
-    var delta;
-
-    if (inserted)
-      inserted = extractAdd(this, inserted);
-
-    if (deleted)
-      deleted = extractRemove(this, deleted);
-
-    if (delta = getDelta(inserted, deleted))
-      this.emit_itemsChanged(delta);
-  };
-
   var EXTRACT_SOURCEOBJECT_UPDATE = function(sourceObject){
     var sourceObjectInfo = this.sourceMap_[sourceObject.basisObjectId];
     var newValue = this.rule(sourceObject) || null;
@@ -2032,10 +2017,10 @@
       return;
 
     if (newValue instanceof DataObject || newValue instanceof ReadOnlyDataset)
-      inserted = extractAdd(this, newValue);
+      inserted = addToExtract(this, newValue, sourceObject);
 
     if (oldValue)
-      deleted = extractRemove(this, oldValue);
+      deleted = removeFromExtract(this, oldValue, sourceObject);
 
     // update value
     sourceObjectInfo.value = newValue;
@@ -2044,13 +2029,38 @@
       this.emit_itemsChanged(delta);
   };
 
-  var EXTRACT_DATASET_HANDLER = {
-    itemsChanged: EXTRACT_DATASET_ITEMSCHANGED
+  var EXTRACT_DATASET_ITEMSCHANGED = function(dataset, delta){
+    var inserted = delta.inserted;
+    var deleted = delta.deleted;
+    var delta;
+
+    if (inserted)
+      inserted = addToExtract(this, inserted, dataset);
+
+    if (deleted)
+      deleted = removeFromExtract(this, deleted, dataset);
+
+    if (delta = getDelta(inserted, deleted))
+      this.emit_itemsChanged(delta);
   };
 
-  function extractAdd(dataset, items){
-    var sourceMap = dataset.sourceMap_;
-    var members = dataset.members_;
+  var EXTRACT_DATASET_HANDLER = {
+    itemsChanged: EXTRACT_DATASET_ITEMSCHANGED,
+    destroy: function(dataset){
+      var sourceMap = this.sourceMap_;
+
+      // reset refences for destroyed dataset
+      for (var cursor = sourceMap[dataset.basisObjectId]; cursor = cursor.ref;)
+        sourceMap[cursor.object.basisObjectId].value = null;
+
+      // make sure dataset be deleted from source map
+      delete sourceMap[dataset.basisObjectId];
+    }
+  };
+
+  function addToExtract(extract, items, ref){
+    var sourceMap = extract.sourceMap_;
+    var members = extract.members_;
     var queue = arrayFrom(items);
     var inserted = [];
 
@@ -2059,51 +2069,75 @@
       var item = queue[i];
       var sourceObjectId = item.basisObjectId;
 
-      if (sourceMap[sourceObjectId])
+      // if no sourceObjectId -> { object, ref }
+      if (!sourceObjectId)
       {
-        sourceMap[sourceObjectId].refCount++;
-        continue;
+        ref = item.ref;
+        item = item.object;
+        sourceObjectId = item.basisObjectId;
       }
 
-      var memberInfo;
-      var sourceObjectInfo = sourceMap[sourceObjectId] = {
-        source: item,
-        refCount: 1,
-        value: null
-      };
-
-      if (item instanceof DataObject)
+      var sourceObjectInfo = sourceMap[sourceObjectId];
+      if (sourceObjectInfo)
       {
-        var value = dataset.rule(item) || null;
-
-        if (value instanceof DataObject || value instanceof ReadOnlyDataset)
-        {
-          queue.push(value);
-          sourceObjectInfo.value = value;
-        }
-
-        members[sourceObjectId] = sourceObjectInfo;
-        inserted.push(item);
-
-        if (dataset.ruleEvents)
-          item.addHandler(dataset.ruleEvents, dataset);
+        // if info exists just add reference
+        sourceObjectInfo.ref = {
+          object: ref,
+          ref: sourceObjectInfo.ref
+        };
       }
       else
       {
-        // if not an object -> dataset
-        item.addHandler(EXTRACT_DATASET_HANDLER, dataset);
+        // create new source object info
+        sourceObjectInfo = sourceMap[sourceObjectId] = {
+          source: item,
+          ref: {
+            object: ref,
+            ref: null
+          },
+          visited: null, // used for source reference search
+          value: null    // computed value
+        };
 
-        if (item.itemCount)
-          queue.push.apply(queue, item.getItems());
+        if (item instanceof DataObject)
+        {
+          var value = extract.rule(item) || null;
+
+          if (value instanceof DataObject || value instanceof ReadOnlyDataset)
+          {
+            sourceObjectInfo.value = value;
+            queue.push({
+              object: value,
+              ref: item
+            });
+          }
+
+          members[sourceObjectId] = sourceObjectInfo;
+          inserted.push(item);
+
+          if (extract.ruleEvents)
+            item.addHandler(extract.ruleEvents, extract);
+        }
+        else
+        {
+          // if not an object -> dataset
+          item.addHandler(EXTRACT_DATASET_HANDLER, extract);
+
+          for (var j = 0, datasetItems = item.getItems(); j < datasetItems.length; j++)
+            queue.push({
+              object: datasetItems[j],
+              ref: item
+            });
+        }
       }
     }
 
     return inserted;
   }
 
-  function extractRemove(dataset, items){
-    var sourceMap = dataset.sourceMap_;
-    var members = dataset.members_;
+  function removeFromExtract(extract, items, ref){
+    var sourceMap = extract.sourceMap_;
+    var members = extract.members_;
     var queue = arrayFrom(items);
     var deleted = [];
 
@@ -2111,31 +2145,94 @@
     {
       var item = queue[i];
       var sourceObjectId = item.basisObjectId;
-      var sourceObjectInfo = sourceMap[sourceObjectId];
 
-      if (--sourceObjectInfo.refCount == 0)
+      // if no sourceObjectId -> { object, ref }
+      if (!sourceObjectId)
+      {
+        ref = item.ref;
+        item = item.object;
+        sourceObjectId = item.basisObjectId;
+      }
+
+      var sourceObjectInfo = sourceMap[sourceObjectId];
+      var sourceObjectValue = sourceObjectInfo.value;
+
+      // remove reference from object
+      for (var cursor = sourceObjectInfo, prevCursor = sourceObjectInfo; cursor = cursor.ref;)
+      {
+        if (cursor.object === ref)
+        {
+          prevCursor.ref = cursor.ref;
+          break;
+        }
+        prevCursor = cursor;
+      }
+
+      if (!sourceObjectInfo.ref)
       {
         if (item instanceof DataObject)
         {
           delete members[sourceObjectId];
           deleted.push(item);
 
-          if (dataset.ruleEvents)
-            item.removeHandler(dataset.ruleEvents, dataset);
+          if (extract.ruleEvents)
+            item.removeHandler(extract.ruleEvents, extract);
 
-          if (sourceObjectInfo.value)
-            queue.push(sourceObjectInfo.value);
+          if (sourceObjectValue)
+            queue.push({
+              object: sourceObjectValue,
+              ref: item
+            });
         }
         else
         {
           // if not an object -> dataset
-          item.removeHandler(EXTRACT_DATASET_HANDLER, dataset);
+          item.removeHandler(EXTRACT_DATASET_HANDLER, extract);
 
-          if (item.itemCount)
-            queue.push.apply(queue, item.getItems());  // getItems may deffer from inserted
+          for (var j = 0, datasetItems = item.getItems(); j < datasetItems.length; j++)
+            queue.push({
+              object: datasetItems[j],
+              ref: item
+            });
         }
 
         delete sourceMap[sourceObjectId];
+      }
+      else
+      {
+        // happen only for cycles
+        var findSourceRef = function(object, marker){
+          var sourceObjectInfo = sourceMap[object.basisObjectId];
+
+          if (sourceObjectInfo && sourceObjectInfo.visited !== marker)
+          {
+            // use two loops as more efficient way, if object has a source reference
+            // going in deep is not required
+
+            // search for source reference
+            for (var cursor = sourceObjectInfo; cursor = cursor.ref;)
+              if (cursor.object === extract.source)
+                return true;
+
+            // object has no source object, go in deep
+            sourceObjectInfo.visited = marker; // mark object info by unique for search marker,
+                                               // to not check object more than once
+
+            // recursive search for source reference
+            for (var cursor = sourceObjectInfo; cursor = cursor.ref;)
+              if (findSourceRef(cursor.object, marker || {}))
+                return true;
+          }
+        };
+
+        if (sourceObjectValue && !findSourceRef(item))
+        {
+          sourceObjectInfo.value = null;
+          queue.push({
+            object: sourceObjectValue,
+            ref: item
+          });
+        }
       }
     }
 
@@ -2162,7 +2259,9 @@
     * @inheritDoc
     */
     listen: {
-      source: EXTRACT_DATASET_HANDLER
+      source: {
+        itemsChanged: EXTRACT_DATASET_ITEMSCHANGED
+      }
     }
   });
 

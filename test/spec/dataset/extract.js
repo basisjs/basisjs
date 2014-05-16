@@ -343,6 +343,39 @@ module.exports = {
             assert(extract.source === dataset);
             assert(eventCount(extract, 'itemsChanged') == 2);
           }
+        },
+        {
+          name: 'change source with intersected items, with cycles',
+          test: function(){
+            var items = generate(1, 3);
+            items[0].update({ parent: items[1] });
+            items[1].update({ parent: items[2] });
+            items[2].update({ parent: items[0] });
+            var dataset1 = new Dataset({ items: [items[0], items[1]] });
+            var dataset2 = new Dataset({ items: [items[1], items[2]] });
+            var extract = new Extract({
+              source: dataset1,
+              rule: 'data.parent'
+            });
+
+            assert(dataset1.itemCount == 2);
+            assert(extract.source === dataset1);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, [1, 2, 3]) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            extract.setSource(dataset2);
+            assert(dataset2.itemCount == 2);
+            assert(extract.source === dataset2);
+            assert(extract.itemCount == 3);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+
+            dataset2.remove(items[1]);
+            dataset2.remove(items[2]);
+            assert(dataset2.itemCount == 0);
+            assert(extract.itemCount == 0);
+            assert(eventCount(extract, 'itemsChanged') == 3);
+          }
         }
       ]
     },
@@ -630,6 +663,254 @@ module.exports = {
             assert(extract.itemCount == 4);
             assert(checkValues(extract, range(1, 4)) == false);
             assert(eventCount(extract, 'itemsChanged') == 1);
+          }
+        },
+        {
+          name: 'remove item from source should remove related members on recursive references',
+          test: function(){
+            var items = generate(1, 2);
+            items[0].update({ parent: items[1] });
+            items[1].update({ parent: items[0] });
+            var dataset = new Dataset({ items: [items[0]] });
+            var extract = new Extract({
+              source: dataset,
+              rule: 'data.parent'
+            });
+
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            dataset.remove(items[0]);
+            assert(dataset.itemCount == 0);
+            assert(extract.itemCount == 0);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+          }
+        },
+        {
+          name: 'remove item from source should not remove related members on recursive references but only if member has other references from source',
+          test: function(){
+            var items = generate(1, 3);
+            items[0].update({ parent: items[1] });
+            items[1].update({ parent: items[2] });
+            items[2].update({ parent: items[0] });
+            var dataset = new Dataset({ items: [items[0], items[1]] });
+            var extract = new Extract({
+              source: dataset,
+              rule: 'data.parent'
+            });
+
+            assert(dataset.itemCount == 2);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, range(1, 3)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            dataset.remove(items[0]);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, range(1, 3)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            dataset.remove(items[1]);
+            assert(dataset.itemCount == 0);
+            assert(extract.itemCount == 0);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+
+            //
+            // round 2
+            //
+            dataset.set(items);
+            assert(dataset.itemCount == 3);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, range(1, 3)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 3);
+
+            // remove first item and then second, it should left all three items
+            dataset.remove(items[0]);
+            dataset.remove(items[1]);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, range(1, 3)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 3);
+
+            dataset.remove(items[2]);
+            assert(dataset.itemCount == 0);
+            assert(extract.itemCount == 0);
+            assert(eventCount(extract, 'itemsChanged') == 4);
+          }
+        },
+        {
+          name: 'remove item with dataset from source should remove related members',
+          test: function(){
+            var items = generate(1, 3);
+            var a = items[0];
+            var b = items[1];
+            var c = items[2];
+
+            a.update({ parent: c });
+            b.update({ parent: c });
+            c.update({ items: new Dataset({ items: [a, b] }) });
+
+            var dataset = new Dataset({ items: [a] });
+            var extract = new Extract({
+              source: dataset,
+              rule: function(item){
+                return item.data.parent || item.data.items;
+              }
+            });
+
+            // source -> a ----> c <---- b
+            //           ^       |       ^
+            //           \--- dataset ---/
+
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, range(1, 3)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            // extract should be empty if remove `a` from dataset
+            dataset.clear();
+            assert(dataset.itemCount == 0);
+            assert(extract.itemCount == 0);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+          }
+        },
+        {
+          name: 'destroy object\'s dataset but don\'t notify about changes',
+          test: function(){
+            var objectDataset = new Dataset({ items: generate(2, 3) });
+            var object = new basis.data.Object({
+              data: {
+                value: 1,
+                items: objectDataset
+              }
+            });
+            var dataset = new Dataset({ items: [object] });
+            var extract = new Extract({
+              source: dataset,
+              rule: 'data.items'
+            });
+
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, range(1, 3)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            // destroy object dataset should not produce a warnings
+            assert(catchWarnings(function(){
+              objectDataset.destroy();
+            }) == false);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 1);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+
+            // trigger object value recalc by updating it
+            assert(catchWarnings(function(){
+              assert(object.update({ trigger: true }) != false);
+            }) == false);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 1);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+
+            // trigger object value recalc by updating it
+            assert(catchWarnings(function(){
+              assert(object.update({ items: null }) != false);
+            }) == false);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 1);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+          }
+        },
+        {
+          name: 'destroy object\'s dataset and notify about changes',
+          test: function(){
+            var objectDataset = new Dataset({ items: generate(2, 3) });
+            var object = new basis.data.Object({
+              data: {
+                value: 1,
+                items: objectDataset
+              }
+            });
+            var dataset = new Dataset({ items: [object] });
+            var extract = new Extract({
+              source: dataset,
+              rule: 'data.items'
+            });
+
+            // add listener after extract created
+            objectDataset.addHandler({
+              destroy: function(){
+                object.update({ items: null });
+              }
+            });
+
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, range(1, 3)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            // destroy object dataset should not produce a warnings
+            assert(catchWarnings(function(){
+              objectDataset.destroy();
+            }) == false);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 1);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+
+            // trigger object value recalc by updating it
+            assert(catchWarnings(function(){
+              assert(object.update({ trigger: true }) != false);
+            }) == false);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 1);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+          }
+        },
+        {
+          name: 'destroy object\'s dataset and notify about changes (another listener order)',
+          test: function(){
+            var objectDataset = new Dataset({ items: generate(2, 3) });
+            var object = new basis.data.Object({
+              data: {
+                value: 1,
+                items: objectDataset
+              }
+            });
+
+            // add handler before extract created
+            objectDataset.addHandler({
+              destroy: function(){
+                object.update({ items: null });
+              }
+            });
+
+            var dataset = new Dataset({ items: [object] });
+            var extract = new Extract({
+              source: dataset,
+              rule: 'data.items'
+            });
+
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 3);
+            assert(checkValues(extract, range(1, 3)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            // destroy object dataset should not produce a warnings
+            assert(catchWarnings(function(){
+              objectDataset.destroy();
+            }) == false);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 1);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+
+            // trigger object value recalc by updating it
+            assert(catchWarnings(function(){
+              assert(object.update({ trigger: true }) != false);
+            }) == false);
+            assert(dataset.itemCount == 1);
+            assert(extract.itemCount == 1);
+            assert(eventCount(extract, 'itemsChanged') == 2);
           }
         }
       ]
