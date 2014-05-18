@@ -431,6 +431,72 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'style namespaces',
+      test: [
+        {
+          name: 'using global styles in isolated scope',
+          test: function(){
+            var template = new Template(
+              '<b:isolate prefix="xxx-"/>' +
+              '<b:style>' +
+                '.global-class { width: 66px; }' +
+                '.global-class_mod { height: 66px; }' +
+              '</b:style>' +
+              '<div>' +
+                '<div{a} class="global-class global-class_{mod}"/>' +
+                '<div{b} class=":global-class :global-class_{mod}"/>' +
+                '<div{c} class=":global-class global-class_{mod}"/>' +
+              '</div>'
+            );
+            var tmpl = template.createInstance();
+            tmpl.set('mod', 'mod');
+            document.body.appendChild(tmpl.element);
+
+            assert(tmpl.a.className == 'xxx-global-class xxx-global-class_mod');
+            assert(tmpl.a.offsetWidth == 66);
+            assert(tmpl.a.offsetHeight == 66);
+
+            assert(tmpl.b.className == 'global-class global-class_mod');
+            assert(tmpl.b.offsetWidth == 73);
+            assert(tmpl.b.offsetHeight == 73);
+
+            assert(tmpl.c.className == 'global-class xxx-global-class_mod');
+            assert(tmpl.c.offsetWidth == 73);
+            assert(tmpl.c.offsetHeight == 66);
+          }
+        },
+        {
+          name: 'using style with namespace',
+          test: function(){
+            var template = new Template(
+              '<b:isolate prefix="xxx-"/>' +
+              '<b:style src="global-style.css" ns="foo"/>' +
+              '<b:style>' +
+                '.global-class { width: 66px; }' +
+                '.global-class_mod { height: 66px; }' +
+              '</b:style>' +
+              '<div>' +
+                '<div{a} class="global-class global-class_{mod}"/>' +
+                '<div{b} class="foo:global-class foo:global-class_{mod}"/>' +
+              '</div>'
+            );
+            var tmpl = template.createInstance();
+            tmpl.set('mod', 'mod');
+            document.body.appendChild(tmpl.element);
+
+            assert(tmpl.a.className == 'xxx-global-class xxx-global-class_mod');
+            assert(tmpl.a.offsetWidth == 66);
+            assert(tmpl.a.offsetHeight == 66);
+
+            assert(tmpl.b.className != 'xxx-global-class xxx-global-class_mod');
+            assert(/^(\S+)global-class \1global-class_mod$/.test(tmpl.b.className));
+            assert(tmpl.b.offsetWidth == 73);
+            assert(tmpl.b.offsetHeight == 73);
+          }
+        }
+      ]
     }
   ]
 };

@@ -583,7 +583,7 @@
 
     var IDENT = /^[a-z_][a-z0-9_\-]*$/i;
     var CLASS_ATTR_PARTS = /(\S+)/g;
-    var CLASS_ATTR_BINDING = /^([a-z_][a-z0-9_\-]*)?\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
+    var CLASS_ATTR_BINDING = /^((?:[a-z_][a-z0-9_\-]*)?(?::(?:[a-z_][a-z0-9_\-]*)?)?)\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
     var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
     var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
     var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
@@ -1117,6 +1117,9 @@
                 case 'isolate':
                   if (!template.isolate)
                     template.isolate = elAttrs.prefix || options.isolate || genIsolateMarker();
+
+                  /** @cut */ else
+                  /** @cut */   basis.dev.warn('<b:isolate> is set already to `' + template.isolate + '`');
                 break;
 
                 case 'l10n':
@@ -1583,13 +1586,15 @@
 
       for (var i = stIdx || 0, token; token = tokens[i]; i++)
       {
-        if (token[TOKEN_TYPE] == TYPE_ELEMENT)
+        var tokenType = token[TOKEN_TYPE];
+
+        if (tokenType == TYPE_ELEMENT)
           unpredictable += applyDefines(token, template, options, ELEMENT_ATTRS);
 
-        if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_CLASS || (token[TOKEN_TYPE] == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
+        if (tokenType == TYPE_ATTRIBUTE_CLASS || (tokenType == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
         {
           var bindings = token[TOKEN_BINDINGS];
-          var valueIdx = ATTR_VALUE_INDEX[token[TOKEN_TYPE]];
+          var valueIdx = ATTR_VALUE_INDEX[tokenType];
 
           if (bindings)
           {
@@ -1634,9 +1639,15 @@
     }
 
     function isolateTokens(tokens, isolate, stIdx){
+      function processName(name){
+        var parts = name.split(':');
+        return parts.length == 1 ? isolate + parts[0] : parts[1];
+      }
+
       for (var i = stIdx || 0, token; token = tokens[i]; i++)
       {
         var tokenType = token[TOKEN_TYPE];
+
         if (tokenType == TYPE_ELEMENT)
           isolateTokens(token, isolate, ELEMENT_ATTRS);
 
@@ -1646,11 +1657,14 @@
           var valueIndex = ATTR_VALUE_INDEX[tokenType];
 
           if (token[valueIndex])
-            token[valueIndex] = token[valueIndex].replace(/(^|\s+)/g, '$1' + isolate);
+            token[valueIndex] = token[valueIndex]
+              .split(/\s+/)
+              .map(processName)
+              .join(' ');
 
           if (bindings)
             for (var k = 0, bind; bind = bindings[k]; k++)
-              bind[0] = isolate + bind[0];
+              bind[0] = processName(bind[0]);
         }
       }
     }
