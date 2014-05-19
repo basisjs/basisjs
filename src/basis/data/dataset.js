@@ -6,10 +6,15 @@
  /**
   * Namespace overview:
   * - Classes:
-  *   {basis.data.dataset.Merge}, {basis.data.dataset.Subtract},
-  *   {basis.data.dataset.MapFilter}, {basis.data.dataset.Subset},
-  *   {basis.data.dataset.Split}, {basis.data.dataset.Slice}
-  *   {basis.data.dataset.Cloud}, {basis.data.dataset.Extract}
+  *   {basis.data.dataset.Merge},
+  *   {basis.data.dataset.Subtract},
+  *   {basis.data.dataset.SourceDataset},
+  *   {basis.data.dataset.MapFilter},
+  *   {basis.data.dataset.Filter},
+  *   {basis.data.dataset.Split},
+  *   {basis.data.dataset.Slice}
+  *   {basis.data.dataset.Cloud},
+  *   {basis.data.dataset.Extract}
   *
   * @see ./demo/defile/dataset.html
   *
@@ -1329,14 +1334,14 @@
 
 
   //
-  // Subset
+  // Filter
   //
 
  /**
   * @class
   */
-  var Subset = Class(MapFilter, {
-    className: namespace + '.Subset',
+  var Filter = Class(MapFilter, {
+    className: namespace + '.Filter',
 
    /**
     * @inheritDoc
@@ -2292,9 +2297,18 @@
 
     // transform datasets
     MapFilter: MapFilter,
-    Subset: Subset,
+    Filter: Filter,
     Split: Split,
     Extract: Extract,
+
+    // deprecated name of Filter
+    Subset: Filter.subclass({
+      className: namespace + '.Subset',
+      init: function(){
+        /** @cut */ basis.dev.warn('Class ' + this.constructor.className + ' is deprecated, use ' + Filter.className + ' instead');
+        Filter.prototype.init.call(this);
+      }
+    }),
 
     // other
     Slice: Slice,

@@ -362,8 +362,8 @@
     });
 
     new DatasetViewer({
-      title: 'Subset of dataset A: ONLY ODD',
-      dataSource: new nsDataset.Subset({
+      title: 'Filter of dataset A: ONLY ODD',
+      dataSource: new nsDataset.Filter({
         rule: basis.getter('data.value % 2'),
         source: A
       })

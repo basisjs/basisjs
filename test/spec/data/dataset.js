@@ -67,7 +67,7 @@ module.exports = {
               items: items
             });
 
-            var subset = new basis.data.dataset.Subset({
+            var subset = new basis.data.dataset.Filter({
               source: dataset,
               rule: function(obj){
                 return obj.data.value % 2;
@@ -112,7 +112,7 @@ module.exports = {
               items: items
             });
 
-            var subset = new basis.data.dataset.Subset({
+            var subset = new basis.data.dataset.Filter({
               source: dataset,
               rule: function(obj){
                 return obj.data.value % 2;

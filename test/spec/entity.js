@@ -1540,7 +1540,7 @@ module.exports = {
           name: 'no warnings about handler remove on destroy',
           test: function(){
             var Type = basis.entity.createType();
-            var subset = new basis.data.dataset.Subset({ source: Type.all });
+            var subset = new basis.data.dataset.Filter({ source: Type.all });
             var instance = Type({});
 
             assert(subset.itemCount == 1);
@@ -1555,7 +1555,7 @@ module.exports = {
           name: 'no warnings on all.sync([])',
           test: function(){
             var Type = basis.entity.createType();
-            var subset = new basis.data.dataset.Subset({ source: Type.all });
+            var subset = new basis.data.dataset.Filter({ source: Type.all });
             var eventCount = 0;
 
             Type({});

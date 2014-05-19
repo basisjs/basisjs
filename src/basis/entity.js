@@ -28,7 +28,7 @@
   var DataObject = basis.data.Object;
   var Slot = basis.data.Slot;
   var Dataset = basis.data.Dataset;
-  var Subset = basis.data.dataset.Subset;
+  var Filter = basis.data.dataset.Filter;
   var Split = basis.data.dataset.Split;
 
   var NULL_INFO = {};
@@ -351,13 +351,13 @@
  /**
   * @class
   */
-  var EntityCollection = Class(Subset, {
+  var EntityCollection = Class(Filter, {
     className: namespace + '.EntityCollection',
 
     name: null,
 
-    init: ENTITYSET_INIT_METHOD(Subset, 'EntityCollection'),
-    sync: ENTITYSET_SYNC_METHOD(Subset)
+    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection'),
+    sync: ENTITYSET_SYNC_METHOD(Filter)
   });
 
   //
