@@ -1053,14 +1053,17 @@
     else
     {
       // browser env
-      var scripts = document.getElementsByTagName('script');
+      var scripts = document.scripts;
       for (var i = 0, scriptEl; scriptEl = scripts[i]; i++)
       {
-        var configAttrNode = scriptEl.getAttributeNode('data-basis-config') || scriptEl.getAttributeNode('basis-config');
-        if (configAttrNode)
+        var configAttrValue = scriptEl.hasAttribute('basis-config')
+          ? scriptEl.getAttribute('basis-config')
+          : scriptEl.getAttribute('data-basis-config');
+
+        if (configAttrValue !== null)
         {
           try {
-            extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
+            extend(config, Function('return{' + configAttrValue + '}')() || {});
           } catch(e) {
             /** @cut */ consoleMethods.error('basis.js config parse fault: ' + e);
           }
