@@ -257,7 +257,7 @@
     * function to fetch item from vector
     * @type {function(object)}
     */
-    valueGetter: basis.fn.$null,
+    vectorGetter: basis.fn.$null,
 
    /**
     * Values vector
@@ -285,7 +285,7 @@
       if (value !== null)
       {
         this.vector_.splice(binarySearchPos(this.vector_, value), 0, value);
-        this.value = this.valueGetter(this.vector_);
+        this.value = this.vectorGetter(this.vector_);
       }
     },
 
@@ -296,7 +296,7 @@
       if (value !== null)
       {
         this.vector_.splice(binarySearchPos(this.vector_, value), 1);
-        this.value = this.valueGetter(this.vector_);
+        this.value = this.vectorGetter(this.vector_);
       }
     },
 
@@ -310,7 +310,7 @@
       if (newValue !== null)
         this.vector_.splice(binarySearchPos(this.vector_, newValue), 0, newValue);
 
-      this.set(this.valueGetter(this.vector_));
+      this.set(this.vectorGetter(this.vector_));
     },
 
    /**
@@ -335,7 +335,7 @@
   */
   var Min = Class(VectorIndex, {
     className: namespace + '.Min',
-    valueGetter: function(vector){
+    vectorGetter: function(vector){
       return vector[0];
     }
   });
@@ -346,7 +346,7 @@
   */
   var Max = Class(VectorIndex, {
     className: namespace + '.Max',
-    valueGetter: function(vector){
+    vectorGetter: function(vector){
       return vector[vector.length - 1];
     }
   });
