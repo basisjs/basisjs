@@ -1428,6 +1428,25 @@ module.exports = {
 
                 instance.set('foo', true);
                 assert(instance.element.style.display == '');
+
+                instance.set('foo', 'foo');
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', undefined);
+                assert(instance.element.style.display == 'none');
+              }
+            },
+            {
+              name: 'single string binding',
+              test: function(){
+                var t = createTemplate('<span b:show="{foo}"/>');
+                var instance = t.createInstance();
+
+                instance.set('foo', 'foo');
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', undefined);
+                assert(instance.element.style.display == 'none');
               }
             },
             {
@@ -1476,6 +1495,19 @@ module.exports = {
 
                 var t = createTemplate('<span b:hide="{foo}{bar}"/>');
                 assert(t.createInstance().element.style.display == '');
+              }
+            },
+            {
+              name: 'single string binding',
+              test: function(){
+                var t = createTemplate('<span b:hide="{foo}"/>');
+                var instance = t.createInstance();
+
+                instance.set('foo', undefined);
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 'foo');
+                assert(instance.element.style.display == 'none');
               }
             },
             {

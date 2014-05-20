@@ -578,7 +578,7 @@
               if (!attrExprMap[attrExprId])
               {
                 attrExprMap[attrExprId] = bindVar;
-                varList.push(bindVar + '=""');
+                varList.push(bindVar + '=' + (binding[7] == 'hide' ? '""' : '"none"'));
               }
 
               if (binding[7])

@@ -472,7 +472,7 @@ module.exports = {
           test: function(){
             var template = new Template(
               '<b:isolate prefix="xxx-"/>' +
-              '<b:style src="global-style.css" ns="foo"/>' +
+              '<b:style src="global_style.css" ns="foo"/>' +
               '<b:style>' +
                 '.global-class { width: 66px; }' +
                 '.global-class_mod { height: 66px; }' +
