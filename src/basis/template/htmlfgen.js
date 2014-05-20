@@ -214,6 +214,7 @@
     var SPECIAL_ATTR_MAP = {
       disabled: '*',  // any tag
       checked: ['input'],
+      indeterminate: ['input'],
       value: ['input', 'textarea'],
       minlength: ['input'],
       maxlength: ['input'],
@@ -227,7 +228,8 @@
       checked: true,
       selected: true,
       readonly: true,
-      multiple: true
+      multiple: true,
+      indeterminate: true
     };
 
     var bindFunctions = {

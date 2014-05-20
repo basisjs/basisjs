@@ -610,16 +610,22 @@
     className: namespace + '.Checkbox',
 
     value: false,
+    indeterminate: false,
 
     template: templates.Checkbox,
 
     binding: {
+      indeterminate: 'indeterminate',
       checked: {
         events: 'change',
         getter: function(field){
           return field.value ? 'checked' : '';
         }
       }
+    },
+    event_change: function(event){
+      Field.prototype.event_change.call(this, event);
+      this.syncIndeterminate();
     },
 
     toggle: function(){
@@ -631,6 +637,19 @@
     syncFieldValue_: function(){
       if (this.tmpl && this.tmpl.field)
         this.setValue(!!this.tmpl.field.checked);
+    },
+    syncIndeterminate: function(){
+      // this part looks tricky, but we do that because browser change
+      // indeterminate by it's own logic, and it may differ from know value
+      // that template stored in
+      this.indeterminate = !this.indeterminate;
+      this.updateBind('indeterminate');
+      this.indeterminate = !this.indeterminate;
+      this.updateBind('indeterminate');
+    },
+    setIndeterminate: function(value){
+      this.indeterminate = !!value;
+      this.syncIndeterminate();
     }
   });
 
