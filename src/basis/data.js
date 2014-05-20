@@ -586,7 +586,7 @@
     * Indicates that property is locked (don't fire event for changes).
     * @type {boolean}
     */
-    locked: false,
+    locked: 0,
 
    /**
     * Value before property locked (passed as oldValue when property unlock).
@@ -673,30 +673,41 @@
     },
 
    /**
-    * Locks object for change event fire.
+    * Returns boolean value is locked or not.
+    * @return {boolean}
     */
-    lock: function(){
-      if (!this.locked)
-      {
-        this.locked = true;
-        this.lockedValue_ = this.value;
-      }
+    isLocked: function(){
+      return this.locked > 0;
     },
 
    /**
-    * Unlocks object for change event fire. If value changed during object
+    * Locks value for change event fire.
+    */
+    lock: function(){
+      this.locked++;
+
+      if (this.locked == 1)
+        this.lockedValue_ = this.value;
+    },
+
+   /**
+    * Unlocks value for change event fire. If value changed during object
     * was locked, than change event fires.
     */
     unlock: function(){
       if (this.locked)
       {
-        var lockedValue = this.lockedValue_;
+        this.locked--;
 
-        this.lockedValue_ = null;
-        this.locked = false;
+        if (!this.locked)
+        {
+          var lockedValue = this.lockedValue_;
 
-        if (this.value !== lockedValue)
-          this.emit_change(lockedValue);
+          this.lockedValue_ = null;
+
+          if (this.value !== lockedValue)
+            this.emit_change(lockedValue);
+        }
       }
     },
 

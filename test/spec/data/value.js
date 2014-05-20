@@ -22,14 +22,14 @@ module.exports = {
 
         testValue.link(t, 'saved');
         testValue.set(val);
-        this.is(val, testValue.value);
-        this.is(val, t.saved);
+        assert(testValue.value === val);
+        assert(t.saved === val);
 
         // not fire on existing testValue set
         t.saved = 0;
         testValue.set(val);
-        this.is(val, testValue.value);
-        this.is(0, t.saved);
+        assert(testValue.value === val);
+        assert(t.saved === 0);
       }
     },
     {
@@ -41,16 +41,16 @@ module.exports = {
 
         testValue.link(t, 'saved');
         testValue.set(val);
-        this.is(val, testValue.value);
-        this.is(val, t.saved);
+        assert(testValue.value === val);
+        assert(t.saved === val);
 
         var testValue = new basis.data.Value({ value: 123 });
         var t = {};
         var val = Math.random();
         testValue.link(t, function(val){ this.saved = val * 2; });
         testValue.set(val);
-        this.is(val, testValue.value);
-        this.is(val * 2, t.saved);
+        assert(testValue.value === val);
+        assert(t.saved === val * 2);
       }
     },
     {
@@ -63,22 +63,22 @@ module.exports = {
           }
         });
 
-        this.is(null, testValue.links_);
-        this.is(null, object.handler);
+        assert(testValue.links_ === null);
+        assert(object.handler === null);
 
         testValue.link(object, object.testMethod);
-        this.is(1, object.xxx);
-        this.is(true, object.handler !== null);
-        this.is(true, testValue.links_.context === object);
-        this.is(null, testValue.links_.links_);
+        assert(object.xxx === 1);
+        assert(object.handler !== null);
+        assert(testValue.links_.context === object);
+        assert(testValue.links_.links_ === null);
 
         testValue.unlink(object);
-        this.is(null, object.handler);
-        this.is(null, testValue.links_);
+        assert(object.handler === null);
+        assert(testValue.links_ === null);
 
         testValue.link(object, object.testMethod);
-        testValue.link(object, function(testValue){ this.xxx = testValue });
-        this.is(true, testValue.links_.context === object);
+        testValue.link(object, function(testValue){ this.xxx = testValue; });
+        assert(testValue.links_.context === object);
       }
     },
     {
@@ -88,12 +88,12 @@ module.exports = {
         var testValue = new basis.data.Value({ value: 1 });
         var object = new basis.data.Object();
         testValue.link(object, function(){});
-        this.is(true, !!object.handler);
-        this.is(true, !!testValue.links_);
+        assert(object.handler !== null);
+        assert(testValue.links_ !== null);
 
         object.destroy();
-        this.is(null, object.handler);
-        this.is(null, testValue.links_);
+        assert(object.handler === null);
+        assert(testValue.links_ === null);
 
         // destroy testValue with link to emitter
         var testValue = new basis.data.Value({ value: 1 });
@@ -101,8 +101,8 @@ module.exports = {
         testValue.link(object, function(){});
 
         testValue.destroy();
-        this.is(null, object.handler);
-        this.is(null, testValue.links_);
+        assert(object.handler === null);
+        assert(testValue.links_ === null);
       }
     },
     {
@@ -111,12 +111,12 @@ module.exports = {
         var emitter = new basis.event.Emitter;
         var testValue = new basis.data.Value({ value: emitter });
 
-        this.is(true, testValue.value === emitter);
-        this.is(true, !!emitter.handler);
+        assert(testValue.value === emitter);
+        assert(emitter.handler !== null);
 
         emitter.destroy();
-        this.is(null, testValue.value);
-        this.is(null, emitter.handler);
+        assert(testValue.value === null);
+        assert(emitter.handler === null);
       }
     },
     {
@@ -125,16 +125,16 @@ module.exports = {
         var emitter = new basis.event.Emitter;
         var testValue = new basis.data.Value({ value: null });
 
-        this.is(null, emitter.handler);
-        this.is(null, testValue.value);
+        assert(emitter.handler === null);
+        assert(testValue.value === null);
 
         testValue.set(emitter);
-        this.is(true, !!emitter.handler);
-        this.is(true, testValue.value === emitter);
+        assert(emitter.handler !== null);
+        assert(testValue.value === emitter);
 
         testValue.set(null);
-        this.is(null, emitter.handler);
-        this.is(null, testValue.value);
+        assert(emitter.handler === null);
+        assert(testValue.value === null);
       }
     },
     {
@@ -145,8 +145,8 @@ module.exports = {
         var a = testValue.as(fn);
         var b = testValue.as(fn);
 
-        this.is(true, a instanceof basis.Token);
-        this.is(true, a === b);
+        assert(a instanceof basis.Token);
+        assert(a === b);
 
         ///////
 
@@ -155,8 +155,8 @@ module.exports = {
         var a = testValue.as(fn, true);
         var b = testValue.as(fn, true);
 
-        this.is(true, a instanceof basis.DeferredToken);
-        this.is(true, a === b);
+        assert(a instanceof basis.DeferredToken);
+        assert(a === b);
 
         ///////
 
@@ -164,8 +164,8 @@ module.exports = {
         var a = testValue.as(function(){});
         var b = testValue.as(function(){});
 
-        this.is(true, a instanceof basis.Token);
-        this.is(true, a === b);
+        assert(a instanceof basis.Token);
+        assert(a === b);
 
         ///////
 
@@ -176,14 +176,14 @@ module.exports = {
         var a = testValue.as(fn);
         var b = testValue.as(basis.fn.$self);
 
-        this.is(true, a !== b);
-        this.is(9, a.value);
-        this.is(3, b.value);
+        assert(a !== b);
+        assert(a.value === 9);
+        assert(b.value === 3);
 
         testValue.set(4);
 
-        this.is(16, a.value);
-        this.is(4, b.value);
+        assert(a.value === 16);
+        assert(b.value === 4);
       }
     },
     {
@@ -199,29 +199,66 @@ module.exports = {
           }
         });
 
-        this.is(0, changeCount);
-        this.is(1, testValue.value);
-        this.is(true, testValue.locked === false);
+        assert(changeCount === 0);
+        assert(testValue.value === 1);
+        assert(testValue.isLocked() === false);
 
         testValue.lock();
         testValue.set(2);
 
-        this.is(0, changeCount);
-        this.is(2, testValue.value);
-        this.is(true, testValue.locked === true);
+        assert(changeCount === 0);
+        assert(testValue.value === 2);
+        assert(testValue.isLocked() === true);
 
         testValue.unlock();
-        this.is(1, changeCount);
-        this.is(2, testValue.value);
-        this.is(true, testValue.locked === false);
-        this.is(true, testValue.lockedValue_ === null);
+        assert(changeCount === 1);
+        assert(testValue.value === 2);
+        assert(testValue.isLocked() === false);
+        assert(testValue.lockedValue_ === null);
 
         testValue.lock();
-        this.is(true, testValue.lockedValue_ === 2);
+        assert(testValue.lockedValue_ === 2);
         testValue.unlock();
-        this.is(2, testValue.value);
-        this.is(true, testValue.locked === false);
-        this.is(true, testValue.lockedValue_ === null);
+        assert(testValue.value === 2);
+        assert(testValue.isLocked() === false);
+        assert(testValue.lockedValue_ === null);
+      }
+    },
+    {
+      name: 'multiple Value#lock/unlock',
+      test: function(){
+        var changeCount = 0;
+        var testValue = new basis.data.Value({
+          value: 1,
+          handler: {
+            change: function(){
+              changeCount++;
+            }
+          }
+        });
+
+        assert(testValue.isLocked() === false);
+
+        testValue.lock();
+        testValue.lock();
+        testValue.unlock();
+
+        assert(testValue.isLocked() === true);
+
+        testValue.unlock();
+        assert(testValue.isLocked() === false);
+
+        testValue.unlock();
+        assert(testValue.isLocked() === false);
+
+        testValue.unlock();
+        assert(testValue.isLocked() === false);
+
+        testValue.lock();
+        assert(testValue.isLocked() === true);
+
+        testValue.unlock();
+        assert(testValue.isLocked() === false);
       }
     }
   ]
