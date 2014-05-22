@@ -491,14 +491,6 @@
         {
           var attrName = binding[ATTR_NAME];
 
-          /** @cut */ debugList.push('{' + [
-          /** @cut */   'binding:"' + bindName + '"',
-          /** @cut */   'dom:' + domRef,
-          /** @cut */   'attr:"' + attrName + '"',
-          /** @cut */   'val:' + bindVar,
-          /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
-          /** @cut */ ] + '}');
-
           switch (attrName)
           {
             case 'class':
@@ -615,6 +607,14 @@
                     domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' + bindVar : bindVar) + ';'
                 );
           }
+
+          /** @cut */ debugList.push('{' + [
+          /** @cut */   'binding:"' + bindName + '"',
+          /** @cut */   'dom:' + domRef,
+          /** @cut */   'attr:"' + attrName + '"',
+          /** @cut */   'val:' + bindVar,
+          /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+          /** @cut */ ] + '}');
         }
       }
 
