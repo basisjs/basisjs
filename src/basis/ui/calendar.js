@@ -746,7 +746,7 @@
     // date change
     selectDate: function(date){
       if (date - this.date.value != 0)  // test for date equal
-        basis.date.set(this.date, date);
+        this.date.set(new Date(date));
     },
 
     //
