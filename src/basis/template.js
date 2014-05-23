@@ -1768,7 +1768,7 @@
             });
 
             var sourceResource = basis.resource(url).ready(function(cssResource){
-              var cssText = isolateCss(cssResource.cssText, isolate);
+              var cssText = isolateCss(cssResource.cssText || '', isolate);
 
               /** @cut */ if (typeof btoa == 'function')
               /** @cut */   cssText += '\n/*# sourceMappingURL=data:application/json;base64,' +
