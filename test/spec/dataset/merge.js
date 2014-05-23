@@ -684,7 +684,7 @@ module.exports = {
           }
         },
         {
-          name: 'clear method should remove all source values',
+          name: 'clear method should not have any effect',
           test: function(){
             var dataset1 = new Dataset({ items: generate(1, 5) });
             var dataset2 = new Dataset({ items: generate(6, 10) });
@@ -697,10 +697,10 @@ module.exports = {
 
             merge.clear();
 
-            assert(eventCount(merge, 'sourcesChanged') == 2);
-            assert(merge.itemCount == 0);
-            assert(merge.sources.length == 0);
-            assert(merge.getSourceValues().length == 0);
+            assert(eventCount(merge, 'sourcesChanged') == 1);
+            assert(merge.itemCount == 10);
+            assert(merge.sources.length == 2);
+            assert(merge.getSourceValues().length == 2);
           }
         }
       ]

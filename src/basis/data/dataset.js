@@ -560,19 +560,17 @@
     },
 
    /**
-    * Remove all sources. All members are removing as side effect.
-    */
-    clear: function(){
-      this.setSources();
-    },
-
-   /**
     * @inheritDoc
     */
     destroy: function(){
+      this.setSources();
+
       // inherit
       ReadOnlyDataset.prototype.destroy.call(this);
 
+      this.sourceValues_ = null;
+      this.sourcesMap_ = null;
+      this.sourceDelta_ = null;
       this.sources = null;
     }
   });
@@ -848,8 +846,10 @@
    /**
     * @inheritDoc
     */
-    clear: function(){
+    destroy: function(){
       this.setOperands();
+
+      ReadOnlyDataset.prototype.destroy.call(this);
     }
   });
 
@@ -968,16 +968,11 @@
     },
 
    /**
-    * Drop dataset. All members are removing as side effect.
-    */
-    clear: function(){
-      this.setSource();
-    },
-
-   /**
     * @inheritDoc
     */
     destroy: function(){
+      this.setSource();
+
       // inherit
       ReadOnlyDataset.prototype.destroy.call(this);
 
