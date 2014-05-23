@@ -1804,15 +1804,15 @@
   //
 
   function startUseResource(uri){
-    var resource = basis.resource(uri);
-    if (resource.type == '.css')
-      resource.fetch().startUse();
+    var resource = basis.resource(uri).fetch();
+    if (typeof resource.startUse == 'function')
+      resource.startUse();
   }
 
   function stopUseResource(uri){
-    var resource = basis.resource(uri);
-    if (resource.type == '.css')
-      resource.fetch().stopUse();
+    var resource = basis.resource(uri).fetch();
+    if (typeof resource.stopUse == 'function')
+      resource.stopUse();
   }
 
 
