@@ -60,6 +60,7 @@ module.exports = new basis.ui.Node({
 
   template: resource('./template/list.tmpl'),
   binding: {
+    hidden: basis.data.index.count(Todo.all).as(basis.bool.invert),
     noActive: basis.data.index.count(Todo.active).as(basis.bool.invert)
   },
   action: {

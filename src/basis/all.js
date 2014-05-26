@@ -35,6 +35,7 @@ basis.require('basis.data.vector');
 basis.require('basis.entity');
 basis.require('basis.net');
 basis.require('basis.net.ajax');
+basis.require('basis.net.jsonp');
 basis.require('basis.net.action');
 basis.require('basis.net.service');
 basis.require('basis.net.soap');

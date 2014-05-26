@@ -116,8 +116,8 @@ function endInspect(){
 
 function updateOnScroll(event){
   var scrollElement = document.compatMode == 'CSS1Compat' ? document.documentElement : document.body;
-  overlayContent.style.top = -scrollElement.scrollTop + 'px';
-  overlayContent.style.left = -scrollElement.scrollLeft + 'px';
+  overlayContent.style.top = -(global.pageYOffset || scrollElement.scrollTop) + 'px';
+  overlayContent.style.left = -(global.pageXOffset || scrollElement.scrollLeft) + 'px';
 
   if (event && event.target !== document)
     highlight(true);

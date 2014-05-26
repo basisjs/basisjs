@@ -28,7 +28,7 @@
   var DataObject = basis.data.Object;
   var Slot = basis.data.Slot;
   var Dataset = basis.data.Dataset;
-  var Subset = basis.data.dataset.Subset;
+  var Filter = basis.data.dataset.Filter;
   var Split = basis.data.dataset.Split;
 
   var NULL_INFO = {};
@@ -270,6 +270,7 @@
     return function(data){
       var destroyItems = basis.object.slice(this.items_);
       var inserted = [];
+      var deleted = [];
 
       if (data)
       {
@@ -287,10 +288,18 @@
         if (key in destroyItems == false)
           inserted.push(this.items_[key]);
 
-      Dataset.setAccumulateState(true);
       for (var key in destroyItems)
         if (destroyItems[key])
-          destroyItems[key].destroy();
+          deleted.push(destroyItems[key]);
+
+      if (deleted.length)
+        this.emit_itemsChanged({
+          deleted: deleted
+        });
+
+      Dataset.setAccumulateState(true);
+      for (var i = 0; i < deleted.length; i++)
+        deleted[i].destroy();
       Dataset.setAccumulateState(false);
 
       return inserted.length ? inserted : null;
@@ -342,13 +351,13 @@
  /**
   * @class
   */
-  var EntityCollection = Class(Subset, {
+  var EntityCollection = Class(Filter, {
     className: namespace + '.EntityCollection',
 
     name: null,
 
-    init: ENTITYSET_INIT_METHOD(Subset, 'EntityCollection'),
-    sync: ENTITYSET_SYNC_METHOD(Subset)
+    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection'),
+    sync: ENTITYSET_SYNC_METHOD(Filter)
   });
 
   //
@@ -1497,14 +1506,14 @@
         if (this.__id__ != null)
           updateIndex(this, this.__id__, null);
 
-        // inherit
-        DataObject.prototype.destroy.call(this);
-
         // delete from all entity type list (is it right order?)
-        if (all)
+        if (all && all.has(this))
           all.emit_itemsChanged({
             deleted: [this]
           });
+
+        // inherit
+        DataObject.prototype.destroy.call(this);
 
         // clear links
         this.data = NULL_INFO;

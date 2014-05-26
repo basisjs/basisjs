@@ -10,7 +10,7 @@
   *   {basis.data.STATE}, {basis.data.SUBSCRIPTION}
   * - Classes:
   *   {basis.data.Object}, {basis.data.KeyObjectMap},
-  *   {basis.data.AbstractDataset}, {basis.data.Dataset}
+  *   {basis.data.ReadOnlyDataset}, {basis.data.Dataset}
   *
   * @namespace basis.data
   */
@@ -586,7 +586,7 @@
     * Indicates that property is locked (don't fire event for changes).
     * @type {boolean}
     */
-    locked: false,
+    locked: 0,
 
    /**
     * Value before property locked (passed as oldValue when property unlock).
@@ -673,30 +673,41 @@
     },
 
    /**
-    * Locks object for change event fire.
+    * Returns boolean value is locked or not.
+    * @return {boolean}
     */
-    lock: function(){
-      if (!this.locked)
-      {
-        this.locked = true;
-        this.lockedValue_ = this.value;
-      }
+    isLocked: function(){
+      return this.locked > 0;
     },
 
    /**
-    * Unlocks object for change event fire. If value changed during object
+    * Locks value for change event fire.
+    */
+    lock: function(){
+      this.locked++;
+
+      if (this.locked == 1)
+        this.lockedValue_ = this.value;
+    },
+
+   /**
+    * Unlocks value for change event fire. If value changed during object
     * was locked, than change event fires.
     */
     unlock: function(){
       if (this.locked)
       {
-        var lockedValue = this.lockedValue_;
+        this.locked--;
 
-        this.lockedValue_ = null;
-        this.locked = false;
+        if (!this.locked)
+        {
+          var lockedValue = this.lockedValue_;
 
-        if (this.value !== lockedValue)
-          this.emit_change(lockedValue);
+          this.lockedValue_ = null;
+
+          if (this.value !== lockedValue)
+            this.emit_change(lockedValue);
+        }
       }
     },
 
@@ -1621,7 +1632,7 @@
     },
 
    /**
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     dataset: null,
 
@@ -1632,7 +1643,7 @@
 
    /**
     * Fires when dataset was changed.
-    * @param {basis.data.AbstractDataset} oldDataset
+    * @param {basis.data.ReadOnlyDataset} oldDataset
     * @event
     */
     emit_datasetChanged: createEvent('datasetChanged', 'oldDataset'),
@@ -1659,7 +1670,7 @@
     },
 
    /**
-    * @param {basis.data.AbstractDataset} dataset
+    * @param {basis.data.ReadOnlyDataset} dataset
     */
     setDataset: function(dataset){
       dataset = resolveDataset(this, this.setDataset, dataset, 'datasetAdapter_');
@@ -1738,8 +1749,8 @@
  /**
   * @class
   */
-  var AbstractDataset = Class(AbstractData, {
-    className: namespace + '.AbstractDataset',
+  var ReadOnlyDataset = Class(AbstractData, {
+    className: namespace + '.ReadOnlyDataset',
 
    /**
     * Cardinality of set.
@@ -1910,7 +1921,7 @@
  /**
   * @class
   */
-  var Dataset = Class(AbstractDataset, {
+  var Dataset = Class(ReadOnlyDataset, {
     className: namespace + '.Dataset',
 
    /**
@@ -1929,7 +1940,7 @@
     */
     init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       var items = this.items;
       if (items)
@@ -2148,10 +2159,9 @@
   });
 
 
-/**
+ /**
   * @class
   */
-
   var DatasetAdapter = function(context, fn, source, handler){
     this.context = context;
     this.fn = fn;
@@ -2159,14 +2169,41 @@
     this.handler = handler;
   };
 
-  DatasetAdapter.prototype.adapter_ = null;
-  DatasetAdapter.prototype.proxy = function(){
+  DatasetAdapter.prototype = {
+    context: null,
+    fn: null,
+    source: null,
+    handler: null,
+    adapter_: null,
+    attachMethod: 'addHandler',
+    detachMethod: 'removeHandler',
+    proxy: function(){
+      this.fn.call(this.context, this.source);
+    }
+  };
+
+ /**
+  * Binding bridge dataset adapter
+  * @class
+  */
+  var BBDatasetAdapter = function(){
+    DatasetAdapter.apply(this, arguments);
+  };
+  BBDatasetAdapter.prototype = new DatasetWrapper();
+  BBDatasetAdapter.prototype.attachMethod = 'attach';
+  BBDatasetAdapter.prototype.detachMethod = 'detach';
+
+  //
+  // adapter handlers
+  //
+
+  var TOKEN_ADAPTER_HANDLER = function(){
     this.fn.call(this.context, this.source);
   };
 
   var DATASETWRAPPER_ADAPTER_HANDLER = {
-    datasetChanged: function(wrapper){
-      this.fn.call(this.context, wrapper);
+    datasetChanged: function(){
+      this.fn.call(this.context, this.source);
     },
     destroy: function(){
       this.fn.call(this.context, null);
@@ -2174,14 +2211,17 @@
   };
 
   var VALUE_ADAPTER_HANDLER = {
-    change: function(value){
-      this.fn.call(this.context, value);
+    change: function(){
+      this.fn.call(this.context, this.source);
     },
     destroy: function(){
       this.fn.call(this.context, null);
     }
   };
 
+ /**
+  * Resolve dataset from source value.
+  */
   function resolveDataset(context, fn, source, property){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
@@ -2189,29 +2229,35 @@
     if (typeof source == 'function')
       source = source.call(context, context);
 
-    if (source instanceof DatasetWrapper)
+    if (source)
     {
-      newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
-      source = source.dataset;
+      if (source instanceof DatasetWrapper)
+      {
+        newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
+        source = source.dataset;
+      }
+      else
+        if (source instanceof Value)
+        {
+          newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+          source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+        }
+        else
+          if (source.bindingBridge)
+          {
+            newAdapter = new BBDatasetAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+            source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+          }
     }
 
-    if (source instanceof basis.Token)
-      source = Value.from(source);  // basis.Token -> basis.data.Value
-
-    if (source instanceof Value)
-    {
-      newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-      source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
-    }
-
-    if (source instanceof AbstractDataset == false)
+    if (source instanceof ReadOnlyDataset == false)
       source = null;
 
     if (property && oldAdapter !== newAdapter)
     {
       if (oldAdapter)
       {
-        oldAdapter.source.removeHandler(oldAdapter.handler, oldAdapter);
+        oldAdapter.source[oldAdapter.detachMethod](oldAdapter.handler, oldAdapter);
 
         // destroy nested adapter if exists
         if (oldAdapter.adapter_)
@@ -2219,7 +2265,7 @@
       }
 
       if (newAdapter)
-        newAdapter.source.addHandler(newAdapter.handler, newAdapter);
+        newAdapter.source[newAdapter.attachMethod](newAdapter.handler, newAdapter);
 
       context[property] = newAdapter;
     }
@@ -2233,7 +2279,7 @@
   //
 
   Dataset.setAccumulateState = (function(){
-    var proto = AbstractDataset.prototype;
+    var proto = ReadOnlyDataset.prototype;
     var realEvent = proto.emit_itemsChanged;
     var setStateCount = 0;
     var urgentTimer;
@@ -2248,7 +2294,11 @@
       var eventCacheCopy = eventCache;
       eventCache = {};
       for (var datasetId in eventCacheCopy)
-        flushCache(eventCacheCopy[datasetId]);
+      {
+        var entry = eventCacheCopy[datasetId];
+        if (entry)
+          flushCache(entry);
+      }
     }
 
     function storeDatasetDelta(delta){
@@ -2258,32 +2308,97 @@
       var deleted = delta.deleted;
       var cache = eventCache[datasetId];
 
-      if (inserted && deleted)
+      if ((inserted && deleted) || (cache && cache.mixed))
       {
         if (cache)
         {
-          delete eventCache[datasetId];
+          eventCache[datasetId] = null;
           flushCache(cache);
         }
+
         realEvent.call(dataset, delta);
         return;
       }
 
-      var mode = inserted ? 'inserted' : 'deleted';
       if (cache)
       {
+        var mode = inserted ? 'inserted' : 'deleted';
         var array = cache[mode];
         if (!array)
-          flushCache(cache);
-        else
         {
-          array.push.apply(array, inserted || deleted);
-          return;
+          var inCacheMode = inserted ? 'deleted' : 'inserted';
+          var inCache = cache[inCacheMode];
+          var inCacheMap = {};
+          var deltaItems = inserted || deleted;
+          var newInCacheItems = [];
+          var inCacheRemoves = 0;
+
+          // build map of in-cache items
+          for (var i = 0; i < inCache.length; i++)
+            inCacheMap[inCache[i].basisObjectId] = i;
+
+          // build new oposite items array
+          for (var i = 0; i < deltaItems.length; i++)
+          {
+            var id = deltaItems[i].basisObjectId;
+            if (id in inCacheMap == false)
+            {
+              newInCacheItems.push(deltaItems[i]);
+            }
+            else
+            {
+              inCacheRemoves++;
+              inCache[inCacheMap[id]] = null;
+            }
+          }
+
+          // filter in-cache items if any removes
+          if (inCacheRemoves)
+          {
+            if (inCacheRemoves < inCache.length)
+            {
+              // filter in-cache items
+              inCache = inCache.filter(Boolean);
+            }
+            else
+            {
+              // all items removed, drop array
+              inCache = null;
+            }
+
+            cache[inCacheMode] = inCache;
+          }
+
+          if (!newInCacheItems.length)
+          {
+            // reset empty array
+            newInCacheItems = null;
+
+            // if in-cache is empty - terminate event
+            if (!inCache)
+              eventCache[datasetId] = null;
+          }
+          else
+          {
+            // save new in-cache items
+            cache[mode] = newInCacheItems;
+
+            if (inCache)
+              cache.mixed = true;
+          }
         }
+        else
+          array.push.apply(array, inserted || deleted);
+
+        return;
       }
 
-      eventCache[datasetId] = delta;
-      delta.dataset = dataset;
+      eventCache[datasetId] = {
+        inserted: inserted,
+        deleted: deleted,
+        dataset: dataset,
+        mixed: false
+      };
     }
 
     function urgentFlush(){
@@ -2372,7 +2487,7 @@
 
     KeyObjectMap: KeyObjectMap,
 
-    AbstractDataset: AbstractDataset,
+    ReadOnlyDataset: ReadOnlyDataset,
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
     DatasetAdapter: DatasetAdapter,

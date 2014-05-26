@@ -119,13 +119,10 @@
 
   function getViewportRect(element){
     var point = getTopLeftPoint(element);
-    var top = point.top;
-    var left = point.left;
+    var top = point.top + element.clientTop;
+    var left = point.left + element.clientLeft;
     var width = element.clientWidth;
     var height = element.clientHeight;
-
-    top += element.clientTop + (global.pageYOffset || documentElement.scrollTop);
-    left += element.clientLeft + (global.pageXOffset || documentElement.scrollLeft);
 
     return {
       top: top,

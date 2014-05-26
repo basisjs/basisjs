@@ -438,7 +438,7 @@
         key = this.keyGetter(child);
         if (key in delta)
         {
-	  if (basis.fn.$isNotNull(delta[key]))
+          if (delta[key] != null)
             child.values[seria.basisObjectId] = delta[key];
           else
             delete child.values[seria.basisObjectId];
@@ -662,8 +662,11 @@
         var tw;
         for (var i = 0; i < keysCount; i++)
         {
-          keyLabels[i] = keys[i];
-          tw = context.measureText(keyLabels[i]).width;
+          tw = context.measureText(keys[i]).width;
+          keyLabels[i] = {
+            text: keys[i],
+            width: tw
+          };
 
           if (tw > maxKeyTextWidth)
             maxKeyTextWidth = tw;
@@ -677,8 +680,8 @@
       var lastXLabelWidth = 0;
       if (this.showXLabels)
       {
-        firstXLabelWidth = context.measureText(xLabels[0]).width + 12; // 12 = padding + border
-        lastXLabelWidth = context.measureText(xLabels[(this.invertAxis ? partCount : keysCount) - 1]).width + 12;
+        firstXLabelWidth = xLabels[0].width + 12; // 12 = padding + border
+        lastXLabelWidth = xLabels[(this.invertAxis ? partCount : keysCount) - 1].width + 12;
       }
 
       var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxKeyTextWidth;
@@ -772,7 +775,7 @@
           {
             context.translate(x, HEIGHT - BOTTOM + 15);
             context.rotate(-angle);
-            context.fillText(xLabels[i], 0, 0);
+            context.fillText(xLabels[i].text, 0, 0);
           }
           context.restore();
 
@@ -1330,7 +1333,7 @@
       context.closePath();
 
       context.fillStyle = 'black';
-      context.fillText(keyText, xPosition + .5, TOP + HEIGHT + 5);
+      context.fillText(keyText, xPosition + .5, HEIGHT + keyTextHeight + 4 + .5);
 
       var labels = [];
 

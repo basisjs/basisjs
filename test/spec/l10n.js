@@ -11,66 +11,66 @@ module.exports = {
       name: 'fallback',
       test: function(){
         var res = JSON.parse(basis.require('./l10n.l10n').resource.get(true));
-        var dict = basis.l10n.dictionary('l10n.l10n');
+        var dict = basis.l10n.dictionary('./l10n.l10n');
         basis.l10n.setCulture('en-US');
-        this.is('base', dict.token('value').value);
+        assert(dict.token('value').value === 'base');
 
         basis.l10n.setCultureList('en-US a/b b/c c');
 
         basis.l10n.setCulture('c');
-        this.is('base', dict.token('value').value);
+        assert(dict.token('value').value === 'base');
         basis.l10n.setCulture('b');
-        this.is('base', dict.token('value').value);
+        assert(dict.token('value').value === 'base');
         basis.l10n.setCulture('a');
-        this.is('base', dict.token('value').value);
+        assert(dict.token('value').value === 'base');
 
         res.c = { value: 'c' };
         dict.resource.update(JSON.stringify(res));
         basis.l10n.setCulture('c');
-        this.is('c', dict.token('value').value);
+        assert(dict.token('value').value === 'c');
 
         basis.l10n.setCulture('b');
-        this.is('c', dict.token('value').value);
+        assert(dict.token('value').value === 'c');
         basis.l10n.setCulture('a');
-        this.is('c', dict.token('value').value);
+        assert(dict.token('value').value === 'c');
 
         res.b = { value: 'b' };
         dict.resource.update(JSON.stringify(res));
-        this.is('b', dict.token('value').value);
+        assert(dict.token('value').value === 'b');
         basis.l10n.setCulture('b');
-        this.is('b', dict.token('value').value);
+        assert(dict.token('value').value === 'b');
         basis.l10n.setCulture('c');
-        this.is('c', dict.token('value').value);
+        assert(dict.token('value').value === 'c');
 
         res.a = { value: 'a' };
         dict.resource.update(JSON.stringify(res));
         basis.l10n.setCulture('a');
-        this.is('a', dict.token('value').value);
+        assert(dict.token('value').value === 'a');
         basis.l10n.setCulture('b');
-        this.is('b', dict.token('value').value);
+        assert(dict.token('value').value === 'b');
         basis.l10n.setCulture('c');
-        this.is('c', dict.token('value').value);
+        assert(dict.token('value').value === 'c');
       }
     },
     {
       name: 'dictionary',
       test: function(){
-        this.is(true, basis.l10n.dictionary('l10n.l10n') === basis.l10n.dictionary('l10n.l10n'));
-        this.is(true, basis.l10n.dictionary(basis.resource('./l10n.l10n')) === basis.l10n.dictionary('l10n.l10n'));
+        assert(basis.l10n.dictionary('./l10n.l10n') === basis.l10n.dictionary('./l10n.l10n'));
+        assert(basis.l10n.dictionary(basis.resource('./l10n.l10n')) === basis.l10n.dictionary('./l10n.l10n'));
 
         var staticdata = { 'ru-RU': { test: 'Test' } };
         var dict = basis.l10n.dictionary(staticdata);
-        this.is(true, dict instanceof basis.l10n.Dictionary);
-        this.is(true, basis.l10n.dictionary(staticdata) !== basis.l10n.dictionary(staticdata));
+        assert(dict instanceof basis.l10n.Dictionary);
+        assert(basis.l10n.dictionary(staticdata) !== basis.l10n.dictionary(staticdata));
 
         //
         basis.l10n.setCultureList('en-US ru-RU');
 
         basis.l10n.setCulture('en-US');
-        this.is(true, dict.token('test').value === undefined);
+        assert(dict.token('test').value === undefined);
 
         basis.l10n.setCulture('ru-RU');
-        this.is('Test', dict.token('test').value);
+        assert(dict.token('test').value === 'Test');
       }
     },
     {
@@ -79,31 +79,31 @@ module.exports = {
         basis.l10n.setCultureList('en-US ru-RU');
 
         basis.l10n.setCulture('en-US');
-        this.is('en-US', basis.l10n.getCulture());
-        this.is('en-US', basis.l10n.culture.value);
-        this.is('en-US', basis.l10n.culture.get());
-        this.is('en-US', basis.l10n.culture().name);
+        assert(basis.l10n.getCulture() === 'en-US');
+        assert(basis.l10n.culture.value === 'en-US');
+        assert(basis.l10n.culture.get() === 'en-US');
+        assert(basis.l10n.culture().name === 'en-US');
 
         basis.l10n.setCulture('ru-RU');
-        this.is('ru-RU', basis.l10n.getCulture());
-        this.is('ru-RU', basis.l10n.culture.value);
-        this.is('ru-RU', basis.l10n.culture.get());
-        this.is('ru-RU', basis.l10n.culture().name);
+        assert(basis.l10n.getCulture() === 'ru-RU');
+        assert(basis.l10n.culture.value === 'ru-RU');
+        assert(basis.l10n.culture.get() === 'ru-RU');
+        assert(basis.l10n.culture().name === 'ru-RU');
 
         basis.l10n.culture.set('en-US');
-        this.is('en-US', basis.l10n.getCulture());
-        this.is('en-US', basis.l10n.culture.value);
-        this.is('en-US', basis.l10n.culture.get());
-        this.is('en-US', basis.l10n.culture().name);
+        assert(basis.l10n.getCulture() === 'en-US');
+        assert(basis.l10n.culture.value === 'en-US');
+        assert(basis.l10n.culture.get() === 'en-US');
+        assert(basis.l10n.culture().name === 'en-US');
 
         // create culture
-        this.is('en-US', (new basis.l10n.Culture('en-US')).name);
-        this.is(true, (new basis.l10n.Culture('en-US')) !== (new basis.l10n.Culture('en-US')));
+        assert((new basis.l10n.Culture('en-US')).name === 'en-US');
+        assert((new basis.l10n.Culture('en-US')) !== (new basis.l10n.Culture('en-US')));
 
         // culture helper
-        this.is(true, basis.l10n.culture('ru-RU') === basis.l10n.culture('ru-RU'));
-        this.is(true, basis.l10n.culture() === basis.l10n.culture(basis.l10n.getCulture()));
-        this.is(true, basis.l10n.culture() instanceof basis.l10n.Culture);
+        assert(basis.l10n.culture('ru-RU') === basis.l10n.culture('ru-RU'));
+        assert(basis.l10n.culture() === basis.l10n.culture(basis.l10n.getCulture()));
+        assert(basis.l10n.culture() instanceof basis.l10n.Culture);
       }
     }
   ]

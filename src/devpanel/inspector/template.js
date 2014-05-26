@@ -128,7 +128,8 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           if (node.data.tmpl)
           {
             var el = node.data.tmpl.element;
-            return el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className.split(' ').join('.') : '');
+            var cls = (typeof el.className == 'string' ? el.className : el.className.baseVal);
+            return el.tagName + (el.id ? '#' + el.id : '') + (cls ? '.' + cls.split(' ').join('.') : '');
           }
         }
       },

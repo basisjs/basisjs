@@ -50,10 +50,7 @@ module.exports = basis.app.create({
         // nested views
         form: resource('./module/form/index.js'),
         list: resource('./module/list/index.js'),
-        stat: resource('./module/stat/index.js'),
-
-        // this is dynamic construction for !Todo.all.itemCount
-        empty: basis.data.index.count(Todo.all).as(basis.bool.invert)
+        stat: resource('./module/stat/index.js')
       }
     });
   }

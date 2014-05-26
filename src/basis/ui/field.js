@@ -610,16 +610,22 @@
     className: namespace + '.Checkbox',
 
     value: false,
+    indeterminate: false,
 
     template: templates.Checkbox,
 
     binding: {
+      indeterminate: 'indeterminate',
       checked: {
         events: 'change',
         getter: function(field){
           return field.value ? 'checked' : '';
         }
       }
+    },
+    event_change: function(event){
+      Field.prototype.event_change.call(this, event);
+      this.syncIndeterminate();
     },
 
     toggle: function(){
@@ -631,6 +637,19 @@
     syncFieldValue_: function(){
       if (this.tmpl && this.tmpl.field)
         this.setValue(!!this.tmpl.field.checked);
+    },
+    syncIndeterminate: function(){
+      // this part looks tricky, but we do that because browser change
+      // indeterminate by it's own logic, and it may differ from know value
+      // that template stored in
+      this.indeterminate = !this.indeterminate;
+      this.updateBind('indeterminate');
+      this.indeterminate = !this.indeterminate;
+      this.updateBind('indeterminate');
+    },
+    setIndeterminate: function(value){
+      this.indeterminate = !!value;
+      this.syncIndeterminate();
     }
   });
 
@@ -1297,7 +1316,7 @@
   //
 
   /** @const */ var REGEXP_EMAIL = /^([a-z0-9а-яА-ЯёЁ\.\-\_]+|[a-z0-9а-яА-ЯёЁ\.\-\_]+\+[a-z0-9а-яА-ЯёЁ\.\-\_]+)\@(([a-z0-9а-яА-ЯёЁ][a-z0-9а-яА-ЯёЁ\-]*\.)+[a-zа-яА-ЯёЁ]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i;
-  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Zа-яА-ЯёЁ0-9][a-zA-Zа-яА-ЯёЁ\d\-_]+\.)+[a-zA-Zа-яА-ЯёЁ]{2,6})(:\d+)?(\/[^\?]*(\?\S(\=\S*))*(\#\S*)?)?$/i;
+  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Zа-яА-ЯёЁ0-9][a-zA-Zа-яА-ЯёЁ\d\-_]+\.)+[a-zA-Zа-яА-ЯёЁ]{2,6})(:\d+)?(\/[^\?]*(\?\S+(\=\S*))*(\#\S*)?)?$/i;
 
  /**
   * @class

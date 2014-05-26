@@ -1053,16 +1053,19 @@
     else
     {
       // browser env
-      var scripts = document.getElementsByTagName('script');
+      var scripts = document.scripts;
       for (var i = 0, scriptEl; scriptEl = scripts[i]; i++)
       {
-        var configAttrNode = scriptEl.getAttributeNode('data-basis-config') || scriptEl.getAttributeNode('basis-config');
-        if (configAttrNode)
+        var configAttrValue = scriptEl.hasAttribute('basis-config')
+          ? scriptEl.getAttribute('basis-config')
+          : scriptEl.getAttribute('data-basis-config');
+
+        if (configAttrValue !== null)
         {
           scriptEl.removeAttribute('basis-config');
           scriptEl.removeAttribute('data-basis-config');
           try {
-            extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
+            extend(config, Function('return{' + configAttrValue + '}')() || {});
           } catch(e) {
             /** @cut */ consoleMethods.error('basis.js config parse fault: ' + e);
           }
@@ -1750,6 +1753,7 @@
   var resources = {};
   var resourceContentCache = {};
   var resourcePatch = {};
+  var virtualResourceSeed = 1;
   /** @cut */ var resourceResolvingStack = [];
   /** @cut */ var requires;
   // var resourceUpdateNotifier = extend(new Token(), {
@@ -1820,142 +1824,169 @@
     return resourceContentCache[url];
   };
 
+  var createResource = function(resourceUrl, content){
+    var contentType = pathUtils.extname(resourceUrl);
+    var contentWrapper = getResource.extensions[contentType];
+    var isVirtual = arguments.length > 1;
+    var resolved = false;
+    var wrapped = false;
+    /** @cut */ var wrappedContent;
+
+    if (isVirtual)
+      resourceUrl += '#virtual';
+
+    var resource = function(){
+      // if resource resolved, just return content
+      if (resolved)
+        return content;
+
+      // fetch url content
+      var urlContent = isVirtual ? content : getResourceContent(resourceUrl);
+
+      /** @cut    recursion warning */
+      /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
+      /** @cut */ if (idx != -1)
+      /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+      /** @cut */ resourceResolvingStack.push(resourceUrl);
+
+      // if resource type has wrapper - wrap it, or use url content as result
+      if (contentWrapper)
+      {
+        if (!wrapped)
+        {
+          wrapped = true;
+          content = contentWrapper(urlContent, resourceUrl);
+          /** @cut */ wrappedContent = urlContent;
+        }
+      }
+      else
+      {
+        content = urlContent;
+      }
+
+      // mark as resolved and apply binded functions
+      resolved = true;
+      applyResourcePatches(resource);
+      resource.apply();
+
+      // resourceUpdateNotifier.value = resourceUrl;
+      // resourceUpdateNotifier.apply();
+
+      /** @cut    recursion warning */
+      /** @cut */ resourceResolvingStack.pop();
+
+      return content;
+    };
+
+    extend(resource, extend(new Token(), {
+      url: resourceUrl,
+      type: contentType,
+      virtual: isVirtual,
+
+      fetch: function(){
+        return resource();
+      },
+      toString: function(){
+        return '[basis.resource ' + resourceUrl + ']';
+      },
+      isResolved: function(){
+        return resolved;
+      },
+      /** @cut */ hasChanges: function(){
+      /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
+      /** @cut */ },
+      update: function(newContent){
+        newContent = String(newContent);
+
+        if (!resolved || isVirtual || newContent != resourceContentCache[resourceUrl])
+        {
+          if (!isVirtual)
+            resourceContentCache[resourceUrl] = newContent;
+
+          if (contentWrapper)
+          {
+            if (!wrapped && isVirtual)
+              content = newContent;
+
+            // wrap content only if it wrapped already and non-updatable
+            if (wrapped && !contentWrapper.permanent)
+            {
+              content = contentWrapper(newContent, resourceUrl, content);
+              applyResourcePatches(resource);
+              resource.apply();
+            }
+          }
+          else
+          {
+            content = newContent;
+            resolved = true;
+            applyResourcePatches(resource);
+            resource.apply();
+          }
+
+          // resourceUpdateNotifier.value = resourceUrl;
+          // resourceUpdateNotifier.apply();
+        }
+      },
+      reload: function(){
+        if (isVirtual)
+          return;
+
+        var oldContent = resourceContentCache[resourceUrl];
+        var newContent = getResourceContent(resourceUrl, true);
+
+        if (newContent != oldContent)
+        {
+          resolved = false;
+          resource.update(newContent);
+        }
+      },
+      get: function(source){
+        if (isVirtual)
+          if (source)
+            return contentWrapper ? wrappedContent : content;
+
+        return source ? getResourceContent(resourceUrl) : resource();
+      },
+      ready: function(fn, context){
+        if (resolved)
+        {
+          fn.call(context, resource());
+
+          if (contentWrapper && contentWrapper.permanent)
+            return;
+        }
+
+        resource.attach(fn, context);
+
+        return resource;
+      }
+    }));
+
+    // cache it
+    resources[resourceUrl] = resource;
+
+    return resource;
+  };
+
  /**
   * @name resource
   */
   var getResource = function(resourceUrl){
+    var resource = resources[resourceUrl];
+
+    if (resource)
+      return resource;
+
     /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
     /** @cut */   consoleMethods.warn('Bad usage: basis.resource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
+    // try resolve resource path
     resourceUrl = pathUtils.resolve(resourceUrl);
+    resource = resources[resourceUrl];
 
-    if (!resources[resourceUrl])
-    {
-      var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
-      var resolved = false;
-      var wrapped = false;
-      var content;
-      /** @cut */ var wrappedContent;
-
-      var resource = function(){
-        // if resource resolved, just return content
-        if (resolved)
-          return content;
-
-        // fetch url content
-        var urlContent = getResourceContent(resourceUrl);
-
-        /** @cut    recursion warning */
-        /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
-        /** @cut */ if (idx != -1)
-        /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
-        /** @cut */ resourceResolvingStack.push(resourceUrl);
-
-        // if resource type has wrapper - wrap it, or use url content as result
-        if (contentWrapper)
-        {
-          if (!wrapped)
-          {
-            wrapped = true;
-            content = contentWrapper(urlContent, resourceUrl);
-            /** @cut */ wrappedContent = urlContent;
-          }
-        }
-        else
-        {
-          content = urlContent;
-        }
-
-        // mark as resolved and apply binded functions
-        resolved = true;
-        applyResourcePatches(resource);
-        resource.apply();
-
-        // resourceUpdateNotifier.value = resourceUrl;
-        // resourceUpdateNotifier.apply();
-
-        /** @cut    recursion warning */
-        /** @cut */ resourceResolvingStack.pop();
-
-        return content;
-      };
-
-      extend(resource, extend(new Token(), {
-        url: resourceUrl,
-        fetch: function(){
-          return resource();
-        },
-        toString: function(){
-          return '[basis.resource ' + resourceUrl + ']';
-        },
-        isResolved: function(){
-          return resolved;
-        },
-        /** @cut */ hasChanges: function(){
-        /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
-        /** @cut */ },
-        update: function(newContent){
-          newContent = String(newContent);
-
-          if (!resolved || newContent != resourceContentCache[resourceUrl])
-          {
-            resourceContentCache[resourceUrl] = newContent;
-
-            if (contentWrapper)
-            {
-              // wrap content only if it wrapped already and non-updatable
-              if (wrapped && !contentWrapper.permanent)
-              {
-                content = contentWrapper(newContent, resourceUrl);
-                applyResourcePatches(resource);
-                resource.apply();
-              }
-            }
-            else
-            {
-              content = newContent;
-              resolved = true;
-              applyResourcePatches(resource);
-              resource.apply();
-            }
-
-            // resourceUpdateNotifier.value = resourceUrl;
-            // resourceUpdateNotifier.apply();
-          }
-        },
-        reload: function(){
-          var oldContent = resourceContentCache[resourceUrl];
-          var newContent = getResourceContent(resourceUrl, true);
-
-          if (newContent != oldContent)
-          {
-            resolved = false;
-            resource.update(newContent);
-          }
-        },
-        get: function(source){
-          return source ? getResourceContent(resourceUrl) : resource();
-        },
-        ready: function(fn, context){
-          if (resolved)
-          {
-            fn.call(context, resource());
-
-            if (contentWrapper && contentWrapper.permanent)
-              return;
-          }
-
-          resource.attach(fn, context);
-
-          return resource;
-        }
-      }));
-
-      // cache result
-      resources[resourceUrl] = resource;
-    }
-
-    return resources[resourceUrl];
+    // return resource or create it
+    return resource || createResource(resourceUrl);
   };
 
   extend(getResource, {
@@ -1989,6 +2020,13 @@
     },
     getFiles: function(cache){
       return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
+    },
+
+    virtual: function(type, content){
+      return createResource(
+        pathUtils.normalize((pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/virtualResource' + (virtualResourceSeed++) + '.' + type),
+        content
+      );
     },
 
     extensions: {
@@ -2050,15 +2088,13 @@
         permanent: true
       }),
 
-      '.css': function(content, url){
-        var resource = CssResource.resources[url];
+      '.css': function(content, url, cssResource){
+        if (!cssResource)
+          cssResource = new CssResource(url);
 
-        if (!resource)
-          resource = new CssResource(url);
-        else
-          resource.updateCssText(content);
+        cssResource.updateCssText(content);
 
-        return resource;
+        return cssResource;
       },
 
       '.json': function(content, url){
@@ -3165,9 +3201,6 @@
   //
 
   var CssResource = (function(){
-    var cssResources = {};
-    var cleanupDom = true; // is require remove style node on CssResource destroy or not
-
     // Test for appendChild bugs (old IE browsers has a problem with append textNode into <style>)
     var STYLE_APPEND_BUGGY = (function(){
       try {
@@ -3178,18 +3211,6 @@
         return true;
       }
     })();
-
-    // cleanup on page unload
-    cleaner.add({
-      destroy: function(){
-        cleanupDom = false; // don't need remove unused style on global destroy
-
-        for (var url in cssResources)
-          cssResources[url].destroy();
-
-        cssResources = null;
-      }
-    });
 
 
    /**
@@ -3228,9 +3249,9 @@
         this.element = document.createElement('style');
 
         if (!STYLE_APPEND_BUGGY)
-          this.textNode = this.element.appendChild(document.createTextNode(''));
+          this.element.appendChild(document.createTextNode(''));
 
-        /** @cut */ this.element.setAttribute('src', pathUtils.relative(this.url));
+        /** @cut */ this.element.setAttribute('src', this.url);
       }
 
       // add element to document
@@ -3247,30 +3268,27 @@
    /**
     * @class
     */
-    var CssResource = Class(null, {
+    return Class(null, {
       className: 'basis.CssResource',
 
       inUse: 0,
 
       url: '',
       baseURI: '',
-      cssText: '',
+      cssText: undefined,
 
-      resource: null,
       element: null,
-      textNode: null,
 
       init: function(url){
-        this.url = pathUtils.resolve(url);
+        this.url = url;
         this.baseURI = pathUtils.dirname(url) + '/';
-
-        cssResources[url] = this;
       },
 
       updateCssText: function(cssText){
         if (this.cssText != cssText)
         {
           this.cssText = cssText;
+
           if (this.inUse && this.element)
           {
             setBase(this.baseURI);
@@ -3280,32 +3298,24 @@
         }
       },
 
-      syncCssText: function(){
-        if (this.textNode)
-        {
-          // W3C browsers
-          this.textNode.nodeValue = this.cssText;
-        }
-        else
-        {
-          // old IE
-          this.element.styleSheet.cssText = this.cssText;
-        }
-      },
+      syncCssText: STYLE_APPEND_BUGGY
+        // old IE
+        ? function(){
+            this.element.styleSheet.cssText = this.cssText;
+          }
+        // W3C browsers
+        : function(){
+            var cssText = this.cssText;
+
+            /** @cut add source url for debug */
+            /** @cut */ cssText += '\n/*# sourceURL=' + pathUtils.origin + this.url + ' */';
+
+            this.element.firstChild.nodeValue = cssText;
+          },
 
       startUse: function(){
         if (!this.inUse)
-        {
-          if (!this.resource)
-          {
-            var resource = getResource(this.url);
-
-            this.resource = resource;
-            this.cssText = resource.get(true);
-          }
-
           documentInterface.head.ready(injectStyleToHead, this);
-        }
 
         this.inUse += 1;
       },
@@ -3323,19 +3333,13 @@
       },
 
       destroy: function(){
-        if (this.element && cleanupDom)
+        if (this.element)
           documentInterface.remove(this.element);
 
         this.element = null;
-        this.textNode = null;
-        this.resource = null;
         this.cssText = null;
       }
     });
-
-    CssResource.resources = cssResources;
-
-    return CssResource;
   })();
 
 

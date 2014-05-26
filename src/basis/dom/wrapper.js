@@ -40,7 +40,7 @@
 
   var AbstractData = basis.data.AbstractData;
   var DataObject = basis.data.Object;
-  var AbstractDataset = basis.data.AbstractDataset;
+  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
   var Dataset = basis.data.Dataset;
   var DatasetWrapper = basis.data.DatasetWrapper;
 
@@ -596,12 +596,12 @@
 
    /**
     * Object that's manage childNodes updates.
-    * @type {basis.data.AbstractDataset}
+    * @type {basis.data.ReadOnlyDataset}
     */
     dataSource: null,
 
    /**
-    * @param {basis.data.AbstractDataset} oldDataSource
+    * @param {basis.data.ReadOnlyDataset} oldDataSource
     */
     emit_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
 
@@ -914,7 +914,7 @@
     },
 
    /**
-    * @param {basis.data.AbstractDataset=} dataSource
+    * @param {basis.data.ReadOnlyDataset=} dataSource
     */
     setDataSource: function(dataSource){
     },
@@ -2447,7 +2447,7 @@
       // add selection object, if selection is not null
       if (this.selection)
       {
-        if (this.selection instanceof AbstractDataset == false)
+        if (this.selection instanceof ReadOnlyDataset == false)
           this.selection = new Selection(this.selection);
         if (this.listen.selection)
           this.selection.addHandler(this.listen.selection, this);
@@ -2986,7 +2986,7 @@
   * use basis.dom.wrapper.AbstractNode#getChildNodesDataset method instead.
   * @class
   */
-  var ChildNodesDataset = Class(AbstractDataset, {
+  var ChildNodesDataset = Class(ReadOnlyDataset, {
     className: namespace + '.ChildNodesDataset',
 
    /**
@@ -2998,7 +2998,7 @@
     * @constructor
     */
     init: function(){
-      AbstractDataset.prototype.init.call(this);
+      ReadOnlyDataset.prototype.init.call(this);
 
       var sourceNode = this.sourceNode;
 
@@ -3023,7 +3023,7 @@
       delete childNodesDatasetMap[this.sourceNode.basisObjectId];
 
       // inherit
-      AbstractDataset.prototype.destroy.call(this);
+      ReadOnlyDataset.prototype.destroy.call(this);
     }
   });
 
@@ -3137,5 +3137,5 @@
     // datasets
     ChildNodesDataset: ChildNodesDataset,
     Selection: Selection,
-    nullSelection: new AbstractDataset
+    nullSelection: new ReadOnlyDataset
   };

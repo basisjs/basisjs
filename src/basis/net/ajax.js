@@ -215,6 +215,7 @@
     requestStartTime: 0,
     timeout: 30000, // 30 sec
     timer_: null,
+    lastRequestUrl_: null,
 
     debug: false,
 
@@ -246,7 +247,7 @@
 
       if (!xhr.responseType)
         if (this.responseType == 'json' || /^application\/json/i.test(this.data.contentType))
-          return safeJsonParse(xhr.responseText, this.requestData.url);
+          return safeJsonParse(xhr.responseText, this.lastRequestUrl_);
 
       if ('response' in xhr)
         return xhr.response;
@@ -345,6 +346,7 @@
 
       // open XMLHttpRequest
       xhr.open(requestData.method, requestData.requestUrl, requestData.asynchronous);
+      this.lastRequestUrl_ = requestData.requestUrl;
 
       // set response type
       setResponseType(xhr, requestData);

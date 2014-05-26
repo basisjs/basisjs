@@ -258,7 +258,7 @@
           this.stepUp();
 
         // prevent page scrolling
-        event.cancelDefault();
+        event.preventDefault();
       }
     },
 

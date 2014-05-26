@@ -32,6 +32,23 @@ module.exports = {
       obj.history_ = [];
       obj.historyAll_ = [];
     }
+
+    function catchWarnings(fn){
+      var warn = basis.dev.warn;
+      var warnings = [];
+
+      try {
+        basis.dev.warn = function(message){
+          warnings.push(message);
+        };
+
+        fn();
+      } finally {
+        basis.dev.warn = warn;
+      }
+
+      return warnings.length ? warnings : false;
+    }
   },
 
   test: [
@@ -49,7 +66,7 @@ module.exports = {
             });
 
             this.is(true, EntityType.all !== null);
-            this.is(true, EntityType.all instanceof nsData.AbstractDataset);
+            this.is(true, EntityType.all instanceof nsData.ReadOnlyDataset);
 
             var entityA = EntityType();
             this.is(undefined, entityA);
@@ -81,7 +98,7 @@ module.exports = {
             });
 
             this.is(true, EntityType.all !== null);
-            this.is(true, EntityType.all instanceof nsData.AbstractDataset);
+            this.is(true, EntityType.all instanceof nsData.ReadOnlyDataset);
 
             var entityA = EntityType();
             this.is(undefined, entityA);
@@ -232,7 +249,7 @@ module.exports = {
               },
               calcWithDefault: {
                 defValue: 777,
-                calc: basis.entity.calc('a', function(a){ return a * 5 })
+                calc: basis.entity.calc('a', function(a){ return a * 5; })
               }
             });
 
@@ -1034,7 +1051,7 @@ module.exports = {
             this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
             this.is({ value: '1', self: false }, entity.modified);
             this.is({ id: 2, value: '2', self: true }, entity.data);
-            this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+            this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate'; }).length);
 
             entity.setState(nsData.STATE.UNDEFINED);
 
@@ -1044,7 +1061,7 @@ module.exports = {
             this.is({ value: '2', self: true }, entity.history_[1]);
             this.is(null, entity.modified);
             this.is({ id: 2, value: '1', self: false }, entity.data);
-            this.is(2, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+            this.is(2, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate'; }).length);
           }
         },
         {
@@ -1513,6 +1530,51 @@ module.exports = {
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      name: 'destroy',
+      test: [
+        {
+          name: 'no warnings about handler remove on destroy',
+          test: function(){
+            var Type = basis.entity.createType();
+            var subset = new basis.data.dataset.Filter({ source: Type.all });
+            var instance = Type({});
+
+            assert(subset.itemCount == 1);
+            assert(catchWarnings(function(){
+              instance.destroy();
+            }) == false);
+
+            assert(subset.itemCount == 0);
+          }
+        },
+        {
+          name: 'no warnings on all.sync([])',
+          test: function(){
+            var Type = basis.entity.createType();
+            var subset = new basis.data.dataset.Filter({ source: Type.all });
+            var eventCount = 0;
+
+            Type({});
+            Type({});
+
+            subset.addHandler({
+              itemsChanged: function(){
+                eventCount++;
+              }
+            });
+
+            assert(subset.itemCount == 2);
+            assert(catchWarnings(function(){
+              Type.all.sync([]);
+            }) == false);
+
+            assert(subset.itemCount == 0);
+            assert(eventCount == 1);
+          }
         }
       ]
     }
