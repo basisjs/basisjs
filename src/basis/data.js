@@ -2283,7 +2283,11 @@
       var eventCacheCopy = eventCache;
       eventCache = {};
       for (var datasetId in eventCacheCopy)
-        flushCache(eventCacheCopy[datasetId]);
+      {
+        var entry = eventCacheCopy[datasetId];
+        if (entry)
+          flushCache(entry);
+      }
     }
 
     function storeDatasetDelta(delta){
@@ -2297,7 +2301,7 @@
       {
         if (cache)
         {
-          delete eventCache[datasetId];
+          eventCache[datasetId] = null;
           flushCache(cache);
         }
 
@@ -2311,30 +2315,66 @@
         var array = cache[mode];
         if (!array)
         {
-          var from = inserted ? cache.deleted : cache.inserted;
-          var fromMap = {};
-          var opositeSource = inserted || deleted;
-          var oposite = [];
+          var inCacheMode = inserted ? 'deleted' : 'inserted';
+          var inCache = cache[inCacheMode];
+          var inCacheMap = {};
+          var deltaItems = inserted || deleted;
+          var newInCacheItems = [];
+          var inCacheRemoves = 0;
 
-          for (var i = 0; i < from.length; i++)
-            fromMap[from[i].basisObjectId] = from[i];
+          // build map of in-cache items
+          for (var i = 0; i < inCache.length; i++)
+            inCacheMap[inCache[i].basisObjectId] = i;
 
-          for (var i = 0; i < opositeSource.length; i++)
+          // build new oposite items array
+          for (var i = 0; i < deltaItems.length; i++)
           {
-            var id = opositeSource[i].basisObjectId;
-            if (id in fromMap == false)
-              oposite.push(opositeSource[i]);
+            var id = deltaItems[i].basisObjectId;
+            if (id in inCacheMap == false)
+            {
+              newInCacheItems.push(deltaItems[i]);
+            }
             else
-              fromMap[id] = null;
+            {
+              inCacheRemoves++;
+              inCache[inCacheMap[id]] = null;
+            }
           }
 
-          for (var i = 0, k = 0; i < from.length; i++)
-            if (fromMap[from[i].basisObjectId])
-              from[k++] = from[i];
-          from.length = 0;
+          // filter in-cache items if any removes
+          if (inCacheRemoves)
+          {
+            if (inCacheRemoves < inCache.length)
+            {
+              // filter in-cache items
+              inCache = inCache.filter(Boolean);
+            }
+            else
+            {
+              // all items removed, drop array
+              inCache = null;
+            }
 
-          cache[mode] = oposite;
-          cache.mixed = true;
+            cache[inCacheMode] = inCache;
+          }
+
+          if (!newInCacheItems.length)
+          {
+            // reset empty array
+            newInCacheItems = null;
+
+            // if in-cache is empty - terminate event
+            if (!inCache)
+              eventCache[datasetId] = null;
+          }
+          else
+          {
+            // save new in-cache items
+            cache[mode] = newInCacheItems;
+
+            if (inCache)
+              cache.mixed = true;
+          }
         }
         else
           array.push.apply(array, inserted || deleted);
