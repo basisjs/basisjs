@@ -368,13 +368,14 @@ module.exports = {
             assert(dataset2.itemCount == 2);
             assert(extract.source === dataset2);
             assert(extract.itemCount == 3);
-            assert(eventCount(extract, 'itemsChanged') == 2);
+            assert(checkValues(extract, [1, 2, 3]) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
 
             dataset2.remove(items[1]);
             dataset2.remove(items[2]);
             assert(dataset2.itemCount == 0);
             assert(extract.itemCount == 0);
-            assert(eventCount(extract, 'itemsChanged') == 3);
+            assert(eventCount(extract, 'itemsChanged') == 2);
           }
         }
       ]
