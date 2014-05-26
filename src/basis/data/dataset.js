@@ -46,6 +46,7 @@
   var ReadOnlyDataset = basis.data.ReadOnlyDataset;
   var Dataset = basis.data.Dataset;
   var DatasetWrapper = basis.data.DatasetWrapper;
+  var setAccumulateState = Dataset.setAccumulateState;
 
 
   //
@@ -941,6 +942,7 @@
         if (listenHandler)
         {
           var itemsChangedHandler = listenHandler.itemsChanged;
+          setAccumulateState(true);
 
           if (oldSource)
           {
@@ -961,6 +963,7 @@
                 inserted: source.getItems()
               });
           }
+          setAccumulateState(false);
         }
 
         this.emit_sourceChanged(oldSource);
@@ -1068,7 +1071,7 @@
       var member;
       var updateHandler = this.ruleEvents;
 
-      Dataset.setAccumulateState(true);
+      setAccumulateState(true);
 
       if (delta.inserted)
       {
@@ -1133,7 +1136,7 @@
         }
       }
 
-      Dataset.setAccumulateState(false);
+      setAccumulateState(false);
 
       if (delta = getDelta(inserted, deleted))
         this.emit_itemsChanged(delta);
@@ -1859,7 +1862,7 @@
       var inserted = [];
       var deleted = [];
 
-      Dataset.setAccumulateState(true);
+      setAccumulateState(true);
 
       if (array = delta.inserted)
         for (var i = 0, sourceObject; sourceObject = array[i]; i++)
@@ -1923,7 +1926,7 @@
             sourceObject.removeHandler(updateHandler, this);
         }
 
-      Dataset.setAccumulateState(false);
+      setAccumulateState(false);
 
       if (delta = getDelta(inserted, deleted))
         this.emit_itemsChanged(delta);

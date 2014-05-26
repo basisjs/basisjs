@@ -2294,7 +2294,11 @@
       var eventCacheCopy = eventCache;
       eventCache = {};
       for (var datasetId in eventCacheCopy)
-        flushCache(eventCacheCopy[datasetId]);
+      {
+        var entry = eventCacheCopy[datasetId];
+        if (entry)
+          flushCache(entry);
+      }
     }
 
     function storeDatasetDelta(delta){
@@ -2304,32 +2308,97 @@
       var deleted = delta.deleted;
       var cache = eventCache[datasetId];
 
-      if (inserted && deleted)
+      if ((inserted && deleted) || (cache && cache.mixed))
       {
         if (cache)
         {
-          delete eventCache[datasetId];
+          eventCache[datasetId] = null;
           flushCache(cache);
         }
+
         realEvent.call(dataset, delta);
         return;
       }
 
-      var mode = inserted ? 'inserted' : 'deleted';
       if (cache)
       {
+        var mode = inserted ? 'inserted' : 'deleted';
         var array = cache[mode];
         if (!array)
-          flushCache(cache);
-        else
         {
-          array.push.apply(array, inserted || deleted);
-          return;
+          var inCacheMode = inserted ? 'deleted' : 'inserted';
+          var inCache = cache[inCacheMode];
+          var inCacheMap = {};
+          var deltaItems = inserted || deleted;
+          var newInCacheItems = [];
+          var inCacheRemoves = 0;
+
+          // build map of in-cache items
+          for (var i = 0; i < inCache.length; i++)
+            inCacheMap[inCache[i].basisObjectId] = i;
+
+          // build new oposite items array
+          for (var i = 0; i < deltaItems.length; i++)
+          {
+            var id = deltaItems[i].basisObjectId;
+            if (id in inCacheMap == false)
+            {
+              newInCacheItems.push(deltaItems[i]);
+            }
+            else
+            {
+              inCacheRemoves++;
+              inCache[inCacheMap[id]] = null;
+            }
+          }
+
+          // filter in-cache items if any removes
+          if (inCacheRemoves)
+          {
+            if (inCacheRemoves < inCache.length)
+            {
+              // filter in-cache items
+              inCache = inCache.filter(Boolean);
+            }
+            else
+            {
+              // all items removed, drop array
+              inCache = null;
+            }
+
+            cache[inCacheMode] = inCache;
+          }
+
+          if (!newInCacheItems.length)
+          {
+            // reset empty array
+            newInCacheItems = null;
+
+            // if in-cache is empty - terminate event
+            if (!inCache)
+              eventCache[datasetId] = null;
+          }
+          else
+          {
+            // save new in-cache items
+            cache[mode] = newInCacheItems;
+
+            if (inCache)
+              cache.mixed = true;
+          }
         }
+        else
+          array.push.apply(array, inserted || deleted);
+
+        return;
       }
 
-      eventCache[datasetId] = delta;
-      delta.dataset = dataset;
+      eventCache[datasetId] = {
+        inserted: inserted,
+        deleted: deleted,
+        dataset: dataset,
+        mixed: false
+      };
     }
 
     function urgentFlush(){
