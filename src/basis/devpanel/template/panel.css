@@ -8,9 +8,10 @@
 
   opacity: 0.5;
   background: #999;
-  border: 1px solid #666;
   border-radius: 5px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.75);
+  box-shadow:
+    0 0 7px 1px rgba(0, 0, 0, 0),
+    0 0 0px 1px rgba(255, 255, 255, .75);
   
   font-family: Arial;
   font-size: 12px;
@@ -29,14 +30,13 @@
 {
   opacity: 1;
   box-shadow:
-    0 0 7px 0 rgba(0, 0, 0, .3),
-    0 0 0px 1px rgba(255, 255, 255, 0.5) inset;
+    0 0 7px 1px rgba(0, 0, 0, .3),
+    0 0 0px 1px rgba(255, 255, 255, 1);
 }
 
 .Basis-DevPanel_isOnline
 {
   background: #4B77CC;
-  border-color: #4B77CC;
 }
 
 .devpanel-inspectMode .Basis-DevPanel
@@ -53,11 +53,10 @@
 .Basis-DevPanel-Button
 {
   border-left: 1px solid rgba(255, 255, 255, .4);
-  border-right: 1px solid rgba(255, 255, 255, .4);
-  margin-left: -1px;
   display: inline-block;
-  padding: 5px 10px 4px;
-  background:  no-repeat center center;
+  padding: 5px 8px;
+  min-width: 10px;
+  background: no-repeat center center;
 }
 .Basis-DevPanel-Button:hover
 {
@@ -66,6 +65,7 @@
 .Basis-DevPanel-Button:last-child
 {
   border-right: none;
+  border-radius: 0 4px 4px 0;
 }
 
 .Basis-DevPanel-Button.template
@@ -84,10 +84,12 @@
 .Basis-DevPanel-DragTrigger
 {
   display: inline-block;
-  width: 11px;
+  position: relative;
+  top: 0px;
+  width: 12px;
   height: 100%;
   cursor: move;
-  background: url(img/drag.png) no-repeat 2px center;
+  background: url(img/drag.png) no-repeat center;
 }
 
 @media print {

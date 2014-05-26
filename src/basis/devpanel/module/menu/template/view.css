@@ -3,13 +3,12 @@
   display: none;
 
   position: absolute;
-  left: 23px;
-  padding: 1px;
-  background: #E8E8E8;
+  left: 27px;
+  background: #F0F0F0;
   color: #444;
   text-align: left;
-  margin-top: 2px;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, .25), 0 0 1px 1px rgba(255, 255, 255, 1) inset;
+  margin-top: 3px;
+  box-shadow: 1px 1px 7px 1px rgba(0, 0, 0, .3);
   z-index: 1;
 }
 

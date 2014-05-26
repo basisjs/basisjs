@@ -1,3 +1,11 @@
+## 1.2.4 (May 26, 2014)
+
+- FIX: `basis.ui.slider` exception on value changes via `mousewheel`
+- FIX: `basis.entity` warnings on entity destroy and `all.sync([])`
+- FIX: `basis.ui.chart` wrong key label vertical text offset when no `y` axis labels shown
+- add `sourceURL` to css resource content (`Chrome DevTools` shows source files now)
+- tweak `basis.devpanel` styles
+
 ## 1.2.3 (April 24, 2014)
 
 - FIX: one more fix for `basis.utils.info.fn` function parsing 
