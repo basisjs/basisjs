@@ -1734,11 +1734,11 @@
       addTokenRef(result.tokens[0], 'element');
       normalizeRefs(result.tokens, result.dictURI);
 
+      // deal with defines
+      result.unpredictable = !!applyDefines(result.tokens, result, options);
+
       if (includeStack.length == 0)
       {
-        // deal with defines
-        result.unpredictable = !!applyDefines(result.tokens, result, options);
-
         if (result.isolate)
         {
           isolateTokens(result.tokens, result.isolate);
