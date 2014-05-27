@@ -10,6 +10,19 @@ if (!inspectBasis)
   return;
 }
 
+// much strict template isolation, to prevent style mix with inspecting basis app styles,
+// as isolation prefixes based on template id in dev mode
+basis.patch('basis.template', function(exports){
+  exports.Template.extend({
+    isolatePrefix_: false,
+    getIsolatePrefix: function(){
+      if (!this.isolatePrefix_)
+        this.isolatePrefix_ = basis.genUID() + '__';
+      return this.isolatePrefix_;
+    }
+  });
+});
+
 // everything ok, init interface
 basis.nextTick(function(){
   basis.ready(function(){

@@ -29,7 +29,6 @@
   var tmplFilesMap = {};
 
   var DECLARATION_VERSION = 2;
-  var BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   // token types
   /** @const */ var TYPE_ELEMENT = 1;
@@ -463,21 +462,7 @@
   }
 
   function genIsolateMarker(){
-    function base62(n){
-      var result = '';
-      do
-      {
-        result += BASE62.charAt(n % 62);
-        n = parseInt(n / 62, 10);
-      }
-      while (n);
-      return result;
-    }
-
-    return 'i' + (
-      base62(parseInt(Math.random() * 1e9, 10)) +
-      base62(Date.now() % 1e9)
-    ) + '__';
+    return 'i' + basis.genUID() + '__';
   }
 
   function isolateCss(css, prefix){
@@ -1902,7 +1887,7 @@
   * @func
   */
   function buildTemplate(){
-    var decl = getDeclFromSource(this.source, this.baseURI, false, { isolate: 'i' + this.templateId + '__' });
+    var decl = getDeclFromSource(this.source, this.baseURI, false, { isolate: this.getIsolatePrefix() });
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens, this);  // makeFunctions
     var deps = this.deps_;
@@ -2136,6 +2121,15 @@
     * @param {object=} tmpl Storage of DOM references.
     */
     clearInstance: function(tmpl){
+    },
+
+   /**
+    * Returns base isolation prefix for template's content. Use it only if template content use <b:isolate>.
+    * Template could overload it by `prefix` attribute in <b:isolate> tag.
+    * @return {string} Isolation prefix.
+    */
+    getIsolatePrefix: function(){
+      return 'i' + this.templateId + '__';
     },
 
     getBinding: function(bindings){
