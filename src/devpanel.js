@@ -17,7 +17,7 @@ basis.patch('basis.template', function(exports){
     isolatePrefix_: false,
     getIsolatePrefix: function(){
       if (!this.isolatePrefix_)
-        this.isolatePrefix_ = basis.genUID() + '__';
+        this.isolatePrefix_ = basis.genUID().replace(/^[^a-z]/i, 'i$&') + '__';
       return this.isolatePrefix_;
     }
   });
