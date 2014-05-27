@@ -1722,6 +1722,9 @@
       // deal with defines
       result.unpredictable = !!applyDefines(result.tokens, result, options);
 
+      /** @cut */ if (/^[^a-z]/i.test(result.isolate))
+      /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, otherwise it leads to incorrect css class names and broken styles');
+
       if (includeStack.length == 0)
       {
         if (result.isolate)
