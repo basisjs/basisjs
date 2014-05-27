@@ -52,7 +52,7 @@
   //
 
   var eventAttr = /^event-(.+)+/;
-  var basisTemplateIdMarker = 'basisTemplateId_' + Date.now().toString(36) + parseInt((1e11 - 1) * Math.random(), 10).toString(36);
+  var basisTemplateIdMarker = 'basisTemplateId_' + basis.genUID();
 
   // dictionaries
   var tmplEventListeners = {};

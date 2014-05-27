@@ -43,6 +43,29 @@
 
 
  /**
+  * Generates unique id.
+  * random() + performance.now() + Date.now()
+  * @param {number=} len Required length of id (16 by default).
+  * @returns {string} Generated id.
+  */
+  function genUID(len){
+    function base36(val){
+      return parseInt(Number(val), 10).toString(36);
+    }
+
+    var result = (global.performance ? base36(global.performance.now()) : '') + base36(new Date);
+
+    if (!len)
+      len = 16;
+
+    while (result.length < len)
+      result = base36(1e12 * Math.random()) + result;
+
+    return result.substr(result.length - len, len);
+  }
+
+
+ /**
   * Copy all properties from source (object) to destination object.
   * @param {object} dest Object should be extended.
   * @param {object} source
@@ -268,6 +291,7 @@
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
+    var ID = 'basisGetterId' + genUID() + '_';
     var modificatorSeed = 1;
     var simplePath = /^[a-z$_][a-z$_0-9]*(\.[a-z$_][a-z$_0-9]*)*$/i;
 
@@ -328,7 +352,7 @@
       return new Function('object', 'return object != null ? object.' + path + ' : object');
     }
 
-    return function(path, modificator){
+    var getterFn = function(path, modificator){
       var func;
       var result;
       var getterId;
@@ -340,7 +364,7 @@
       // resolve getter by path
       if (typeof path == 'function')
       {
-        getterId = path.basisGetterId_;
+        getterId = path[ID];
 
         // path is function
         if (getterId)
@@ -361,8 +385,8 @@
 
           // add to cache
           getterId = getterMap.push(func);
-          path.basisGetterId_ = -getterId;
-          func.basisGetterId_ = getterId;
+          path[ID] = -getterId;
+          func[ID] = getterId;
         }
       }
       else
@@ -373,7 +397,7 @@
         if (func)
         {
           // resolve getter id
-          getterId = func.basisGetterId_;
+          getterId = func[ID];
         }
         else
         {
@@ -384,7 +408,7 @@
 
           // add to cache
           getterId = getterMap.push(func);
-          func.basisGetterId_ = getterId;
+          func[ID] = getterId;
           pathCache[path] = func;
         }
       }
@@ -466,7 +490,7 @@
         result.mod = modificator;
 
         // cache new getter
-        result.basisGetterId_ = getterMap.push(result);
+        result[ID] = getterMap.push(result);
       }
       else
       {
@@ -478,6 +502,9 @@
       return result;
     };
 
+    getterFn.ID = ID;
+
+    return getterFn;
   })();
 
   var nullGetter = extend(function(){}, {
@@ -3381,6 +3408,7 @@
     DeferredToken: DeferredToken,
 
     // util functions
+    genUID: genUID,
     getter: getter,
     ready: ready,
 

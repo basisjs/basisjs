@@ -461,7 +461,7 @@
 
     events = events.trim().split(' ').sort();
 
-    var indexId = [BaseClass.basisClassId_, getter.basisGetterId_, events].join('_');
+    var indexId = [BaseClass.basisClassId_, getter[basis.getter.ID], events].join('_');
     var indexConstructor = indexConstructors_[indexId];
 
     if (indexConstructor)

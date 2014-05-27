@@ -182,7 +182,7 @@
       events = String(events).trim().split(/\s+|\s*,\s*/).sort();
 
       var tokenId = this.basisObjectId;
-      var enumId = events.concat(tokenId, getter.basisGetterId_).join('_');
+      var enumId = events.concat(tokenId, getter[basis.getter.ID]).join('_');
 
       if (tokenComputeFn[enumId])
         return tokenComputeFn[enumId];
