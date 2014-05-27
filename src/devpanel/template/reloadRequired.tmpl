@@ -1,5 +1,6 @@
 <b:style src="./reloadRequired.css"/>
-<b:define name="visible" type="bool"/>
-<div class="Devpanel-ReloadRequired Devpanel-ReloadRequired_{visible}" event-click="reload">
+<b:isolate/>
+
+<div b:show="{visible}" class="label" event-click="reload">
   {count} file(s) updated, changes can't be applied until page reload
 </div>

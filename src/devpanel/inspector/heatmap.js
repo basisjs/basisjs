@@ -10,23 +10,20 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').mar
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var inspectMode;
+var inspectMode = new basis.data.Value({ value: false });
 var elements = [];
 
 var overlayNode = new basis.ui.Node({
   template: resource('./template/heat_overlay.tmpl'),
-  action: {
-    mouseover: function(e){
-      basis.cssom.classList(overlayContent).add('hover');
-    },
-    mouseout: function(e){
-      basis.cssom.classList(overlayContent).remove('hover');
-    }
+  hide: new basis.Token(false),
+  binding: {
+    hide: 'hide'
   }
 });
 
 var overlay = overlayNode.element;
 var overlayContent = overlayNode.tmpl.content || overlay;
+var tokenDomProto = overlayNode.tmpl.token;
 
 // dom mutation observer
 
@@ -42,11 +39,10 @@ var observer = (function(){
 })();
 
 function startInspect(){
-  if (!inspectMode)
+  if (!inspectMode.value)
   {
-    basis.cssom.classList(document.body).add('devpanel-inspectMode');
     updateOnScroll();
-    inspectMode = true;
+    inspectMode.set(true);
     highlight();
 
     basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
@@ -64,19 +60,17 @@ function startInspect(){
 }
 
 function endInspect(){
-  if (inspectMode)
+  if (inspectMode.value)
   {
     if (observer)
       observer.disconnect();
-
-    basis.cssom.classList(document.body).remove('devpanel-inspectMode');
 
     basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
     basis.dom.event.removeHandler(window, 'resize', updateOnResize);
     inspectBasisEvent.releaseEvent('contextmenu');
 
     unhighlight();
-    inspectMode = false;
+    inspectMode.set(false);
   }
 }
 
@@ -92,9 +86,9 @@ function updateOnScroll(event){
 var resizeTimer;
 function updateOnResize(){
   clearTimeout(resizeTimer);
-  basis.cssom.classList(overlayContent).add('hide');
+  overlayNode.hide.set(true);
   resizeTimer = setTimeout(function(){
-    basis.cssom.classList(overlayContent).remove('hide');
+    overlayNode.hide.set(false);
     highlight(true);
   }, 100);
 }
@@ -119,32 +113,36 @@ function highlight(keepOverlay){
     var temp = max != min ? 1 - ((data.updates - min) / (max - min)) : 1;
     var bgColor = 'rgba(' + [255 - parseInt(128 * temp), parseInt(temp * 255), 0].join(',') + ', .4)';
     var borderColor = 'rgba(' + [200 - parseInt(128 * temp), parseInt(temp * 200), 0].join(',') + ', .75)';
-    data.element = tokenElements.appendChild(basis.dom.createElement({
-      description: '.devpanel-heat-token',
-      css: {
-        backgroundColor: bgColor,
-        outline: '1px solid ' + borderColor,
-        top: data.rect.top + 'px',
-        left: data.rect.left + 'px',
-        width: data.rect.width + 'px',
-        height: data.rect.height + 'px'
-      }
-    }, data.updates == 1 ? '' : data.updates));
+    data.element = tokenElements.appendChild(basis.cssom.setStyle(tokenDomProto.cloneNode(false), {
+      backgroundColor: bgColor,
+      outline: '1px solid ' + borderColor,
+      top: data.rect.top + 'px',
+      left: data.rect.left + 'px',
+      width: data.rect.width + 'px',
+      height: data.rect.height + 'px'
+    }));
+    data.element.appendChild(document.createTextNode(data.updates == 1 ? '' : data.updates));
   }
 
   overlayContent.appendChild(tokenElements);
 
   if (!keepOverlay)
-
+    document.body.appendChild(overlay);
+}
 
 function unhighlight(keepOverlay){
   var data;
 
   while (data = elements.pop())
+    if (data.element.parentNode)
+      data.element.parentNode.removeChild(data.element);
+
   if (!keepOverlay)
   {
     basis.cssom.classList(overlayContent).remove('hover');
-  
+    if (overlay.parentNode)
+      overlay.parentNode.removeChild(overlay);
+  }
 }
 
 function updateHighlight(records){
@@ -212,6 +210,7 @@ function domTreeHighlight(root){
 module.exports = {
   startInspect: startInspect,
   endInspect: endInspect,
+  inspectMode: inspectMode,
   isActive: function(){
     return !!inspectMode;
   }

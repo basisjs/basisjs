@@ -1,21 +1,21 @@
 <b:style src="./template_hintPopup.css"/>
-<b:define name="name" type="bool"/>
+<b:isolate/>
 
-<div id="devpanel-l10n-templateHintPopup">
-  <span class="devpanel-l10n-templateHintPopup__name devpanel-l10n-templateHintPopup__name_{name}">
-    <span class="devpanel-l10n-templateHintPopup__propertyTitle">Reference: </span>
+<div class="popup">
+  <span b:show="{name}" class="name">
+    <span class="propertyTitle">Reference: </span>
     {name}
   </span>
-  <span class="devpanel-l10n-templateHintPopup__source">
-    <span class="devpanel-l10n-templateHintPopup__propertyTitle">Source: </span>
+  <span class="source">
+    <span class="propertyTitle">Source: </span>
     {source}
   </span>
-  <span class="devpanel-l10n-templateHintPopup__instance">
-    <span class="devpanel-l10n-templateHintPopup__propertyTitle">Instance: </span>
+  <span class="instance">
+    <span class="propertyTitle">Instance: </span>
     {instanceName}
   </span>
-  <span class="devpanel-l10n-templateHintPopup__rootNodeSelector">
-    <span class="devpanel-l10n-templateHintPopup__propertyTitle">Root node: </span>
+  <span class="rootNodeSelector">
+    <span class="propertyTitle">Root node: </span>
     {rootNodeSelector}
   </span>
 </div>

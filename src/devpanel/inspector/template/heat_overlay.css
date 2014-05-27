@@ -1,4 +1,4 @@
-#devpanel-heat-overlay
+.overlay
 {
   position: fixed;
   pointer-events: none;
@@ -10,22 +10,20 @@
   background: rgba(110,163,217,0.2);
   background1: rgba(255,255,255,0.2);
 }
-#devpanel-heat-overlay__content
+.content
 {
   position: absolute;
   top: 0;
   left: 0;
   opacity: 1;
-    -webkit-transition: opacity .3s;
   transition: opacity .3s;
 }
-#devpanel-heat-overlay__content.hide
+.content_hide
 {
   opacity: 0;
-    -webkit-transition: opacity .15s;
   transition: opacity .15s;
 }
-#devpanel-heat-overlay__content .devpanel-heat-token
+.token
 {
   position: absolute;
   z-index: 65000;

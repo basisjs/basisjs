@@ -1,4 +1,15 @@
 <b:style src="./l10n_overlay.css"/>
-<div id="devpanel-l10n-overlay">
-  <div{content} id="devpanel-l10n-overlay__content" event-mouseover="mouseover" event-mouseout="mouseout"/>
+<b:isolate/>
+<b:define name="hover" type="bool"/>
+<b:define name="hide" type="bool"/>
+
+<div class="overlay">
+  <div{content}
+    class="content content_{hover} content_{hide}"
+    style="top: -{top}px; left: -{left}px"
+    event-mouseover="mouseover"
+    event-mouseout="mouseout"
+  />
 </div>
+
+<div{token} class="token"/>

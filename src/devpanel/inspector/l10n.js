@@ -15,22 +15,33 @@ var colorPicker = require('./colorPicker.js');
 var transport = require('../api/transport.js');
 
 var elements = [];
-var inspectMode;
+var inspectMode = new basis.data.Value({ value: false });
 
 var overlayNode = new basis.ui.Node({
   template: resource('./template/l10n_overlay.tmpl'),
+  hover: new basis.Token(false),
+  hide: new basis.Token(false),
+  top: new basis.Token(0),
+  left: new basis.Token(0),
+  binding: {
+    hover: 'hover',
+    hide: 'hide',
+    top: 'top',
+    left: 'left'
+  },
   action: {
     mouseover: function(e){
-      basis.cssom.classList(overlayContent).add('hover');
+      this.hover.set(true);
     },
     mouseout: function(e){
-      basis.cssom.classList(overlayContent).remove('hover');
+      this.hover.set(false);
     }
   }
 });
 
 var overlay = overlayNode.tmpl.element;
 var overlayContent = overlayNode.tmpl.content;
+var tokenDomProto = overlayNode.tmpl.token;
 
 function pickHandler(event){
   var token = event.sender.token;
@@ -68,11 +79,10 @@ var observer = (function(){
 })();
 
 function startInspect(){
-  if (!inspectMode)
+  if (!inspectMode.value)
   {
-    basis.cssom.classList(document.body).add('devpanel-inspectMode');
     updateOnScroll();
-    inspectMode = true;
+    inspectMode.set(true);
     highlight();
 
     basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
@@ -94,12 +104,10 @@ function startInspect(){
   }
 }
 function endInspect(){
-  if (inspectMode)
+  if (inspectMode.value)
   {
     if (observer)
       observer.disconnect();
-
-    basis.cssom.classList(document.body).remove('devpanel-inspectMode');
 
     basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
     basis.dom.event.removeHandler(window, 'resize', updateOnResize);
@@ -109,26 +117,27 @@ function endInspect(){
     inspectBasisEvent.releaseEvent('click');
 
     unhighlight();
-    inspectMode = false;
+    inspectMode.set(false);
     transport.sendData('endInspect', 'l10n');
   }
 }
 
 function updateOnScroll(event){
   var scrollElement = document.compatMode == 'CSS1Compat' ? document.documentElement : document.body;
-  overlayContent.style.top = -(global.pageYOffset || scrollElement.scrollTop) + 'px';
-  overlayContent.style.left = -(global.pageXOffset || scrollElement.scrollLeft) + 'px';
 
-  if (event && event.target !== document)
+  overlayNode.top.set(global.pageYOffset || scrollElement.scrollTop);
+  overlayNode.left.set(global.pageXOffset || scrollElement.scrollLeft);
+
+  //if (event && event.target !== document)
     highlight(true);
 }
 
 var resizeTimer;
 function updateOnResize(){
   clearTimeout(resizeTimer);
-  basis.cssom.classList(overlayContent).add('hide');
+  overlayNode.hide.set(true);
   resizeTimer = setTimeout(function(){
-    basis.cssom.classList(overlayContent).remove('hide');
+    overlayNode.hide.set(false);
     highlight(true);
   }, 100);
 }
@@ -152,7 +161,7 @@ function unhighlight(keepOverlay){
 
   if (!keepOverlay)
   {
-    basis.cssom.classList(overlayContent).remove('hover');
+    overlayNode.hover.set(false);
     basis.dom.remove(overlay);
   }
 }
@@ -189,16 +198,13 @@ function addTokenToHighlight(token, ref, domNode){
       var color = getColorForDictionary(token.dictionary.resource.url);
       var bgColor = 'rgba(' + color.join(',') + ', .3)';
       var borderColor = 'rgba(' + color.join(',') + ', .6)';
-      var element = overlayContent.appendChild(basis.dom.createElement({
-        description: '.devpanel-l10n-token',
-        css: {
-          backgroundColor: bgColor,
-          outline: '1px solid ' + borderColor,
-          top: rect.top + 'px',
-          left: rect.left + 'px',
-          width: rect.width + 'px',
-          height: rect.height + 'px'
-        }
+      var element = overlayContent.appendChild(basis.cssom.setStyle(tokenDomProto.cloneNode(false), {
+        backgroundColor: bgColor,
+        outline: '1px solid ' + borderColor,
+        top: rect.top + 'px',
+        left: rect.left + 'px',
+        width: rect.width + 'px',
+        height: rect.height + 'px'
       }));
 
       element.token = token;
@@ -252,6 +258,7 @@ function getColorForDictionary(dictionaryName){
 module.exports = {
   startInspect: startInspect,
   endInspect: endInspect,
+  inspectMode: inspectMode,
   isActive: function(){
     return !!inspectMode;
   }

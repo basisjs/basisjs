@@ -1,4 +1,4 @@
-.Basis-DevPanel
+.panel
 {
   position: fixed;
   z-index: 10001;
@@ -20,13 +20,19 @@
   
   cursor: pointer;
 
-    -webkit-transition: box-shadow .15s, background .15s, opacity .15s, border-color .15s;
   transition: box-shadow .15s, background .15s, opacity .15s, border-color .15s;
 }
 
-.Basis-DevPanel:hover,
-.Basis-DevPanel_activated,
-.devpanel-inspectMode .Basis-DevPanel
+@media print {
+  .panel
+  {
+    display: none;
+  }
+}
+
+.panel:hover,
+.panel_activated,
+.panel_inspectMode
 {
   opacity: 1;
   box-shadow:
@@ -34,23 +40,23 @@
     0 0 0px 1px rgba(255, 255, 255, 1);
 }
 
-.Basis-DevPanel_isOnline
+.panel_isOnline
 {
   background: #4B77CC;
 }
 
-.devpanel-inspectMode .Basis-DevPanel
+.panel_inspectMode
 {
   pointer-events: none;
 }
 
-.Basis-DevPanel-Section
+.panel__section
 {
   position: relative;
   display: inline-block;
 }
 
-.Basis-DevPanel-Button
+.panel__button
 {
   border-left: 1px solid rgba(255, 255, 255, .4);
   display: inline-block;
@@ -58,30 +64,30 @@
   min-width: 10px;
   background: no-repeat center center;
 }
-.Basis-DevPanel-Button:hover
+.panel__button:hover
 {
   background-color: rgba(255, 255, 255, 0.2);
 }
-.Basis-DevPanel-Button:last-child
+.panel__button:last-child
 {
   border-right: none;
   border-radius: 0 4px 4px 0;
 }
 
-.Basis-DevPanel-Button.template
+.panel__button_template
 {
   background-image: url(img/inspect-template.png); 
 }
-.Basis-DevPanel-Button.l10n
+.panel__button_l10n
 {
   background-image: url(img/inspect-l10n.png);
 }
-.Basis-DevPanel-Button.fileInspector
+/*.panel__button.fileInspector
 {
   background-image: url(img/folder.png);
-}
+}*/
 
-.Basis-DevPanel-DragTrigger
+.panel__dd-trigger
 {
   display: inline-block;
   position: relative;
@@ -90,11 +96,4 @@
   height: 100%;
   cursor: move;
   background: url(img/drag.png) no-repeat center;
-}
-
-@media print {
-  .Basis-DevPanel
-  {
-    display: none;
-  }
 }

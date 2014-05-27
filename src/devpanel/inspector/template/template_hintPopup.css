@@ -1,4 +1,4 @@
-#devpanel-l10n-templateHintPopup
+.popup
 {
   position: fixed;
   padding: 4px 8px;
@@ -16,22 +16,15 @@
   z-index: 10001 !important;
 }
 
-.devpanel-l10n-templateHintPopup__element,
-.devpanel-l10n-templateHintPopup__rootNodeSelector,
-.devpanel-l10n-templateHintPopup__source
-{
-  display: block;
-}
-.devpanel-l10n-templateHintPopup__name
-{
-  display: none;
-}
-.devpanel-l10n-templateHintPopup__name_name
+.element,
+.rootNodeSelector,
+.source,
+.name
 {
   display: block;
 }
 
-.devpanel-l10n-templateHintPopup__propertyTitle
+.propertyTitle
 {
   color: black;
 }

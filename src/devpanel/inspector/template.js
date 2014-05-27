@@ -13,7 +13,7 @@ var document = global.document;
 var transport = require('../api/transport.js');
 
 var inspectDepth = 0;
-var inspectMode;
+var inspectMode = new basis.data.Value({ value: false });
 
 var overlay = basis.dom.createElement({
   css: {
@@ -172,7 +172,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 });
 
 function startInspect(){
-  if (!inspectMode)
+  if (!inspectMode.value)
   {
     basis.dom.event.addGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.addGlobalHandler('mousewheel', mouseWheelHandler);
@@ -181,14 +181,13 @@ function startInspect(){
     inspectBasisEvent.captureEvent('contextmenu', endInspect);
     inspectBasisEvent.captureEvent('click', pickHandler);
 
-    basis.cssom.classList(document.body).add('devpanel-inspectMode');
-    inspectMode = true;
+    inspectMode.set(true);
     transport.sendData('startInspect', 'template');
   }
 }
 
 function endInspect(){
-  if (inspectMode)
+  if (inspectMode.value)
   {
     basis.dom.event.removeGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
@@ -197,8 +196,7 @@ function endInspect(){
     inspectBasisEvent.releaseEvent('contextmenu');
     inspectBasisEvent.releaseEvent('click');
 
-    basis.cssom.classList(document.body).remove('devpanel-inspectMode');
-    inspectMode = false;
+    inspectMode.set(false);
     transport.sendData('endInspect', 'template');
     pickupTarget.set();
   }
@@ -269,6 +267,7 @@ function mouseWheelHandler(event){
 module.exports = {
   startInspect: startInspect,
   endInspect: endInspect,
+  inspectMode: inspectMode,
   isActive: function(){
     return !!inspectMode;
   }

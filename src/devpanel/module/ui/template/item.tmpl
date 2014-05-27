@@ -1,24 +1,22 @@
 <b:style src="./item.css"/>
-<b:define name="nestedViewCount" type="bool"/>
-<b:define name="satelliteName" type="bool"/>
-<b:define name="namespace" type="bool"/>
+<b:isolate/>
 
-<div class="basisjs-devpanel-ui-view-item">
-  <div class="basisjs-devpanel-ui-view-item__title" event-click="toggle" event-mouseenter="enter" event-mouseleave="leave">
-    <div class="basisjs-devpanel-ui-view-item__expander basisjs-devpanel-ui-view-item__expander_{nestedViewCount}"/>
-    <span class="basisjs-devpanel-ui-view-item__satelliteName basisjs-devpanel-ui-view-item__satelliteName_{satelliteName}">
+<div class="item">
+  <div class="title" event-click="toggle" event-mouseenter="enter" event-mouseleave="leave">
+    <div b:show="{nestedViewCount}" class="expander"/>
+    <span b:show="{satelliteName}" class="satelliteName">
       {satelliteName}
     </span>
-    <span class="basisjs-devpanel-ui-view-item__namespace basisjs-devpanel-ui-view-item__namespace_{namespace}">
+    <span b:show="{namespace}" class="namespace">
       {namespace}.
     </span>
     {name}
-    <span class="basisjs-devpanel-ui-view-item__id">
+    <span class="id">
       #{id}
     </span>
-    <span class="basisjs-devpanel-ui-view-item__count basisjs-devpanel-ui-view-item__count_{nestedViewCount}">
+    <span b:show="{nestedViewCount}" class="count">
       {nestedViewCount}
     </span>
   </div>
-  <div{childNodesElement} class="basisjs-devpanel-ui-view-item__content"/>
+  <div{childNodesElement} class="content"/>
 </div>

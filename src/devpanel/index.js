@@ -1,4 +1,6 @@
 require('basis.data');
+require('basis.data.value');
+require('basis.data.index');
 require('basis.ui');
 require('basis.dragdrop');
 
@@ -14,6 +16,17 @@ var heatInspector = resource('./inspector/heatmap.js');
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
 //var fileInspector = resource('./module/fileInspector/fileInspector.js');
+
+var inspectors = new basis.data.Dataset();
+var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
+
+[l10nInspector, templateInspector, heatInspector].forEach(function(inspectorRes){
+  inspectorRes.ready(function(inspector){
+    inspectors.add(inspector.inspectMode.link(new basis.data.Object, function(value){
+      this.update({ mode: value });
+    }));
+  });
+});
 
 
 //
@@ -70,6 +83,7 @@ var panel = new basis.ui.Node({
     cultureName: inspectBasis.l10n.culture,
     cultureList: cultureList,
     isOnline: isOnline,
+    inspectMode: inspectMode,
     reloadRequired: 'satellite:'
   },
 
