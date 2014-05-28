@@ -208,7 +208,7 @@
     var SPECIAL_ATTR_MAP = {
       disabled: '*',  // any tag
       checked: ['input'],
-      value: ['input', 'textarea'],
+      value: ['input', 'textarea', 'select'],
       minlength: ['input'],
       maxlength: ['input'],
       readonly: ['input'],
