@@ -36,7 +36,7 @@
 ;(function(global){ // global is current context (`window` in browser and `global` on node.js)
   'use strict';
 
-  var VERSION = '1.2.4';
+  var VERSION = '1.2.5-dev';
 
   var document = global.document;
   var Object_toString = Object.prototype.toString;
