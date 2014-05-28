@@ -62,7 +62,7 @@ basis.nextTick(function(){
     // init interface
     require('./devpanel/index.js');
     // temporary here
-    require('./devpanel/module/ui/index.js');
+    //require('./devpanel/module/ui/index.js');
 
     // setup live update
     if (inspectBasis.devtools)

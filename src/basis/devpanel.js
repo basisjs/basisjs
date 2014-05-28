@@ -1,5 +1,5 @@
 // save current basis.js instance under generated name
-var inspectBasisRef = 'inspectBasis' + parseInt((1e11 - 1) * Math.random(), 10);
+var inspectBasisRef = 'inspectBasis_' + basis.genUID();
 global[inspectBasisRef] = basis;
 
 // load another instance of basis.js to don't influence on original one
