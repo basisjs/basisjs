@@ -13,7 +13,7 @@ if (document.createEvent)
 
   transferEl = document.createElement('pre');
   transferEl.id = 'devpanelSharedDom';  // for old plugin
-  transferEl.style.display = 'display: none';
+  transferEl.style.display = 'none';
 
   sendData = function(action, data){
     var dataTextNode = document.createTextNode(JSON.stringify(data));

@@ -269,6 +269,6 @@ module.exports = {
   endInspect: endInspect,
   inspectMode: inspectMode,
   isActive: function(){
-    return !!inspectMode;
+    return inspectMode.value;
   }
 };
