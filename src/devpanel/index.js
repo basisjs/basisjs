@@ -28,6 +28,14 @@ var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(B
   });
 });
 
+var activated = new basis.data.value.Expression(
+  basis.data.Value.from(themeList, 'visibleChanged', 'visible'),
+  basis.data.Value.from(cultureList, 'visibleChanged', 'visible'),
+  function(themeListVisible, cultureListVisible){
+    return themeListVisible || cultureListVisible;
+  }
+);
+
 
 //
 // panel
@@ -71,13 +79,11 @@ else
 var panel = new basis.ui.Node({
   container: document.body,
 
-  activated: false,
   themeName: inspectBasis.template.currentTheme().name,
-
   template: resource('./template/panel.tmpl'),
 
   binding: {
-    activated: 'activated',
+    activated: activated,
     themeName: 'themeName',
     themeList: themeList,
     cultureName: inspectBasis.l10n.culture,

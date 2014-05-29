@@ -1,12 +1,6 @@
-<<<<<<< HEAD:src/basis/devpanel/themeList.js
-basis.require('basis.template');
-
-var Menu = require('./component/menu.js');
-=======
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var Menu = require('./module/menu/index.js');
->>>>>>> 1.3.0:src/devpanel/themeList.js
 
 var view = new Menu({
   selection: {
