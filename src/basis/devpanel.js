@@ -1,39 +1,18 @@
-basis.ready(function(){
-  // init interface
-  require('./devpanel/index.js');
+// save current basis.js instance under generated name
+var inspectBasisRef = 'inspectBasis_' + basis.genUID();
+global[inspectBasisRef] = basis;
 
-  // init transport
-  var transport = require('./devpanel/API/transport.js');
-  transport.init();
+// load another instance of basis.js to don't influence on original one
+var script = document.createElement('script');
+script.setAttribute('src', basis.filename_);
+script.setAttribute('basis-config',
+  JSON.stringify({
+    autoload: basis.path.dirname(basis.filename_) + '/devpanel',
+    noConflict: true,
+    inspectBasisRef: inspectBasisRef
+  }).replace(/^\{|\}$/g, '')
+);
+basis.doc.head.add(script);
 
-  // prepare API object
-  basis.appCP = basis.object.merge(
-    {
-      getFileGraph: function(){
-        var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
-
-        if (basisjsTools)
-          basisjsTools.getFileGraph(function(err, data){
-            transport.sendData('fileGraph', {
-              err: err,
-              data: data
-            });
-          });
-      }
-    },
-
-    require('./devpanel/API/version.js'),
-    require('./devpanel/API/server.js'),
-    require('./devpanel/API/file.js'),
-    require('./devpanel/API/l10n.js'),
-    require('./devpanel/API/inspector.js')
-  );
-
-  console.log('basis devpanel inited');
-});
-
-module.exports = {
-  openFileInspector: function(){
-    require('./devpanel/module/fileInspector/fileInspector.js').open();
-  }
-};
+// croak namespace
+delete basis.devpanel;

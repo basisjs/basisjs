@@ -1,0 +1,11 @@
+.menu
+{
+  position: absolute;
+  left: 27px;
+  background: #F0F0F0;
+  color: #444;
+  text-align: left;
+  margin-top: 3px;
+  box-shadow: 1px 1px 7px 1px rgba(0, 0, 0, .3);
+  z-index: 1;
+}

@@ -1,6 +1,0 @@
-{
-  "base": {
-    "View": "./template/view.tmpl",
-    "Item": "./template/item.tmpl"
-  }
-}

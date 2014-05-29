@@ -1,0 +1,32 @@
+<b:style src="./panel.css"/>
+<b:isolate/>
+<b:define name="activated" type="bool"/>
+<b:define name="isOnline" type="bool"/>
+<b:define name="inspectMode" type="bool"/>
+
+<div class="panel panel_{activated} panel_{isOnline} panel_{inspectMode}" event-mousemove="storePosition">
+  <div{dragElement} class="panel__dd-trigger">&nbsp;</div>
+  <div class="panel__section">
+    <div class="panel__button panel__button_template" event-mousedown="inspectTemplate">&nbsp;</div>
+    <div{themeButton} class="panel__button" event-click="showThemes">
+      {themeName}
+    </div>
+    <!--{themeList}-->
+  </div>
+  <div class="panel__section">  
+    <div class="panel__button panel__button_l10n" event-mousedown="inspectl10n">&nbsp;</div>
+    <div{cultureButton} class="panel__button" event-click="showCultures">
+      {cultureName}
+    </div>
+    <!--{cultureList}-->
+  </div>
+  <div class="panel__section">
+    <div class="panel__button" event-mousedown="inspectHeat">
+      Heat map
+    </div>
+  </div>
+  <!-- <div class="panel__section panel__section_FileInspector">
+    <div class="panel__button fileInspector" event-click="inspectFile">&nbsp;</div>
+  </div> -->
+  <!--{reloadRequired}-->
+</div>

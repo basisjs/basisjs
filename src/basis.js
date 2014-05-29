@@ -43,6 +43,29 @@
 
 
  /**
+  * Generates unique id.
+  * random() + performance.now() + Date.now()
+  * @param {number=} len Required length of id (16 by default).
+  * @returns {string} Generated id.
+  */
+  function genUID(len){
+    function base36(val){
+      return parseInt(Number(val), 10).toString(36);
+    }
+
+    var result = (global.performance ? base36(global.performance.now()) : '') + base36(new Date);
+
+    if (!len)
+      len = 16;
+
+    while (result.length < len)
+      result = base36(1e12 * Math.random()) + result;
+
+    return result.substr(result.length - len, len);
+  }
+
+
+ /**
   * Copy all properties from source (object) to destination object.
   * @param {object} dest Object should be extended.
   * @param {object} source
@@ -268,6 +291,7 @@
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
+    var ID = 'basisGetterId' + genUID() + '_';
     var modificatorSeed = 1;
     var simplePath = /^[a-z$_][a-z$_0-9]*(\.[a-z$_][a-z$_0-9]*)*$/i;
 
@@ -328,7 +352,7 @@
       return new Function('object', 'return object != null ? object.' + path + ' : object');
     }
 
-    return function(path, modificator){
+    var getterFn = function(path, modificator){
       var func;
       var result;
       var getterId;
@@ -340,7 +364,7 @@
       // resolve getter by path
       if (typeof path == 'function')
       {
-        getterId = path.basisGetterId_;
+        getterId = path[ID];
 
         // path is function
         if (getterId)
@@ -361,8 +385,8 @@
 
           // add to cache
           getterId = getterMap.push(func);
-          path.basisGetterId_ = -getterId;
-          func.basisGetterId_ = getterId;
+          path[ID] = -getterId;
+          func[ID] = getterId;
         }
       }
       else
@@ -373,7 +397,7 @@
         if (func)
         {
           // resolve getter id
-          getterId = func.basisGetterId_;
+          getterId = func[ID];
         }
         else
         {
@@ -384,7 +408,7 @@
 
           // add to cache
           getterId = getterMap.push(func);
-          func.basisGetterId_ = getterId;
+          func[ID] = getterId;
           pathCache[path] = func;
         }
       }
@@ -466,7 +490,7 @@
         result.mod = modificator;
 
         // cache new getter
-        result.basisGetterId_ = getterMap.push(result);
+        result[ID] = getterMap.push(result);
       }
       else
       {
@@ -478,6 +502,9 @@
       return result;
     };
 
+    getterFn.ID = ID;
+
+    return getterFn;
   })();
 
   var nullGetter = extend(function(){}, {
@@ -1053,14 +1080,19 @@
     else
     {
       // browser env
-      var scripts = document.getElementsByTagName('script');
+      var scripts = document.scripts;
       for (var i = 0, scriptEl; scriptEl = scripts[i]; i++)
       {
-        var configAttrNode = scriptEl.getAttributeNode('data-basis-config') || scriptEl.getAttributeNode('basis-config');
-        if (configAttrNode)
+        var configAttrValue = scriptEl.hasAttribute('basis-config')
+          ? scriptEl.getAttribute('basis-config')
+          : scriptEl.getAttribute('data-basis-config');
+
+        if (configAttrValue !== null)
         {
+          scriptEl.removeAttribute('basis-config');
+          scriptEl.removeAttribute('data-basis-config');
           try {
-            extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
+            extend(config, Function('return{' + configAttrValue + '}')() || {});
           } catch(e) {
             /** @cut */ consoleMethods.error('basis.js config parse fault: ' + e);
           }
@@ -1766,7 +1798,7 @@
       for (var key in map)
         resourceContentCache[pathUtils.resolve(key)] = map[key];
 
-      __resources__ = null; // reset prefetched to reduce memory leaks
+      //__resources__ = null; // reset prefetched to reduce memory leaks
     }
   })();
 
@@ -1900,10 +1932,13 @@
 
           if (contentWrapper)
           {
+            if (!wrapped && isVirtual)
+              content = newContent;
+
             // wrap content only if it wrapped already and non-updatable
             if (wrapped && !contentWrapper.permanent)
             {
-              content = contentWrapper(newContent, resourceUrl);
+              content = contentWrapper(newContent, resourceUrl, content);
               applyResourcePatches(resource);
               resource.apply();
             }
@@ -2016,7 +2051,7 @@
 
     virtual: function(type, content){
       return createResource(
-        pathUtils.baseURI + 'virtualResource' + (virtualResourceSeed++) + '.' + type,
+        pathUtils.normalize((pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/virtualResource' + (virtualResourceSeed++) + '.' + type),
         content
       );
     },
@@ -2081,15 +2116,13 @@
         permanent: true
       }),
 
-      '.css': function(content, url){
-        var resource = CssResource.resources[url];
+      '.css': function(content, url, cssResource){
+        if (!cssResource)
+          cssResource = new CssResource(url);
 
-        if (!resource)
-          resource = new CssResource(url);
-        else
-          resource.updateCssText(content);
+        cssResource.updateCssText(content);
 
-        return resource;
+        return cssResource;
       },
 
       '.json': function(content, url){
@@ -3212,9 +3245,6 @@
   //
 
   var CssResource = (function(){
-    var cssResources = {};
-    var cleanupDom = true; // is require remove style node on CssResource destroy or not
-
     // Test for appendChild bugs (old IE browsers has a problem with append textNode into <style>)
     var STYLE_APPEND_BUGGY = (function(){
       try {
@@ -3225,18 +3255,6 @@
         return true;
       }
     })();
-
-    // cleanup on page unload
-    cleaner.add({
-      destroy: function(){
-        cleanupDom = false; // don't need remove unused style on global destroy
-
-        for (var url in cssResources)
-          cssResources[url].destroy();
-
-        cssResources = null;
-      }
-    });
 
 
    /**
@@ -3275,9 +3293,9 @@
         this.element = document.createElement('style');
 
         if (!STYLE_APPEND_BUGGY)
-          this.textNode = this.element.appendChild(document.createTextNode(''));
+          this.element.appendChild(document.createTextNode(''));
 
-        /** @cut */ this.element.setAttribute('src', pathUtils.relative(this.url));
+        /** @cut */ this.element.setAttribute('src', this.url);
       }
 
       // add element to document
@@ -3294,31 +3312,27 @@
    /**
     * @class
     */
-    var CssResource = Class(null, {
+    return Class(null, {
       className: 'basis.CssResource',
 
       inUse: 0,
 
       url: '',
       baseURI: '',
-      cssText: '',
+      cssText: undefined,
 
-      resource: null,
       element: null,
-      textNode: null,
 
       init: function(url){
-        this.resource = getResource(url);
         this.url = url;
         this.baseURI = pathUtils.dirname(url) + '/';
-
-        cssResources[url] = this;
       },
 
       updateCssText: function(cssText){
         if (this.cssText != cssText)
         {
           this.cssText = cssText;
+
           if (this.inUse && this.element)
           {
             setBase(this.baseURI);
@@ -3328,29 +3342,24 @@
         }
       },
 
-      syncCssText: function(){
-        if (this.textNode)
-        {
-          // W3C browsers
-          this.textNode.nodeValue = this.cssText;
-        }
-        else
-        {
-          // old IE
-          this.element.styleSheet.cssText = this.cssText;
-        }
-      },
+      syncCssText: STYLE_APPEND_BUGGY
+        // old IE
+        ? function(){
+            this.element.styleSheet.cssText = this.cssText;
+          }
+        // W3C browsers
+        : function(){
+            var cssText = this.cssText;
+
+            /** @cut add source url for debug */
+            /** @cut */ cssText += '\n/*# sourceURL=' + pathUtils.origin + this.url + ' */';
+
+            this.element.firstChild.nodeValue = cssText;
+          },
 
       startUse: function(){
         if (!this.inUse)
-        {
-          this.cssText = this.resource.get(true);
-
-          /** @cut add source url for debug */
-          /** @cut */ this.cssText += '\n/*# sourceURL=' + pathUtils.origin + this.resource.url + ' */';
-
           documentInterface.head.ready(injectStyleToHead, this);
-        }
 
         this.inUse += 1;
       },
@@ -3368,19 +3377,13 @@
       },
 
       destroy: function(){
-        if (this.element && cleanupDom)
+        if (this.element)
           documentInterface.remove(this.element);
 
         this.element = null;
-        this.textNode = null;
-        this.resource = null;
         this.cssText = null;
       }
     });
-
-    CssResource.resources = cssResources;
-
-    return CssResource;
   })();
 
 
@@ -3422,6 +3425,7 @@
     DeferredToken: DeferredToken,
 
     // util functions
+    genUID: genUID,
     getter: getter,
     ready: ready,
 

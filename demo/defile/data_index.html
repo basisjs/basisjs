@@ -216,7 +216,7 @@
         {
           header: 'Total, %',
           body: {
-            template: '<td class="right">{percentOfTotalSum}</td>'
+            template: '<td class="right">{percentOfTotalSum}%</td>'
           },
           footer: {
             template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
@@ -252,11 +252,11 @@
               emit_update: function(delta){
                 nsData.Object.prototype.emit_update.call(this, delta);
 
-                this.owner.percentOfTotalSum = basis.string.format('{0:.2}%', 100 * this.data.percentOfTotalSum);
+                this.owner.percentOfTotalSum = (100 * this.data.percentOfTotalSum).toFixed(2);
                 this.owner.updateBind('percentOfTotalSum');
-                this.owner.percentOfTotalRange = basis.string.format('{0:.2}%', 100 * this.data.percentOfTotalRange);
+                this.owner.percentOfTotalRange = (100 * this.data.percentOfTotalRange).toFixed(2);
                 this.owner.updateBind('percentOfTotalRange');
-                this.owner.percentOfValueMax = basis.string.format('{0:.2}%', 100 * this.data.percentOfValueMax);
+                this.owner.percentOfValueMax = (100 * this.data.percentOfValueMax).toFixed(2);
                 this.owner.updateBind('percentOfValueMax');
               }
             })

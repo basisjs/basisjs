@@ -22,6 +22,7 @@
   var createEvent = basis.event.create;
 
   var HtmlTemplate = basis.template.html.Template;
+  var htmlTemplateIdMarker = basis.template.html.marker;
   var TemplateSwitcher = basis.template.TemplateSwitcher;
   var DWNode = basis.dom.wrapper.Node;
   var DWPartitionNode = basis.dom.wrapper.PartitionNode;
@@ -31,6 +32,15 @@
   //
   // main part
   //
+
+
+  //
+  // debug
+  //
+
+  /** @cut */ var instances = {};
+  /** @cut */ var notifier = new basis.Token();
+
 
   //
   // Binding
@@ -390,6 +400,9 @@
             this.container = null;
           }
         }
+
+        /** @cut */ instances[this.basisObjectId] = this;
+        /** @cut */ notifier.set({ action: 'create', instance: this });
       },
 
       templateSync: function(){
@@ -581,6 +594,9 @@
       * @inheritDoc
       */
       destroy: function(){
+        /** @cut */ delete instances[this.basisObjectId];
+        /** @cut */ notifier.set({ action: 'destroy', instance: this });
+
         var template = this.template;
         var element = this.element;
 
@@ -747,7 +763,11 @@
 
     init: function(){
       this.element = this.childNodesElement = document.createDocumentFragment();
+
       DWGroupingNode.prototype.init.call(this);
+
+      /** @cut */ instances[this.basisObjectId] = this;
+      /** @cut */ notifier.set({ action: 'create', instance: this });
     },
 
     syncDomRefs: function(){
@@ -766,7 +786,11 @@
     },
 
     destroy: function(){
+      /** @cut */ delete instances[this.basisObjectId];
+      /** @cut */ notifier.set({ action: 'destroy', instance: this });
+
       DWGroupingNode.prototype.destroy.call(this);
+
       this.element = null;
       this.childNodesElement = null;
     }
@@ -856,7 +880,7 @@
 
         if (newElement)
         {
-          newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
+          newElement[htmlTemplateIdMarker] = this.delegate.element[htmlTemplateIdMarker]; // to make events work
           this.element = newElement;
         }
       },
@@ -868,7 +892,7 @@
             var newElement = this.getElement(this.delegate);
 
             if (newElement)
-              newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
+              newElement[htmlTemplateIdMarker] = this.delegate.element[htmlTemplateIdMarker]; // to make events work
 
             this.element = newElement || this.tmpl.element;
 
@@ -886,6 +910,11 @@
   //
 
   module.exports = {
+    /** @cut */ debug_notifier: notifier,
+    /** @cut */ debug_getInstances: function(){
+    /** @cut */   return basis.object.values(instances);
+    /** @cut */ },
+
     BINDING_PRESET: BINDING_PRESET,
 
     Node: Node,

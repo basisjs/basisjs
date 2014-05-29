@@ -83,8 +83,8 @@ var dataset = new basis.data.Dataset({
   ]
 });
 
-// автоматический набор – подмножество "только нечетные"
-var odd = new basis.data.dataset.Subset({
+// автоматический набор – содержит только объекты с нечетным значением
+var odd = new basis.data.dataset.Filter({
   source: dataset,
   rule: function(item){
     return item.data.value % 2;

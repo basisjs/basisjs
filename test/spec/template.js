@@ -10,16 +10,8 @@ module.exports = {
       return new basis.template.html.Template(source);
     };
 
-    var text = function(template, binding){
-      if (typeof template == 'string')
-        template = createTemplate(template);
-
-      var tmpl = template.createInstance();
-      if (binding)
-        for (var key in binding)
-          tmpl.set(key, binding[key]);
-
-      var cursor = tmpl.element;
+    var getHTML = function(el){
+      var cursor = el;
       var res = '';
 
       if (cursor.parentNode && cursor.parentNode.nodeType == 11) // DocumentFragment
@@ -33,9 +25,22 @@ module.exports = {
 
       return res;
     };
+
+    var text = function(template, binding){
+      if (typeof template == 'string')
+        template = createTemplate(template);
+
+      var tmpl = template.createInstance();
+      if (binding)
+        for (var key in binding)
+          tmpl.set(key, binding[key]);
+
+      return getHTML(tmpl.element);
+    };
   },
 
   test: [
+    require('./template/isolate.js'),
     {
       name: 'Source',
       test: [
@@ -89,13 +94,13 @@ module.exports = {
                 this.is(el.innerHTML, text(tmpl));
 
                 el.innerHTML = '<span style="color: red;"></span>';
-                this.is(el.innerHTML, text(tmpl, { foo: 'red' }));                
+                this.is(el.innerHTML, text(tmpl, { foo: 'red' }));
               }
             }
           ]
         }
       ]
-    },    
+    },
     {
       name: '<b:include>',
       test: [
@@ -1339,6 +1344,219 @@ module.exports = {
                   }
                 }
               ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      name: 'attribute bindings',
+      test: [
+        {
+          name: 'expression in regular attribute',
+          test: function(){
+            var t = createTemplate('<span title="{foo}{bar}"/>');
+            var instance = t.createInstance();
+
+            assert(instance.element.title == '');
+
+            instance.set('foo', 'x');
+            assert(instance.element.title == 'xundefined'); // bar is undefined
+
+            instance.set('bar', 'x');
+            assert(instance.element.title == 'xx');
+
+            instance.set('foo', '');
+            assert(instance.element.title == 'x');
+
+            instance.set('bar', 'xx');
+            assert(instance.element.title == 'xx');
+
+          }
+        },
+        {
+          name: 'expression in style',
+          test: function(){
+            var t = createTemplate('<span style="display: {foo}{bar}"/>');
+            var instance = t.createInstance();
+
+            assert(instance.element.style.display == '');
+
+            instance.set('foo', 'blo');
+            assert(instance.element.style.display == ''); // 'blo' is not a valid value
+
+            instance.set('bar', 'ck');
+            assert(instance.element.style.display == 'block');
+
+            instance.set('foo', 'inline');
+            assert(instance.element.style.display == 'block'); // 'inlineblock' is not a valid value
+
+            instance.set('bar', '');
+            assert(instance.element.style.display == 'inline');
+
+            instance.set('foo', '');
+            assert(instance.element.style.display == '');
+
+            instance.set('bar', 'inline');
+            assert(instance.element.style.display == 'inline');
+
+          }
+        },
+        {
+          name: 'b:show',
+          test: [
+            {
+              name: 'when value for binding is not set yet, element should be invisible',
+              test: function(){
+                var t = createTemplate('<span b:show="{foo}"/>');
+                assert(t.createInstance().element.style.display == 'none');
+
+                var t = createTemplate('<span b:show="{foo}{bar}"/>');
+                assert(t.createInstance().element.style.display == 'none');
+              }
+            },
+            {
+              name: 'single binding',
+              test: function(){
+                var t = createTemplate('<span b:show="{foo}"/>');
+                var instance = t.createInstance();
+
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', false);
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', true);
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 'foo');
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', undefined);
+                assert(instance.element.style.display == 'none');
+              }
+            },
+            {
+              name: 'single string binding',
+              test: function(){
+                var t = createTemplate('<span b:show="{foo}"/>');
+                var instance = t.createInstance();
+
+                instance.set('foo', 'foo');
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', undefined);
+                assert(instance.element.style.display == 'none');
+              }
+            },
+            {
+              name: 'expression',
+              test: function(){
+                var t = createTemplate('<span b:show="{foo}{bar}"/>');
+                var instance = t.createInstance();
+
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', 0);  // 0 + undefined -> false
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', 1);  // 0 + 1 -> true
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', -1); // 0 + -1 -> true
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 1);  // 1 + -1 -> false
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', 1);  // 1 + 1 -> true
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', -1);  // 1 + -1 -> false
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', 0);  // 1 + 0 -> true
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 0);  // 0 + 0 -> false
+                assert(instance.element.style.display == 'none');
+              }
+            }
+          ]
+        },
+        {
+          name: 'b:hide',
+          test: [
+            {
+              name: 'when value for binding is not set yet, element should visible',
+              test: function(){
+                var t = createTemplate('<span b:hide="{foo}"/>');
+                assert(t.createInstance().element.style.display == '');
+
+                var t = createTemplate('<span b:hide="{foo}{bar}"/>');
+                assert(t.createInstance().element.style.display == '');
+              }
+            },
+            {
+              name: 'single string binding',
+              test: function(){
+                var t = createTemplate('<span b:hide="{foo}"/>');
+                var instance = t.createInstance();
+
+                instance.set('foo', undefined);
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 'foo');
+                assert(instance.element.style.display == 'none');
+              }
+            },
+            {
+              name: 'single binding',
+              test: function(){
+                var t = createTemplate('<span b:hide="{foo}"/>');
+                var instance = t.createInstance();
+
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', true);
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', false);
+                assert(instance.element.style.display == '');
+              }
+            },
+            {
+              name: 'expression',
+              test: function(){
+                var t = createTemplate('<span b:hide="{foo}{bar}"/>');
+                var instance = t.createInstance();
+
+                assert(instance.element.style.display == '');
+
+                instance.set('foo', 0);  // 0 + undefined -> false
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', 1);  // 0 + 1 -> true
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', -1); // 0 + -1 -> true
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', 1);  // 1 + -1 -> false
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', 1);  // 1 + 1 -> true
+                assert(instance.element.style.display == 'none');
+
+                instance.set('bar', -1);  // 1 + -1 -> false
+                assert(instance.element.style.display == '');
+
+                instance.set('bar', 0);  // 1 + 0 -> true
+                assert(instance.element.style.display == 'none');
+
+                instance.set('foo', 0);  // 0 + 0 -> false
+                assert(instance.element.style.display == '');
+              }
             }
           ]
         }

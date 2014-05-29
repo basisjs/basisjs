@@ -82,6 +82,7 @@
   var REFERENCE = /([a-z_][a-z0-9_]*)(\||\}\s*)/ig;
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
   var BREAK_TAG_PARSE = /^/g;
+  var SINGLETON_TAG = /^(area|base|br|col|command|embed|hr|img|input|link|meta|param|source)$/i;
   var TAG_IGNORE_CONTENT = {
     text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g,
     style: /((?:.|[\r\n])*?)(?:<\/b:style>|$)/g
@@ -292,14 +293,23 @@
           {
             parseTag = false;
 
-            if (m[3] == '/>') // otherwise m[3] == '>'
+            if (m[3] == '/>' ||
+                (!lastTag.prefix && SINGLETON_TAG.test(lastTag.name)))
+            {
+              /** @cut */ if (m[3] != '/>')
+              /** @cut */   result.warns.push('Tag <' + lastTag.name + '> doesn\'t closed explicit (use `/>` as tag ending)');
+
               lastTag = tagStack.pop();
+            }
             else
+            {
+              // otherwise m[3] == '>'
               if (lastTag.prefix == 'b' && lastTag.name in TAG_IGNORE_CONTENT)
               {
                 state = TAG_IGNORE_CONTENT[lastTag.name];
                 break;
               }
+            }
 
             state = TEXT;
             break;
@@ -462,6 +472,106 @@
     return template;
   }
 
+  function genIsolateMarker(){
+    return 'i' + basis.genUID() + '__';
+  }
+
+  function isolateCss(css, prefix){
+    function addMatch(prefix){
+      if (i > lastMatchPos)
+      {
+        result.push(
+          (prefix || '') +
+          css.substring(lastMatchPos, i)
+        );
+        lastMatchPos = i;
+      }
+    }
+
+    var result = [];
+    var sym = css.split('');
+    var len = sym.length;
+    var lastMatchPos = 0;
+    var blockScope = false;
+    var strSym;
+
+    if (!prefix)
+      prefix = genIsolateMarker();
+
+    for (var i = 0; i < len; i++)
+    {
+      switch (sym[i])
+      {
+        case '\'':
+        case '\"':
+          strSym = sym[i];
+          //addMatch();
+
+          while (++i < len)
+          {
+            if (sym[i] == '\\')
+              i++;
+            else
+              if (sym[i] == strSym)
+              {
+                i++;
+                //addMatch('string');
+                break;
+              }
+          }
+
+          break;
+
+        case '/':
+          if (sym[i + 1] == '*')
+          {
+            //addMatch();
+            i++;
+
+            while (++i < len)
+              if (sym[i] == '*' && sym[i + 1] == '/')
+              {
+                i += 2;
+                //addMatch('comment');
+                break;
+              }
+          }
+
+          break;
+
+        case '{':
+          blockScope = true;
+          break;
+
+        case '}':
+          blockScope = false;
+          break;
+
+        case '.':
+          if (!blockScope)
+          {
+            i++;
+            addMatch();
+
+            while (++i < len)
+              if (!/[a-z0-9\-\_]/.test(sym[i]))
+              {
+                addMatch(prefix);
+                i -= 1;
+                break;
+              }
+          }
+
+          break;
+      }
+    }
+
+    addMatch();
+
+    return result.join('');
+  }
+
+
  /**
   * make compiled version of template
   */
@@ -469,7 +579,7 @@
 
     var IDENT = /^[a-z_][a-z0-9_\-]*$/i;
     var CLASS_ATTR_PARTS = /(\S+)/g;
-    var CLASS_ATTR_BINDING = /^([a-z_][a-z0-9_\-]*)?\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
+    var CLASS_ATTR_BINDING = /^((?:[a-z_][a-z0-9_\-]*)?(?::(?:[a-z_][a-z0-9_\-]*)?)?)\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
     var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
     var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
     var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
@@ -519,35 +629,35 @@
       return array;
     }
 
+    function buildAttrExpression(parts){
+      var bindName;
+      var names = [];
+      var expression = [];
+      var map = {};
+
+      for (var j = 0; j < parts.length; j++)
+        if (j % 2)
+        {
+          bindName = parts[j];
+
+          if (!map[bindName])
+          {
+            map[bindName] = names.length;
+            names.push(bindName);
+          }
+
+          expression.push(map[bindName]);
+        }
+        else
+        {
+          if (parts[j])
+            expression.push(untoken(parts[j]));
+        }
+
+      return [names, expression];
+    }
+
     function processAttr(name, value){
-      function buildExpression(parts){
-        var bindName;
-        var names = [];
-        var expression = [];
-        var map = {};
-
-        for (var j = 0; j < parts.length; j++)
-          if (j % 2)
-          {
-            bindName = parts[j];
-
-            if (!map[bindName])
-            {
-              map[bindName] = names.length;
-              names.push(bindName);
-            }
-
-            expression.push(map[bindName]);
-          }
-          else
-          {
-            if (parts[j])
-              expression.push(untoken(parts[j]));
-          }
-
-        return [names, expression];
-      }
-
       var bindings = 0;
       var parts;
       var m;
@@ -592,7 +702,7 @@
                 var valueParts = value.split(STYLE_ATTR_BINDING);
                 if (valueParts.length > 1)
                 {
-                  var expr = buildExpression(valueParts);
+                  var expr = buildAttrExpression(valueParts);
                   expr.push(propertyName);
                   bindings.push(expr);
                 }
@@ -614,7 +724,7 @@
           default:
             parts = value.split(ATTR_BINDING);
             if (parts.length > 1)
-              bindings = buildExpression(parts);
+              bindings = buildAttrExpression(parts);
             else
               value = untoken(value);
         }
@@ -633,6 +743,8 @@
     function attrs(token, declToken, optimizeSize){
       var attrs = token.attrs;
       var result = [];
+      var styleAttr;
+      var display;
       var m;
 
       for (var i = 0, attr; attr = attrs[i]; i++)
@@ -646,7 +758,12 @@
               var refs = (attr.value || '').trim().split(/\s+/);
               for (var j = 0; j < refs.length; j++)
                 addTokenRef(declToken, refs[j]);
-            break;
+              break;
+
+            case 'show':
+            case 'hide':
+              display = attr;
+              break;
           }
 
           continue;
@@ -673,7 +790,30 @@
         if (parsed.value && (!optimizeSize || !parsed.binding || parsed.type != 2))
           item.push(parsed.value);
 
+        if (parsed.type == TYPE_ATTRIBUTE_STYLE)
+          styleAttr = item;
+
         result.push(item);
+      }
+
+      if (display)
+      {
+        if (!styleAttr)
+        {
+          styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
+          result.push(styleAttr);
+        }
+
+        if (!styleAttr[1])
+          styleAttr[1] = [];
+
+        if (display.name == 'show')
+          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
+
+        styleAttr[1].push(
+          buildAttrExpression(display.value.split(ATTR_BINDING))
+            .concat('display', display.name)
+        );
       }
 
       return result.length ? result : 0;
@@ -725,16 +865,39 @@
         arrayAdd(array, items[i]);
     }
 
-    function unshiftUnique(array, items){
-      for (var i = 0; i < items.length; i++)
-        if (array.indexOf(items[i]) == -1)
-          array.unshift(items[i]);
+    function addResources(array, items, prefix){
+      for (var i = 0, item; item = items[i]; i++)
+      {
+        item[1] = prefix + item[1];
+        array.unshift(item);
+      }
+    }
+
+    function addResource(template, token, src, isolatePrefix){
+      if (src)
+      {
+        /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(src))
+        /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+        template.resources.push([
+          path.resolve(template.baseURI + src),
+          isolatePrefix
+        ]);
+      }
+      else
+      {
+        var text = token.childs[0];
+        template.resources.push([
+          basis.resource.virtual('css', text ? text.value : '').url,
+          isolatePrefix
+        ]);
+      }
     }
 
     //
     // main function
     //
-    function process(tokens, template, options){
+    function process(tokens, template, options, context){
 
       function modifyAttr(token, name, action){
         var attrs = tokenAttrs(token);
@@ -875,7 +1038,7 @@
                             if (typeof value == 'number')
                               value = attrBindings[0].indexOf(parsed.binding[0][value]);
 
-                            attrBindings[1].push(value)
+                            attrBindings[1].push(value);
                           }
                       }
                     }
@@ -944,18 +1107,15 @@
                   /** @cut */ if (token.name == 'resource')
                   /** @cut */   basis.dev.warn('<b:resource> is deprecated and will be removed in next minor release. Use <b:style> instead.' + (template.sourceUrl ? ' File: ' + template.sourceUrl : ''));
 
-                  if (elAttrs.src)
-                  {
-                    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
-                    /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+                  addResource(template, token, elAttrs.src, (context && context.isolate) || '');
+                break;
 
-                    template.resources.push(path.resolve(template.baseURI + elAttrs.src));
-                  }
-                  else
-                  {
-                    var text = token.childs[0];
-                    template.resources.push(basis.resource.virtual('css', text ? text.value : '').url);
-                  }
+                case 'isolate':
+                  if (!template.isolate)
+                    template.isolate = elAttrs.prefix || options.isolate || genIsolateMarker();
+
+                  /** @cut */ else
+                  /** @cut */   basis.dev.warn('<b:isolate> is set already to `' + template.isolate + '`');
                 break;
 
                 case 'l10n':
@@ -1043,6 +1203,7 @@
                     // prevent recursion
                     if (includeStack.indexOf(resource) == -1)
                     {
+                      var isolatePrefix = 'isolate' in elAttrs ? elAttrs.isolate || genIsolateMarker() : '';
                       var decl;
 
                       if (!isDocumentIdRef)
@@ -1062,7 +1223,7 @@
                       }
 
                       if (decl.resources && 'no-style' in elAttrs == false)
-                        unshiftUnique(template.resources, decl.resources);
+                        addResources(template.resources, decl.resources, isolatePrefix);
 
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
@@ -1119,6 +1280,10 @@
                         {
                           switch (child.name)
                           {
+                            case 'style':
+                              addResource(template, child, tokenAttrs(child).src, isolatePrefix);
+                              break;
+
                             case 'replace':
                             case 'remove':
                             case 'before':
@@ -1219,6 +1384,14 @@
 
                       if (tokenRefMap.element)
                         removeTokenRef(tokenRefMap.element.token, 'element');
+
+                      // isolate
+                      if (isolatePrefix)
+                        isolateTokens(decl.tokens, isolatePrefix);
+                      else
+                        // inherit isolate from nested template
+                        if (decl.isolate && !template.isolate)
+                          template.isolate = options.isolate || genIsolateMarker();
 
                       //resources.push.apply(resources, tokens.resources);
                       result.push.apply(result, decl.tokens);
@@ -1412,13 +1585,15 @@
 
       for (var i = stIdx || 0, token; token = tokens[i]; i++)
       {
-        if (token[TOKEN_TYPE] == TYPE_ELEMENT)
+        var tokenType = token[TOKEN_TYPE];
+
+        if (tokenType == TYPE_ELEMENT)
           unpredictable += applyDefines(token, template, options, ELEMENT_ATTRS);
 
-        if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_CLASS || (token[TOKEN_TYPE] == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
+        if (tokenType == TYPE_ATTRIBUTE_CLASS || (tokenType == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
         {
           var bindings = token[TOKEN_BINDINGS];
-          var valueIdx = ATTR_VALUE - (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_CLASS);
+          var valueIdx = ATTR_VALUE_INDEX[tokenType];
 
           if (bindings)
           {
@@ -1462,6 +1637,37 @@
       return unpredictable;
     }
 
+    function isolateTokens(tokens, isolate, stIdx){
+      function processName(name){
+        var parts = name.split(':');
+        return parts.length == 1 ? isolate + parts[0] : parts[1];
+      }
+
+      for (var i = stIdx || 0, token; token = tokens[i]; i++)
+      {
+        var tokenType = token[TOKEN_TYPE];
+
+        if (tokenType == TYPE_ELEMENT)
+          isolateTokens(token, isolate, ELEMENT_ATTRS);
+
+        if (tokenType == TYPE_ATTRIBUTE_CLASS || (tokenType == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
+        {
+          var bindings = token[TOKEN_BINDINGS];
+          var valueIndex = ATTR_VALUE_INDEX[tokenType];
+
+          if (token[valueIndex])
+            token[valueIndex] = token[valueIndex]
+              .split(/\s+/)
+              .map(processName)
+              .join(' ');
+
+          if (bindings)
+            for (var k = 0, bind; bind = bindings[k]; k++)
+              bind[0] = processName(bind[0]);
+        }
+      }
+    }
+
     return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
       options = options || {};
       var warns = [];
@@ -1477,7 +1683,8 @@
         /** @cut for token type change in dev mode */ l10n: [],
         defines: {},
         unpredictable: true,
-        warns: warns
+        warns: warns,
+        isolate: false
       };
 
       // resolve l10n dictionary url
@@ -1498,12 +1705,10 @@
         /** @cut */ source_ = source;
         source = tokenize(String(source));
       }
-      else
-      {
-        // add tokenizer warnings if any
-        if (source.warns)
-          warns.push.apply(warns, source.warns);
-      }
+
+      // add tokenizer warnings if any
+      if (source.warns)
+        warns.push.apply(warns, source.warns);
 
       // prevent recursion
       if (sourceOrigin)
@@ -1531,6 +1736,55 @@
       // deal with defines
       result.unpredictable = !!applyDefines(result.tokens, result, options);
 
+      /** @cut */ if (/^[^a-z]/i.test(result.isolate))
+      /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, otherwise it leads to incorrect css class names and broken styles');
+
+      if (includeStack.length == 0)
+      {
+        if (result.isolate)
+        {
+          isolateTokens(result.tokens, result.isolate);
+          for (var i = 0, item; item = result.resources[i]; i++)
+            item[1] = result.isolate + item[1];
+        }
+
+        result.resources = result.resources
+          // remove duplicates
+          .filter(function(item, idx, array){
+            return !basis.array.search(array, String(item), String, idx + 1);
+          })
+          // isolate
+          .map(function(item){
+            var url = item[0];
+            var isolate = item[1];
+
+            if (!isolate)
+              return url;
+
+            var resource = basis.resource.virtual('css', '').ready(function(cssResource){
+              sourceResource();
+              basis.object.extend(cssResource, {
+                url: url + '?isolate-prefix=' + isolate,
+                baseURI: basis.path.dirname(url) + '/'
+              });
+            });
+
+            var sourceResource = basis.resource(url).ready(function(cssResource){
+              var cssText = isolateCss(cssResource.cssText || '', isolate);
+
+              /** @cut */ if (typeof btoa == 'function')
+              /** @cut */   cssText += '\n/*# sourceMappingURL=data:application/json;base64,' +
+              /** @cut */     btoa('{"version":3,"sources":["' + basis.path.origin + url + '"],' +
+              /** @cut */     '"mappings":"AAAA' + basis.string.repeat(';AACA', cssText.split('\n').length) +
+              /** @cut */     '"}') + ' */';
+
+              resource.update(cssText);
+            });
+
+            return resource.url;
+          });
+      }
+
       /** @cut */ for (var key in result.defines)
       /** @cut */   if (!result.defines[key].used)
       /** @cut */     warns.push('Unused define for ' + key);
@@ -1546,24 +1800,22 @@
     };
   })();
 
-  //
-  //
-  //
 
-  var usableResources = {
-    '.css': true
-  };
+  //
+  //
+  //
 
   function startUseResource(uri){
-    if (usableResources[path.extname(uri)])
-      basis.resource(uri)().startUse();
+    var resource = basis.resource(uri).fetch();
+    if (typeof resource.startUse == 'function')
+      resource.startUse();
   }
 
   function stopUseResource(uri){
-    if (usableResources[path.extname(uri)])
-      basis.resource(uri)().stopUse();
+    var resource = basis.resource(uri).fetch();
+    if (typeof resource.stopUse == 'function')
+      resource.stopUse();
   }
-
 
 
  /**
@@ -1652,7 +1904,7 @@
   * @func
   */
   function buildTemplate(){
-    var decl = getDeclFromSource(this.source, this.baseURI);
+    var decl = getDeclFromSource(this.source, this.baseURI, false, { isolate: this.getIsolatePrefix() });
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens, this);  // makeFunctions
     var deps = this.deps_;
@@ -1886,6 +2138,15 @@
     * @param {object=} tmpl Storage of DOM references.
     */
     clearInstance: function(tmpl){
+    },
+
+   /**
+    * Returns base isolation prefix for template's content. Use it only if template content use <b:isolate>.
+    * Template could overload it by `prefix` attribute in <b:isolate> tag.
+    * @return {string} Isolation prefix.
+    */
+    getIsolatePrefix: function(){
+      return 'i' + this.templateId + '__';
     },
 
     getBinding: function(bindings){
@@ -2730,6 +2991,7 @@
 
     // for debug purposes
     tokenize: tokenize,
+    isolateCss: isolateCss,
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     getL10nTemplate: getL10nTemplate,

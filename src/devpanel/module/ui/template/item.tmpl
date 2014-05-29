@@ -1,0 +1,22 @@
+<b:style src="./item.css"/>
+<b:isolate/>
+
+<div class="item">
+  <div class="title" event-click="toggle" event-mouseenter="enter" event-mouseleave="leave">
+    <div b:show="{nestedViewCount}" class="expander"/>
+    <span b:show="{satelliteName}" class="satelliteName">
+      {satelliteName}
+    </span>
+    <span b:show="{namespace}" class="namespace">
+      {namespace}.
+    </span>
+    {name}
+    <span class="id">
+      #{id}
+    </span>
+    <span b:show="{nestedViewCount}" class="count">
+      {nestedViewCount}
+    </span>
+  </div>
+  <div{childNodesElement} class="content"/>
+</div>

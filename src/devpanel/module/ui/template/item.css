@@ -1,0 +1,59 @@
+.title
+{
+  padding: 3px 2px 4px 18px;
+  position: relative;
+  font-size: 12px;
+}
+.title:hover
+{
+  background: rgba(0,0,0,.1);
+  cursor: pointer;
+}
+
+.expander
+{
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #AAA;
+  background: #CCC;
+  border-radius: 2px;
+}
+
+.satelliteName
+{
+  display: none;
+  padding: 1px 5px 2px;
+  margin: 0 1ex 0 -2px;
+  background: #AD0;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.namespace
+{
+  color: #777;
+  font-size: 11px;
+}
+
+.id
+{
+  color: #069;
+  padding-left: 1ex;
+}
+
+.count
+{
+  margin-left: 1ex;
+  background: #DDD;
+  padding: 1px 4px;
+  font-size: 11px;
+  border-radius: 3px;
+}
+
+.content
+{
+  padding-left: 20px;
+}

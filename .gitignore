@@ -16,3 +16,6 @@ build/
 temp/
 tmp/
 test/lib/
+
+# dev
+.idea

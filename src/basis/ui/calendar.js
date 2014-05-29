@@ -194,23 +194,19 @@
       title: {
         events: 'periodChanged',
         getter: function(node){
-          return PERIOD_TITLE[node.nodePeriodName](node);
+          return node.parentNode && PERIOD_TITLE[node.nodePeriodName](node);
         }
       },
       before: {
         events: 'periodChanged',
         getter: function(node){
-          return node.parentNode && node.periodStart < node.parentNode.periodStart
-            ? 'before'
-            : '';
+          return node.parentNode && node.periodStart < node.parentNode.periodStart;
         }
       },
       after: {
         events: 'periodChanged',
         getter: function(node){
-          return node.parentNode && node.periodEnd > node.parentNode.periodEnd
-            ? 'after'
-            : '';
+          return node.parentNode && node.periodEnd > node.parentNode.periodEnd;
         }
       }
     },
@@ -223,16 +219,16 @@
       }
     },
 
+    isPeriodEnabled: function(){
+      return true;
+    },
     setPeriod: function(period, selectedDate, rebuild){
       if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
         this.periodStart = period.periodStart;
         this.periodEnd = period.periodEnd;
 
-        if (this.isPeriodEnabled(this.periodStart, this.periodEnd))
-          this.enable();
-        else
-          this.disable();
+        this.setDisabled(!this.isPeriodEnabled(this.periodStart, this.periodEnd));
 
         if (selectedDate)
         {
@@ -247,17 +243,31 @@
     }
   });
 
-  function getPeriods(){
+  function getPeriods(section){
     // update nodes
-    var nodePeriod = getPeriod(this.nodePeriodName, basis.date.add(new Date(this.periodStart), this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(this.periodStart) || 0)));
     var result = [];
+    var nodePeriod = getPeriod(
+      section.nodePeriodName,
+      basis.date.add(
+        new Date(section.periodStart),
+        section.nodePeriodUnit,
+        -section.nodePeriodUnitCount * section.getInitOffset(section.periodStart)
+      )
+    );
 
-    for (var i = 0; i < this.nodeCount; i++)
+    for (var i = 0; i < section.nodeCount; i++)
     {
       result.push(nodePeriod);
 
       // move to next period
-      nodePeriod = getPeriod(this.nodePeriodName, basis.date.add(new Date(nodePeriod.periodStart), this.nodePeriodUnit, this.nodePeriodUnitCount));
+      nodePeriod = getPeriod(
+        section.nodePeriodName,
+        basis.date.add(
+          new Date(nodePeriod.periodStart),
+          section.nodePeriodUnit,
+          section.nodePeriodUnitCount
+        )
+      );
     }
 
     return result;
@@ -273,19 +283,18 @@
     emit_selectedDateChanged: createEvent('selectedDateChanged'),
 
     template: module.template('Section'),
-
     binding: {
       sectionName: 'sectionName',
       title: {
         events: 'periodChanged',
         getter: function(node){
-          return node.getTitle(node.periodStart) || '-';
+          return node.getTitle(node.periodStart);
         }
       },
       tabTitle: {
         events: 'selectedDateChanged',
         getter: function(node){
-          return node.getTabTitle(node.selectedDate) || '-';
+          return node.getTabTitle(node.selectedDate);
         }
       }
     },
@@ -293,12 +302,60 @@
     childClass: CalendarNode,
 
     // dates
-
     minDate: null,
     maxDate: null,
 
     periodStart: null,
     periodEnd: null,
+    selectedDate: null,
+
+    // period
+
+    isPrevPeriodEnabled: true,
+    isNextPeriodEnabled: true,
+
+    periodName: 'period',
+
+    // nodes properties
+
+    nodeCount: 12,
+    nodePeriodName: '-',
+    nodePeriodUnit: '-',
+    nodePeriodUnitCount: 1,
+
+    selection: true,
+
+    init: function(){
+      this.childNodes = getPeriods(this).map(function(period){
+        return {
+          nodePeriodName: this.nodePeriodName
+        };
+      }, this);
+
+      UINode.prototype.init.call(this);
+
+      var selectedDate = this.selectedDate || new Date;
+      this.selectedDate = null;
+      this.setViewDate(selectedDate);
+      this.setSelectedDate(selectedDate);
+    },
+
+    // nodes methods
+
+    getNodeByDate: function(date){
+      if (date && this.periodStart <= date && date <= this.periodEnd)
+      {
+        var pos = binarySearchIntervalPos(this.childNodes, date);
+        if (pos != -1)
+          return this.childNodes[pos];
+      }
+
+      return null;
+    },
+
+    isPeriodEnabled: function(){
+      return true;
+    },
     setPeriod: function(period, rebuild){
       if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
@@ -308,7 +365,7 @@
         this.periodStart = period.periodStart;
         this.periodEnd = period.periodEnd;
 
-        var periods = getPeriods.call(this);
+        var periods = getPeriods(this);
 
         this.minDate = periods[0].periodStart;
         this.maxDate = periods[periods.length - 1].periodEnd;
@@ -321,7 +378,6 @@
       }
     },
 
-    selectedDate: null,
     setSelectedDate: function(date){
       if (this.selectedDate - date)
       {
@@ -341,61 +397,6 @@
 
         this.emit_selectedDateChanged(oldSelectedDate);
       }
-    },
-
-    // period
-
-    isPrevPeriodEnabled: true,
-    isNextPeriodEnabled: true,
-
-    periodName: 'period',
-
-    // nodes properties
-
-    nodeCount: 12,
-    nodePeriodName: '-',
-    nodePeriodUnit: '-',
-    nodePeriodUnitCount: 1,
-
-    selection: true,
-
-    init: function(){
-      var selectedDate = this.selectedDate || new Date;
-      this.selectedDate = null;
-
-      this.setViewDate(selectedDate);
-
-      this.childNodes = getPeriods.call(this).map(function(period){
-        return {
-          isPeriodEnabled: this.isPeriodEnabled,
-          disabled: !this.isPeriodEnabled(period.periodStart, period.periodEnd),
-          nodePeriodName: this.nodePeriodName,
-          periodStart: period.periodStart,
-          periodEnd: period.periodEnd
-        };
-      }, this);
-
-      UINode.prototype.init.call(this);
-
-      this.setSelectedDate(selectedDate);
-    },
-
-    getTitle: function(){
-    },
-    getTabTitle: function(){
-    },
-
-    // nodes methods
-
-    getNodeByDate: function(date){
-      if (date && this.periodStart <= date && date <= this.periodEnd)
-      {
-        var pos = binarySearchIntervalPos(this.childNodes, date);
-        if (pos != -1)
-          return this.childNodes[pos];
-      }
-
-      return null;
     },
 
     prevPeriod: function(){
@@ -418,6 +419,14 @@
 
     // bild methods
     getInitOffset: function(){
+      return 0;
+    },
+
+    getTitle: function(){
+      return '-';
+    },
+    getTabTitle: function(){
+      return '-';
     }
   });
 
@@ -575,8 +584,13 @@
       if (delta.inserted)
         for (var i = 0, section; section = delta.inserted[i++];)
         {
+          section.isPeriodEnabled = this.isPeriodEnabled;
+          section.childNodes.forEach(function(child){
+            child.isPeriodEnabled = this.isPeriodEnabled;
+          }, this);
           section.setViewDate(this.date.value);
           this.selectedDate.link(section, section.setSelectedDate);
+          section.rebuild();
         }
 
       if (delta.deleted)
@@ -635,11 +649,23 @@
 
     selection: true,
     childClass: CalendarSection,
-    childFactory: function(){
+    childFactory: function(nameOrClass){
+      var SectionClass = nameOrClass;
+
+      if (typeof nameOrClass == 'string')
+        SectionClass = CalendarSection[nameOrClass];
+
+      if (!basis.Class.isClass(SectionClass) || !SectionClass.isSubclassOf(CalendarSection))
+      {
+        /** @cut */ basis.dev.warn(nameOrClass + ' is not a valid value for child of basis.ui.calendat.Calendar');
+        return;
+      }
+
+      return new SectionClass();
     },
 
     date: null,
-    sections: ['Month', 'Year', 'YearDecade'], /*'Quarter', 'YearQuarters', 'Century'*/
+    childNodes: ['Month', 'Year', 'YearDecade'], /*'Quarter', 'YearQuarters', 'Century'*/
 
     // enable/disable periods
     minDate: null,
@@ -658,18 +684,17 @@
       this.selectedDate = new Value({ value: new Date(this.date || now) });
       this.date = new Value({ value: new Date(this.date || now) });
 
+      // insert sections
+      this.isPeriodEnabled = this.isPeriodEnabled.bind(this);
+
       // inherit
       UINode.prototype.init.call(this);
 
-      // insert sections
-      this.isPeriodEnabled = this.isPeriodEnabled.bind(this);
       if (this.sections)
-        this.setChildNodes(this.sections.map(function(sectionClass){
-          return new CalendarSection[sectionClass]({
-            isPeriodEnabled: this.isPeriodEnabled,
-            selectedDate: this.selectedDate.value
-          });
-        }, this));
+      {
+        /** @cut */ basis.dev.warn('basis.ui.calendar.Calendar#sections is deprecated, use childNodes instead');
+        this.setChildNodes(this.sections);
+      }
     },
 
     setMinDate: function(date){
@@ -713,7 +738,7 @@
     // date change
     selectDate: function(date){
       if (date - this.date.value != 0)  // test for date equal
-        basis.date.set(this.date, date);
+        this.date.set(new Date(date));
     },
 
     //

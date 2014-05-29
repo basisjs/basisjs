@@ -44,7 +44,6 @@ module.exports = {
       };
     })();
 
-    var nsData = basis.data;
     var DataObject = basis.data.Object;
     var Dataset = basis.data.Dataset;
     var SourceDataset = basis.data.dataset.SourceDataset;
@@ -52,7 +51,7 @@ module.exports = {
 
   test: [
     {
-      name: 'Common',
+      name: 'Accumulate events',
       test: [
         {
           name: 'accumulate events and updates',
@@ -62,12 +61,12 @@ module.exports = {
             var insertDoubles = 0;
             var deleteDoubles = 0;
 
-            var items = basis.data.wrap(basis.array.create(10, function(i){ return i <= 5 ? i : 100 }), true);
+            var items = basis.data.wrap(basis.array.create(10, function(i){ return i <= 5 ? i : 100; }), true);
             var dataset = new basis.data.Dataset({
               items: items
             });
 
-            var subset = new basis.data.dataset.Subset({
+            var subset = new basis.data.dataset.Filter({
               source: dataset,
               rule: function(obj){
                 return obj.data.value % 2;
@@ -107,12 +106,12 @@ module.exports = {
             var insertDoubles = 0;
             var deleteDoubles = 0;
 
-            var items = basis.data.wrap(basis.array.create(10, function(i){ return i <= 5 ? i : 100 }), true);
+            var items = basis.data.wrap(basis.array.create(10, function(i){ return i <= 5 ? i : 100; }), true);
             var dataset = new basis.data.Dataset({
               items: items
             });
 
-            var subset = new basis.data.dataset.Subset({
+            var subset = new basis.data.dataset.Filter({
               source: dataset,
               rule: function(obj){
                 return obj.data.value % 2;
@@ -145,113 +144,217 @@ module.exports = {
           }
         },
         {
-          name: 'Slice order',
+          name: 'merge insert events',
           test: function(){
-            var sliceSort = function(a, b){
-              return +(a.value > b.value) || -(a.value < b.value) || (a.object.basisObjectId - b.object.basisObjectId);
-            };
-            var sliceMap = function(array){
-              return array.map(function(item){
-                return item.value + '/' + item.object.basisObjectId;
-              });
-            };
+            var dataset = new basis.data.Dataset();
+
+            basis.data.Dataset.setAccumulateState(true);
+            dataset.add(new basis.data.Object());
+            assert(dataset.getItems().length == 0);
+            dataset.add(new basis.data.Object());
+            assert(dataset.getItems().length == 0);
+            basis.data.Dataset.setAccumulateState(false);
+
+            assert(dataset.getItems().length == 2);
+
+            basis.data.Dataset.setAccumulateState(true);
+            dataset.add(new basis.data.Object());
+            assert(dataset.getItems().length == 2);
+            dataset.add(new basis.data.Object());
+            assert(dataset.getItems().length == 2);
+            basis.data.Dataset.setAccumulateState(false);
+
+            assert(dataset.getItems().length == 4);
+          }
+        },
+        {
+          name: 'merge inserted->deleted events',
+          test: function(){
+            var dataset = new basis.data.Dataset();
+            var a = new basis.data.Object();
+            var b = new basis.data.Object();
+            var c = new basis.data.Object();
+
+            basis.data.Dataset.setAccumulateState(true);
+            dataset.add([a, b, c]);
+            assert(dataset.getItems().length == 0);
+            dataset.remove([a, c]);
+            assert(dataset.getItems().length == 0);
+            basis.data.Dataset.setAccumulateState(false);
+
+            assert(dataset.getItems().length == 1);
+            assert(dataset.has(b));
+            assert(dataset.pick() === b);
+
+            basis.data.Dataset.setAccumulateState(true);
+            dataset.add([a, b, c]);
+            assert(dataset.getItems().length == 1);
+            dataset.remove(b);
+            assert(dataset.getItems().length == 1);
+            basis.data.Dataset.setAccumulateState(false);
+
+            assert(dataset.getItems().length == 2);
+            assert(dataset.has(a));
+            assert(dataset.has(c));
+          }
+        },
+        {
+          name: 'merge deleted->inserted events',
+          test: function(){
+            var a = new basis.data.Object();
+            var b = new basis.data.Object();
+            var c = new basis.data.Object();
+            var dataset = new basis.data.Dataset({
+              items: [a, b, c]
+            });
+
+            basis.data.Dataset.setAccumulateState(true);
+            dataset.remove([a, b, c]);
+            assert(dataset.getItems().length == 3);
+            dataset.add([b]);
+            assert(dataset.getItems().length == 3);
+            basis.data.Dataset.setAccumulateState(false);
+
+            assert(dataset.getItems().length == 1);
+            assert(dataset.has(b));
+            assert(dataset.pick() === b);
+
+            basis.data.Dataset.setAccumulateState(true);
+            dataset.remove(b);
+            assert(dataset.getItems().length == 1);
+            dataset.add([a, c]);
+            assert(dataset.getItems().length == 1);
+            basis.data.Dataset.setAccumulateState(false);
+
+            assert(dataset.getItems().length == 2);
+            assert(dataset.has(a));
+            assert(dataset.has(c));
+          }
+        },
+        {
+          name: 'mixed events flush on third',
+          test: function(){
+            var a = new basis.data.Object();
+            var b = new basis.data.Object();
+            var c = new basis.data.Object();
+            var d = new basis.data.Object();
+            var dataset = new basis.data.Dataset({ items: [d] });
+
+            basis.data.Dataset.setAccumulateState(true);
+            dataset.add([a, b, c]);
+            assert(dataset.getItems().length == 1);
+            dataset.remove([a, d]);
+            assert(dataset.getItems().length == 1);
+            dataset.add(a);
+            assert(dataset.getItems().length == 3);
+            dataset.add(c);
+            assert(dataset.getItems().length == 3);
+            basis.data.Dataset.setAccumulateState(false);
+
+            assert(dataset.getItems().length == 3);
+
+            ///
 
             var dataset = new basis.data.Dataset({
-              items: basis.array.create(10, function(v){
-                return new basis.data.Object({
-                  data: { value: v % 3 }
-                })
-              })
+              items: [a, b, c]
             });
 
-            var slice = new basis.data.dataset.Slice({
-              source: dataset,
-              limit: 3,
-              rule: 'data.value'
-            });
+            basis.data.Dataset.setAccumulateState(true);
+            dataset.remove([a, b, c]);
+            assert(dataset.getItems().length == 3);
+            dataset.add([a, d]);
+            assert(dataset.getItems().length == 3);
+            dataset.remove(a);
+            assert(dataset.getItems().length == 1);
+            dataset.remove(d);
+            assert(dataset.getItems().length == 1);
+            basis.data.Dataset.setAccumulateState(false);
 
-            // check index on create
-            this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
-
-            // update items
-            dataset.forEach(function(item){
-              item.update({
-                value: item.data.value + 10
-              })
-            });
-
-            this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
-
-            // random item update
-            slice.index_[9].object.update({ value: 10 });
-            this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
-
-            // set 1 value to every item
-            var items = dataset.getItems().slice(0);
-            items.forEach(function(item){
-              item.update({ value: 1 });
-            });
-
-            // check correct sorting and all index value must be 1
-            this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
-            this.is(basis.array.create(10, 1), slice.index_.map(function(i){ return i.value }));
-
-            // set 2 value to every item in random order
-            var i = 3;
-            items
-              .sort(function(a, b){
-                return a.basisObjectId * ((i += 111) % 19) - b.basisObjectId * ((i += 113) % 13);
-              })
-              .forEach(function(item){
-                item.update({ value: 2 });
-              });
-
-            // correct sorting and all index value must be 2
-            this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
-            this.is(basis.array.create(10, 2), slice.index_.map(function(i){ return i.value }));
+            assert(dataset.getItems().length == 0);
           }
-        }
-      ]
-    },
-    {
-      name: 'SourceDataset',
-      test: [
+        },
         {
-          name: 'source and active',
-          test: function(){
-            var warn = basis.dev.warn;
-            var warning = false;
-            var dataset = new Dataset();
-            var sourceDataset = new SourceDataset({
-              active: true,
-              source: dataset
-            });
+          name: 'edge cases: empty inserted/deleted on mixed events should not to flush',
+          test: [
+            {
+              name: 'edge case: empty inserted/deleted on mixed events should not to flush',
+              test: function(){
+                var dataset = new basis.data.Dataset();
+                var a = new basis.data.Object();
+                var b = new basis.data.Object();
+                var c = new basis.data.Object();
 
-            try {
-              basis.dev.warn = function(message){
-                warning = message;
-              };
+                basis.data.Dataset.setAccumulateState(true);
+                dataset.add([a, b, c]);
+                assert(dataset.getItems().length == 0);
+                dataset.remove([a, b, c]);
+                assert(dataset.getItems().length == 0);
+                dataset.add([a, b, c]);
+                assert(dataset.getItems().length == 0);
+                basis.data.Dataset.setAccumulateState(false);
 
-              this.is(1, dataset.debug_handlers().length);
-              this.is(1, sourceDataset.debug_handlers().length);
+                assert(dataset.getItems().length == 3);
 
-              sourceDataset.setSource();
-              this.is(0, dataset.debug_handlers().length);
-              this.is(1, sourceDataset.debug_handlers().length);
+                ///
 
-              sourceDataset.setSource(dataset);
-              this.is(1, dataset.debug_handlers().length);
-              this.is(1, sourceDataset.debug_handlers().length);
+                var dataset = new basis.data.Dataset({
+                  items: [a, b, c]
+                });
 
-              sourceDataset.setActive(false);
-              this.is(1, dataset.debug_handlers().length);
-              this.is(0, sourceDataset.debug_handlers().length);
-            } finally {
-              basis.dev.warn = warn;
+                basis.data.Dataset.setAccumulateState(true);
+                dataset.remove([a, b, c]);
+                assert(dataset.getItems().length == 3);
+                dataset.add([a, b, c]);
+                assert(dataset.getItems().length == 3);
+                dataset.remove([a, b, c]);
+                assert(dataset.getItems().length == 3);
+                basis.data.Dataset.setAccumulateState(false);
+
+                assert(dataset.getItems().length == 0);
+              }
+            },
+            {
+              name: 'edge case: empty inserted/deleted on mixed events -> no events',
+              test: function(){
+                var dataset = new basis.data.Dataset();
+                var a = new basis.data.Object();
+                var b = new basis.data.Object();
+                var c = new basis.data.Object();
+
+                basis.data.Dataset.setAccumulateState(true);
+                dataset.add([a, b, c]);
+                assert(dataset.getItems().length == 0);
+                dataset.remove(a);
+                assert(dataset.getItems().length == 0);
+                dataset.remove(b);
+                assert(dataset.getItems().length == 0);
+                dataset.remove(c);
+                basis.data.Dataset.setAccumulateState(false);
+
+                assert(dataset.getItems().length == 0);
+                assert(eventCount(dataset, 'itemsChanged') == 0);
+
+                ///
+
+                var dataset = new basis.data.Dataset({
+                  items: [a, b, c]
+                });
+
+                basis.data.Dataset.setAccumulateState(true);
+                dataset.remove([a, b, c]);
+                assert(dataset.getItems().length == 3);
+                dataset.add(a);
+                assert(dataset.getItems().length == 3);
+                dataset.add(b);
+                assert(dataset.getItems().length == 3);
+                dataset.add(c);
+                basis.data.Dataset.setAccumulateState(false);
+
+                assert(dataset.getItems().length == 3);
+                assert(eventCount(dataset, 'itemsChanged') == 1); // single event on items add on init
+              }
             }
-
-            this.is(false, warning);
-          }
+          ]
         }
       ]
     },
@@ -513,7 +616,7 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
               }
             };
             var dataset = new basis.data.Dataset();
@@ -542,7 +645,7 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
               }
             };
             var dataset = new basis.data.Dataset();
@@ -573,7 +676,7 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
               }
             };
             var dataset = new basis.data.Dataset();
@@ -590,7 +693,7 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
               }
             };
             var dataset = new basis.data.Dataset();
@@ -599,19 +702,19 @@ module.exports = {
 
             obj.setDataset(token);
             this.is(true, obj.dataset === dataset);
-            this.is(true, obj.test.source === basis.data.Value.from(token));
+            this.is(true, obj.test.source === token);
 
             token.set(dataset2);
             this.is(true, obj.dataset === dataset2);
-            this.is(true, obj.test.source === basis.data.Value.from(token));
+            this.is(true, obj.test.source === token);
 
             token.set(null);
             this.is(true, obj.dataset === null);
-            this.is(true, obj.test.source === basis.data.Value.from(token));
+            this.is(true, obj.test.source === token);
 
             token.set(dataset2);
             this.is(true, obj.dataset === dataset2);
-            this.is(true, obj.test.source === basis.data.Value.from(token));
+            this.is(true, obj.test.source === token);
 
             obj.setDataset(null);
             this.is(true, obj.dataset === null);
@@ -627,7 +730,7 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test')
+                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
               }
             };
             var split = new basis.data.dataset.Split();

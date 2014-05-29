@@ -52,6 +52,7 @@
   //
 
   var eventAttr = /^event-(.+)+/;
+  var basisTemplateIdMarker = 'basisTemplateId_' + basis.genUID();
 
   // dictionaries
   var tmplEventListeners = {};
@@ -165,7 +166,7 @@
       // attribute found
       if (typeof attr == 'string')
       {
-        // search for nearest node with basisTemplateId property
+        // search for nearest node with basis template marker
         var cursor = attrCursor;
         var actionTarget = cursor;
         var refId;
@@ -180,7 +181,7 @@
 
         while (cursor)
         {
-          refId = cursor.basisTemplateId;
+          refId = cursor[basisTemplateIdMarker];
           if (typeof refId == 'number')
           {
             // if node found, return it
@@ -671,12 +672,12 @@
       var getter2 = getters[name2];
 
       switch (names.length) {
-        case 1: 
+        case 1:
           return function bindingUpdater1(object){
             this(name1, getter1(object));
           };
 
-        case 2: 
+        case 2:
           return function bindingUpdater2(object){
             this(name1, getter1(object));
             this(name2, getter2(object));
@@ -788,7 +789,7 @@
     };
 
     return function(tokens){
-      var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG);
+      var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG, basisTemplateIdMarker);
       var createInstance;
       var instances = {};
       var l10nMap = {};
@@ -931,6 +932,8 @@
   //
 
   module.exports = {
+    marker: basisTemplateIdMarker,
+
     Template: HtmlTemplate,
     TemplateSwitcher: HtmlTemplateSwitcher
   };

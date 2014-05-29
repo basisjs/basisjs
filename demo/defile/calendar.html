@@ -60,12 +60,13 @@
 
     var calendar = new basis.ui.calendar.Calendar({
       container: basis.dom.get('demo-container'),
-      sections: ['Month', 'Year', 'YearDecade']
+      childNodes: ['Month', 'Year', 'YearDecade'],
+      minDate: new Date
     });
 
     var calendar2 = new basis.ui.calendar.Calendar({
       container: basis.dom.get('demo-container'),
-      sections: ['Year', 'YearDecade']
+      childNodes: ['Year', 'YearDecade']
     });
 
   </script>

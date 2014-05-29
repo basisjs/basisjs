@@ -1,6 +1,6 @@
 
   function resolveGetter(getter){
-    if (getter.basisGetterId_ > 0)
+    if (getter[basis.getter.ID] > 0)
     {
       var result = 'getter(';
 

@@ -6,10 +6,15 @@
  /**
   * Namespace overview:
   * - Classes:
-  *   {basis.data.dataset.Merge}, {basis.data.dataset.Subtract},
-  *   {basis.data.dataset.MapFilter}, {basis.data.dataset.Subset},
-  *   {basis.data.dataset.Split}, {basis.data.dataset.Slice}
-  *   {basis.data.dataset.Cloud}
+  *   {basis.data.dataset.Merge},
+  *   {basis.data.dataset.Subtract},
+  *   {basis.data.dataset.SourceDataset},
+  *   {basis.data.dataset.MapFilter},
+  *   {basis.data.dataset.Filter},
+  *   {basis.data.dataset.Split},
+  *   {basis.data.dataset.Slice}
+  *   {basis.data.dataset.Cloud},
+  *   {basis.data.dataset.Extract}
   *
   * @see ./demo/defile/dataset.html
   *
@@ -41,6 +46,7 @@
   var ReadOnlyDataset = basis.data.ReadOnlyDataset;
   var Dataset = basis.data.Dataset;
   var DatasetWrapper = basis.data.DatasetWrapper;
+  var setAccumulateState = Dataset.setAccumulateState;
 
 
   //
@@ -106,7 +112,7 @@
   * @param {string|Array.<string>} events
   */
   function createRuleEvents(fn, events){
-    return (function createRuleEvents__extend__(events){
+    return (function createRuleEventsExtend(events){
       if (!events)
         return null;
 
@@ -121,7 +127,7 @@
       }
 
       return extend(basis.event.createHandler(events, fn), {
-        __extend__: createRuleEvents__extend__
+        __extend__: createRuleEventsExtend
       });
     })(events);
   }
@@ -308,11 +314,15 @@
         memberCounter = memberMap[objectId];
         isMember = sourceCount && memberCounter.count && rule(memberCounter.count, sourceCount);
 
-        if (isMember != !!this.items_[objectId])
-          (isMember
-            ? inserted // not in items -> insert
-            : deleted  // already in items -> delete
-          ).push(memberCounter.object);
+        if (isMember != objectId in this.items_)
+        {
+          if (isMember)
+            // not in items -> insert
+            inserted.push(memberCounter.object);
+          else
+            // already in items -> delete
+            deleted.push(memberCounter.object);
+        }
 
         if (memberCounter.count == 0)
           delete memberMap[objectId];
@@ -424,21 +434,25 @@
       // fire sources changes event
       if (delta = getDelta(inserted, deleted))
       {
-        if (merge.sourceDelta_)
+        var setSourcesTransaction = merge.sourceDelta_;
+        if (setSourcesTransaction)
         {
           if (delta.inserted)
             delta.inserted.forEach(function(source){
               if (!basis.array.remove(this.deleted, source))
                 basis.array.add(this.inserted, source);
-            }, merge.sourceDelta_);
+            }, setSourcesTransaction);
+
           if (delta.deleted)
             delta.deleted.forEach(function(source){
               if (!basis.array.remove(this.inserted, source))
                 basis.array.add(this.deleted, source);
-            }, merge.sourceDelta_);
+            }, setSourcesTransaction);
         }
         else
+        {
           merge.emit_sourcesChanged(delta);
+        }
       }
 
       return delta;
@@ -547,19 +561,17 @@
     },
 
    /**
-    * Remove all sources. All members are removing as side effect.
-    */
-    clear: function(){
-      this.setSources();
-    },
-
-   /**
     * @inheritDoc
     */
     destroy: function(){
+      this.setSources();
+
       // inherit
       ReadOnlyDataset.prototype.destroy.call(this);
 
+      this.sourceValues_ = null;
+      this.sourcesMap_ = null;
+      this.sourceDelta_ = null;
       this.sources = null;
     }
   });
@@ -627,7 +639,8 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      this.setOperands(null, this.subtrahend);
+      if (!this.minuendAdapter_)
+        this.setMinuend(null);
     }
   };
 
@@ -645,7 +658,8 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      this.setOperands(this.minuend, null);
+      if (!this.subtrahendAdapter_)
+        this.setSubtrahend(null);
     }
   };
 
@@ -667,6 +681,12 @@
     minuend: null,
 
    /**
+    * Minuend wrapper
+    * @type {basis.data.DatasetAdapter}
+    */
+    minuendAdapter_: null,
+
+   /**
     * Fires when minuend changed.
     * @param {basis.data.ReadOnlyDataset} oldMinuend Value of {basis.data.dataset.Subtract#minuend} before changes.
     * @event
@@ -677,6 +697,12 @@
     * @type {basis.data.ReadOnlyDataset}
     */
     subtrahend: null,
+
+   /**
+    * Subtrahend wrapper
+    * @type {basis.data.DatasetAdapter}
+    */
+    subtrahendAdapter_: null,
 
    /**
     * Fires when subtrahend changed.
@@ -721,11 +747,8 @@
       var delta;
       var operandsChanged = false;
 
-      if (minuend instanceof ReadOnlyDataset == false)
-        minuend = null;
-
-      if (subtrahend instanceof ReadOnlyDataset == false)
-        subtrahend = null;
+      minuend = basis.data.resolveDataset(this, this.setMinuend, minuend, 'minuendAdapter_');
+      subtrahend = basis.data.resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendAdapter_');
 
       var oldMinuend = this.minuend;
       var oldSubtrahend = this.subtrahend;
@@ -804,7 +827,10 @@
     * @return {Object} Delta if changes happend
     */
     setMinuend: function(minuend){
-      return this.setOperands(minuend, this.subtrahend);
+      return this.setOperands(
+        minuend,
+        this.subtrahendAdapter_ ? this.subtrahendAdapter_.source : this.subtrahend
+      );
     },
 
    /**
@@ -812,14 +838,19 @@
     * @return {Object} Delta if changes happend
     */
     setSubtrahend: function(subtrahend){
-      return this.setOperands(this.minuend, subtrahend);
+      return this.setOperands(
+        this.minuendAdapter_ ? this.minuendAdapter_.source : this.minuend,
+        subtrahend
+      );
     },
 
    /**
     * @inheritDoc
     */
-    clear: function(){
+    destroy: function(){
       this.setOperands();
+
+      ReadOnlyDataset.prototype.destroy.call(this);
     }
   });
 
@@ -911,6 +942,8 @@
         if (listenHandler)
         {
           var itemsChangedHandler = listenHandler.itemsChanged;
+          setAccumulateState(true);
+
           if (oldSource)
           {
             oldSource.removeHandler(listenHandler, this);
@@ -930,6 +963,7 @@
                 inserted: source.getItems()
               });
           }
+          setAccumulateState(false);
         }
 
         this.emit_sourceChanged(oldSource);
@@ -937,16 +971,11 @@
     },
 
    /**
-    * Drop dataset. All members are removing as side effect.
-    */
-    clear: function(){
-      this.setSource();
-    },
-
-   /**
     * @inheritDoc
     */
     destroy: function(){
+      this.setSource();
+
       // inherit
       ReadOnlyDataset.prototype.destroy.call(this);
 
@@ -1042,7 +1071,7 @@
       var member;
       var updateHandler = this.ruleEvents;
 
-      Dataset.setAccumulateState(true);
+      setAccumulateState(true);
 
       if (delta.inserted)
       {
@@ -1107,7 +1136,7 @@
         }
       }
 
-      Dataset.setAccumulateState(false);
+      setAccumulateState(false);
 
       if (delta = getDelta(inserted, deleted))
         this.emit_itemsChanged(delta);
@@ -1303,14 +1332,14 @@
 
 
   //
-  // Subset
+  // Filter
   //
 
  /**
   * @class
   */
-  var Subset = Class(MapFilter, {
-    className: namespace + '.Subset',
+  var Filter = Class(MapFilter, {
+    className: namespace + '.Filter',
 
    /**
     * @inheritDoc
@@ -1833,7 +1862,7 @@
       var inserted = [];
       var deleted = [];
 
-      Dataset.setAccumulateState(true);
+      setAccumulateState(true);
 
       if (array = delta.inserted)
         for (var i = 0, sourceObject; sourceObject = array[i]; i++)
@@ -1897,7 +1926,7 @@
             sourceObject.removeHandler(updateHandler, this);
         }
 
-      Dataset.setAccumulateState(false);
+      setAccumulateState(false);
 
       if (delta = getDelta(inserted, deleted))
         this.emit_itemsChanged(delta);
@@ -1985,10 +2014,276 @@
 
 
   //
+  // Extract
+  //
+
+  var EXTRACT_SOURCEOBJECT_UPDATE = function(sourceObject){
+    var sourceObjectInfo = this.sourceMap_[sourceObject.basisObjectId];
+    var newValue = this.rule(sourceObject) || null;
+    var oldValue = sourceObjectInfo.value;
+    var inserted;
+    var deleted;
+    var delta;
+
+    if (newValue === oldValue)
+      return;
+
+    if (newValue instanceof DataObject || newValue instanceof ReadOnlyDataset)
+      inserted = addToExtract(this, newValue, sourceObject);
+
+    if (oldValue)
+      deleted = removeFromExtract(this, oldValue, sourceObject);
+
+    // update value
+    sourceObjectInfo.value = newValue;
+
+    if (delta = getDelta(inserted, deleted))
+      this.emit_itemsChanged(delta);
+  };
+
+  var EXTRACT_DATASET_ITEMSCHANGED = function(dataset, delta){
+    var inserted = delta.inserted;
+    var deleted = delta.deleted;
+    var delta;
+
+    if (inserted)
+      inserted = addToExtract(this, inserted, dataset);
+
+    if (deleted)
+      deleted = removeFromExtract(this, deleted, dataset);
+
+    if (delta = getDelta(inserted, deleted))
+      this.emit_itemsChanged(delta);
+  };
+
+  var EXTRACT_DATASET_HANDLER = {
+    itemsChanged: EXTRACT_DATASET_ITEMSCHANGED,
+    destroy: function(dataset){
+      var sourceMap = this.sourceMap_;
+
+      // reset refences for destroyed dataset
+      for (var cursor = sourceMap[dataset.basisObjectId]; cursor = cursor.ref;)
+        sourceMap[cursor.object.basisObjectId].value = null;
+
+      // make sure dataset be deleted from source map
+      delete sourceMap[dataset.basisObjectId];
+    }
+  };
+
+  function hasExtractSourceRef(extract, object, marker){
+    var sourceObjectInfo = extract.sourceMap_[object.basisObjectId];
+
+    if (sourceObjectInfo && sourceObjectInfo.visited !== marker)
+    {
+      // use two loops as more efficient way, if object has a source reference
+      // going in deep is not required
+
+      // search for source reference
+      for (var cursor = sourceObjectInfo; cursor = cursor.ref;)
+        if (cursor.object === extract.source)
+          return true;
+
+      // object has no source object, go in deep
+      sourceObjectInfo.visited = marker; // mark object info by unique for search marker,
+                                         // to not check object more than once
+
+      // recursive search for source reference
+      for (var cursor = sourceObjectInfo; cursor = cursor.ref;)
+        if (hasExtractSourceRef(extract, cursor.object, marker || {}))
+          return true;
+    }
+  }
+
+  function addToExtract(extract, items, ref){
+    var sourceMap = extract.sourceMap_;
+    var members = extract.members_;
+    var queue = arrayFrom(items);
+    var inserted = [];
+
+    for (var i = 0; i < queue.length; i++)
+    {
+      var item = queue[i];
+      var sourceObjectId = item.basisObjectId;
+
+      // if no sourceObjectId -> { object, ref }
+      if (!sourceObjectId)
+      {
+        ref = item.ref;
+        item = item.object;
+        sourceObjectId = item.basisObjectId;
+      }
+
+      var sourceObjectInfo = sourceMap[sourceObjectId];
+      if (sourceObjectInfo)
+      {
+        // if info exists just add reference
+        sourceObjectInfo.ref = {
+          object: ref,
+          ref: sourceObjectInfo.ref
+        };
+      }
+      else
+      {
+        // create new source object info
+        sourceObjectInfo = sourceMap[sourceObjectId] = {
+          source: item,
+          ref: {
+            object: ref,
+            ref: null
+          },
+          visited: null, // used for source reference search
+          value: null    // computed value
+        };
+
+        if (item instanceof DataObject)
+        {
+          var value = extract.rule(item) || null;
+
+          if (value instanceof DataObject || value instanceof ReadOnlyDataset)
+          {
+            sourceObjectInfo.value = value;
+            queue.push({
+              object: value,
+              ref: item
+            });
+          }
+
+          members[sourceObjectId] = sourceObjectInfo;
+          inserted.push(item);
+
+          if (extract.ruleEvents)
+            item.addHandler(extract.ruleEvents, extract);
+        }
+        else
+        {
+          // if not an object -> dataset
+          item.addHandler(EXTRACT_DATASET_HANDLER, extract);
+
+          for (var j = 0, datasetItems = item.getItems(); j < datasetItems.length; j++)
+            queue.push({
+              object: datasetItems[j],
+              ref: item
+            });
+        }
+      }
+    }
+
+    return inserted;
+  }
+
+  function removeFromExtract(extract, items, ref){
+    var sourceMap = extract.sourceMap_;
+    var members = extract.members_;
+    var queue = arrayFrom(items);
+    var deleted = [];
+
+    for (var i = 0; i < queue.length; i++)
+    {
+      var item = queue[i];
+      var sourceObjectId = item.basisObjectId;
+
+      // if no sourceObjectId -> { object, ref }
+      if (!sourceObjectId)
+      {
+        ref = item.ref;
+        item = item.object;
+        sourceObjectId = item.basisObjectId;
+      }
+
+      var sourceObjectInfo = sourceMap[sourceObjectId];
+      var sourceObjectValue = sourceObjectInfo.value;
+
+      // remove reference from object
+      for (var cursor = sourceObjectInfo, prevCursor = sourceObjectInfo; cursor = cursor.ref;)
+      {
+        if (cursor.object === ref)
+        {
+          prevCursor.ref = cursor.ref;
+          break;
+        }
+        prevCursor = cursor;
+      }
+
+      if (!sourceObjectInfo.ref)
+      {
+        if (item instanceof DataObject)
+        {
+          delete members[sourceObjectId];
+          deleted.push(item);
+
+          if (extract.ruleEvents)
+            item.removeHandler(extract.ruleEvents, extract);
+
+          if (sourceObjectValue)
+            queue.push({
+              object: sourceObjectValue,
+              ref: item
+            });
+        }
+        else
+        {
+          // if not an object -> dataset
+          item.removeHandler(EXTRACT_DATASET_HANDLER, extract);
+
+          for (var j = 0, datasetItems = item.getItems(); j < datasetItems.length; j++)
+            queue.push({
+              object: datasetItems[j],
+              ref: item
+            });
+        }
+
+        delete sourceMap[sourceObjectId];
+      }
+      else
+      {
+        // happen for multiple references and cycles
+        if (sourceObjectValue && !hasExtractSourceRef(extract, item))
+        {
+          sourceObjectInfo.value = null;
+          queue.push({
+            object: sourceObjectValue,
+            ref: item
+          });
+        }
+      }
+    }
+
+    return deleted;
+  }
+
+ /**
+  * @class
+  */
+  var Extract = SourceDataset.subclass({
+    className: namespace + '.Extract',
+
+   /**
+    * Nothing return by default. Behave like proxy.
+    */
+    rule: basis.getter(function(){}),
+
+   /**
+    * Events list when dataset should recompute rule for source item.
+    */
+    ruleEvents: createRuleEvents(EXTRACT_SOURCEOBJECT_UPDATE, 'update'),
+
+   /**
+    * @inheritDoc
+    */
+    listen: {
+      source: {
+        itemsChanged: EXTRACT_DATASET_ITEMSCHANGED
+      }
+    }
+  });
+
+
+  //
   // export names
   //
 
   module.exports = {
+    getDelta: getDelta,
     createRuleEvents: createRuleEvents,
 
     // operable datasets
@@ -2000,8 +2295,18 @@
 
     // transform datasets
     MapFilter: MapFilter,
-    Subset: Subset,
+    Filter: Filter,
     Split: Split,
+    Extract: Extract,
+
+    // deprecated name of Filter
+    Subset: Filter.subclass({
+      className: namespace + '.Subset',
+      init: function(){
+        /** @cut */ basis.dev.warn('Class ' + this.constructor.className + ' is deprecated, use ' + Filter.className + ' instead');
+        Filter.prototype.init.call(this);
+      }
+    }),
 
     // other
     Slice: Slice,
