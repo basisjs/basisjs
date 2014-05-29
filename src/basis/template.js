@@ -1986,7 +1986,7 @@
       source = host.textContent || host.text;
     /** @cut */ else
     /** @cut */   if (!host)
-    /** @cut */     basis.dev.warn('Template script element with id `' + sourceId + '` not found');
+    /** @cut */     basis.dev.warn('Template script element with id `' + id + '` not found');
     /** @cut */   else
     /** @cut */     basis.dev.warn('Template should be declared in <script type="text/basis-template"> element (id `' + sourceId + '`)');
 
