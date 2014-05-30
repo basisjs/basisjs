@@ -1,6 +1,7 @@
 
   basis.require('basis.event');
   basis.require('basis.dom.event');
+  basis.require('basis.dom.computedStyle');
   basis.require('basis.layout');
 
 
@@ -25,6 +26,7 @@
   var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
+  var getComputedStyle = basis.dom.computedStyle.get;
   var getOffsetParent = basis.layout.getOffsetParent;
   var getBoundingRect = basis.layout.getBoundingRect;
   var getViewportRect = basis.layout.getViewportRect;
@@ -60,8 +62,14 @@
       // calculate point
       initX: event.mouseX,
       initY: event.mouseY,
+
       deltaX: 0,
-      deltaY: 0
+      minDeltaX: -Infinity,
+      maxDeltaX: Infinity,
+
+      deltaY: 0,
+      minDeltaY: -Infinity,
+      maxDeltaY: Infinity
     };
 
     // add global handlers
@@ -83,20 +91,29 @@
   }
 
   function onDrag(event){
-    if (dragElement.axisX)
-      dragData.deltaX = dragElement.axisXproxy(event.mouseX - dragData.initX);
+    var deltaX = event.mouseX - dragData.initX;
+    var deltaY = event.mouseY - dragData.initY;
 
-    if (dragElement.axisY)
-      dragData.deltaY = dragElement.axisYproxy(event.mouseY - dragData.initY);
-
-    if (!dragging && dragElement.startRule(dragData.deltaX, dragData.deltaY))
+    if (!dragging)
     {
+      // if not dragging, check could we start to drag
+      if (!dragElement.startRule(deltaX, deltaY))
+        return;
+
+      // start dragging
       dragging = true;
-      dragElement.emit_start(dragData, event);
+      dragElement.emit_start(dragData, event);  // deltaX & deltaY will be equal to zero
     }
 
-    if (dragging)
-      dragElement.emit_drag(dragData, event);
+    // calculate delta
+    if (dragElement.axisX)
+      dragData.deltaX = dragElement.axisXproxy(basis.number.fit(deltaX, dragData.minDeltaX, dragData.maxDeltaX));
+
+    if (dragElement.axisY)
+      dragData.deltaY = dragElement.axisYproxy(basis.number.fit(deltaY, dragData.minDeltaY, dragData.maxDeltaY));
+
+    // emit drag event
+    dragElement.emit_drag(dragData, event);
   }
 
   function stopDrag(event){
@@ -132,16 +149,9 @@
   var DragDropElement = Emitter.subclass({
     className: namespace + '.DragDropElement',
 
-    containerGetter: basis.getter('element'),
-
     element: null,
     trigger: null,            // element that init a dragging; if null then element init dragging itself
     baseElement: null,        // element that bounds dragging element movements; if null then document body is base
-
-    fixTop: true,
-    fixRight: true,
-    fixBottom: true,
-    fixLeft: true,
 
     axisX: true,
     axisY: true,
@@ -149,12 +159,12 @@
     axisXproxy: basis.fn.$self,
     axisYproxy: basis.fn.$self,
 
+    prepareDrag: basis.fn.$undef,
     startRule: basis.fn.$true,
     ignoreTarget: function(target, event){
       return /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName);
     },
 
-    prepareDrag: function(){},
     emit_start: createEvent('start'), // occure on first mouse move
     emit_drag: createEvent('drag'),
     emit_over: createEvent('over'),
@@ -225,18 +235,119 @@
  /**
   * @class
   */
+  var DeltaWriter = basis.Class(null, {
+    className: namespace + '.DeltaWriter',
+    property: null,
+    invert: false,
+    format: basis.fn.$self,
+    init: function(element){
+      if (typeof this.property == 'function')
+        this.property = this.property(element);
+
+      if (typeof this.invert == 'function')
+        this.invert = this.invert(this.property);
+
+      this.value = this.read(element);
+    },
+    read: function(){
+      return element[this.property];
+    },
+    write: function(element, formattedValue){
+      element[this.property] = formattedValue;
+    },
+    applyDelta: function(element, delta){
+      if (this.invert)
+        delta = -delta;
+
+      this.write(element, this.format(this.value + delta, delta));
+    }
+  });
+
+ /**
+  * @class
+  */
+  var StyleDeltaWriter = DeltaWriter.subclass({
+    className: namespace + '.StyleDeltaWriter',
+    format: function(value, delta){
+      return value + 'px';
+    },
+    read: function(element){
+      return parseFloat(getComputedStyle(element, this.property));
+    },
+    write: function(element, formattedValue){
+      element.style[this.property] = formattedValue;
+    }
+  });
+
+ /**
+  * @class
+  */
+  var StylePositionX = StyleDeltaWriter.subclass({
+    property: function(element){
+      return getComputedStyle(element, 'left') == 'auto' ? 'right' : 'left';
+    },
+    invert: function(property){
+      return property != 'left';
+    }
+  });
+
+ /**
+  * @class
+  */
+  var StylePositionY = StyleDeltaWriter.subclass({
+    property: function(element){
+      return getComputedStyle(element, 'top') == 'auto' ? 'bottom' : 'top';
+    },
+    invert: function(property){
+      return property != 'top';
+    }
+  });
+
+ /**
+  * @class
+  */
   var MoveableElement = DragDropElement.subclass({
     className: namespace + '.MoveableElement',
 
+    fixTop: true,
+    fixRight: true,
+    fixBottom: true,
+    fixLeft: true,
+
+    axisX: StylePositionX,
+    axisY: StylePositionY,
+
     emit_start: function(dragData, event){
-      var element = this.containerGetter(this, dragData.initX, dragData.initY);
+      var element = this.element;
 
       if (element)
       {
-        var base = this.getBase();
+        var viewport = getViewportRect(this.getBase());
+        var box = getBoundingRect(element);
+
         dragData.element = element;
-        dragData.box = getBoundingRect(element, getOffsetParent(base));
-        dragData.viewport = getViewportRect(base);
+
+        if (this.axisX)
+        {
+          dragData.axisX = new this.axisX(element);
+
+          if (this.fixLeft)
+            dragData.minDeltaX = viewport.left - box.left;
+
+          if (this.fixRight)
+            dragData.maxDeltaX = viewport.right - box.right;
+        }
+
+        if (this.axisY)
+        {
+          dragData.axisY = new this.axisY(element);
+
+          if (this.fixTop)
+            dragData.minDeltaY = viewport.top - box.top;
+
+          if (this.fixBottom)
+            dragData.maxDeltaY = viewport.bottom - box.bottom;
+        }
       }
 
       DragDropElement.prototype.emit_start.call(this, dragData, event);
@@ -246,31 +357,11 @@
       if (!dragData.element)
         return;
 
-      if (this.axisX)
-      {
-        var newLeft = dragData.box.left + dragData.deltaX;
+      if (dragData.axisX)
+        dragData.axisX.applyDelta(dragData.element, dragData.deltaX);
 
-        if (this.fixLeft && newLeft < 0)
-          newLeft = 0;
-        else
-          if (this.fixRight && newLeft + dragData.box.width > dragData.viewport.width)
-            newLeft = dragData.viewport.width - dragData.box.width;
-
-        dragData.element.style.left = newLeft + 'px';
-      }
-
-      if (this.axisY)
-      {
-        var newTop = dragData.box.top + dragData.deltaY;
-
-        if (this.fixTop && newTop < 0)
-          newTop = 0;
-        else
-          if (this.fixBottom && newTop + dragData.box.height > dragData.viewport.height)
-            newTop = dragData.viewport.height - dragData.box.height;
-
-        dragData.element.style.top = newTop + 'px';
-      }
+      if (dragData.axisY)
+        dragData.axisY.applyDelta(dragData.element, dragData.deltaY);
 
       DragDropElement.prototype.emit_drag.call(this, dragData, event);
     }
@@ -283,5 +374,7 @@
 
   module.exports = {
     DragDropElement: DragDropElement,
-    MoveableElement: MoveableElement
+    MoveableElement: MoveableElement,
+    DeltaWriter: DeltaWriter,
+    StyleDeltaWriter: StyleDeltaWriter
   };

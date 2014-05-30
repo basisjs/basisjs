@@ -9,10 +9,13 @@ Remove
   - `basis.ui.Node#templateUpdate`
   - `basis.ui.Node#content`
   - `basis.platformFeature` (use `basis.cssom.features` instead)
+  - `basis.dragdrop.DragDropElement#containerGetter` (`element` could be changed on `prepareDrag` or `emit_start`)
 
 Might break
 
   - `basis.template` resources of included templates are always going before own template resources
+  - `basis.dragdrop.DragDropElement#startRule` receive real `deltaX`/`deltaY` but not a result of `axisXproxy`/`axisYproxy` methods
+  - `basis.dragdrop.DragDropElement` always emit `start` event with zero `deltaX`/`deltaY`
 
 ## 1.2.1 → 1.2.3
 
