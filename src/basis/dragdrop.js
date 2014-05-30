@@ -25,6 +25,7 @@
   var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
+  var getOffsetParent = basis.layout.getOffsetParent;
   var getBoundingRect = basis.layout.getBoundingRect;
   var getViewportRect = basis.layout.getViewportRect;
 
@@ -134,8 +135,8 @@
     containerGetter: basis.getter('element'),
 
     element: null,
-    trigger: null,            // element that trig a drag; if null element is trig drag itself
-    baseElement: null,        // element that will be a base of offset; if null then document body is base
+    trigger: null,            // element that init a dragging; if null then element init dragging itself
+    baseElement: null,        // element that bounds dragging element movements; if null then document body is base
 
     fixTop: true,
     fixRight: true,
@@ -232,9 +233,10 @@
 
       if (element)
       {
+        var base = this.getBase();
         dragData.element = element;
-        dragData.box = getBoundingRect(element);  // relative to offsetParent?
-        dragData.viewport = getViewportRect(this.getBase());
+        dragData.box = getBoundingRect(element, getOffsetParent(base));
+        dragData.viewport = getViewportRect(base);
       }
 
       DragDropElement.prototype.emit_start.call(this, dragData, event);
