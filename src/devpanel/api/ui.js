@@ -20,7 +20,7 @@ function updateInfo(){
   updateInfoQueue = {};
   updateInfoTimer_ = null;
 
-  console.log('updateInfo');
+  //console.log('updateInfo');
 
   for (var id in queue)
   {
