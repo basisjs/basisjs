@@ -1580,30 +1580,29 @@ module.exports = {
           name: 'no warnings on subset sync',
           test: function(){
             var Type = basis.entity.createType('TestType', {
-              Id: basis.entity.IntId,
-              Group: Number
+              id: basis.entity.IntId,
+              group: Number
             });
 
             var split = new basis.entity.Grouping({
               wrapper: Type,
               source: Type.all,
-              rule: 'data.Group'
+              rule: 'data.group'
             });
 
             var wrapper = split.getSubset(1, true);
-
             var subset = new basis.data.dataset.Subset({
               source: wrapper
             });
 
             assert(catchWarnings(function(){
-              wrapper.dataset.sync([{ Id: 1, Group: 1 }]);
+              wrapper.dataset.sync([{ id: 1, group: 1 }]);
             }) == false);
             assert(wrapper.itemCount == 1);
             assert(subset.itemCount == 1);
 
             assert(catchWarnings(function(){
-              wrapper.dataset.sync([{ Id: 2, Group: 1 }]);
+              wrapper.dataset.sync([{ id: 2, group: 1 }]);
             }) == false);
             assert(wrapper.itemCount == 1);
             assert(subset.itemCount == 1);
