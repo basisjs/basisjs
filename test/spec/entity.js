@@ -1590,17 +1590,23 @@ module.exports = {
               rule: 'data.Group'
             });
 
-            var subsetWrapper = split.getSubset(1, true);
+            var wrapper = split.getSubset(1, true);
+
+            var subset = new basis.data.dataset.Subset({
+              source: wrapper
+            });
 
             assert(catchWarnings(function(){
-              subsetWrapper.dataset.sync([{ Id: 1, Group: 1 }]);
+              wrapper.dataset.sync([{ Id: 1, Group: 1 }]);
             }) == false);
-            assert(subsetWrapper.itemCount == 1);
+            assert(wrapper.itemCount == 1);
+            assert(subset.itemCount == 1);
 
             assert(catchWarnings(function(){
-              subsetWrapper.dataset.sync([{ Id: 2, Group: 1 }]);
+              wrapper.dataset.sync([{ Id: 2, Group: 1 }]);
             }) == false);
-            assert(subsetWrapper.itemCount == 1);
+            assert(wrapper.itemCount == 1);
+            assert(subset.itemCount == 1);
           }
         }
       ]
