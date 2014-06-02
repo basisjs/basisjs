@@ -1575,6 +1575,33 @@ module.exports = {
             assert(subset.itemCount == 0);
             assert(eventCount == 1);
           }
+        },
+        {
+          name: 'no warnings on subset sync',
+          test: function(){
+            var Type = basis.entity.createType('TestType', {
+              Id: basis.entity.IntId,
+              Group: Number
+            });
+
+            var split = new basis.entity.Grouping({
+              wrapper: Type,
+              source: Type.all,
+              rule: 'data.Group'
+            });
+
+            var subsetWrapper = split.getSubset(1, true);
+
+            assert(catchWarnings(function(){
+              subsetWrapper.dataset.sync([{ Id: 1, Group: 1 }]);
+            }) == false);
+            assert(subsetWrapper.itemCount == 1);
+
+            assert(catchWarnings(function(){
+              subsetWrapper.dataset.sync([{ Id: 2, Group: 1 }]);
+            }) == false);
+            assert(subsetWrapper.itemCount == 1);
+          }
         }
       ]
     }
