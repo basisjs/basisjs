@@ -329,6 +329,10 @@
         return;
       }
 
+      // ignore set source for self fields
+      if (name == '-')
+        return;
+
       if (source instanceof DataObject == false)
         source = null;
 
