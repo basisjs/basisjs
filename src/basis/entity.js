@@ -292,8 +292,8 @@
         if (destroyItems[key])
           deleted.push(destroyItems[key]);
 
-      if (deleted.length)
-        this.emit_itemsChanged({
+      if (deleted.length && this.wrapper.all)
+        this.wrapper.all.emit_itemsChanged({
           deleted: deleted
         });
 

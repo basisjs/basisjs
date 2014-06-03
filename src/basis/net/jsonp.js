@@ -41,7 +41,7 @@
   }
 
   function releaseCallback(name){
-    fetchCallbackData(name);
+    delete callbackData[name];
     delete global[name];
   }
 
@@ -58,6 +58,10 @@
 
     if (typeof readyState != 'number')
     {
+      // nothing to do if event for previous script fired
+      if (!readyState || this.script !== readyState.target)
+        return;
+
       error = readyState && readyState.type == 'error';
       readyState = error || !this.script.readyState || /loaded|complete/.test(this.script.readyState) ? STATE_DONE : STATE_LOADING;
     }
@@ -74,8 +78,8 @@
     {
       this.clearTimeout();
 
-      // handle memory leak in IE
-      this.script.onload = this.script.onreadystatechange = null;
+      // remove event handlers
+      this.script.onload = this.script.onerror = this.script.onreadystatechange = null;
 
       // remove the script
       if (this.script.parentNode)
@@ -112,7 +116,20 @@
       // dispatch complete event
       this.emit_complete(this);
 
-      this.callback = releaseCallback(this.callback);
+      // cleanup callback
+      var callback = this.callback;
+      if (abort)
+      {
+        // if request aborted delete callback in 5 mins or on callback invocation
+        setTimeout(global[callback] = function(){
+          releaseCallback(callback);
+        }, 5 * 60 * 1000);
+      }
+      else
+      {
+        // otherwise release callback immediately
+        releaseCallback(callback);
+      }
     }
     else
       newState = STATE.PROCESSING;
@@ -134,7 +151,7 @@
     emit_readyStateChanged: createRequestEvent('readyStateChanged'),
 
     isIdle: function(){
-      return !!this.script;
+      return !this.script;
     },
 
     isSuccessful: function(){
