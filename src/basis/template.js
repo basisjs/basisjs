@@ -876,7 +876,7 @@
       else
       {
         var text = token.childs[0];
-        url = basis.resource.virtual('css', text ? text.value : '').url;
+        url = basis.resource.virtual('css', text ? text.value : '', template.sourceUrl).url;
       }
 
       template.resources.push([url, isolatePrefix]);

@@ -2052,9 +2052,10 @@
       return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
     },
 
-    virtual: function(type, content){
+    virtual: function(type, content, ownerUrl){
       return createResource(
-        pathUtils.normalize((pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/virtualResource' + (virtualResourceSeed++) + '.' + type),
+        (ownerUrl ? ownerUrl + ':' : pathUtils.normalize(pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/') +
+          'virtual-resource' + (virtualResourceSeed++) + '.' + type,
         content
       );
     },
