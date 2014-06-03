@@ -1,3 +1,9 @@
+## 1.2.5 (June 3, 2014)
+
+- FIX: fix issues with request concurrency and request abort in `basis.net.jsonp`
+- FIX: process `value` attribute for `<select>` as special
+- FIX: crash issue with `basis.entity.EntitySet#sync`
+
 ## 1.2.4 (May 26, 2014)
 
 - FIX: `basis.ui.slider` exception on value changes via `mousewheel`
