@@ -2274,6 +2274,77 @@
       source: {
         itemsChanged: EXTRACT_DATASET_ITEMSCHANGED
       }
+    },
+
+   /**
+    * Set new extract rule.
+    * @param {function(basis.data.Object):boolean} rule
+    * @return {Object} Delta of member changes.
+    */
+    setRule: function(rule){
+      if (typeof rule != 'function')
+        rule = basis.fn.$undef;
+
+      if (this.rule !== rule)
+      {
+        this.rule = rule;
+
+        // re-apply rule
+        var insertedMap = {};
+        var deletedMap = {};
+        var array;
+        var delta;
+
+        for (var key in this.sourceMap_)
+        {
+          var sourceObjectInfo = this.sourceMap_[key];
+          var sourceObject = sourceObjectInfo.source;
+
+          if (sourceObject instanceof DataObject)
+          {
+            var newValue = this.rule(sourceObject) || null;
+            var oldValue = sourceObjectInfo.value;
+
+            if (newValue === oldValue)
+              continue;
+
+            if (newValue instanceof DataObject || newValue instanceof ReadOnlyDataset)
+            {
+              var inserted = addToExtract(this, newValue, sourceObject);
+              for (var i = 0; i < inserted.length; i++)
+              {
+                var item = inserted[i];
+                var id = item.basisObjectId;
+                if (deletedMap[id])
+                  delete deletedMap[id];
+                else
+                  insertedMap[id] = item;
+              }
+            }
+
+
+            if (oldValue)
+            {
+              var deleted = removeFromExtract(this, oldValue, sourceObject);
+              for (var i = 0; i < deleted.length; i++)
+              {
+                var item = deleted[i];
+                var id = item.basisObjectId;
+                if (insertedMap[id])
+                  delete insertedMap[id];
+                else
+                  deletedMap[id] = item;
+              }
+            }
+
+            // update value
+            sourceObjectInfo.value = newValue;
+          }
+        }
+
+        if (delta = getDelta(values(insertedMap), values(deletedMap)))
+          this.emit_itemsChanged(delta);
+      }
     }
   });
 
