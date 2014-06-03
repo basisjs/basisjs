@@ -1091,11 +1091,7 @@
 
               switch (token.name)
               {
-                case 'resource':
                 case 'style':
-                  /** @cut */ if (token.name == 'resource')
-                  /** @cut */   basis.dev.warn('<b:resource> is deprecated and will be removed in next minor release. Use <b:style> instead.' + (template.sourceUrl ? ' File: ' + template.sourceUrl : ''));
-
                   addResource(template, token, elAttrs.src, (context && context.isolate) || '');
                 break;
 

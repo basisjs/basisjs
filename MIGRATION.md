@@ -10,6 +10,7 @@ Remove
   - `basis.ui.Node#content`
   - `basis.platformFeature` (use `basis.cssom.features` instead)
   - `basis.dragdrop.DragDropElement#containerGetter` (`element` could be changed on `prepareDrag` or `emit_start`)
+  - `<b:resource>` in templates (use `<b:style>` instead)
 
 Might break
 
