@@ -1324,8 +1324,8 @@
       };
     },
     Required: function(field){
-      var value = field.getValue().trim();
-      if (basis.fn.$isNull(value) || value == '')
+      var value = field.getValue();
+      if (basis.fn.$isNull(value) || value.trim() == '')
         return new ValidatorError(field, dict.token('validator.required'));
     },
     Number: function(field){
