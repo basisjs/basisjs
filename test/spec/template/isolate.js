@@ -716,6 +716,33 @@ module.exports = {
                 assert(tmpl.b.offsetWidth == 3);
                 assert(tmpl.b.offsetHeight == 3);
               }
+            },
+            {
+              name: 'the same style file in various templates with the same prefix',
+              test: function(){
+                var templateA = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="foo"/>' +
+                  '<b:isolate/>' +
+                  '<div{a} class="foo:class foo:class_{mod}"/>'
+                );
+                var templateB = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="bar"/>' +
+                  '<b:isolate/>' +
+                  '<div{a} class="bar:class bar:class_{mod}"/>'
+                );
+                var tmplA = templateA.createInstance();
+                tmplA.set('mod', 'mod');
+                var tmplB = templateB.createInstance();
+                tmplB.set('mod', 'mod');
+
+                assert(tmplA.a.className != 'foo:class foo:class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmplA.a.className));
+
+                assert(tmplB.a.className != 'foo:class foo:class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmplB.a.className));
+
+                assert(tmplA.a.className == tmplB.a.className);
+              }
             }
           ]
         }
