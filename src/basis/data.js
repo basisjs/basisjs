@@ -2280,10 +2280,10 @@
 
   Dataset.setAccumulateState = (function(){
     var proto = ReadOnlyDataset.prototype;
-    var realEvent = proto.emit_itemsChanged;
+    var eventCache = {};
     var setStateCount = 0;
     var urgentTimer;
-    var eventCache = {};
+    var realEvent;
 
     function flushCache(cache){
       var dataset = cache.dataset;
@@ -2421,6 +2421,7 @@
       {
         if (setStateCount == 0)
         {
+          realEvent = proto.emit_itemsChanged;
           proto.emit_itemsChanged = storeDatasetDelta;
           if (!urgentTimer)
             urgentTimer = basis.setImmediate(urgentFlush);
