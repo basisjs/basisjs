@@ -1325,7 +1325,7 @@
     },
     Required: function(field){
       var value = field.getValue();
-      if (basis.fn.$isNull(value) || value == '')
+      if (basis.fn.$isNull(value) || String(value).trim() == '')
         return new ValidatorError(field, dict.token('validator.required'));
     },
     Number: function(field){
