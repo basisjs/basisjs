@@ -31,23 +31,34 @@
     return offsetParent || documentElement;
   }
 
-  function getPageOffset(){
+  function getOffset(element){
     var top = 0;
     var left = 0;
 
-    if (document.compatMode == 'CSS1Compat')
+    if (element && element.getBoundingClientRect)
     {
-      top = global.pageYOffset || documentElement.scrollTop;
-      left = global.pageXOffset || documentElement.scrollLeft;
+      // offset relative to element
+      var relRect = element.getBoundingClientRect();
+      left = -relRect.left;
+      top = -relRect.top;
     }
     else
     {
-      // IE6 and lower
-      var body = document.body;
-      if (element !== body)
+      // offset relative to page
+      if (document.compatMode == 'CSS1Compat')
       {
-        top = body.scrollTop - body.clientTop;
-        left = body.scrollLeft - body.clientLeft;
+        top = global.pageYOffset || documentElement.scrollTop;
+        left = global.pageXOffset || documentElement.scrollLeft;
+      }
+      else
+      {
+        // IE6 and lower
+        var body = document.body;
+        if (element !== body)
+        {
+          top = body.scrollTop - body.clientTop;
+          left = body.scrollLeft - body.clientLeft;
+        }
       }
     }
 
@@ -57,14 +68,14 @@
     };
   }
 
-  function getTopLeftPoint(element){
+  function getTopLeftPoint(element, relElement){
     var left = 0;
     var top = 0;
 
     if (element && element.getBoundingClientRect)
     {
       var box = element.getBoundingClientRect();
-      var offset = getPageOffset();
+      var offset = getOffset(relElement);
 
       top = box.top + offset.y;
       left = box.left + offset.x;
@@ -85,21 +96,7 @@
     if (element && element.getBoundingClientRect)
     {
       var rect = element.getBoundingClientRect();
-      var offset;
-
-      // coords relative of relElement
-      if (relElement && relElement.getBoundingClientRect)
-      {
-        var relRect = relElement.getBoundingClientRect();
-        offset = {
-          x: -relRect.left,
-          y: -relRect.top
-        };
-      }
-      else
-      {
-        offset = getPageOffset();
-      }
+      var offset = getOffset(relElement);
 
       top = rect.top + offset.y;
       left = rect.left + offset.x;
@@ -117,8 +114,8 @@
     };
   }
 
-  function getViewportRect(element){
-    var point = getTopLeftPoint(element);
+  function getViewportRect(element, relElement){
+    var point = getTopLeftPoint(element, relElement);
     var top = point.top + element.clientTop;
     var left = point.left + element.clientLeft;
     var width = element.clientWidth;

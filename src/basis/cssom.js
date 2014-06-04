@@ -150,8 +150,9 @@
   // Style mapping
   //
 
-  var styleMapping = {};
   var testElement = dom.createElement('');
+  var styleMapping = {};
+  var features = {};
 
   function createStyleMapping(property, names, regSupport, getters){
     getters = getters || {};
@@ -162,7 +163,7 @@
       if (typeof testElement.style[name] != 'undefined')
       {
         if (regSupport)
-          basis.platformFeature['css-' + property] = name;
+          features['css-' + property] = name;
 
         styleMapping[property] = {
           key: name,
@@ -715,6 +716,8 @@
   //
 
   module.exports = {
+    features: features,
+
     // style interface
     setStyleProperty: setStyleProperty,
     setStyle: setStyle,

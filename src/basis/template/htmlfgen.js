@@ -215,7 +215,7 @@
       disabled: '*',  // any tag
       checked: ['input'],
       indeterminate: ['input'],
-      value: ['input', 'textarea'],
+      value: ['input', 'textarea', 'select'],
       minlength: ['input'],
       maxlength: ['input'],
       readonly: ['input'],

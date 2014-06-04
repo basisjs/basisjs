@@ -821,13 +821,13 @@
       disabled: {
         events: 'disable enable',
         getter: function(node){
-          return node.disabled || node.contextDisabled;
+          return node.isDisabled();
         }
       },
       enabled: {
         events: 'disable enable',
         getter: function(node){
-          return !(node.disabled || node.contextDisabled);
+          return !node.isDisabled();
         }
       }
     },

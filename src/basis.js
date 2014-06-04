@@ -15,21 +15,24 @@
  *
  * Content overview:
  * - util functions
+ * - basis.getter
  * - console method wrappers (basis.dev)
- * - basis.path (path utils)
+ * - timer functions (basis.setImmediate, basis.clearImmediate, basis.nextTick)
+ * - path utils (basis.path)
  * - process config (basis.config)
  * - basis.namespace
  * - basis.Class namespace (provides inheritance)
  * - basis.Token
  * - basis.resource
  * - basis.require
- * - buildin class extensions and fixes
- *   o Function
- *   o Array
- *   o String
- *   o Number
- *   o Date (more extensions for Date in src/basis/date.js)
+ * - polyfills for `Function#bind`, `Array.isArray`, `Array#indexOf`, `Array#lastIndexOf`, `Array#forEach`, `Array#map`, `Array#filter`, `Array#some`, `Array#every`, `Array#reduce`, `String#trim`, `Date#now`
+ * - function to work with primitives
+ *   - Function
+ *   - Array
+ *   - String
+ *   - Number
  * - basis.ready
+ * - async document imterface (basis.doc)
  * - basis.cleaner
  */
 
@@ -2049,9 +2052,10 @@
       return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
     },
 
-    virtual: function(type, content){
+    virtual: function(type, content, ownerUrl){
       return createResource(
-        pathUtils.normalize((pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/virtualResource' + (virtualResourceSeed++) + '.' + type),
+        (ownerUrl ? ownerUrl + ':' : pathUtils.normalize(pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/') +
+          'virtual-resource' + (virtualResourceSeed++) + '.' + type,
         content
       );
     },
@@ -3400,7 +3404,6 @@
 
     NODE_ENV: NODE_ENV,
     config: config,
-    platformFeature: {},
 
     // modularity
     resolveNSFilename: resolveNSFilename,

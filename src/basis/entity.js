@@ -292,8 +292,8 @@
         if (destroyItems[key])
           deleted.push(destroyItems[key]);
 
-      if (deleted.length)
-        this.emit_itemsChanged({
+      if (deleted.length && this.wrapper.all)
+        this.wrapper.all.emit_itemsChanged({
           deleted: deleted
         });
 
@@ -405,6 +405,7 @@
 
       var entitySetType = new EntitySetConstructor({
         entitySetClass: {
+          /** @cut */ className: namespace + '.EntitySet(' + (typeof wrapper == 'string' ? wrapper : (wrapper.entityType || wrapper).name || 'UnknownType') + ')',
           /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.entityType || wrapper).name || 'UnknownType') + '}',
           wrapper: wrapper
         }
@@ -1175,7 +1176,7 @@
     }
 
     return Class(BaseEntity, {
-      className: namespace + '.Entity',
+      className: entityType.name,
 
       extendConstructor_: false,
       fieldHandlers_: null,

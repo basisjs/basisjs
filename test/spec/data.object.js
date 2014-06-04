@@ -116,6 +116,7 @@ module.exports = {
                 });
 
                 assert({ foo: 1, bar: 2 }, instance.data);
+                assert('-' in instance.sources == false);
               }
             },
             {
@@ -134,6 +135,7 @@ module.exports = {
                 });
 
                 assert({ foo: 1, bar: 2 }, instance.data);
+                assert('-' in instance.sources == false);
               }
             },
             {
@@ -161,6 +163,7 @@ module.exports = {
                 });
 
                 assert({ foo: 1, bar: 'a' }, instance.data);
+                assert('-' in instance.sources == false);
               }
             },
             {
@@ -313,6 +316,7 @@ module.exports = {
                 });
 
                 assert({ foo: 'a' }, instance.data);
+                assert('-' in instance.sources == false);
 
                 var instance = new Merge({
                   fields: {
@@ -325,6 +329,7 @@ module.exports = {
 
                 instance.setSource('a', source);
                 assert({ foo: 'a' }, instance.data);
+                assert('-' in instance.sources == false);
               }
             },
             {
@@ -344,6 +349,7 @@ module.exports = {
 
                 assert('a' in instance.sources == true);
                 assert('b' in instance.sources == false);
+                assert('-' in instance.sources == false);
               }
             },
             {
@@ -358,6 +364,7 @@ module.exports = {
 
                 instance.setSource('b', new basis.data.Object());
                 assert('b' in instance.sources == false);
+                assert('-' in instance.sources == false);
               }
             }
           ]
@@ -546,6 +553,8 @@ module.exports = {
                 });
 
                 assert({ foo: 'a', bar: 'own' }, instance.data);
+                assert('a' in instance.sources == true);
+                assert('-' in instance.sources == false);
 
                 assert({ bar: 'own' }, instance.update({ bar: 123 }));
                 assert({ foo: 'a', bar: 123 }, instance.data);

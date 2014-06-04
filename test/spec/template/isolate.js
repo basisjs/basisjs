@@ -436,65 +436,315 @@ module.exports = {
       name: 'style namespaces',
       test: [
         {
-          name: 'using global styles in isolated scope',
-          test: function(){
-            var template = new Template(
-              '<b:isolate prefix="xxx-"/>' +
-              '<b:style>' +
-                '.global-class { width: 66px; }' +
-                '.global-class_mod { height: 66px; }' +
-              '</b:style>' +
-              '<div>' +
-                '<div{a} class="global-class global-class_{mod}"/>' +
-                '<div{b} class=":global-class :global-class_{mod}"/>' +
-                '<div{c} class=":global-class global-class_{mod}"/>' +
-              '</div>'
-            );
-            var tmpl = template.createInstance();
-            tmpl.set('mod', 'mod');
-            document.body.appendChild(tmpl.element);
+          name: 'global namespace',
+          test: [
+            {
+              name: 'using global styles in isolated scope',
+              test: function(){
+                var template = new Template(
+                  '<b:isolate prefix="xxx-"/>' +
+                  '<b:style>' +
+                    '.global-class { width: 66px; }' +
+                    '.global-class_mod { height: 66px; }' +
+                  '</b:style>' +
+                  '<div>' +
+                    '<div{a} class="global-class global-class_{mod}"/>' +
+                    '<div{b} class=":global-class :global-class_{mod}"/>' +
+                    '<div{c} class=":global-class global-class_{mod}"/>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
 
-            assert(tmpl.a.className == 'xxx-global-class xxx-global-class_mod');
-            assert(tmpl.a.offsetWidth == 66);
-            assert(tmpl.a.offsetHeight == 66);
+                assert(tmpl.a.className == 'xxx-global-class xxx-global-class_mod');
+                assert(tmpl.a.offsetWidth == 66);
+                assert(tmpl.a.offsetHeight == 66);
 
-            assert(tmpl.b.className == 'global-class global-class_mod');
-            assert(tmpl.b.offsetWidth == 73);
-            assert(tmpl.b.offsetHeight == 73);
+                assert(tmpl.b.className == 'global-class global-class_mod');
+                assert(tmpl.b.offsetWidth == 73);
+                assert(tmpl.b.offsetHeight == 73);
 
-            assert(tmpl.c.className == 'global-class xxx-global-class_mod');
-            assert(tmpl.c.offsetWidth == 73);
-            assert(tmpl.c.offsetHeight == 66);
-          }
+                assert(tmpl.c.className == 'global-class xxx-global-class_mod');
+                assert(tmpl.c.offsetWidth == 73);
+                assert(tmpl.c.offsetHeight == 66);
+              }
+            },
+            {
+              name: 'using global styles in include',
+              test: function(){
+                var include = new Template(
+                  '<div{a} class="global-class global-class_{mod}"/>' +
+                  '<div{b} class=":global-class :global-class_{mod}"/>' +
+                  '<div{c} class=":global-class global-class_{mod}"/>'
+                );
+                var template = new Template(
+                  '<b:isolate prefix="xxx-"/>' +
+                  '<div>' +
+                    '<b:include src="#' + include.templateId + '"/>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                assert(tmpl.a.className == 'xxx-global-class xxx-global-class_mod');
+                assert(tmpl.b.className == 'global-class global-class_mod');
+                assert(tmpl.c.className == 'global-class xxx-global-class_mod');
+              }
+            },
+            {
+              name: 'using global styles in include with isolate attribute',
+              test: function(){
+                var include = new Template(
+                  '<div{a} class="global-class global-class_{mod}"/>' +
+                  '<div{b} class=":global-class :global-class_{mod}"/>' +
+                  '<div{c} class=":global-class global-class_{mod}"/>'
+                );
+                var template = new Template(
+                  '<b:isolate prefix="xxx-"/>' +
+                  '<div>' +
+                    '<b:include src="#' + include.templateId + '" isolate="yyy-"/>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                assert(tmpl.a.className == 'xxx-yyy-global-class xxx-yyy-global-class_mod');
+                assert(tmpl.b.className == 'global-class global-class_mod');
+                assert(tmpl.c.className == 'global-class xxx-yyy-global-class_mod');
+              }
+            }
+          ]
         },
         {
-          name: 'using style with namespace',
-          test: function(){
-            var template = new Template(
-              '<b:isolate prefix="xxx-"/>' +
-              '<b:style src="global_style.css" ns="foo"/>' +
-              '<b:style>' +
-                '.global-class { width: 66px; }' +
-                '.global-class_mod { height: 66px; }' +
-              '</b:style>' +
-              '<div>' +
-                '<div{a} class="global-class global-class_{mod}"/>' +
-                '<div{b} class="foo:global-class foo:global-class_{mod}"/>' +
-              '</div>'
-            );
-            var tmpl = template.createInstance();
-            tmpl.set('mod', 'mod');
-            document.body.appendChild(tmpl.element);
+          name: 'custom namespaces',
+          test: [
+            {
+              name: 'using style with namespace w/o isolate',
+              test: function(){
+                var template = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="foo"/>' +
+                  '<div>' +
+                    '<div{a} class="foo:global-class foo:global-class_{mod}"/>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
 
-            assert(tmpl.a.className == 'xxx-global-class xxx-global-class_mod');
-            assert(tmpl.a.offsetWidth == 66);
-            assert(tmpl.a.offsetHeight == 66);
+                assert(tmpl.a.className != 'foo:global-class foo:global-class_mod');
+                assert(tmpl.a.className != 'global-class global-class_mod');
+                assert(/^(\S+)global-class \1global-class_mod$/.test(tmpl.a.className));
+                assert(tmpl.a.offsetWidth == 73);
+                assert(tmpl.a.offsetHeight == 73);
+              }
+            },
+            {
+              name: 'using style with namespace',
+              test: function(){
+                var template = new Template(
+                  '<b:isolate prefix="xxx-"/>' +
+                  '<b:style src="../fixture/global_style.css" ns="foo"/>' +
+                  '<b:style>' +
+                    '.global-class { width: 66px; }' +
+                    '.global-class_mod { height: 66px; }' +
+                  '</b:style>' +
+                  '<div>' +
+                    '<div{a} class="global-class global-class_{mod}"/>' +
+                    '<div{b} class="foo:global-class foo:global-class_{mod}"/>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
 
-            assert(tmpl.b.className != 'xxx-global-class xxx-global-class_mod');
-            assert(/^(\S+)global-class \1global-class_mod$/.test(tmpl.b.className));
-            assert(tmpl.b.offsetWidth == 73);
-            assert(tmpl.b.offsetHeight == 73);
-          }
+                assert(tmpl.a.className == 'xxx-global-class xxx-global-class_mod');
+                assert(tmpl.a.offsetWidth == 66);
+                assert(tmpl.a.offsetHeight == 66);
+
+                assert(tmpl.b.className != 'xxx-global-class xxx-global-class_mod');
+                assert(/^(\S+)global-class \1global-class_mod$/.test(tmpl.b.className));
+                assert(tmpl.b.offsetWidth == 73);
+                assert(tmpl.b.offsetHeight == 73);
+              }
+            },
+            {
+              name: 'use namespace from include',
+              test: function(){
+                var include = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="foo"/>' +
+                  '<div{b} class="foo:global-class foo:global-class_{mod}"/>'
+                );
+                var template = new Template(
+                  '<b:isolate prefix="xxx-"/>' +
+                  '<b:style>' +
+                    '.global-class { width: 66px; }' +
+                    '.global-class_mod { height: 66px; }' +
+                  '</b:style>' +
+                  '<div>' +
+                    '<div{a} class="foo:global-class foo:global-class_{mod}"/>' +
+                    '<b:include src="#' + include.templateId + '"/>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                assert(tmpl.a.className != 'xxx-global-class xxx-global-class_mod');
+                assert(/^(\S+)global-class \1global-class_mod$/.test(tmpl.a.className));
+                assert(tmpl.a.offsetWidth == 73);
+                assert(tmpl.a.offsetHeight == 73);
+
+                assert(tmpl.b.className != 'xxx-global-class xxx-global-class_mod');
+                assert(/^(\S+)global-class \1global-class_mod$/.test(tmpl.b.className));
+                assert(tmpl.b.offsetWidth == 73);
+                assert(tmpl.b.offsetHeight == 73);
+              }
+            },
+            {
+              name: 'override namespace from include',
+              test: function(){
+                var include = new Template(
+                  '<b:style ns="foo">' +
+                    '.class { width: 1px; }' +
+                    '.class_mod { height: 1x; }' +
+                  '</b:style>' +
+                  '<div{b} class="foo:class foo:class_{mod}"/>'
+                );
+                var template = new Template(
+                  '<b:isolate prefix="xxx-"/>' +
+                  '<b:style ns="foo">' +
+                    '.class { width: 2px; }' +
+                    '.class_mod { height: 2px; }' +
+                  '</b:style>' +
+                  '<div>' +
+                    '<div{a} class="foo:class foo:class_{mod}"/>' +
+                    '<b:include src="#' + include.templateId + '"/>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                assert(tmpl.a.className != 'xxx-class xxx-class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmpl.a.className));
+                assert(tmpl.a.offsetWidth == 2);
+                assert(tmpl.a.offsetHeight == 2);
+
+                assert(tmpl.b.className != 'xxx-class xxx-class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmpl.b.className));
+                assert(tmpl.b.offsetWidth == 2);
+                assert(tmpl.b.offsetHeight == 2);
+              }
+            },
+            {
+              name: 'override namespace from include',
+              test: function(){
+                var include = new Template(
+                  '<b:style ns="foo">' +
+                    '.class { width: 1px; }' +
+                    '.class_mod { height: 1x; }' +
+                  '</b:style>' +
+                  '<div{b} class="foo:class foo:class_{mod}"/>'
+                );
+                var template = new Template(
+                  '<b:isolate prefix="xxx-"/>' +
+                  '<div>' +
+                    '<div{a} class="foo:class foo:class_{mod}"/>' +
+                    '<b:include src="#' + include.templateId + '">' +
+                      '<b:style ns="foo">' +
+                        '.class { width: 2px; }' +
+                        '.class_mod { height: 2px; }' +
+                      '</b:style>' +
+                    '</b:include>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                assert(tmpl.a.className != 'xxx-class xxx-class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmpl.a.className));
+                assert(tmpl.a.offsetWidth == 2);
+                assert(tmpl.a.offsetHeight == 2);
+
+                assert(tmpl.b.className != 'xxx-class xxx-class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmpl.b.className));
+                assert(tmpl.b.offsetWidth == 2);
+                assert(tmpl.b.offsetHeight == 2);
+              }
+            },
+            {
+              name: 'override namespace priority include -> include/style -> template/style',
+              test: function(){
+                var include = new Template(
+                  '<b:style ns="foo">' +
+                    '.class { width: 1px; }' +
+                    '.class_mod { height: 1x; }' +
+                  '</b:style>' +
+                  '<div{b} class="foo:class foo:class_{mod}"/>'
+                );
+                var template = new Template(
+                  '<b:isolate prefix="xxx-"/>' +
+                  '<b:style ns="foo">' +
+                    '.class { width: 3px; }' +
+                    '.class_mod { height: 3px; }' +
+                  '</b:style>' +
+                  '<div>' +
+                    '<div{a} class="foo:class foo:class_{mod}"/>' +
+                    '<b:include src="#' + include.templateId + '">' +
+                      '<b:style ns="foo">' +
+                        '.class { width: 2px; }' +
+                        '.class_mod { height: 2px; }' +
+                      '</b:style>' +
+                    '</b:include>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                assert(tmpl.a.className != 'xxx-class xxx-class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmpl.a.className));
+                assert(tmpl.a.offsetWidth == 3);
+                assert(tmpl.a.offsetHeight == 3);
+
+                assert(tmpl.b.className != 'xxx-class xxx-class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmpl.b.className));
+                assert(tmpl.b.offsetWidth == 3);
+                assert(tmpl.b.offsetHeight == 3);
+              }
+            },
+            {
+              name: 'the same style file in various templates with the same prefix',
+              test: function(){
+                var templateA = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="foo"/>' +
+                  '<b:isolate/>' +
+                  '<div{a} class="foo:class foo:class_{mod}"/>'
+                );
+                var templateB = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="bar"/>' +
+                  '<b:isolate/>' +
+                  '<div{a} class="bar:class bar:class_{mod}"/>'
+                );
+                var tmplA = templateA.createInstance();
+                tmplA.set('mod', 'mod');
+                var tmplB = templateB.createInstance();
+                tmplB.set('mod', 'mod');
+
+                assert(tmplA.a.className != 'foo:class foo:class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmplA.a.className));
+
+                assert(tmplB.a.className != 'foo:class foo:class_mod');
+                assert(/^(\S+)class \1class_mod$/.test(tmplB.a.className));
+
+                assert(tmplA.a.className == tmplB.a.className);
+              }
+            }
+          ]
         }
       ]
     }

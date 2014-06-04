@@ -588,6 +588,7 @@
     var tokenMap = basis.NODE_ENV ? node_require('./template/htmlentity.json') : {};
     var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
     var includeStack = [];
+    var styleNamespaceIsolate = {};
 
     function name(token){
       return (token.prefix ? token.prefix + ':' : '') + token.name;
@@ -865,33 +866,33 @@
         arrayAdd(array, items[i]);
     }
 
-    function addResources(array, items, prefix){
+    function addStyles(array, items, prefix){
       for (var i = 0, item; item = items[i]; i++)
-      {
-        item[1] = prefix + item[1];
-        array.unshift(item);
-      }
+        if (item[1] !== styleNamespaceIsolate)
+          item[1] = prefix + item[1];
+
+      array.unshift.apply(array, items);
     }
 
-    function addResource(template, token, src, isolatePrefix){
+    function addStyle(template, token, src, isolatePrefix){
+      var url;
+
       if (src)
       {
         /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(src))
         /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-        template.resources.push([
-          path.resolve(template.baseURI + src),
-          isolatePrefix
-        ]);
+        url = path.resolve(template.baseURI + src);
       }
       else
       {
         var text = token.childs[0];
-        template.resources.push([
-          basis.resource.virtual('css', text ? text.value : '').url,
-          isolatePrefix
-        ]);
+        url = basis.resource.virtual('css', text ? text.value : '', template.sourceUrl).url;
       }
+
+      template.resources.push([url, isolatePrefix]);
+
+      return url;
     }
 
     //
@@ -1102,12 +1103,17 @@
 
               switch (token.name)
               {
-                case 'resource':
                 case 'style':
-                  /** @cut */ if (token.name == 'resource')
-                  /** @cut */   basis.dev.warn('<b:resource> is deprecated and will be removed in next minor release. Use <b:style> instead.' + (template.sourceUrl ? ' File: ' + template.sourceUrl : ''));
+                  var styleNamespace = elAttrs.namespace || elAttrs.ns;
+                  var styleIsolate = styleNamespace ? styleNamespaceIsolate : (context && context.isolate) || '';
+                  var src = addStyle(template, token, elAttrs.src, styleIsolate);
 
-                  addResource(template, token, elAttrs.src, (context && context.isolate) || '');
+                  if (styleNamespace)
+                  {
+                    if (src in styleNamespaceIsolate == false)
+                      styleNamespaceIsolate[src] = genIsolateMarker();
+                    template.styleNSPrefix[styleNamespace] = styleNamespaceIsolate[src];
+                  }
                 break;
 
                 case 'isolate':
@@ -1223,7 +1229,7 @@
                       }
 
                       if (decl.resources && 'no-style' in elAttrs == false)
-                        addResources(template.resources, decl.resources, isolatePrefix);
+                        addStyles(template.resources, decl.resources, isolatePrefix);
 
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
@@ -1233,6 +1239,7 @@
 
                       var tokenRefMap = normalizeRefs(decl.tokens);
                       var instructions = (token.childs || []).slice();
+                      var styleNSPrefixMap = basis.object.slice(decl.styleNSPrefix);
 
                       if (elAttrs['class'])
                         instructions.push({
@@ -1281,7 +1288,17 @@
                           switch (child.name)
                           {
                             case 'style':
-                              addResource(template, child, tokenAttrs(child).src, isolatePrefix);
+                              var childAttrs = tokenAttrs(child);
+                              var styleNamespace = childAttrs.namespace || childAttrs.ns;
+                              var styleIsolate = styleNamespace ? styleNamespaceIsolate : isolatePrefix;
+                              var src = addStyle(template, child, childAttrs.src, styleIsolate);
+
+                              if (styleNamespace)
+                              {
+                                if (src in styleNamespaceIsolate == false)
+                                  styleNamespaceIsolate[src] = genIsolateMarker();
+                                styleNSPrefixMap[styleNamespace] = styleNamespaceIsolate[src];
+                              }
                               break;
 
                             case 'replace':
@@ -1384,6 +1401,9 @@
 
                       if (tokenRefMap.element)
                         removeTokenRef(tokenRefMap.element.token, 'element');
+
+                      // complete template namespace prefix map
+                      basis.object.complete(template.styleNSPrefix, styleNSPrefixMap);
 
                       // isolate
                       if (isolatePrefix)
@@ -1637,10 +1657,29 @@
       return unpredictable;
     }
 
-    function isolateTokens(tokens, isolate, stIdx){
+    function isolateTokens(tokens, isolate, template, stIdx){
       function processName(name){
         var parts = name.split(':');
-        return parts.length == 1 ? isolate + parts[0] : parts[1];
+
+        if (parts.length == 1)
+          return isolate + parts[0];
+
+        // don't resolve namespaced names if not template isolate mode
+        if (!template)
+          return name;
+
+        // global namespace
+        if (!parts[0])
+          return parts[1];
+
+        // if namespace not found, no prefix and show warning
+        if (parts[0] in template.styleNSPrefix == false)
+        {
+          /** @cut */ template.warns.push('Namespace `' + parts[0] + '` is not defined in template, no prefix added');
+          return name;
+        }
+
+        return template.styleNSPrefix[parts[0]] + parts[1];
       }
 
       for (var i = stIdx || 0, token; token = tokens[i]; i++)
@@ -1648,7 +1687,7 @@
         var tokenType = token[TOKEN_TYPE];
 
         if (tokenType == TYPE_ELEMENT)
-          isolateTokens(token, isolate, ELEMENT_ATTRS);
+          isolateTokens(token, isolate, template, ELEMENT_ATTRS);
 
         if (tokenType == TYPE_ATTRIBUTE_CLASS || (tokenType == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
         {
@@ -1679,6 +1718,7 @@
         baseURI: baseURI || '',
         tokens: null,
         resources: [],
+        styleNSPrefix: {},
         deps: [],
         /** @cut for token type change in dev mode */ l10n: [],
         defines: {},
@@ -1714,7 +1754,9 @@
       if (sourceOrigin)
         includeStack.push(sourceOrigin);
 
+      //
       // main task
+      //
       result.tokens = process(source, result, options);
 
       // prevent recursion
@@ -1741,13 +1783,16 @@
 
       if (includeStack.length == 0)
       {
-        if (result.isolate)
-        {
-          isolateTokens(result.tokens, result.isolate);
-          for (var i = 0, item; item = result.resources[i]; i++)
-            item[1] = result.isolate + item[1];
-        }
+        // isolate tokens
+        isolateTokens(result.tokens, result.isolate || '', result);
 
+        // resolve style prefix
+        if (result.isolate)
+          for (var i = 0, item; item = result.resources[i]; i++)
+            if (item[1] !== styleNamespaceIsolate)  // ignore namespaced styles
+              item[1] = result.isolate + item[1];
+
+        // isolate styles
         result.resources = result.resources
           // remove duplicates
           .filter(function(item, idx, array){
@@ -1758,9 +1803,15 @@
             var url = item[0];
             var isolate = item[1];
 
+            // resolve namespaced style
+            if (isolate === styleNamespaceIsolate)
+              isolate = styleNamespaceIsolate[url];
+
+            // if no isolate prefix -> nothing todo
             if (!isolate)
               return url;
 
+            // otherwise create virtual resource with prefixed classes in selectors
             var resource = basis.resource.virtual('css', '').ready(function(cssResource){
               sourceResource();
               basis.object.extend(cssResource, {
@@ -2000,7 +2051,7 @@
       source = host.textContent || host.text;
     /** @cut */ else
     /** @cut */   if (!host)
-    /** @cut */     basis.dev.warn('Template script element with id `' + sourceId + '` not found');
+    /** @cut */     basis.dev.warn('Template script element with id `' + id + '` not found');
     /** @cut */   else
     /** @cut */     basis.dev.warn('Template should be declared in <script type="text/basis-template"> element (id `' + sourceId + '`)');
 

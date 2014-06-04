@@ -1,3 +1,29 @@
+## 1.2.5 → 1.3.0
+
+Rename
+
+  - `basis.data.AbstractDataset` → `basis.data.ReadOnlyDataset`
+
+Remove
+
+  - `basis.ui.Node#templateUpdate`
+  - `basis.ui.Node#content`
+  - `basis.platformFeature` (use `basis.cssom.features` instead)
+  - `basis.dragdrop.DragDropElement#containerGetter` (`element` could be changed on `prepareDrag` or `emit_start`)
+  - `<b:resource>` in templates (use `<b:style>` instead)
+
+Might break
+
+  - `basis.template` resources of included templates are always going before own template resources
+  - `basis.dragdrop.DragDropElement#startRule` receive real `deltaX`/`deltaY` but not a result of `axisXproxy`/`axisYproxy` methods
+  - `basis.dragdrop.DragDropElement` always emit `start` event with zero `deltaX`/`deltaY`
+
+## 1.2.1 → 1.2.3
+
+Might break
+
+  - `basis.ui.calendar.CalendarNode` has no `periodStart` and `periodEnd` on init, but get those properties after append to parent (section) and receive `periodChanged` event
+
 ## 1.2.0 → 1.2.1
 
 Remove
@@ -26,7 +52,7 @@ Remove
   - `basis.entity.Type#addField` (doesn't work since 1.0 anyway)
   - `basis.entity.Type#addCalcField` (doesn't work since 1.0 anyway)
 
-Might broke
+Might break
 
   - `extProto: false` by default (don't extend buildin classes prototypes)
   - all resource extensions are updatable by default (use `permanent: true` in resource type definition to supress it)
