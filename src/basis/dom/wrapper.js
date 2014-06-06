@@ -359,30 +359,17 @@
     return null;
   }
 
-  function extendSatelliteConfig(result, extend){
-    for (var name in extend)
-      result[name] = processSatelliteConfig(extend[name]);
-  }
-
   function applySatellites(node, satellites){
     for (var name in satellites)
       if (satellites[name] && typeof satellites[name] == 'object')
         node.setSatellite(name, satellites[name]);
   }
 
-  // default satellite config map
-  var NULL_SATELLITE_CONFIG = Class.customExtendProperty({}, function(result, extend){
-    /** @cut */ for (var key in extend)
-    /** @cut */ {
-    /** @cut */   basis.dev.warn('basis.dom.wrapper.AbstractNode#satelliteConfig is deprecated now, use basis.dom.wrapper.AbstractNode#satellite instead');
-    /** @cut */   break;
-    /** @cut */ }
-
-    extendSatelliteConfig(result, extend);
-  });
-
   // default satellite map
-  var NULL_SATELLITE = Class.customExtendProperty({}, extendSatelliteConfig);
+  var NULL_SATELLITE = Class.customExtendProperty({}, function(result, extend){
+    for (var name in extend)
+      result[name] = processSatelliteConfig(extend[name]);
+  });
 
   // satellite update handler
   var SATELLITE_UPDATE = function(owner){
@@ -712,13 +699,6 @@
     groupId: NaN,
 
    /**
-    * Hash of satellite object configs.
-    * @type {Object}
-    * @deprecated
-    */
-    satelliteConfig: NULL_SATELLITE_CONFIG,
-
-   /**
     * Satellite objects storage.
     * @type {Object}
     */
@@ -804,14 +784,6 @@
 
       // process satellites
       var satellites = this.satellite;
-
-      if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
-      {
-        /** @cut */ if (this.satelliteConfig !== this.constructor.prototype.satelliteConfig)
-        /** @cut */   basis.dev.warn('basis.dom.wrapper.AbstractNode#satelliteConfig is deprecated now, use basis.dom.wrapper.AbstractNode#satellite instead');
-        satellites = basis.object.merge(satellites, this.satelliteConfig);
-      }
-
       if (satellites !== NULL_SATELLITE)
       {
         this.satellite = NULL_SATELLITE;
