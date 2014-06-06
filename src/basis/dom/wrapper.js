@@ -400,6 +400,7 @@
         if (!satellite)
         {
           // create new satellite instance
+          var listenHandler;
           var satelliteConfig = (
             typeof config.config == 'function'
               ? config.config(owner)
@@ -422,8 +423,10 @@
 
           // this statement here, because owner set in config and no listen add in this case
           // TODO: looks like a hack, fix it
-          if (owner.listen && owner.listen.satellite)
-            satellite.addHandler(owner.listen && owner.listen.satellite, owner);
+          if (listenHandler = owner.listen.satellite)
+            satellite.addHandler(listenHandler, owner);
+          if (listenHandler = owner.listen['satellite:' + name])
+            satellite.addHandler(listenHandler, owner);
         }
         else
         {
@@ -990,6 +993,7 @@
       if (oldSatellite !== satellite)
       {
         var satelliteListen = this.listen.satellite;
+        var satellitePersonalListen = this.listen['satellite:' + name];
         var destroySatellite;
 
         if (oldSatellite)
@@ -1007,6 +1011,8 @@
             // regular satellite
             if (satelliteListen)
               oldSatellite.removeHandler(satelliteListen, this);
+            if (satellitePersonalListen)
+              oldSatellite.removeHandler(satellitePersonalListen, this);
 
             oldSatellite.setOwner(null);
           }
@@ -1082,6 +1088,8 @@
 
             if (satelliteListen)
               satellite.addHandler(satelliteListen, this);
+            if (satellitePersonalListen)
+              satellite.addHandler(satellitePersonalListen, this);
           }
           else
           {
