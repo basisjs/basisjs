@@ -668,7 +668,7 @@
     return fn.apply(null, values);
   }
 
-  function chooseArray(newArray, oldArray){
+  function arrayField(newArray, oldArray){
     if (!Array.isArray(newArray))
       return null;
 
@@ -680,6 +680,45 @@
         return newArray;
 
     return oldArray;
+  }
+
+  var fromISOString = (function(){
+    function fastDateParse(y, m, d, h, i, s, ms){
+      var date = new Date(y, m - 1, d, h || 0, 0, s || 0, ms ? ms.substr(0, 3) : 0);
+      date.setMinutes((i || 0) - tz - date.getTimezoneOffset());
+      return date;
+    }
+
+    var tz;
+    return function(isoDateString){
+      tz = 0;
+      return fastDateParse.apply(
+        null,
+        String(isoDateString || '')
+          .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
+            tz = i ? h * 60 + i * 1 : h * 1;
+            return pre;
+          })
+          .split(reIsoStringSplit)
+      );
+    };
+  })();
+
+  function dateField(value, oldValue){
+    if (typeof value == 'string')
+      return fromISOString(value);
+
+    if (typeof value == 'number')
+      return new Date(value);
+
+    if (value == null)
+      return null;
+
+    if (value && value.constructor === Date)
+      return value;
+
+    /** @cut */ basis.dev.warn('basis.entity: Bad value for Date field, value ignored');
+    return oldValue;
   }
 
   function addField(entityType, name, config){
@@ -736,7 +775,10 @@
       }
 
       if (config.type === Array)
-        config.type = chooseArray;
+        config.type = arrayField;
+
+      if (config.type === Date)
+        config.type = dateField;
 
       // if type still is not a function - ignore it
       if (typeof config.type != 'function')
@@ -1242,8 +1284,8 @@
         var result;
         var rollbackData = this.modified;
 
-        if (valueWrapper === chooseArray && rollbackData && key in rollbackData)
-          value = chooseArray(value, rollbackData[key]);
+        if (valueWrapper === arrayField && rollbackData && key in rollbackData)
+          value = arrayField(value, rollbackData[key]);
 
         var newValue = valueWrapper(value, this.data[key]);
         var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
