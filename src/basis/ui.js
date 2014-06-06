@@ -408,6 +408,7 @@
 
       templateSync: function(){
         var oldElement = this.element;
+        var oldTmpl = this.tmpl;
         var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
         var noChildNodesElement;
 
@@ -481,7 +482,8 @@
         }
 
         // emit event
-        this.emit_templateChanged();
+        if (oldTmpl)
+          this.emit_templateChanged();
       },
 
      /**
