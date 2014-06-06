@@ -42,7 +42,7 @@
   var VERSION = '1.3.0-dev';
 
   var document = global.document;
-  var Object_toString = Object.prototype.toString;
+  var toString = Object.prototype.toString;
 
 
  /**
@@ -453,7 +453,7 @@
       {
         case 'string':
           result = function(object){
-            return String_extensions.format(modificator, func(object));
+            return stringFunctions.format(modificator, func(object));
           };
           break;
 
@@ -800,7 +800,7 @@
   // path utils
   //
 
-  var NODE_ENV = typeof process == 'object' && Object_toString.call(process) == '[object process]';
+  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
 
  /**
   * Utilities for handling and transforming file paths. All these functions perform
@@ -1070,9 +1070,7 @@
   */
   var config = (function(){
     var basisBaseURI = '';
-    var config = {
-      extProto: false
-    };
+    var config = {};
 
     if (NODE_ENV)
     {
@@ -1100,9 +1098,8 @@
             /** @cut */ consoleMethods.error('basis.js config parse fault: ' + e);
           }
 
-          // warn about extClass in basis-config, this option was introduced in 0.9.8 for preventing using custom methods via buildin clasess
-          // TODO: remove this warning in later versions
-          /** @cut */ if ('extClass' in config) consoleMethods.warn('extClass option in basis-config is not required, basis.js doesn\'t extend buildin classes by custom methods any more');
+          // warn about extProto in basis-config, this option was removed in 1.3.0
+          /** @cut */ if ('extProto' in config) consoleMethods.warn('extProto option in basis-config is not support anymore');
 
           var src = scriptEl.src;
 
@@ -1242,7 +1239,7 @@
    /**
     * dev mode only
     */
-    function dev_verboseNameWrap(name, args, fn){
+    function devVerboseName(name, args, fn){
       return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
     }
 
@@ -1281,7 +1278,7 @@
       var NewClassProto = function(){};
 
       // verbose name in dev
-      /** @cut */ NewClassProto = dev_verboseNameWrap(className, {}, NewClassProto);
+      /** @cut */ NewClassProto = devVerboseName(className, {}, NewClassProto);
 
       NewClassProto.prototype = SuperClass.prototype;
 
@@ -1356,7 +1353,7 @@
 
       // verbose name in dev
       // NOTE: this code makes Chrome and Firefox show class name in console
-      /** @cut */ newClass = dev_verboseNameWrap(className, { instanceSeed: instanceSeed }, newClass);
+      /** @cut */ newClass = devVerboseName(className, { instanceSeed: instanceSeed }, newClass);
 
       // add constructor property to prototype
       newProto.constructor = newClass;
@@ -1411,7 +1408,7 @@
       }
 
       // for browsers that doesn't enum toString
-      if (TOSTRING_BUG && source[key = 'toString'] !== Object_toString)
+      if (TOSTRING_BUG && source[key = 'toString'] !== toString)
         proto[key] = source[key];
 
       return this;
@@ -1469,7 +1466,7 @@
             return extension;
 
           var Base = function(){};
-          /** @cut verbose name in dev */ Base = dev_verboseNameWrap(devName || 'customExtendProperty', {}, Base);
+          /** @cut verbose name in dev */ Base = devVerboseName(devName || 'customExtendProperty', {}, Base);
           Base.prototype = this;
 
           var result = new Base;
@@ -1524,7 +1521,7 @@
             return keys;
 
           // verbose name in dev
-          /** @cut */ var Cls = dev_verboseNameWrap('oneFunctionProperty', {}, function(){});
+          /** @cut */ var Cls = devVerboseName('oneFunctionProperty', {}, function(){});
           /** @cut */ result = new Cls;
           /** @cut */ result.__extend__ = create;
 
@@ -2090,7 +2087,7 @@
         }
 
         /** @cut */ if (requires)
-        /** @cut */   Array_extensions.add(requires, namespace);
+        /** @cut */   arrayFunctions.add(requires, namespace);
 
         if (!namespaces[namespace])
         {
@@ -2336,6 +2333,7 @@
 
  /**
   * @param {string} filename
+  * @param {string} dirname
   * @name require
   */
   var requireNamespace = (function(){
@@ -2489,7 +2487,7 @@
     * @return {boolean}
     */
     isArray: function(value){
-      return Object_toString.call(value) === '[object Array]';
+      return toString.call(value) === '[object Array]';
     }
   });
 
@@ -2499,7 +2497,7 @@
       var len = object.length;
 
       if (typeof len == 'undefined' ||
-          Object_toString.call(object) == '[object Function]') // Safari 5.1 has a bug, typeof for node collection returns `function`
+          toString.call(object) == '[object Function]') // Safari 5.1 has a bug, typeof for node collection returns `function`
         return [object];
 
       if (!offset)
@@ -2614,13 +2612,16 @@
     }
   });
 
-  var Array_extensions = {
+  var arrayFunctions = {
+    from: arrayFrom,
+    create: createArray,
+
     // extractors
     flatten: function(this_){
       return this_.concat.apply([], this_);
     },
     repeat: function(this_, count){
-      return Array_extensions.flatten(createArray(parseInt(count, 10) || 0, this_));
+      return arrayFunctions.flatten(createArray(parseInt(count, 10) || 0, this_));
     },
 
     // search
@@ -2718,9 +2719,6 @@
     }
   };
 
-  // it's prohibited and will be removed soon
-  extendProto(Array, Array_extensions);
-
   // IE 5.5+ & Opera
   // when second argument is omited, method set this parameter equal zero (must be equal array length)
   if (![1, 2].splice(1).length)
@@ -2741,14 +2739,6 @@
 
   var ESCAPE_FOR_REGEXP = /([\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$])/g;
   var FORMAT_REGEXP = /\{([a-z\d_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
-
-  function isEmptyString(value){
-    return value == null || String(value) == '';
-  }
-
-  function isNotEmptyString(value){
-    return value != null && String(value) != '';
-  }
 
   complete(String, {
     toLowerCase: function(value){
@@ -2785,7 +2775,7 @@
     }
   });
 
-  var String_extensions = {
+  var stringFunctions = {
    /**
     * @return {*}
     */
@@ -2823,7 +2813,7 @@
             value = Number(value);
             return numFormat == '.'
               ? value.toFixed(num)
-              : Number_extensions.lead(value, num);
+              : numberFunctions.lead(value, num);
           }
           return value;
         }
@@ -2841,11 +2831,15 @@
       return this_.replace(/[A-Z]/g, function(m){
         return '-' + m.toLowerCase();
       });
+    },
+
+    isEmpty: function(value){
+      return value == null || String(value) == '';
+    },
+    isNotEmpty: function(value){
+      return value != null && String(value) != '';
     }
   };
-
-  // it's prohibited and will be removed soon
-  extendProto(String, String_extensions);
 
 
   // Fix some methods
@@ -2895,7 +2889,7 @@
   * @namespace Number.prototype
   */
 
-  var Number_extensions = {
+  var numberFunctions = {
     fit: function(this_, min, max){
       if (!isNaN(min) && this_ < min)
         return Number(min);
@@ -2929,9 +2923,6 @@
       return res + (postfix || '');
     }
   };
-
-  // it's prohibited and will be removed soon
-  extendProto(Number, Number_extensions);
 
 
   // ============================================
@@ -2970,7 +2961,7 @@
  /**
   * Attach document ready handlers
   * @param {function()} handler
-  * @param {*} thisObject Context for handler
+  * @param {*} context Context for handler
   */
   var ready = (function(){
     // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig/Roman Dvornov
@@ -3116,12 +3107,12 @@
     function remove(node){
       for (var key in callbacks)
       {
-        var entry = Array_extensions.search(callbacks[key], node, function(item){
+        var entry = arrayFunctions.search(callbacks[key], node, function(item){
           return item[1] && item[1][1];
         });
 
         if (entry)
-          Array_extensions.remove(callbacks[key], entry);
+          arrayFunctions.remove(callbacks[key], entry);
       }
 
       if (node && node.parentNode && node.parentNode.nodeType == 1)
@@ -3215,7 +3206,7 @@
           objects.push(object);
       },
       remove: function(object){
-        Array_extensions.remove(objects, object);
+        arrayFunctions.remove(objects, object);
       }
     };
 
@@ -3457,15 +3448,9 @@
       lazyInitAndRun: lazyInitAndRun,
       runOnce: runOnce
     },
-    array: extend(arrayFrom, merge(Array_extensions, {
-      from: arrayFrom,
-      create: createArray
-    })),
-    string: merge(String_extensions, {
-      isEmpty: isEmptyString,
-      isNotEmpty: isNotEmptyString
-    }),
-    number: Number_extensions,
+    array: extend(arrayFrom, arrayFunctions),
+    string: stringFunctions,
+    number: numberFunctions,
     bool: {
       invert: function(value){
         return !value;
@@ -3475,7 +3460,7 @@
       parse: typeof JSON != 'undefined'
         ? JSON.parse
         : function(str){
-            return String_extensions.toObject(str, true);
+            return stringFunctions.toObject(str, true);
           }
     }
   });
