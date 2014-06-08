@@ -1894,18 +1894,9 @@
     },
 
    /**
-    * Do nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
-    * TODO: remove method definition and method call in destroy method.
-    */
-    clear: function(){
-    },
-
-   /**
     * @destructor
     */
     destroy: function(){
-      this.clear();
-
       // inherit
       AbstractData.prototype.destroy.call(this);
 
@@ -2155,6 +2146,16 @@
       }
 
       return delta;
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      this.clear();
+
+      // inherit
+      ReadOnlyDataset.prototype.destroy.call(this);
     }
   });
 

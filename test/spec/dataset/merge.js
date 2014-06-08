@@ -682,26 +682,6 @@ module.exports = {
             assert(merge.sources.length == 0);
             assert(merge.getSourceValues().length == 0);
           }
-        },
-        {
-          name: 'clear method should not have any effect',
-          test: function(){
-            var dataset1 = new Dataset({ items: generate(1, 5) });
-            var dataset2 = new Dataset({ items: generate(6, 10) });
-            var merge = new Merge({
-              sources: [
-                dataset1,
-                dataset2
-              ]
-            });
-
-            merge.clear();
-
-            assert(eventCount(merge, 'sourcesChanged') == 1);
-            assert(merge.itemCount == 10);
-            assert(merge.sources.length == 2);
-            assert(merge.getSourceValues().length == 2);
-          }
         }
       ]
     }
