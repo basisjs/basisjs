@@ -2176,8 +2176,12 @@
     source: null,
     handler: null,
     adapter_: null,
-    attachMethod: 'addHandler',
-    detachMethod: 'removeHandler',
+    attach: function(){
+      this.source.addHandler(this.handler, this);
+    },
+    detach: function(){
+      this.source.removeHandler(this.handler, this);
+    },
     proxy: function(){
       this.fn.call(this.context, this.source);
     }
@@ -2190,9 +2194,13 @@
   var BBDatasetAdapter = function(){
     DatasetAdapter.apply(this, arguments);
   };
-  BBDatasetAdapter.prototype = new DatasetWrapper();
-  BBDatasetAdapter.prototype.attachMethod = 'attach';
-  BBDatasetAdapter.prototype.detachMethod = 'detach';
+  BBDatasetAdapter.prototype = new DatasetAdapter();
+  BBDatasetAdapter.prototype.attach = function(){
+    this.source.bindingBridge.attach(this.source, this.handler, this);
+  };
+  BBDatasetAdapter.prototype.detach = function(){
+    this.source.bindingBridge.detach(this.source, this.handler, this);
+  };
 
   //
   // adapter handlers
@@ -2258,7 +2266,7 @@
     {
       if (oldAdapter)
       {
-        oldAdapter.source[oldAdapter.detachMethod](oldAdapter.handler, oldAdapter);
+        oldAdapter.detach();
 
         // destroy nested adapter if exists
         if (oldAdapter.adapter_)
@@ -2266,7 +2274,7 @@
       }
 
       if (newAdapter)
-        newAdapter.source[newAdapter.attachMethod](newAdapter.handler, newAdapter);
+        newAdapter.attach();
 
       context[property] = newAdapter;
     }
