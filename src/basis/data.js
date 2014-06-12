@@ -950,7 +950,7 @@
       }
 
       var handler = basis.event.createHandler(events, function(object){
-        this.set(getter(object)); // `this` is a token
+        Value.prototype.set.call(this, getter(object)); // `this` is a token
       });
       var id = handler.events.concat(String(getter), obj.basisObjectId).join('_');
 
@@ -959,7 +959,8 @@
       {
         getter = basis.getter(getter);
         result = castValueMap[id] = new Value({
-          value: getter(obj)
+          value: getter(obj),
+          set: basis.fn.$undef
         });
 
         handler.destroy = function(sender){
