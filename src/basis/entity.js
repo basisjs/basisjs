@@ -411,7 +411,7 @@
         }
       });
 
-      var entitySetClass = entitySetType.entitySetClass;
+      var EntitySetClass = entitySetType.entitySetClass;
       var result = function(data, entitySet){
         if (data != null)
         {
@@ -428,7 +428,7 @@
 
       // if wrapper is string resolve it by named type map
       if (typeof wrapper == 'string')
-        entitySetClass.prototype.wrapper = getTypeByName(wrapper, entitySetClass.prototype, 'wrapper');
+        EntitySetClass.prototype.wrapper = getTypeByName(wrapper, EntitySetClass.prototype, 'wrapper');
 
       // resolve type name
       resolveType(name, result);
@@ -439,35 +439,50 @@
         typeName: name,
 
         toString: function(){
-          return this.typeName + '()';
+          return name + '()';
         },
 
-        entitySetType: entitySetType,
-        extend: function(){
-          return entitySetClass.extend.apply(entitySetClass, arguments);
-        },
-        extendClass: function(){
-          entitySetClass.extend.apply(entitySetClass, arguments);
-          return result;
-        },
         reader: function(data){
           if (Array.isArray(data))
           {
-            var wrapper = entitySetClass.prototype.wrapper;
+            var wrapper = EntitySetClass.prototype.wrapper;
             return data.map(wrapper.reader || wrapper);
           }
 
           return data;
         },
+
+        extendClass: function(source){
+          EntitySetClass.extend.call(EntitySetClass, source);
+          return result;
+        },
         extendReader: function(extReader){
           var reader = result.reader;
+
           result.reader = function(data){
             if (Array.isArray(data))
               extReader(data);
             return reader(data);
           };
+
+          return result;
+        },
+
+        // deprecated
+        entitySetType: entitySetType,
+        extend: function(){
+          /** @cut */ basis.dev.warn('basis.entity: EntitySetType.extend() is deprecated, use EntitySetType.extendClass() instead.');
+          return EntitySetClass.extend.apply(EntitySetClass, arguments);
         }
       });
+
+      /** @cut */ if (Object.defineProperty)
+      /** @cut */   Object.defineProperty(result, 'entitySetType', {
+      /** @cut */     get: function(){
+      /** @cut */       basis.dev.warn('basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.');
+      /** @cut */       return entitySetType;
+      /** @cut */     }
+      /** @cut */   });
 
       return result;
     }
@@ -571,24 +586,20 @@
 
       var entityType = new EntityTypeConstructor(config || {}, result);
       var EntityClass = entityType.entityClass;
+      var name = entityType.name;
 
       // resolve type by name
-      resolveType(entityType.name, result);
+      resolveType(name, result);
 
       // extend result with additional properties
       extend(result, {
         all: entityType.all,
 
         type: entityType,
-        typeName: entityType.name,
-        entityType: entityType,  // ?? deprecated
+        typeName: name,
 
         toString: function(){
-          return this.typeName + '()';
-        },
-
-        reader: function(data){
-          return entityType.reader(data);
+          return name + '()';
         },
 
         get: function(data){
@@ -598,21 +609,41 @@
           return entityType.getSlot(id, defaults);
         },
 
-        extend: function(){
-          return EntityClass.extend.apply(EntityClass, arguments);
+        reader: function(data){
+          return entityType.reader(data);
         },
-        extendClass: function(){
-          return EntityClass.extend.apply(EntityClass, arguments);
+
+        extendClass: function(source){
+          EntityClass.extend.call(EntityClass, source);
+          return result;
         },
         extendReader: function(extReader){
           var reader = result.reader;
+
           result.reader = function(data){
             if (data && typeof data == 'object')
               extReader(data);
             return reader(data);
           };
+
+          return result;
+        },
+
+        // deprecated
+        entityType: entityType,
+        extend: function(){
+          /** @cut */ basis.dev.warn('basis.entity: EntityType.extend() is deprecated, use EntityType.extendClass() instead.');
+          return EntityClass.extend.apply(EntityClass, arguments);
         }
       });
+
+      /** @cut */ if (Object.defineProperty)
+      /** @cut */   Object.defineProperty(result, 'entityType', {
+      /** @cut */     get: function(){
+      /** @cut */       basis.dev.warn('basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.');
+      /** @cut */       return entityType;
+      /** @cut */     }
+      /** @cut */   });
 
       return result;
     }
