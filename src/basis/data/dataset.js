@@ -1784,7 +1784,7 @@
         }
 
         // set new values
-        this.orderDesc = !!orderDesc;
+        this.orderDesc = orderDesc;
         this.rule = rule;
         this.emit_ruleChanged(oldRule, oldOrderDesc);
 

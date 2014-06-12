@@ -311,6 +311,9 @@
         var baz = parts[2];
         var fn;
 
+        // This approach helps produce function that could be
+        // optimized (inlined) by js engine. In most cases path contains
+        // from 1 to 3 parts and we don't use a loop in those cases.
         switch (parts.length)
         {
           case 1:
