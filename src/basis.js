@@ -1383,7 +1383,7 @@
       var proto = this.prototype;
 
       if (typeof source == 'function' && !isClass(source))
-        source = source(this.superClass_.prototype);
+        source = source(this.superClass_.prototype, slice(proto));
 
       if (source.prototype)
         source = source.prototype;
