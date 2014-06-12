@@ -1856,6 +1856,15 @@
     },
 
    /**
+    * Returns results of execution some function for every items in dataset.
+    * @param {function(item:basis.data.Object)|string} fn Value get function.
+    * @return {Array.<*>}
+    */
+    getValues: function(fn){
+      return this.getItems().map(getter(fn || $self));
+    },
+
+   /**
     * Returns first any item if exists.
     * @return {basis.data.Object}
     */
