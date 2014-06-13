@@ -129,13 +129,19 @@
       if (item && (!checkType || item.entityType === checkType))
         return item;
     },
-    add: function(value, item){
-      var cur = hasOwnProperty.call(this.items, value) && this.items[value];
-
-      if (item && (!cur || cur === item))
+    add: function(value, newItem){
+      if (newItem)
       {
-        this.items[value] = item;
-        return true;
+        var curItem = this.get(value);
+
+        if (!curItem)
+        {
+          this.items[value] = newItem;
+          return true;
+        }
+
+        if (curItem !== newItem)
+          throw 'basis.entity: Value `' + value + '` for index is already occupied';
       }
     },
     remove: function(value, item){
@@ -1231,8 +1237,8 @@
             // if no key that's a constrain, nothing to do
             if (key && newValue !== oldValue)
             {
-              data[key] = newValue;
               delta[key] = oldValue;
+              data[key] = newValue;
               updated = true;
             }
           }
@@ -1249,16 +1255,10 @@
 
           if (newId !== curId)
           {
-            var curEntity = indexDescriptor.index.get(newId);
-
-            if (curEntity && curEntity !== entity)
-              throw 'Duplicate value for index [' + oldValue + ' -> ' + newValue + ']';
-
-            if (!curEntity)
-            {
-              entity[indexDescriptor.property] = newId;
-              updateIndex(indexDescriptor.index, entity, curId, newId);
-            }
+            // TODO: correct rollback if one of indexes updated
+            // and than exception occured
+            updateIndex(indexDescriptor.index, entity, curId, newId);
+            entity[indexDescriptor.property] = newId;
           }
         }
 
@@ -1276,20 +1276,21 @@
     }
 
     function updateIndex(index, entity, curValue, newValue){
+      // if new value is not null, add new value to index
+      // NOTE: goes first as may cause to exception
+      if (newValue != null)
+      {
+        index.add(newValue, entity);
+        if (hasOwnProperty.call(slots, newValue))
+          slots[newValue].setDelegate(entity);
+      }
+
       // if current value is not null, remove old value from index first
       if (curValue != null)
       {
         index.remove(curValue, entity);
         if (hasOwnProperty.call(slots, curValue))
           slots[curValue].setDelegate();
-      }
-
-      // if new value is not null, add new value to index
-      if (newValue != null)
-      {
-        index.add(newValue, entity);
-        if (hasOwnProperty.call(slots, newValue))
-          slots[newValue].setDelegate(entity);
       }
     }
 
