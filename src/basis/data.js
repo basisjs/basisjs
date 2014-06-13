@@ -1861,8 +1861,8 @@
     * @param {function(item:basis.data.Object)|string} fn Value get function.
     * @return {Array.<*>}
     */
-    getValues: function(fn){
-      return this.getItems().map(getter(fn || $self));
+    getValues: function(getter){
+      return this.getItems().map(basis.getter(getter || $self));
     },
 
    /**
