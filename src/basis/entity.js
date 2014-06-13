@@ -62,6 +62,7 @@
 
   // types map
   var namedTypes = {};
+  var namedIndexes = {};
   var deferredTypeDef = {};
   var TYPE_DEFINITION_PLACEHOLDER = function TYPE_DEFINITION_PLACEHOLDER(){};
 
@@ -99,7 +100,8 @@
       var Type = namedTypes[typeName];
       if (Type)
         return Type(value, oldValue);
-      /** @cut */ else if (arguments.length) // don't warn on default value calculation
+
+      /** @cut */ if (arguments.length) // don't warn on default value calculation
       /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for ' + field + ', but function called');
     };
   }
@@ -117,20 +119,9 @@
     className: namespace + '.Index',
 
     items: null,
-    fn: String,
 
     init: function(fn){
       this.items = {};
-      if (typeof fn == 'function')
-        this.fn = fn;
-    },
-    calcWrapper: function(newValue, oldValue){
-      var value = this.fn(newValue, oldValue);
-
-      if (value !== oldValue && hasOwnProperty.call(this.items, value))
-        throw 'Duplicate value for index [' + oldValue + ' -> ' + newValue + ']';
-
-      return value;
     },
     get: function(value, checkType){
       var item = hasOwnProperty.call(this.items, value) && this.items[value];
@@ -233,18 +224,22 @@
     return result;
   }
 
-  function ConcatString(){
+  function ConcatStringField(name){
+    if (arguments.length == 1)
+      return function(delta, data, oldValue){
+        if (name in delta)
+          return data[name] != null ? String(data[name]) : null;
+        return oldValue;
+      };
+
     return CalculateField.apply(null, arrayFrom(arguments).concat(function(){
-      var value = [];
-      for (var i = arguments.length; i-- > 0;)
-      {
+      for (var i = arguments.length - 1; i >= 0; i--)
         if (arguments[i] == null)
           return null;
-        value.push(arguments[i]);
-      }
-      return value.join('-');
+      return Array.prototype.join.call(arguments, '-');
     }));
   }
+
 
   //
   // EntitySet
@@ -567,9 +562,6 @@
             {
               if (entityType.compositeKey)
                 idValue = entityType.compositeKey(data, data);
-              else
-                if (idField)
-                  idValue = data[idField];
 
               if (idValue != null)
                 entity = entityType.index.get(idValue, entityType);
@@ -768,7 +760,7 @@
     else
     {
       // make a copy of config to avoid side effect
-      config = basis.object.slice(config);
+      config = config ? basis.object.slice(config) : {};
     }
 
     // process type in config
@@ -815,32 +807,14 @@
       if (typeof config.type != 'function')
       {
         /** @cut */ basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + name + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
-        config.type = $self;
+        config.type = null;
       }
     }
 
     var wrapper = config.type || $self;
 
-    if ([NumericId, NumberId, IntId, StringId].indexOf(wrapper) != -1)
-      config.id = true;
-
-    if (config.id)
-    {
-      if (!entityType.index)
-        entityType.index = new Index(String);
-
-      entityType.idFields[name] = true;
-
-      if (entityType.idField || entityType.compositeKey)
-      {
-        entityType.idField = null;
-        entityType.compositeKey = ConcatString.apply(null, keys(entityType.idFields));
-      }
-      else
-      {
-        entityType.idField = name;
-      }
-    }
+    if (config.id || config.index || [NumericId, NumberId, IntId, StringId].indexOf(wrapper) != -1)
+      entityType.idFields[name] = config;
 
     if (config.calc)
     {
@@ -915,9 +889,6 @@
         return;
       }
 
-      if (entityType.idField && name == entityType.idField)
-        entityType.compositeKey = wrapper;
-
       // resolve calc dependencies
       deps[name] = calcArgs.reduce(function(res, ref){
         var items = deps[ref] || [ref];
@@ -969,6 +940,7 @@
     all: null,
 
     fields: null,
+    idField: null,
     idFields: null,
     defaults: null,
 
@@ -977,6 +949,7 @@
 
     singleton: false,
     index: null,
+    indexes: null,
     entityClass: null,
 
     init: function(config, wrapper){
@@ -1039,6 +1012,80 @@
           addCalcField(this, null, item);
         }, this);
 
+      // process id and indexes
+      var idFields = keys(this.idFields);
+      var indexes = {};
+      if (idFields.length)
+      {
+        for (var field in this.idFields)
+        {
+          var fieldCfg = this.idFields[field];
+          var index = fieldCfg.index;
+          var indexDescriptor;
+
+          // resolve index
+          if (!index || index instanceof Index == false)
+          {
+            if (typeof index == 'string')
+            {
+              if (index in namedIndexes == false)
+                namedIndexes[index] = new Index();
+              index = namedIndexes[index];
+            }
+            else
+            {
+              if (!this.index)
+                this.index = new Index();
+              index = this.index;
+            }
+          }
+
+          indexDescriptor = indexes[index.basisObjectId];
+          if (!indexDescriptor)
+            indexDescriptor = indexes[index.basisObjectId] = {
+              index: index,
+              fields: []
+            };
+
+          // reg id field
+          indexDescriptor.fields.push(field);
+          this.idFields[field] = indexDescriptor;
+        }
+
+        if (this.index && this.index.basisObjectId in indexes == false)
+        {
+          /** @cut */ basis.dev.warn('basis.entity: entity index is not used for any field, index ignored');
+          this.index = null;
+        }
+
+        // process indexes
+        for (var id in indexes)
+        {
+          var indexDescriptor = indexes[id];
+          indexDescriptor.property = '__id__' + id;
+          indexDescriptor.compositeKey = ConcatStringField.apply(null, indexDescriptor.fields);
+          if (indexDescriptor.fields.length == 1)
+            indexDescriptor.idField = indexDescriptor.fields[0];
+        }
+
+        // choose primary key
+        var indexesKeys = keys(indexes);
+        var primaryIndex = indexes[this.index ? this.index.basisObjectId : indexesKeys[0]];
+
+        // set primary and id fields
+        this.index = primaryIndex.index;
+        this.idField = primaryIndex.idField;
+        this.compositeKey = primaryIndex.compositeKey;
+        this.idProperty = primaryIndex.property;
+
+        this.indexes = indexes;
+      }
+      else
+      {
+        /** @cut */ basis.dev.warn('basis.entity: entity has no any id field, index ignored');
+        this.index = null;
+      }
+
       // create initDelta
       var initDelta = {};
       for (var key in this.defaults)
@@ -1091,25 +1138,23 @@
     },
     get: function(entityOrData){
       var id = this.getId(entityOrData);
-      if (id != null)
+      if (this.index && id != null)
         return this.index.get(id, this);
     },
     getId: function(entityOrData){
-      if ((this.idField || this.compositeKey) && entityOrData != null)
+      if (this.compositeKey && entityOrData != null)
       {
         if (isKeyType[typeof entityOrData])
           return entityOrData;
 
         if (entityOrData && entityOrData.entityType === this)
-          return entityOrData.__id__;
+          return entityOrData[this.idProperty];
 
         if (entityOrData instanceof DataObject)
           entityOrData = entityOrData.data;
 
         if (this.compositeKey)
           return this.compositeKey(entityOrData, entityOrData);
-        else
-          return entityOrData[this.idField];
       }
     },
     getSlot: function(data){
@@ -1122,7 +1167,7 @@
           if (isKeyType[typeof data])
           {
             var tmp = {};
-            if (this.idField && !this.compositeKey)
+            if (this.idField)
               tmp[this.idField] = data;
             data = tmp;
           }
@@ -1156,8 +1201,10 @@
       // entity can't has a delegate
     },
 
-    modified: null,
+    extendConstructor_: false,
+    fieldHandlers_: null,
 
+    modified: null,
     emit_rollbackUpdate: createEvent('rollbackUpdate')
   });
 
@@ -1171,8 +1218,6 @@
       var calcs = entityType.calcs;
       var data = entity.data;
       var updated = false;
-      var curId = entity.__id__;
-      var newId;
 
       try {
         if (calcs)
@@ -1193,44 +1238,44 @@
           }
         }
 
-        if (entityType.compositeKey)
-          newId = entityType.compositeKey(delta, data, curId);
-        else
-          newId = entityType.idField && entityType.idField in delta ? data[entityType.idField] : curId;
+        for (var id in entityType.indexes)
+        {
+          var indexDescriptor = entityType.indexes[id];
+          var curId = entity[indexDescriptor.property];
+          var newId = curId;
 
-        if (newId !== curId)
-          entityType.index.calcWrapper(newId, curId);
+          if (indexDescriptor.compositeKey)
+            newId = indexDescriptor.compositeKey(delta, data, curId);
 
+          if (newId !== curId)
+          {
+            var curEntity = indexDescriptor.index.get(newId);
+
+            if (curEntity && curEntity !== entity)
+              throw 'Duplicate value for index [' + oldValue + ' -> ' + newValue + ']';
+
+            if (!curEntity)
+            {
+              entity[indexDescriptor.property] = newId;
+              updateIndex(indexDescriptor.index, entity, curId, newId);
+            }
+          }
+        }
+
+        return updated;
       } catch(e) {
         /** @cut */ entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
 
         // rollback all changes
-        updated = false;
-        newId = curId;
-
         for (var key in delta)
           entity.data[key] = delta[key];
 
         if (rollbackDelta && !entity.modified)
-          for (var key in rollbackDelta)
-          {
-            entity.modified = rollbackDelta;
-            break;
-          }
+          entity.modified = rollbackDelta;
       }
-
-      if (newId !== curId)
-      {
-        entity.__id__ = newId;
-        updateIndex(entity, curId, newId);
-      }
-
-      return updated;
     }
 
-    function updateIndex(entity, curValue, newValue){
-      var index = entityType.index;
-
+    function updateIndex(index, entity, curValue, newValue){
       // if current value is not null, remove old value from index first
       if (curValue != null)
       {
@@ -1250,9 +1295,6 @@
 
     return Class(BaseEntity, {
       className: entityType.name,
-
-      extendConstructor_: false,
-      fieldHandlers_: null,
 
       init: function(data){
         // ignore delegate and data
@@ -1293,7 +1335,7 @@
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
       },
       getId: function(){
-        return this.__id__;
+        return this[entityType.idProperty];
       },
       get: function(key, real){
         if (real && this.modified && key in this.modified)
@@ -1323,8 +1365,12 @@
                                         // that why we fetch it again after valueWrapper call
 
         var valueChanged = newValue !== curValue &&
-                           // date comparison fix;
-                           (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
+                           // date comparison:
+                           (!newValue ||
+                            !curValue ||
+                             newValue.constructor !== Date ||
+                             curValue.constructor !== Date ||
+                             +newValue !== +curValue);
 
         // if value changed:
         // - update index for id field
@@ -1486,9 +1532,7 @@
 
         if (data)
         {
-          var rollbackUpdate;
-          var rollbackDelta = {};
-
+          var rollbackDelta;
           var setResult;
 
           // update fields
@@ -1504,7 +1548,8 @@
 
               if (setResult.rollback)
               {
-                rollbackUpdate = true;
+                if (!rollbackDelta)
+                  rollbackDelta = {};
                 rollbackDelta[setResult.rollback.key] = setResult.rollback.value;
               }
             }
@@ -1518,7 +1563,7 @@
           if (update)
             this.emit_update(delta);
 
-          if (rollbackUpdate)
+          if (rollbackDelta)
             this.emit_rollbackUpdate(rollbackDelta);
         }
 
@@ -1576,9 +1621,14 @@
           this.fieldHandlers_ = null;
         }
 
-        // delete from index
-        if (this.__id__ != null)
-          updateIndex(this, this.__id__, null);
+        // delete from indexes
+        for (var key in entityType.indexes)
+        {
+          var indexDescriptor = entityType.indexes[key];
+          var id = this[indexDescriptor.property];
+          if (id != null)
+            updateIndex(indexDescriptor.index, this, id, null);
+        }
 
         // delete from all entity type list (is it right order?)
         if (all && all.has(this))
@@ -1650,10 +1700,20 @@
     getTypeByName: function(typeName){
       return namedTypes[typeName];
     },
+    getIndexByName: function(name){
+      return namedIndexes[name];
+    },
+
     get: function(typeName, id){
       var type = namedTypes[typeName];
       if (type)
         return type.get(id);
+    },
+    getByIndex: function(name, id){
+      if (name in namedIndexes)
+        return namedIndexes[name].get(id);
+      /** @cut */ else
+      /** @cut */   basis.dev.warn('basis.entity: index with name `' + name + '` doesn\'t exists');
     },
 
     NumericId: NumericId,
@@ -1662,6 +1722,7 @@
     StringId: StringId,
     Index: Index,
     CalculateField: CalculateField,
+    ConcatStringField: ConcatStringField,
     calc: CalculateField,
 
     EntityType: EntityTypeWrapper,
