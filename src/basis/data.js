@@ -1479,67 +1479,77 @@
 
   var KEYOBJECTMAP_MEMBER_HANDLER = {
     destroy: function(){
-      delete this.map[this.itemId];
+      delete this.map[this.id];
     }
   };
 
  /**
   * @class
   */
-  var KeyObjectMap = Class(null, {
+  var KeyObjectMap = Class(AbstractData, {
     className: namespace + '.KeyObjectMap',
 
     itemClass: DataObject,
     keyGetter: $self,
+    autoDestroyMembers: true,
     map_: null,
 
     extendConstructor_: true,
     init: function(){
       this.map_ = {};
-      cleaner.add(this);
+      AbstractData.prototype.init.call(this);
     },
 
     resolve: function(object){
       return this.get(this.keyGetter(object), object);
     },
     create: function(key, object){
-      var itemConfig = {};
+      var itemConfig;
 
       if (key instanceof DataObject)
-      {
-        itemConfig.delegate = key;
-      }
-      else
-      {
-        itemConfig.data = {
-          id: key,
-          title: key
+        itemConfig = {
+          delegate: key
         };
-      }
+      else
+        itemConfig = {
+          data: {
+            id: key,
+            title: key
+          }
+        };
 
       return new this.itemClass(itemConfig);
     },
-    get: function(key, object){
+    get: function(key, autocreate){
       var itemId = key instanceof DataObject ? key.basisObjectId : key;
-      var item = this.map_[itemId];
+      var itemInfo = this.map_[itemId];
 
-      if (!item && object)
+      if (!itemInfo && autocreate)
       {
-        item = this.map_[itemId] = this.create(key, object);
-        item.addHandler(KEYOBJECTMAP_MEMBER_HANDLER, {
+        itemInfo = this.map_[itemId] = {
           map: this.map_,
-          itemId: itemId
-        });
+          id: itemId,
+          item: this.create(key, autocreate)
+        };
+        itemInfo.item.addHandler(KEYOBJECTMAP_MEMBER_HANDLER, itemInfo);
       }
 
-      return item;
+      if (itemInfo)
+        return itemInfo.item;
     },
     destroy: function(){
-      cleaner.remove(this);
+      AbstractData.prototype.destroy.call(this);
 
-      var items = values(this.map_);
-      for (var i = 0, item; item = items[i++];)
-        item.destroy();
+      var map = this.map_;
+      this.map_ = null;
+      for (var itemId in map)
+      {
+        var itemInfo = map[itemId];
+        if (this.autoDestroyMembers)
+          itemInfo.item.destroy();
+        else
+          itemInfo.item.removeHandler(KEYOBJECTMAP_MEMBER_HANDLER, itemInfo);
+      }
     }
   });
 
