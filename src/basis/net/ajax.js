@@ -467,11 +467,15 @@
     requestHeaders: basis.Class.extensibleProperty(),
     responseType: '',
     params: null,
+    routerParams: null,
+    url: '',
+    postBody: null,
 
     init: function(){
       AbstractTransport.prototype.init.call(this);
 
       this.params = objectSlice(this.params);
+      this.routerParams = objectSlice(this.routerParams);
     },
 
     // params methods
@@ -497,7 +501,8 @@
 
       extend(requestData, {
         headers: objectMerge(this.requestHeaders, requestData.headers),
-        params: objectMerge(this.params, requestData.params)
+        params: objectMerge(this.params, requestData.params),
+        routerParams: objectMerge(this.routerParams, requestData.routerParams)
       });
 
       basis.object.complete(requestData, {
