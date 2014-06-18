@@ -406,8 +406,8 @@
 
       var entitySetType = new EntitySetConstructor({
         entitySetClass: {
-          /** @cut */ className: namespace + '.EntitySet(' + (typeof wrapper == 'string' ? wrapper : (wrapper.entityType || wrapper).name || 'UnknownType') + ')',
-          /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.entityType || wrapper).name || 'UnknownType') + '}',
+          /** @cut */ className: namespace + '.EntitySet(' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + ')',
+          /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + '}',
           wrapper: wrapper
         }
       });
@@ -1088,8 +1088,11 @@
       }
       else
       {
-        /** @cut */ basis.dev.warn('basis.entity: entity has no any id field, index ignored');
-        this.index = null;
+        if (this.index)
+        {
+          /** @cut */ basis.dev.warn('basis.entity: entity has no any id field, index ignored');
+          this.index = null;
+        }
       }
 
       // create initDelta
