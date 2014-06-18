@@ -338,9 +338,16 @@
 
       if (oldSource !== source)
       {
+        var listenHandler = this.listen['source:' + name];
+
         // remove handler from old source if present
         if (oldSource)
+        {
+          if (listenHandler)
+            oldSource.removeHandler(listenHandler, this);
+
           oldSource.removeHandler(MERGE_SOURCE_HANDLER, this.sourcesContext_[name]);
+        }
 
         // set new source value
         this.sources[name] = source;
@@ -355,6 +362,9 @@
             };
 
           source.addHandler(MERGE_SOURCE_HANDLER, this.sourcesContext_[name]);
+
+          if (listenHandler)
+            source.addHandler(listenHandler, this);
 
           // apply new source data
           this.update(this.fields.sources[name](source.data));
