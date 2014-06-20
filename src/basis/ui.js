@@ -525,11 +525,16 @@
         }
 
         // apply new value
-        if (this.template !== template)
+        var oldTmpl = this.tmpl;
+        var oldTemplate = this.template;
+        if (oldTemplate !== template)
         {
           // set new template
           this.template = template;
           this.templateSync();
+
+          if (oldTemplate)
+            oldTemplate.clearInstance(oldTmpl);
         }
       },
 
