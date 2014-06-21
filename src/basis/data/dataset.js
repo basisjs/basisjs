@@ -661,7 +661,7 @@
         return;
 
       var newDelta = getDelta(
-        /* inserted */ delta.deleted  && delta.deleted.filter(datasetAbsentFilter, this),
+        /* inserted */ delta.deleted  && delta.deleted.filter(this.minuend.has, this.minuend),
         /* deleted */  delta.inserted && delta.inserted.filter(this.has, this)
       );
 

@@ -368,6 +368,65 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'change content of operands',
+      test: [
+        {
+          name: 'change minuend items',
+          test: function(){
+            var items = generate(0, 10);
+            var minuend = new Dataset({ items: items.slice(0, 5) });
+            var subtrahend = new Dataset({ items: items.slice(3, 8) });
+            var subtract = new Subtract({
+              minuend: minuend,
+              subtrahend: subtrahend
+            });
+
+            assert(subtract.itemCount == 3);
+            assert(checkValues(subtract, range(0, 2)) == false);
+
+            minuend.add([items[3], items[9]]);
+            assert(subtract.itemCount == 4);
+            assert(checkValues(subtract, [0, 1, 2, 9]) == false);
+
+            minuend.remove([items[0], items[4]]);
+            assert(subtract.itemCount == 3);
+            assert(checkValues(subtract, [1, 2, 9]) == false);
+
+            minuend.clear();
+            assert(subtract.itemCount == 0);
+          }
+        },
+        {
+          name: 'change subtrahend items',
+          test: function(){
+            var items = generate(0, 10);
+            var minuend = new Dataset({ items: items.slice(0, 5) });
+            var subtrahend = new Dataset({ items: items.slice(3, 8) });
+            var subtract = new Subtract({
+              minuend: minuend,
+              subtrahend: subtrahend
+            });
+
+            assert(subtract.itemCount == 3);
+            assert(checkValues(subtract, range(0, 2)) == false);
+
+            subtrahend.add([items[2], items[9]]);
+            assert(subtract.itemCount == 2);
+            assert(checkValues(subtract, [0, 1]) == false);
+
+            subtrahend.remove([items[3], items[7]]);
+            assert(subtract.itemCount == 3);
+            assert(checkValues(subtract, [0, 1, 3]) == false);
+
+            subtrahend.clear();
+            assert(subtract.itemCount == 5);
+            assert(checkValues(minuend, range(0, 4)) == false);
+            assert(checkValues(subtract, range(0, 4)) == false);
+          }
+        }
+      ]
     }
   ]
 };
