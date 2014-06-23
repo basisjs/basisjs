@@ -596,7 +596,7 @@
     emit_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
 
    /**
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     dataSourceAdapter_: null,
 

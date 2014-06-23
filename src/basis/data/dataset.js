@@ -693,7 +693,7 @@
 
    /**
     * Minuend wrapper
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     minuendAdapter_: null,
 
@@ -711,7 +711,7 @@
 
    /**
     * Subtrahend wrapper
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     subtrahendAdapter_: null,
 
@@ -896,7 +896,7 @@
 
    /**
     * Source wrapper
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     sourceAdapter_: null,
 

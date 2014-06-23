@@ -1154,6 +1154,11 @@
     delegate: null,
 
    /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    delegateAdapter_: null,
+
+   /**
     * @type {Array.<basis.data.Object>}
     */
     delegates_: null,
@@ -1282,6 +1287,8 @@
     * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
+      newDelegate = resolveObject(this, this.setDelegate, newDelegate, 'delegateAdapter_');
+
       // check is newDelegate can be linked to this object as delegate
       if (newDelegate && newDelegate instanceof DataObject)
       {
@@ -1657,7 +1664,7 @@
     dataset: null,
 
    /**
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     datasetAdapter_: null,
 
@@ -1877,7 +1884,7 @@
 
    /**
     * Returns results of execution some function for every items in dataset.
-    * @param {function(item:basis.data.Object)|string} fn Value get function.
+    * @param {function(item:basis.data.Object)|string} getter Value get function.
     * @return {Array.<*>}
     */
     getValues: function(getter){
@@ -2192,19 +2199,19 @@
  /**
   * @class
   */
-  var DatasetAdapter = function(context, fn, source, handler){
+  var ResolveAdapter = function(context, fn, source, handler){
     this.context = context;
     this.fn = fn;
     this.source = source;
     this.handler = handler;
   };
 
-  DatasetAdapter.prototype = {
+  ResolveAdapter.prototype = {
     context: null,
     fn: null,
     source: null,
     handler: null,
-    adapter_: null,
+    next: null,
     attach: function(){
       this.source.addHandler(this.handler, this);
     },
@@ -2220,14 +2227,14 @@
   * Binding bridge dataset adapter
   * @class
   */
-  var BBDatasetAdapter = function(){
-    DatasetAdapter.apply(this, arguments);
+  var BBResolveAdapter = function(){
+    ResolveAdapter.apply(this, arguments);
   };
-  BBDatasetAdapter.prototype = new DatasetAdapter();
-  BBDatasetAdapter.prototype.attach = function(){
+  BBResolveAdapter.prototype = new ResolveAdapter();
+  BBResolveAdapter.prototype.attach = function(){
     this.source.bindingBridge.attach(this.source, this.handler, this);
   };
-  BBDatasetAdapter.prototype.detach = function(){
+  BBResolveAdapter.prototype.detach = function(){
     this.source.bindingBridge.detach(this.source, this.handler, this);
   };
 
@@ -2271,20 +2278,20 @@
     {
       if (source instanceof DatasetWrapper)
       {
-        newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
+        newAdapter = new ResolveAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
         source = source.dataset;
       }
       else
         if (source instanceof Value)
         {
-          newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-          source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+          newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+          source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
         }
         else
           if (source.bindingBridge)
           {
-            newAdapter = new BBDatasetAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-            source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+            newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+            source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
           }
     }
 
@@ -2298,8 +2305,56 @@
         oldAdapter.detach();
 
         // destroy nested adapter if exists
-        if (oldAdapter.adapter_)
-          resolveDataset(oldAdapter, null, null, 'adapter_');
+        if (oldAdapter.next)
+          resolveDataset(oldAdapter, null, null, 'next');
+      }
+
+      if (newAdapter)
+        newAdapter.attach();
+
+      context[property] = newAdapter;
+    }
+
+    return source;
+  }
+
+ /**
+  * Resolve object from source value.
+  */
+  function resolveObject(context, fn, source, property){
+    var oldAdapter = context[property] || null;
+    var newAdapter = null;
+
+    if (typeof source == 'function')
+      source = source.call(context, context);
+
+    if (source)
+    {
+      if (source instanceof Value)
+      {
+        newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+        source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
+      }
+      else
+        if (source.bindingBridge)
+        {
+          newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+          source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
+        }
+    }
+
+    if (source instanceof DataObject == false)
+      source = null;
+
+    if (property && oldAdapter !== newAdapter)
+    {
+      if (oldAdapter)
+      {
+        oldAdapter.detach();
+
+        // destroy nested adapter if exists
+        if (oldAdapter.next)
+          resolveObject(oldAdapter, null, null, 'next');
       }
 
       if (newAdapter)
@@ -2529,11 +2584,13 @@
     ReadOnlyDataset: ReadOnlyDataset,
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
-    DatasetAdapter: DatasetAdapter,
 
     isConnected: isConnected,
     getDatasetDelta: getDatasetDelta,
+
+    ResolveAdapter: ResolveAdapter,
     resolveDataset: resolveDataset,
+    resolveObject: resolveObject,
 
     wrapData: wrapData,
     wrapObject: wrapObject,
