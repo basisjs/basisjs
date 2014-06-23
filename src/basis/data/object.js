@@ -20,11 +20,11 @@
   * Getter generator for quick field values fetch from source object.
   * TODO: cache?
   */
-  function generateGetData(names, sourceNames){
+  function generateGetData(nameMap){
     return new Function('data', 'return {' +
-      names.map(function(name, idx){
-        var ownName = name.replace(/"/g, '\\"');
-        var sourceName = ((sourceNames && sourceNames[idx]) || name).replace(/"/g, '\\"');
+      basis.object.iterate(nameMap, function(ownName, sourceName){
+        ownName = ownName.replace(/"/g, '\\"');
+        sourceName = sourceName.replace(/"/g, '\\"');
         return '"' + ownName + '": data["' + sourceName + '"]';
       }) +
     '}');
@@ -35,19 +35,23 @@
   */
   var MERGE_SOURCE_HANDLER = {
     update: function(sender, senderDelta){
+      var fields = this.host.fields;
       var data = {};
 
-      if (this.name == this.host.fields.defaultSource)
+      if (this.name == fields.defaultSource)
       {
         for (var key in senderDelta)
-          if (key in this.host.fields.sourceField == false)
+          if (key in fields.fieldSource == false)
             data[key] = sender.data[key];
       }
       else
       {
         for (var key in senderDelta)
-          if (this.host.fields.sourceField[key] == this.name)
-            data[key] = sender.data[key];
+        {
+          var mergeKey = fields.fromNames[this.name][key];
+          if (mergeKey && this.host.fields.fieldSource[mergeKey] == this.name)
+            data[mergeKey] = sender.data[key];
+        }
       }
 
       for (var key in data)
@@ -65,10 +69,14 @@
   */
   var fieldsExtend = function(fields){
     var sources = {};
+    var toNames = {};
+    var fromNames = {};
     var result = {
       defaultSource: false,
-      sourceField: {},
-      sources: {},
+      fieldSource: {},
+      toNames: toNames,
+      fromNames: fromNames,
+      sources: sources,
       __extend__: fieldsExtend
     };
 
@@ -79,32 +87,44 @@
     // process fields from definition
     for (var field in fields)
     {
-      var sourceName = fields[field];
+      var def = fields[field].split(':');
+      var sourceName = def.shift();
+      var sourceField = def.length ? def.join(':') : field;
 
       if (sourceName == result.defaultSource)
       {
         /** @cut */ if (field != '*')
-        /** @cut */   basis.dev.warn('basis.data.object.Merge: source `' + sourceName + '` has already defined for any field (star rule), definition this source for `' + field + '` field is superfluous.');
+        /** @cut */   basis.dev.warn('basis.data.object.Merge: source `' + sourceName + '` has already defined for any field (star rule), definition this source for `' + field + '` field is superfluous (ignored).');
         continue;
       }
 
-      if (!sources[sourceName])
-        sources[sourceName] = [];
+      if (sourceName == '-' && sourceField != field)
+      {
+        /** @cut */ basis.dev.warn('basis.data.object.Merge: custom field name can\'t be used for own properties, definition `' + field + ': "' + fields[field] + '"` ignored.');
+        continue;
+      }
 
-      sources[sourceName].push(field);
-      result.sourceField[field] = sourceName;
+      if (!toNames[sourceName])
+      {
+        toNames[sourceName] = {};
+        fromNames[sourceName] = {};
+      }
+
+      toNames[sourceName][field] = sourceField;
+      fromNames[sourceName][sourceField] = field;
+      result.fieldSource[field] = sourceName;
     }
 
     // generate source values getters
-    for (var sourceName in sources)
-      result.sources[sourceName] = generateGetData(sources[sourceName]);
+    for (var sourceName in toNames)
+      sources[sourceName] = generateGetData(toNames[sourceName]);
 
     // generate values getter for default source
     if (result.defaultSource)
-      result.sources[result.defaultSource] = function(data){
+      sources[result.defaultSource] = function(data){
         var res = {};
         for (var key in data)
-          if (key in result.sourceField == false)
+          if (key in result.fieldSource == false)
             res[key] = data[key];
         return res;
       };
@@ -117,9 +137,6 @@
   * @class
   * TODO:
   *   - subscription for sources
-  *   - listen for sources (named listens 'source:foo')
-  *   - field name in source (i.e. foo: 'bar:baz'), may be useful, when required
-  *     to get fields with the same name from different sources
   */
   var Merge = DataObject.subclass({
     className: namespace + '.Merge',
@@ -186,7 +203,7 @@
       // if data present in config, apply values but only for own properties
       for (var key in data)
       {
-        var name = this.fields.sourceField[key] || this.fields.defaultSource;
+        var name = this.fields.fieldSource[key] || this.fields.defaultSource;
         if (name == '-')
           this.data[key] = data[key];
       }
@@ -209,15 +226,18 @@
       {
         for (var key in data)
         {
-          var name = this.fields.sourceField[key] || this.fields.defaultSource;
+          var sourceName = this.fields.fieldSource[key] || this.fields.defaultSource;
 
-          if (!name)
+          if (!sourceName)
           {
             /** @cut */ basis.dev.warn('Unknown source for field `' + key + '`');
             continue;
           }
 
-          var value = this.sources[name].data[key];
+          var sourceKey = sourceName != this.fields.defaultSource
+            ? this.fields.toNames[sourceName][key]
+            : key;
+          var value = this.sources[sourceName].data[sourceKey];
           if (value !== this.data[key])
           {
             // add to delta only new keys
@@ -250,17 +270,17 @@
       // process values
       for (var key in data)
       {
-        var name = this.fields.sourceField[key] || this.fields.defaultSource;
+        var sourceName = this.fields.fieldSource[key] || this.fields.defaultSource;
 
         // check is any source associate with field
-        if (!name)
+        if (!sourceName)
         {
           /** @cut */ basis.dev.warn('Unknown source for field `' + key + '`');
           continue;
         }
 
         // own property change
-        if (name == '-')
+        if (sourceName == '-')
         {
           delta[key] = this.data[key];
           this.data[key] = data[key];
@@ -268,17 +288,21 @@
         }
 
         // check source is attached
-        if (this.sources[name])
+        if (this.sources[sourceName])
         {
-          if (this.sources[name].data[key] !== data[key])
+          var sourceKey = sourceName != this.fields.defaultSource
+            ? this.fields.toNames[sourceName][key]
+            : key;
+
+          if (this.sources[sourceName].data[sourceKey] !== data[key])
           {
             if (!sourceDelta)
               sourceDelta = {};
 
-            if (name in sourceDelta == false)
-              sourceDelta[name] = {};
+            if (sourceName in sourceDelta == false)
+              sourceDelta[sourceName] = {};
 
-            sourceDelta[name][key] = data[key];
+            sourceDelta[sourceName][sourceKey] = data[key];
           }
           else
           {
@@ -293,8 +317,8 @@
 
       // trigger updates in sources
       if (sourceDelta)
-        for (var key in sourceDelta)
-          this.sources[key].update(sourceDelta[key]);
+        for (var sourceName in sourceDelta)
+          this.sources[sourceName].update(sourceDelta[sourceName]);
 
       // close trasaction and emit update event if any changes
       this.delta_ = null;
@@ -325,7 +349,7 @@
 
       if (name in this.fields.sources == false)
       {
-        /** @cut */ basis.dev.warn('basis.data.object.Merge#setSource: can\'t set source with name `' + name + '` as it not specified by fields configuration');
+        /** @cut */ basis.dev.warn('basis.data.object.Merge#setSource: can\'t set source with name `' + name + '` as not specified by fields configuration');
         return;
       }
 
@@ -388,6 +412,10 @@
 
       for (var name in this.fields.sources)
         this.setSource(name, sources[name]);
+
+      /** @cut */ for (var name in sources)
+      /** @cut */   if (name in this.fields.sources == false)
+      /** @cut */     basis.dev.warn('basis.data.object.Merge#setSource: can\'t set source with name `' + name + '` as not specified by fields configuration');
     },
 
    /**

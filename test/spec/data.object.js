@@ -4,6 +4,23 @@ module.exports = {
     basis.require('basis.entity');
     var DataObject = basis.require('basis.data').Object;
     var Merge = basis.require('basis.data.object').Merge;
+
+    function catchWarnings(fn){
+      var warn = basis.dev.warn;
+      var warnings = [];
+
+      try {
+        basis.dev.warn = function(message){
+          warnings.push(message);
+        };
+
+        fn();
+      } finally {
+        basis.dev.warn = warn;
+      }
+
+      return warnings.length ? warnings : false;
+    }
   },
 
   test: [
@@ -28,7 +45,7 @@ module.exports = {
               }
             },
             {
-              name: '1 sources',
+              name: '1 source',
               test: function(){
                 var MyMerge = Merge.subclass({
                   fields: {
@@ -94,7 +111,7 @@ module.exports = {
               }
             },
             {
-              name: 'no sources, no field fields',
+              name: 'no sources, no fields',
               test: function(){
                 var instance = new Merge({
                   data: {
@@ -139,7 +156,7 @@ module.exports = {
               }
             },
             {
-              name: 'no sources, own properties',
+              name: 'source and own properties',
               test: function(){
                 var instance = new Merge({
                   fields: {
@@ -152,7 +169,7 @@ module.exports = {
                     baz: 3
                   },
                   sources: {
-                    a: new basis.data.Object({
+                    a: new DataObject({
                       data: {
                         foo: 'a',
                         bar: 'a',
@@ -175,24 +192,129 @@ module.exports = {
                     '*': 'b'
                   }
                 });
-                var instance = new MyMerge({
-                  sources: {
-                    a: new basis.data.Object({
-                      data: {
-                        foo: 'a'
-                      }
-                    }),
-                    c: new basis.data.Object({
-                      data: {
-                        foo: 'c'
-                      }
-                    })
-                  }
-                });
+                var instance;
+
+                assert(catchWarnings(function(){
+                  instance = new MyMerge({
+                    sources: {
+                      a: new DataObject({
+                        data: {
+                          foo: 'a'
+                        }
+                      }),
+                      c: new DataObject({
+                        data: {
+                          foo: 'c'
+                        }
+                      })
+                    }
+                  });
+                }));
 
                 assert({ foo: 'a' }, instance.data);
                 assert('a' in instance.sources == true);
                 assert('c' in instance.sources == false);
+              }
+            },
+            {
+              name: 'bad field definitions',
+              test: [
+                {
+                  name: 'superfluous definition for `*`',
+                  test: function(){
+                    var instance;
+
+                    assert(catchWarnings(function(){
+                      instance = new Merge({
+                        fields: {
+                          '*': 'a',
+                          x: 'a'
+                        }
+                      });
+                    }));
+
+                    assert({ }, instance.fields.fieldSource);
+                  }
+                },
+                {
+                  name: 'custom field with `-` is prohibited',
+                  test: function(){
+                    var instance;
+
+                    assert(catchWarnings(function(){
+                      instance = new Merge({
+                        fields: {
+                          x: '-:name'
+                        }
+                      });
+                    }));
+
+                    assert({ }, instance.fields.fieldSource);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'custom field name in source',
+              test: function(){
+                var MyMerge = Merge.subclass({
+                  fields: {
+                    foo: 'a:baz',
+                    bar: 'a',
+                    '*': '-'
+                  }
+                });
+                var source = new DataObject({
+                  data: {
+                    foo: 'a-foo',
+                    bar: 'a-bar',
+                    baz: 'a-baz'
+                  }
+                });
+
+                var instance = new MyMerge({
+                  sources: {
+                    a: source
+                  }
+                });
+                assert({ foo: 'a-baz', bar: 'a-bar' }, instance.data);
+              }
+            },
+            {
+              name: 'values from default source should not overload defined fields',
+              test: function(){
+                var MyMerge = Merge.subclass({
+                  fields: {
+                    foo: '-',
+                    bar: 'a',
+                    '*': 'b'
+                  }
+                });
+
+                var instance = new MyMerge({
+                  data: {
+                    foo: 'own-foo',
+                    bar: 'own-bar',
+                    baz: 'own-baz'
+                  },
+                  sources: {
+                    a: new DataObject({
+                      data: {
+                        foo: 'a-foo',
+                        bar: 'a-bar',
+                        baz: 'a-baz'
+                      }
+                    }),
+                    b: new DataObject({
+                      data: {
+                        foo: 'b-foo',
+                        bar: 'b-bar',
+                        baz: 'b-baz'
+                      }
+                    })
+                  }
+                });
+                assert({ foo: 'own-foo', bar: 'a-bar', baz: 'b-baz' }, instance.data);
               }
             }
           ]
@@ -342,10 +464,12 @@ module.exports = {
                   }
                 });
 
-                instance.setSources({
-                  a: new basis.data.Object(),
-                  b: new basis.data.Object()
-                });
+                assert(catchWarnings(function(){
+                  instance.setSources({
+                    a: new DataObject(),
+                    b: new DataObject()
+                  });
+                }));
 
                 assert('a' in instance.sources == true);
                 assert('b' in instance.sources == false);
@@ -362,9 +486,89 @@ module.exports = {
                   }
                 });
 
-                instance.setSource('b', new basis.data.Object());
+                assert(catchWarnings(function(){
+                  instance.setSource('b', new DataObject());
+                }));
                 assert('b' in instance.sources == false);
                 assert('-' in instance.sources == false);
+              }
+            },
+            {
+              name: 'custom field name in source',
+              test: function(){
+                var source = new DataObject({
+                  data: {
+                    foo: 'a-foo',
+                    bar: 'a-bar',
+                    baz: 'a-baz'
+                  }
+                });
+                var instance = new Merge({
+                  fields: {
+                    foo: 'a:baz',
+                    bar: '-'
+                  },
+                  sources: {
+                    a: source
+                  }
+                });
+
+                assert({ foo: 'a-baz' }, instance.data);
+                assert('-' in instance.sources == false);
+
+                var instance = new Merge({
+                  fields: {
+                    foo: 'a:baz',
+                    bar: '-'
+                  }
+                });
+
+                assert({ }, instance.data);
+
+                instance.setSource('a', source);
+                assert({ foo: 'a-baz' }, instance.data);
+                assert('-' in instance.sources == false);
+              }
+            },
+            {
+              name: 'values from default source should not override other fields',
+              test: function(){
+                var MyMerge = Merge.subclass({
+                  fields: {
+                    foo: '-',
+                    bar: 'a',
+                    '*': 'b'
+                  }
+                });
+
+                var instance = new MyMerge({
+                  data: {
+                    foo: 'own-foo',
+                    bar: 'own-bar',
+                    baz: 'own-baz'
+                  }
+                });
+
+                assert({ foo: 'own-foo' }, instance.data);
+
+                instance.setSources({
+                  a: new DataObject({
+                    data: {
+                      foo: 'a-foo',
+                      bar: 'a-bar',
+                      baz: 'a-baz'
+                    }
+                  }),
+                  b: new DataObject({
+                    data: {
+                      foo: 'b-foo',
+                      bar: 'b-bar',
+                      baz: 'b-baz'
+                    }
+                  })
+                });
+
+                assert({ foo: 'own-foo', bar: 'a-bar', baz: 'b-baz' }, instance.data);
               }
             }
           ]
@@ -484,9 +688,9 @@ module.exports = {
               },
             },
             {
-              name: 'un-existent fields',
+              name: 'non-existent fields',
               test: function(){
-                var a = new basis.data.Object({
+                var a = new DataObject({
                   data: {
                     foo: 1
                   }
@@ -507,7 +711,10 @@ module.exports = {
                 assert(a.data.bar === undefined);
                 assert('bar' in a.data == false);
 
-                assert(instance.update({ baz: 123 }) === false);
+                // should warn about non-existent fields
+                assert(catchWarnings(function(){
+                  assert(instance.update({ baz: 123 }) === false);
+                }));
                 assert('baz' in instance.data === false);
                 assert('baz' in a.data === false);
               }
@@ -530,7 +737,7 @@ module.exports = {
             {
               name: 'source & own properties',
               test: function(){
-                var source = new basis.data.Object({
+                var source = new DataObject({
                   data: {
                     foo: 'a',
                     bar: 'a',
@@ -600,12 +807,16 @@ module.exports = {
                 assert(entity.data, instance.data);
 
                 // set wrong value for enum field, should not change
-                assert(false, instance.update({ enum: 4 }));
+                catchWarnings(function(){
+                  assert(false, instance.update({ enum: 4 }));
+                });
                 assert(instance.data.enum === 2);
                 assert(entity.data, instance.data);
 
-                // set correct value for enum field, should change
-                assert(false, instance.update({ nonexists: 123 }));
+                // set non-exists key in source, should not change
+                catchWarnings(function(){
+                  assert(false, instance.update({ nonexists: 123 }));
+                });
                 assert('nonexists' in instance.data === false);
                 assert(entity.data, instance.data);
               }
@@ -632,12 +843,16 @@ module.exports = {
                 assert(entity.data !== instance.data);
 
                 // id is used by another entity, should no changes
-                assert(false, instance.update({ id: 1 }));
+                catchWarnings(function(){
+                  assert(false, instance.update({ id: 1 }));
+                });
                 assert(instance.data.id === null);
                 assert(entity.data, instance.data);
 
                 // should coerce value, the same case, no changes
-                assert(false, instance.update({ id: '1' }));
+                catchWarnings(function(){
+                  assert(false, instance.update({ id: '1' }));
+                });
                 assert(instance.data.id === null);
                 assert(entity.data, instance.data);
               }
@@ -664,7 +879,9 @@ module.exports = {
                 assert(entity.data !== instance.data);
 
                 // calc fields is read only and shouldn't be changed
-                assert(false, instance.update({ calc: 123 }));
+                catchWarnings(function(){
+                  assert(false, instance.update({ calc: 123 }));
+                });
                 assert(instance.data.calc === 1);
                 assert(entity.data, instance.data);
 
@@ -672,6 +889,105 @@ module.exports = {
                 assert({ id: 1, calc: 1 }, instance.update({ id: 2 }));
                 assert(instance.data.calc === 2);
                 assert(entity.data, instance.data);
+              }
+            },
+            {
+              name: 'custom field name',
+              test: function(){
+                var source = new DataObject({
+                  data: {
+                    foo: 1,
+                    bar: 2,
+                    baz: 3
+                  }
+                });
+                var instance = new Merge({
+                  fields: {
+                    foo: 'a:baz',
+                    bar: 'a'
+                  },
+                  sources: {
+                    a: source
+                  }
+                });
+
+                assert({ foo: 3, bar: 2 }, instance.data);
+                assert(source.data !== instance.data);
+
+                // merge -> source
+                var delta = instance.update({ foo: 4, bar: 5 });
+                assert({ foo: 3, bar: 2 }, delta);
+                assert({ foo: 4, bar: 5 }, instance.data);
+                assert({ foo: 1, bar: 5, baz: 4 }, source.data);
+
+                // source -> merge
+                var delta = source.update({ foo: 'foo', bar: 'bar', baz: 'baz' });
+                assert({ foo: 1, bar: 5, baz: 4 }, delta);
+                assert({ foo: 'baz', bar: 'bar' }, instance.data);
+                assert({ foo: 'foo', bar: 'bar', baz: 'baz' }, source.data);
+              }
+            },
+            {
+              name: 'values from default source should not override other fields',
+              test: function(){
+                var MyMerge = Merge.subclass({
+                  fields: {
+                    foo: '-',
+                    bar: 'a',
+                    '*': 'b'
+                  }
+                });
+
+                var instance = new MyMerge({
+                  data: {
+                    foo: 'own-foo',
+                    bar: 'own-bar',
+                    baz: 'own-baz'
+                  },
+                  sources: {
+                    a: new DataObject({
+                      data: {
+                        foo: 'a-foo',
+                        bar: 'a-bar',
+                        baz: 'a-baz'
+                      }
+                    }),
+                    b: new DataObject({
+                      data: {
+                        foo: 'b-foo',
+                        bar: 'b-bar',
+                        baz: 'b-baz'
+                      }
+                    })
+                  }
+                });
+
+                instance.update({
+                  foo: 1,
+                  bar: 1,
+                  baz: 1
+                });
+                assert({ foo: 1, bar: 1, baz: 1 }, instance.data);
+                assert({ foo: 'a-foo', bar: 1, baz: 'a-baz' }, instance.sources.a.data);
+                assert({ foo: 'b-foo', bar: 'b-bar', baz: 1 }, instance.sources.b.data);
+
+                instance.sources.a.update({
+                  foo: 2,
+                  bar: 2,
+                  baz: 2
+                });
+                assert({ foo: 1, bar: 2, baz: 1 }, instance.data);
+                assert({ foo: 2, bar: 2, baz: 2 }, instance.sources.a.data);
+                assert({ foo: 'b-foo', bar: 'b-bar', baz: 1 }, instance.sources.b.data);
+
+                instance.sources.b.update({
+                  foo: 3,
+                  bar: 3,
+                  baz: 3
+                });
+                assert({ foo: 1, bar: 2, baz: 3 }, instance.data);
+                assert({ foo: 2, bar: 2, baz: 2 }, instance.sources.a.data);
+                assert({ foo: 3, bar: 3, baz: 3 }, instance.sources.b.data);
               }
             }
           ]
