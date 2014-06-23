@@ -528,11 +528,7 @@
   // Value
   //
 
-  var computeFunctions = {};
-  var valueSetters = {};
-  var valueSyncToken = function(value){
-    this.set(this.fn(value));
-  };
+  var GETTER_ID = basis.getter.ID;
   var VALUE_EMMITER_HANDLER = {
     destroy: function(object){
       this.value.unlink(object, this.fn);
@@ -542,6 +538,12 @@
     destroy: function(object){
       this.set(null);
     }
+  };
+
+  var computeFunctions = {};
+  var valueSetters = {};
+  var valueSyncToken = function(value){
+    this.set(this.fn(value));
   };
 
  /**
@@ -727,7 +729,8 @@
       var handler = basis.event.createHandler(events, function(object){
         this.set(fn(object, hostValue.value)); // `this` is a token
       });
-      var getComputeTokenId = handler.events.concat(String(fn), this.basisObjectId).join('_');
+      var fnId = fn[GETTER_ID] || (basis.getter(fn) && fn[GETTER_ID]);
+      var getComputeTokenId = handler.events.concat(fnId, this.basisObjectId).join('_');
       var getComputeToken = computeFunctions[getComputeTokenId];
 
       if (!getComputeToken)
@@ -814,7 +817,8 @@
         var cursor = this;
 
         while (cursor = cursor.links_)
-          if (cursor.context instanceof basis.Token && cursor.context.fn == String(fn)) // compare functions as strings, as they should be with no sideeffect
+          if (cursor.context instanceof basis.Token &&
+              cursor.context.fn[GETTER_ID] == fn[GETTER_ID]) // compare functions by getter id
             return deferred
               ? cursor.context.deferred()
               : cursor.context;
@@ -822,6 +826,7 @@
 
       // create token
       var token = new basis.Token();
+      basis.getter(fn); // add getter id
       token.fn = fn;
 
       this.link(token, valueSyncToken);
@@ -934,7 +939,11 @@
   // cast to Value
   //
 
-  var castValueMap = {};
+  var valueFromMap = {};
+  var valueFromSetProxy = function(object){
+    Value.prototype.set.call(this, object); // `this` is a token
+  };
+
   Value.from = function(obj, events, getter){
     var result;
 
@@ -949,22 +958,22 @@
         events = null;
       }
 
-      var handler = basis.event.createHandler(events, function(object){
-        Value.prototype.set.call(this, getter(object)); // `this` is a token
-      });
-      var id = handler.events.concat(String(getter), obj.basisObjectId).join('_');
+      getter = basis.getter(getter);
 
-      result = castValueMap[id];
+      var handler = basis.event.createHandler(events, valueFromSetProxy);
+      var id = handler.events.concat(getter[GETTER_ID], obj.basisObjectId).join('_');
+
+      result = valueFromMap[id];
       if (!result)
       {
-        getter = basis.getter(getter);
-        result = castValueMap[id] = new Value({
-          value: getter(obj),
+        result = valueFromMap[id] = new Value({
+          value: obj,
+          proxy: getter,
           set: basis.fn.$undef
         });
 
         handler.destroy = function(sender){
-          delete castValueMap[id];
+          valueFromMap[id] = null;
           this.destroy();
         };
 
@@ -978,10 +987,10 @@
       var bindingBridge = obj.bindingBridge;
       if (id && bindingBridge)
       {
-        result = castValueMap[id];
+        result = valueFromMap[id];
         if (!result)
         {
-          result = castValueMap[id] = new Value({
+          result = valueFromMap[id] = new Value({
             value: bindingBridge.get(obj)
           });
 
