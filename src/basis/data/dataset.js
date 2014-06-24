@@ -2362,27 +2362,17 @@
     * @return {Object} Delta of member changes.
     */
     applyRule: function(){
-      var items = [];
       var insertedMap = {};
       var deletedMap = {};
       var array;
       var delta;
 
-      // find items to re-apply rule
       for (var key in this.sourceMap_)
       {
         var sourceObjectInfo = this.sourceMap_[key];
-        if (sourceObjectInfo.source instanceof DataObject)
-          items.push(sourceObjectInfo);
-      }
-
-      // re-apply rule
-      for (var i = 0; i < items.length; i++)
-      {
-        var sourceObjectInfo = items[i];
         var sourceObject = sourceObjectInfo.source;
 
-        if (sourceObject.basisObjectId in this.sourceMap_)
+        if (sourceObject instanceof DataObject)
         {
           var newValue = this.rule(sourceObject) || null;
           var oldValue = sourceObjectInfo.value;
