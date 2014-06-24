@@ -2702,23 +2702,27 @@
     },
 
     // misc.
-    sortAsObject: function(this_, getter_, comparator, desc){
+    sortAsObject: function(){
+      /** @cut */ consoleMethods.warn('basis.array.sortAsObject is deprecated, use basis.array.sort instead');
+      return arrayFunctions.sort.apply(this, arguments);
+    },
+    sort: function(this_, getter_, comparator, desc){
       getter_ = getter(getter_);
       desc = desc ? -1 : 1;
 
       return this_
         .map(function(item, index){
-               return {
-                 i: index,       // index
-                 v: getter_(item) // value
-               };
-             })                                                                           // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
-        .sort(comparator || function(a, b){
+          return {
+            i: index,        // index
+            v: getter_(item) // value
+          };
+        })
+        .sort(comparator || function(a, b){             // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
           return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1));
         })
         .map(function(item){
-               return this_[item.i];
-             }, this_);
+          return this[item.i];
+        }, this_);
     }
   };
 

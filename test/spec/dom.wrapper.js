@@ -2726,7 +2726,7 @@ module.exports = {
               node.appendChild(testSet[i]);
 
             this.is(false, checkNode(node));
-            this.is($values(basis.array.sortAsObject(testSet, 'data.group')), $values(node.childNodes));
+            this.is($values(basis.array.sort(testSet, 'data.group')), $values(node.childNodes));
 
             // =======================================
             var testSet = getTestSet();
