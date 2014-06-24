@@ -2180,6 +2180,7 @@
       {
         // create new source object info
         sourceObjectInfo = sourceMap[sourceObjectId] = {
+          member: false,
           source: item,
           ref: {
             object: ref,
@@ -2202,9 +2203,6 @@
             });
           }
 
-          members[sourceObjectId] = sourceObjectInfo;
-          inserted.push(item);
-
           if (extract.ruleEvents)
             item.addHandler(extract.ruleEvents, extract);
         }
@@ -2219,6 +2217,14 @@
               ref: item
             });
         }
+      }
+
+      if (!sourceObjectInfo.member && item instanceof DataObject &&
+          (extract.includeSourceItems || ref !== extract.source))
+      {
+        sourceObjectInfo.member = true;
+        members[sourceObjectId] = sourceObjectInfo;
+        inserted.push(item);
       }
     }
 
@@ -2253,6 +2259,19 @@
         if (cursor.object === ref)
         {
           prevCursor.ref = cursor.ref;
+
+          if (sourceObjectInfo.member)
+          {
+            var removeMember = !sourceObjectInfo.ref || (!extract.includeSourceItems &&
+              (sourceObjectInfo.ref.object !== extract.source || sourceObjectInfo.ref.ref));
+            if (removeMember)
+            {
+              sourceObjectInfo.member = false;
+              delete members[sourceObjectId];
+              deleted.push(item);
+            }
+          }
+
           break;
         }
         prevCursor = cursor;
@@ -2262,9 +2281,6 @@
       {
         if (item instanceof DataObject)
         {
-          delete members[sourceObjectId];
-          deleted.push(item);
-
           if (extract.ruleEvents)
             item.removeHandler(extract.ruleEvents, extract);
 
@@ -2310,6 +2326,11 @@
   */
   var Extract = SourceDataset.subclass({
     className: namespace + '.Extract',
+
+   /**
+    * @type {boolean}
+    */
+    includeSourceItems: true,
 
    /**
     * Nothing return by default. Behave like proxy.
