@@ -196,7 +196,17 @@
           var actions = attr.trim().split(/\s+/);
           event.actionTarget = actionTarget;
           for (var i = 0, actionName; actionName = actions[i++];)
-            tmplRef.action.call(tmplRef.context, actionName, event);
+            switch (actionName)
+            {
+              case 'prevent-default':
+                event.preventDefault();
+                break;
+              case 'stop-propagation':
+                event.stopPropagation();
+                break;
+              default:
+                tmplRef.action.call(tmplRef.context, actionName, event);
+            }
         }
       }
 
