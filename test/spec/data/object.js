@@ -104,13 +104,13 @@ module.exports = {
           name: 'simple create',
           test: function(){
             var objectA = new DataObject;
-            this.is({}, objectA.data);
-            this.is(0, eventCount(objectA));
+            assert({}, objectA.data);
+            assert(eventCount(objectA) === 0);
 
             var objectB = new DataObject({ data: { a: 1, b: 2 } });
-            this.is({ a: 1, b: 2 }, objectB.data);
-            this.is(0, eventCount(objectB));
-            this.is(0, eventCount(objectB));
+            assert({ a: 1, b: 2 }, objectB.data);
+            assert(eventCount(objectB) === 0);
+            assert(eventCount(objectB) === 0);
           }
         },
         {
@@ -118,22 +118,22 @@ module.exports = {
           test: function(){
             var objectA = new DataObject({ data: { a: 1, b: 2 } });
             var objectB = new DataObject({ data: { a: 3, b: 4 }, delegate: objectA });
-            this.is({ a: 1, b: 2 }, objectA.data);
-            this.is({ a: 1, b: 2 }, objectB.data);
-            this.is(true, objectA.data === objectB.data);
-            this.is(true, objectA.state === objectB.state);
-            this.is(0, eventCount(objectA));
-            this.is(0, eventCount(objectB, 'update'));
-            this.is(1, eventCount(objectB, 'delegateChanged'));
+            assert({ a: 1, b: 2 }, objectA.data);
+            assert({ a: 1, b: 2 }, objectB.data);
+            assert(objectA.data === objectB.data);
+            assert(objectA.state === objectB.state);
+            assert(eventCount(objectA) === 0);
+            assert(eventCount(objectB, 'update') === 0);
+            assert(eventCount(objectB, 'delegateChanged') === 1);
 
-            this.is(false, checkObject(objectA));
-            this.is(false, checkObject(objectB));
+            assert(checkObject(objectA) === false);
+            assert(checkObject(objectB) === false);
 
             objectB.setDelegate();
-            this.is({ a: 1, b: 2 }, objectB.data);
-            this.is(0, eventCount(objectB, 'update'));
-            this.is(false, checkObject(objectA));
-            this.is(false, checkObject(objectB));
+            assert({ a: 1, b: 2 }, objectB.data);
+            assert(eventCount(objectB, 'update') === 0);
+            assert(checkObject(objectA) === false);
+            assert(checkObject(objectB) === false);
           }
         }
       ]
@@ -150,11 +150,11 @@ module.exports = {
                 var a = new DataObject({ data: { a: 1, b: 2 } });
                 var b = new DataObject({ data: { b: 2, c: 3 } });
 
-                this.is(0, eventCount(b, 'update'));
+                assert(eventCount(b, 'update') === 0);
 
                 b.setDelegate(a);
-                this.is(1, eventCount(b, 'update'));
-                this.is({ a: undefined, c: 3 }, getLastEvent(b, 'update').args[0]);
+                assert(eventCount(b, 'update') === 1);
+                assert({ a: undefined, c: 3 }, getLastEvent(b, 'update').args[0]);
               }
             },
             {
@@ -165,24 +165,23 @@ module.exports = {
                 var objectC = new DataObject({ data: { x: 1, y: 2, z: 3 } });
 
                 objectA.setDelegate(objectB); // no update event
-                this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                this.is(0, eventCount(objectA, 'update'));
-                this.is(0, eventCount(objectB, 'update'));
+                assert({ a: 1, b: 2, c: 3 }, objectA.data);
+                assert(eventCount(objectA, 'update') === 0);
+                assert(eventCount(objectB, 'update') === 0);
 
                 objectA.setDelegate(objectC);
-                this.is({ x: 1, y: 2, z: 3 }, objectA.data);
-                this.is(1, eventCount(objectA, 'update'));
-                this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[0]);
+                assert({ x: 1, y: 2, z: 3 }, objectA.data);
+                assert(eventCount(objectA, 'update') === 1);
+                assert({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[0]);
 
                 objectA.setDelegate(objectB);
-                this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                this.is(2, eventCount(objectA, 'update'));
-                this.is({ a: undefined, b: undefined, c: undefined, x: 1, y: 2, z: 3 }, getLastEvent(objectA, 'update').args[0]);
+                assert({ a: 1, b: 2, c: 3 }, objectA.data);
+                assert(eventCount(objectA, 'update') === 2);
+                assert({ a: undefined, b: undefined, c: undefined, x: 1, y: 2, z: 3 }, getLastEvent(objectA, 'update').args[0]);
 
                 objectA.setDelegate();
-                this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                //this.is(3, objectA.history_.last());
-                this.is(2, eventCount(objectA, 'update'));
+                assert({ a: 1, b: 2, c: 3 }, objectA.data);
+                assert(eventCount(objectA, 'update') === 2);
               }
             },
             {
@@ -194,41 +193,41 @@ module.exports = {
                 // data tested in previous test, see above
 
                 objectA.setDelegate(objectB);
-                this.is(true, objectA.delegate === objectB);
-                this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                this.is(0, eventCount(objectA, 'update'));
-                this.is(1, eventCount(objectA, 'delegateChanged'));
-                this.is(false, checkObject(objectA));
-                this.is(false, checkObject(objectB));
+                assert(objectA.delegate === objectB);
+                assert({ a: 1, b: 2, c: 3 }, objectA.data);
+                assert(eventCount(objectA, 'update') === 0);
+                assert(eventCount(objectA, 'delegateChanged') === 1);
+                assert(checkObject(objectA) === false);
+                assert(checkObject(objectB) === false);
 
                 objectB.setDelegate(objectC);
-                this.is(true, objectB.delegate === objectC);
-                this.is({ x: 1, y: 2, z: 3 }, objectA.data);
-                this.is(1, eventCount(objectA, 'update'));
-                this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[0]);
-                this.is(1, eventCount(objectA, 'delegateChanged'));
-                this.is(false, checkObject(objectA));
-                this.is(false, checkObject(objectB));
-                this.is(false, checkObject(objectC));
+                assert(true, objectB.delegate === objectC);
+                assert({ x: 1, y: 2, z: 3 }, objectA.data);
+                assert(eventCount(objectA, 'update') === 1);
+                assert({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[0]);
+                assert(eventCount(objectA, 'delegateChanged') === 1);
+                assert(checkObject(objectA) === false);
+                assert(checkObject(objectB) === false);
+                assert(checkObject(objectC) === false);
 
                 objectB.setDelegate();
-                this.is(true, objectB.delegate == null);
-                this.is({ x: 1, y: 2, z: 3 }, objectA.data);
-                this.is(true, objectB.data !== objectC.data);
-                this.is(1, eventCount(objectA, 'update'));
-                this.is(1, eventCount(objectA, 'delegateChanged'));
-                this.is(2, eventCount(objectB, 'delegateChanged'));
-                this.is(false, checkObject(objectA));
-                this.is(false, checkObject(objectB));
-                this.is(false, checkObject(objectC));
+                assert(objectB.delegate == null);
+                assert({ x: 1, y: 2, z: 3 }, objectA.data);
+                assert(objectB.data !== objectC.data);
+                assert(eventCount(objectA, 'update') === 1);
+                assert(eventCount(objectA, 'delegateChanged') === 1);
+                assert(eventCount(objectB, 'delegateChanged') === 2);
+                assert(checkObject(objectA) === false);
+                assert(checkObject(objectB) === false);
+                assert(checkObject(objectC) === false);
 
                 objectA.setDelegate();
-                this.is(true, objectA.delegate == null);
-                this.is({ x: 1, y: 2, z: 3 }, objectA.data);
-                this.is(1, eventCount(objectA, 'update'));
-                this.is(2, eventCount(objectA, 'delegateChanged'));
-                this.is(false, checkObject(objectA));
-                this.is(false, checkObject(objectB));
+                assert(objectA.delegate == null);
+                assert({ x: 1, y: 2, z: 3 }, objectA.data);
+                assert(eventCount(objectA, 'update') === 1);
+                assert(eventCount(objectA, 'delegateChanged') === 2);
+                assert(checkObject(objectA) === false);
+                assert(checkObject(objectB) === false);
               }
             },
             {
@@ -239,29 +238,29 @@ module.exports = {
                 // data tested in previous test, see above
 
                 objectB.setDelegate(objectC);
-                this.is(true, objectB.delegate === objectC);
-                this.is({ x: 1, y: 2, z: 3 }, objectB.data);
-                this.is(1, eventCount(objectB, 'update'));
-                this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectB, 'update').args[0]);
-                this.is(1, eventCount(objectB, 'delegateChanged'));
+                assert(objectB.delegate === objectC);
+                assert({ x: 1, y: 2, z: 3 }, objectB.data);
+                assert(eventCount(objectB, 'update') === 1);
+                assert({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectB, 'update').args[0]);
+                assert(eventCount(objectB, 'delegateChanged') === 1);
 
                 objectB.setDelegate('not a delegate');
-                this.is(true, objectB.delegate === null);
-                this.is({ x: 1, y: 2, z: 3 }, objectB.data);
-                this.is(1, eventCount(objectB, 'update'));
-                this.is(2, eventCount(objectB, 'delegateChanged'));
+                assert(objectB.delegate === null);
+                assert({ x: 1, y: 2, z: 3 }, objectB.data);
+                assert(eventCount(objectB, 'update') === 1);
+                assert(eventCount(objectB, 'delegateChanged') === 2);
 
                 objectB.setDelegate('not a delegate #2');
-                this.is(true, objectB.delegate === null);
-                this.is({ x: 1, y: 2, z: 3 }, objectB.data);
-                this.is(1, eventCount(objectB, 'update'));
-                this.is(2, eventCount(objectB, 'delegateChanged'));
+                assert(objectB.delegate === null);
+                assert({ x: 1, y: 2, z: 3 }, objectB.data);
+                assert(eventCount(objectB, 'update') === 1);
+                assert(eventCount(objectB, 'delegateChanged') === 2);
 
                 objectB.setDelegate(objectC);
-                this.is(true, objectB.delegate === objectC);
-                this.is({ x: 1, y: 2, z: 3 }, objectB.data);
-                this.is(1, eventCount(objectB, 'update'));
-                this.is(3, eventCount(objectB, 'delegateChanged'));
+                assert(objectB.delegate === objectC);
+                assert({ x: 1, y: 2, z: 3 }, objectB.data);
+                assert(eventCount(objectB, 'update') === 1);
+                assert(eventCount(objectB, 'delegateChanged') === 3);
               }
             },
             {
@@ -296,19 +295,19 @@ module.exports = {
                 });
 
                 a.setState(basis.data.STATE.READY, 'ok');
-                this.is(String(basis.data.STATE.READY), String(c.state));
-                this.is('ok', c.state.data);
-                this.is(true, c.delegate === b);
-                this.is(true, c.target === a);
-                this.is(true, c.root === a);
+                assert(String(basis.data.STATE.READY), String(c.state));
+                assert(c.state.data === 'ok');
+                assert(c.delegate === b);
+                assert(c.target === a);
+                assert(c.root === a);
 
                 a.destroy();
-                this.is(String(basis.data.STATE.READY), String(c.state));
-                this.is('ok', c.state.data);
-                this.is(null, c.target);
-                this.is(true, c.root === b);
-                this.is(null, b.delegate);
-                this.is(3, destroyCatched);
+                assert(String(basis.data.STATE.READY), String(c.state));
+                assert(c.state.data === 'ok');
+                assert(c.target === null);
+                assert(c.root === b);
+                assert(b.delegate === null);
+                assert(destroyCatched === 3);
               }
             }
           ]
@@ -319,21 +318,21 @@ module.exports = {
             var objectA = new DataObject;
             var objectB = new DataObject;
 
-            this.is(0, eventCount(objectA, 'update')); // should be no update events
+            assert(eventCount(objectA, 'update') === 0); // should be no update events
 
             objectA.setDelegate(objectB); // no update event
-            this.is(true, objectA.delegate === objectB);
-            this.is(true, objectA.data === objectB.data);
-            this.is({}, objectA.data);
+            assert(objectA.delegate === objectB);
+            assert(objectA.data === objectB.data);
+            assert({}, objectA.data);
 
-            this.is(0, eventCount(objectA, 'update')); // should be no update events
+            assert(eventCount(objectA, 'update') === 0); // should be no update events
 
             objectA.setDelegate(); // no update event
-            this.is(true, objectA.delegate === null);
-            this.is(true, objectA.data !== objectB.data);
-            this.is({}, objectA.data);
+            assert(objectA.delegate === null);
+            assert(objectA.data !== objectB.data);
+            assert({}, objectA.data);
 
-            this.is(0, eventCount(objectA, 'update')); // should be no update events
+            assert(eventCount(objectA, 'update') === 0); // should be no update events
           }
         },
         {
@@ -344,21 +343,21 @@ module.exports = {
             var objectC = new DataObject;
 
             objectA.setDelegate(objectB);
-            this.is(true, objectA.delegate === objectB);
+            assert(objectA.delegate === objectB);
 
             objectB.setDelegate(objectC);
-            this.is(true, objectB.delegate === objectC);
+            assert(objectB.delegate === objectC);
 
             objectC.setDelegate(objectA); // should be ignored
-            this.is(true, objectC.delegate === null);
-            this.is(true, basis.data.isConnected(objectC, objectA));
+            assert(objectC.delegate === null);
+            assert(basis.data.isConnected(objectC, objectA));
 
             objectA.setDelegate(objectC);
-            this.is(true, objectA.delegate === objectC);
-            this.is(true, basis.data.isConnected(objectC, objectA));
-            this.is(true, basis.data.isConnected(objectC, objectB));
-            this.is(false, basis.data.isConnected(objectB, objectA));
-            this.is(false, basis.data.isConnected(objectB, objectC));
+            assert(objectA.delegate === objectC);
+            assert(basis.data.isConnected(objectC, objectA));
+            assert(basis.data.isConnected(objectC, objectB));
+            assert(basis.data.isConnected(objectB, objectA) === false);
+            assert(basis.data.isConnected(objectB, objectC) === false);
           }
         },
         {
@@ -371,15 +370,15 @@ module.exports = {
             a.setDelegate(c);
             b.setDelegate(c);
             var delegates = c.debug_delegates();
-            assert(delegates.length == 2);
-            assert(basis.array.has(delegates, a) == true);
-            assert(basis.array.has(delegates, b) == true);
+            assert(delegates.length === 2);
+            assert(basis.array.has(delegates, a) === true);
+            assert(basis.array.has(delegates, b) === true);
 
             a.setDelegate();
             var delegates = c.debug_delegates();
-            assert(delegates.length == 1);
-            assert(basis.array.has(delegates, a) == false);
-            assert(basis.array.has(delegates, b) == true);
+            assert(delegates.length === 1);
+            assert(basis.array.has(delegates, a) === false);
+            assert(basis.array.has(delegates, b) === true);
           }
         },
         {
@@ -401,17 +400,16 @@ module.exports = {
               }
             });
 
-            this.is(0, delegateEventCount);
+            assert(eventCount(delegate, 'update') === 0);
 
             object.update({ foo: 1 });
 
-            this.is(1, delegateEventCount);
+            assert(eventCount(delegate, 'update') === 1);
           }
         },
         {
           name: 'delegates removed on update should not recieve update event',
           test: function(){
-            var delegateEventCount = 0;
             var object = new DataObject({
               handler: {
                 update: function(){
@@ -420,25 +418,19 @@ module.exports = {
               }
             });
             var delegate = new DataObject({
-              delegate: object,
-              handler: {
-                update: function(){
-                  delegateEventCount++;
-                }
-              }
+              delegate: object
             });
 
-            this.is(0, delegateEventCount);
+            assert(eventCount(delegate, 'update') === 0);
 
             object.update({ foo: 1 });
 
-            this.is(0, delegateEventCount);
+            assert(eventCount(delegate, 'update') === 0);
           }
         },
         {
           name: 'delegates added on stateChanged should recieve just one stateChanged event',
           test: function(){
-            var delegateEventCount = 0;
             var object = new DataObject({
               state: basis.data.STATE.UNDEFINED,
               handler: {
@@ -448,25 +440,19 @@ module.exports = {
               }
             });
             var delegate = new DataObject({
-              state: basis.data.STATE.UNDEFINED,
-              handler: {
-                stateChanged: function(){
-                  delegateEventCount++;
-                }
-              }
+              state: basis.data.STATE.UNDEFINED
             });
 
-            this.is(0, delegateEventCount);
+            assert(eventCount(delegate, 'stateChanged') === 0);
 
             object.setState(basis.data.STATE.READY);
 
-            this.is(1, delegateEventCount);
+            assert(eventCount(delegate, 'stateChanged') === 1);
           }
         },
         {
           name: 'delegates removed on stateChanged should not recieve stateChanged event',
           test: function(){
-            var delegateEventCount = 0;
             var object = new DataObject({
               state: basis.data.STATE.UNDEFINED,
               handler: {
@@ -477,20 +463,126 @@ module.exports = {
             });
             var delegate = new DataObject({
               state: basis.data.STATE.UNDEFINED,
-              delegate: object,
-              handler: {
-                stateChanged: function(){
-                  delegateEventCount++;
-                }
-              }
+              delegate: object
             });
 
-            this.is(0, delegateEventCount);
+            assert(eventCount(delegate, 'stateChanged') === 0);
 
             object.setState(basis.data.STATE.READY);
 
-            this.is(0, delegateEventCount);
+            assert(eventCount(delegate, 'stateChanged') === 0);
           }
+        },
+        {
+          name: 'resolveObject',
+          test: [
+            {
+              name: 'use Value with null as value on init',
+              test: function(){
+                var value = new basis.data.Value();
+                var delegate = new basis.data.Object({
+                  state: basis.data.STATE.READY,
+                  delegate: value
+                });
+                var object = new basis.data.Object({
+                  delegate: value,
+                  state: basis.data.STATE.UNDEFINED,
+                  data: { bar: 1 }
+                });
+
+                assert(delegate.delegate === null);
+                assert(delegate.state == basis.data.STATE.READY);
+                assert({}, delegate.data);
+                assert(eventCount(delegate, 'update') === 0);
+                assert(eventCount(delegate, 'stateChanged') === 0);
+
+                assert(object.delegate === null);
+                assert(object.state == basis.data.STATE.UNDEFINED);
+                assert({ bar: 1 }, object.data);
+                assert(eventCount(object, 'update') === 0);
+                assert(eventCount(object, 'stateChanged') === 0);
+
+                assert(object.state !== delegate.state);
+                assert(object.data !== delegate.data);
+
+                delegate.setDelegate(null);
+                assert(eventCount(delegate, 'update') === 0);
+                assert(eventCount(delegate, 'stateChanged') === 0);
+
+                delegate.update({ foo: 1 });
+                delegate.setState(basis.data.STATE.PROCESSING);
+                assert(eventCount(delegate, 'update') === 1);
+                assert(eventCount(delegate, 'stateChanged') === 1);
+
+                // set object to value should set delegate for object
+                value.set(delegate);
+                assert(object.delegate === delegate);
+                assert(object.data === delegate.data);
+                assert(object.state === delegate.state);
+                assert(eventCount(object, 'update') === 1);
+                assert(eventCount(object, 'stateChanged') === 1);
+                assert(eventCount(delegate, 'update') === 1);
+                assert(eventCount(delegate, 'stateChanged') === 1);
+              }
+            },
+            {
+              name: 'use Value with Object as value on init',
+              test: function(){
+                var delegate = new basis.data.Object({
+                  state: basis.data.STATE.READY,
+                  data: { foo: 1 }
+                });
+                var value = new basis.data.Value({ value: delegate });
+                var object = new basis.data.Object({
+                  delegate: value,
+                  state: basis.data.STATE.UNDEFINED,
+                  data: { bar: 1 }
+                });
+
+                assert(object.delegate === delegate);
+                assert(object.state == basis.data.STATE.READY);
+                assert({ foo: 1 }, object.data);
+                assert(eventCount(object, 'delegateChanged') === 1);
+                assert(eventCount(object, 'update') === 0);
+                assert(eventCount(object, 'stateChanged') === 0);
+                assert(object.data === delegate.data);
+                assert(object.state === delegate.state);
+
+                // reset value should drop delegate on object
+                value.set();
+                assert(object.delegate === null);
+                assert(object.data !== delegate.data);
+                assert(object.state === delegate.state);
+                assert(eventCount(object, 'delegateChanged') === 2);
+                assert(eventCount(object, 'update') === 0);
+                assert(eventCount(object, 'stateChanged') === 0);
+                assert(eventCount(delegate, 'update') === 0);
+                assert(eventCount(delegate, 'stateChanged') === 0);
+
+                // changes in old delegate doesn't affect object
+                delegate.update({ foo: 2 });
+                assert(eventCount(delegate, 'update') === 1);
+                assert(object.delegate === null);
+                assert(object.data !== delegate.data);
+                assert(object.state === delegate.state);
+                assert(eventCount(object, 'update') === 0);
+                assert(eventCount(object, 'stateChanged') === 0);
+
+                // drop resolve adapter
+                object.setDelegate();
+                assert(object.delegate === null);
+                assert(eventCount(object, 'update') === 0);
+                assert(eventCount(object, 'stateChanged') === 0);
+
+                // now changes in value doesn't affect object
+                value.set(delegate);
+                assert(object.delegate === null);
+                assert(eventCount(object, 'delegateChanged') === 2);
+                assert(eventCount(object, 'update') === 0);
+                assert(eventCount(object, 'stateChanged') === 0);
+              }
+            }
+          ]
         }
       ]
     },
@@ -507,8 +599,8 @@ module.exports = {
               subscribeTo: nsData.SUBSCRIPTION.DELEGATE
             });
 
-            this.is(1, objectA.subscriberCount);
-            this.is(1, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 1);
+            assert(eventCount(objectA, 'subscribersChanged') === 1);
           }
         },
         {
@@ -520,31 +612,31 @@ module.exports = {
               subscribeTo: nsData.SUBSCRIPTION.DELEGATE
             });
 
-            this.is(0, objectA.subscriberCount);
-            this.is(0, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 0);
+            assert(eventCount(objectA, 'subscribersChanged') === 0);
 
             objectB.setDelegate(objectA);
 
-            this.is(0, objectA.subscriberCount);
-            this.is(0, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 0);
+            assert(eventCount(objectA, 'subscribersChanged') === 0);
 
             // switch on
             objectB.setActive(true);
 
-            this.is(1, objectA.subscriberCount);
-            this.is(1, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 1);
+            assert(eventCount(objectA, 'subscribersChanged') === 1);
 
             // nothing changed
             objectB.setActive(true);
 
-            this.is(1, objectA.subscriberCount);
-            this.is(1, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 1);
+            assert(eventCount(objectA, 'subscribersChanged') === 1);
 
             // switch off
             objectB.setActive(false);
 
-            this.is(0, objectA.subscriberCount);
-            this.is(2, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 0);
+            assert(eventCount(objectA, 'subscribersChanged') === 2);
           }
         },
         {
@@ -556,31 +648,31 @@ module.exports = {
               subscribeTo: nsData.SUBSCRIPTION.NONE
             });
 
-            this.is(0, objectA.subscriberCount);
-            this.is(0, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 0);
+            assert(eventCount(objectA, 'subscribersChanged') === 0);
 
             objectB.setDelegate(objectA);
 
-            this.is(0, objectA.subscriberCount);
-            this.is(0, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 0);
+            assert(eventCount(objectA, 'subscribersChanged') === 0);
 
             // switch on
             objectB.setSubscription(nsData.SUBSCRIPTION.DELEGATE);
 
-            this.is(1, objectA.subscriberCount);
-            this.is(1, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 1);
+            assert(eventCount(objectA, 'subscribersChanged') === 1);
 
             // nothing changed
             objectB.setSubscription(nsData.SUBSCRIPTION.DELEGATE);
 
-            this.is(1, objectA.subscriberCount);
-            this.is(1, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 1);
+            assert(eventCount(objectA, 'subscribersChanged') === 1);
 
             // switch off
             objectB.setSubscription(nsData.SUBSCRIPTION.NONE);
 
-            this.is(0, objectA.subscriberCount);
-            this.is(2, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 0);
+            assert(eventCount(objectA, 'subscribersChanged') === 2);
           }
         },
         {
@@ -593,13 +685,13 @@ module.exports = {
               delegate: objectA
             });
 
-            this.is(1, objectA.subscriberCount);
-            this.is(1, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 1);
+            assert(eventCount(objectA, 'subscribersChanged') === 1);
 
             objectB.destroy();
 
-            this.is(0, objectA.subscriberCount);
-            this.is(2, eventCount(objectA, 'subscribersChanged'));
+            assert(objectA.subscriberCount === 0);
+            assert(eventCount(objectA, 'subscribersChanged') === 2);
           }
         }
       ]

@@ -1016,6 +1016,8 @@
   // Object
   //
 
+  var INIT_DATA = {};
+
  /**
   * Returns true if object is connected to another object through delegate chain.
   * @param {basis.data.Object} a
@@ -1228,6 +1230,7 @@
 
       // data/delegate
       var delegate = this.delegate;
+      var data = this.data;
 
       if (delegate)
       {
@@ -1235,17 +1238,20 @@
         this.delegate = null;
         this.target = null;
 
-        // assign data & state to avoid update and stateChanged events
-        this.data = delegate.data;
-        this.state = delegate.state;
+        // ignore data property
+        this.data = INIT_DATA;
 
         // assign delegate
         this.setDelegate(delegate);
+
+        // if delegate is not assigned, restore data
+        if (this.data === INIT_DATA)
+          this.data = data || {};
       }
       else
       {
-        // if data doesn't exists - init it
-        if (!this.data)
+        // if data doesn't exists - create new one
+        if (!data)
           this.data = {};
 
         // set target property to itself if target property is not null
@@ -1317,9 +1323,9 @@
         var oldDelegate = this.delegate;
         var oldTarget = this.target;
         var oldRoot = this.root;
-        var delta = {};
-        var dataChanged = false;
         var delegateListenHandler = this.listen.delegate;
+        var dataChanged = false;
+        var delta;
 
         if (oldDelegate)
         {
@@ -1351,28 +1357,36 @@
           // assign new delegate
           this.delegate = newDelegate;
 
+          // add delegate listener
+          if (delegateListenHandler)
+            newDelegate.addHandler(delegateListenHandler, this);
+
+          // add object to delegate's list of delegates
           newDelegate.delegates_ = {
             delegate: this,
             next: newDelegate.delegates_
           };
 
-          // calculate delta as difference between current data and delegate info
-          for (var key in newDelegate.data)
-            if (key in oldData === false)
-            {
-              dataChanged = true;
-              delta[key] = undefined;
-            }
+          // possible only when set delegate on init
+          if (this.data !== INIT_DATA)
+          {
+            // calculate delta as difference between current data and delegate info
+            delta = {};
 
-          for (var key in oldData)
-            if (oldData[key] !== newDelegate.data[key])
-            {
-              dataChanged = true;
-              delta[key] = oldData[key];
-            }
+            for (var key in newDelegate.data)
+              if (key in oldData === false)
+              {
+                dataChanged = true;
+                delta[key] = undefined;
+              }
 
-          if (delegateListenHandler)
-            newDelegate.addHandler(delegateListenHandler, this);
+            for (var key in oldData)
+              if (oldData[key] !== newDelegate.data[key])
+              {
+                dataChanged = true;
+                delta[key] = oldData[key];
+              }
+          }
         }
         else
         {
@@ -1394,7 +1408,7 @@
           this.emit_update(delta);
 
         // emit event state changed
-        if (oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
+        if (delta && oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
           this.emit_stateChanged(oldState);
 
         // fire event if delegate changed
