@@ -641,9 +641,15 @@
         var taskId = 1;
 
         // emulate setImmediate
-        setImmediate = function(){
+        setImmediate = function(fn/*, ..args */){
+          if (typeof fn != 'function')
+          {
+            /** @cut */ consoleMethods.warn('basis.setImmediate() and basis.nextTick() accept functions only (call ignored)');
+            return;
+          }
+
           taskById[++taskId] = {
-            fn: arguments[0],
+            fn: fn,
             args: arrayFrom(arguments, 1)
           };
 
@@ -666,15 +672,7 @@
           if (task)
           {
             delete taskById[id];
-
-            if (typeof task.fn == 'function')
-              task.fn.apply(undefined, task.args);
-            else
-            {
-              (global.execScript || function(fn){
-                global['eval'].call(global, fn);
-              })(String(task.fn));
-            }
+            return task.fn.apply(undefined, task.args);
           }
         };
       })();
