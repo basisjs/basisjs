@@ -481,7 +481,7 @@
 
    /**
     * Add source from sources list.
-    * @param {basis.data.ReadOnlyDataset} source
+    * @param {basis.data.ReadOnlyDataset|object|function()} source
     * @return {boolean} Returns true if new source added.
     */
     addSource: function(source){
@@ -491,9 +491,11 @@
         return;
       }
 
-      for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
-        if (sourceInfo.source === source)
-          return;
+      if (this.hasSource(source))
+      {
+        /** @cut */ basis.dev.warn(this.constructor.className + '.addSource: value is already in source list');
+        return;
+      }
 
       var sourceInfo = {
         owner: this,
@@ -511,7 +513,7 @@
 
    /**
     * Removes source from sources list.
-    * @param {basis.data.ReadOnlyDataset} source
+    * @param {basis.data.ReadOnlyDataset|object|function()} source
     * @return {boolean} Returns true if source removed.
     */
     removeSource: function(source){
@@ -527,6 +529,19 @@
         }
 
       /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source value isn\'t found in source list');
+    },
+
+   /**
+    * Removes source from sources list.
+    * @param {basis.data.ReadOnlyDataset|object|function()} source
+    * @return {boolean} Returns true if source already added.
+    */
+    hasSource: function(source){
+      for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
+        if (sourceInfo.source === source)
+          return true;
+
+      return false;
     },
 
    /**
