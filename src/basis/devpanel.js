@@ -7,9 +7,14 @@ var script = document.createElement('script');
 script.setAttribute('src', basis.filename_);
 script.setAttribute('basis-config',
   JSON.stringify({
-    autoload: basis.path.dirname(basis.filename_) + '/devpanel',
     noConflict: true,
-    inspectBasisRef: inspectBasisRef
+    inspectBasisRef: inspectBasisRef,
+    modules: {
+      devpanel: {
+        autoload: true,
+        filename: basis.path.dirname(basis.filename_) + '/devpanel/index.js'
+      }
+    }
   }).replace(/^\{|\}$/g, '')
 );
 basis.doc.head.add(script);
