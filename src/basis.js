@@ -1059,25 +1059,19 @@
   */
 
   var basisFilename = '';
+  var config = fetchConfig();
 
  /**
-  * basis.js options read from script's `basis-config` or `data-basis-config` attribute.
-  *
-  * Special processing options:
-  * - autoload: namespace that must be loaded right after core loaded
-  * - path: dictionary of paths for root namespaces
-  *
-  * Other options copy into basis.config as is.
+  * Fetch basis.js options from script's `basis-config` or `data-basis-config` attribute.
   */
-  var config = (function(){
+  function fetchConfig(){
     var basisBaseURI = '';
-    var config = {};
+    var config;
 
     if (NODE_ENV)
     {
       // node.js env
       basisFilename = __filename;
-      basisBaseURI = __dirname;
     }
     else
     {
@@ -1089,72 +1083,149 @@
           ? scriptEl.getAttribute('basis-config')
           : scriptEl.getAttribute('data-basis-config');
 
+        scriptEl.removeAttribute('basis-config');
+        scriptEl.removeAttribute('data-basis-config');
+
         if (configAttrValue !== null)
         {
-          scriptEl.removeAttribute('basis-config');
-          scriptEl.removeAttribute('data-basis-config');
+          basisFilename = pathUtils.normalize(scriptEl.src);
+
           try {
-            extend(config, Function('return{' + configAttrValue + '}')() || {});
+            config = Function('return{' + configAttrValue + '}')();
           } catch(e) {
-            /** @cut */ consoleMethods.error('basis.js config parse fault: ' + e);
+            /** @cut */ consoleMethods.error('basis-config: basis.js config parse fault: ' + e);
           }
-
-          // warn about extProto in basis-config, this option was removed in 1.3.0
-          /** @cut */ if ('extProto' in config) consoleMethods.warn('extProto option in basis-config is not support anymore');
-
-          var src = scriptEl.src;
-
-          // IE7 and lower doesn't absolutize src value
-          if (!/^[a-z]+:\/\//.test(src))
-          {
-            // absolutize src using anchor, IE absolutize href on <a> cloning
-            var anchor = document.createElement('a');
-            anchor.href = src;
-            src = anchor.cloneNode(false).href;  // NOTE: false is important here,
-                                                 // wrong href transformation otherwise
-          }
-
-          basisFilename = pathUtils.normalize(src);
-          basisBaseURI = pathUtils.dirname(basisFilename);
 
           break;
         }
       }
     }
 
-    config.path = extend(config.path || {}, {
-      basis: basisBaseURI
+    return processConfig(config);
+  }
+
+ /**
+  * Process config object and returns adopted config.
+  *
+  * Special options:
+  * - autoload: namespace that must be loaded right after core loaded
+  * - path: dictionary of paths for root namespaces
+  * - modules: dictionary of modules with options
+  *
+  * Other options copy into basis.config as is.
+  */
+  function processConfig(config, verbose){
+    // make a copy of config
+    config = slice(config);
+
+    // warn about extProto in basis-config, this option was removed in 1.3.0
+    /** @cut */ if ('extProto' in config)
+    /** @cut */   consoleMethods.warn('basis-config: `extProto` option in basis-config is not support anymore');
+
+    // warn about path in basis-config, this option was deprecated in 1.3.0
+    /** @cut */ if ('path' in config)
+    /** @cut */   consoleMethods.warn('basis-config: `path` option in basis-config is deprecated, use `modules` instead');
+
+    // build modules list
+    var autoload = [];
+    var modules = merge(config.path, config.modules, {
+      basis: basisFilename
     });
 
-    var autoload = config.autoload;
-    config.autoload = false;
-    if (autoload)
+    // reset modules
+    config.modules = {};
+
+    // process autoload
+    if (config.autoload)
     {
-      var m = autoload.match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)((?:\.[a-z$_][a-z0-9$_]*)*)$/i);
+      // [path/to/][name][.rest.ext] -> {
+      //   name: name,
+      //   filename: path + name + rest
+      // }
+
+      var m = String(config.autoload).match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)((?:\.[a-z$_][a-z0-9$_]*)*)$/i);
       if (m)
       {
-        if (m[2] != 'basis')
-        {
-          config.autoload = m[2] + (m[3] || '');
-          if (m[1])
-            config.path[m[2]] = m[1].replace(/\/$/, '');
-        }
-        else
-        {
-          /** @cut */ consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
-        }
+        modules[m[2]] = {
+          autoload: true,
+          filename: m[1] + m[2] + (m[3] || '.js')
+        };
       }
       else
       {
-        /** @cut */ consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
+        /** @cut */ consoleMethods.warn('basis-config: wrong `autoload` value (setting ignored): ' + config.autoload);
+      }
+
+      delete config.autoload;
+    }
+
+    // process modules
+    for (var name in modules)
+    {
+      // name: {
+      //   autoload: boolean,
+      //   path: 'path/to',
+      //   filename: 'module.js'
+      // }
+      //
+      // or
+      //
+      // name: 'filename'
+
+      var module = modules[name];
+
+      // if value is string, convert to config
+      if (typeof module == 'string')
+        module = {
+          filename: module
+        };
+
+      // get and resolve path and filename
+      var filename = module.filename;
+      var path = module.path;
+
+      if (path)
+        path = pathUtils.resolve(path);
+      if (filename)
+        filename = pathUtils.resolve(filename);
+
+      // if no path but filename
+      // let filename equals to 'path/to/file[.ext]', then
+      //   path = 'path/to/file'
+      //   filename = 'path/to/file[.ext]'
+      if (filename && !path)
+        path = filename.substr(0, filename.length - pathUtils.extname(filename).length);
+
+      // if no filename but path
+      // let path equals to 'path/to/file[.ext]', then
+      //   path = 'path/to'
+      //   filename = 'path/to/file[.ext]'
+      if (!filename && path)
+      {
+        filename = path;
+        path = pathUtils.dirname(path);
+      }
+
+      // if filename has no extension, adds `.js`
+      if (!pathUtils.extname(filename))
+        filename += '.js';
+
+      // store results
+      config.modules[name] = {
+        path: path,
+        filename: filename
+      };
+
+      // store autoload modules
+      if (module.autoload)
+      {
+        config.autoload = autoload;
+        autoload.push(name);
       }
     }
 
-    for (var key in config.path)
-      config.path[key] = pathUtils.resolve(config.path[key]) + '/';
-
     return config;
-  })();
+  }
 
 
   // ============================================
@@ -2065,20 +2136,20 @@
         if (!namespace)
         {
           var implicitNamespace = true;
-          namespace = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
+          filename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
 
-          for (var ns in config.path)
+          for (var ns in nsRootPath)
           {
-            var path = config.path[ns] + ns + '/';
+            var path = nsRootPath[ns] + ns + '/';
             if (filename.substr(0, path.length) == path)
             {
               implicitNamespace = false;
-              namespace = namespace.substr(config.path[ns].length);
+              filename = filename.substr(nsRootPath[ns].length);
               break;
             }
           }
 
-          namespace = namespace
+          namespace = filename
             .replace(/\./g, '_')
             .replace(/^\//g, '')
             .replace(/\//g, '.');
@@ -2225,7 +2296,13 @@
   var namespaces = {};
   var namespace2filename = {};
   var filename2namespace = {};
-  var nsRootPath = slice(config.path);
+  var nsRootPath = {};
+
+  iterate(config.modules, function(name, module){
+    nsRootPath[name] = module.path + '/';
+    namespace2filename[name] = module.filename;
+    filename2namespace[module.filename] = name;
+  });
 
   (function(map){
     var map = typeof __namespace_map__ != 'undefined' ? __namespace_map__ : null;
@@ -2260,18 +2337,22 @@
   });
 
   function resolveNSFilename(namespace){
-    var namespaceRoot = namespace.split('.')[0];
-    var filename = namespace.replace(/\./g, '/') + '.js';
-
     if (namespace in namespace2filename == false)
     {
+      var parts = namespace.split('.');
+      var namespaceRoot = parts.shift();
+      var filename = parts.join('/') + '.js';
+
       if (namespaceRoot in nsRootPath == false)
-        nsRootPath[namespaceRoot] = pathUtils.baseURI;
+        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
 
       if (namespaceRoot == namespace)
-        filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
+        filename = nsRootPath[namespaceRoot].replace(/\/$/, '') + '.js';
+      else
+        filename = nsRootPath[namespaceRoot] + filename;
 
-      namespace2filename[namespace] = nsRootPath[namespaceRoot] + filename;
+      namespace2filename[namespace] = filename;
+      filename2namespace[filename] = namespace;
     }
 
     return namespace2filename[namespace];
@@ -2424,25 +2505,6 @@
     var resource = getResource.get(filename);
     if (resource && resource.isResolved())
       patchFn(resource.get(), resource.url);
-  }
-
-  //
-  // Buildin classes extension
-  //
-
-  function extendProto(cls, extensions){
-    if (config.extProto)
-      for (var key in extensions)
-        cls.prototype[key] = (function(method, clsName){
-          return function(){
-            /** @cut */ if (config.extProto == 'warn')
-            /** @cut */   consoleMethods.warn(clsName + '#' + method + ' is not a standard method and will be removed soon; use basis.' + clsName.toLowerCase() + '.' + method + ' instead');
-
-            var args = [this];
-            Array.prototype.push.apply(args, arguments);
-            return extensions[method].apply(extensions, args);
-          };
-        })(key, cls.name || cls.toString().match(/^\s*function\s*(\w*)\s*\(/)[1]);
   }
 
 
@@ -3377,6 +3439,7 @@
   // create and extend basis namespace
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
+    /** @cut */ processConfig: processConfig,
 
     // properties and settings
     version: VERSION,
@@ -3479,6 +3542,8 @@
   //
 
   if (config.autoload)
-    requireNamespace(config.autoload);
+    config.autoload.forEach(function(name){
+      requireNamespace(name);
+    });
 
 })(this);
