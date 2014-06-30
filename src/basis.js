@@ -1192,23 +1192,29 @@
       // if no path but filename
       // let filename equals to 'path/to/file[.ext]', then
       //   path = 'path/to/file'
-      //   filename = 'path/to/file[.ext]'
+      //   filename = '../file[.ext]'
       if (filename && !path)
+      {
         path = filename.substr(0, filename.length - pathUtils.extname(filename).length);
+        filename = '../' + pathUtils.basename(filename);
+      }
 
       // if no filename but path
       // let path equals to 'path/to/file[.ext]', then
       //   path = 'path/to'
-      //   filename = 'path/to/file[.ext]'
+      //   filename = 'file[.ext]'
       if (!filename && path)
       {
-        filename = path;
+        filename = pathUtils.basename(path);
         path = pathUtils.dirname(path);
       }
 
       // if filename has no extension, adds `.js`
       if (!pathUtils.extname(filename))
         filename += '.js';
+
+      // resolve filename
+      filename = pathUtils.resolve(path, filename);
 
       // store results
       config.modules[name] = {
