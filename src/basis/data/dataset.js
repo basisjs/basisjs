@@ -121,11 +121,7 @@
         return events;
 
       if (typeof events != 'string' && !Array.isArray(events))
-      {
-        events = typeof events == 'object' ? basis.object.keys(events) : null;
-        /** @cut */ if (events)
-        /** @cut */   basis.dev.warn('Using an object for ruleEvents is deprecated, use space separated event names string or array of strings instead.');
-      }
+        events = null;
 
       return extend(basis.event.createHandler(events, fn), {
         __extend__: createRuleEventsExtend
