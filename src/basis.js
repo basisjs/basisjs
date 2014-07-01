@@ -820,13 +820,13 @@
     var ORIGIN_RX = /^(?:[a-zA-Z0-9\-]+:)?\/\/[^\/]+\/?/;
     var SEARCH_HASH_RX = /[\?#].*$/;
 
-    var utils = {};
-    var origin = '';
     var baseURI;
+    var origin;
+    var utils;
 
     if (NODE_ENV)
     {
-      var path = require('path').resolve('.').replace(/\\/g, '/');
+      var path = (process.basisjsBaseURI || '').replace(/\\/g, '/'); // on Windows path contains backslashes
       baseURI = path.replace(/^[^\/]*/, '');
       origin = path.replace(/\/.*/, '');
     }
@@ -1065,13 +1065,12 @@
   * Fetch basis.js options from script's `basis-config` or `data-basis-config` attribute.
   */
   function fetchConfig(){
-    var basisBaseURI = '';
     var config;
 
     if (NODE_ENV)
     {
       // node.js env
-      basisFilename = __filename;
+      basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
     }
     else
     {
