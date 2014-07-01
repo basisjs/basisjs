@@ -826,7 +826,7 @@
 
     if (NODE_ENV)
     {
-      var path = (process.basisjsBaseURI || '').replace(/\\/g, '/'); // on Windows path contains backslashes
+      var path = (process.basisjsBaseURI || require('path').resolve('.')).replace(/\\/g, '/'); // on Windows path contains backslashes
       baseURI = path.replace(/^[^\/]*/, '');
       origin = path.replace(/\/.*/, '');
     }
