@@ -469,7 +469,7 @@
           return result;
         },
 
-        // deprecated
+        // deprecated in 1.3.0
         entitySetType: entitySetType,
         extend: function(){
           /** @cut */ basis.dev.warn('basis.entity: EntitySetType.extend() is deprecated, use EntitySetType.extendClass() instead.');
@@ -477,6 +477,7 @@
         }
       });
 
+      // deprecated in 1.3.0
       /** @cut */ if (Object.defineProperty)
       /** @cut */   Object.defineProperty(result, 'entitySetType', {
       /** @cut */     get: function(){
@@ -627,7 +628,7 @@
           return result;
         },
 
-        // deprecated
+        // deprecated in 1.3.0
         entityType: entityType,
         extend: function(){
           /** @cut */ basis.dev.warn('basis.entity: EntityType.extend() is deprecated, use EntityType.extendClass() instead.');
@@ -635,6 +636,7 @@
         }
       });
 
+      // deprecated in 1.3.0
       /** @cut */ if (Object.defineProperty)
       /** @cut */   Object.defineProperty(result, 'entityType', {
       /** @cut */     get: function(){

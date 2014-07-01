@@ -184,7 +184,7 @@
           newStateData = this.getResponseError();
 
           // NOTE: for backward capability of deprecated behaviour
-          // should be removed in future
+          // should be removed in future (deprecated in 1.2.0)
           if (!newStateData && this.data.error)
           {
             /** @cut */ basis.dev.warn('Request#getResponseError should not update request data, but returns error data. Please, fix your method implementation, as data updating is deprecated behaviour.');
@@ -256,6 +256,7 @@
     },
 
    /**
+    * deprecated in 1.2.0
     * @deprecated
     */
     processErrorResponse: function(){

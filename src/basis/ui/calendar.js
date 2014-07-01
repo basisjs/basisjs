@@ -700,6 +700,7 @@
 
       if (this.sections)
       {
+        // deprecated in 1.3.0
         /** @cut */ basis.dev.warn('basis.ui.calendar.Calendar#sections is deprecated, use childNodes instead');
         this.setChildNodes(this.sections);
       }

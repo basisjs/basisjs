@@ -2454,7 +2454,7 @@
     Split: Split,
     Extract: Extract,
 
-    // deprecated name of Filter
+    // deprecated in 1.3.0 name of Filter
     Subset: Filter.subclass({
       className: namespace + '.Subset',
       init: function(){

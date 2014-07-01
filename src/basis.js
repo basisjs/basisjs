@@ -2769,6 +2769,7 @@
 
     // misc.
     sortAsObject: function(){
+      // deprecated in basis.js 1.3.0
       /** @cut */ consoleMethods.warn('basis.array.sortAsObject is deprecated, use basis.array.sort instead');
       return arrayFunctions.sort.apply(this, arguments);
     },
