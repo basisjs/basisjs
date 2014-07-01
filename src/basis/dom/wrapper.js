@@ -2703,13 +2703,6 @@
       this.map_ = {};
       this.nullGroup = new PartitionNode();
 
-      // TODO: remove in next releases
-      if ('groupGetter' in this)
-      {
-        this.rule = getter(this.groupGetter);
-        /** @cut */ basis.dev.warn('basis.dom.wrapper.GroupingNode#groupGetter is deprecated now, use basis.dom.wrapper.GroupingNode#rule instead. groupGetter value was set to rule property.');
-      }
-
       AbstractNode.prototype.init.call(this);
     },
 
