@@ -826,6 +826,7 @@
 
     if (NODE_ENV)
     {
+      // try to use baseURI from process, it may be provided by parent module
       var path = (process.basisjsBaseURI || require('path').resolve('.')).replace(/\\/g, '/'); // on Windows path contains backslashes
       baseURI = path.replace(/^[^\/]*/, '');
       origin = path.replace(/\/.*/, '');
@@ -1916,7 +1917,10 @@
       else
       {
         try {
-          resourceContent = require('fs').readFileSync(url, 'utf-8');
+          // try to use special read file function, it may be provided by parent module
+          resourceContent = process.basisjsReadFile
+            ? process.basisjsReadFile(url)
+            : require('fs').readFileSync(url, 'utf-8');
         } catch(e){
           /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
