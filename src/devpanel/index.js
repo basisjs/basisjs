@@ -12,15 +12,13 @@ if (!inspectBasis)
 
 // much strict template isolation, to prevent style mix with inspecting basis app styles,
 // as isolation prefixes based on template id in dev mode
-basis.patch('basis.template', function(exports){
-  exports.Template.extend({
-    isolatePrefix_: false,
-    getIsolatePrefix: function(){
-      if (!this.isolatePrefix_)
-        this.isolatePrefix_ = basis.genUID().replace(/^[^a-z]/i, 'i$&') + '__';
-      return this.isolatePrefix_;
-    }
-  });
+require('basis.template').Template.extend({
+  isolatePrefix_: false,
+  getIsolatePrefix: function(){
+    if (!this.isolatePrefix_)
+      this.isolatePrefix_ = basis.genUID().replace(/^[^a-z]/i, 'i$&') + '__';
+    return this.isolatePrefix_;
+  }
 });
 
 // everything ok, init interface
