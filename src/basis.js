@@ -1176,8 +1176,10 @@
 
       // if value is string, convert to config
       if (typeof module == 'string')
+        // value is filename
         module = {
-          filename: module
+          // if path ends with `/` add `[name].js` to the end
+          filename: module.replace(/\/$/, '/' + name + '.js')
         };
 
       // get and resolve path and filename
