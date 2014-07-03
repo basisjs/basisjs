@@ -2145,20 +2145,20 @@
         if (!namespace)
         {
           var implicitNamespace = true;
-          filename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
+          var resolvedFilename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
 
           for (var ns in nsRootPath)
           {
             var path = nsRootPath[ns] + ns + '/';
-            if (filename.substr(0, path.length) == path)
+            if (resolvedFilename.substr(0, path.length) == path)
             {
               implicitNamespace = false;
-              filename = filename.substr(nsRootPath[ns].length);
+              resolvedFilename = resolvedFilename.substr(nsRootPath[ns].length);
               break;
             }
           }
 
-          namespace = filename
+          namespace = resolvedFilename
             .replace(/\./g, '_')
             .replace(/^\//g, '')
             .replace(/\//g, '.');
