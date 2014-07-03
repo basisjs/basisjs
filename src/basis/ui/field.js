@@ -894,8 +894,9 @@
         {
           this.select();
 
-          if (this.parentNode || this.owner)
-            this.parentNode.hide();
+          var owner = this.parentNode || this.owner;
+          if (owner)
+            owner.hide();
 
           event.die();
         }
