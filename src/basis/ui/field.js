@@ -894,7 +894,7 @@
         {
           this.select();
 
-          if (this.parentNode)
+          if (this.parentNode || this.owner)
             this.parentNode.hide();
 
           event.die();
