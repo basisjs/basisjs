@@ -132,16 +132,17 @@
  /**
   *
   */
-  function createKeyMap(config, keyGetter, itemClass, SubsetClass){
+  function createKeyMap(config, keyGetter, ItemClass, SubsetClass){
     return new KeyObjectMap(extend({
       keyGetter: keyGetter,
-      itemClass: itemClass,
+      itemClass: ItemClass,
       create: function(key, object){
-        var obj = KeyObjectMap.prototype.create.call(this, key, object);
-        obj.setDataset(new SubsetClass({
+        var datasetWrapper = KeyObjectMap.prototype.create.call(this, key, object);
+        datasetWrapper.ruleValue = key;
+        datasetWrapper.setDataset(new SubsetClass({
           ruleValue: key
         }));
-        return obj;
+        return datasetWrapper;
       }
     }, config));
   }
