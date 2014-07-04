@@ -4,6 +4,7 @@ module.exports = {
   html: __dirname + 'l10n.html',  // to properly load .l10n file
   init: function(){
     basis.require('basis.l10n');
+    basis.require('basis.ui');
   },
 
   test: [
@@ -50,6 +51,27 @@ module.exports = {
         assert(dict.token('value').value === 'b');
         basis.l10n.setCulture('c');
         assert(dict.token('value').value === 'c');
+        
+        res.b = { 
+          token: {
+            key1: 'a',
+            key2: 'b'
+          }
+        };
+        dict.resource.update(JSON.stringify(res));
+        basis.l10n.setCulture('a');
+        var node = new basis.ui.Node({ template: basis.resource('./l10n.tmpl') });
+        node.tmpl.set('key', 'key1');
+        assert(node.element.innerText === 'a');
+        res.a = { 
+          token: {
+            key1: 'c'
+          }
+        };        
+        dict.resource.update(JSON.stringify(res));
+        assert(node.element.innerText === 'c');
+        node.tmpl.set('key', 'key2');
+        assert(node.element.innerText === 'b');
       }
     },
     {
