@@ -174,10 +174,10 @@
     addProperty: function(propertyName, eventName){
       var handler = {};
       handler[eventName || propertyName + 'Changed'] = function(object, oldValue){
-        if (oldValue)
+        if (oldValue instanceof AbstractData)
           SUBSCRIPTION.unlink(propertyName, object, oldValue);
 
-        if (object[propertyName])
+        if (object[propertyName] instanceof AbstractData)
           SUBSCRIPTION.link(propertyName, object, object[propertyName]);
       };
 
@@ -257,6 +257,7 @@
   SUBSCRIPTION.addProperty('delegate');
   SUBSCRIPTION.addProperty('target');
   SUBSCRIPTION.addProperty('dataset');
+  SUBSCRIPTION.addProperty('value', 'change');
 
 
   //
@@ -551,6 +552,11 @@
   */
   var Value = Class(AbstractData, {
     className: namespace + '.Value',
+
+   /**
+    * @inheritDoc
+    */
+    subscribeTo: SUBSCRIPTION.VALUE,
 
    /**
     * Fires when value was changed.
