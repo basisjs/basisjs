@@ -1710,16 +1710,21 @@
       return namedIndexes[name];
     },
 
-    get: function(typeName, id){
-      var type = namedTypes[typeName];
-      if (type)
-        return type.get(id);
+    get: function(typeName, value){      // works like Type.get(value)
+      var Type = namedTypes[typeName];
+      if (Type)
+        return Type.get(value);
     },
-    getByIndex: function(name, id){
-      if (name in namedIndexes)
-        return namedIndexes[name].get(id);
+    resolve: function(typeName, value){  // works like Type(value)
+      var Type = namedTypes[typeName];
+      if (Type)
+        return Type(value);
+    },
+    getByIndex: function(indexName, id){
+      if (indexName in namedIndexes)
+        return namedIndexes[indexName].get(id);
       /** @cut */ else
-      /** @cut */   basis.dev.warn('basis.entity: index with name `' + name + '` doesn\'t exists');
+      /** @cut */   basis.dev.warn('basis.entity: index with name `' + indexName + '` doesn\'t exists');
     },
 
     NumericId: NumericId,
