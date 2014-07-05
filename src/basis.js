@@ -2006,8 +2006,6 @@
       /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
       /** @cut */ },
       update: function(newContent){
-        newContent = String(newContent);
-
         if (!resolved || isVirtual || newContent != resourceContentCache[resourceUrl])
         {
           if (!isVirtual)
