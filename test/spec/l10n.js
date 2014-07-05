@@ -55,9 +55,109 @@ module.exports = {
             basis.l10n.setCulture('c');
             assert(dict.token('value').value === 'c');
           }
+        }
+      ]
+    },
+    {
+      name: 'computeToken',
+      test: [
+        {
+          name: 'base',
+          init: function(){
+            basis.require('basis.l10n');
+            basis.l10n.setCultureList('a');
+            basis.l10n.setCulture('a');
+          },
+          test: [
+            {
+              name: 'simple',
+              test: function(){
+                var dict = basis.l10n.dictionary(basis.resource.virtual('l10n', {
+                  a: {
+                    token: {
+                      foo: 'foo',
+                      bar: 'bar'
+                    }
+                  }
+                }));
+                var token = dict.token('token').computeToken();
+                var tokenCount = Object.keys(dict.tokens).length;
+
+                // should not produce extra tokens in dictionary
+                assert(Object.keys(dict.tokens).length == tokenCount);
+
+                assert(token.get() === undefined);
+                assert(Object.keys(dict.tokens).length == tokenCount);
+
+                token.set('foo');
+                assert(token.get() === 'foo');
+                assert(Object.keys(dict.tokens).length == tokenCount);
+
+                token.set('bar');
+                assert(token.get() === 'bar');
+                assert(Object.keys(dict.tokens).length == tokenCount);
+
+                token.set('baz');
+                assert(token.get() === undefined);
+                assert(Object.keys(dict.tokens).length == tokenCount);
+              }
+            },
+            {
+              name: 'update on dictionary changes',
+              test: function(){
+                var data = {
+                  a: {
+                    token: {
+                      foo: 'foo',
+                      bar: 'bar'
+                    }
+                  }
+                };
+                var dict = basis.l10n.dictionary(basis.resource.virtual('l10n', data));
+                var computeToken = dict.token('token').computeToken();
+
+                assert(computeToken.get() === undefined);
+
+                computeToken.set('foo');
+                assert(computeToken.get() === 'foo');
+
+                dict.resource.update({
+                  a: {
+                    token: {
+                      foo: 'foo-2',
+                      bar: 'bar-2'
+                    }
+                  }
+                });
+                assert(computeToken.get() === 'foo-2');
+
+                computeToken.set('bar');
+                assert(computeToken.get() === 'bar-2');
+
+                dict.resource.update({
+                  a: {
+                    token: {}
+                  }
+                });
+                assert(computeToken.get() === undefined);
+
+                dict.resource.update({});
+                assert(computeToken.get() === undefined);
+
+                dict.resource.update({
+                  a: {
+                    token: {
+                      bar: 'bar-3'
+                    }
+                  }
+                });
+                assert(computeToken.get() === 'bar-3');
+              }
+            }
+          ]
         },
         {
-          name: 'fallback and compute token',
+          name: 'fallback',
           test: function(){
             basis.l10n.setCultureList('a/b b');
 
@@ -74,7 +174,6 @@ module.exports = {
                 }
               }
             }));
-
             var checkToken = dict.token('token').computeToken();
 
             // base culture A
@@ -106,6 +205,54 @@ module.exports = {
 
             checkToken.set('key2');
             assert(checkToken.get() === 'b2');
+          }
+        },
+        {
+          name: 'fallback on dictionary update',
+          test: function(){
+            basis.l10n.setCultureList('a/b b');
+
+            var data = {
+              a: {
+                token: {
+                  key1: 'a'
+                }
+              },
+              b: {
+                token: {
+                  key1: 'b1',
+                  key2: 'b2'
+                }
+              }
+            };
+            var dict = basis.l10n.dictionary(basis.resource.virtual('l10n', data));
+            var checkToken = dict.token('token').computeToken();
+
+            // base culture A
+            checkToken.set('key1');
+            assert(basis.l10n.getCulture() === 'a');
+            assert(checkToken.get() === 'a');
+
+            checkToken.set('key2');
+            assert(checkToken.get() === 'b2');
+
+            // update dict content
+            dict.resource.update(basis.object.complete({
+              b: {
+                token: {
+                  key1: 'b1-2',
+                  key2: 'b2-2'
+                }
+              }
+            }, data));
+
+            assert(checkToken.get() === 'b2-2');
+
+            checkToken.set('key1');
+            assert(checkToken.get() === 'a');
+
+            checkToken.set('key2');
+            assert(checkToken.get() === 'b2-2');
           }
         }
       ]
