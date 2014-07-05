@@ -1,6 +1,5 @@
 // resolve basis.js instance for inspect
-var inspectBasis = global[basis.config.inspectBasisRef];
-delete global[basis.config.inspectBasisRef];
+var inspectBasis = basis.config.inspect;
 this.inspectBasis = inspectBasis;
 
 // check basis.js instance found

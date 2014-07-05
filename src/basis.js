@@ -36,7 +36,8 @@
  * - basis.cleaner
  */
 
-;(function(global){ // global is current context (`window` in browser and `global` on node.js)
+// global is current context (`window` in browser and `global` on node.js)
+;(function createBasisInstance(global, __basisFilename, __config){
   'use strict';
 
   var VERSION = '1.3.0-dev';
@@ -1059,44 +1060,47 @@
   * @namespace basis
   */
 
-  var basisFilename = '';
+  var basisFilename = __basisFilename || '';
   var config = fetchConfig();
 
  /**
   * Fetch basis.js options from script's `basis-config` or `data-basis-config` attribute.
   */
   function fetchConfig(){
-    var config;
+    var config = __config;
 
-    if (NODE_ENV)
+    if (!config)
     {
-      // node.js env
-      basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
-    }
-    else
-    {
-      // browser env
-      var scripts = document.scripts;
-      for (var i = 0, scriptEl; scriptEl = scripts[i]; i++)
+      if (NODE_ENV)
       {
-        var configAttrValue = scriptEl.hasAttribute('basis-config')
-          ? scriptEl.getAttribute('basis-config')
-          : scriptEl.getAttribute('data-basis-config');
-
-        scriptEl.removeAttribute('basis-config');
-        scriptEl.removeAttribute('data-basis-config');
-
-        if (configAttrValue !== null)
+        // node.js env
+        basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
+      }
+      else
+      {
+        // browser env
+        var scripts = document.scripts;
+        for (var i = 0, scriptEl; scriptEl = scripts[i]; i++)
         {
-          basisFilename = pathUtils.normalize(scriptEl.src);
+          var configAttrValue = scriptEl.hasAttribute('basis-config')
+            ? scriptEl.getAttribute('basis-config')
+            : scriptEl.getAttribute('data-basis-config');
 
-          try {
-            config = Function('return{' + configAttrValue + '}')();
-          } catch(e) {
-            /** @cut */ consoleMethods.error('basis-config: basis.js config parse fault: ' + e);
+          scriptEl.removeAttribute('basis-config');
+          scriptEl.removeAttribute('data-basis-config');
+
+          if (configAttrValue !== null)
+          {
+            basisFilename = pathUtils.normalize(scriptEl.src);
+
+            try {
+              config = Function('return{' + configAttrValue + '}')();
+            } catch(e) {
+              /** @cut */ consoleMethods.error('basis-config: basis.js config parse fault: ' + e);
+            }
+
+            break;
           }
-
-          break;
         }
       }
     }
@@ -3037,7 +3041,7 @@
 
  /**
   * Attach document ready handlers
-  * @param {function()} handler
+  * @param {function()} callback
   * @param {*} context Context for handler
   */
   var ready = (function(){
@@ -3454,8 +3458,16 @@
     // properties and settings
     version: VERSION,
 
+    // config and environment
     NODE_ENV: NODE_ENV,
     config: config,
+    createSandbox: function(config){
+      return createBasisInstance(
+        global,
+        basisFilename,
+        complete({ noConflict: true }, config)
+      );
+    },
 
     // modularity
     resolveNSFilename: resolveNSFilename,
@@ -3555,5 +3567,12 @@
     config.autoload.forEach(function(name){
       requireNamespace(name);
     });
+
+
+  //
+  // return basis instance (needs for createSandbox)
+  //
+
+  return basis;
 
 })(this);
