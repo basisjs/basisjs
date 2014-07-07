@@ -796,7 +796,7 @@
             var exists = values.indexOf(value) != -1;
 
             /** @cut */ if (!exists)
-            /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ', new value ignored.');
+            /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ' (new value ignored).\nVariants:', values, '\nIgnored value:', value);
 
             return exists ? value : oldValue;
           };
