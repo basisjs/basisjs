@@ -2445,7 +2445,7 @@
           moduleProto._compile = function(content, filename){
             this.basis = basis;
             content =
-              'var node_require = require;\n' +
+              'var __nodejsRequire = require;\n' +
               'var basis = module.basis;\n' +
               'var resource = function(filename){ return basis.resource(__dirname + "/" + filename) };\n' +
               'var require = function(filename, baseURI){ return basis.require(filename, baseURI || __dirname) };\n' +

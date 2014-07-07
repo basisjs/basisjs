@@ -129,9 +129,9 @@
       if (!this.context)
         return false;
 
-      return this.updateCount != this.lastDrawUpdateCount
-          || this.tmpl.canvas.width != this.lastDrawWidth
-          || this.tmpl.canvas.height != this.lastDrawHeight;
+      return this.updateCount != this.lastDrawUpdateCount ||
+             this.tmpl.canvas.width != this.lastDrawWidth ||
+             this.tmpl.canvas.height != this.lastDrawHeight;
     },
     draw: function(){
       if (!this.context)

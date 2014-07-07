@@ -879,15 +879,15 @@
       function checkMapDays(mode, month, sday, tday){
         var result;
         if (!mode)
-          // first month:  check only for last days
-          result = month >> sday;
-        else if (mode == 1)
-          // last month:   check only for first days
-          result = month & DAY_COUNT_MASK[tday + 1]; // MAX_DAY_MASK >> 31 - tday
-        else
-          // middle month: check full month
-          result = month;
-        return result;
+          // first month: check only for last days
+          return month >> sday;
+
+        if (mode == 1)
+          // last month: check only for first days
+          return month & DAY_COUNT_MASK[tday + 1]; // MAX_DAY_MASK >> 31 - tday
+
+        // middle month: check full month
+        return month;
       }
 
       // check for min/max dates
@@ -921,10 +921,8 @@
           if (monthCount == 0)
           {
             // check for day period
-            return !(year  = map[s.year])     // full year enabled, return true
-                   ||
-                   !(month = year[s.month])   // full month enabled, return true
-                   ||
+            return !(year  = map[s.year]) ||   // full year enabled, return true
+                   !(month = year[s.month]) || // full month enabled, return true
                    (((month ^ MAX_DAY_MASK) >> s.day) & DAY_COUNT_MASK[e.day - s.day + 1]);  // MAX_DAY_MASK >> 31 - (t.day - s.day + 1)
           }
 
@@ -964,10 +962,8 @@
           //
           if (monthCount == 0)
             // check for day period
-            return (year  = map[s.year])      // year absent return false
-                   &&
-                   (month = year[s.month])    // month absent return false
-                   &&
+            return (year  = map[s.year]) &&   // year absent return false
+                   (month = year[s.month]) && // month absent return false
                    ((month >> s.day) & DAY_COUNT_MASK[e.day - s.day + 1]);  // MAX_DAY_MASK >> 31 - (t.day - s.day + 1)
 
           //

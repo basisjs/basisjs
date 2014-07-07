@@ -574,7 +574,7 @@
     var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
     var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
-    var tokenMap = basis.NODE_ENV ? node_require('./template/htmlentity.json') : {};
+    var tokenMap = basis.NODE_ENV ? __nodejsRequire('./template/htmlentity.json') : {};
     var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
     var includeStack = [];
     var styleNamespaceIsolate = {};
@@ -1632,9 +1632,11 @@
 
                 if (bindDef[0])
                 {
-                  if (bindDef.length == 1) // bool
+                  if (bindDef.length == 1)
+                    // bool
                     arrayAdd(newAttrValue, bind[0] + bindName);
-                  else                     // enum
+                  else
+                    // enum
                     arrayAdd(newAttrValue, bind[0] + bindDef[1][bindDef[0] - 1]);
                 }
               }
@@ -2747,7 +2749,7 @@
     });
 
     themes[name].fallback = extendFallback(name, []);
-    sourceList.push(themes['base'].sources);
+    sourceList.push(themes.base.sources);
 
     return themeInterface;
   }

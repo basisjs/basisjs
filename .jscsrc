@@ -18,24 +18,19 @@
     "disallowSpacesInsideArrayBrackets": true,
     "disallowSpacesInsideParentheses": true,
 
-    "disallowQuotedKeysInObjects": "allButReserved",
     "disallowSpaceAfterObjectKeys": true,
 
     "requireCommaBeforeLineBreak": true,
 
-    "requireRightStickedOperators": ["!"],
-    "disallowRightStickedOperators": ["?", "+", "/", "*", ":", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<=", ","],
-
-    "requireLeftStickedOperators": [","],   
-    "disallowLeftStickedOperators": ["?", "+", "/", "*", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<="],
-
-    "disallowSpaceAfterPrefixUnaryOperators": ["++", "--", "+", "-"],
+    "disallowSpaceAfterBinaryOperators": ["!"],
+    "disallowSpaceAfterPrefixUnaryOperators": ["++", "--", "+", "-", "!"],
     "disallowSpaceBeforePostfixUnaryOperators": ["++", "--"],
 
+    "requireSpacesInConditionalExpression": true,
     "requireSpaceBeforeBinaryOperators": ["+", "-", "/", "*", "=", "==", "===", "!=", "!=="],
     "requireSpaceAfterBinaryOperators": ["+", "-", "/", "*", "=", "==", "===", "!=", "!=="],
 
-    "requireOperatorBeforeLineBreak": ["+", "-", "/", "*", "&&", "||", "&", "|", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<="],
+    "requireOperatorBeforeLineBreak": ["/", "*", "&&", "||", "&", "|", "=", "==", "===", "!=", "!==", ">", ">=", "<", "<="],
 
     "disallowImplicitTypeConversion": ["string", "binary"],
     "basisIdentifiersStyle": true,
@@ -50,7 +45,7 @@
     "requireLineFeedAtFileEnd": true,
 
     "disallowKeywords": ["with", "eval"],
-    "requireKeywordsOnNewLine": ["if", "else", "while", "for", "do", "return", "switch", "case", "try", "break"],
+    "requireKeywordsOnNewLine": ["else", "while", "for", "do", "return", "switch", "case", "try", "break"],
     "disallowKeywordsOnNewLine": ["catch"],
     "requireCapitalizedConstructors": true,
 

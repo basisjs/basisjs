@@ -269,12 +269,9 @@
         var pointY = dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()];
 
         if (
-            (dir[2] != LEFT && pointX < (width >> (dir[2] == CENTER)))
-            ||
-            (dir[2] != RIGHT && (viewport.width - pointX + viewport.left) < (width >> (dir[2] == CENTER)))
-            ||
-            (dir[3] != TOP && pointY < (height >> (dir[3] == CENTER)))
-            ||
+            (dir[2] != LEFT && pointX < (width >> (dir[2] == CENTER))) ||
+            (dir[2] != RIGHT && (viewport.width - pointX + viewport.left) < (width >> (dir[2] == CENTER))) ||
+            (dir[3] != TOP && pointY < (height >> (dir[3] == CENTER))) ||
             (dir[3] != BOTTOM && (viewport.height - pointY + viewport.top) < (height >> (dir[3] == CENTER)))
            )
           return false;

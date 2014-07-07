@@ -623,8 +623,8 @@
         }
       }
     },
-    event_change: function(event){
-      Field.prototype.event_change.call(this, event);
+    emit_change: function(event){
+      Field.prototype.emit_change.call(this, event);
       this.syncIndeterminate();
     },
 

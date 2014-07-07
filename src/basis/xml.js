@@ -134,7 +134,7 @@
     {
       var attr = document.createNode(2, name, namespace);
       attr.nodeValue = value;
-      element.setAttributeNode(attr)
+      element.setAttributeNode(attr);
     }
   }
 
@@ -183,9 +183,9 @@
           return '';
 
         // test for <node xsi:nil="true"/>
-        if (attributes.length == 1
-            && (firstAttr.baseName || firstAttr.localName) == XSI_NIL_LOCALPART
-            && firstAttr.namespaceURI == XSI_NAMESPACE)
+        if (attributes.length == 1 &&
+            (firstAttr.baseName || firstAttr.localName) == XSI_NIL_LOCALPART &&
+            firstAttr.namespaceURI == XSI_NAMESPACE)
           return null;
       }
       else

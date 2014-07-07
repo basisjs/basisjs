@@ -372,7 +372,7 @@
     if (!options)
       options = {};
 
-    var parser = LANG_PARSER[lang] || LANG_PARSER['text'];
+    var parser = LANG_PARSER[lang] || LANG_PARSER.text;
     var html = parser(normalize(text || '').replace(/</g, '&lt;'));
 
     var lines = html.join('').split('\n');

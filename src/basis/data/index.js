@@ -506,11 +506,6 @@
         events = '';
       }
 
-      /** @cut */ if (events)
-      /** @cut */   if (typeof getter == 'string' && getter.split(/\s+/).some(function(e){ return e in basis.event.events; })
-      /** @cut */       || Array.isArray(getter) && getter.some(function(e){ return e in basis.event.events; }))
-      /** @cut */     basis.dev.warn('events must be before getter in basis.data.index constructor');
-
       var indexConstructor = getIndexConstructor(IndexClass, getter || defGetter, events);
 
       if (dataset)
