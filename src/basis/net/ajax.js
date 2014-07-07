@@ -133,6 +133,9 @@
     var newStateData;
     var aborted;
 
+    // reset send delay timer
+    this.sendDelayTimer_ = clearTimeout(this.sendDelayTimer_);
+
     if (!xhr)
       return;
 
@@ -215,6 +218,8 @@
     requestStartTime: 0,
     timeout: 30000, // 30 sec
     timer_: null,
+    sendDelay: null,
+    sendDelayTimer_: null,
     lastRequestUrl_: null,
 
     debug: false,
@@ -379,7 +384,19 @@
       }
 
       // send data
-      xhr.send(postBody);
+      if (this.sendDelay)
+      {
+        if (this.sendDelayTimer_)
+          this.sendDelayTimer_ = clearTimeout(this.sendDelayTimer_);
+
+        this.sendDelayTimer_ = setTimeout(function(){
+          this.sendDelayTimer_ = null;
+          if (this.xhr === xhr && xhr.readyState == STATE_OPENED)
+            xhr.send(postBody);
+        }.bind(this), this.sendDelay);
+      }
+      else
+        xhr.send(postBody);
 
       /** @cut */ if (this.debug)
       /** @cut */   basis.dev.log('Request over, waiting for response');
