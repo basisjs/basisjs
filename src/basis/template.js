@@ -797,13 +797,25 @@
         if (!styleAttr[1])
           styleAttr[1] = [];
 
-        if (display.name == 'show')
-          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
+        var displayExpr = buildAttrExpression((display.value || display.name).split(ATTR_BINDING));
 
-        styleAttr[1].push(
-          buildAttrExpression(display.value.split(ATTR_BINDING))
-            .concat('display', display.name)
-        );
+        if (displayExpr[0].length - displayExpr[1].length)
+        {
+          // expression has non-binding parts, treat as constant
+          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') +
+            // visible when:
+            //   show & value is not empty
+            //   or
+            //   hide & value is empty
+            (display.name == 'show' ^ display.value === '' ? '' : 'display: none');
+        }
+        else
+        {
+          if (display.name == 'show')
+            styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
+
+          styleAttr[1].push(displayExpr.concat('display', display.name));
+        }
       }
 
       return result.length ? result : 0;
