@@ -386,6 +386,9 @@ module.exports = {
           test: function(){
             var delegateEventCount = 0;
             var object = new DataObject({
+              data: {
+                foo: 1
+              },
               handler: {
                 update: function(){
                   delegate.setDelegate(this);
@@ -393,6 +396,9 @@ module.exports = {
               }
             });
             var delegate = new DataObject({
+              data: {
+                foo: 2
+              },
               handler: {
                 update: function(){
                   delegateEventCount++;
@@ -402,15 +408,20 @@ module.exports = {
 
             assert(eventCount(delegate, 'update') === 0);
 
-            object.update({ foo: 1 });
+            object.update({ foo: 3 });
 
             assert(eventCount(delegate, 'update') === 1);
+            assert({ foo: 3 }, object.data);
+            assert({ foo: 3 }, delegate.data);
           }
         },
         {
           name: 'delegates removed on update should not recieve update event',
           test: function(){
             var object = new DataObject({
+              data: {
+                foo: 1
+              },
               handler: {
                 update: function(){
                   delegate.setDelegate();
@@ -423,9 +434,43 @@ module.exports = {
 
             assert(eventCount(delegate, 'update') === 0);
 
-            object.update({ foo: 1 });
+            object.update({ foo: 2 });
 
             assert(eventCount(delegate, 'update') === 0);
+            assert({ foo: 2 }, object.data);
+            assert({ foo: 1 }, delegate.data);
+          }
+        },
+        {
+          name: 'delegates removed on update should not recieve update event',
+          test: function(){
+            var object = new DataObject({
+              data: {
+                foo: 1
+              },
+              handler: {
+                update: function(){
+                  foo.setDelegate();
+                }
+              }
+            });
+            var foo = new DataObject({
+              delegate: object
+            });
+            var bar = new DataObject({
+              data: {
+                foo: 2
+              }
+            });
+
+            assert(eventCount(foo, 'update') === 0);
+
+            object.setDelegate(bar);
+
+            assert(eventCount(foo, 'update') === 0);
+            assert({ foo: 2 }, object.data);
+            assert({ foo: 1 }, foo.data);
+            assert({ foo: 2 }, bar.data);
           }
         },
         {
@@ -448,6 +493,7 @@ module.exports = {
             object.setState(basis.data.STATE.READY);
 
             assert(eventCount(delegate, 'stateChanged') === 1);
+            assert(delegate.state == basis.data.STATE.READY);
           }
         },
         {
