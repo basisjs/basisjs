@@ -25,6 +25,7 @@
   var Class = basis.Class;
   var cleaner = basis.cleaner;
 
+  var sliceArray = Array.prototype.slice;
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
@@ -2460,6 +2461,11 @@
             }
             else
             {
+              // on first remove make a copy of inCache array
+              // to avoid side-effect if array already used by some object
+              if (!inCacheRemoves)
+                inCache = sliceArray.call(inCache);
+
               inCacheRemoves++;
               inCache[inCacheMap[id]] = null;
             }
