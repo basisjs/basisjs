@@ -165,7 +165,7 @@ module.exports = {
         var b = testValue.as(function(){});
 
         assert(a instanceof basis.Token);
-        assert(a !== b);
+        assert(a === b);
 
         ///////
 

@@ -732,11 +732,14 @@
         events = null;
       }
 
+      if (!fn)
+        fn = $self;
+
       var hostValue = this;
       var handler = basis.event.createHandler(events, function(object){
         this.set(fn(object, hostValue.value)); // `this` is a token
       });
-      var fnId = fn[GETTER_ID] || (basis.getter(fn) && fn[GETTER_ID]);
+      var fnId = fn[GETTER_ID] || String(fn);
       var getComputeTokenId = handler.events.concat(fnId, this.basisObjectId).join('_');
       var getComputeToken = computeFunctions[getComputeTokenId];
 
@@ -818,22 +821,28 @@
     * @return {basis.Token|basis.DeferredToken}
     */
     as: function(fn, deferred){
+      if (!fn)
+        fn = $self;
+
       if (this.links_)
       {
         // try to find token with the same function
         var cursor = this;
+        var fnId = fn[GETTER_ID] || String(fn);
 
         while (cursor = cursor.links_)
-          if (cursor.context instanceof basis.Token &&
-              cursor.context.fn[GETTER_ID] == fn[GETTER_ID]) // compare functions by getter id
+        {
+          var context = cursor.context;
+          if (context instanceof basis.Token &&
+              (context.fn[GETTER_ID] || String(context.fn)) == fnId) // compare functions by id
             return deferred
-              ? cursor.context.deferred()
-              : cursor.context;
+              ? context.deferred()
+              : context;
+        }
       }
 
       // create token
       var token = new basis.Token();
-      basis.getter(fn); // add getter id
       token.fn = fn;
 
       this.link(token, valueSyncToken);
@@ -965,17 +974,19 @@
         events = null;
       }
 
-      getter = basis.getter(getter);
+      if (!getter)
+        getter = $self;
 
       var handler = basis.event.createHandler(events, valueFromSetProxy);
-      var id = handler.events.concat(getter[GETTER_ID], obj.basisObjectId).join('_');
+      var getterId = getter[GETTER_ID] || String(getter);
+      var id = handler.events.concat(getterId, obj.basisObjectId).join('_');
 
       result = valueFromMap[id];
       if (!result)
       {
         result = valueFromMap[id] = new Value({
           value: obj,
-          proxy: getter,
+          proxy: basis.getter(getter),
           set: basis.fn.$undef
         });
 
