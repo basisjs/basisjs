@@ -31,7 +31,6 @@
   //
 
   var Class = basis.Class;
-  var cleaner = basis.cleaner;
 
   var sliceArray = Array.prototype.slice;
   var values = basis.object.values;
