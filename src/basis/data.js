@@ -994,7 +994,13 @@
         result = valueFromMap[id] = new Value({
           value: obj,
           proxy: basis.getter(getter),
-          set: basis.fn.$undef
+          set: basis.fn.$undef,
+          handler: {
+            destroy: function(){
+              valueFromMap[id] = null;
+              obj.removeHandler(handler, this);
+            }
+          }
         });
 
         handler.destroy = function(sender){

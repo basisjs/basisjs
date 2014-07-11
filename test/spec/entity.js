@@ -1659,7 +1659,7 @@ module.exports = {
             });
 
             var wrapper = split.getSubset(1, true);
-            var subset = new basis.data.dataset.Subset({
+            var subset = new basis.data.dataset.Filter({
               source: wrapper
             });
 
