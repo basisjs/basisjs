@@ -2455,15 +2455,6 @@
     Split: Split,
     Extract: Extract,
 
-    // deprecated in 1.3.0 name of Filter
-    Subset: Filter.subclass({
-      className: namespace + '.Subset',
-      init: function(){
-        /** @cut */ basis.dev.warn('Class ' + this.constructor.className + ' is deprecated, use ' + Filter.className + ' instead');
-        Filter.prototype.init.call(this);
-      }
-    }),
-
     // other
     Slice: Slice,
     Cloud: Cloud

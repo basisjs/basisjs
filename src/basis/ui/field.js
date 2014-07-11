@@ -640,8 +640,8 @@
     },
     syncIndeterminate: function(){
       // this part looks tricky, but we do that because browser change
-      // indeterminate by it's own logic, and it may differ from know value
-      // that template stored in
+      // indeterminate by it's own logic, and it may differ from known value
+      // that template stored in DOM
       this.indeterminate = !this.indeterminate;
       this.updateBind('indeterminate');
       this.indeterminate = !this.indeterminate;

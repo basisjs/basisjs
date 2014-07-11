@@ -9,8 +9,16 @@
   * - Const:
   *   {basis.data.STATE}, {basis.data.SUBSCRIPTION}
   * - Classes:
-  *   {basis.data.Object}, {basis.data.KeyObjectMap},
-  *   {basis.data.ReadOnlyDataset}, {basis.data.Dataset}
+  *   {basis.data.AbstractData}, {basis.data.Value},
+  *   {basis.data.Object}, {basis.data.Slot},
+  *   {basis.data.KeyObjectMap}, {basis.data.ReadOnlyDataset},
+  *   {basis.data.DatasetWrapper}, {basis.data.Dataset},
+  *   {basis.data.ResolveAdapter}
+  * - Functions:
+  *   {basis.data.isConnected}, {basis.data.getDatasetDelta},
+  *   {basis.data.resolveDataset}, {basis.data.resolveObject},
+  *   {basis.data.wrapData}, {basis.data.wrapObject},
+  *   {basis.data.wrap}
   *
   * @namespace basis.data
   */
@@ -168,7 +176,7 @@
     },
    /**
     * @param {string} propertyName Name of property for subscription. Property
-    *   must must be instance of {basis.data.AbstractData} class.
+    *   should be instance of {basis.data.AbstractData} class.
     * @param {string=} eventName Name of event which fire when property changed.
     *   If omitted it will be equal to property name with 'Changed' suffix.
     */
@@ -593,7 +601,7 @@
 
    /**
     * Indicates that property is locked (don't fire event for changes).
-    * @type {boolean}
+    * @type {number}
     */
     locked: 0,
 
@@ -775,7 +783,7 @@
 
         getComputeToken = computeFunctions[getComputeTokenId] = function(object){
           /** @cut */ if (object instanceof basis.event.Emitter == false)
-          /** @cut */   basis.dev.warn('basis.data.Value#compute: object must be an instanceof basis.event.Emitter');
+          /** @cut */   basis.dev.warn('basis.data.Value#compute: object should be an instanceof basis.event.Emitter');
 
           var objectId = object.basisObjectId;
           var pair = tokenMap[objectId];
@@ -1240,7 +1248,7 @@
     * @constructor
     */
     init: function(){
-      // root always must be set, by default root is instance itself
+      // root always should be set, by default root is instance itself
       this.root = this;
 
       // inherit
@@ -1516,6 +1524,9 @@
   // Slot
   //
 
+ /**
+  * @class
+  */
   var Slot = Class(DataObject, {
     className: namespace + '.Slot'
   });
@@ -2040,7 +2051,7 @@
         }
         else
         {
-          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value should be an instance of basis.data.Object');
         }
       }
 
@@ -2086,7 +2097,7 @@
         }
         else
         {
-          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value should be an instance of basis.data.Object');
         }
       }
 
@@ -2147,7 +2158,7 @@
         }
         else
         {
-          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value should be an instance of basis.data.Object');
         }
       }
 
