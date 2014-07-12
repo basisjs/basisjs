@@ -24,7 +24,7 @@ Remove
   - `basis.ui.table` drop support for `content` in footer config
   - `basis.template` remove support for `<b:resource>` (use `<b:style>` instead)
 
-Stop use
+Stop use (deprecated)
 
   - `path` section in `basis-config` (use `modules` instead)
   - `basis.entity.EntityType().entityType` (use `type` instead)
