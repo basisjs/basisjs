@@ -1,18 +1,15 @@
-// save current basis.js instance under generated name
-var inspectBasisRef = 'inspectBasis_' + basis.genUID();
-global[inspectBasisRef] = basis;
-
-// load another instance of basis.js to don't influence on original one
-var script = document.createElement('script');
-script.setAttribute('src', basis.filename_);
-script.setAttribute('basis-config',
-  JSON.stringify({
-    autoload: basis.path.dirname(basis.filename_) + '/devpanel',
-    noConflict: true,
-    inspectBasisRef: inspectBasisRef
-  }).replace(/^\{|\}$/g, '')
-);
-basis.doc.head.add(script);
-
-// croak namespace
-delete basis.devpanel;
+/** @cut */ // do nothing in build mode
+/** @cut */ if (basis.filename_)
+/** @cut */ {
+/** @cut */   // create separate instance of basis.js core to avoid influence on original one
+/** @cut */   // do it only in dev mode
+/** @cut */   basis.createSandbox({
+/** @cut */     inspect: basis,
+/** @cut */     modules: {
+/** @cut */       devpanel: {
+/** @cut */         autoload: true,
+/** @cut */         filename: basis.path.dirname(basis.filename_) + '/devpanel/index.js'
+/** @cut */       }
+/** @cut */     }
+/** @cut */   });
+/** @cut */ }

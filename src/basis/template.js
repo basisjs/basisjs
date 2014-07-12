@@ -585,7 +585,7 @@
     var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
     var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
-    var tokenMap = basis.NODE_ENV ? node_require('./template/htmlentity.json') : {};
+    var tokenMap = basis.NODE_ENV ? __nodejsRequire('./template/htmlentity.json') : {};
     var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
     var includeStack = [];
     var styleNamespaceIsolate = {};
@@ -808,13 +808,25 @@
         if (!styleAttr[1])
           styleAttr[1] = [];
 
-        if (display.name == 'show')
-          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
+        var displayExpr = buildAttrExpression((display.value || display.name).split(ATTR_BINDING));
 
-        styleAttr[1].push(
-          buildAttrExpression(display.value.split(ATTR_BINDING))
-            .concat('display', display.name)
-        );
+        if (displayExpr[0].length - displayExpr[1].length)
+        {
+          // expression has non-binding parts, treat as constant
+          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') +
+            // visible when:
+            //   show & value is not empty
+            //   or
+            //   hide & value is empty
+            (display.name == 'show' ^ display.value === '' ? '' : 'display: none');
+        }
+        else
+        {
+          if (display.name == 'show')
+            styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
+
+          styleAttr[1].push(displayExpr.concat('display', display.name));
+        }
       }
 
       return result.length ? result : 0;
@@ -1634,9 +1646,11 @@
 
                 if (bindDef[0])
                 {
-                  if (bindDef.length == 1) // bool
+                  if (bindDef.length == 1)
+                    // bool
                     arrayAdd(newAttrValue, bind[0] + bindName);
-                  else                     // enum
+                  else
+                    // enum
                     arrayAdd(newAttrValue, bind[0] + bindDef[1][bindDef[0] - 1]);
                 }
               }

@@ -43,16 +43,15 @@ var navTree = new app.ext.docTree.DocTree({
       return;
     }
 
-    var root = path.split(".")[0];
+    var root = path.split('.')[0];
     var node = arraySearch(this.childNodes, root, 'data.fullPath');
 
     if (node)
     {
       node.expand();
-      node = arraySearch(node.childNodes, path, 'data.fullPath')
-             ||
+      node = arraySearch(node.childNodes, path, 'data.fullPath') ||
              arraySearch(
-               basis.array.sortAsObject(node.childNodes, 'data.fullPath').reverse(),
+               basis.array.sort(node.childNodes, 'data.fullPath').reverse(),
                0,
                function(item){
                  return path.indexOf(item.data.fullPath + '.');
@@ -64,7 +63,7 @@ var navTree = new app.ext.docTree.DocTree({
     if (node)
     {
       var cursor = node.data.fullPath;
-      var least = path.replace(new RegExp("^" + basis.string.forRegExp(cursor) + '\\.?'), '');
+      var least = path.replace(new RegExp('^' + basis.string.forRegExp(cursor) + '\\.?'), '');
       if (least)
       {
         var parts = least.split(/\./);

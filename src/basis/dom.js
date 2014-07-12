@@ -376,7 +376,9 @@
     for (var i = 0, property; property = TEXT_PROPERTIES[i++];)
       if (node[property] != null)
         return node[property];
-    return axis(node, AXIS_DESCENDANT, function(node){ return node.nodeType == TEXT_NODE; }).map(getter('nodeValue')).join('');
+    return axis(node, AXIS_DESCENDANT, function(node){
+      return node.nodeType == TEXT_NODE;
+    }).map(getter('nodeValue')).join('');
   }
 
   //

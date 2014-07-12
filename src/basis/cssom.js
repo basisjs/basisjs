@@ -19,7 +19,6 @@
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
   var Class = basis.Class;
-  var cleaner = basis.cleaner;
   var dom = basis.dom;
   var DOMTokenList = global.DOMTokenList;
 

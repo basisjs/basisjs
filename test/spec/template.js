@@ -1406,6 +1406,29 @@ module.exports = {
           name: 'b:show',
           test: [
             {
+              name: 'should be hidden if value is empty',
+              test: function(){
+                var t = createTemplate('<span b:show=""/>');
+                assert(t.createInstance().element.style.display == 'none');
+              }
+            },
+            {
+              name: 'when value has non-binding parts or not specified, should be visible',
+              test: function(){
+                var t = createTemplate('<span b:show/>');
+                assert(t.createInstance().element.style.display == '');
+
+                var t = createTemplate('<span b:show="true"/>');
+                assert(t.createInstance().element.style.display == '');
+
+                var t = createTemplate('<span b:show="false"/>');
+                assert(t.createInstance().element.style.display == '');
+
+                var t = createTemplate('<span b:show="true{foo}"/>');
+                assert(t.createInstance().element.style.display == '');
+              }
+            },
+            {
               name: 'when value for binding is not set yet, element should be invisible',
               test: function(){
                 var t = createTemplate('<span b:show="{foo}"/>');
@@ -1487,6 +1510,29 @@ module.exports = {
         {
           name: 'b:hide',
           test: [
+            {
+              name: 'should be visible if value is empty',
+              test: function(){
+                var t = createTemplate('<span b:hide=""/>');
+                assert(t.createInstance().element.style.display == '');
+              }
+            },
+            {
+              name: 'when value has non-binding parts or not specified, should be hidden',
+              test: function(){
+                var t = createTemplate('<span b:hide/>');
+                assert(t.createInstance().element.style.display == 'none');
+
+                var t = createTemplate('<span b:hide="true"/>');
+                assert(t.createInstance().element.style.display == 'none');
+
+                var t = createTemplate('<span b:hide="false"/>');
+                assert(t.createInstance().element.style.display == 'none');
+
+                var t = createTemplate('<span b:hide="true{foo}"/>');
+                assert(t.createInstance().element.style.display == 'none');
+              }
+            },
             {
               name: 'when value for binding is not set yet, element should visible',
               test: function(){

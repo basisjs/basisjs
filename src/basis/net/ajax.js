@@ -133,6 +133,9 @@
     var newStateData;
     var aborted;
 
+    // reset send delay timer
+    this.sendDelayTimer_ = clearTimeout(this.sendDelayTimer_);
+
     if (!xhr)
       return;
 
@@ -184,7 +187,7 @@
           newStateData = this.getResponseError();
 
           // NOTE: for backward capability of deprecated behaviour
-          // should be removed in future
+          // should be removed in future (deprecated in 1.2.0)
           if (!newStateData && this.data.error)
           {
             /** @cut */ basis.dev.warn('Request#getResponseError should not update request data, but returns error data. Please, fix your method implementation, as data updating is deprecated behaviour.');
@@ -215,6 +218,8 @@
     requestStartTime: 0,
     timeout: 30000, // 30 sec
     timer_: null,
+    sendDelay: null,
+    sendDelayTimer_: null,
     lastRequestUrl_: null,
 
     debug: false,
@@ -256,6 +261,7 @@
     },
 
    /**
+    * deprecated in 1.2.0
     * @deprecated
     */
     processErrorResponse: function(){
@@ -378,7 +384,19 @@
       }
 
       // send data
-      xhr.send(postBody);
+      if (this.sendDelay)
+      {
+        if (this.sendDelayTimer_)
+          this.sendDelayTimer_ = clearTimeout(this.sendDelayTimer_);
+
+        this.sendDelayTimer_ = setTimeout(function(){
+          this.sendDelayTimer_ = null;
+          if (this.xhr === xhr && xhr.readyState == STATE_OPENED)
+            xhr.send(postBody);
+        }.bind(this), this.sendDelay);
+      }
+      else
+        xhr.send(postBody);
 
       /** @cut */ if (this.debug)
       /** @cut */   basis.dev.log('Request over, waiting for response');
@@ -467,11 +485,15 @@
     requestHeaders: basis.Class.extensibleProperty(),
     responseType: '',
     params: null,
+    routerParams: null,
+    url: '',
+    postBody: null,
 
     init: function(){
       AbstractTransport.prototype.init.call(this);
 
       this.params = objectSlice(this.params);
+      this.routerParams = objectSlice(this.routerParams);
     },
 
     // params methods
@@ -497,7 +519,8 @@
 
       extend(requestData, {
         headers: objectMerge(this.requestHeaders, requestData.headers),
-        params: objectMerge(this.params, requestData.params)
+        params: objectMerge(this.params, requestData.params),
+        routerParams: objectMerge(this.routerParams, requestData.routerParams)
       });
 
       basis.object.complete(requestData, {

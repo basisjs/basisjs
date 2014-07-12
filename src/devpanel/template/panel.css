@@ -15,12 +15,19 @@
   
   font-family: Arial;
   font-size: 12px;
+  line-height: normal;
   color: white;
   text-align: center;
   
   cursor: pointer;
 
   transition: box-shadow .15s, background .15s, opacity .15s, border-color .15s;
+}
+.panel,
+.panel *
+{
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
 }
 
 @media print {

@@ -9,8 +9,16 @@
   * - Const:
   *   {basis.data.STATE}, {basis.data.SUBSCRIPTION}
   * - Classes:
-  *   {basis.data.Object}, {basis.data.KeyObjectMap},
-  *   {basis.data.ReadOnlyDataset}, {basis.data.Dataset}
+  *   {basis.data.AbstractData}, {basis.data.Value},
+  *   {basis.data.Object}, {basis.data.Slot},
+  *   {basis.data.KeyObjectMap}, {basis.data.ReadOnlyDataset},
+  *   {basis.data.DatasetWrapper}, {basis.data.Dataset},
+  *   {basis.data.ResolveAdapter}
+  * - Functions:
+  *   {basis.data.isConnected}, {basis.data.getDatasetDelta},
+  *   {basis.data.resolveDataset}, {basis.data.resolveObject},
+  *   {basis.data.wrapData}, {basis.data.wrapObject},
+  *   {basis.data.wrap}
   *
   * @namespace basis.data
   */
@@ -23,8 +31,8 @@
   //
 
   var Class = basis.Class;
-  var cleaner = basis.cleaner;
 
+  var sliceArray = Array.prototype.slice;
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
@@ -167,17 +175,17 @@
     },
    /**
     * @param {string} propertyName Name of property for subscription. Property
-    *   must must be instance of {basis.data.AbstractData} class.
+    *   should be instance of {basis.data.AbstractData} class.
     * @param {string=} eventName Name of event which fire when property changed.
     *   If omitted it will be equal to property name with 'Changed' suffix.
     */
     addProperty: function(propertyName, eventName){
       var handler = {};
       handler[eventName || propertyName + 'Changed'] = function(object, oldValue){
-        if (oldValue)
+        if (oldValue instanceof AbstractData)
           SUBSCRIPTION.unlink(propertyName, object, oldValue);
 
-        if (object[propertyName])
+        if (object[propertyName] instanceof AbstractData)
           SUBSCRIPTION.link(propertyName, object, object[propertyName]);
       };
 
@@ -257,6 +265,7 @@
   SUBSCRIPTION.addProperty('delegate');
   SUBSCRIPTION.addProperty('target');
   SUBSCRIPTION.addProperty('dataset');
+  SUBSCRIPTION.addProperty('value', 'change');
 
 
   //
@@ -528,11 +537,7 @@
   // Value
   //
 
-  var computeFunctions = {};
-  var valueSetters = {};
-  var valueSyncToken = function(value){
-    this.set(this.fn(value));
-  };
+  var GETTER_ID = basis.getter.ID;
   var VALUE_EMMITER_HANDLER = {
     destroy: function(object){
       this.value.unlink(object, this.fn);
@@ -544,11 +549,22 @@
     }
   };
 
+  var computeFunctions = {};
+  var valueSetters = {};
+  var valueSyncToken = function(value){
+    this.set(this.fn(value));
+  };
+
  /**
   * @class
   */
   var Value = Class(AbstractData, {
     className: namespace + '.Value',
+
+   /**
+    * @inheritDoc
+    */
+    subscribeTo: SUBSCRIPTION.VALUE,
 
    /**
     * Fires when value was changed.
@@ -584,7 +600,7 @@
 
    /**
     * Indicates that property is locked (don't fire event for changes).
-    * @type {boolean}
+    * @type {number}
     */
     locked: 0,
 
@@ -723,11 +739,15 @@
         events = null;
       }
 
+      if (!fn)
+        fn = $self;
+
       var hostValue = this;
       var handler = basis.event.createHandler(events, function(object){
         this.set(fn(object, hostValue.value)); // `this` is a token
       });
-      var getComputeTokenId = handler.events.concat(String(fn), this.basisObjectId).join('_');
+      var fnId = fn[GETTER_ID] || String(fn);
+      var getComputeTokenId = handler.events.concat(fnId, this.basisObjectId).join('_');
       var getComputeToken = computeFunctions[getComputeTokenId];
 
       if (!getComputeToken)
@@ -762,7 +782,7 @@
 
         getComputeToken = computeFunctions[getComputeTokenId] = function(object){
           /** @cut */ if (object instanceof basis.event.Emitter == false)
-          /** @cut */   basis.dev.warn('basis.data.Value#compute: object must be an instanceof basis.event.Emitter');
+          /** @cut */   basis.dev.warn('basis.data.Value#compute: object should be an instanceof basis.event.Emitter');
 
           var objectId = object.basisObjectId;
           var pair = tokenMap[objectId];
@@ -808,16 +828,24 @@
     * @return {basis.Token|basis.DeferredToken}
     */
     as: function(fn, deferred){
+      if (!fn)
+        fn = $self;
+
       if (this.links_)
       {
         // try to find token with the same function
         var cursor = this;
+        var fnId = fn[GETTER_ID] || String(fn);
 
         while (cursor = cursor.links_)
-          if (cursor.context instanceof basis.Token && cursor.context.fn == String(fn)) // compare functions as strings, as they should be with no sideeffect
+        {
+          var context = cursor.context;
+          if (context instanceof basis.Token &&
+              (context.fn[GETTER_ID] || String(context.fn)) == fnId) // compare functions by id
             return deferred
-              ? cursor.context.deferred()
-              : cursor.context;
+              ? context.deferred()
+              : context;
+        }
       }
 
       // create token
@@ -934,7 +962,11 @@
   // cast to Value
   //
 
-  var castValueMap = {};
+  var valueFromMap = {};
+  var valueFromSetProxy = function(object){
+    Value.prototype.set.call(this, object); // `this` is a token
+  };
+
   Value.from = function(obj, events, getter){
     var result;
 
@@ -949,21 +981,30 @@
         events = null;
       }
 
-      var handler = basis.event.createHandler(events, function(object){
-        this.set(getter(object)); // `this` is a token
-      });
-      var id = handler.events.concat(String(getter), obj.basisObjectId).join('_');
+      if (!getter)
+        getter = $self;
 
-      result = castValueMap[id];
+      var handler = basis.event.createHandler(events, valueFromSetProxy);
+      var getterId = getter[GETTER_ID] || String(getter);
+      var id = handler.events.concat(getterId, obj.basisObjectId).join('_');
+
+      result = valueFromMap[id];
       if (!result)
       {
-        getter = basis.getter(getter);
-        result = castValueMap[id] = new Value({
-          value: getter(obj)
+        result = valueFromMap[id] = new Value({
+          value: obj,
+          proxy: basis.getter(getter),
+          set: basis.fn.$undef,
+          handler: {
+            destroy: function(){
+              valueFromMap[id] = null;
+              obj.removeHandler(handler, this);
+            }
+          }
         });
 
         handler.destroy = function(sender){
-          delete castValueMap[id];
+          valueFromMap[id] = null;
           this.destroy();
         };
 
@@ -977,10 +1018,10 @@
       var bindingBridge = obj.bindingBridge;
       if (id && bindingBridge)
       {
-        result = castValueMap[id];
+        result = valueFromMap[id];
         if (!result)
         {
-          result = castValueMap[id] = new Value({
+          result = valueFromMap[id] = new Value({
             value: bindingBridge.get(obj)
           });
 
@@ -1005,6 +1046,8 @@
   //
   // Object
   //
+
+  var INIT_DATA = {};
 
  /**
   * Returns true if object is connected to another object through delegate chain.
@@ -1144,6 +1187,11 @@
     delegate: null,
 
    /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    delegateAdapter_: null,
+
+   /**
     * @type {Array.<basis.data.Object>}
     */
     delegates_: null,
@@ -1205,7 +1253,7 @@
     * @constructor
     */
     init: function(){
-      // root always must be set, by default root is instance itself
+      // root always should be set, by default root is instance itself
       this.root = this;
 
       // inherit
@@ -1213,6 +1261,7 @@
 
       // data/delegate
       var delegate = this.delegate;
+      var data = this.data;
 
       if (delegate)
       {
@@ -1220,17 +1269,20 @@
         this.delegate = null;
         this.target = null;
 
-        // assign data & state to avoid update and stateChanged events
-        this.data = delegate.data;
-        this.state = delegate.state;
+        // ignore data property
+        this.data = INIT_DATA;
 
         // assign delegate
         this.setDelegate(delegate);
+
+        // if delegate is not assigned, restore data
+        if (this.data === INIT_DATA)
+          this.data = data || {};
       }
       else
       {
-        // if data doesn't exists - init it
-        if (!this.data)
+        // if data doesn't exists - create new one
+        if (!data)
           this.data = {};
 
         // set target property to itself if target property is not null
@@ -1272,6 +1324,8 @@
     * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
+      newDelegate = resolveObject(this, this.setDelegate, newDelegate, 'delegateAdapter_');
+
       // check is newDelegate can be linked to this object as delegate
       if (newDelegate && newDelegate instanceof DataObject)
       {
@@ -1300,9 +1354,9 @@
         var oldDelegate = this.delegate;
         var oldTarget = this.target;
         var oldRoot = this.root;
-        var delta = {};
-        var dataChanged = false;
         var delegateListenHandler = this.listen.delegate;
+        var dataChanged = false;
+        var delta;
 
         if (oldDelegate)
         {
@@ -1334,28 +1388,36 @@
           // assign new delegate
           this.delegate = newDelegate;
 
+          // add delegate listener
+          if (delegateListenHandler)
+            newDelegate.addHandler(delegateListenHandler, this);
+
+          // add object to delegate's list of delegates
           newDelegate.delegates_ = {
             delegate: this,
             next: newDelegate.delegates_
           };
 
-          // calculate delta as difference between current data and delegate info
-          for (var key in newDelegate.data)
-            if (key in oldData === false)
-            {
-              dataChanged = true;
-              delta[key] = undefined;
-            }
+          // possible only when set delegate on init
+          if (this.data !== INIT_DATA)
+          {
+            // calculate delta as difference between current data and delegate info
+            delta = {};
 
-          for (var key in oldData)
-            if (oldData[key] !== newDelegate.data[key])
-            {
-              dataChanged = true;
-              delta[key] = oldData[key];
-            }
+            for (var key in newDelegate.data)
+              if (key in oldData === false)
+              {
+                dataChanged = true;
+                delta[key] = undefined;
+              }
 
-          if (delegateListenHandler)
-            newDelegate.addHandler(delegateListenHandler, this);
+            for (var key in oldData)
+              if (oldData[key] !== newDelegate.data[key])
+              {
+                dataChanged = true;
+                delta[key] = oldData[key];
+              }
+          }
         }
         else
         {
@@ -1377,7 +1439,7 @@
           this.emit_update(delta);
 
         // emit event state changed
-        if (oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
+        if (delta && oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
           this.emit_stateChanged(oldState);
 
         // fire event if delegate changed
@@ -1467,6 +1529,9 @@
   // Slot
   //
 
+ /**
+  * @class
+  */
   var Slot = Class(DataObject, {
     className: namespace + '.Slot'
   });
@@ -1478,67 +1543,77 @@
 
   var KEYOBJECTMAP_MEMBER_HANDLER = {
     destroy: function(){
-      delete this.map[this.itemId];
+      delete this.map[this.id];
     }
   };
 
  /**
   * @class
   */
-  var KeyObjectMap = Class(null, {
+  var KeyObjectMap = Class(AbstractData, {
     className: namespace + '.KeyObjectMap',
 
     itemClass: DataObject,
     keyGetter: $self,
+    autoDestroyMembers: true,
     map_: null,
 
     extendConstructor_: true,
     init: function(){
       this.map_ = {};
-      cleaner.add(this);
+      AbstractData.prototype.init.call(this);
     },
 
     resolve: function(object){
       return this.get(this.keyGetter(object), object);
     },
     create: function(key, object){
-      var itemConfig = {};
+      var itemConfig;
 
       if (key instanceof DataObject)
-      {
-        itemConfig.delegate = key;
-      }
-      else
-      {
-        itemConfig.data = {
-          id: key,
-          title: key
+        itemConfig = {
+          delegate: key
         };
-      }
+      else
+        itemConfig = {
+          data: {
+            id: key,
+            title: key
+          }
+        };
 
       return new this.itemClass(itemConfig);
     },
-    get: function(key, object){
+    get: function(key, autocreate){
       var itemId = key instanceof DataObject ? key.basisObjectId : key;
-      var item = this.map_[itemId];
+      var itemInfo = this.map_[itemId];
 
-      if (!item && object)
+      if (!itemInfo && autocreate)
       {
-        item = this.map_[itemId] = this.create(key, object);
-        item.addHandler(KEYOBJECTMAP_MEMBER_HANDLER, {
+        itemInfo = this.map_[itemId] = {
           map: this.map_,
-          itemId: itemId
-        });
+          id: itemId,
+          item: this.create(key, autocreate)
+        };
+        itemInfo.item.addHandler(KEYOBJECTMAP_MEMBER_HANDLER, itemInfo);
       }
 
-      return item;
+      if (itemInfo)
+        return itemInfo.item;
     },
     destroy: function(){
-      cleaner.remove(this);
+      AbstractData.prototype.destroy.call(this);
 
-      var items = values(this.map_);
-      for (var i = 0, item; item = items[i++];)
-        item.destroy();
+      var map = this.map_;
+      this.map_ = null;
+      for (var itemId in map)
+      {
+        var itemInfo = map[itemId];
+        if (this.autoDestroyMembers)
+          itemInfo.item.destroy();
+        else
+          itemInfo.item.removeHandler(KEYOBJECTMAP_MEMBER_HANDLER, itemInfo);
+      }
     }
   });
 
@@ -1637,7 +1712,7 @@
     dataset: null,
 
    /**
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     datasetAdapter_: null,
 
@@ -1856,6 +1931,15 @@
     },
 
    /**
+    * Returns results of execution some function for every items in dataset.
+    * @param {function(item:basis.data.Object)|string} getter Value get function.
+    * @return {Array.<*>}
+    */
+    getValues: function(getter){
+      return this.getItems().map(basis.getter(getter || $self));
+    },
+
+   /**
     * Returns first any item if exists.
     * @return {basis.data.Object}
     */
@@ -1894,18 +1978,9 @@
     },
 
    /**
-    * Do nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
-    * TODO: remove method definition and method call in destroy method.
-    */
-    clear: function(){
-    },
-
-   /**
     * @destructor
     */
     destroy: function(){
-      this.clear();
-
       // inherit
       AbstractData.prototype.destroy.call(this);
 
@@ -1981,7 +2056,7 @@
         }
         else
         {
-          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value should be an instance of basis.data.Object');
         }
       }
 
@@ -2027,7 +2102,7 @@
         }
         else
         {
-          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value should be an instance of basis.data.Object');
         }
       }
 
@@ -2088,7 +2163,7 @@
         }
         else
         {
-          /** @cut */ basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
+          /** @cut */ basis.dev.warn('Wrong data type: value should be an instance of basis.data.Object');
         }
       }
 
@@ -2155,6 +2230,16 @@
       }
 
       return delta;
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      this.clear();
+
+      // inherit
+      ReadOnlyDataset.prototype.destroy.call(this);
     }
   });
 
@@ -2162,21 +2247,25 @@
  /**
   * @class
   */
-  var DatasetAdapter = function(context, fn, source, handler){
+  var ResolveAdapter = function(context, fn, source, handler){
     this.context = context;
     this.fn = fn;
     this.source = source;
     this.handler = handler;
   };
 
-  DatasetAdapter.prototype = {
+  ResolveAdapter.prototype = {
     context: null,
     fn: null,
     source: null,
     handler: null,
-    adapter_: null,
-    attachMethod: 'addHandler',
-    detachMethod: 'removeHandler',
+    next: null,
+    attach: function(){
+      this.source.addHandler(this.handler, this);
+    },
+    detach: function(){
+      this.source.removeHandler(this.handler, this);
+    },
     proxy: function(){
       this.fn.call(this.context, this.source);
     }
@@ -2186,12 +2275,16 @@
   * Binding bridge dataset adapter
   * @class
   */
-  var BBDatasetAdapter = function(){
-    DatasetAdapter.apply(this, arguments);
+  var BBResolveAdapter = function(){
+    ResolveAdapter.apply(this, arguments);
   };
-  BBDatasetAdapter.prototype = new DatasetWrapper();
-  BBDatasetAdapter.prototype.attachMethod = 'attach';
-  BBDatasetAdapter.prototype.detachMethod = 'detach';
+  BBResolveAdapter.prototype = new ResolveAdapter();
+  BBResolveAdapter.prototype.attach = function(){
+    this.source.bindingBridge.attach(this.source, this.handler, this);
+  };
+  BBResolveAdapter.prototype.detach = function(){
+    this.source.bindingBridge.detach(this.source, this.handler, this);
+  };
 
   //
   // adapter handlers
@@ -2233,20 +2326,20 @@
     {
       if (source instanceof DatasetWrapper)
       {
-        newAdapter = new DatasetAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
+        newAdapter = new ResolveAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
         source = source.dataset;
       }
       else
         if (source instanceof Value)
         {
-          newAdapter = new DatasetAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-          source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+          newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+          source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
         }
         else
           if (source.bindingBridge)
           {
-            newAdapter = new BBDatasetAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-            source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'adapter_');
+            newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+            source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
           }
     }
 
@@ -2257,15 +2350,63 @@
     {
       if (oldAdapter)
       {
-        oldAdapter.source[oldAdapter.detachMethod](oldAdapter.handler, oldAdapter);
+        oldAdapter.detach();
 
         // destroy nested adapter if exists
-        if (oldAdapter.adapter_)
-          resolveDataset(oldAdapter, null, null, 'adapter_');
+        if (oldAdapter.next)
+          resolveDataset(oldAdapter, null, null, 'next');
       }
 
       if (newAdapter)
-        newAdapter.source[newAdapter.attachMethod](newAdapter.handler, newAdapter);
+        newAdapter.attach();
+
+      context[property] = newAdapter;
+    }
+
+    return source;
+  }
+
+ /**
+  * Resolve object from source value.
+  */
+  function resolveObject(context, fn, source, property){
+    var oldAdapter = context[property] || null;
+    var newAdapter = null;
+
+    if (typeof source == 'function')
+      source = source.call(context, context);
+
+    if (source)
+    {
+      if (source instanceof Value)
+      {
+        newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+        source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
+      }
+      else
+        if (source.bindingBridge)
+        {
+          newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+          source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
+        }
+    }
+
+    if (source instanceof DataObject == false)
+      source = null;
+
+    if (property && oldAdapter !== newAdapter)
+    {
+      if (oldAdapter)
+      {
+        oldAdapter.detach();
+
+        // destroy nested adapter if exists
+        if (oldAdapter.next)
+          resolveObject(oldAdapter, null, null, 'next');
+      }
+
+      if (newAdapter)
+        newAdapter.attach();
 
       context[property] = newAdapter;
     }
@@ -2280,10 +2421,10 @@
 
   Dataset.setAccumulateState = (function(){
     var proto = ReadOnlyDataset.prototype;
-    var realEvent = proto.emit_itemsChanged;
+    var eventCache = {};
     var setStateCount = 0;
     var urgentTimer;
-    var eventCache = {};
+    var realEvent;
 
     function flushCache(cache){
       var dataset = cache.dataset;
@@ -2347,6 +2488,11 @@
             }
             else
             {
+              // on first remove make a copy of inCache array
+              // to avoid side-effect if array already used by some object
+              if (!inCacheRemoves)
+                inCache = sliceArray.call(inCache);
+
               inCacheRemoves++;
               inCache[inCacheMap[id]] = null;
             }
@@ -2421,6 +2567,7 @@
       {
         if (setStateCount == 0)
         {
+          realEvent = proto.emit_itemsChanged;
           proto.emit_itemsChanged = storeDatasetDelta;
           if (!urgentTimer)
             urgentTimer = basis.setImmediate(urgentFlush);
@@ -2490,11 +2637,13 @@
     ReadOnlyDataset: ReadOnlyDataset,
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
-    DatasetAdapter: DatasetAdapter,
 
     isConnected: isConnected,
     getDatasetDelta: getDatasetDelta,
+
+    ResolveAdapter: ResolveAdapter,
     resolveDataset: resolveDataset,
+    resolveObject: resolveObject,
 
     wrapData: wrapData,
     wrapObject: wrapObject,

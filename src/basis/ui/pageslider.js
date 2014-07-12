@@ -72,7 +72,7 @@
       }
 
     },
-    isHorizontal: function() {
+    isHorizontal: function(){
       return this.direction === DIRECTIONS.HORIZONTAL;
     },
     init: function(){
@@ -129,8 +129,8 @@
           : currentPage.previousSibling;
       }
       else
-        if ((viewPort > (pagePosition + pageSize / 2))
-            || (viewPort < (pagePosition - pageSize / 2)))
+        if ((viewPort > (pagePosition + pageSize / 2)) ||
+            (viewPort < (pagePosition - pageSize / 2)))
         {
           pageScrollTo = viewPort - pagePosition > 0
             ? currentPage.nextSibling

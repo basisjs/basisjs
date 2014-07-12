@@ -90,10 +90,10 @@
       var cmpVersion = versions[name];  // with
 
       if (cmpVersion)
-        return answers[forTest] = !version
-          || (operation == '=' && cmpVersion == version)
-          || (operation == '+' && cmpVersion >= version)
-          || (operation == '-' && cmpVersion <  version);
+        return answers[forTest] = !version ||
+               (operation == '=' && cmpVersion == version) ||
+               (operation == '+' && cmpVersion >= version) ||
+               (operation == '-' && cmpVersion <  version);
     }
     else
     {
@@ -111,7 +111,7 @@
     set: function(name, value, expire, path, domain){
       document.cookie = name + '=' + (value == null ? '' : escape(value)) +
                         ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
-                        (expire ? ';expires=' + (new Date(Date.now() + expire * 1000)).toGMTString() : '') + 
+                        (expire ? ';expires=' + (new Date(Date.now() + expire * 1000)).toGMTString() : '') +
                         (domain ? ';domain=' + domain : '');
     },
 

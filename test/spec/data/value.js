@@ -3,6 +3,23 @@ module.exports = {
 
   init: function(){
     basis.require('basis.data');
+
+    function catchWarnings(fn){
+      var warn = basis.dev.warn;
+      var warnings = [];
+
+      try {
+        basis.dev.warn = function(message){
+          warnings.push(message);
+        };
+
+        fn();
+      } finally {
+        basis.dev.warn = warn;
+      }
+
+      return warnings.length ? warnings : false;
+    }
   },
 
   test: [
@@ -139,52 +156,78 @@ module.exports = {
     },
     {
       name: 'Value#as',
-      test: function(){
-        var testValue = new basis.data.Value();
-        var fn = function(){};
-        var a = testValue.as(fn);
-        var b = testValue.as(fn);
+      test: [
+        {
+          name: 'result for same function should be equal',
+          test: function(){
+            var testValue = new basis.data.Value();
+            var fn = function(){};
+            var a = testValue.as(fn);
+            var b = testValue.as(fn);
 
-        assert(a instanceof basis.Token);
-        assert(a === b);
+            assert(a instanceof basis.Token);
+            assert(a === b);
+          }
+        },
+        {
+          name: 'result for same function and deferred should be equal',
+          test: function(){
+            var testValue = new basis.data.Value();
+            var fn = function(){};
+            var a = testValue.as(fn, true);
+            var b = testValue.as(fn, true);
 
-        ///////
+            assert(a instanceof basis.DeferredToken);
+            assert(a === b);
+          }
+        },
+        {
+          name: 'result for different functions but the same source code should be the same',
+          test: function(){
+            var testValue = new basis.data.Value();
+            var a = testValue.as(function(){});
+            var b = testValue.as(function(){});
 
-        var testValue = new basis.data.Value();
-        var fn = function(){};
-        var a = testValue.as(fn, true);
-        var b = testValue.as(fn, true);
+            assert(a instanceof basis.Token);
+            assert(a === b);
+          }
+        },
+        {
+          name: 'result for getters should be the same',
+          test: function(){
+            var testValue = new basis.data.Value();
+            var a = testValue.as(basis.getter('data.foo'));
+            var b = testValue.as(basis.getter('data.bar'));
+            var c = testValue.as(basis.getter('data.foo'));
 
-        assert(a instanceof basis.DeferredToken);
-        assert(a === b);
+            assert(a instanceof basis.Token);
+            assert(b instanceof basis.Token);
+            assert(c instanceof basis.Token);
+            assert(a !== b);
+            assert(a === c);
+          }
+        },
+        {
+          name: 'common case',
+          test: function(){
+            var testValue = new basis.data.Value({ value: 3 });
+            var fn = function(v){
+              return v * v;
+            };
+            var a = testValue.as(fn);
+            var b = testValue.as(basis.fn.$self);
 
-        ///////
+            assert(a !== b);
+            assert(a.value === 9);
+            assert(b.value === 3);
 
-        var testValue = new basis.data.Value();
-        var a = testValue.as(function(){});
-        var b = testValue.as(function(){});
+            testValue.set(4);
 
-        assert(a instanceof basis.Token);
-        assert(a === b);
-
-        ///////
-
-        var testValue = new basis.data.Value({ value: 3 });
-        var fn = function(v){
-          return v * v;
-        };
-        var a = testValue.as(fn);
-        var b = testValue.as(basis.fn.$self);
-
-        assert(a !== b);
-        assert(a.value === 9);
-        assert(b.value === 3);
-
-        testValue.set(4);
-
-        assert(a.value === 16);
-        assert(b.value === 4);
-      }
+            assert(a.value === 16);
+            assert(b.value === 4);
+          }
+        }
+      ]
     },
     {
       name: 'Value#lock/unlock',
@@ -260,6 +303,46 @@ module.exports = {
         testValue.unlock();
         assert(testValue.isLocked() === false);
       }
+    },
+    {
+      name: 'Value.from',
+      test: [
+        {
+          name: 'value destroy -> unlink from source',
+          test: function(){
+            var obj = new basis.data.Object();
+            var value = basis.data.Value.from(obj, null, 'basisObjectId');
+
+            assert(obj.debug_handlers().length == 1);
+
+            assert(catchWarnings(function(){
+              value.destroy();
+            }) == false);
+
+            assert(obj.debug_handlers().length == 0);
+            assert(value !== basis.data.Value.from(obj, null, 'basisObjectId'));
+          }
+        },
+        {
+          name: 'source destroy -> value destroy',
+          test: function(){
+            var obj = new basis.data.Object();
+            var value = basis.data.Value.from(obj, null, 'basisObjectId');
+            var destroyCount = 0;
+
+            value.addHandler({
+              destroy: function(){
+                destroyCount++;
+              }
+            });
+
+            assert(catchWarnings(function(){
+              obj.destroy();
+            }) == false);
+            assert(destroyCount == 1);
+          }
+        }
+      ]
     }
   ]
 };

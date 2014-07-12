@@ -324,19 +324,6 @@
       {
         var events = 'events' in value ? value.events : 'update';
 
-        if ('hook' in value)
-        {
-          if ('events' in value == false)
-          {
-            /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config is deprecated, use events property instead');
-            events = basis.object.keys(value.hook);
-          }
-          else
-          {
-            /** @cut */ basis.dev.warn(namespace + ': hook property in satellite config was ignored (events property used)');
-          }
-        }
-
         if (Array.isArray(events))
           events = events.join(' ');
 
@@ -359,30 +346,17 @@
     return null;
   }
 
-  function extendSatelliteConfig(result, extend){
-    for (var name in extend)
-      result[name] = processSatelliteConfig(extend[name]);
-  }
-
   function applySatellites(node, satellites){
     for (var name in satellites)
       if (satellites[name] && typeof satellites[name] == 'object')
         node.setSatellite(name, satellites[name]);
   }
 
-  // default satellite config map
-  var NULL_SATELLITE_CONFIG = Class.customExtendProperty({}, function(result, extend){
-    /** @cut */ for (var key in extend)
-    /** @cut */ {
-    /** @cut */   basis.dev.warn('basis.dom.wrapper.AbstractNode#satelliteConfig is deprecated now, use basis.dom.wrapper.AbstractNode#satellite instead');
-    /** @cut */   break;
-    /** @cut */ }
-
-    extendSatelliteConfig(result, extend);
-  });
-
   // default satellite map
-  var NULL_SATELLITE = Class.customExtendProperty({}, extendSatelliteConfig);
+  var NULL_SATELLITE = Class.customExtendProperty({}, function(result, extend){
+    for (var name in extend)
+      result[name] = processSatelliteConfig(extend[name]);
+  });
 
   // satellite update handler
   var SATELLITE_UPDATE = function(owner){
@@ -413,6 +387,7 @@
         if (!satellite)
         {
           // create new satellite instance
+          var listenHandler;
           var satelliteConfig = (
             typeof config.config == 'function'
               ? config.config(owner)
@@ -435,8 +410,10 @@
 
           // this statement here, because owner set in config and no listen add in this case
           // TODO: looks like a hack, fix it
-          if (owner.listen && owner.listen.satellite)
-            satellite.addHandler(owner.listen && owner.listen.satellite, owner);
+          if (listenHandler = owner.listen.satellite)
+            satellite.addHandler(listenHandler, owner);
+          if (listenHandler = owner.listen['satellite:' + name])
+            satellite.addHandler(listenHandler, owner);
         }
         else
         {
@@ -606,7 +583,7 @@
     emit_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
 
    /**
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     dataSourceAdapter_: null,
 
@@ -712,13 +689,6 @@
     groupId: NaN,
 
    /**
-    * Hash of satellite object configs.
-    * @type {Object}
-    * @deprecated
-    */
-    satelliteConfig: NULL_SATELLITE_CONFIG,
-
-   /**
     * Satellite objects storage.
     * @type {Object}
     */
@@ -804,14 +774,6 @@
 
       // process satellites
       var satellites = this.satellite;
-
-      if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
-      {
-        /** @cut */ if (this.satelliteConfig !== this.constructor.prototype.satelliteConfig)
-        /** @cut */   basis.dev.warn('basis.dom.wrapper.AbstractNode#satelliteConfig is deprecated now, use basis.dom.wrapper.AbstractNode#satellite instead');
-        satellites = basis.object.merge(satellites, this.satelliteConfig);
-      }
-
       if (satellites !== NULL_SATELLITE)
       {
         this.satellite = NULL_SATELLITE;
@@ -1018,6 +980,7 @@
       if (oldSatellite !== satellite)
       {
         var satelliteListen = this.listen.satellite;
+        var satellitePersonalListen = this.listen['satellite:' + name];
         var destroySatellite;
 
         if (oldSatellite)
@@ -1035,6 +998,8 @@
             // regular satellite
             if (satelliteListen)
               oldSatellite.removeHandler(satelliteListen, this);
+            if (satellitePersonalListen)
+              oldSatellite.removeHandler(satellitePersonalListen, this);
 
             oldSatellite.setOwner(null);
           }
@@ -1110,6 +1075,8 @@
 
             if (satelliteListen)
               satellite.addHandler(satelliteListen, this);
+            if (satellitePersonalListen)
+              satellite.addHandler(satellitePersonalListen, this);
           }
           else
           {
@@ -2735,13 +2702,6 @@
     init: function(){
       this.map_ = {};
       this.nullGroup = new PartitionNode();
-
-      // TODO: remove in next releases
-      if ('groupGetter' in this)
-      {
-        this.rule = getter(this.groupGetter);
-        /** @cut */ basis.dev.warn('basis.dom.wrapper.GroupingNode#groupGetter is deprecated now, use basis.dom.wrapper.GroupingNode#rule instead. groupGetter value was set to rule property.');
-      }
 
       AbstractNode.prototype.init.call(this);
     },

@@ -1,195 +1,87 @@
-require('basis.data');
-require('basis.data.value');
-require('basis.data.index');
-require('basis.ui');
-require('basis.dragdrop');
+// resolve basis.js instance for inspect
+var inspectBasis = basis.config.inspect;
+this.inspectBasis = inspectBasis;
 
-var inspectBasis = require('devpanel').inspectBasis;
-inspectBasis.require('basis.l10n');
-inspectBasis.require('basis.template');
-inspectBasis.require('basis.dom.event');
+// check basis.js instance found
+if (!inspectBasis)
+{
+  basis.dev.warn('inspect basis.js instance doesn\'t found');
+  return;
+}
 
-var l10nInspector = resource('./inspector/l10n.js');
-var templateInspector = resource('./inspector/template.js');
-var heatInspector = resource('./inspector/heatmap.js');
-
-var themeList = require('./themeList.js');
-var cultureList = require('./cultureList.js');
-//var fileInspector = resource('./module/fileInspector/fileInspector.js');
-
-var inspectors = new basis.data.Dataset();
-var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
-
-[l10nInspector, templateInspector, heatInspector].forEach(function(inspectorRes){
-  inspectorRes.ready(function(inspector){
-    inspectors.add(inspector.inspectMode.link(new basis.data.Object, function(value){
-      this.update({ mode: value });
-    }));
-  });
+// much strict template isolation, to prevent style mix with inspecting basis app styles,
+// as isolation prefixes based on template id in dev mode
+require('basis.template').Template.extend({
+  isolatePrefix_: false,
+  getIsolatePrefix: function(){
+    if (!this.isolatePrefix_)
+      this.isolatePrefix_ = basis.genUID().replace(/^[^a-z]/i, 'i$&') + '__';
+    return this.isolatePrefix_;
+  }
 });
 
-var activated = new basis.data.value.Expression(
-  basis.data.Value.from(themeList, 'visibleChanged', 'visible'),
-  basis.data.Value.from(cultureList, 'visibleChanged', 'visible'),
-  function(themeListVisible, cultureListVisible){
-    return themeListVisible || cultureListVisible;
-  }
-);
+// everything ok, init interface
+basis.nextTick(function(){
+  basis.ready(function(){
+    // init transport
+    var transport = require('./api/transport.js');
+    module.transferEl = transport.transferEl;
 
+    // make devpanel allowed for inspected basis.js
+    inspectBasis.devpanel = module;
 
-//
-// panel
-//
+    // prepare API object
+    inspectBasis.appCP = basis.object.merge(
+      {
+        getFileGraph: function(){
+          var basisjsTools = typeof basisjsToolsFileSync != 'undefined'
+            ? basisjsToolsFileSync // new
+            : basis.devtools;      // old
 
-var isOnline;
-var permamentFiles = [];
-var permamentFilesCount = new basis.data.Value(0);
-
-if (typeof basisjsToolsFileSync != 'undefined')
-{
-  // new basisjs-tools
-  isOnline = new basis.Token(basisjsToolsFileSync.isOnline.value);
-  basisjsToolsFileSync.isOnline.attach(isOnline.set, isOnline);
-
-  basisjsToolsFileSync.notifications.attach(function(eventName, filename){
-    var ext = basis.path.extname(filename);
-
-    if (eventName == 'new' || ext in inspectBasis.resource.extensions == false)
-      return;
-
-    if (inspectBasis.resource.extensions[ext].permanent && inspectBasis.resource.isResolved(filename))
-    {
-      basis.setImmediate(function(){
-        if (inspectBasis.resource(filename).hasChanges())
-          basis.array.add(permamentFiles, filename);
-        else
-          basis.array.remove(permamentFiles, filename);
-
-        permamentFilesCount.set(permamentFiles.length);
-      });
-    }
-  });
-}
-else
-{
-  // old basisjs-tools
-  isOnline = inspectBasis.devtools && basis.data.Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
-}
-
-var panel = new basis.ui.Node({
-  container: document.body,
-
-  themeName: inspectBasis.template.currentTheme().name,
-  template: resource('./template/panel.tmpl'),
-
-  binding: {
-    activated: activated,
-    themeName: 'themeName',
-    themeList: themeList,
-    cultureName: inspectBasis.l10n.culture,
-    cultureList: cultureList,
-    isOnline: isOnline,
-    inspectMode: inspectMode,
-    reloadRequired: 'satellite:'
-  },
-
-  action: {
-    inspectTemplate: function(){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
-        templateInspector().startInspect();
-      });
-    },
-    showThemes: function(){
-      themeList.setDelegate(this);
-    },
-    inspectl10n: function(){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
-        l10nInspector().startInspect();
-      });
-    },
-    showCultures: function(){
-      cultureList.setDelegate(this);
-    },
-    inspectHeat: function(){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
-        heatInspector().startInspect();
-      });
-    },
-    // inspectFile: function(){
-    //   fileInspector().toggle();
-    // },
-    storePosition: function(event){
-      if (localStorage)
-        localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
-    }
-  },
-
-  satellite: {
-    reloadRequired: {
-      instance: new basis.ui.Node({
-        template: resource('./template/reloadRequired.tmpl'),
-        binding: {
-          visible: permamentFilesCount.as(Boolean),
-          count: permamentFilesCount
-        },
-        action: {
-          reload: function(){
-            global.location.reload();
-          }
+          if (basisjsTools)
+            basisjsTools.getFileGraph(function(err, data){
+              transport.sendData('fileGraph', {
+                data: data,
+                err: err
+              });
+            });
         }
-      })
+      },
+
+      require('./api/version.js'),
+      require('./api/server.js'),
+      require('./api/file.js'),
+      require('./api/l10n.js'),
+      require('./api/ui.js'),
+      require('./api/inspector.js')
+    );
+
+    // init interface
+    require('./ui.js');
+    // temporary here
+    //require('./module/ui/index.js');
+
+    // setup live update
+    if (inspectBasis.devtools)
+    {
+      var FILE_HANDLER = {
+        update: function(sender, delta){
+          if ('filename' in delta || 'content' in delta)
+            if (!basis.resource.isDefined || basis.resource.isDefined(this.data.filename, true))
+              basis.resource(this.data.filename).update(this.data.content);
+        }
+      };
+      inspectBasis.devtools.files.addHandler({
+        itemsChanged: function(sender, delta){
+          if (delta.inserted)
+            delta.inserted.forEach(function(file){
+              file.addHandler(FILE_HANDLER);
+            });
+        }
+      });
     }
-  },
 
-  init: function(){
-    basis.ui.Node.prototype.init.call(this);
-
-    this.dde = new basis.dragdrop.MoveableElement();
-  },
-  templateSync: function(){
-    basis.ui.Node.prototype.templateSync.call(this);
-
-    this.dde.setElement(this.element, this.tmpl.dragElement);
-  },
-  destroy: function(){
-    this.dde.destroy();
-    this.dde = null;
-
-    basis.ui.Node.prototype.destroy.call(this);
-  }
+    basis.dev.log('basis devpanel inited');
+  });
 });
 
-themeList.selection.addHandler({
-  itemsChanged: function(object, delta){
-    var theme = this.pick();
-    panel.themeName = theme.value;
-    panel.updateBind('themeName');
-  }
-});
-
-
-//
-// drag stuff
-//
-if (typeof localStorage != 'undefined')
-{
-  var position = (localStorage['basis-devpanel'] || '10;10').split(';');
-  panel.element.style.left = position[0] + 'px';
-  panel.element.style.top = position[1] + 'px';
-}
-
-
-//
-// exports
-//
-
-module.exports = panel;

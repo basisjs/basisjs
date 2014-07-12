@@ -283,6 +283,24 @@ module.exports = {
             this.is(false, checkNode(node));
             this.is(true, partitionNode.element.tagName == 'SPAN');
           }
+        },
+        {
+          name: 'When template instance changing, old handlers should be removed',
+          test: function(){
+            var node = new basis.ui.Node({
+              template: '{x}',
+              binding: {
+                x: 'data:'
+              }
+            });
+
+            // one handler for bindings
+            assert(node.debug_handlers().length === 1);
+
+            // set template with no bindings should lead to empty handler list
+            node.setTemplate(new basis.template.html.Template('bar'));
+            assert(node.debug_handlers().length === 0);
+          }
         }
       ]
     },

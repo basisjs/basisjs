@@ -533,6 +533,159 @@ module.exports = {
           }
         },
         {
+          name: 'some objects with same dataset',
+          test: function(){
+            var objectDataset = new basis.data.Dataset({ items: generate(1, 3) });
+            var objectA = new basis.data.Object({
+              data: {
+                value: 4,
+                items: objectDataset
+              }
+            });
+            var objectB = new basis.data.Object({
+              data: {
+                value: 5,
+                items: objectDataset
+              }
+            });
+            var dataset = new Dataset({ items: [objectA, objectB] });
+            var extract = new Extract({
+              source: dataset,
+              rule: 'data.items'
+            });
+
+            assert(extract.itemCount == 5);
+            assert(checkValues(extract, range(1, 5)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            objectA.update({ items: null });
+            assert(extract.itemCount == 5);
+            assert(checkValues(extract, range(1, 5)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            objectA.update({ items: objectDataset });
+            assert(extract.itemCount == 5);
+            assert(checkValues(extract, range(1, 5)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            objectB.update({ items: null });
+            assert(extract.itemCount == 5);
+            assert(checkValues(extract, range(1, 5)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            objectA.update({ items: null });
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(4, 5)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+          }
+        },
+        {
+          name: 'some objects with dataset as source',
+          test: function(){
+            var objectDataset = new basis.data.Dataset();
+            var objectA = new basis.data.Object({
+              data: {
+                value: 1,
+                items: objectDataset
+              }
+            });
+            var objectB = new basis.data.Object({
+              data: {
+                value: 2,
+                items: objectDataset
+              }
+            });
+            objectDataset.set([objectA, objectB]);
+            var dataset = new Dataset({ items: [objectA, objectB] });
+            var extract = new Extract({
+              source: objectDataset,
+              rule: 'data.items'
+            });
+
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            objectA.update({ items: null });
+            objectB.update({ items: null });
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            extract.setSource(dataset);
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            extract.setSource(null);
+            assert(extract.itemCount == 0);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+
+            // restore state
+            objectA.update({ items: objectDataset });
+            objectB.update({ items: objectDataset });
+            extract.setSource(objectDataset);
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 3);
+
+            // drop source
+            extract.setSource(null);
+            assert(extract.itemCount == 0);
+            assert(eventCount(extract, 'itemsChanged') == 4);
+          }
+        },
+        {
+          name: 'some objects with dataset as source',
+          test: function(){
+            var objectDataset = new basis.data.Dataset();
+            var objectA = new basis.data.Object({
+              data: {
+                value: 1,
+                items: objectDataset
+              }
+            });
+            var objectB = new basis.data.Object({
+              data: {
+                value: 2,
+                items: objectDataset
+              }
+            });
+            objectDataset.set([objectA, objectB]);
+            var dataset = new Dataset({ items: [objectA, objectB] });
+            var extract = new Extract({
+              source: objectDataset,
+              rule: 'data.items'
+            });
+
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            objectA.update({ items: null });
+            objectB.update({ items: null });
+            extract.setSource(dataset);
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            objectA.update({ items: dataset });
+            objectB.update({ items: dataset });
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            extract.setSource(objectDataset);
+            assert(extract.itemCount == 2);
+            assert(checkValues(extract, range(1, 2)) == false);
+            assert(eventCount(extract, 'itemsChanged') == 1);
+
+            extract.setSource(null);
+            assert(extract.itemCount == 0);
+            assert(eventCount(extract, 'itemsChanged') == 2);
+          }
+        },
+        {
           name: 'change source dataset',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 3) });

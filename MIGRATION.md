@@ -2,21 +2,50 @@
 
 Rename
 
+  - `basis.array.sortAsObject` → `basis.array.sort`
   - `basis.data.AbstractDataset` → `basis.data.ReadOnlyDataset`
+  - `basis.data.DatasetAdapter` → `basis.data.ResolveAdapter`
+  - `basis.data.dataset.Subset` → `basis.data.dataset.Filter`
 
 Remove
 
+  - remove support for `extProto` in `basis-config`
+  - `basis.setImmediate` and `basis.nextTick` doesn't accept non-function values anymore
+  - `basis.platformFeature` (use `basis.cssom.features` instead)
+  - `basis.data.ReadOnlyDataset#clear`
+  - `basis.data.dataset` drop fallback for `ruleEvents` as object
+  - `basis.dragdrop.DragDropElement#containerGetter`
+  - `basis.dom.wrapper.AbstractNode#satelliteConfig`
+  - `basis.dom.wrapper.GroupingNode#groupGetter`
+  - `basis.dom.wrapper` drop support for `hook` in satellite config
   - `basis.ui.Node#templateUpdate`
   - `basis.ui.Node#content`
-  - `basis.platformFeature` (use `basis.cssom.features` instead)
-  - `basis.dragdrop.DragDropElement#containerGetter` (`element` could be changed on `prepareDrag` or `emit_start`)
-  - `<b:resource>` in templates (use `<b:style>` instead)
+  - `basis.ui.table` drop support for `content` in header config
+  - `basis.ui.table` drop support for `content` in footer config
+  - `basis.template` remove support for `<b:resource>` (use `<b:style>` instead)
+
+Stop use (deprecated)
+
+  - `path` section in `basis-config` (use `modules` instead)
+  - `basis.entity.EntityType().entityType` (use `type` instead)
+  - `basis.entity.EntitySetType().entitySetType` (use `type` instead)
+  - `basis.entity.EntityType().extend` (use `extendClass` instead)
+  - `basis.entity.EntitySetType().extend` (use `extendClass` instead)
+  - `basis.ui.calendar.Calendar#sections` (use `childNodes` instead)
 
 Might break
 
-  - `basis.template` resources of included templates are always going before own template resources
+  - `basis.date` show warnings instead of exception throw
+  - `clear` methods in `basis.data.dataset` don't reset sources anymore
+  - `basis.data.Value.from()` instances are readonly now
+  - `basis.data.Value#locked` is counter now but not a boolean value (use `basis.data.Value#isLocked()` to check value is locked)
+  - `basis.template` style of included templates are always going before own template resources
+  - `basis.template` apply defines per include but not per template
+  - `basis.ui` emit `templateChanged` event only on template change, but not on instance create
+  - `basis.ui.field.validator.Required()` is trim value before check now
   - `basis.dragdrop.DragDropElement#startRule` receive real `deltaX`/`deltaY` but not a result of `axisXproxy`/`axisYproxy` methods
   - `basis.dragdrop.DragDropElement` always emit `start` event with zero `deltaX`/`deltaY`
+  - `basis.dragdrop` implement `DragDropElement#ignoreTarget` to ignore element that can't be a drag trigger (by default those elements are `<input>`, `<textarea>`, `<select>` and `<button>`)
 
 ## 1.2.1 → 1.2.3
 

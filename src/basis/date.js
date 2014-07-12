@@ -27,7 +27,6 @@
     second: 1000
   };
 
-  var PART_ERROR = 'Unknown date part: ';
   var DATE_PART = 'year month day hour minute second millisecond'.split(' ');
 
   var GETTER = {};
@@ -194,154 +193,158 @@
     };
   })();
 
-  var toISOString = function(){
-    return dateFormat(this, ISO_FORMAT, true);
-  };
+  function toISOString(this_){
+    return dateFormat(this_, ISO_FORMAT, true);
+  }
+
+  function toISODateString(this_){
+    return dateFormat(this_, '%Y-%M-%D', true);
+  }
+
+  function toISOTimeString(this_){
+    return dateFormat(this_, '%H:%I:%S.%Z', true);
+  }
 
 
   //
-  // Date prototype extension
+  // Date functions
   //
 
-  var Date_extensions = {
-    isLeapYear: isLeapYear,
-    getMonthDayCount: getMonthDayCount,
-    add: function(this_, part, value){
-      var getter = GETTER[part];
+  function add(this_, part, value){
+    var getter = GETTER[part];
 
-      if (!getter)
-        throw new Error(PART_ERROR + part);
-
-      var day;
-      if (part == 'year' || part == 'month')
-      {
-        day = this_.getDate();
-        if (day > 28)
-          this_.setDate(1);
-      }
-
-      SETTER[part](this_, getter(this_) + value);
-
-      if (day > 28)
-      {
-        var monthDayCount = getMonthDayCount(this_);
-        this_.setDate(Math.min(day, monthDayCount));
-      }
-
+    if (!getter)
+    {
+      /** @cut */ basis.dev.warn('basis.date.add: Unknown date part `' + part + '`, date not changed');
       return this_;
-    },
-    diff: function(this_, part, date){
-      if (part == 'year' || part == 'month')
-      {
-        var dir = Number(this_) - Number(date) > 0 ? -1 : 1;
-        var left = dir > 0 ? this_ : date;
-        var right = dir > 0 ? date : this_;
-
-        var ly = left.getFullYear();
-        var ry = right.getFullYear();
-        var ydiff = ry - ly;
-
-        if (part == 'year')
-          return dir * ydiff;
-
-        var lm = left.getMonth();
-        var rm = right.getMonth();
-        var mdiff = ydiff ? ((ydiff > 1 ? (ydiff - 1) * 12 : 0) + (12 - 1 - lm) + (rm + 1)) : rm - lm;
-
-        return dir * mdiff;
-      }
-      else
-      {
-        var diff = Math.floor((date - this_) / DIFF_BASE[part]);
-        return diff + Number(GETTER[part](new Date(date - diff * DIFF_BASE[part])) - GETTER[part](this_) != 0);
-      }
-    },
-    set: function(this_, part, value){
-      var setter = SETTER[part];
-
-      if (!setter)
-        throw new Error(PART_ERROR + part);
-
-      var day;
-      if (part == 'year' || part == 'month')
-      {
-        day = this_.getDate();
-        if (day > 28)
-          this_.setDate(1);
-      }
-
-      setter(this_, value);
-
-      if (day > 28)
-      {
-        var monthDayCount = getMonthDayCount(this_);
-        this_.setDate(Math.min(day, monthDayCount));
-      }
-
-      return this_;
-    },
-    get: function(this_, part){
-      if (GETTER[part])
-        return GETTER[part](this_);
-
-      throw new Error(PART_ERROR + part);
-    },
-    toISODateString: function(this_){
-      return dateFormat(this_, '%Y-%M-%D', true);
-    },
-    toISOTimeString: function(this_){
-      return dateFormat(this_, '%H:%I:%S.%Z', true);
-    },
-    fromDate: function(this_, date){
-      if (date instanceof Date)
-      {
-        this_.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-        this_.setTime(date.getTime());
-      }
-
-      return this_;
-    },
-    format: dateFormat,
-    fromISOString: function(this_, isoDateString){
-      return this_.fromDate(fromISOString(isoDateString));
     }
-  };
 
-  // extend prototype if enabled
-  // will be removed in future
-  if (basis.config.extProto)
-    (function(){
-      for (var key in Date_extensions)
-        Date.prototype[key] = (function(method, clsName){
-          return function(){
-            /** @cut */ if (basis.config.extProto == 'warn')
-            /** @cut */   basis.dev.warn('Date#' + method + ' is not a standard method and will be removed soon; use basis.date.' + method + ' instead');
+    var day;
+    if (part == 'year' || part == 'month')
+    {
+      day = this_.getDate();
+      if (day > 28)
+        this_.setDate(1);
+    }
 
-            var args = [this];
-            Array.prototype.push.apply(args, arguments);
-            return Date_extensions[method].apply(Date_extensions, args);
-          };
-        })(key);
-    })();
+    SETTER[part](this_, getter(this_) + value);
+
+    if (day > 28)
+    {
+      var monthDayCount = getMonthDayCount(this_);
+      this_.setDate(Math.min(day, monthDayCount));
+    }
+
+    return this_;
+  }
+
+  function diff(this_, part, date){
+    if (part == 'year' || part == 'month')
+    {
+      var dir = Number(this_) - Number(date) > 0 ? -1 : 1;
+      var left = dir > 0 ? this_ : date;
+      var right = dir > 0 ? date : this_;
+
+      var ly = left.getFullYear();
+      var ry = right.getFullYear();
+      var ydiff = ry - ly;
+
+      if (part == 'year')
+        return dir * ydiff;
+
+      var lm = left.getMonth();
+      var rm = right.getMonth();
+      var mdiff = ydiff ? ((ydiff > 1 ? (ydiff - 1) * 12 : 0) + (12 - 1 - lm) + (rm + 1)) : rm - lm;
+
+      return dir * mdiff;
+    }
+    else
+    {
+      var diff = Math.floor((date - this_) / DIFF_BASE[part]);
+      return diff + Number(GETTER[part](new Date(date - diff * DIFF_BASE[part])) - GETTER[part](this_) != 0);
+    }
+  }
+
+  function set(this_, part, value){
+    var setter = SETTER[part];
+
+    if (!setter)
+    {
+      /** @cut */ basis.dev.warn('basis.date.set: Unknown date part `' + part + '`, date not changed');
+      return this_;
+    }
+
+    var day;
+    if (part == 'year' || part == 'month')
+    {
+      day = this_.getDate();
+      if (day > 28)
+        this_.setDate(1);
+    }
+
+    setter(this_, value);
+
+    if (day > 28)
+    {
+      var monthDayCount = getMonthDayCount(this_);
+      this_.setDate(Math.min(day, monthDayCount));
+    }
+
+    return this_;
+  }
+
+  function get(this_, part){
+    if (GETTER[part])
+      return GETTER[part](this_);
+
+    /** @cut */ basis.dev.warn('basis.date.get: Unknown date part `' + part + '`');
+  }
+
+  function fromDate(this_, date){
+    if (date instanceof Date)
+    {
+      this_.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+      this_.setTime(date.getTime());
+    }
+
+    return this_;
+  }
+
+  //
+  // Complete Date prototype by ECMAScript5 methods
+  //
 
   basis.object.complete(Date.prototype, {
-    // implemented in ECMAScript5
     // TODO: check for time zone
-    toISOString: toISOString,
-    toJSON: toISOString
+    toISOString: function(){
+      return toISOString(this);
+    },
+    toJSON: function(){
+      return this.toISOString();
+    }
   });
+
 
   //
   // export names
   //
 
-  module.exports = basis.object.complete({
+  module.exports = {
     monthNumToAbbr: monthNumToAbbr,
     dayNumToAbbr: dayNumToAbbr,
 
-    format: dateFormat,
     fromISOString: fromISOString,
-    toISOString: function(date){
-      return dateFormat(date, ISO_FORMAT, true);
-    }
-  }, Date_extensions);
+
+    format: dateFormat,
+    toISOString: toISOString,
+    toISODateString: toISODateString,
+    toISOTimeString: toISOTimeString,
+
+    isLeapYear: isLeapYear,
+    getMonthDayCount: getMonthDayCount,
+    add: add,
+    set: set,
+    get: get,
+    diff: diff,
+    fromDate: fromDate
+  };

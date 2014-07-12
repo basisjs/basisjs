@@ -692,6 +692,7 @@
 
       if (this.sections)
       {
+        // deprecated in 1.3.0
         /** @cut */ basis.dev.warn('basis.ui.calendar.Calendar#sections is deprecated, use childNodes instead');
         this.setChildNodes(this.sections);
       }
@@ -868,12 +869,12 @@
     isPeriodEnabled: function(periodStart, periodEnd){
 
       function checkMapDays(mode, month, sday, tday){
-        // first month: check only for last days
         if (!mode)
+          // first month: check only for last days
           return month >> sday;
 
-        // last month: check only for first days
         if (mode == 1)
+          // last month: check only for first days
           return month & DAY_COUNT_MASK[tday + 1]; // MAX_DAY_MASK >> 31 - tday
 
         // middle month: check full month

@@ -27,7 +27,9 @@ function updateInfo(){
     var instance = instances[id].data.instance;
     if (instance.firstChild)
       instance.childNodes.forEach(function(child){
-        queue[child.basisObjectId] = true;
+        var id = child.basisObjectId;
+        if (id in instances)
+          queue[id] = true;
       });
   }
 

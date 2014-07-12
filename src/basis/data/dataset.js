@@ -37,6 +37,7 @@
   var $self = basis.fn.$self;
   var $true = basis.fn.$true;
   var $false = basis.fn.$false;
+  var $undef = basis.fn.$undef;
   var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
 
@@ -120,11 +121,7 @@
         return events;
 
       if (typeof events != 'string' && !Array.isArray(events))
-      {
-        events = typeof events == 'object' ? basis.object.keys(events) : null;
-        /** @cut */ if (events)
-        /** @cut */   basis.dev.warn('Using an object for ruleEvents is deprecated, use space separated event names string or array of strings instead.');
-      }
+        events = null;
 
       return extend(basis.event.createHandler(events, fn), {
         __extend__: createRuleEventsExtend
@@ -135,16 +132,17 @@
  /**
   *
   */
-  function createKeyMap(config, keyGetter, itemClass, SubsetClass){
+  function createKeyMap(config, keyGetter, ItemClass, SubsetClass){
     return new KeyObjectMap(extend({
       keyGetter: keyGetter,
-      itemClass: itemClass,
+      itemClass: ItemClass,
       create: function(key, object){
-        var obj = KeyObjectMap.prototype.create.call(this, key, object);
-        obj.setDataset(new SubsetClass({
+        var datasetWrapper = KeyObjectMap.prototype.create.call(this, key, object);
+        datasetWrapper.ruleValue = key;
+        datasetWrapper.setDataset(new SubsetClass({
           ruleValue: key
         }));
-        return obj;
+        return datasetWrapper;
       }
     }, config));
   }
@@ -220,7 +218,6 @@
 
    /**
     * Fires when source set changed.
-    * @param {basis.data.ReadOnlyDataset} dataset
     * @param {object} delta Delta of changes. Must have property `inserted`
     * or `deleted`, or both of them. `inserted` property is array of new sources
     * and `deleted` property is array of removed sources.
@@ -243,6 +240,13 @@
     rule: function(count, sourceCount){
       return count > 0;
     },
+
+   /**
+    * Fires when rule is changed.
+    * @param {function(count:number, sourceCount:number): boolean} oldRule
+    * @event
+    */
+    emit_ruleChanged: createEvent('ruleChanged', 'oldRule'),
 
    /**
     * @inheritDoc
@@ -277,16 +281,20 @@
 
    /**
     * Set new merge rule for dataset. Some types are available in basis.data.Dataset.Merge
-    * @param {function(count:number, sourceCount:number):boolean} rule New rule.
+    * @param {function(count:number, sourceCount:number):boolean|string} rule New rule.
+    * @return {Object} Delta of member changes.
     */
     setRule: function(rule){
-      if (typeof rule != 'function')
-        rule = Merge.UNION;
+      rule = getter(rule || Merge.UNION);
 
       if (this.rule !== rule)
       {
+        var oldRule = this.rule;
+
         this.rule = rule;
-        this.applyRule();
+        this.emit_ruleChanged(oldRule);
+
+        return this.applyRule();
       }
     },
 
@@ -470,7 +478,7 @@
 
    /**
     * Add source from sources list.
-    * @param {basis.data.ReadOnlyDataset} source
+    * @param {basis.data.ReadOnlyDataset|object|function()} source
     * @return {boolean} Returns true if new source added.
     */
     addSource: function(source){
@@ -480,9 +488,11 @@
         return;
       }
 
-      for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
-        if (sourceInfo.source === source)
-          return;
+      if (this.hasSource(source))
+      {
+        /** @cut */ basis.dev.warn(this.constructor.className + '.addSource: value is already in source list');
+        return;
+      }
 
       var sourceInfo = {
         owner: this,
@@ -500,7 +510,7 @@
 
    /**
     * Removes source from sources list.
-    * @param {basis.data.ReadOnlyDataset} source
+    * @param {basis.data.ReadOnlyDataset|object|function()} source
     * @return {boolean} Returns true if source removed.
     */
     removeSource: function(source){
@@ -516,6 +526,19 @@
         }
 
       /** @cut */ basis.dev.warn(this.constructor.className + '.removeSource: source value isn\'t found in source list');
+    },
+
+   /**
+    * Removes source from sources list.
+    * @param {basis.data.ReadOnlyDataset|object|function()} source
+    * @return {boolean} Returns true if source already added.
+    */
+    hasSource: function(source){
+      for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
+        if (sourceInfo.source === source)
+          return true;
+
+      return false;
     },
 
    /**
@@ -650,7 +673,7 @@
         return;
 
       var newDelta = getDelta(
-        /* inserted */ delta.deleted  && delta.deleted.filter(datasetAbsentFilter, this),
+        /* inserted */ delta.deleted  && delta.deleted.filter(this.minuend.has, this.minuend),
         /* deleted */  delta.inserted && delta.inserted.filter(this.has, this)
       );
 
@@ -682,7 +705,7 @@
 
    /**
     * Minuend wrapper
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     minuendAdapter_: null,
 
@@ -700,7 +723,7 @@
 
    /**
     * Subtrahend wrapper
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     subtrahendAdapter_: null,
 
@@ -885,7 +908,7 @@
 
    /**
     * Source wrapper
-    * @type {basis.data.DatasetAdapter}
+    * @type {basis.data.ResolveAdapter}
     */
     sourceAdapter_: null,
 
@@ -1166,8 +1189,16 @@
 
    /**
     * Helper function.
+    * @type {function(basis.data.Object):*}
     */
     rule: getter($true),
+
+   /**
+    * Fires when rule is changed.
+    * @param {function(basis.data.Object):*} oldRule
+    * @event
+    */
+    emit_ruleChanged: createEvent('ruleChanged', 'oldRule'),
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -1229,16 +1260,19 @@
 
    /**
     * Set new filter function.
-    * @param {function(basis.data.Object):boolean} rule
+    * @param {function(item:basis.data.Object):*|string} rule
     * @return {Object} Delta of member changes.
     */
     setRule: function(rule){
-      if (typeof rule != 'function')
-        rule = $true;
+      rule = getter(rule || $true);
 
       if (this.rule !== rule)
       {
+        var oldRule = this.rule;
+
         this.rule = rule;
+        this.emit_ruleChanged(oldRule);
+
         return this.applyRule();
       }
     },
@@ -1384,17 +1418,25 @@
       return this.keyMap.resolve(sourceObject);
     },
 
-    /**
+   /**
+    * @inheritDoc
+    */
+    rule: getter($undef),
+
+   /**
     * @inheritDoc
     */
     setRule: function(rule){
-      if (typeof rule != 'function')
-        rule = $true;
+      rule = getter(rule || $undef);
 
       if (this.rule !== rule)
       {
+        var oldRule = this.rule;
+
         this.rule = rule;
         this.keyMap.keyGetter = rule;
+        this.emit_ruleChanged(oldRule);
+
         return this.applyRule();
       }
     },
@@ -1524,9 +1566,9 @@
   };
 
   function sliceIndexSort(a, b){
-    return +(a.value > b.value)
-        || -(a.value < b.value)
-        ||  (a.object.basisObjectId - b.object.basisObjectId);
+    return +(a.value > b.value) ||
+           -(a.value < b.value) ||
+            (a.object.basisObjectId - b.object.basisObjectId);
   }
 
   var SLICE_SOURCE_HANDLER = {
@@ -1612,10 +1654,18 @@
 
    /**
     * Ordering items function.
-    * @type {function(basis.data.Object)}
+    * @type {function(basis.data.Object):*}
     * @readonly
     */
     rule: getter($true),
+
+   /**
+    * Fires when rule is changed.
+    * @param {function(item:basis.data.Object):*} oldRule
+    * @param {boolean} oldOrderDesc
+    * @event
+    */
+    emit_ruleChanged: createEvent('ruleChanged', 'oldRule', 'oldOrderDesc'),
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -1718,24 +1768,40 @@
     },
 
    /**
-    * Set new rule and orderDesc
+    * Set new rule and order.
+    * @param {function(item:basis.data.Object):*|string} rule
+    * @param {boolean} orderDesc
+    * @return {object} Delta of member changes.
     */
     setRule: function(rule, orderDesc){
-      rule = getter(rule);
-      this.orderDesc = !!orderDesc;
+      rule = getter(rule || $true);
+      orderDesc = !!orderDesc;
 
-      if (this.rule != rule)
+      if (this.rule != rule || this.orderDesc != orderDesc)
       {
-        var index = this.index_;
+        var oldRule = this.rule;
+        var oldOrderDesc = this.orderDesc;
 
-        for (var i = 0; i < index.length; i++)
-          index[i].value = rule(index[i].object);
+        // rebuild index only if rule changing
+        if (this.rule != rule)
+        {
+          var index = this.index_;
 
+          for (var i = 0; i < index.length; i++)
+            index[i].value = rule(index[i].object);
+
+          index.sort(sliceIndexSort);
+
+          this.rule = rule;
+        }
+
+        // set new values
+        this.orderDesc = orderDesc;
         this.rule = rule;
-        index.sort(sliceIndexSort);
-      }
+        this.emit_ruleChanged(oldRule, oldOrderDesc);
 
-      return this.applyRule();
+        return this.applyRule();
+      }
     },
 
    /**
@@ -1952,9 +2018,9 @@
     subsetWrapperClass: DatasetWrapper,
 
    /**
-    * @type {function(basis.data.Object)}
+    * @type {function(basis.data.Object):*}
     */
-    rule: getter($false),
+    rule: getter($undef),
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -2259,8 +2325,16 @@
 
    /**
     * Nothing return by default. Behave like proxy.
+    * @type {function(item:basis.data.Object):basis.data.Object|basis.data.ReadOnlyDataset}
     */
-    rule: basis.getter(function(){}),
+    rule: getter($undef),
+
+   /**
+    * Fires when rule is changed.
+    * @param {function(item:basis.data.Object):basis.data.Object|basis.data.ReadOnlyDataset} oldRule
+    * @event
+    */
+    emit_ruleChanged: createEvent('ruleChanged', 'oldRule'),
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -2282,69 +2356,80 @@
     * @return {Object} Delta of member changes.
     */
     setRule: function(rule){
-      if (typeof rule != 'function')
-        rule = basis.fn.$undef;
+      rule = getter(rule || $undef);
 
       if (this.rule !== rule)
       {
+        var oldRule = this.rule;
+
         this.rule = rule;
+        this.emit_ruleChanged(oldRule);
 
-        // re-apply rule
-        var insertedMap = {};
-        var deletedMap = {};
-        var array;
-        var delta;
-
-        for (var key in this.sourceMap_)
-        {
-          var sourceObjectInfo = this.sourceMap_[key];
-          var sourceObject = sourceObjectInfo.source;
-
-          if (sourceObject instanceof DataObject)
-          {
-            var newValue = this.rule(sourceObject) || null;
-            var oldValue = sourceObjectInfo.value;
-
-            if (newValue === oldValue)
-              continue;
-
-            if (newValue instanceof DataObject || newValue instanceof ReadOnlyDataset)
-            {
-              var inserted = addToExtract(this, newValue, sourceObject);
-              for (var i = 0; i < inserted.length; i++)
-              {
-                var item = inserted[i];
-                var id = item.basisObjectId;
-                if (deletedMap[id])
-                  delete deletedMap[id];
-                else
-                  insertedMap[id] = item;
-              }
-            }
-
-
-            if (oldValue)
-            {
-              var deleted = removeFromExtract(this, oldValue, sourceObject);
-              for (var i = 0; i < deleted.length; i++)
-              {
-                var item = deleted[i];
-                var id = item.basisObjectId;
-                if (insertedMap[id])
-                  delete insertedMap[id];
-                else
-                  deletedMap[id] = item;
-              }
-            }
-
-            // update value
-            sourceObjectInfo.value = newValue;
-          }
-        }
-
-        if (delta = getDelta(values(insertedMap), values(deletedMap)))
-          this.emit_itemsChanged(delta);
+        return this.applyRule();
       }
+    },
+
+   /**
+    * Re-apply rule to members.
+    * @return {Object} Delta of member changes.
+    */
+    applyRule: function(){
+      var insertedMap = {};
+      var deletedMap = {};
+      var array;
+      var delta;
+
+      for (var key in this.sourceMap_)
+      {
+        var sourceObjectInfo = this.sourceMap_[key];
+        var sourceObject = sourceObjectInfo.source;
+
+        if (sourceObject instanceof DataObject)
+        {
+          var newValue = this.rule(sourceObject) || null;
+          var oldValue = sourceObjectInfo.value;
+
+          if (newValue === oldValue)
+            continue;
+
+          if (newValue instanceof DataObject || newValue instanceof ReadOnlyDataset)
+          {
+            var inserted = addToExtract(this, newValue, sourceObject);
+            for (var i = 0; i < inserted.length; i++)
+            {
+              var item = inserted[i];
+              var id = item.basisObjectId;
+              if (deletedMap[id])
+                delete deletedMap[id];
+              else
+                insertedMap[id] = item;
+            }
+          }
+
+
+          if (oldValue)
+          {
+            var deleted = removeFromExtract(this, oldValue, sourceObject);
+            for (var i = 0; i < deleted.length; i++)
+            {
+              var item = deleted[i];
+              var id = item.basisObjectId;
+              if (insertedMap[id])
+                delete insertedMap[id];
+              else
+                deletedMap[id] = item;
+            }
+          }
+
+          // update value
+          sourceObjectInfo.value = newValue;
+        }
+      }
+
+      if (delta = getDelta(values(insertedMap), values(deletedMap)))
+        this.emit_itemsChanged(delta);
+
+      return delta;
     }
   });
 
@@ -2369,15 +2454,6 @@
     Filter: Filter,
     Split: Split,
     Extract: Extract,
-
-    // deprecated name of Filter
-    Subset: Filter.subclass({
-      className: namespace + '.Subset',
-      init: function(){
-        /** @cut */ basis.dev.warn('Class ' + this.constructor.className + ' is deprecated, use ' + Filter.className + ' instead');
-        Filter.prototype.init.call(this);
-      }
-    }),
 
     // other
     Slice: Slice,
