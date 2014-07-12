@@ -2,8 +2,6 @@
   basis.require('app.core');
   basis.require('app.ext.view');
 
-  var classList = basis.cssom.classList;
-
   var clsById = app.core.clsList.map(function(cls){
     return new basis.data.Object({
       data: {
@@ -24,7 +22,6 @@
 
   var ViewNSNode = basis.ui.Node.subclass({
     template: resource('./template/namespaceNode.tmpl'),
-
     binding: {
       path: 'data:className',
       namespace: {
@@ -49,39 +46,28 @@
       }
     },
 
-    templateUpdate: function(tmpl, eventName, delta){
-      if (!eventName || 'clsId' in delta)
-        this.setDataSource(namespaceClsSplitBySuper.getSubset(this.data.clsId));
-    },
-
-    sorting: basis.getter('data.className.split(".").pop()')
+    dataSource: basis.data.Value.factory('update', function(node){
+      return namespaceClsSplitBySuper.getSubset(node.data.clsId);
+    }),
+    sorting: basis.getter('data.className.split(".").pop()'),
+    childClass: basis.Class.SELF
   });
-
-  ViewNSNode.prototype.childClass = ViewNSNode;
 
   var viewNamespaceMap = new app.ext.view.View({
     viewHeader: 'Namespace class map',
     title: 'Namespace class map',
 
     template: resource('./template/namespaceMap.tmpl'),
-
     binding: {
-      classMap: 'satellite:'
-    },
-
-    satellite: {
-      classMap: {
-        instanceOf: basis.ui.Node.subclass({
-          template: '<ul class="firstLevel"/>',
-          dataSource: namespaceClsSplitBySuper.getSubset(0, true),
-          childClass: ViewNSNode
-        })
-      }
+      classMap: new basis.ui.Node({
+        template: '<ul class="firstLevel"/>',
+        dataSource: namespaceClsSplitBySuper.getSubset(0, true),
+        childClass: ViewNSNode
+      })
     },
     
     handler: {
       delegateChanged: function(){
-
         var namespace = this.data.obj;
         if (namespace)
         {

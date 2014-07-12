@@ -170,8 +170,8 @@
       scrollThumbLeft: {
         events: 'pageCountChanged pageSpanChanged',
         getter: function(node){
-          return node.scrollThumbLeft_
-              || percent(basis.number.fit(node.spanStartPage_ / Math.max(node.pageCount - node.pageSpan, 1), 0, 1));
+          return node.scrollThumbLeft_ ||
+                 percent(basis.number.fit(node.spanStartPage_ / Math.max(node.pageCount - node.pageSpan, 1), 0, 1));
         }
       }
     },

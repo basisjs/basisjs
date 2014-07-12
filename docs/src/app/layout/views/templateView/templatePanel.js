@@ -1,12 +1,7 @@
 
   basis.require('basis.ui.code');
 
-  /*basis.require('app.view.templateView.actions');
-  basis.require('app.view.templateView.bindings');*/
-
-  //basis.require('app.views.templateView.tree');
-  var buildTemplateTree = resource('./buildTemplateTree.js')();//app.view.templateView.tree.buildTemplate;
-
+  var buildTemplateTree = require('./buildTemplateTree.js');
 
   function resolveFunction(fn){
     var info = basis.utils.info.fn(fn);
@@ -23,53 +18,50 @@
  /**
   * @class
   */
-  var BindingsPanel = basis.ui.Node.subclass({
-    templateUpdate: function(){
-      var template = this.delegate.templateView;
-      var binding;
-      if (template)
-      {
-        var matchBinding = template.getBinding(this.data.obj.prototype.binding);
-        binding = basis.object.iterate(this.data.obj.prototype.binding, function(key, value){
-          return typeof value == 'object' ? {
-            data: {
-              name: key,
-              getter: value.getter,
-              events: value.events,
-              used: matchBinding && matchBinding.names.indexOf(key) != -1
-            }
-          } : null;
-        }).filter(Boolean);
-      }
-
-      this.setChildNodes(binding);
-    },
-
+  var bindingsPanel = new basis.ui.Node({
     template: resource('./template/bindingsPanel.tmpl'),
 
-    sorting: 'data.name',
+    handler: {
+      update: function(){
+        var template = this.delegate.templateView;
+        var binding;
 
+        if (template)
+        {
+          var matchBinding = template.getBinding(this.data.obj.prototype.binding);
+          binding = basis.object.iterate(this.data.obj.prototype.binding, function(key, value){
+            if (typeof value == 'object')
+              return {
+                data: {
+                  name: key,
+                  getter: value.getter,
+                  events: value.events,
+                  used: matchBinding && matchBinding.names.indexOf(key) != -1
+                }
+              };
+          }).filter(Boolean);
+        }
+
+        this.setChildNodes(binding);
+      }
+    },
+
+    sorting: 'data.name',
     childClass: {
       expanded: false,
       emit_toggle: basis.event.create('toggle'),
 
       template: resource('./template/bindingsPanelItem.tmpl'),
-
       binding: {
         name: 'data:',
         events: 'data:events || ""',
-        used: function(node){
-          return node.data.used ? 'used' : '';
-        },
+        used: 'data:',
         expanded: {
           events: 'toggle',
-          getter: function(node){
-            return node.expanded ? 'expanded' : '';
-          }
+          getter: 'expanded'
         },
         source: 'satellite:'
       },
-
       action: {
         toggle: function(){
           this.expanded = !this.expanded;
@@ -82,7 +74,7 @@
           events: 'toggle',
           existsIf: basis.getter('expanded'),
           instanceOf: basis.ui.code.SourceCode.subclass({
-            autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
+            autoDelegate: true,
             lang: 'js',
             lineNumber: false,
             codeGetter: function(node){
@@ -96,59 +88,51 @@
   });
 
  /**
-  * @class
+  *
   */
-  var ActionsPanel = basis.ui.Node.subclass({
-    templateUpdate: function(){
-      var cls = this.data.obj;
+  var actionsPanel = new basis.ui.Node({
+    handler: {
+      update: function(){
+        var cls = this.data.obj;
 
-      if (cls && basis.Class.isClass(cls))
-      {
-        var action = cls.prototype.action;
-        var childNodes = [];
-        if (action)
+        if (cls && basis.Class.isClass(cls))
         {
-          for (var actionName in action)
-            if (actionName != '__extend__' && typeof action[actionName] == 'function')
-            {
-              childNodes.push({
-                data: {
-                  name: actionName,
-                  action: action[actionName],
-                  used: true
-                }
-              });
-            }
-        }
+          var action = cls.prototype.action;
+          var childNodes = [];
 
-        this.setChildNodes(childNodes);
+          if (action)
+            for (var actionName in action)
+              if (actionName != '__extend__' && typeof action[actionName] == 'function')
+                childNodes.push({
+                  data: {
+                    name: actionName,
+                    action: action[actionName],
+                    used: true
+                  }
+                });
+
+          this.setChildNodes(childNodes);
+        }
       }
     },
 
     template: resource('./template/actionsPanel.tmpl'),
 
     sorting: 'data.name',
-
     childClass: {
       expanded: false,
       emit_toggle: basis.event.create('toggle'),
 
       template: resource('./template/actionsPanelItem.tmpl'),
-
       binding: {
         name: 'data:',
-        used: function(node){
-          return node.data.used ? 'used' : '';
-        },
+        used: 'data:',
         expanded: {
           events: 'toggle',
-          getter: function(node){
-            return node.expanded ? 'expanded' : '';
-          }
+          getter: 'expanded'
         },
         source: 'satellite:'
       },
-
       action: {
         toggle: function(){
           this.expanded = !this.expanded;
@@ -161,7 +145,7 @@
           events: 'toggle',
           existsIf: basis.getter('expanded'),
           instanceOf: basis.ui.code.SourceCode.subclass({
-            autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
+            autoDelegate: true,
             lang: 'js',
             lineNumber: false,
             codeGetter: function(node){
@@ -174,39 +158,37 @@
     }
   });
 
+  function tmplUrl(fn){
+    return {
+      events: 'update',
+      getter: function(node){
+        var template = node.data.obj && node.data.obj.prototype.template;
+        return fn(template && template.source && template.source.url);
+      }
+    };
+  }
 
  /**
   * @class
   */
   var TemplatePanel = basis.ui.Node.subclass({
     template: resource('./template/templatePanel.tmpl'),
-
     binding: {
       bindings: 'satellite:',
       actions: 'satellite:',
-      isExternalFile: function(node){
-        var template = node.data.obj && node.data.obj.prototype.template;
-        if (template && template.source && template.source.url)
-          return 'isExternalFile';
-        return '';
-      },
-      externalFileCaption: function(node){
-        var template = node.data.obj && node.data.obj.prototype.template;
-        return basis.path.basename((template && template.source && template.source.url) || '');
-      },
-      externalFileUrl: function(node){
-        var template = node.data.obj && node.data.obj.prototype.template;
-        var url = (template && template.source && template.source.url) || '';
-        
+      isExternalFile: tmplUrl(Boolean),
+      externalFileCaption: tmplUrl(function(url){
+        return basis.path.basename(url || '');
+      }),
+      externalFileUrl: tmplUrl(function(url){
         return url && basis.path.relative(url);
-      }
+      })
     },
 
     emit_templateViewChanged: basis.event.create('templateViewChanged'),
 
-    templateUpdate: function(){
+    processTemplate: function(){
       var rootCfg = {};
-
       var template = this.data.obj.prototype.template;
 
       if (this.templateView === template)
@@ -214,29 +196,27 @@
 
       if (template)
       {
+        if (!template.docsCache_)
+          template.docsCache_ = buildTemplateTree(
+            basis.template.getDeclFromSource(template.source, template.baseURI).tokens
+          );
+
         rootCfg.childNodes = template.docsCache_;
-
-        if (!rootCfg.childNodes)
-        {
-          rootCfg.childNodes = [];
-
-          var decl = basis.template.getDeclFromSource(template.source, template.baseURI);
-
-          rootCfg.childNodes = buildTemplateTree(decl.tokens);
-        }
       }
 
       this.setChildNodes(rootCfg.childNodes || [], true);
-      this.updateBind('isExternalFile');
-      this.updateBind('externalFileCaption');
-      this.updateBind('externalFileUrl');
 
-      if (template)
-        template.docsCache_ = basis.array.from(this.childNodes);
-
-      var oldTemplate = this.templateView;
       this.templateView = template;
-      this.emit_templateViewChanged(oldTemplate);
+      this.emit_templateViewChanged();
+    },
+    init: function(){
+      basis.ui.Node.prototype.init.call(this);
+      this.processTemplate();
+    },
+    handler: {
+      update: function(){
+        this.processTemplate();
+      }
     },
 
     satellite: {
@@ -244,13 +224,13 @@
         events: 'templateViewChanged',
         existsIf: basis.getter('templateView'),
         delegate: basis.fn.$self,
-        instanceOf: BindingsPanel
+        instance: bindingsPanel
       },
       actions: {
         events: 'templateViewChanged',
         existsIf: basis.getter('templateView'),
         delegate: basis.fn.$self,
-        instanceOf: ActionsPanel
+        instance: actionsPanel
       }
     }
   });

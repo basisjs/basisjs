@@ -1,11 +1,11 @@
-<b:define name="completed" type="bool"/>
+<b:define name="hidden" type="bool"/>
 
-<footer id="footer">
+<footer id="footer" class="{hidden}">
   <span id="todo-count">
     <strong>{active}</strong> {l10n:itemsLeft.{active}} left
   </span>
   <!--{filters}-->
-  <button id="clear-completed" class="has-{completed}" event-click="clearCompleted">
+  <button id="clear-completed" b:show="{completed}" event-click="clearCompleted">
     Clear completed ({completed})
   </button>
 </footer>

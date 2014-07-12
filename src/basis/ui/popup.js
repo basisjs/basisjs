@@ -109,6 +109,20 @@
     return DIR_MAP[typeof value == 'string' && value.toUpperCase()] || valueOnFailure;
   }
 
+  function resolveRelBox(relPoint, offsetParent){
+    if (Array.isArray(relPoint))
+      return {
+        left: relPoint[0],
+        right: relPoint[0],
+        width: 0,
+        top: relPoint[1],
+        bottom: relPoint[1],
+        height: 0
+      };
+
+    return getBoundingRect(relPoint, offsetParent);
+  }
+
 
  /**
   * @class
@@ -145,6 +159,7 @@
 
     visible: false,
     autorotate: false,
+    autoRealign: true,
     zIndex: 0,
 
     dir: '',
@@ -243,7 +258,7 @@
       if (this.visible && this.relElement)
       {
         var offsetParent = getOffsetParent(this.element);
-        var box = getBoundingRect(this.relElement, offsetParent);
+        var box = resolveRelBox(this.relElement, offsetParent);
         var viewport = getViewportRect(offsetParent);
         var width = this.element.offsetWidth;
         var height = this.element.offsetHeight;
@@ -254,12 +269,9 @@
         var pointY = dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()];
 
         if (
-            (dir[2] != LEFT && pointX < (width >> (dir[2] == CENTER)))
-            ||
-            (dir[2] != RIGHT && (viewport.width - pointX + viewport.left) < (width >> (dir[2] == CENTER)))
-            ||
-            (dir[3] != TOP && pointY < (height >> (dir[3] == CENTER)))
-            ||
+            (dir[2] != LEFT && pointX < (width >> (dir[2] == CENTER))) ||
+            (dir[2] != RIGHT && (viewport.width - pointX + viewport.left) < (width >> (dir[2] == CENTER))) ||
+            (dir[3] != TOP && pointY < (height >> (dir[3] == CENTER))) ||
             (dir[3] != BOTTOM && (viewport.height - pointY + viewport.top) < (height >> (dir[3] == CENTER)))
            )
           return false;
@@ -318,7 +330,7 @@
 
         if (!point)
         {
-          var box = getBoundingRect(this.relElement, offsetParent);
+          var box = resolveRelBox(this.relElement, offsetParent);
 
           point = {
             x: dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()],
@@ -366,7 +378,7 @@
     },
     show: function(relElement, dir, orientation){
       // assign new offset element
-      this.relElement = DOM.get(relElement) || this.relElement;
+      this.relElement = Array.isArray(relElement) ? relElement : DOM.get(relElement) || this.relElement;
 
       // set up direction and orientation
       this.setLayout(normalizeDir(dir, this.defaultDir), orientation);
@@ -489,7 +501,8 @@
     },
     realignAll: function(){
       for (var popup = this.firstChild; popup; popup = popup.nextSibling)
-        popup.realign();
+        if (popup.autoRealign)
+          popup.realign();
     },
     clear: function(){
       if (this.firstChild)
@@ -549,8 +562,14 @@
       while (popup)
       {
         var next = popup.previousSibling;
-        if (popup.hideOnScroll && popup.relElement && popup.offsetParent !== sender && DOM.parentOf(sender, popup.relElement))
+
+        if (popup.hideOnScroll &&
+            popup.relElement &&
+            !Array.isArray(popup.relElement) &&
+            popup.offsetParent !== sender &&
+            DOM.parentOf(sender, popup.relElement))
           popup.hide();
+
         popup = next;
       }
     }

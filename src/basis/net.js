@@ -82,10 +82,14 @@
     }
   });
 
- /**
-  * @class AbstractRequest
-  */
 
+  //
+  // Request
+  //
+
+ /**
+  * @class
+  */
   var AbstractRequest = DataObject.subclass({
     className: namespace + '.AbstractRequest',
 
@@ -135,10 +139,36 @@
     }
   });
 
- /**
-  * @class AbstractTransport
-  */
 
+  //
+  // Transport
+  //
+
+  var TRANSPORT_REQUEST_HANDLER = {
+    start: function(sender, request){
+      basis.array.add(this.inprogressRequests, request);
+    },
+    complete: function(sender, request){
+      basis.array.remove(this.inprogressRequests, request);
+    }
+  };
+
+  var TRANSPORT_POOL_LIMIT_HANDLER = {
+    complete: function(){
+      var nextRequest = this.requestQueue.shift();
+      if (nextRequest)
+      {
+        basis.nextTick(function(){
+          nextRequest.doRequest();
+        });
+      }
+    }
+  };
+
+
+ /**
+  * @class
+  */
   var AbstractTransport = Emitter.subclass({
     className: namespace + '.AbstractTransport',
 
@@ -268,28 +298,6 @@
     }
   });
 
-  var TRANSPORT_REQUEST_HANDLER = {
-    start: function(sender, request){
-      basis.array.add(this.inprogressRequests, request);
-    },
-    complete: function(sender, request){
-      basis.array.remove(this.inprogressRequests, request);
-    }
-  };
-
-  var TRANSPORT_POOL_LIMIT_HANDLER = {
-    complete: function(){
-      var nextRequest = this.requestQueue.shift();
-      if (nextRequest)
-      {
-        basis.nextTick(function(){
-          nextRequest.doRequest();
-        });
-      }
-    }
-  };
-
-  
 
   //
   // export names

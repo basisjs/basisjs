@@ -57,7 +57,7 @@
     basis.require('basis.dom');
     basis.require('basis.ui.button');
     basis.require('basis.ui.window');
-    
+
     // import names
     var DOM = basis.dom;
     var getter = basis.getter;
@@ -73,7 +73,11 @@
       moveable: true,
       title: 'Simple Window',
       closeOnEscape: true,
-      content: DOM.createElement({ css: { padding: '1.5em 1ex' } }, 'Basis is great framework!'),
+      childNodes: [
+        {
+          template: '<div style="padding: 1.5em 1ex">Basis is great framework!</div>'
+        }
+      ],
       buttons: [
         {
           caption: 'OK',
@@ -93,7 +97,7 @@
       buttonCancel: 'Close',
 
       childClass: {
-        template: 
+        template:
           '<div>' +
             '#{id}. {title}' +
           '</div>',

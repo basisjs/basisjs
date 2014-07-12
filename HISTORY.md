@@ -1,3 +1,155 @@
+## 1.3.0 (July 13, 2014)
+
+### Core
+
+- NEW: virtual resources implemented (i.e. `basis.resource.virtual(type, content, baseURI)`)
+- NEW: implement `basis.createSandbox(config)`
+- NEW: use `process.basisjsReadFile(fn)` and `process.basisjsBaseURI` on `node.js` environment if possible (better build process)
+- NEW: `basis.genUID(len)`
+- FIX: `basis.getter()` use unique `basisGetterId_` marker for using several instances of `basis.js` core on one page
+- API: `basis.resource#update` doesn't convert new content to string anymore
+- API: pass current prototype state to function's class extensions for easier method overload (i.e. `SomeClass.subclass(function(superProto, currentProto){ /* ... */ })`)
+- API: rework config processing
+  - `basis.processConfig(object)` to process config (available in dev mode only)
+  - new section `modules` to define modules (better setup for module base path and index file, multiple autoload)
+  - deprecate `path` section (use `modules` instead)
+
+### Data
+
+#### Object
+
+- NEW: `basis.data.resolveObject()` (similar to `basis.data.resolveDataset()`)
+- NEW: `basis.data.object.Merge` listen for custom source by name (i.e. `listen: { 'source:name': { /* handler */ } }`)
+- NEW: `basis.data.object.Merge` support for different field names for source and instance (i.e. `fieldName: 'source:sourceFieldName'`)
+- FIX: `basis.data.object.Merge` adds own fields marker (i.e. `-`) to sources by mistake
+
+#### Entity
+
+- NEW: `Date` field type (convert `ISO` date string or number to date, use date instance as is, accept `null`, ignore new value otherwise)
+- NEW: multiple indexes for one instance
+- NEW: `basis.entity.getIndexByName(indexName)`
+- NEW: `basis.entity.getByIndex(indexName, value)`
+- NEW: `basis.entity.resolve(type, value)` (works like `Type(value)`)
+- NEW: export `basis.entity.ConcatStringField()`
+- API: unify `basis.entity.EntityTypeWrapper` and `basis.entity.EntitySetWrapper`
+  - `extendClass` and `extendReader` methods return type wrapper
+  - deprecate `entityType` and `entitySetType` properties (use `type` instead)
+  - deprecate `extend` methods
+- FIX: better `Entity` and `EntitySet` type names in dev mode
+
+#### Dataset
+
+- NEW: `basis.data.resolveDataset()` support for values with binding bridge interface (i.e. `basis.Token`)
+- IMPROVE: mix `inserted` and `deleted` in accumulate delta if possible (reduce event count)
+- API: `basis.data` cache `ReadOblyDataset#emit_itemsChanged` before `setAccumulateState` starts to use current (probably overrided) method
+- FIX: issue with `itemsChanged` when delta may be corrupted in some complex cases 
+- NEW: implement `basis.data.ReadOnlyDataset#getValues()` method
+- API: `clear` methods in `basis.data.dataset` don't reset sources anymore
+- NEW: implement `emit_ruleChanged` event for all datasets in `basis.data.dataset`
+- API: uniform `setRule` methods in `basis.data.dataset` (wrap new value by `basis.getter`, emits `ruleChanged` event and returns `delta`)
+- API: `basis.data.dataset` set `ruleValue` property not only for dataset, but for dataset wrapper too
+- NEW: `basis.data.dataset.Merge#hasSource(value)`
+- NEW: `basis.data.dataset.Merge` is now support for any values as source if it could be resolved in dataset by `basis.data.resolveDataset()`
+- NEW: use `resolveDataset` for `basis.data.Subtract#minuend` and `basis.data.Subtract#subtrahend`
+- FIX: `basis.data.dataset.Subtract` bug, when items that not in `minuend` removes from `subtrahend` wrongly adds to set- 
+- NEW: `basis.data.dataset.Extract` dataset, that recursive extracts items by source items (rule could returns `basis.data.Object` or `basis.data.ReadOblyDataset`)
+
+#### Value
+
+- API: `basis.data.Value.from()` instances are readonly now
+- NEW: subscription for `basis.data.Value#value` property (i.e. `basis.data.SUBSCRIPTION.VALUE`)
+- API: use counter for `basis.data.Value#locked` instead of `true`/`false`
+- NEW: `basis.data.Value#isLocked()` method implemented
+- FIX: `basis.data.Value` correctly works with getters now
+- NEW: new index `basis.data.index.distinct()` that counts unique values in dataset
+
+#### Map
+
+- NEW: `basis.data.KeyObjectMap#autoDestroyMembers` (`true` by default)
+
+### Template
+
+- CHANGE: styles of included templates are always going before own template styles
+- CHANGE: apply defines per include but not per template
+- NEW: support for `id:` references in `<b:include>` (i.e. `<b:include src="id:foo"/>`)
+- NEW: support for inline `<b:style>`
+- NEW: style isolation, new `<b:isolate>` tag and `isolate` attribute for `<b:include>`
+- NEW: style namespaces, `ns` or `namespace` attributes on `<b:style>`
+- NEW: `b:show` and `b:hide` attributes
+- NEW: auto close `html` singleton tags (like `<input>`, `<img>`, `<br>` etc)
+- NEW: build-in actions to manage events `prevent-default` and `stop-propagation`
+- FIX: use unique `basisTemplateId` marker for using several `basis.js` instances on one page
+- FIX: better recursion prevention (detect root template include)
+- FIX: treat `indeterminate` as special attribute for `<input>`
+- FIX: treat `value` as special attribute for `<select>`
+- FIX: attribute expressions doesn't update `DOM` in some cases
+- IMPROVE: work with resources like styles more universal to support formats other than `.css`
+
+### UI
+
+- NEW: named `listen` for satellites (i.e. `listen: { 'satellite:name': { /* handler */ } }`)
+- NEW: `basis.ui.debug_notifier()` and `basis.ui.debug_getInstances()` functions to inspect `basis.ui` instances (available in dev mode only)
+- API: use `basis.ui.Node#isDisabled()` method in `disabled` and `enabled` bindings instead of custom code
+- API: `basis.ui` emit `templateChanged` event only on template change, but not on instance create
+- FIX: `basis.ui.Node`'s template instance changing bug (old template handler didn't remove)
+- NEW: now possible set point as `relElement` on init or by `basis.ui.popup.Popup#show()` method (i.e. `popup.show([50, 100])`)
+- NEW: `basis.ui.popup.Popup#autoRealign` boolean property to prevent automatic realign on window resize
+- API: deprecate `basis.ui.calendar.Calendar#sections` (use `childNodes` instead)
+- FIX: broken `basis.ui.calendar.Calendar#selectDate()` method
+- API: `basis.ui.form.FormContent` is now checks field is disabled on field commit
+- NEW: `basis.ui.field.Checkbox#indeterminate` implemented
+- API: `basis.ui.field.validator.Required()` is trim value before check
+- NEW: `basis.ui.field.ComboboxItem` is now selectable when using as satellite
+- NEW: `basis.ui.pageslider.PageSlider` supports for vertical scroll now
+
+### Transport
+
+- NEW: `basis.net.ajax.Transport` completes request's `routerParams` by transport's `routerParams`
+- NEW: `basis.net.ajax.Request#sendDelay` property to delay `send` call (`null` by default)
+- FIX: `basis.net.ajax` should show actual request `url` on json parse failure, but not url template
+- FIX: add missed `basis.net.jsonp` to `basis.all`
+
+### Devpanel
+
+- restructing, refactoring, isolate styles
+- tweak styles to be stable for style reset
+- use `basis.js` sandbox for devpanel
+- init work on `basis.ui` inspecting
+- do nothing in build mode
+
+### Other
+
+- API: `basis.date` show warnings instead of exception throw
+- NEW: `basis.dom.event` adds `target` property (alias for `sender`) to wrapped event object
+- FIX: `basis.l10n.Token#computeToken` is not fallback propertly
+- NEW: `basis.dragdrop` implement `DragDropElement#ignoreTarget` to ignore element that can't be a drag trigger (by default those elements are `<input>`, `<textarea>`, `<select>` and `<button>`)
+- NEW: various improvements on `basis.dragdrop.MoveableElement` class, make it move universal and adaptive
+
+### Renaming
+
+- `basis.array.sortAsObject` → `basis.array.sort`
+- `basis.data.AbstractDataset` → `basis.data.ReadOnlyDataset`
+- `basis.data.DatasetAdapter` → `basis.data.ResolveAdapter`
+- `basis.data.dataset.Subset` → `basis.data.dataset.Filter`
+
+### Removals
+
+- remove support for `extProto` in `basis-config`
+- `basis.setImmediate` and `basis.nextTick` doesn't accept non-function values anymore
+- `basis.platformFeature` (use `basis.cssom.features` instead)
+- `basis.data.ReadOnlyDataset#clear`
+- `basis.data.dataset` drop fallback for `ruleEvents` as object
+- `basis.dragdrop.DragDropElement#containerGetter`
+- `basis.dom.wrapper.AbstractNode#satelliteConfig`
+- `basis.dom.wrapper.GroupingNode#groupGetter`
+- `basis.dom.wrapper` drop support for `hook` in satellite config
+- `basis.ui.Node#templateUpdate`
+- `basis.ui.Node#content`
+- `basis.ui.table` drop support for `content` in header config
+- `basis.ui.table` drop support for `content` in footer config
+- `basis.template` remove support for `<b:resource>` (use `<b:style>` instead)
+
+
 ## 1.2.5 (June 3, 2014)
 
 - FIX: fix issues with request concurrency and request abort in `basis.net.jsonp`

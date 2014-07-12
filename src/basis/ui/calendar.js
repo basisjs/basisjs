@@ -227,6 +227,9 @@
       }
     },
 
+    isPeriodEnabled: function(){
+      return true;
+    },
     setPeriod: function(period, selectedDate, rebuild){
       if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
@@ -333,7 +336,6 @@
     init: function(){
       this.childNodes = getPeriods(this).map(function(period){
         return {
-          isPeriodEnabled: this.isPeriodEnabled,
           nodePeriodName: this.nodePeriodName
         };
       }, this);
@@ -359,6 +361,9 @@
       return null;
     },
 
+    isPeriodEnabled: function(){
+      return true;
+    },
     setPeriod: function(period, rebuild){
       if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
@@ -587,8 +592,13 @@
       if (delta.inserted)
         for (var i = 0, section; section = delta.inserted[i++];)
         {
+          section.isPeriodEnabled = this.isPeriodEnabled;
+          section.childNodes.forEach(function(child){
+            child.isPeriodEnabled = this.isPeriodEnabled;
+          }, this);
           section.setViewDate(this.date.value);
           this.selectedDate.link(section, section.setSelectedDate);
+          section.rebuild();
         }
 
       if (delta.deleted)
@@ -647,11 +657,23 @@
 
     selection: true,
     childClass: CalendarSection,
-    childFactory: function(){
+    childFactory: function(nameOrClass){
+      var SectionClass = nameOrClass;
+
+      if (typeof nameOrClass == 'string')
+        SectionClass = CalendarSection[nameOrClass];
+
+      if (!basis.Class.isClass(SectionClass) || !SectionClass.isSubclassOf(CalendarSection))
+      {
+        /** @cut */ basis.dev.warn(nameOrClass + ' is not a valid value for child of basis.ui.calendat.Calendar');
+        return;
+      }
+
+      return new SectionClass();
     },
 
     date: null,
-    sections: ['Month', 'Year', 'YearDecade'], /*'Quarter', 'YearQuarters', 'Century'*/
+    childNodes: ['Month', 'Year', 'YearDecade'], /*'Quarter', 'YearQuarters', 'Century'*/
 
     // enable/disable periods
     minDate: null,
@@ -670,18 +692,18 @@
       this.selectedDate = new basis.data.Value({ value: new Date(this.date || now) });
       this.date = new basis.data.Value({ value: new Date(this.date || now) });
 
+      // insert sections
+      this.isPeriodEnabled = this.isPeriodEnabled.bind(this);
+
       // inherit
       UINode.prototype.init.call(this);
 
-      // insert sections
-      this.isPeriodEnabled = this.isPeriodEnabled.bind(this);
       if (this.sections)
-        this.setChildNodes(this.sections.map(function(sectionClass){
-          return new CalendarSection[sectionClass]({
-            isPeriodEnabled: this.isPeriodEnabled,
-            selectedDate: this.selectedDate.value
-          });
-        }, this));
+      {
+        // deprecated in 1.3.0
+        /** @cut */ basis.dev.warn('basis.ui.calendar.Calendar#sections is deprecated, use childNodes instead');
+        this.setChildNodes(this.sections);
+      }
     },
 
     setMinDate: function(date){
@@ -725,7 +747,7 @@
     // date change
     selectDate: function(date){
       if (date - this.date.value != 0)  // test for date equal
-        basis.date.set(this.date, date);
+        this.date.set(new Date(date));
     },
 
     //
@@ -857,15 +879,15 @@
       function checkMapDays(mode, month, sday, tday){
         var result;
         if (!mode)
-          // first month:  check only for last days
-          result = month >> sday;
-        else if (mode == 1)
-          // last month:   check only for first days
-          result = month & DAY_COUNT_MASK[tday + 1]; // MAX_DAY_MASK >> 31 - tday
-        else
-          // middle month: check full month
-          result = month;
-        return result;
+          // first month: check only for last days
+          return month >> sday;
+
+        if (mode == 1)
+          // last month: check only for first days
+          return month & DAY_COUNT_MASK[tday + 1]; // MAX_DAY_MASK >> 31 - tday
+
+        // middle month: check full month
+        return month;
       }
 
       // check for min/max dates
@@ -899,10 +921,8 @@
           if (monthCount == 0)
           {
             // check for day period
-            return !(year  = map[s.year])     // full year enabled, return true
-                   ||
-                   !(month = year[s.month])   // full month enabled, return true
-                   ||
+            return !(year  = map[s.year]) ||   // full year enabled, return true
+                   !(month = year[s.month]) || // full month enabled, return true
                    (((month ^ MAX_DAY_MASK) >> s.day) & DAY_COUNT_MASK[e.day - s.day + 1]);  // MAX_DAY_MASK >> 31 - (t.day - s.day + 1)
           }
 
@@ -942,10 +962,8 @@
           //
           if (monthCount == 0)
             // check for day period
-            return (year  = map[s.year])      // year absent return false
-                   &&
-                   (month = year[s.month])    // month absent return false
-                   &&
+            return (year  = map[s.year]) &&   // year absent return false
+                   (month = year[s.month]) && // month absent return false
                    ((month >> s.day) & DAY_COUNT_MASK[e.day - s.day + 1]);  // MAX_DAY_MASK >> 31 - (t.day - s.day + 1)
 
           //

@@ -45,6 +45,7 @@
     var bindingList;
     var markedElementList;
     var rootPath;
+    var attrExprId;
 
     function putRefs(refs, pathIdx){
       for (var i = 0, refName; refName = refs[i]; i++)
@@ -65,7 +66,7 @@
       bindingList.push(binding);
     }
 
-    function processTokens(tokens, path, noTextBug){
+    function processTokens(tokens, path, noTextBug, templateMarker){
       var localPath;
       var refs;
       var myRef;
@@ -117,7 +118,7 @@
           myRef = -1;
 
           if (path == rootPath)
-            markedElementList.push(localPath + '.basisTemplateId');
+            markedElementList.push(localPath + '.' + templateMarker);
 
           if (!explicitRef)
           {
@@ -160,13 +161,17 @@
 
                 case 'style':
                   for (var k = 0, property; property = bindings[k]; k++)
+                  {
+                    attrExprId++;
                     for (var m = 0, bindName; bindName = property[0][m]; m++)
-                      putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2]]);
+                      putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2], property[3], attrExprId]);
+                  }
                 break;
 
                 default:
+                  attrExprId++;
                   for (var k = 0, bindName; bindName = bindings[0][k]; k++)
-                    putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]);
+                    putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME], attrExprId]);
               }
             }
           }
@@ -180,14 +185,15 @@
       }
     }
 
-    return function(tokens, path, noTextBug){
+    return function(tokens, path, noTextBug, templateMarker){
       pathList = [];
       refList = [];
       bindingList = [];
       markedElementList = [];
       rootPath = path || '_';
+      attrExprId = 0;
 
-      processTokens(tokens, rootPath, noTextBug);
+      processTokens(tokens, rootPath, noTextBug, templateMarker);
 
       return {
         path: pathList,
@@ -208,6 +214,7 @@
     var SPECIAL_ATTR_MAP = {
       disabled: '*',  // any tag
       checked: ['input'],
+      indeterminate: ['input'],
       value: ['input', 'textarea', 'select'],
       minlength: ['input'],
       maxlength: ['input'],
@@ -221,7 +228,8 @@
       checked: true,
       selected: true,
       readonly: true,
-      multiple: true
+      multiple: true,
+      indeterminate: true
     };
 
     var bindFunctions = {
@@ -303,11 +311,13 @@
       var l10nCompute = [];
       var l10nBindings = {};
       var l10nBindSeed = 1;
+      var specialAttr;
+      var attrExprId;
+      var attrExprMap = {};
+      /** @cut */ var debugList = [];
       var toolsUsed = {
         resolve: true
       };
-      var specialAttr;
-      /** @cut */ var debugList = [];
 
       for (var i = 0, binding; binding = bindings[i]; i++)
       {
@@ -481,14 +491,6 @@
         {
           var attrName = binding[ATTR_NAME];
 
-          /** @cut */ debugList.push('{' + [
-          /** @cut */   'binding:"' + bindName + '"',
-          /** @cut */   'dom:' + domRef,
-          /** @cut */   'attr:"' + attrName + '"',
-          /** @cut */   'val:' + bindVar,
-          /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
-          /** @cut */ ] + '}');
-
           switch (attrName)
           {
             case 'class':
@@ -563,15 +565,36 @@
               break;
 
             case 'style':
-              varList.push(bindVar + '=""');
-              putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding, false, l10nBindings));
+              var expr = buildAttrExpression(binding, false, l10nBindings);
+
+              // resolve expression bind var
+              attrExprId = binding[8];
+              if (!attrExprMap[attrExprId])
+              {
+                attrExprMap[attrExprId] = bindVar;
+                varList.push(bindVar + '=' + (binding[7] == 'hide' ? '""' : '"none"'));
+              }
+
+              if (binding[7])
+                expr = expr.replace(/\+""$/, '') + (binding[7] == 'hide' ? '?"none":""' : '?"":"none"');
+
+              bindVar = attrExprMap[attrExprId];
+              putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, expr);
 
               break;
 
             default:
               specialAttr = SPECIAL_ATTR_MAP[attrName];
 
-              varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n', l10nBindings));
+              // resolve expression bind var
+              attrExprId = binding[7];
+              if (!attrExprMap[attrExprId])
+              {
+                varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n', l10nBindings));
+                attrExprMap[attrExprId] = bindVar;
+              }
+
+              bindVar = attrExprMap[attrExprId];
               putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar,
                 specialAttr && SPECIAL_ATTR_SINGLE[attrName]
                   ? buildAttrExpression(binding, 'bool', l10nBindings) + '?"' + attrName + '":""'
@@ -584,6 +607,14 @@
                     domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' + bindVar : bindVar) + ';'
                 );
           }
+
+          /** @cut */ debugList.push('{' + [
+          /** @cut */   'binding:"' + bindName + '"',
+          /** @cut */   'dom:' + domRef,
+          /** @cut */   'attr:"' + attrName + '"',
+          /** @cut */   'val:' + bindVar,
+          /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+          /** @cut */ ] + '}');
         }
       }
 
@@ -654,7 +685,7 @@
     /** @cut */ }
   }
 
-  var getFunctions = function(tokens, debug, uri, source, noTextBug){
+  var getFunctions = function(tokens, debug, uri, source, noTextBug, templateMarker){
     // try get functions from cache by templateId
     var fn = tmplFunctions[uri && basis.path.relative(uri)];
 
@@ -662,7 +693,7 @@
       return fn;
 
     // build functions
-    var paths = buildPathes(tokens, '_', noTextBug);
+    var paths = buildPathes(tokens, '_', noTextBug, templateMarker);
     var bindings = buildBindings(paths.binding);
     var objectRefs = paths.markedElementList.join('=');
     var createInstance;

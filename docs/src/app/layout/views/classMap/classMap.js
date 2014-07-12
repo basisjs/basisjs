@@ -29,7 +29,6 @@
 
   var ClsNode = basis.ui.Node.subclass({
     template: resource('./template/classMapNode.tmpl'),
-
     binding: {
       path: 'data:',
       className: {
@@ -37,22 +36,22 @@
         getter: function(node){
           return node.data.className.split(/\./).pop();
         }
+      },
+      hasSubclasses: {
+        events: 'childNodesModified',
+        getter: function(node){
+          return node.firstChild ? 'has-subclasses' : '';
+        }
       }
     },
 
-    templateUpdate: function(tmpl, eventName, delta){
-      if (!eventName || 'clsId' in delta)
-        this.setDataSource(clsSplitBySuper.getSubset(this.data.clsId));
-    },
-    emit_childNodesModified: function(delta){
-      basis.ui.Node.prototype.emit_childNodesModified.call(this, delta);
-      classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
-    }, 
+    dataSource: basis.data.Value.factory('update', function(node){
+      return clsSplitBySuper.getSubset(this.data.clsId);
+    }),
 
-    sorting: basis.getter('data.className')
+    sorting: basis.getter('data.className'),
+    childClass: Class.SELF
   });
-
-  ClsNode.prototype.childClass = ClsNode;
 
   var classMap = new basis.ui.scroller.ScrollPanel({
     autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,

@@ -15,31 +15,58 @@
  *
  * Content overview:
  * - util functions
+ * - basis.getter
  * - console method wrappers (basis.dev)
- * - basis.path (path utils)
+ * - timer functions (basis.setImmediate, basis.clearImmediate, basis.nextTick)
+ * - path utils (basis.path)
  * - process config (basis.config)
  * - basis.namespace
  * - basis.Class namespace (provides inheritance)
  * - basis.Token
  * - basis.resource
  * - basis.require
- * - buildin class extensions and fixes
- *   o Function
- *   o Array
- *   o String
- *   o Number
- *   o Date (more extensions for Date in src/basis/date.js)
+ * - polyfills for `Function#bind`, `Array.isArray`, `Array#indexOf`, `Array#lastIndexOf`, `Array#forEach`, `Array#map`, `Array#filter`, `Array#some`, `Array#every`, `Array#reduce`, `String#trim`, `Date#now`
+ * - function to work with primitives
+ *   - Function
+ *   - Array
+ *   - String
+ *   - Number
  * - basis.ready
+ * - async document imterface (basis.doc)
  * - basis.cleaner
  */
 
-;(function(global){ // global is current context (`window` in browser and `global` on node.js)
+// global is current context (`window` in browser and `global` on node.js)
+;(function createBasisInstance(global, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.2.5';
+  var VERSION = '1.3.0';
 
   var document = global.document;
-  var Object_toString = Object.prototype.toString;
+  var toString = Object.prototype.toString;
+
+
+ /**
+  * Generates unique id.
+  * random() + performance.now() + Date.now()
+  * @param {number=} len Required length of id (16 by default).
+  * @returns {string} Generated id.
+  */
+  function genUID(len){
+    function base36(val){
+      return parseInt(Number(val), 10).toString(36);
+    }
+
+    var result = (global.performance ? base36(global.performance.now()) : '') + base36(new Date);
+
+    if (!len)
+      len = 16;
+
+    while (result.length < len)
+      result = base36(1e12 * Math.random()) + result;
+
+    return result.substr(result.length - len, len);
+  }
 
 
  /**
@@ -268,6 +295,7 @@
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
+    var ID = 'basisGetterId' + genUID() + '_';
     var modificatorSeed = 1;
     var simplePath = /^[a-z$_][a-z$_0-9]*(\.[a-z$_][a-z$_0-9]*)*$/i;
 
@@ -284,6 +312,9 @@
         var baz = parts[2];
         var fn;
 
+        // This approach helps produce function that could be
+        // optimized (inlined) by js engine. In most cases path contains
+        // from 1 to 3 parts and we don't use a loop in those cases.
         switch (parts.length)
         {
           case 1:
@@ -328,7 +359,7 @@
       return new Function('object', 'return object != null ? object.' + path + ' : object');
     }
 
-    return function(path, modificator){
+    var getterFn = function(path, modificator){
       var func;
       var result;
       var getterId;
@@ -340,7 +371,7 @@
       // resolve getter by path
       if (typeof path == 'function')
       {
-        getterId = path.basisGetterId_;
+        getterId = path[ID];
 
         // path is function
         if (getterId)
@@ -361,8 +392,8 @@
 
           // add to cache
           getterId = getterMap.push(func);
-          path.basisGetterId_ = -getterId;
-          func.basisGetterId_ = getterId;
+          path[ID] = -getterId;
+          func[ID] = getterId;
         }
       }
       else
@@ -373,7 +404,7 @@
         if (func)
         {
           // resolve getter id
-          getterId = func.basisGetterId_;
+          getterId = func[ID];
         }
         else
         {
@@ -384,7 +415,7 @@
 
           // add to cache
           getterId = getterMap.push(func);
-          func.basisGetterId_ = getterId;
+          func[ID] = getterId;
           pathCache[path] = func;
         }
       }
@@ -426,7 +457,7 @@
       {
         case 'string':
           result = function(object){
-            return String_extensions.format(modificator, func(object));
+            return stringFunctions.format(modificator, func(object));
           };
           break;
 
@@ -466,7 +497,7 @@
         result.mod = modificator;
 
         // cache new getter
-        result.basisGetterId_ = getterMap.push(result);
+        result[ID] = getterMap.push(result);
       }
       else
       {
@@ -478,6 +509,9 @@
       return result;
     };
 
+    getterFn.ID = ID;
+
+    return getterFn;
   })();
 
   var nullGetter = extend(function(){}, {
@@ -608,9 +642,15 @@
         var taskId = 1;
 
         // emulate setImmediate
-        setImmediate = function(){
+        setImmediate = function(fn/*, ..args */){
+          if (typeof fn != 'function')
+          {
+            /** @cut */ consoleMethods.warn('basis.setImmediate() and basis.nextTick() accept functions only (call ignored)');
+            return;
+          }
+
           taskById[++taskId] = {
-            fn: arguments[0],
+            fn: fn,
             args: arrayFrom(arguments, 1)
           };
 
@@ -633,15 +673,7 @@
           if (task)
           {
             delete taskById[id];
-
-            if (typeof task.fn == 'function')
-              task.fn.apply(undefined, task.args);
-            else
-            {
-              (global.execScript || function(fn){
-                global['eval'].call(global, fn);
-              })(String(task.fn));
-            }
+            return task.fn.apply(undefined, task.args);
           }
         };
       })();
@@ -770,7 +802,7 @@
   // path utils
   //
 
-  var NODE_ENV = typeof process == 'object' && Object_toString.call(process) == '[object process]';
+  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
 
  /**
   * Utilities for handling and transforming file paths. All these functions perform
@@ -789,13 +821,14 @@
     var ORIGIN_RX = /^(?:[a-zA-Z0-9\-]+:)?\/\/[^\/]+\/?/;
     var SEARCH_HASH_RX = /[\?#].*$/;
 
-    var utils = {};
-    var origin = '';
     var baseURI;
+    var origin;
+    var utils;
 
     if (NODE_ENV)
     {
-      var path = require('path').resolve('.').replace(/\\/g, '/');
+      // try to use baseURI from process, it may be provided by parent module
+      var path = (process.basisjsBaseURI || require('path').resolve('.')).replace(/\\/g, '/'); // on Windows path contains backslashes
       baseURI = path.replace(/^[^\/]*/, '');
       origin = path.replace(/\/.*/, '');
     }
@@ -1027,101 +1060,184 @@
   * @namespace basis
   */
 
-  var basisFilename = '';
+  var basisFilename = __basisFilename || '';
+  var config = fetchConfig();
 
  /**
-  * basis.js options read from script's `basis-config` or `data-basis-config` attribute.
-  *
-  * Special processing options:
-  * - autoload: namespace that must be loaded right after core loaded
-  * - path: dictionary of paths for root namespaces
-  *
-  * Other options copy into basis.config as is.
+  * Fetch basis.js options from script's `basis-config` or `data-basis-config` attribute.
   */
-  var config = (function(){
-    var basisBaseURI = '';
-    var config = {
-      extProto: false
-    };
+  function fetchConfig(){
+    var config = __config;
 
-    if (NODE_ENV)
+    if (!config)
     {
-      // node.js env
-      basisFilename = __filename;
-      basisBaseURI = __dirname;
-    }
-    else
-    {
-      // browser env
-      var scripts = document.getElementsByTagName('script');
-      for (var i = 0, scriptEl; scriptEl = scripts[i]; i++)
+      if (NODE_ENV)
       {
-        var configAttrNode = scriptEl.getAttributeNode('data-basis-config') || scriptEl.getAttributeNode('basis-config');
-        if (configAttrNode)
-        {
-          try {
-            extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
-          } catch(e) {
-            /** @cut */ consoleMethods.error('basis.js config parse fault: ' + e);
-          }
-
-          // warn about extClass in basis-config, this option was introduced in 0.9.8 for preventing using custom methods via buildin clasess
-          // TODO: remove this warning in later versions
-          /** @cut */ if ('extClass' in config) consoleMethods.warn('extClass option in basis-config is not required, basis.js doesn\'t extend buildin classes by custom methods any more');
-
-          var src = scriptEl.src;
-
-          // IE7 and lower doesn't absolutize src value
-          if (!/^[a-z]+:\/\//.test(src))
-          {
-            // absolutize src using anchor, IE absolutize href on <a> cloning
-            var anchor = document.createElement('a');
-            anchor.href = src;
-            src = anchor.cloneNode(false).href;  // NOTE: false is important here,
-                                                 // wrong href transformation otherwise
-          }
-
-          basisFilename = pathUtils.normalize(src);
-          basisBaseURI = pathUtils.dirname(basisFilename);
-
-          break;
-        }
-      }
-    }
-
-    config.path = extend(config.path || {}, {
-      basis: basisBaseURI
-    });
-
-    var autoload = config.autoload;
-    config.autoload = false;
-    if (autoload)
-    {
-      var m = autoload.match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)((?:\.[a-z$_][a-z0-9$_]*)*)$/i);
-      if (m)
-      {
-        if (m[2] != 'basis')
-        {
-          config.autoload = m[2] + (m[3] || '');
-          if (m[1])
-            config.path[m[2]] = m[1].replace(/\/$/, '');
-        }
-        else
-        {
-          /** @cut */ consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
-        }
+        // node.js env
+        basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
       }
       else
       {
-        /** @cut */ consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
+        // browser env
+        var scripts = document.scripts;
+        for (var i = 0, scriptEl; scriptEl = scripts[i]; i++)
+        {
+          var configAttrValue = scriptEl.hasAttribute('basis-config')
+            ? scriptEl.getAttribute('basis-config')
+            : scriptEl.getAttribute('data-basis-config');
+
+          scriptEl.removeAttribute('basis-config');
+          scriptEl.removeAttribute('data-basis-config');
+
+          if (configAttrValue !== null)
+          {
+            basisFilename = pathUtils.normalize(scriptEl.src);
+
+            try {
+              config = Function('return{' + configAttrValue + '}')();
+            } catch(e) {
+              /** @cut */ consoleMethods.error('basis-config: basis.js config parse fault: ' + e);
+            }
+
+            break;
+          }
+        }
       }
     }
 
-    for (var key in config.path)
-      config.path[key] = pathUtils.resolve(config.path[key]) + '/';
+    return processConfig(config);
+  }
+
+ /**
+  * Process config object and returns adopted config.
+  *
+  * Special options:
+  * - autoload: namespace that must be loaded right after core loaded
+  * - path: dictionary of paths for root namespaces
+  * - modules: dictionary of modules with options
+  *
+  * Other options copy into basis.config as is.
+  */
+  function processConfig(config, verbose){
+    // make a copy of config
+    config = slice(config);
+
+    // warn about extProto in basis-config, this option was removed in 1.3.0
+    /** @cut */ if ('extProto' in config)
+    /** @cut */   consoleMethods.warn('basis-config: `extProto` option in basis-config is not support anymore');
+
+    // warn about path in basis-config, this option was deprecated in 1.3.0
+    /** @cut */ if ('path' in config)
+    /** @cut */   consoleMethods.warn('basis-config: `path` option in basis-config is deprecated, use `modules` instead');
+
+    // build modules list
+    var autoload = [];
+    var modules = merge(config.path, config.modules, {
+      basis: basisFilename
+    });
+
+    // reset modules
+    config.modules = {};
+
+    // process autoload
+    if (config.autoload)
+    {
+      // [path/to/][name][.rest.ext] -> {
+      //   name: name,
+      //   filename: path + name + rest
+      // }
+
+      var m = String(config.autoload).match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)((?:\.[a-z$_][a-z0-9$_]*)*)$/i);
+      if (m)
+      {
+        modules[m[2]] = {
+          autoload: true,
+          filename: m[1] + m[2] + (m[3] || '.js')
+        };
+      }
+      else
+      {
+        /** @cut */ consoleMethods.warn('basis-config: wrong `autoload` value (setting ignored): ' + config.autoload);
+      }
+
+      delete config.autoload;
+    }
+
+    // process modules
+    for (var name in modules)
+    {
+      // name: {
+      //   autoload: boolean,
+      //   path: 'path/to',
+      //   filename: 'module.js'
+      // }
+      //
+      // or
+      //
+      // name: 'filename'
+
+      var module = modules[name];
+
+      // if value is string, convert to config
+      if (typeof module == 'string')
+        // value is filename
+        module = {
+          // if path ends with `/` add `[name].js` to the end
+          filename: module.replace(/\/$/, '/' + name + '.js')
+        };
+
+      // get and resolve path and filename
+      var filename = module.filename;
+      var path = module.path;
+
+      if (path)
+        path = pathUtils.resolve(path);
+      if (filename)
+        filename = pathUtils.resolve(filename);
+
+      // if no path but filename
+      // let filename equals to 'path/to/file[.ext]', then
+      //   path = 'path/to/file'
+      //   filename = '../file[.ext]'
+      if (filename && !path)
+      {
+        path = filename.substr(0, filename.length - pathUtils.extname(filename).length);
+        filename = '../' + pathUtils.basename(filename);
+      }
+
+      // if no filename but path
+      // let path equals to 'path/to/file[.ext]', then
+      //   path = 'path/to'
+      //   filename = 'file[.ext]'
+      if (!filename && path)
+      {
+        filename = pathUtils.basename(path);
+        path = pathUtils.dirname(path);
+      }
+
+      // if filename has no extension, adds `.js`
+      if (!pathUtils.extname(filename))
+        filename += '.js';
+
+      // resolve filename
+      filename = pathUtils.resolve(path, filename);
+
+      // store results
+      config.modules[name] = {
+        path: path,
+        filename: filename
+      };
+
+      // store autoload modules
+      if (module.autoload)
+      {
+        config.autoload = autoload;
+        autoload.push(name);
+      }
+    }
 
     return config;
-  })();
+  }
 
 
   // ============================================
@@ -1207,7 +1323,7 @@
    /**
     * dev mode only
     */
-    function dev_verboseNameWrap(name, args, fn){
+    function devVerboseName(name, args, fn){
       return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
     }
 
@@ -1246,7 +1362,7 @@
       var NewClassProto = function(){};
 
       // verbose name in dev
-      /** @cut */ NewClassProto = dev_verboseNameWrap(className, {}, NewClassProto);
+      /** @cut */ NewClassProto = devVerboseName(className, {}, NewClassProto);
 
       NewClassProto.prototype = SuperClass.prototype;
 
@@ -1321,7 +1437,7 @@
 
       // verbose name in dev
       // NOTE: this code makes Chrome and Firefox show class name in console
-      /** @cut */ newClass = dev_verboseNameWrap(className, { instanceSeed: instanceSeed }, newClass);
+      /** @cut */ newClass = devVerboseName(className, { instanceSeed: instanceSeed }, newClass);
 
       // add constructor property to prototype
       newProto.constructor = newClass;
@@ -1351,7 +1467,7 @@
       var proto = this.prototype;
 
       if (typeof source == 'function' && !isClass(source))
-        source = source(this.superClass_.prototype);
+        source = source(this.superClass_.prototype, slice(proto));
 
       if (source.prototype)
         source = source.prototype;
@@ -1376,7 +1492,7 @@
       }
 
       // for browsers that doesn't enum toString
-      if (TOSTRING_BUG && source[key = 'toString'] !== Object_toString)
+      if (TOSTRING_BUG && source[key = 'toString'] !== toString)
         proto[key] = source[key];
 
       return this;
@@ -1434,7 +1550,7 @@
             return extension;
 
           var Base = function(){};
-          /** @cut verbose name in dev */ Base = dev_verboseNameWrap(devName || 'customExtendProperty', {}, Base);
+          /** @cut verbose name in dev */ Base = devVerboseName(devName || 'customExtendProperty', {}, Base);
           Base.prototype = this;
 
           var result = new Base;
@@ -1489,7 +1605,7 @@
             return keys;
 
           // verbose name in dev
-          /** @cut */ var Cls = dev_verboseNameWrap('oneFunctionProperty', {}, function(){});
+          /** @cut */ var Cls = devVerboseName('oneFunctionProperty', {}, function(){});
           /** @cut */ result = new Cls;
           /** @cut */ result.__extend__ = create;
 
@@ -1748,6 +1864,7 @@
   var resources = {};
   var resourceContentCache = {};
   var resourcePatch = {};
+  var virtualResourceSeed = 1;
   /** @cut */ var resourceResolvingStack = [];
   /** @cut */ var requires;
   // var resourceUpdateNotifier = extend(new Token(), {
@@ -1765,7 +1882,7 @@
       for (var key in map)
         resourceContentCache[pathUtils.resolve(key)] = map[key];
 
-      __resources__ = null; // reset prefetched to reduce memory leaks
+      //__resources__ = null; // reset prefetched to reduce memory leaks
     }
   })();
 
@@ -1806,7 +1923,10 @@
       else
       {
         try {
-          resourceContent = require('fs').readFileSync(url, 'utf-8');
+          // try to use special read file function, it may be provided by parent module
+          resourceContent = process.basisjsReadFile
+            ? process.basisjsReadFile(url)
+            : require('fs').readFileSync(url, 'utf-8');
         } catch(e){
           /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
@@ -1818,142 +1938,167 @@
     return resourceContentCache[url];
   };
 
+  var createResource = function(resourceUrl, content){
+    var contentType = pathUtils.extname(resourceUrl);
+    var contentWrapper = getResource.extensions[contentType];
+    var isVirtual = arguments.length > 1;
+    var resolved = false;
+    var wrapped = false;
+    /** @cut */ var wrappedContent;
+
+    if (isVirtual)
+      resourceUrl += '#virtual';
+
+    var resource = function(){
+      // if resource resolved, just return content
+      if (resolved)
+        return content;
+
+      // fetch url content
+      var urlContent = isVirtual ? content : getResourceContent(resourceUrl);
+
+      /** @cut    recursion warning */
+      /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
+      /** @cut */ if (idx != -1)
+      /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+      /** @cut */ resourceResolvingStack.push(resourceUrl);
+
+      // if resource type has wrapper - wrap it, or use url content as result
+      if (contentWrapper)
+      {
+        if (!wrapped)
+        {
+          wrapped = true;
+          content = contentWrapper(urlContent, resourceUrl);
+          /** @cut */ wrappedContent = urlContent;
+        }
+      }
+      else
+      {
+        content = urlContent;
+      }
+
+      // mark as resolved and apply binded functions
+      resolved = true;
+      applyResourcePatches(resource);
+      resource.apply();
+
+      // resourceUpdateNotifier.value = resourceUrl;
+      // resourceUpdateNotifier.apply();
+
+      /** @cut    recursion warning */
+      /** @cut */ resourceResolvingStack.pop();
+
+      return content;
+    };
+
+    extend(resource, extend(new Token(), {
+      url: resourceUrl,
+      type: contentType,
+      virtual: isVirtual,
+
+      fetch: function(){
+        return resource();
+      },
+      toString: function(){
+        return '[basis.resource ' + resourceUrl + ']';
+      },
+      isResolved: function(){
+        return resolved;
+      },
+      /** @cut */ hasChanges: function(){
+      /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
+      /** @cut */ },
+      update: function(newContent){
+        if (!resolved || isVirtual || newContent != resourceContentCache[resourceUrl])
+        {
+          if (!isVirtual)
+            resourceContentCache[resourceUrl] = newContent;
+
+          if (contentWrapper)
+          {
+            if (!wrapped && isVirtual)
+              content = newContent;
+
+            // wrap content only if it wrapped already and non-updatable
+            if (wrapped && !contentWrapper.permanent)
+            {
+              content = contentWrapper(newContent, resourceUrl, content);
+              applyResourcePatches(resource);
+              resource.apply();
+            }
+          }
+          else
+          {
+            content = newContent;
+            resolved = true;
+            applyResourcePatches(resource);
+            resource.apply();
+          }
+
+          // resourceUpdateNotifier.value = resourceUrl;
+          // resourceUpdateNotifier.apply();
+        }
+      },
+      reload: function(){
+        if (isVirtual)
+          return;
+
+        var oldContent = resourceContentCache[resourceUrl];
+        var newContent = getResourceContent(resourceUrl, true);
+
+        if (newContent != oldContent)
+        {
+          resolved = false;
+          resource.update(newContent);
+        }
+      },
+      get: function(source){
+        if (isVirtual)
+          if (source)
+            return contentWrapper ? wrappedContent : content;
+
+        return source ? getResourceContent(resourceUrl) : resource();
+      },
+      ready: function(fn, context){
+        if (resolved)
+        {
+          fn.call(context, resource());
+
+          if (contentWrapper && contentWrapper.permanent)
+            return;
+        }
+
+        resource.attach(fn, context);
+
+        return resource;
+      }
+    }));
+
+    // cache it
+    resources[resourceUrl] = resource;
+
+    return resource;
+  };
+
  /**
   * @name resource
   */
   var getResource = function(resourceUrl){
+    var resource = resources[resourceUrl];
+
+    if (resource)
+      return resource;
+
     /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
     /** @cut */   consoleMethods.warn('Bad usage: basis.resource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
+    // try resolve resource path
     resourceUrl = pathUtils.resolve(resourceUrl);
+    resource = resources[resourceUrl];
 
-    if (!resources[resourceUrl])
-    {
-      var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
-      var resolved = false;
-      var wrapped = false;
-      var content;
-      /** @cut */ var wrappedContent;
-
-      var resource = function(){
-        // if resource resolved, just return content
-        if (resolved)
-          return content;
-
-        // fetch url content
-        var urlContent = getResourceContent(resourceUrl);
-
-        /** @cut    recursion warning */
-        /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
-        /** @cut */ if (idx != -1)
-        /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
-        /** @cut */ resourceResolvingStack.push(resourceUrl);
-
-        // if resource type has wrapper - wrap it, or use url content as result
-        if (contentWrapper)
-        {
-          if (!wrapped)
-          {
-            wrapped = true;
-            content = contentWrapper(urlContent, resourceUrl);
-            /** @cut */ wrappedContent = urlContent;
-          }
-        }
-        else
-        {
-          content = urlContent;
-        }
-
-        // mark as resolved and apply binded functions
-        resolved = true;
-        applyResourcePatches(resource);
-        resource.apply();
-
-        // resourceUpdateNotifier.value = resourceUrl;
-        // resourceUpdateNotifier.apply();
-
-        /** @cut    recursion warning */
-        /** @cut */ resourceResolvingStack.pop();
-
-        return content;
-      };
-
-      extend(resource, extend(new Token(), {
-        url: resourceUrl,
-        fetch: function(){
-          return resource();
-        },
-        toString: function(){
-          return '[basis.resource ' + resourceUrl + ']';
-        },
-        isResolved: function(){
-          return resolved;
-        },
-        /** @cut */ hasChanges: function(){
-        /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
-        /** @cut */ },
-        update: function(newContent){
-          newContent = String(newContent);
-
-          if (!resolved || newContent != resourceContentCache[resourceUrl])
-          {
-            resourceContentCache[resourceUrl] = newContent;
-
-            if (contentWrapper)
-            {
-              // wrap content only if it wrapped already and non-updatable
-              if (wrapped && !contentWrapper.permanent)
-              {
-                content = contentWrapper(newContent, resourceUrl);
-                applyResourcePatches(resource);
-                resource.apply();
-              }
-            }
-            else
-            {
-              content = newContent;
-              resolved = true;
-              applyResourcePatches(resource);
-              resource.apply();
-            }
-
-            // resourceUpdateNotifier.value = resourceUrl;
-            // resourceUpdateNotifier.apply();
-          }
-        },
-        reload: function(){
-          var oldContent = resourceContentCache[resourceUrl];
-          var newContent = getResourceContent(resourceUrl, true);
-
-          if (newContent != oldContent)
-          {
-            resolved = false;
-            resource.update(newContent);
-          }
-        },
-        get: function(source){
-          return source ? getResourceContent(resourceUrl) : resource();
-        },
-        ready: function(fn, context){
-          if (resolved)
-          {
-            fn.call(context, resource());
-
-            if (contentWrapper && contentWrapper.permanent)
-              return;
-          }
-
-          resource.attach(fn, context);
-
-          return resource;
-        }
-      }));
-
-      // cache result
-      resources[resourceUrl] = resource;
-    }
-
-    return resources[resourceUrl];
+    // return resource or create it
+    return resource || createResource(resourceUrl);
   };
 
   extend(getResource, {
@@ -1989,6 +2134,14 @@
       return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
     },
 
+    virtual: function(type, content, ownerUrl){
+      return createResource(
+        (ownerUrl ? ownerUrl + ':' : pathUtils.normalize(pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/') +
+          'virtual-resource' + (virtualResourceSeed++) + '.' + type,
+        content
+      );
+    },
+
     extensions: {
       '.js': extend(function(content, filename){
         var namespace = filename2namespace[filename];
@@ -1996,20 +2149,20 @@
         if (!namespace)
         {
           var implicitNamespace = true;
-          namespace = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
+          var resolvedFilename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
 
-          for (var ns in config.path)
+          for (var ns in nsRootPath)
           {
-            var path = config.path[ns] + ns + '/';
-            if (filename.substr(0, path.length) == path)
+            var path = nsRootPath[ns] + ns + '/';
+            if (resolvedFilename.substr(0, path.length) == path)
             {
               implicitNamespace = false;
-              namespace = namespace.substr(config.path[ns].length);
+              resolvedFilename = resolvedFilename.substr(nsRootPath[ns].length);
               break;
             }
           }
 
-          namespace = namespace
+          namespace = resolvedFilename
             .replace(/\./g, '_')
             .replace(/^\//g, '')
             .replace(/\//g, '.');
@@ -2019,7 +2172,7 @@
         }
 
         /** @cut */ if (requires)
-        /** @cut */   Array_extensions.add(requires, namespace);
+        /** @cut */   arrayFunctions.add(requires, namespace);
 
         if (!namespaces[namespace])
         {
@@ -2048,15 +2201,13 @@
         permanent: true
       }),
 
-      '.css': function(content, url){
-        var resource = CssResource.resources[url];
+      '.css': function(content, url, cssResource){
+        if (!cssResource)
+          cssResource = new CssResource(url);
 
-        if (!resource)
-          resource = new CssResource(url);
-        else
-          resource.updateCssText(content);
+        cssResource.updateCssText(content);
 
-        return resource;
+        return cssResource;
       },
 
       '.json': function(content, url){
@@ -2158,7 +2309,13 @@
   var namespaces = {};
   var namespace2filename = {};
   var filename2namespace = {};
-  var nsRootPath = slice(config.path);
+  var nsRootPath = {};
+
+  iterate(config.modules, function(name, module){
+    nsRootPath[name] = module.path + '/';
+    namespace2filename[name] = module.filename;
+    filename2namespace[module.filename] = name;
+  });
 
   (function(map){
     var map = typeof __namespace_map__ != 'undefined' ? __namespace_map__ : null;
@@ -2193,18 +2350,22 @@
   });
 
   function resolveNSFilename(namespace){
-    var namespaceRoot = namespace.split('.')[0];
-    var filename = namespace.replace(/\./g, '/') + '.js';
-
     if (namespace in namespace2filename == false)
     {
+      var parts = namespace.split('.');
+      var namespaceRoot = parts.shift();
+      var filename = parts.join('/') + '.js';
+
       if (namespaceRoot in nsRootPath == false)
-        nsRootPath[namespaceRoot] = pathUtils.baseURI;
+        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
 
       if (namespaceRoot == namespace)
-        filename2namespace[nsRootPath[namespaceRoot] + filename] = namespaceRoot;
+        filename = nsRootPath[namespaceRoot].replace(/\/$/, '') + '.js';
+      else
+        filename = nsRootPath[namespaceRoot] + filename;
 
-      namespace2filename[namespace] = nsRootPath[namespaceRoot] + filename;
+      namespace2filename[namespace] = filename;
+      filename2namespace[filename] = namespace;
     }
 
     return namespace2filename[namespace];
@@ -2267,6 +2428,7 @@
 
  /**
   * @param {string} filename
+  * @param {string} dirname
   * @name require
   */
   var requireNamespace = (function(){
@@ -2283,7 +2445,7 @@
           moduleProto._compile = function(content, filename){
             this.basis = basis;
             content =
-              'var node_require = require;\n' +
+              'var __nodejsRequire = require;\n' +
               'var basis = module.basis;\n' +
               'var resource = function(filename){ return basis.resource(__dirname + "/" + filename) };\n' +
               'var require = function(filename, baseURI){ return basis.require(filename, baseURI || __dirname) };\n' +
@@ -2358,25 +2520,6 @@
       patchFn(resource.get(), resource.url);
   }
 
-  //
-  // Buildin classes extension
-  //
-
-  function extendProto(cls, extensions){
-    if (config.extProto)
-      for (var key in extensions)
-        cls.prototype[key] = (function(method, clsName){
-          return function(){
-            /** @cut */ if (config.extProto == 'warn')
-            /** @cut */   consoleMethods.warn(clsName + '#' + method + ' is not a standard method and will be removed soon; use basis.' + clsName.toLowerCase() + '.' + method + ' instead');
-
-            var args = [this];
-            Array.prototype.push.apply(args, arguments);
-            return extensions[method].apply(extensions, args);
-          };
-        })(key, cls.name || cls.toString().match(/^\s*function\s*(\w*)\s*\(/)[1]);
-  }
-
 
  /**
   * @namespace Function.prototype
@@ -2420,7 +2563,7 @@
     * @return {boolean}
     */
     isArray: function(value){
-      return Object_toString.call(value) === '[object Array]';
+      return toString.call(value) === '[object Array]';
     }
   });
 
@@ -2430,7 +2573,7 @@
       var len = object.length;
 
       if (typeof len == 'undefined' ||
-          Object_toString.call(object) == '[object Function]') // Safari 5.1 has a bug, typeof for node collection returns `function`
+          toString.call(object) == '[object Function]') // Safari 5.1 has a bug, typeof for node collection returns `function`
         return [object];
 
       if (!offset)
@@ -2545,13 +2688,16 @@
     }
   });
 
-  var Array_extensions = {
+  var arrayFunctions = {
+    from: arrayFrom,
+    create: createArray,
+
     // extractors
     flatten: function(this_){
       return this_.concat.apply([], this_);
     },
     repeat: function(this_, count){
-      return Array_extensions.flatten(createArray(parseInt(count, 10) || 0, this_));
+      return arrayFunctions.flatten(createArray(parseInt(count, 10) || 0, this_));
     },
 
     // search
@@ -2629,28 +2775,30 @@
     },
 
     // misc.
-    sortAsObject: function(this_, getter_, comparator, desc){
+    sortAsObject: function(){
+      // deprecated in basis.js 1.3.0
+      /** @cut */ consoleMethods.warn('basis.array.sortAsObject is deprecated, use basis.array.sort instead');
+      return arrayFunctions.sort.apply(this, arguments);
+    },
+    sort: function(this_, getter_, comparator, desc){
       getter_ = getter(getter_);
       desc = desc ? -1 : 1;
 
       return this_
         .map(function(item, index){
-               return {
-                 i: index,       // index
-                 v: getter_(item) // value
-               };
-             })                                                                           // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
-        .sort(comparator || function(a, b){
+          return {
+            i: index,        // index
+            v: getter_(item) // value
+          };
+        })
+        .sort(comparator || function(a, b){             // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
           return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1));
         })
         .map(function(item){
-               return this_[item.i];
-             }, this_);
+          return this[item.i];
+        }, this_);
     }
   };
-
-  // it's prohibited and will be removed soon
-  extendProto(Array, Array_extensions);
 
   // IE 5.5+ & Opera
   // when second argument is omited, method set this parameter equal zero (must be equal array length)
@@ -2672,14 +2820,6 @@
 
   var ESCAPE_FOR_REGEXP = /([\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$])/g;
   var FORMAT_REGEXP = /\{([a-z\d_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
-
-  function isEmptyString(value){
-    return value == null || String(value) == '';
-  }
-
-  function isNotEmptyString(value){
-    return value != null && String(value) != '';
-  }
 
   complete(String, {
     toLowerCase: function(value){
@@ -2716,7 +2856,7 @@
     }
   });
 
-  var String_extensions = {
+  var stringFunctions = {
    /**
     * @return {*}
     */
@@ -2754,7 +2894,7 @@
             value = Number(value);
             return numFormat == '.'
               ? value.toFixed(num)
-              : Number_extensions.lead(value, num);
+              : numberFunctions.lead(value, num);
           }
           return value;
         }
@@ -2772,11 +2912,15 @@
       return this_.replace(/[A-Z]/g, function(m){
         return '-' + m.toLowerCase();
       });
+    },
+
+    isEmpty: function(value){
+      return value == null || String(value) == '';
+    },
+    isNotEmpty: function(value){
+      return value != null && String(value) != '';
     }
   };
-
-  // it's prohibited and will be removed soon
-  extendProto(String, String_extensions);
 
 
   // Fix some methods
@@ -2826,7 +2970,7 @@
   * @namespace Number.prototype
   */
 
-  var Number_extensions = {
+  var numberFunctions = {
     fit: function(this_, min, max){
       if (!isNaN(min) && this_ < min)
         return Number(min);
@@ -2860,9 +3004,6 @@
       return res + (postfix || '');
     }
   };
-
-  // it's prohibited and will be removed soon
-  extendProto(Number, Number_extensions);
 
 
   // ============================================
@@ -2900,8 +3041,8 @@
 
  /**
   * Attach document ready handlers
-  * @param {function()} handler
-  * @param {*} thisObject Context for handler
+  * @param {function()} callback
+  * @param {*} context Context for handler
   */
   var ready = (function(){
     // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig/Roman Dvornov
@@ -3047,12 +3188,12 @@
     function remove(node){
       for (var key in callbacks)
       {
-        var entry = Array_extensions.search(callbacks[key], node, function(item){
+        var entry = arrayFunctions.search(callbacks[key], node, function(item){
           return item[1] && item[1][1];
         });
 
         if (entry)
-          Array_extensions.remove(callbacks[key], entry);
+          arrayFunctions.remove(callbacks[key], entry);
       }
 
       if (node && node.parentNode && node.parentNode.nodeType == 1)
@@ -3146,7 +3287,7 @@
           objects.push(object);
       },
       remove: function(object){
-        Array_extensions.remove(objects, object);
+        arrayFunctions.remove(objects, object);
       }
     };
 
@@ -3163,9 +3304,6 @@
   //
 
   var CssResource = (function(){
-    var cssResources = {};
-    var cleanupDom = true; // is require remove style node on CssResource destroy or not
-
     // Test for appendChild bugs (old IE browsers has a problem with append textNode into <style>)
     var STYLE_APPEND_BUGGY = (function(){
       try {
@@ -3176,18 +3314,6 @@
         return true;
       }
     })();
-
-    // cleanup on page unload
-    cleaner.add({
-      destroy: function(){
-        cleanupDom = false; // don't need remove unused style on global destroy
-
-        for (var url in cssResources)
-          cssResources[url].destroy();
-
-        cssResources = null;
-      }
-    });
 
 
    /**
@@ -3226,9 +3352,9 @@
         this.element = document.createElement('style');
 
         if (!STYLE_APPEND_BUGGY)
-          this.textNode = this.element.appendChild(document.createTextNode(''));
+          this.element.appendChild(document.createTextNode(''));
 
-        /** @cut */ this.element.setAttribute('src', pathUtils.relative(this.url));
+        /** @cut */ this.element.setAttribute('src', this.url);
       }
 
       // add element to document
@@ -3245,30 +3371,27 @@
    /**
     * @class
     */
-    var CssResource = Class(null, {
+    return Class(null, {
       className: 'basis.CssResource',
 
       inUse: 0,
 
       url: '',
       baseURI: '',
-      cssText: '',
+      cssText: undefined,
 
-      resource: null,
       element: null,
-      textNode: null,
 
       init: function(url){
-        this.url = pathUtils.resolve(url);
+        this.url = url;
         this.baseURI = pathUtils.dirname(url) + '/';
-
-        cssResources[url] = this;
       },
 
       updateCssText: function(cssText){
         if (this.cssText != cssText)
         {
           this.cssText = cssText;
+
           if (this.inUse && this.element)
           {
             setBase(this.baseURI);
@@ -3278,37 +3401,24 @@
         }
       },
 
-      syncCssText: function(){
-        if (this.textNode)
-        {
-          var cssText = this.cssText;
+      syncCssText: STYLE_APPEND_BUGGY
+        // old IE
+        ? function(){
+            this.element.styleSheet.cssText = this.cssText;
+          }
+        // W3C browsers
+        : function(){
+            var cssText = this.cssText;
 
-          /** @cut add source url for debug */
-          /** @cut */ cssText += '\n/*# sourceURL=' + pathUtils.origin + this.resource.url + ' */';
+            /** @cut add source url for debug */
+            /** @cut */ cssText += '\n/*# sourceURL=' + pathUtils.origin + this.url + ' */';
 
-          // W3C browsers
-          this.textNode.nodeValue = cssText;
-        }
-        else
-        {
-          // old IE
-          this.element.styleSheet.cssText = this.cssText;
-        }
-      },
+            this.element.firstChild.nodeValue = cssText;
+          },
 
       startUse: function(){
         if (!this.inUse)
-        {
-          if (!this.resource)
-          {
-            var resource = getResource(this.url);
-
-            this.resource = resource;
-            this.cssText = resource.get(true);
-          }
-
           documentInterface.head.ready(injectStyleToHead, this);
-        }
 
         this.inUse += 1;
       },
@@ -3326,19 +3436,13 @@
       },
 
       destroy: function(){
-        if (this.element && cleanupDom)
+        if (this.element)
           documentInterface.remove(this.element);
 
         this.element = null;
-        this.textNode = null;
-        this.resource = null;
         this.cssText = null;
       }
     });
-
-    CssResource.resources = cssResources;
-
-    return CssResource;
   })();
 
 
@@ -3349,13 +3453,21 @@
   // create and extend basis namespace
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
+    /** @cut */ processConfig: processConfig,
 
     // properties and settings
     version: VERSION,
 
+    // config and environment
     NODE_ENV: NODE_ENV,
     config: config,
-    platformFeature: {},
+    createSandbox: function(config){
+      return createBasisInstance(
+        global,
+        basisFilename,
+        complete({ noConflict: true }, config)
+      );
+    },
 
     // modularity
     resolveNSFilename: resolveNSFilename,
@@ -3380,6 +3492,7 @@
     DeferredToken: DeferredToken,
 
     // util functions
+    genUID: genUID,
     getter: getter,
     ready: ready,
 
@@ -3425,15 +3538,9 @@
       lazyInitAndRun: lazyInitAndRun,
       runOnce: runOnce
     },
-    array: extend(arrayFrom, merge(Array_extensions, {
-      from: arrayFrom,
-      create: createArray
-    })),
-    string: merge(String_extensions, {
-      isEmpty: isEmptyString,
-      isNotEmpty: isNotEmptyString
-    }),
-    number: Number_extensions,
+    array: extend(arrayFrom, arrayFunctions),
+    string: stringFunctions,
+    number: numberFunctions,
     bool: {
       invert: function(value){
         return !value;
@@ -3443,7 +3550,7 @@
       parse: typeof JSON != 'undefined'
         ? JSON.parse
         : function(str){
-            return String_extensions.toObject(str, true);
+            return stringFunctions.toObject(str, true);
           }
     }
   });
@@ -3457,6 +3564,15 @@
   //
 
   if (config.autoload)
-    requireNamespace(config.autoload);
+    config.autoload.forEach(function(name){
+      requireNamespace(name);
+    });
+
+
+  //
+  // return basis instance (needs for createSandbox)
+  //
+
+  return basis;
 
 })(this);

@@ -82,8 +82,6 @@
 
   <script type="text/javascript" id="demo-javascript">
 
-    basis.require('basis.dom');
-    basis.require('basis.cssom');
     basis.require('basis.data');
     basis.require('basis.data.index');
     basis.require('basis.ui.button');
@@ -91,10 +89,8 @@
     basis.require('basis.ui.slider');
 
     // import names
-    var DOM = basis.dom;
     var nsData = basis.data;
     var nsDataIndex = basis.data.index;
-    var cssom = basis.cssom;
 
     var getter = basis.getter;
     var ButtonPanel = basis.ui.button.ButtonPanel;
@@ -131,7 +127,7 @@
     });
 
     new ButtonPanel({
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       childNodes: [
         {
           caption: 'add',
@@ -178,7 +174,7 @@
 
     var count = 0;
     var table = new Table({
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       dataSource: dataset,
       structure: [
         {
@@ -220,7 +216,7 @@
         {
           header: 'Total, %',
           body: {
-            template: '<td class="right">{percentOfTotalSum}</td>'
+            template: '<td class="right">{percentOfTotalSum}%</td>'
           },
           footer: {
             template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
@@ -256,11 +252,11 @@
               emit_update: function(delta){
                 nsData.Object.prototype.emit_update.call(this, delta);
 
-                this.owner.percentOfTotalSum = basis.string.format('{0:.2}%', 100 * this.data.percentOfTotalSum);
+                this.owner.percentOfTotalSum = (100 * this.data.percentOfTotalSum).toFixed(2);
                 this.owner.updateBind('percentOfTotalSum');
-                this.owner.percentOfTotalRange = basis.string.format('{0:.2}%', 100 * this.data.percentOfTotalRange);
+                this.owner.percentOfTotalRange = (100 * this.data.percentOfTotalRange).toFixed(2);
                 this.owner.updateBind('percentOfTotalRange');
-                this.owner.percentOfValueMax = basis.string.format('{0:.2}%', 100 * this.data.percentOfValueMax);
+                this.owner.percentOfValueMax = (100 * this.data.percentOfValueMax).toFixed(2);
                 this.owner.updateBind('percentOfValueMax');
               }
             })
@@ -277,7 +273,7 @@
     });
 
     var recordPanel = new UINode({
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       template: '<div id="RecordPanel" class="{hasDelegate}"/>',
       binding: {
         hasDelegate: {

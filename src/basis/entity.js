@@ -28,7 +28,7 @@
   var DataObject = basis.data.Object;
   var Slot = basis.data.Slot;
   var Dataset = basis.data.Dataset;
-  var Subset = basis.data.dataset.Subset;
+  var Filter = basis.data.dataset.Filter;
   var Split = basis.data.dataset.Split;
 
   var NULL_INFO = {};
@@ -62,6 +62,7 @@
 
   // types map
   var namedTypes = {};
+  var namedIndexes = {};
   var deferredTypeDef = {};
   var TYPE_DEFINITION_PLACEHOLDER = function TYPE_DEFINITION_PLACEHOLDER(){};
 
@@ -99,7 +100,8 @@
       var Type = namedTypes[typeName];
       if (Type)
         return Type(value, oldValue);
-      /** @cut */ else if (arguments.length) // don't warn on default value calculation
+
+      /** @cut */ if (arguments.length) // don't warn on default value calculation
       /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for ' + field + ', but function called');
     };
   }
@@ -117,20 +119,9 @@
     className: namespace + '.Index',
 
     items: null,
-    fn: String,
 
     init: function(fn){
       this.items = {};
-      if (typeof fn == 'function')
-        this.fn = fn;
-    },
-    calcWrapper: function(newValue, oldValue){
-      var value = this.fn(newValue, oldValue);
-
-      if (value !== oldValue && hasOwnProperty.call(this.items, value))
-        throw 'Duplicate value for index [' + oldValue + ' -> ' + newValue + ']';
-
-      return value;
     },
     get: function(value, checkType){
       var item = hasOwnProperty.call(this.items, value) && this.items[value];
@@ -138,13 +129,19 @@
       if (item && (!checkType || item.entityType === checkType))
         return item;
     },
-    add: function(value, item){
-      var cur = hasOwnProperty.call(this.items, value) && this.items[value];
-
-      if (item && (!cur || cur === item))
+    add: function(value, newItem){
+      if (newItem)
       {
-        this.items[value] = item;
-        return true;
+        var curItem = this.get(value);
+
+        if (!curItem)
+        {
+          this.items[value] = newItem;
+          return true;
+        }
+
+        if (curItem !== newItem)
+          throw 'basis.entity: Value `' + value + '` for index is already occupied';
       }
     },
     remove: function(value, item){
@@ -233,18 +230,22 @@
     return result;
   }
 
-  function ConcatString(){
+  function ConcatStringField(name){
+    if (arguments.length == 1)
+      return function(delta, data, oldValue){
+        if (name in delta)
+          return data[name] != null ? String(data[name]) : null;
+        return oldValue;
+      };
+
     return CalculateField.apply(null, arrayFrom(arguments).concat(function(){
-      var value = [];
-      for (var i = arguments.length; i-- > 0;)
-      {
+      for (var i = arguments.length - 1; i >= 0; i--)
         if (arguments[i] == null)
           return null;
-        value.push(arguments[i]);
-      }
-      return value.join('-');
+      return Array.prototype.join.call(arguments, '-');
     }));
   }
+
 
   //
   // EntitySet
@@ -351,13 +352,13 @@
  /**
   * @class
   */
-  var EntityCollection = Class(Subset, {
+  var EntityCollection = Class(Filter, {
     className: namespace + '.EntityCollection',
 
     name: null,
 
-    init: ENTITYSET_INIT_METHOD(Subset, 'EntityCollection'),
-    sync: ENTITYSET_SYNC_METHOD(Subset)
+    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection'),
+    sync: ENTITYSET_SYNC_METHOD(Filter)
   });
 
   //
@@ -405,12 +406,13 @@
 
       var entitySetType = new EntitySetConstructor({
         entitySetClass: {
-          /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.entityType || wrapper).name || 'UnknownType') + '}',
+          /** @cut */ className: namespace + '.EntitySet(' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + ')',
+          /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + '}',
           wrapper: wrapper
         }
       });
 
-      var entitySetClass = entitySetType.entitySetClass;
+      var EntitySetClass = entitySetType.entitySetClass;
       var result = function(data, entitySet){
         if (data != null)
         {
@@ -427,7 +429,7 @@
 
       // if wrapper is string resolve it by named type map
       if (typeof wrapper == 'string')
-        entitySetClass.prototype.wrapper = getTypeByName(wrapper, entitySetClass.prototype, 'wrapper');
+        EntitySetClass.prototype.wrapper = getTypeByName(wrapper, EntitySetClass.prototype, 'wrapper');
 
       // resolve type name
       resolveType(name, result);
@@ -438,35 +440,51 @@
         typeName: name,
 
         toString: function(){
-          return this.typeName + '()';
+          return name + '()';
         },
 
-        entitySetType: entitySetType,
-        extend: function(){
-          return entitySetClass.extend.apply(entitySetClass, arguments);
-        },
-        extendClass: function(){
-          entitySetClass.extend.apply(entitySetClass, arguments);
-          return result;
-        },
         reader: function(data){
           if (Array.isArray(data))
           {
-            var wrapper = entitySetClass.prototype.wrapper;
+            var wrapper = EntitySetClass.prototype.wrapper;
             return data.map(wrapper.reader || wrapper);
           }
 
           return data;
         },
+
+        extendClass: function(source){
+          EntitySetClass.extend.call(EntitySetClass, source);
+          return result;
+        },
         extendReader: function(extReader){
           var reader = result.reader;
+
           result.reader = function(data){
             if (Array.isArray(data))
               extReader(data);
             return reader(data);
           };
+
+          return result;
+        },
+
+        // deprecated in 1.3.0
+        entitySetType: entitySetType,
+        extend: function(){
+          /** @cut */ basis.dev.warn('basis.entity: EntitySetType.extend() is deprecated, use EntitySetType.extendClass() instead.');
+          return EntitySetClass.extend.apply(EntitySetClass, arguments);
         }
       });
+
+      // deprecated in 1.3.0
+      /** @cut */ if (Object.defineProperty)
+      /** @cut */   Object.defineProperty(result, 'entitySetType', {
+      /** @cut */     get: function(){
+      /** @cut */       basis.dev.warn('basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.');
+      /** @cut */       return entitySetType;
+      /** @cut */     }
+      /** @cut */   });
 
       return result;
     }
@@ -551,9 +569,6 @@
             {
               if (entityType.compositeKey)
                 idValue = entityType.compositeKey(data, data);
-              else
-                if (idField)
-                  idValue = data[idField];
 
               if (idValue != null)
                 entity = entityType.index.get(idValue, entityType);
@@ -570,24 +585,20 @@
 
       var entityType = new EntityTypeConstructor(config || {}, result);
       var EntityClass = entityType.entityClass;
+      var name = entityType.name;
 
       // resolve type by name
-      resolveType(entityType.name, result);
+      resolveType(name, result);
 
       // extend result with additional properties
       extend(result, {
         all: entityType.all,
 
         type: entityType,
-        typeName: entityType.name,
-        entityType: entityType,  // ?? deprecated
+        typeName: name,
 
         toString: function(){
-          return this.typeName + '()';
-        },
-
-        reader: function(data){
-          return entityType.reader(data);
+          return name + '()';
         },
 
         get: function(data){
@@ -597,21 +608,42 @@
           return entityType.getSlot(id, defaults);
         },
 
-        extend: function(){
-          return EntityClass.extend.apply(EntityClass, arguments);
+        reader: function(data){
+          return entityType.reader(data);
         },
-        extendClass: function(){
-          return EntityClass.extend.apply(EntityClass, arguments);
+
+        extendClass: function(source){
+          EntityClass.extend.call(EntityClass, source);
+          return result;
         },
         extendReader: function(extReader){
           var reader = result.reader;
+
           result.reader = function(data){
             if (data && typeof data == 'object')
               extReader(data);
             return reader(data);
           };
+
+          return result;
+        },
+
+        // deprecated in 1.3.0
+        entityType: entityType,
+        extend: function(){
+          /** @cut */ basis.dev.warn('basis.entity: EntityType.extend() is deprecated, use EntityType.extendClass() instead.');
+          return EntityClass.extend.apply(EntityClass, arguments);
         }
       });
+
+      // deprecated in 1.3.0
+      /** @cut */ if (Object.defineProperty)
+      /** @cut */   Object.defineProperty(result, 'entityType', {
+      /** @cut */     get: function(){
+      /** @cut */       basis.dev.warn('basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.');
+      /** @cut */       return entityType;
+      /** @cut */     }
+      /** @cut */   });
 
       return result;
     }
@@ -667,7 +699,7 @@
     return fn.apply(null, values);
   }
 
-  function chooseArray(newArray, oldArray){
+  function arrayField(newArray, oldArray){
     if (!Array.isArray(newArray))
       return null;
 
@@ -679,6 +711,45 @@
         return newArray;
 
     return oldArray;
+  }
+
+  var fromISOString = (function(){
+    function fastDateParse(y, m, d, h, i, s, ms){
+      var date = new Date(y, m - 1, d, h || 0, 0, s || 0, ms ? ms.substr(0, 3) : 0);
+      date.setMinutes((i || 0) - tz - date.getTimezoneOffset());
+      return date;
+    }
+
+    var tz;
+    return function(isoDateString){
+      tz = 0;
+      return fastDateParse.apply(
+        null,
+        String(isoDateString || '')
+          .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
+            tz = i ? h * 60 + i * 1 : h * 1;
+            return pre;
+          })
+          .split(reIsoStringSplit)
+      );
+    };
+  })();
+
+  function dateField(value, oldValue){
+    if (typeof value == 'string')
+      return fromISOString(value);
+
+    if (typeof value == 'number')
+      return new Date(value);
+
+    if (value == null)
+      return null;
+
+    if (value && value.constructor === Date)
+      return value;
+
+    /** @cut */ basis.dev.warn('basis.entity: Bad value for Date field, value ignored');
+    return oldValue;
   }
 
   function addField(entityType, name, config){
@@ -697,7 +768,7 @@
     else
     {
       // make a copy of config to avoid side effect
-      config = basis.object.slice(config);
+      config = config ? basis.object.slice(config) : {};
     }
 
     // process type in config
@@ -725,7 +796,7 @@
             var exists = values.indexOf(value) != -1;
 
             /** @cut */ if (!exists)
-            /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ', new value ignored.');
+            /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ' (new value ignored).\nVariants:', values, '\nIgnored value:', value);
 
             return exists ? value : oldValue;
           };
@@ -735,38 +806,23 @@
       }
 
       if (config.type === Array)
-        config.type = chooseArray;
+        config.type = arrayField;
+
+      if (config.type === Date)
+        config.type = dateField;
 
       // if type still is not a function - ignore it
       if (typeof config.type != 'function')
       {
         /** @cut */ basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + name + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
-        config.type = $self;
+        config.type = null;
       }
     }
 
     var wrapper = config.type || $self;
 
-    if ([NumericId, NumberId, IntId, StringId].indexOf(wrapper) != -1)
-      config.id = true;
-
-    if (config.id)
-    {
-      if (!entityType.index)
-        entityType.index = new Index(String);
-
-      entityType.idFields[name] = true;
-
-      if (entityType.idField || entityType.compositeKey)
-      {
-        entityType.idField = null;
-        entityType.compositeKey = ConcatString.apply(null, keys(entityType.idFields));
-      }
-      else
-      {
-        entityType.idField = name;
-      }
-    }
+    if (config.id || config.index || [NumericId, NumberId, IntId, StringId].indexOf(wrapper) != -1)
+      entityType.idFields[name] = config;
 
     if (config.calc)
     {
@@ -841,9 +897,6 @@
         return;
       }
 
-      if (entityType.idField && name == entityType.idField)
-        entityType.compositeKey = wrapper;
-
       // resolve calc dependencies
       deps[name] = calcArgs.reduce(function(res, ref){
         var items = deps[ref] || [ref];
@@ -895,6 +948,7 @@
     all: null,
 
     fields: null,
+    idField: null,
     idFields: null,
     defaults: null,
 
@@ -903,6 +957,7 @@
 
     singleton: false,
     index: null,
+    indexes: null,
     entityClass: null,
 
     init: function(config, wrapper){
@@ -965,6 +1020,83 @@
           addCalcField(this, null, item);
         }, this);
 
+      // process id and indexes
+      var idFields = keys(this.idFields);
+      var indexes = {};
+      if (idFields.length)
+      {
+        for (var field in this.idFields)
+        {
+          var fieldCfg = this.idFields[field];
+          var index = fieldCfg.index;
+          var indexDescriptor;
+
+          // resolve index
+          if (!index || index instanceof Index == false)
+          {
+            if (typeof index == 'string')
+            {
+              if (index in namedIndexes == false)
+                namedIndexes[index] = new Index();
+              index = namedIndexes[index];
+            }
+            else
+            {
+              if (!this.index)
+                this.index = new Index();
+              index = this.index;
+            }
+          }
+
+          indexDescriptor = indexes[index.basisObjectId];
+          if (!indexDescriptor)
+            indexDescriptor = indexes[index.basisObjectId] = {
+              index: index,
+              fields: []
+            };
+
+          // reg id field
+          indexDescriptor.fields.push(field);
+          this.idFields[field] = indexDescriptor;
+        }
+
+        if (this.index && this.index.basisObjectId in indexes == false)
+        {
+          /** @cut */ basis.dev.warn('basis.entity: entity index is not used for any field, index ignored');
+          this.index = null;
+        }
+
+        // process indexes
+        for (var id in indexes)
+        {
+          var indexDescriptor = indexes[id];
+          indexDescriptor.property = '__id__' + id;
+          indexDescriptor.compositeKey = ConcatStringField.apply(null, indexDescriptor.fields);
+          if (indexDescriptor.fields.length == 1)
+            indexDescriptor.idField = indexDescriptor.fields[0];
+        }
+
+        // choose primary key
+        var indexesKeys = keys(indexes);
+        var primaryIndex = indexes[this.index ? this.index.basisObjectId : indexesKeys[0]];
+
+        // set primary and id fields
+        this.index = primaryIndex.index;
+        this.idField = primaryIndex.idField;
+        this.compositeKey = primaryIndex.compositeKey;
+        this.idProperty = primaryIndex.property;
+
+        this.indexes = indexes;
+      }
+      else
+      {
+        if (this.index)
+        {
+          /** @cut */ basis.dev.warn('basis.entity: entity has no any id field, index ignored');
+          this.index = null;
+        }
+      }
+
       // create initDelta
       var initDelta = {};
       for (var key in this.defaults)
@@ -1017,25 +1149,23 @@
     },
     get: function(entityOrData){
       var id = this.getId(entityOrData);
-      if (id != null)
+      if (this.index && id != null)
         return this.index.get(id, this);
     },
     getId: function(entityOrData){
-      if ((this.idField || this.compositeKey) && entityOrData != null)
+      if (this.compositeKey && entityOrData != null)
       {
         if (isKeyType[typeof entityOrData])
           return entityOrData;
 
         if (entityOrData && entityOrData.entityType === this)
-          return entityOrData.__id__;
+          return entityOrData[this.idProperty];
 
         if (entityOrData instanceof DataObject)
           entityOrData = entityOrData.data;
 
         if (this.compositeKey)
           return this.compositeKey(entityOrData, entityOrData);
-        else
-          return entityOrData[this.idField];
       }
     },
     getSlot: function(data){
@@ -1048,7 +1178,7 @@
           if (isKeyType[typeof data])
           {
             var tmp = {};
-            if (this.idField && !this.compositeKey)
+            if (this.idField)
               tmp[this.idField] = data;
             data = tmp;
           }
@@ -1082,8 +1212,10 @@
       // entity can't has a delegate
     },
 
-    modified: null,
+    extendConstructor_: false,
+    fieldHandlers_: null,
 
+    modified: null,
     emit_rollbackUpdate: createEvent('rollbackUpdate')
   });
 
@@ -1097,8 +1229,6 @@
       var calcs = entityType.calcs;
       var data = entity.data;
       var updated = false;
-      var curId = entity.__id__;
-      var newId;
 
       try {
         if (calcs)
@@ -1112,50 +1242,53 @@
             // if no key that's a constrain, nothing to do
             if (key && newValue !== oldValue)
             {
-              data[key] = newValue;
               delta[key] = oldValue;
+              data[key] = newValue;
               updated = true;
             }
           }
         }
 
-        if (entityType.compositeKey)
-          newId = entityType.compositeKey(delta, data, curId);
-        else
-          newId = entityType.idField && entityType.idField in delta ? data[entityType.idField] : curId;
+        for (var id in entityType.indexes)
+        {
+          var indexDescriptor = entityType.indexes[id];
+          var curId = entity[indexDescriptor.property];
+          var newId = curId;
 
-        if (newId !== curId)
-          entityType.index.calcWrapper(newId, curId);
+          if (indexDescriptor.compositeKey)
+            newId = indexDescriptor.compositeKey(delta, data, curId);
 
+          if (newId !== curId)
+          {
+            // TODO: correct rollback if one of indexes updated
+            // and than exception occured
+            updateIndex(indexDescriptor.index, entity, curId, newId);
+            entity[indexDescriptor.property] = newId;
+          }
+        }
+
+        return updated;
       } catch(e) {
         /** @cut */ entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
 
         // rollback all changes
-        updated = false;
-        newId = curId;
-
         for (var key in delta)
           entity.data[key] = delta[key];
 
         if (rollbackDelta && !entity.modified)
-          for (var key in rollbackDelta)
-          {
-            entity.modified = rollbackDelta;
-            break;
-          }
+          entity.modified = rollbackDelta;
       }
-
-      if (newId !== curId)
-      {
-        entity.__id__ = newId;
-        updateIndex(entity, curId, newId);
-      }
-
-      return updated;
     }
 
-    function updateIndex(entity, curValue, newValue){
-      var index = entityType.index;
+    function updateIndex(index, entity, curValue, newValue){
+      // if new value is not null, add new value to index
+      // NOTE: goes first as may cause to exception
+      if (newValue != null)
+      {
+        index.add(newValue, entity);
+        if (hasOwnProperty.call(slots, newValue))
+          slots[newValue].setDelegate(entity);
+      }
 
       // if current value is not null, remove old value from index first
       if (curValue != null)
@@ -1164,21 +1297,10 @@
         if (hasOwnProperty.call(slots, curValue))
           slots[curValue].setDelegate();
       }
-
-      // if new value is not null, add new value to index
-      if (newValue != null)
-      {
-        index.add(newValue, entity);
-        if (hasOwnProperty.call(slots, newValue))
-          slots[newValue].setDelegate(entity);
-      }
     }
 
     return Class(BaseEntity, {
-      className: namespace + '.Entity',
-
-      extendConstructor_: false,
-      fieldHandlers_: null,
+      className: entityType.name,
 
       init: function(data){
         // ignore delegate and data
@@ -1219,7 +1341,7 @@
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
       },
       getId: function(){
-        return this.__id__;
+        return this[entityType.idProperty];
       },
       get: function(key, real){
         if (real && this.modified && key in this.modified)
@@ -1241,16 +1363,20 @@
         var result;
         var rollbackData = this.modified;
 
-        if (valueWrapper === chooseArray && rollbackData && key in rollbackData)
-          value = chooseArray(value, rollbackData[key]);
+        if (valueWrapper === arrayField && rollbackData && key in rollbackData)
+          value = arrayField(value, rollbackData[key]);
 
         var newValue = valueWrapper(value, this.data[key]);
         var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
                                         // that why we fetch it again after valueWrapper call
 
         var valueChanged = newValue !== curValue &&
-                           // date comparison fix;
-                           (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
+                           // date comparison:
+                           (!newValue ||
+                            !curValue ||
+                             newValue.constructor !== Date ||
+                             curValue.constructor !== Date ||
+                             +newValue !== +curValue);
 
         // if value changed:
         // - update index for id field
@@ -1412,9 +1538,7 @@
 
         if (data)
         {
-          var rollbackUpdate;
-          var rollbackDelta = {};
-
+          var rollbackDelta;
           var setResult;
 
           // update fields
@@ -1430,7 +1554,8 @@
 
               if (setResult.rollback)
               {
-                rollbackUpdate = true;
+                if (!rollbackDelta)
+                  rollbackDelta = {};
                 rollbackDelta[setResult.rollback.key] = setResult.rollback.value;
               }
             }
@@ -1444,7 +1569,7 @@
           if (update)
             this.emit_update(delta);
 
-          if (rollbackUpdate)
+          if (rollbackDelta)
             this.emit_rollbackUpdate(rollbackDelta);
         }
 
@@ -1502,9 +1627,14 @@
           this.fieldHandlers_ = null;
         }
 
-        // delete from index
-        if (this.__id__ != null)
-          updateIndex(this, this.__id__, null);
+        // delete from indexes
+        for (var key in entityType.indexes)
+        {
+          var indexDescriptor = entityType.indexes[key];
+          var id = this[indexDescriptor.property];
+          if (id != null)
+            updateIndex(indexDescriptor.index, this, id, null);
+        }
 
         // delete from all entity type list (is it right order?)
         if (all && all.has(this))
@@ -1576,10 +1706,25 @@
     getTypeByName: function(typeName){
       return namedTypes[typeName];
     },
-    get: function(typeName, id){
-      var type = namedTypes[typeName];
-      if (type)
-        return type.get(id);
+    getIndexByName: function(name){
+      return namedIndexes[name];
+    },
+
+    get: function(typeName, value){      // works like Type.get(value)
+      var Type = namedTypes[typeName];
+      if (Type)
+        return Type.get(value);
+    },
+    resolve: function(typeName, value){  // works like Type(value)
+      var Type = namedTypes[typeName];
+      if (Type)
+        return Type(value);
+    },
+    getByIndex: function(indexName, id){
+      if (indexName in namedIndexes)
+        return namedIndexes[indexName].get(id);
+      /** @cut */ else
+      /** @cut */   basis.dev.warn('basis.entity: index with name `' + indexName + '` doesn\'t exists');
     },
 
     NumericId: NumericId,
@@ -1588,6 +1733,7 @@
     StringId: StringId,
     Index: Index,
     CalculateField: CalculateField,
+    ConcatStringField: ConcatStringField,
     calc: CalculateField,
 
     EntityType: EntityTypeWrapper,

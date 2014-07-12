@@ -41,6 +41,8 @@
       font-size: 80%;
       font-weight: normal;
       background: #EEE;
+      position:relative;
+      z-index: 1;
       margin: 0;
       padding: 2px;
       text-align: center;
@@ -60,9 +62,11 @@
     }
     #CountriesPanel .Country
     {
+      cursor: pointer;
       display: inline-block;
       padding: 7px;
       color: #0066CC;
+      text-decoration: underline;
     }
     #CountriesPanel .Country:hover
     {
@@ -189,11 +193,10 @@
 
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.dom');
-    basis.require('basis.layout');
     basis.require('basis.ui');
     basis.require('basis.ui.scroller');
     basis.require('basis.ui.pageslider');
-    
+
     // import names
     var DOM = basis.dom;
 
@@ -201,9 +204,6 @@
     var ScrollPanel = basis.ui.scroller.ScrollPanel;
     var ScrollGallery = basis.ui.scroller.ScrollGallery;
     var PageSlider = basis.ui.pageslider.PageSlider;
-    var uiNode = basis.ui.Node;
-
-    var getter = basis.getter;
 
     function createBlock(header, cssClassName){
       var demoBlock = DOM.createElement('.DemoBlock', DOM.createElement('H2', header));
@@ -217,7 +217,7 @@
     //
     var worldMapBlock = createBlock('World Map on ScrollPanel');
 
-    new uiNode({
+    new basis.ui.Node({
       container: worldMapBlock,
 
       template:
@@ -227,38 +227,41 @@
         '</div>',
       binding: {
         worldMap: new ScrollPanel({
-          template: '<b:include src="basis.ui.scroller.ScrollPanel" id="WorldMapPanel"/>',
-          content: DOM.createElement('img[src="../res/img/map.gif"][event-click="coord"][width="2550"][height="1285"]'),
+          template:
+            '<b:include src="basis.ui.scroller.ScrollPanel" id="WorldMapPanel">' +
+              '<b:append ref="content">' +
+                '<img src="../res/img/map.gif" event-click="coord" width="2550" height="1285"/>' +
+              '</b:append>' +
+            '</b:include>',
 
           scrollTo: function(x, y){
-            this.scroller.setPosition(Math.max(0, x - this.element.offsetWidth / 2), Math.max(0, y - this.element.offsetHeight / 2));
+            this.scroller.setPosition(
+              Math.max(0, x - this.element.offsetWidth / 2),
+              Math.max(0, y - this.element.offsetHeight / 2)
+            );
           }
         })
       },
 
       childClass: {
-        template:
-          '<a href="#" class="Country" event-click="scrollTo">{title}</a>',
-
+        template: '<span class="Country" event-click="scrollTo">{title}</span>',
         binding: {
-          title: 'data:Title'
+          title: 'data:'
         },
-
         action: {
           scrollTo: function(event){
-            this.parentNode.satellite.worldMap.scrollTo(this.data.PositionX, this.data.PositionY);
-            event.die();
+            this.parentNode.satellite.worldMap.scrollTo(this.data.x, this.data.y);
           }
         }
       },
 
       childNodes: [
-        { data: { Title: 'Russia', PositionX: 1792, PositionY: 0 } },
-        { data: { Title: 'China', PositionX: 1900, PositionY: 358 } },
-        { data: { Title: 'Kazakhstan', PositionX: 1642, PositionY: 252 } },
-        { data: { Title: 'Ukraine', PositionX: 1412, PositionY: 242 } },
-        { data: { Title: 'USA', PositionX: 558, PositionY: 345 } },
-        { data: { Title: 'Canada', PositionX: 612, PositionY: 0 } }
+        { data: { title: 'Russia', x: 1792, y: 0 } },
+        { data: { title: 'China', x: 1900, y: 358 } },
+        { data: { title: 'Kazakhstan', x: 1642, y: 252 } },
+        { data: { title: 'Ukraine', x: 1412, y: 242 } },
+        { data: { title: 'USA', x: 558, y: 345 } },
+        { data: { title: 'Canada', x: 612, y: 0 } }
       ]
     });
 
@@ -307,7 +310,7 @@
       container: createBlock('Scroll List', 'short'),
 
       childClass: {
-        template: 
+        template:
           '<div class="ScrollList-Item">{title}</div>',
 
         binding: {
@@ -325,7 +328,7 @@
         { title: 'List Item 7' },
         { title: 'List Item 8' },
         { title: 'List Item 9' },
-        { title: 'List Item 10'},
+        { title: 'List Item 10' },
         { title: 'List Item 11' },
         { title: 'List Item 12' },
         { title: 'List Item 13' },
@@ -338,28 +341,40 @@
     // Page Slider
     //
 
-    new PageSlider({
-      template: '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>',
-      container: createBlock('Page Slider', 'short'),
-
-      childClass: {
+    var childClassSettings = {
         template:
-          '<b:include src="basis.ui.tabs.Page">' +
-            '<b:append ref="content">' +
-              '<div class="PageContent">' +
-                '{text}' +
-              '</div>' +
-            '</b:append>' +
-          '</b:include>',
+            '<b:include src="basis.ui.tabs.Page">' +
+                    '<b:append ref="content">' +
+                        '<div class="PageContent">' +
+                            '{text}' +
+                        '</div>' +
+                    '</b:append>' +
+            '</b:include>',
         binding: {
-          text: 'text'
+            text: 'text'
         }
-      },
-      childNodes: [
+    };
+    var childNodesData = [
         { text: 'Page 1' },
         { text: 'Page 2' },
         { text: 'Page 3' }
-      ]
+    ];
+    var pageSliderTemplate = '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>';
+
+    var DIRECTIONS = basis.ui.pageslider.DIRECTIONS;
+    new PageSlider({
+        template: pageSliderTemplate,
+        container: createBlock('Horizontal Page Slider', 'short'),
+        childClass: childClassSettings,
+        childNodes: childNodesData
+    });
+
+    new PageSlider({
+        template: pageSliderTemplate,
+        container: createBlock('Vertical Page Slider', 'short'),
+        direction: DIRECTIONS.VERTICAL,
+        childClass: childClassSettings,
+        childNodes: childNodesData
     });
 
     //
@@ -368,7 +383,7 @@
 
     var ImageGallery = ScrollGallery.subclass({
       childClass: {
-        template: 
+        template:
           '<div{content} class="ImageItem" event-click="select">' +
             '<img{image} src="{src}"/>' +
             '<span class="aligner"/>' +

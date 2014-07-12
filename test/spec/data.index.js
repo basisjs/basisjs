@@ -24,15 +24,39 @@ module.exports = {
               }
             });
 
-            this.is(1, basis.object.keys(map.indexes).length);
-            this.is(3, map.indexes.sum.value);
+            assert(basis.object.keys(map.indexes).length === 1);
+            assert(map.indexes.sum.value === 3);
 
             map.destroy();
 
-            this.is(0, basis.object.keys(map.indexes).length);
+            assert(basis.object.keys(map.indexes).length === 0);
           }
         }
       ]
+    },
+    {
+      name: 'Distinct',
+      test: function(){
+        var dataset = new basis.data.Dataset({
+          items: basis.data.wrap(basis.array.create(10, function(idx){ return { value: idx }; }), true)
+        });
+        var distinct = basis.data.index.distinct(dataset, 'update', 'data.value');
+
+        assert(distinct.value === 10);
+
+        dataset.forEach(function(item){
+          item.update({ value: item.data.value % 2 });
+        });
+        assert(distinct.value === 2);
+
+        dataset.getItems().forEach(function(item, idx){
+          item.update({ value: idx + 10 });
+        });
+        assert(distinct.value === 10);
+
+        dataset.clear();
+        assert(distinct.value === 0);
+      }
     }
   ]
 };

@@ -1,6 +1,6 @@
 
   function resolveGetter(getter){
-    if (getter.basisGetterId_ > 0)
+    if (getter[basis.getter.ID] > 0)
     {
       var result = 'getter(';
 
@@ -45,7 +45,7 @@
       }
     }
 
-    for (var i = 0; i < chars.length; i++) main_loop:
+    for (var i = 0; i < chars.length; i++) mainLoop:
     {
       var ch = chars[i];
       switch (ch)
@@ -83,8 +83,8 @@
           {
             j++;
 
-            if (chars[j] == '\n') 
-              break main_loop;
+            if (chars[j] == '\n')
+              break mainLoop;
 
             if (chars[j] == '\\')
             {

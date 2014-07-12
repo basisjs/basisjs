@@ -53,7 +53,7 @@
       childNode: {
         commit: function(field){
           while (field = field.nextSibling)
-            if (field.focusable)
+            if (field.focusable && !field.isDisabled())
               return field.focus(true);
 
           this.submit();

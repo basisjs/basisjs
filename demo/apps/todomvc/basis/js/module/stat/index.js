@@ -52,6 +52,7 @@ module.exports = new basis.ui.Node({
   template: resource('./template/footer.tmpl'),
   binding: {
     filters: filters,
+    hidden: basis.data.index.count(Todo.all).as(basis.bool.invert),
     completed: basis.data.index.count(Todo.completed),
     active: basis.data.index.count(Todo.active)
   },

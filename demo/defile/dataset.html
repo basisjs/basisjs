@@ -122,15 +122,13 @@
 
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.dom');
-    basis.require('basis.dom.event');
     basis.require('basis.data');
     basis.require('basis.data.dataset');
     basis.require('basis.ui.popup');
     basis.require('basis.ui.menu');
-    
+
     // import names
     var DOM = basis.dom;
-    var Event = basis.dom.event;
     var nsData = basis.data;
     var Menu = basis.ui.menu.Menu;
     var UINode = basis.ui.Node;
@@ -191,13 +189,14 @@
 
       template:
         '<div class="DemoBlock">' +
-          '<span{content}/>' +
+          '<!--{image}-->' +
           '<div{childNodesElement} class="items"/>' +
           '<h3>{title}</h3>' +
         '</div>',
 
       binding: {
-        title: 'title'
+        title: 'title',
+        image: 'image'
       },
 
       childClass: {
@@ -220,16 +219,16 @@
           '<!-- {childNodesHere} -->' +
           '<button event-click="add">add</button>' +
           '<h3>{title}</h3>' +
-        '</div>', 
+        '</div>',
 
       binding: {
         title: 'title'
       },
 
       action: {
-        add: function(){
+        add: function(event){
           newItemPopup.dataSource.setSubtrahend(this.dataSource);
-          newItemPopup.show(Event.sender(event));
+          newItemPopup.show(event.sender);
         }
       },
 
@@ -300,7 +299,7 @@
 
     new DatasetViewer({
       title: 'Union (A ∪ B ∪ C)',
-      content: createImage('union'),
+      image: createImage('union'),
       dataSource: new nsDataset.Merge({
         rule: nsDataset.Merge.UNION,  // by default
         sources: [A, B, C]
@@ -309,7 +308,7 @@
 
     new DatasetViewer({
       title: 'Intersection (A ∩ B ∩ C)',
-      content: createImage('intersection'),
+      image: createImage('intersection'),
       dataSource: I = new nsDataset.Merge({
         rule: nsDataset.Merge.INTERSECTION,
         sources: [A, B, C]
@@ -318,7 +317,7 @@
 
     new DatasetViewer({
       title: 'AtLeastOneExclude (A ∪ B ∪ C) / (A ∩ B ∩ C) [union subtract intersection]',
-      content: createImage('atleastoneexclude'),
+      image: createImage('atleastoneexclude'),
       dataSource: new nsDataset.Merge({
         rule: nsDataset.Merge.AT_LEAST_ONE_EXCLUDE,
         sources: [A, B, C]
@@ -327,7 +326,7 @@
 
     new DatasetViewer({
       title: 'Difference (A ∆ B ∆ C)',
-      content: createImage('difference'),
+      image: createImage('difference'),
       dataSource: new nsDataset.Merge({
         rule: nsDataset.Merge.DIFFERENCE,
         sources: [A, B, C]
@@ -336,7 +335,7 @@
 
     new DatasetViewer({
       title: 'MoreThanOneInclude (A ∪ B ∪ C) / (A ∆ B ∆ C) [union subtract difference]',
-      content: createImage('morethanoneinclude'),
+      image: createImage('morethanoneinclude'),
       dataSource: new nsDataset.Merge({
         rule: nsDataset.Merge.MORE_THAN_ONE_INCLUDE,
         sources: [A, B, C]
@@ -345,7 +344,7 @@
 
     new DatasetViewer({
       title: 'Subtract (A / B)',
-      content: createImage('subtract'),
+      image: createImage('subtract'),
       dataSource: new nsDataset.Subtract({
         minuend: A,
         subtrahend: B
@@ -363,8 +362,8 @@
     });
 
     new DatasetViewer({
-      title: 'Subset of dataset A: ONLY ODD',
-      dataSource: new nsDataset.Subset({
+      title: 'Filter of dataset A: ONLY ODD',
+      dataSource: new nsDataset.Filter({
         rule: basis.getter('data.value % 2'),
         source: A
       })

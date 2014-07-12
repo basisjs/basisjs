@@ -118,24 +118,25 @@ basis.ready(function(){
           instanceOf: basis.ui.Node.subclass({
             template: resource('./template/tagList.tmpl'),
 
-            templateUpdate: function(){
-              this.setChildNodes(this.data.tags.map(function(tag){
-                return {
-                  data: { title: tag }
-                };
-              }));
+            init: function(){
+              basis.ui.Node.prototype.init.call(this);
+              basis.data.Value.from(this, 'update', 'data.tags').link(this, function(tags){
+                this.setChildNodes(tags.map(function(tag){
+                  return { tag: tag };
+                }));
+              });
             },
 
             childClass: {
               template: resource('./template/tag.tmpl'),
 
               binding: {
-                title: 'data:'
+                title: 'tag'
               },
 
               action: {
                 pick: function(){
-                  blogThreadPage.setSource(cloud.getSubset(this.data.title));
+                  blogThreadPage.setSource(cloud.getSubset(this.tag));
                 }
               }
             }
@@ -193,19 +194,23 @@ basis.ready(function(){
         collapsed: true,
 
         template: resource('./template/archiveYear.tmpl'),
-
         binding: {
           collapsed: function(node){
             return node.collapsed ? 'collapsed' : '';
           }
         },
-
         action: {
           toggle: function(){
             this.collapsed = !this.collapsed;
             this.updateBind('collapsed');
           }
         }
+      },
+      handler: {
+        childNodesModified: basis.fn.runOnce(function(){
+          this.firstChild.collapsed = false;
+          this.firstChild.updateBind('collapsed');
+        })
       }
     },
     template: resource('./template/archive.tmpl'),
@@ -235,8 +240,6 @@ basis.ready(function(){
       }
     }
   });
-  archiveList.grouping.firstChild.collapsed = false;
-  archiveList.grouping.firstChild.updateBind('collapsed');
 
   times.push([getTime(), 'archive list']);
 
@@ -249,6 +252,9 @@ basis.ready(function(){
     source: cloud,
     calcs: {
       percentOfRange: basis.data.index.percentOfRange('itemsChanged', 'itemCount'),
+      title: function(data){
+        return data.title;
+      },
       source: function(data, indexes, obj){
         return obj;
       }
@@ -256,25 +262,25 @@ basis.ready(function(){
   });
 
   var tagCloud = new basis.ui.Node({
-    dataSource: cloudCalcs,
-    sorting: 'data.title',
     template: resource('./template/tagCloud.tmpl'),
 
+    dataSource: cloudCalcs,
+    sorting: function(child){
+      return String(child.data.title).toLowerCase();
+    },
     childClass: {
       active: true,
 
       template: resource('./template/tagCloudTag.tmpl'),
-
       binding: {
-        title: 'data.source.data.title',
+        title: 'data:title',
         fontSize: {
           events: 'update',
           getter: function(node){
-            return basis.string.format('{0:.2}%', 80 + 120 * node.data.percentOfRange);
+            return (80 + 120 * node.data.percentOfRange).toFixed(2) + '%';
           }
         }
       },
-
       action: {
         pick: function(){
           blogThreadPage.setSource(this.data.source);

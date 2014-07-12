@@ -23,6 +23,7 @@
   var createEvent = basis.event.create;
 
   var HtmlTemplate = basis.template.html.Template;
+  var htmlTemplateIdMarker = basis.template.html.marker;
   var TemplateSwitcher = basis.template.TemplateSwitcher;
   var DWNode = basis.dom.wrapper.Node;
   var DWPartitionNode = basis.dom.wrapper.PartitionNode;
@@ -32,6 +33,15 @@
   //
   // main part
   //
+
+
+  //
+  // debug
+  //
+
+  /** @cut */ var instances = {};
+  /** @cut */ var notifier = new basis.Token();
+
 
   //
   // Binding
@@ -341,15 +351,6 @@
      /**
       * @inheritDoc
       */
-      emit_update: function(delta){
-        this.templateUpdate(this.tmpl, 'update', delta);
-
-        super_.emit_update.call(this, delta);
-      },
-
-     /**
-      * @inheritDoc
-      */
       init: function(){
         this.element = this.childNodesElement = getDocumentFragment();
 
@@ -400,10 +401,14 @@
             this.container = null;
           }
         }
+
+        /** @cut */ instances[this.basisObjectId] = this;
+        /** @cut */ notifier.set({ action: 'create', instance: this });
       },
 
       templateSync: function(){
         var oldElement = this.element;
+        var oldTmpl = this.tmpl;
         var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
         var noChildNodesElement;
 
@@ -462,12 +467,6 @@
         if (this instanceof PartitionNode)
           reinsertPartitionNodes(this);
 
-        // insert content
-        if (this.content)
-          (tmpl.content || tmpl.element).appendChild(this.content.nodeType ? this.content : document.createTextNode(this.content));
-
-        this.templateUpdate(this.tmpl);
-
         if (oldElement && oldElement !== this.element && oldElement.nodeType != 11) // 11 - DocumentFragment
         {
           var parentNode = oldElement && oldElement.parentNode;
@@ -483,7 +482,8 @@
         }
 
         // emit event
-        this.emit_templateChanged();
+        if (oldTmpl)
+          this.emit_templateChanged();
       },
 
      /**
@@ -525,11 +525,16 @@
         }
 
         // apply new value
-        if (this.template !== template)
+        var oldTmpl = this.tmpl;
+        var oldTemplate = this.template;
+        if (oldTemplate !== template)
         {
           // set new template
           this.template = template;
           this.templateSync();
+
+          if (oldTemplate)
+            oldTemplate.clearInstance(oldTmpl);
         }
       },
 
@@ -557,16 +562,6 @@
 
         /** @cut */ if (!action)
         /** @cut */   basis.dev.warn('template call `' + actionName + '` action, but it isn\'t defined in action list');
-      },
-
-     /**
-      * Template update function. It calls on init and on update event by default.
-      * @param {object} tmpl
-      * @param {string} eventName
-      * @param {object} delta
-      */
-      templateUpdate: function(tmpl, eventName, delta){
-        /* nothing to do, override it in sub classes */
       },
 
      /**
@@ -607,6 +602,9 @@
       * @inheritDoc
       */
       destroy: function(){
+        /** @cut */ delete instances[this.basisObjectId];
+        /** @cut */ notifier.set({ action: 'destroy', instance: this });
+
         var template = this.template;
         var element = this.element;
 
@@ -773,7 +771,11 @@
 
     init: function(){
       this.element = this.childNodesElement = document.createDocumentFragment();
+
       DWGroupingNode.prototype.init.call(this);
+
+      /** @cut */ instances[this.basisObjectId] = this;
+      /** @cut */ notifier.set({ action: 'create', instance: this });
     },
 
     syncDomRefs: function(){
@@ -792,7 +794,11 @@
     },
 
     destroy: function(){
+      /** @cut */ delete instances[this.basisObjectId];
+      /** @cut */ notifier.set({ action: 'destroy', instance: this });
+
       DWGroupingNode.prototype.destroy.call(this);
+
       this.element = null;
       this.childNodesElement = null;
     }
@@ -823,13 +829,13 @@
       disabled: {
         events: 'disable enable',
         getter: function(node){
-          return node.disabled || node.contextDisabled;
+          return node.isDisabled();
         }
       },
       enabled: {
         events: 'disable enable',
         getter: function(node){
-          return !(node.disabled || node.contextDisabled);
+          return !node.isDisabled();
         }
       }
     },
@@ -882,7 +888,7 @@
 
         if (newElement)
         {
-          newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
+          newElement[htmlTemplateIdMarker] = this.delegate.element[htmlTemplateIdMarker]; // to make events work
           this.element = newElement;
         }
       },
@@ -894,7 +900,7 @@
             var newElement = this.getElement(this.delegate);
 
             if (newElement)
-              newElement.basisTemplateId = this.delegate.element.basisTemplateId; // to make events work
+              newElement[htmlTemplateIdMarker] = this.delegate.element[htmlTemplateIdMarker]; // to make events work
 
             this.element = newElement || this.tmpl.element;
 
@@ -912,6 +918,11 @@
   //
 
   module.exports = {
+    /** @cut */ debug_notifier: notifier,
+    /** @cut */ debug_getInstances: function(){
+    /** @cut */   return basis.object.values(instances);
+    /** @cut */ },
+
     BINDING_PRESET: BINDING_PRESET,
 
     Node: Node,

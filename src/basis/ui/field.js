@@ -610,16 +610,22 @@
     className: namespace + '.Checkbox',
 
     value: false,
+    indeterminate: false,
 
     template: templates.Checkbox,
 
     binding: {
+      indeterminate: 'indeterminate',
       checked: {
         events: 'change',
         getter: function(field){
           return field.value ? 'checked' : '';
         }
       }
+    },
+    emit_change: function(event){
+      Field.prototype.emit_change.call(this, event);
+      this.syncIndeterminate();
     },
 
     toggle: function(){
@@ -631,6 +637,19 @@
     syncFieldValue_: function(){
       if (this.tmpl && this.tmpl.field)
         this.setValue(!!this.tmpl.field.checked);
+    },
+    syncIndeterminate: function(){
+      // this part looks tricky, but we do that because browser change
+      // indeterminate by it's own logic, and it may differ from known value
+      // that template stored in DOM
+      this.indeterminate = !this.indeterminate;
+      this.updateBind('indeterminate');
+      this.indeterminate = !this.indeterminate;
+      this.updateBind('indeterminate');
+    },
+    setIndeterminate: function(value){
+      this.indeterminate = !!value;
+      this.syncIndeterminate();
     }
   });
 
@@ -875,8 +894,9 @@
         {
           this.select();
 
-          if (this.parentNode)
-            this.parentNode.hide();
+          var owner = this.parentNode || this.owner;
+          if (owner)
+            owner.hide();
 
           event.die();
         }
@@ -1062,7 +1082,6 @@
 
       // create items popup
       this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
-        content: this.childNodesElement,
         handler: {
           context: this,
           callbacks: ComboboxPopupHandler
@@ -1325,7 +1344,7 @@
     },
     Required: function(field){
       var value = field.getValue();
-      if (basis.fn.$isNull(value) || value == '')
+      if (basis.fn.$isNull(value) || String(value).trim() == '')
         return new ValidatorError(field, dict.token('validator.required'));
     },
     Number: function(field){

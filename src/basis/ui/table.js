@@ -299,13 +299,6 @@
           if ('groupId' in colConfig)
             config.groupId = colConfig.groupId;
 
-          // content in header config is deprecated
-          if ('content' in headerConfig)
-          {
-            /** @cut */ basis.dev.warn('`content` property in header cell config is deprecated, use `title` instead');
-            config.title = headerConfig.content;
-          }
-
           if ('template' in headerConfig)
             config.template = headerConfig.template;
 
@@ -314,10 +307,6 @@
 
           if (typeof config.title == 'function')
             config.title = config.title.call(this);
-
-          // css classes
-          /** @cut */ if (headerConfig.cssClassName)
-          /** @cut */   basis.dev.warn('cssClassName isn\'t supported in header cell config anymore, use template property instead');
 
           // sorting
           var sorting = getter(colConfig.colSorting || colConfig.sorting);
@@ -400,16 +389,6 @@
 
             // fulfill config
             var config = {};
-
-            /** @cut */ if (footerConfig.cssClassName)
-            /** @cut */   basis.dev.warn('cssClassName isn\'t supported in footer cell config anymore, use template property instead');
-
-            // content in footer config is deprecated
-            if ('content' in footerConfig)
-            {
-              /** @cut */ basis.dev.warn('`content` property in footer cell config is deprecated, use `value` instead');
-              config.value = footerConfig.content;
-            }
 
             if ('template' in footerConfig)
               config.value = footerConfig.template;

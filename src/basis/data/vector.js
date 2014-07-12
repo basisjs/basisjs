@@ -106,7 +106,7 @@
 
     events = events.trim().split(' ').sort();
 
-    var fnId = [BaseClass.basisClassId_, getter.basisGetterId_, events].join('_');
+    var fnId = [BaseClass.basisClassId_, getter[basis.getter.ID], events].join('_');
     var fnConstructor = fnPreset_[fnId];
 
     if (fnConstructor)

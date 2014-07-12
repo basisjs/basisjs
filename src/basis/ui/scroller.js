@@ -157,7 +157,7 @@
 
       this.onUpdateHandler = this.onUpdate.bind(this);
 
-      this.updateElementPosition = TRANSFORM_SUPPORT ? this.updatePosition_styleTransform : this.updatePosition_styleTopLeft;
+      this.updateElementPosition = TRANSFORM_SUPPORT ? this.updatePositionByTransform : this.updatePositionByTopLeft;
     },
     setElement: function(element){
       if (this.targetElement && this.panning)
@@ -190,14 +190,14 @@
       Event.removeHandler(this.targetElement, 'touchstart', this.onMouseDown, this);
     },
 
-    updatePosition_styleTopLeft: function(){
+    updatePositionByTopLeft: function(){
       if (this.scrollX)
         this.targetElement.style.left = -this.viewportX + 'px';
       if (this.scrollY)
         this.targetElement.style.top = -this.viewportY + 'px';
     },
 
-    updatePosition_styleTransform: function(){
+    updatePositionByTransform: function(){
       var deltaX = -(this.isUpdating ? this.viewportX : Math.round(this.viewportX)) + 'px';
       var deltaY = -(this.isUpdating ? this.viewportY : Math.round(this.viewportY)) + 'px';
 

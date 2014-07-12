@@ -20,7 +20,7 @@
 
   var DataObject = basis.data.Object;
   var KeyObjectMap = basis.data.KeyObjectMap;
-  var AbstractDataset = basis.data.AbstractDataset;
+  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
   var DatasetWrapper = basis.data.DatasetWrapper;
 
   var Value = basis.data.Value;
@@ -257,7 +257,7 @@
     * function to fetch item from vector
     * @type {function(object)}
     */
-    itemGetter: basis.fn.$null,
+    vectorGetter: basis.fn.$null,
 
    /**
     * Values vector
@@ -352,6 +352,82 @@
   });
 
 
+ /**
+  * @class
+  */
+  var Distinct = Class(Index, {
+    className: namespace + '.Distinct',
+
+   /**
+    * Values map
+    * @type {object}
+    */
+    map_: null,
+
+   /**
+    * @inheritDoc
+    */
+    init: function(){
+      this.map_ = {};
+      Index.prototype.init.call(this);
+    },
+
+   /**
+    * @inheritDoc
+    */
+    add_: function(value){
+      if (!this.map_.hasOwnProperty(value)) // new key
+        this.map_[value] = 0;
+
+      if (++this.map_[value] == 1)
+        this.value += 1;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    remove_: function(value){
+      if (--this.map_[value] == 0)
+        this.value -= 1;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    update_: function(newValue, oldValue){
+      var delta = 0;
+
+      // add
+      if (!this.map_.hasOwnProperty(newValue))  // new key
+        this.map_[newValue] = 0;
+
+      if (++this.map_[newValue] == 1)
+        delta += 1;
+
+      // remove
+      if (--this.map_[oldValue] == 0)
+        delta -= 1;
+
+      // apply delta
+      if (delta)
+        this.set(this.value + delta);
+    },
+
+   /**
+    * @inheritDoc
+    */
+    normalize: String,
+
+   /**
+    * @inheritDoc
+    */
+    destroy: function(){
+      Index.prototype.destroy.call(this);
+      this.map_ = null;
+    }
+  });
+
+
   //
   // Index builder
   //
@@ -385,7 +461,7 @@
 
     events = events.trim().split(' ').sort();
 
-    var indexId = [BaseClass.basisClassId_, getter.basisGetterId_, events].join('_');
+    var indexId = [BaseClass.basisClassId_, getter[basis.getter.ID], events].join('_');
     var indexConstructor = indexConstructors_[indexId];
 
     if (indexConstructor)
@@ -417,7 +493,7 @@
     return function(events, getter){
       var dataset;
 
-      if (events instanceof AbstractDataset || events instanceof DatasetWrapper)
+      if (events instanceof ReadOnlyDataset || events instanceof DatasetWrapper)
       {
         dataset = events;
         events = getter;
@@ -429,11 +505,6 @@
         getter = events;
         events = '';
       }
-
-      /** @cut */ if (events)
-      /** @cut */   if (typeof getter == 'string' && getter.split(/\s+/).some(function(e){ return e in basis.event.events; })
-      /** @cut */       || Array.isArray(getter) && getter.some(function(e){ return e in basis.event.events; }))
-      /** @cut */     basis.dev.warn('events must be before getter in basis.data.index constructor');
 
       var indexConstructor = getIndexConstructor(IndexClass, getter || defGetter, events);
 
@@ -453,6 +524,7 @@
   var avg = createIndexConstructor(Avg);
   var min = createIndexConstructor(Min);
   var max = createIndexConstructor(Max);
+  var distinct = createIndexConstructor(Distinct);
 
 
   //
@@ -554,7 +626,7 @@
  var datasetIndexes = {};
 
  /**
-  * @param {basis.data.AbstractDataset} dataset
+  * @param {basis.data.ReadOnlyDataset} dataset
   * @param {basis.data.index.IndexConstructor} indexConstructor
   */
   function getDatasetIndex(dataset, indexConstructor){
@@ -594,7 +666,7 @@
   }
 
  /**
-  * @param {basis.data.AbstractDataset} dataset
+  * @param {basis.data.ReadOnlyDataset} dataset
   * @param {basis.data.index.Index} index
   */
   function removeDatasetIndex(dataset, index){
@@ -980,12 +1052,14 @@
     VectorIndex: VectorIndex,
     Min: Min,
     Max: Max,
+    Distinct: Distinct,
 
     count: count,
     sum: sum,
     avg: avg,
     max: max,
     min: min,
+    distinct: distinct,
 
     CalcIndexPreset: CalcIndexPreset,
     percentOfRange: percentOfRange,

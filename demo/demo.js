@@ -4,13 +4,15 @@ basis.ready(function(){
 
   new basis.ui.Node({
     container: document.body,
-    content: document.getElementById('demo-container'),
     template: basis.resource('../res/demo.tmpl'),
     binding: {
-      sourceCode: 'satellite:',
       title: function(){
         return document.title;
-      }
+      },
+      content: function(){
+        return document.getElementById('demo-container');
+      },
+      sourceCode: 'satellite:'
     },
     satellite: {
       sourceCode: {

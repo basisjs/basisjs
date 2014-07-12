@@ -42,6 +42,7 @@
   var tokenIndex = [];
   var tokenComputeFn = {};
   var tokenComputes = {};
+  var updateToken = basis.Token.prototype.set;
 
 
  /**
@@ -56,9 +57,15 @@
     init: function(value, token){
       token.computeTokens[this.basisObjectId] = this;
       this.token = token;
-      this.get = token.computeGetMethod;
 
       basis.Token.prototype.init.call(this, value);
+    },
+
+    get: function(){
+      var key = this.token.type == 'plural'
+        ? cultures[currentCulture].plural(this.value)
+        : this.value;
+      return this.token.dictionary.getValue(this.token.name + '.' + key);
     },
 
     toString: function(){
@@ -125,39 +132,15 @@
       return this.get();
     },
 
-    computeGetMethod: function(){
-    },
-
     apply: function(){
-      var values = {};
-      var tokens = this.computeTokens;
-      var get = this.type == 'plural'
-        ? function(){
-            return values[cultures[currentCulture].plural(this.value)];
-          }
-        : function(){
-            return values[this.value];
-          };
-
-      this.computeGetMethod = get;
-
-      if ((this.type == 'plural' && Array.isArray(this.value)) ||
-          (this.type == 'default' && typeof this.value == 'object'))
-        values = basis.object.slice(this.value, ownKeys(this.value));
-
-      for (var key in tokens)
-      {
-        var computeToken = tokens[key];
-        var curValue = computeToken.get();
-        var newValue = get.call(computeToken);
-
-        computeToken.get = get;
-
-        if (curValue !== newValue)
-          computeToken.apply();
-      }
+      for (var key in this.computeTokens)
+        this.computeTokens[key].apply();
 
       basis.Token.prototype.apply.call(this);
+    },
+
+    set: function(){
+      /** @cut */ basis.dev.warn('basis.l10n: Value for l10n token can\'t be set directly, but through dictionary update only');
     },
 
     setType: function(type){
@@ -182,7 +165,7 @@
       events = String(events).trim().split(/\s+|\s*,\s*/).sort();
 
       var tokenId = this.basisObjectId;
-      var enumId = events.concat(tokenId, getter.basisGetterId_).join('_');
+      var enumId = events.concat(tokenId, getter[basis.getter.ID]).join('_');
 
       if (tokenComputeFn[enumId])
         return tokenComputeFn[enumId];
@@ -190,7 +173,7 @@
       var token = this;
       var objectTokenMap = {};
       var updateValue = function(object){
-        this.set(getter(object));
+        updateToken.call(this, getter(object));
       };
       var handler = {
         destroy: function(object){
@@ -407,7 +390,7 @@
     */
     syncValues: function(){
       for (var tokenName in this.tokens)
-        this.tokens[tokenName].set(this.getValue(tokenName));
+        updateToken.call(this.tokens[tokenName], this.getValue(tokenName));
     },
 
    /**
@@ -473,7 +456,7 @@
 
 
  /**
-  * @param {basis.Resource|string} content
+  * @param {basis.Resource|string} source
   * @return {basis.l10n.Dictionary}
   */
   function resolveDictionary(source){

@@ -97,10 +97,12 @@
         if (typeof event[name] != 'function' && name in this == false)
           this[name] = event[name];
 
+      var target = sender(event);
       basis.object.extend(this, {
         event_: event,
 
-        sender: sender(event),
+        sender: target,
+        target: target,
 
         key: key(event),
         charCode: charCode(event),
