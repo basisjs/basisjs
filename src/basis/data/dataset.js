@@ -565,13 +565,7 @@
       {
         var source = sources[i];
         if (!basis.array.remove(exists, source))
-        {
           this.addSource(source);
-        }
-        else
-        {
-          /** @cut */ basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of ReadOnlyDataset', source);
-        }
       }
 
       exists.forEach(this.removeSource, this);
