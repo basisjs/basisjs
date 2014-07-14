@@ -84,20 +84,12 @@
 
     if (!events.resizeSensor_)
     {
-      // onresize doesn't fire when element insert into document
-      // using iframe is better
-      // if (false && 'onresize' in element)
-      // {
-      //   element.onresize = function(e){
-      //     events.forEach(function(handler){
-      //       handler.fn.call(handler.context, element);
-      //     });
-      //   };
-      // }
-      // else
+      // NOTE: we don't use `onresize` in IE, because it doesn't fire when
+      // element insert into document, so using iframe is better solution
+
       if (OVERFLOW_EVENT_SUPPORTED)
       {
-        var sensor = events.resizeSensor_ = overflowSensorProto.cloneNode(true);
+        var sensor = overflowSensorProto.cloneNode(true);
         var x = -1;
         var y = -1;
         var first = sensor.firstElementChild.firstChild;
@@ -176,6 +168,8 @@
 
         element.appendChild(sensor);
       }
+
+      events.resizeSensor_ = sensor;
     }
 
     events.push({
@@ -203,10 +197,9 @@
     {
       var sensor = events.resizeSensor_;
 
-      if ('onresize' in element)
-        element.onresize = null;
+      if (sensor.parentNode)
+        sensor.parentNode.removeChild(sensor);
 
-      sensor.parentNode.removeChild(sensor);
       delete element.flowEvents_;
     }
   };
