@@ -1898,7 +1898,7 @@
   }
 
   var getResourceContent = function(url, ignoreCache){
-    if (ignoreCache || !resourceContentCache.hasOwnProperty(url))
+    if (ignoreCache || !hasOwnProperty.call(resourceContentCache, url))
     {
       var resourceContent = '';
 
@@ -1941,12 +1941,12 @@
   var createResource = function(resourceUrl, content){
     var contentType = pathUtils.extname(resourceUrl);
     var contentWrapper = getResource.extensions[contentType];
-    var isVirtual = arguments.length > 1;
+    var virtual = arguments.length > 1;
     var resolved = false;
     var wrapped = false;
     /** @cut */ var wrappedContent;
 
-    if (isVirtual)
+    if (virtual)
       resourceUrl += '#virtual';
 
     var resource = function(){
@@ -1955,7 +1955,7 @@
         return content;
 
       // fetch url content
-      var urlContent = isVirtual ? content : getResourceContent(resourceUrl);
+      var urlContent = virtual ? content : getResourceContent(resourceUrl);
 
       /** @cut    recursion warning */
       /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
@@ -1995,7 +1995,7 @@
     extend(resource, extend(new Token(), {
       url: resourceUrl,
       type: contentType,
-      virtual: isVirtual,
+      virtual: virtual,
 
       fetch: function(){
         return resource();
@@ -2010,14 +2010,14 @@
       /** @cut */   return contentWrapper ? resourceContentCache[resourceUrl] !== wrappedContent : false;
       /** @cut */ },
       update: function(newContent){
-        if (!resolved || isVirtual || newContent != resourceContentCache[resourceUrl])
+        if (!resolved || virtual || newContent != resourceContentCache[resourceUrl])
         {
-          if (!isVirtual)
+          if (!virtual)
             resourceContentCache[resourceUrl] = newContent;
 
           if (contentWrapper)
           {
-            if (!wrapped && isVirtual)
+            if (!wrapped && virtual)
               content = newContent;
 
             // wrap content only if it wrapped already and non-updatable
@@ -2041,7 +2041,7 @@
         }
       },
       reload: function(){
-        if (isVirtual)
+        if (virtual)
           return;
 
         var oldContent = resourceContentCache[resourceUrl];
@@ -2054,9 +2054,8 @@
         }
       },
       get: function(source){
-        if (isVirtual)
-          if (source)
-            return contentWrapper ? wrappedContent : content;
+        if (virtual && source)
+          return contentWrapper ? wrappedContent : content;
 
         return source ? getResourceContent(resourceUrl) : resource();
       },
@@ -2113,27 +2112,24 @@
 
       return resource ? resource.isResolved() : false;
     },
-    exists: function(resourceUrl){
+    exists: function(resourceUrl, inCache){
       /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
       /** @cut */   consoleMethods.warn('Bad usage: basis.resource.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-      return resources.hasOwnProperty(pathUtils.resolve(resourceUrl));
+      return hasOwnProperty.call(
+        inCache ? resourceContentCache : resources,
+        pathUtils.resolve(resourceUrl)
+      );
     },
     get: function(resourceUrl){
       /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
       /** @cut */   consoleMethods.warn('Bad usage: basis.resource.get(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-      resourceUrl = pathUtils.resolve(resourceUrl);
-
-      if (!getResource.exists(resourceUrl))
-        return null;
-
-      return getResource(resourceUrl);
+      return resources[pathUtils.resolve(resourceUrl)] || null;
     },
     getFiles: function(cache){
       return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
     },
-
     virtual: function(type, content, ownerUrl){
       return createResource(
         (ownerUrl ? ownerUrl + ':' : pathUtils.normalize(pathUtils.baseURI == '/' ? '' : pathUtils.baseURI) + '/') +
@@ -3557,6 +3553,26 @@
 
   // add dev namespace, host for special functionality in development environment
   getNamespace('basis.dev').extend(consoleMethods);
+
+
+  //
+  // set up file sync if available (dev mode only)
+  //
+
+  /** @cut */ ready(function(){
+  /** @cut */   var basisjsTools = global.basisjsToolsFileSync;
+  /** @cut */
+  /** @cut */   if (basisjsTools)
+  /** @cut */     basisjsTools.notifications.attach(function(action, filename, content){
+  /** @cut */       if (action == 'update')
+  /** @cut */       {
+  /** @cut */         if (filename in resources)
+  /** @cut */           resources[filename].update(content);
+  /** @cut */         if (filename in resourceContentCache)
+  /** @cut */           resourceContentCache[filename] = content;
+  /** @cut */       }
+  /** @cut */     });
+  /** @cut */ });
 
 
   //
