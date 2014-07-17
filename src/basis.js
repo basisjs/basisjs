@@ -47,25 +47,21 @@
 
 
  /**
-  * Generates unique id.
-  * random() + performance.now() + Date.now()
+  * Generates unique id (mix datetime and random).
   * @param {number=} len Required length of id (16 by default).
   * @returns {string} Generated id.
   */
   function genUID(len){
-    function base36(val){
-      return parseInt(Number(val), 10).toString(36);
-    }
-
-    var result = (global.performance ? base36(global.performance.now()) : '') + base36(new Date);
+    // uid should starts with alpha
+    var result = String.fromCharCode(97 + Math.round(25 * Math.random()));
 
     if (!len)
       len = 16;
 
     while (result.length < len)
-      result = base36(1e12 * Math.random()) + result;
+      result += parseInt(new Date * Math.random(), 10).toString(36);
 
-    return result.substr(result.length - len, len);
+    return result.substr(0, len);
   }
 
 
