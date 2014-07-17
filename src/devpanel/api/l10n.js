@@ -1,26 +1,23 @@
-require('basis.data');
-
-var STATE = basis.data.STATE;
-var sendData = require('./transport.js').sendData;
-
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
+
+var STATE = require('basis.data').STATE;
+var sendData = require('./transport.js').sendData;
+var File = require('../basisjs-tools-sync.js').File;
 
 inspectBasisL10n.onCultureChange(function(culture){
   sendData('cultureChanged', culture);
 });
 
-function createDictionaryFileContent(data){
-  var dictionaryData = {};
+function createDictionaryFileContent(description){
+  var dictionaryData = basis.object.slice(description.cultureValues);
 
-  if (data.tokenTypes)
-    dictionaryData['_meta'] = {
-      type: data.tokenTypes
+  if (description.tokenTypes)
+    dictionaryData._meta = {
+      type: description.tokenTypes
     };
 
-  basis.object.extend(dictionaryData, data.cultureValues);
-
-  return JSON.stringify(dictionaryData, undefined, 2);
+  return JSON.stringify(dictionaryData, null, 2);
 }
 
 module.exports = {
@@ -58,17 +55,18 @@ module.exports = {
   },
 
   updateDictionary: function(data){
-    inspectBasis.resource('/' + data.dictionary).update(createDictionaryFileContent(data));
+    inspectBasis
+      .resource(data.filename || '/' + data.dictionary)  // remove data.dictionary
+      .update(createDictionaryFileContent(data));
   },
 
   saveDictionary: function(data){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+    var filename = data.filename || '/' + data.dictionary;  // remove data.dictionary
+    var file = File.get(filename);
 
-    if (!basisjsTools)
+    if (!file)
       return;
 
-    // saving
-    var file = basisjsTools.getFile('/' + data.dictionary, true);
     var FILE_HANDLER = {
       stateChanged: function(){
         if (this.state == STATE.READY)

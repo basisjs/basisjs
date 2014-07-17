@@ -15,7 +15,8 @@ var heatInspector = resource('./inspector/heatmap.js');
 
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
-//var fileInspector = resource('./module/fileInspector/fileInspector.js');
+var isOnline = require('./basisjs-tools-sync.js').isOnline;
+var permamentFilesCount = require('./basisjs-tools-sync.js').permamentFilesCount;
 
 var inspectors = new basis.data.Dataset();
 var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
@@ -32,41 +33,6 @@ var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(B
 //
 // panel
 //
-
-var isOnline;
-var permamentFiles = [];
-var permamentFilesCount = new basis.data.Value(0);
-
-if (typeof basisjsToolsFileSync != 'undefined')
-{
-  // new basisjs-tools
-  isOnline = new basis.Token(basisjsToolsFileSync.isOnline.value);
-  basisjsToolsFileSync.isOnline.attach(isOnline.set, isOnline);
-
-  basisjsToolsFileSync.notifications.attach(function(eventName, filename){
-    var ext = basis.path.extname(filename);
-
-    if (eventName == 'new' || ext in inspectBasis.resource.extensions == false)
-      return;
-
-    if (inspectBasis.resource.extensions[ext].permanent && inspectBasis.resource.isResolved(filename))
-    {
-      basis.setImmediate(function(){
-        if (inspectBasis.resource(filename).hasChanges())
-          basis.array.add(permamentFiles, filename);
-        else
-          basis.array.remove(permamentFiles, filename);
-
-        permamentFilesCount.set(permamentFiles.length);
-      });
-    }
-  });
-}
-else
-{
-  // old basisjs-tools
-  isOnline = inspectBasis.devtools && basis.data.Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
-}
 
 var panel = new basis.ui.Node({
   container: document.body,

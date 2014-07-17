@@ -1,6 +1,6 @@
 // resolve basis.js instance for inspect
 var inspectBasis = basis.config.inspect;
-this.inspectBasis = inspectBasis;
+exports.inspectBasis = inspectBasis;
 
 // check basis.js instance found
 if (!inspectBasis)
@@ -20,7 +20,7 @@ require('basis.template').Template.extend({
   }
 });
 
-// everything ok, init interface
+// main part
 basis.nextTick(function(){
   basis.ready(function(){
     // init transport
@@ -32,24 +32,7 @@ basis.nextTick(function(){
 
     // prepare API object
     inspectBasis.appCP = basis.object.merge(
-      {
-        getFileGraph: function(){
-          var basisjsTools = typeof basisjsToolsFileSync != 'undefined'
-            ? basisjsToolsFileSync // new
-            : basis.devtools;      // old
-
-          if (basisjsTools)
-            basisjsTools.getFileGraph(function(err, data){
-              transport.sendData('fileGraph', {
-                data: data,
-                err: err
-              });
-            });
-        }
-      },
-
-      require('./api/version.js'),
-      require('./api/server.js'),
+      require('./api/status.js'),
       require('./api/file.js'),
       require('./api/l10n.js'),
       require('./api/ui.js'),
@@ -57,31 +40,31 @@ basis.nextTick(function(){
     );
 
     // init interface
-    require('./ui.js');
+    require('./panel.js');
     // temporary here
     //require('./module/ui/index.js');
 
-    // setup live update
-    if (inspectBasis.devtools)
-    {
-      var FILE_HANDLER = {
-        update: function(sender, delta){
-          if ('filename' in delta || 'content' in delta)
-            if (!basis.resource.isDefined || basis.resource.isDefined(this.data.filename, true))
-              basis.resource(this.data.filename).update(this.data.content);
-        }
-      };
-      inspectBasis.devtools.files.addHandler({
-        itemsChanged: function(sender, delta){
-          if (delta.inserted)
-            delta.inserted.forEach(function(file){
-              file.addHandler(FILE_HANDLER);
-            });
-        }
-      });
-    }
+    // setup self live update
+    // TODO: rework
+    // if (inspectBasis.devtools)
+    // {
+    //   var FILE_HANDLER = {
+    //     update: function(sender, delta){
+    //       if ('filename' in delta || 'content' in delta)
+    //         if (!basis.resource.isDefined || basis.resource.isDefined(this.data.filename, true))
+    //           basis.resource(this.data.filename).update(this.data.content);
+    //     }
+    //   };
+    //   inspectBasis.devtools.files.addHandler({
+    //     itemsChanged: function(sender, delta){
+    //       if (delta.inserted)
+    //         delta.inserted.forEach(function(file){
+    //           file.addHandler(FILE_HANDLER);
+    //         });
+    //     }
+    //   });
+    // }
 
     basis.dev.log('basis devpanel inited');
   });
 });
-

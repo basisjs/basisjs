@@ -2,21 +2,16 @@ require('basis.ui');
 require('basis.template');
 require('basis.dom.event');
 
-var templates = basis.template.define('app.menu', {
-  View: resource('./template/view.tmpl'),
-  Item: resource('./template/item.tmpl')
-});
-
 module.exports = basis.ui.Node.subclass({
   opened: false,
 
-  template: templates.View,
+  template: resource('./template/view.tmpl'),
   binding: {
     opened: 'opened'
   },
 
   childClass: {
-    template: templates.Item
+    template: resource('./template/item.tmpl')
   },
 
   handler: {

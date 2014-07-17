@@ -1,22 +1,36 @@
 var document = global.document;
-var sendData = basis.fn.$undef;
+var sendData = function(){};
 var transferEl;
+
+// if (!global.CustomEvent)
+// {
+//   var CustomEvent = function(event, params){
+//     var evt = document.createEvent('CustomEvent');
+
+//     basis.object.complete(params || {}, {
+//       bubbles: false,
+//       cancelable: false,
+//       detail: undefined
+//     });
+
+//     evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+
+//     return evt;
+//    };
+
+//   CustomEvent.prototype = global.Event.prototype;
+// }
 
 if (document.createEvent)
 {
-  var transferDataEvent = document.createEvent('Event');
-  transferDataEvent.initEvent('devpanelData', true, false);
-
-  // dispatch init
-  var initEvent = document.createEvent('Event');
-  initEvent.initEvent('devpanelInit', true, false);
-
   transferEl = document.createElement('pre');
   transferEl.id = 'devpanelSharedDom';  // for old plugin
   transferEl.style.display = 'none';
 
   sendData = function(action, data){
     var dataTextNode = document.createTextNode(JSON.stringify(data));
+    var transferDataEvent = document.createEvent('Event');
+    transferDataEvent.initEvent('devpanelData', true, false);
 
     transferEl.setAttribute('action', action);
     transferEl.appendChild(dataTextNode);
@@ -26,7 +40,12 @@ if (document.createEvent)
   };
 
   // add to document and fire init event
-  document.body.appendChild(transferEl).dispatchEvent(initEvent);
+  var initEvent = document.createEvent('Event');
+  initEvent.initEvent('devpanelInit', true, false);
+
+  document.body
+    .appendChild(transferEl)
+    .dispatchEvent(initEvent);
 }
 else
 {

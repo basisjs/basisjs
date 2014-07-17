@@ -1,5 +1,4 @@
 require('basis.data');
-require('basis.data.dataset');
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisUI = inspectBasis.require('basis.ui');
