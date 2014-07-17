@@ -701,14 +701,15 @@
       {
         if (global.MessageChannel)
         {
-          addToQueue = function(taskId){
-            var channel = new global.MessageChannel();
-            var setImmediateHandler = function(){
-              runTask(taskId);
-            };
+          var channel = new global.MessageChannel();
 
-            channel.port1.onmessage = setImmediateHandler;
-            channel.port2.postMessage(''); // broken in Opera if no value
+          channel.port1.onmessage = function(event){
+            var taskId = event.data;
+            runTask(taskId);
+          };
+
+          addToQueue = function(taskId){
+            channel.port2.postMessage(taskId);
           };
         }
         else
