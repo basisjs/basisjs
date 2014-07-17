@@ -81,11 +81,16 @@
 
         // feature available in development mode only
         /** @cut */ if (this.debug_emit)
+        /** @cut */ {
+        /** @cut */   args = [];  // avoid optimization warnings about arguments
+        /** @cut */   for (var i = 0; i < arguments.length; i++)
+        /** @cut */     args.push(arguments[i]);
         /** @cut */   this.debug_emit({
         /** @cut */     sender: this,
         /** @cut */     type: eventName,
-        /** @cut */     args: arguments
+        /** @cut */     args: args
         /** @cut */   });
+        /** @cut */ }
       };
 
       // function wrapper for more verbose in development mode
