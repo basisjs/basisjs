@@ -47,25 +47,25 @@
 
 
  /**
-  * Generates unique id.
-  * random() + performance.now() + Date.now()
+  * Generates unique id (mix datetime and random).
   * @param {number=} len Required length of id (16 by default).
   * @returns {string} Generated id.
   */
   function genUID(len){
     function base36(val){
-      return parseInt(Number(val), 10).toString(36);
+      return Math.round(val).toString(36);
     }
 
-    var result = (global.performance ? base36(global.performance.now()) : '') + base36(new Date);
+    // uid should starts with alpha
+    var result = base36(10 + 25 * Math.random());
 
     if (!len)
       len = 16;
 
     while (result.length < len)
-      result = base36(1e12 * Math.random()) + result;
+      result += base36(new Date * Math.random());
 
-    return result.substr(result.length - len, len);
+    return result.substr(0, len);
   }
 
 
@@ -701,14 +701,15 @@
       {
         if (global.MessageChannel)
         {
-          addToQueue = function(taskId){
-            var channel = new global.MessageChannel();
-            var setImmediateHandler = function(){
-              runTask(taskId);
-            };
+          var channel = new global.MessageChannel();
 
-            channel.port1.onmessage = setImmediateHandler;
-            channel.port2.postMessage(''); // broken in Opera if no value
+          channel.port1.onmessage = function(event){
+            var taskId = event.data;
+            runTask(taskId);
+          };
+
+          addToQueue = function(taskId){
+            channel.port2.postMessage(taskId);
           };
         }
         else
