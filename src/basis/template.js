@@ -1750,18 +1750,16 @@
       if (source.warns)
         warns.push.apply(warns, source.warns);
 
-      // prevent recursion
-      if (sourceOrigin)
-        includeStack.push(sourceOrigin);
+      // start prevent recursion
+      includeStack.push((sourceOrigin !== true && sourceOrigin) || {}); // basisjs-tools pass true
 
       //
       // main task
       //
       result.tokens = process(source, result, options);
 
-      // prevent recursion
-      if (sourceOrigin)
-        includeStack.pop();
+      // stop prevent recursion
+      includeStack.pop();
 
       // there must be at least one token in result
       if (!result.tokens)

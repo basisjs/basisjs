@@ -206,7 +206,7 @@
       {
         //find idle transport
         for (var id in this.requests)
-          if (this.requests[id].isIdle() && !this.requestQueue.indexOf(this.requests[id]) != -1)
+          if (this.requests[id].isIdle() && this.requestQueue.indexOf(this.requests[id]) == -1)
           {
             request = this.requests[id];
             delete this.requests[id];
