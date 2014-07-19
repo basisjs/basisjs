@@ -2,7 +2,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
 
 var STATE = require('basis.data').STATE;
-var sendData = require('./transport.js').sendData;
+var sendData = require('devpanel.transport').sendData;
 var File = require('../basisjs-tools-sync.js').File;
 
 inspectBasisL10n.onCultureChange(function(culture){

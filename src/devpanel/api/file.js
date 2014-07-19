@@ -1,6 +1,6 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var sendData = require('./transport.js').sendData;
+var sendData = require('devpanel.transport').sendData;
 var File = require('../basisjs-tools-sync.js').File;
 
 function sendFile(file){

@@ -5,18 +5,18 @@ require('basis.ui');
 require('basis.dragdrop');
 
 var inspectBasis = require('devpanel').inspectBasis;
-inspectBasis.require('basis.l10n');
-inspectBasis.require('basis.template');
-inspectBasis.require('basis.dom.event');
+var inspectBasisL10n = inspectBasis.require('basis.l10n');
+var inspectBasisTemplate = inspectBasis.require('basis.template');
+var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
-var l10nInspector = resource('./inspector/l10n.js');
-var templateInspector = resource('./inspector/template.js');
-var heatInspector = resource('./inspector/heatmap.js');
+var l10nInspector = resource('../../inspector/l10n.js');
+var templateInspector = resource('../../inspector/template.js');
+var heatInspector = resource('../../inspector/heatmap.js');
 
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
-var isOnline = require('./basisjs-tools-sync.js').isOnline;
-var permamentFilesCount = require('./basisjs-tools-sync.js').permamentFilesCount;
+var isOnline = require('../../basisjs-tools-sync.js').isOnline;
+var permamentFilesCount = require('../../basisjs-tools-sync.js').permamentFilesCount;
 
 var inspectors = new basis.data.Dataset();
 var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
@@ -50,7 +50,7 @@ var panel = new basis.ui.Node({
     cultureList: cultureList,
     isOnline: isOnline,
     inspectMode: inspectMode,
-    reloadRequired: 'satellite:'
+    permamentFilesCount: permamentFilesCount
   },
 
   action: {
@@ -66,54 +66,34 @@ var panel = new basis.ui.Node({
       themeList.setDelegate(this);
     },
     inspectl10n: function(){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
-        l10nInspector().startInspect();
-      });
+      l10nInspector().startInspect();
     },
     showCultures: function(){
       cultureList.setDelegate(this);
     },
     inspectHeat: function(){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
-        heatInspector().startInspect();
-      });
+      heatInspector().startInspect();
     },
+    reload: function(){
+      global.location.reload();
+    }
     // inspectFile: function(){
     //   fileInspector().toggle();
-    // },
-    storePosition: function(event){
-      if (localStorage)
-        localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
-    }
-  },
-
-  satellite: {
-    reloadRequired: {
-      instance: new basis.ui.Node({
-        template: resource('./template/reloadRequired.tmpl'),
-        binding: {
-          visible: permamentFilesCount.as(Boolean),
-          count: permamentFilesCount
-        },
-        action: {
-          reload: function(){
-            global.location.reload();
-          }
-        }
-      })
-    }
+    // }
   },
 
   init: function(){
     basis.ui.Node.prototype.init.call(this);
 
-    this.dde = new basis.dragdrop.MoveableElement();
+    this.dde = new basis.dragdrop.MoveableElement({
+      handler: {
+        drag: function(sender, data){
+          localStorage['basis-devpanel'] =
+            parseInt(data.axisX.value + data.deltaX) + ';' +
+            parseInt(data.axisY.value + data.deltaY);
+        }
+      }
+    });
   },
   templateSync: function(){
     basis.ui.Node.prototype.templateSync.call(this);

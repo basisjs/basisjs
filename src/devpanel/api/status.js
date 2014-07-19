@@ -1,4 +1,4 @@
-var transport = require('./transport.js');
+var transport = require('devpanel.transport');
 var isOnline = require('../basisjs-tools-sync.js').isOnline;
 
 module.exports = {

@@ -8,7 +8,7 @@
 /** @cut */     modules: {
 /** @cut */       devpanel: {
 /** @cut */         autoload: true,
-/** @cut */         filename: basis.path.dirname(basis.filename_) + '/devpanel/index.js'
+/** @cut */         path: basis.path.dirname(basis.filename_) + '/devpanel/index.js'
 /** @cut */       }
 /** @cut */     }
 /** @cut */   });

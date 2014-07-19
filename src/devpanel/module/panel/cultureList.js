@@ -1,7 +1,7 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var Value = require('basis.data').Value;
-var Menu = require('./module/menu/index.js');
+var Menu = require('../menu/index.js');
 
 module.exports = new Menu({
   childClass: {

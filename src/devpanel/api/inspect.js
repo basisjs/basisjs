@@ -1,14 +1,14 @@
-var transport = require('./transport.js');
+var sendData = require('devpanel.transport').sendData;
 var l10nInspector = require('../inspector/l10n.js');
 var templateInspector = require('../inspector/template.js');
 
 module.exports = {
   getInspectMode: function(){
     if (l10nInspector.isActive())
-      transport.sendData('startInspect', 'l10n');
+      sendData('startInspect', 'l10n');
 
     if (templateInspector.isActive())
-      transport.sendData('startInspect', 'template');
+      sendData('startInspect', 'template');
   },
   l10nStartInspect: function(){
     l10nInspector.startInspect();

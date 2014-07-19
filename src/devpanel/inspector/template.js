@@ -10,7 +10,7 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').mar
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var transport = require('../api/transport.js');
+var transport = require('devpanel.transport');
 
 var inspectDepth = 0;
 var inspectMode = new basis.data.Value({ value: false });

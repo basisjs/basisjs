@@ -1,6 +1,6 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var Menu = require('./module/menu/index.js');
+var Menu = require('../menu/index.js');
 
 var view = new Menu({
   selection: {

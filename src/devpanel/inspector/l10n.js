@@ -11,8 +11,8 @@ var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var colorPicker = require('./colorPicker.js');
-var transport = require('../api/transport.js');
+var getColor = require('../module/color.js');
+var transport = require('devpanel.transport');
 
 var elements = [];
 var inspectMode = new basis.data.Value({ value: false });
@@ -89,8 +89,8 @@ function startInspect(){
     basis.dom.event.addHandler(window, 'resize', updateOnResize);
     inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);
     inspectBasisEvent.captureEvent('mouseup', basis.dom.event.kill);
-    inspectBasisEvent.captureEvent('contextmenu', endInspect);
     inspectBasisEvent.captureEvent('click', pickHandler);
+    inspectBasisEvent.captureEvent('contextmenu', endInspect);
 
     transport.sendData('startInspect', 'l10n');
 
@@ -113,8 +113,8 @@ function endInspect(){
     basis.dom.event.removeHandler(window, 'resize', updateOnResize);
     inspectBasisEvent.releaseEvent('mousedown');
     inspectBasisEvent.releaseEvent('mouseup');
-    inspectBasisEvent.releaseEvent('contextmenu');
     inspectBasisEvent.releaseEvent('click');
+    inspectBasisEvent.releaseEvent('contextmenu');
 
     unhighlight();
     inspectMode.set(false);
@@ -246,7 +246,7 @@ function domTreeHighlight(root){
 var dictionaryColor = {};
 function getColorForDictionary(dictionaryName){
   if (!dictionaryColor[dictionaryName])
-    dictionaryColor[dictionaryName] = colorPicker.getColor();
+    dictionaryColor[dictionaryName] = getColor();
 
   return dictionaryColor[dictionaryName];
 }

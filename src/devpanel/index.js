@@ -15,7 +15,7 @@ require('basis.template').Template.extend({
   isolatePrefix_: false,
   getIsolatePrefix: function(){
     if (!this.isolatePrefix_)
-      this.isolatePrefix_ = basis.genUID().replace(/^[^a-z]/i, 'i$&') + '__';
+      this.isolatePrefix_ = basis.genUID() + '__';
     return this.isolatePrefix_;
   }
 });
@@ -24,23 +24,20 @@ require('basis.template').Template.extend({
 basis.nextTick(function(){
   basis.ready(function(){
     // init transport
-    var transport = require('./api/transport.js');
-    module.transferEl = transport.transferEl;
-
-    // make devpanel allowed for inspected basis.js
-    inspectBasis.devpanel = module;
+    require('./transport.js');
 
     // prepare API object
     inspectBasis.appCP = basis.object.merge(
       require('./api/status.js'),
+      require('./api/inspect.js'),
       require('./api/file.js'),
       require('./api/l10n.js'),
-      require('./api/ui.js'),
-      require('./api/inspector.js')
+      require('./api/ui.js')
     );
 
     // init interface
-    require('./panel.js');
+    require('./module/panel/index.js');
+
     // temporary here
     //require('./module/ui/index.js');
 
