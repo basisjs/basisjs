@@ -1,3 +1,15 @@
+## 1.3.1 (July 19, 2014)
+
+- FIX: remove wrong warning in `basis.data.dataset.Merge#setSources()`
+- FIX: exception in `basis.dom.resize.remove()` when iframe sensor used
+- FIX: `basis.template` include stack issue
+- FIX: `basis.net.Transport#poolLimit` request duplicate issue
+- FIX: memory leaks when `MessageChannel` polyfill for `basis.setImmediate()`
+- FIX: module `path` and `filename` resolving in `basis.processConfig`
+- FIX: `basis.genUID()` don't rely on `performance.now()`
+- API: `basis.genUID()` is return UID that always srart with alpha
+- automate library publication
+
 ## 1.3.0 (July 13, 2014)
 
 ### Core
