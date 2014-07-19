@@ -1191,20 +1191,20 @@
       var filename = module.filename;
       var path = module.path;
 
-      if (path)
-        path = pathUtils.resolve(path);
-      if (filename)
-        filename = pathUtils.resolve(filename);
-
       // if no path but filename
       // let filename equals to 'path/to/file[.ext]', then
       //   path = 'path/to/file'
       //   filename = '../file[.ext]'
       if (filename && !path)
       {
+        filename = pathUtils.resolve(filename);
         path = filename.substr(0, filename.length - pathUtils.extname(filename).length);
         filename = '../' + pathUtils.basename(filename);
       }
+
+      // path should be absolute
+      // at this point path is defined in any case
+      path = pathUtils.resolve(path);
 
       // if no filename but path
       // let path equals to 'path/to/file[.ext]', then
