@@ -11,28 +11,43 @@ var File = entity.createType('File', {
   content: function(value){
     return typeof value == 'string' ? value : null;
   }
-}).extendClass({
-  read: function(){
-    this.setState(STATE.PROCESSING);
-    this.file.read(function(data){
-      this.setState(STATE.READY);
-    }.bind(this));
-  },
-  save: function(content){
-    this.setState(STATE.PROCESSING);
-    this.file.save(content, function(err){
-      if (err)
-        this.setState(STATE.ERROR, err);
-      else
-        this.setState(STATE.READY);
-    }.bind(this));
-  },
-  emit_update: function(delta){
-    entity.BaseEntity.prototype.emit_update.call(this, delta);
+}).extendClass(function(super_, current_){
+  return {
+    file: null,
+    read: function(){
+      if (!this.file)
+      {
+        basis.dev.warn('basis.devpanel: file can\'t be read, no basisjsToolsFileSync file associated');
+        return;
+      }
 
-    if ('content' in delta)
-      this.file.set(this.data.content);
-  }
+      this.setState(STATE.PROCESSING);
+      this.file.read(function(data){
+        this.setState(STATE.READY);
+      }.bind(this));
+    },
+    save: function(content){
+      if (!this.file)
+      {
+        basis.dev.warn('basis.devpanel: file can\'t be saved, no basisjsToolsFileSync file associated');
+        return;
+      }
+
+      this.setState(STATE.PROCESSING);
+      this.file.save(content, function(err){
+        if (err)
+          this.setState(STATE.ERROR, err);
+        else
+          this.setState(STATE.READY);
+      }.bind(this));
+    },
+    emit_update: function(delta){
+      current_.emit_update.call(this, delta);
+
+      if (this.file && 'content' in delta)
+        this.file.set(this.data.content);
+    }
+  };
 });
 
 var permamentFiles = [];
@@ -53,6 +68,9 @@ basis.ready(function(){
   }
 
   // sync files
+  File.all.forEach(function(file){
+    file.file = basisjsTools.getFile(file.data.filename, true);
+  });
   File.all.sync(basisjsTools.getFiles().map(function(file){
     return {
       filename: file.filename,
@@ -69,7 +87,7 @@ basis.ready(function(){
         File({
           filename: filename,
           content: content
-        }).file = basisjsTools.getFile(filename);
+        }).file = basisjsTools.getFile(filename, true);
         break;
 
       case 'remove':

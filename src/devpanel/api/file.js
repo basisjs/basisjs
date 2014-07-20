@@ -61,29 +61,30 @@ FILE_LIST_HANDLER.itemsChanged(File.all, {
 // exports
 //
 module.exports = {
-  getFileList: function(){
-    sendData('filesChanged', {
-      inserted: File.all.getValues('data.filename')
-    });
+  getFileList: function(done){
+    done(null, File.all.getValues('data.filename'));
   },
-  getFileGraph: function(){
+  getFileGraph: function(done){
     var basisjsTools = global.basisjsToolsFileSync;
 
     if (basisjsTools)
       basisjsTools.getFileGraph(function(err, data){
-        sendData('fileGraph', {
-          data: data,
-          err: err
-        });
+        if (!err)
+          done(null, JSON.parse(data));
+        done(err);
       });
+    else
+      done('No basisjs-tools');
   },
-  createFile: function(filename){
+  createFile: function(done, filename){
     var basisjsTools = global.basisjsToolsFileSync;
 
     if (basisjsTools)
-      basisjsTools.createFile(filename);
+      basisjsTools.createFile(filename, done);
+    else
+      done('No basisjs-tools');
   },
-  readFile: function(filename){
+  readFile: function(done, filename){
     var file = File.get(filename);
 
     if (file)
@@ -94,7 +95,7 @@ module.exports = {
         file.read();
     }
   },
-  saveFile: function(filename, content){
+  saveFile: function(done, filename, content){
     var file = File.get(filename);
 
     if (file)

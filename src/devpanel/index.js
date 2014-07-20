@@ -27,7 +27,7 @@ basis.nextTick(function(){
     require('./transport.js');
 
     // prepare API object
-    inspectBasis.appCP = basis.object.merge(
+    exports.api = basis.object.merge(
       require('./api/status.js'),
       require('./api/inspect.js'),
       require('./api/file.js'),
