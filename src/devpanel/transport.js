@@ -57,10 +57,11 @@ if (emitEvent)
       });
   };
 
-  document.addEventListener('devpanel:connect', function(event){
+  document.addEventListener('basisjs-devpanel:connect', function(event){
     var notifyChannelId = event.detail;
-    var outputChannelId = 'devpanel:output-' + basis.genUID();
-    var inputChannelId = 'devpanel:input-' + basis.genUID();
+    var connectionId = basis.genUID();
+    var outputChannelId = 'basisjs-devpanel:' + connectionId + '-output';
+    var inputChannelId = 'basisjs-devpanel:' + connectionId + '-input';
 
     // reg channel
     channels[outputChannelId] = inputChannelId;
@@ -95,7 +96,7 @@ if (emitEvent)
     });
   });
 
-  emitEvent('devpanel:init', selfId);
+  emitEvent('basisjs-devpanel:init', selfId);
 
   // transferEl = document.createElement('pre');
   // transferEl.id = 'devpanelSharedDom';  // for old plugin
