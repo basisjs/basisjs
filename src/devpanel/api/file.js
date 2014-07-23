@@ -53,8 +53,8 @@ var FILE_LIST_HANDLER = {
 };
 
 File.all.addHandler(FILE_LIST_HANDLER);
-FILE_LIST_HANDLER.itemsChanged(File.all, {
-  inserted: File.all.getItems()
+File.all.getItems().forEach(function(file){
+  file.addHandler(FILE_HANDLER);
 });
 
 //

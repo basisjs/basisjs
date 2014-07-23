@@ -1,4 +1,6 @@
 var document = global.document;
+var channels = {};
+var selfId = basis.genUID();
 var sendData = function(){};
 var emitEvent = false;
 var transferEl;
@@ -32,7 +34,8 @@ if (document.createEvent)
     }
 
     emitEvent = function(name, data){
-      document.dispatchEvent(new EventClass('devpanel:' + name, {
+      console.log('[publish] ' + name, data);
+      document.dispatchEvent(new EventClass(name, {
         detail: data
       }));
     };
@@ -44,38 +47,55 @@ if (document.createEvent)
 //
 if (emitEvent)
 {
-  sendData = function(action, data){
-    console.log('send to acp: ', action, data);
-    emitEvent('data', {
-      action: action,
-      data: data
-    });
+  sendData = function(topic, data){
+    console.log('send to acp: ', topic, data);
+    for (var id in channels)
+      emitEvent(id, {
+        type: 'notify',
+        topic: topic,
+        data: data
+      });
   };
 
-  document.addEventListener('devpanel:ping', function(){
-    emitEvent('pong');
+  document.addEventListener('devpanel:connect', function(event){
+    var notifyChannelId = event.detail;
+    var outputChannelId = 'devpanel:output-' + basis.genUID();
+    var inputChannelId = 'devpanel:input-' + basis.genUID();
+
+    // reg channel
+    channels[outputChannelId] = inputChannelId;
+
+    // create input event-channel
+    document.addEventListener(inputChannelId, function(event){
+      console.log('devpanel {' + inputChannelId + '}', event.detail);
+
+      var detail = event.detail || {};
+      var command = detail.command;
+      var args = detail.args;
+      var api = require('devpanel').api;
+
+      if (api.hasOwnProperty(command))
+      {
+        api[command].apply(null, [function(err, data){
+          emitEvent(outputChannelId, {
+            type: 'response',
+            id: detail.id,
+            status: err ? 'error' : 'ok',
+            data: err || data
+          });
+        }].concat(args));
+      }
+      else
+        basis.dev.warn('[basis.devpanel] ACP call for unknown command `' + command + '`');
+    });
+
+    emitEvent(notifyChannelId, {
+      input: outputChannelId,
+      output: inputChannelId
+    });
   });
 
-  document.addEventListener('devpanel:command', function(event){
-    console.log('command', event.detail);
-    var detail = event.detail || {};
-    var command = detail.command;
-    var args = detail.args;
-    var api = require('devpanel').api;
-
-    if (api.hasOwnProperty(command))
-      api[command].apply(null, [function(err, data){
-        sendData('response', {
-          id: detail.id,
-          status: err ? 'error' : 'ok',
-          data: err || data
-        });
-      }].concat(args));
-    else
-      basis.dev.warn('[basis.devpanel] ACP call for unknown command `' + command + '`');
-  });
-
-  emitEvent('init');
+  emitEvent('devpanel:init', selfId);
 
   // transferEl = document.createElement('pre');
   // transferEl.id = 'devpanelSharedDom';  // for old plugin
