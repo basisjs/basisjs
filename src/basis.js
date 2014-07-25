@@ -44,6 +44,7 @@
 
   var document = global.document;
   var toString = Object.prototype.toString;
+  var isCoreBasis = !__config;
 
 
  /**
@@ -3444,6 +3445,94 @@
 
 
   //
+  // Sandbox
+  //
+
+  var sandboxes = {};
+
+  function createSandbox(config){
+    var name = config && config.name;
+
+    if (hasOwnProperty.call(sandboxes, name))
+    {
+      /** @cut */ consoleMethods.warn('basis.createSandbox: Sandbox name should be unique. Name `' + name + '` already in use (ignore name).');
+      name = false;
+    }
+
+    if (!name)
+    {
+      name = 'sandbox-' + genUID();
+      /** @cut */ consoleMethods.warn('basis.createSandbox: Name of sandbox is not specified. Name for new sandbox is `' + name + '`.');
+    }
+
+    /** @cut */ consoleMethods.info('basis.createSandbox: Create new sandbox `' + name + '`');
+    var sandbox = createBasisInstance(
+      global,
+      basisFilename,
+      complete({
+        name: name,
+        noConflict: true
+      }, config)
+    );
+
+    // registrate sandbox
+    sandboxes[name] = sandbox;
+
+    // override some properties of sandbox
+    extend(sandbox, {
+      /** @cut */ initDevpanel: initDevpanel,
+      // use one createSandbox function per core
+      createSandbox: createSandbox
+    });
+
+    return sandbox;
+  }
+
+
+  //
+  // Development stuff (dev mode only)
+  //
+
+  /** @cut */ var initDevpanel = runOnce(function(){
+  /** @cut */   if (basisFilename)
+  /** @cut */     createBasisInstance(global, basisFilename, {
+  /** @cut */       name: 'basis.devpanel',
+  /** @cut */       noConflict: true,
+  /** @cut */       inspect: basis,
+  /** @cut */       sandboxes: sandboxes,
+  /** @cut */       modules: {
+  /** @cut */         devpanel: {
+  /** @cut */           autoload: true,
+  /** @cut */           path: pathUtils.dirname(basisFilename) + '/devpanel/index.js'
+  /** @cut */         }
+  /** @cut */       }
+  /** @cut */     });
+  /** @cut */ });
+
+  // core basis.js instance listen to `basisjs:init-devpanel` event
+  // to init basis.devpanel in dev mode
+  // there is should be just one instance of devpanel per core
+  /** @cut */ if (isCoreBasis && document && document.addEventListener)
+  /** @cut */   document.addEventListener('basisjs:init-devpanel', initDevpanel);
+
+  // set up file sync if available (dev mode only)
+  /** @cut */ ready(function(){
+  /** @cut */   var basisjsTools = global.basisjsToolsFileSync;
+  /** @cut */
+  /** @cut */   if (basisjsTools)
+  /** @cut */     basisjsTools.notifications.attach(function(action, filename, content){
+  /** @cut */       if (action == 'update')
+  /** @cut */       {
+  /** @cut */         if (filename in resources)
+  /** @cut */           resources[filename].update(content);
+  /** @cut */         if (filename in resourceContentCache)
+  /** @cut */           resourceContentCache[filename] = content;
+  /** @cut */       }
+  /** @cut */     });
+  /** @cut */ });
+
+
+  //
   // export names
   //
 
@@ -3451,6 +3540,7 @@
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
     /** @cut */ processConfig: processConfig,
+    /** @cut */ initDevpanel: initDevpanel,
 
     // properties and settings
     version: VERSION,
@@ -3458,13 +3548,7 @@
     // config and environment
     NODE_ENV: NODE_ENV,
     config: config,
-    createSandbox: function(config){
-      return createBasisInstance(
-        global,
-        basisFilename,
-        complete({ noConflict: true }, config)
-      );
-    },
+    createSandbox: createSandbox,
 
     // modularity
     resolveNSFilename: resolveNSFilename,
@@ -3554,26 +3638,6 @@
 
   // add dev namespace, host for special functionality in development environment
   getNamespace('basis.dev').extend(consoleMethods);
-
-
-  //
-  // set up file sync if available (dev mode only)
-  //
-
-  /** @cut */ ready(function(){
-  /** @cut */   var basisjsTools = global.basisjsToolsFileSync;
-  /** @cut */
-  /** @cut */   if (basisjsTools)
-  /** @cut */     basisjsTools.notifications.attach(function(action, filename, content){
-  /** @cut */       if (action == 'update')
-  /** @cut */       {
-  /** @cut */         if (filename in resources)
-  /** @cut */           resources[filename].update(content);
-  /** @cut */         if (filename in resourceContentCache)
-  /** @cut */           resourceContentCache[filename] = content;
-  /** @cut */       }
-  /** @cut */     });
-  /** @cut */ });
 
 
   //
