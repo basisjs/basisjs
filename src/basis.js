@@ -2522,7 +2522,10 @@
     // if resource exists and resolved -> apply patch
     var resource = getResource.get(filename);
     if (resource && resource.isResolved())
+    {
+      /** @cut */ consoleMethods.info('Apply patch for ' + resource.url);
       patchFn(resource.get(), resource.url);
+    }
   }
 
 
