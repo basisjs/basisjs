@@ -1773,7 +1773,7 @@
 
       if (!token)
       {
-        token = this.deferredToken = new DeferredToken(this.value);
+        token = this.deferredToken = new DeferredToken(this.get());
         this.attach(token.set, token);
       }
 
