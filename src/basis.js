@@ -2132,7 +2132,11 @@
       return getResource(resourceUrl);
     },
     getFiles: function(cache){
-      return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
+      return cache
+        ? keys(resourceContentCache)
+        : keys(resources).filter(function(filename){
+            return !resources[filename].virtual;
+          });
     },
 
     virtual: function(type, content, ownerUrl){
