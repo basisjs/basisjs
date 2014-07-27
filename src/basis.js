@@ -68,6 +68,27 @@
     return result.substr(0, len);
   }
 
+ /**
+  * Define property (if possible) that show warning on access.
+  * @param {object} object
+  * @param {string} name Property name
+  * @param {*} value
+  * @param {string} warning Warning messsage
+  */
+  function defineReadWarningProperty(object, name, value, warning){
+    object[name] = value;
+
+    /** @cut */ if (Object.defineProperty)
+    /** @cut */   Object.defineProperty(object, name, {
+    /** @cut */     get: function(){
+    /** @cut */       consoleMethods.warn(warning);
+    /** @cut */       return value;
+    /** @cut */     },
+    /** @cut */     set: function(newValue){
+    /** @cut */       value = newValue;
+    /** @cut */     }
+    /** @cut */   });
+  }
 
  /**
   * Copy all properties from source (object) to destination object.
@@ -1123,6 +1144,11 @@
     // make a copy of config
     config = slice(config);
 
+    // extend by default settings
+    complete(config, {
+      implicitExt: 'warn'  // true, false, 'warn'
+    });
+
     // warn about extProto in basis-config, this option was removed in 1.3.0
     /** @cut */ if ('extProto' in config)
     /** @cut */   consoleMethods.warn('basis-config: `extProto` option in basis-config is not support anymore');
@@ -1899,7 +1925,7 @@
   }
 
   var getResourceContent = function(url, ignoreCache){
-    if (ignoreCache || !resourceContentCache.hasOwnProperty(url))
+    if (ignoreCache || !hasOwnProperty.call(resourceContentCache, url))
     {
       var resourceContent = '';
 
@@ -2118,7 +2144,7 @@
       /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
       /** @cut */   consoleMethods.warn('Bad usage: basis.resource.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
-      return resources.hasOwnProperty(pathUtils.resolve(resourceUrl));
+      return hasOwnProperty.call(resources, pathUtils.resolve(resourceUrl));
     },
     get: function(resourceUrl){
       /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
@@ -2192,7 +2218,21 @@
           }, filename, content).exports;
 
           if (ns.exports && ns.exports.constructor === Object)
-            complete(ns, ns.exports);
+          {
+            if (config.implicitExt)
+            {
+              /** @cut */ if (config.implicitExt == 'warn')
+              /** @cut */ {
+              /** @cut */   for (var key in ns.exports)
+              /** @cut */     if (key in ns == false)
+              /** @cut */       defineReadWarningProperty(ns, key, ns.exports[key],
+              /** @cut */         'basis.js: Access to implicit namespace property `' + namespace + '.' + key + '`'
+              /** @cut */       );
+              /** @cut */ }
+              /** @cut */ else
+              complete(ns, ns.exports);
+            }
+          }
 
           /** @cut */ ns.filename_ = filename;
           /** @cut */ ns.source_ = content;
@@ -2413,16 +2453,28 @@
 
     for (var i = 1, name; name = path[i]; i++)
     {
-      if (!cursor[name])
-      {
-        var nspath = path.slice(0, i + 1).join('.');
+      var nspath = path.slice(0, i + 1).join('.');
 
+      if (!hasOwnProperty.call(rootNs.namespaces_, nspath))
+      {
         // create new namespace
-        cursor[name] = new Namespace(nspath);
-        rootNs.namespaces_[nspath] = cursor[name];
+        var namespace = new Namespace(nspath);
+
+        // cursor[name] = namespace;
+        if (config.implicitExt)
+        {
+          cursor[name] = namespace;
+
+          /** @cut */ if (config.implicitExt == 'warn')
+          /** @cut */   defineReadWarningProperty(cursor, name, namespace,
+          /** @cut */     'basis.js: Access to implicit namespace `' + nspath + '`'
+          /** @cut */   );
+        }
+
+        rootNs.namespaces_[nspath] = namespace;
       }
 
-      cursor = cursor[name];
+      cursor = rootNs.namespaces_[nspath];
     }
 
     namespaces[path.join('.')] = cursor;
@@ -3476,6 +3528,7 @@
         complete({ noConflict: true }, config)
       );
     },
+    dev: (new Namespace('basis.dev')).extend(consoleMethods),
 
     // modularity
     resolveNSFilename: resolveNSFilename,
@@ -3562,9 +3615,6 @@
           }
     }
   });
-
-  // add dev namespace, host for special functionality in development environment
-  getNamespace('basis.dev').extend(consoleMethods);
 
 
   //
