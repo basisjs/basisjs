@@ -4,7 +4,6 @@
   */
 
   var namespace = this.path;
-  var ns = basis.namespace(String(namespace));
 
 
   //
@@ -130,9 +129,10 @@
     if (!started)
     {
       startWatch();
-
       started = true;
-      /** @cut */ if (ns.debug) basis.dev.log(namespace + ' started');
+
+      /** @cut */ if (module.exports.debug)
+      /** @cut */   basis.dev.log(namespace + ' started');
 
       checkUrl();
     }
@@ -145,9 +145,10 @@
     if (started)
     {
       stopWatch();
-
       started = false;
-      /** @cut */ if (ns.debug) basis.dev.log(namespace + ' stopped');
+
+      /** @cut */ if (module.exports.debug)
+      /** @cut */   basis.dev.log(namespace + ' stopped');
     }
   }
 
@@ -225,7 +226,8 @@
           }
       }
 
-      /** @cut */ if (ns.debug) basis.dev.info.apply(basis.dev, [namespace + ': hash changed to "' + newPath + '"'].concat(log.length ? log : '<no matches>'));
+      /** @cut */ if (module.exports.debug)
+      /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': hash changed to "' + newPath + '"'].concat(log.length ? log : '\n<no matches>'));
     }
 
   }
@@ -236,6 +238,7 @@
   function add(path, callback, context){
     var route = routes[path];
     var config;
+    /** @cut */ var log = [];
 
     if (!route)
     {
@@ -268,10 +271,21 @@
     if (path in matched)
     {
       if (config.callback.enter)
+      {
         config.callback.enter.call(context);
+        /** @cut */ log.push('\n', { type: 'enter', path: route.source, cb: config, route: route });
+      }
+
       if (config.callback.match)
+      {
         config.callback.match.apply(context, arrayFrom(matched[path], 1));
+        /** @cut */ log.push('\n', { type: 'match', path: route.source, cb: config, route: route, args: arrayFrom(matched[path], 1) });
+      }
+
     }
+
+    /** @cut */ if (module.exports.debug)
+    /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': add handler for route `' + path + '`'].concat(log.length ? log : '\n<no matches>'));
   }
 
  /**
