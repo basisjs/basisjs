@@ -44,6 +44,8 @@
 
   var document = global.document;
   var toString = Object.prototype.toString;
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
+  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
 
 
  /**
@@ -824,8 +826,6 @@
   // path utils
   //
 
-  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
-
  /**
   * Utilities for handling and transforming file paths. All these functions perform
   * only string transformations. Server or something else are not consulted to
@@ -1146,7 +1146,7 @@
 
     // extend by default settings
     complete(config, {
-      implicitExt: 'warn'  // true, false, 'warn'
+      implicitExt: NODE_ENV ? true : 'warn'  // true, false, 'warn'
     });
 
     // warn about extProto in basis-config, this option was removed in 1.3.0
