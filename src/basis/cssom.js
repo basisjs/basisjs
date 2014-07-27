@@ -1,7 +1,4 @@
 
-  basis.require('basis.dom');
-
-
  /**
   * @namespace basis.cssom
   */
@@ -19,7 +16,7 @@
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
   var Class = basis.Class;
-  var dom = basis.dom;
+  var dom = require('basis.dom');
   var DOMTokenList = global.DOMTokenList;
 
 

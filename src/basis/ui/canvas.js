@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.ui');
-
-
  /**
   * @namespace basis.ui.canvas
   */
@@ -16,17 +10,16 @@
   // import names
   //
 
-  var createEvent = basis.event.create;
-
-  var dwNode = basis.dom.wrapper.Node;
-  var Node = basis.ui.Node;
+  var createEvent = require('basis.event').create;
+  var dwNode = require('basis.dom.wrapper').Node;
+  var Node = require('basis.ui').Node;
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Canvas: resource('./templates/canvas/Canvas.tmpl')
   });
 

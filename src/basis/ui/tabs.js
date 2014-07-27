@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.ui');
-
-
  /**
   * @see ./demo/defile/tabs.html
   * @namespace basis.ui.tabs
@@ -17,19 +11,18 @@
   // import names
   //
 
-  var getter = basis.getter;
-
   var Class = basis.Class;
-  var DOM = basis.dom;
-
-  var UINode = basis.ui.Node;
+  var getter = basis.getter;
+  var basisUi = require('basis.ui');
+  var Node = basisUi.Node;
+  var ShadowNodeList = basisUi.ShadowNodeList;
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     TabControl: resource('./templates/tabs/TabControl.tmpl'),
     TabGroup: resource('./templates/tabs/TabGroup.tmpl'),
     Tab: resource('./templates/tabs/Tab.tmpl'),
@@ -60,17 +53,17 @@
  /**
   * @class
   */
-  var AbstractTabsControl = Class(UINode, {
+  var AbstractTabsControl = Class(Node, {
     className: namespace + '.AbstractTabsControl',
 
     selection: true,
     autoSelectChild: true,
 
-    childClass: UINode,
+    childClass: Node,
 
     emit_childNodesModified: function(delta){
       findAndSelectActiveNode.call(this);
-      UINode.prototype.emit_childNodesModified.call(this, delta);
+      Node.prototype.emit_childNodesModified.call(this, delta);
     },
 
     listen: {
@@ -103,7 +96,7 @@
  /**
   * @class
   */
-  var Tab = Class(UINode, {
+  var Tab = Class(Node, {
     className: namespace + '.Tab',
 
     template: templates.Tab,
@@ -124,7 +117,7 @@
       if (this.unselectDisabled)
         this.unselect();
 
-      UINode.prototype.emit_disable.call(this);
+      Node.prototype.emit_disable.call(this);
     }
   });
 
@@ -154,7 +147,7 @@
  /**
   * @class
   */
-  var Page = Class(UINode, {
+  var Page = Class(Node, {
     className: namespace + '.Page',
 
     template: templates.Page
@@ -181,7 +174,7 @@
 
     template: templates.TabSheet,
 
-    childClass: UINode
+    childClass: Node
   });
 
 
@@ -196,7 +189,7 @@
     childClass: TabSheet,
 
     satellite: {
-      shadowPages: basis.ui.ShadowNodeList.subclass({
+      shadowPages: ShadowNodeList.subclass({
         className: namespace + '.ShadowPages',
         getChildNodesElement: function(host){
           return host.tmpl.pagesElement;

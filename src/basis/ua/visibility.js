@@ -1,6 +1,4 @@
 
-  basis.require('basis.event');
-
  /**
   * @namespace basis.ua.visibility
   */
@@ -13,6 +11,9 @@
   //
 
   var document = global.document;
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var Emitter = basisEvent.Emitter;
 
 
   //
@@ -32,9 +33,9 @@
   // visibility change emiiter
   //
 
-  var listener = new basis.event.Emitter({
-    visible: basis.event.create('visible'),
-    hidden: basis.event.create('hidden')
+  var listener = new Emitter({
+    visible: createEvent('visible'),
+    hidden: createEvent('hidden')
   });
 
   //

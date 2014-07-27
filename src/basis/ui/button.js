@@ -1,7 +1,4 @@
 
-  basis.require('basis.ui');
-
-
  /**
   * @see ./demo/defile/button.html
   * @namespace basis.ui.button
@@ -14,14 +11,14 @@
   // import names
   //
 
-  var Node = basis.ui.Node;
+  var Node = require('basis.ui').Node;
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Button: resource('./templates/button/Button.tmpl'),
     ButtonPanel: resource('./templates/button/ButtonPanel.tmpl'),
     ButtonGroup: resource('./templates/button/ButtonGroup.tmpl')

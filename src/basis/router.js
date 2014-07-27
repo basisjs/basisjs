@@ -1,7 +1,4 @@
 
-  basis.require('basis.dom.event');
-
-
  /**
   * @namespace basis.router
   */
@@ -16,6 +13,7 @@
 
   var location = global.location;
   var document = global.document;
+  var eventUtils = require('basis.dom.event');
 
   // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
   var docMode = document.documentMode;
@@ -113,13 +111,13 @@
 
   function startWatch(){
     if (eventSupport)
-      basis.dom.event.addHandler(global, 'hashchange', checkUrl);
+      eventUtils.addHandler(global, 'hashchange', checkUrl);
     else
       timer = setInterval(checkUrl, CHECK_INTERVAL);
   }
   function stopWatch(){
     if (eventSupport)
-      basis.dom.event.removeHandler(global, 'hashchange', checkUrl);
+      eventUtils.removeHandler(global, 'hashchange', checkUrl);
     else
       clearInterval(timer);
   }

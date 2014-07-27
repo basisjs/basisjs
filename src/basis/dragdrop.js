@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom.event');
-  basis.require('basis.dom.computedStyle');
-  basis.require('basis.layout');
-
-
  /**
   * @namespace basis.dragdrop
   */
@@ -19,24 +13,26 @@
   var document = global.document;
   var cleaner = basis.cleaner;
 
-  var Event = basis.dom.event;
-  var addGlobalHandler = Event.addGlobalHandler;
-  var removeGlobalHandler = Event.removeGlobalHandler;
+  var eventUtils = require('basis.dom.event');
+  var addGlobalHandler = eventUtils.addGlobalHandler;
+  var removeGlobalHandler = eventUtils.removeGlobalHandler;
 
-  var Emitter = basis.event.Emitter;
-  var createEvent = basis.event.create;
+  var basisEvent = require('basis.event');
+  var Emitter = basisEvent.Emitter;
+  var createEvent = basisEvent.create;
 
-  var getComputedStyle = basis.dom.computedStyle.get;
-  var getOffsetParent = basis.layout.getOffsetParent;
-  var getBoundingRect = basis.layout.getBoundingRect;
-  var getViewportRect = basis.layout.getViewportRect;
+  var getComputedStyle = require('basis.dom.computedStyle').get;
+  var basisLayout = require('basis.layout');
+  var getOffsetParent = basisLayout.getOffsetParent;
+  var getBoundingRect = basisLayout.getBoundingRect;
+  var getViewportRect = basisLayout.getViewportRect;
 
 
   //
   // Main part
   //
 
-  var SELECTSTART_SUPPORTED = Event.getEventInfo('selectstart').supported;
+  var SELECTSTART_SUPPORTED = eventUtils.getEventInfo('selectstart').supported;
 
   var dragging;
   var dragElement;
@@ -81,7 +77,7 @@
 
     // avoid text selection in IE
     if (SELECTSTART_SUPPORTED)
-      addGlobalHandler('selectstart', Event.kill);
+      addGlobalHandler('selectstart', eventUtils.kill);
 
     // cancel event default action
     event.preventDefault();
@@ -123,7 +119,7 @@
     removeGlobalHandler('mousedown', stopDrag);
 
     if (SELECTSTART_SUPPORTED)
-      removeGlobalHandler('selectstart', Event.kill);
+      removeGlobalHandler('selectstart', eventUtils.kill);
 
     // store current values for event emit
     var element = dragElement;
@@ -194,12 +190,12 @@
       if (this.trigger !== trigger)
       {
         if (this.trigger)
-          Event.removeHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.removeHandler(this.trigger, 'mousedown', startDrag, this);
 
         this.trigger = trigger;
 
         if (this.trigger)
-          Event.addHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.addHandler(this.trigger, 'mousedown', startDrag, this);
       }
     },
     setBase: function(baseElement){

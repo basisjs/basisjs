@@ -1,8 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-
-
  /**
   * Namespace overview:
   * - {basis.data.value.Property}
@@ -21,10 +17,11 @@
 
   var getter = basis.getter;
   var cleaner = basis.cleaner;
-  var Emitter = basis.event.Emitter;
-  var AbstractData = basis.data.AbstractData;
-  var Value = basis.data.Value;
-  var STATE = basis.data.STATE;
+
+  var basisData = require('basis.data');
+  var AbstractData = basisData.AbstractData;
+  var Value = basisData.Value;
+  var STATE = basisData.STATE;
 
 
  /**

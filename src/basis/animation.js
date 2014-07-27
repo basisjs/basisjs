@@ -1,9 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.cssom');
-  basis.require('basis.data.value');
-
-
  /**
   * @namespace basis.animation
   */
@@ -16,10 +11,10 @@
   //
 
   var Class = basis.Class;
-  var Property = basis.data.value.Property;
 
-  var setStyle = basis.cssom.setStyle;
-  var createEvent = basis.event.create;
+  var setStyle = require('basis.cssom').setStyle;
+  var createEvent = require('basis.event').create;
+  var Value = require('basis.data').Value;
 
 
   //
@@ -65,7 +60,7 @@
  /**
   * @class
   */
-  var Thread = Class(Property, {
+  var Thread = Class(Value, {
     className: namespace + '.Thread',
 
     duration: 1000,
@@ -81,17 +76,16 @@
       if (this.value == 0.0)
         this.emit_start();
 
-      Property.prototype.emit_change.call(this, prevValue);
+      Value.prototype.emit_change.call(this, prevValue);
 
       if (this.value == 1.0)
         this.emit_finish();
     },
 
-    extendConstructor_: true,
     init: function(){
       this.run = this.run.bind(this);
 
-      Property.prototype.init.call(this, 0);
+      Value.prototype.init.call(this, 0);
     },
     start: function(invertIfRun){
       if (!this.started)
@@ -141,7 +135,7 @@
     destroy: function(){
       this.stop();
 
-      Property.prototype.destroy.call(this);
+      Value.prototype.destroy.call(this);
     }
   });
 

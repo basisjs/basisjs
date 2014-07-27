@@ -1,9 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.net.ajax');
-  basis.require('basis.net.action');
-
-
  /**
   * @namespace basis.net.service
   */
@@ -15,11 +10,12 @@
   // import names
   //
 
-  var createEvent = basis.event.create;
-  var createAction = basis.net.action.create;
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var Emitter = basisEvent.Emitter;
 
-  var Emitter = basis.event.Emitter;
-  var AjaxTransport = basis.net.ajax.Transport;
+  var AjaxTransport = require('basis.net.ajax').Transport;
+  var createAction = require('basis.net.action').create;
 
 
  /**

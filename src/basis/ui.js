@@ -1,11 +1,4 @@
 
-  basis.require('basis.l10n');
-  basis.require('basis.data');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.template');
-  basis.require('basis.template.html');
-
-
  /**
   * @namespace basis.ui
   */
@@ -20,14 +13,16 @@
   var document = global.document;
 
   var Class = basis.Class;
-  var createEvent = basis.event.create;
+  var createEvent = require('basis.event').create;
 
-  var HtmlTemplate = basis.template.html.Template;
-  var htmlTemplateIdMarker = basis.template.html.marker;
-  var TemplateSwitcher = basis.template.TemplateSwitcher;
-  var DWNode = basis.dom.wrapper.Node;
-  var DWPartitionNode = basis.dom.wrapper.PartitionNode;
-  var DWGroupingNode = basis.dom.wrapper.GroupingNode;
+  var basisTemplateHtml = require('basis.template.html');
+  var HtmlTemplate = basisTemplateHtml.Template;
+  var htmlTemplateIdMarker = basisTemplateHtml.marker;
+  var TemplateSwitcher = require('basis.template').TemplateSwitcher;
+  var basisDomWrapper = require('basis.dom.wrapper');
+  var DWNode = basisDomWrapper.Node;
+  var DWPartitionNode = basisDomWrapper.PartitionNode;
+  var DWGroupingNode = basisDomWrapper.GroupingNode;
 
 
   //

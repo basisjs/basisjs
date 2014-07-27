@@ -1,14 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.cssom');
-  basis.require('basis.l10n');
-  basis.require('basis.ui');
-  basis.require('basis.ui.button');
-  basis.require('basis.dragdrop');
-
-
  /**
   * @see ./demo/defile/window.html
   * @namespace basis.ui.window
@@ -22,24 +12,22 @@
   //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
-  var Event = basis.dom.event;
-  var cssom = basis.cssom;
-
   var arrayFrom = basis.array.from;
-  var createEvent = basis.event.create;
-
-  var UINode = basis.ui.Node;
-  var ButtonPanel = basis.ui.button.ButtonPanel;
+  var DOM = require('basis.dom');
+  var cssom = require('basis.cssom');
+  var createEvent = require('basis.event').create;
+  var Node = require('basis.ui').Node;
+  var ButtonPanel = require('basis.ui.button').ButtonPanel;
+  var MoveableElement = require('basis.dragdrop').MoveableElement;
 
 
   //
   // definitions
   //
 
-  var dict = basis.l10n.dictionary(__filename);
+  var dict = require('basis.l10n').dictionary(__filename);
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Blocker: resource('./templates/window/Blocker.tmpl'),
     Window: resource('./templates/window/Window.tmpl'),
     TitleButton: resource('./templates/window/TitleButton.tmpl'),
@@ -55,7 +43,7 @@
  /**
   * @class
   */
-  var Blocker = Class(UINode, {
+  var Blocker = Class(Node, {
     className: namespace + '.Blocker',
 
     template: templates.Blocker,
@@ -82,7 +70,7 @@
     destroy: function(){
       this.release();
 
-      UINode.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
     }
   });
 
@@ -99,7 +87,7 @@
  /**
   * @class
   */
-  var Window = Class(UINode, {
+  var Window = Class(Node, {
     className: namespace + '.Window',
 
     emit_beforeShow: createEvent('beforeShow'),
@@ -168,7 +156,7 @@
         existsIf: function(owner){
           return !owner.titleButton || owner.titleButton.close !== false;
         },
-        instanceOf: UINode.subclass({
+        instanceOf: Node.subclass({
           className: namespace + '.TitleButton',
 
           template: templates.TitleButton,
@@ -182,11 +170,11 @@
     },
 
     init: function(){
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
 
       // make window moveable
       if (this.moveable)
-        this.dde = new basis.dragdrop.MoveableElement({
+        this.dde = new MoveableElement({
           fixRight: false,
           fixBottom: false,
           handler: {
@@ -232,7 +220,7 @@
       if (!this.autocenter && this.element.nodeType == 1)
         style = basis.object.slice(this.element.style, ['left', 'top', 'margin']);
 
-      UINode.prototype.templateSync.call(this);
+      Node.prototype.templateSync.call(this);
 
       if (this.element.nodeType == 1)
       {
@@ -321,7 +309,7 @@
         this.buttonPanel = null;
       }
 
-      UINode.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
     }
   });
 
@@ -329,7 +317,7 @@
   // Window manager
   //
 
-  var windowManager = new UINode({
+  var windowManager = new Node({
     template: templates.windowManager,
     selection: true,
     blocker: basis.fn.lazyInit(function(){

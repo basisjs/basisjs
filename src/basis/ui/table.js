@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.l10n');
-  basis.require('basis.ui');
-
-
  /**
   * Table namespace
   *
@@ -29,18 +23,24 @@
   var nullGetter = basis.fn.nullGetter;
   var extend = basis.object.extend;
 
-  var GroupingNode = basis.dom.wrapper.GroupingNode;
-  var PartitionNode = basis.dom.wrapper.PartitionNode;
-  var UINode = basis.ui.Node;
-  var UIPartitionNode = basis.ui.PartitionNode;
-  var UIGroupingNode = basis.ui.GroupingNode;
+  var basisEvent = require('basis.event');
+  var Emitter = basisEvent.Emitter;
+  var createEvent = basisEvent.create;
+  var basisDomWrapper = require('basis.dom.wrapper');
+  var GroupingNode = basisDomWrapper.GroupingNode;
+  var PartitionNode = basisDomWrapper.PartitionNode;
+  var basisUi = require('basis.ui');
+  var UINode = basisUi.Node;
+  var UIPartitionNode = basisUi.PartitionNode;
+  var UIGroupingNode = basisUi.GroupingNode;
+  var basisTemplate = require('basis.template');
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = basisTemplate.define(namespace, {
     Table: resource('./templates/table/Table.tmpl'),
     Body: resource('./templates/table/Body.tmpl'),
     Row: resource('./templates/table/Row.tmpl'),
@@ -93,7 +93,7 @@
     childClass: PartitionNode.subclass({
       className: namespace + '.AbstractHeaderPartitionNode',
       colSpan: 1,
-      emit_colSpanChanged: basis.event.create('colSpanChanged'),
+      emit_colSpanChanged: createEvent('colSpanChanged'),
       emit_childNodesModified: function(delta){
         PartitionNode.prototype.emit_childNodesModified.call(this, delta);
         this.updateColSpan();
@@ -131,7 +131,7 @@
         dataSource: function(owner){
           return owner.getChildNodesDataset();
         },
-        instanceOf: basis.ui.Node.subclass({
+        instanceOf: UINode.subclass({
           template: templates.HeaderPartitionRow,
           childClass: HeaderPartitionNode
         })
@@ -152,7 +152,7 @@
     * @inheritDoc
     */
     syncDomRefs: function(){
-      basis.ui.GroupingNode.prototype.syncDomRefs.call(this);
+      UIGroupingNode.prototype.syncDomRefs.call(this);
 
       var cursor = this;
       var element = this.owner ? (this.owner.tmpl && this.owner.tmpl.groupRowsElement) || this.owner.childNodesElement : null;
@@ -291,7 +291,10 @@
           var headerConfig = colConfig.header;
           var config = {};
 
-          if (headerConfig == null || typeof headerConfig != 'object' || headerConfig instanceof basis.Token || headerConfig instanceof basis.event.Emitter)
+          if (headerConfig == null ||
+              typeof headerConfig != 'object' ||
+              headerConfig instanceof basis.Token ||
+              headerConfig instanceof Emitter)
             headerConfig = {
               title: headerConfig
             };
@@ -382,7 +385,9 @@
           {
             var footerConfig = colConfig.footer != null ? colConfig.footer : {};
 
-            if (typeof footerConfig != 'object' || footerConfig instanceof basis.Token || footerConfig instanceof basis.event.Emitter)
+            if (typeof footerConfig != 'object' ||
+                footerConfig instanceof basis.Token ||
+                footerConfig instanceof Emitter)
               footerConfig = {
                 value: footerConfig
               };
@@ -532,7 +537,7 @@
 
           if (cellTemplate)
           {
-            if (cellTemplate instanceof basis.template.Template)
+            if (cellTemplate instanceof basisTemplate.Template)
               cellTemplateRef = '#' + cellTemplate.templateId;
             else
               if (typeof cellTemplate == 'function' && cellTemplate.url)

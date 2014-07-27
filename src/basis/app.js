@@ -1,7 +1,7 @@
 
-  //
-  // inport names
-  //
+ /**
+  * @namespace basis.app
+  */
 
   var document = global.document || {
     title: 'unknown'
