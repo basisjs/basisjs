@@ -658,8 +658,8 @@
     // attach event handlers
     if (isConfig)
     {
-      if (config.css && basis.cssom)
-        basis.cssom.setStyle(element, config.css);
+      if (config.css)
+        require('basis.cssom').setStyle(element, config.css);
 
       for (var event in config)
         if (typeof config[event] == 'function')

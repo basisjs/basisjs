@@ -37,6 +37,7 @@
   var Emitter = basisEvent.Emitter;
   var createEvent = basisEvent.create;
   var events = basisEvent.events;
+  var createEventHandler = basisEvent.createHandler;
 
 
   //
@@ -741,7 +742,7 @@
         fn = $self;
 
       var hostValue = this;
-      var handler = basis.event.createHandler(events, function(object){
+      var handler = createEventHandler(events, function(object){
         this.set(fn(object, hostValue.value)); // `this` is a token
       });
       var fnId = fn[GETTER_ID] || String(fn);
@@ -779,8 +780,8 @@
         });
 
         getComputeToken = computeFunctions[getComputeTokenId] = function(object){
-          /** @cut */ if (object instanceof basis.event.Emitter == false)
-          /** @cut */   basis.dev.warn('basis.data.Value#compute: object should be an instanceof basis.event.Emitter');
+          /** @cut */ if (object instanceof Emitter == false)
+          /** @cut */   basis.dev.warn('basis.data.Value#compute: object should be an instance of basis.event.Emitter');
 
           var objectId = object.basisObjectId;
           var pair = tokenMap[objectId];
@@ -982,7 +983,7 @@
       if (!getter)
         getter = $self;
 
-      var handler = basis.event.createHandler(events, valueFromSetProxy);
+      var handler = createEventHandler(events, valueFromSetProxy);
       var getterId = getter[GETTER_ID] || String(getter);
       var id = handler.events.concat(getterId, obj.basisObjectId).join('_');
 

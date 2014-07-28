@@ -113,6 +113,8 @@
     return getBoundingRect(relPoint, offsetParent);
   }
 
+  // use basis.ui.window.getWindowTopZIndex() if basis.ui.window resolved
+  // TODO: remove dependance on basis.ui.window (make common module to manage layers)
   function getTopZIndex(){
     var basisUiWindow = basis.resource.get(basis.resolveNSFilename('basis.ui.window'));
     return basisUiWindow ? basisUiWindow.fetch().getWindowTopZIndex() : 2001;

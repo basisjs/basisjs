@@ -10,7 +10,8 @@
   // import names
   //
 
-  var eventUtils = require('basis.dom.event'); // TODO
+  var STATE = require('basis.data').STATE;
+  var eventUtils = require('basis.dom.event'); // TODO: avoid of using basis.dom.event
   var basisNet = require('basis.net');
   var AbstractTransport = basisNet.AbstractTransport;
   var AbstractRequest = basisNet.AbstractRequest;
@@ -42,7 +43,7 @@
   {
     var REQUEST_PROGRESS_HANDLER = function(event){
       if (event.lengthComputable)
-        this.setState(basis.data.STATE.PROCESSING, {
+        this.setState(STATE.PROCESSING, {
           loaded: event.loaded,
           total: event.total
         });
@@ -125,7 +126,7 @@
     var IFrameRequest = AbstractRequest.subclass({
       className: namespace + '.IFrameRequest',
 
-      state: basis.data.STATE.UNDEFINED,
+      state: STATE.UNDEFINED,
       inprogress: false,
 
       init: function(){
@@ -133,7 +134,7 @@
 
         this.frame = createIFrame();
 
-        basis.dom.event.addHandlers(this.frame, { load: this.onLoad }, this);
+        eventUtils.addHandlers(this.frame, { load: this.onLoad }, this);
       },
       onLoad: function(event){
         if (this.inprogress)
@@ -153,7 +154,7 @@
             that.removeFrame();
           }, 100);
 
-          this.setState(basis.data.STATE.READY);
+          this.setState(STATE.READY);
         }
       },
       isSuccessful: function(){
@@ -181,7 +182,7 @@
         this.transport.emit_start(this);
         this.insertFrame();
         this.inprogress = true;
-        this.setState(basis.data.STATE.PROCESSING);
+        this.setState(STATE.PROCESSING);
 
         form.setAttribute('enctype', 'multipart/form-data');
         form.setAttribute('method', 'POST');
