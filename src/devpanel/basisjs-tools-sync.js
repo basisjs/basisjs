@@ -1,11 +1,13 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var entity = require('basis.entity');
-var STATE = require('basis.data').STATE;
+var basisData = require('basis.data');
+var STATE = basisData.STATE;
+var Value = basisData.Value;
 
 //
 // defines
 //
-var isOnline = new basis.data.Value({ value: false });
+var isOnline = new Value({ value: false });
 var File = entity.createType('File', {
   filename: entity.StringId,
   content: function(value){
@@ -51,7 +53,7 @@ var File = entity.createType('File', {
 });
 
 var permamentFiles = [];
-var permamentFilesCount = new basis.data.Value(0);
+var permamentFilesCount = new Value(0);
 
 
 //

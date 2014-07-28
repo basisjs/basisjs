@@ -1,8 +1,8 @@
-require('basis.dom');
-require('basis.dom.event');
-require('basis.cssom');
-require('basis.layout');
-require('basis.ui');
+var domEventUtils = require('basis.dom.event');
+var setStyle = require('basis.cssom').setStyle;
+var getBoundingRect = require('basis.layout').getBoundingRect;
+var Value = require('basis.data').Value;
+var Node = require('basis.ui').Node;
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
@@ -10,10 +10,10 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').mar
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var inspectMode = new basis.data.Value({ value: false });
+var inspectMode = new Value({ value: false });
 var elements = [];
 
-var overlayNode = new basis.ui.Node({
+var overlayNode = new Node({
   template: resource('./template/heat_overlay.tmpl'),
   hide: new basis.Token(false),
   binding: {
@@ -45,8 +45,8 @@ function startInspect(){
     inspectMode.set(true);
     highlight();
 
-    basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
-    basis.dom.event.addHandler(window, 'resize', updateOnResize);
+    domEventUtils.addGlobalHandler('scroll', updateOnScroll);
+    domEventUtils.addHandler(window, 'resize', updateOnResize);
     inspectBasisEvent.captureEvent('contextmenu', endInspect);
 
     if (observer)
@@ -65,8 +65,8 @@ function endInspect(){
     if (observer)
       observer.disconnect();
 
-    basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
-    basis.dom.event.removeHandler(window, 'resize', updateOnResize);
+    domEventUtils.removeGlobalHandler('scroll', updateOnScroll);
+    domEventUtils.removeHandler(window, 'resize', updateOnResize);
     inspectBasisEvent.releaseEvent('contextmenu');
 
     unhighlight();
@@ -113,7 +113,7 @@ function highlight(keepOverlay){
     var temp = max != min ? 1 - ((data.updates - min) / (max - min)) : 1;
     var bgColor = 'rgba(' + [255 - parseInt(128 * temp), parseInt(temp * 255), 0].join(',') + ', .4)';
     var borderColor = 'rgba(' + [200 - parseInt(128 * temp), parseInt(temp * 200), 0].join(',') + ', .75)';
-    data.element = tokenElements.appendChild(basis.cssom.setStyle(tokenDomProto.cloneNode(false), {
+    data.element = tokenElements.appendChild(setStyle(tokenDomProto.cloneNode(false), {
       backgroundColor: bgColor,
       outline: '1px solid ' + borderColor,
       top: data.rect.top + 'px',
@@ -137,12 +137,8 @@ function unhighlight(keepOverlay){
     if (data.element.parentNode)
       data.element.parentNode.removeChild(data.element);
 
-  if (!keepOverlay)
-  {
-    basis.cssom.classList(overlayContent).remove('hover');
-    if (overlay.parentNode)
-      overlay.parentNode.removeChild(overlay);
-  }
+  if (!keepOverlay && overlay.parentNode)
+    overlay.parentNode.removeChild(overlay);
 }
 
 function updateHighlight(records){
@@ -177,12 +173,12 @@ function domTreeHighlight(root){
             switch (domNode.nodeType)
             {
               case 1:
-                rect = basis.layout.getBoundingRect(domNode);
+                rect = getBoundingRect(domNode);
                 break;
               case 3:
                 var range = document.createRange();
                 range.selectNodeContents(domNode);
-                rect = basis.layout.getBoundingRect(range);
+                rect = getBoundingRect(range);
                 break;
             }
           }
@@ -198,7 +194,7 @@ function domTreeHighlight(root){
       }
     }
 
-    if (child.nodeType == basis.dom.ELEMENT_NODE)
+    if (child.nodeType == 1) // ELEMENT_NODE
       domTreeHighlight(child);
   }
 }

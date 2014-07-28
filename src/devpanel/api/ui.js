@@ -1,4 +1,6 @@
-require('basis.data');
+var basisData = require('basis.data');
+var DataObject = basisData.Object;
+var Dataset = basisData.Dataset;
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisUI = inspectBasis.require('basis.ui');
@@ -10,7 +12,7 @@ var updateInfoTimer_ = null;
 var config = { data: null };
 var updateObj = { parent: null, satelliteName: null, groupNode: null, grouping: null };
 
-var allInstances = new basis.data.Dataset();
+var allInstances = new Dataset();
 
 function updateInfo(){
   var queue = updateInfoQueue;
@@ -65,7 +67,7 @@ function processEvent(event){
         parent: null
       };
 
-      instances[id] = new basis.data.Object(config);
+      instances[id] = new DataObject(config);
 
       updateInfoQueue[id] = true;
       if (!updateInfoTimer_)

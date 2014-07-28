@@ -1,8 +1,9 @@
-require('basis.data');
-require('basis.data.value');
-require('basis.data.index');
-require('basis.ui');
-require('basis.dragdrop');
+var MoveableElement = require('basis.dragdrop').MoveableElement;
+var basisData = require('basis.data');
+var DataObject = basisData.Object;
+var Dataset = basisData.Dataset;
+var count = require('basis.data.index').count;
+var Node = require('basis.ui').Node;
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
@@ -18,12 +19,12 @@ var cultureList = require('./cultureList.js');
 var isOnline = require('../../basisjs-tools-sync.js').isOnline;
 var permamentFilesCount = require('../../basisjs-tools-sync.js').permamentFilesCount;
 
-var inspectors = new basis.data.Dataset();
-var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
+var inspectors = new Dataset();
+var inspectMode = count(inspectors, 'update', 'data.mode').as(Boolean);
 
 [l10nInspector, templateInspector, heatInspector].forEach(function(inspectorRes){
   inspectorRes.ready(function(inspector){
-    inspectors.add(inspector.inspectMode.link(new basis.data.Object, function(value){
+    inspectors.add(inspector.inspectMode.link(new DataObject, function(value){
       this.update({ mode: value });
     }));
   });
@@ -34,11 +35,11 @@ var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(B
 // panel
 //
 
-var panel = new basis.ui.Node({
+var panel = new Node({
   container: document.body,
 
   activated: false,
-  themeName: inspectBasis.template.currentTheme().name,
+  themeName: inspectBasisTemplate.currentTheme().name,
 
   template: resource('./template/panel.tmpl'),
 
@@ -46,7 +47,7 @@ var panel = new basis.ui.Node({
     activated: 'activated',
     themeName: 'themeName',
     themeList: themeList,
-    cultureName: inspectBasis.l10n.culture,
+    cultureName: inspectBasisL10n.culture,
     cultureList: cultureList,
     isOnline: isOnline,
     inspectMode: inspectMode,
@@ -55,12 +56,7 @@ var panel = new basis.ui.Node({
 
   action: {
     inspectTemplate: function(){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
-        templateInspector().startInspect();
-      });
+      templateInspector().startInspect();
     },
     showThemes: function(){
       themeList.setDelegate(this);
@@ -83,9 +79,9 @@ var panel = new basis.ui.Node({
   },
 
   init: function(){
-    basis.ui.Node.prototype.init.call(this);
+    Node.prototype.init.call(this);
 
-    this.dde = new basis.dragdrop.MoveableElement({
+    this.dde = new MoveableElement({
       handler: {
         drag: function(sender, data){
           localStorage['basis-devpanel'] =
@@ -96,7 +92,7 @@ var panel = new basis.ui.Node({
     });
   },
   templateSync: function(){
-    basis.ui.Node.prototype.templateSync.call(this);
+    Node.prototype.templateSync.call(this);
 
     this.dde.setElement(this.element, this.tmpl.dragElement);
   },
@@ -104,7 +100,7 @@ var panel = new basis.ui.Node({
     this.dde.destroy();
     this.dde = null;
 
-    basis.ui.Node.prototype.destroy.call(this);
+    Node.prototype.destroy.call(this);
   }
 });
 
