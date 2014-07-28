@@ -1,7 +1,4 @@
 
-  basis.require('basis.dom.computedStyle');
-
-
  /**
   * @namespace basis.layout
   */
@@ -15,7 +12,7 @@
 
   var document = global.document;
   var documentElement = document.documentElement;
-  var computedStyle = basis.dom.computedStyle.get;
+  var computedStyle = require('basis.dom.computedStyle').get;
 
 
   //

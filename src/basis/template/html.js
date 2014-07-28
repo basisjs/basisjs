@@ -1,10 +1,4 @@
 
-  basis.require('basis.dom.event');
-  basis.require('basis.l10n');
-  basis.require('basis.template');
-  basis.require('basis.template.htmlfgen');
-
-
  /**
   * @namespace basis.template.html
   */
@@ -17,33 +11,37 @@
   //
 
   var document = global.document;
-  var domEvent = basis.dom.event;
+  var domEvent = require('basis.dom.event');
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
-  var l10nToken = basis.l10n.token;
-  var getFunctions = basis.template.htmlfgen.getFunctions;
+  var basisL10n = require('basis.l10n');
+  var getL10nToken = basisL10n.token;
+  var L10nToken = basisL10n.Token;
+  var getFunctions = require('basis.template.htmlfgen').getFunctions;
 
-  var TemplateSwitchConfig = basis.template.TemplateSwitchConfig;
-  var TemplateSwitcher = basis.template.TemplateSwitcher;
-  var Template = basis.template.Template;
+  var basisTemplate = require('basis.template');
+  var getL10nTemplate = basisTemplate.getL10nTemplate;
+  var TemplateSwitchConfig = basisTemplate.TemplateSwitchConfig;
+  var TemplateSwitcher = basisTemplate.TemplateSwitcher;
+  var Template = basisTemplate.Template;
 
-  var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
-  var TYPE_ATTRIBUTE = basis.template.TYPE_ATTRIBUTE;
-  var TYPE_TEXT = basis.template.TYPE_TEXT;
-  var TYPE_COMMENT = basis.template.TYPE_COMMENT;
+  var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
+  var TYPE_ATTRIBUTE = basisTemplate.TYPE_ATTRIBUTE;
+  var TYPE_TEXT = basisTemplate.TYPE_TEXT;
+  var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
 
-  var TOKEN_TYPE = basis.template.TOKEN_TYPE;
-  var TOKEN_BINDINGS = basis.template.TOKEN_BINDINGS;
-  var TOKEN_REFS = basis.template.TOKEN_REFS;
+  var TOKEN_TYPE = basisTemplate.TOKEN_TYPE;
+  var TOKEN_BINDINGS = basisTemplate.TOKEN_BINDINGS;
+  var TOKEN_REFS = basisTemplate.TOKEN_REFS;
 
-  var ATTR_NAME = basis.template.ATTR_NAME;
-  var ATTR_VALUE = basis.template.ATTR_VALUE;
-  var ATTR_NAME_BY_TYPE = basis.template.ATTR_NAME_BY_TYPE;
+  var ATTR_NAME = basisTemplate.ATTR_NAME;
+  var ATTR_VALUE = basisTemplate.ATTR_VALUE;
+  var ATTR_NAME_BY_TYPE = basisTemplate.ATTR_NAME_BY_TYPE;
 
-  var ELEMENT_NAME = basis.template.ELEMENT_NAME;
+  var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
 
-  var TEXT_VALUE = basis.template.TEXT_VALUE;
-  var COMMENT_VALUE = basis.template.COMMENT_VALUE;
+  var TEXT_VALUE = basisTemplate.TEXT_VALUE;
+  var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
 
 
 
@@ -118,8 +116,8 @@
 
   // l10n
   var l10nTemplates = {};
-  function getL10nTemplate(token){
-    var template = basis.template.getL10nTemplate(token);
+  function getL10nHtmlTemplate(token){
+    var template = getL10nTemplate(token);
     var id = template.templateId;
     var htmlTemplate = l10nTemplates[id];
 
@@ -608,15 +606,15 @@
               {
                 // FIX ME
                 oldAttach.tmpl.element.toString = null;
-                getL10nTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
+                getL10nHtmlTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
               }
 
               oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             }
 
-            if (value.type == 'markup' && value instanceof basis.l10n.Token)
+            if (value.type == 'markup' && value instanceof L10nToken)
             {
-              var template = getL10nTemplate(value);
+              var template = getL10nHtmlTemplate(value);
               var context = this.context;
               var bindings = this.bindings;
               var bindingInterface = this.bindingInterface;
@@ -660,7 +658,7 @@
             {
               // FIX ME
               oldAttach.tmpl.element.toString = null;
-              getL10nTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
+              getL10nHtmlTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
             }
 
             oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
@@ -794,7 +792,7 @@
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
-      l10nToken: l10nToken,
+      l10nToken: getL10nToken,
       createBindingFunction: createBindingFunction
     };
 
@@ -818,14 +816,14 @@
         var l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
 
         for (var i = 0, key; key = fn.l10nKeys[i]; i++)
-          l10nProtoSync(key, l10nToken(key).value);
+          l10nProtoSync(key, getL10nToken(key).value);
 
         if (fn.l10nKeys)
           for (var i = 0, key; key = fn.l10nKeys[i]; i++)
           {
             var link = {
               path: key,
-              token: l10nToken(key),
+              token: getL10nToken(key),
               handler: function(value){
                 l10nProtoSync(this.path, value);
                 for (var key in instances)
@@ -952,7 +950,7 @@
   // for backward capability
   // TODO: remove
   //
-  basis.template.extend({
+  basis.namespace('basis.template').extend({
     /** @cut using only in dev mode */ getDebugInfoById: getDebugInfoById,
 
     buildHtml: buildHtml,

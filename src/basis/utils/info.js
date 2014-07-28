@@ -1,4 +1,8 @@
 
+ /**
+  * @namespace basis.utils.info
+  */
+
   function resolveGetter(getter){
     if (getter[basis.getter.ID] > 0)
     {

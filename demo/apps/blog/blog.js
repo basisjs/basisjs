@@ -1,16 +1,20 @@
 
-basis.require('basis.date');
-basis.require('basis.dom');
-basis.require('basis.data');
-basis.require('basis.data.dataset');
-basis.require('basis.data.index');
-basis.require('basis.ui');
-basis.require('basis.ui.paginator');
-basis.require('basis.utils.benchmark');
+var basisDate = require('basis.date');
+var dateFormat = basisDate.format;
+var dateFromISOString = basisDate.fromISOString;
+var domUtils = require('basis.dom');
+var basisData = require('basis.data');
+var Value = basisData.Value;
+var DataObject = basisData.Object;
+var Dataset = basisData.Dataset;
+var basisDataset = require('basis.data.dataset');
+var basisIndex = basis.require('basis.data.index');
+var Node = require('basis.ui').Node;
+var Paginator = require('basis.ui.paginator').Paginator;
+var getTime = require('basis.utils.benchmark').time;
 
 basis.ready(function(){
-  var statOutElement = basis.dom.createElement('ul');
-  var getTime = basis.utils.benchmark.time;
+  var statOutElement = domUtils.createElement('ul');
   var PROFILE = false;
 
   function outStat(){
@@ -20,13 +24,13 @@ basis.ready(function(){
     for (var i = 0; i < times.length; i++)
     {
       var t = times[i];
-      statOutElement.appendChild(basis.dom.createElement('LI', parseInt(t[0] - sdate) + 'ms, self: ' + parseInt(t[0] - (lasttime)) + ' [' + t[1] + ']'));
+      statOutElement.appendChild(domUtils.createElement('LI', parseInt(t[0] - sdate) + 'ms, self: ' + parseInt(t[0] - (lasttime)) + ' [' + t[1] + ']'));
       lasttime = t[0];
     }
 
-    basis.dom.insert(statOutElement, [
-      basis.dom.createElement('B', parseInt(lasttime - sdate)),
-      basis.dom.createElement('SPAN', ' (' + parseInt(Date.now() - firstTime) + ')')
+    domUtils.insert(statOutElement, [
+      domUtils.createElement('B', parseInt(lasttime - sdate)),
+      domUtils.createElement('SPAN', ' (' + parseInt(Date.now() - firstTime) + ')')
     ]);
   }
 
@@ -38,9 +42,9 @@ basis.ready(function(){
 
   times.push([getTime(), 'generate posts']);
 
-  var allPostDataset = new basis.data.Dataset({
+  var allPostDataset = new Dataset({
     items: postsData.map(function(data){
-      return new basis.data.Object({
+      return new DataObject({
         data: data
       });
     })
@@ -53,7 +57,7 @@ basis.ready(function(){
 
   var POST_PER_PAGE = 15;
 
-  var blogThreadPage = new basis.data.dataset.Slice({
+  var blogThreadPage = new basisDataset.Slice({
     source: allPostDataset,
     orderDesc: true,
     limit: POST_PER_PAGE,
@@ -62,7 +66,7 @@ basis.ready(function(){
 
   times.push([getTime(), 'thread slice']);
 
-  var paginator = new basis.ui.paginator.Paginator({
+  var paginator = new Paginator({
     pageCount: Math.ceil(allPostDataset.itemCount / POST_PER_PAGE),
     pageSpan: 12,
     handler: {
@@ -79,7 +83,7 @@ basis.ready(function(){
     }
   }, paginator);
 
-  var postList = new basis.ui.Node({
+  var postList = new Node({
     template: resource('./template/blog-thread.tmpl'),
 
     dataSource: blogThreadPage,
@@ -97,7 +101,7 @@ basis.ready(function(){
         pubDate: {
           events: 'update',
           getter: function(node){
-            return basis.date.format(basis.date.fromISOString(node.data.pubDate), '%D/%M/%Y %H:%I:%S');
+            return dateFormat(dateFromISOString(node.data.pubDate), '%D/%M/%Y %H:%I:%S');
           }
         },
         tagList: 'satellite:'
@@ -115,12 +119,12 @@ basis.ready(function(){
             return owner.data.tags && owner.data.tags.length;
           },
           delegate: basis.fn.$self,
-          instanceOf: basis.ui.Node.subclass({
+          instanceOf: Node.subclass({
             template: resource('./template/tagList.tmpl'),
 
             init: function(){
-              basis.ui.Node.prototype.init.call(this);
-              basis.data.Value.from(this, 'update', 'data.tags').link(this, function(tags){
+              Node.prototype.init.call(this);
+              Value.from(this, 'update', 'data.tags').link(this, function(tags){
                 this.setChildNodes(tags.map(function(tag){
                   return { tag: tag };
                 }));
@@ -150,12 +154,12 @@ basis.ready(function(){
   times.push([getTime(), 'post list']);
 
 
-  var postByCategory = new basis.data.dataset.Split({
+  var postByCategory = new basisDataset.Split({
     source: allPostDataset,
     rule: 'data.category'
   });
 
-  var categoryList = new basis.ui.Node({
+  var categoryList = new Node({
     dataSource: postByCategory,
     template: resource('./template/categoryList.tmpl'),
 
@@ -179,8 +183,8 @@ basis.ready(function(){
 
 
   var MONTH = 'January February March April May June July August September October November December'.split(' ');
-  var archiveList = new basis.ui.Node({
-    dataSource: new basis.data.dataset.Split({
+  var archiveList = new Node({
+    dataSource: new basisDataset.Split({
       source: allPostDataset,
       rule: 'data.pubDate.substr(0, 7)'
     }),
@@ -243,15 +247,15 @@ basis.ready(function(){
 
   times.push([getTime(), 'archive list']);
 
-  var cloud = new basis.data.dataset.Cloud({
+  var cloud = new basisDataset.Cloud({
     source: allPostDataset,
     rule: 'data.tags'
   });
 
-  var cloudCalcs = new basis.data.index.IndexMap({
+  var cloudCalcs = new basisIndex.IndexMap({
     source: cloud,
     calcs: {
-      percentOfRange: basis.data.index.percentOfRange('itemsChanged', 'itemCount'),
+      percentOfRange: basisIndex.percentOfRange('itemsChanged', 'itemCount'),
       title: function(data){
         return data.title;
       },
@@ -261,7 +265,7 @@ basis.ready(function(){
     }
   });
 
-  var tagCloud = new basis.ui.Node({
+  var tagCloud = new Node({
     template: resource('./template/tagCloud.tmpl'),
 
     dataSource: cloudCalcs,
@@ -291,7 +295,7 @@ basis.ready(function(){
 
   times.push([getTime(), 'tag cloud']);
 
-  var app = new basis.ui.Node({
+  var app = new Node({
     container: document.body,
 
     template: resource('./template/app.tmpl'),

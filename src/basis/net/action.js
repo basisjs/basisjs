@@ -1,7 +1,4 @@
 
-  basis.require('basis.data');
-  basis.require('basis.net.ajax');
-
  /**
   * @namespace basis.net.action
   */
@@ -11,10 +8,13 @@
   // import names
   //
 
-  var STATE_UNDEFINED = basis.data.STATE.UNDEFINED;
-  var STATE_READY = basis.data.STATE.READY;
-  var STATE_PROCESSING = basis.data.STATE.PROCESSING;
-  var STATE_ERROR = basis.data.STATE.ERROR;
+  var STATE = require('basis.data').STATE;
+  var STATE_UNDEFINED = STATE.UNDEFINED;
+  var STATE_READY = STATE.READY;
+  var STATE_PROCESSING = STATE.PROCESSING;
+  var STATE_ERROR = STATE.ERROR;
+
+  var AjaxTransport = require('basis.net.ajax').Transport;
 
 
   //
@@ -85,7 +85,7 @@
       return config.createTransport(config);
 
     // fallback, create instance of basis.net.ajax.Transport by default, if no other options
-    return new basis.net.ajax.Transport(config);
+    return new AjaxTransport(config);
   }
 
  /**

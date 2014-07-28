@@ -1,7 +1,4 @@
 
-  basis.require('basis.data');
-
-
  /**
   * @namespace basis.data.object
   */
@@ -13,7 +10,8 @@
   // import names
   //
 
-  var DataObject = basis.data.Object;
+  var createEvent = require('basis.event').create;
+  var DataObject = require('basis.data').Object;
 
 
  /**
@@ -147,7 +145,7 @@
     * @param {DataObject} oldSource Value of source reference before changes.
     * @event
     */
-    emit_sourceChanged: basis.event.create('sourceChanged', 'name', 'oldSource'),
+    emit_sourceChanged: createEvent('sourceChanged', 'name', 'oldSource'),
 
    /**
     * Field source association map. Key is field name, and value is source name.

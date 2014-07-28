@@ -1,12 +1,10 @@
 
-  basis.require('basis.event');
-
-
  /**
   * @namespace basis.l10n
   */
 
   var namespace = this.path;
+  var ns = basis.namespace(String(namespace));
 
 
   //
@@ -14,7 +12,7 @@
   //
 
   var Class = basis.Class;
-  var Emitter = basis.event.Emitter;
+  var Emitter = require('basis.event').Emitter;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 
@@ -144,7 +142,7 @@
     },
 
     setType: function(type){
-      if (type != 'plural' && (!basis.l10n.enableMarkup || type != 'markup'))
+      if (type != 'plural' && (!ns.enableMarkup || type != 'markup'))
         type = 'default';
 
       if (this.type != type)

@@ -1,14 +1,4 @@
 
-  basis.require('basis.l10n');
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.data.value');
-  basis.require('basis.ui');
-  basis.require('basis.ui.popup');
-
-
  /**
   * @see ./demo/defile/form.html
   * @namespace basis.ui.field
@@ -22,29 +12,28 @@
   //
 
   var Class = basis.Class;
-  var Event = basis.dom.event;
-  var DOM = basis.dom;
-
   var complete = basis.object.complete;
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
-  var l10nToken = basis.l10n.token;
 
-  var Property = basis.data.value.Property;
-  var Selection = basis.dom.wrapper.Selection;
-  var UINode = basis.ui.Node;
-  var Popup = basis.ui.popup.Popup;
+  var DOM = require('basis.dom');
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var events = basisEvent.events;
+
+  var Value = require('basis.data').Value;
+  var Selection = require('basis.dom.wrapper').Selection;
+  var UINode = require('basis.ui').Node;
+  var Popup = require('basis.ui.popup').Popup;
 
 
   //
   // definitions
   //
 
-  var dict = basis.l10n.dictionary(__filename);
+  var dict = require('basis.l10n').dictionary(__filename);
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Example: resource('./templates/field/Example.tmpl'),
     Description: resource('./templates/field/Description.tmpl'),
     Counter: resource('./templates/field/Counter.tmpl'),
@@ -74,7 +63,7 @@
     MatchInput: resource('./templates/field/MatchInput.tmpl')
   });
 
-  basis.template.define(namespace + '.native', {
+  require('basis.template').define(namespace + '.native', {
     text: resource('./templates/field/native-type-text.tmpl'),
     password: resource('./templates/field/native-type-password.tmpl'),
     textarea: resource('./templates/field/native-type-textarea.tmpl'),
@@ -943,7 +932,7 @@
         Popup.prototype.templateSync.call(this);
 
         if (this.owner && this.owner.childNodesElement)
-          DOM.insert(this.tmpl.content || this.element, this.owner.childNodesElement);
+          (this.tmpl.content || this.element).appendChild(this.owner.childNodesElement);
       }
     }),
     property: null,
@@ -1095,7 +1084,7 @@
       UINode.prototype.templateSync.call(this);
 
       if (this.childNodesElement && this.popup)
-        DOM.insert(this.popup.tmpl.content || this.popup.element, this.childNodesElement);
+        (this.popup.tmpl.content || this.popup.element).appendChild(this.childNodesElement);
 
       this.popup.ignoreClickFor = [this.tmpl.field];
     },
@@ -1154,7 +1143,7 @@
  /**
   * @class
   */
-  var MatchProperty = Property.subclass({
+  var MatchProperty = Value.subclass({
     className: namespace + '.MatchProperty',
 
     matchFunction: function(child, reset){
@@ -1215,10 +1204,8 @@
     emit_change: function(oldValue){
       this.rx = this.regexpGetter(this.value);
 
-      Property.prototype.emit_change.call(this, oldValue);
+      Value.prototype.emit_change.call(this, oldValue);
     },
-
-    extendConstructor_: true,
 
     init: function(){
       var startPoints = this.startPoints || '';
@@ -1235,7 +1222,7 @@
         return (i % 3) == 2;
       };
 
-      Property.prototype.init.call(this, '', this.handlers, String.trim);
+      Value.prototype.init.call(this, '', this.handlers, String.trim);
     }
   });
 

@@ -1,9 +1,4 @@
 
-  basis.require('basis.data');
-  basis.require('basis.data.dataset');
-  basis.require('basis.data.value');
-
-
  /**
   * @see ./demo/defile/data_index.html
   * @namespace basis.data.index
@@ -18,13 +13,16 @@
 
   var Class = basis.Class;
 
-  var DataObject = basis.data.Object;
-  var KeyObjectMap = basis.data.KeyObjectMap;
-  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
-  var DatasetWrapper = basis.data.DatasetWrapper;
+  var basisData = require('basis.data');
+  var Value = basisData.Value;
+  var DataObject = basisData.Object;
+  var KeyObjectMap = basisData.KeyObjectMap;
+  var ReadOnlyDataset = basisData.ReadOnlyDataset;
+  var DatasetWrapper = basisData.DatasetWrapper;
 
-  var Value = basis.data.Value;
-  var MapFilter = basis.data.dataset.MapFilter;
+  var basisDataset = require('basis.data.dataset');
+  var MapFilter = basisDataset.MapFilter;
+  var createRuleEvents = basisDataset.createRuleEvents;
 
 
   //
@@ -838,7 +836,7 @@
     },
 
     /** looks like a hack */
-    ruleEvents: basis.data.dataset.createRuleEvents(
+    ruleEvents: createRuleEvents(
       function(sender, delta){
         MapFilter.prototype.ruleEvents.update.call(this, sender, delta);
 

@@ -1,29 +1,35 @@
 
-  basis.require('basis.template');
+ /**
+  * @namespace basis.template.htmlfgen
+  */
+
+  var namespace = this.path;
 
 
   //
   // import names
   //
 
-  var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
-  var TYPE_ATTRIBUTE = basis.template.TYPE_ATTRIBUTE;
-  var TYPE_TEXT = basis.template.TYPE_TEXT;
-  var TYPE_COMMENT = basis.template.TYPE_COMMENT;
+  var basisTemplate = require('basis.template');
 
-  var TOKEN_TYPE = basis.template.TOKEN_TYPE;
-  var TOKEN_BINDINGS = basis.template.TOKEN_BINDINGS;
-  var TOKEN_REFS = basis.template.TOKEN_REFS;
+  var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
+  var TYPE_ATTRIBUTE = basisTemplate.TYPE_ATTRIBUTE;
+  var TYPE_TEXT = basisTemplate.TYPE_TEXT;
+  var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
 
-  var ATTR_NAME = basis.template.ATTR_NAME;
-  var ATTR_NAME_BY_TYPE = basis.template.ATTR_NAME_BY_TYPE;
+  var TOKEN_TYPE = basisTemplate.TOKEN_TYPE;
+  var TOKEN_BINDINGS = basisTemplate.TOKEN_BINDINGS;
+  var TOKEN_REFS = basisTemplate.TOKEN_REFS;
 
-  var ELEMENT_NAME = basis.template.ELEMENT_NAME;
-  var ELEMENT_ATTRS = basis.template.ELEMENT_ATTRS;
-  var ELEMENT_CHILDS = basis.template.ELEMENT_CHILDS;
+  var ATTR_NAME = basisTemplate.ATTR_NAME;
+  var ATTR_NAME_BY_TYPE = basisTemplate.ATTR_NAME_BY_TYPE;
 
-  var TEXT_VALUE = basis.template.TEXT_VALUE;
-  var COMMENT_VALUE = basis.template.COMMENT_VALUE;
+  var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
+  var ELEMENT_ATTRS = basisTemplate.ELEMENT_ATTRS;
+  var ELEMENT_CHILDS = basisTemplate.ELEMENT_CHILDS;
+
+  var TEXT_VALUE = basisTemplate.TEXT_VALUE;
+  var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
 
 
   //
@@ -739,10 +745,16 @@
     result.createInstance = compileFunction(['tid', 'map', 'proto', 'tools', '__l10n', 'TEXT_BUG'],
       /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
-      'var getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
+      'var getBindings=tools.createBindingFunction([' +
+        bindings.keys.map(function(key){
+          return '"' + key + '"';
+        }) +
+      ']),' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
       'Attaches=function(){};' +
-      'Attaches.prototype={' + bindings.keys.map(function(key){ return key + ':null'; }) + '};' +
+      'Attaches.prototype={' + bindings.keys.map(function(key){
+        return key + ':null';
+      }) + '};' +
       'return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){' +
         'var _=proto.cloneNode(true),' +
         paths.path.concat(bindings.vars) + ',' +
@@ -779,6 +791,11 @@
 
     return result;
   };
+
+
+  //
+  // exports
+  //
 
   module.exports = {
     getFunctions: getFunctions

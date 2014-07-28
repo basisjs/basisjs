@@ -1,7 +1,4 @@
 
-  basis.require('basis.event');
-
-
  /**
   * This namespace contains base classes and functions for data maintain.
   *
@@ -36,9 +33,10 @@
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
-  var Emitter = basis.event.Emitter;
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
+  var basisEvent = require('basis.event');
+  var Emitter = basisEvent.Emitter;
+  var createEvent = basisEvent.create;
+  var events = basisEvent.events;
 
 
   //

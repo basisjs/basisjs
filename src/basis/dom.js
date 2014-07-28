@@ -1,7 +1,4 @@
 
-  basis.require('basis.dom.event');
-
-
  /**
   * This namespace provides functions for DOM manupulations - transerval,
   * node creation, moving and test nodes. Most of functions are compatible with
@@ -42,6 +39,7 @@
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
+  var eventUtils = require('basis.dom.event');
 
   // element for DOM support tests
   var testElement = document.createElement('div');
@@ -663,14 +661,9 @@
       if (config.css && basis.cssom)
         basis.cssom.setStyle(element, config.css);
 
-      // NOTE: full path for basis.dom.event here, because basis.dom.event will be available
-      // after basis.dom load
-      if (basis.dom.event)
-      {
-        for (var event in config)
-          if (typeof config[event] == 'function')
-            basis.dom.event.addHandler(element, event, config[event], element);
-      }
+      for (var event in config)
+        if (typeof config[event] == 'function')
+          eventUtils.addHandler(element, event, config[event], element);
     }
 
     // return an element
@@ -779,7 +772,7 @@
   function clone(node, noChildren){
     var result = node.cloneNode(!noChildren);
     if (result.attachEvent) // clear event handlers for IE
-      axis(result, AXIS_DESCENDANT_OR_SELF).forEach(basis.dom.event.clearHandlers);
+      axis(result, AXIS_DESCENDANT_OR_SELF).forEach(eventUtils.clearHandlers);
     return result;
   }
 

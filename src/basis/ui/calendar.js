@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.date');
-  basis.require('basis.ui');
-  basis.require('basis.l10n');
-
-
  /**
   * @see ./demo/defile/calendar.html
   * @namespace basis.ui.calendar
@@ -21,9 +15,12 @@
 
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
-  var createEvent = basis.event.create;
-
-  var UINode = basis.ui.Node;
+  var dateUtils = require('basis.date');
+  var createEvent = require('basis.event').create;
+  var Value = require('basis.data').Value;
+  var basisUI = require('basis.ui');
+  var Node = basisUI.Node;
+  var ShadowNodeList = basisUI.ShadowNodeList;
 
 
   //
@@ -37,16 +34,16 @@
   var FORWARD = true;
   var BACKWARD = false;
 
-  var monthNumToRef = basis.date.monthNumToAbbr;
+  var monthNumToRef = dateUtils.monthNumToAbbr;
 
 
   //
   // definitions
   //
 
-  var dict = basis.l10n.dictionary(__filename);
+  var dict = require('basis.l10n').dictionary(__filename);
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Calendar: resource('./templates/calendar/Calendar.tmpl'),
     Section: resource('./templates/calendar/Section.tmpl'),
     SectionMonth: resource('./templates/calendar/SectionMonth.tmpl'),
@@ -182,7 +179,7 @@
  /**
   * @class
   */
-  var CalendarNode = Class(UINode, {
+  var CalendarNode = Class(Node, {
     className: namespace + '.Calendar.Node',
 
     childClass: null,
@@ -192,7 +189,7 @@
 
     emit_periodChanged: createEvent('periodChanged'),
     emit_select: function(){
-      UINode.prototype.emit_select.call(this);
+      Node.prototype.emit_select.call(this);
       this.focus();
     },
 
@@ -256,7 +253,7 @@
     var result = [];
     var nodePeriod = getPeriod(
       section.nodePeriodName,
-      basis.date.add(
+      dateUtils.add(
         new Date(section.periodStart),
         section.nodePeriodUnit,
         -section.nodePeriodUnitCount * section.getInitOffset(section.periodStart)
@@ -270,7 +267,7 @@
       // move to next period
       nodePeriod = getPeriod(
         section.nodePeriodName,
-        basis.date.add(
+        dateUtils.add(
           new Date(nodePeriod.periodStart),
           section.nodePeriodUnit,
           section.nodePeriodUnitCount
@@ -284,7 +281,7 @@
  /**
   * @class
   */
-  var CalendarSection = Class(UINode, {
+  var CalendarSection = Class(Node, {
     className: namespace + '.CalendarSection',
 
     emit_periodChanged: createEvent('periodChanged'),
@@ -340,7 +337,7 @@
         };
       }, this);
 
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
 
       var selectedDate = this.selectedDate || new Date;
       this.selectedDate = null;
@@ -455,7 +452,7 @@
       return date.getDate();
     },
     getInitOffset: function(date){
-      return 1 + (basis.date.set(new Date(date), DAY, 1).getDay() + 5) % 7;
+      return 1 + (dateUtils.set(new Date(date), DAY, 1).getDay() + 5) % 7;
     },
 
     template: templates.SectionMonth,
@@ -584,7 +581,7 @@
  /**
   * @class
   */
-  var Calendar = Class(UINode, {
+  var Calendar = Class(Node, {
     className: namespace + '.Calendar',
 
     emit_change: createEvent('change'),
@@ -605,7 +602,7 @@
         for (var i = 0, section; section = delta.deleted[i++];)
           this.selectedDate.unlink(section, section.setSelectedDate);
 
-      UINode.prototype.emit_childNodesModified.call(this, delta);
+      Node.prototype.emit_childNodesModified.call(this, delta);
 
       if (this.selection && !this.selection.itemCount && this.firstChild)
         this.firstChild.select();
@@ -614,7 +611,7 @@
     template: templates.Calendar,
     binding: {
       today: function(){
-        return basis.date.format(new Date(), '%D.%M.%Y');
+        return dateUtils.format(new Date(), '%D.%M.%Y');
       }
     },
     action: {
@@ -629,19 +626,19 @@
       }
     },
     templateAction: function(actionName, event, node){
-      UINode.prototype.templateAction.call(this, actionName, event);
+      Node.prototype.templateAction.call(this, actionName, event);
 
       if (node instanceof CalendarNode)
       {
         var newDate = node.periodStart;
         var activeSection = this.selection.pick();
-        this.selectedDate.set(basis.date.add(new Date(this.selectedDate.value), activeSection.nodePeriodUnit, basis.date.diff(this.selectedDate.value, activeSection.nodePeriodUnit, newDate)));
+        this.selectedDate.set(dateUtils.add(new Date(this.selectedDate.value), activeSection.nodePeriodUnit, dateUtils.diff(this.selectedDate.value, activeSection.nodePeriodUnit, newDate)));
         this.nextSection(BACKWARD);
       }
     },
 
     satellite: {
-      shadowTabs: basis.ui.ShadowNodeList.subclass({
+      shadowTabs: ShadowNodeList.subclass({
         className: namespace + '.ShadowTabs',
         getChildNodesElement: function(host){
           return host.tmpl.sectionTabs;
@@ -665,7 +662,7 @@
 
       if (!basis.Class.isClass(SectionClass) || !SectionClass.isSubclassOf(CalendarSection))
       {
-        /** @cut */ basis.dev.warn(nameOrClass + ' is not a valid value for child of basis.ui.calendat.Calendar');
+        /** @cut */ basis.dev.warn(nameOrClass + ' is not a valid value for child of basis.ui.calendar.Calendar');
         return;
       }
 
@@ -689,14 +686,14 @@
       // dates
       var now = new Date();
 
-      this.selectedDate = new basis.data.Value({ value: new Date(this.date || now) });
-      this.date = new basis.data.Value({ value: new Date(this.date || now) });
+      this.selectedDate = new Value({ value: new Date(this.date || now) });
+      this.date = new Value({ value: new Date(this.date || now) });
 
       // insert sections
       this.isPeriodEnabled = this.isPeriodEnabled.bind(this);
 
       // inherit
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
 
       if (this.sections)
       {
@@ -764,7 +761,7 @@
         var offset = forward ? 1 : -1;
         var startMark = forward ? 'start' : 'till';
         var endMark = forward ? 'till' : 'start';
-        var cursor = basis.date.add(new Date(date), 'millisecond', offset);
+        var cursor = dateUtils.add(new Date(date), 'millisecond', offset);
         var map = this.map[this.periodEnableByDefault ? 'disabled' : 'enabled'];
 
         if (map)
@@ -778,12 +775,12 @@
 
           // search for enable year
           while (!this.isPeriodEnabled(period.periodStart, period.periodEnd))
-            period = getPeriod(YEAR, basis.date.add(cursor, YEAR, offset));
+            period = getPeriod(YEAR, dateUtils.add(cursor, YEAR, offset));
 
           // enabled year found, search for enabled month - it's situate between period.periodStart and period.periodEnd
           period[endMark] = getPeriod(MONTH, period[startMark])[endMark];
           while (!this.isPeriodEnabled(period.periodStart, period.periodEnd))
-            period = getPeriod(MONTH, basis.date.add(cursor, MONTH, offset));
+            period = getPeriod(MONTH, dateUtils.add(cursor, MONTH, offset));
 
           // enabled month found, search for day
           var s = unpackDate(period[startMark]);
@@ -844,7 +841,7 @@
         {
           var offset = forward ? 1 : -1;
           var curYear = date.getFullYear();
-          var firstDate = basis.date.add(new Date(date), 'millisecond', offset);
+          var firstDate = dateUtils.add(new Date(date), 'millisecond', offset);
           var firstYear = firstDate.getFullYear();
           var years = basis.object.keys(this.map.enable).filter(function(year){
             return offset * year >= offset * firstYear;
@@ -1003,7 +1000,7 @@
     // destruction
 
     destroy: function(){
-      UINode.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
 
       // clean up
       this.date.destroy();

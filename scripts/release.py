@@ -68,6 +68,27 @@ def copy_built_files(output_script, repository_location):
         call(command)
 
 
+def update_conf(conf_name):
+    conf_path = os.path.join(repository_location, conf_name)
+
+    version_updated = False
+
+    if not os.path.exists(conf_path):
+        return version_updated
+
+    with open(conf_path) as conf:
+        contents = json.loads(conf.read())
+        print u'I\'m changing {} version from {} to {}'.format(
+            conf_name, contents['version'], version
+        )
+        version_updated = contents['version'] != version
+        contents['version'] = version
+
+    with open(conf_path, 'w') as conf:
+        conf.write(json.dumps(contents, sort_keys=False, indent=2))
+
+    return version_updated
+
 for config_file_name in config_file_names:
     if not config_file_name.endswith('.json'):
         continue
@@ -77,7 +98,6 @@ for config_file_name in config_file_names:
     with open(config_path) as f:
         config = json.loads(f.read())
         output_location = tempfile.mkdtemp()
-
 
         repository = config['build'].get(
             'repository',
@@ -96,12 +116,8 @@ for config_file_name in config_file_names:
             "git", "clone", "--depth", "1", repository, repository_location
         ])
 
-        with open(os.path.join(repository_location, 'bower.json')) as f:
-            bower_conf = json.loads(f.read())
-            bower_conf['version'] = version
-
-        with open(os.path.join(repository_location, 'bower.json'), 'w') as f:
-            f.write(json.dumps(bower_conf, sort_keys=False, indent=2))
+        update_conf('bower.json')
+        npm_publish_required = update_conf('package.json')
 
         call([
             'basis', '--config-file', config_path, 'build', '--output', output_location,
@@ -135,15 +151,23 @@ for config_file_name in config_file_names:
                 continue
             raise
 
-
         call([
             "git", "tag", "-a", "v" + version, '-m', tag_message
         ], cwd=repository_location)
 
-        if not is_debug:
+        if is_debug:
+            continue
+
+        # Publication operations. Cannot be undone.
+        call([
+            "git", "push",
+        ], cwd=repository_location)
+
+        call([
+            "git", "push", "--tags",
+        ], cwd=repository_location)
+
+        if npm_publish_required:
             call([
-                "git", "push",
-            ], cwd=repository_location)
-            call([
-                "git", "push", "--tags",
+                "npm", "publish",
             ], cwd=repository_location)

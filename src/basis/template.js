@@ -1,7 +1,4 @@
 
-  basis.require('basis.l10n');
-
-
  /**
   * @namespace basis.template
   */
@@ -19,6 +16,7 @@
   var arraySearch = basis.array.search;
   var arrayAdd = basis.array.add;
   var arrayRemove = basis.array.remove;
+  var getL10nToken = require('basis.l10n').token;
 
 
   //
@@ -447,7 +445,7 @@
 
   function getL10nTemplate(token){
     if (typeof token == 'string')
-      token = basis.l10n.token(token);
+      token = getL10nToken(token);
 
     if (!token)
       return null;
@@ -1472,7 +1470,7 @@
                 else
                 {
                   var l10nId = parts.slice(1).join('@');
-                  var l10nToken = basis.l10n.token(l10nId);
+                  var l10nToken = getL10nToken(l10nId);
                   var l10nTemplate = getL10nTemplate(l10nToken);
 
                   template.l10nResolved = true;
@@ -1991,7 +1989,7 @@
     /** @cut */   this.l10n_ = {};
     /** @cut */   for (var i = 0, key; key = l10n[i]; i++)
     /** @cut */   {
-    /** @cut */     var l10nToken = basis.l10n.token(key);
+    /** @cut */     var l10nToken = getL10nToken(key);
     /** @cut */     l10nToken.bindingBridge.attach(l10nToken, l10nHandler, this.l10n_[key] = {
     /** @cut */       template: this,
     /** @cut */       token: l10nToken,

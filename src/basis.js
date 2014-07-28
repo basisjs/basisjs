@@ -40,11 +40,13 @@
 ;(function createBasisInstance(global, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.3.1-dev';
+  var VERSION = '1.4.0-dev';
+  var isCoreBasis = !__config;
 
   var document = global.document;
   var toString = Object.prototype.toString;
-  var isCoreBasis = !__config;
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
+  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
 
 
  /**
@@ -69,6 +71,27 @@
     return result.substr(0, len);
   }
 
+ /**
+  * Define property (if possible) that show warning on access.
+  * @param {object} object
+  * @param {string} name Property name
+  * @param {*} value
+  * @param {string} warning Warning messsage
+  */
+  function defineReadWarningProperty(object, name, value, warning){
+    object[name] = value;
+
+    /** @cut */ if (Object.defineProperty)
+    /** @cut */   Object.defineProperty(object, name, {
+    /** @cut */     get: function(){
+    /** @cut */       consoleMethods.warn(warning);
+    /** @cut */       return value;
+    /** @cut */     },
+    /** @cut */     set: function(newValue){
+    /** @cut */       value = newValue;
+    /** @cut */     }
+    /** @cut */   });
+  }
 
  /**
   * Copy all properties from source (object) to destination object.
@@ -804,8 +827,6 @@
   // path utils
   //
 
-  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
-
  /**
   * Utilities for handling and transforming file paths. All these functions perform
   * only string transformations. Server or something else are not consulted to
@@ -1124,6 +1145,11 @@
     // make a copy of config
     config = slice(config);
 
+    // extend by default settings
+    complete(config, {
+      implicitExt: NODE_ENV ? true : 'warn'  // true, false, 'warn'
+    });
+
     // warn about extProto in basis-config, this option was removed in 1.3.0
     /** @cut */ if ('extProto' in config)
     /** @cut */   consoleMethods.warn('basis-config: `extProto` option in basis-config is not support anymore');
@@ -1192,20 +1218,20 @@
       var filename = module.filename;
       var path = module.path;
 
-      if (path)
-        path = pathUtils.resolve(path);
-      if (filename)
-        filename = pathUtils.resolve(filename);
-
       // if no path but filename
       // let filename equals to 'path/to/file[.ext]', then
       //   path = 'path/to/file'
       //   filename = '../file[.ext]'
       if (filename && !path)
       {
+        filename = pathUtils.resolve(filename);
         path = filename.substr(0, filename.length - pathUtils.extname(filename).length);
         filename = '../' + pathUtils.basename(filename);
       }
+
+      // path should be absolute
+      // at this point path is defined in any case
+      path = pathUtils.resolve(path);
 
       // if no filename but path
       // let path equals to 'path/to/file[.ext]', then
@@ -1774,7 +1800,7 @@
 
       if (!token)
       {
-        token = this.deferredToken = new DeferredToken(this.value);
+        token = this.deferredToken = new DeferredToken(this.get());
         this.attach(token.set, token);
       }
 
@@ -2130,7 +2156,11 @@
       return resources[pathUtils.resolve(resourceUrl)] || null;
     },
     getFiles: function(cache){
-      return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
+      return cache
+        ? keys(resourceContentCache)
+        : keys(resources).filter(function(filename){
+            return !resources[filename].virtual;
+          });
     },
     virtual: function(type, content, ownerUrl){
       return createResource(
@@ -2185,7 +2215,21 @@
           }, filename, content).exports;
 
           if (ns.exports && ns.exports.constructor === Object)
-            complete(ns, ns.exports);
+          {
+            if (config.implicitExt)
+            {
+              /** @cut */ if (config.implicitExt == 'warn')
+              /** @cut */ {
+              /** @cut */   for (var key in ns.exports)
+              /** @cut */     if (key in ns == false)
+              /** @cut */       defineReadWarningProperty(ns, key, ns.exports[key],
+              /** @cut */         'basis.js: Access to implicit namespace property `' + namespace + '.' + key + '`'
+              /** @cut */       );
+              /** @cut */ }
+              /** @cut */ else
+              complete(ns, ns.exports);
+            }
+          }
 
           /** @cut */ ns.filename_ = filename;
           /** @cut */ ns.source_ = content;
@@ -2406,16 +2450,28 @@
 
     for (var i = 1, name; name = path[i]; i++)
     {
-      if (!cursor[name])
-      {
-        var nspath = path.slice(0, i + 1).join('.');
+      var nspath = path.slice(0, i + 1).join('.');
 
+      if (!hasOwnProperty.call(rootNs.namespaces_, nspath))
+      {
         // create new namespace
-        cursor[name] = new Namespace(nspath);
-        rootNs.namespaces_[nspath] = cursor[name];
+        var namespace = new Namespace(nspath);
+
+        // cursor[name] = namespace;
+        if (config.implicitExt)
+        {
+          cursor[name] = namespace;
+
+          /** @cut */ if (config.implicitExt == 'warn')
+          /** @cut */   defineReadWarningProperty(cursor, name, namespace,
+          /** @cut */     'basis.js: Access to implicit namespace `' + nspath + '`'
+          /** @cut */   );
+        }
+
+        rootNs.namespaces_[nspath] = namespace;
       }
 
-      cursor = cursor[name];
+      cursor = rootNs.namespaces_[nspath];
     }
 
     namespaces[path.join('.')] = cursor;
@@ -2515,7 +2571,10 @@
     // if resource exists and resolved -> apply patch
     var resource = getResource.get(filename);
     if (resource && resource.isResolved())
+    {
+      /** @cut */ consoleMethods.info('Apply patch for ' + resource.url);
       patchFn(resource.get(), resource.url);
+    }
   }
 
 
@@ -3635,9 +3694,6 @@
           }
     }
   });
-
-  // add dev namespace, host for special functionality in development environment
-  getNamespace('basis.dev').extend(consoleMethods);
 
 
   //

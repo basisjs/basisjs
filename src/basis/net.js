@@ -1,7 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-
  /**
   * @namespace basis.net
   */
@@ -17,12 +14,14 @@
   var arrayFrom = basis.array.from;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
-  var createEvent = basis.event.create;
 
-  var STATE = basis.data.STATE;
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var Emitter = basisEvent.Emitter;
 
-  var DataObject = basis.data.Object;
-  var Emitter = basis.event.Emitter;
+  var basisData = require('basis.data');
+  var STATE = basisData.STATE;
+  var DataObject = basisData.Object;
 
 
  /**

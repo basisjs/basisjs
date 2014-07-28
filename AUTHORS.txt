@@ -1,5 +1,0 @@
-Authors ordered by first contribution.
-
-Roman Dvornov <rdvornov@gmail.com>
-Vladimir Ratsev <wuzykk@gmail.com>
-Vladimir Fateev <vnfateev@gmail.com>

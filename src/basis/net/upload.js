@@ -1,13 +1,25 @@
 
-  basis.require('basis.net.ajax');
-
+ /**
+  * @namespace basis.net.upload
+  */
 
   var namespace = this.path;
 
-  var AbstractTransport = basis.net.AbstractTransport;
-  var AbstractRequest = basis.net.AbstractRequest;
-  var AjaxTransport = basis.net.ajax.Transport;
 
+  //
+  // import names
+  //
+
+  var eventUtils = require('basis.dom.event'); // TODO
+  var basisNet = require('basis.net');
+  var AbstractTransport = basisNet.AbstractTransport;
+  var AbstractRequest = basisNet.AbstractRequest;
+  var AjaxTransport = require('basis.net.ajax').Transport;
+
+
+  //
+  // main part
+  //
 
   // features support detection
 
@@ -21,28 +33,21 @@
     return window.FormData !== undefined;
   }
 
-  function createIFrame(){
-    var frame = document.createElement('iframe');
-    frame.style.position = 'absolute';
-    frame.style.left = '-2000px';
-    frame.style.top = '-2000px';
-    frame.name = frame.id = 'f' + parseInt(Math.random() * 10e10);
-    frame.src = 'about:blank';
-
-    return frame;
-  }
-
-  function getIFrameDocument(frame){
-    return frame.contentWindow ? frame.contentWindow.document : frame.contentDocument ? frame.contentDocument : frame.document;
-  }
-
-  //
-  // FileUploader
-  //
+ /**
+  * @class
+  */
   var FileUploader;
 
   if (fileAPISupport() && formDataSupport()) // XMLHttpRequest2
   {
+    var REQUEST_PROGRESS_HANDLER = function(event){
+      if (event.lengthComputable)
+        this.setState(basis.data.STATE.PROCESSING, {
+          loaded: event.loaded,
+          total: event.total
+        });
+    };
+
     FileUploader = AjaxTransport.subclass({
       className: namespace + '.FileUploader',
 
@@ -84,22 +89,39 @@
       },
 
       emit_start: function(request){
-        basis.dom.event.addHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
+        eventUtils.addHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
         AjaxTransport.prototype.emit_start.call(this, request);
       },
       emit_complete: function(request){
-        basis.dom.event.removeHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
+        eventUtils.removeHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
         AjaxTransport.prototype.emit_complete.call(this, request);
       }
     });
-
-    var REQUEST_PROGRESS_HANDLER = function(event){
-      if (event.lengthComputable)
-        this.setState(basis.data.STATE.PROCESSING, { loaded: event.loaded, total: event.total });
-    };
   }
   else //IFrame
   {
+    var createIFrame = function(){
+      var frame = document.createElement('iframe');
+      frame.style.position = 'absolute';
+      frame.style.left = '-2000px';
+      frame.style.top = '-2000px';
+      frame.name = frame.id = 'f' + parseInt(Math.random() * 10e10);
+      frame.src = 'about:blank';
+
+      return frame;
+    };
+
+    var getIFrameDocument = function(frame){
+      return frame.contentWindow
+        ? frame.contentWindow.document
+        : frame.contentDocument
+          ? frame.contentDocument
+          : frame.document;
+    };
+
+   /**
+    * @class
+    */
     var IFrameRequest = AbstractRequest.subclass({
       className: namespace + '.IFrameRequest',
 

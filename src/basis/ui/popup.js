@@ -1,13 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.cssom');
-  basis.require('basis.layout');
-  basis.require('basis.l10n');
-  basis.require('basis.ui');
-
-
  /**
   * @see ./demo/defile/popup.html
   * @namespace basis.ui.popup
@@ -24,26 +15,25 @@
   var document = global.document;
   var documentElement = document && document.documentElement;
   var Class = basis.Class;
-  var DOM = basis.dom;
-  var Event = basis.dom.event;
-  var cssom = basis.cssom;
-  var layout = basis.layout;
-
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
-  var createEvent = basis.event.create;
-  var getOffsetParent = basis.layout.getOffsetParent;
-  var getBoundingRect = basis.layout.getBoundingRect;
-  var getViewportRect = basis.layout.getViewportRect;
 
-  var UINode = basis.ui.Node;
+  var DOM = require('basis.dom');
+  var Event = require('basis.dom.event');
+  var cssom = require('basis.cssom');
+  var createEvent = require('basis.event').create;
+  var basisLayout = require('basis.layout');
+  var getOffsetParent = basisLayout.getOffsetParent;
+  var getBoundingRect = basisLayout.getBoundingRect;
+  var getViewportRect = basisLayout.getViewportRect;
+  var UINode = require('basis.ui').Node;
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Popup: resource('./templates/popup/Popup.tmpl'),
     Balloon: resource('./templates/popup/Balloon.tmpl'),
     popupManager: resource('./templates/popup/popupManager.tmpl')
@@ -121,6 +111,11 @@
       };
 
     return getBoundingRect(relPoint, offsetParent);
+  }
+
+  function getTopZIndex(){
+    var basisUiWindow = basis.resource.get(basis.resolveNSFilename('basis.ui.window'));
+    return basisUiWindow ? basisUiWindow.fetch().getWindowTopZIndex() : 2001;
   }
 
 
@@ -488,7 +483,7 @@
 
     insertBefore: function(newChild, refChild){
       if (UINode.prototype.insertBefore.call(this, newChild, refChild))
-        newChild.setZIndex(basis.ui.window ? basis.ui.window.getWindowTopZIndex() : 2001);
+        newChild.setZIndex(getTopZIndex());
     },
     removeChild: function(popup){
       if (popup)

@@ -1,11 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.ui');
-  basis.require('basis.ui.field');
-
-
  /**
   * @see ./demo/defile/form.html
   * @namespace basis.ui.form
@@ -18,21 +11,18 @@
   // import names
   //
 
-  var DOM = basis.dom;
-  var domEvent = basis.dom.event;
-  var field = basis.ui.field;
-
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
-
-  var UINode = basis.ui.Node;
+  var field = require('basis.ui.field');
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var events = basisEvent.events;
+  var Node = require('basis.ui').Node;
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Form: resource('./templates/form/Form.tmpl'),
     FormContent: resource('./templates/form/FormContent.tmpl')
   });
@@ -41,7 +31,7 @@
  /**
   * @class
   */
-  var FormContent = UINode.subclass({
+  var FormContent = Node.subclass({
     className: namespace + '.FormContent',
 
     template: templates.FormContent,
@@ -154,7 +144,7 @@
       },
       validate: function(event){
         if (this.validate() !== true)
-          domEvent.cancelDefault(event);
+          event.preventDefault();
       }
     },
 
