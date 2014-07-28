@@ -52,8 +52,56 @@ var File = entity.createType('File', {
   };
 });
 
+var notificationsQueue = [];
 var permamentFiles = [];
 var permamentFilesCount = new Value(0);
+
+function processNotificationQueue(){
+  // aggregate files changes
+  basisData.Dataset.setAccumulateState(true);
+
+  notificationsQueue.splice(0).forEach(function(notification){
+    var action = notification.action;
+    var filename = notification.filename;
+    var file = notification.file;
+    var content = notification.content;
+
+    switch (action)
+    {
+      case 'new':
+      case 'update':
+        File({
+          filename: filename,
+          content: content
+        }).file = file;
+        break;
+
+      case 'remove':
+        File(filename).destroy();
+        break;
+    }
+
+    // permanent files changes
+    if (action == 'new')
+      return;
+
+    // trace only update and delete
+    var ext = basis.path.extname(filename);
+
+    if (ext in inspectBasis.resource.extensions &&
+        inspectBasis.resource.extensions[ext].permanent &&
+        inspectBasis.resource.isResolved(filename) &&
+        inspectBasis.resource(filename).hasChanges())
+      basis.array.add(permamentFiles, filename);
+    else
+      basis.array.remove(permamentFiles, filename);
+  });
+
+  // set new count
+  permamentFilesCount.set(permamentFiles.length);
+
+  basisData.Dataset.setAccumulateState(false);
+}
 
 
 //
@@ -82,42 +130,15 @@ basis.ready(function(){
 
   // subscribe to files change notifications
   basisjsTools.notifications.attach(function(action, filename, content){
-    switch (action)
-    {
-      case 'new':
-      case 'update':
-        File({
-          filename: filename,
-          content: content
-        }).file = basisjsTools.getFile(filename, true);
-        break;
+    if (!notificationsQueue.length)
+      basis.nextTick(processNotificationQueue);
 
-      case 'remove':
-        File(filename).destroy();
-        break;
-    }
-
-    // permanent files changes
-    if (action == 'new')
-      return;
-
-    var ext = basis.path.extname(filename);
-
-    if (ext in inspectBasis.resource.extensions == false)
-      return;
-
-    if (inspectBasis.resource.extensions[ext].permanent &&
-        inspectBasis.resource.isResolved(filename))
-    {
-      basis.setImmediate(function(){
-        if (inspectBasis.resource(filename).hasChanges())
-          basis.array.add(permamentFiles, filename);
-        else
-          basis.array.remove(permamentFiles, filename);
-
-        permamentFilesCount.set(permamentFiles.length);
-      });
-    }
+    notificationsQueue.push({
+      action: action,
+      filename: filename,
+      file: basisjsTools.getFile(filename, true),
+      content: content
+    });
   });
 
   // sync isOnline
