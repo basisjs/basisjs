@@ -3608,6 +3608,7 @@
     NODE_ENV: NODE_ENV,
     config: config,
     createSandbox: createSandbox,
+    dev: (new Namespace('basis.dev')).extend(consoleMethods),
 
     // modularity
     resolveNSFilename: resolveNSFilename,
