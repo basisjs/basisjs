@@ -1763,10 +1763,11 @@
         }
 
         this.itemCount = dataset ? dataset.itemCount : 0;
+        this.dataset = dataset;
+
         if (delta = getDatasetDelta(oldDataset, dataset))
           this.emit_itemsChanged(delta);
 
-        this.dataset = dataset;
         this.emit_datasetChanged(oldDataset);
       }
     },
