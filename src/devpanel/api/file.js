@@ -69,9 +69,10 @@ module.exports = {
 
     if (basisjsTools)
       basisjsTools.getFileGraph(function(err, data){
-        if (!err)
+        if (err)
+          done(err);
+        else
           done(null, JSON.parse(data));
-        done(err);
       });
     else
       done('No basisjs-tools');
