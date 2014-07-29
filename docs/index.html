@@ -21,10 +21,10 @@
         var scripts = m[1].split(',');
         document.write(scripts.map(basis.string.format, '<script type="text/javascript" src="{0}"><\/script>'));
       }
-    })();  
+    })();
   </script>
   <script>
-    app.stat.pageLoadTime.set(new Date - PAGE_LOAD_TIME);
+    basis.require('app.stat').pageLoadTime.set(new Date - PAGE_LOAD_TIME);
   </script>
 </body>
 

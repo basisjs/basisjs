@@ -1,16 +1,11 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-  basis.require('basis.entity');
-  basis.require('basis.net.ajax');
-  basis.require('app.stat');
-
-  // import names
-
   var getter = basis.getter;
-
-  var nsData = basis.data;
-  var nsEntity = basis.entity;
+  var appStat = require('app.stat');
+  var createEvent = require('basis.event').create;
+  var nsData = require('basis.data');
+  var nsEntity = require('basis.entity');
+  var ajax = require('basis.net.ajax');
+  var fnInfo = require('basis.utils.info').fn;
 
 
   // main part
@@ -20,41 +15,37 @@
   }
 
 
-  var JsDocLinkEntity = new nsEntity.EntityType({
-    name: 'JsDocLinkEntity',
-    fields: {
-      url: nsEntity.StringId,
-      title: function(value){ return value != null ? String(value) : null; }
+  var JsDocLinkEntity = nsEntity.createType('JsDocLinkEntity', {
+    url: nsEntity.StringId,
+    title: function(value){
+      return value != null ? String(value) : null;
     }
   });
 
-  var JsDocLinkEntity_init_ = JsDocLinkEntity.entityType.entityClass.prototype.init;
-  JsDocLinkEntity.entityType.entityClass.prototype.init = function(){
-    JsDocLinkEntity_init_.apply(this, arguments);
-    resourceLoader.addResource(this.data.url, 'link');
-  };
-
-
-  var JsDocEntity = new nsEntity.EntityType({
-    name: 'JsDocEntity',
-    fields: {
-      path: nsEntity.StringId,
-      file: String,
-      line: Number,
-      text: String,
-      context: String,
-      tags: basis.fn.$self
+  JsDocLinkEntity.all.addHandler({
+    itemsChanged: function(sender, delta){
+      if (delta.inserted)
+        delta.inserted.forEach(function(item){
+          resourceLoader.addResource(item.data.url, 'link');
+        });
     }
   });
 
-  var JsDocConfigOption = new nsEntity.EntityType({
-    fields: {
-      path: nsEntity.StringId,
-      constructorPath: String,
-      name: String,
-      type: String,
-      description: String
-    }
+  var JsDocEntity = nsEntity.createType('JsDocEntity', {
+    path: nsEntity.StringId,
+    file: String,
+    line: Number,
+    text: String,
+    context: String,
+    tags: basis.fn.$self
+  });
+
+  var JsDocConfigOption = nsEntity.createType('JsDocConfigOption', {
+    path: nsEntity.StringId,
+    constructorPath: String,
+    name: String,
+    type: String,
+    description: String
   });
 
   var awaitingUpdateQueue = {};
@@ -167,12 +158,12 @@
   }
 
 
-  basis.data.SUBSCRIPTION.addProperty('inheritDoc');
+  nsData.SUBSCRIPTION.addProperty('inheritDoc');
 
-  var destroyJsDocEntity = JsDocEntity.entityType.entityClass.prototype.destroy;
-  JsDocEntity.entityType.entityClass.extend({
-    subscribeTo: basis.data.SUBSCRIPTION.INHERITDOC,
-    emit_inheritDocChanged: basis.event.create('inheritDocChanged'),
+  var destroyJsDocEntity = JsDocEntity.type.entityClass.prototype.destroy;
+  JsDocEntity.extendClass({
+    subscribeTo: nsData.SUBSCRIPTION.INHERITDOC,
+    emit_inheritDocChanged: createEvent('inheritDocChanged'),
     inheritDoc: null,
     listen: {
       inheritDoc: {
@@ -320,15 +311,14 @@
       if (/_$/.test(key))
         continue;
 
-      var obj = scope[key];
-      
-      if (   (key == 'constructor')
-          || (key == 'prototype')
-          //|| (key == 'init' && context == 'prototype')
-          || (key == 'className' && context == 'class')
-          || (key == 'subclass' && context == 'class')
-          || (key == 'isSubclassOf' && context == 'class')
-          || (key == 'toString' && (Object.prototype.toString === obj || basis.Class.prototype.toString === obj)))
+      var obj = keys[key];
+
+      if (key == 'constructor' ||
+          key == 'prototype' ||
+          (key == 'className' && context == 'class') ||
+          (key == 'subclass' && context == 'class') ||
+          (key == 'isSubclassOf' && context == 'class') ||
+          (key == 'toString' && (Object.prototype.toString === obj || basis.Class.prototype.toString === obj)))
         continue;
 
       walkThroughCount++;
@@ -400,12 +390,6 @@
             kind: kind,
             tag: tag
           };
-          //if (!window.yyy_) window.yyy_ = 1; else window.yyy_ += 1;
-        }
-        else
-        {
-          //if (!window.xxx_) window.xxx_ = 1; else window.xxx_ += 1;
-          //return;
         }
       }
 
@@ -419,7 +403,7 @@
           obj: obj
         }
       });
-      
+
       members[path].push(dataObject);
 
       if (/^(function|class|constant|namespace)$/.test(kind))
@@ -482,16 +466,16 @@
 
   var walkStartTime = Date.now();
 
-  basis.namespaces_['basis'] = basis;
+  basis.namespaces_.basis = basis;
   walk({
     scope: basis.namespaces_,
     context: 'object'
   });
   var walkTime = Date.now() - walkStartTime;
   //basis.dev.log(walkTime, '/', walkThroughCount);
-  app.stat.walkTime.set(walkTime);
-  app.stat.walkCount.set(walkCount);
-  app.stat.tokenCount.set(basis.object.keys(mapDO).length);
+  appStat.walkTime.set(walkTime);
+  appStat.walkCount.set(walkCount);
+  appStat.tokenCount.set(basis.object.keys(mapDO).length);
 
   //
   // --------------------------------
@@ -504,12 +488,10 @@
     if (func.basisDocFD_)
       return func.basisDocFD_;
 
-    return func.basisDocFD_ = basis.utils.info.fn(func);
+    return func.basisDocFD_ = fnInfo(func);
   }
 
   function getMembers(path){
-    //var objData = mapDO[path] && mapDO[path].data;
-    //return objData.kind == 'class' ? basis.object.iterate(objData.obj.docsProto_, function(key, value){ return mapDO[value.path] }) : 
     return members[path];
   }
 
@@ -531,7 +513,7 @@
       {
         var proto = result[i].cls.prototype;
         var present = key in proto && proto[key] !== value;
-        result[i].present = present; 
+        result[i].present = present;
         if (present)
           result[i].tag = presentCount++ ? 'override' : 'implement';
         value = proto[key];
@@ -626,7 +608,7 @@
 
               lineFix = (m[1].match(/\n/g) || []).length;
               createJsDocEntity(jsdoc[jsdoc.length - 1], ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
-              
+
               if (isClass)
                 clsPrefix = name;
             }
@@ -656,7 +638,7 @@
     loaded: {},
     curResource: null,
     transport: basis.fn.lazyInit(function(){
-      var transport = new basis.net.ajax.Transport();
+      var transport = new ajax.Transport();
 
       transport.addHandler({
         failure: function(){
@@ -703,7 +685,7 @@
     }
   };
 
-  basis.source_ = basis.net.ajax.request(basis.filename_);
+  basis.source_ = ajax.request(basis.filename_);
   var resolveQueue = basis.object.values(basis.namespaces_).concat(basis).map(function(ns){
     if (ns.source_)
       return {
@@ -742,5 +724,8 @@
     getInheritance: getInheritance,
     loadResource: resourceLoader.addResource.bind(resourceLoader),
 
-    searchIndex: new basis.data.Dataset({ items: searchValues, listen: { item: null } })
+    searchIndex: new nsData.Dataset({
+      items: searchValues,
+      listen: { item: null }
+    })
   };

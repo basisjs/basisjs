@@ -1,27 +1,28 @@
-basis.require('basis.all');
+// include all basis.js modules
+require('basis.all');
 
-basis.require('basis.app');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.layout');
-basis.require('app.stat');
-basis.require('app.core');
-basis.require('basis.l10n');
-basis.require('basis.ui.panel');
+var domUtils = require('basis.dom');
+var domEventUtils = require('basis.dom.event');
+var Node = require('basis.ui').Node;
+var PageControl = require('basis.ui.tabs').PageControl;
+var Cloud = require('basis.data.dataset').Cloud;
+var appStat = require('app.stat');
+var searchIndex = require('app.core').searchIndex;
+var router = require('basis.router');
+var animation = require('basis.animation');
+var l10n = require('basis.l10n');
+var VerticalPanelStack = require('basis.ui.panel').VerticalPanelStack;
 
-basis.l10n.setCultureList('en-US/ru-RU ru-RU'); // en-US temporary fallback on ru-RU
-basis.require('basis.l10n').enableMarkup = true;
+l10n.setCultureList('en-US/ru-RU ru-RU'); // en-US temporary fallback on ru-RU
+l10n.enableMarkup = true;
 //basis.l10n.setCulture('ru-RU');
 
-basis.app.create({
+require('basis.app').create({
   title: 'Basis.js API',
   init: function(){
     var initTime = new Date;
 
     basis.object.extend(app, this);
-
-    // import names
-    var VerticalPanelStack = basis.ui.panel.VerticalPanelStack;
 
     //
     // main part
@@ -49,11 +50,11 @@ basis.app.create({
       itemsChanged: function(){
         var item = this.pick();
         if (item)
-          basis.router.navigate(item.data.fullPath);
+          router.navigate(item.data.fullPath);
       }
     });
 
-    var sidebarPages = new basis.ui.tabs.PageControl({
+    var sidebarPages = new PageControl({
       childNodes: [
         {
           name: 'tree',
@@ -77,7 +78,7 @@ basis.app.create({
         {
           if (!oldValue)
           {
-            searchCloud.setSource(app.core.searchIndex);
+            searchCloud.setSource(searchIndex);
             sidebarPages.getChildByName('search').select();
           }
 
@@ -93,7 +94,7 @@ basis.app.create({
       }
     });
 
-    var searchCloud = new basis.data.dataset.Cloud({
+    var searchCloud = new Cloud({
       ruleEvents: false,
       rule: function(obj){
         return obj.data.title
@@ -108,7 +109,7 @@ basis.app.create({
     //
 
     var sidebar = new VerticalPanelStack({
-      container: basis.dom.get('Layout'),
+      container: domUtils.get('Layout'),
       template: '<b:include src="basis.ui.panel.Stack" id="Sidebar"/>',
       childNodes: [
         {
@@ -124,7 +125,7 @@ basis.app.create({
     });
 
     var contentLayout = new VerticalPanelStack({
-      container: basis.dom.get('Layout'),
+      container: domUtils.get('Layout'),
       template: '<b:include src="basis.ui.panel.Stack" id="Content"/>',
       childNodes: [
         {
@@ -144,11 +145,11 @@ basis.app.create({
     targetContent.scrollTo = smoothScroll(contentLayout.lastChild.element);
 
     function smoothScroll(element){
-      var thread = new basis.animation.Thread({
+      var thread = new animation.Thread({
         duration: 350,
         interval: 15
       });
-      var modificator = new basis.animation.Modificator(thread, function(value){
+      var modificator = new animation.Modificator(thread, function(value){
         element.scrollTop = parseInt(value);
       }, 0, 0, true);
 
@@ -173,20 +174,22 @@ basis.app.create({
     //
     // Global events
     //
-    basis.dom.event.addGlobalHandler('click', function(event){
+    domEventUtils.addGlobalHandler('click', function(event){
       if (!event.mouseLeft)
         return;
 
       var sender = event.sender;
 
       if (sender.tagName != 'A')
-        sender = basis.dom.findAncestor(sender, function(node){ return node.tagName == 'A'; });
+        sender = domUtils.findAncestor(sender, function(node){
+          return node.tagName == 'A';
+        });
 
       if (sender && sender.pathname == location.pathname && sender.hash != '')
-        navTree.open(sender.hash, basis.dom.parentOf(navTree.element, sender));
+        navTree.open(sender.hash, domUtils.parentOf(navTree.element, sender));
     });
 
-    basis.dom.event.addGlobalHandler('keydown', function(event){
+    domEventUtils.addGlobalHandler('keydown', function(event){
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || prototypeMapPopup().visible)
         return;
 
@@ -195,9 +198,9 @@ basis.app.create({
 
     searchInput.focus(true);
 
-    app.stat.initTime.set(new Date - initTime);
+    appStat.initTime.set(new Date - initTime);
 
-    return new basis.ui.Node({
+    return new Node({
       template: resource('./app.tmpl'),
       binding: {
         sidebar: sidebar,

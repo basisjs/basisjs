@@ -1,14 +1,14 @@
-basis.require('basis.ui');
-basis.require('basis.data.index');
-basis.require('app.stat');
-basis.require('app.core');
+var Node = require('basis.ui').Node;
+var count = require('basis.data.index').count;
+var appStat = require('app.stat');
+var appCore = require('app.core');
 
-var viewInheritance = resource('./views/inheritance/inheritance.js')();
-var viewSourceCode = resource('./views/sourceCode/sourceCode.js')();
-var viewTemplate = resource('./views/templateView/templateView.js')();
-var viewPrototype = resource('./views/prototype/prototype.js')();
-var viewNamespaceMap = resource('./views/namespaceMap/namespaceMap.js')();
-var viewDescription = resource('./views/description/description.js')();
+var viewInheritance = require('./views/inheritance/inheritance.js');
+var viewSourceCode = require('./views/sourceCode/sourceCode.js');
+var viewTemplate = require('./views/templateView/templateView.js');
+var viewPrototype = require('./views/prototype/prototype.js');
+var viewNamespaceMap = require('./views/namespaceMap/namespaceMap.js');
+var viewDescription = require('./views/description/description.js');
 
 var VIEW_MAP = {
   'namespace':      [viewDescription, viewNamespaceMap],
@@ -24,7 +24,7 @@ var VIEW_MAP = {
   'event':          [viewDescription, viewInheritance, viewSourceCode]
 };
 
-module.exports = new basis.ui.Node({
+module.exports = new Node({
   template: resource('./template/targetContent.tmpl'),
   binding: {
     indexPage: 'satellite:',
@@ -37,17 +37,21 @@ module.exports = new basis.ui.Node({
   },
 
   satellite: {
-    indexPage: new basis.ui.Node({
+    indexPage: new Node({
       template: resource('./template/targetContentEmpty.tmpl'),
       binding: {
-        pageLoadTime: app.stat.pageLoadTime,
-        moduleCount: basis.fn.$const(basis.object.iterate(basis.namespaces_, function(key, value){ return value.filename_ }).filter(Boolean).length),
-        walkCount: app.stat.walkCount,
-        walkTime: app.stat.walkTime,
-        initTime: app.stat.initTime,
-        tokenCount: app.stat.tokenCount,
-        jsDocsCount: basis.data.index.count(app.core.JsDocEntity.all),
-        searchIndexSize: basis.data.index.count(app.core.searchIndex)
+        moduleCount: basis.fn.$const(
+          basis.object.values(basis.namespaces_).reduce(function(res, ns){
+            return res + !!ns.filename_;
+          }, 0)
+        ),
+        pageLoadTime: appStat.pageLoadTime,
+        walkCount: appStat.walkCount,
+        walkTime: appStat.walkTime,
+        initTime: appStat.initTime,
+        tokenCount: appStat.tokenCount,
+        jsDocsCount: count(appCore.JsDocEntity.all),
+        searchIndexSize: count(appCore.searchIndex)
       }
     })
   },
@@ -55,7 +59,7 @@ module.exports = new basis.ui.Node({
   setDelegate: function(delegate){
     this.clear(true);
 
-    basis.ui.Node.prototype.setDelegate.call(this, delegate);
+    Node.prototype.setDelegate.call(this, delegate);
 
     if (this.delegate)
     {
@@ -68,5 +72,3 @@ module.exports = new basis.ui.Node({
   },
   scrollTo: basis.fn.$true
 });
-
-

@@ -2224,7 +2224,7 @@
               /** @cut */ if (config.implicitExt == 'warn')
               /** @cut */ {
               /** @cut */   for (var key in ns.exports)
-              /** @cut */     if (key in ns == false)
+              /** @cut */     if (key in ns == false && key != 'path')
               /** @cut */       defineReadWarningProperty(ns, key, ns.exports[key],
               /** @cut */         'basis.js: Access to implicit namespace property `' + namespace + '.' + key + '`'
               /** @cut */       );
