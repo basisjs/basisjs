@@ -1,0 +1,16 @@
+.page
+{
+  width: 800px;
+  margin: 0 auto;
+  border-left: 1px solid #888;
+  border-right: 1px solid #888;
+}
+.page H1
+{
+  margin: 0;
+  padding: .5em 20px;
+}
+.content
+{
+  padding: 20px;
+}

@@ -1,0 +1,10 @@
+.tab
+{
+  padding: 8px 16px;
+  float: left;
+  cursor: pointer;
+}
+.tab:hover
+{
+  background: rgba(255, 255, 255, .25);
+}
