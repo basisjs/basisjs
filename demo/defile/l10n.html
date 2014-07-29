@@ -38,7 +38,7 @@
     /** @cut */ basis.require('basis.devpanel');
 
     basis.l10n.setCultureList('en-US ru-RU uk-UA');
-    basis.l10n.enableMarkup = true;
+    basis.require('basis.l10n').enableMarkup = true;
 
     new basis.ui.button.ButtonPanel({
       container: document.getElementById('demo-container'),

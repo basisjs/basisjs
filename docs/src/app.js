@@ -10,7 +10,7 @@ basis.require('basis.l10n');
 basis.require('basis.ui.panel');
 
 basis.l10n.setCultureList('en-US/ru-RU ru-RU'); // en-US temporary fallback on ru-RU
-basis.l10n.enableMarkup = true;
+basis.require('basis.l10n').enableMarkup = true;
 //basis.l10n.setCulture('ru-RU');
 
 basis.app.create({

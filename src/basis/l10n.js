@@ -4,7 +4,6 @@
   */
 
   var namespace = this.path;
-  var ns = basis.namespace(String(namespace));
 
 
   //
@@ -142,7 +141,7 @@
     },
 
     setType: function(type){
-      if (type != 'plural' && (!ns.enableMarkup || type != 'markup'))
+      if (type != 'plural' && (!module.exports.enableMarkup || type != 'markup'))
         type = 'default';
 
       if (this.type != type)
