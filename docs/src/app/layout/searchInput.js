@@ -1,65 +1,64 @@
 var DOM = require('basis.dom');
 var uiField = require('basis.ui.field');
 
-var SearchMatchInput = uiField.MatchInput.subclass({
-  matchFilterClass: uiField.MatchFilter.subclass({
-    textNodeGetter: basis.getter('tmpl.title'),
-    emit_change: function(oldValue){
-      uiField.MatchProperty.prototype.emit_change.call(this, oldValue);
+var MatchFilterClass = uiField.MatchFilter.subclass({
+  emit_change: function(oldValue){
+    uiField.MatchProperty.prototype.emit_change.call(this, oldValue);
 
-      var value = this.value;
-      var fc = value.charAt(0);
-      var v = value.substr(1).replace(/./g, function(m){
-        return '[' + m.toUpperCase() + m.toLowerCase() + ']';
-      });
-      var rx = new RegExp('(^|[^a-zA-Z])([' + fc.toLowerCase() + fc.toUpperCase() + ']' + v + ')|([a-z])(' + fc.toUpperCase() + v + ')');
-      var textNodeGetter = this.textNodeGetter;
-      var wrapMap = this.map;
+    var value = this.value;
+    var fc = value.charAt(0);
+    var v = value.substr(1).replace(/./g, function(m){
+      return '[' + m.toUpperCase() + m.toLowerCase() + ']';
+    });
+    var rx = new RegExp('(^|[^a-zA-Z])([' + fc.toLowerCase() + fc.toUpperCase() + ']' + v + ')|([a-z])(' + fc.toUpperCase() + v + ')');
+    var textNodeGetter = this.textNodeGetter;
+    var wrapMap = this.map;
 
-      wrapMap['SPAN.match'] = function(s, i){
-        return s && (i % 5 == 2 || i % 5 == 4);
-      };
+    wrapMap['SPAN.match'] = function(s, i){
+      return s && (i % 5 == 2 || i % 5 == 4);
+    };
 
-      this.node.setMatchFunction(value ? function(child, reset){
-        if (!reset)
+    this.node.setMatchFunction(value ? function(child, reset){
+      if (!reset)
+      {
+        var textNode = child._m || textNodeGetter(child);
+        var p = textNode.nodeValue.split(rx);
+        if (p.length > 1)
         {
-          var textNode = child._m || textNodeGetter(child);
-          var p = textNode.nodeValue.split(rx);
-          if (p.length > 1)
-          {
-            DOM.replace(
-              child._x || textNode,
-              child._x = DOM.createElement('SPAN.matched', DOM.wrap(p, wrapMap))
-            );
-            child._m = textNode;
-            return true;
-          }
+          DOM.replace(
+            child._x || textNode,
+            child._x = DOM.createElement('SPAN.matched', DOM.wrap(p, wrapMap))
+          );
+          child._m = textNode;
+          return true;
         }
+      }
 
-        if (child._x)
-        {
-          DOM.replace(child._x, child._m);
-          delete child._x;
-          delete child._m;
-        }
+      if (child._x)
+      {
+        DOM.replace(child._x, child._m);
+        delete child._x;
+        delete child._m;
+      }
 
-        return false;
-      } : null);
+      return false;
+    } : null);
 
-      DOM.get('SidebarContent').scrollTop = 0;
-    }
-  })
+    DOM.get('SidebarContent').scrollTop = 0;
+  }
 });
 
 
-var searchInput = new SearchMatchInput({
+var searchInput = new uiField.MatchInput({
   template: resource('./template/searchInput.tmpl'),
   action: {
     clear: function(){
       this.setValue('');
     }
   },
+  matchFilterClass: MatchFilterClass,
   matchFilter: {
+    textNodeGetter: basis.getter('tmpl.title'),
     regexpGetter: function(value){
       return new RegExp('(^|[^a-z])(' + basis.string.forRegExp(value) + ')', 'i');
     },

@@ -27,31 +27,27 @@ var VIEW_MAP = {
 module.exports = new Node({
   template: resource('./template/targetContent.tmpl'),
   binding: {
-    indexPage: 'satellite:',
     hasDelegate: {
       events: 'delegateChanged',
       getter: function(node){
         return !!node.delegate;
       }
-    }
-  },
-
-  satellite: {
+    },
     indexPage: new Node({
       template: resource('./template/targetContentEmpty.tmpl'),
       binding: {
-        moduleCount: basis.fn.$const(
-          basis.object.values(basis.namespaces_).reduce(function(res, ns){
-            return res + !!ns.filename_;
-          }, 0)
-        ),
         pageLoadTime: appStat.pageLoadTime,
         walkCount: appStat.walkCount,
         walkTime: appStat.walkTime,
         initTime: appStat.initTime,
         tokenCount: appStat.tokenCount,
         jsDocsCount: count(appCore.JsDocEntity.all),
-        searchIndexSize: count(appCore.searchIndex)
+        searchIndexSize: count(appCore.searchIndex),
+        moduleCount: basis.fn.$const(
+          basis.object.values(basis.namespaces_).reduce(function(res, ns){
+            return res + !!ns.filename_;
+          }, 0)
+        )
       }
     })
   },

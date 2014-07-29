@@ -1,29 +1,18 @@
 <!doctype html>
 
 <html>
-
 <head>
-  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <meta charset="utf-8">
   <title>Basis.js API</title>
-  <script>var PAGE_LOAD_TIME = new Date();</script>
 
-  <link rel="stylesheet" type="text/css" title="Default Style" href="src/app/css/main.css" media="screen" />
-
+  <script>
+    var PAGE_LOAD_TIME = new Date();
+  </script>
   <script src="../src/basis.js" basis-config="autoload: 'src/app'"></script>
 </head>
 
 <body>
   <script type="text/javascript">
-    (function(){
-      var m;
-      if (m = location.search.match(/ext=([^&]+)/))
-      {
-        var scripts = m[1].split(',');
-        document.write(scripts.map(basis.string.format, '<script type="text/javascript" src="{0}"><\/script>'));
-      }
-    })();
-  </script>
-  <script>
     basis.require('app.stat').pageLoadTime.set(new Date - PAGE_LOAD_TIME);
   </script>
 </body>

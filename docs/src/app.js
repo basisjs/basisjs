@@ -29,14 +29,14 @@ require('basis.app').create({
     //
     var prototypeMapPopup = resource('./app/layout/prototypeMapPopup.js');
 
-    var targetHeader = resource('./app/layout/targetHeader.js')();
-    var targetContent = resource('./app/layout/targetContent.js')();
+    var targetHeader = require('./app/layout/targetHeader.js');
+    var targetContent = require('./app/layout/targetContent.js');
 
     targetHeader.setDelegate(targetContent);
     targetHeader.setDataSource(targetContent.getChildNodesDataset());
 
-    var navTree = resource('./app/layout/navTree.js')();
-    var searchTree = resource('./app/layout/searchTree.js')();
+    var navTree = require('./app/layout/navTree.js');
+    var searchTree = require('./app/layout/searchTree.js');
 
     navTree.selection.addHandler({
       itemsChanged: function(){
@@ -70,7 +70,7 @@ require('basis.app').create({
     //
     // search input
     //
-    var searchInput = resource('./app/layout/searchInput.js')();
+    var searchInput = require('./app/layout/searchInput.js');
     searchInput.matchFilter.node = searchTree;
     searchInput.matchFilter.addHandler({
       change: function(sender, oldValue){
@@ -109,7 +109,6 @@ require('basis.app').create({
     //
 
     var sidebar = new VerticalPanelStack({
-      container: domUtils.get('Layout'),
       template: '<b:include src="basis.ui.panel.Stack" id="Sidebar"/>',
       childNodes: [
         {
@@ -117,15 +116,14 @@ require('basis.app').create({
           childNodes: searchInput
         },
         {
-          template: '<b:include src="basis.ui.panel.Panel" id="SidebarContent"/>',
           flex: 1,
+          template: '<b:include src="basis.ui.panel.Panel" id="SidebarContent"/>',
           childNodes: sidebarPages
         }
       ]
     });
 
     var contentLayout = new VerticalPanelStack({
-      container: domUtils.get('Layout'),
       template: '<b:include src="basis.ui.panel.Stack" id="Content"/>',
       childNodes: [
         {
@@ -201,7 +199,7 @@ require('basis.app').create({
     appStat.initTime.set(new Date - initTime);
 
     return new Node({
-      template: resource('./app.tmpl'),
+      template: resource('./app/template/layout.tmpl'),
       binding: {
         sidebar: sidebar,
         content: contentLayout
