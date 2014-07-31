@@ -154,7 +154,9 @@
             object.addHandler(OBJECTSET_HANDLER, this);
         }
         else
-          throw this.constructor.className + '#add: Instance of AbstractData required';
+        {
+          /** @cut */ basis.dev.warn(this.constructor.className + '#add: Instance of AbstractData required');
+        }
       }
 
       this.fire(true, true);
