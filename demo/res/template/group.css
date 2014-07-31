@@ -1,0 +1,18 @@
+.group
+{
+  padding-bottom: 1.5em !important;
+}
+.title
+{
+  clear: both;
+  font-size: 210%;
+  font-family: Arial;
+  padding-left: 22px;
+}
+.content
+{
+  overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 5px;
+}

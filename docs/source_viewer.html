@@ -6,11 +6,10 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf8" />
   <title>Basis Source Viewer</title>
 
-  <script type="text/javascript" data-basis-config="" src="../src/basis.js"></script>
-
   <style type="text/css">
     BODY
     {
+      background: white;
       color: black;
       font-size: small;
     }
@@ -22,15 +21,16 @@
 </head>
 
 <body>
+  <script src="../src/basis.js" basis-config></script>
   <script type="text/javascript">
-    basis.require('basis.ui.code');
-    basis.require('basis.net.ajax');
+    var SourceCode = basis.require('basis.ui.code').SourceCode;
+    var request = basis.require('basis.net.ajax').request;
 
     var line = parseInt((location.hash || '').replace(/^#/, ''));
     var filename = ((location.search || '').match(/[\?\&]file=([^&]+)/) || [])[1];
 
     if (filename)
-      basis.net.ajax.request(filename, function(data){
+      request(filename, function(data){
         var node = new basis.ui.code.SourceCode({
           container: document.body,
           lang: 'js',

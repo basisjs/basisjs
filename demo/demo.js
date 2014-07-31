@@ -4,7 +4,7 @@ basis.ready(function(){
 
   var mainView = new Node({
     container: document.body,
-    template: basis.resource('../res/demo.tmpl'),
+    template: basis.resource('../res/template/demo-page.tmpl'),
     binding: {
       title: function(){
         return document.title;
@@ -22,30 +22,25 @@ basis.ready(function(){
         instanceOf: Node,
         config: function(){
           return {
-            template: basis.resource('../res/sourceCode.tmpl'),
+            sourceVisible: new basis.Token(false),
+            template: basis.resource('../res/template/source.tmpl'),
+            binding: {
+              code: 'code',
+              sourceVisible: 'sourceVisible'
+            },
             action: {
               toggleCode: function(){
-                this.sourceVisible = !this.sourceVisible;
+                this.sourceVisible.set(!this.sourceVisible.value);
 
                 if (!this.code)
                 {
                   highlight.useStyle();
-                  this.code = highlight.highlight(document.getElementById('demo-javascript').innerHTML, 'js');
+                  this.code = highlight.highlight(
+                    document.getElementById('demo-javascript').innerHTML,
+                    'js'
+                  );
                   this.updateBind('code');
                 }
-
-                this.updateBind('sourceVisible');
-                this.updateBind('toggleText');
-              }
-            },
-            sourceVisible: false,
-            binding: {
-              code: 'code',
-              sourceVisible: function(node){
-                return node.sourceVisible ? 'sourceVisible' : '';
-              },
-              toggleText: function(node){
-                return node.sourceVisible ? 'Hide source code' : 'Show source code';
               }
             }
           };

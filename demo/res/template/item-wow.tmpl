@@ -1,0 +1,15 @@
+<b:style src="./item.css"/>
+<b:style src="./item-wow.css"/>
+<b:isolate/>
+
+<li class="item" event-click="select">
+  <a class="link" href="{url}">
+    <div class="header">
+      <img class="image" src="{imageUrl}" width="100" height="75" event-error="setDefaultImage"/>
+      <span class="title">{title}</span>
+    </div>
+    <div class="wowtext">
+      {wow}
+    </div>
+  </a>
+</li>

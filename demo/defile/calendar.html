@@ -48,9 +48,9 @@
 
     new basis.ui.button.ButtonPanel({
       container: basis.dom.get('demo-container'),
-      childNodes: [null].concat(basis.l10n.getCultureList()).map(function(culture){
+      childNodes: basis.l10n.getCultureList().map(function(culture){
         return {
-          caption: culture || 'Default (English)',
+          caption: culture,
           click: function(){
             basis.l10n.setCulture(culture);
           }
