@@ -69,6 +69,42 @@
     }
   };
 
+  var objectSetUpdater = (function(){
+    var objects = {};
+    var timer;
+
+    function process(){
+      // set timer to make sure all objects be processed
+      // it helps avoid try/catch and process all objects even if any exception
+      var etimer = basis.setImmediate(process);
+
+      // reset timer
+      timer = null;
+
+      // process objects
+      for (var id in objects)
+      {
+        var object = objects[id];
+        delete objects[id];
+        object.update();
+      }
+
+      // if no exceptions we will be here, reset emergency timer
+      basis.clearImmediate(etimer);
+    }
+
+    return {
+      add: function(object){
+        objects[object.basisObjectId] = object;
+        if (!timer)
+          timer = basis.setImmediate(process);
+      },
+      remove: function(object){
+        delete objects[object.basisObjectId];
+      }
+    };
+  })();
+
  /**
   * @class
   */
@@ -113,12 +149,6 @@
     * @private
     */
     stateChanged_: true,
-
-   /**
-    * @type {number}
-    * @private
-    */
-    timer_: false,
 
    /**
     * @constructor
@@ -195,8 +225,8 @@
         this.valueChanged_ = this.valueChanged_ || !!valueChanged;
         this.stateChanged_ = this.stateChanged_ || !!stateChanged;
 
-        if (!this.timer_ && (this.valueChanged_ || this.stateChanged_))
-          this.timer_ = basis.setImmediate(this.update.bind(this));
+        if (this.valueChanged_ || this.stateChanged_)
+          objectSetUpdater.add(this);
       }
     },
 
@@ -224,7 +254,7 @@
       this.valueChanged_ = false;
       this.stateChanged_ = false;
 
-      this.timer_ = basis.clearImmediate(this.timer_);
+      objectSetUpdater.remove(this);
 
       if (!cleaner.globalDestroy)
       {
@@ -266,8 +296,7 @@
       this.lock();
       this.clear();
 
-      if (this.timer_)
-        basis.clearImmediate(this.timer_);
+      objectSetUpdater.remove(this);
 
       Value.prototype.destroy.call(this);
     }
