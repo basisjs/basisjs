@@ -3105,33 +3105,40 @@
   * @param {*} context Context for handler
   */
   var ready = (function(){
-    // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig/Roman Dvornov
+    var eventFired = !document || document.readyState == 'complete';
+    var readyHandlers = [];
+    var timer;
 
-    function isReady(){
-      return document.readyState == 'complete' && !!document.body;
+    function processReadyHandler(){
+      var handler;
+
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
+
+      // if handlers queue has more than one handler, set emergency timer
+      // make sure we continue to process the queue on exception
+      // helps to avoid try/catch
+      if (readyHandlers.length > 1)
+        timer = setImmediate(processReadyHandler);
+
+      // process handler queue
+      while (handler = readyHandlers.shift())
+        handler[0].call(handler[1]);
+
+      // remove emergency timer as all handlers are process
+      timer = clearImmediate(timer);
     }
 
-    var fired = !document || isReady();
-    var deferredHandler;
-
-    function runReadyHandler(handler){
-      handler.callback.call(handler.context);
+    function fireHandlers(e){
+      if (!eventFired++)
+        processReadyHandler();
     }
 
-    function fireHandlers(){
-      if (isReady())
-        if (!fired++)
-          while (deferredHandler)
-          {
-            runReadyHandler(deferredHandler);
-            deferredHandler = deferredHandler.next;
-          }
-    }
-
-    // The DOM ready check for Internet Explorer
+    // the DOM ready check for Internet Explorer
     function doScrollCheck(){
       try {
-        // If IE is used, use the trick by Diego Perini
+        // use the trick by Diego Perini
         // http://javascript.nwbox.com/IEContentLoaded/
         document.documentElement.doScroll('left');
         fireHandlers();
@@ -3140,14 +3147,14 @@
       }
     }
 
-    if (!fired)
+    if (!eventFired)
     {
       if (document.addEventListener)
       {
         // use the real event for browsers that support it (all modern browsers support it)
         document.addEventListener('DOMContentLoaded', fireHandlers, false);
 
-        // A fallback to window.onload, that will always work
+        // a fallback to window.onload, that will always work
         global.addEventListener('load', fireHandlers, false);
       }
       else
@@ -3156,34 +3163,26 @@
         // maybe late but safe also for iframes
         document.attachEvent('onreadystatechange', fireHandlers);
 
-        // A fallback to window.onload, that will always work
+        // a fallback to window.onload, that will always work
         global.attachEvent('onload', fireHandlers);
 
-        // If IE and not a frame
-        // continually check to see if the document is ready
+        // if not a frame continually check to see if the document is ready
         try {
           if (!global.frameElement && document.documentElement.doScroll)
             doScrollCheck();
-        } catch(e) {
-        }
+        } catch(e) {}
       }
     }
 
     // return attach function
     return function(callback, context){
-      if (!fired)
-      {
-        deferredHandler = {
-          callback: callback,
-          context: context,
-          next: deferredHandler
-        };
-      }
-      else
-        runReadyHandler({
-          callback: callback,
-          context: context
-        });
+      // if no ready handlers yet and no event fired,
+      // set timer to run handlers async
+      if (!readyHandlers.length && eventFired && !timer)
+        timer = setImmediate(processReadyHandler);
+
+      // add handler to queue
+      readyHandlers.push([callback, context]);
     };
   })();
 
