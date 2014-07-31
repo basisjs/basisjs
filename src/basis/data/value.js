@@ -310,9 +310,11 @@
  /**
   * @class
   */
-  var Expression = Property.subclass({
+  var Expression = Value.subclass({
     className: namespace + '.Expression',
 
+    // use custom constructor
+    extendConstructor_: false,
     init: function(args, calc){
       Value.prototype.init.call(this);
 
@@ -325,34 +327,38 @@
         calc = basis.fn.$undef;
       }
 
-      if (args.length == 1)
-      {
-        args[0].link(this, function(value){
-          this.set(calc.call(this, value));
-        });
-      }
-
-      if (args.length > 1)
-      {
-        var changeWatcher = new ObjectSet({
-          objects: args,
-          calculateOnInit: true,
-          calculateValue: function(){
-            return calc.apply(this, args.map(function(item){
-              return item.value;
-            }));
+      var changeWatcher = new ObjectSet({
+        objects: args,
+        calculateOnInit: true,
+        calculateValue: function(){
+          return calc.apply(this, args.map(function(item){
+            return item.value;
+          }));
+        },
+        handler: {
+          context: this,
+          callbacks: {
+            change: function(){
+              Value.prototype.set.call(this, this.value);
+            },
+            destroy: function(){
+              changeWatcher = null;
+            }
           }
-        });
+        }
+      });
 
-        changeWatcher.link(this, this.set);
+      changeWatcher.link(this, Value.prototype.set);
 
-        this.addHandler({
-          destroy: function(){
-            if (!cleaner.globalDestroy)
-              changeWatcher.destroy();
-          }
-        });
-      }
+      this.addHandler({
+        destroy: function(){
+          changeWatcher.destroy();
+        }
+      });
+    },
+
+    // expressions are read only
+    set: function(){
     }
   });
 
