@@ -11,6 +11,7 @@
   //
 
   var document = global.document;
+  var Node = global.Node;
   var domEvent = require('basis.dom.event');
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
@@ -108,7 +109,7 @@
   })();
 
   // old Firefox has no Node#contains method (Firefox 8 and lower)
-  if (typeof Node != 'undefined' && !Node.prototype.contains)
+  if (Node && !Node.prototype.contains)
     Node.prototype.contains = function(child){
       return !!(this.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
     };
