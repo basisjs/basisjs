@@ -1,9 +1,9 @@
-#sourceCode
+.view
 {
   padding-bottom: 2em;
 }
 
-#sourceCodeTrigger
+.toggler
 {
   cursor: pointer;
   text-decoration: underline;
