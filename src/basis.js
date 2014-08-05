@@ -1,9 +1,6 @@
 /*
   Basis javascript library
   http://github.com/basisjs/basisjs
-
-  @license
-  Dual licensed under the MIT or GPL Version 2 licenses.
 */
 
 /**
@@ -40,7 +37,7 @@
 ;(function createBasisInstance(global, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.3.2-dev';
+  var VERSION = '1.3.2';
 
   var document = global.document;
   var toString = Object.prototype.toString;

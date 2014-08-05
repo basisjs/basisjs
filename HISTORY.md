@@ -1,3 +1,9 @@
+## 1.3.2 (August 5, 2014)
+
+- FIX: remove index handler from items on dataset destroy in `basis.data.index`
+- FIX: resolving by entity type wrapper in `basis.entity` when both arguments are equal (e.g. `Type(1, 1)` wrongly returns `1` instead of `Type` instance)
+- FIX: make `basis.dragdrop` more stable when side choosing
+
 ## 1.3.1 (July 19, 2014)
 
 - FIX: remove wrong warning in `basis.data.dataset.Merge#setSources()`
