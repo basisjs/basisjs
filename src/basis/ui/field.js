@@ -1111,7 +1111,7 @@
       {
         // update value & selection
         var item = basis.array.search(this.childNodes, value, getFieldValue);
-        if (item && !item.isDisabled())
+        if (item)
           this.selection.set([item]);
         else
           this.selection.clear();
