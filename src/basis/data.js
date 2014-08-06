@@ -1790,8 +1790,8 @@
    /**
     * Proxy method for contained dataset.
     */
-    getValues: function(){
-      return this.dataset ? this.dataset.getValues() : [];
+    getValues: function(getter){
+      return this.dataset ? this.dataset.getValues(getter) : [];
     },
 
    /**
