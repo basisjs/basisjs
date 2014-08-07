@@ -280,11 +280,15 @@
       return this.getResponseError();
     },
     getResponseError: function(){
+      var xhr = this.xhr;
+      var msg = !this.responseType
+                  ? xhr.responseText
+                  : xhr.response || xhr.statusText || 'Error';
+
       return {
         code: 'SERVER_ERROR',
-        msg: !this.responseType
-          ? this.xhr.responseText
-          : this.xhr.response || this.xhr.statusText || 'Error'
+        msg: msg,
+        response: this.getResponseData()
       };
     },
 
