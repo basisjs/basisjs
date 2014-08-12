@@ -44,6 +44,24 @@ module.exports = {
       };
     })();
 
+    function createSource(min, max){
+      var items = [];
+
+      min = min || 0;
+      max = max || 9;
+
+      while (min <= max)
+        items.push(new DataObject({
+          data: {
+            value: min++
+          }
+        }));
+
+      return new Dataset({
+        items: items
+      });
+    }
+
     var DataObject = basis.data.Object;
     var Dataset = basis.data.Dataset;
     var Slice = basis.data.dataset.Slice;
@@ -116,6 +134,482 @@ module.exports = {
         this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
         this.is(basis.array.create(10, 2), slice.index_.map(function(i){ return i.value; }));
       }
+    },
+    {
+      name: '#left()',
+      test: [
+        {
+          name: 'should return the same value for the same offset',
+          test: function(){
+            var slice = new Slice();
+            var first = slice.left(0);
+            var second = slice.left(1);
+
+            assert(first !== second);
+            assert(slice.left(0) === first);
+            assert(slice.left() === first);
+            assert(slice.left({}) === first);
+            assert(slice.left(1) === second);
+            assert(slice.left('1') === second);
+            assert(slice.left(1.2) === second);
+          }
+        },
+        {
+          name: 'should be destroyed on slice destroy',
+          test: function(){
+            var destroyed = false;
+            var slice = new Slice();
+            var first = slice.left();
+            first.addHandler({
+              destroy: function(){
+                destroyed = true;
+              }
+            });
+
+            assert(destroyed === false);
+
+            slice.destroy();
+            assert(destroyed === true);
+          }
+        },
+        {
+          name: 'should referer on correct item on create',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              offset: 2,
+              limit: 3
+            });
+
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // left:   2 1  0 -1 -2  ...
+
+            assert(slice.left(-1).value.data.value == 3);
+            assert(slice.left(0).value.data.value == 2);
+            assert(slice.left(1).value.data.value == 1);
+          }
+        },
+        {
+          name: 'should referer on correct item on range change create',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              offset: 2,
+              limit: 3
+            });
+
+            //                --->
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // left:   2 1  0 -1 -2  ...
+            // init values
+            assert(slice.left(-1).value.data.value == 3);
+            assert(slice.left(0).value.data.value == 2);
+            assert(slice.left(1).value.data.value == 1);
+
+            //                --->
+            // slice:  0 1 2 3 [4  5] 6 7 8 9
+            // left:    .. 2 1  0 -1 -2 ..
+            slice.setRange(4, 2);
+            assert(slice.left(-1).value.data.value == 5);
+            assert(slice.left(0).value.data.value == 4);
+            assert(slice.left(1).value.data.value == 3);
+
+            //                --->
+            // slice:  0 1 2 3 4 5 6 7 8 [9 .]
+            // left:              .. 2 1  0 -1 -2 ..
+            slice.setRange(9, 2);
+            assert(slice.left(-1).value === null);
+            assert(slice.left(0).value.data.value == 9);
+            assert(slice.left(1).value.data.value == 8);
+
+            //                --->
+            // slice: . [.  0] 1 2 3 4 5 6 7 8 [9 .]
+            // left:  1  0 -1 -2 ..
+            slice.setRange(-1, 2);
+            assert(slice.left(-1).value.data.value == 0);
+            assert(slice.left(0).value === null);
+            assert(slice.left(1).value === null);
+          }
+        },
+        {
+          name: 'should referer on correct item on items changes',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              offset: 2,
+              limit: 3
+            });
+
+            //                --->
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // left:   2 1  0 -1 -2  ...
+            // init values
+            assert(slice.left(-1).value.data.value == 3);
+            assert(slice.left(0).value.data.value == 2);
+            assert(slice.left(1).value.data.value == 1);
+
+            //                --->
+            // slice:  0 1 [3  4  5] 6 7 8 9
+            // left:   2 1  0 -1 -2  ...
+            slice.left(0).value.destroy();
+            assert(slice.left(-1).value.data.value == 4);
+            assert(slice.left(0).value.data.value == 3);
+            assert(slice.left(1).value.data.value == 1);
+
+            //                --->
+            // slice:  -1 0 [1  3  4] 5 6 7 8 9
+            // left:    2 1  0 -1 -2  ...
+            slice.source.add(new DataObject({ data: { value: -1 } }));
+            assert(slice.left(-1).value.data.value == 3);
+            assert(slice.left(0).value.data.value == 1);
+            assert(slice.left(1).value.data.value == 0);
+
+            slice.source.destroy();
+            assert(slice.left(-1).value === null);
+            assert(slice.left(0).value === null);
+            assert(slice.left(1).value === null);
+          }
+        },
+        {
+          name: '[orderDesc = true] should referer on correct item on create',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              orderDesc: true,
+              offset: 5,
+              limit: 3
+            });
+
+            //                <---
+            // slice:  0 1 [ 2  3 4] 5 6 7 8 9
+            // left:    ... -2 -1 0  1 2 ...
+
+            assert([2, 3, 4], slice.getValues('data.value'));
+            assert(slice.left(-1).value.data.value == 3);
+            assert(slice.left(0).value.data.value == 4);
+            assert(slice.left(1).value.data.value == 5);
+          }
+        },
+        {
+          name: '[orderDesc = true] should referer on correct item on range change create',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              orderDesc: true,
+              offset: 5,
+              limit: 3
+            });
+
+            //                <---
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // left:   ... -2 -1  0  1 2 ...
+            // init values
+            assert(slice.left(-1).value.data.value == 3);
+            assert(slice.left(0).value.data.value == 4);
+            assert(slice.left(1).value.data.value == 5);
+
+            //                <---
+            // slice:  0 1 2 3 [ 4 5] 6 7 8 9
+            // left:     ... -2 -1 0  1 2 ...
+            slice.setRange(4, 2);
+            assert(slice.left(-1).value.data.value == 4);
+            assert(slice.left(0).value.data.value == 5);
+            assert(slice.left(1).value.data.value == 6);
+
+            //                <---
+            // slice:  0 1 2 3 4 5 6 7  8 [9 .]
+            // left:            ... -2 -1  0  1 2 ...
+            slice.setRange(0, 1);
+            assert(slice.left(-1).value.data.value == 8);
+            assert(slice.left(0).value.data.value == 9);
+            assert(slice.left(1).value === null);
+          }
+        },
+        {
+          name: '[orderDesc = true] should referer on correct item on items changes',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              orderDesc: true,
+              offset: 5,
+              limit: 3
+            });
+
+            //                <---
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // left:   ... -2 -1  0  1 2 ...
+            // init values
+            assert(slice.left(-1).value.data.value == 3);
+            assert(slice.left(0).value.data.value == 4);
+            assert(slice.left(1).value.data.value == 5);
+
+            //                <---
+            // slice:  0  [ 1  2  3] 5 6 7 8 9
+            // left:   ... -2 -1  0  1 2 ...
+            slice.left(0).value.destroy();
+            assert(slice.left(-1).value.data.value == 2);
+            assert(slice.left(0).value.data.value == 3);
+            assert(slice.left(1).value.data.value == 5);
+
+            //                <---
+            // slice:  0 1 [2  3  5] 6 7 8 9 10
+            // left:   ... -2 -1  0  1 2 ...
+            slice.source.add(new DataObject({ data: { value: 10 } }));
+            assert(slice.left(-1).value.data.value == 3);
+            assert(slice.left(0).value.data.value == 5);
+            assert(slice.left(1).value.data.value == 6);
+
+            slice.source.destroy();
+            assert(slice.left(-1).value === null);
+            assert(slice.left(0).value === null);
+            assert(slice.left(1).value === null);
+          }
+        }
+      ]
+    },
+    {
+      name: '#right()',
+      test: [
+        {
+          name: 'should return the same value for the same offset',
+          test: function(){
+            var slice = new Slice();
+            var first = slice.right(0);
+            var second = slice.right(1);
+
+            assert(first !== second);
+            assert(slice.right(0) === first);
+            assert(slice.right() === first);
+            assert(slice.right({}) === first);
+            assert(slice.right(1) === second);
+            assert(slice.right('1') === second);
+            assert(slice.right(1.2) === second);
+          }
+        },
+        {
+          name: 'should be destroyed on slice destroy',
+          test: function(){
+            var destroyed = false;
+            var slice = new Slice();
+            var first = slice.right();
+            first.addHandler({
+              destroy: function(){
+                destroyed = true;
+              }
+            });
+
+            assert(destroyed === false);
+
+            slice.destroy();
+            assert(destroyed === true);
+          }
+        },
+        {
+          name: 'should referer on correct item on create',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              offset: 2,
+              limit: 3
+            });
+
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // right:  ... -2 -1  0  1 2 ...
+
+            assert(slice.right(-1).value.data.value == 3);
+            assert(slice.right(0).value.data.value == 4);
+            assert(slice.right(1).value.data.value == 5);
+          }
+        },
+        {
+          name: 'should referer on correct item on range change create',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              offset: 2,
+              limit: 3
+            });
+
+            //                --->
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // right:  ... -2 -1  0  1 2 ...
+            // init values
+            assert(slice.right(-1).value.data.value == 3);
+            assert(slice.right(0).value.data.value == 4);
+            assert(slice.right(1).value.data.value == 5);
+
+            //                --->
+            // slice:  0 1 2 3 [4  5] 6 7 8 9
+            // right:   ... -2 -1  0  1 2 ...
+            slice.setRange(4, 2);
+            assert(slice.right(-1).value.data.value == 4);
+            assert(slice.right(0).value.data.value == 5);
+            assert(slice.right(1).value.data.value == 6);
+
+            //                --->
+            // slice:  0 1 2 3 4 5 6 7 8 [9 .] .
+            // right:             ... -2 -1 0  1 2 ...
+            slice.setRange(9, 2);
+            assert(slice.right(-1).value.data.value == 9);
+            assert(slice.right(0).value === null);
+            assert(slice.right(1).value === null);
+
+            //                --->
+            // slice:  [. 0] 1 2 3 4 5 6 7 8 [9 .] .
+            // right:  -1 0  1 2 ...
+            slice.setRange(-1, 2);
+            assert(slice.right(-1).value == null);
+            assert(slice.right(0).value.data.value === 0);
+            assert(slice.right(1).value.data.value === 1);
+          }
+        },
+        {
+          name: 'should referer on correct item on items changes',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              offset: 2,
+              limit: 3
+            });
+
+            //                --->
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // right:  ... -2 -1  0  1 2 ...
+            // init values
+            assert(slice.right(-1).value.data.value == 3);
+            assert(slice.right(0).value.data.value == 4);
+            assert(slice.right(1).value.data.value == 5);
+
+            //                --->
+            // slice:  0 1 [2  3  5] 6 7 8 9
+            // right:  ... -2 -1  0  1 2 ...
+            slice.right(0).value.destroy();
+            assert(slice.right(-1).value.data.value == 3);
+            assert(slice.right(0).value.data.value == 5);
+            assert(slice.right(1).value.data.value == 6);
+
+            //                --->
+            // slice:  -1 0 [1  2  3] 5 6 7 8 9
+            // right:   ... -2 -1  0  1 2 ...
+            slice.source.add(new DataObject({ data: { value: -1 } }));
+            assert(slice.right(-1).value.data.value == 2);
+            assert(slice.right(0).value.data.value == 3);
+            assert(slice.right(1).value.data.value == 5);
+
+            slice.source.destroy();
+            assert(slice.right(-1).value === null);
+            assert(slice.right(0).value === null);
+            assert(slice.right(1).value === null);
+          }
+        },
+        {
+          name: '[orderDesc = true] should referer on correct item on create',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              orderDesc: true,
+              offset: 5,
+              limit: 3
+            });
+
+            //                <---
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // right:  2 1  0 -1 -2  ...
+            assert([2, 3, 4], slice.getValues('data.value'));
+            assert(slice.right(-1).value.data.value == 3);
+            assert(slice.right(0).value.data.value == 2);
+            assert(slice.right(1).value.data.value == 1);
+          }
+        },
+        {
+          name: '[orderDesc = true] should referer on correct item on range change create',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              orderDesc: true,
+              offset: 5,
+              limit: 3
+            });
+
+            //                <---
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // right:  2 1  0 -1 -2  ...
+            // init value
+            assert(slice.right(-1).value.data.value == 3);
+            assert(slice.right(0).value.data.value == 2);
+            assert(slice.right(1).value.data.value == 1);
+
+
+            //                <---
+            // slice:  0 1 2 3 [4  5] 6 7 8 9
+            // right:      2 1  0 -1 -2  ...
+            slice.setRange(4, 2);
+            assert(slice.right(-1).value.data.value == 5);
+            assert(slice.right(0).value.data.value == 4);
+            assert(slice.right(1).value.data.value == 3);
+
+            //                <---
+            // slice:  0 1 2 3 4 5 6 7  8 [9]
+            // right:                 2 1  0 -1 -2
+            slice.setRange(0, 1);
+            assert(slice.right(-1).value === null);
+            assert(slice.right(0).value.data.value == 9);
+            assert(slice.right(1).value.data.value == 8);
+          }
+        },
+        {
+          name: '[orderDesc = true] should referer on correct item on items changes',
+          test: function(){
+            var slice = new Slice({
+              source: createSource(0, 9),
+              rule: 'data.value',
+              orderDesc: true,
+              offset: 5,
+              limit: 3
+            });
+
+            //                <---
+            // slice:  0 1 [2  3  4] 5 6 7 8 9
+            // right:  2 1  0 -1 -2  ...
+            // init values
+            assert(slice.right(-1).value.data.value == 3);
+            assert(slice.right(0).value.data.value == 2);
+            assert(slice.right(1).value.data.value == 1);
+
+            //                <---
+            // slice:  0 [1  3  4] 5 6 7 8 9
+            // right:  1  0 -1 -2  ...
+            slice.right(0).value.destroy();
+            assert(slice.right(-1).value.data.value == 3);
+            assert(slice.right(0).value.data.value == 1);
+            assert(slice.right(1).value.data.value == 0);
+
+            //                <---
+            // slice:  0 1 [3  4  5] 6 7 8 9 10
+            // right:    1  0 -1 -2  ...
+            slice.source.add(new DataObject({ data: { value: 10 } }));
+            assert(slice.right(-1).value.data.value == 4);
+            assert(slice.right(0).value.data.value == 3);
+            assert(slice.right(1).value.data.value == 1);
+
+            slice.source.destroy();
+            assert(slice.right(-1).value === null);
+            assert(slice.right(0).value === null);
+            assert(slice.right(1).value === null);
+          }
+        }
+      ]
     }
   ]
 };

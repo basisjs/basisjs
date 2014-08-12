@@ -46,6 +46,7 @@
 
   var basisData = require('basis.data');
   var SUBSCRIPTION = basisData.SUBSCRIPTION;
+  var Value = basisData.Value;
   var DataObject = basisData.Object;
   var KeyObjectMap = basisData.KeyObjectMap;
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
@@ -1679,6 +1680,16 @@
     index_: null,
 
    /**
+    * @type {object}
+    */
+    left_: null,
+
+   /**
+    * @type {object}
+    */
+    right_: null,
+
+   /**
     * Direction of range.
     * @type {boolean}
     * @readonly
@@ -1838,10 +1849,90 @@
       for (var objectId in curSet)
         delete this.members_[objectId];
 
+      // update left tokens
+      if (this.left_)
+        for (var offset in this.left_)
+        {
+          var item = this.index_[this.orderDesc ? end + Number(offset) - 1 : start - Number(offset)];
+          this.left_[offset].set(item ? item.object : null);
+        }
+
+      // update right tokens
+      if (this.right_)
+        for (var offset in this.right_)
+        {
+          var item = this.index_[this.orderDesc ? start - Number(offset) : end + Number(offset) - 1];
+          console.log([this.offset, this.limit], [start, end, offset], this.orderDesc ? start - Number(offset) : end + Number(offset) - 1, item);          
+          this.right_[offset].set(item ? item.object : null);
+        }
+
+      // emit event if any delta
       if (delta = getDelta(inserted, values(curSet)))
         this.emit_itemsChanged(delta);
 
       return delta;
+    },
+
+   /**
+    * @param {number} offset
+    * @return {basis.data.Value}
+    */
+    left: function(offset){
+      offset = parseInt(offset, 10) || 0;
+
+      if (!this.left_)
+        this.left_ = {};
+
+      var value = this.left_[offset];
+      if (!value)
+      {
+        var start = this.offset;
+        var end = start + this.limit;
+
+        if (this.orderDesc)
+        {
+          start = this.index_.length - end;
+          end = start + this.limit;
+        }
+
+        var item = this.index_[this.orderDesc ? end + offset - 1 : start - offset];
+        value = this.left_[offset] = new Value({
+          value: item ? item.object : null
+        });
+      }
+
+      return value;
+    },
+
+   /**
+    * @param {number} offset
+    * @return {basis.data.Value}
+    */
+    right: function(offset){
+      offset = parseInt(offset, 10) || 0;
+
+      if (!this.right_)
+        this.right_ = {};
+
+      var value = this.right_[offset];
+      if (!value)
+      {
+        var start = this.offset;
+        var end = start + this.limit;
+
+        if (this.orderDesc)
+        {
+          start = this.index_.length - end;
+          end = start + this.limit;
+        }
+
+        var item = this.index_[this.orderDesc ? start - offset : end + offset - 1];
+        value = this.right_[offset] = new Value({
+          value: item ? item.object : null
+        });
+      }
+
+      return value;
     },
 
    /**
@@ -1850,6 +1941,20 @@
     destroy: function(){
       // inherit
       SourceDataset.prototype.destroy.call(this);
+
+      if (this.left_)
+      {
+        for (var offset in this.left_)
+          this.left_[offset].destroy();
+        this.left_ = null;
+      }
+
+      if (this.right_)
+      {
+        for (var offset in this.right_)
+          this.right_[offset].destroy();
+        this.right_ = null;
+      }
 
       // destroy index
       this.index_ = null;
