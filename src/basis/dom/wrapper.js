@@ -2073,7 +2073,7 @@
             for (var i = 0, child; child = this.childNodes[i]; i++)
               unlockDataSourceItemNode(child);
 
-          this.clear();
+          this.clear(!this.destroyDataSourceMember);
         }
 
         this.dataSource = dataSource;
