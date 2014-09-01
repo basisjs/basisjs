@@ -26,6 +26,7 @@
 
   var basisData = require('basis.data');
   var DataObject = basisData.Object;
+  var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var Slot = basisData.Slot;
   var Dataset = basisData.Dataset;
   var basisDataset = require('basis.data.dataset');
@@ -401,36 +402,67 @@
 
       if (!name || namedTypes[name])
       {
-        /** @cut */ if (namedTypes[name]) basis.dev.warn(namespace + ': Duplicate entity set type name `' + this.name + '`, name ignored');
+        /** @cut */ if (namedTypes[name])
+        /** @cut */   basis.dev.warn(namespace + ': Duplicate entity set type name `' + this.name + '`, name ignored');
         name = getUntitledName('UntitledEntitySetType');
       }
 
-      var entitySetType = new EntitySetConstructor({
-        entitySetClass: {
-          /** @cut */ className: namespace + '.EntitySet(' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + ')',
-          /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + '}',
-          wrapper: wrapper
-        }
+      // create type class
+      var EntitySetClass = EntitySet.subclass({
+        /** @cut */ className: namespace + '.EntitySet(' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + ')',
+        /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + '}',
+        wrapper: wrapper
       });
-
-      var EntitySetClass = entitySetType.entitySetClass;
-      var result = function(data, entitySet){
-        if (data != null)
-        {
-          if (entitySet instanceof EntitySet == false)
-            entitySet = entitySetType.createEntitySet();
-
-          entitySet.set(data instanceof Dataset ? data.getItems() : arrayFrom(data));
-
-          return entitySet;
-        }
-        else
-          return null;
-      };
 
       // if wrapper is string resolve it by named type map
       if (typeof wrapper == 'string')
         EntitySetClass.prototype.wrapper = getTypeByName(wrapper, EntitySetClass.prototype, 'wrapper');
+
+      // create type
+      var entitySetType = new EntitySetConstructor({
+        entitySetClass: EntitySetClass
+      });
+
+      // field wrapper
+      var result = function(items, entitySet){
+        if (entitySet instanceof EntitySetClass == false)
+          entitySet = null;
+
+        if (items != null)
+        {
+          if (items instanceof EntitySetClass)
+            return items;
+
+          var newEntitySet = new EntitySetClass({
+            items: items instanceof ReadOnlyDataset
+              ? items.getItems()
+              : arrayFrom(items)
+          });
+
+          // if no old set or item count is not the same
+          if (!entitySet || entitySet.itemCount != newEntitySet.itemCount)
+            return newEntitySet;
+
+          // compare content of sets
+          for (var i = 0, items = newEntitySet.getItems(); i < items.length; i++)
+            if (!entitySet.has(items[i]))
+              return newEntitySet;
+
+          for (var i = 0, items = entitySet.getItems(); i < items.length; i++)
+            if (!newEntitySet.has(items[i]))
+              return newEntitySet;
+
+          // if new set is the same, destoy it as not needed
+          newEntitySet.destroy();
+        }
+        else
+        {
+          return null;
+        }
+
+        return entitySet;
+      };
+      result.rollbackCompare = result;
 
       // resolve type name
       resolveType(name, result);
@@ -502,12 +534,8 @@
   var EntitySetConstructor = Class(null, {
     className: namespace + '.EntitySetConstructor',
 
-    entitySetClass: EntitySet,
-
     extendConstructor_: true,
-    createEntitySet: function(){
-      return new this.entitySetClass();
-    }
+    entitySetClass: null
   });
 
  /*
@@ -704,19 +732,25 @@
     return fn.apply(null, values);
   }
 
-  function arrayField(newArray, oldArray){
-    if (!Array.isArray(newArray))
-      return null;
+  var arrayField = (function(){
+    var arrayField = function(newArray, oldArray){
+      if (!Array.isArray(newArray))
+        return null;
 
-    if (!Array.isArray(oldArray) || newArray.length != oldArray.length)
-      return newArray || null;
+      if (!Array.isArray(oldArray) || newArray.length != oldArray.length)
+        return newArray || null;
 
-    for (var i = 0; i < newArray.length; i++)
-      if (newArray[i] !== oldArray[i])
-        return newArray;
+      for (var i = 0; i < newArray.length; i++)
+        if (newArray[i] !== oldArray[i])
+          return newArray;
 
-    return oldArray;
-  }
+      return oldArray;
+    };
+
+    arrayField.rollbackCompare = arrayField;
+
+    return arrayField;
+  })();
 
   var fromISOString = (function(){
     function fastDateParse(y, m, d, h, i, s, ms){
@@ -1370,8 +1404,8 @@
         var result;
         var rollbackData = this.modified;
 
-        if (valueWrapper === arrayField && rollbackData && key in rollbackData)
-          value = arrayField(value, rollbackData[key]);
+        if (valueWrapper.rollbackCompare && rollbackData && key in rollbackData)
+          value = valueWrapper.rollbackCompare(value, rollbackData[key]);
 
         var newValue = valueWrapper(value, this.data[key]);
         var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
@@ -1385,7 +1419,7 @@
                              curValue.constructor !== Date ||
                              +newValue !== +curValue);
 
-        // if value changed:
+        // if value changed then:
         // - update index for id field
         // - attach/detach handlers on object destroy (for Emitters)
         // - registrate changes to rollback data if neccessary

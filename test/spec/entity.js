@@ -49,6 +49,10 @@ module.exports = {
 
       return warnings.length ? warnings : false;
     }
+
+    function getIds(dataset){
+      return dataset instanceof nsData.ReadOnlyDataset ? dataset.getValues('data.id').sort() : null;
+    }
   },
 
   test: [
@@ -1646,6 +1650,221 @@ module.exports = {
                 this.is(false, obj.set('enum', 123));
                 this.is('value', obj.data.enum);
               }
+            }
+          ]
+        },
+        {
+          name: 'entity set',
+          test: [
+            {
+              name: 'new value should produce new dataset',
+              test: function(){
+                var Item = basis.entity.createType(null, {
+                  id: basis.entity.IntId
+                });
+                var T = basis.entity.createType(null, {
+                  items: basis.entity.createSetType(Item)
+                });
+
+                var entity = T({ items: [1, 2, 3] });
+                var base = entity.data.items;
+
+                entity.set('items', [2, 3]);
+                assert(entity.data.items !== base);
+
+                entity.set('items', null);
+                assert(entity.data.items === null);
+
+                entity.set('items', [1, 2, 3]);
+                assert(entity.data.items !== base);
+              }
+            },
+            {
+              name: 'should produce new dataset for the same set',
+              test: function(){
+                var Item = basis.entity.createType(null, {
+                  id: basis.entity.IntId
+                });
+                var T = basis.entity.createType(null, {
+                  items: basis.entity.createSetType(Item)
+                });
+
+                var entity = T({ items: [1, 2, 3] });
+                var base = entity.data.items;
+
+                entity.set('items', [2, 3, 1]);
+                assert(entity.data.items === base);
+
+                entity.set('items', [1, 2, 3, 2, 1]);
+                assert(entity.data.items === base);
+              }
+            },
+            {
+              name: 'rollback',
+              test: [
+                {
+                  name: 'should store original value in modified when update with rollback',
+                  test: function(){
+                    var Item = basis.entity.createType(null, {
+                      id: basis.entity.IntId
+                    });
+                    var T = basis.entity.createType(null, {
+                      items: basis.entity.createSetType(Item)
+                    });
+
+                    var entity = T({ items: [1, 2, 3] });
+                    var base = entity.data.items;
+
+                    entity.set('items', [2, 3], true);
+
+                    assert(entity.data.items !== base);
+                    assert([2, 3], getIds(entity.data.items));
+                    assert(entity.modified.items === base);
+                    assert([1, 2, 3], getIds(entity.modified.items));
+                  }
+                },
+                {
+                  name: 'should update data if modified exists when update with rollback',
+                  test: function(){
+                    var Item = basis.entity.createType(null, {
+                      id: basis.entity.IntId
+                    });
+                    var T = basis.entity.createType(null, {
+                      items: basis.entity.createSetType(Item)
+                    });
+
+                    var entity = T({ items: [1, 2, 3] });
+                    var base = entity.data.items;
+
+                    entity.set('items', [2, 3], true);
+                    var data = entity.data.items;
+
+                    entity.set('items', [3, 1], true);
+
+                    assert(entity.data.items !== data);
+                    assert([1, 3], getIds(entity.data.items));
+                    assert(entity.modified.items === base);
+                    assert([1, 2, 3], getIds(entity.modified.items));
+                  }
+                },
+                {
+                  name: 'should update modified if exists when update with no rollback',
+                  test: function(){
+                    var Item = basis.entity.createType(null, {
+                      id: basis.entity.IntId
+                    });
+                    var T = basis.entity.createType(null, {
+                      items: basis.entity.createSetType(Item)
+                    });
+
+                    var entity = T({ items: [1, 2, 3] });
+                    var base = entity.data.items;
+
+                    entity.set('items', [2, 3], true);
+                    var data = entity.data.items;
+
+                    entity.set('items', [3, 1]);
+
+                    assert(entity.data.items === data);
+                    assert([2, 3], getIds(entity.data.items));
+                    assert(entity.modified.items !== base);
+                    assert([1, 3], getIds(entity.modified.items));
+                  }
+                },
+                {
+                  name: 'should remove value from modified if new value similar to original value in rollback mode',
+                  test: function(){
+                    var Item = basis.entity.createType(null, {
+                      id: basis.entity.IntId
+                    });
+                    var T = basis.entity.createType(null, {
+                      items: basis.entity.createSetType(Item)
+                    });
+
+                    var entity = T({ items: [1, 2, 3] });
+                    var base = entity.data.items;
+
+                    entity.set('items', [2, 3], true);
+                    var data = entity.data.items;
+
+                    entity.set('items', [3, 2, 1], true);
+
+                    assert(entity.data.items === base);
+                    assert([1, 2, 3], getIds(entity.data.items));
+                    assert(entity.modified == null);
+                  }
+                },
+                {
+                  name: 'should remove value from modified if new value similar to user value in non-rollback mode',
+                  test: function(){
+                    var Item = basis.entity.createType(null, {
+                      id: basis.entity.IntId
+                    });
+                    var T = basis.entity.createType(null, {
+                      items: basis.entity.createSetType(Item)
+                    });
+
+                    var entity = T({ items: [1, 2, 3] });
+                    var base = entity.data.items;
+
+                    entity.set('items', [2, 3], true);
+                    var data = entity.modified.items;
+
+                    entity.set('items', [3, 2]);
+
+                    assert(entity.data.items === base);
+                    assert([2, 3], getIds(entity.data.items));
+                    assert(entity.modified == null);
+                  }
+                },
+                {
+                  name: 'should restore value from modified when rollback',
+                  test: function(){
+                    var Item = basis.entity.createType(null, {
+                      id: basis.entity.IntId
+                    });
+                    var T = basis.entity.createType(null, {
+                      items: basis.entity.createSetType(Item)
+                    });
+
+                    var entity = T({ items: [1, 2, 3] });
+                    var base = entity.data.items;
+
+                    entity.set('items', [2, 3], true);
+                    var data = entity.data.items;
+
+                    entity.rollback();
+
+                    assert(entity.data.items === base);
+                    assert([1, 2, 3], getIds(entity.data.items));
+                    assert(entity.modified == null);
+                  }
+                },
+                {
+                  name: 'should restore value from modified when rollback #2',
+                  test: function(){
+                    var Item = basis.entity.createType(null, {
+                      id: basis.entity.IntId
+                    });
+                    var T = basis.entity.createType(null, {
+                      items: basis.entity.createSetType(Item)
+                    });
+
+                    var entity = T({ items: [1, 2, 3] });
+                    var base = entity.data.items;
+
+                    entity.set('items', [2, 3], true);
+                    entity.set('items', [3, 4, 5]);
+
+                    var data = entity.modified.items;
+                    entity.rollback();
+
+                    assert(entity.data.items === data);
+                    assert([3, 4, 5], getIds(entity.data.items));
+                    assert(entity.modified == null);
+                  }
+                }
+              ]
             }
           ]
         }
