@@ -36,6 +36,7 @@
     className: namespace + '.Service',
 
     inprogressTransports: null,
+    stoppedTransports: null,
 
     transportClass: AjaxTransport,
 
@@ -103,7 +104,7 @@
 
     openSession: function(sessionKey, sessionData){
       this.sessionKey = sessionKey;
-      this.sessionData = sessionData;
+      this.sessionData = sessionData || sessionKey;
 
       this.unfreeze();
 
