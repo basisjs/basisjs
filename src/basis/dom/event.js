@@ -304,6 +304,24 @@
   var noCaptureScheme = !W3CSUPPORT;
 
  /**
+  * Flush asap handlers
+  */
+  var flushAsap = true;
+  var lastAsapEvent;
+
+
+ /**
+  *
+  */
+  function processAsap(event){
+    if (flushAsap && event !== lastAsapEvent)
+    {
+      lastAsapEvent = event;
+      basis.asap.process();
+    }
+  }
+
+ /**
   * Observe handlers for event
   * @private
   * @param {Event} event
@@ -317,17 +335,20 @@
     {
       captureHandler.handler.call(captureHandler.thisObject, wrappedEvent);
       kill(event);
-      return;
     }
-
-    if (handlers)
+    else
     {
-      for (var i = handlers.length; i-- > 0;)
+      if (handlers)
       {
-        var handlerObject = handlers[i];
-        handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
+        for (var i = handlers.length; i-- > 0;)
+        {
+          var handlerObject = handlers[i];
+          handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
+        }
       }
     }
+
+    processAsap(event);
   }
 
  /**
@@ -474,6 +495,8 @@
         // call eventType handlers
         for (var i = 0, wrappedEvent = new Event(event), item; item = eventTypeHandlers[i++];)
           item.handler.call(item.thisObject, wrappedEvent);
+
+        processAsap(event);
       };
 
       if (W3CSUPPORT)
@@ -584,7 +607,14 @@
 
     var handlers = node[EVENT_HOLDER];
     if (handlers && handlers[eventType])
+    {
+      try {
+        flushAsap = false;
         handlers[eventType].fireEvent(event);
+      } finally {
+        flushAsap = true;
+      }
+    }
   }
 
   //

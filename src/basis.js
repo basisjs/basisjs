@@ -637,13 +637,13 @@
 
 
   //
-  // Support for setImmediate/clearImmediate
+  // Timers
   //
 
   var setImmediate = global.setImmediate || global.msSetImmediate;
   var clearImmediate = global.clearImmediate || global.msSetImmediate;
 
-  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't global
+  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't a global
   if (setImmediate)
     setImmediate = setImmediate.bind(global);
 
@@ -655,6 +655,7 @@
   // Inspired on Domenic Denicola's solution https://github.com/NobleJS/setImmediate
   //
   if (!setImmediate)
+  {
     (function(){
       var MESSAGE_NAME = 'basisjs.setImmediate';
       var runTask = (function(){
@@ -693,8 +694,10 @@
           if (task)
           {
             delete taskById[id];
-            return task.fn.apply(undefined, task.args);
+            task.fn.apply(undefined, task.args);
           }
+
+          asap.process();
         };
       })();
 
@@ -817,6 +820,77 @@
         }
       }
     })();
+  }
+
+  //
+  // asap
+  //
+  var asap = (function(){
+    var queue = [];
+    var processing = false;
+    var timer;
+
+    function process(){
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
+
+      try {
+        var item;
+
+        // mark queue as processing to avoid concurrency
+        processing = true;
+
+        // process queue
+        while (item = queue.shift())
+          item.fn.call(item.context);
+      } finally {
+        // queue is not processing anymore
+        processing = false;
+
+        // if any function in queue than exception was occured,
+        // run rest functions in next code frame
+        if (queue.length)
+          timer = setImmediate(process);
+      }
+    }
+
+   /**
+    * Invoke function as soon as possible. The ideal case is invocation in the end
+    * of current code frame (after all changes done). It's possible when code frame
+    * inited by browser events or timers (setImmediate/clearImmediate/nextTick), so
+    * we can process asap functions right after handler function was invoked.
+    * Asap function invocation can't be aborted.
+    * 
+    * Single timer is using for asap functions invocation. Exceptions aren't catching.
+    * If any exception rest functions will be invoked in next code frame.
+    *
+    * @param {function} fn Function that should be invoked ASAP.
+    * @param {*=} context Context for function invocation.
+    */
+    var asap = function(fn, context){
+      // add function to queue
+      queue.push({
+        fn: fn,
+        context: context
+      });
+
+      // set timer to process queue, if timer is not set yet
+      if (!timer)
+        timer = setImmediate(process);
+    };
+
+   /**
+    * Run asap functions processing.
+    */ 
+    asap.process = function(){
+      // run queue process only if queue isn't processing
+      if (!processing)
+        process();
+    };
+
+    return asap;
+  })();
 
 
   // ============================================
@@ -3125,6 +3199,9 @@
 
       // remove emergency timer as all handlers are process
       timer = clearImmediate(timer);
+
+      // process asap queue
+      asap.process();
     }
 
     function fireHandlers(e){
@@ -3542,6 +3619,7 @@
     nextTick: function(){
       setImmediate.apply(null, arguments);
     },
+    asap: asap,
 
     // classes
     Class: Class,
