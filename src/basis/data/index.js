@@ -680,6 +680,9 @@
 
       // if no indexes - delete indexes storage and remove handlers
       dataset.removeHandler(DATASET_WITH_INDEX_HANDLER);
+      DATASET_WITH_INDEX_HANDLER.itemsChanged.call(dataset, dataset, {
+        deleted: dataset.getItems()
+      });
       delete datasetIndexes[dataset.basisObjectId];
     }
   }

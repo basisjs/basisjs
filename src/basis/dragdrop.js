@@ -268,7 +268,7 @@
       return value + 'px';
     },
     read: function(element){
-      return parseFloat(getComputedStyle(element, this.property));
+      return parseFloat(getComputedStyle(element, this.property)) || 0;
     },
     write: function(element, formattedValue){
       element.style[this.property] = formattedValue;
@@ -280,10 +280,12 @@
   */
   var StylePositionX = StyleDeltaWriter.subclass({
     property: function(element){
-      return getComputedStyle(element, 'left') == 'auto' ? 'right' : 'left';
+      return getComputedStyle(element, 'left') == 'auto' && getComputedStyle(element, 'right') != 'auto'
+        ? 'right'
+        : 'left';
     },
     invert: function(property){
-      return property != 'left';
+      return property == 'right';
     }
   });
 
@@ -292,10 +294,12 @@
   */
   var StylePositionY = StyleDeltaWriter.subclass({
     property: function(element){
-      return getComputedStyle(element, 'top') == 'auto' ? 'bottom' : 'top';
+      return getComputedStyle(element, 'top') == 'auto' && getComputedStyle(element, 'bottom') != 'auto'
+        ? 'bottom'
+        : 'top';
     },
     invert: function(property){
-      return property != 'top';
+      return property == 'bottom';
     }
   });
 

@@ -88,6 +88,56 @@ module.exports = {
           }
         },
         {
+          name: 'resolving by id',
+          test: function(){
+            var Type = new nsEntity.createType(basis.genUID(), {
+              id: nsEntity.IntId
+            });
+
+            var result = Type(1, 1);
+            assert(result instanceof Type.type.entityClass);
+            assert(result.type === Type);
+            assert({ id: 1 }, result.data);
+
+            var result = Type('2', 2);
+            assert(result instanceof Type.type.entityClass);
+            assert(result.type === Type);
+            assert({ id: 2 }, result.data);
+
+            var result = Type(3, 4);
+            assert(result instanceof Type.type.entityClass);
+            assert({ id: 3 }, result.data);
+            assert(Type.get(4) == null);
+
+            var data = { id: 5 };
+            var result = Type(data, data);
+            assert(result instanceof Type.type.entityClass);
+            assert(result.type === Type);
+            assert({ id: 5 }, result.data);
+          }
+        },
+        {
+          name: 'resolving by entity instance',
+          test: function(){
+            var Type = new nsEntity.createType(basis.genUID(), {
+              id: nsEntity.IntId
+            });
+            var Type2 = new nsEntity.createType(basis.genUID(), {
+              id: nsEntity.IntId
+            });
+
+            var result = Type(1, Type2(1));
+            assert(result instanceof Type.type.entityClass);
+            assert(result.type === Type);
+            assert({ id: 1 }, result.data);
+
+            var result = Type(Type2(2), Type2(2));
+            assert(result instanceof Type.type.entityClass);
+            assert(result.type === Type);
+            assert({ id: null }, result.data);
+          }
+        },
+        {
           name: 'keys test #1',
           test: function(){
             var EntityType = new nsEntity.EntityType({

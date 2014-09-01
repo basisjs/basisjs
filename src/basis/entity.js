@@ -540,6 +540,10 @@
 
           if (data != null)
           {
+            // make sure second argument is correct entityType instance or ignore it
+            if (!entity || entity.entityType !== entityType)
+              entity = null;
+
             // if newData instance of target EntityType return newData
             if (data === entity || data.entityType === entityType)
               return data;
