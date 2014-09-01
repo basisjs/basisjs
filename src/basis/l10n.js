@@ -59,10 +59,14 @@
     },
 
     get: function(){
-      var key = this.token.type == 'plural'
-        ? cultures[currentCulture].plural(this.value)
-        : this.value;
-      return this.token.dictionary.getValue(this.token.name + '.' + key);
+      var isPlural = this.token.type == 'plural';
+      var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
+      var value = this.token.dictionary.getValue(this.token.name + '.' + key);
+
+      if (isPlural)
+        value = String(value).replace(/#/g, this.value);
+
+      return value;
     },
 
     toString: function(){
