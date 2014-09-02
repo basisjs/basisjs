@@ -1809,17 +1809,20 @@
     IntId: IntId,
     StringId: StringId,
     Index: Index,
-    CalculateField: CalculateField,
-    ConcatStringField: ConcatStringField,
     calc: CalculateField,
 
-    EntityType: EntityTypeWrapper,
-    Entity: createEntityClass,
     BaseEntity: BaseEntity,
 
-    EntitySetType: EntitySetWrapper,
     EntitySet: EntitySet,
     ReadOnlyEntitySet: ReadOnlyEntitySet,
     Collection: EntityCollection,
-    Grouping: EntityGrouping
+    Grouping: EntityGrouping,
+
+    // looks like deprecated things
+    // TODO: deprecate
+    CalculateField: CalculateField,
+    ConcatStringField: ConcatStringField,
+    EntitySetType: EntitySetWrapper,
+    EntityType: EntityTypeWrapper,
+    Entity: createEntityClass
   };
