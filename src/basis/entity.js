@@ -1136,13 +1136,15 @@
       for (var key in this.defaults)
         initDelta[key] = undefined;
 
+      /** @cut */ if ('state' in config)
+      /** @cut */   basis.dev.warn('basis.entity: `state` in type config is deprecated, use Type.extendClass instead');
+
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.fields, this.slots);
       this.entityClass.extend({
         entityType: this,
         type: wrapper,
         typeName: this.name,
-        state: config.state || this.entityClass.prototype.state,
         generateData: getDataBuilder(this.defaults, this.fields),
         initDelta: initDelta
       });
