@@ -1871,6 +1871,86 @@ module.exports = {
       ]
     },
     {
+      name: 'external rules to update values',
+      test: [
+        {
+          name: 'should set null as value when value is Emitter instance and destroy',
+          test: function(){
+            var T = basis.entity.createType(null, {
+              value: basis.fn.$self
+            });
+
+            var emitter = new basis.data.Object();
+            var entity = T({ value: emitter });
+
+            assert(entity.data.value === emitter);
+
+            emitter.destroy();
+            assert(entity.data.value === null);
+          }
+        },
+        {
+          name: 'should set null to modified when value is Emitter instance and destroy',
+          test: function(){
+            var T = basis.entity.createType(null, {
+              value: basis.fn.$self
+            });
+
+            var emitter1 = new basis.data.Object();
+            var emitter2 = new basis.data.Object();
+            var entity = T({ value: emitter1 });
+
+            entity.set('value', emitter2, true);
+            assert(entity.data.value === emitter2);
+            assert(entity.modified.value === emitter1);
+
+            emitter1.destroy();
+            assert(entity.data.value === emitter2);
+            assert(entity.modified.value === null);
+          }
+        },
+        {
+          name: 'should drop modified if it contains null value for field and Emitter instance in data destroy',
+          test: function(){
+            var T = basis.entity.createType(null, {
+              value: basis.fn.$self
+            });
+
+            var emitter = new basis.data.Object();
+            var entity = T({ value: null });
+
+            entity.set('value', emitter, true);
+            assert(entity.data.value === emitter);
+            assert('value' in entity.modified === true);
+            assert(entity.modified.value === null);
+
+            emitter.destroy();
+            assert(entity.data.value === null);
+            assert(entity.modified === null);
+          }
+        },
+        {
+          name: 'should drop modified when Emitter instance destroy and field in data stores null',
+          test: function(){
+            var T = basis.entity.createType(null, {
+              value: basis.fn.$self
+            });
+
+            var emitter = new basis.data.Object();
+            var entity = T({ value: emitter });
+
+            entity.set('value', null, true);
+            assert(entity.data.value === null);
+            assert(entity.modified.value === emitter);
+
+            emitter.destroy();
+            assert(entity.data.value === null);
+            assert(entity.modified === null);
+          }
+        }
+      ]
+    },
+    {
       name: 'destroy',
       test: [
         {

@@ -872,13 +872,6 @@
       entityType.fields[name] = wrapper;
 
     entityType.defaults[name] = 'defValue' in config ? config.defValue : wrapper();
-
-    if (!fieldDestroyHandlers[name])
-      fieldDestroyHandlers[name] = {
-        destroy: function(){
-          this.set(name, null);
-        }
-      };
   }
 
   function addFieldAlias(entityType, alias, name){
@@ -1242,6 +1235,15 @@
     basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity);
   }
 
+  var ENTITY_FIELD_HANDLER = {
+    itemsChanged: function(sender){
+      this.owner.set(this.key, sender.getItems(), this.rollback);
+    },
+    destroy: function(){
+      this.owner.set(this.key, null, this.rollback);
+    }
+  };
+
  /**
   * @class
   */
@@ -1340,6 +1342,37 @@
       }
     }
 
+    function addHandler(entity, key, value, type){
+      // add new handler if object is instance of basis.event.Emitter
+      // value !== entity to prevent recursion for self update
+      if (value && value !== entity && value instanceof Emitter)
+      {
+        if (!entity.fieldHandlers_)
+          entity.fieldHandlers_ = {
+            data: {},
+            modified: {}
+          };
+
+        var handlers = entity.fieldHandlers_[type];
+        value.addHandler(ENTITY_FIELD_HANDLER, handlers[key] = {
+          owner: entity,
+          key: key,
+          rollback: type == 'data'
+        });
+      }
+    }
+
+    function removeHandler(entity, key, value, type){
+      var handlers = entity.fieldHandlers_ && entity.fieldHandlers_[type];
+
+      // remove attached handler if exists
+      if (handlers && handlers[key])
+      {
+        value.removeHandler(ENTITY_FIELD_HANDLER, handlers[key]);
+        handlers[key] = null;
+      }
+    }
+
     return Class(BaseEntity, {
       className: entityType.name,
 
@@ -1362,12 +1395,7 @@
           value = this.data[key];
 
           if (value && value !== this && value instanceof Emitter)
-          {
-            value.addHandler(fieldDestroyHandlers[key], this);
-            if (!this.fieldHandlers_)
-              this.fieldHandlers_ = {};
-            this.fieldHandlers_[key] = true;
-          }
+            addHandler(this, key, value, 'data');
         }
 
         calc(this, this.initDelta);
@@ -1438,7 +1466,10 @@
               // create rollback storage if absent
               // actually this means rollback mode is switched on
               if (!rollbackData)
-                this.modified = rollbackData = {};
+              {
+                rollbackData = {};
+                this.modified = rollbackData;
+              }
 
               // save current value if key is not in rollback storage
               // if key is not in rollback storage, than this key didn't change since rollback mode was switched on
@@ -1450,8 +1481,10 @@
                   value: undefined
                 };
 
-                // store current value
+                // mode value data -> modified
                 rollbackData[key] = curValue;
+                removeHandler(this, key, curValue, 'data');
+                addHandler(this, key, curValue, 'modified');
               }
               else
               {
@@ -1463,6 +1496,7 @@
                   };
 
                   delete rollbackData[key];
+                  removeHandler(this, key, newValue, 'modified');
 
                   if (!keys(rollbackData).length)
                     this.modified = null;
@@ -1476,16 +1510,20 @@
               // value in rollback storage, but not in info
               if (rollbackData && key in rollbackData)
               {
-                if (rollbackData[key] !== newValue)
+                var rollbackValue = rollbackData[key];
+                if (rollbackValue !== newValue)
                 {
                   // create rollback delta
                   result.rollback = {
                     key: key,
-                    value: rollbackData[key]
+                    value: rollbackValue
                   };
 
                   // store new value
                   rollbackData[key] = newValue;
+
+                  removeHandler(this, key, rollbackValue, 'modified');
+                  addHandler(this, key, newValue, 'modified');
 
                   break updateField; // skip update field
                 }
@@ -1500,22 +1538,8 @@
           // set new value for field
           this.data[key] = newValue;
 
-          // remove attached handler if exists
-          if (this.fieldHandlers_ && this.fieldHandlers_[key])
-          {
-            curValue.removeHandler(fieldDestroyHandlers[key], this);
-            this.fieldHandlers_[key] = false;
-          }
-
-          // add new handler if object is instance of basis.event.Emitter
-          // newValue !== this prevents recursion for self update
-          if (newValue && newValue !== this && newValue instanceof Emitter)
-          {
-            newValue.addHandler(fieldDestroyHandlers[key], this);
-            if (!this.fieldHandlers_)
-              this.fieldHandlers_ = {};
-            this.fieldHandlers_[key] = true;
-          }
+          removeHandler(this, key, curValue, 'data');
+          addHandler(this, key, newValue, 'data');
 
           // prepare result
           result.key = key;
@@ -1585,7 +1609,7 @@
           // update fields
           for (var key in data)
           {
-            if (setResult = this.set(key, data[key], rollback, true)) //this.set(key, data[key], rollback))
+            if (setResult = this.set(key, data[key], rollback, true))
             {
               if (setResult.key)
               {
@@ -1661,9 +1685,15 @@
         // unlink attached handlers
         if (this.fieldHandlers_)
         {
-          for (var key in this.fieldHandlers_)
-            if (this.fieldHandlers_[key])
-              this.data[key].removeHandler(fieldDestroyHandlers[key], this);
+          var handlers = this.fieldHandlers_.modified;
+          for (var key in handlers)
+            if (handlers[key])
+              this.data[key].removeHandler(ENTITY_FIELD_HANDLER, handlers[key]);
+
+          var handlers = this.fieldHandlers_.data;
+          for (var key in handlers)
+            if (handlers[key])
+              this.data[key].removeHandler(ENTITY_FIELD_HANDLER, handlers[key]);
 
           this.fieldHandlers_ = null;
         }
