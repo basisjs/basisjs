@@ -424,20 +424,19 @@
       });
 
       // field wrapper
-      var result = function(items, entitySet){
+      var result = function(newValue, entitySet){
         if (entitySet instanceof EntitySetClass == false)
           entitySet = null;
 
-        if (items != null)
+        if (newValue != null)
         {
-          if (items instanceof EntitySetClass)
-            return items;
-
-          var newEntitySet = new EntitySetClass({
-            items: items instanceof ReadOnlyDataset
-              ? items.getItems()
-              : arrayFrom(items)
-          });
+          var newEntitySet = newValue instanceof EntitySetClass
+            ? newValue
+            : new EntitySetClass({
+                items: newValue instanceof ReadOnlyDataset
+                  ? newValue.getItems()
+                  : arrayFrom(newValue)
+              });
 
           // if no old set or item count is not the same
           if (!entitySet || entitySet.itemCount != newEntitySet.itemCount)
@@ -452,8 +451,9 @@
             if (!newEntitySet.has(items[i]))
               return newEntitySet;
 
-          // if new set is the same, destoy it as not needed
-          newEntitySet.destroy();
+          // if new set is the same, destroy it as not needed
+          if (newEntitySet !== newValue)
+            newEntitySet.destroy();
         }
         else
         {
@@ -569,11 +569,11 @@
           if (data != null)
           {
             // make sure second argument is correct entityType instance or ignore it
-            if (!entity || entity.entityType !== entityType)
+            if (!entity || entity instanceof EntityClass === false)
               entity = null;
 
             // if newData instance of target EntityType return newData
-            if (data === entity || data.entityType === entityType)
+            if (data === entity || data instanceof EntityClass)
               return data;
 
             var idValue;
@@ -1237,7 +1237,11 @@
 
   var ENTITY_FIELD_HANDLER = {
     itemsChanged: function(sender){
-      this.owner.set(this.key, sender.getItems(), this.rollback);
+      if (this.rollback && this.owner.modified && this.key in this.owner.modified)
+        // special case, to correct compare modified and data
+        this.owner.set(this.key, this.owner.modified[this.key]);
+      else
+        this.owner.set(this.key, sender, this.rollback);
     },
     destroy: function(){
       this.owner.set(this.key, null, this.rollback);
