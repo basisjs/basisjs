@@ -9,20 +9,50 @@
   var namespace = this.path;
   var ns = basis.namespace(String(namespace));
 
+  var PathServerHistoryBased = function() {
+
+  }
+
+  var PathServerHashBased = function() {
+    var location = global.location;
+    var document = global.document;
+
+    // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
+    var docMode = document.documentMode;
+    var eventSupport = 'onhashchange' in global && (docMode === undefined || docMode > 7);
+
+    var CHECK_INTERVAL = 50;
+
+    function startWatch(){
+      if (eventSupport)
+        basis.dom.event.addHandler(global, 'hashchange', checkUrl);
+      else
+        timer = setInterval(checkUrl, CHECK_INTERVAL);
+    }
+    
+    function stopWatch(){
+      if (eventSupport)
+        basis.dom.event.removeHandler(global, 'hashchange', checkUrl);
+      else
+        clearInterval(timer);
+    }
+
+    function navigate(path, replace){
+      if (replace)
+        location.replace(location.pathname + '#' + path);
+      else
+        location.hash = path;
+
+      if (started)
+        checkUrl();
+    }
+  }
+
+
 
   //
   // main part
   //
-
-  var location = global.location;
-  var document = global.document;
-
-  // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
-  var docMode = document.documentMode;
-  var eventSupport = 'onhashchange' in global && (docMode === undefined || docMode > 7);
-
-  var CHECK_INTERVAL = 50;
-
   var arrayFrom = basis.array.from;
   var routes = {};
   var matched = {};
@@ -109,19 +139,6 @@
     }
 
     return new RegExp('^' + parse(0) + '$', 'i');
-  }
-
-  function startWatch(){
-    if (eventSupport)
-      basis.dom.event.addHandler(global, 'hashchange', checkUrl);
-    else
-      timer = setInterval(checkUrl, CHECK_INTERVAL);
-  }
-  function stopWatch(){
-    if (eventSupport)
-      basis.dom.event.removeHandler(global, 'hashchange', checkUrl);
-    else
-      clearInterval(timer);
   }
 
 
@@ -305,15 +322,15 @@
  /**
   * Navigate to specified path
   */
-  function navigate(path, replace){
-    if (replace)
-      location.replace(location.pathname + '#' + path);
-    else
-      location.hash = path;
-
-    if (started)
-      checkUrl();
-  }
+  // function navigate(path, replace){
+  //   if (replace)
+  //     location.replace(location.pathname + '#' + path);
+  //   else
+  //     location.hash = path;
+  //
+  //   if (started)
+  //     checkUrl();
+  // }
 
   //
   // export names
