@@ -1,4 +1,5 @@
-basis.require('basis.dom.event');
+
+  basis.require('basis.dom.event');
 
  /**
   * @namespace basis.router
@@ -40,7 +41,7 @@ basis.require('basis.dom.event');
     isStarted: function() {
       return this.started;
     }
-  });
+  })
 
   var PathServiceHistoryBased = basis.Class(PathService, {
     root: '/',
@@ -82,7 +83,7 @@ basis.require('basis.dom.event');
       var match = this.location.href.replace(/#.*/, '').match(/\?.+/);
       return match ? match[0] : '';
     }
-  });
+  })
 
   var PathServiceHashBased = basis.Class(PathService, {
     eventSupport: null,
@@ -121,7 +122,7 @@ basis.require('basis.dom.event');
     getPath: function() {
       return this.location.hash.substr(1) || '';
     }
-  });
+  })
 
   //
   // main part
@@ -219,6 +220,9 @@ basis.require('basis.dom.event');
 
  /**
   * Start router
+  * @param  {object} options: Start options varying service used.
+  * {html5history: true, ...} turns on HTML5 history based.
+  * {root: {string}, ...} sets root url for HTML5 history based
   */
   function start(){
     if (!service.isStarted())
@@ -403,14 +407,14 @@ basis.require('basis.dom.event');
       service.navigate.apply(service, arguments);
     else
       pathBeforeStart = arguments;
-  };
+  }
 
-/**
- * Get current path
- */
-function getPath() {
-  return service.getPath();
-};
+ /**
+  * Get current path
+  */
+  function getPath() {
+    return service.getPath();
+  }
 
 
   //
@@ -427,4 +431,4 @@ function getPath() {
     checkUrl: checkUrl,
     navigate: navigate,
     getPath: getPath
-  };
+  }
