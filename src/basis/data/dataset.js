@@ -1862,7 +1862,6 @@
         for (var offset in this.right_)
         {
           var item = this.index_[this.orderDesc ? start - Number(offset) : end + Number(offset) - 1];
-          console.log([this.offset, this.limit], [start, end, offset], this.orderDesc ? start - Number(offset) : end + Number(offset) - 1, item);          
           this.right_[offset].set(item ? item.object : null);
         }
 
@@ -1874,6 +1873,7 @@
     },
 
    /**
+    * Returns a Value that refer to [start + offset] item in slice (ordered vector).
     * @param {number} offset
     * @return {basis.data.Value}
     */
@@ -1905,6 +1905,7 @@
     },
 
    /**
+    * Returns a Value that refer to [start + offset] item in slice (ordered vector).
     * @param {number} offset
     * @return {basis.data.Value}
     */
