@@ -45,7 +45,7 @@
     emit_sessionFreeze: createEvent('sessionFreeze'),
     emit_sessionUnfreeze: createEvent('sessionUnfreeze'),
 
-    isSecure: false,
+    secure: false,
 
     prepare: basis.fn.$true,
     signature: basis.fn.$undef,
@@ -57,18 +57,23 @@
 
       Emitter.prototype.init.call(this);
 
+      if ('isSecure' in this)
+      {
+        /** @cut */ basis.dev.warn(namespace + '.Service#isSecure is deprecated and will be remove in next version. Please, use Service.secure property instead');
+        this.secure = this.isSecure;
+      }
+
       this.inprogressTransports = [];
 
       var TransportClass = this.transportClass;
       this.transportClass = TransportClass.subclass({
         service: this,
-
-        needSignature: this.isSecure,
+        secure: this.secure,
 
         emit_failure: function(request, error){
           TransportClass.prototype.emit_failure.call(this, request, error);
 
-          if (this.needSignature && this.service.isSessionExpiredError(request))
+          if (this.secure && this.service.isSessionExpiredError(request))
           {
             this.service.freeze();
             this.service.stoppedTransports.push(this);
@@ -76,11 +81,20 @@
           }
         },
 
+        init: function(){
+          TransportClass.prototype.init.call(this);
+          if ('needSignature' in this)
+          {
+            /** @cut */ basis.dev.warn('`needSignature` property is deprecated and will be remove in next version. Please, use `secure` property instead');
+            this.secure = this.needSignature;
+          }
+        },
+
         request: function(requestData){
           if (!this.service.prepare(this, requestData))
             return;
 
-          if (this.needSignature && !this.service.sign(this))
+          if (this.secure && !this.service.sign(this))
             return;
 
           return TransportClass.prototype.request.call(this, requestData);
@@ -125,7 +139,7 @@
       this.sessionData = null;
 
       this.stoppedTransports = this.inprogressTransports.filter(function(transport){
-        return transport.needSignature;
+        return transport.secure;
       });
 
       for (var i = 0, transport; transport = this.inprogressTransports[i]; i++)
