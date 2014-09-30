@@ -182,7 +182,7 @@
         }
       },
       name: 'name',
-      titleText: 'title',
+      title: 'title',
       value: {
         events: 'change',
         getter: function(node){
@@ -201,7 +201,13 @@
         getter: 'error'
       },
       example: 'satellite:',
-      description: 'satellite:'
+      description: 'satellite:',
+
+      // deprecated
+      titleText: function(node){
+        /** @cut */ basis.dev.warn('`titleText` for basis.ui.field.Field instances is deprecated, use `title` instead');
+        return node.title;
+      }
     },
 
     action: 'focus blur change keydown keypress keyup input'.split(' ').reduce(
@@ -1140,6 +1146,10 @@
   // Filter
   //
 
+  function defaultTextNodeGetter(node){
+    return node.tmpl.title || node.tmpl.titleText;
+  }
+
  /**
   * @class
   */
@@ -1210,7 +1220,7 @@
     init: function(){
       var startPoints = this.startPoints || '';
 
-      this.textNodeGetter = getter(this.textNodeGetter || 'tmpl.titleText');
+      this.textNodeGetter = getter(this.textNodeGetter || defaultTextNodeGetter);
 
       if (typeof this.regexpGetter != 'function')
         this.regexpGetter = function(value){
