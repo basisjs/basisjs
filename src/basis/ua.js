@@ -111,31 +111,6 @@
   }
 
   //
-  // Cookies
-  //
-
-  var cookies = {
-    set: function(name, value, expire, path, domain){
-      document.cookie = name + '=' + (value == null ? '' : escape(value)) +
-                        ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
-                        (expire ? ';expires=' + (new Date(Date.now() + expire * 1000)).toGMTString() : '') +
-                        (domain ? ';domain=' + domain : '');
-    },
-
-    get: function(name){
-      var m = document.cookie.match(new RegExp('(^|;)\\s*' + name + '\\s*=\\s*(.*?)\\s*(;|$)'));
-      return m && unescape(m[2]);
-    },
-
-    remove: function(name, path, domain){
-      document.cookie = name + '=;expires=' + (new Date(0)).toGMTString() +
-                        ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
-                        (domain ? ';domain=' + domain : '');
-    }
-  };
-
-
-  //
   // export names
   //
 
@@ -145,8 +120,5 @@
     is: testBrowser,   // single test
     test: function(){  // multiple test
       return basis.array(arguments).some(testBrowser);
-    },
-
-    // cookie interface
-    cookies: cookies
+    }
   };
