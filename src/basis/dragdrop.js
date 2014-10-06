@@ -68,12 +68,16 @@
       maxDeltaY: Infinity
     };
 
+    // recovery mode: if mouseup/touchend event is missed for some reason,
+    // new mousedown/touchstart event stops dragging
+    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('touchstart', stopDrag);
+
     // add global handlers
     addGlobalHandler('mousemove', onDrag);
+    addGlobalHandler('touchmove', onDrag);
     addGlobalHandler('mouseup', stopDrag);
-
-    // recover mode: if mouseup missed for some reason, new mousedown stops dragging
-    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('touchend', stopDrag);
 
     // avoid text selection in IE
     if (SELECTSTART_SUPPORTED)
@@ -114,9 +118,12 @@
 
   function stopDrag(event){
     // remove global handlers
-    removeGlobalHandler('mousemove', onDrag);
-    removeGlobalHandler('mouseup', stopDrag);
     removeGlobalHandler('mousedown', stopDrag);
+    removeGlobalHandler('touchstart', stopDrag);
+    removeGlobalHandler('mousemove', onDrag);
+    removeGlobalHandler('touchmove', onDrag);
+    removeGlobalHandler('mouseup', stopDrag);
+    removeGlobalHandler('touchend', stopDrag);
 
     if (SELECTSTART_SUPPORTED)
       removeGlobalHandler('selectstart', eventUtils.kill);
@@ -190,12 +197,18 @@
       if (this.trigger !== trigger)
       {
         if (this.trigger)
+        {
           eventUtils.removeHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.removeHandler(this.trigger, 'touchstart', startDrag, this);
+        }
 
         this.trigger = trigger;
 
         if (this.trigger)
+        {
           eventUtils.addHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.addHandler(this.trigger, 'touchstart', startDrag, this);
+        }
       }
     },
     setBase: function(baseElement){
