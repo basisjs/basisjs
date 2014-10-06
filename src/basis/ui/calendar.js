@@ -142,7 +142,7 @@
 
     var pos, compareValue;
     var l = 0;
-    var r = arr.length;
+    var r = arr.length - 1;
     var lv, rv;
 
     // binary search
