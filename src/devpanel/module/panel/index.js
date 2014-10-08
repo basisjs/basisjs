@@ -8,7 +8,7 @@ var Node = require('basis.ui').Node;
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var inspectBasisEvent = inspectBasis.require('basis.dom.event');
+var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
 var l10nInspector = resource('../../inspector/l10n.js');
 var templateInspector = resource('../../inspector/template.js');
@@ -30,6 +30,15 @@ var inspectMode = count(inspectors, 'update', 'data.mode').as(Boolean);
   });
 });
 
+
+function startInspector(inspector){
+  // NOTE: use capture here, to avoid event processing by inspecting
+  //       basis.js instance, it may close popups or something like that
+  inspectBasisDomEvent.captureEvent('click', function(){
+    inspectBasisDomEvent.releaseEvent('click');
+    inspector().startInspect();
+  });
+}
 
 //
 // panel
@@ -56,19 +65,19 @@ var panel = new Node({
 
   action: {
     inspectTemplate: function(){
-      templateInspector().startInspect();
+      startInspector(templateInspector);
     },
     showThemes: function(){
       themeList.setDelegate(this);
     },
     inspectl10n: function(){
-      l10nInspector().startInspect();
+      startInspector(l10nInspector);
     },
     showCultures: function(){
       cultureList.setDelegate(this);
     },
     inspectHeat: function(){
-      heatInspector().startInspect();
+      startInspector(heatInspector);
     },
     reload: function(){
       global.location.reload();

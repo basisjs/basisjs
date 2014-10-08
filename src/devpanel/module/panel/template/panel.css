@@ -5,6 +5,7 @@
   left: 10px;
   top: 10px;
   padding: 1px;
+  white-space: nowrap;
 
   opacity: 0.5;
   background: #999;
