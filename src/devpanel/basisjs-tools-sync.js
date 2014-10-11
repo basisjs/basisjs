@@ -47,7 +47,7 @@ var File = entity.createType('File', {
       current_.emit_update.call(this, delta);
 
       if (this.file && 'content' in delta)
-        this.file.set(this.data.content);
+        this.file.update(this.data.content);
     }
   };
 });
