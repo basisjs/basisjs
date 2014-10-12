@@ -74,20 +74,40 @@
   * @param {*} value
   * @param {string} warning Warning messsage
   */
-  function defineReadWarningProperty(object, name, value, warning){
-    object[name] = value;
-
-    /** @cut */ if (Object.defineProperty)
-    /** @cut */   Object.defineProperty(object, name, {
-    /** @cut */     get: function(){
-    /** @cut */       consoleMethods.warn(warning);
-    /** @cut */       return value;
-    /** @cut */     },
-    /** @cut */     set: function(newValue){
-    /** @cut */       value = newValue;
+  var warnPropertyAccess = (function(object, name, value, warning){
+    /** @cut */ // show warnings only in dev mode
+    /** @cut */ try {
+    /** @cut */   if (Object.defineProperty)
+    /** @cut */   {
+    /** @cut */     // IE8 has Object.defineProperty(), but it works for DOM nodes only
+    /** @cut */     var obj = {};
+    /** @cut */     Object.defineProperty(obj, 'foo', {
+    /** @cut */       get: function(){
+    /** @cut */         return true;
+    /** @cut */       }
+    /** @cut */     });
+    /** @cut */
+    /** @cut */     // if no exception and property returns true
+    /** @cut */     // looks like we could use Object.defineProperty()
+    /** @cut */     if (obj.foo === true)
+    /** @cut */     {
+    /** @cut */       return function(object, name, value, warning){
+    /** @cut */         Object.defineProperty(object, name, {
+    /** @cut */           get: function(){
+    /** @cut */             consoleMethods.warn(warning);
+    /** @cut */             return value;
+    /** @cut */           },
+    /** @cut */           set: function(newValue){
+    /** @cut */             value = newValue;
+    /** @cut */           }
+    /** @cut */         });
+    /** @cut */       };
     /** @cut */     }
-    /** @cut */   });
-  }
+    /** @cut */   }
+    /** @cut */ } catch(e){ }
+
+    return function(){};
+  })();
 
  /**
   * Copy all properties from source (object) to destination object.
@@ -2227,9 +2247,12 @@
               /** @cut */ {
               /** @cut */   for (var key in ns.exports)
               /** @cut */     if (key in ns == false && key != 'path')
-              /** @cut */       defineReadWarningProperty(ns, key, ns.exports[key],
+              /** @cut */     {
+              /** @cut */       ns[key] = ns.exports[key];
+              /** @cut */       warnPropertyAccess(ns, key, ns.exports[key],
               /** @cut */         'basis.js: Access to implicit namespace property `' + namespace + '.' + key + '`'
               /** @cut */       );
+              /** @cut */     }
               /** @cut */ }
               /** @cut */ else
               complete(ns, ns.exports);
@@ -2468,9 +2491,12 @@
           cursor[name] = namespace;
 
           /** @cut */ if (config.implicitExt == 'warn')
-          /** @cut */   defineReadWarningProperty(cursor, name, namespace,
+          /** @cut */ {
+          /** @cut */   cursor[name] = namespace;
+          /** @cut */   warnPropertyAccess(cursor, name, namespace,
           /** @cut */     'basis.js: Access to implicit namespace `' + nspath + '`'
           /** @cut */   );
+          /** @cut */ }
         }
 
         rootNs.namespaces_[nspath] = namespace;
@@ -2490,7 +2516,7 @@
   * @param {string} dirname
   * @name require
   */
-  var requireNamespace = (function(){
+  var requireNamespace = (function(filename, dirname){
     if (NODE_ENV)
     {
       var moduleProto = module.constructor.prototype;
@@ -3529,7 +3555,11 @@
         complete({ noConflict: true }, config)
       );
     },
-    dev: (new Namespace('basis.dev')).extend(consoleMethods),
+    dev: (new Namespace('basis.dev'))
+      .extend(consoleMethods)
+      .extend({
+        warnPropertyAccess: warnPropertyAccess
+      }),
 
     // modularity
     resolveNSFilename: resolveNSFilename,
