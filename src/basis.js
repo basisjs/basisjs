@@ -37,7 +37,7 @@
 ;(function createBasisInstance(global, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.3.2';
+  var VERSION = '1.3.3';
 
   var document = global.document;
   var toString = Object.prototype.toString;
@@ -170,7 +170,12 @@
   * @return {object}
   */
   function merge(/* obj1 .. objN */){
-    return arrayFrom(arguments).reduce(extend, {});
+    var result = {};
+
+    for (var i = 0; i < arguments.length; i++)
+      extend(result, arguments[i]);
+
+    return result;
   }
 
  /**
