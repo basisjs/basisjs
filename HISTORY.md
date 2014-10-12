@@ -1,3 +1,10 @@
+## 1.3.3 (October 12, 2014)
+
+- FIX: exception on config processing when `Array#reduce` is not supported by browser
+- FIX: exception in `basis.entity` on using `Object.defineProperty()` in IE8 (dev-mode only)
+- FIX: `basis.ui.calendar` infinite loop in some cases by mistake in local binary search function
+- FIX: RegExp for url validator in `basis.ui.field`
+
 ## 1.3.2 (August 5, 2014)
 
 - FIX: remove index handler from items on dataset destroy in `basis.data.index`

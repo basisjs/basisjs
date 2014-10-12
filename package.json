@@ -2,7 +2,7 @@
   "name": "basisjs",
   "title": "basis.js",
   "description": "JavaScript framework to build single-page applications",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "main": "src/basis.js",
   "homepage": "http://basisjs.com",
   "repository": {
