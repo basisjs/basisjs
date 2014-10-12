@@ -70,7 +70,7 @@
     var pos;
     var compareValue;
     var l = 0;
-    var r = arr.length;
+    var r = arr.length - 1;
     var lv;
     var rv;
 

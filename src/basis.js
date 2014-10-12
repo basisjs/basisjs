@@ -193,7 +193,12 @@
   * @return {object}
   */
   function merge(/* obj1 .. objN */){
-    return arrayFrom(arguments).reduce(extend, {});
+    var result = {};
+
+    for (var i = 0; i < arguments.length; i++)
+      extend(result, arguments[i]);
+
+    return result;
   }
 
  /**

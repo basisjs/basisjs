@@ -112,6 +112,42 @@
       basis.dev.warn(namespace + ': type `' + typeName + '` is not defined, but used by ' + deferredTypeDef[typeName].length + ' type(s)');
   }
 
+
+  /** @cut */ // Define property (if possible) that show warning on access.
+  /** @cut */ var warnPropertyAccess = (function(){
+  /** @cut */   try {
+  /** @cut */     if (Object.defineProperty)
+  /** @cut */     {
+  /** @cut */       // IE8 has Object.defineProperty(), but it works for DOM nodes only
+  /** @cut */       var obj = {};
+  /** @cut */       Object.defineProperty(obj, 'x', {
+  /** @cut */         get: function(){
+  /** @cut */           return true;
+  /** @cut */         }
+  /** @cut */       });
+  /** @cut */
+  /** @cut */       if (obj.x)
+  /** @cut */       {
+  /** @cut */         // looks like we could use Object.defineProperty() here
+  /** @cut */         return function(object, name, value, warning){
+  /** @cut */           Object.defineProperty(object, name, {
+  /** @cut */             get: function(){
+  /** @cut */               basis.dev.warn(warning);
+  /** @cut */               return value;
+  /** @cut */             },
+  /** @cut */             set: function(newValue){
+  /** @cut */               value = newValue;
+  /** @cut */             }
+  /** @cut */           });
+  /** @cut */         };
+  /** @cut */       }
+  /** @cut */     }
+  /** @cut */   } catch(e){ }
+  /** @cut */
+  /** @cut */   return function(){};
+  /** @cut */ })();
+
+
   //
   // Index
   //
@@ -479,13 +515,9 @@
       });
 
       // deprecated in 1.3.0
-      /** @cut */ if (Object.defineProperty)
-      /** @cut */   Object.defineProperty(result, 'entitySetType', {
-      /** @cut */     get: function(){
-      /** @cut */       basis.dev.warn('basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.');
-      /** @cut */       return entitySetType;
-      /** @cut */     }
-      /** @cut */   });
+      /** @cut */ warnPropertyAccess(result, 'entitySetType', entitySetType,
+      /** @cut */   'basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.'
+      /** @cut */ );
 
       return result;
     }
@@ -642,13 +674,9 @@
       });
 
       // deprecated in 1.3.0
-      /** @cut */ if (Object.defineProperty)
-      /** @cut */   Object.defineProperty(result, 'entityType', {
-      /** @cut */     get: function(){
-      /** @cut */       basis.dev.warn('basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.');
-      /** @cut */       return entityType;
-      /** @cut */     }
-      /** @cut */   });
+      /** @cut */ warnPropertyAccess(result, 'entityType', entityType,
+      /** @cut */   'basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.'
+      /** @cut */ );
 
       return result;
     }
