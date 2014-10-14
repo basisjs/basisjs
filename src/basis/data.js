@@ -2421,6 +2421,53 @@
     return source;
   }
 
+ /**
+  * Resolve value from source value.
+  */
+  function resolveValue(context, fn, source, property){
+    var oldAdapter = context[property] || null;
+    var newAdapter = null;
+
+    // functions can be used as property value on instance create,
+    // it makes possible to use factories (i.e. Value.factory())
+    if (typeof source == 'function')
+      source = source.call(context, context);
+
+    if (source)
+    {
+      if (source instanceof Value)
+      {
+        newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+        source = resolveValue(newAdapter, newAdapter.proxy, source.value, 'next');
+      }
+      else
+        if (source.bindingBridge)
+        {
+          newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+          source = resolveValue(newAdapter, newAdapter.proxy, source.value, 'next');
+        }
+    }
+
+    if (property && oldAdapter !== newAdapter)
+    {
+      if (oldAdapter)
+      {
+        oldAdapter.detach();
+
+        // destroy nested adapter if exists
+        if (oldAdapter.next)
+          resolveValue(oldAdapter, null, null, 'next');
+      }
+
+      if (newAdapter)
+        newAdapter.attach();
+
+      context[property] = newAdapter;
+    }
+
+    return source;
+  }
+
 
   //
   // Accumulate dataset changes
@@ -2651,6 +2698,7 @@
     ResolveAdapter: ResolveAdapter,
     resolveDataset: resolveDataset,
     resolveObject: resolveObject,
+    resolveValue: resolveValue,
 
     wrapData: wrapData,
     wrapObject: wrapObject,
