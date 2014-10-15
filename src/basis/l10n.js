@@ -461,7 +461,7 @@
 
     if (typeof source == 'string')
     {
-      var location = source;
+      var location = basis.resource.resolveURI(source);
       var extname = basis.path.extname(location);
 
       if (extname != '.l10n')

@@ -1946,6 +1946,29 @@
       }
   }
 
+  var resolveResourceUri = function(url, baseURI, clr){
+    var rootNS = url.match(/^([a-zA-Z0-9\_\-]+):/);
+
+    if (rootNS)
+    {
+      var namespaceRoot = rootNS[1];
+
+      if (namespaceRoot in nsRootPath == false)
+        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
+
+      url = nsRootPath[namespaceRoot] + pathUtils.normalize('./' + url.substr(rootNS[0].length));
+    }
+    else
+    {
+      url = pathUtils.resolve(baseURI, url);
+    }
+
+    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+    /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+    return url;
+  };
+
   var getResourceContent = function(url, ignoreCache){
     if (ignoreCache || !hasOwnProperty.call(resourceContentCache, url))
     {
@@ -2133,24 +2156,23 @@
  /**
   * @name resource
   */
-  var getResource = function(resourceUrl){
-    var resource = resources[resourceUrl];
+  var getResource = function(url){
+    var resource = resources[url];
 
-    if (resource)
-      return resource;
+    if (!resource)
+    {
+      var resolvedUrl = resolveResourceUri(url, null, 'basis.resource(\'{url}\')');
 
-    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-    /** @cut */   consoleMethods.warn('Bad usage: basis.resource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-    // try resolve resource path
-    resourceUrl = pathUtils.resolve(resourceUrl);
-    resource = resources[resourceUrl];
+      resource = resources[resolvedUrl] || createResource(resolvedUrl);
+      resources[url] = resource;
+    }
 
     // return resource or create it
-    return resource || createResource(resourceUrl);
+    return resource;
   };
 
   extend(getResource, {
+    resolveURI: resolveResourceUri,
     // onUpdate: function(fn, context){
     //   resourceUpdateNotifier.attach(fn, context);
     // },
@@ -2163,16 +2185,10 @@
       return resource ? resource.isResolved() : false;
     },
     exists: function(resourceUrl){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-      return hasOwnProperty.call(resources, pathUtils.resolve(resourceUrl));
+      return hasOwnProperty.call(resources, resolveResourceUri(resourceUrl, null, 'basis.resource.exists(\'{url}\')'));
     },
     get: function(resourceUrl){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.get(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-      resourceUrl = pathUtils.resolve(resourceUrl);
+      resourceUrl = resolveResourceUri(resourceUrl, null, 'basis.resource.get(\'{url}\')');
 
       if (!getResource.exists(resourceUrl))
         return null;
@@ -2358,10 +2374,7 @@
         sourceURL,
         baseURL,
         function(relativePath){
-          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(relativePath))
-          /** @cut */   consoleMethods.warn('Bad usage: resource(\'' + relativePath + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-          return getResource(pathUtils.resolve(baseURL, relativePath));
+          return getResource(resolveResourceUri(relativePath, baseURL, 'resource(\'{url}\')'));
         },
         function(relativePath, base){
           return requireNamespace(relativePath, base || baseURL);
@@ -2551,7 +2564,7 @@
         }
         else
         {
-          filename = pathUtils.resolve(dirname, filename);
+          filename = resolveResourceUri(filename, dirname);
           return require(filename);
         }
       };
@@ -2566,11 +2579,8 @@
         }
         else
         {
-          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
-          /** @cut */   consoleMethods.warn('Bad usage: require(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
           // regular filename
-          filename = pathUtils.resolve(dirname, filename);
+          filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
         }
 
         return getResource(filename).fetch();
@@ -2587,11 +2597,8 @@
     }
     else
     {
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.patch(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
       // regular filename
-      filename = pathUtils.resolve(filename);
+      filename = resolveResourceUri(filename, null, 'basis.patch(\'{url}\')');
     }
 
     if (!resourcePatch[filename])
