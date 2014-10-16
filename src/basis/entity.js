@@ -745,6 +745,8 @@
     return oldArray;
   }
 
+  var reIsoStringSplit = /\D/;
+  var reIsoTimezoneDesignator = /(.{10,})([\-\+]\d{1,2}):?(\d{1,2})?$/;
   var fromISOString = (function(){
     function fastDateParse(y, m, d, h, i, s, ms){
       var date = new Date(y, m - 1, d, h || 0, 0, s || 0, ms ? ms.substr(0, 3) : 0);
@@ -768,10 +770,10 @@
   })();
 
   function dateField(value, oldValue){
-    if (typeof value == 'string')
+    if (typeof value == 'string' && value)
       return fromISOString(value);
 
-    if (typeof value == 'number')
+    if (typeof value == 'number' && isNaN(value) == false)
       return new Date(value);
 
     if (value == null)

@@ -25,6 +25,7 @@ module.exports = {
       };
     })();
 
+    var dateUtils = basis.require('basis.date');
     var nsData = basis.data;
     var nsEntity = basis.entity;
 
@@ -1645,6 +1646,141 @@ module.exports = {
                 this.is('value', obj.data.enum);
                 this.is(false, obj.set('enum', 123));
                 this.is('value', obj.data.enum);
+              }
+            }
+          ]
+        },
+        {
+          name: 'Date',
+          test: [
+            {
+              name: 'set correct values on init',
+              test: function(){
+                var T = basis.entity.createType({
+                  fields: {
+                    date: Date
+                  }
+                });
+
+                var date = new Date;
+                assert(T({ date: null }).data.date === null);
+                assert(T({ date: date }).data.date === date);
+                assert(T({ date: dateUtils.toISOString(date) }).data.date - date === 0);
+                assert(T({ date: Number(date) }).data.date - date === 0);
+              }
+            },
+            {
+              name: 'set correct values on update',
+              test: function(){
+                var T = basis.entity.createType({
+                  fields: {
+                    date: Date
+                  }
+                });
+
+                var date = new Date;
+                var date2 = new Date(2014, 10, 15);
+
+                // null
+                var instance = T({ date: date });
+                instance.set('date', null);
+                assert(instance.data.date === null);
+
+                instance = T({ date: null });
+                assert(instance.set('date', null) === false);
+                assert(instance.data.date === null);
+
+                // string (the same value)
+                var value = dateUtils.toISOString(date);
+                var instance = T({ date: date });
+                assert(instance.set('date', value) === false);
+                assert(instance.data.date !== value);
+                assert(instance.data.date === date);
+
+                // another value
+                var value = dateUtils.toISOString(date2);
+                var instance = T({ date: date });
+                assert(instance.set('date', value) !== false);
+                assert(instance.data.date !== value);
+                assert(instance.data.date !== date);
+                assert(instance.data.date - date2 === 0);
+
+                instance = T({ date: null });
+                assert(instance.set('date', value) !== false);
+                assert(instance.data.date !== value);
+                assert(instance.data.date !== date2);
+                assert(instance.data.date - date2 === 0);
+
+                // number (the same value)
+                var value = Number(date);
+                var instance = T({ date: date });
+                assert(instance.set('date', value) === false);
+                assert(instance.data.date !== value);
+                assert(instance.data.date === date);
+
+                // another value
+                var value = Number(date2);
+                var instance = T({ date: date });
+                assert(instance.set('date', value) !== false);
+                assert(instance.data.date !== value);
+                assert(instance.data.date !== date);
+                assert(instance.data.date - date2 === 0);
+
+                instance = T({ date: null });
+                assert(instance.set('date', value) !== false);
+                assert(instance.data.date !== value);
+                assert(instance.data.date !== date);
+                assert(instance.data.date - date2 === 0);
+
+                // date
+                var instance = T({ date: date });
+                assert(instance.set('date', date) === false);
+                assert(instance.data.date === date);
+
+                var instance = T({ date: date });
+                assert(instance.set('date', date2) !== false);
+                assert(instance.data.date === date2);
+
+                var instance = T({ date: null });
+                assert(instance.set('date', date) !== false);
+                assert(instance.data.date === date);
+              }
+            },
+            {
+              name: 'set wrong values on init',
+              test: function(){
+                var T = basis.entity.createType({
+                  fields: {
+                    date: Date
+                  }
+                });
+
+                assert(T({ date: {} }).data.date === null);
+                assert(T({ date: [] }).data.date === null);
+                assert(T({ date: function(){} }).data.date === null);
+                assert(T({ date: '' }).data.date === null);
+                assert(T({ date: NaN }).data.date === null);
+                assert(T({ date: true }).data.date === null);
+                assert(T({ date: false }).data.date === null);
+              }
+            },
+            {
+              name: 'set wrong values',
+              test: function(){
+                var T = basis.entity.createType({
+                  fields: {
+                    date: Date
+                  }
+                });
+
+                var date = new Date();
+                assert(T({ date: date }).set('date', {}) === false);
+                assert(T({ date: date }).set('date', []) === false);
+                assert(T({ date: date }).set('date', function(){}) === false);
+                assert(T({ date: date }).set('date', '') === false);
+                assert(T({ date: date }).set('date', NaN) === false);
+                assert(T({ date: date }).set('date', true) === false);
+                assert(T({ date: date }).set('date', false) === false);
               }
             }
           ]
