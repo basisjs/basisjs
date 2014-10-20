@@ -1129,16 +1129,28 @@
                 break;
 
                 case 'define':
+                  /** @cut */ if ('name' in elAttrs == false)
+                  /** @cut */   template.warns.push('Define has no `name` attribute');
+                  /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
+                  /** @cut */   template.warns.push('Define for `' + elAttrs.name + '` has already defined');
+
                   if ('name' in elAttrs && !template.defines[elAttrs.name])
                   {
                     switch (elAttrs.type)
                     {
                       case 'bool':
-                        template.defines[elAttrs.name] = [elAttrs['default'] == 'true' ? 1 : 0];
+                        template.defines[elAttrs.name] = [
+                          elAttrs.from || elAttrs.name,
+                          elAttrs['default'] == 'true' ? 1 : 0
+                        ];
                         break;
                       case 'enum':
                         var values = elAttrs.values ? elAttrs.values.trim().split(' ') : [];
-                        template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
+                        template.defines[elAttrs.name] = [
+                          elAttrs.from || elAttrs.name,
+                          values.indexOf(elAttrs['default']) + 1,
+                          values
+                        ];
                         break;
                       /** @cut */ default:
                       /** @cut */  template.warns.push('Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
@@ -1602,7 +1614,8 @@
 
           if (bindings)
           {
-            var newAttrValue = (token[valueIdx] || '').trim().split(' ');
+            var newAttrValue = (token[valueIdx] || '').trim();
+            newAttrValue = newAttrValue == '' ? [] : newAttrValue.split(' ');
 
             for (var k = 0, bind; bind = bindings[k]; k++)
             {
@@ -1614,17 +1627,18 @@
 
               if (bindDef)
               {
-                bind.push.apply(bind, bindDef);
-                bindDef.used = true;
+                bind.pop(); // remove define reference
+                bind.push.apply(bind, bindDef); // add define
+                bindDef.used = true;  // mark as used
 
-                if (bindDef[0])
+                if (bindDef[1])
                 {
-                  if (bindDef.length == 1)
+                  if (bindDef.length == 2)
                     // bool
                     arrayAdd(newAttrValue, bind[0] + bindName);
                   else
                     // enum
-                    arrayAdd(newAttrValue, bind[0] + bindDef[1][bindDef[0] - 1]);
+                    arrayAdd(newAttrValue, bind[0] + bindDef[2][bindDef[1] - 1]);
                 }
               }
               else
