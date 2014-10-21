@@ -5,19 +5,18 @@
 
   var namespace = this.path;
 
-  // for better pack
-
   var document = global.document;
   var $null = basis.fn.$null;
   var arrayFrom = basis.array.from;
+  var globalEvents = {};
 
-  var W3CSUPPORT = !!document.addEventListener;
 
   //
   // Const
   //
 
-  var EVENT_HOLDER = '__basisEvents';
+  var EVENT_HOLDER = 'basisEvents_' + basis.genUID();
+  var W3CSUPPORT = !!document.addEventListener;
 
   var KEY = {
     BACKSPACE: 8,
@@ -442,17 +441,17 @@
     if (typeof handler != 'function')
       throw 'basis.event.addHandler: handler is not a function';
 
-    if (!node[EVENT_HOLDER])
-      node[EVENT_HOLDER] = {};
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
 
-    // event handler
+    if (!handlers)
+      handlers = node[EVENT_HOLDER] = {};
+
+    var eventTypeHandlers = handlers[eventType];
     var handlerObject = {
       handler: handler,
       thisObject: thisObject
     };
 
-    var handlers = node[EVENT_HOLDER];
-    var eventTypeHandlers = handlers[eventType];
     if (!eventTypeHandlers)
     {
       eventTypeHandlers = handlers[eventType] = [handlerObject];
@@ -518,7 +517,7 @@
   function removeHandler(node, eventType, handler, thisObject){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers)
     {
       var eventTypeHandlers = handlers[eventType];
@@ -550,7 +549,7 @@
   function clearHandlers(node, eventType){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers)
     {
       if (typeof eventType != 'string')
@@ -582,7 +581,7 @@
   function fireEvent(node, eventType, event){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers && handlers[eventType])
         handlers[eventType].fireEvent(event);
   }
