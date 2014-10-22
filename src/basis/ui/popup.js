@@ -254,9 +254,15 @@
       {
         var offsetParent = getOffsetParent(this.element);
         var box = resolveRelBox(this.relElement, offsetParent);
-        var viewport = getViewportRect(offsetParent);
         var width = this.element.offsetWidth;
         var height = this.element.offsetHeight;
+
+        // NOTE: temporary solution addresses to app where document or body
+        // could be scrolled; for now it works, because popups lay into
+        // popupManager layer and documentElement or body could be a offset parent;
+        // but it would be broken when we allow popups to place in any layer in future;
+        // don't forget to implement univesal solution in this case
+        var viewport = getViewportRect(global, offsetParent);
 
         dir = normalizeDir(dir, this.dir).split(' ');
 
