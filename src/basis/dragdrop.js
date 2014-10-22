@@ -23,7 +23,6 @@
 
   var getComputedStyle = require('basis.dom.computedStyle').get;
   var basisLayout = require('basis.layout');
-  var getOffsetParent = basisLayout.getOffsetParent;
   var getBoundingRect = basisLayout.getBoundingRect;
   var getViewportRect = basisLayout.getViewportRect;
 
@@ -215,7 +214,15 @@
       this.baseElement = resolveElement(baseElement);
     },
     getBase: function(){
-      return this.baseElement || (document.compatMode == 'CSS1Compat' ? document.documentElement : document.body);
+      if (getComputedStyle(this.element, 'position') == 'fixed')
+        return global; // window
+
+      if (this.baseElement)
+        return this.baseElement;
+
+      return document.compatMode == 'CSS1Compat'
+        ? document.documentElement
+        : document.body;
     },
 
     isDragging: function(){
@@ -336,7 +343,7 @@
       if (element)
       {
         var viewport = getViewportRect(this.getBase());
-        var box = getBoundingRect(element);
+        var box = getBoundingRect(element, this.getBase());
 
         dragData.element = element;
 
