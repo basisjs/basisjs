@@ -2440,15 +2440,7 @@
     {
       var parts = namespace.split('.');
       var namespaceRoot = parts.shift();
-      var filename = parts.join('/') + '.js';
-
-      if (namespaceRoot in nsRootPath == false)
-        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
-
-      if (namespaceRoot == namespace)
-        filename = nsRootPath[namespaceRoot].replace(/\/$/, '') + '.js';
-      else
-        filename = nsRootPath[namespaceRoot] + filename;
+      var filename = resolveResourceUri(namespaceRoot + ':' + parts.join('/') + '.js').replace(/\/\.js$/, '.js');
 
       namespace2filename[namespace] = filename;
       filename2namespace[filename] = namespace;
