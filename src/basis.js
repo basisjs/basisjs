@@ -2484,6 +2484,9 @@
   * @return {basis.Namespace}
   */
   function getNamespace(path){
+    if (hasOwnProperty.call(namespaces, path))
+      return namespaces[path];
+
     path = path.split('.');
 
     var rootNs = getRootNamespace(path[0]);
