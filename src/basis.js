@@ -2358,7 +2358,7 @@
 
     // compile function if required
     if (typeof compiledSourceCode != 'function')
-      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require'],
+      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require', 'asset'],
         '"use strict";\n' +
         sourceCode
       );
@@ -2373,11 +2373,14 @@
         global,
         sourceURL,
         baseURL,
-        function(relativePath){
-          return getResource(resolveResourceUri(relativePath, baseURL, 'resource(\'{url}\')'));
+        function(path){
+          return getResource(resolveResourceUri(path, baseURL, 'resource(\'{url}\')'));
         },
-        function(relativePath, base){
-          return requireNamespace(relativePath, base || baseURL);
+        function(path, base){
+          return requireNamespace(path, base || baseURL);
+        },
+        function(path){
+          return resolveResourceUri(path, baseURL, 'asset(\'{url}\')');
         }
       );
 
@@ -3577,8 +3580,8 @@
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
-    asset: function(url){   // NOTE: don't replace for $self, builder attach
-      return url;           // special handler for this function
+    asset: function(path){
+      return resolveResourceUri(path, null, 'basis.asset(\'{url}\')');
     },
 
     // timers
