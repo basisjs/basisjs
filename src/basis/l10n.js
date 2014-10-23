@@ -221,6 +221,10 @@
 
       this.computeTokens = null;
       this.value = null;
+      this.dictionary = null;
+
+      // remove from index
+      tokenIndex[this.index] = null;
 
       basis.Token.prototype.destroy.call(this);
     }
