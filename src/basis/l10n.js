@@ -465,11 +465,11 @@
 
     if (typeof source == 'string')
     {
-      var location = basis.resource.resolveURI(source);
+      var location = source;
       var extname = basis.path.extname(location);
 
       if (extname != '.l10n')
-        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n';
+        location = location.replace(new RegExp(extname + '([#?]|$)'), '.l10n$1');
 
       source = basis.resource(location);
     }
