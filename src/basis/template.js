@@ -572,10 +572,15 @@
     var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
     var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
-    var tokenMap = basis.NODE_ENV ? __nodejsRequire('./template/htmlentity.json') : {};
+    var tokenMap = {};
     var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
     var includeStack = [];
     var styleNamespaceIsolate = {};
+
+    // load token map when node evironment, because html parsing is not available
+    // comment it, to not include code to build
+    /** @cut */ if (basis.NODE_ENV)
+    /** @cut */  tokenMap = __nodejsRequire('./template/htmlentity.json');
 
     function name(token){
       return (token.prefix ? token.prefix + ':' : '') + token.name;
