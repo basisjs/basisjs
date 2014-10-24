@@ -28,8 +28,8 @@ module.exports = {
             assert(basis.resource.resolveURI('/foo/bar') === '/foo/bar');
             assert(basis.resource.resolveURI('./foo/bar') === localBaseUri + '/foo/bar');
             assert(basis.resource.resolveURI('././foo/bar') === localBaseUri + '/foo/bar');
-            assert(basis.resource.resolveURI('../foo/bar') === basis.path.resolve(localBaseUri, '..') + '/foo/bar');
-            assert(basis.resource.resolveURI('../foo/../bar') === basis.path.resolve(localBaseUri, '..') + '/bar');
+            assert(basis.resource.resolveURI('../foo/bar') === basis.path.resolve(localBaseUri, '../foo/bar'));
+            assert(basis.resource.resolveURI('../foo/../bar') === basis.path.resolve(localBaseUri, '../bar'));
             assert(basis.resource.resolveURI('//foo/../bar') === '/bar');
             assert(basis.resource.resolveURI('./foo:bar') === localBaseUri + '/foo:bar');
             assert(basis.resource.resolveURI('./:foo:bar') === localBaseUri + '/:foo:bar');
@@ -38,8 +38,8 @@ module.exports = {
             assert(basis.resource.resolveURI('/foo/bar', null) === '/foo/bar');
             assert(basis.resource.resolveURI('./foo/bar', null) === localBaseUri + '/foo/bar');
             assert(basis.resource.resolveURI('././foo/bar', null) === localBaseUri + '/foo/bar');
-            assert(basis.resource.resolveURI('../foo/bar', null) === basis.path.resolve(localBaseUri, '..') + '/foo/bar');
-            assert(basis.resource.resolveURI('../foo/../bar', null) === basis.path.resolve(localBaseUri, '..') + '/bar');
+            assert(basis.resource.resolveURI('../foo/bar', null) === basis.path.resolve(localBaseUri, '../foo/bar'));
+            assert(basis.resource.resolveURI('../foo/../bar', null) === basis.path.resolve(localBaseUri, '../bar'));
             assert(basis.resource.resolveURI('//foo/../bar', null) === '/bar');
             assert(basis.resource.resolveURI('./foo:bar', null) === localBaseUri + '/foo:bar');
             assert(basis.resource.resolveURI('./:foo:bar', null) === localBaseUri + '/:foo:bar');
