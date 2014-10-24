@@ -29,20 +29,27 @@
  *   - String
  *   - Number
  * - basis.ready
- * - async document imterface (basis.doc)
+ * - async document interface (basis.doc)
  * - basis.cleaner
  */
 
-// global is current context (`window` in browser and `global` on node.js)
-;(function createBasisInstance(global, __basisFilename, __config){
+// context is `window` in browser and module on node.js
+;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
   var VERSION = '1.4.0-dev';
 
+  var global = Function('return this')();
+  var NODE_ENV = global !== context ? global : false;
   var document = global.document;
   var toString = Object.prototype.toString;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
+
+  // It's old behaviour that looks odd. For now we leave everything as is.
+  // But we should use context as something to store into, and global as source
+  // of global things.
+  // TODO: to do thins stuff right
+  global = context;
 
 
  /**
@@ -528,6 +535,9 @@
       result.base = func.base || func;
       result.__extend__ = getter;
 
+      // NOTE: Only object modificators has no modId. Therefore getters with object
+      // modificator are not caching. It avoid storing (by closure) object that
+      // can't be collected by GC.
       if (modId)
       {
         if (!modList)
@@ -543,12 +553,6 @@
 
         // cache new getter
         result[ID] = getterMap.push(result);
-      }
-      else
-      {
-        // only object modificators has no modId
-        // getters with object modificator are not caching
-        // this prevents of storing (in closure) object that can't be released by gabage collectors
       }
 
       return result;
@@ -650,8 +654,8 @@
       iterate(methods, function(methodName){
         methods[methodName] = 'bind' in Function.prototype && typeof console[methodName] == 'function'
           ? Function.prototype.bind.call(console[methodName], console)
-            // ie8 and lower, it's also more safe when Function.prototype.bind defined
-            // by other libraries (like es5-shim)
+            // IE8 and lower solution. It's also more safe when Function.prototype.bind
+            // defines by other libraries (like es5-shim).
           : function(){
               Function.prototype.apply.call(console[methodName], console, arguments);
             };
@@ -733,7 +737,7 @@
       //
       // implement platform specific solution
       //
-      if (global.process && typeof process.nextTick == 'function')
+      if (NODE_ENV && NODE_ENV.process && typeof process.nextTick == 'function')
       {
         // use next tick on node.js
         addToQueue = function(taskId){
@@ -1119,6 +1123,19 @@
       {
         // node.js env
         basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
+
+        /** @cut */ if (process.basisjsConfig)
+        /** @cut */ {
+        /** @cut */   config = process.basisjsConfig;
+        /** @cut */   if (typeof config == 'string')
+        /** @cut */   {
+        /** @cut */     try {
+        /** @cut */       config = Function('return{' + config + '}')();
+        /** @cut */     } catch(e) {
+        /** @cut */       /** @cut */ consoleMethods.error('basis-config: basis.js config parse fault: ' + e);
+        /** @cut */     }
+        /** @cut */   }
+        /** @cut */ }
       }
       else
       {
@@ -3657,7 +3674,7 @@
   // auto load section
   //
 
-  if (config.autoload)
+  if (config.autoload && !NODE_ENV)
     config.autoload.forEach(function(name){
       requireNamespace(name);
     });
