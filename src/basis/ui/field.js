@@ -860,15 +860,6 @@
   //  Combobox
   //
 
-  var ComboboxPopupHandler = {
-    show: function(){
-      this.updateBind('opened');
-    },
-    hide: function(){
-      this.updateBind('opened');
-    }
-  };
-
  /**
   * @class
   */
@@ -899,11 +890,6 @@
     }
   });
 
-  var COMBOBOX_SELECTION_HANDLER = {
-    itemsChanged: function(selection){
-      this.setDelegate(selection.pick());
-    }
-  };
 
  /**
   * @class
@@ -916,19 +902,23 @@
     emit_change: function(event){
       ComplexField.prototype.emit_change.call(this, event);
 
-      var value = this.getValue();
-
       if (this.property)
+      {
+        var value = this.getValue();
         this.property.set(value);
+      }
     },
 
     emit_childNodesModified: function(delta){
       ComplexField.prototype.emit_childNodesModified.call(this, delta);
+
       if (this.property)
         this.setValue(this.property.value);
     },
 
     caption: null,
+    property: null,
+    opened: false,
     popup: null,
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
@@ -943,16 +933,12 @@
           (this.tmpl.content || this.element).appendChild(this.fieldOwner_.childNodesElement);
       }
     }),
-    property: null,
 
     template: templates.Combobox,
-
     binding: {
       captionItem: 'satellite:',
       hiddenField: 'satellite:',
-      opened: function(node){
-        return node.popup.visible ? 'opened' : '';
-      }
+      opened: 'opened'
     },
 
     satellite: {
@@ -1053,7 +1039,6 @@
     },
 
     init: function(){
-
       if (this.property)
         this.value = this.property.value;
 
@@ -1061,13 +1046,16 @@
       ComplexField.prototype.init.call(this);
 
       this.setSatellite('captionItem', new this.childClass({
-        delegate: this.selection.pick(),
-        owner: this,
+        delegate: Value.from(this.selection, 'itemsChanged', function(selection){
+          return selection.pick();
+        }),
         getTitle: function(){
-          return this.owner.getTitle();
+          if (this.delegate)
+            return this.delegate.getTitle();
         },
         getValue: function(){
-          return this.owner.getValue();
+          if (this.delegate)
+            return this.delegate.getValue();
         },
         handler: {
           delegateChanged: function(){
@@ -1075,16 +1063,15 @@
           }
         }
       }));
-      this.selection.addHandler(COMBOBOX_SELECTION_HANDLER, this.satellite.captionItem);
 
       // create items popup
       this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
-        fieldOwner_: this,
-        handler: {
-          context: this,
-          callbacks: ComboboxPopupHandler
-        }
+        fieldOwner_: this
       }, this.popup));
+
+      this.opened = Value.from(this.popup, 'show hide', function(popup){
+        return popup.visible;
+      });
 
       if (this.property)
         this.property.link(this, this.setValue);
@@ -1127,18 +1114,13 @@
       }
     },
     destroy: function(){
-      if (this.property)
-      {
-        this.property.unlink(this);
-        this.property = null;
-      }
+      this.property = null;
+
+      this.opened.destroy();
+      this.opened = null;
 
       this.popup.destroy();
       this.popup = null;
-
-      this.satellite.captionItem.setDelegate();
-      this.selection.removeHandler(COMBOBOX_SELECTION_HANDLER, this.satellite.captionItem);
-      this.setSatellite('captionItem', null);
 
       ComplexField.prototype.destroy.call(this);
     }
