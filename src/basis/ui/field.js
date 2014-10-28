@@ -937,8 +937,10 @@
       templateSync: function(){
         Popup.prototype.templateSync.call(this);
 
-        if (this.owner && this.owner.childNodesElement)
-          (this.tmpl.content || this.element).appendChild(this.owner.childNodesElement);
+        // NOTE: for now popups can't has an owner as has a parent node (popup manager)
+        // TODO: use owner when popups can has owner
+        if (this.fieldOwner_ && this.fieldOwner_.childNodesElement)
+          (this.tmpl.content || this.element).appendChild(this.fieldOwner_.childNodesElement);
       }
     }),
     property: null,
@@ -1077,6 +1079,7 @@
 
       // create items popup
       this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
+        fieldOwner_: this,
         handler: {
           context: this,
           callbacks: ComboboxPopupHandler
