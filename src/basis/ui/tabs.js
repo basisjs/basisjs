@@ -34,11 +34,7 @@
  /**
   * @class
   */
-<<<<<<< HEAD
   var AbstractTabsControl = Node.subclass({
-=======
-  var AbstractTabsControl = Class(Node, {
->>>>>>> origin/1.4.0
     className: namespace + '.AbstractTabsControl',
 
     selection: true,
@@ -81,11 +77,7 @@
  /**
   * @class
   */
-<<<<<<< HEAD
   var Tab = Node.subclass({
-=======
-  var Tab = Class(Node, {
->>>>>>> origin/1.4.0
     className: namespace + '.Tab',
 
     template: module.template('Tab'),
@@ -136,11 +128,7 @@
  /**
   * @class
   */
-<<<<<<< HEAD
   var Page = Node.subclass({
-=======
-  var Page = Class(Node, {
->>>>>>> origin/1.4.0
     className: namespace + '.Page',
 
     template: module.template('Page')

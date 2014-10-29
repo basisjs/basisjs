@@ -111,13 +111,8 @@
         dataSource: function(owner){
           return owner.getChildNodesDataset();
         },
-<<<<<<< HEAD
-        instanceOf: basis.ui.Node.subclass({
-          template: module.template('HeaderPartitionRow'),
-=======
         instanceOf: UINode.subclass({
-          template: templates.HeaderPartitionRow,
->>>>>>> origin/1.4.0
+          template: module.template('HeaderPartitionRow'),
           childClass: HeaderPartitionNode
         })
       }
