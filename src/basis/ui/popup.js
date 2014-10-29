@@ -14,20 +14,16 @@
 
   var window = global;
   var document = global.document;
-  var documentElement = document && document.documentElement;
-  var Class = basis.Class;
-  var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
   var domUtils = require('basis.dom');
   var eventUtils = require('basis.dom.event');
   var cssom = require('basis.cssom');
   var createEvent = require('basis.event').create;
-  var basisLayout = require('basis.layout');
-  var getOffsetParent = basisLayout.getOffsetParent;
-  var getBoundingRect = basisLayout.getBoundingRect;
-  var getViewportRect = basisLayout.getViewportRect;
-  var UINode = require('basis.ui').Node;
+  var getOffsetParent = require('basis.layout').getOffsetParent;
+  var getBoundingRect = require('basis.layout').getBoundingRect;
+  var getViewportRect = require('basis.layout').getViewportRect;
+  var Node = require('basis.ui').Node;
 
 
   //
@@ -120,10 +116,153 @@
   }
 
 
+  //
+  // Popup manager
+  //
+  // NOTE: popupManager adds global event handlers dynamically because click event
+  // which makes popup visible can also hide it (as click outside of popup).
+
+  var body;
+  var popupManager = basis.object.extend([], {
+    add: function(popup){
+      if (!this.length)
+      {
+        eventUtils.addGlobalHandler('click', this.hideByClick, this);
+        eventUtils.addGlobalHandler('keydown', this.hideByKey, this);
+        eventUtils.addGlobalHandler('scroll', this.hideByScroll, this);
+        eventUtils.addHandler(window, 'resize', this.realignAll, this);
+      }
+
+      this.unshift(popup);
+      popup.setZIndex(getTopZIndex());
+
+      if (body && !domUtils.parentOf(document, popup.element))
+        body.appendChild(popup.element);
+    },
+
+    remove: function(popup){
+      var popupIndex = this.indexOf(popup);
+
+      if (popupIndex == -1)
+        return;
+
+      if (popup.hideOnAnyClick)
+      {
+        var nextPopup = this[popupIndex - 1];
+        if (nextPopup)
+          nextPopup.hide();
+      }
+
+      basis.array.remove(this, popup);
+      if (popup.element.parentNode === body)
+        domUtils.remove(popup.element);
+
+      if (!this.length)
+      {
+        eventUtils.removeGlobalHandler('click', this.hideByClick, this);
+        eventUtils.removeGlobalHandler('keydown', this.hideByKey, this);
+        eventUtils.removeGlobalHandler('scroll', this.hideByScroll, this);
+        eventUtils.removeHandler(window, 'resize', this.realignAll, this);
+      }
+    },
+
+    clear: function(){
+      arrayFrom(this).forEach(function(popup){
+        popup.hide();
+      });
+    },
+
+    realignAll: function(){
+      this.forEach(function(popup){
+        if (popup.autoRealign)
+          popup.realign();
+      });
+    },
+
+    hideByClick: function(event){
+      if (!this.length)
+        return;
+
+      var ancestors = domUtils.axis(event.sender, domUtils.AXIS_ANCESTOR_OR_SELF);
+
+      for (var i = 0, popup; popup = this[i]; i++)
+      {
+        if (ancestors.indexOf(popup.element) != -1 || ancestors.some(function(element){
+          return popup.ignoreClickFor.indexOf(element) != -1;
+        }))
+        {
+          for (var j = i - 1; popup = this[j]; j--)
+            if (popup.hideOnAnyClick)
+            {
+              popup.hide();
+              break;
+            }
+
+          return;
+        }
+      }
+
+      // remove first hideOnAnyClick:true popup
+      var firstOnAnyClickPopup = basis.array.lastSearch(this, true, 'hideOnAnyClick');
+      if (firstOnAnyClickPopup)
+        firstOnAnyClickPopup.hide();
+    },
+    hideByKey: function(event){
+      var popup = this[0];
+
+      if (popup)
+      {
+        var hideOnKey = popup.hideOnKey;
+        var hide;
+
+        if (typeof hideOnKey == 'function')
+          hide = hideOnKey.call(this, event.key);
+
+        if (Array.isArray(hideOnKey))
+          hide = hideOnKey.indexOf(event.key) != -1;
+
+        if (hide)
+          popup.hide();
+      }
+    },
+    hideByScroll: function(event){
+      var sender = event.sender;
+
+      if (domUtils.parentOf(sender, this.element))
+        return;
+
+      arrayFrom(this)
+        .forEach(function(popup){
+          if (popup.hideOnScroll &&
+              popup.relElement && !Array.isArray(popup.relElement) &&
+              popup.offsetParent !== sender &&
+              domUtils.parentOf(sender, popup.relElement))
+            popup.hide();
+        });
+    }
+  });
+
+  // async document.body ready
+  basis.doc.body.ready(function(body_){
+    body = body_;
+    popupManager.forEach(function(popup){
+      if (!domUtils.parentOf(document, popup.element))
+      {
+        body.appendChild(popup.element);
+        popup.realign();
+      }
+    });
+  });
+
+
+  //
+  // popups
+  //
+
  /**
   * @class
   */
-  var Popup = Class(UINode, {
+  var Popup = Node.subclass({
     className: namespace + '.Popup',
 
     template: templates.Popup,
@@ -168,7 +307,7 @@
     ignoreClickFor: null,
 
     init: function(){
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
 
       this.ignoreClickFor = arrayFrom(this.ignoreClickFor);
 
@@ -186,7 +325,7 @@
       this.setLayout(this.defaultDir, this.orientation);
     },
     templateSync: function(){
-      UINode.prototype.templateSync.call(this);
+      Node.prototype.templateSync.call(this);
 
       this.realign();
     },
@@ -398,7 +537,7 @@
         // make element invisible & insert element into DOM
         cssom.visibility(this.element, false);
 
-        popupManager.appendChild(this);
+        popupManager.add(this);
 
         // dispatch `beforeShow` event, there we can fill popup with content
         this.emit_beforeShow();
@@ -423,8 +562,7 @@
         // set visible flag
         this.visible = false;
 
-        if (this.parentNode)
-          popupManager.removeChild(this);
+        popupManager.remove(this);
 
         // dispatch event
         this.emit_hide();
@@ -436,150 +574,17 @@
     destroy: function(){
       this.hide();
 
-      UINode.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
     }
   });
 
  /**
   * @class
   */
-  var Balloon = Class(Popup, {
+  var Balloon = Popup.subclass({
     className: namespace + '.Balloon',
 
     template: templates.Balloon
-  });
-
-
-  //
-  //  Popup manager
-  //
-
-  // NOTE: popupManager adds global event handlers dynamically because click event
-  // which makes popup visible can also hide it (as click outside of popup).
-
-  var popupManager = new UINode({
-    template: templates.popupManager,
-
-    selection: true,
-
-    emit_childNodesModified: function(delta){
-      if (delta.deleted)
-        for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
-          item.hide();
-
-      if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
-      {
-        eventUtils.addGlobalHandler('click', this.hideByClick, this);
-        eventUtils.addGlobalHandler('keydown', this.hideByKey, this);
-        eventUtils.addGlobalHandler('scroll', this.hideByScroll, this);
-        eventUtils.addHandler(window, 'resize', this.realignAll, this);
-      }
-
-      if (this.lastChild)
-        this.lastChild.select();
-      else
-      {
-        eventUtils.removeGlobalHandler('click', this.hideByClick, this);
-        eventUtils.removeGlobalHandler('keydown', this.hideByKey, this);
-        eventUtils.removeGlobalHandler('scroll', this.hideByScroll, this);
-        eventUtils.removeHandler(window, 'resize', this.realignAll, this);
-      }
-
-      UINode.prototype.emit_childNodesModified.call(this, delta);
-    },
-
-    insertBefore: function(newChild, refChild){
-      if (UINode.prototype.insertBefore.call(this, newChild, refChild))
-        newChild.setZIndex(getTopZIndex());
-    },
-    removeChild: function(popup){
-      if (popup)
-      {
-        if (popup.hideOnAnyClick && popup.nextSibling)
-          this.removeChild(popup.nextSibling);
-
-        UINode.prototype.removeChild.call(this, popup);
-      }
-    },
-    realignAll: function(){
-      for (var popup = this.firstChild; popup; popup = popup.nextSibling)
-        if (popup.autoRealign)
-          popup.realign();
-    },
-    clear: function(){
-      if (this.firstChild)
-        this.removeChild(this.firstChild);
-    },
-    hideByClick: function(event){
-      if (!this.firstChild)
-        return;
-
-      var ancestorAxis = domUtils.axis(event.sender, domUtils.AXIS_ANCESTOR_OR_SELF);
-
-      for (var popup = this.lastChild; popup; popup = popup.previousSibling)
-      {
-        if (ancestorAxis.indexOf(popup.element) != -1 || ancestorAxis.some(function(element){
-          return popup.ignoreClickFor.indexOf(element) != -1;
-        }))
-        {
-          while (popup = popup.nextSibling)
-          {
-            if (popup.hideOnAnyClick)
-            {
-              this.removeChild(popup);
-              break;
-            }
-          }
-
-          return;
-        }
-      }
-
-      // remove first hideOnAnyClick:true popup
-      this.removeChild(this.getChild(true, 'hideOnAnyClick'));
-    },
-    hideByKey: function(event){
-      var popup = this.lastChild;
-      if (popup && popup.hideOnKey)
-      {
-        var result = false;
-
-        if (typeof popup.hideOnKey == 'function')
-          result = popup.hideOnKey(event.key);
-        else
-          if (Array.isArray(popup.hideOnKey))
-            result = popup.hideOnKey.indexOf(event.key) != -1;
-
-        if (result)
-          popup.hide();
-      }
-    },
-    hideByScroll: function(event){
-      var sender = event.sender;
-
-      if (domUtils.parentOf(sender, this.element))
-        return;
-
-      var popup = this.lastChild;
-      while (popup)
-      {
-        var next = popup.previousSibling;
-
-        if (popup.hideOnScroll &&
-            popup.relElement &&
-            !Array.isArray(popup.relElement) &&
-            popup.offsetParent !== sender &&
-            domUtils.parentOf(sender, popup.relElement))
-          popup.hide();
-
-        popup = next;
-      }
-    }
-  });
-
-  basis.doc.body.ready(function(body){
-    domUtils.insert(body, popupManager.element, domUtils.INSERT_BEGIN);
-    popupManager.realignAll();
   });
 
 
