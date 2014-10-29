@@ -12,14 +12,15 @@
   //
 
 
+  var window = global;
   var document = global.document;
   var documentElement = document && document.documentElement;
   var Class = basis.Class;
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
-  var DOM = require('basis.dom');
-  var Event = require('basis.dom.event');
+  var domUtils = require('basis.dom');
+  var eventUtils = require('basis.dom.event');
   var cssom = require('basis.cssom');
   var createEvent = require('basis.event').create;
   var basisLayout = require('basis.layout');
@@ -379,7 +380,7 @@
     },
     show: function(relElement, dir, orientation){
       // assign new offset element
-      this.relElement = Array.isArray(relElement) ? relElement : DOM.get(relElement) || this.relElement;
+      this.relElement = Array.isArray(relElement) ? relElement : domUtils.get(relElement) || this.relElement;
 
       // set up direction and orientation
       this.setLayout(normalizeDir(dir, this.defaultDir), orientation);
@@ -468,20 +469,20 @@
 
       if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
       {
-        Event.addGlobalHandler('click', this.hideByClick, this);
-        Event.addGlobalHandler('keydown', this.hideByKey, this);
-        Event.addGlobalHandler('scroll', this.hideByScroll, this);
-        Event.addHandler(window, 'resize', this.realignAll, this);
+        eventUtils.addGlobalHandler('click', this.hideByClick, this);
+        eventUtils.addGlobalHandler('keydown', this.hideByKey, this);
+        eventUtils.addGlobalHandler('scroll', this.hideByScroll, this);
+        eventUtils.addHandler(window, 'resize', this.realignAll, this);
       }
 
       if (this.lastChild)
         this.lastChild.select();
       else
       {
-        Event.removeGlobalHandler('click', this.hideByClick, this);
-        Event.removeGlobalHandler('keydown', this.hideByKey, this);
-        Event.removeGlobalHandler('scroll', this.hideByScroll, this);
-        Event.removeHandler(window, 'resize', this.realignAll, this);
+        eventUtils.removeGlobalHandler('click', this.hideByClick, this);
+        eventUtils.removeGlobalHandler('keydown', this.hideByKey, this);
+        eventUtils.removeGlobalHandler('scroll', this.hideByScroll, this);
+        eventUtils.removeHandler(window, 'resize', this.realignAll, this);
       }
 
       UINode.prototype.emit_childNodesModified.call(this, delta);
@@ -513,7 +514,7 @@
       if (!this.firstChild)
         return;
 
-      var ancestorAxis = DOM.axis(event.sender, DOM.AXIS_ANCESTOR_OR_SELF);
+      var ancestorAxis = domUtils.axis(event.sender, domUtils.AXIS_ANCESTOR_OR_SELF);
 
       for (var popup = this.lastChild; popup; popup = popup.previousSibling)
       {
@@ -556,7 +557,7 @@
     hideByScroll: function(event){
       var sender = event.sender;
 
-      if (DOM.parentOf(sender, this.element))
+      if (domUtils.parentOf(sender, this.element))
         return;
 
       var popup = this.lastChild;
@@ -568,7 +569,7 @@
             popup.relElement &&
             !Array.isArray(popup.relElement) &&
             popup.offsetParent !== sender &&
-            DOM.parentOf(sender, popup.relElement))
+            domUtils.parentOf(sender, popup.relElement))
           popup.hide();
 
         popup = next;
@@ -577,7 +578,7 @@
   });
 
   basis.doc.body.ready(function(body){
-    DOM.insert(body, popupManager.element, DOM.INSERT_BEGIN);
+    domUtils.insert(body, popupManager.element, domUtils.INSERT_BEGIN);
     popupManager.realignAll();
   });
 
