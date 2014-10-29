@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dragdrop');
-  basis.require('basis.layout');
-  basis.require('basis.ui');
-
-
  /**
   * @see ./demo/defile/paginator.html
   * @namespace basis.ui.paginator
@@ -17,12 +11,12 @@
   //
 
   var createArray = basis.array.create;
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
-  var getBoundingRect = basis.layout.getBoundingRect;
-
-  var DragDropElement = basis.dragdrop.DragDropElement;
-  var UINode = basis.ui.Node;
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var events = basisEvent.events;
+  var getBoundingRect = require('basis.layout').getBoundingRect;
+  var DragDropElement = require('basis.dragdrop').DragDropElement;
+  var Node = require('basis.ui').Node;
 
 
   //
@@ -38,7 +32,7 @@
   * Base child node class for Paginator
   * @class
   */
-  var PaginatorNode = UINode.subclass({
+  var PaginatorNode = Node.subclass({
     className: namespace + '.PaginatorNode',
 
     emit_pageNumberChanged: createEvent('pageNumberChanged', 'oldPageNumber'),
@@ -101,7 +95,7 @@
   * Paginator
   * @class
   */
-  var Paginator = UINode.subclass({
+  var Paginator = Node.subclass({
     className: namespace + '.Paginator',
 
     template: module.template('Paginator'),
@@ -207,7 +201,7 @@
     * @constructor
     */
     init: function(){
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
 
       var pageSpan = this.pageSpan;
       var pageCount = this.pageCount;
@@ -233,7 +227,7 @@
     * @inheritDoc
     */
     templateSync: function(){
-      UINode.prototype.templateSync.call(this);
+      Node.prototype.templateSync.call(this);
 
       this.dde.setElement(
         'scrollThumb' in this.tmpl && 'scrollThumbWrapper' in this.tmpl
@@ -366,7 +360,7 @@
       this.dde.destroy();
       this.dde = null;
 
-      UINode.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
     }
   });
 

@@ -1,17 +1,17 @@
-basis.require('basis.dom.event');
-basis.require('app.ext.docTree');
-
-var curHash;
+var DocTree = require('app.ext.docTree').DocTree;
+var mapDO = require('app.core').mapDO;
+var router = require('basis.router');
 var arraySearch = basis.array.search;
+var curHash;
 
-var navTree = new app.ext.docTree.DocTree({
+var navTree = new DocTree({
   childNodes: [
     {
       data: { kind: 'Section', title: 'basis', fullPath: 'basis' },
       selectable: false,
       childNodes: basis.object.iterate(basis.namespaces_, function(key){
-        if (key in app.core.mapDO == false) debugger;
-        return app.core.mapDO[key];
+        if (key in mapDO == false) debugger;
+        return mapDO[key];
       })
     }
   ],
@@ -96,12 +96,12 @@ var navTree = new app.ext.docTree.DocTree({
   }
 });
 
-basis.router.add('*all', function(path){
+router.add('*all', function(path){
   navTree.open(path);
 });
 
 basis.nextTick(function(){
-  basis.router.start();
+  router.start();
 });
 
 //

@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.ui');
-  basis.require('basis.template');
-
-
  /**
   * This namespace contains {basis.ui.tree.Tree} control class and it's
   * child nodes classes. There are two base child classes for tree
@@ -36,13 +30,12 @@
   //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
-
-  var createEvent = basis.event.create;
-
-  var UINode = basis.ui.Node;
-  var UIPartitionNode = basis.ui.PartitionNode;
-  var UIGroupingNode = basis.ui.GroupingNode;
+  var DOM = require('basis.dom');
+  var createEvent = require('basis.event').create;
+  var basisUi = require('basis.ui');
+  var UINode = basisUi.Node;
+  var UIPartitionNode = basisUi.PartitionNode;
+  var UIGroupingNode = basisUi.GroupingNode;
 
 
   //

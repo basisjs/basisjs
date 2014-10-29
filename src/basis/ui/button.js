@@ -1,7 +1,4 @@
 
-  basis.require('basis.ui');
-
-
  /**
   * @see ./demo/defile/button.html
   * @namespace basis.ui.button
@@ -14,7 +11,7 @@
   // import names
   //
 
-  var Node = basis.ui.Node;
+  var Node = require('basis.ui').Node;
 
 
   //

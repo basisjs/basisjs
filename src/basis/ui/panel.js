@@ -1,10 +1,4 @@
 
-  basis.require('basis.dom.computedStyle');
-  basis.require('basis.dom.resize');
-  basis.require('basis.template');
-  basis.require('basis.ui');
-
-
  /**
   * @namespace basis.ui.panel
   */
@@ -17,13 +11,18 @@
   //
 
   var document = global.document;
-  var listenResize = basis.dom.resize.add;
-  var computedStyle = basis.dom.computedStyle.get;
-  var UINode = basis.ui.Node;
+  var listenResize = require('basis.dom.resize').add;
+  var computedStyle = require('basis.dom.computedStyle').get;
+  var Node = require('basis.ui').Node;
+
+  var templates = require('basis.template').define(namespace, {
+    Panel: resource('./templates/layout/VerticalPanel.tmpl'),
+    Stack: resource('./templates/layout/VerticalPanelStack.tmpl')
+  });
 
 
   //
-  // main part
+  // tests
   //
 
   var testElement = document.createElement('div');
@@ -54,10 +53,14 @@
   }
 
 
+  //
+  // main part
+  //
+
  /**
   * @class
   */
-  var VerticalPanel = UINode.subclass({
+  var VerticalPanel = Node.subclass({
     className: namespace + '.VerticalPanel',
 
     template: module.template('Panel'),
@@ -84,7 +87,7 @@
  /**
   * @class
   */
-  var VerticalPanelStack = UINode.subclass({
+  var VerticalPanelStack = Node.subclass({
     className: namespace + '.VerticalPanelStack',
 
     template: module.template('Stack'),
@@ -97,7 +100,7 @@
     childClass: VerticalPanel,
 
     templateSync: function(){
-      UINode.prototype.templateSync.call(this);
+      Node.prototype.templateSync.call(this);
 
       if (!SUPPORT_DISPLAYBOX)
       {
@@ -140,7 +143,7 @@
 
 
   //
-  // export
+  // exports
   //
 
   module.exports = {

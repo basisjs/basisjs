@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom.event');
-  basis.require('basis.dom.computedStyle');
-  basis.require('basis.layout');
-
-
  /**
   * @namespace basis.dragdrop
   */
@@ -19,24 +13,25 @@
   var document = global.document;
   var cleaner = basis.cleaner;
 
-  var Event = basis.dom.event;
-  var addGlobalHandler = Event.addGlobalHandler;
-  var removeGlobalHandler = Event.removeGlobalHandler;
+  var eventUtils = require('basis.dom.event');
+  var addGlobalHandler = eventUtils.addGlobalHandler;
+  var removeGlobalHandler = eventUtils.removeGlobalHandler;
 
-  var Emitter = basis.event.Emitter;
-  var createEvent = basis.event.create;
+  var basisEvent = require('basis.event');
+  var Emitter = basisEvent.Emitter;
+  var createEvent = basisEvent.create;
 
-  var getComputedStyle = basis.dom.computedStyle.get;
-  var getOffsetParent = basis.layout.getOffsetParent;
-  var getBoundingRect = basis.layout.getBoundingRect;
-  var getViewportRect = basis.layout.getViewportRect;
+  var getComputedStyle = require('basis.dom.computedStyle').get;
+  var basisLayout = require('basis.layout');
+  var getBoundingRect = basisLayout.getBoundingRect;
+  var getViewportRect = basisLayout.getViewportRect;
 
 
   //
   // Main part
   //
 
-  var SELECTSTART_SUPPORTED = Event.getEventInfo('selectstart').supported;
+  var SELECTSTART_SUPPORTED = eventUtils.getEventInfo('selectstart').supported;
 
   var dragging;
   var dragElement;
@@ -72,16 +67,20 @@
       maxDeltaY: Infinity
     };
 
+    // recovery mode: if mouseup/touchend event is missed for some reason,
+    // new mousedown/touchstart event stops dragging
+    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('touchstart', stopDrag);
+
     // add global handlers
     addGlobalHandler('mousemove', onDrag);
+    addGlobalHandler('touchmove', onDrag);
     addGlobalHandler('mouseup', stopDrag);
-
-    // recover mode: if mouseup missed for some reason, new mousedown stops dragging
-    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('touchend', stopDrag);
 
     // avoid text selection in IE
     if (SELECTSTART_SUPPORTED)
-      addGlobalHandler('selectstart', Event.kill);
+      addGlobalHandler('selectstart', eventUtils.kill);
 
     // cancel event default action
     event.preventDefault();
@@ -118,12 +117,15 @@
 
   function stopDrag(event){
     // remove global handlers
-    removeGlobalHandler('mousemove', onDrag);
-    removeGlobalHandler('mouseup', stopDrag);
     removeGlobalHandler('mousedown', stopDrag);
+    removeGlobalHandler('touchstart', stopDrag);
+    removeGlobalHandler('mousemove', onDrag);
+    removeGlobalHandler('touchmove', onDrag);
+    removeGlobalHandler('mouseup', stopDrag);
+    removeGlobalHandler('touchend', stopDrag);
 
     if (SELECTSTART_SUPPORTED)
-      removeGlobalHandler('selectstart', Event.kill);
+      removeGlobalHandler('selectstart', eventUtils.kill);
 
     // store current values for event emit
     var element = dragElement;
@@ -194,19 +196,33 @@
       if (this.trigger !== trigger)
       {
         if (this.trigger)
-          Event.removeHandler(this.trigger, 'mousedown', startDrag, this);
+        {
+          eventUtils.removeHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.removeHandler(this.trigger, 'touchstart', startDrag, this);
+        }
 
         this.trigger = trigger;
 
         if (this.trigger)
-          Event.addHandler(this.trigger, 'mousedown', startDrag, this);
+        {
+          eventUtils.addHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.addHandler(this.trigger, 'touchstart', startDrag, this);
+        }
       }
     },
     setBase: function(baseElement){
       this.baseElement = resolveElement(baseElement);
     },
     getBase: function(){
-      return this.baseElement || (document.compatMode == 'CSS1Compat' ? document.documentElement : document.body);
+      if (getComputedStyle(this.element, 'position') == 'fixed')
+        return global; // window
+
+      if (this.baseElement)
+        return this.baseElement;
+
+      return document.compatMode == 'CSS1Compat'
+        ? document.documentElement
+        : document.body;
     },
 
     isDragging: function(){
@@ -272,7 +288,7 @@
       return value + 'px';
     },
     read: function(element){
-      return parseFloat(getComputedStyle(element, this.property));
+      return parseFloat(getComputedStyle(element, this.property)) || 0;
     },
     write: function(element, formattedValue){
       element.style[this.property] = formattedValue;
@@ -284,10 +300,12 @@
   */
   var StylePositionX = StyleDeltaWriter.subclass({
     property: function(element){
-      return getComputedStyle(element, 'left') == 'auto' ? 'right' : 'left';
+      return getComputedStyle(element, 'left') == 'auto' && getComputedStyle(element, 'right') != 'auto'
+        ? 'right'
+        : 'left';
     },
     invert: function(property){
-      return property != 'left';
+      return property == 'right';
     }
   });
 
@@ -296,10 +314,12 @@
   */
   var StylePositionY = StyleDeltaWriter.subclass({
     property: function(element){
-      return getComputedStyle(element, 'top') == 'auto' ? 'bottom' : 'top';
+      return getComputedStyle(element, 'top') == 'auto' && getComputedStyle(element, 'bottom') != 'auto'
+        ? 'bottom'
+        : 'top';
     },
     invert: function(property){
-      return property != 'top';
+      return property == 'bottom';
     }
   });
 
@@ -323,7 +343,7 @@
       if (element)
       {
         var viewport = getViewportRect(this.getBase());
-        var box = getBoundingRect(element);
+        var box = getBoundingRect(element, this.getBase());
 
         dragData.element = element;
 

@@ -1,9 +1,6 @@
 /*
   Basis javascript library
   http://github.com/basisjs/basisjs
-
-  @license
-  Dual licensed under the MIT or GPL Version 2 licenses.
 */
 
 /**
@@ -32,42 +29,92 @@
  *   - String
  *   - Number
  * - basis.ready
- * - async document imterface (basis.doc)
+ * - async document interface (basis.doc)
  * - basis.cleaner
  */
 
-// global is current context (`window` in browser and `global` on node.js)
-;(function createBasisInstance(global, __basisFilename, __config){
+// context is `window` in browser and module on node.js
+;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.3.0';
+  var VERSION = '1.4.0-dev';
 
+  var global = Function('return this')();
+  var NODE_ENV = global !== context ? global : false;
   var document = global.document;
   var toString = Object.prototype.toString;
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+  // It's old behaviour that looks odd. For now we leave everything as is.
+  // But we should use context as something to store into, and global as source
+  // of global things.
+  // TODO: to do thins stuff right
+  global = context;
 
 
  /**
-  * Generates unique id.
-  * random() + performance.now() + Date.now()
+  * Generates unique id (mix datetime and random).
   * @param {number=} len Required length of id (16 by default).
   * @returns {string} Generated id.
   */
   function genUID(len){
     function base36(val){
-      return parseInt(Number(val), 10).toString(36);
+      return Math.round(val).toString(36);
     }
 
-    var result = (global.performance ? base36(global.performance.now()) : '') + base36(new Date);
+    // uid should starts with alpha
+    var result = base36(10 + 25 * Math.random());
 
     if (!len)
       len = 16;
 
     while (result.length < len)
-      result = base36(1e12 * Math.random()) + result;
+      result += base36(new Date * Math.random());
 
-    return result.substr(result.length - len, len);
+    return result.substr(0, len);
   }
 
+ /**
+  * Define property (if possible) that show warning on access.
+  * @param {object} object
+  * @param {string} name Property name
+  * @param {*} value
+  * @param {string} warning Warning messsage
+  */
+  var warnPropertyAccess = (function(object, name, value, warning){
+    /** @cut */ // show warnings only in dev mode
+    /** @cut */ try {
+    /** @cut */   if (Object.defineProperty)
+    /** @cut */   {
+    /** @cut */     // IE8 has Object.defineProperty(), but it works for DOM nodes only
+    /** @cut */     var obj = {};
+    /** @cut */     Object.defineProperty(obj, 'foo', {
+    /** @cut */       get: function(){
+    /** @cut */         return true;
+    /** @cut */       }
+    /** @cut */     });
+    /** @cut */
+    /** @cut */     // if no exception and property returns true
+    /** @cut */     // looks like we could use Object.defineProperty()
+    /** @cut */     if (obj.foo === true)
+    /** @cut */     {
+    /** @cut */       return function(object, name, value, warning){
+    /** @cut */         Object.defineProperty(object, name, {
+    /** @cut */           get: function(){
+    /** @cut */             consoleMethods.warn(warning);
+    /** @cut */             return value;
+    /** @cut */           },
+    /** @cut */           set: function(newValue){
+    /** @cut */             value = newValue;
+    /** @cut */           }
+    /** @cut */         });
+    /** @cut */       };
+    /** @cut */     }
+    /** @cut */   }
+    /** @cut */ } catch(e){ }
+
+    return function(){};
+  })();
 
  /**
   * Copy all properties from source (object) to destination object.
@@ -173,7 +220,12 @@
   * @return {object}
   */
   function merge(/* obj1 .. objN */){
-    return arrayFrom(arguments).reduce(extend, {});
+    var result = {};
+
+    for (var i = 0; i < arguments.length; i++)
+      extend(result, arguments[i]);
+
+    return result;
   }
 
  /**
@@ -483,6 +535,9 @@
       result.base = func.base || func;
       result.__extend__ = getter;
 
+      // NOTE: Only object modificators has no modId. Therefore getters with object
+      // modificator are not caching. It avoid storing (by closure) object that
+      // can't be collected by GC.
       if (modId)
       {
         if (!modList)
@@ -498,12 +553,6 @@
 
         // cache new getter
         result[ID] = getterMap.push(result);
-      }
-      else
-      {
-        // only object modificators has no modId
-        // getters with object modificator are not caching
-        // this prevents of storing (in closure) object that can't be released by gabage collectors
       }
 
       return result;
@@ -605,8 +654,8 @@
       iterate(methods, function(methodName){
         methods[methodName] = 'bind' in Function.prototype && typeof console[methodName] == 'function'
           ? Function.prototype.bind.call(console[methodName], console)
-            // ie8 and lower, it's also more safe when Function.prototype.bind defined
-            // by other libraries (like es5-shim)
+            // IE8 and lower solution. It's also more safe when Function.prototype.bind
+            // defines by other libraries (like es5-shim).
           : function(){
               Function.prototype.apply.call(console[methodName], console, arguments);
             };
@@ -688,7 +737,7 @@
       //
       // implement platform specific solution
       //
-      if (global.process && typeof process.nextTick == 'function')
+      if (NODE_ENV && NODE_ENV.process && typeof process.nextTick == 'function')
       {
         // use next tick on node.js
         addToQueue = function(taskId){
@@ -701,14 +750,15 @@
       {
         if (global.MessageChannel)
         {
-          addToQueue = function(taskId){
-            var channel = new global.MessageChannel();
-            var setImmediateHandler = function(){
-              runTask(taskId);
-            };
+          var channel = new global.MessageChannel();
 
-            channel.port1.onmessage = setImmediateHandler;
-            channel.port2.postMessage(''); // broken in Opera if no value
+          channel.port1.onmessage = function(event){
+            var taskId = event.data;
+            runTask(taskId);
+          };
+
+          addToQueue = function(taskId){
+            channel.port2.postMessage(taskId);
           };
         }
         else
@@ -801,8 +851,6 @@
   // ============================================
   // path utils
   //
-
-  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
 
  /**
   * Utilities for handling and transforming file paths. All these functions perform
@@ -1075,6 +1123,19 @@
       {
         // node.js env
         basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
+
+        /** @cut */ if (process.basisjsConfig)
+        /** @cut */ {
+        /** @cut */   config = process.basisjsConfig;
+        /** @cut */   if (typeof config == 'string')
+        /** @cut */   {
+        /** @cut */     try {
+        /** @cut */       config = Function('return{' + config + '}')();
+        /** @cut */     } catch(e) {
+        /** @cut */       /** @cut */ consoleMethods.error('basis-config: basis.js config parse fault: ' + e);
+        /** @cut */     }
+        /** @cut */   }
+        /** @cut */ }
       }
       else
       {
@@ -1121,6 +1182,11 @@
   function processConfig(config, verbose){
     // make a copy of config
     config = slice(config);
+
+    // extend by default settings
+    complete(config, {
+      implicitExt: NODE_ENV ? true : 'warn'  // true, false, 'warn'
+    });
 
     // warn about extProto in basis-config, this option was removed in 1.3.0
     /** @cut */ if ('extProto' in config)
@@ -1190,20 +1256,20 @@
       var filename = module.filename;
       var path = module.path;
 
-      if (path)
-        path = pathUtils.resolve(path);
-      if (filename)
-        filename = pathUtils.resolve(filename);
-
       // if no path but filename
       // let filename equals to 'path/to/file[.ext]', then
       //   path = 'path/to/file'
       //   filename = '../file[.ext]'
       if (filename && !path)
       {
+        filename = pathUtils.resolve(filename);
         path = filename.substr(0, filename.length - pathUtils.extname(filename).length);
         filename = '../' + pathUtils.basename(filename);
       }
+
+      // path should be absolute
+      // at this point path is defined in any case
+      path = pathUtils.resolve(path);
 
       // if no filename but path
       // let path equals to 'path/to/file[.ext]', then
@@ -1772,7 +1838,7 @@
 
       if (!token)
       {
-        token = this.deferredToken = new DeferredToken(this.value);
+        token = this.deferredToken = new DeferredToken(this.get());
         this.attach(token.set, token);
       }
 
@@ -1897,8 +1963,31 @@
       }
   }
 
+  var resolveResourceUri = function(url, baseURI, clr){
+    var rootNS = url.match(/^([a-zA-Z0-9\_\-]+):/);
+
+    if (rootNS)
+    {
+      var namespaceRoot = rootNS[1];
+
+      if (namespaceRoot in nsRootPath == false)
+        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
+
+      url = nsRootPath[namespaceRoot] + pathUtils.normalize('./' + url.substr(rootNS[0].length));
+    }
+    else
+    {
+      url = pathUtils.resolve(baseURI, url);
+    }
+
+    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+    /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+    return url;
+  };
+
   var getResourceContent = function(url, ignoreCache){
-    if (ignoreCache || !resourceContentCache.hasOwnProperty(url))
+    if (ignoreCache || !hasOwnProperty.call(resourceContentCache, url))
     {
       var resourceContent = '';
 
@@ -2084,24 +2173,23 @@
  /**
   * @name resource
   */
-  var getResource = function(resourceUrl){
-    var resource = resources[resourceUrl];
+  var getResource = function(url){
+    var resource = resources[url];
 
-    if (resource)
-      return resource;
+    if (!resource)
+    {
+      var resolvedUrl = resolveResourceUri(url, null, 'basis.resource(\'{url}\')');
 
-    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-    /** @cut */   consoleMethods.warn('Bad usage: basis.resource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-    // try resolve resource path
-    resourceUrl = pathUtils.resolve(resourceUrl);
-    resource = resources[resourceUrl];
+      resource = resources[resolvedUrl] || createResource(resolvedUrl);
+      resources[url] = resource;
+    }
 
     // return resource or create it
-    return resource || createResource(resourceUrl);
+    return resource;
   };
 
   extend(getResource, {
+    resolveURI: resolveResourceUri,
     // onUpdate: function(fn, context){
     //   resourceUpdateNotifier.attach(fn, context);
     // },
@@ -2114,16 +2202,10 @@
       return resource ? resource.isResolved() : false;
     },
     exists: function(resourceUrl){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-      return resources.hasOwnProperty(pathUtils.resolve(resourceUrl));
+      return hasOwnProperty.call(resources, resolveResourceUri(resourceUrl, null, 'basis.resource.exists(\'{url}\')'));
     },
     get: function(resourceUrl){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.get(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-      resourceUrl = pathUtils.resolve(resourceUrl);
+      resourceUrl = resolveResourceUri(resourceUrl, null, 'basis.resource.get(\'{url}\')');
 
       if (!getResource.exists(resourceUrl))
         return null;
@@ -2131,7 +2213,11 @@
       return getResource(resourceUrl);
     },
     getFiles: function(cache){
-      return keys(cache ? resourceContentCache : resources).map(pathUtils.relative);
+      return cache
+        ? keys(resourceContentCache)
+        : keys(resources).filter(function(filename){
+            return !resources[filename].virtual;
+          });
     },
 
     virtual: function(type, content, ownerUrl){
@@ -2188,7 +2274,24 @@
           ns.exports = runScriptInContext(module, filename, content).exports;
 
           if (ns.exports && ns.exports.constructor === Object)
-            complete(ns, ns.exports);
+          {
+            if (config.implicitExt)
+            {
+              /** @cut */ if (config.implicitExt == 'warn')
+              /** @cut */ {
+              /** @cut */   for (var key in ns.exports)
+              /** @cut */     if (key in ns == false && key != 'path')
+              /** @cut */     {
+              /** @cut */       ns[key] = ns.exports[key];
+              /** @cut */       warnPropertyAccess(ns, key, ns.exports[key],
+              /** @cut */         'basis.js: Access to implicit namespace property `' + namespace + '.' + key + '`'
+              /** @cut */       );
+              /** @cut */     }
+              /** @cut */ }
+              /** @cut */ else
+              complete(ns, ns.exports);
+            }
+          }
 
           /** @cut */ ns.filename_ = filename;
           /** @cut */ ns.source_ = content;
@@ -2273,7 +2376,7 @@
 
     // compile function if required
     if (typeof compiledSourceCode != 'function')
-      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require'],
+      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require', 'asset'],
         '"use strict";\n' +
         sourceCode
       );
@@ -2288,14 +2391,14 @@
         global,
         sourceURL,
         baseURL,
-        function(relativePath){
-          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(relativePath))
-          /** @cut */   consoleMethods.warn('Bad usage: resource(\'' + relativePath + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-          return getResource(pathUtils.resolve(baseURL, relativePath));
+        function(path){
+          return getResource(resolveResourceUri(path, baseURL, 'resource(\'{url}\')'));
         },
-        function(relativePath, base){
-          return requireNamespace(relativePath, base || baseURL);
+        function(path, base){
+          return requireNamespace(path, base || baseURL);
+        },
+        function(path){
+          return resolveResourceUri(path, baseURL, 'asset(\'{url}\')');
         }
       );
 
@@ -2371,15 +2474,7 @@
     {
       var parts = namespace.split('.');
       var namespaceRoot = parts.shift();
-      var filename = parts.join('/') + '.js';
-
-      if (namespaceRoot in nsRootPath == false)
-        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
-
-      if (namespaceRoot == namespace)
-        filename = nsRootPath[namespaceRoot].replace(/\/$/, '') + '.js';
-      else
-        filename = nsRootPath[namespaceRoot] + filename;
+      var filename = resolveResourceUri(namespaceRoot + ':' + parts.join('/') + '.js').replace(/\/\.js$/, '.js');
 
       namespace2filename[namespace] = filename;
       filename2namespace[filename] = namespace;
@@ -2418,6 +2513,9 @@
   * @return {basis.Namespace}
   */
   function getNamespace(path){
+    if (hasOwnProperty.call(namespaces, path))
+      return namespaces[path];
+
     path = path.split('.');
 
     var rootNs = getRootNamespace(path[0]);
@@ -2425,16 +2523,31 @@
 
     for (var i = 1, name; name = path[i]; i++)
     {
-      if (!cursor[name])
-      {
-        var nspath = path.slice(0, i + 1).join('.');
+      var nspath = path.slice(0, i + 1).join('.');
 
+      if (!hasOwnProperty.call(rootNs.namespaces_, nspath))
+      {
         // create new namespace
-        cursor[name] = new Namespace(nspath);
-        rootNs.namespaces_[nspath] = cursor[name];
+        var namespace = new Namespace(nspath);
+
+        // cursor[name] = namespace;
+        if (config.implicitExt)
+        {
+          cursor[name] = namespace;
+
+          /** @cut */ if (config.implicitExt == 'warn')
+          /** @cut */ {
+          /** @cut */   cursor[name] = namespace;
+          /** @cut */   warnPropertyAccess(cursor, name, namespace,
+          /** @cut */     'basis.js: Access to implicit namespace `' + nspath + '`'
+          /** @cut */   );
+          /** @cut */ }
+        }
+
+        rootNs.namespaces_[nspath] = namespace;
       }
 
-      cursor = cursor[name];
+      cursor = rootNs.namespaces_[nspath];
     }
 
     namespaces[path.join('.')] = cursor;
@@ -2448,7 +2561,7 @@
   * @param {string} dirname
   * @name require
   */
-  var requireNamespace = (function(){
+  var requireNamespace = (function(filename, dirname){
     if (NODE_ENV)
     {
       var moduleProto = module.constructor.prototype;
@@ -2483,7 +2596,7 @@
         }
         else
         {
-          filename = pathUtils.resolve(dirname, filename);
+          filename = resolveResourceUri(filename, dirname);
           return require(filename);
         }
       };
@@ -2498,11 +2611,8 @@
         }
         else
         {
-          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
-          /** @cut */   consoleMethods.warn('Bad usage: require(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
           // regular filename
-          filename = pathUtils.resolve(dirname, filename);
+          filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
         }
 
         return getResource(filename).fetch();
@@ -2519,11 +2629,8 @@
     }
     else
     {
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.patch(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
       // regular filename
-      filename = pathUtils.resolve(filename);
+      filename = resolveResourceUri(filename, null, 'basis.patch(\'{url}\')');
     }
 
     if (!resourcePatch[filename])
@@ -2534,7 +2641,10 @@
     // if resource exists and resolved -> apply patch
     var resource = getResource.get(filename);
     if (resource && resource.isResolved())
+    {
+      /** @cut */ consoleMethods.info('Apply patch for ' + resource.url);
       patchFn(resource.get(), resource.url);
+    }
   }
 
 
@@ -3062,33 +3172,40 @@
   * @param {*} context Context for handler
   */
   var ready = (function(){
-    // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig/Roman Dvornov
+    var eventFired = !document || document.readyState == 'complete';
+    var readyHandlers = [];
+    var timer;
 
-    function isReady(){
-      return document.readyState == 'complete' && !!document.body;
+    function processReadyHandler(){
+      var handler;
+
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
+
+      // if handlers queue has more than one handler, set emergency timer
+      // make sure we continue to process the queue on exception
+      // helps to avoid try/catch
+      if (readyHandlers.length > 1)
+        timer = setImmediate(processReadyHandler);
+
+      // process handler queue
+      while (handler = readyHandlers.shift())
+        handler[0].call(handler[1]);
+
+      // remove emergency timer as all handlers are process
+      timer = clearImmediate(timer);
     }
 
-    var fired = !document || isReady();
-    var deferredHandler;
-
-    function runReadyHandler(handler){
-      handler.callback.call(handler.context);
+    function fireHandlers(e){
+      if (!eventFired++)
+        processReadyHandler();
     }
 
-    function fireHandlers(){
-      if (isReady())
-        if (!fired++)
-          while (deferredHandler)
-          {
-            runReadyHandler(deferredHandler);
-            deferredHandler = deferredHandler.next;
-          }
-    }
-
-    // The DOM ready check for Internet Explorer
+    // the DOM ready check for Internet Explorer
     function doScrollCheck(){
       try {
-        // If IE is used, use the trick by Diego Perini
+        // use the trick by Diego Perini
         // http://javascript.nwbox.com/IEContentLoaded/
         document.documentElement.doScroll('left');
         fireHandlers();
@@ -3097,14 +3214,14 @@
       }
     }
 
-    if (!fired)
+    if (!eventFired)
     {
       if (document.addEventListener)
       {
         // use the real event for browsers that support it (all modern browsers support it)
         document.addEventListener('DOMContentLoaded', fireHandlers, false);
 
-        // A fallback to window.onload, that will always work
+        // a fallback to window.onload, that will always work
         global.addEventListener('load', fireHandlers, false);
       }
       else
@@ -3113,34 +3230,26 @@
         // maybe late but safe also for iframes
         document.attachEvent('onreadystatechange', fireHandlers);
 
-        // A fallback to window.onload, that will always work
+        // a fallback to window.onload, that will always work
         global.attachEvent('onload', fireHandlers);
 
-        // If IE and not a frame
-        // continually check to see if the document is ready
+        // if not a frame continually check to see if the document is ready
         try {
           if (!global.frameElement && document.documentElement.doScroll)
             doScrollCheck();
-        } catch(e) {
-        }
+        } catch(e) {}
       }
     }
 
     // return attach function
     return function(callback, context){
-      if (!fired)
-      {
-        deferredHandler = {
-          callback: callback,
-          context: context,
-          next: deferredHandler
-        };
-      }
-      else
-        runReadyHandler({
-          callback: callback,
-          context: context
-        });
+      // if no ready handlers yet and no event fired,
+      // set timer to run handlers async
+      if (!readyHandlers.length && eventFired && !timer)
+        timer = setImmediate(processReadyHandler);
+
+      // add handler to queue
+      readyHandlers.push([callback, context]);
     };
   })();
 
@@ -3485,6 +3594,11 @@
         complete({ noConflict: true }, config)
       );
     },
+    dev: (new Namespace('basis.dev'))
+      .extend(consoleMethods)
+      .extend({
+        warnPropertyAccess: warnPropertyAccess
+      }),
 
     // modularity
     resolveNSFilename: resolveNSFilename,
@@ -3492,8 +3606,8 @@
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
-    asset: function(url){   // NOTE: don't replace for $self, builder attach
-      return url;           // special handler for this function
+    asset: function(path){
+      return resolveResourceUri(path, null, 'basis.asset(\'{url}\')');
     },
 
     // timers
@@ -3572,15 +3686,12 @@
     }
   });
 
-  // add dev namespace, host for special functionality in development environment
-  getNamespace('basis.dev').extend(consoleMethods);
-
 
   //
   // auto load section
   //
 
-  if (config.autoload)
+  if (config.autoload && !NODE_ENV)
     config.autoload.forEach(function(name){
       requireNamespace(name);
     });

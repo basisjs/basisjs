@@ -1,10 +1,10 @@
-basis.require('basis.ui');
-basis.require('basis.ui.button');
-
-var viewPrototype = resource('./views/prototype/prototype.js').fetch();
+var Button = require('basis.ui.button').Button;
+var Node = require('basis.ui').Node;
+var getFunctionDescription = require('app.core').getFunctionDescription;
+var viewPrototype = require('./views/prototype/prototype.js');
 var prototypeMapPopup = resource('./prototypeMapPopup.js');
 
-module.exports = new basis.ui.Node({
+module.exports = new Node({
   template: resource('./template/targetHeader.tmpl'),
   binding: {
     kind: 'data:',
@@ -14,7 +14,7 @@ module.exports = new basis.ui.Node({
       getter: function(node){
         return (node.data.title || '') +
           (/^(method|function|class)$/.test(node.data.kind)
-            ? '(' + app.core.getFunctionDescription(node.data.obj).args + ')'
+            ? '(' + getFunctionDescription(node.data.obj).args + ')'
             : ''
           );
       }
@@ -27,7 +27,7 @@ module.exports = new basis.ui.Node({
     }
   },
 
-  childClass: basis.ui.button.Button.subclass({
+  childClass: Button.subclass({
     binding: {
       caption: function(button){
         return button.delegate.viewHeader;

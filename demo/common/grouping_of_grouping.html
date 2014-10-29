@@ -407,7 +407,8 @@
 
     var metroList = new basis.ui.Node({
       container: document.getElementById('MetroDemo-Container'),
-      template: '<div id="MetroDemo"/>',
+      template:
+        '<div id="MetroDemo"/>',
 
       sorting: 'data.name',
       childClass: {
@@ -425,7 +426,7 @@
       childNodes: metro.map(function(item){
         return {
           data: item
-        }
+        };
       }),
 
       grouping: {

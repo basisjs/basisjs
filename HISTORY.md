@@ -1,3 +1,28 @@
+## 1.3.3 (October 12, 2014)
+
+- FIX: exception on config processing when `Array#reduce` is not supported by browser
+- FIX: exception in `basis.entity` on using `Object.defineProperty()` in IE8 (dev-mode only)
+- FIX: `basis.ui.calendar` infinite loop in some cases by mistake in local binary search function
+- FIX: RegExp for url validator in `basis.ui.field`
+
+## 1.3.2 (August 5, 2014)
+
+- FIX: remove index handler from items on dataset destroy in `basis.data.index`
+- FIX: resolving by entity type wrapper in `basis.entity` when both arguments are equal (e.g. `Type(1, 1)` wrongly returns `1` instead of `Type` instance)
+- FIX: make `basis.dragdrop` more stable when side choosing
+
+## 1.3.1 (July 19, 2014)
+
+- FIX: remove wrong warning in `basis.data.dataset.Merge#setSources()`
+- FIX: exception in `basis.dom.resize.remove()` when iframe sensor used
+- FIX: `basis.template` include stack issue
+- FIX: `basis.net.Transport#poolLimit` request duplicate issue
+- FIX: memory leaks when `MessageChannel` polyfill for `basis.setImmediate()`
+- FIX: module `path` and `filename` resolving in `basis.processConfig`
+- FIX: `basis.genUID()` don't rely on `performance.now()`
+- API: `basis.genUID()` is return UID that always srart with alpha
+- automate library publication
+
 ## 1.3.0 (July 13, 2014)
 
 ### Core

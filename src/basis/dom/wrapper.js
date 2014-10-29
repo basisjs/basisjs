@@ -1,8 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-
-
  /**
   * This namespace contains base classes and functions for components of Basis framework.
   *
@@ -32,17 +28,20 @@
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
   var oneFunctionProperty = Class.oneFunctionProperty;
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var events = basisEvent.events;
+  var basisData = require('basis.data');
+  var resolveDataset = basisData.resolveDataset;
 
-  var SUBSCRIPTION = basis.data.SUBSCRIPTION;
-  var STATE = basis.data.STATE;
+  var SUBSCRIPTION = basisData.SUBSCRIPTION;
+  var STATE = basisData.STATE;
 
-  var AbstractData = basis.data.AbstractData;
-  var DataObject = basis.data.Object;
-  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
-  var Dataset = basis.data.Dataset;
-  var DatasetWrapper = basis.data.DatasetWrapper;
+  var AbstractData = basisData.AbstractData;
+  var DataObject = basisData.Object;
+  var ReadOnlyDataset = basisData.ReadOnlyDataset;
+  var Dataset = basisData.Dataset;
+  var DatasetWrapper = basisData.DatasetWrapper;
 
 
   //
@@ -2049,7 +2048,7 @@
         throw EXCEPTION_NO_CHILDCLASS;
 
       // dataset
-      dataSource = basis.data.resolveDataset(this, this.setDataSource, dataSource, 'dataSourceAdapter_');
+      dataSource = resolveDataset(this, this.setDataSource, dataSource, 'dataSourceAdapter_');
 
       if (this.dataSource !== dataSource)
       {
@@ -2074,7 +2073,7 @@
             for (var i = 0, child; child = this.childNodes[i]; i++)
               unlockDataSourceItemNode(child);
 
-          this.clear();
+          this.clear(!this.destroyDataSourceMember);
         }
 
         this.dataSource = dataSource;

@@ -1,0 +1,55 @@
+.item
+{
+  width: 140px;
+  display: inline-block;
+  vertical-align: top;
+  text-align: center;
+  cursor: pointer;
+  height: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.link
+{
+  padding-top: 4px;
+  border: 1px solid #FAF8EC;
+  display: block;
+  text-decoration: none;
+  color: #333;
+  text-shadow: 0px 1px 1px rgba(0,0,0,0);
+  -webkit-transition: text-shadow .33s;
+  -moz-transition: text-shadow .33s;
+  -o-transition: text-shadow .33s;
+  transition: text-shadow .33s;
+}
+.image
+{
+  margin: 5px 5px 0 5px;
+  border: 1px solid #E0E0E0;
+  background: white;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0);
+  -webkit-transition: opacity .33s, border-color .33s, box-shadow .33s;
+  -moz-transition: opacity .33s, border-color .33s, box-shadow .33s;
+  -o-transition: opacity .33s, border-color .33s, box-shadow .33s;
+  transition: opacity .33s, border-color .33s, box-shadow .33s;
+  opacity: .85;
+}
+.link:hover
+{
+  background: #F2ECC9;
+  text-shadow: 0px 1px 1px rgba(0,0,0,.12);
+}
+.link:hover .image
+{
+  opacity: 1;
+  border-color: #C0C0C0;
+  box-shadow: 1px 1px 3px rgba(0,0,0,.15);
+}
+.title
+{
+  display: block;
+  padding: 7px 10px 10px;
+  text-align: center;
+  font-size: 85%;
+}

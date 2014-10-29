@@ -1,21 +1,32 @@
 
-  basis.require('basis.ua');
-  basis.require('basis.net');
-  basis.require('basis.data');
-
+ /**
+  * @namespace basis.net.ajax
+  */
 
   var namespace = this.path;
 
-  var ua = basis.ua;
+
+  //
+  // import names
+  //
+
   var escapeValue = global.encodeURIComponent;
   var FormData = global.FormData;
   var extend = basis.object.extend;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
-  var createTransportEvent = basis.net.createTransportEvent;
-  var createRequestEvent = basis.net.createRequestEvent;
-  var AbstractRequest = basis.net.AbstractRequest;
-  var AbstractTransport = basis.net.AbstractTransport;
+  var ua = require('basis.ua');
+
+  var basisNet = require('basis.net');
+  var createTransportEvent = basisNet.createTransportEvent;
+  var createRequestEvent = basisNet.createRequestEvent;
+  var AbstractRequest = basisNet.AbstractRequest;
+  var AbstractTransport = basisNet.AbstractTransport;
+
+
+  //
+  // main part
+  //
 
   /** @const */ var STATE_UNSENT = 0;
   /** @const */ var STATE_OPENED = 1;
@@ -23,7 +34,7 @@
   /** @const */ var STATE_LOADING = 3;
   /** @const */ var STATE_DONE = 4;
 
-  var STATE = basis.data.STATE;
+  var STATE = require('basis.data').STATE;
   var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.split(' ');
   var IS_POST_REGEXP = /POST/i;
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
@@ -269,11 +280,15 @@
       return this.getResponseError();
     },
     getResponseError: function(){
+      var xhr = this.xhr;
+      var msg = !this.responseType
+                  ? xhr.responseText
+                  : xhr.response || xhr.statusText || 'Error';
+
       return {
         code: 'SERVER_ERROR',
-        msg: !this.responseType
-          ? this.xhr.responseText
-          : this.xhr.response || this.xhr.statusText || 'Error'
+        msg: msg,
+        response: this.getResponseData()
       };
     },
 

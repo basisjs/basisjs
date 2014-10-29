@@ -1,11 +1,4 @@
 
-  basis.require('basis.dom');
-  basis.require('basis.dom.resize');
-  basis.require('basis.cssom');
-  basis.require('basis.layout');
-  basis.require('basis.ui.table');
-
-
  /**
   * @see ./demo/defile/table.html
   * @namespace basis.ui.scrolltable
@@ -19,15 +12,13 @@
   //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
-  var cssom = basis.cssom;
-  var layout = basis.layout;
-
   var createArray = basis.array.create;
-  var createElement = basis.dom.createElement;
-  var listenResize = basis.dom.resize.add;
-
-  var Table = basis.ui.table.Table;
+  var DOM = require('basis.dom');
+  var createElement = DOM.createElement;
+  var cssom = require('basis.cssom');
+  var layout = require('basis.layout');
+  var listenResize = require('basis.dom.resize').add;
+  var Table = require('basis.ui.table').Table;
 
 
   //

@@ -1,8 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-
-
  /**
   * Namespace overview:
   * - Classes:
@@ -33,20 +29,30 @@
 
   var extend = basis.object.extend;
   var values = basis.object.values;
+  var objectSlice = basis.object.slice;
+  var arrayAdd = basis.array.add;
+  var arrayRemove = basis.array.remove;
   var getter = basis.getter;
   var $self = basis.fn.$self;
   var $true = basis.fn.$true;
   var $false = basis.fn.$false;
   var $undef = basis.fn.$undef;
   var arrayFrom = basis.array.from;
-  var createEvent = basis.event.create;
 
-  var SUBSCRIPTION = basis.data.SUBSCRIPTION;
-  var DataObject = basis.data.Object;
-  var KeyObjectMap = basis.data.KeyObjectMap;
-  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
-  var Dataset = basis.data.Dataset;
-  var DatasetWrapper = basis.data.DatasetWrapper;
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var createEventHandler = basisEvent.createHandler;
+  var Emitter = basisEvent.Emitter;
+
+  var basisData = require('basis.data');
+  var SUBSCRIPTION = basisData.SUBSCRIPTION;
+  var Value = basisData.Value;
+  var DataObject = basisData.Object;
+  var KeyObjectMap = basisData.KeyObjectMap;
+  var ReadOnlyDataset = basisData.ReadOnlyDataset;
+  var Dataset = basisData.Dataset;
+  var DatasetWrapper = basisData.DatasetWrapper;
+  var resolveDataset = basisData.resolveDataset;
   var setAccumulateState = Dataset.setAccumulateState;
 
 
@@ -123,7 +129,7 @@
       if (typeof events != 'string' && !Array.isArray(events))
         events = null;
 
-      return extend(basis.event.createHandler(events, fn), {
+      return extend(createEventHandler(events, fn), {
         __extend__: createRuleEventsExtend
       });
     })(events);
@@ -383,7 +389,7 @@
     * @private
     */
     removeDataset_: function(dataset){
-      basis.array.remove(this.sources, dataset);
+      arrayRemove(this.sources, dataset);
 
       // remove event listeners from dataset
       if (this.listen.source)
@@ -404,7 +410,7 @@
       // this -> sourceInfo
       var merge = this.owner;
       var sourcesMap_ = merge.sourcesMap_;
-      var dataset = basis.data.resolveDataset(this, merge.updateDataset_, source, 'adapter');
+      var dataset = resolveDataset(this, merge.updateDataset_, source, 'adapter');
       var inserted;
       var deleted;
       var delta;
@@ -447,14 +453,14 @@
         {
           if (delta.inserted)
             delta.inserted.forEach(function(source){
-              if (!basis.array.remove(this.deleted, source))
-                basis.array.add(this.inserted, source);
+              if (!arrayRemove(this.deleted, source))
+                arrayAdd(this.inserted, source);
             }, setSourcesTransaction);
 
           if (delta.deleted)
             delta.deleted.forEach(function(source){
-              if (!basis.array.remove(this.inserted, source))
-                basis.array.add(this.deleted, source);
+              if (!arrayRemove(this.inserted, source))
+                arrayAdd(this.deleted, source);
             }, setSourcesTransaction);
         }
         else
@@ -504,7 +510,7 @@
       this.sourceValues_.push(sourceInfo);
       this.updateDataset_.call(sourceInfo, source);
 
-      if (this.listen.sourceValue && source instanceof basis.event.Emitter)
+      if (this.listen.sourceValue && source instanceof Emitter)
         source.addHandler(this.listen.sourceValue, this);
     },
 
@@ -517,7 +523,7 @@
       for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
         if (sourceInfo.source === source)
         {
-          if (this.listen.sourceValue && source instanceof basis.event.Emitter)
+          if (this.listen.sourceValue && source instanceof Emitter)
             source.removeHandler(this.listen.sourceValue, this);
 
           this.updateDataset_.call(sourceInfo, null);
@@ -564,14 +570,8 @@
       for (var i = 0; i < sources.length; i++)
       {
         var source = sources[i];
-        if (!basis.array.remove(exists, source))
-        {
+        if (!arrayRemove(exists, source))
           this.addSource(source);
-        }
-        else
-        {
-          /** @cut */ basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of ReadOnlyDataset', source);
-        }
       }
 
       exists.forEach(this.removeSource, this);
@@ -770,8 +770,8 @@
       var delta;
       var operandsChanged = false;
 
-      minuend = basis.data.resolveDataset(this, this.setMinuend, minuend, 'minuendAdapter_');
-      subtrahend = basis.data.resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendAdapter_');
+      minuend = resolveDataset(this, this.setMinuend, minuend, 'minuendAdapter_');
+      subtrahend = resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendAdapter_');
 
       var oldMinuend = this.minuend;
       var oldSubtrahend = this.subtrahend;
@@ -952,7 +952,7 @@
     * @param {basis.data.ReadOnlyDataset} source
     */
     setSource: function(source){
-      source = basis.data.resolveDataset(this, this.setSource, source, 'sourceAdapter_');
+      source = resolveDataset(this, this.setSource, source, 'sourceAdapter_');
 
       // sync with source
       if (this.source !== source)
@@ -1680,6 +1680,16 @@
     index_: null,
 
    /**
+    * @type {object}
+    */
+    left_: null,
+
+   /**
+    * @type {object}
+    */
+    right_: null,
+
+   /**
     * Direction of range.
     * @type {boolean}
     * @readonly
@@ -1818,7 +1828,7 @@
         end = start + this.limit;
       }
 
-      var curSet = basis.object.slice(this.members_);
+      var curSet = objectSlice(this.members_);
       var newSet = this.index_.slice(Math.max(0, start), Math.max(0, end));
       var inserted = [];
       var delta;
@@ -1839,10 +1849,91 @@
       for (var objectId in curSet)
         delete this.members_[objectId];
 
+      // update left tokens
+      if (this.left_)
+        for (var offset in this.left_)
+        {
+          var item = this.index_[this.orderDesc ? end + Number(offset) - 1 : start - Number(offset)];
+          this.left_[offset].set(item ? item.object : null);
+        }
+
+      // update right tokens
+      if (this.right_)
+        for (var offset in this.right_)
+        {
+          var item = this.index_[this.orderDesc ? start - Number(offset) : end + Number(offset) - 1];
+          this.right_[offset].set(item ? item.object : null);
+        }
+
+      // emit event if any delta
       if (delta = getDelta(inserted, values(curSet)))
         this.emit_itemsChanged(delta);
 
       return delta;
+    },
+
+   /**
+    * Returns a Value that refer to [start + offset] item in slice (ordered vector).
+    * @param {number} offset
+    * @return {basis.data.Value}
+    */
+    left: function(offset){
+      offset = parseInt(offset, 10) || 0;
+
+      if (!this.left_)
+        this.left_ = {};
+
+      var value = this.left_[offset];
+      if (!value)
+      {
+        var start = this.offset;
+        var end = start + this.limit;
+
+        if (this.orderDesc)
+        {
+          start = this.index_.length - end;
+          end = start + this.limit;
+        }
+
+        var item = this.index_[this.orderDesc ? end + offset - 1 : start - offset];
+        value = this.left_[offset] = new Value({
+          value: item ? item.object : null
+        });
+      }
+
+      return value;
+    },
+
+   /**
+    * Returns a Value that refer to [start + offset] item in slice (ordered vector).
+    * @param {number} offset
+    * @return {basis.data.Value}
+    */
+    right: function(offset){
+      offset = parseInt(offset, 10) || 0;
+
+      if (!this.right_)
+        this.right_ = {};
+
+      var value = this.right_[offset];
+      if (!value)
+      {
+        var start = this.offset;
+        var end = start + this.limit;
+
+        if (this.orderDesc)
+        {
+          start = this.index_.length - end;
+          end = start + this.limit;
+        }
+
+        var item = this.index_[this.orderDesc ? start - offset : end + offset - 1];
+        value = this.right_[offset] = new Value({
+          value: item ? item.object : null
+        });
+      }
+
+      return value;
     },
 
    /**
@@ -1851,6 +1942,20 @@
     destroy: function(){
       // inherit
       SourceDataset.prototype.destroy.call(this);
+
+      if (this.left_)
+      {
+        for (var offset in this.left_)
+          this.left_[offset].destroy();
+        this.left_ = null;
+      }
+
+      if (this.right_)
+      {
+        for (var offset in this.right_)
+          this.right_[offset].destroy();
+        this.right_ = null;
+      }
 
       // destroy index
       this.index_ = null;

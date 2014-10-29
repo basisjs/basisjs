@@ -1,7 +1,4 @@
 
-  basis.require('basis.ui');
-
-
  /**
   * @see ./demo/defile/tabs.html
   * @namespace basis.ui.tabs
@@ -14,7 +11,10 @@
   // import names
   //
 
-  var UINode = basis.ui.Node;
+  var Class = basis.Class;
+  var getter = basis.getter;
+  var Node = require('basis.ui').Node;
+  var ShadowNodeList = require('basis.ui').ShadowNodeList;
 
 
   //
@@ -34,17 +34,21 @@
  /**
   * @class
   */
-  var AbstractTabsControl = UINode.subclass({
+<<<<<<< HEAD
+  var AbstractTabsControl = Node.subclass({
+=======
+  var AbstractTabsControl = Class(Node, {
+>>>>>>> origin/1.4.0
     className: namespace + '.AbstractTabsControl',
 
     selection: true,
     autoSelectChild: true,
 
-    childClass: UINode,
+    childClass: Node,
 
     emit_childNodesModified: function(delta){
       findAndSelectActiveNode.call(this);
-      UINode.prototype.emit_childNodesModified.call(this, delta);
+      Node.prototype.emit_childNodesModified.call(this, delta);
     },
 
     listen: {
@@ -77,7 +81,11 @@
  /**
   * @class
   */
-  var Tab = UINode.subclass({
+<<<<<<< HEAD
+  var Tab = Node.subclass({
+=======
+  var Tab = Class(Node, {
+>>>>>>> origin/1.4.0
     className: namespace + '.Tab',
 
     template: module.template('Tab'),
@@ -98,7 +106,7 @@
       if (this.unselectDisabled)
         this.unselect();
 
-      UINode.prototype.emit_disable.call(this);
+      Node.prototype.emit_disable.call(this);
     }
   });
 
@@ -128,7 +136,11 @@
  /**
   * @class
   */
-  var Page = UINode.subclass({
+<<<<<<< HEAD
+  var Page = Node.subclass({
+=======
+  var Page = Class(Node, {
+>>>>>>> origin/1.4.0
     className: namespace + '.Page',
 
     template: module.template('Page')
@@ -155,7 +167,7 @@
 
     template: module.template('TabSheet'),
 
-    childClass: UINode
+    childClass: Node
   });
 
 
@@ -170,7 +182,7 @@
     childClass: TabSheet,
 
     satellite: {
-      shadowPages: basis.ui.ShadowNodeList.subclass({
+      shadowPages: ShadowNodeList.subclass({
         className: namespace + '.ShadowPages',
         getChildNodesElement: function(host){
           return host.tmpl.pagesElement;

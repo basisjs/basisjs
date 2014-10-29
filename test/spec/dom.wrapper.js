@@ -2682,7 +2682,7 @@ module.exports = {
           }
         },
         {
-          name: 'dataSource via Value.factory and subscription on node destroy',
+          name: 'destroy active node with dataSource should not produce warnings',
           test: function(){
             var dataset = new basis.data.Dataset;
             var node = new Node({
@@ -2707,6 +2707,189 @@ module.exports = {
 
             assert(warning === false);
           }
+        },
+        {
+          name: 'destroyDataSourceMember',
+          test: [
+            {
+              name: 'should be true by default',
+              test: function(){
+                var node = new Node();
+
+                assert(node.destroyDataSourceMember === true);
+              }
+            },
+            {
+              name: 'if true, child nodes produced by dataSource should be destroyed when remove from dataSource',
+              test: function(){
+                var objectDestroyCount = 0;
+                var nodeDestroyCount = 0;
+                var dataset = new basis.data.Dataset({
+                  items: basis.array.create(3, function(){
+                    return new basis.data.Object({
+                      handler: {
+                        destroy: function(){
+                          objectDestroyCount++;
+                        }
+                      }
+                    });
+                  })
+                });
+                var node = new Node({
+                  dataSource: dataset,
+                  childClass: Node.subclass({
+                    handler: {
+                      destroy: function(){
+                        nodeDestroyCount++;
+                      }
+                    }
+                  }),
+                  childFactory: function(config){
+                    return new this.childClass(config);
+                  }
+                });
+
+                assert(dataset.itemCount === 3);
+                assert(objectDestroyCount === 0);
+                assert(node.childNodes.length === 3);
+                assert(nodeDestroyCount === 0);
+
+                dataset.clear();
+                assert(dataset.itemCount === 0);
+                assert(objectDestroyCount === 0);
+                assert(node.childNodes.length === 0);
+                assert(nodeDestroyCount === 3);
+              }
+            },
+            {
+              name: 'if true, child nodes produced by dataSource should be destroyed on dataSource change',
+              test: function(){
+                var objectDestroyCount = 0;
+                var nodeDestroyCount = 0;
+                var dataset = new basis.data.Dataset({
+                  items: basis.array.create(3, function(){
+                    return new basis.data.Object({
+                      handler: {
+                        destroy: function(){
+                          objectDestroyCount++;
+                        }
+                      }
+                    });
+                  })
+                });
+                var node = new Node({
+                  dataSource: dataset,
+                  childClass: Node.subclass({
+                    handler: {
+                      destroy: function(){
+                        nodeDestroyCount++;
+                      }
+                    }
+                  }),
+                  childFactory: function(config){
+                    return new this.childClass(config);
+                  }
+                });
+
+                assert(dataset.itemCount === 3);
+                assert(objectDestroyCount === 0);
+                assert(node.childNodes.length === 3);
+                assert(nodeDestroyCount === 0);
+
+                node.setDataSource();
+                assert(dataset.itemCount === 3);
+                assert(objectDestroyCount === 0);
+                assert(node.childNodes.length === 0);
+                assert(nodeDestroyCount === 3);
+              }
+            },
+            {
+              name: 'if false, child nodes produced by dataSource should not be destroyed when remove from dataSource',
+              test: function(){
+                var objectDestroyCount = 0;
+                var nodeDestroyCount = 0;
+                var dataset = new basis.data.Dataset({
+                  items: basis.array.create(3, function(){
+                    return new basis.data.Object({
+                      handler: {
+                        destroy: function(){
+                          objectDestroyCount++;
+                        }
+                      }
+                    });
+                  })
+                });
+                var node = new Node({
+                  destroyDataSourceMember: false,
+                  dataSource: dataset,
+                  childClass: Node.subclass({
+                    handler: {
+                      destroy: function(){
+                        nodeDestroyCount++;
+                      }
+                    }
+                  }),
+                  childFactory: function(config){
+                    return new this.childClass(config);
+                  }
+                });
+
+                assert(dataset.itemCount === 3);
+                assert(objectDestroyCount === 0);
+                assert(node.childNodes.length === 3);
+                assert(nodeDestroyCount === 0);
+
+                dataset.clear();
+                assert(dataset.itemCount === 0);
+                assert(objectDestroyCount === 0);
+                assert(node.childNodes.length === 0);
+                assert(nodeDestroyCount === 0);
+              }
+            },
+            {
+              name: 'if false, child nodes produced by dataSource should not be destroyed on dataSource change',
+              test: function(){
+                var objectDestroyCount = 0;
+                var nodeDestroyCount = 0;
+                var dataset = new basis.data.Dataset({
+                  items: basis.array.create(3, function(){
+                    return new basis.data.Object({
+                      handler: {
+                        destroy: function(){
+                          objectDestroyCount++;
+                        }
+                      }
+                    });
+                  })
+                });
+                var node = new Node({
+                  destroyDataSourceMember: false,
+                  dataSource: dataset,
+                  childClass: Node.subclass({
+                    handler: {
+                      destroy: function(){
+                        nodeDestroyCount++;
+                      }
+                    }
+                  }),
+                  childFactory: function(config){
+                    return new this.childClass(config);
+                  }
+                });
+
+                assert(dataset.itemCount === 3);
+                assert(objectDestroyCount === 0);
+                assert(node.childNodes.length === 3);
+                assert(nodeDestroyCount === 0);
+
+                node.setDataSource();
+                assert(dataset.itemCount === 3);
+                assert(objectDestroyCount === 0);
+                assert(node.childNodes.length === 0);
+                assert(nodeDestroyCount === 0);
+              }
+            }
+          ]
         }
       ]
     },

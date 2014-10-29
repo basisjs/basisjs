@@ -1,7 +1,4 @@
 
-  basis.require('basis.event');
-
-
  /**
   * This namespace contains base classes and functions for data maintain.
   *
@@ -36,9 +33,11 @@
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
-  var Emitter = basis.event.Emitter;
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
+  var basisEvent = require('basis.event');
+  var Emitter = basisEvent.Emitter;
+  var createEvent = basisEvent.create;
+  var createEventHandler = basisEvent.createHandler;
+  var events = basisEvent.events;
 
 
   //
@@ -743,7 +742,7 @@
         fn = $self;
 
       var hostValue = this;
-      var handler = basis.event.createHandler(events, function(object){
+      var handler = createEventHandler(events, function(object){
         this.set(fn(object, hostValue.value)); // `this` is a token
       });
       var fnId = fn[GETTER_ID] || String(fn);
@@ -781,7 +780,7 @@
         });
 
         getComputeToken = computeFunctions[getComputeTokenId] = function(object){
-          /** @cut */ if (object instanceof basis.event.Emitter == false)
+          /** @cut */ if (object instanceof Emitter == false)
           /** @cut */   basis.dev.warn('basis.data.Value#compute: object should be an instanceof basis.event.Emitter');
 
           var objectId = object.basisObjectId;
@@ -984,7 +983,7 @@
       if (!getter)
         getter = $self;
 
-      var handler = basis.event.createHandler(events, valueFromSetProxy);
+      var handler = createEventHandler(events, valueFromSetProxy);
       var getterId = getter[GETTER_ID] || String(getter);
       var id = handler.events.concat(getterId, obj.basisObjectId).join('_');
 
@@ -1765,10 +1764,11 @@
         }
 
         this.itemCount = dataset ? dataset.itemCount : 0;
+        this.dataset = dataset;
+
         if (delta = getDatasetDelta(oldDataset, dataset))
           this.emit_itemsChanged(delta);
 
-        this.dataset = dataset;
         this.emit_datasetChanged(oldDataset);
       }
     },
@@ -1785,6 +1785,13 @@
     */
     getItems: function(){
       return this.dataset ? this.dataset.getItems() : [];
+    },
+
+   /**
+    * Proxy method for contained dataset.
+    */
+    getValues: function(getter){
+      return this.dataset ? this.dataset.getValues(getter) : [];
     },
 
    /**
@@ -2414,6 +2421,53 @@
     return source;
   }
 
+ /**
+  * Resolve value from source value.
+  */
+  function resolveValue(context, fn, source, property){
+    var oldAdapter = context[property] || null;
+    var newAdapter = null;
+
+    // functions can be used as property value on instance create,
+    // it makes possible to use factories (i.e. Value.factory())
+    if (typeof source == 'function')
+      source = source.call(context, context);
+
+    if (source)
+    {
+      if (source instanceof Value)
+      {
+        newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+        source = resolveValue(newAdapter, newAdapter.proxy, source.value, 'next');
+      }
+      else
+        if (source.bindingBridge)
+        {
+          newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+          source = resolveValue(newAdapter, newAdapter.proxy, source.value, 'next');
+        }
+    }
+
+    if (property && oldAdapter !== newAdapter)
+    {
+      if (oldAdapter)
+      {
+        oldAdapter.detach();
+
+        // destroy nested adapter if exists
+        if (oldAdapter.next)
+          resolveValue(oldAdapter, null, null, 'next');
+      }
+
+      if (newAdapter)
+        newAdapter.attach();
+
+      context[property] = newAdapter;
+    }
+
+    return source;
+  }
+
 
   //
   // Accumulate dataset changes
@@ -2644,6 +2698,7 @@
     ResolveAdapter: ResolveAdapter,
     resolveDataset: resolveDataset,
     resolveObject: resolveObject,
+    resolveValue: resolveValue,
 
     wrapData: wrapData,
     wrapObject: wrapObject,

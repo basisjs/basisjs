@@ -1,8 +1,4 @@
 
-  basis.require('basis.ui');
-  basis.require('basis.ui.popup');
-
-
  /**
   * @namespace basis.ui.menu
   */
@@ -17,11 +13,13 @@
   var Class = basis.Class;
   var getter = basis.getter;
 
-  var DIR = basis.ui.popup.DIR;
-  var Popup = basis.ui.popup.Popup;
-  var UINode = basis.ui.Node;
-  var UIPartitionNode = basis.ui.PartitionNode;
-  var UIGroupingNode = basis.ui.GroupingNode;
+  var basisUi = require('basis.ui');
+  var UINode = basisUi.Node;
+  var UIPartitionNode = basisUi.PartitionNode;
+  var UIGroupingNode = basisUi.GroupingNode;
+  var basisUiPopup = require('basis.ui.popup');
+  var DIR = basisUiPopup.DIR;
+  var Popup = basisUiPopup.Popup;
 
 
   //

@@ -1,7 +1,4 @@
 
-  basis.require('basis.event');
-
-
  /**
   * @namespace basis.l10n
   */
@@ -14,7 +11,7 @@
   //
 
   var Class = basis.Class;
-  var Emitter = basis.event.Emitter;
+  var Emitter = require('basis.event').Emitter;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 
@@ -144,7 +141,7 @@
     },
 
     setType: function(type){
-      if (type != 'plural' && (!basis.l10n.enableMarkup || type != 'markup'))
+      if (type != 'plural' && (!module.exports.enableMarkup || type != 'markup'))
         type = 'default';
 
       if (this.type != type)
@@ -224,6 +221,10 @@
 
       this.computeTokens = null;
       this.value = null;
+      this.dictionary = null;
+
+      // remove from index
+      tokenIndex[this.index] = null;
 
       basis.Token.prototype.destroy.call(this);
     }
@@ -468,7 +469,7 @@
       var extname = basis.path.extname(location);
 
       if (extname != '.l10n')
-        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n';
+        location = location.replace(new RegExp(extname + '([#?]|$)'), '.l10n$1');
 
       source = basis.resource(location);
     }

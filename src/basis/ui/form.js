@@ -1,9 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.ui');
-  basis.require('basis.ui.field');
-
-
  /**
   * @see ./demo/defile/form.html
   * @namespace basis.ui.form
@@ -16,17 +11,17 @@
   // import names
   //
 
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
-  var field = basis.ui.field;
-
-  var UINode = basis.ui.Node;
+  var field = require('basis.ui.field');
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var events = basisEvent.events;
+  var Node = require('basis.ui').Node;
 
 
  /**
   * @class
   */
-  var FormContent = UINode.subclass({
+  var FormContent = Node.subclass({
     className: namespace + '.FormContent',
 
     template: module.template('FormContent'),

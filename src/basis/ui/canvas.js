@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.ui');
-
-
  /**
   * @namespace basis.ui.canvas
   */
@@ -16,10 +10,9 @@
   // import names
   //
 
-  var createEvent = basis.event.create;
-
-  var dwNode = basis.dom.wrapper.Node;
-  var Node = basis.ui.Node;
+  var createEvent = require('basis.event').create;
+  var dwNode = require('basis.dom.wrapper').Node;
+  var Node = require('basis.ui').Node;
 
 
   //

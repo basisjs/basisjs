@@ -1,19 +1,16 @@
 
-  basis.require('basis.ui');
-  basis.require('basis.utils.highlight');
-
-
  /**
   * @namespace basis.ui.code
   */
 
   var namespace = this.path;
-  var highlight = basis.utils.highlight.highlight;
+  var highlight = require('basis.utils.highlight').highlight;
+  var Node = require('basis.ui').Node;
 
  /**
   * @class
   */
-  var SourceCode = basis.Class(basis.ui.Node, {
+  var SourceCode = basis.Class(Node, {
     className: namespace + '.SourceCode',
 
     template: resource('./templates/highlight/SourceCode.tmpl'),

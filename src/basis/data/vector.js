@@ -1,8 +1,4 @@
 
-  basis.require('basis.data');
-  basis.require('basis.data.dataset');
-
-
  /**
   * @namespace basis.data.dataset
   */
@@ -15,13 +11,15 @@
   //
 
   var Class = basis.Class;
-  var DataObject = basis.data.Object;
-  var Slot = basis.data.Slot;
-  var SourceDataset = basis.data.dataset.SourceDataset;
-
   var $undef = basis.fn.$undef;
   var $true = basis.fn.$true;
   var defaultRule = basis.getter($undef);
+
+  var basisData = require('basis.data');
+  var DataObject = basisData.Object;
+  var Slot = basisData.Slot;
+  var SourceDataset = require('basis.data.dataset').SourceDataset;
+
 
 
   //
@@ -48,7 +46,7 @@
       return delta;
   }
 
-  var VectorFn = basis.Class(null, {
+  var VectorFn = Class(null, {
     className: namespace + '.Count',
     extendConstructor_: true
   });

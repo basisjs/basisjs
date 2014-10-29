@@ -1,7 +1,4 @@
 
-  basis.require('basis.l10n');
-
-
  /**
   * @namespace basis.template
   */
@@ -19,6 +16,7 @@
   var arraySearch = basis.array.search;
   var arrayAdd = basis.array.add;
   var arrayRemove = basis.array.remove;
+  var getL10nToken = require('basis.l10n').token;
 
 
   //
@@ -458,7 +456,7 @@
 
   function getL10nTemplate(token){
     if (typeof token == 'string')
-      token = basis.l10n.token(token);
+      token = getL10nToken(token);
 
     if (!token)
       return null;
@@ -584,11 +582,16 @@
     var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
     var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
     var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
-    var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
-    var tokenMap = basis.NODE_ENV ? __nodejsRequire('./template/htmlentity.json') : {};
+    var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
+    var tokenMap = {};
     var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
     var includeStack = [];
     var styleNamespaceIsolate = {};
+
+    // load token map when node evironment, because html parsing is not available
+    // comment it, to not include code to build
+    /** @cut */ if (basis.NODE_ENV)
+    /** @cut */  tokenMap = __nodejsRequire('./template/htmlentity.json');
 
     function name(token){
       return (token.prefix ? token.prefix + ':' : '') + token.name;
@@ -891,10 +894,7 @@
 
       if (src)
       {
-        /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(src))
-        /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-        url = path.resolve(template.baseURI + src);
+        url = basis.resource.resolveURI(src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
       }
       else
       {
@@ -1141,25 +1141,32 @@
                   /** @cut */   template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
 
                   if (elAttrs.src)
-                  {
-                    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
-                    /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-                    template.dictURI = path.resolve(template.baseURI, elAttrs.src);
-                  }
+                    template.dictURI = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
                 break;
 
                 case 'define':
+                  /** @cut */ if ('name' in elAttrs == false)
+                  /** @cut */   template.warns.push('Define has no `name` attribute');
+                  /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
+                  /** @cut */   template.warns.push('Define for `' + elAttrs.name + '` has already defined');
+
                   if ('name' in elAttrs && !template.defines[elAttrs.name])
                   {
                     switch (elAttrs.type)
                     {
                       case 'bool':
-                        template.defines[elAttrs.name] = [elAttrs['default'] == 'true' ? 1 : 0];
+                        template.defines[elAttrs.name] = [
+                          elAttrs.from || elAttrs.name,
+                          elAttrs['default'] == 'true' ? 1 : 0
+                        ];
                         break;
                       case 'enum':
                         var values = elAttrs.values ? elAttrs.values.trim().split(' ') : [];
-                        template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
+                        template.defines[elAttrs.name] = [
+                          elAttrs.from || elAttrs.name,
+                          values.indexOf(elAttrs['default']) + 1,
+                          values
+                        ];
                         break;
                       /** @cut */ default:
                       /** @cut */  template.warns.push('Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
@@ -1194,21 +1201,15 @@
                       // <b:include src="id:foo"/>
                       resource = resolveSourceByDocumentId(url.substr(3));
                     }
+                    else if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
+                    {
+                      // <b:include src="foo.bar.baz"/>
+                      resource = getSourceByPath(url);
+                    }
                     else
                     {
-                      if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
-                      {
-                        // <b:include src="foo.bar.baz"/>
-                        resource = getSourceByPath(url);
-                      }
-                      else
-                      {
-                        // <b:include src="./path/to/file.tmpl"/>
-                        /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
-                        /** @cut */   basis.dev.warn('Bad usage: <b:include src=\"' + url + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-                        resource = basis.resource(path.resolve(template.baseURI + url));
-                      }
+                      // <b:include src="./path/to/file.tmpl"/>
+                      resource = basis.resource(basis.resource.resolveURI(url, template.baseURI,  '<b:include src=\"{url}\"/>'));
                     }
 
                     if (!resource)
@@ -1486,7 +1487,7 @@
                 else
                 {
                   var l10nId = parts.slice(1).join('@');
-                  var l10nToken = basis.l10n.token(l10nId);
+                  var l10nToken = getL10nToken(l10nId);
                   var l10nTemplate = getL10nTemplate(l10nToken);
 
                   template.l10nResolved = true;
@@ -1629,7 +1630,8 @@
 
           if (bindings)
           {
-            var newAttrValue = (token[valueIdx] || '').trim().split(' ');
+            var newAttrValue = (token[valueIdx] || '').trim();
+            newAttrValue = newAttrValue == '' ? [] : newAttrValue.split(' ');
 
             for (var k = 0, bind; bind = bindings[k]; k++)
             {
@@ -1641,17 +1643,18 @@
 
               if (bindDef)
               {
-                bind.push.apply(bind, bindDef);
-                bindDef.used = true;
+                bind.pop(); // remove define reference
+                bind.push.apply(bind, bindDef); // add define
+                bindDef.used = true;  // mark as used
 
-                if (bindDef[0])
+                if (bindDef[1])
                 {
-                  if (bindDef.length == 1)
+                  if (bindDef.length == 2)
                     // bool
                     arrayAdd(newAttrValue, bind[0] + bindName);
                   else
                     // enum
-                    arrayAdd(newAttrValue, bind[0] + bindDef[1][bindDef[0] - 1]);
+                    arrayAdd(newAttrValue, bind[0] + bindDef[2][bindDef[1] - 1]);
                 }
               }
               else
@@ -1764,18 +1767,16 @@
       if (source.warns)
         warns.push.apply(warns, source.warns);
 
-      // prevent recursion
-      if (sourceOrigin)
-        includeStack.push(sourceOrigin);
+      // start prevent recursion
+      includeStack.push((sourceOrigin !== true && sourceOrigin) || {}); // basisjs-tools pass true
 
       //
       // main task
       //
       result.tokens = process(source, result, options);
 
-      // prevent recursion
-      if (sourceOrigin)
-        includeStack.pop();
+      // stop prevent recursion
+      includeStack.pop();
 
       // there must be at least one token in result
       if (!result.tokens)
@@ -2007,7 +2008,7 @@
     /** @cut */   this.l10n_ = {};
     /** @cut */   for (var i = 0, key; key = l10n[i]; i++)
     /** @cut */   {
-    /** @cut */     var l10nToken = basis.l10n.token(key);
+    /** @cut */     var l10nToken = getL10nToken(key);
     /** @cut */     l10nToken.bindingBridge.attach(l10nToken, l10nHandler, this.l10n_[key] = {
     /** @cut */       template: this,
     /** @cut */       token: l10nToken,

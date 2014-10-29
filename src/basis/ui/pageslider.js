@@ -1,9 +1,4 @@
 
-  basis.require('basis.ui');
-  basis.require('basis.ui.tabs');
-  basis.require('basis.ui.scroller');
-
-
  /**
   * @namespace basis.ui.pageslider
   */
@@ -15,17 +10,13 @@
   // import names
   //
 
-  var PageControl = basis.ui.tabs.PageControl;
-  var Scroller = basis.ui.scroller.Scroller;
+  var PageControl = require('basis.ui.tabs').PageControl;
+  var Scroller = require('basis.ui.scroller').Scroller;
 
 
   //
   // definitions
   //
-
-  var templates = basis.template.define(namespace, {
-    PageSlider: resource('./templates/pageslider/PageSlider.tmpl')
-  });
 
   var DIRECTIONS  = {
     HORIZONTAL:'horizontal',
@@ -62,15 +53,9 @@
     emit_childNodesModified: function(delta){
       PageControl.prototype.emit_childNodesModified.call(this, delta);
 
-      for (var i = 0, child; child = this.childNodes[i]; i++) {
-        var style = this.isHorizontal() ? {
-          left: (100 * i) + '%'
-        } : {
-          top: (100 * i) + '%'
-        };
-        cssom.setStyle(child.element, style);
-      }
-
+      var property = this.isHorizontal() ? 'left' : 'top';
+      for (var i = 0, child; child = this.childNodes[i]; i++)
+        child.element.style[property] = (100 * i) + '%';
     },
     isHorizontal: function(){
       return this.direction === DIRECTIONS.HORIZONTAL;

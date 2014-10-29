@@ -52,23 +52,16 @@
 
   <script type="text/javascript" id="demo-javascript">
 
-    basis.require('basis.dom');
-    basis.require('basis.dom.event');
-    basis.require('basis.data');
-    basis.require('basis.ui.popup');
-    basis.require('basis.ui.form');
-    basis.require('basis.ui.button');
-
-    
     // import names
     var getter = basis.getter;
 
-    var DOM = basis.dom;
-    var Event = basis.dom.event;
-    var nsData = basis.data;
-    var nsForm = basis.ui.form;
-    var nsField = basis.ui.field;
-    var nsButton = basis.ui.button;
+    var DOM = basis.require('basis.dom');
+    var Event = basis.require('basis.dom.event');
+    var Property = basis.require('basis.data.value').Property;
+    var nsData = basis.require('basis.data');
+    var nsForm = basis.require('basis.ui.form');
+    var nsField = basis.require('basis.ui.field');
+    var nsButton = basis.require('basis.ui.button');
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
@@ -77,8 +70,8 @@
       return DOM.createElement('.fieldViewer');
     }
 
-    var _postInit = basis.ui.field.Field.prototype.postInit;
-    basis.ui.field.Field.prototype.postInit = function(){
+    var _postInit = nsField.Field.prototype.postInit;
+    nsField.Field.prototype.postInit = function(){
       _postInit.apply(this, arguments);
       DOM.insert(DOM.get('demo-container'), createFieldView(this));
     };
@@ -123,7 +116,7 @@
       container: createBlock('Select Field')
     });
 
-    var property = new nsData.value.Property(1);
+    var property = new Property(1);
 
     new nsField.Combobox({
       childNodes: [
@@ -230,8 +223,8 @@
       ],
       onSubmit: function(data){
         alert([
-          'First Name: ' + data.FirstName, 
-          'Last Name: ' + data.LastName, 
+          'First Name: ' + data.FirstName,
+          'Last Name: ' + data.LastName,
           'Gender: '  + data.Gender
         ].join('\n'));
       },
@@ -246,7 +239,6 @@
       container: formContainer
     });
 
-    
   </script>
 </body>
 

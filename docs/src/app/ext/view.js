@@ -1,17 +1,15 @@
 
-  basis.require('basis.dom.wrapper');
-  basis.require('app.core');
-
   var namespace = module.path;
+
 
   //
   // classes
   //
 
-  var View = basis.ui.Node.subclass({
+  var View = Node.subclass({
     className: namespace + '.View',
 
-    autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
+    autoDelegate: true,
     isAcceptableObject: basis.fn.$true,
 
     binding: {
@@ -26,26 +24,16 @@
     }
   });
 
-  var ViewOption = basis.ui.Node.subclass({
+  var ViewOption = Node.subclass({
     className: namespace + '.ViewOption',
 
     template: module.template('ViewOption'),
-
     binding: {
       title: 'title'
-    },
-
-    action: {
-      select: function(){
-        this.select();
-      }
-    },
-    init: function(){
-      basis.ui.Node.prototype.init.call(this);
     }
   });
 
-  var ViewOptions = basis.ui.Node.subclass({
+  var ViewOptions = Node.subclass({
     className: namespace + '.ViewOptions',
 
     template: module.template('ViewOptionList'),

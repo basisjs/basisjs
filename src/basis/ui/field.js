@@ -1,14 +1,4 @@
 
-  basis.require('basis.l10n');
-  basis.require('basis.event');
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.data.value');
-  basis.require('basis.ui');
-  basis.require('basis.ui.popup');
-
-
  /**
   * @see ./demo/defile/form.html
   * @namespace basis.ui.field
@@ -22,27 +12,26 @@
   //
 
   var Class = basis.Class;
-  var Event = basis.dom.event;
-  var DOM = basis.dom;
-
   var complete = basis.object.complete;
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
-  var l10nToken = basis.l10n.token;
 
-  var Property = basis.data.value.Property;
-  var Selection = basis.dom.wrapper.Selection;
-  var UINode = basis.ui.Node;
-  var Popup = basis.ui.popup.Popup;
+  var DOM = require('basis.dom');
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var events = basisEvent.events;
+
+  var Value = require('basis.data').Value;
+  var Selection = require('basis.dom.wrapper').Selection;
+  var UINode = require('basis.ui').Node;
+  var Popup = require('basis.ui.popup').Popup;
 
 
   //
   // definitions
   //
 
-  var dict = basis.l10n.dictionary(__filename);
+  var dict = require('basis.l10n').dictionary(__filename);
 
 
   //
@@ -153,7 +142,7 @@
         }
       },
       name: 'name',
-      titleText: 'title',
+      title: 'title',
       value: {
         events: 'change',
         getter: function(node){
@@ -172,7 +161,13 @@
         getter: 'error'
       },
       example: 'satellite:',
-      description: 'satellite:'
+      description: 'satellite:',
+
+      // deprecated
+      titleText: function(node){
+        /** @cut */ basis.dev.warn('`titleText` for basis.ui.field.Field instances is deprecated, use `title` instead');
+        return node.title;
+      }
     },
 
     action: 'focus blur change keydown keypress keyup input'.split(' ').reduce(
@@ -825,15 +820,6 @@
   //  Combobox
   //
 
-  var ComboboxPopupHandler = {
-    show: function(){
-      this.updateBind('opened');
-    },
-    hide: function(){
-      this.updateBind('opened');
-    }
-  };
-
  /**
   * @class
   */
@@ -864,11 +850,6 @@
     }
   });
 
-  var COMBOBOX_SELECTION_HANDLER = {
-    itemsChanged: function(selection){
-      this.setDelegate(selection.pick());
-    }
-  };
 
  /**
   * @class
@@ -881,19 +862,23 @@
     emit_change: function(event){
       ComplexField.prototype.emit_change.call(this, event);
 
-      var value = this.getValue();
-
       if (this.property)
+      {
+        var value = this.getValue();
         this.property.set(value);
+      }
     },
 
     emit_childNodesModified: function(delta){
       ComplexField.prototype.emit_childNodesModified.call(this, delta);
+
       if (this.property)
         this.setValue(this.property.value);
     },
 
     caption: null,
+    property: null,
+    opened: false,
     popup: null,
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
@@ -902,20 +887,18 @@
       templateSync: function(){
         Popup.prototype.templateSync.call(this);
 
-        if (this.owner && this.owner.childNodesElement)
-          DOM.insert(this.tmpl.content || this.element, this.owner.childNodesElement);
+        // NOTE: for now popups can't has an owner as has a parent node (popup manager)
+        // TODO: use owner when popups can has owner
+        if (this.fieldOwner_ && this.fieldOwner_.childNodesElement)
+          (this.tmpl.content || this.element).appendChild(this.fieldOwner_.childNodesElement);
       }
     }),
-    property: null,
 
     template: module.template('Combobox'),
-
     binding: {
       captionItem: 'satellite:',
       hiddenField: 'satellite:',
-      opened: function(node){
-        return node.popup.visible ? 'opened' : '';
-      }
+      opened: 'opened'
     },
 
     satellite: {
@@ -1016,7 +999,6 @@
     },
 
     init: function(){
-
       if (this.property)
         this.value = this.property.value;
 
@@ -1024,13 +1006,16 @@
       ComplexField.prototype.init.call(this);
 
       this.setSatellite('captionItem', new this.childClass({
-        delegate: this.selection.pick(),
-        owner: this,
+        delegate: Value.from(this.selection, 'itemsChanged', function(selection){
+          return selection.pick();
+        }),
         getTitle: function(){
-          return this.owner.getTitle();
+          if (this.delegate)
+            return this.delegate.getTitle();
         },
         getValue: function(){
-          return this.owner.getValue();
+          if (this.delegate)
+            return this.delegate.getValue();
         },
         handler: {
           delegateChanged: function(){
@@ -1038,15 +1023,15 @@
           }
         }
       }));
-      this.selection.addHandler(COMBOBOX_SELECTION_HANDLER, this.satellite.captionItem);
 
       // create items popup
       this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
-        handler: {
-          context: this,
-          callbacks: ComboboxPopupHandler
-        }
+        fieldOwner_: this
       }, this.popup));
+
+      this.opened = Value.from(this.popup, 'show hide', function(popup){
+        return popup.visible;
+      });
 
       if (this.property)
         this.property.link(this, this.setValue);
@@ -1055,7 +1040,7 @@
       UINode.prototype.templateSync.call(this);
 
       if (this.childNodesElement && this.popup)
-        DOM.insert(this.popup.tmpl.content || this.popup.element, this.childNodesElement);
+        (this.popup.tmpl.content || this.popup.element).appendChild(this.childNodesElement);
 
       this.popup.ignoreClickFor = [this.tmpl.field];
     },
@@ -1082,25 +1067,20 @@
       {
         // update value & selection
         var item = basis.array.search(this.childNodes, value, getFieldValue);
-        if (item && !item.isDisabled())
+        if (item)
           this.selection.set([item]);
         else
           this.selection.clear();
       }
     },
     destroy: function(){
-      if (this.property)
-      {
-        this.property.unlink(this);
-        this.property = null;
-      }
+      this.property = null;
+
+      this.opened.destroy();
+      this.opened = null;
 
       this.popup.destroy();
       this.popup = null;
-
-      this.satellite.captionItem.setDelegate();
-      this.selection.removeHandler(COMBOBOX_SELECTION_HANDLER, this.satellite.captionItem);
-      this.setSatellite('captionItem', null);
 
       ComplexField.prototype.destroy.call(this);
     }
@@ -1111,10 +1091,14 @@
   // Filter
   //
 
+  function defaultTextNodeGetter(node){
+    return node.tmpl.title || node.tmpl.titleText;
+  }
+
  /**
   * @class
   */
-  var MatchProperty = Property.subclass({
+  var MatchProperty = Value.subclass({
     className: namespace + '.MatchProperty',
 
     matchFunction: function(child, reset){
@@ -1175,15 +1159,13 @@
     emit_change: function(oldValue){
       this.rx = this.regexpGetter(this.value);
 
-      Property.prototype.emit_change.call(this, oldValue);
+      Value.prototype.emit_change.call(this, oldValue);
     },
-
-    extendConstructor_: true,
 
     init: function(){
       var startPoints = this.startPoints || '';
 
-      this.textNodeGetter = getter(this.textNodeGetter || 'tmpl.titleText');
+      this.textNodeGetter = getter(this.textNodeGetter || defaultTextNodeGetter);
 
       if (typeof this.regexpGetter != 'function')
         this.regexpGetter = function(value){
@@ -1195,7 +1177,7 @@
         return (i % 3) == 2;
       };
 
-      Property.prototype.init.call(this, '', this.handlers, String.trim);
+      Value.prototype.init.call(this, '', this.handlers, String.trim);
     }
   });
 
@@ -1277,7 +1259,7 @@
   //
 
   /** @const */ var REGEXP_EMAIL = /^([a-z0-9а-яА-ЯёЁ\.\-\_]+|[a-z0-9а-яА-ЯёЁ\.\-\_]+\+[a-z0-9а-яА-ЯёЁ\.\-\_]+)\@(([a-z0-9а-яА-ЯёЁ][a-z0-9а-яА-ЯёЁ\-]*\.)+[a-zа-яА-ЯёЁ]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i;
-  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Zа-яА-ЯёЁ0-9][a-zA-Zа-яА-ЯёЁ\d\-_]+\.)+[a-zA-Zа-яА-ЯёЁ]{2,6})(:\d+)?(\/[^\?]*(\?\S+(\=\S*))*(\#\S*)?)?$/i;
+  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Zа-яА-ЯёЁ0-9][a-zA-Zа-яА-ЯёЁ\d\-\._]+\.)+[a-zA-Zа-яА-ЯёЁ]{2,7})(:\d+)?(\/[^\?]*(\?\S+(\=\S*))*(\#\S*)?)?$/i;
 
  /**
   * @class

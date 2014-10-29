@@ -1,16 +1,14 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-  basis.require('basis.data.dataset');
-
-
  /**
   * @namespace basis.entity
   */
 
   var namespace = this.path;
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
 
@@ -22,14 +20,17 @@
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
-  var Emitter = basis.event.Emitter;
-  var createEvent = basis.event.create;
+  var basisEvent = require('basis.event');
+  var Emitter = basisEvent.Emitter;
+  var createEvent = basisEvent.create;
 
-  var DataObject = basis.data.Object;
-  var Slot = basis.data.Slot;
-  var Dataset = basis.data.Dataset;
-  var Filter = basis.data.dataset.Filter;
-  var Split = basis.data.dataset.Split;
+  var basisData = require('basis.data');
+  var DataObject = basisData.Object;
+  var Slot = basisData.Slot;
+  var Dataset = basisData.Dataset;
+  var basisDataset = require('basis.data.dataset');
+  var Filter = basisDataset.Filter;
+  var Split = basisDataset.Split;
 
   var NULL_INFO = {};
 
@@ -110,6 +111,7 @@
     for (var typeName in deferredTypeDef)
       basis.dev.warn(namespace + ': type `' + typeName + '` is not defined, but used by ' + deferredTypeDef[typeName].length + ' type(s)');
   }
+
 
   //
   // Index
@@ -478,13 +480,9 @@
       });
 
       // deprecated in 1.3.0
-      /** @cut */ if (Object.defineProperty)
-      /** @cut */   Object.defineProperty(result, 'entitySetType', {
-      /** @cut */     get: function(){
-      /** @cut */       basis.dev.warn('basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.');
-      /** @cut */       return entitySetType;
-      /** @cut */     }
-      /** @cut */   });
+      /** @cut */ basis.dev.warnPropertyAccess(result, 'entitySetType', entitySetType,
+      /** @cut */   'basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.'
+      /** @cut */ );
 
       return result;
     }
@@ -539,6 +537,10 @@
 
           if (data != null)
           {
+            // make sure second argument is correct entityType instance or ignore it
+            if (!entity || entity.entityType !== entityType)
+              entity = null;
+
             // if newData instance of target EntityType return newData
             if (data === entity || data.entityType === entityType)
               return data;
@@ -637,13 +639,9 @@
       });
 
       // deprecated in 1.3.0
-      /** @cut */ if (Object.defineProperty)
-      /** @cut */   Object.defineProperty(result, 'entityType', {
-      /** @cut */     get: function(){
-      /** @cut */       basis.dev.warn('basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.');
-      /** @cut */       return entityType;
-      /** @cut */     }
-      /** @cut */   });
+      /** @cut */ basis.dev.warnPropertyAccess(result, 'entityType', entityType,
+      /** @cut */   'basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.'
+      /** @cut */ );
 
       return result;
     }
@@ -965,7 +963,8 @@
       this.name = config.name;
       if (!this.name || namedTypes[this.name])
       {
-        /** @cut */ if (namedTypes[this.name]) basis.dev.warn(namespace + ': Duplicate type name `' + this.name + '`, name ignored');
+        /** @cut */ if (namedTypes[this.name])
+        /** @cut */   basis.dev.warn(namespace + ': Duplicate type name `' + this.name + '`, name ignored');
         this.name = getUntitledName('UntitledEntityType');
       }
 
@@ -983,7 +982,8 @@
       {
         if (index instanceof Index)
           this.index = index;
-        /** @cut */else basis.dev.warn('index must be instanceof basis.entity.Index');
+        /** @cut */ else
+        /** @cut */   basis.dev.warn('index must be instanceof basis.entity.Index');
       }
 
       // wrapper and all instances set

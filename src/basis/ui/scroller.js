@@ -1,12 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.dom.event');
-  basis.require('basis.dom.resize');
-  basis.require('basis.cssom');
-  basis.require('basis.ui');
-  basis.require('basis.animation');
-
-
  /**
   * @see ./demo/defile/scroller.html
   * @namespace basis.ui.scroller
@@ -20,15 +12,14 @@
   //
 
   var document = global.document;
-  var Event = basis.dom.event;
-  var cssom = basis.cssom;
-  var anim = basis.animation;
-
-  var createEvent = basis.event.create;
-  var listenResize = basis.dom.resize.add;
-
-  var Emitter = basis.event.Emitter;
-  var UINode = basis.ui.Node;
+  var Event = require('basis.dom.event');
+  var cssom = require('basis.cssom');
+  var anim = require('basis.animation');
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var Emitter = basisEvent.Emitter;
+  var listenResize = require('basis.dom.resize').add;
+  var Node = require('basis.ui').Node;
 
 
   //
@@ -242,7 +233,7 @@
 
       this.emit_finish();
 
-      basis.dom.event.releaseEvent('click');
+      Event.releaseEvent('click');
     },
 
     onMouseDown: function(event){
@@ -261,15 +252,12 @@
       Event.addGlobalHandler('mouseup', this.onMouseUp, this);
       Event.addGlobalHandler('touchend', this.onMouseUp, this);
 
-      //Event.cancelBubble(event);
       event.preventDefault();
     },
 
     onMouseMove: function(event){
       if (this.minScrollDelta == 0 || this.minScrollDeltaYReached || this.minScrollDeltaXReached)
-      {
         this.startUpdate();
-      }
 
       var time = Date.now();
       var deltaTime = time - this.lastMotionUpdateTime;
@@ -352,7 +340,7 @@
       Event.removeGlobalHandler('touchend', this.onMouseUp, this);
 
       if (this.minScrollDeltaXReached || this.minScrollDeltaYReached)
-        basis.dom.event.captureEvent('click', basis.fn.$true);
+        Event.captureEvent('click', basis.fn.$true);
 
       this.emit_startInertia();
     },
@@ -538,7 +526,7 @@
  /**
   * @class
   */
-  var Scrollbar = UINode.subclass({
+  var Scrollbar = Node.subclass({
     className: namespace + '.Scrollbar',
 
     orientation: '',
@@ -630,7 +618,7 @@
  /**
   * @class
   */
-  var ScrollPanel = UINode.subclass({
+  var ScrollPanel = Node.subclass({
     className: namespace + '.ScrollPanel',
 
     useScrollbars: true,
@@ -658,7 +646,7 @@
 
     action: {
       onwheel: function(event){
-        var delta = Event.wheelDelta(event);
+        var delta = event.wheelDelta;
 
         if (this.scrollY)
           this.scroller.setPositionY(this.scroller.viewportTargetY - this.wheelDelta * delta, this.inertia);
@@ -668,7 +656,7 @@
         if (!this.inertia)
           this.updatePosition();
 
-        Event.kill(event);
+        event.die();
       }
     },
 
@@ -688,7 +676,7 @@
     },
 
     init: function(){
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
 
       //init variables
       this.minPositionX = 0;
@@ -720,7 +708,7 @@
     },
 
     templateSync: function(){
-      UINode.prototype.templateSync.call(this);
+      Node.prototype.templateSync.call(this);
 
       var scrollElement = this.tmpl.scrollElement || this.element;
 
@@ -782,7 +770,7 @@
       this.scroller.destroy();
       this.scroller = null;
 
-      UINode.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
     }
   });
 
@@ -800,15 +788,14 @@
 
     action: {
       onwheel: function(event){
-        var delta = Event.wheelDelta(event);
-
+        var delta = event.wheelDelta;
         var selected = this.selection.pick();
         var nextChild = delta == -1 ? selected.nextSibling : selected.previousSibling;
 
         if (nextChild)
           nextChild.select();
 
-        Event.kill(event);
+        event.die();
       }
     },
 
@@ -822,7 +809,7 @@
       }
     },
 
-    childClass: UINode.subclass({
+    childClass: Node.subclass({
       className: namespace + '.ScrollGalleryItem',
 
       template: module.template('ScrollGalleryItem'),
@@ -835,7 +822,7 @@
       },
 
       emit_select: function(){
-        UINode.prototype.emit_select.call(this);
+        Node.prototype.emit_select.call(this);
         this.parentNode.scrollToChild(this);
       }
     }),

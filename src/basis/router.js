@@ -1,13 +1,9 @@
 
-  basis.require('basis.dom.event');
-
-
  /**
   * @namespace basis.router
   */
 
   var namespace = this.path;
-  var ns = basis.namespace(String(namespace));
 
 
   //
@@ -16,6 +12,7 @@
 
   var location = global.location;
   var document = global.document;
+  var eventUtils = require('basis.dom.event');
 
   // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
   var docMode = document.documentMode;
@@ -113,13 +110,13 @@
 
   function startWatch(){
     if (eventSupport)
-      basis.dom.event.addHandler(global, 'hashchange', checkUrl);
+      eventUtils.addHandler(global, 'hashchange', checkUrl);
     else
       timer = setInterval(checkUrl, CHECK_INTERVAL);
   }
   function stopWatch(){
     if (eventSupport)
-      basis.dom.event.removeHandler(global, 'hashchange', checkUrl);
+      eventUtils.removeHandler(global, 'hashchange', checkUrl);
     else
       clearInterval(timer);
   }
@@ -132,9 +129,10 @@
     if (!started)
     {
       startWatch();
-
       started = true;
-      /** @cut */ if (ns.debug) basis.dev.log(namespace + ' started');
+
+      /** @cut */ if (module.exports.debug)
+      /** @cut */   basis.dev.log(namespace + ' started');
 
       checkUrl();
     }
@@ -147,9 +145,10 @@
     if (started)
     {
       stopWatch();
-
       started = false;
-      /** @cut */ if (ns.debug) basis.dev.log(namespace + ' stopped');
+
+      /** @cut */ if (module.exports.debug)
+      /** @cut */   basis.dev.log(namespace + ' stopped');
     }
   }
 
@@ -227,7 +226,8 @@
           }
       }
 
-      /** @cut */ if (ns.debug) basis.dev.info.apply(basis.dev, [namespace + ': hash changed to "' + newPath + '"'].concat(log.length ? log : '<no matches>'));
+      /** @cut */ if (module.exports.debug)
+      /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': hash changed to "' + newPath + '"'].concat(log.length ? log : '\n<no matches>'));
     }
 
   }
@@ -238,6 +238,7 @@
   function add(path, callback, context){
     var route = routes[path];
     var config;
+    /** @cut */ var log = [];
 
     if (!route)
     {
@@ -270,10 +271,21 @@
     if (path in matched)
     {
       if (config.callback.enter)
+      {
         config.callback.enter.call(context);
+        /** @cut */ log.push('\n', { type: 'enter', path: route.source, cb: config, route: route });
+      }
+
       if (config.callback.match)
+      {
         config.callback.match.apply(context, arrayFrom(matched[path], 1));
+        /** @cut */ log.push('\n', { type: 'match', path: route.source, cb: config, route: route, args: arrayFrom(matched[path], 1) });
+      }
+
     }
+
+    /** @cut */ if (module.exports.debug)
+    /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': add handler for route `' + path + '`'].concat(log.length ? log : '\n<no matches>'));
   }
 
  /**
