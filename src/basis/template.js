@@ -1627,13 +1627,15 @@
               if (bind.length > 2)  // bind already processed
                 continue;
 
-              var bindName = bind[1].split(':').pop();
+              var bindNameParts = bind[1].split(':');
+              var bindName = bindNameParts.pop();
+              var bindPrefix = bindNameParts.pop() || '';
               var bindDef = template.defines[bindName];
 
               if (bindDef)
               {
-                bind.pop(); // remove define reference
-                bind.push.apply(bind, bindDef); // add define
+                bind[1] = (bindPrefix ? bindPrefix + ':' : '') + bindDef[0];
+                bind.push.apply(bind, bindDef.slice(1)); // add define
                 bindDef.used = true;  // mark as used
 
                 if (bindDef[1])
