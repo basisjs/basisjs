@@ -2,14 +2,16 @@ module.exports = {
   name: 'basis.dom.wrapper',
 
   init: function(){
-    basis.require('basis.dom');
-    basis.require('basis.dom.wrapper');
-
     var Class = basis.Class;
-    var DOM = basis.dom;
+    var DOM = basis.require('basis.dom');
+    var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
+    var Node = basis.require('basis.dom.wrapper').Node;
+    var Value = basis.require('basis.data').Value;
+    var DataObject = basis.require('basis.data').Object;
+    var Dataset = basis.require('basis.data').Dataset;
+    var DatasetWrapper = basis.require('basis.data').DatasetWrapper;
+    var READY = basis.require('basis.data').STATE.READY;
 
-    var nsWrappers = basis.dom.wrapper;
-    var Node = basis.dom.wrapper.Node;
     Node.extend({
       listen: basis.object.extend({
         parentNode: {},
@@ -24,9 +26,9 @@ module.exports = {
     var getGroups = domHelpers.getGroups;
 
     var groupDatasetByGroupMap = {};
-    var groupDatasetByGroup10 = new basis.data.Dataset({
+    var groupDatasetByGroup10 = new Dataset({
       items: basis.array.create(10, function(idx){
-        return groupDatasetByGroupMap[idx + 1] = new basis.data.Object({
+        return groupDatasetByGroupMap[idx + 1] = new DataObject({
           data: {
             id: idx + 1,
             title: idx + 1
@@ -34,7 +36,7 @@ module.exports = {
         });
       })
     });
-    var groupDatasetByGroup = new basis.data.Dataset({
+    var groupDatasetByGroup = new Dataset({
       items: basis.array.create(4, function(idx){
         return groupDatasetByGroupMap[idx + 1];
       })
@@ -68,9 +70,9 @@ module.exports = {
     }
 
     function getDataset(){
-      return new basis.data.Dataset({
+      return new Dataset({
         items: testSet.map(function(item){
-          return new basis.data.Object({
+          return new DataObject({
             data: basis.object.slice(item.data)
           });
         })
@@ -194,8 +196,8 @@ module.exports = {
         {
           name: 'drop owner on owner destroy',
           test: function(){
-            var owner = new basis.dom.wrapper.Node();
-            var node = new basis.dom.wrapper.Node({
+            var owner = new Node();
+            var node = new Node({
               owner: owner
             });
 
@@ -219,19 +221,19 @@ module.exports = {
           name: 'switch owner (setSatellite)',
           test: function(){
             var ownerChangedCount = 0;
-            var satellite = new basis.dom.wrapper.Node({
+            var satellite = new Node({
               handler: {
                 ownerChanged: function(){
                   ownerChangedCount++;
                 }
               }
             });
-            var node1 = new basis.dom.wrapper.Node({
+            var node1 = new Node({
               satellite: {
                 example: satellite
               }
             });
-            var node2 = new basis.dom.wrapper.Node();
+            var node2 = new Node();
 
             this.is(false, checkNode(node1));
             this.is(false, checkNode(node2));
@@ -266,19 +268,19 @@ module.exports = {
           name: 'switch owner (setOwner)',
           test: function(){
             var ownerChangedCount = 0;
-            var satellite = new basis.dom.wrapper.Node({
+            var satellite = new Node({
               handler: {
                 ownerChanged: function(){
                   ownerChangedCount++;
                 }
               }
             });
-            var node1 = new basis.dom.wrapper.Node({
+            var node1 = new Node({
               satellite: {
                 example: satellite
               }
             });
-            var node2 = new basis.dom.wrapper.Node();
+            var node2 = new Node();
 
             this.is(false, checkNode(node1));
             this.is(false, checkNode(node2));
@@ -311,8 +313,8 @@ module.exports = {
         {
           name: 'reset owner',
           test: function(){
-            var satellite = new basis.dom.wrapper.Node();
-            var node = new basis.dom.wrapper.Node({
+            var satellite = new Node();
+            var node = new Node({
               satellite: {
                 test: satellite
               }
@@ -347,14 +349,14 @@ module.exports = {
           test: function(){
             var ownerChangedEventCount = 0;
             var satelliteChangedEventCount = 0;
-            var satellite = new basis.dom.wrapper.Node({
+            var satellite = new Node({
               handler: {
                 ownerChanged: function(){
                   ownerChangedEventCount++;
                 }
               }
             });
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: satellite
               },
@@ -390,8 +392,8 @@ module.exports = {
         {
           name: 'destroy satellite on owner destroy',
           test: function(){
-            var satellite = new basis.dom.wrapper.Node();
-            var node = new basis.dom.wrapper.Node({
+            var satellite = new Node();
+            var node = new Node({
               satellite: {
                 test: satellite
               }
@@ -423,14 +425,14 @@ module.exports = {
           test: function(){
             var nodeDestroyed = false;
             var ownerDestroyed = false;
-            var owner = new basis.dom.wrapper.Node({
+            var owner = new Node({
               handler: {
                 destroy: function(){
                   ownerDestroyed = true;
                 }
               }
             });
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               owner: owner,
               handler: {
                 destroy: function(){
@@ -455,7 +457,7 @@ module.exports = {
         {
           name: 'auto-create satellite (empty config)',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {}
               }
@@ -463,7 +465,7 @@ module.exports = {
 
             this.is(false, checkNode(node));
             this.is(true, !!node.satellite.test);
-            this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+            this.is(true, node.satellite.test instanceof AbstractNode);
             this.is(true, node.satellite.test.owner === node);
             this.is(true, 'test' in node.satellite.__auto__);
           }
@@ -471,8 +473,8 @@ module.exports = {
         {
           name: 'auto-satellite with instance',
           test: function(){
-            var satellite = new basis.dom.wrapper.Node();
-            var node = new basis.dom.wrapper.Node({
+            var satellite = new Node();
+            var node = new Node({
               satellite: {
                 test: {
                   instance: satellite
@@ -492,7 +494,7 @@ module.exports = {
           name: 'auto-create satellite with existsIf',
           test: function(){
             // use existsIf config
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   existsIf: 'data.value'
@@ -508,7 +510,7 @@ module.exports = {
             node.update({ value: true });
             this.is(false, checkNode(node));
             this.is(true, !!node.satellite.test);
-            this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+            this.is(true, node.satellite.test instanceof AbstractNode);
             this.is(true, node.satellite.test.owner === node);
 
             // should be destroyed
@@ -528,7 +530,7 @@ module.exports = {
           name: 'should be possible don\'t listen event by setting false/null/empty string/array to events setting',
           test: function(){
             // set null
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   events: null,
@@ -544,7 +546,7 @@ module.exports = {
             this.is(undefined, node.satellite.test);
 
             // set false
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   events: false,
@@ -560,7 +562,7 @@ module.exports = {
             this.is(undefined, node.satellite.test);
 
             // set empty string
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   events: '',
@@ -576,7 +578,7 @@ module.exports = {
             this.is(undefined, node.satellite.test);
 
             // set empty array
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   events: [],
@@ -596,7 +598,7 @@ module.exports = {
           name: 'auto-create satellite with config',
           test: function(){
             // config as object
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   config: {
@@ -611,7 +613,7 @@ module.exports = {
             this.is('bar', node.satellite.test.foo);
 
             // config as function
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   config: function(owner){
@@ -634,7 +636,7 @@ module.exports = {
           name: 'auto-create satellite should be destroyed after satelliteChanged event on owner',
           test: function(){
             // use existsIf config
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   existsIf: 'data.value'
@@ -672,14 +674,14 @@ module.exports = {
           test: function(){
             // use existsIf config
             var satelliteDestroyed = false;
-            var satellite = new basis.dom.wrapper.Node({
+            var satellite = new Node({
               handler: {
                 destroy: function(){
                   satelliteDestroyed = true;
                 }
               }
             });
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   existsIf: 'data.value',
@@ -720,14 +722,14 @@ module.exports = {
           name: 'auto-create satellite with delegate/dataSource',
           test: function(){
             // use existsIf config
-            var delegate = new basis.data.Object;
-            var dataSource = new basis.data.Dataset;
-            var node = new basis.dom.wrapper.Node({
+            var delegate = new DataObject;
+            var dataSource = new Dataset;
+            var node = new Node({
               _delegate: delegate,
               _dataSource: dataSource,
               satellite: {
                 test: {
-                  instanceOf: basis.dom.wrapper.Node,
+                  satelliteClass: Node,
                   delegate: '_delegate',
                   dataSource: '_dataSource'
                 }
@@ -747,18 +749,18 @@ module.exports = {
           name: 'auto-create satellite should be created with delegate/dataSource (set delegate/dataSource before postInit – templateUpdate issue)',
           test: function(){
             // use existsIf config
-            var delegate = new basis.data.Object;
-            var dataSource = new basis.data.Dataset;
+            var delegate = new DataObject;
+            var dataSource = new Dataset;
             var delegateSet = false;
             var delegateSetBeforePostInit = false;
             var dataSourceSet = false;
             var dataSourceSetBeforePostInit = false;
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               _delegate: delegate,
               _dataSource: dataSource,
               satellite: {
                 test: {
-                  instanceOf: basis.dom.wrapper.Node.subclass({
+                  satelliteClass: Node.subclass({
                     handler: {
                       delegateChanged: function(){
                         delegateSet = true;
@@ -770,7 +772,7 @@ module.exports = {
                     postInit: function(){
                       delegateSetBeforePostInit = delegateSet;
                       dataSourceSetBeforePostInit = dataSourceSet;
-                      basis.dom.wrapper.Node.prototype.postInit.call(this);
+                      Node.prototype.postInit.call(this);
                     }
                   }),
                   delegate: '_delegate',
@@ -794,14 +796,14 @@ module.exports = {
           name: 'auto-satellite with delegate/dataSource',
           test: function(){
             // use existsIf config
-            var delegate = new basis.data.Object;
-            var dataSource = new basis.data.Dataset;
-            var node = new basis.dom.wrapper.Node({
+            var delegate = new DataObject;
+            var dataSource = new Dataset;
+            var node = new Node({
               _delegate: delegate,
               _dataSource: dataSource,
               satellite: {
                 test: {
-                  instance: new basis.dom.wrapper.Node(),
+                  instance: new Node(),
                   delegate: '_delegate',
                   dataSource: '_dataSource'
                 }
@@ -821,10 +823,10 @@ module.exports = {
           name: 'auto-satellite with delegate/dataSource and existsIf',
           test: function(){
             // use existsIf config
-            var delegate = new basis.data.Object;
-            var dataSource = new basis.data.Dataset;
-            var satellite = new basis.dom.wrapper.Node();
-            var node = new basis.dom.wrapper.Node({
+            var delegate = new DataObject;
+            var dataSource = new Dataset;
+            var satellite = new Node();
+            var node = new Node({
               _delegate: delegate,
               _dataSource: dataSource,
               satellite: {
@@ -866,14 +868,14 @@ module.exports = {
           test: function(){
             // use existsIf config
             var satelliteDestroyed = false;
-            var satellite = new basis.dom.wrapper.Node({
+            var satellite = new Node({
               handler: {
                 destroy: function(){
                   satelliteDestroyed = true;
                 }
               }
             });
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   instance: satellite
@@ -904,14 +906,14 @@ module.exports = {
           test: function(){
             // use existsIf config
             var satelliteDestroyed = false;
-            var satellite = new basis.dom.wrapper.Node({
+            var satellite = new Node({
               handler: {
                 destroy: function(){
                   satelliteDestroyed = true;
                 }
               }
             });
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   existsIf: 'data.value',
@@ -943,14 +945,14 @@ module.exports = {
           test: function(){
             // use existsIf config
             var satelliteDestroyed = false;
-            var satellite = new basis.dom.wrapper.Node({
+            var satellite = new Node({
               handler: {
                 destroy: function(){
                   satelliteDestroyed = true;
                 }
               }
             });
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   existsIf: 'data.value',
@@ -979,7 +981,7 @@ module.exports = {
           name: 'auto-create satellite with existsIf and custom events - events as string',
           test: function(){
             // events as string
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   events: 'stateChanged activeChanged',
@@ -998,10 +1000,10 @@ module.exports = {
             this.is(undefined, node.satellite.test);
 
             // should be created
-            node.setState(basis.data.STATE.READY, '1');
+            node.setState(READY, '1');
             this.is(false, checkNode(node));
             this.is(true, !!node.satellite.test);
-            this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+            this.is(true, node.satellite.test instanceof AbstractNode);
             this.is(true, node.satellite.test.owner === node);
 
             // should not be destroyed (no changes on update event)
@@ -1028,7 +1030,7 @@ module.exports = {
           name: 'auto-create satellite with existsIf and custom events - events as array',
           test: function(){
             // events as array
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   events: ['stateChanged', 'activeChanged'],
@@ -1047,10 +1049,10 @@ module.exports = {
             this.is(undefined, node.satellite.test);
 
             // should be created
-            node.setState(basis.data.STATE.READY, '1');
+            node.setState(READY, '1');
             this.is(false, checkNode(node));
             this.is(true, !!node.satellite.test);
-            this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+            this.is(true, node.satellite.test instanceof AbstractNode);
             this.is(true, node.satellite.test.owner === node);
 
             // should not be destroyed (no changes on update event)
@@ -1075,7 +1077,7 @@ module.exports = {
         {
           name: 'auto-create satellite can be replaced, auto config should be dropped',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {}
               }
@@ -1089,7 +1091,7 @@ module.exports = {
             var warning = false;
             var satellite = node.satellite.test;
             var satelliteDestroyed = false;
-            var newSatellite = new basis.dom.wrapper.AbstractNode;
+            var newSatellite = new AbstractNode;
 
             satellite.addHandler({
               destroy: function(){
@@ -1118,7 +1120,7 @@ module.exports = {
         {
           name: 'auto-create satellite can be replaced (not created), auto-config should be dropped',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
                   existsIf: basis.fn.$false
@@ -1132,7 +1134,7 @@ module.exports = {
 
             var warn = basis.dev.warn;
             var warning = false;
-            var newSatellite = new basis.dom.wrapper.AbstractNode;
+            var newSatellite = new AbstractNode;
             try {
               basis.dev.warn = function(message){
                 warning = message;
@@ -1154,7 +1156,7 @@ module.exports = {
           name: 'dynamicaly set auto-create satellite (empty config)',
           test: function(){
             var satelliteChangedEventCount = 0;
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
              handler: {
                 satelliteChanged: function(){
                   satelliteChangedEventCount++;
@@ -1167,7 +1169,7 @@ module.exports = {
             this.is(false, checkNode(node));
             this.is(true, 'test' in node.satellite);
             this.is(true, 'test' in node.satellite.__auto__);
-            this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+            this.is(true, node.satellite.test instanceof AbstractNode);
             this.is(1, satelliteChangedEventCount);
 
             var satelliteDestroyed = false;
@@ -1190,7 +1192,7 @@ module.exports = {
           name: 'dynamicaly set auto-create satellite with existsIf',
           test: function(){
             var satelliteChangedEventCount = 0;
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
              handler: {
                 satelliteChanged: function(){
                   satelliteChangedEventCount++;
@@ -1214,7 +1216,7 @@ module.exports = {
             this.is(false, checkNode(node));
             this.is(true, 'test' in node.satellite);
             this.is(true, 'test' in node.satellite.__auto__);
-            this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+            this.is(true, node.satellite.test instanceof AbstractNode);
             this.is(1, satelliteChangedEventCount);
 
             var satelliteDestroyed = false;
@@ -1240,7 +1242,7 @@ module.exports = {
           name: 'dynamicaly set auto-create satellite and replace by another auto-create satellite',
           test: function(){
             var satelliteChangedEventCount = 0;
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               handler: {
                 satelliteChanged: function(){
                   satelliteChangedEventCount++;
@@ -1283,13 +1285,13 @@ module.exports = {
             this.is(false, checkNode(node));
             this.is(true, 'test' in node.satellite);
             this.is(true, 'test' in node.satellite.__auto__);
-            this.is(true, node.satellite.test instanceof basis.dom.wrapper.AbstractNode);
+            this.is(true, node.satellite.test instanceof AbstractNode);
           }
         },
         {
           name: 'auto-create satellite can\'t reset owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {}
               }
@@ -1318,10 +1320,10 @@ module.exports = {
         {
           name: 'auto-satellite can\'t reset owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
-                  instance: new basis.dom.wrapper.Node()
+                  instance: new Node()
                 }
               }
             });
@@ -1349,12 +1351,12 @@ module.exports = {
         {
           name: 'auto-create satellite can\'t change owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {}
               }
             });
-            var newOwner = new basis.dom.wrapper.Node();
+            var newOwner = new Node();
 
             var warn = basis.dev.warn;
             var warning = false;
@@ -1380,14 +1382,14 @@ module.exports = {
         {
           name: 'auto-satellite can\'t change owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
-                  instance: new basis.dom.wrapper.Node()
+                  instance: new Node()
                 }
               }
             });
-            var newOwner = new basis.dom.wrapper.Node();
+            var newOwner = new Node();
 
             var warn = basis.dev.warn;
             var warning = false;
@@ -1413,8 +1415,8 @@ module.exports = {
         {
           name: 'non-used auto-satellite can\'t change owner',
           test: function(){
-            var satellite = new basis.dom.wrapper.Node();
-            var node = new basis.dom.wrapper.Node({
+            var satellite = new Node();
+            var node = new Node({
               satellite: {
                 test: {
                   existsIf: 'data.value',
@@ -1422,7 +1424,7 @@ module.exports = {
                 }
               }
             });
-            var newOwner = new basis.dom.wrapper.Node();
+            var newOwner = new Node();
 
             var warn = basis.dev.warn;
             var warning = false;
@@ -1446,12 +1448,12 @@ module.exports = {
         {
           name: 'auto-create satellite can\'t moved to another owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {}
               }
             });
-            var newOwner = new basis.dom.wrapper.Node();
+            var newOwner = new Node();
 
             var warn = basis.dev.warn;
             var warning = false;
@@ -1477,14 +1479,14 @@ module.exports = {
         {
           name: 'auto-satellite can\'t moved to another owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
-                  instance: new basis.dom.wrapper.Node()
+                  instance: new Node()
                 }
               }
             });
-            var newOwner = new basis.dom.wrapper.Node();
+            var newOwner = new Node();
 
             var warn = basis.dev.warn;
             var warning = false;
@@ -1510,7 +1512,7 @@ module.exports = {
         {
           name: 'auto-create satellite can\'t change name inside owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {}
               }
@@ -1542,10 +1544,10 @@ module.exports = {
         {
           name: 'auto-satellite can\'t change name inside owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {
-                  instance: new basis.dom.wrapper.Node()
+                  instance: new Node()
                 }
               }
             });
@@ -1576,7 +1578,7 @@ module.exports = {
         {
           name: 'auto-create satellite can\'t be destroyed',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 test: {}
               }
@@ -1605,13 +1607,13 @@ module.exports = {
         {
           name: 'all satellites should be destroyed with owner',
           test: function(){
-            var node = new basis.dom.wrapper.Node({
+            var node = new Node({
               satellite: {
                 autoCreateSatellite: {},
                 autoSatellite: {
-                  instance: new basis.dom.wrapper.Node()
+                  instance: new Node()
                 },
-                regularSatellite: new basis.dom.wrapper.Node()
+                regularSatellite: new Node()
               }
             });
 
@@ -1664,7 +1666,7 @@ module.exports = {
         {
           name: 'instance with existsIf dataSource should not be reset if dataSource is not specified in auto-satellite config',
           test: function(){
-            var dataset = new basis.data.Dataset();
+            var dataset = new Dataset();
             var satellite = new Node({
               dataSource: dataset
             });
@@ -1699,8 +1701,8 @@ module.exports = {
         {
           name: 'instance with existsIf dataSource should be overrided by auto-satellite config value if specified',
           test: function(){
-            var dataset = new basis.data.Dataset();
-            var nodeDataset = new basis.data.Dataset();
+            var dataset = new Dataset();
+            var nodeDataset = new Dataset();
             var satellite = new Node({
               dataSource: dataset
             });
@@ -1736,7 +1738,7 @@ module.exports = {
         {
           name: 'instance with existsIf delegate should not be reset if delegate is not specified in auto-satellite config',
           test: function(){
-            var object = new basis.data.Object();
+            var object = new DataObject();
             var satellite = new Node({
               delegate: object
             });
@@ -1771,7 +1773,7 @@ module.exports = {
         {
           name: 'instance with existsIf delegate should be overrided by auto-satellite config value if specified',
           test: function(){
-            var object = new basis.data.Object();
+            var object = new DataObject();
             var satellite = new Node({
               delegate: object
             });
@@ -1808,7 +1810,7 @@ module.exports = {
           name: 'auto-create satellite should apply autoDelegate when no config.delegate',
           test: function(){
             var delegateChangedCount = 0;
-            var object = new basis.data.Object();
+            var object = new DataObject();
             var node = new Node({
               data: {
                 value: object
@@ -1817,7 +1819,7 @@ module.exports = {
                 foo: {
                   events: 'update',
                   existsIf: 'data.value',
-                  instanceOf: Node,
+                  satelliteClass: Node,
                   config: {
                     autoDelegate: true,
                     handler: {
@@ -1851,7 +1853,7 @@ module.exports = {
           name: 'auto-create satellite config delegate value should be used even if satellite has autoDelegate',
           test: function(){
             var delegateChangedCount = 0;
-            var object = new basis.data.Object();
+            var object = new DataObject();
             var node = new Node({
               data: {
                 value: object
@@ -1861,7 +1863,7 @@ module.exports = {
                   events: 'update',
                   existsIf: 'data.value',
                   delegate: 'data.value',
-                  instanceOf: Node,
+                  satelliteClass: Node,
                   config: {
                     autoDelegate: true,
                     handler: {
@@ -1895,7 +1897,7 @@ module.exports = {
           name: 'auto-satellite should apply autoDelegate when no config.delegate',
           test: function(){
             var delegateChangedCount = 0;
-            var object = new basis.data.Object();
+            var object = new DataObject();
             var satellite = new Node({
               autoDelegate: true,
               handler: {
@@ -1939,7 +1941,7 @@ module.exports = {
           name: 'auto-satellite config delegate value should be used even if satellite has autoDelegate',
           test: function(){
             var delegateChangedCount = 0;
-            var object = new basis.data.Object();
+            var object = new DataObject();
             var satellite = new Node({
               autoDelegate: true,
               handler: {
@@ -2047,7 +2049,7 @@ module.exports = {
           test: function(){
             var dataset = getDataset();
             var length = dataset.itemCount;
-            var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+            var datasetWrapper = new DatasetWrapper({ dataset: dataset });
             var node = new Node({
               childFactory: nodeFactory,
               dataSource: datasetWrapper
@@ -2065,8 +2067,8 @@ module.exports = {
           test: function(){
             var dataset = getDataset();
             var length = dataset.itemCount;
-            var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
-            var value = new basis.data.Value({ value: datasetWrapper });
+            var datasetWrapper = new DatasetWrapper({ dataset: dataset });
+            var value = new Value({ value: datasetWrapper });
             var node = new Node({
               childFactory: nodeFactory,
               dataSource: value
@@ -2084,7 +2086,7 @@ module.exports = {
           test: function(){
             // non-empty dataSource
             var dataset = getDataset();
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var node = new Node({
               childFactory: nodeFactory,
               dataSource: value
@@ -2100,7 +2102,7 @@ module.exports = {
             this.is(null, node.dataSourceAdapter_);
 
             // empty dataSource
-            var value = new basis.data.Value();
+            var value = new Value();
             var node = new Node({
               childFactory: nodeFactory,
               dataSource: value
@@ -2120,14 +2122,14 @@ module.exports = {
           name: 'dataSource adapter shouldn\'t be removed on source destroy',
           test: function(){
             // non-empty dataSource
-            var dataset = new basis.data.Dataset({
+            var dataset = new Dataset({
               handler: {
                 destroy: function(){
                   value.set(null);
                 }
               }
             });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var node = new Node({
               childFactory: nodeFactory,
               dataSource: value
@@ -2164,7 +2166,7 @@ module.exports = {
           name: 'if dataSource adapter in config, childNodes should be ignored',
           test: function(){
             var testSet = getTestSet();
-            var value = new basis.data.Value();
+            var value = new Value();
             var node = new Node({
               childFactory: nodeFactory,
               childNodes: testSet,
@@ -2238,7 +2240,7 @@ module.exports = {
         {
           name: 'node modify methods should throw an exception and should not to change childNodes or dataSource if dataSource adapter used',
           test: function(){
-            var value = new basis.data.Value();
+            var value = new Value();
             var node = new Node({
               childFactory: nodeFactory,
               dataSource: value
@@ -2362,7 +2364,7 @@ module.exports = {
         {
           name: 'setChildNodes with no dataSource but with dataSource adapter',
           test: function(){
-            var value = new basis.data.Value;
+            var value = new Value;
             var node = new Node({
               childFactory: nodeFactory,
               dataSource: value
@@ -2460,7 +2462,7 @@ module.exports = {
           name: 'set/reset/set DatasetWrapper instance as dataSource',
           test: function(){
             var dataset = getDataset();
-            var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
+            var datasetWrapper = new DatasetWrapper({ dataset: dataset });
             var node = new Node({
               childFactory: nodeFactory
             });
@@ -2490,8 +2492,8 @@ module.exports = {
           name: 'set/reset/set Value instance as dataSource',
           test: function(){
             var dataset = getDataset();
-            var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
-            var value = new basis.data.Value({ value: datasetWrapper });
+            var datasetWrapper = new DatasetWrapper({ dataset: dataset });
+            var value = new Value({ value: datasetWrapper });
             var node = new Node({
               childFactory: nodeFactory
             });
@@ -2520,10 +2522,10 @@ module.exports = {
         {
           name: 'dynamic test for Value/DatasetWrapper as dataSource',
           test: function(){
-            var dataset = new basis.data.Dataset();
-            var anotherDataset = new basis.data.Dataset();
-            var selectedDataset = new basis.data.Value({ value: dataset });
-            var node = new basis.dom.wrapper.Node({
+            var dataset = new Dataset();
+            var anotherDataset = new Dataset();
+            var selectedDataset = new Value({ value: dataset });
+            var node = new Node({
               dataSource: selectedDataset
             });
 
@@ -2535,7 +2537,7 @@ module.exports = {
             this.is(true, node.dataSource === null);  // true
             this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
 
-            selectedDataset.set(new basis.data.DatasetWrapper({ dataset: anotherDataset }));
+            selectedDataset.set(new DatasetWrapper({ dataset: anotherDataset }));
 
             this.is(true, node.dataSource === anotherDataset);  // true
             this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
@@ -2655,10 +2657,10 @@ module.exports = {
         {
           name: 'dataSource via Value.factory and subscription on node destroy',
           test: function(){
-            var dataset = new basis.data.Dataset;
+            var dataset = new Dataset;
             var node = new Node({
               active: true,
-              dataSource: basis.data.Value.factory(function(){
+              dataSource: Value.factory(function(){
                 return dataset;
               })
             });
@@ -2684,7 +2686,7 @@ module.exports = {
         {
           name: 'destroy active node with dataSource should not produce warnings',
           test: function(){
-            var dataset = new basis.data.Dataset;
+            var dataset = new Dataset;
             var node = new Node({
               active: true,
               dataSource: dataset
@@ -2724,9 +2726,9 @@ module.exports = {
               test: function(){
                 var objectDestroyCount = 0;
                 var nodeDestroyCount = 0;
-                var dataset = new basis.data.Dataset({
+                var dataset = new Dataset({
                   items: basis.array.create(3, function(){
-                    return new basis.data.Object({
+                    return new DataObject({
                       handler: {
                         destroy: function(){
                           objectDestroyCount++;
@@ -2766,9 +2768,9 @@ module.exports = {
               test: function(){
                 var objectDestroyCount = 0;
                 var nodeDestroyCount = 0;
-                var dataset = new basis.data.Dataset({
+                var dataset = new Dataset({
                   items: basis.array.create(3, function(){
-                    return new basis.data.Object({
+                    return new DataObject({
                       handler: {
                         destroy: function(){
                           objectDestroyCount++;
@@ -2808,9 +2810,9 @@ module.exports = {
               test: function(){
                 var objectDestroyCount = 0;
                 var nodeDestroyCount = 0;
-                var dataset = new basis.data.Dataset({
+                var dataset = new Dataset({
                   items: basis.array.create(3, function(){
-                    return new basis.data.Object({
+                    return new DataObject({
                       handler: {
                         destroy: function(){
                           objectDestroyCount++;
@@ -2851,9 +2853,9 @@ module.exports = {
               test: function(){
                 var objectDestroyCount = 0;
                 var nodeDestroyCount = 0;
-                var dataset = new basis.data.Dataset({
+                var dataset = new Dataset({
                   items: basis.array.create(3, function(){
-                    return new basis.data.Object({
+                    return new DataObject({
                       handler: {
                         destroy: function(){
                           objectDestroyCount++;
@@ -3751,7 +3753,7 @@ module.exports = {
             {
               name: 'childNodes + empty group dataset + fill/clear the dataset',
               test: function(){
-                var groupDataSource = new basis.data.Dataset();
+                var groupDataSource = new Dataset();
                 var node = new Node({
                   childFactory: nodeFactory,
                   childNodes: getTestSet(),
@@ -3772,7 +3774,7 @@ module.exports = {
             {
               name: 'childNodes + empty group dataset + fill/clear the dataset + destroy dataset',
               test: function(){
-                var groupDataSource = new basis.data.Dataset();
+                var groupDataSource = new Dataset();
                 var node = new Node({
                   childFactory: nodeFactory,
                   childNodes: getTestSet(),
@@ -3791,7 +3793,7 @@ module.exports = {
                 this.is(4, node.grouping.childNodes.length);
                 this.is(false, checkNode(node));
 
-                var dataset2 = new basis.data.Dataset({ items: groupDatasetByGroup.getItems() });
+                var dataset2 = new Dataset({ items: groupDatasetByGroup.getItems() });
                 var itemCount = dataset2.itemCount;
                 this.is(true, itemCount > 0);
 
@@ -3880,7 +3882,7 @@ module.exports = {
                   childNodes: basis.array.create(10, basis.fn.$self),
                   grouping: {
                     rule: 'data.value',
-                    dataSource: new basis.data.Dataset(),
+                    dataSource: new Dataset(),
                     autoDestroyWithNoOwner: false
                   }
                 });
