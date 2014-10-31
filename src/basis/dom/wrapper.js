@@ -253,75 +253,81 @@
   // AbstractNode
   //
 
-  function processSatelliteConfig(value){
-    if (!value)
+  function processSatelliteConfig(satelliteConfig){
+    if (!satelliteConfig)
       return null;
 
-    if (value.isSatelliteConfig)
-      return value;
+    if (satelliteConfig.isSatelliteConfig)
+      return satelliteConfig;
 
-    if (value instanceof AbstractNode)
-      return value;
+    if (satelliteConfig instanceof AbstractNode)
+      return satelliteConfig;
 
-    if (Class.isClass(value))
-      value = {
-        instanceOf: value
+    if (Class.isClass(satelliteConfig))
+      satelliteConfig = {
+        satelliteClass: satelliteConfig
       };
 
-    if (value && value.constructor === Object)
+    if (satelliteConfig && satelliteConfig.constructor === Object)
     {
       var handlerRequired = false;
+      var satelliteClass;
       var config = {
         isSatelliteConfig: true
       };
 
-      var instanceClass;
 
-      for (var key in value)
+      for (var key in satelliteConfig)
+      {
+        var value = satelliteConfig[key];
         switch (key)
         {
           case 'instance':
-            if (value[key] instanceof AbstractNode)
-              config[key] = value[key];
-            else
-            {
-              /** @cut */ basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
-            }
-
+            if (value instanceof AbstractNode)
+              config[key] = value;
+            /** @cut */ else
+            /** @cut */   basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
             break;
 
           case 'instanceOf':
-            if (Class.isClass(value[key]) && value[key].isSubclassOf(AbstractNode))
-              instanceClass = value[key];
-            else
+          case 'satelliteClass':
+            if (key == 'instanceOf')
             {
-              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` value in satellite config must be a subclass of basis.dom.wrapper.AbstractNode');
+              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config is deprecated, use `satelliteClass` instead');
+              if ('satelliteClass' in satelliteConfig)
+                /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config has ignored, as `satelliteClass` is specified');
             }
+
+            if (Class.isClass(value) && value.isSubclassOf(AbstractNode))
+              satelliteClass = value;
+            /** @cut */ else
+            /** @cut */   basis.dev.warn(namespace + ': `satelliteClass` value in satellite config should be a subclass of basis.dom.wrapper.AbstractNode');
             break;
 
           case 'existsIf':
           case 'delegate':
           case 'dataSource':
             handlerRequired = true;
-            config[key] = getter(value[key]);
+            config[key] = getter(value);
             break;
 
           case 'config':
-            config[key] = value[key];
+            config[key] = value;
             break;
         }
+      }
 
       if (!config.instance)
-        config.instanceOf = instanceClass || AbstractNode;
+        config.satelliteClass = satelliteClass || AbstractNode;
       else
       {
-        /** @cut */ if (instanceClass)
-        /** @cut */   basis.dev.warn(namespace + ': `instanceOf` can\'t be set with `instance` value in satellite config, value ignored');
+        /** @cut */ if (satelliteClass)
+        /** @cut */   basis.dev.warn(namespace + ': `satelliteClass` can\'t be set with `instance` value in satellite config, value ignored');
       }
 
       if (handlerRequired)
       {
-        var events = 'events' in value ? value.events : 'update';
+        var events = 'events' in satelliteConfig ? satelliteConfig.events : 'update';
 
         if (Array.isArray(events))
           events = events.join(' ');
@@ -404,7 +410,7 @@
           if (config.dataSource)
             satelliteConfig.dataSource = config.dataSource(owner);
 
-          satellite = new config.instanceOf(satelliteConfig);
+          satellite = new config.satelliteClass(satelliteConfig);
           satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
 
           // this statement here, because owner set in config and no listen add in this case
