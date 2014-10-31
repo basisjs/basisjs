@@ -312,7 +312,7 @@
             break;
 
           case 'config':
-            config[key] = value;
+            config[key] = typeof value == 'string' ? getter(value) : value;
             break;
         }
       }
