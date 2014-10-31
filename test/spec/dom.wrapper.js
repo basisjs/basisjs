@@ -527,6 +527,48 @@ module.exports = {
           }
         },
         {
+          name: 'auto-create satellite with existsIf as bindingBridge',
+          test: function(){
+            // use existsIf config
+            var token = new basis.Token(false);
+            var node = new Node({
+              satellite: {
+                test: {
+                  existsIf: token
+                }
+              }
+            });
+
+            // should not exists
+            this.is(false, checkNode(node));
+            this.is(undefined, node.satellite.test);
+
+            // should be created
+            token.set(true);
+            this.is(false, checkNode(node));
+            this.is(true, !!node.satellite.test);
+            this.is(true, node.satellite.test instanceof AbstractNode);
+            this.is(true, node.satellite.test.owner === node);
+
+            // should be destroyed
+            var satelliteDestroyed = false;
+            node.satellite.test.addHandler({
+              destroy: function(){
+                satelliteDestroyed = true;
+              }
+            });
+
+            token.set(false);
+            this.is(false, checkNode(node));
+            this.is(undefined, node.satellite.test);
+            this.is(true, satelliteDestroyed);
+            assert(token.handler != null);
+
+            node.destroy();
+            assert(token.handler == null);
+          }
+        },
+        {
           name: 'should be possible don\'t listen event by setting false/null/empty string/array to events setting',
           test: function(){
             // set null

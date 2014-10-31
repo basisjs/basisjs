@@ -32,6 +32,7 @@
   var createEvent = basisEvent.create;
   var events = basisEvent.events;
   var basisData = require('basis.data');
+  var resolveValue = basisData.resolveValue;
   var resolveDataset = basisData.resolveDataset;
 
   var SUBSCRIPTION = basisData.SUBSCRIPTION;
@@ -268,14 +269,13 @@
         satelliteClass: satelliteConfig
       };
 
-    if (satelliteConfig && satelliteConfig.constructor === Object)
+    if (satelliteConfig.constructor === Object)
     {
       var handlerRequired = false;
       var satelliteClass;
       var config = {
         isSatelliteConfig: true
       };
-
 
       for (var key in satelliteConfig)
       {
@@ -289,13 +289,16 @@
             /** @cut */   basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
             break;
 
-          case 'instanceOf':
+          case 'instanceOf': // deprecated
           case 'satelliteClass':
             if (key == 'instanceOf')
             {
               /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config is deprecated, use `satelliteClass` instead');
               if ('satelliteClass' in satelliteConfig)
+              {
                 /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config has ignored, as `satelliteClass` is specified');
+                break;
+              }
             }
 
             if (Class.isClass(value) && value.isSubclassOf(AbstractNode))
@@ -307,8 +310,18 @@
           case 'existsIf':
           case 'delegate':
           case 'dataSource':
-            handlerRequired = true;
-            config[key] = getter(value);
+            if (value)
+            {
+              if (typeof value == 'string')
+                value = getter(value);
+
+              if (typeof value != 'function')
+                value = basis.fn.$const(value);
+              else
+                handlerRequired = true;
+            }
+
+            config[key] = value;
             break;
 
           case 'config':
@@ -364,18 +377,21 @@
   });
 
   // satellite update handler
-  var SATELLITE_UPDATE = function(owner){
+  var SATELLITE_UPDATE = function(){
     // this -> {
+    //   owner: owner,
     //   name: satelliteName,
-    //   config: satelliteConfig
+    //   config: satelliteConfig,
+    //   instance: satelliteInstance or null
     // }
     var name = this.name;
     var config = this.config;
+    var owner = this.owner;
 
-    var exists = !config.existsIf || config.existsIf(owner);
-    var satellite = owner.satellite[name];
+    var satellite = this.instance;
+    var exists = ('existsIf' in config == false) || config.existsIf(owner);
 
-    if (exists)
+    if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsAdapter'))
     {
       if (satellite)
       {
@@ -429,7 +445,7 @@
             satellite.setDataSource(config.dataSource(owner));
         }
 
-        owner.satellite.__auto__[name].instance = satellite;
+        this.instance = satellite;
         owner.setSatellite(name, satellite, true);
       }
     }
@@ -446,7 +462,7 @@
             satellite.setDataSource();
         }
 
-        owner.satellite.__auto__[name].instance = null;
+        this.instance = null;
         owner.setSatellite(name, null, true);
       }
     }
@@ -952,17 +968,14 @@
       if (preserveAuto)
       {
         satellite = autoConfig.instance;
-        if (autoConfig.config.instance)
-        {
-          if (satellite)
-            delete autoConfig.config.instance.setOwner;
-        }
+        if (satellite && autoConfig.config.instance)
+          delete autoConfig.config.instance.setOwner;
       }
       else
       {
         satellite = processSatelliteConfig(satellite);
 
-        if (satellite && satellite.owner && auto && satellite.ownerSatelliteName && auto[satellite.ownerSatelliteName])
+        if (satellite && satellite.owner === this && auto && satellite.ownerSatelliteName && auto[satellite.ownerSatelliteName])
         {
           /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change name inside owner');
           return;
@@ -1023,7 +1036,8 @@
               owner: this,
               name: name,
               config: satellite,
-              instance: null
+              instance: null,
+              existsAdapter: null
             };
 
             // auto-create satellite
@@ -1168,8 +1182,12 @@
         delete satellites.__auto__;
 
         for (var name in auto)
+        {
           if (auto[name].config.instance && !auto[name].instance)
             auto[name].config.instance.destroy();
+          if (auto[name].existsAdapter)
+            resolveValue(auto[name], null, null, 'existsAdapter');
+        }
 
         for (var name in satellites)
         {
