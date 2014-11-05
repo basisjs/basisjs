@@ -673,13 +673,13 @@
 
     satellite: {
       horizontalScrollbar: {
-        instanceOf: HorizontalScrollbar,
+        satelliteClass: HorizontalScrollbar,
         existsIf: function(object){
           return object.useScrollbars && object.scrollX;
         }
       },
       verticalScrollbar: {
-        instanceOf: VerticalScrollbar,
+        satelliteClass: VerticalScrollbar,
         existsIf: function(object){
           return object.useScrollbars && object.scrollY;
         }

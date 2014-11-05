@@ -131,7 +131,7 @@
         dataSource: function(owner){
           return owner.getChildNodesDataset();
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           template: templates.HeaderPartitionRow,
           childClass: HeaderPartitionNode
         })

@@ -156,7 +156,7 @@
         existsIf: function(owner){
           return !owner.titleButton || owner.titleButton.close !== false;
         },
-        instanceOf: Node.subclass({
+        satelliteClass: Node.subclass({
           className: namespace + '.TitleButton',
 
           template: templates.TitleButton,

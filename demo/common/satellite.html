@@ -223,7 +223,7 @@
               '<span{group} class="noGroup">no group selected</span>' +
               '<button event-click="chooseGroup">..</button>' +
             '</div>' +
-            '<span class="user__title">{title}</span>' + 
+            '<span class="user__title">{title}</span>' +
           '</div>',
         binding: {
           group: 'satellite:',
@@ -241,9 +241,9 @@
 
         satellite: {
           group: {
-            existsIf: basis.getter('data.group'),
-            delegate: basis.getter('data.group'),
-            instanceOf: basis.ui.Node.subclass({
+            existsIf: 'data.group',
+            delegate: 'data.group',
+            satelliteClass: basis.ui.Node.subclass({
               template: '{title}',
               binding: {
                 title: 'data:'
@@ -257,7 +257,7 @@
     var groupList = new basis.ui.Node({
       container: document.getElementById('demo-container'),
       template: '<div id="GroupList"/>',
-      
+
       dataSource: UserGroup.all,
       sorting: 'data.groupId',
       childClass: {
@@ -276,22 +276,20 @@
         },
 
         satellite: {
-          titleEditor: {
-            instanceOf: basis.ui.field.Text.subclass({
-              autoDelegate: true,
-              maxLength: 32,
-              handler: {
-                update: function(){
-                  this.setValue(this.data.title);
-                },
-                change: function(){
-                  this.update({
-                    title: this.getValue()
-                  });
-                }
+          titleEditor: basis.ui.field.Text.subclass({
+            autoDelegate: true,
+            maxLength: 32,
+            handler: {
+              update: function(){
+                this.setValue(this.data.title);
+              },
+              change: function(){
+                this.update({
+                  title: this.getValue()
+                });
               }
-            })
-          }
+            }
+          })
         }
       }
     });

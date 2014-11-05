@@ -247,7 +247,7 @@
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },
-            instanceOf: basis.dom.wrapper.AbstractNode.subclass({
+            satelliteClass: basis.dom.wrapper.AbstractNode.subclass({
               active: true,
               emit_update: function(delta){
                 nsData.Object.prototype.emit_update.call(this, delta);

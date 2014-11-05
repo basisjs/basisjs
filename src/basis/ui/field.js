@@ -228,7 +228,7 @@
         existsIf: function(owner){
           return owner.example;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Example',
           template: templates.Example,
           binding: {
@@ -248,7 +248,7 @@
         existsIf: function(owner){
           return owner.description;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Description',
           template: templates.Description,
           binding: {
@@ -557,7 +557,7 @@
         existsIf: function(owner){
           return owner.maxLength > 0;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Counter',
 
           template: templates.Counter,
@@ -923,14 +923,14 @@
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
       template: templates.ComboboxDropdownList,
-      autorotate: 1,
+      autorotate: true,
       templateSync: function(){
         Popup.prototype.templateSync.call(this);
 
         // NOTE: for now popups can't has an owner as has a parent node (popup manager)
         // TODO: use owner when popups can has owner
-        if (this.fieldOwner_ && this.fieldOwner_.childNodesElement)
-          (this.tmpl.content || this.element).appendChild(this.fieldOwner_.childNodesElement);
+        if (this.owner && this.owner.childNodesElement)
+          (this.tmpl.content || this.element).appendChild(this.owner.childNodesElement);
       }
     }),
 
@@ -942,11 +942,14 @@
     },
 
     satellite: {
+      popup: {
+        config: 'popup'
+      },
       hiddenField: {
         existsIf: function(owner){
           return owner.name;
         },
-        instanceOf: Hidden.subclass({
+        satelliteClass: Hidden.subclass({
           className: namespace + '.ComboboxHidden',
           getValue: function(){
             return this.owner.getValue();
@@ -992,7 +995,9 @@
               return;
             }
 
-            next = basis.array.search(DOM.axis(cur || this.firstChild, DOM.AXIS_FOLLOWING_SIBLING), false, 'disabled');
+            next = cur ? cur.nextSibling : this.firstChild;
+            while (next && next.isDisabled())
+              next = next.nextSibling;
           break;
 
           case event.KEY.UP:
@@ -1006,7 +1011,9 @@
               return;
             }
 
-            next = basis.array.search(DOM.axis(cur || this.lastChild, DOM.AXIS_PRECEDING_SIBLING), false, 'disabled');
+            next = cur ? cur.previousSibling : this.lastChild;
+            while (next && next.isDisabled())
+              next = next.previousSibling;
           break;
         }
 
@@ -1065,13 +1072,9 @@
       }));
 
       // create items popup
-      this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
-        fieldOwner_: this
-      }, this.popup));
-
-      this.opened = Value.from(this.popup, 'show hide', function(popup){
-        return popup.visible;
-      });
+      this.popup = new this.popupClass(this.popup);
+      this.setSatellite('popup', this.popup);
+      this.opened = Value.from(this.popup, 'show hide', 'visible');
 
       if (this.property)
         this.property.link(this, this.setValue);
@@ -1115,8 +1118,6 @@
     },
     destroy: function(){
       this.property = null;
-
-      this.opened.destroy();
       this.opened = null;
 
       this.popup.destroy();
