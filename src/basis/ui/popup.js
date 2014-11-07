@@ -122,8 +122,9 @@
   // NOTE: popupManager adds global event handlers dynamically because click event
   // which makes popup visible can also hide it (as click outside of popup).
 
-  var body;
   var popupManager = basis.object.extend([], {
+    body: NaN,
+
     add: function(popup){
       if (!this.length)
       {
@@ -136,10 +137,9 @@
       this.unshift(popup);
       popup.setZIndex(getTopZIndex());
 
-      if (body && !domUtils.parentOf(document, popup.element))
-        body.appendChild(popup.element);
+      if (this.body && !domUtils.parentOf(document, popup.element))
+        this.body.appendChild(popup.element);
     },
-
     remove: function(popup){
       var popupIndex = this.indexOf(popup);
 
@@ -154,7 +154,7 @@
       }
 
       basis.array.remove(this, popup);
-      if (popup.element.parentNode === body)
+      if (popup.element.parentNode === this.body)
         domUtils.remove(popup.element);
 
       if (!this.length)
@@ -165,7 +165,6 @@
         eventUtils.removeHandler(window, 'resize', this.realignAll, this);
       }
     },
-
     clear: function(){
       arrayFrom(this).forEach(function(popup){
         popup.hide();
@@ -234,17 +233,17 @@
       arrayFrom(this)
         .forEach(function(popup){
           if (popup.hideOnScroll &&
-              popup.relElement && !Array.isArray(popup.relElement) &&
+              popup.relElement_ && !Array.isArray(popup.relElement_) &&
               popup.offsetParent !== sender &&
-              domUtils.parentOf(sender, popup.relElement))
+              domUtils.parentOf(sender, popup.relElement_))
             popup.hide();
         });
     }
   });
 
   // async document.body ready
-  basis.doc.body.ready(function(body_){
-    body = body_;
+  basis.doc.body.ready(function(body){
+    popupManager.body = body;
     popupManager.forEach(function(popup){
       if (!domUtils.parentOf(document, popup.element))
       {
@@ -291,8 +290,17 @@
     emit_hide: createEvent('hide'),
     emit_realign: createEvent('realign'),
     emit_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir'),
+    listen: {
+      owner: {
+        templateChanged: function(owner){
+          if (this.visible)
+            this.show.apply(this, this.visibleArgs_);
+        }
+      }
+    },
 
     visible: false,
+    visibleArgs_: null,
     autorotate: false,
     autoRealign: true,
     zIndex: 0,
@@ -300,6 +308,8 @@
     dir: '',
     defaultDir: DEFAULT_DIR,
     orientation: ORIENTATION.VERTICAL,
+    relElement: null,
+    relElement_: null,
 
     hideOnAnyClick: true,
     hideOnKey: false,
@@ -389,11 +399,11 @@
 
       return result;
     },
-    isFitToViewport: function(dir){
-      if (this.visible && this.relElement)
+    isFitToViewport: function(dir, relElement){
+      if (this.visible && relElement)
       {
         var offsetParent = getOffsetParent(this.element);
-        var box = resolveRelBox(this.relElement, offsetParent);
+        var box = resolveRelBox(relElement, offsetParent);
         var width = this.element.offsetWidth;
         var height = this.element.offsetHeight;
 
@@ -432,7 +442,8 @@
     realign: function(){
       this.setZIndex(this.zIndex);
 
-      if (this.visible && this.relElement)
+      var relElement = this.visible && this.relElement_;
+      if (relElement)
       {
         var dir = this.dir.split(' ');
         var point;
@@ -445,7 +456,7 @@
 
         while (this.autorotate && rotateOffset <= maxRotate)
         {
-          if (point = this.isFitToViewport(curDir.join(' ')))
+          if (point = this.isFitToViewport(curDir.join(' '), relElement))
           {
             dirH = curDir[2];
             dirV = curDir[3];
@@ -471,7 +482,7 @@
 
         if (!point)
         {
-          var box = resolveRelBox(this.relElement, offsetParent);
+          var box = resolveRelBox(relElement, offsetParent);
 
           point = {
             x: dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()],
@@ -517,9 +528,29 @@
         this.emit_realign();
       }
     },
+    resolveRelElement: function(value){
+      if (typeof value == 'string')
+      {
+        if (value.substr(0, 6) != 'owner:')
+          return domUtils.get(relElement);
+
+        if (this.owner)
+          return (this.owner.tmpl && this.owner.tmpl[value.substr(6)]) || this.owner.element;
+        else
+          return null;
+      }
+
+      if (Array.isArray(value))
+        return value;
+
+      return value || null;
+    },
     show: function(relElement, dir, orientation){
+      // store arguments for re-apply settings
+      this.visibleArgs_ = basis.array(arguments);
+
       // assign new offset element
-      this.relElement = Array.isArray(relElement) ? relElement : domUtils.get(relElement) || this.relElement;
+      this.relElement_ = this.resolveRelElement(relElement || this.relElement);
 
       // set up direction and orientation
       this.setLayout(normalizeDir(dir, this.defaultDir), orientation);
@@ -528,7 +559,7 @@
       if (!this.visible)
       {
         // error on relElement no assigned
-        if (!this.relElement)
+        if (!this.relElement_)
         {
           /** @cut */ basis.dev.warn('Popup#show(): relElement missed');
           return;
@@ -557,6 +588,9 @@
         this.realign();
     },
     hide: function(){
+      this.visibleArgs_ = null;
+      this.relElement_ = null;
+
       if (this.visible)
       {
         // set visible flag
@@ -573,6 +607,7 @@
     },
     destroy: function(){
       this.hide();
+      this.relElement = null;
 
       Node.prototype.destroy.call(this);
     }

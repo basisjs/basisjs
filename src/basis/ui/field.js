@@ -922,24 +922,16 @@
     popup: null,
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
-      template: templates.ComboboxDropdownList,
       autorotate: true,
+      relElement: 'owner:field',
+      template: templates.ComboboxDropdownList,
       templateSync: function(){
         Popup.prototype.templateSync.call(this);
 
-        // NOTE: for now popups can't has an owner as has a parent node (popup manager)
-        // TODO: use owner when popups can has owner
         if (this.owner && this.owner.childNodesElement)
           (this.tmpl.content || this.element).appendChild(this.owner.childNodesElement);
       }
     }),
-
-    template: templates.Combobox,
-    binding: {
-      captionItem: 'satellite:',
-      hiddenField: 'satellite:',
-      opened: 'opened'
-    },
 
     satellite: {
       popup: {
@@ -971,6 +963,12 @@
       }
     },
 
+    template: templates.Combobox,
+    binding: {
+      captionItem: 'satellite:',
+      hiddenField: 'satellite:',
+      opened: 'opened'
+    },
     action: {
       togglePopup: function(){
         if (this.isDisabled() || this.popup.visible)
@@ -1090,7 +1088,7 @@
     show: function(){
       if (this.tmpl)
       {
-        this.popup.show(this.tmpl.field);
+        this.popup.show();
         this.focus();
       }
     },
