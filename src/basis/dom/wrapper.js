@@ -2411,6 +2411,11 @@
     disabled: false,
 
    /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    disabled_: null,
+
+   /**
     * @type {boolean}
     * @readonly
     */
@@ -2446,10 +2451,11 @@
       // inherit
       AbstractNode.prototype.init.call(this);
 
-      // synchronize node state according to config
+      // synchronize disabled
       if (this.disabled)
-        this.emit_disable();
+        this.disabled = !!resolveValue(this, this.setDisabled, this.disabled, 'disabled_');
 
+      // selected
       if (this.selected)
       {
         this.selected = false;
@@ -2558,17 +2564,7 @@
     * @return {boolean} Returns true if disabled property was changed.
     */
     enable: function(){
-      var disabled = this.disabled;
-
-      if (disabled)
-      {
-        this.disabled = false;
-
-        if (!this.contextDisabled)
-          this.emit_enable();
-      }
-
-      return this.disabled != disabled;
+      return this.setDisabled(false);
     },
 
    /**
@@ -2576,17 +2572,7 @@
     * @return {boolean} Returns true if disabled property was changed.
     */
     disable: function(){
-      var disabled = this.disabled;
-
-      if (!disabled)
-      {
-        this.disabled = true;
-
-        if (!this.contextDisabled)
-          this.emit_disable();
-      }
-
-      return this.disabled != disabled;
+      return this.setDisabled(true);
     },
 
    /**
@@ -2595,9 +2581,20 @@
     * @return {boolean} Returns true if disabled property was changed.
     */
     setDisabled: function(disabled){
-      return disabled
-        ? this.disable()
-        : this.enable();
+      disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabled_');
+
+      if (this.disabled !== disabled)
+      {
+        this.disabled = disabled;
+
+        if (!this.contextDisabled)
+          if (disabled)
+            this.emit_disable();
+          else
+            this.emit_enable();
+
+        return true;
+      }
     },
 
    /**
@@ -2638,11 +2635,13 @@
     */
     destroy: function(){
       this.unselect();
-
       this.contextSelection = null;
-
       if (this.selection)
         this.setSelection();
+
+      // unlink disabled bb-value
+      if (this.disabled_)
+        resolveValue(this, null, null, 'disabled_');
 
       // inherit
       AbstractNode.prototype.destroy.call(this);
