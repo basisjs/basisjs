@@ -299,6 +299,11 @@
     active: false,
 
    /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    active_: null,
+
+   /**
     * Fires when state of subscription was changed.
     * @event
     */
@@ -362,10 +367,14 @@
 
       // activate subscription if active
       if (this.active)
-        this.addHandler(getMaskConfig(this.subscribeTo).handler);
+      {
+        this.active = !!resolveValue(this, this.setActive, this.active, 'active_');
+        if (this.active)
+          this.addHandler(getMaskConfig(this.subscribeTo).handler);
+      }
 
+      // apply sync action
       var syncAction = this.syncAction;
-
       if (syncAction)
       {
         this.syncAction = null;
@@ -416,7 +425,7 @@
     * @return {boolean} Returns true if {basis.data.Object#active} was changed.
     */
     setActive: function(isActive){
-      isActive = !!isActive;
+      isActive = !!resolveValue(this, this.setActive, isActive, 'active_');
 
       if (this.active != isActive)
       {
@@ -526,6 +535,10 @@
         for (var i = 0, action; action = config.actions[i]; i++)
           action(SUBSCRIPTION.unlink, this);
       }
+
+      // clean up active resolve adapter
+      if (this.active_)
+        resolveValue(this, null, null, 'active_');
 
       this.state = STATE.UNDEFINED;
     }
