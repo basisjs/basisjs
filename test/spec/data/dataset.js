@@ -652,6 +652,21 @@ module.exports = {
           }
         },
         {
+          name: 'destroy value should set property to null',
+          test: function(){
+            var dataset = new Dataset();
+            var value = new Value({ value: dataset });
+            var datasetWrapper = new DatasetWrapper({ dataset: value });
+
+            assert(datasetWrapper.dataset === dataset);
+            assert(datasetWrapper.datasetAdapter_ && datasetWrapper.datasetAdapter_.source === value);
+
+            value.destroy();
+            assert(datasetWrapper.dataset === null);
+            assert(datasetWrapper.datasetAdapter_ === null);
+          }
+        },
+        {
           name: 'common use-case of resolveDataset usage',
           test: function(){
             var obj = {

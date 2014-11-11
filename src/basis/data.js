@@ -2264,6 +2264,14 @@
   });
 
 
+  //
+  // resolvers
+  //
+
+  function resolveAdapterProxy(){
+    this.fn.call(this.context, this.source);
+  }
+
  /**
   * @class
   */
@@ -2285,9 +2293,6 @@
     },
     detach: function(){
       this.source.removeHandler(this.handler, this);
-    },
-    proxy: function(){
-      this.fn.call(this.context, this.source);
     }
   };
 
@@ -2310,25 +2315,29 @@
   // adapter handlers
   //
 
-  var TOKEN_ADAPTER_HANDLER = function(){
+  var DEFAULT_CHANGE_ADAPTER_HANDLER = function(){
     this.fn.call(this.context, this.source);
   };
+  var DEFAULT_DESTROY_ADAPTER_HANDLER = function(){
+    this.fn.call(this.context, null);
+  };
+
+  var TOKEN_ADAPTER_HANDLER = DEFAULT_CHANGE_ADAPTER_HANDLER;
 
   var DATASETWRAPPER_ADAPTER_HANDLER = {
-    datasetChanged: function(){
-      this.fn.call(this.context, this.source);
-    },
-    destroy: function(){
-      this.fn.call(this.context, null);
-    }
+    datasetChanged: DEFAULT_CHANGE_ADAPTER_HANDLER,
+    destroy: DEFAULT_DESTROY_ADAPTER_HANDLER
   };
 
   var VALUE_ADAPTER_HANDLER = {
-    change: function(){
-      this.fn.call(this.context, this.source);
-    },
+    change: DEFAULT_CHANGE_ADAPTER_HANDLER,
+    destroy: DEFAULT_DESTROY_ADAPTER_HANDLER
+  };
+
+  var VALUE_VALUE_ADAPTER_HANDLER = {
+    change: DEFAULT_CHANGE_ADAPTER_HANDLER,
     destroy: function(){
-      this.fn.call(this.context, null);
+      this.fn.call(this.context, resolveValue({}, null, this.source.value));
     }
   };
 
@@ -2339,11 +2348,12 @@
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
-    if (typeof source == 'function')
+    if (fn !== resolveAdapterProxy && typeof source == 'function')
       source = source.call(context, context);
 
     if (source)
     {
+      // try to re-use old adapter
       var adapter = newAdapter = oldAdapter && oldAdapter.source === source ? oldAdapter : null;
 
       if (source instanceof DatasetWrapper)
@@ -2354,12 +2364,12 @@
       else if (source instanceof Value)
       {
         newAdapter = adapter || new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-        source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
+        source = resolveDataset(newAdapter, resolveAdapterProxy, source.value, 'next');
       }
       else if (source.bindingBridge)
       {
         newAdapter = adapter || new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-        source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
+        source = resolveDataset(newAdapter, resolveAdapterProxy, source.value, 'next');
       }
     }
 
@@ -2393,22 +2403,23 @@
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
-    if (typeof source == 'function')
+    if (fn !== resolveAdapterProxy && typeof source == 'function')
       source = source.call(context, context);
 
     if (source)
     {
+      // try to re-use old adapter
       var adapter = oldAdapter && oldAdapter.source === source ? oldAdapter : null;
 
       if (source instanceof Value)
       {
         newAdapter = adapter || new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-        source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
+        source = resolveObject(newAdapter, resolveAdapterProxy, source.value, 'next');
       }
       else if (source.bindingBridge)
       {
         newAdapter = adapter || new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-        source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
+        source = resolveObject(newAdapter, resolveAdapterProxy, source.value, 'next');
       }
     }
 
@@ -2444,22 +2455,24 @@
 
     // functions can be used as property value on instance create,
     // it makes possible to use factories (i.e. Value.factory())
-    if (typeof source == 'function')
+    if (fn !== resolveAdapterProxy && typeof source == 'function')
       source = source.call(context, context);
 
     if (source)
     {
+      // try to re-use old adapter
+      var adapter = oldAdapter && oldAdapter.source === source ? oldAdapter : null;
+
       if (source instanceof Value)
       {
-        newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-        source = resolveValue(newAdapter, newAdapter.proxy, source.value, 'next');
+        newAdapter = adapter || new ResolveAdapter(context, fn, source, VALUE_VALUE_ADAPTER_HANDLER);
+        source = resolveValue(newAdapter, resolveAdapterProxy, source.value, 'next');
       }
-      else
-        if (source.bindingBridge)
-        {
-          newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-          source = resolveValue(newAdapter, newAdapter.proxy, source.value, 'next');
-        }
+      else if (source.bindingBridge)
+      {
+        newAdapter = adapter || new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+        source = resolveValue(newAdapter, resolveAdapterProxy, source.value, 'next');
+      }
     }
 
     if (property && oldAdapter !== newAdapter)
