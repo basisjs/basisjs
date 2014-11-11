@@ -1590,6 +1590,9 @@
 
         return update ? delta : false;
       },
+      read: function(data){
+        return this.update(this.type.reader(data));
+      },
       generateData: function(){ // will be overrided
         return {};
       },
