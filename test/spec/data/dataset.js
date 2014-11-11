@@ -2,13 +2,23 @@ module.exports = {
   name: 'basis.data datasets',
 
   init: function(){
-    basis.require('basis.event');
-    basis.require('basis.data');
-    basis.require('basis.data.dataset');
+    var dataWrap = basis.require('basis.data').wrap;
+    var Value = basis.require('basis.data').Value;
+    var DataObject = basis.require('basis.data').Object;
+    var Dataset = basis.require('basis.data').Dataset;
+    var DatasetWrapper = basis.require('basis.data').DatasetWrapper;
+    var resolveDataset = basis.require('basis.data').resolveDataset;
+    var SourceDataset = basis.require('basis.data.dataset').SourceDataset;
+    var Filter = basis.require('basis.data.dataset').Filter;
+    var Slice = basis.require('basis.data.dataset').Slice;
+    var Split = basis.require('basis.data.dataset').Split;
+
 
     (function(){
-      var eventTypeFilter = function(event){ return event.type == this; };
-      var proto = basis.event.Emitter.prototype;
+      var eventTypeFilter = function(event){
+        return event.type == this;
+      };
+      var proto = basis.require('basis.event').Emitter.prototype;
       var eventsMap = {};
       var seed = 1;
 
@@ -43,10 +53,6 @@ module.exports = {
         return events && events[events.length - 1];
       };
     })();
-
-    var DataObject = basis.data.Object;
-    var Dataset = basis.data.Dataset;
-    var SourceDataset = basis.data.dataset.SourceDataset;
   },
 
   test: [
@@ -61,19 +67,21 @@ module.exports = {
             var insertDoubles = 0;
             var deleteDoubles = 0;
 
-            var items = basis.data.wrap(basis.array.create(10, function(i){ return i <= 5 ? i : 100; }), true);
-            var dataset = new basis.data.Dataset({
+            var items = dataWrap(basis.array.create(10, function(i){
+              return i <= 5 ? i : 100;
+            }), true);
+            var dataset = new Dataset({
               items: items
             });
 
-            var subset = new basis.data.dataset.Filter({
+            var subset = new Filter({
               source: dataset,
               rule: function(obj){
                 return obj.data.value % 2;
               }
             });
 
-            var slice = new basis.data.dataset.Slice({
+            var slice = new Slice({
               source: subset,
               rule: 'data.value',
               handler: {
@@ -89,13 +97,13 @@ module.exports = {
               }
             });
 
-            basis.data.Dataset.setAccumulateState(true);
+            Dataset.setAccumulateState(true);
             items[6].update({ value: 3 });
             items[5].update({ value: 100 });
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
-            this.is(0, insertDoubles);
-            this.is(0, deleteDoubles);
+            assert(insertDoubles === 0);
+            assert(deleteDoubles === 0);
           }
         },
         {
@@ -106,19 +114,21 @@ module.exports = {
             var insertDoubles = 0;
             var deleteDoubles = 0;
 
-            var items = basis.data.wrap(basis.array.create(10, function(i){ return i <= 5 ? i : 100; }), true);
-            var dataset = new basis.data.Dataset({
+            var items = dataWrap(basis.array.create(10, function(i){
+              return i <= 5 ? i : 100;
+            }), true);
+            var dataset = new Dataset({
               items: items
             });
 
-            var subset = new basis.data.dataset.Filter({
+            var subset = new Filter({
               source: dataset,
               rule: function(obj){
                 return obj.data.value % 2;
               }
             });
 
-            var slice = new basis.data.dataset.Slice({
+            var slice = new Slice({
               source: subset,
               rule: 'data.value',
               handler: {
@@ -134,35 +144,35 @@ module.exports = {
               }
             });
 
-            basis.data.Dataset.setAccumulateState(true);
+            Dataset.setAccumulateState(true);
             items[5].update({ value: 100 });
             items[6].update({ value: 3 });
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
-            this.is(0, insertDoubles);
-            this.is(0, deleteDoubles);
+            assert(insertDoubles === 0);
+            assert(deleteDoubles === 0);
           }
         },
         {
           name: 'merge insert events',
           test: function(){
-            var dataset = new basis.data.Dataset();
+            var dataset = new Dataset();
 
-            basis.data.Dataset.setAccumulateState(true);
-            dataset.add(new basis.data.Object());
+            Dataset.setAccumulateState(true);
+            dataset.add(new DataObject());
             assert(dataset.getItems().length == 0);
-            dataset.add(new basis.data.Object());
+            dataset.add(new DataObject());
             assert(dataset.getItems().length == 0);
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
             assert(dataset.getItems().length == 2);
 
-            basis.data.Dataset.setAccumulateState(true);
-            dataset.add(new basis.data.Object());
+            Dataset.setAccumulateState(true);
+            dataset.add(new DataObject());
             assert(dataset.getItems().length == 2);
-            dataset.add(new basis.data.Object());
+            dataset.add(new DataObject());
             assert(dataset.getItems().length == 2);
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
             assert(dataset.getItems().length == 4);
           }
@@ -170,28 +180,28 @@ module.exports = {
         {
           name: 'merge inserted->deleted events',
           test: function(){
-            var dataset = new basis.data.Dataset();
-            var a = new basis.data.Object();
-            var b = new basis.data.Object();
-            var c = new basis.data.Object();
+            var dataset = new Dataset();
+            var a = new DataObject();
+            var b = new DataObject();
+            var c = new DataObject();
 
-            basis.data.Dataset.setAccumulateState(true);
+            Dataset.setAccumulateState(true);
             dataset.add([a, b, c]);
             assert(dataset.getItems().length == 0);
             dataset.remove([a, c]);
             assert(dataset.getItems().length == 0);
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
             assert(dataset.getItems().length == 1);
             assert(dataset.has(b));
             assert(dataset.pick() === b);
 
-            basis.data.Dataset.setAccumulateState(true);
+            Dataset.setAccumulateState(true);
             dataset.add([a, b, c]);
             assert(dataset.getItems().length == 1);
             dataset.remove(b);
             assert(dataset.getItems().length == 1);
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
             assert(dataset.getItems().length == 2);
             assert(dataset.has(a));
@@ -201,30 +211,30 @@ module.exports = {
         {
           name: 'merge deleted->inserted events',
           test: function(){
-            var a = new basis.data.Object();
-            var b = new basis.data.Object();
-            var c = new basis.data.Object();
-            var dataset = new basis.data.Dataset({
+            var a = new DataObject();
+            var b = new DataObject();
+            var c = new DataObject();
+            var dataset = new Dataset({
               items: [a, b, c]
             });
 
-            basis.data.Dataset.setAccumulateState(true);
+            Dataset.setAccumulateState(true);
             dataset.remove([a, b, c]);
             assert(dataset.getItems().length == 3);
             dataset.add([b]);
             assert(dataset.getItems().length == 3);
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
             assert(dataset.getItems().length == 1);
             assert(dataset.has(b));
             assert(dataset.pick() === b);
 
-            basis.data.Dataset.setAccumulateState(true);
+            Dataset.setAccumulateState(true);
             dataset.remove(b);
             assert(dataset.getItems().length == 1);
             dataset.add([a, c]);
             assert(dataset.getItems().length == 1);
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
             assert(dataset.getItems().length == 2);
             assert(dataset.has(a));
@@ -234,13 +244,13 @@ module.exports = {
         {
           name: 'mixed events flush on third',
           test: function(){
-            var a = new basis.data.Object();
-            var b = new basis.data.Object();
-            var c = new basis.data.Object();
-            var d = new basis.data.Object();
-            var dataset = new basis.data.Dataset({ items: [d] });
+            var a = new DataObject();
+            var b = new DataObject();
+            var c = new DataObject();
+            var d = new DataObject();
+            var dataset = new Dataset({ items: [d] });
 
-            basis.data.Dataset.setAccumulateState(true);
+            Dataset.setAccumulateState(true);
             dataset.add([a, b, c]);
             assert(dataset.getItems().length == 1);
             dataset.remove([a, d]);
@@ -249,17 +259,17 @@ module.exports = {
             assert(dataset.getItems().length == 3);
             dataset.add(c);
             assert(dataset.getItems().length == 3);
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
             assert(dataset.getItems().length == 3);
 
             ///
 
-            var dataset = new basis.data.Dataset({
+            var dataset = new Dataset({
               items: [a, b, c]
             });
 
-            basis.data.Dataset.setAccumulateState(true);
+            Dataset.setAccumulateState(true);
             dataset.remove([a, b, c]);
             assert(dataset.getItems().length == 3);
             dataset.add([a, d]);
@@ -268,7 +278,7 @@ module.exports = {
             assert(dataset.getItems().length == 1);
             dataset.remove(d);
             assert(dataset.getItems().length == 1);
-            basis.data.Dataset.setAccumulateState(false);
+            Dataset.setAccumulateState(false);
 
             assert(dataset.getItems().length == 0);
           }
@@ -279,36 +289,36 @@ module.exports = {
             {
               name: 'edge case: empty inserted/deleted on mixed events should not to flush',
               test: function(){
-                var dataset = new basis.data.Dataset();
-                var a = new basis.data.Object();
-                var b = new basis.data.Object();
-                var c = new basis.data.Object();
+                var dataset = new Dataset();
+                var a = new DataObject();
+                var b = new DataObject();
+                var c = new DataObject();
 
-                basis.data.Dataset.setAccumulateState(true);
+                Dataset.setAccumulateState(true);
                 dataset.add([a, b, c]);
                 assert(dataset.getItems().length == 0);
                 dataset.remove([a, b, c]);
                 assert(dataset.getItems().length == 0);
                 dataset.add([a, b, c]);
                 assert(dataset.getItems().length == 0);
-                basis.data.Dataset.setAccumulateState(false);
+                Dataset.setAccumulateState(false);
 
                 assert(dataset.getItems().length == 3);
 
                 ///
 
-                var dataset = new basis.data.Dataset({
+                var dataset = new Dataset({
                   items: [a, b, c]
                 });
 
-                basis.data.Dataset.setAccumulateState(true);
+                Dataset.setAccumulateState(true);
                 dataset.remove([a, b, c]);
                 assert(dataset.getItems().length == 3);
                 dataset.add([a, b, c]);
                 assert(dataset.getItems().length == 3);
                 dataset.remove([a, b, c]);
                 assert(dataset.getItems().length == 3);
-                basis.data.Dataset.setAccumulateState(false);
+                Dataset.setAccumulateState(false);
 
                 assert(dataset.getItems().length == 0);
               }
@@ -316,12 +326,12 @@ module.exports = {
             {
               name: 'edge case: empty inserted/deleted on mixed events -> no events',
               test: function(){
-                var dataset = new basis.data.Dataset();
-                var a = new basis.data.Object();
-                var b = new basis.data.Object();
-                var c = new basis.data.Object();
+                var dataset = new Dataset();
+                var a = new DataObject();
+                var b = new DataObject();
+                var c = new DataObject();
 
-                basis.data.Dataset.setAccumulateState(true);
+                Dataset.setAccumulateState(true);
                 dataset.add([a, b, c]);
                 assert(dataset.getItems().length == 0);
                 dataset.remove(a);
@@ -329,18 +339,18 @@ module.exports = {
                 dataset.remove(b);
                 assert(dataset.getItems().length == 0);
                 dataset.remove(c);
-                basis.data.Dataset.setAccumulateState(false);
+                Dataset.setAccumulateState(false);
 
                 assert(dataset.getItems().length == 0);
                 assert(eventCount(dataset, 'itemsChanged') == 0);
 
                 ///
 
-                var dataset = new basis.data.Dataset({
+                var dataset = new Dataset({
                   items: [a, b, c]
                 });
 
-                basis.data.Dataset.setAccumulateState(true);
+                Dataset.setAccumulateState(true);
                 dataset.remove([a, b, c]);
                 assert(dataset.getItems().length == 3);
                 dataset.add(a);
@@ -348,7 +358,7 @@ module.exports = {
                 dataset.add(b);
                 assert(dataset.getItems().length == 3);
                 dataset.add(c);
-                basis.data.Dataset.setAccumulateState(false);
+                Dataset.setAccumulateState(false);
 
                 assert(dataset.getItems().length == 3);
                 assert(eventCount(dataset, 'itemsChanged') == 1); // single event on items add on init
@@ -366,22 +376,23 @@ module.exports = {
           test: function(){
             var log = [];
             var obj = {
-              log: function(){
-                log.push(basis.data.resolveDataset({}, function(){}, val));
+              log: function(value){
+                this.value = value;
+                log.push(value);
               }
             };
-            var dataset = new basis.data.Dataset();
-            var adopted = basis.data.resolveDataset(obj, obj.log, dataset, 'test');
+            var dataset = new Dataset();
+            var adopted = resolveDataset(obj, obj.log, dataset, 'test');
 
-            this.is(true, adopted === dataset);
-            this.is(false, 'test' in obj);
-            this.is([], log);
+            assert(adopted === dataset);
+            assert('test' in obj === false);
+            assert([], log);
 
-            adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+            adopted = resolveDataset(obj, obj.log, null, 'test');
 
-            this.is(true, adopted === null);
-            this.is(false, 'test' in obj);
-            this.is([], log);
+            assert(adopted === null);
+            assert('test' in obj == false);
+            assert([], log);
           }
         },
         {
@@ -392,50 +403,50 @@ module.exports = {
               log: function(val){
                 log.push({
                   context: this,
-                  value: basis.data.resolveDataset({}, function(){}, val)
+                  value: resolveDataset({}, function(){}, val)
                 });
               }
             };
-            var dataset = new basis.data.Dataset();
-            var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
-            var adopted = basis.data.resolveDataset(obj, obj.log, datasetWrapper, 'test');
+            var dataset = new Dataset();
+            var datasetWrapper = new DatasetWrapper({ dataset: dataset });
+            var adopted = resolveDataset(obj, obj.log, datasetWrapper, 'test');
 
-            this.is(true, adopted === dataset);
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === datasetWrapper);
-            this.is([], log);
+            assert(adopted === dataset);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === datasetWrapper);
+            assert([], log);
 
             // change wrapper's dataset should add record to log
-            dataset = new basis.data.Dataset();
+            dataset = new Dataset();
             datasetWrapper.setDataset(dataset);
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === datasetWrapper);
-            this.is(1, log.length);
-            this.is(obj, log[0].context);
-            this.is(true, log[0].value === dataset);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === datasetWrapper);
+            assert(log.length === 1);
+            assert(log[0].context === obj);
+            assert(log[0].value === dataset);
 
             // reset dataset
             datasetWrapper.setDataset();
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === datasetWrapper);
-            this.is(2, log.length);
-            this.is(obj, log[1].context);
-            this.is(true, log[1].value === null);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === datasetWrapper);
+            assert(log.length === 2);
+            assert(log[1].context === obj);
+            assert(log[1].value === null);
 
             // clean up
-            adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+            adopted = resolveDataset(obj, obj.log, null, 'test');
 
-            this.is(true, adopted === null);
-            this.is(null, obj.test);
-            this.is(2, log.length);
+            assert(adopted === null);
+            assert(obj.test === null);
+            assert(log.length == 2);
 
             // change wrapper's dataset should change nothing
-            datasetWrapper.setDataset(new basis.data.Dataset());
+            datasetWrapper.setDataset(new Dataset());
 
-            this.is(null, obj.test);
-            this.is(2, log.length);
+            assert(obj.test === null);
+            assert(log.length === 2);
           }
         },
         {
@@ -446,50 +457,50 @@ module.exports = {
               log: function(val){
                 log.push({
                   context: this,
-                  value: basis.data.resolveDataset({}, function(){}, val)
+                  value: resolveDataset({}, function(){}, val)
                 });
               }
             };
-            var dataset = new basis.data.Dataset();
-            var value = new basis.data.Value({ value: dataset });
-            var adopted = basis.data.resolveDataset(obj, obj.log, value, 'test');
+            var dataset = new Dataset();
+            var value = new Value({ value: dataset });
+            var adopted = resolveDataset(obj, obj.log, value, 'test');
 
-            this.is(true, adopted === dataset);
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is([], log);
+            assert(adopted === dataset);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert([], log);
 
             // change wrapper's dataset should add record to log
-            dataset = new basis.data.Dataset();
+            dataset = new Dataset();
             value.set(dataset);
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is(1, log.length);
-            this.is(obj, log[0].context);
-            this.is(true, log[0].value === dataset);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert(log.length === 1);
+            assert(log[0].context === obj);
+            assert(log[0].value === dataset);
 
             // reset dataset
             value.set(null);
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is(2, log.length);
-            this.is(obj, log[1].context);
-            this.is(true, log[1].value === null);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert(log.length === 2);
+            assert(log[1].context === obj);
+            assert(log[1].value === null);
 
             // clean up
-            adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+            adopted = resolveDataset(obj, obj.log, null, 'test');
 
-            this.is(true, adopted === null);
-            this.is(null, obj.test);
-            this.is(2, log.length);
+            assert(adopted === null);
+            assert(obj.test === null);
+            assert(log.length === 2);
 
             // change wrapper's dataset should change nothing
-            value.set(new basis.data.Dataset());
+            value.set(new Dataset());
 
-            this.is(null, obj.test);
-            this.is(2, log.length);
+            assert(obj.test === null);
+            assert(log.length === 2);
           }
         },
         {
@@ -500,50 +511,50 @@ module.exports = {
               log: function(val){
                 log.push({
                   context: this,
-                  value: basis.data.resolveDataset({}, function(){}, val)
+                  value: resolveDataset({}, function(){}, val)
                 });
               }
             };
-            var dataset = new basis.data.Dataset();
-            var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
-            var value = new basis.data.Value({ value: datasetWrapper });
-            var adopted = basis.data.resolveDataset(obj, obj.log, value, 'test');
+            var dataset = new Dataset();
+            var datasetWrapper = new DatasetWrapper({ dataset: dataset });
+            var value = new Value({ value: datasetWrapper });
+            var adopted = resolveDataset(obj, obj.log, value, 'test');
 
-            this.is(true, adopted === dataset);
-            this.is(true, 'test' in obj);
-            this.is([], log);
+            assert(adopted === dataset);
+            assert('test' in obj);
+            assert([], log);
 
             // reset dataset
             datasetWrapper.setDataset();
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is(1, log.length);
-            this.is(obj, log[0].context);
-            this.is(null, log[0].value);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert(log.length === 1);
+            assert(log[0].context === obj);
+            assert(log[0].value === null);
 
             // change wrapper's dataset should add record to log
-            dataset = new basis.data.Dataset();
+            dataset = new Dataset();
             datasetWrapper.setDataset(dataset);
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is(2, log.length);
-            this.is(obj, log[1].context);
-            this.is(true, log[1].value === dataset);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert(log.length === 2);
+            assert(log[1].context === obj);
+            assert(log[1].value === dataset);
 
             // clean up
-            adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+            adopted = resolveDataset(obj, obj.log, null, 'test');
 
-            this.is(true, adopted === null);
-            this.is(null, obj.test);
-            this.is(2, log.length);
+            assert(adopted === null);
+            assert(obj.test === null);
+            assert(log.length === 2);
 
             // change wrapper's dataset should change nothing
-            datasetWrapper.setDataset(new basis.data.Dataset());
+            datasetWrapper.setDataset(new Dataset());
 
-            this.is(null, obj.test);
-            this.is(2, log.length);
+            assert(obj.test === null);
+            assert(log.length === 2);
           }
         },
         {
@@ -554,61 +565,61 @@ module.exports = {
               log: function(val){
                 log.push({
                   context: this,
-                  value: basis.data.resolveDataset({}, function(){}, val)
+                  value: resolveDataset({}, function(){}, val)
                 });
               }
             };
-            var dataset = new basis.data.Dataset();
-            var datasetWrapper = new basis.data.DatasetWrapper({ dataset: dataset });
-            var value = new basis.data.Value({ value: datasetWrapper });
-            var adopted = basis.data.resolveDataset(obj, obj.log, value, 'test');
+            var dataset = new Dataset();
+            var datasetWrapper = new DatasetWrapper({ dataset: dataset });
+            var value = new Value({ value: datasetWrapper });
+            var adopted = resolveDataset(obj, obj.log, value, 'test');
 
-            this.is(true, adopted === dataset);
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is([], log);
+            assert(adopted === dataset);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert([], log);
 
             // change wrapper's dataset should add record to log
-            dataset = new basis.data.Dataset();
+            dataset = new Dataset();
             value.set(dataset);
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is(1, log.length);
-            this.is(obj, log[0].context);
-            this.is(true, log[0].value === dataset);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert(log.length === 1);
+            assert(log[0].context === obj);
+            assert(log[0].value === dataset);
 
             // reset dataset
             value.set(null);
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is(2, log.length);
-            this.is(obj, log[1].context);
-            this.is(null, log[1].value);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert(log.length === 2);
+            assert(log[1].context === obj);
+            assert(log[1].value === null);
 
             // set dataset wrapper
             value.set(datasetWrapper);
 
-            this.is(true, 'test' in obj);
-            this.is(true, 'test' in obj && obj.test.source === value);
-            this.is(3, log.length);
-            this.is(obj, log[2].context);
-            this.is(true, log[2].value === datasetWrapper.dataset);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert(log.length === 3);
+            assert(log[2].context === obj);
+            assert(log[2].value === datasetWrapper.dataset);
 
             // clean up
-            adopted = basis.data.resolveDataset(obj, obj.log, null, 'test');
+            adopted = resolveDataset(obj, obj.log, null, 'test');
 
-            this.is(true, adopted === null);
-            this.is(null, obj.test);
-            this.is(3, log.length);
+            assert(adopted === null);
+            assert(obj.test === null);
+            assert(log.length === 3);
 
             // change wrapper's dataset should change nothing
-            datasetWrapper.setDataset(new basis.data.Dataset());
-            value.set(new basis.data.Dataset());
+            datasetWrapper.setDataset(new Dataset());
+            value.set(new Dataset());
 
-            this.is(null, obj.test);
-            this.is(3, log.length);
+            assert(obj.test === null);
+            assert(log.length === 3);
           }
         },
         {
@@ -616,28 +627,28 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
+                this.dataset = resolveDataset(this, this.setDataset, val, 'test');
               }
             };
-            var dataset = new basis.data.Dataset();
-            var anotherDataset = new basis.data.Dataset();
-            var value = new basis.data.Value({ value: dataset });
+            var dataset = new Dataset();
+            var anotherDataset = new Dataset();
+            var value = new Value({ value: dataset });
 
             obj.setDataset(value);
-            this.is(true, obj.dataset === dataset);
-            this.is(true, obj.test.source === value);
+            assert(obj.dataset === dataset);
+            assert(obj.test.source === value);
 
             value.set(null);
-            this.is(true, obj.dataset === null);
-            this.is(true, obj.test.source === value);
+            assert(obj.dataset === null);
+            assert(obj.test.source === value);
 
-            value.set(new basis.data.DatasetWrapper({ dataset: anotherDataset }));
-            this.is(true, obj.dataset === anotherDataset);
-            this.is(true, obj.test.source === value);
+            value.set(new DatasetWrapper({ dataset: anotherDataset }));
+            assert(obj.dataset === anotherDataset);
+            assert(obj.test.source === value);
 
             value.value.setDataset(null);
-            this.is(true, obj.dataset === null);
-            this.is(true, obj.test.source === value);
+            assert(obj.dataset === null);
+            assert(obj.test.source === value);
           }
         },
         {
@@ -645,30 +656,30 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
+                this.dataset = resolveDataset(this, this.setDataset, val, 'test');
               }
             };
-            var dataset = new basis.data.Dataset();
-            var datasetWrapper1 = new basis.data.DatasetWrapper({ dataset: dataset });
-            var value1 = new basis.data.Value({ value: datasetWrapper1 });
-            var datasetWrapper2 = new basis.data.DatasetWrapper({ dataset: value1 });
-            var value2 = new basis.data.Value({ value: datasetWrapper2 });
+            var dataset = new Dataset();
+            var datasetWrapper1 = new DatasetWrapper({ dataset: dataset });
+            var value1 = new Value({ value: datasetWrapper1 });
+            var datasetWrapper2 = new DatasetWrapper({ dataset: value1 });
+            var value2 = new Value({ value: datasetWrapper2 });
 
             obj.setDataset(value2);
-            this.is(true, obj.dataset === dataset);
-            this.is(true, obj.test.source === value2);
+            assert(obj.dataset === dataset);
+            assert(obj.test.source === value2);
 
             value1.set(null);
-            this.is(true, obj.dataset === null);
-            this.is(true, obj.test.source === value2);
+            assert(obj.dataset === null);
+            assert(obj.test.source === value2);
 
             value2.set(datasetWrapper1);
-            this.is(true, obj.dataset === dataset);
-            this.is(true, obj.test.source === value2);
+            assert(obj.dataset === dataset);
+            assert(obj.test.source === value2);
 
             value2.value.setDataset(null);
-            this.is(true, obj.dataset === null);
-            this.is(true, obj.test.source === value2);
+            assert(obj.dataset === null);
+            assert(obj.test.source === value2);
           }
         },
         {
@@ -676,16 +687,16 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
+                this.dataset = resolveDataset(this, this.setDataset, val, 'test');
               }
             };
-            var dataset = new basis.data.Dataset();
+            var dataset = new Dataset();
 
             obj.setDataset(function(){
               return dataset;
             });
-            this.is(true, obj.dataset === dataset);
-            this.is(false, 'test' in obj);
+            assert(obj.dataset === dataset);
+            assert('test' in obj === false);
           }
         },
         {
@@ -693,36 +704,36 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
+                this.dataset = resolveDataset(this, this.setDataset, val, 'test');
               }
             };
-            var dataset = new basis.data.Dataset();
-            var dataset2 = new basis.data.Dataset();
+            var dataset = new Dataset();
+            var dataset2 = new Dataset();
             var token = new basis.Token(dataset);
 
             obj.setDataset(token);
-            this.is(true, obj.dataset === dataset);
-            this.is(true, obj.test.source === token);
+            assert(obj.dataset === dataset);
+            assert(obj.test.source === token);
 
             token.set(dataset2);
-            this.is(true, obj.dataset === dataset2);
-            this.is(true, obj.test.source === token);
+            assert(obj.dataset === dataset2);
+            assert(obj.test.source === token);
 
             token.set(null);
-            this.is(true, obj.dataset === null);
-            this.is(true, obj.test.source === token);
+            assert(obj.dataset === null);
+            assert(obj.test.source === token);
 
             token.set(dataset2);
-            this.is(true, obj.dataset === dataset2);
-            this.is(true, obj.test.source === token);
+            assert(obj.dataset === dataset2);
+            assert(obj.test.source === token);
 
             obj.setDataset(null);
-            this.is(true, obj.dataset === null);
-            this.is(true, obj.test === null);
+            assert(obj.dataset === null);
+            assert(obj.test === null);
 
             token.set(dataset);
-            this.is(true, obj.dataset === null);
-            this.is(true, obj.test === null);
+            assert(obj.dataset === null);
+            assert(obj.test === null);
           }
         },
         {
@@ -730,22 +741,22 @@ module.exports = {
           test: function(){
             var obj = {
               setDataset: function(val){
-                this.dataset = basis.data.resolveDataset(this, this.setDataset, val, 'test');
+                this.dataset = resolveDataset(this, this.setDataset, val, 'test');
               }
             };
-            var split = new basis.data.dataset.Split();
-            var selected = new basis.data.Value({ value: 'foo' });
+            var split = new Split();
+            var selected = new Value({ value: 'foo' });
 
             obj.setDataset(selected.as(function(val){
               return split.getSubset(val, true);
             }));
 
-            this.is(true, obj.dataset === split.getSubset('foo', true).dataset);
-            this.is(true, obj.dataset === basis.data.resolveDataset({}, null, split.getSubset('foo', true)));
+            assert(obj.dataset === split.getSubset('foo', true).dataset);
+            assert(obj.dataset === resolveDataset({}, null, split.getSubset('foo', true)));
 
             selected.set('bar');
-            this.is(true, obj.dataset === split.getSubset('bar', true).dataset);
-            this.is(true, obj.dataset === basis.data.resolveDataset({}, null, split.getSubset('bar', true)));
+            assert(obj.dataset === split.getSubset('bar', true).dataset);
+            assert(obj.dataset === resolveDataset({}, null, split.getSubset('bar', true)));
           }
         }
       ]
