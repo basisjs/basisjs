@@ -216,6 +216,10 @@ function addTokenToHighlight(token, ref, domNode){
 function domTreeHighlight(root){
   for (var i = 0, child, l10nRef; child = root.childNodes[i]; i++)
   {
+    if (child.nodeType == basis.dom.ELEMENT_NODE)
+      if (l10nRef = child.getAttribute('data-basisjs-l10n'))
+        addTokenToHighlight(inspectBasisL10n.token(l10nRef), child, child);
+
     if (child[inspectBasisTemplateMarker])
     {
       var debugInfo = inspectBasisTemplate.getDebugInfoById(child[inspectBasisTemplateMarker]);
@@ -234,12 +238,7 @@ function domTreeHighlight(root){
     }
 
     if (child.nodeType == basis.dom.ELEMENT_NODE)
-    {
-      if (l10nRef = child.getAttribute('data-basisjs-l10n'))
-        addTokenToHighlight(inspectBasisL10n.token(l10nRef), child, child);
-
       domTreeHighlight(child);
-    }
   }
 }
 
