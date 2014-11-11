@@ -623,6 +623,35 @@ module.exports = {
           }
         },
         {
+          name: 're-apply the same value should does nothing',
+          test: function(){
+            var log = [];
+            var obj = {
+              log: function(val){
+                log.push(val);
+              }
+            };
+
+            var value = new Value();
+            var resolveResult;
+            var adapter;
+
+            resolveResult = resolveDataset(obj, obj.log, value, 'test');
+            adapter = obj.test;
+            assert(resolveResult === null);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert([], log);
+
+            resolveResult = resolveDataset(obj, obj.log, value, 'test');
+            assert(resolveResult === null);
+            assert('test' in obj);
+            assert('test' in obj && obj.test.source === value);
+            assert(obj.test === adapter);
+            assert([], log);
+          }
+        },
+        {
           name: 'common use-case of resolveDataset usage',
           test: function(){
             var obj = {

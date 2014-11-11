@@ -2344,23 +2344,23 @@
 
     if (source)
     {
+      var adapter = newAdapter = oldAdapter && oldAdapter.source === source ? oldAdapter : null;
+
       if (source instanceof DatasetWrapper)
       {
-        newAdapter = new ResolveAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
+        newAdapter = adapter || new ResolveAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
         source = source.dataset;
       }
-      else
-        if (source instanceof Value)
-        {
-          newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-          source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
-        }
-        else
-          if (source.bindingBridge)
-          {
-            newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-            source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
-          }
+      else if (source instanceof Value)
+      {
+        newAdapter = adapter || new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+        source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
+      }
+      else if (source.bindingBridge)
+      {
+        newAdapter = adapter || new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+        source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
+      }
     }
 
     if (source instanceof ReadOnlyDataset == false)
