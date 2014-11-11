@@ -613,6 +613,18 @@
         reader: function(data){
           return entityType.reader(data);
         },
+        readList: function(value){
+          if (!value)
+            return [];
+
+          if (!Array.isArray(value))
+            value = [value];
+
+          for (var i = 0; i < value.length; i++)
+            value[i] = result(entityType.reader(value[i]));
+
+          return value;
+        },
 
         extendClass: function(source){
           EntityClass.extend.call(EntityClass, source);
