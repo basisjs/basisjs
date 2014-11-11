@@ -2398,17 +2398,18 @@
 
     if (source)
     {
+      var adapter = oldAdapter && oldAdapter.source === source ? oldAdapter : null;
+
       if (source instanceof Value)
       {
-        newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
+        newAdapter = adapter || new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
         source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
       }
-      else
-        if (source.bindingBridge)
-        {
-          newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-          source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
-        }
+      else if (source.bindingBridge)
+      {
+        newAdapter = adapter || new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+        source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
+      }
     }
 
     if (source instanceof DataObject == false)

@@ -2,14 +2,14 @@ module.exports = {
   name: 'basis.data.Object',
 
   init: function(){
-    basis.require('basis.event');
-    basis.require('basis.data');
-
-    var nsData = basis.data;
-    var DataObject = nsData.Object;
+    var DataObject = basis.require('basis.data').Object;
+    var isConnected = basis.require('basis.data').isConnected;
+    var Value = basis.require('basis.data').Value;
+    var STATE = basis.require('basis.data').STATE;
+    var SUBSCRIPTION = basis.require('basis.data').SUBSCRIPTION;
 
     (function(){
-      var proto = basis.data.Object.prototype;
+      var proto = DataObject.prototype;
       var eventsMap = {};
       var seed = 1;
       var eventTypeFilter = function(event){
@@ -267,8 +267,8 @@ module.exports = {
               name: 'destroy',
               test: function(){
                 var destroyCatched = 0;
-                var a = new basis.data.Object({ target: true });
-                var b = new basis.data.Object({
+                var a = new DataObject({ target: true });
+                var b = new DataObject({
                   delegate: a,
                   listen: {
                     delegate: {
@@ -278,7 +278,7 @@ module.exports = {
                     }
                   }
                 });
-                var c = new basis.data.Object({
+                var c = new DataObject({
                   delegate: b,
                   listen: {
                     root: {
@@ -294,15 +294,15 @@ module.exports = {
                   }
                 });
 
-                a.setState(basis.data.STATE.READY, 'ok');
-                assert(String(basis.data.STATE.READY), String(c.state));
+                a.setState(STATE.READY, 'ok');
+                assert(String(STATE.READY), String(c.state));
                 assert(c.state.data === 'ok');
                 assert(c.delegate === b);
                 assert(c.target === a);
                 assert(c.root === a);
 
                 a.destroy();
-                assert(String(basis.data.STATE.READY), String(c.state));
+                assert(String(STATE.READY), String(c.state));
                 assert(c.state.data === 'ok');
                 assert(c.target === null);
                 assert(c.root === b);
@@ -350,14 +350,14 @@ module.exports = {
 
             objectC.setDelegate(objectA); // should be ignored
             assert(objectC.delegate === null);
-            assert(basis.data.isConnected(objectC, objectA));
+            assert(isConnected(objectC, objectA));
 
             objectA.setDelegate(objectC);
             assert(objectA.delegate === objectC);
-            assert(basis.data.isConnected(objectC, objectA));
-            assert(basis.data.isConnected(objectC, objectB));
-            assert(basis.data.isConnected(objectB, objectA) === false);
-            assert(basis.data.isConnected(objectB, objectC) === false);
+            assert(isConnected(objectC, objectA));
+            assert(isConnected(objectC, objectB));
+            assert(isConnected(objectB, objectA) === false);
+            assert(isConnected(objectB, objectC) === false);
           }
         },
         {
@@ -432,7 +432,7 @@ module.exports = {
           name: 'delegates added on stateChanged should recieve just one stateChanged event',
           test: function(){
             var object = new DataObject({
-              state: basis.data.STATE.UNDEFINED,
+              state: STATE.UNDEFINED,
               handler: {
                 stateChanged: function(){
                   delegate.setDelegate(this);
@@ -440,12 +440,12 @@ module.exports = {
               }
             });
             var delegate = new DataObject({
-              state: basis.data.STATE.UNDEFINED
+              state: STATE.UNDEFINED
             });
 
             assert(eventCount(delegate, 'stateChanged') === 0);
 
-            object.setState(basis.data.STATE.READY);
+            object.setState(STATE.READY);
 
             assert(eventCount(delegate, 'stateChanged') === 1);
           }
@@ -454,7 +454,7 @@ module.exports = {
           name: 'delegates removed on stateChanged should not recieve stateChanged event',
           test: function(){
             var object = new DataObject({
-              state: basis.data.STATE.UNDEFINED,
+              state: STATE.UNDEFINED,
               handler: {
                 stateChanged: function(){
                   delegate.setDelegate();
@@ -462,13 +462,13 @@ module.exports = {
               }
             });
             var delegate = new DataObject({
-              state: basis.data.STATE.UNDEFINED,
+              state: STATE.UNDEFINED,
               delegate: object
             });
 
             assert(eventCount(delegate, 'stateChanged') === 0);
 
-            object.setState(basis.data.STATE.READY);
+            object.setState(STATE.READY);
 
             assert(eventCount(delegate, 'stateChanged') === 0);
           }
@@ -479,25 +479,25 @@ module.exports = {
             {
               name: 'use Value with null as value on init',
               test: function(){
-                var value = new basis.data.Value();
-                var delegate = new basis.data.Object({
-                  state: basis.data.STATE.READY,
+                var value = new Value();
+                var delegate = new DataObject({
+                  state: STATE.READY,
                   delegate: value
                 });
-                var object = new basis.data.Object({
+                var object = new DataObject({
                   delegate: value,
-                  state: basis.data.STATE.UNDEFINED,
+                  state: STATE.UNDEFINED,
                   data: { bar: 1 }
                 });
 
                 assert(delegate.delegate === null);
-                assert(delegate.state == basis.data.STATE.READY);
+                assert(delegate.state == STATE.READY);
                 assert({}, delegate.data);
                 assert(eventCount(delegate, 'update') === 0);
                 assert(eventCount(delegate, 'stateChanged') === 0);
 
                 assert(object.delegate === null);
-                assert(object.state == basis.data.STATE.UNDEFINED);
+                assert(object.state == STATE.UNDEFINED);
                 assert({ bar: 1 }, object.data);
                 assert(eventCount(object, 'update') === 0);
                 assert(eventCount(object, 'stateChanged') === 0);
@@ -510,7 +510,7 @@ module.exports = {
                 assert(eventCount(delegate, 'stateChanged') === 0);
 
                 delegate.update({ foo: 1 });
-                delegate.setState(basis.data.STATE.PROCESSING);
+                delegate.setState(STATE.PROCESSING);
                 assert(eventCount(delegate, 'update') === 1);
                 assert(eventCount(delegate, 'stateChanged') === 1);
 
@@ -528,19 +528,19 @@ module.exports = {
             {
               name: 'use Value with Object as value on init',
               test: function(){
-                var delegate = new basis.data.Object({
-                  state: basis.data.STATE.READY,
+                var delegate = new DataObject({
+                  state: STATE.READY,
                   data: { foo: 1 }
                 });
-                var value = new basis.data.Value({ value: delegate });
-                var object = new basis.data.Object({
+                var value = new Value({ value: delegate });
+                var object = new DataObject({
                   delegate: value,
-                  state: basis.data.STATE.UNDEFINED,
+                  state: STATE.UNDEFINED,
                   data: { bar: 1 }
                 });
 
                 assert(object.delegate === delegate);
-                assert(object.state == basis.data.STATE.READY);
+                assert(object.state == STATE.READY);
                 assert({ foo: 1 }, object.data);
                 assert(eventCount(object, 'delegateChanged') === 1);
                 assert(eventCount(object, 'update') === 0);
@@ -581,6 +581,26 @@ module.exports = {
                 assert(eventCount(object, 'update') === 0);
                 assert(eventCount(object, 'stateChanged') === 0);
               }
+            },
+            {
+              name: 'set the same value should does nothing',
+              test: function(){
+                var object = new DataObject();
+                var foo = new DataObject();
+                var value = new Value({
+                  value: foo
+                });
+
+                object.setDelegate(value);
+                assert(object.delegate === foo);
+                assert(object.delegateAdapter_ != null);
+                assert(object.delegateAdapter_ && object.delegateAdapter_.source === value);
+
+                var adapter = object.delegateAdapter_;
+                object.setDelegate(value);
+                assert(object.delegate === foo);
+                assert(object.delegateAdapter_ === adapter);
+              }
             }
           ]
         }
@@ -596,7 +616,7 @@ module.exports = {
             new DataObject({
               delegate: objectA,
               active: true,
-              subscribeTo: nsData.SUBSCRIPTION.DELEGATE
+              subscribeTo: SUBSCRIPTION.DELEGATE
             });
 
             assert(objectA.subscriberCount === 1);
@@ -609,7 +629,7 @@ module.exports = {
             var objectA = new DataObject;
             var objectB = new DataObject({
               active: false,
-              subscribeTo: nsData.SUBSCRIPTION.DELEGATE
+              subscribeTo: SUBSCRIPTION.DELEGATE
             });
 
             assert(objectA.subscriberCount === 0);
@@ -645,7 +665,7 @@ module.exports = {
             var objectA = new DataObject;
             var objectB = new DataObject({
               active: true,
-              subscribeTo: nsData.SUBSCRIPTION.NONE
+              subscribeTo: SUBSCRIPTION.NONE
             });
 
             assert(objectA.subscriberCount === 0);
@@ -657,19 +677,19 @@ module.exports = {
             assert(eventCount(objectA, 'subscribersChanged') === 0);
 
             // switch on
-            objectB.setSubscription(nsData.SUBSCRIPTION.DELEGATE);
+            objectB.setSubscription(SUBSCRIPTION.DELEGATE);
 
             assert(objectA.subscriberCount === 1);
             assert(eventCount(objectA, 'subscribersChanged') === 1);
 
             // nothing changed
-            objectB.setSubscription(nsData.SUBSCRIPTION.DELEGATE);
+            objectB.setSubscription(SUBSCRIPTION.DELEGATE);
 
             assert(objectA.subscriberCount === 1);
             assert(eventCount(objectA, 'subscribersChanged') === 1);
 
             // switch off
-            objectB.setSubscription(nsData.SUBSCRIPTION.NONE);
+            objectB.setSubscription(SUBSCRIPTION.NONE);
 
             assert(objectA.subscriberCount === 0);
             assert(eventCount(objectA, 'subscribersChanged') === 2);
@@ -681,7 +701,7 @@ module.exports = {
             var objectA = new DataObject;
             var objectB = new DataObject({
               active: true,
-              subscribeTo: nsData.SUBSCRIPTION.DELEGATE,
+              subscribeTo: SUBSCRIPTION.DELEGATE,
               delegate: objectA
             });
 
