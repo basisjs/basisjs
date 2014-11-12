@@ -81,22 +81,18 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
-
-    basis.require('basis.data');
-    basis.require('basis.data.index');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.table');
-    basis.require('basis.ui.slider');
-
     // import names
-    var nsData = basis.data;
-    var nsDataIndex = basis.data.index;
+    var nsData = basis.require('basis.data');
+    var nsDataIndex = basis.require('basis.data.index');
 
     var getter = basis.getter;
-    var ButtonPanel = basis.ui.button.ButtonPanel;
-    var Table = basis.ui.table.Table;
-    var Slider = basis.ui.slider.Slider;
-    var UINode = basis.ui.Node;
+    var Dataset = nsData.Dataset;
+    var Expression = basis.require('basis.data.value').Expression;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var Table = basis.require('basis.ui.table').Table;
+    var Slider = basis.require('basis.ui.slider').Slider;
+    var UINode = basis.require('basis.ui').Node;
+    var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
 
     Math.seedrandom('basis');
 
@@ -104,7 +100,7 @@
       var seed = 0;
 
       return function(){
-        return basis.data.wrapObject({
+        return nsData.wrapObject({
           id: ++seed,
           title: 'item' + seed,
           value: parseInt(50 * Math.random(), 10),
@@ -113,7 +109,7 @@
       };
     })();
 
-    var dataset = new basis.data.Dataset({
+    var dataset = new Dataset({
       items: basis.array.create(15, createDataItem)
     });
 
@@ -181,9 +177,9 @@
           header: '#',
           body: '{id}',
           footer: {
-            value: new basis.data.value.Expression(
-              basis.data.index.min(dataset, 'data.value'),
-              basis.data.index.max(dataset, 'data.value'),
+            value: new Expression(
+              nsDataIndex.min(dataset, 'data.value'),
+              nsDataIndex.max(dataset, 'data.value'),
               function(min, max){
                 return 'min/max: ' + min + '/' + max;
               }
@@ -196,21 +192,21 @@
           body: '{title}'
         },
         {
-          sorting: basis.getter('data.value', Number),
+          sorting: getter('data.value', Number),
           header: 'Value',
           body: '<div class="barWrapper"><div class="bar" style="width: {percentOfValueMax}%"/><span class="label">{value}</span></div>',
           footer: {
             template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
-            value: basis.data.index.count(dataset)
+            value: nsDataIndex.count(dataset)
           }
         },
         {
-          sorting: basis.getter('data.total', Number),
+          sorting: getter('data.total', Number),
           header: 'Total',
           body: '<div class="barWrapper"><div class="bar" style="width: {percentOfTotalRange}%"/><span class="label">{total}</span></div>',
           footer: {
             template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
-            value: basis.data.index.sum(dataset, 'data.total')
+            value: nsDataIndex.sum(dataset, 'data.total')
           }
         },
         {
@@ -220,7 +216,7 @@
           },
           footer: {
             template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
-            value: basis.data.index.avg(indexMap, 'data.percentOfTotalSum').as(function(avg){
+            value: nsDataIndex.avg(indexMap, 'data.percentOfTotalSum').as(function(avg){
               return (avg * 100).toFixed(2) + '%';
             })
           }
@@ -247,7 +243,7 @@
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },
-            satelliteClass: basis.dom.wrapper.AbstractNode.subclass({
+            satelliteClass: AbstractNode.subclass({
               active: true,
               emit_update: function(delta){
                 nsData.Object.prototype.emit_update.call(this, delta);
