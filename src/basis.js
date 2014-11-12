@@ -890,7 +890,7 @@
     * inited by browser events or timers (setImmediate/clearImmediate/nextTick), so
     * we can process asap functions right after handler function was invoked.
     * Asap function invocation can't be aborted.
-    * 
+    *
     * Single timer is using for asap functions invocation. Exceptions aren't catching.
     * If any exception rest functions will be invoked in next code frame.
     *
@@ -907,11 +907,13 @@
       // set timer to process queue, if timer is not set yet
       if (!timer)
         timer = setImmediate(process);
+
+      return true;
     };
 
    /**
     * Run asap functions processing.
-    */ 
+    */
     asap.process = function(){
       // run queue process only if queue isn't processing
       if (!processing)

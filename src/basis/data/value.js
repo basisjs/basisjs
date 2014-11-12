@@ -71,15 +71,15 @@
 
   var objectSetUpdater = (function(){
     var objects = {};
-    var timer;
+    var sheduled = false;
 
     function process(){
       // set timer to make sure all objects be processed
       // it helps avoid try/catch and process all objects even if any exception
       var etimer = basis.setImmediate(process);
 
-      // reset timer
-      timer = null;
+      // reset shedule, to add new expressions
+      sheduled = false;
 
       // process objects
       for (var id in objects)
@@ -96,8 +96,8 @@
     return {
       add: function(object){
         objects[object.basisObjectId] = object;
-        if (!timer)
-          timer = basis.setImmediate(process);
+        if (!sheduled)
+          sheduled = basis.asap(process);
       },
       remove: function(object){
         delete objects[object.basisObjectId];
