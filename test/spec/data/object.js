@@ -808,6 +808,43 @@ module.exports = {
                     assert(eventCount(obj, 'activeChanged') === 2);
                     assert(target.subscriberCount === 0);
                   }
+                },
+                {
+                  name: 'active = function()',
+                  test: function(){
+                    var obj = new DataObject({
+                      active: Value.factory('stateChanged', function(obj){
+                        return obj.state == STATE.READY;
+                      })
+                    });
+
+                    assert(obj.active === true);
+                    assert(obj.active_ === null);
+                    assert(eventCount(obj, 'activeChanged') === 0);
+                  }
+                },
+                {
+                  name: 'active = factory',
+                  test: function(){
+                    var obj = new DataObject({
+                      active: {
+                        factory: Value.factory('stateChanged', function(obj){
+                          return obj.state == STATE.READY;
+                        })
+                      }
+                    });
+
+                    assert(obj.active === false);
+                    assert(eventCount(obj, 'activeChanged') === 0);
+
+                    obj.setState(STATE.READY);
+                    assert(obj.active === true);
+                    assert(eventCount(obj, 'activeChanged') === 1);
+
+                    obj.setState(STATE.ERROR);
+                    assert(obj.active === false);
+                    assert(eventCount(obj, 'activeChanged') === 2);
+                  }
                 }
               ]
             },
@@ -943,6 +980,37 @@ module.exports = {
                     assert(obj.active === false);
                     assert(eventCount(obj, 'activeChanged') === 2);
                     assert(target.subscriberCount === 0);
+                  }
+                },
+                {
+                  name: 'set function should not invoke function',
+                  test: function(){
+                    var obj = new DataObject();
+
+                    obj.setActive(Value.factory('stateChanged', function(obj){
+                      return obj.state == STATE.READY;
+                    }));
+
+                    assert(obj.active === true);
+                    assert(obj.active_ == null);
+                  }
+                },
+                {
+                  name: 'set factory',
+                  test: function(){
+                    var obj = new DataObject();
+
+                    obj.setActive({
+                      factory: Value.factory('stateChanged', function(obj){
+                        return obj.state == STATE.READY;
+                      })
+                    });
+
+                    assert(obj.active === false);
+
+                    obj.setState(STATE.READY);
+
+                    assert(obj.active === true);
                   }
                 }
               ]

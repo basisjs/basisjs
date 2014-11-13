@@ -373,7 +373,11 @@
       // activate subscription if active
       if (this.active)
       {
-        this.active = !!resolveValue(this, this.setActive, this.active === PROXY ? getActiveProxyValue(this) : this.active, 'active_');
+        if (this.active === PROXY)
+          this.active = getActiveProxyValue(this);
+
+        this.active = !!resolveValue(this, this.setActive, this.active, 'active_');
+
         if (this.active)
           this.addHandler(getMaskConfig(this.subscribeTo).handler);
       }
@@ -2345,7 +2349,7 @@
   var VALUE_VALUE_ADAPTER_HANDLER = {
     change: DEFAULT_CHANGE_ADAPTER_HANDLER,
     destroy: function(){
-      this.fn.call(this.context, resolveValue({}, null, this.source.value));
+      this.fn.call(this.context, resolveValue(NULL_OBJECT, null, this.source.value));
     }
   };
 
@@ -2461,10 +2465,11 @@
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
-    // functions can be used as property value on instance create,
-    // it makes possible to use factories (i.e. Value.factory())
-    if (fn !== resolveAdapterProxy && typeof source == 'function')
-      source = source.call(context, context);
+    // as functions could be a value, set factory via plain object with `factory` property
+    // i.e. source = { factory: function(){ /* factory code */ } }
+    // apply only for top-level resolveValue() invocation
+    if (source && fn !== resolveAdapterProxy && source.constructor === Object && typeof source.factory == 'function')
+      source = source.factory.call(context, context);
 
     if (source)
     {
