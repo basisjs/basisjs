@@ -105,6 +105,7 @@
 
   var subscriptionConfig = {};
   var subscriptionSeed = 1;
+  var PROXY = 'proxy';
 
 
  /**
@@ -271,6 +272,10 @@
   // Abstract data
   //
 
+  function getActiveProxyValue(instance){
+    return Value.from(instance, 'subscribersChanged', 'subscriberCount > 0');
+  }
+
  /**
   * Base class for any data type class.
   * @class
@@ -368,7 +373,7 @@
       // activate subscription if active
       if (this.active)
       {
-        this.active = !!resolveValue(this, this.setActive, this.active, 'active_');
+        this.active = !!resolveValue(this, this.setActive, this.active === PROXY ? getActiveProxyValue(this) : this.active, 'active_');
         if (this.active)
           this.addHandler(getMaskConfig(this.subscribeTo).handler);
       }
@@ -425,6 +430,9 @@
     * @return {boolean} Returns true if {basis.data.Object#active} was changed.
     */
     setActive: function(isActive){
+      if (isActive === PROXY)
+        isActive = getActiveProxyValue(this);
+
       isActive = !!resolveValue(this, this.setActive, isActive, 'active_');
 
       if (this.active != isActive)
@@ -2706,6 +2714,7 @@
     // const
     STATE: STATE,
     SUBSCRIPTION: SUBSCRIPTION,
+    PROXY: PROXY,
 
     // classes
     AbstractData: AbstractData,
