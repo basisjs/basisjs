@@ -87,8 +87,24 @@
         this.priority.splice(order, 0, value);
     },
 
+   /**
+    * Returns all registred states
+    * @return {Array.<basis.data.STATE>}
+    */
     getList: function(){
       return values(STATE_EXISTS);
+    },
+
+   /**
+    * Create value factory that proxy state from nested object.
+    * @param {string} events
+    * @param {string} property
+    * @return {function(basis.event.Emitter)}
+    */
+    proxy: function(events, property){
+      return Value.factory(events, function(owner){
+        return Value.from(owner[property], 'stateChanged', 'state');
+      });
     }
   };
 
@@ -291,6 +307,11 @@
     state: STATE.UNDEFINED,
 
    /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    state_: null,
+
+   /**
     * Fires when state or state.data was changed.
     * @param {object} oldState Object state before changes.
     * @event
@@ -383,6 +404,11 @@
           this.addHandler(getMaskConfig(this.subscribeTo).handler);
       }
 
+      // resolve state
+      // Q: should we check for `instanceof String` here?
+      if (typeof this.state != 'string')
+        this.state = String(resolveValue(this, this.setState, this.state, 'state_'));
+
       // apply sync action
       var syncAction = this.syncAction;
       if (syncAction)
@@ -399,10 +425,16 @@
     * @return {boolean} Current object state.
     */
     setState: function(state, data){
+      state = resolveValue(this, this.setState, state, 'state_');
+
       var stateCode = String(state);
 
       if (!STATE_EXISTS[stateCode])
         throw new Error('Wrong state value');
+
+      // try fetch data from state
+      if (this.state_ && data === undefined)
+        data = state.data;
 
       // set new state for object
       if (this.state != stateCode || this.state.data != data)
@@ -549,9 +581,11 @@
           action(SUBSCRIPTION.unlink, this);
       }
 
-      // clean up active resolve adapter
+      // clean up adapters
       if (this.active_)
         resolveValue(this, null, null, 'active_');
+      if (this.state_)
+        resolveValue(this, null, null, 'state_');
 
       this.state = STATE.UNDEFINED;
     }
