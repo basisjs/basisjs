@@ -2305,7 +2305,7 @@
     },
 
     extensions: {
-      '.js': extend(function(content, filename){
+      '.js': extend(function processJsResourceContent(content, filename){
         var namespace = filename2namespace[filename];
 
         if (!namespace)
@@ -2380,7 +2380,7 @@
         permanent: true
       }),
 
-      '.css': function(content, url, cssResource){
+      '.css': function processCssResourceContent(content, url, cssResource){
         if (!cssResource)
           cssResource = new CssResource(url);
 
@@ -2389,7 +2389,7 @@
         return cssResource;
       },
 
-      '.json': function(content, url){
+      '.json': function processJsonResourceContent(content, url){
         if (typeof content == 'object')
           return content;
 
@@ -2458,6 +2458,8 @@
 
     // run
     if (typeof compiledSourceCode == 'function')
+    {
+      /** @cut */ compiledSourceCode.displayName = '[module] ' + (filename2namespace[sourceURL] || sourceURL);
       compiledSourceCode.call(
         context.exports,
         context.exports,
@@ -2476,6 +2478,7 @@
           return resolveResourceUri(path, baseURL, 'asset(\'{url}\')');
         }
       );
+    }
 
     return context;
   };
@@ -2621,10 +2624,12 @@
   * @name require
   */
   var requireNamespace = (function(filename, dirname){
+    var result;
+
     if (NODE_ENV)
     {
       var moduleProto = module.constructor.prototype;
-      return function(filename, dirname){
+      result = function(filename, dirname){
         if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == '.js')
         {
           var _compile = moduleProto._compile;
@@ -2662,7 +2667,7 @@
     }
     else
     {
-      return function(filename, dirname){
+      result = function(filename, dirname){
         if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
         {
           // namespace, like 'foo.bar.baz'
@@ -2677,6 +2682,10 @@
         return getResource(filename).fetch();
       };
     }
+
+    /** @cut */ result.displayName = 'basis.require';
+
+    return result;
   })();
 
 
