@@ -46,6 +46,8 @@
 
   var NULL_OBJECT = {};
   var EMPTY_ARRAY = [];
+  var FACTORY = {};
+  var PROXY = 'proxy';
 
 
   //
@@ -105,7 +107,6 @@
 
   var subscriptionConfig = {};
   var subscriptionSeed = 1;
-  var PROXY = 'proxy';
 
 
  /**
@@ -1061,9 +1062,11 @@
   };
 
   Value.factory = function(events, getter){
-    return function(object){
+    var result = function(object){
       return Value.from(object, events, getter);
     };
+    result.factory = FACTORY;
+    return result;
   };
 
 
@@ -2468,8 +2471,8 @@
     // as functions could be a value, set factory via plain object with `factory` property
     // i.e. source = { factory: function(){ /* factory code */ } }
     // apply only for top-level resolveValue() invocation
-    if (source && fn !== resolveAdapterProxy && source.constructor === Object && typeof source.factory == 'function')
-      source = source.factory.call(context, context);
+    if (source && fn !== resolveAdapterProxy && typeof source == 'function' && source.factory === FACTORY)
+      source = source.call(context, context);
 
     if (source)
     {
@@ -2719,6 +2722,7 @@
     // const
     STATE: STATE,
     SUBSCRIPTION: SUBSCRIPTION,
+    FACTORY: FACTORY,
     PROXY: PROXY,
 
     // classes
