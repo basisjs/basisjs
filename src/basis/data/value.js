@@ -307,6 +307,29 @@
   // Expression
   //
 
+  var EXPRESSION_BBVALUE_HANDLER = function(){
+    objectSetUpdater.add(this);
+  };
+  var EXPRESSION_VALUE_HANDLER = {
+    change: function(){
+      objectSetUpdater.add(this);
+    },
+    destroy: function(){
+      this.destroy();
+    }
+  };
+  var EXPRESSION_DESTROY_HANDLER = {
+    destroy: function(expression){
+      for (var i = 0, value; value = this[i]; i++)
+      {
+        if (value instanceof Value)
+          value.removeHandler(EXPRESSION_VALUE_HANDLER, expression);
+        else if (value.bindingBridge)
+          value.bindingBridge.detach(value, EXPRESSION_BBVALUE_HANDLER, expression);
+      }
+    }
+  };
+
  /**
   * @class
   */
@@ -315,50 +338,51 @@
 
     // use custom constructor
     extendConstructor_: false,
-    init: function(args, calc){
+    init: function(/* value, value, */ calc){
       Value.prototype.init.call(this);
 
-      var args = basis.array(arguments);
-      var calc = args.pop();
+      var values = basis.array(arguments);
+      var calc = values.pop();
 
       if (typeof calc != 'function')
+        throw new Error(this.constructor.className + ': Last argument of constructor must be a function');
+
+      for (var i = 0; i < values.length; i++)
       {
-        /** @cut */ basis.dev.warn(this.constructor.className + ': last argument of constructor must be a function');
-        calc = basis.fn.$undef;
+        var value = values[i];
+
+        if (value instanceof Value)
+          value.addHandler(EXPRESSION_VALUE_HANDLER, this);
+        else if (value.bindingBridge)
+          value.bindingBridge.attach(value, EXPRESSION_BBVALUE_HANDLER, this);
+        else
+          throw new Error(this.constructor.className + ': Value or bb-value required');
       }
 
-      var changeWatcher = new ObjectSet({
-        objects: args,
-        calculateOnInit: true,
-        calculateValue: function(){
-          return calc.apply(this, args.map(function(item){
-            return item.value;
-          }));
-        },
-        handler: {
-          context: this,
-          callbacks: {
-            change: function(){
-              Value.prototype.set.call(this, this.value);
-            },
-            destroy: function(){
-              changeWatcher = null;
-            }
-          }
-        }
-      });
+      this.addHandler(EXPRESSION_DESTROY_HANDLER, values);
 
-      changeWatcher.link(this, Value.prototype.set);
+      this.update = function(){
+        objectSetUpdater.remove(this);
+        Value.prototype.set.call(this, calc.apply(null, values.map(function(value){
+          return value.bindingBridge.get(value);
+        })));
+      };
 
-      this.addHandler({
-        destroy: function(){
-          changeWatcher.destroy();
-        }
-      });
+      this.update();
+    },
+
+    // override in init
+    update: function(){
     },
 
     // expressions are read only
     set: function(){
+    },
+
+    destroy: function(){
+      objectSetUpdater.remove(this);
+
+      Value.prototype.destroy.call(this);
     }
   });
 
