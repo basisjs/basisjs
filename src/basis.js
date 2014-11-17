@@ -1813,8 +1813,8 @@
     * @type {object}
     */
     bindingBridge: {
-      attach: function(host, fn, context){
-        host.attach(fn, context);
+      attach: function(host, fn, context, onDestroy){
+        host.attach(fn, context, onDestroy);
       },
       detach: function(host, fn, context){
         host.detach(fn, context);
@@ -1856,7 +1856,7 @@
     * @param {function(value)} fn
     * @param {object=} context
     */
-    attach: function(fn, context){
+    attach: function(fn, context, onDestroy){
       /** @cut */ var cursor = this;
       /** @cut */ while (cursor = cursor.handler)
       /** @cut */   if (cursor.fn === fn && cursor.context === context)
@@ -1865,6 +1865,7 @@
       this.handler = {
         fn: fn,
         context: context,
+        destroy: onDestroy || null,
         handler: this.handler
       };
     },
@@ -1883,6 +1884,7 @@
         {
           // make it non-callable
           cursor.fn = $undef;
+          cursor.destroy = cursor.destroy && $undef;
 
           // remove from list
           prev.handler = cursor.handler;
@@ -1933,6 +1935,11 @@
         this.deferredToken.destroy();
         this.deferredToken = null;
       }
+
+      var cursor = this;
+      while (cursor = cursor.handler)
+        if (cursor.destroy)
+          cursor.destroy.call(cursor.context);
 
       this.handler = null;
       this.value = null;
