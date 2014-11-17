@@ -32,6 +32,7 @@
   var createEvent = basisEvent.create;
   var events = basisEvent.events;
   var basisData = require('basis.data');
+  var resolveValue = basisData.resolveValue;
   var resolveDataset = basisData.resolveDataset;
 
   var SUBSCRIPTION = basisData.SUBSCRIPTION;
@@ -253,75 +254,93 @@
   // AbstractNode
   //
 
-  function processSatelliteConfig(value){
-    if (!value)
+  function processSatelliteConfig(satelliteConfig){
+    if (!satelliteConfig)
       return null;
 
-    if (value.isSatelliteConfig)
-      return value;
+    if (satelliteConfig.isSatelliteConfig)
+      return satelliteConfig;
 
-    if (value instanceof AbstractNode)
-      return value;
+    if (satelliteConfig instanceof AbstractNode)
+      return satelliteConfig;
 
-    if (Class.isClass(value))
-      value = {
-        instanceOf: value
+    if (Class.isClass(satelliteConfig))
+      satelliteConfig = {
+        satelliteClass: satelliteConfig
       };
 
-    if (value && value.constructor === Object)
+    if (satelliteConfig.constructor === Object)
     {
       var handlerRequired = false;
+      var satelliteClass;
       var config = {
         isSatelliteConfig: true
       };
 
-      var instanceClass;
-
-      for (var key in value)
+      for (var key in satelliteConfig)
+      {
+        var value = satelliteConfig[key];
         switch (key)
         {
           case 'instance':
-            if (value[key] instanceof AbstractNode)
-              config[key] = value[key];
-            else
-            {
-              /** @cut */ basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
-            }
-
+            if (value instanceof AbstractNode)
+              config[key] = value;
+            /** @cut */ else
+            /** @cut */   basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
             break;
 
-          case 'instanceOf':
-            if (Class.isClass(value[key]) && value[key].isSubclassOf(AbstractNode))
-              instanceClass = value[key];
-            else
+          case 'instanceOf': // deprecated
+          case 'satelliteClass':
+            if (key == 'instanceOf')
             {
-              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` value in satellite config must be a subclass of basis.dom.wrapper.AbstractNode');
+              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config is deprecated, use `satelliteClass` instead');
+              if ('satelliteClass' in satelliteConfig)
+              {
+                /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config has ignored, as `satelliteClass` is specified');
+                break;
+              }
             }
+
+            if (Class.isClass(value) && value.isSubclassOf(AbstractNode))
+              satelliteClass = value;
+            /** @cut */ else
+            /** @cut */   basis.dev.warn(namespace + ': `satelliteClass` value in satellite config should be a subclass of basis.dom.wrapper.AbstractNode');
             break;
 
           case 'existsIf':
           case 'delegate':
           case 'dataSource':
-            handlerRequired = true;
-            config[key] = getter(value[key]);
+            if (value)
+            {
+              if (typeof value == 'string')
+                value = getter(value);
+
+              if (typeof value != 'function')
+                value = basis.fn.$const(value);
+              else
+                handlerRequired = true;
+            }
+
+            config[key] = value;
             break;
 
           case 'config':
-            config[key] = value[key];
+            config[key] = typeof value == 'string' ? getter(value) : value;
             break;
         }
+      }
 
       if (!config.instance)
-        config.instanceOf = instanceClass || AbstractNode;
+        config.satelliteClass = satelliteClass || AbstractNode;
       else
       {
-        /** @cut */ if (instanceClass)
-        /** @cut */   basis.dev.warn(namespace + ': `instanceOf` can\'t be set with `instance` value in satellite config, value ignored');
+        /** @cut */ if (satelliteClass)
+        /** @cut */   basis.dev.warn(namespace + ': `satelliteClass` can\'t be set with `instance` value in satellite config, value ignored');
       }
 
       if (handlerRequired)
       {
-        var events = 'events' in value ? value.events : 'update';
+        var events = 'events' in satelliteConfig ? satelliteConfig.events : 'update';
 
         if (Array.isArray(events))
           events = events.join(' ');
@@ -358,18 +377,21 @@
   });
 
   // satellite update handler
-  var SATELLITE_UPDATE = function(owner){
+  var SATELLITE_UPDATE = function(){
     // this -> {
+    //   owner: owner,
     //   name: satelliteName,
-    //   config: satelliteConfig
+    //   config: satelliteConfig,
+    //   instance: satelliteInstance or null
     // }
     var name = this.name;
     var config = this.config;
+    var owner = this.owner;
 
-    var exists = !config.existsIf || config.existsIf(owner);
-    var satellite = owner.satellite[name];
+    var satellite = this.instance;
+    var exists = ('existsIf' in config == false) || config.existsIf(owner);
 
-    if (exists)
+    if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsAdapter'))
     {
       if (satellite)
       {
@@ -404,7 +426,7 @@
           if (config.dataSource)
             satelliteConfig.dataSource = config.dataSource(owner);
 
-          satellite = new config.instanceOf(satelliteConfig);
+          satellite = new config.satelliteClass(satelliteConfig);
           satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
 
           // this statement here, because owner set in config and no listen add in this case
@@ -423,7 +445,7 @@
             satellite.setDataSource(config.dataSource(owner));
         }
 
-        owner.satellite.__auto__[name].instance = satellite;
+        this.instance = satellite;
         owner.setSatellite(name, satellite, true);
       }
     }
@@ -440,7 +462,7 @@
             satellite.setDataSource();
         }
 
-        owner.satellite.__auto__[name].instance = null;
+        this.instance = null;
         owner.setSatellite(name, null, true);
       }
     }
@@ -946,17 +968,14 @@
       if (preserveAuto)
       {
         satellite = autoConfig.instance;
-        if (autoConfig.config.instance)
-        {
-          if (satellite)
-            delete autoConfig.config.instance.setOwner;
-        }
+        if (satellite && autoConfig.config.instance)
+          delete autoConfig.config.instance.setOwner;
       }
       else
       {
         satellite = processSatelliteConfig(satellite);
 
-        if (satellite && satellite.owner && auto && satellite.ownerSatelliteName && auto[satellite.ownerSatelliteName])
+        if (satellite && satellite.owner === this && auto && satellite.ownerSatelliteName && auto[satellite.ownerSatelliteName])
         {
           /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change name inside owner');
           return;
@@ -1017,7 +1036,8 @@
               owner: this,
               name: name,
               config: satellite,
-              instance: null
+              instance: null,
+              existsAdapter: null
             };
 
             // auto-create satellite
@@ -1162,8 +1182,12 @@
         delete satellites.__auto__;
 
         for (var name in auto)
+        {
           if (auto[name].config.instance && !auto[name].instance)
             auto[name].config.instance.destroy();
+          if (auto[name].existsAdapter)
+            resolveValue(auto[name], null, null, 'existsAdapter');
+        }
 
         for (var name in satellites)
         {
@@ -2387,6 +2411,11 @@
     disabled: false,
 
    /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    disabled_: null,
+
+   /**
     * @type {boolean}
     * @readonly
     */
@@ -2422,10 +2451,11 @@
       // inherit
       AbstractNode.prototype.init.call(this);
 
-      // synchronize node state according to config
+      // synchronize disabled
       if (this.disabled)
-        this.emit_disable();
+        this.disabled = !!resolveValue(this, this.setDisabled, this.disabled, 'disabled_');
 
+      // selected
       if (this.selected)
       {
         this.selected = false;
@@ -2534,17 +2564,7 @@
     * @return {boolean} Returns true if disabled property was changed.
     */
     enable: function(){
-      var disabled = this.disabled;
-
-      if (disabled)
-      {
-        this.disabled = false;
-
-        if (!this.contextDisabled)
-          this.emit_enable();
-      }
-
-      return this.disabled != disabled;
+      return this.setDisabled(false);
     },
 
    /**
@@ -2552,17 +2572,7 @@
     * @return {boolean} Returns true if disabled property was changed.
     */
     disable: function(){
-      var disabled = this.disabled;
-
-      if (!disabled)
-      {
-        this.disabled = true;
-
-        if (!this.contextDisabled)
-          this.emit_disable();
-      }
-
-      return this.disabled != disabled;
+      return this.setDisabled(true);
     },
 
    /**
@@ -2571,9 +2581,20 @@
     * @return {boolean} Returns true if disabled property was changed.
     */
     setDisabled: function(disabled){
-      return disabled
-        ? this.disable()
-        : this.enable();
+      disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabled_');
+
+      if (this.disabled !== disabled)
+      {
+        this.disabled = disabled;
+
+        if (!this.contextDisabled)
+          if (disabled)
+            this.emit_disable();
+          else
+            this.emit_enable();
+
+        return true;
+      }
     },
 
    /**
@@ -2614,11 +2635,13 @@
     */
     destroy: function(){
       this.unselect();
-
       this.contextSelection = null;
-
       if (this.selection)
         this.setSelection();
+
+      // unlink disabled bb-value
+      if (this.disabled_)
+        resolveValue(this, null, null, 'disabled_');
 
       // inherit
       AbstractNode.prototype.destroy.call(this);

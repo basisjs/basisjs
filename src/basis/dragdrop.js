@@ -23,7 +23,6 @@
 
   var getComputedStyle = require('basis.dom.computedStyle').get;
   var basisLayout = require('basis.layout');
-  var getOffsetParent = basisLayout.getOffsetParent;
   var getBoundingRect = basisLayout.getBoundingRect;
   var getViewportRect = basisLayout.getViewportRect;
 
@@ -68,12 +67,16 @@
       maxDeltaY: Infinity
     };
 
+    // recovery mode: if mouseup/touchend event is missed for some reason,
+    // new mousedown/touchstart event stops dragging
+    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('touchstart', stopDrag);
+
     // add global handlers
     addGlobalHandler('mousemove', onDrag);
+    addGlobalHandler('touchmove', onDrag);
     addGlobalHandler('mouseup', stopDrag);
-
-    // recover mode: if mouseup missed for some reason, new mousedown stops dragging
-    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('touchend', stopDrag);
 
     // avoid text selection in IE
     if (SELECTSTART_SUPPORTED)
@@ -114,9 +117,12 @@
 
   function stopDrag(event){
     // remove global handlers
-    removeGlobalHandler('mousemove', onDrag);
-    removeGlobalHandler('mouseup', stopDrag);
     removeGlobalHandler('mousedown', stopDrag);
+    removeGlobalHandler('touchstart', stopDrag);
+    removeGlobalHandler('mousemove', onDrag);
+    removeGlobalHandler('touchmove', onDrag);
+    removeGlobalHandler('mouseup', stopDrag);
+    removeGlobalHandler('touchend', stopDrag);
 
     if (SELECTSTART_SUPPORTED)
       removeGlobalHandler('selectstart', eventUtils.kill);
@@ -190,19 +196,33 @@
       if (this.trigger !== trigger)
       {
         if (this.trigger)
+        {
           eventUtils.removeHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.removeHandler(this.trigger, 'touchstart', startDrag, this);
+        }
 
         this.trigger = trigger;
 
         if (this.trigger)
+        {
           eventUtils.addHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.addHandler(this.trigger, 'touchstart', startDrag, this);
+        }
       }
     },
     setBase: function(baseElement){
       this.baseElement = resolveElement(baseElement);
     },
     getBase: function(){
-      return this.baseElement || (document.compatMode == 'CSS1Compat' ? document.documentElement : document.body);
+      if (getComputedStyle(this.element, 'position') == 'fixed')
+        return global; // window
+
+      if (this.baseElement)
+        return this.baseElement;
+
+      return document.compatMode == 'CSS1Compat'
+        ? document.documentElement
+        : document.body;
     },
 
     isDragging: function(){
@@ -323,7 +343,7 @@
       if (element)
       {
         var viewport = getViewportRect(this.getBase());
-        var box = getBoundingRect(element);
+        var box = getBoundingRect(element, this.getBase());
 
         dragData.element = element;
 

@@ -345,7 +345,7 @@
 
         childFactory: basis.ui.Node.prototype.childFactory,
         childClass: nsUI.Node.subclass({
-          template: 
+          template:
             '<div class="Field-WordLink">' +
               '<!--{word}-->' +
               '<span class="Field-WordLink-DeleteButton" event-click="delete">x</span>' +
@@ -364,7 +364,7 @@
           satellite: {
             word: {
               delegate: basis.getter('data.WordId', Word),
-              instanceOf: nsUI.Node.subclass({
+              satelliteClass: nsUI.Node.subclass({
                 template:
                   '<span class="Field-WordLink-Title">{title}</span>',
 
@@ -473,7 +473,7 @@
         satellite: {
           word: {
             delegate: basis.getter('data.WordId', Word),
-            instanceOf: nsUI.Node.subclass({
+            satelliteClass: nsUI.Node.subclass({
               template:
                 '<span>' +
                    '{title} ' +

@@ -29,20 +29,27 @@
  *   - String
  *   - Number
  * - basis.ready
- * - async document imterface (basis.doc)
+ * - async document interface (basis.doc)
  * - basis.cleaner
  */
 
-// global is current context (`window` in browser and `global` on node.js)
-;(function createBasisInstance(global, __basisFilename, __config){
+// context is `window` in browser and module on node.js
+;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
   var VERSION = '1.4.0-dev';
 
+  var global = Function('return this')();
+  var NODE_ENV = global !== context ? global : false;
   var document = global.document;
   var toString = Object.prototype.toString;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
+
+  // It's old behaviour that looks odd. For now we leave everything as is.
+  // But we should use context as something to store into, and global as source
+  // of global things.
+  // TODO: to do thins stuff right
+  global = context;
 
 
  /**
@@ -74,20 +81,40 @@
   * @param {*} value
   * @param {string} warning Warning messsage
   */
-  function defineReadWarningProperty(object, name, value, warning){
-    object[name] = value;
-
-    /** @cut */ if (Object.defineProperty)
-    /** @cut */   Object.defineProperty(object, name, {
-    /** @cut */     get: function(){
-    /** @cut */       consoleMethods.warn(warning);
-    /** @cut */       return value;
-    /** @cut */     },
-    /** @cut */     set: function(newValue){
-    /** @cut */       value = newValue;
+  var warnPropertyAccess = (function(object, name, value, warning){
+    /** @cut */ // show warnings only in dev mode
+    /** @cut */ try {
+    /** @cut */   if (Object.defineProperty)
+    /** @cut */   {
+    /** @cut */     // IE8 has Object.defineProperty(), but it works for DOM nodes only
+    /** @cut */     var obj = {};
+    /** @cut */     Object.defineProperty(obj, 'foo', {
+    /** @cut */       get: function(){
+    /** @cut */         return true;
+    /** @cut */       }
+    /** @cut */     });
+    /** @cut */
+    /** @cut */     // if no exception and property returns true
+    /** @cut */     // looks like we could use Object.defineProperty()
+    /** @cut */     if (obj.foo === true)
+    /** @cut */     {
+    /** @cut */       return function(object, name, value, warning){
+    /** @cut */         Object.defineProperty(object, name, {
+    /** @cut */           get: function(){
+    /** @cut */             consoleMethods.warn(warning);
+    /** @cut */             return value;
+    /** @cut */           },
+    /** @cut */           set: function(newValue){
+    /** @cut */             value = newValue;
+    /** @cut */           }
+    /** @cut */         });
+    /** @cut */       };
     /** @cut */     }
-    /** @cut */   });
-  }
+    /** @cut */   }
+    /** @cut */ } catch(e){ }
+
+    return function(){};
+  })();
 
  /**
   * Copy all properties from source (object) to destination object.
@@ -193,7 +220,12 @@
   * @return {object}
   */
   function merge(/* obj1 .. objN */){
-    return arrayFrom(arguments).reduce(extend, {});
+    var result = {};
+
+    for (var i = 0; i < arguments.length; i++)
+      extend(result, arguments[i]);
+
+    return result;
   }
 
  /**
@@ -503,6 +535,9 @@
       result.base = func.base || func;
       result.__extend__ = getter;
 
+      // NOTE: Only object modificators has no modId. Therefore getters with object
+      // modificator are not caching. It avoid storing (by closure) object that
+      // can't be collected by GC.
       if (modId)
       {
         if (!modList)
@@ -518,12 +553,6 @@
 
         // cache new getter
         result[ID] = getterMap.push(result);
-      }
-      else
-      {
-        // only object modificators has no modId
-        // getters with object modificator are not caching
-        // this prevents of storing (in closure) object that can't be released by gabage collectors
       }
 
       return result;
@@ -625,8 +654,8 @@
       iterate(methods, function(methodName){
         methods[methodName] = 'bind' in Function.prototype && typeof console[methodName] == 'function'
           ? Function.prototype.bind.call(console[methodName], console)
-            // ie8 and lower, it's also more safe when Function.prototype.bind defined
-            // by other libraries (like es5-shim)
+            // IE8 and lower solution. It's also more safe when Function.prototype.bind
+            // defines by other libraries (like es5-shim).
           : function(){
               Function.prototype.apply.call(console[methodName], console, arguments);
             };
@@ -637,13 +666,13 @@
 
 
   //
-  // Support for setImmediate/clearImmediate
+  // Timers
   //
 
   var setImmediate = global.setImmediate || global.msSetImmediate;
   var clearImmediate = global.clearImmediate || global.msSetImmediate;
 
-  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't global
+  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't a global
   if (setImmediate)
     setImmediate = setImmediate.bind(global);
 
@@ -655,6 +684,7 @@
   // Inspired on Domenic Denicola's solution https://github.com/NobleJS/setImmediate
   //
   if (!setImmediate)
+  {
     (function(){
       var MESSAGE_NAME = 'basisjs.setImmediate';
       var runTask = (function(){
@@ -693,8 +723,10 @@
           if (task)
           {
             delete taskById[id];
-            return task.fn.apply(undefined, task.args);
+            task.fn.apply(undefined, task.args);
           }
+
+          asap.process();
         };
       })();
 
@@ -708,7 +740,7 @@
       //
       // implement platform specific solution
       //
-      if (global.process && typeof process.nextTick == 'function')
+      if (NODE_ENV && NODE_ENV.process && typeof process.nextTick == 'function')
       {
         // use next tick on node.js
         addToQueue = function(taskId){
@@ -817,6 +849,79 @@
         }
       }
     })();
+  }
+
+  //
+  // asap
+  //
+  var asap = (function(){
+    var queue = [];
+    var processing = false;
+    var timer;
+
+    function process(){
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
+
+      try {
+        var item;
+
+        // mark queue as processing to avoid concurrency
+        processing = true;
+
+        // process queue
+        while (item = queue.shift())
+          item.fn.call(item.context);
+      } finally {
+        // queue is not processing anymore
+        processing = false;
+
+        // if any function in queue than exception was occured,
+        // run rest functions in next code frame
+        if (queue.length)
+          timer = setImmediate(process);
+      }
+    }
+
+   /**
+    * Invoke function as soon as possible. The ideal case is invocation in the end
+    * of current code frame (after all changes done). It's possible when code frame
+    * inited by browser events or timers (setImmediate/clearImmediate/nextTick), so
+    * we can process asap functions right after handler function was invoked.
+    * Asap function invocation can't be aborted.
+    *
+    * Single timer is using for asap functions invocation. Exceptions aren't catching.
+    * If any exception rest functions will be invoked in next code frame.
+    *
+    * @param {function} fn Function that should be invoked ASAP.
+    * @param {*=} context Context for function invocation.
+    */
+    var asap = function(fn, context){
+      // add function to queue
+      queue.push({
+        fn: fn,
+        context: context
+      });
+
+      // set timer to process queue, if timer is not set yet
+      if (!timer)
+        timer = setImmediate(process);
+
+      return true;
+    };
+
+   /**
+    * Run asap functions processing.
+    */
+    asap.process = function(){
+      // run queue process only if queue isn't processing
+      if (!processing)
+        process();
+    };
+
+    return asap;
+  })();
 
 
   // ============================================
@@ -1094,6 +1199,19 @@
       {
         // node.js env
         basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
+
+        /** @cut */ if (process.basisjsConfig)
+        /** @cut */ {
+        /** @cut */   config = process.basisjsConfig;
+        /** @cut */   if (typeof config == 'string')
+        /** @cut */   {
+        /** @cut */     try {
+        /** @cut */       config = Function('return{' + config + '}')();
+        /** @cut */     } catch(e) {
+        /** @cut */       /** @cut */ consoleMethods.error('basis-config: basis.js config parse fault: ' + e);
+        /** @cut */     }
+        /** @cut */   }
+        /** @cut */ }
       }
       else
       {
@@ -1695,8 +1813,8 @@
     * @type {object}
     */
     bindingBridge: {
-      attach: function(host, fn, context){
-        host.attach(fn, context);
+      attach: function(host, fn, context, onDestroy){
+        host.attach(fn, context, onDestroy);
       },
       detach: function(host, fn, context){
         host.detach(fn, context);
@@ -1738,7 +1856,7 @@
     * @param {function(value)} fn
     * @param {object=} context
     */
-    attach: function(fn, context){
+    attach: function(fn, context, onDestroy){
       /** @cut */ var cursor = this;
       /** @cut */ while (cursor = cursor.handler)
       /** @cut */   if (cursor.fn === fn && cursor.context === context)
@@ -1747,6 +1865,7 @@
       this.handler = {
         fn: fn,
         context: context,
+        destroy: onDestroy || null,
         handler: this.handler
       };
     },
@@ -1765,6 +1884,7 @@
         {
           // make it non-callable
           cursor.fn = $undef;
+          cursor.destroy = cursor.destroy && $undef;
 
           // remove from list
           prev.handler = cursor.handler;
@@ -1815,6 +1935,11 @@
         this.deferredToken.destroy();
         this.deferredToken = null;
       }
+
+      var cursor = this;
+      while (cursor = cursor.handler)
+        if (cursor.destroy)
+          cursor.destroy.call(cursor.context);
 
       this.handler = null;
       this.value = null;
@@ -1920,6 +2045,29 @@
         patches[i](resource.get(), resource.url);
       }
   }
+
+  var resolveResourceUri = function(url, baseURI, clr){
+    var rootNS = url.match(/^([a-zA-Z0-9\_\-]+):/);
+
+    if (rootNS)
+    {
+      var namespaceRoot = rootNS[1];
+
+      if (namespaceRoot in nsRootPath == false)
+        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
+
+      url = nsRootPath[namespaceRoot] + pathUtils.normalize('./' + url.substr(rootNS[0].length));
+    }
+    else
+    {
+      url = pathUtils.resolve(baseURI, url);
+    }
+
+    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+    /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+
+    return url;
+  };
 
   var getResourceContent = function(url, ignoreCache){
     if (ignoreCache || !hasOwnProperty.call(resourceContentCache, url))
@@ -2108,24 +2256,23 @@
  /**
   * @name resource
   */
-  var getResource = function(resourceUrl){
-    var resource = resources[resourceUrl];
+  var getResource = function(url){
+    var resource = resources[url];
 
-    if (resource)
-      return resource;
+    if (!resource)
+    {
+      var resolvedUrl = resolveResourceUri(url, null, 'basis.resource(\'{url}\')');
 
-    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-    /** @cut */   consoleMethods.warn('Bad usage: basis.resource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-    // try resolve resource path
-    resourceUrl = pathUtils.resolve(resourceUrl);
-    resource = resources[resourceUrl];
+      resource = resources[resolvedUrl] || createResource(resolvedUrl);
+      resources[url] = resource;
+    }
 
     // return resource or create it
-    return resource || createResource(resourceUrl);
+    return resource;
   };
 
   extend(getResource, {
+    resolveURI: resolveResourceUri,
     // onUpdate: function(fn, context){
     //   resourceUpdateNotifier.attach(fn, context);
     // },
@@ -2138,16 +2285,10 @@
       return resource ? resource.isResolved() : false;
     },
     exists: function(resourceUrl){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-      return hasOwnProperty.call(resources, pathUtils.resolve(resourceUrl));
+      return hasOwnProperty.call(resources, resolveResourceUri(resourceUrl, null, 'basis.resource.exists(\'{url}\')'));
     },
     get: function(resourceUrl){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.get(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-      resourceUrl = pathUtils.resolve(resourceUrl);
+      resourceUrl = resolveResourceUri(resourceUrl, null, 'basis.resource.get(\'{url}\')');
 
       if (!getResource.exists(resourceUrl))
         return null;
@@ -2171,7 +2312,7 @@
     },
 
     extensions: {
-      '.js': extend(function(content, filename){
+      '.js': extend(function processJsResourceContent(content, filename){
         var namespace = filename2namespace[filename];
 
         if (!namespace)
@@ -2222,9 +2363,12 @@
               /** @cut */ {
               /** @cut */   for (var key in ns.exports)
               /** @cut */     if (key in ns == false && key != 'path')
-              /** @cut */       defineReadWarningProperty(ns, key, ns.exports[key],
+              /** @cut */     {
+              /** @cut */       ns[key] = ns.exports[key];
+              /** @cut */       warnPropertyAccess(ns, key, ns.exports[key],
               /** @cut */         'basis.js: Access to implicit namespace property `' + namespace + '.' + key + '`'
               /** @cut */       );
+              /** @cut */     }
               /** @cut */ }
               /** @cut */ else
               complete(ns, ns.exports);
@@ -2243,7 +2387,7 @@
         permanent: true
       }),
 
-      '.css': function(content, url, cssResource){
+      '.css': function processCssResourceContent(content, url, cssResource){
         if (!cssResource)
           cssResource = new CssResource(url);
 
@@ -2252,7 +2396,7 @@
         return cssResource;
       },
 
-      '.json': function(content, url){
+      '.json': function processJsonResourceContent(content, url){
         if (typeof content == 'object')
           return content;
 
@@ -2314,13 +2458,15 @@
 
     // compile function if required
     if (typeof compiledSourceCode != 'function')
-      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require'],
+      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require', 'asset'],
         '"use strict";\n' +
         sourceCode
       );
 
     // run
     if (typeof compiledSourceCode == 'function')
+    {
+      /** @cut */ compiledSourceCode.displayName = '[module] ' + (filename2namespace[sourceURL] || sourceURL);
       compiledSourceCode.call(
         context.exports,
         context.exports,
@@ -2329,16 +2475,17 @@
         global,
         sourceURL,
         baseURL,
-        function(relativePath){
-          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(relativePath))
-          /** @cut */   consoleMethods.warn('Bad usage: resource(\'' + relativePath + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-          return getResource(pathUtils.resolve(baseURL, relativePath));
+        function(path){
+          return getResource(resolveResourceUri(path, baseURL, 'resource(\'{url}\')'));
         },
-        function(relativePath, base){
-          return requireNamespace(relativePath, base || baseURL);
+        function(path, base){
+          return requireNamespace(path, base || baseURL);
+        },
+        function(path){
+          return resolveResourceUri(path, baseURL, 'asset(\'{url}\')');
         }
       );
+    }
 
     return context;
   };
@@ -2396,15 +2543,7 @@
     {
       var parts = namespace.split('.');
       var namespaceRoot = parts.shift();
-      var filename = parts.join('/') + '.js';
-
-      if (namespaceRoot in nsRootPath == false)
-        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
-
-      if (namespaceRoot == namespace)
-        filename = nsRootPath[namespaceRoot].replace(/\/$/, '') + '.js';
-      else
-        filename = nsRootPath[namespaceRoot] + filename;
+      var filename = resolveResourceUri(namespaceRoot + ':' + parts.join('/') + '.js').replace(/\/\.js$/, '.js');
 
       namespace2filename[namespace] = filename;
       filename2namespace[filename] = namespace;
@@ -2443,6 +2582,9 @@
   * @return {basis.Namespace}
   */
   function getNamespace(path){
+    if (hasOwnProperty.call(namespaces, path))
+      return namespaces[path];
+
     path = path.split('.');
 
     var rootNs = getRootNamespace(path[0]);
@@ -2463,9 +2605,12 @@
           cursor[name] = namespace;
 
           /** @cut */ if (config.implicitExt == 'warn')
-          /** @cut */   defineReadWarningProperty(cursor, name, namespace,
+          /** @cut */ {
+          /** @cut */   cursor[name] = namespace;
+          /** @cut */   warnPropertyAccess(cursor, name, namespace,
           /** @cut */     'basis.js: Access to implicit namespace `' + nspath + '`'
           /** @cut */   );
+          /** @cut */ }
         }
 
         rootNs.namespaces_[nspath] = namespace;
@@ -2485,11 +2630,13 @@
   * @param {string} dirname
   * @name require
   */
-  var requireNamespace = (function(){
+  var requireNamespace = (function(filename, dirname){
+    var result;
+
     if (NODE_ENV)
     {
       var moduleProto = module.constructor.prototype;
-      return function(filename, dirname){
+      result = function(filename, dirname){
         if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == '.js')
         {
           var _compile = moduleProto._compile;
@@ -2520,14 +2667,14 @@
         }
         else
         {
-          filename = pathUtils.resolve(dirname, filename);
+          filename = resolveResourceUri(filename, dirname);
           return require(filename);
         }
       };
     }
     else
     {
-      return function(filename, dirname){
+      result = function(filename, dirname){
         if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
         {
           // namespace, like 'foo.bar.baz'
@@ -2535,16 +2682,17 @@
         }
         else
         {
-          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
-          /** @cut */   consoleMethods.warn('Bad usage: require(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
           // regular filename
-          filename = pathUtils.resolve(dirname, filename);
+          filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
         }
 
         return getResource(filename).fetch();
       };
     }
+
+    /** @cut */ result.displayName = 'basis.require';
+
+    return result;
   })();
 
 
@@ -2556,11 +2704,8 @@
     }
     else
     {
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.patch(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
       // regular filename
-      filename = pathUtils.resolve(filename);
+      filename = resolveResourceUri(filename, null, 'basis.patch(\'{url}\')');
     }
 
     if (!resourcePatch[filename])
@@ -3125,6 +3270,9 @@
 
       // remove emergency timer as all handlers are process
       timer = clearImmediate(timer);
+
+      // process asap queue
+      asap.process();
     }
 
     function fireHandlers(e){
@@ -3524,7 +3672,11 @@
         complete({ noConflict: true }, config)
       );
     },
-    dev: (new Namespace('basis.dev')).extend(consoleMethods),
+    dev: (new Namespace('basis.dev'))
+      .extend(consoleMethods)
+      .extend({
+        warnPropertyAccess: warnPropertyAccess
+      }),
 
     // modularity
     resolveNSFilename: resolveNSFilename,
@@ -3532,8 +3684,8 @@
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
-    asset: function(url){   // NOTE: don't replace for $self, builder attach
-      return url;           // special handler for this function
+    asset: function(path){
+      return resolveResourceUri(path, null, 'basis.asset(\'{url}\')');
     },
 
     // timers
@@ -3542,6 +3694,7 @@
     nextTick: function(){
       setImmediate.apply(null, arguments);
     },
+    asap: asap,
 
     // classes
     Class: Class,
@@ -3617,7 +3770,7 @@
   // auto load section
   //
 
-  if (config.autoload)
+  if (config.autoload && !NODE_ENV)
     config.autoload.forEach(function(name){
       requireNamespace(name);
     });

@@ -119,7 +119,7 @@ basis.ready(function(){
             return owner.data.tags && owner.data.tags.length;
           },
           delegate: basis.fn.$self,
-          instanceOf: Node.subclass({
+          satelliteClass: Node.subclass({
             template: resource('./template/tagList.tmpl'),
 
             init: function(){

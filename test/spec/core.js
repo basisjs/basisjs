@@ -4,6 +4,7 @@ module.exports = {
     require('./core/utils.js'),
     require('./core/path.js'),
     require('./core/getter.js'),
+    require('./core/resource.js'),
     require('./core/patch.js')
   ]
 };

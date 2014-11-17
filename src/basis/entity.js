@@ -112,6 +112,7 @@
       basis.dev.warn(namespace + ': type `' + typeName + '` is not defined, but used by ' + deferredTypeDef[typeName].length + ' type(s)');
   }
 
+
   //
   // Index
   //
@@ -479,13 +480,9 @@
       });
 
       // deprecated in 1.3.0
-      /** @cut */ if (Object.defineProperty)
-      /** @cut */   Object.defineProperty(result, 'entitySetType', {
-      /** @cut */     get: function(){
-      /** @cut */       basis.dev.warn('basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.');
-      /** @cut */       return entitySetType;
-      /** @cut */     }
-      /** @cut */   });
+      /** @cut */ basis.dev.warnPropertyAccess(result, 'entitySetType', entitySetType,
+      /** @cut */   'basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.'
+      /** @cut */ );
 
       return result;
     }
@@ -616,6 +613,21 @@
         reader: function(data){
           return entityType.reader(data);
         },
+        readList: function(value, map){
+          if (!value)
+            return [];
+
+          if (!Array.isArray(value))
+            value = [value];
+
+          if (typeof map != 'function')
+            map = $self;
+
+          for (var i = 0; i < value.length; i++)
+            value[i] = result(entityType.reader(map(value[i], i)));
+
+          return value;
+        },
 
         extendClass: function(source){
           EntityClass.extend.call(EntityClass, source);
@@ -642,13 +654,9 @@
       });
 
       // deprecated in 1.3.0
-      /** @cut */ if (Object.defineProperty)
-      /** @cut */   Object.defineProperty(result, 'entityType', {
-      /** @cut */     get: function(){
-      /** @cut */       basis.dev.warn('basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.');
-      /** @cut */       return entityType;
-      /** @cut */     }
-      /** @cut */   });
+      /** @cut */ basis.dev.warnPropertyAccess(result, 'entityType', entityType,
+      /** @cut */   'basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.'
+      /** @cut */ );
 
       return result;
     }
@@ -1581,6 +1589,9 @@
         }
 
         return update ? delta : false;
+      },
+      read: function(data){
+        return this.update(this.type.reader(data));
       },
       generateData: function(){ // will be overrided
         return {};

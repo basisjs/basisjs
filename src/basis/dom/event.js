@@ -5,19 +5,18 @@
 
   var namespace = this.path;
 
-  // for better pack
-
   var document = global.document;
   var $null = basis.fn.$null;
   var arrayFrom = basis.array.from;
+  var globalEvents = {};
 
-  var W3CSUPPORT = !!document.addEventListener;
 
   //
   // Const
   //
 
-  var EVENT_HOLDER = '__basisEvents';
+  var EVENT_HOLDER = 'basisEvents_' + basis.genUID();
+  var W3CSUPPORT = !!document.addEventListener;
 
   var KEY = {
     BACKSPACE: 8,
@@ -304,6 +303,24 @@
   var noCaptureScheme = !W3CSUPPORT;
 
  /**
+  * Flush asap handlers
+  */
+  var flushAsap = true;
+  var lastAsapEvent;
+
+
+ /**
+  *
+  */
+  function processAsap(event){
+    if (flushAsap && event !== lastAsapEvent)
+    {
+      lastAsapEvent = event;
+      basis.asap.process();
+    }
+  }
+
+ /**
   * Observe handlers for event
   * @private
   * @param {Event} event
@@ -317,17 +334,20 @@
     {
       captureHandler.handler.call(captureHandler.thisObject, wrappedEvent);
       kill(event);
-      return;
     }
-
-    if (handlers)
+    else
     {
-      for (var i = handlers.length; i-- > 0;)
+      if (handlers)
       {
-        var handlerObject = handlers[i];
-        handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
+        for (var i = handlers.length; i-- > 0;)
+        {
+          var handlerObject = handlers[i];
+          handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
+        }
       }
     }
+
+    processAsap(event);
   }
 
  /**
@@ -442,17 +462,17 @@
     if (typeof handler != 'function')
       throw 'basis.event.addHandler: handler is not a function';
 
-    if (!node[EVENT_HOLDER])
-      node[EVENT_HOLDER] = {};
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
 
-    // event handler
+    if (!handlers)
+      handlers = node[EVENT_HOLDER] = {};
+
+    var eventTypeHandlers = handlers[eventType];
     var handlerObject = {
       handler: handler,
       thisObject: thisObject
     };
 
-    var handlers = node[EVENT_HOLDER];
-    var eventTypeHandlers = handlers[eventType];
     if (!eventTypeHandlers)
     {
       eventTypeHandlers = handlers[eventType] = [handlerObject];
@@ -474,6 +494,8 @@
         // call eventType handlers
         for (var i = 0, wrappedEvent = new Event(event), item; item = eventTypeHandlers[i++];)
           item.handler.call(item.thisObject, wrappedEvent);
+
+        processAsap(event);
       };
 
       if (W3CSUPPORT)
@@ -518,7 +540,7 @@
   function removeHandler(node, eventType, handler, thisObject){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers)
     {
       var eventTypeHandlers = handlers[eventType];
@@ -550,7 +572,7 @@
   function clearHandlers(node, eventType){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers)
     {
       if (typeof eventType != 'string')
@@ -582,9 +604,16 @@
   function fireEvent(node, eventType, event){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers && handlers[eventType])
+    {
+      try {
+        flushAsap = false;
         handlers[eventType].fireEvent(event);
+      } finally {
+        flushAsap = true;
+      }
+    }
   }
 
   //

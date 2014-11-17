@@ -182,7 +182,7 @@
         }
       },
       name: 'name',
-      titleText: 'title',
+      title: 'title',
       value: {
         events: 'change',
         getter: function(node){
@@ -201,7 +201,13 @@
         getter: 'error'
       },
       example: 'satellite:',
-      description: 'satellite:'
+      description: 'satellite:',
+
+      // deprecated
+      titleText: function(node){
+        /** @cut */ basis.dev.warn('`titleText` for basis.ui.field.Field instances is deprecated, use `title` instead');
+        return node.title;
+      }
     },
 
     action: 'focus blur change keydown keypress keyup input'.split(' ').reduce(
@@ -222,7 +228,7 @@
         existsIf: function(owner){
           return owner.example;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Example',
           template: templates.Example,
           binding: {
@@ -242,7 +248,7 @@
         existsIf: function(owner){
           return owner.description;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Description',
           template: templates.Description,
           binding: {
@@ -551,7 +557,7 @@
         existsIf: function(owner){
           return owner.maxLength > 0;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Counter',
 
           template: templates.Counter,
@@ -854,15 +860,6 @@
   //  Combobox
   //
 
-  var ComboboxPopupHandler = {
-    show: function(){
-      this.updateBind('opened');
-    },
-    hide: function(){
-      this.updateBind('opened');
-    }
-  };
-
  /**
   * @class
   */
@@ -893,11 +890,6 @@
     }
   });
 
-  var COMBOBOX_SELECTION_HANDLER = {
-    itemsChanged: function(selection){
-      this.setDelegate(selection.pick());
-    }
-  };
 
  /**
   * @class
@@ -910,24 +902,29 @@
     emit_change: function(event){
       ComplexField.prototype.emit_change.call(this, event);
 
-      var value = this.getValue();
-
       if (this.property)
+      {
+        var value = this.getValue();
         this.property.set(value);
+      }
     },
 
     emit_childNodesModified: function(delta){
       ComplexField.prototype.emit_childNodesModified.call(this, delta);
+
       if (this.property)
         this.setValue(this.property.value);
     },
 
     caption: null,
+    property: null,
+    opened: false,
     popup: null,
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
+      autorotate: true,
+      relElement: 'owner:field',
       template: templates.ComboboxDropdownList,
-      autorotate: 1,
       templateSync: function(){
         Popup.prototype.templateSync.call(this);
 
@@ -935,24 +932,16 @@
           (this.tmpl.content || this.element).appendChild(this.owner.childNodesElement);
       }
     }),
-    property: null,
-
-    template: templates.Combobox,
-
-    binding: {
-      captionItem: 'satellite:',
-      hiddenField: 'satellite:',
-      opened: function(node){
-        return node.popup.visible ? 'opened' : '';
-      }
-    },
 
     satellite: {
+      popup: {
+        config: 'popup'
+      },
       hiddenField: {
         existsIf: function(owner){
           return owner.name;
         },
-        instanceOf: Hidden.subclass({
+        satelliteClass: Hidden.subclass({
           className: namespace + '.ComboboxHidden',
           getValue: function(){
             return this.owner.getValue();
@@ -974,6 +963,12 @@
       }
     },
 
+    template: templates.Combobox,
+    binding: {
+      captionItem: 'satellite:',
+      hiddenField: 'satellite:',
+      opened: 'opened'
+    },
     action: {
       togglePopup: function(){
         if (this.isDisabled() || this.popup.visible)
@@ -998,7 +993,9 @@
               return;
             }
 
-            next = basis.array.search(DOM.axis(cur || this.firstChild, DOM.AXIS_FOLLOWING_SIBLING), false, 'disabled');
+            next = cur ? cur.nextSibling : this.firstChild;
+            while (next && next.isDisabled())
+              next = next.nextSibling;
           break;
 
           case event.KEY.UP:
@@ -1012,7 +1009,9 @@
               return;
             }
 
-            next = basis.array.search(DOM.axis(cur || this.lastChild, DOM.AXIS_PRECEDING_SIBLING), false, 'disabled');
+            next = cur ? cur.previousSibling : this.lastChild;
+            while (next && next.isDisabled())
+              next = next.previousSibling;
           break;
         }
 
@@ -1045,7 +1044,6 @@
     },
 
     init: function(){
-
       if (this.property)
         this.value = this.property.value;
 
@@ -1053,13 +1051,16 @@
       ComplexField.prototype.init.call(this);
 
       this.setSatellite('captionItem', new this.childClass({
-        delegate: this.selection.pick(),
-        owner: this,
+        delegate: Value.from(this.selection, 'itemsChanged', function(selection){
+          return selection.pick();
+        }),
         getTitle: function(){
-          return this.owner.getTitle();
+          if (this.delegate)
+            return this.delegate.getTitle();
         },
         getValue: function(){
-          return this.owner.getValue();
+          if (this.delegate)
+            return this.delegate.getValue();
         },
         handler: {
           delegateChanged: function(){
@@ -1067,15 +1068,11 @@
           }
         }
       }));
-      this.selection.addHandler(COMBOBOX_SELECTION_HANDLER, this.satellite.captionItem);
 
       // create items popup
-      this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
-        handler: {
-          context: this,
-          callbacks: ComboboxPopupHandler
-        }
-      }, this.popup));
+      this.popup = new this.popupClass(this.popup);
+      this.setSatellite('popup', this.popup);
+      this.opened = Value.from(this.popup, 'show hide', 'visible');
 
       if (this.property)
         this.property.link(this, this.setValue);
@@ -1091,7 +1088,7 @@
     show: function(){
       if (this.tmpl)
       {
-        this.popup.show(this.tmpl.field);
+        this.popup.show();
         this.focus();
       }
     },
@@ -1118,18 +1115,11 @@
       }
     },
     destroy: function(){
-      if (this.property)
-      {
-        this.property.unlink(this);
-        this.property = null;
-      }
+      this.property = null;
+      this.opened = null;
 
       this.popup.destroy();
       this.popup = null;
-
-      this.satellite.captionItem.setDelegate();
-      this.selection.removeHandler(COMBOBOX_SELECTION_HANDLER, this.satellite.captionItem);
-      this.setSatellite('captionItem', null);
 
       ComplexField.prototype.destroy.call(this);
     }
@@ -1139,6 +1129,10 @@
   //
   // Filter
   //
+
+  function defaultTextNodeGetter(node){
+    return node.tmpl.title || node.tmpl.titleText;
+  }
 
  /**
   * @class
@@ -1210,7 +1204,7 @@
     init: function(){
       var startPoints = this.startPoints || '';
 
-      this.textNodeGetter = getter(this.textNodeGetter || 'tmpl.titleText');
+      this.textNodeGetter = getter(this.textNodeGetter || defaultTextNodeGetter);
 
       if (typeof this.regexpGetter != 'function')
         this.regexpGetter = function(value){
@@ -1304,7 +1298,7 @@
   //
 
   /** @const */ var REGEXP_EMAIL = /^([a-z0-9а-яА-ЯёЁ\.\-\_]+|[a-z0-9а-яА-ЯёЁ\.\-\_]+\+[a-z0-9а-яА-ЯёЁ\.\-\_]+)\@(([a-z0-9а-яА-ЯёЁ][a-z0-9а-яА-ЯёЁ\-]*\.)+[a-zа-яА-ЯёЁ]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i;
-  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Zа-яА-ЯёЁ0-9][a-zA-Zа-яА-ЯёЁ\d\-_]+\.)+[a-zA-Zа-яА-ЯёЁ]{2,6})(:\d+)?(\/[^\?]*(\?\S+(\=\S*))*(\#\S*)?)?$/i;
+  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Zа-яА-ЯёЁ0-9][a-zA-Zа-яА-ЯёЁ\d\-\._]+\.)+[a-zA-Zа-яА-ЯёЁ]{2,7})(:\d+)?(\/[^\?]*(\?\S+(\=\S*))*(\#\S*)?)?$/i;
 
  /**
   * @class

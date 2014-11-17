@@ -50,7 +50,7 @@
     }
   );
 
-  var cancelAnimationFrame = createMethod('cancelRequestAnimationFrame') || createMethod('cancelAnimationFrame',
+  var cancelAnimationFrame = createMethod('cancelAnimationFrame') || createMethod('cancelRequestAnimationFrame',
     function(id){
       clearTimeout(id);
     }

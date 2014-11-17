@@ -85,6 +85,12 @@
     text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g,
     style: /((?:.|[\r\n])*?)(?:<\/b:style>|$)/g
   };
+  var CSS_CLASSNAME_START = /^\-?([_a-z]|[^\x00-\xb1]|\\[0-9a-f]{1,6}(\r\n|[ \n\r\t\f])?|\\[^\n\r\f0-9a-f])/i; // http://www.w3.org/TR/css3-selectors/#lex
+  var CSS_CLASSNAME_START_MAXLEN = 8; // -?\\.{1,6}
+  var CSS_NESTED_ATRULE = /^(media|supports|document)\b/i;
+  var CSS_NESTED_ATRULE_MAXLEN = 8; // maxlength(media | supports | document) = 8 symbols
+  var CSS_FNSELECTOR = /^(not|has|matches|nth-child|nth-last-child)\(/i;
+  var CSS_FNSELECTOR_MAXLEN = 15; // maxlength(not | has | matches | nth-child | nth-last-child) + '(' = 15 symbols
 
   var quoteUnescape = /\\"/g;
 
@@ -464,14 +470,126 @@
   }
 
   function isolateCss(css, prefix){
-    function addMatch(prefix){
-      if (i > lastMatchPos)
+    function jumpAfter(str, offset){
+      var index = css.indexOf(str, offset);
+      i = index !== -1 ? index + str.length : sym.length;
+    }
+
+    function parseString(endSym){
+      var quote = sym[i];
+
+      if (quote !== '"' && quote !== '\'')
+        return;
+
+      for (i++; i < len && sym[i] !== quote; i++)
+        if (sym[i] === '\\')
+          i++;
+
+      return true;
+    }
+
+    function parseBraces(endSym){
+      var bracket = sym[i];
+
+      if (bracket === '(')
       {
-        result.push(
-          (prefix || '') +
-          css.substring(lastMatchPos, i)
-        );
+        jumpAfter(')', i + 1);
+        return true;
+      }
+
+      if (bracket === '[')
+      {
+        for (i++; i < len && sym[i] !== ']'; i++)
+          parseString();
+        return true;
+      }
+    }
+
+    function parseComment(){
+      if (sym[i] !== '/' || sym[i + 1] !== '*')
+        return;
+
+      jumpAfter('*/', i + 2);
+
+      return true;
+    }
+
+    function parsePseudoContent(){
+      for (; i < len && sym[i] != ')'; i++)
+        if (parseComment() || parseBraces() || parsePseudo() || parseClassName())
+          continue;
+    }
+
+    function parsePseudo(){
+      if (sym[i] !== ':')
+        return;
+
+      var m = css.substr(i + 1, CSS_FNSELECTOR_MAXLEN).match(CSS_FNSELECTOR);
+      if (m)
+      {
+        i += m[0].length + 1;
+        parsePseudoContent();
+      }
+
+      return true;
+    }
+
+    function parseAtRule(){
+      if (sym[i] !== '@')
+        return;
+
+      var m = css.substr(i + 1, CSS_NESTED_ATRULE_MAXLEN).match(CSS_NESTED_ATRULE);
+      if (m)
+      {
+        i += m[0].length;
+        nestedStyleSheet = true;
+      }
+
+      return true;
+    }
+
+    function parseBlock(){
+      if (sym[i] !== '{')
+        return;
+
+      if (nestedStyleSheet)
+      {
+        i++;
+        parseStyleSheet(true);
+        return;
+      }
+
+      for (i++; i < len && sym[i] !== '}'; i++)
+        parseString() || parseBraces();
+
+      return true;
+    }
+
+    function parseClassName(){
+      if (sym[i] !== '.')
+        return;
+
+      var m = css.substr(i + 1, CSS_CLASSNAME_START_MAXLEN).match(CSS_CLASSNAME_START);
+      if (m)
+      {
+        i++;
+        result.push(css.substring(lastMatchPos, i), prefix);
         lastMatchPos = i;
+      }
+
+      return true;
+    }
+
+    function parseStyleSheet(nested){
+      for (nestedStyleSheet = false; i < len; i++)
+      {
+        if (parseComment() || parseAtRule() || parsePseudo() || parseBraces() || parseClassName())
+          continue;
+
+        if (nested && sym[i] == '}')
+          return;
+
+        parseBlock();
       }
     }
 
@@ -479,83 +597,15 @@
     var sym = css.split('');
     var len = sym.length;
     var lastMatchPos = 0;
-    var blockScope = false;
-    var strSym;
+    var i = 0;
+    var nestedStyleSheet;
 
     if (!prefix)
       prefix = genIsolateMarker();
 
-    for (var i = 0; i < len; i++)
-    {
-      switch (sym[i])
-      {
-        case '\'':
-        case '\"':
-          strSym = sym[i];
-          //addMatch();
+    parseStyleSheet(false);
 
-          while (++i < len)
-          {
-            if (sym[i] == '\\')
-              i++;
-            else
-              if (sym[i] == strSym)
-              {
-                i++;
-                //addMatch('string');
-                break;
-              }
-          }
-
-          break;
-
-        case '/':
-          if (sym[i + 1] == '*')
-          {
-            //addMatch();
-            i++;
-
-            while (++i < len)
-              if (sym[i] == '*' && sym[i + 1] == '/')
-              {
-                i += 2;
-                //addMatch('comment');
-                break;
-              }
-          }
-
-          break;
-
-        case '{':
-          blockScope = true;
-          break;
-
-        case '}':
-          blockScope = false;
-          break;
-
-        case '.':
-          if (!blockScope)
-          {
-            i++;
-            addMatch();
-
-            while (++i < len)
-              if (!/[a-z0-9\-\_]/.test(sym[i]))
-              {
-                addMatch(prefix);
-                i -= 1;
-                break;
-              }
-          }
-
-          break;
-      }
-    }
-
-    addMatch();
-
-    return result.join('');
+    return result.join('') + css.substring(lastMatchPos);
   }
 
 
@@ -571,11 +621,16 @@
     var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
     var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
     var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
-    var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
-    var tokenMap = basis.NODE_ENV ? __nodejsRequire('./template/htmlentity.json') : {};
+    var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
+    var tokenMap = {};
     var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
     var includeStack = [];
     var styleNamespaceIsolate = {};
+
+    // load token map when node evironment, because html parsing is not available
+    // comment it, to not include code to build
+    /** @cut */ if (basis.NODE_ENV)
+    /** @cut */  tokenMap = __nodejsRequire('./template/htmlentity.json');
 
     function name(token){
       return (token.prefix ? token.prefix + ':' : '') + token.name;
@@ -878,10 +933,7 @@
 
       if (src)
       {
-        /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(src))
-        /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-        url = path.resolve(template.baseURI + src);
+        url = basis.resource.resolveURI(src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
       }
       else
       {
@@ -1128,25 +1180,32 @@
                   /** @cut */   template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
 
                   if (elAttrs.src)
-                  {
-                    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(elAttrs.src))
-                    /** @cut */   basis.dev.warn('Bad usage: <b:' + token.name + ' src=\"' + elAttrs.src + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-                    template.dictURI = path.resolve(template.baseURI, elAttrs.src);
-                  }
+                    template.dictURI = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
                 break;
 
                 case 'define':
+                  /** @cut */ if ('name' in elAttrs == false)
+                  /** @cut */   template.warns.push('Define has no `name` attribute');
+                  /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
+                  /** @cut */   template.warns.push('Define for `' + elAttrs.name + '` has already defined');
+
                   if ('name' in elAttrs && !template.defines[elAttrs.name])
                   {
                     switch (elAttrs.type)
                     {
                       case 'bool':
-                        template.defines[elAttrs.name] = [elAttrs['default'] == 'true' ? 1 : 0];
+                        template.defines[elAttrs.name] = [
+                          elAttrs.from || elAttrs.name,
+                          elAttrs['default'] == 'true' ? 1 : 0
+                        ];
                         break;
                       case 'enum':
                         var values = elAttrs.values ? elAttrs.values.trim().split(' ') : [];
-                        template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
+                        template.defines[elAttrs.name] = [
+                          elAttrs.from || elAttrs.name,
+                          values.indexOf(elAttrs['default']) + 1,
+                          values
+                        ];
                         break;
                       /** @cut */ default:
                       /** @cut */  template.warns.push('Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
@@ -1189,10 +1248,7 @@
                     else
                     {
                       // <b:include src="./path/to/file.tmpl"/>
-                      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
-                      /** @cut */   basis.dev.warn('Bad usage: <b:include src=\"' + url + '\"/>.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-                      resource = basis.resource(path.resolve(template.baseURI + url));
+                      resource = basis.resource(basis.resource.resolveURI(url, template.baseURI,  '<b:include src=\"{url}\"/>'));
                     }
 
                     if (!resource)
@@ -1613,29 +1669,33 @@
 
           if (bindings)
           {
-            var newAttrValue = (token[valueIdx] || '').trim().split(' ');
+            var newAttrValue = (token[valueIdx] || '').trim();
+            newAttrValue = newAttrValue == '' ? [] : newAttrValue.split(' ');
 
             for (var k = 0, bind; bind = bindings[k]; k++)
             {
               if (bind.length > 2)  // bind already processed
                 continue;
 
-              var bindName = bind[1].split(':').pop();
+              var bindNameParts = bind[1].split(':');
+              var bindName = bindNameParts.pop();
+              var bindPrefix = bindNameParts.pop() || '';
               var bindDef = template.defines[bindName];
 
               if (bindDef)
               {
-                bind.push.apply(bind, bindDef);
-                bindDef.used = true;
+                bind[1] = (bindPrefix ? bindPrefix + ':' : '') + bindDef[0];
+                bind.push.apply(bind, bindDef.slice(1)); // add define
+                bindDef.used = true;  // mark as used
 
-                if (bindDef[0])
+                if (bindDef[1])
                 {
-                  if (bindDef.length == 1)
+                  if (bindDef.length == 2)
                     // bool
                     arrayAdd(newAttrValue, bind[0] + bindName);
                   else
                     // enum
-                    arrayAdd(newAttrValue, bind[0] + bindDef[1][bindDef[0] - 1]);
+                    arrayAdd(newAttrValue, bind[0] + bindDef[2][bindDef[1] - 1]);
                 }
               }
               else
@@ -1872,8 +1932,9 @@
     if (this.destroyBuilder)
       buildTemplate.call(this);
 
-    for (var i = 0, attach; attach = this.attaches_[i]; i++)
-      attach.handler.call(attach.context);
+    var cursor = this;
+    while (cursor = cursor.attaches_)
+      cursor.handler.call(cursor.context);
   }
 
   function cloneDecl(array){
@@ -2127,6 +2188,11 @@
     baseURI: '',
 
    /**
+    * @private
+    */
+    attaches_: null,
+
+   /**
     * @param {string|function()|Array} source Template source code that will be parsed
     * into DOM structure prototype. Parsing will be done on first {basis.Html.Template#createInstance}
     * or {basis.Html.Template#getBinding} call. If function passed it be called and it's result will be
@@ -2137,7 +2203,6 @@
       if (templateList.length == 4096)
         throw 'Too many templates (maximum 4096)';
 
-      this.attaches_ = [];
       this.setSource(source || '');
 
       this.templateId = templateList.push(this) - 1;
@@ -2145,22 +2210,29 @@
 
     bindingBridge: {
       attach: function(template, handler, context){
-        for (var i = 0, listener; listener = template.attaches_[i]; i++)
-          if (listener.handler == handler && listener.context == context)
-            return;
+        /** @cut */ var cursor = template;
+        /** @cut */ while (cursor = cursor.attaches_)
+        /** @cut */   if (cursor.handler === handler && cursor.context === context)
+        /** @cut */     basis.dev.warn('basis.template.Template#bindingBridge.attach: duplicate handler & context pair');
 
-        template.attaches_.push({
+        template.attaches_ = {
           handler: handler,
-          context: context
-        });
+          context: context,
+          attaches_: template.attaches_
+        };
       },
       detach: function(template, handler, context){
-        for (var i = 0, listener; listener = template.attaches_[i]; i++)
-          if (listener.handler == handler && listener.context == context)
+        var cursor = template;
+        var prev;
+
+        while (prev = cursor, cursor = cursor.attaches_)
+          if (cursor.handler === handler && cursor.context === context)
           {
-            template.attaches_.splice(i, 1);
+            prev.attaches_ = cursor.attaches_;
             return;
           }
+
+        /** @cut */ basis.dev.warn('basis.template.Template#bindingBridge.detach: handler & context pair not found, nothing was removed');
       },
       get: function(){
       }
@@ -2250,7 +2322,7 @@
           }
 
           this.baseURI = '';
-          this.source.bindingBridge.detach(oldSource, templateSourceUpdate, this);
+          oldSource.bindingBridge.detach(oldSource, templateSourceUpdate, this);
         }
 
         if (source && source.bindingBridge)
