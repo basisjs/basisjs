@@ -634,7 +634,6 @@
       events.change.call(this, oldValue);
 
       var cursor = this;
-
       while (cursor = cursor.links_)
         cursor.fn.call(cursor.context, this.value, oldValue);
     },
@@ -684,8 +683,8 @@
     * Settings for bindings.
     */
     bindingBridge: {
-      attach: function(host, callback, context){
-        host.link(context, callback, true);
+      attach: function(host, callback, context, onDestroy){
+        host.link(context, callback, true, onDestroy);
       },
       detach: function(host, callback, context){
         host.unlink(context, callback);
@@ -929,7 +928,7 @@
     * @param {string|function} fn Property or setter function.
     * @return {object} Returns object.
     */
-    link: function(context, fn, noApply){
+    link: function(context, fn, noApply, onDestroy){
       if (typeof fn != 'function')
       {
         var property = String(fn);
@@ -956,6 +955,7 @@
         value: this,
         context: context,
         fn: fn,
+        destroy: onDestroy || null,
         links_: this.links_
       };
 
@@ -1006,8 +1006,12 @@
       // remove event handlers from all basis.event.Emitter instances
       var cursor = this;
       while (cursor = cursor.links_)
+      {
         if (cursor.context instanceof Emitter)
           cursor.context.removeHandler(VALUE_EMMITER_HANDLER, cursor);
+        if (cursor.destroy)
+          cursor.destroy.call(cursor.context);
+      }
 
       this.proxy = null;
       this.initValue = null;
