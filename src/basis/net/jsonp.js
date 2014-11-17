@@ -323,7 +323,7 @@
 
     requestClass: Request,
 
-    emit_readyStateChanged: createRequestEvent('readyStateChanged'),
+    emit_readyStateChanged: createTransportEvent('readyStateChanged'),
 
     // transport properties
     encoding: null,
