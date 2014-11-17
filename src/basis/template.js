@@ -1932,8 +1932,9 @@
     if (this.destroyBuilder)
       buildTemplate.call(this);
 
-    for (var i = 0, attach; attach = this.attaches_[i]; i++)
-      attach.handler.call(attach.context);
+    var cursor = this;
+    while (cursor = cursor.attaches_)
+      cursor.handler.call(cursor.context);
   }
 
   function cloneDecl(array){
@@ -2187,6 +2188,11 @@
     baseURI: '',
 
    /**
+    * @private
+    */
+    attaches_: null,
+
+   /**
     * @param {string|function()|Array} source Template source code that will be parsed
     * into DOM structure prototype. Parsing will be done on first {basis.Html.Template#createInstance}
     * or {basis.Html.Template#getBinding} call. If function passed it be called and it's result will be
@@ -2197,7 +2203,6 @@
       if (templateList.length == 4096)
         throw 'Too many templates (maximum 4096)';
 
-      this.attaches_ = [];
       this.setSource(source || '');
 
       this.templateId = templateList.push(this) - 1;
@@ -2205,22 +2210,29 @@
 
     bindingBridge: {
       attach: function(template, handler, context){
-        for (var i = 0, listener; listener = template.attaches_[i]; i++)
-          if (listener.handler == handler && listener.context == context)
-            return;
+        /** @cut */ var cursor = template;
+        /** @cut */ while (cursor = cursor.attaches_)
+        /** @cut */   if (cursor.handler === handler && cursor.context === context)
+        /** @cut */     basis.dev.warn('basis.template.Template#bindingBridge.attach: duplicate handler & context pair');
 
-        template.attaches_.push({
+        template.attaches_ = {
           handler: handler,
-          context: context
-        });
+          context: context,
+          attaches_: template.attaches_
+        };
       },
       detach: function(template, handler, context){
-        for (var i = 0, listener; listener = template.attaches_[i]; i++)
-          if (listener.handler == handler && listener.context == context)
+        var cursor = template;
+        var prev;
+
+        while (prev = cursor, cursor = cursor.attaches_)
+          if (cursor.handler === handler && cursor.context === context)
           {
-            template.attaches_.splice(i, 1);
+            prev.attaches_ = cursor.attaches_;
             return;
           }
+
+        /** @cut */ basis.dev.warn('basis.template.Template#bindingBridge.detach: handler & context pair not found, nothing was removed');
       },
       get: function(){
       }
@@ -2310,7 +2322,7 @@
           }
 
           this.baseURI = '';
-          this.source.bindingBridge.detach(oldSource, templateSourceUpdate, this);
+          oldSource.bindingBridge.detach(oldSource, templateSourceUpdate, this);
         }
 
         if (source && source.bindingBridge)
