@@ -196,7 +196,7 @@ module.exports = {
           name: 'destroy',
           test: [
             {
-              name: 'when any argument is destroying expression should be destroed',
+              name: 'when any argument is destroying expression should be destroyed',
               test: function(){
                 var a = new Value({ value: 1 });
                 var expr = new Expression(a, function(){});
@@ -211,24 +211,24 @@ module.exports = {
               }
             },
             {
-              name: 'when any argument is destroying expression should be destroed',
+              name: 'when any argument is destroying expression should be destroyed',
               test: function(){
                 var a = new Value({ value: 1 });
                 var expr = new Expression(a, function(){});
-                var destroed = false;
+                var destroyed = false;
 
                 expr.addHandler({
                   destroy: function(){
-                    destroed = true;
+                    destroyed = true;
                   }
                 });
                 a.destroy();
 
-                assert(destroed === true);
+                assert(destroyed === true);
               }
             },
             {
-              name: 'when expression was destroed by argument destroy, other argument changes should not cause any changes',
+              name: 'when expression was destroyed by argument destroy, other argument changes should not cause any changes',
               test: function(){
                 var a = new Value({ value: 1 });
                 var b = new Value({ value: 2 });

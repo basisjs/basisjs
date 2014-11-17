@@ -310,24 +310,11 @@
   var EXPRESSION_BBVALUE_HANDLER = function(){
     objectSetUpdater.add(this);
   };
-  var EXPRESSION_VALUE_HANDLER = {
-    change: function(){
-      objectSetUpdater.add(this);
-    },
-    destroy: function(){
-      this.destroy();
-    }
+  var EXPRESSION_BBVALUE_DESTROY_HANDLER = function(){
+    this.destroy();
   };
-  var EXPRESSION_DESTROY_HANDLER = {
-    destroy: function(expression){
-      for (var i = 0, value; value = this[i]; i++)
-      {
-        if (value instanceof Value)
-          value.removeHandler(EXPRESSION_VALUE_HANDLER, expression);
-        else if (value.bindingBridge)
-          value.bindingBridge.detach(value, EXPRESSION_BBVALUE_HANDLER, expression);
-      }
-    }
+  var BBVALUE_GETTER = function(value){
+    return value.bindingBridge.get(value);
   };
 
  /**
@@ -336,43 +323,39 @@
   var Expression = Value.subclass({
     className: namespace + '.Expression',
 
+    calc_: null,
+    values_: null,
+
     // use custom constructor
     extendConstructor_: false,
     init: function(/* value, value, */ calc){
       Value.prototype.init.call(this);
 
-      var values = basis.array(arguments);
-      var calc = values.pop();
+      var count = arguments.length - 1;
+      var calc = arguments[count];
 
       if (typeof calc != 'function')
         throw new Error(this.constructor.className + ': Last argument of constructor must be a function');
 
-      for (var i = 0; i < values.length; i++)
+      for (var values = new Array(count), i = 0; i < count; i++)
       {
-        var value = values[i];
+        var value = values[i] = arguments[i];
 
-        if (value instanceof Value)
-          value.addHandler(EXPRESSION_VALUE_HANDLER, this);
-        else if (value.bindingBridge)
-          value.bindingBridge.attach(value, EXPRESSION_BBVALUE_HANDLER, this);
-        else
-          throw new Error(this.constructor.className + ': Value or bb-value required');
+        if (!value.bindingBridge)
+          throw new Error(this.constructor.className + ': bb-value required');
+
+        value.bindingBridge.attach(value, EXPRESSION_BBVALUE_HANDLER, this, EXPRESSION_BBVALUE_DESTROY_HANDLER);
       }
 
-      this.addHandler(EXPRESSION_DESTROY_HANDLER, values);
-
-      this.update = function(){
-        objectSetUpdater.remove(this);
-        Value.prototype.set.call(this, calc.apply(null, values.map(function(value){
-          return value.bindingBridge.get(value);
-        })));
-      };
-
+      this.calc_ = calc;
+      this.values_ = values;
       this.update();
     },
 
     // override in init
     update: function(){
+      objectSetUpdater.remove(this);
+      Value.prototype.set.call(this, this.calc_.apply(null, this.values_.map(BBVALUE_GETTER)));
     },
 
     // expressions are read only
@@ -381,6 +364,9 @@
 
     destroy: function(){
       objectSetUpdater.remove(this);
+
+      for (var i = 0, value; value = this.values_[i]; i++)
+        value.bindingBridge.detach(value, EXPRESSION_BBVALUE_HANDLER, this);
 
       Value.prototype.destroy.call(this);
     }
