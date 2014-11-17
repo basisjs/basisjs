@@ -79,9 +79,6 @@
     abort: function(){
       this.reject('Request aborted');
     },
-    timeout: function(){
-      this.reject('Request timeout');
-    },
     failure: function(request, error){
       this.reject(error);
     },
