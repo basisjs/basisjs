@@ -48,7 +48,7 @@
   // It's old behaviour that looks odd. For now we leave everything as is.
   // But we should use context as something to store into, and global as source
   // of global things.
-  // TODO: to do thins stuff right
+  // TODO: to do this stuff right
   global = context;
 
 
@@ -635,6 +635,23 @@
       if (!fired++)
         return run.apply(thisObject || this, arguments);
     };
+  }
+
+ /**
+  * Generates name for function and registrates it in global scope.
+  * @param {function()} fn Function that should available in global scope.
+  * @param {boolean} permanent If false callback will be removed after fiest invoke.
+  * @return {string} Function name in global scope.
+  */
+  function publicCallback(fn, permanent){
+    var name = 'basisjsCallback' + genUID();
+
+    global[name] = permanent ? fn : function(){
+      delete global[name];
+      fn.apply(this, arguments);
+    };
+
+    return name;
   }
 
 
@@ -3672,7 +3689,7 @@
         complete({ noConflict: true }, config)
       );
     },
-    dev: (new Namespace('basis.dev'))
+    dev: getNamespace('basis.dev')
       .extend(consoleMethods)
       .extend({
         warnPropertyAccess: warnPropertyAccess
@@ -3743,10 +3760,11 @@
       nullGetter: nullGetter,
       wrapper: wrapper,
 
-      // lazy
+      // callbacks
       lazyInit: lazyInit,
       lazyInitAndRun: lazyInitAndRun,
-      runOnce: runOnce
+      runOnce: runOnce,
+      publicCallback: publicCallback
     },
     array: extend(arrayFrom, arrayFunctions),
     string: stringFunctions,

@@ -38,11 +38,9 @@
   var callbackData = {};
 
   function getCallback(){
-    var name = 'basisjsJsonpCallback' + parseInt(Math.random() * 10e10);
-
-    global[name] = function(data){
+    var name = basis.fn.publicCallback(function(data){
       callbackData[name] = data;
-    };
+    });
 
     return name;
   }
