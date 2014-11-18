@@ -1,3 +1,8 @@
+## 1.3.4 (November 18, 2014)
+
+- FIX: `Date` field type in `basis.entity` 
+- FIX: `basis.template.isolateCss` to work with complex selectors (i.e. `:not()`, `:matches()` etc) and nested stylesheets (i.e. `@media`, `@supports` etc)
+
 ## 1.3.3 (October 12, 2014)
 
 - FIX: exception on config processing when `Array#reduce` is not supported by browser

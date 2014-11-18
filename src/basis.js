@@ -37,7 +37,7 @@
 ;(function createBasisInstance(global, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.3.4-dev';
+  var VERSION = '1.3.4';
 
   var document = global.document;
   var toString = Object.prototype.toString;
