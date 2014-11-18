@@ -813,9 +813,9 @@ module.exports = {
                   name: 'active = function()',
                   test: function(){
                     var obj = new DataObject({
-                      active: Value.factory('stateChanged', function(obj){
+                      active: function(obj){
                         return obj.state == STATE.READY;
-                      })
+                      }
                     });
 
                     assert(obj.active === true);
@@ -827,11 +827,9 @@ module.exports = {
                   name: 'active = factory',
                   test: function(){
                     var obj = new DataObject({
-                      active: {
-                        factory: Value.factory('stateChanged', function(obj){
-                          return obj.state == STATE.READY;
-                        })
-                      }
+                      active: Value.factory('stateChanged', function(obj){
+                        return obj.state == STATE.READY;
+                      })
                     });
 
                     assert(obj.active === false);
@@ -987,9 +985,9 @@ module.exports = {
                   test: function(){
                     var obj = new DataObject();
 
-                    obj.setActive(Value.factory('stateChanged', function(obj){
+                    obj.setActive(function(obj){
                       return obj.state == STATE.READY;
-                    }));
+                    });
 
                     assert(obj.active === true);
                     assert(obj.active_ == null);
@@ -1000,11 +998,9 @@ module.exports = {
                   test: function(){
                     var obj = new DataObject();
 
-                    obj.setActive({
-                      factory: Value.factory('stateChanged', function(obj){
-                        return obj.state == STATE.READY;
-                      })
-                    });
+                    obj.setActive(Value.factory('stateChanged', function(obj){
+                      return obj.state == STATE.READY;
+                    }));
 
                     assert(obj.active === false);
 
