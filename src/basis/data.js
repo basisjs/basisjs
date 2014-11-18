@@ -96,15 +96,22 @@
     },
 
    /**
-    * Create value factory that proxy state from nested object.
+    * Create factory to fetch state from nested object.
     * @param {string} events
     * @param {string} property
     * @return {function(basis.event.Emitter)}
     */
-    proxy: function(events, property){
-      return Value.factory(events, function(owner){
-        return Value.from(owner[property], 'stateChanged', 'state');
-      });
+    factory: function(events, property){
+      return Value.factory(events, basis.getter(property, STATE.from));
+    },
+
+   /**
+    * Helper to get Value with state from source.
+    * @param {basis.data.AbstractData} source
+    * @return {basis.data.Value|null}
+    */
+    from: function(source){
+      return Value.from(source, 'stateChanged', 'state');
     }
   };
 
