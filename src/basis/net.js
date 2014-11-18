@@ -91,7 +91,6 @@
   var AbstractRequest = DataObject.subclass({
     className: namespace + '.AbstractRequest',
 
-    influence: null,
     requestData: null,
 
     transport: null,
@@ -104,26 +103,6 @@
     emit_failure: createRequestEvent('failure'),
     emit_complete: createRequestEvent('complete'),
 
-    emit_stateChanged: function(oldState){
-      DataObject.prototype.emit_stateChanged.call(this, oldState);
-
-      if (this.influence)
-        for (var i = 0; i < this.influence.length; i++)
-          this.influence[i].setState(this.state, this.state.data);
-    },
-
-    init: function(){
-      DataObject.prototype.init.call(this);
-      this.influence = [];
-    },
-
-    setInfluence: function(influence){
-      this.influence = arrayFrom(influence);
-    },
-    clearInfluence: function(){
-      this.influence = null;
-    },
-
     abort: basis.fn.$undef,
     doRequest: basis.fn.$undef,
 
@@ -131,7 +110,6 @@
       DataObject.prototype.destroy.call(this);
 
       this.requestData = null;
-      this.clearInfluence();
     }
   });
 
@@ -247,7 +225,6 @@
         request.abort();
 
       request.requestData = requestData;
-      request.setInfluence(requestData.influence || this.influence);
 
       if (!this.poolLimit || this.inprogressRequests.length < this.poolLimit)
       {

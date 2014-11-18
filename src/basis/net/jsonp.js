@@ -364,8 +364,7 @@
         encoding: requestData.encoding || this.encoding,
         params: objectMerge(this.params, requestData.params),
         routerParams: requestData.routerParams,
-        callbackParam: requestData.callbackParam || this.callbackParam,
-        influence: requestData.influence
+        callbackParam: requestData.callbackParam || this.callbackParam
       });
 
       return requestData;

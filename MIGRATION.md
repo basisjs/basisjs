@@ -11,7 +11,8 @@ Rename
   
 Remove
 
-  - `basis.net.action` is not add `request` property to context object (on action invocation)
+  - `basis.net.action` isn't add `request` property to context object (on action invocation)
+  - `basis.net` remove `influence` functionality
 
 Deprecated
 
@@ -24,7 +25,7 @@ Might break
 
   - no more `__basisEvents` in `global` (`basis.dom.event` don't store global event handlers in `global`)
   - `basis.ui.popup.Popup` instances are not children of `popupManager` anymore and could have `parentNode` or `owner`
-  - `basis.net.action` actions return ES6 `Promise` (native or polyfil provided by `basis.promise`)
+  - `basis.net.action` actions return ES6 `Promise` (native or polyfill provided by `basis.promise`)
 
 ## 1.2.5 → 1.3.0
 
