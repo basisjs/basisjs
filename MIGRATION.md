@@ -6,7 +6,7 @@ Rename
   - `Service#isSecure` → `Service#secure`
   - `Service#transportClass#needSignature` → `Service#transportClass#secure`
   - `basis.ui.field.Field#binding.titleText` → `basis.ui.field.Field#binding.title`
-  - `title` reference in `basis.ui.field` templates → `titleEl`
+  - `title` → `titleEl` reference in `basis.ui.field` templates
   - `instanceOf` → `satelliteClass` in satellite config of `basis.dom.wrapper.Node`
   
 Remove
@@ -15,15 +15,15 @@ Remove
 
 Deprecated
 
-  - `Service#isSecure`
-  - `Service#transportClass#needSignature`
-  - `basis.ui.field.Field#binding.titleText`
-  - `instanceOf` in satellite config of `basis.dom.wrapper.Node`
+  - `Service#isSecure` (use `Service#secure` instead)
+  - `Service#transportClass#needSignature` (use `Service#transportClass#secure` instead)
+  - `basis.ui.field.Field#binding.titleText` (use `basis.ui.field.Field#binding.title` instead)
+  - `instanceOf` in satellite config of `basis.dom.wrapper.Node` (use `satelliteClass` instead)
 
 Might break
 
   - no more `__basisEvents` in `global` (`basis.dom.event` don't store global event handlers in `global`)
-  - `basis.ui.popup.Popup` instances are not childs of `popupManager` anymore and could have `parentNode` or `owner`
+  - `basis.ui.popup.Popup` instances are not children of `popupManager` anymore and could have `parentNode` or `owner`
   - `basis.net.action` actions return ES6 `Promise` (native or polyfil provided by `basis.promise`)
 
 ## 1.2.5 → 1.3.0
