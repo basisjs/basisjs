@@ -207,7 +207,7 @@
           var request = transport.requests[id];
           if (request.isIdle() && transport.requestQueue.indexOf(request) == -1)
           {
-            delete this.requests[id];
+            delete transport.requests[id];
             return request;
           }
         }
