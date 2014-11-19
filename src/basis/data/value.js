@@ -328,7 +328,7 @@
 
     // use custom constructor
     extendConstructor_: false,
-    init: function(/* value, value, */ calc){
+    init: function(/* [[value,] value, ..] calc */){
       Value.prototype.init.call(this);
 
       var count = arguments.length - 1;
