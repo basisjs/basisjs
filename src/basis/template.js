@@ -626,6 +626,7 @@
     var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
     var includeStack = [];
     var styleNamespaceIsolate = {};
+    var styleNamespaceResource = {};
 
     // load token map when node evironment, because html parsing is not available
     // comment it, to not include code to build
@@ -1858,10 +1859,15 @@
           .map(function(item){
             var url = item[0];
             var isolate = item[1];
+            var namespaceIsolate = isolate === styleNamespaceIsolate;
 
             // resolve namespaced style
-            if (isolate === styleNamespaceIsolate)
+            if (namespaceIsolate)
+            {
               isolate = styleNamespaceIsolate[url];
+              if (url in styleNamespaceResource)
+                return styleNamespaceResource[url].url;
+            }
 
             // if no isolate prefix -> nothing todo
             if (!isolate)
@@ -1887,6 +1893,9 @@
 
               resource.update(cssText);
             });
+
+            if (namespaceIsolate)
+              styleNamespaceResource[url] = resource;
 
             return resource.url;
           });

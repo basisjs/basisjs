@@ -559,7 +559,7 @@ module.exports = {
           ]
         },
         {
-          name: 'custom namespaces',
+          name: 'style namespaces',
           test: [
             {
               name: 'using style with namespace w/o isolate',
@@ -758,7 +758,7 @@ module.exports = {
               }
             },
             {
-              name: 'the same style file in various templates with the same prefix',
+              name: 'the same style file for various templates should has the same prefix',
               test: function(){
                 var templateA = new Template(
                   '<b:style src="../fixture/global_style.css" ns="foo"/>' +
@@ -782,6 +782,22 @@ module.exports = {
                 assert(/^(\S+)class \1class_mod$/.test(tmplB.a.className));
 
                 assert(tmplA.a.className == tmplB.a.className);
+              }
+            },
+            {
+              name: 'the same style file for various templates should refer for same resource',
+              test: function(){
+                var templateA = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="foo"/>'
+                );
+                var templateB = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="bar"/>'
+                );
+                var tmplA = templateA.createInstance();
+                var tmplB = templateB.createInstance();
+
+                assert(templateA.resources.length == 1);
+                assert(templateA.resources, templateB.resources);
               }
             }
           ]
