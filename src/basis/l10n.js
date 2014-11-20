@@ -275,6 +275,13 @@
     path = path ? path + '.' : '';
 
     for (var name in tokens)
+    {
+      if (name.indexOf('.') != -1)
+      {
+        /** @cut */ basis.dev.warn((dictionary.resource ? dictionary.resource.url : '[anonymous dictionary]') + ': wrong token name `' + name + '`, token ignored.');
+        continue;
+      }
+
       if (hasOwnProperty.call(tokens, name))
       {
         var tokenName = path + name;
@@ -285,6 +292,7 @@
         if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
           walkTokens(dictionary, culture, tokenValue, tokenName);
       }
+    }
   }
 
 
