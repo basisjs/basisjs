@@ -3689,7 +3689,7 @@
         complete({ noConflict: true }, config)
       );
     },
-    dev: getNamespace('basis.dev')
+    dev: (new Namespace('basis.dev'))
       .extend(consoleMethods)
       .extend({
         warnPropertyAccess: warnPropertyAccess
