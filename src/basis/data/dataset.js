@@ -662,7 +662,7 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      if (!this.minuendAdapter_)
+      if (!this.minuendRA_)
         this.setMinuend(null);
     }
   };
@@ -681,7 +681,7 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      if (!this.subtrahendAdapter_)
+      if (!this.subtrahendRA_)
         this.setSubtrahend(null);
     }
   };
@@ -707,7 +707,7 @@
     * Minuend wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    minuendAdapter_: null,
+    minuendRA_: null,
 
    /**
     * Fires when minuend changed.
@@ -725,7 +725,7 @@
     * Subtrahend wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    subtrahendAdapter_: null,
+    subtrahendRA_: null,
 
    /**
     * Fires when subtrahend changed.
@@ -770,8 +770,8 @@
       var delta;
       var operandsChanged = false;
 
-      minuend = resolveDataset(this, this.setMinuend, minuend, 'minuendAdapter_');
-      subtrahend = resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendAdapter_');
+      minuend = resolveDataset(this, this.setMinuend, minuend, 'minuendRA_');
+      subtrahend = resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendRA_');
 
       var oldMinuend = this.minuend;
       var oldSubtrahend = this.subtrahend;
@@ -852,7 +852,7 @@
     setMinuend: function(minuend){
       return this.setOperands(
         minuend,
-        this.subtrahendAdapter_ ? this.subtrahendAdapter_.source : this.subtrahend
+        this.subtrahendRA_ ? this.subtrahendRA_.source : this.subtrahend
       );
     },
 
@@ -862,7 +862,7 @@
     */
     setSubtrahend: function(subtrahend){
       return this.setOperands(
-        this.minuendAdapter_ ? this.minuendAdapter_.source : this.minuend,
+        this.minuendRA_ ? this.minuendRA_.source : this.minuend,
         subtrahend
       );
     },
@@ -910,7 +910,7 @@
     * Source wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    sourceAdapter_: null,
+    sourceRA_: null,
 
    /**
     * Map of source objects.
@@ -925,7 +925,7 @@
     listen: {
       source: {
         destroy: function(){
-          if (!this.sourceAdapter_)
+          if (!this.sourceRA_)
             this.setSource();
         }
       }
@@ -952,7 +952,7 @@
     * @param {basis.data.ReadOnlyDataset} source
     */
     setSource: function(source){
-      source = resolveDataset(this, this.setSource, source, 'sourceAdapter_');
+      source = resolveDataset(this, this.setSource, source, 'sourceRA_');
 
       // sync with source
       if (this.source !== source)

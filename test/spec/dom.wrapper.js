@@ -2136,12 +2136,12 @@ module.exports = {
 
             this.is(false, checkNode(node));
             this.is(true, node.dataSource === dataset);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_.source === value);
 
             node.destroy();
 
             this.is(null, node.dataSource);
-            this.is(null, node.dataSourceAdapter_);
+            this.is(null, node.dataSourceRA_);
 
             // empty dataSource
             var value = new Value();
@@ -2152,12 +2152,12 @@ module.exports = {
 
             this.is(false, checkNode(node));
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_.source === value);
 
             node.destroy();
 
             this.is(null, node.dataSource);
-            this.is(null, node.dataSourceAdapter_);
+            this.is(null, node.dataSourceRA_);
           }
         },
         {
@@ -2179,13 +2179,13 @@ module.exports = {
 
             this.is(false, checkNode(node));
             this.is(true, node.dataSource === dataset);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_.source === value);
 
             dataset.destroy();
             this.is(null, node.dataSource);
             this.is(null, value.value);
-            this.is(true, node.dataSourceAdapter_ !== null);
-            this.is(true, node.dataSourceAdapter_ !== null && node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_ !== null);
+            this.is(true, node.dataSourceRA_ !== null && node.dataSourceRA_.source === value);
           }
         },
         {
@@ -2217,7 +2217,7 @@ module.exports = {
 
             this.is(false, checkNode(node));
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_ != null);
+            this.is(true, node.dataSourceRA_ != null);
             this.is(true, node.firstChild == null);
           }
         },
@@ -2289,8 +2289,8 @@ module.exports = {
             });
 
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_ !== null);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_ !== null);
+            this.is(true, node.dataSourceRA_.source === value);
 
             var exceptionHere = false;
             try {
@@ -2299,8 +2299,8 @@ module.exports = {
               exceptionHere = true;
             }
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_ !== null);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_ !== null);
+            this.is(true, node.dataSourceRA_.source === value);
             this.is(false, checkNode(node));
             this.is(true, exceptionHere);
 
@@ -2311,8 +2311,8 @@ module.exports = {
               exceptionHere = true;
             }
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_ !== null);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_ !== null);
+            this.is(true, node.dataSourceRA_.source === value);
             this.is(false, checkNode(node));
             this.is(true, exceptionHere);
 
@@ -2323,8 +2323,8 @@ module.exports = {
               exceptionHere = true;
             }
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_ !== null);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_ !== null);
+            this.is(true, node.dataSourceRA_.source === value);
             this.is(false, checkNode(node));
             this.is(true, exceptionHere);
 
@@ -2335,8 +2335,8 @@ module.exports = {
               exceptionHere = true;
             }
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_ !== null);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_ !== null);
+            this.is(true, node.dataSourceRA_.source === value);
             this.is(false, checkNode(node));
             this.is(true, exceptionHere);
           }
@@ -2413,8 +2413,8 @@ module.exports = {
             });
 
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_ !== null);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_ !== null);
+            this.is(true, node.dataSourceRA_.source === value);
 
             var exceptionHere = false;
             try {
@@ -2423,8 +2423,8 @@ module.exports = {
               exceptionHere = true;
             }
             this.is(true, node.dataSource === null);
-            this.is(true, node.dataSourceAdapter_ !== null);
-            this.is(true, node.dataSourceAdapter_.source === value);
+            this.is(true, node.dataSourceRA_ !== null);
+            this.is(true, node.dataSourceRA_.source === value);
             this.is(false, checkNode(node));
             this.is(true, exceptionHere);
           }
@@ -2572,22 +2572,22 @@ module.exports = {
             });
 
             this.is(true, node.dataSource === dataset);  // true
-            this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
+            this.is(true, node.dataSourceRA_.source === selectedDataset);  // true
 
             selectedDataset.set(null);
 
             this.is(true, node.dataSource === null);  // true
-            this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
+            this.is(true, node.dataSourceRA_.source === selectedDataset);  // true
 
             selectedDataset.set(new DatasetWrapper({ dataset: anotherDataset }));
 
             this.is(true, node.dataSource === anotherDataset);  // true
-            this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
+            this.is(true, node.dataSourceRA_.source === selectedDataset);  // true
 
             selectedDataset.value.setDataset(null);
 
             this.is(true, node.dataSource === null);  // true
-            this.is(true, node.dataSourceAdapter_.source === selectedDataset);  // true
+            this.is(true, node.dataSourceRA_.source === selectedDataset);  // true
           }
         },
         {

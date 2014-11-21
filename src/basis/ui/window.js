@@ -103,7 +103,7 @@
     zIndex: 0,
 
     visible: false,
-    visible_: null,
+    visibleRA_: null,
 
     dde: null,
 
@@ -286,7 +286,7 @@
       this.select();
     },
     setVisible: function(visible){
-      visible = !!resolveValue(this, this.setVisible, visible, 'visible_');
+      visible = !!resolveValue(this, this.setVisible, visible, 'visibleRA_');
 
       if (this.visible !== visible)
       {

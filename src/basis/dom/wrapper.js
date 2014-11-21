@@ -606,7 +606,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    dataSourceAdapter_: null,
+    dataSourceRA_: null,
 
    /**
     * Map dataSource members to child nodes.
@@ -1147,7 +1147,7 @@
       DataObject.prototype.destroy.call(this);
 
       // delete children
-      if (this.dataSource || this.dataSourceAdapter_)
+      if (this.dataSource || this.dataSourceRA_)
       {
         // drop dataSource
         this.setDataSource();
@@ -1428,7 +1428,7 @@
       this.setChildNodesState(dataSource.state, dataSource.state.data);
     },
     destroy: function(dataSource){
-      if (!this.dataSourceAdapter_)
+      if (!this.dataSourceRA_)
         this.setDataSource();
     }
   };
@@ -1582,7 +1582,7 @@
       }
       else
       {
-        if (this.dataSourceAdapter_)
+        if (this.dataSourceRA_)
           throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
       }
 
@@ -1903,7 +1903,7 @@
       }
       else
       {
-        if (this.dataSourceAdapter_)
+        if (this.dataSourceRA_)
           throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
       }
 
@@ -1962,7 +1962,7 @@
       if (this.dataSource)
         throw EXCEPTION_DATASOURCE_CONFLICT;
 
-      if (this.dataSourceAdapter_)
+      if (this.dataSourceRA_)
         throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
 
       if (oldChild == null || oldChild.parentNode !== this)
@@ -2039,7 +2039,7 @@
     * @param {boolean} keepAlive
     */
     setChildNodes: function(newChildNodes, keepAlive){
-      if (!this.dataSource && !this.dataSourceAdapter_)
+      if (!this.dataSource && !this.dataSourceRA_)
         this.clear(keepAlive);
 
       if (newChildNodes)
@@ -2072,7 +2072,7 @@
         throw EXCEPTION_NO_CHILDCLASS;
 
       // dataset
-      dataSource = resolveDataset(this, this.setDataSource, dataSource, 'dataSourceAdapter_');
+      dataSource = resolveDataset(this, this.setDataSource, dataSource, 'dataSourceRA_');
 
       if (this.dataSource !== dataSource)
       {
@@ -2413,7 +2413,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    disabled_: null,
+    disabledRA_: null,
 
    /**
     * @type {boolean}
@@ -2457,7 +2457,7 @@
       // synchronize disabled
       if (disabled)
       {
-        disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabled_');
+        disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabledRA_');
         if (disabled)
         {
           this.disabled = disabled;
@@ -2592,7 +2592,7 @@
     * @return {boolean} Returns true if disabled property was changed.
     */
     setDisabled: function(disabled){
-      disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabled_');
+      disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabledRA_');
 
       if (this.disabled !== disabled)
       {
@@ -2651,8 +2651,8 @@
         this.setSelection();
 
       // unlink disabled bb-value
-      if (this.disabled_)
-        resolveValue(this, null, null, 'disabled_');
+      if (this.disabledRA_)
+        resolveValue(this, null, null, 'disabledRA_');
 
       // inherit
       AbstractNode.prototype.destroy.call(this);

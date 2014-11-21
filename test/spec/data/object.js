@@ -594,13 +594,13 @@ module.exports = {
 
                 object.setDelegate(value);
                 assert(object.delegate === foo);
-                assert(object.delegateAdapter_ != null);
-                assert(object.delegateAdapter_ && object.delegateAdapter_.source === value);
+                assert(object.delegateRA_ != null);
+                assert(object.delegateRA_ && object.delegateRA_.source === value);
 
-                var adapter = object.delegateAdapter_;
+                var adapter = object.delegateRA_;
                 object.setDelegate(value);
                 assert(object.delegate === foo);
-                assert(object.delegateAdapter_ === adapter);
+                assert(object.delegateRA_ === adapter);
               }
             }
           ]
@@ -819,7 +819,7 @@ module.exports = {
                     });
 
                     assert(obj.active === true);
-                    assert(obj.active_ === null);
+                    assert(obj.activeRA_ === null);
                     assert(eventCount(obj, 'activeChanged') === 0);
                   }
                 },
@@ -990,7 +990,7 @@ module.exports = {
                     });
 
                     assert(obj.active === true);
-                    assert(obj.active_ == null);
+                    assert(obj.activeRA_ == null);
                   }
                 },
                 {
@@ -1021,11 +1021,11 @@ module.exports = {
                       active: new basis.Token
                     });
 
-                    assert(obj.active_ != null);
+                    assert(obj.activeRA_ != null);
 
                     obj.destroy();
 
-                    assert(obj.active_ == null);
+                    assert(obj.activeRA_ == null);
                   }
                 },
                 {

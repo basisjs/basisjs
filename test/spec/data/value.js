@@ -464,12 +464,12 @@ module.exports = {
             });
 
             assert(obj.active === true);
-            assert(obj.active_ instanceof ResolveAdapter);
+            assert(obj.activeRA_ instanceof ResolveAdapter);
 
             // destroy source
             value.destroy();
             assert(obj.active === true);
-            assert(obj.active_ === null);
+            assert(obj.activeRA_ === null);
           }
         },
         {
@@ -482,12 +482,12 @@ module.exports = {
             });
 
             assert(obj.active === true);
-            assert(obj.active_ instanceof ResolveAdapter);
+            assert(obj.activeRA_ instanceof ResolveAdapter);
 
             // destroy source
             bar.destroy();
             assert(obj.active === true);
-            assert(obj.active_ === null);
+            assert(obj.activeRA_ === null);
           }
         },
         {
@@ -500,17 +500,17 @@ module.exports = {
             });
 
             assert(obj.active === true);
-            assert(obj.active_ instanceof ResolveAdapter);
+            assert(obj.activeRA_ instanceof ResolveAdapter);
 
             // destroy source
             foo.destroy();
             assert(bar.value === null);
             assert(obj.active === false);
-            assert(obj.active_ instanceof ResolveAdapter);
+            assert(obj.activeRA_ instanceof ResolveAdapter);
 
             bar.destroy();
             assert(obj.active === false);
-            assert(obj.active_ === null);
+            assert(obj.activeRA_ === null);
           }
         }
       ]

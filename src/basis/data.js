@@ -13,9 +13,8 @@
   *   {basis.data.ResolveAdapter}
   * - Functions:
   *   {basis.data.isConnected}, {basis.data.getDatasetDelta},
-  *   {basis.data.resolveDataset}, {basis.data.resolveObject},
-  *   {basis.data.wrapData}, {basis.data.wrapObject},
-  *   {basis.data.wrap}
+  *   {basis.data.resolveDataset}, {basis.data.resolveObject}, {basis.data.resolveValue},
+  *   {basis.data.wrapData}, {basis.data.wrapObject}, {basis.data.wrap}
   *
   * @namespace basis.data
   */
@@ -316,7 +315,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    state_: null,
+    stateRA_: null,
 
    /**
     * Fires when state or state.data was changed.
@@ -335,7 +334,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    active_: null,
+    activeRA_: null,
 
    /**
     * Fires when state of subscription was changed.
@@ -405,7 +404,7 @@
         if (this.active === PROXY)
           this.active = getActiveProxyValue(this);
 
-        this.active = !!resolveValue(this, this.setActive, this.active, 'active_');
+        this.active = !!resolveValue(this, this.setActive, this.active, 'activeRA_');
 
         if (this.active)
           this.addHandler(getMaskConfig(this.subscribeTo).handler);
@@ -414,7 +413,7 @@
       // resolve state
       // Q: should we check for `instanceof String` here?
       if (typeof this.state != 'string')
-        this.state = String(resolveValue(this, this.setState, this.state, 'state_'));
+        this.state = String(resolveValue(this, this.setState, this.state, 'stateRA_'));
 
       // apply sync action
       var syncAction = this.syncAction;
@@ -432,7 +431,7 @@
     * @return {boolean} Current object state.
     */
     setState: function(state, data){
-      state = resolveValue(this, this.setState, state, 'state_');
+      state = resolveValue(this, this.setState, state, 'stateRA_');
 
       var stateCode = String(state);
 
@@ -440,7 +439,7 @@
         throw new Error('Wrong state value');
 
       // try fetch data from state
-      if (this.state_ && data === undefined)
+      if (this.stateRA_ && data === undefined)
         data = state.data;
 
       // set new state for object
@@ -477,7 +476,7 @@
       if (isActive === PROXY)
         isActive = getActiveProxyValue(this);
 
-      isActive = !!resolveValue(this, this.setActive, isActive, 'active_');
+      isActive = !!resolveValue(this, this.setActive, isActive, 'activeRA_');
 
       if (this.active != isActive)
       {
@@ -589,10 +588,10 @@
       }
 
       // clean up adapters
-      if (this.active_)
-        resolveValue(this, null, null, 'active_');
-      if (this.state_)
-        resolveValue(this, null, null, 'state_');
+      if (this.activeRA_)
+        resolveValue(this, false, false, 'activeRA_');
+      if (this.stateRA_)
+        resolveValue(this, false, false, 'stateRA_');
 
       this.state = STATE.UNDEFINED;
     }
@@ -1261,7 +1260,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    delegateAdapter_: null,
+    delegateRA_: null,
 
    /**
     * @type {Array.<basis.data.Object>}
@@ -1396,7 +1395,7 @@
     * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
-      newDelegate = resolveObject(this, this.setDelegate, newDelegate, 'delegateAdapter_');
+      newDelegate = resolveObject(this, this.setDelegate, newDelegate, 'delegateRA_');
 
       // check is newDelegate can be linked to this object as delegate
       if (newDelegate && newDelegate instanceof DataObject)
@@ -1588,6 +1587,8 @@
       // drop delegate
       if (this.delegate)
         this.setDelegate();
+      if (this.delegateRA_)
+        resolveObject(this, false, false, 'delegateRA_');
 
       // drop data & state
       this.data = NULL_OBJECT;
@@ -1786,7 +1787,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    datasetAdapter_: null,
+    datasetRA_: null,
 
    /**
     * Fires when dataset was changed.
@@ -1820,7 +1821,7 @@
     * @param {basis.data.ReadOnlyDataset} dataset
     */
     setDataset: function(dataset){
-      dataset = resolveDataset(this, this.setDataset, dataset, 'datasetAdapter_');
+      dataset = resolveDataset(this, this.setDataset, dataset, 'datasetRA_');
 
       if (this.dataset !== dataset)
       {
@@ -1893,7 +1894,7 @@
     * @destructor
     */
     destroy: function(){
-      if (this.dataset || this.datasetAdapter_)
+      if (this.dataset || this.datasetRA_)
         this.setDataset();
 
       DataObject.prototype.destroy.call(this);

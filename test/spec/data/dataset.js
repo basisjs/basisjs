@@ -659,11 +659,11 @@ module.exports = {
             var datasetWrapper = new DatasetWrapper({ dataset: value });
 
             assert(datasetWrapper.dataset === dataset);
-            assert(datasetWrapper.datasetAdapter_ && datasetWrapper.datasetAdapter_.source === value);
+            assert(datasetWrapper.datasetRA_ && datasetWrapper.datasetRA_.source === value);
 
             value.destroy();
             assert(datasetWrapper.dataset === null);
-            assert(datasetWrapper.datasetAdapter_ === null);
+            assert(datasetWrapper.datasetRA_ === null);
           }
         },
         {
