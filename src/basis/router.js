@@ -173,9 +173,12 @@
 
         if (match)
         {
+          match = arrayFrom(match, 1);
+          matched[path] = match;
+          route.matched.set(match);
+
           if (!matched[path])
             inserted.push(route);
-          matched[path] = match;
         }
         else
         {
@@ -183,6 +186,7 @@
           {
             deleted.push(route);
             delete matched[path];
+            route.matched.set(null);
           }
         }
       }
@@ -215,7 +219,7 @@
       for (var path in matched)
       {
         var route = routes[path];
-        var args = arrayFrom(matched[path], 1);
+        var args = matched[path];
         var callbacks = arrayFrom(route.callbacks);
 
         for (var i = 0, item; item = callbacks[i]; i++)
@@ -245,6 +249,7 @@
       route = routes[path] = {
         source: path,
         callbacks: [],
+        matched: new basis.Token(null),
         regexp: Object.prototype.toString.call(path) != '[object RegExp]'
           ? pathToRegExp(path)
           : path
@@ -254,7 +259,11 @@
       {
         var match = currentPath.match(route.regexp);
         if (match)
+        {
+          match = arrayFrom(match, 1);
           matched[path] = match;
+          route.matched.set(match);
+        }
       }
     }
 
@@ -278,14 +287,15 @@
 
       if (config.callback.match)
       {
-        config.callback.match.apply(context, arrayFrom(matched[path], 1));
-        /** @cut */ log.push('\n', { type: 'match', path: route.source, cb: config, route: route, args: arrayFrom(matched[path], 1) });
+        config.callback.match.apply(context, matched[path]);
+        /** @cut */ log.push('\n', { type: 'match', path: route.source, cb: config, route: route, args: matched[path] });
       }
-
     }
 
     /** @cut */ if (module.exports.debug)
     /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': add handler for route `' + path + '`'].concat(log.length ? log : '\n<no matches>'));
+
+    return route.matched;
   }
 
  /**
