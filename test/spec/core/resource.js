@@ -72,7 +72,7 @@ module.exports = {
             assert(basis.resource.resolveURI('basis://foo/../bar') === baseURI + '/bar');
             assert(basis.resource.resolveURI('basis:foo:bar') === baseURI + '/foo:bar');
             assert(basis.resource.resolveURI('basis::foo:bar') === baseURI + '/:foo:bar');
-            assert(basis.resource.resolveURI('http://example.com/foo/bar') === basis.path.baseURI + 'example.com/foo/bar');
+            assert(basis.resource.resolveURI('http://example.com/foo/bar') === basis.path.baseURI + 'http/example.com/foo/bar');
           }
         }
       ]
