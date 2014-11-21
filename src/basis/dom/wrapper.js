@@ -2439,6 +2439,9 @@
     * @constructor
     */
     init: function(){
+      var disabled = this.disabled;
+      this.disabled = false;
+
       // add selection object, if selection is not null
       if (this.selection)
       {
@@ -2452,8 +2455,16 @@
       AbstractNode.prototype.init.call(this);
 
       // synchronize disabled
-      if (this.disabled)
-        this.disabled = !!resolveValue(this, this.setDisabled, this.disabled, 'disabled_');
+      if (disabled)
+      {
+        disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabled_');
+        if (disabled)
+        {
+          this.disabled = disabled;
+          for (var child = this.firstChild; child; child = child.nextSibling)
+            updateNodeDisableContext(child, true);
+        }
+      }
 
       // selected
       if (this.selected)
