@@ -46,7 +46,6 @@
   var NULL_OBJECT = {};
   var EMPTY_ARRAY = [];
   var FACTORY = {};
-  var PROXY = 'proxy';
 
 
   //
@@ -295,10 +294,6 @@
   // Abstract data
   //
 
-  function getActiveProxyValue(instance){
-    return Value.from(instance, 'subscribersChanged', 'subscriberCount > 0');
-  }
-
  /**
   * Base class for any data type class.
   * @class
@@ -401,9 +396,6 @@
       // activate subscription if active
       if (this.active)
       {
-        if (this.active === PROXY)
-          this.active = getActiveProxyValue(this);
-
         this.active = !!resolveValue(this, this.setActive, this.active, 'activeRA_');
 
         if (this.active)
@@ -473,9 +465,6 @@
     * @return {boolean} Returns true if {basis.data.Object#active} was changed.
     */
     setActive: function(isActive){
-      if (isActive === PROXY)
-        isActive = getActiveProxyValue(this);
-
       isActive = !!resolveValue(this, this.setActive, isActive, 'activeRA_');
 
       if (this.active != isActive)
@@ -2769,7 +2758,7 @@
     STATE: STATE,
     SUBSCRIPTION: SUBSCRIPTION,
     FACTORY: FACTORY,
-    PROXY: PROXY,
+    PROXY: Value.factory('subscribersChanged', 'subscriberCount'),
 
     // classes
     AbstractData: AbstractData,
