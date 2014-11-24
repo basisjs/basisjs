@@ -669,6 +669,11 @@
     parentNode: null,
 
    /**
+    * @param {basis.dom.wrapper.AbstractNode} oldParentNode
+    */
+    emit_parentChanged: createEvent('parentChanged', 'oldParentNode'),
+
+   /**
     * The node immediately following this node. If there is no such node,
     * this returns null.
     * @type {basis.dom.wrapper.AbstractNode}
@@ -1245,13 +1250,8 @@
         this.satellite = null;
       }
 
-      // remove pointers
+      // reset childNodes pointer
       this.childNodes = null;
-      this.parentNode = null;
-      this.previousSibling = null;
-      this.nextSibling = null;
-      this.firstChild = null;
-      this.lastChild = null;
     }
   });
 
@@ -1796,7 +1796,7 @@
       }
 
       //
-      // ======= after this point newChild will be inserted or moved into new position =======
+      // ======= after this point newChild will be inserted or moved on new position =======
       //
 
       // unlink from old parent
@@ -1913,10 +1913,12 @@
         if (newChild.autoDelegate == DELEGATE.PARENT || newChild.autoDelegate === DELEGATE.ANY)
           newChild.setDelegate(this);
 
-        // dispatch event
+        // dispatch events
+        newChild.emit_parentChanged(null);
         if (!this.dataSource)
           this.emit_childNodesModified({ inserted: [newChild] });
 
+        // add listener
         if (newChild.listen.parentNode)
           this.addHandler(newChild.listen.parentNode, newChild);
       }
@@ -1929,7 +1931,7 @@
     * @inheritDoc
     */
     removeChild: function(oldChild){
-      if (!oldChild || oldChild.parentNode !== this) // this.childNodes.absent(oldChild) truly but speedless
+      if (!oldChild || oldChild.parentNode !== this)
         throw EXCEPTION_NODE_NOT_FOUND;
 
       if (oldChild instanceof this.childClass == false)
@@ -1983,10 +1985,12 @@
       if (oldChild.groupNode)
         oldChild.groupNode.remove(oldChild);
 
-      // dispatch event
+      // dispatch events
+      oldChild.emit_parentChanged(this);
       if (!this.dataSource)
         this.emit_childNodesModified({ deleted: [oldChild] });
 
+      // remove delegate if autoDelegate
       if (oldChild.autoDelegate == DELEGATE.PARENT || oldChild.autoDelegate === DELEGATE.ANY)
         oldChild.setDelegate();
 
@@ -2056,6 +2060,8 @@
         {
           child.nextSibling = null;
           child.previousSibling = null;
+
+          child.emit_parentChanged(this);
 
           if (child.autoDelegate == DELEGATE.PARENT || child.autoDelegate === DELEGATE.ANY)
             child.setDelegate();
