@@ -1941,6 +1941,23 @@
     },
 
    /**
+    * Creates new token from token that contains modified through fn value.
+    * @param {function(value):value} fn
+    * @return {*}
+    */
+    as: function(fn){
+      var token = new Token(fn(this.value));
+      var setter = function(value){
+        this.set(fn(value));
+      };
+      this.attach(setter, token, token.destroy);
+      token.attach($undef, this, function(){
+        this.detach(setter, token);
+      });
+      return token;
+    },
+
+   /**
     * Actually it's not require invoke destroy method for token, garbage
     * collector have no problems to free token's memory when all references
     * to token are removed.
