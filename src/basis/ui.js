@@ -192,6 +192,12 @@
   * Base binding
   */
   var TEMPLATE_BINDING = Class.customExtendProperty({
+    active: {
+      events: 'activeChanged',
+      getter: function(node){
+        return node.active;
+      }
+    },
     state: {
       events: 'stateChanged',
       getter: function(node){
