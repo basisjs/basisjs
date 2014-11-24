@@ -282,9 +282,9 @@
       }
     },
     function(action, object){
-      for (var name in object.satellites)
+      for (var name in object.satellite)
         if (name !== '__auto__')
-          action('satellite', object, object.satellites[name]);
+          action('satellite', object, object.satellite[name]);
     }
   );
 
