@@ -249,6 +249,45 @@
 
   SUBSCRIPTION.addProperty('owner');
   SUBSCRIPTION.addProperty('dataSource');
+  SUBSCRIPTION.add(
+    'CHILD',
+    {
+      childNodesModified: function(object, delta){
+        var array;
+
+        if (array = delta.inserted)
+          for (var i = 0, item; item = array[i]; i++)
+            SUBSCRIPTION.link('child', object, array[i]);
+
+        if (array = delta.deleted)
+          for (var i = 0, item; item = array[i]; i++)
+            SUBSCRIPTION.unlink('child', object, array[i]);
+      }
+    },
+    function(action, object){
+      var childNodes = object.childNodes || [];
+
+      for (var i = 0, child; child = childNodes[i]; i++)
+        action('child', object, child);
+    }
+  );
+  SUBSCRIPTION.add(
+    'SATELLITE',
+    {
+      satelliteChanged: function(object, name, oldSatellite){
+        if (oldSatellite)
+          SUBSCRIPTION.unlink('satellite', object, oldSatellite);
+        if (object.satellite[name])
+          SUBSCRIPTION.link('satellite', object, object.satellite[name]);
+      }
+    },
+    function(action, object){
+      for (var name in object.satellites)
+        if (name !== '__auto__')
+          action('satellite', object, object.satellites[name]);
+    }
+  );
+
 
   //
   // AbstractNode
@@ -484,7 +523,7 @@
    /**
     * @inheritDoc
     */
-    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASOURCE,
+    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASOURCE + SUBSCRIPTION.SATELLITE,
 
    /**
     * @inheritDoc
