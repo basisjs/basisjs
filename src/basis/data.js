@@ -109,7 +109,7 @@
     * @return {basis.data.Value|null}
     */
     from: function(source){
-      return Value.from(source, 'stateChanged', 'state');
+      return Value.from(source, 'stateChanged', 'state') || STATE.UNDEFINED;
     }
   };
 
