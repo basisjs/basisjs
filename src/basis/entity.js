@@ -963,6 +963,8 @@
     fields: null,
     idField: null,
     idFields: null,
+    compositeKey: null,
+    idProperty: null,
     defaults: null,
 
     aliases: null,
@@ -1316,6 +1318,15 @@
 
     return Class(BaseEntity, {
       className: entityType.name,
+
+      syncEvents: {
+        update: true,
+        stateChanged: true,
+        subscribersChanged: true
+      },
+      isSyncRequired: function(){
+        return DataObject.prototype.isSyncRequired.call(this) && (!entityType.idProperty || this[entityType.idProperty] != null);
+      },
 
       init: function(data){
         // ignore delegate and data
