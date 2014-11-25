@@ -135,7 +135,7 @@
       if (initResult)
         insertEl = initResult;
 
-      if (insertEl.bindingBridge)
+      if (insertEl && insertEl.bindingBridge)
       {
         insertEl.bindingBridge.attach(insertEl, function(value){
           app.setElement((value && value.element) || value);
