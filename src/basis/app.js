@@ -128,17 +128,23 @@
       }
     }
 
-    basis.ready(function(){
+    basis.doc.body.ready(function(){
       var insertEl = appEl;
       var initResult = appInit.call(app);
 
       if (initResult)
+        insertEl = initResult;
+
+      if (insertEl.bindingBridge)
       {
-        if (initResult.element)
-          insertEl = initResult.element;
-        else
-          insertEl = initResult;
+        insertEl.bindingBridge.attach(insertEl, function(value){
+          app.setElement((value && value.element) || value);
+        });
+        insertEl = insertEl.bindingBridge.get(insertEl);
       }
+
+      if (insertEl && insertEl.element)
+        insertEl = insertEl.element;
 
       appEl = null;
       app.setElement(insertEl);
