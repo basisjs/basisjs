@@ -1946,14 +1946,18 @@
     * @return {*}
     */
     as: function(fn){
-      var token = new Token(fn(this.value));
+      var token = new Token();
       var setter = function(value){
-        this.set(fn(value));
+        this.set(fn.call(this, value));
       };
+
+      setter.call(token, this.get());
+
       this.attach(setter, token, token.destroy);
       token.attach($undef, this, function(){
         this.detach(setter, token);
       });
+
       return token;
     },
 
@@ -1970,6 +1974,9 @@
         this.deferredToken = null;
       }
 
+      this.attach = $undef;
+      this.detach = $undef;
+
       var cursor = this;
       while (cursor = cursor.handler)
         if (cursor.destroy)
@@ -1977,8 +1984,6 @@
 
       this.handler = null;
       this.value = null;
-      this.attach = $undef;
-      this.detach = $undef;
     }
   });
 
