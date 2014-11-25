@@ -3092,23 +3092,12 @@
     * @inheritDoc
     */
     emit_itemsChanged: function(delta){
+      var array;
+
       Dataset.prototype.emit_itemsChanged.call(this, delta);
 
-      if (delta.inserted)
-      {
-        for (var i = 0, node; node = delta.inserted[i]; i++)
-        {
-          if (!node.selected)
-          {
-            node.selected = true;
-            node.emit_select();
-          }
-        }
-      }
-
-      if (delta.deleted)
-      {
-        for (var i = 0, node; node = delta.deleted[i]; i++)
+      if (array = delta.deleted)
+        for (var i = 0, node; node = array[i]; i++)
         {
           if (node.selected)
           {
@@ -3116,7 +3105,16 @@
             node.emit_unselect();
           }
         }
-      }
+
+      if (array = delta.inserted)
+        for (var i = 0, node; node = array[i]; i++)
+        {
+          if (!node.selected)
+          {
+            node.selected = true;
+            node.emit_select();
+          }
+        }
     },
 
    /**
