@@ -3812,6 +3812,14 @@
 
 
   //
+  // extend exports when node.js environment
+  //
+
+  if (NODE_ENV && exports)
+    exports.basis = basis;
+
+
+  //
   // return basis instance (needs for createSandbox)
   //
 
