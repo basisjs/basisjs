@@ -1021,8 +1021,8 @@
   //
 
   var valueFromMap = {};
-  var valueFromSetProxy = function(object){
-    Value.prototype.set.call(this, object); // `this` is a token
+  var valueFromSetProxy = function(sender){
+    Value.prototype.set.call(this, sender); // `this` is a token
   };
 
   Value.from = function(obj, events, getter){
@@ -1080,10 +1080,17 @@
         if (!result)
         {
           result = valueFromMap[id] = new Value({
-            value: bindingBridge.get(obj)
+            value: bindingBridge.get(obj),
+            set: basis.fn.$undef,
+            handler: {
+              destroy: function(){
+                valueFromMap[id] = null;
+                bindingBridge.detach(obj, Value.prototype.set, result);
+              }
+            }
           });
 
-          bindingBridge.attach(obj, result.set, result);
+          bindingBridge.attach(obj, Value.prototype.set, result, result.destroy);
         }
       }
     }
