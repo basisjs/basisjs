@@ -2361,8 +2361,8 @@
     ResolveAdapter.apply(this, arguments);
   };
   BBResolveAdapter.prototype = new ResolveAdapter();
-  BBResolveAdapter.prototype.attach = function(){
-    this.source.bindingBridge.attach(this.source, this.handler, this);
+  BBResolveAdapter.prototype.attach = function(destroyCallback){
+    this.source.bindingBridge.attach(this.source, this.handler, this, destroyCallback);
   };
   BBResolveAdapter.prototype.detach = function(){
     this.source.bindingBridge.detach(this.source, this.handler, this);
@@ -2378,24 +2378,13 @@
   var DEFAULT_DESTROY_ADAPTER_HANDLER = function(){
     this.fn.call(this.context, null);
   };
-
-  var TOKEN_ADAPTER_HANDLER = DEFAULT_CHANGE_ADAPTER_HANDLER;
+  var RESOLVEVALUE_DESTROY_ADAPTER_HANDLER = function(){
+    this.fn.call(this.context, resolveValue(NULL_OBJECT, null, this.source.bindingBridge.get(this.source)));
+  };
 
   var DATASETWRAPPER_ADAPTER_HANDLER = {
     datasetChanged: DEFAULT_CHANGE_ADAPTER_HANDLER,
     destroy: DEFAULT_DESTROY_ADAPTER_HANDLER
-  };
-
-  var VALUE_ADAPTER_HANDLER = {
-    change: DEFAULT_CHANGE_ADAPTER_HANDLER,
-    destroy: DEFAULT_DESTROY_ADAPTER_HANDLER
-  };
-
-  var VALUE_VALUE_ADAPTER_HANDLER = {
-    change: DEFAULT_CHANGE_ADAPTER_HANDLER,
-    destroy: function(){
-      this.fn.call(this.context, resolveValue(NULL_OBJECT, null, this.source.value));
-    }
   };
 
  /**
@@ -2418,14 +2407,9 @@
         newAdapter = adapter || new ResolveAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
         source = source.dataset;
       }
-      else if (source instanceof Value)
-      {
-        newAdapter = adapter || new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-        source = resolveDataset(newAdapter, resolveAdapterProxy, source.value, 'next');
-      }
       else if (source.bindingBridge)
       {
-        newAdapter = adapter || new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
+        newAdapter = adapter || new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
         source = resolveDataset(newAdapter, resolveAdapterProxy, source.value, 'next');
       }
     }
@@ -2445,7 +2429,7 @@
       }
 
       if (newAdapter)
-        newAdapter.attach();
+        newAdapter.attach(DEFAULT_DESTROY_ADAPTER_HANDLER);
 
       context[property] = newAdapter;
     }
@@ -2463,21 +2447,14 @@
     if (fn !== resolveAdapterProxy && typeof source == 'function')
       source = source.call(context, context);
 
-    if (source)
+    if (source && source.bindingBridge)
     {
-      // try to re-use old adapter
-      var adapter = oldAdapter && oldAdapter.source === source ? oldAdapter : null;
+      if (!oldAdapter || oldAdapter.source !== source)
+        newAdapter = new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
+      else
+        newAdapter = oldAdapter;
 
-      if (source instanceof Value)
-      {
-        newAdapter = adapter || new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-        source = resolveObject(newAdapter, resolveAdapterProxy, source.value, 'next');
-      }
-      else if (source.bindingBridge)
-      {
-        newAdapter = adapter || new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-        source = resolveObject(newAdapter, resolveAdapterProxy, source.value, 'next');
-      }
+      source = resolveObject(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
     }
 
     if (source instanceof DataObject == false)
@@ -2495,7 +2472,7 @@
       }
 
       if (newAdapter)
-        newAdapter.attach();
+        newAdapter.attach(DEFAULT_DESTROY_ADAPTER_HANDLER);
 
       context[property] = newAdapter;
     }
@@ -2510,27 +2487,20 @@
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
-    // as functions could be a value, set factory via plain object with `factory` property
-    // i.e. source = { factory: function(){ /* factory code */ } }
+    // as functions could be a value, invoke only functions with factory property
+    // i.e. source -> function(){ /* factory code */ }).factory === FACTORY
     // apply only for top-level resolveValue() invocation
     if (source && fn !== resolveAdapterProxy && typeof source == 'function' && source.factory === FACTORY)
       source = source.call(context, context);
 
-    if (source)
+    if (source && source.bindingBridge)
     {
-      // try to re-use old adapter
-      var adapter = oldAdapter && oldAdapter.source === source ? oldAdapter : null;
+      if (!oldAdapter || oldAdapter.source !== source)
+        newAdapter = new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
+      else
+        newAdapter = oldAdapter;
 
-      if (source instanceof Value)
-      {
-        newAdapter = adapter || new ResolveAdapter(context, fn, source, VALUE_VALUE_ADAPTER_HANDLER);
-        source = resolveValue(newAdapter, resolveAdapterProxy, source.value, 'next');
-      }
-      else if (source.bindingBridge)
-      {
-        newAdapter = adapter || new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-        source = resolveValue(newAdapter, resolveAdapterProxy, source.value, 'next');
-      }
+      source = resolveValue(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
     }
 
     if (property && oldAdapter !== newAdapter)
@@ -2545,7 +2515,7 @@
       }
 
       if (newAdapter)
-        newAdapter.attach();
+        newAdapter.attach(RESOLVEVALUE_DESTROY_ADAPTER_HANDLER);
 
       context[property] = newAdapter;
     }
