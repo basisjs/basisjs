@@ -368,6 +368,9 @@
           case 'config':
             config[key] = typeof value == 'string' ? getter(value) : value;
             break;
+
+          default:
+            /** @cut */ basis.dev.warn('Unknown satellite config option – ' + key);
         }
       }
 
