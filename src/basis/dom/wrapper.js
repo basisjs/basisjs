@@ -2566,14 +2566,14 @@
           // check for selectable in non-multiple mode, because if node is non-selectable
           // selection will be cleared and this is not desired behaviour
           if (this.selectable)
-            selection.set([this]);
+            selection.set(this);
         }
         else
         {
           if (selected)
-            selection.remove([this]);
+            selection.remove(this);
           else
-            selection.add([this]);
+            selection.add(this);
         }
       }
       else
@@ -2597,7 +2597,7 @@
       {
         var selection = this.contextSelection;
         if (selection)
-          selection.remove([this]);
+          selection.remove(this);
         else
         {
           this.selected = false;
@@ -3124,39 +3124,54 @@
     * @inheritDoc
     */
     add: function(nodes){
-      if (!this.multiple)
+      if (!nodes)
+        return;
+
+      if (!this.multiple && this.itemCount)
+        return this.set(nodes);
+
+      if (!Array.isArray(nodes))
+        nodes = [nodes];
+
+      nodes = nodes.filter(this.filter, this);
+
+      if (!this.multiple && nodes.length > 1)
       {
-        if (this.itemCount)
-          return this.set(nodes);
-        else
-          nodes = [nodes[0]];
+        /** @cut */ basis.dev.warn(namespace + '.Selection#add() can\'t accept more than one node as not in multiple mode');
+        nodes = nodes[0];
       }
 
-      var items = [];
-      for (var i = 0, node; node = nodes[i]; i++)
-      {
-        if (node.contextSelection == this && node.selectable)
-          items.push(node);
-      }
-
-      return Dataset.prototype.add.call(this, items);
+      if (nodes.length)
+        return Dataset.prototype.add.call(this, nodes);
     },
 
    /**
     * @inheritDoc
     */
     set: function(nodes){
-      var items = [];
-      for (var i = 0, node; node = nodes[i]; i++)
+      if (!nodes)
+        return this.clear();
+
+      if (!Array.isArray(nodes))
+        nodes = [nodes];
+
+      nodes = nodes.filter(this.filter, this);
+
+      if (!this.multiple && nodes.length > 1)
       {
-        if (node.contextSelection == this && node.selectable)
-          items.push(node);
+        /** @cut */ basis.dev.warn(namespace + '.Selection#set() can\'t accept more than one node as not in multiple mode');
+        nodes = nodes[0];
       }
 
-      if (!this.multiple)
-        items.splice(1);
+      if (nodes.length)
+        return Dataset.prototype.set.call(this, nodes);
+    },
 
-      return Dataset.prototype.set.call(this, items);
+   /**
+    * Rule that defines which node can't be added to selection
+    */
+    filter: function(node){
+      return node.contextSelection === this && node.selectable;
     }
   });
 
