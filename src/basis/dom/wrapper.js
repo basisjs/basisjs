@@ -2413,13 +2413,6 @@
     emit_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
 
    /**
-    * Indicate could be able node to be selected or not.
-    * @type {boolean}
-    * @readonly
-    */
-    selectable: true,
-
-   /**
     * Indicate node is selected.
     * @type {boolean}
     * @readonly
@@ -2563,10 +2556,7 @@
       {
         if (!multiple)
         {
-          // check for selectable in non-multiple mode, because if node is non-selectable
-          // selection will be cleared and this is not desired behaviour
-          if (this.selectable)
-            selection.set(this);
+          selection.set(this);
         }
         else
         {
@@ -2577,7 +2567,7 @@
         }
       }
       else
-        if (!selected && this.selectable)
+        if (!selected)
         {
           this.selected = true;
           this.emit_select();
@@ -3171,7 +3161,7 @@
     * Rule that defines which node can't be added to selection
     */
     filter: function(node){
-      return node.contextSelection === this && node.selectable;
+      return node.contextSelection === this;
     }
   });
 

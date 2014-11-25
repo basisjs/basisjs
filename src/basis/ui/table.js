@@ -198,6 +198,9 @@
 
     action: {
       setColumnSorting: function(){
+        if (!this.colSorting)
+          return;
+
         if (this.selected)
         {
           var owner = this.parentNode && this.parentNode.owner;
@@ -213,8 +216,6 @@
     * @inheritDoc
     */
     init: function(){
-      this.selectable = !!this.colSorting;
-
       UINode.prototype.init.call(this);
 
       if (this.colSorting)
