@@ -282,9 +282,11 @@
       }
     },
     function(action, object){
-      for (var name in object.satellite)
-        if (name !== '__auto__')
-          action('satellite', object, object.satellite[name]);
+      var satellites = object.satellite;
+      if (satellites !== NULL_SATELLITE)
+        for (var name in satellites)
+          if (name !== '__auto__')
+            action('satellite', object, satellites[name]);
     }
   );
 
