@@ -42,7 +42,6 @@
   var DataObject = basisData.Object;
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var Dataset = basisData.Dataset;
-  var DatasetWrapper = basisData.DatasetWrapper;
 
 
   //
@@ -169,7 +168,7 @@
     if (rootUpdate)
     {
       root.contextSelection = newSelection;
-      if (root.selected)
+      if (root.selected && !root.selectedRA_)
         selected.push(root);
     }
 
@@ -196,7 +195,20 @@
               oldSelection.remove(selected);
 
             if (newSelection)
+            {
               newSelection.add(selected);
+
+              // remove selected from nodes that was not added to new selection set
+              for (var i = 0; i < selected.length; i++)
+              {
+                var node = selected[i];
+                if (node.selected && !newSelection.has(node))
+                {
+                  node.selected = false;
+                  node.emit_unselect();
+                }
+              }
+            }
           }
 
           return;
@@ -214,7 +226,7 @@
       cursor = nextNode;
 
       // store selected nodes
-      if (cursor.selected)
+      if (cursor.selected && !cursor.selectedRA_)
         selected.push(cursor);
 
       // change context selection
@@ -2420,6 +2432,11 @@
     selected: false,
 
    /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    selectedRA_: null,
+
+   /**
     * Set of selected child nodes.
     * @type {basis.dom.wrapper.Selection}
     */
@@ -2475,6 +2492,11 @@
         disable: function(){
           updateNodeDisableContext(this, true);
         }
+      },
+      selection: {
+        destroy: function(){
+          this.setSelection();
+        }
       }
     },
 
@@ -2486,12 +2508,11 @@
       this.disabled = false;
 
       // add selection object, if selection is not null
-      if (this.selection)
+      var selection = this.selection;
+      if (selection)
       {
-        if (this.selection instanceof ReadOnlyDataset == false)
-          this.selection = new Selection(this.selection);
-        if (this.listen.selection)
-          this.selection.addHandler(this.listen.selection, this);
+        this.selection = null;
+        this.setSelection(selection);
       }
 
       // inherit
@@ -2511,10 +2532,7 @@
 
       // selected
       if (this.selected)
-      {
-        this.selected = false;
-        this.select(true);
-      }
+        this.selected = !!resolveValue(this, this.setSelected, this.selected, 'selectedRA_');
     },
 
    /**
@@ -2523,6 +2541,9 @@
     * @return {boolean} Returns true if selection was changed.
     */
     setSelection: function(selection){
+      if (selection instanceof Selection === false)
+        selection = selection ? new Selection(selection) : null;
+
       if (this.selection !== selection)
       {
         // change context selection for child nodes
@@ -2547,33 +2568,7 @@
     * @return {boolean} Returns true if selected state has been changed.
     */
     select: function(multiple){
-      var selected = this.selected;
-      var selection = this.contextSelection;
-
-      // here is no check for selected state, because parentNode.selection depends on it's
-      // mode may do some actions even with selected node
-      if (selection)
-      {
-        if (!multiple)
-        {
-          selection.set(this);
-        }
-        else
-        {
-          if (selected)
-            selection.remove(this);
-          else
-            selection.add(this);
-        }
-      }
-      else
-        if (!selected)
-        {
-          this.selected = true;
-          this.emit_select();
-        }
-
-      return this.selected != selected;
+      return this.setSelected(true, multiple);
     },
 
    /**
@@ -2581,21 +2576,7 @@
     * @return {boolean} Returns true if selected state has been changed.
     */
     unselect: function(){
-      var selected = this.selected;
-
-      if (selected)
-      {
-        var selection = this.contextSelection;
-        if (selection)
-          selection.remove(this);
-        else
-        {
-          this.selected = false;
-          this.emit_unselect();
-        }
-      }
-
-      return this.selected != selected;
+      return this.setSelected(false);
     },
 
    /**
@@ -2605,9 +2586,86 @@
     * @return {boolean} Returns true if selected property was changed.
     */
     setSelected: function(selected, multiple){
-      return selected
-        ? this.select(multiple)
-        : this.unselect();
+      var selection = this.contextSelection;
+
+      selected = !!!!resolveValue(this, this.setSelected, selected, 'selectedRA_');;
+
+      // special case, when node selected and has selection context check only
+      // resolve adapter influence on selected if exists, and restore selection
+      // influence when no resolve adapter
+      if (this.selected && selection)
+      {
+        if (this.selectedRA_)
+        {
+          if (selection.has(this))
+          {
+            this.selected = false;
+            selection.remove(this);
+            this.selected = true;
+          }
+        }
+        else
+        {
+          if (!selection.has(this))
+            selection.add(this);
+        }
+      }
+
+      if (selected !== this.selected)
+      {
+        if (this.selectedRA_) // when resolveValue using ignore selection
+        {
+          this.selected = selected;
+          if (selected)
+            this.emit_select();
+          else
+            this.emit_unselect();
+        }
+        else
+        {
+          if (selected) // this.selected = false -> true
+          {
+            if (selection)
+            {
+              if (multiple)
+                selection.add(this);
+              else
+                selection.set(this);
+            }
+            else
+            {
+              this.selected = true;
+              this.emit_select();
+            }
+          }
+          else // this.selected = true -> false
+          {
+            if (selection)
+            {
+              selection.remove(this);
+            }
+            else
+            {
+              this.selected = false;
+              this.emit_unselect();
+            }
+          }
+        }
+
+        return true;
+      }
+      else
+      {
+        if (!this.selectedRA_ && selected && selection)  // this.selected = true -> true
+        {
+          if (multiple)
+            selection.remove(this);
+          else
+            selection.set(this);
+        }
+      }
+
+      return false;
     },
 
    /**
@@ -2685,14 +2743,16 @@
     * @destructor
     */
     destroy: function(){
-      this.unselect();
-      this.contextSelection = null;
-      if (this.selection)
-        this.setSelection();
-
       // unlink disabled bb-value
       if (this.disabledRA_)
         resolveValue(this, null, null, 'disabledRA_');
+
+      if (this.selectedRA_)
+        resolveValue(this, null, null, 'selectedRA_');
+
+      this.contextSelection = null;
+      if (this.selection)
+        this.setSelection();
 
       // inherit
       AbstractNode.prototype.destroy.call(this);
@@ -3092,7 +3152,7 @@
       if (array = delta.deleted)
         for (var i = 0, node; node = array[i]; i++)
         {
-          if (node.selected)
+          if (node.selected && node.contextSelection === this)
           {
             node.selected = false;
             node.emit_unselect();
@@ -3102,7 +3162,7 @@
       if (array = delta.inserted)
         for (var i = 0, node; node = array[i]; i++)
         {
-          if (!node.selected)
+          if (!node.selected && node.contextSelection === this)
           {
             node.selected = true;
             node.emit_select();
@@ -3128,7 +3188,7 @@
       if (!this.multiple && nodes.length > 1)
       {
         /** @cut */ basis.dev.warn(namespace + '.Selection#add() can\'t accept more than one node as not in multiple mode');
-        nodes = nodes[0];
+        nodes = [nodes[0]];
       }
 
       if (nodes.length)
@@ -3150,18 +3210,20 @@
       if (!this.multiple && nodes.length > 1)
       {
         /** @cut */ basis.dev.warn(namespace + '.Selection#set() can\'t accept more than one node as not in multiple mode');
-        nodes = nodes[0];
+        nodes = [nodes[0]];
       }
 
       if (nodes.length)
         return Dataset.prototype.set.call(this, nodes);
+      else
+        return this.clear();
     },
 
    /**
     * Rule that defines which node can't be added to selection
     */
     filter: function(node){
-      return node.contextSelection === this;
+      return !node.selectedRA_ && node.contextSelection === this;
     }
   });
 

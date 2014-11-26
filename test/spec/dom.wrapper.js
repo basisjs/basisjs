@@ -6,6 +6,7 @@ module.exports = {
     var DOM = basis.require('basis.dom');
     var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
     var Node = basis.require('basis.dom.wrapper').Node;
+    var Selection = basis.require('basis.dom.wrapper').Selection;
     var Value = basis.require('basis.data').Value;
     var DataObject = basis.require('basis.data').Object;
     var Dataset = basis.require('basis.data').Dataset;
