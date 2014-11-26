@@ -325,6 +325,7 @@
     if (satelliteConfig.constructor === Object)
     {
       var handlerRequired = false;
+      var events = 'update';
       var satelliteClass;
       var config = {
         isSatelliteConfig: true
@@ -381,6 +382,10 @@
             config[key] = typeof value == 'string' ? getter(value) : value;
             break;
 
+          case 'events':
+            events = satelliteConfig.events;
+            break;
+
           default:
             /** @cut */ basis.dev.warn('Unknown satellite config option – ' + key);
         }
@@ -396,8 +401,6 @@
 
       if (handlerRequired)
       {
-        var events = 'events' in satelliteConfig ? satelliteConfig.events : 'update';
-
         if (Array.isArray(events))
           events = events.join(' ');
 
