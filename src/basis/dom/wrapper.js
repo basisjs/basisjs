@@ -3226,7 +3226,7 @@
     * Rule that defines which node can't be added to selection
     */
     filter: function(node){
-      return !node.selectedRA_ && node.contextSelection === this;
+      return node instanceof Node && !node.selectedRA_ && node.contextSelection === this;
     }
   });
 
