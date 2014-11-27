@@ -864,6 +864,7 @@
           return pair.token;
         };
 
+        getComputeToken.factory = FACTORY;
         getComputeToken.deferred = function(){
           return function(object){
             return getComputeToken(object).deferred();
