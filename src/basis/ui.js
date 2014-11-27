@@ -842,7 +842,11 @@
       tabindex: {
         events: 'enable disable',
         getter: function(node){
-          return node.isDisabled() ? -1 : node.tabindex || 0;
+          // NOTE: actualy should return -1 here, but tabindex="-1" works only for <input>, but
+          // makes other elements focusable; seems like this should be moved to template land.
+          // http://nemisj.com/focusable/
+          if (!node.isDisabled())
+            return node.tabindex || 0;
         }
       }
     },
