@@ -838,6 +838,12 @@
         getter: function(node){
           return !node.isDisabled();
         }
+      },
+      tabindex: {
+        events: 'enable disable',
+        getter: function(node){
+          return node.isDisabled() ? -1 : node.tabindex || 0;
+        }
       }
     },
 
