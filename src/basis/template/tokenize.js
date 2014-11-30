@@ -32,7 +32,6 @@ function tokenize(source){
   var result = [];
   var tagStack = [];
   var lastTag = { childs: result };
-  var sourceText;
   var token;
   var bufferPos;
   var startPos;
@@ -45,6 +44,7 @@ function tokenize(source){
   var m;
 
   source = source.trim();
+  /** @cut */ result.source_ = source;
   /** @cut */ result.warns = [];
 
   while (pos < source.length || state != TEXT)
@@ -93,17 +93,19 @@ function tokenize(source){
 
         if (textStateEndPos != textEndPos)
         {
-          sourceText = textStateEndPos == startPos
+          var sourceText = textStateEndPos == startPos
             ? m[1]
             : source.substring(textStateEndPos, textEndPos);
 
-          token = sourceText.replace(/\s*(\r\n?|\n\r?)\s*/g, '');
+          sourceText = sourceText.replace(/\s*(\r\n?|\n\r?)\s*/g, '');
 
-          if (token)
+          if (sourceText)
             lastTag.childs.push({
+              start_: textStateEndPos,
+              end_: textEndPos,
               type: TYPE_TEXT,
               len: sourceText.length,
-              value: token
+              value: sourceText
             });
         }
 
@@ -112,6 +114,8 @@ function tokenize(source){
         if (m[3])
         {
           lastTag.childs.push({
+            start_: textEndPos,
+            end_: pos,
             type: TYPE_TEXT,
             refs: ['l10n:' + m[3]],
             value: '{l10n:' + m[3] + '}'
@@ -121,6 +125,8 @@ function tokenize(source){
         {
           bufferPos = pos - 1;
           lastTag.childs.push(token = {
+            start_: textEndPos,
+            end_: textEndPos,
             type: TYPE_TEXT
           });
           state = REFERENCE;
@@ -135,6 +141,8 @@ function tokenize(source){
           else //if (m[3] == '!--')
           {
             lastTag.childs.push(token = {
+              start_: textEndPos,
+              end_: textEndPos,
               type: TYPE_COMMENT
             });
 
@@ -156,6 +164,8 @@ function tokenize(source){
           tagStack.push(lastTag);
 
           lastTag.childs.push(token = {
+            start_: textEndPos,
+            end_: textEndPos,
             type: TYPE_ELEMENT,
             attrs: [],
             childs: []
@@ -172,6 +182,8 @@ function tokenize(source){
         {
           //throw 'Wrong close tag';
           lastTag.childs.push({
+            start_: startPos - 2,
+            end_: startPos + m[0].length,
             type: TYPE_TEXT,
             value: '</' + m[0]
           });
@@ -198,6 +210,7 @@ function tokenize(source){
         {
           // store name (it may be null when check for attribute and end)
           token.name = m[1];
+          token.end_ = startPos + m[1].length;
 
           // store attribute
           if (token.type == TYPE_ATTRIBUTE)
@@ -217,6 +230,7 @@ function tokenize(source){
         if (m[3]) // end tag declaration
         {
           parseTag = false;
+          lastTag.end_ = pos;
 
           if (m[3] == '/>' ||
               (!lastTag.prefix && SINGLETON_TAG.test(lastTag.name)))
@@ -248,6 +262,8 @@ function tokenize(source){
 
         // m[2] == '\s+' next attr, state doesn't change
         token = {
+          start_: pos,
+          end_: pos,
           type: TYPE_ATTRIBUTE
         };
         state = ATTRIBUTE_NAME_OR_END;
@@ -255,6 +271,7 @@ function tokenize(source){
 
       case COMMENT:
         token.value = source.substring(bufferPos, pos - 3);
+        token.end_ = pos;
         state = TEXT;
         break;
 
@@ -272,6 +289,7 @@ function tokenize(source){
           {
             pos -= m[2].length - 1;
             token.value = source.substring(bufferPos, pos);
+            token.end_ = pos;
             state = TEXT;
           }
           else if (token.type == TYPE_COMMENT)
@@ -286,6 +304,8 @@ function tokenize(source){
           else // ATTRIBUTE || ELEMENT
           {
             token = {
+              start_: pos,
+              end_: pos,
               type: TYPE_ATTRIBUTE
             };
             state = ATTRIBUTE_NAME_OR_END;
@@ -297,8 +317,11 @@ function tokenize(source){
 
       case ATTRIBUTE_VALUE:
         token.value = m[1].replace(quoteUnescape, '"');
+        token.end_ = startPos + m[1].length + 2;
 
         token = {
+          start_: pos,
+          end_: pos,
           type: TYPE_ATTRIBUTE
         };
         state = ATTRIBUTE_NAME_OR_END;
@@ -308,6 +331,8 @@ function tokenize(source){
       case TAG_IGNORE_CONTENT.text:
       case TAG_IGNORE_CONTENT.style:
         lastTag.childs.push({
+          start_: startPos,
+          end_: startPos + m[1].length,
           type: TYPE_TEXT,
           value: m[1]
         });
@@ -327,6 +352,8 @@ function tokenize(source){
 
   if (textStateEndPos != pos)
     lastTag.childs.push({
+      start_: textStateEndPos,
+      end_: pos,
       type: TYPE_TEXT,
       value: source.substring(textStateEndPos, pos)
     });
