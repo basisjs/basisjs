@@ -59,8 +59,8 @@ var makeDeclaration = (function(){
 
   // load token map when node evironment, because html parsing is not available
   // comment it, to not include code to build
-  /** @cut */ if (basis.NODE_ENV)
-  /** @cut */  tokenMap = __nodejsRequire('./template/htmlentity.json');
+  /** @cut */ if (basis.NODE_ENV || true)
+  /** @cut */   tokenMap = require('./htmlentity.json');
 
   function name(token){
     return (token.prefix ? token.prefix + ':' : '') + token.name;
@@ -367,7 +367,7 @@ var makeDeclaration = (function(){
     }
     else
     {
-      var text = token.childs[0];
+      var text = token.children[0];
       url = basis.resource.virtual('css', text ? text.value : '', template.sourceUrl).url;
     }
 
@@ -644,7 +644,7 @@ var makeDeclaration = (function(){
               break;
 
               case 'text':
-                var text = token.childs[0];
+                var text = token.children[0];
                 tokens[i--] = basis.object.extend(text, {
                   refs: (elAttrs.ref || '').trim().split(/\s+/),
                   value: 'notrim' in elAttrs ? text.value : text.value.replace(/^\s*[\r\n]+|[\r\n]\s*$/g, '')
@@ -720,7 +720,7 @@ var makeDeclaration = (function(){
                     /** @cut */   addUnique(template.l10n, decl.l10n);
 
                     var tokenRefMap = normalizeRefs(decl.tokens);
-                    var instructions = (token.childs || []).slice();
+                    var instructions = (token.children || []).slice();
                     var styleNSPrefixMap = basis.object.slice(decl.styleNSPrefix);
 
                     if (elAttrs['class'])
@@ -802,7 +802,7 @@ var makeDeclaration = (function(){
                                 var args = [pos + (child.name == 'after'), replaceOrRemove];
 
                                 if (child.name != 'remove')
-                                  args = args.concat(process(child.childs, template, options) || []);
+                                  args = args.concat(process(child.children, template, options) || []);
 
                                 tokenRef.owner.splice.apply(tokenRef.owner, args);
                               }
@@ -818,12 +818,12 @@ var makeDeclaration = (function(){
 
                             if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
                             {
-                              var childs = process(child.childs, template, options) || [];
+                              var children = process(child.children, template, options) || [];
 
                               if (child.name == 'prepend')
-                                token.splice.apply(token, [ELEMENT_ATTRS, 0].concat(childs));
+                                token.splice.apply(token, [ELEMENT_ATTRS, 0].concat(children));
                               else
-                                token.push.apply(token, childs);
+                                token.push.apply(token, children);
                             }
                             break;
 
@@ -928,7 +928,7 @@ var makeDeclaration = (function(){
             name(token)              // ELEMENT_NAME = 3
           ];
           item.push.apply(item, attrs(token, item, options.optimizeSize) || []);
-          item.push.apply(item, process(token.childs, template, options) || []);
+          item.push.apply(item, process(token.children, template, options) || []);
 
           break;
 

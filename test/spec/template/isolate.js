@@ -1,7 +1,7 @@
 module.exports = {
   name: '<b:isolate>',
   init: function(){
-    var isolateCss = basis.require('basis.template').isolateCss;
+    var isolateCss = basis.require('basis.template.isolateCss');
     var Template = basis.require('basis.template.html').Template;
     var DOM = basis.require('basis.dom');
   },

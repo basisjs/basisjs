@@ -31,7 +31,7 @@ var quoteUnescape = /\\"/g;
 function tokenize(source){
   var result = [];
   var tagStack = [];
-  var lastTag = { childs: result };
+  var lastTag = { children: result };
   var token;
   var bufferPos;
   var startPos;
@@ -67,14 +67,14 @@ function tokenize(source){
         lastTag = tagStack.pop();
 
       if (token)
-        lastTag.childs.pop();
+        lastTag.children.pop();
 
-      if (token = lastTag.childs.pop())
+      if (token = lastTag.children.pop())
       {
         if (token.type == TYPE_TEXT && !token.refs)
           textStateEndPos -= 'len' in token ? token.len : token.value.length;
         else
-          lastTag.childs.push(token);
+          lastTag.children.push(token);
       }
 
       parseTag = false;
@@ -100,7 +100,7 @@ function tokenize(source){
           sourceText = sourceText.replace(/\s*(\r\n?|\n\r?)\s*/g, '');
 
           if (sourceText)
-            lastTag.childs.push({
+            lastTag.children.push({
               start_: textStateEndPos,
               end_: textEndPos,
               type: TYPE_TEXT,
@@ -113,7 +113,7 @@ function tokenize(source){
 
         if (m[3])
         {
-          lastTag.childs.push({
+          lastTag.children.push({
             start_: textEndPos,
             end_: pos,
             type: TYPE_TEXT,
@@ -124,7 +124,7 @@ function tokenize(source){
         else if (m[2] == '{')
         {
           bufferPos = pos - 1;
-          lastTag.childs.push(token = {
+          lastTag.children.push(token = {
             start_: textEndPos,
             end_: textEndPos,
             type: TYPE_TEXT
@@ -140,7 +140,7 @@ function tokenize(source){
           }
           else //if (m[3] == '!--')
           {
-            lastTag.childs.push(token = {
+            lastTag.children.push(token = {
               start_: textEndPos,
               end_: textEndPos,
               type: TYPE_COMMENT
@@ -163,12 +163,12 @@ function tokenize(source){
           parseTag = true;
           tagStack.push(lastTag);
 
-          lastTag.childs.push(token = {
+          lastTag.children.push(token = {
             start_: textEndPos,
             end_: textEndPos,
             type: TYPE_ELEMENT,
             attrs: [],
-            childs: []
+            children: []
           });
           lastTag = token;
 
@@ -181,7 +181,7 @@ function tokenize(source){
         if (m[1] !== (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name)
         {
           //throw 'Wrong close tag';
-          lastTag.childs.push({
+          lastTag.children.push({
             start_: startPos - 2,
             end_: startPos + m[0].length,
             type: TYPE_TEXT,
@@ -330,7 +330,7 @@ function tokenize(source){
 
       case TAG_IGNORE_CONTENT.text:
       case TAG_IGNORE_CONTENT.style:
-        lastTag.childs.push({
+        lastTag.children.push({
           start_: startPos,
           end_: startPos + m[1].length,
           type: TYPE_TEXT,
@@ -351,7 +351,7 @@ function tokenize(source){
   }
 
   if (textStateEndPos != pos)
-    lastTag.childs.push({
+    lastTag.children.push({
       start_: textStateEndPos,
       end_: pos,
       type: TYPE_TEXT,

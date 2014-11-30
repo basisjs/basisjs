@@ -13,7 +13,6 @@
   var Class = basis.Class;
   var cleaner = basis.cleaner;
   var path = basis.path;
-  var arraySearch = basis.array.search;
   var arrayAdd = basis.array.add;
   var arrayRemove = basis.array.remove;
   var getL10nToken = require('basis.l10n').token;
@@ -29,8 +28,6 @@
   var DECLARATION_VERSION = 2;
 
   var consts = require('./template/const.js');
-  var tokenize = require('./template/tokenize.js');
-  var isolateCss = require('./template/isolateCss.js');
   var getDeclFromSource = require('./template/declaration.js').getDeclFromSource;
   var makeDeclaration = require('./template/declaration.js').makeDeclaration;
 
@@ -1021,8 +1018,6 @@
     switcher: switcher,
 
     // for debug purposes
-    tokenize: tokenize,
-    isolateCss: isolateCss,
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     getL10nTemplate: getL10nTemplate,
