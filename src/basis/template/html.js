@@ -26,23 +26,24 @@
   var TemplateSwitcher = basisTemplate.TemplateSwitcher;
   var Template = basisTemplate.Template;
 
-  var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
-  var TYPE_ATTRIBUTE = basisTemplate.TYPE_ATTRIBUTE;
-  var TYPE_TEXT = basisTemplate.TYPE_TEXT;
-  var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
+  var consts = require('./const.js');
+  var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+  var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+  var TYPE_TEXT = consts.TYPE_TEXT;
+  var TYPE_COMMENT = consts.TYPE_COMMENT;
 
-  var TOKEN_TYPE = basisTemplate.TOKEN_TYPE;
-  var TOKEN_BINDINGS = basisTemplate.TOKEN_BINDINGS;
-  var TOKEN_REFS = basisTemplate.TOKEN_REFS;
+  var TOKEN_TYPE = consts.TOKEN_TYPE;
+  var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
+  var TOKEN_REFS = consts.TOKEN_REFS;
 
-  var ATTR_NAME = basisTemplate.ATTR_NAME;
-  var ATTR_VALUE = basisTemplate.ATTR_VALUE;
-  var ATTR_NAME_BY_TYPE = basisTemplate.ATTR_NAME_BY_TYPE;
+  var ATTR_NAME = consts.ATTR_NAME;
+  var ATTR_VALUE = consts.ATTR_VALUE;
+  var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
 
-  var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
+  var ELEMENT_NAME = consts.ELEMENT_NAME;
 
-  var TEXT_VALUE = basisTemplate.TEXT_VALUE;
-  var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
+  var TEXT_VALUE = consts.TEXT_VALUE;
+  var COMMENT_VALUE = consts.COMMENT_VALUE;
 
 
 

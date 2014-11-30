@@ -28,391 +28,30 @@
 
   var DECLARATION_VERSION = 2;
 
-  // token types
-  /** @const */ var TYPE_ELEMENT = 1;
-  /** @const */ var TYPE_ATTRIBUTE = 2;
-  /** @const */ var TYPE_ATTRIBUTE_CLASS = 4;
-  /** @const */ var TYPE_ATTRIBUTE_STYLE = 5;
-  /** @const */ var TYPE_ATTRIBUTE_EVENT = 6;
-  /** @const */ var TYPE_TEXT = 3;
-  /** @const */ var TYPE_COMMENT = 8;
+  var consts = require('./template/const.js');
+  var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+  var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+  var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
+  var TYPE_ATTRIBUTE_STYLE = consts.TYPE_ATTRIBUTE_STYLE;
+  var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
+  var TYPE_TEXT = consts.TYPE_TEXT;
+  var TYPE_COMMENT = consts.TYPE_COMMENT;
+  var TOKEN_TYPE = consts.TOKEN_TYPE;
+  var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
+  var TOKEN_REFS = consts.TOKEN_REFS;
+  var ATTR_NAME = consts.ATTR_NAME;
+  var ATTR_VALUE = consts.ATTR_VALUE;
+  var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
+  var ATTR_TYPE_BY_NAME = consts.ATTR_TYPE_BY_NAME;
+  var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
+  var ELEMENT_NAME = consts.ELEMENT_NAME;
+  var ELEMENT_ATTRS = consts.ELEMENT_ATTRS;
+  var ELEMENT_CHILDS = consts.ELEMENT_CHILDS;
+  var TEXT_VALUE = consts.TEXT_VALUE;
+  var COMMENT_VALUE = consts.COMMENT_VALUE;
 
-  // references on fields in declaration
-  /** @const */ var TOKEN_TYPE = 0;
-  /** @const */ var TOKEN_BINDINGS = 1;
-  /** @const */ var TOKEN_REFS = 2;
-
-  /** @const */ var ATTR_NAME = 3;
-  /** @const */ var ATTR_VALUE = 4;
-
-  var ATTR_EVENT_RX = /^event-(.+)$/;
-  var ATTR_NAME_BY_TYPE = {
-    4: 'class',
-    5: 'style'
-  };
-  var ATTR_TYPE_BY_NAME = {
-    'class': TYPE_ATTRIBUTE_CLASS,
-    'style': TYPE_ATTRIBUTE_STYLE
-  };
-  var ATTR_VALUE_INDEX = {
-    2: ATTR_VALUE,
-    4: ATTR_VALUE - 1,
-    5: ATTR_VALUE - 1,
-    6: 2
-  };
-
-  /** @const */ var ELEMENT_NAME = 3;
-  /** @const */ var ELEMENT_ATTRS = 4;
-  /** @const */ var ELEMENT_CHILDS = 5;
-
-  /** @const */ var TEXT_VALUE = 3;
-  /** @const */ var COMMENT_VALUE = 3;
-
-  // parsing variables
-  var SYNTAX_ERROR = 'Invalid or unsupported syntax';
-
-  // html parsing states
-  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z_][a-zA-Z0-9_\-]*(?:\.[a-zA-Z_][a-zA-Z0-9_\-]*)*(?:\.\{[a-zA-Z_][a-zA-Z0-9_\-]*\})?)\})?|<(\/|!--(\s*\{)?)?|$)/g;
-  var TAG_NAME = /([a-z_][a-z0-9\-_]*)(:|\{|\s*(\/?>)?)/ig;
-  var ATTRIBUTE_NAME_OR_END = /([a-z_][a-z0-9_\-]*)(:|\{|=|\s*)|(\/?>)/ig;
-  var COMMENT = /(.|[\r\n])*?-->/g;
-  var CLOSE_TAG = /([a-z_][a-z0-9_\-]*(?::[a-z_][a-z0-9_\-]*)?)>/ig;
-  var REFERENCE = /([a-z_][a-z0-9_]*)(\||\}\s*)/ig;
-  var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
-  var BREAK_TAG_PARSE = /^/g;
-  var SINGLETON_TAG = /^(area|base|br|col|command|embed|hr|img|input|link|meta|param|source)$/i;
-  var TAG_IGNORE_CONTENT = {
-    text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g,
-    style: /((?:.|[\r\n])*?)(?:<\/b:style>|$)/g
-  };
-  var CSS_CLASSNAME_START = /^\-?([_a-z]|[^\x00-\xb1]|\\[0-9a-f]{1,6}(\r\n|[ \n\r\t\f])?|\\[^\n\r\f0-9a-f])/i; // http://www.w3.org/TR/css3-selectors/#lex
-  var CSS_CLASSNAME_START_MAXLEN = 8; // -?\\.{1,6}
-  var CSS_NESTED_ATRULE = /^(media|supports|document)\b/i;
-  var CSS_NESTED_ATRULE_MAXLEN = 8; // maxlength(media | supports | document) = 8 symbols
-  var CSS_FNSELECTOR = /^(not|has|matches|nth-child|nth-last-child)\(/i;
-  var CSS_FNSELECTOR_MAXLEN = 15; // maxlength(not | has | matches | nth-child | nth-last-child) + '(' = 15 symbols
-
-  var quoteUnescape = /\\"/g;
-
-
- /**
-  * Parse html into tokens.
-  * @param {string} source Source of template
-  * @return {Array.<object>}
-  */
-  var tokenize = function(source){
-    var result = [];
-    var tagStack = [];
-    var lastTag = { childs: result };
-    var sourceText;
-    var token;
-    var bufferPos;
-    var startPos;
-    var parseTag = false;
-    var textStateEndPos = 0;
-    var textEndPos;
-
-    var state = TEXT;
-    var pos = 0;
-    var m;
-
-    source = source.trim();
-    /** @cut */ result.warns = [];
-
-    while (pos < source.length || state != TEXT)
-    {
-      state.lastIndex = pos;
-      startPos = pos;
-
-      m = state.exec(source);
-
-      if (!m || m.index !== pos)
-      {
-        // treat broken comment reference as comment content
-        if (state == REFERENCE && token && token.type == TYPE_COMMENT)
-        {
-          state = COMMENT;
-          continue;
-        }
-
-        if (parseTag)
-          lastTag = tagStack.pop();
-
-        if (token)
-          lastTag.childs.pop();
-
-        if (token = lastTag.childs.pop())
-        {
-          if (token.type == TYPE_TEXT && !token.refs)
-            textStateEndPos -= 'len' in token ? token.len : token.value.length;
-          else
-            lastTag.childs.push(token);
-        }
-
-        parseTag = false;
-        state = TEXT;
-        continue;
-      }
-
-      pos = state.lastIndex;
-
-      //stat[state] = (stat[state] || 0) + 1;
-      switch (state)
-      {
-        case TEXT:
-
-          textEndPos = startPos + m[1].length;
-
-          if (textStateEndPos != textEndPos)
-          {
-            sourceText = textStateEndPos == startPos
-              ? m[1]
-              : source.substring(textStateEndPos, textEndPos);
-
-            token = sourceText.replace(/\s*(\r\n?|\n\r?)\s*/g, '');
-
-            if (token)
-              lastTag.childs.push({
-                type: TYPE_TEXT,
-                len: sourceText.length,
-                value: token
-              });
-          }
-
-          textStateEndPos = textEndPos;
-
-          if (m[3])
-          {
-            lastTag.childs.push({
-              type: TYPE_TEXT,
-              refs: ['l10n:' + m[3]],
-              value: '{l10n:' + m[3] + '}'
-            });
-          }
-          else if (m[2] == '{')
-          {
-            bufferPos = pos - 1;
-            lastTag.childs.push(token = {
-              type: TYPE_TEXT
-            });
-            state = REFERENCE;
-          }
-          else if (m[4])
-          {
-            if (m[4] == '/')
-            {
-              token = null;
-              state = CLOSE_TAG;
-            }
-            else //if (m[3] == '!--')
-            {
-              lastTag.childs.push(token = {
-                type: TYPE_COMMENT
-              });
-
-              if (m[5])
-              {
-                bufferPos = pos - m[5].length;
-                state = REFERENCE;
-              }
-              else
-              {
-                bufferPos = pos;
-                state = COMMENT;
-              }
-            }
-          }
-          else if (m[2]) // m[2] == '<' open tag
-          {
-            parseTag = true;
-            tagStack.push(lastTag);
-
-            lastTag.childs.push(token = {
-              type: TYPE_ELEMENT,
-              attrs: [],
-              childs: []
-            });
-            lastTag = token;
-
-            state = TAG_NAME;
-          }
-
-          break;
-
-        case CLOSE_TAG:
-          if (m[1] !== (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name)
-          {
-            //throw 'Wrong close tag';
-            lastTag.childs.push({
-              type: TYPE_TEXT,
-              value: '</' + m[0]
-            });
-          }
-          else
-            lastTag = tagStack.pop();
-
-          state = TEXT;
-          break;
-
-        case TAG_NAME:
-        case ATTRIBUTE_NAME_OR_END:
-          if (m[2] == ':')
-          {
-            if (token.prefix)      // prefix was before, break tag parse
-              state = BREAK_TAG_PARSE;
-            else
-              token.prefix = m[1];
-
-            break;
-          }
-
-          if (m[1])
-          {
-            // store name (it may be null when check for attribute and end)
-            token.name = m[1];
-
-            // store attribute
-            if (token.type == TYPE_ATTRIBUTE)
-              lastTag.attrs.push(token);
-          }
-
-          if (m[2] == '{')
-          {
-            if (token.type == TYPE_ELEMENT)
-              state = REFERENCE;
-            else
-              state = BREAK_TAG_PARSE;
-
-            break;
-          }
-
-          if (m[3]) // end tag declaration
-          {
-            parseTag = false;
-
-            if (m[3] == '/>' ||
-                (!lastTag.prefix && SINGLETON_TAG.test(lastTag.name)))
-            {
-              /** @cut */ if (m[3] != '/>')
-              /** @cut */   result.warns.push('Tag <' + lastTag.name + '> doesn\'t closed explicit (use `/>` as tag ending)');
-
-              lastTag = tagStack.pop();
-            }
-            else
-            {
-              // otherwise m[3] == '>'
-              if (lastTag.prefix == 'b' && lastTag.name in TAG_IGNORE_CONTENT)
-              {
-                state = TAG_IGNORE_CONTENT[lastTag.name];
-                break;
-              }
-            }
-
-            state = TEXT;
-            break;
-          }
-
-          if (m[2] == '=') // ATTRIBUTE_NAME_OR_END only
-          {
-            state = ATTRIBUTE_VALUE;
-            break;
-          }
-
-          // m[2] == '\s+' next attr, state doesn't change
-          token = {
-            type: TYPE_ATTRIBUTE
-          };
-          state = ATTRIBUTE_NAME_OR_END;
-          break;
-
-        case COMMENT:
-          token.value = source.substring(bufferPos, pos - 3);
-          state = TEXT;
-          break;
-
-        case REFERENCE:
-          // add reference to token list name
-          if (token.refs)
-            token.refs.push(m[1]);
-          else
-            token.refs = [m[1]];
-
-          // go next
-          if (m[2] != '|') // m[2] == '}\s*'
-          {
-            if (token.type == TYPE_TEXT)
-            {
-              pos -= m[2].length - 1;
-              token.value = source.substring(bufferPos, pos);
-              state = TEXT;
-            }
-            else if (token.type == TYPE_COMMENT)
-            {
-              state = COMMENT;
-            }
-            else if (token.type == TYPE_ATTRIBUTE && source[pos] == '=')
-            {
-              pos++;
-              state = ATTRIBUTE_VALUE;
-            }
-            else // ATTRIBUTE || ELEMENT
-            {
-              token = {
-                type: TYPE_ATTRIBUTE
-              };
-              state = ATTRIBUTE_NAME_OR_END;
-            }
-          }
-
-          // continue to collect references
-          break;
-
-        case ATTRIBUTE_VALUE:
-          token.value = m[1].replace(quoteUnescape, '"');
-
-          token = {
-            type: TYPE_ATTRIBUTE
-          };
-          state = ATTRIBUTE_NAME_OR_END;
-
-          break;
-
-        case TAG_IGNORE_CONTENT.text:
-        case TAG_IGNORE_CONTENT.style:
-          lastTag.childs.push({
-            type: TYPE_TEXT,
-            value: m[1]
-          });
-
-          lastTag = tagStack.pop();
-
-          state = TEXT;
-          break;
-
-        default:
-          throw 'Parser bug'; // Must never to be here; bug in parser otherwise
-      }
-
-      if (state == TEXT)
-        textStateEndPos = pos;
-    }
-
-    if (textStateEndPos != pos)
-      lastTag.childs.push({
-        type: TYPE_TEXT,
-        value: source.substring(textStateEndPos, pos)
-      });
-
-    /** @cut */ if (lastTag.name)
-    /** @cut */   result.warns.push('No close tag for <' + lastTag.name + '>');
-    /** @cut */
-    /** @cut */ if (!result.warns.length)
-    /** @cut */   delete result.warns;
-
-    result.templateTokens = true;
-
-    return result;
-  };
+  var tokenize = require('./template/tokenize.js');
+  var isolateCss = require('./template/isolateCss.js');
 
 
   //
@@ -469,145 +108,6 @@
     return 'i' + basis.genUID() + '__';
   }
 
-  function isolateCss(css, prefix){
-    function jumpAfter(str, offset){
-      var index = css.indexOf(str, offset);
-      i = index !== -1 ? index + str.length : sym.length;
-    }
-
-    function parseString(endSym){
-      var quote = sym[i];
-
-      if (quote !== '"' && quote !== '\'')
-        return;
-
-      for (i++; i < len && sym[i] !== quote; i++)
-        if (sym[i] === '\\')
-          i++;
-
-      return true;
-    }
-
-    function parseBraces(endSym){
-      var bracket = sym[i];
-
-      if (bracket === '(')
-      {
-        jumpAfter(')', i + 1);
-        return true;
-      }
-
-      if (bracket === '[')
-      {
-        for (i++; i < len && sym[i] !== ']'; i++)
-          parseString();
-        return true;
-      }
-    }
-
-    function parseComment(){
-      if (sym[i] !== '/' || sym[i + 1] !== '*')
-        return;
-
-      jumpAfter('*/', i + 2);
-
-      return true;
-    }
-
-    function parsePseudoContent(){
-      for (; i < len && sym[i] != ')'; i++)
-        if (parseComment() || parseBraces() || parsePseudo() || parseClassName())
-          continue;
-    }
-
-    function parsePseudo(){
-      if (sym[i] !== ':')
-        return;
-
-      var m = css.substr(i + 1, CSS_FNSELECTOR_MAXLEN).match(CSS_FNSELECTOR);
-      if (m)
-      {
-        i += m[0].length + 1;
-        parsePseudoContent();
-      }
-
-      return true;
-    }
-
-    function parseAtRule(){
-      if (sym[i] !== '@')
-        return;
-
-      var m = css.substr(i + 1, CSS_NESTED_ATRULE_MAXLEN).match(CSS_NESTED_ATRULE);
-      if (m)
-      {
-        i += m[0].length;
-        nestedStyleSheet = true;
-      }
-
-      return true;
-    }
-
-    function parseBlock(){
-      if (sym[i] !== '{')
-        return;
-
-      if (nestedStyleSheet)
-      {
-        i++;
-        parseStyleSheet(true);
-        return;
-      }
-
-      for (i++; i < len && sym[i] !== '}'; i++)
-        parseString() || parseBraces();
-
-      return true;
-    }
-
-    function parseClassName(){
-      if (sym[i] !== '.')
-        return;
-
-      var m = css.substr(i + 1, CSS_CLASSNAME_START_MAXLEN).match(CSS_CLASSNAME_START);
-      if (m)
-      {
-        i++;
-        result.push(css.substring(lastMatchPos, i), prefix);
-        lastMatchPos = i;
-      }
-
-      return true;
-    }
-
-    function parseStyleSheet(nested){
-      for (nestedStyleSheet = false; i < len; i++)
-      {
-        if (parseComment() || parseAtRule() || parsePseudo() || parseBraces() || parseClassName())
-          continue;
-
-        if (nested && sym[i] == '}')
-          return;
-
-        parseBlock();
-      }
-    }
-
-    var result = [];
-    var sym = css.split('');
-    var len = sym.length;
-    var lastMatchPos = 0;
-    var i = 0;
-    var nestedStyleSheet;
-
-    if (!prefix)
-      prefix = genIsolateMarker();
-
-    parseStyleSheet(false);
-
-    return result.join('') + css.substring(lastMatchPos);
-  }
-
 
  /**
   * make compiled version of template
@@ -620,6 +120,7 @@
     var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
     var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
     var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
+    var ATTR_EVENT_RX = /^event-(.+)$/;
     var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
     var tokenMap = {};
@@ -1449,7 +950,9 @@
                           }
                         }
                         else
+                        {
                           decl.tokens.push.apply(decl.tokens, process([child], template, options) || []);
+                        }
                       }
 
                       if (tokenRefMap.element)
@@ -1946,6 +1449,9 @@
       cursor.handler.call(cursor.context);
   }
 
+ /**
+  *
+  */
   function cloneDecl(array){
     var result = [];
 
