@@ -33,12 +33,12 @@ var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
 
 
 /**
-* Converts HTML tokens in string to UTF symbols.
-* i.e. '2014 &copy; foo &#8594; bar' -> '2014 © foo → bar'
-* @param {string} string
-* @return {string}
-*/
-var untoken = (function(string){
+ * Converts HTML tokens in string to UTF symbols.
+ * i.e. '2014 &copy; foo &#8594; bar' -> '2014 © foo → bar'
+ * @param {string} string
+ * @return {string}
+ */
+var decodeHTMLTokens = (function(string){
   var tokenMap = {};
   var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
   var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
@@ -71,7 +71,7 @@ var untoken = (function(string){
     return tokenMap[token] || m;
   }
 
-  return function untoken(string){
+  return function decodeHTMLTokens(string){
     return String(string).replace(NAMED_CHARACTER_REF, namedCharReplace);
   };
 })();
@@ -98,13 +98,13 @@ function buildAttrExpression(parts){
     else
     {
       if (parts[j])
-        expression.push(untoken(parts[j]));
+        expression.push(decodeHTMLTokens(parts[j]));
     }
 
   return [names, expression];
 }
 
-function processAttr(name, token){
+function processAttr(token, mode){
   var value = token.value;
   var bindings = 0;
   var parts;
@@ -113,7 +113,7 @@ function processAttr(name, token){
   // other attributes
   if (value)
   {
-    switch (name)
+    switch (mode)
     {
       case 'class':
         if (parts = value.match(CLASS_ATTR_PARTS))
@@ -155,7 +155,7 @@ function processAttr(name, token){
               bindings.push(expr);
             }
             else
-              props.push(propertyName + ': ' + untoken(value));
+              props.push(propertyName + ': ' + decodeHTMLTokens(value));
           }
         }
         else
@@ -174,7 +174,7 @@ function processAttr(name, token){
         if (parts.length > 1)
           bindings = buildAttrExpression(parts);
         else
-          value = untoken(value);
+          value = decodeHTMLTokens(value);
     }
   }
 
@@ -183,9 +183,17 @@ function processAttr(name, token){
 
   token.binding = bindings;
   token.value = value;
-  token.type = ATTR_TYPE_BY_NAME[name] || 2;
+  token.type = ATTR_TYPE_BY_NAME[mode] || TYPE_ATTRIBUTE;
 }
 
+/**
+ * Post processing tokens:
+ *   - process attribute value
+ *   - join subling text nodes if possible
+ *   - decode HTML tokens in text, attribute and comment value
+ * @param {[type]} tokens [description]
+ * @return {[type]} [description]
+ */
 function postProcessing(tokens){
   function tokenName(token){
     return (token.prefix ? token.prefix + ':' : '') + token.name;
@@ -204,37 +212,80 @@ function postProcessing(tokens){
 
     for (var i = 0; token = tokens[i++]; prev = token)
     {
+      // process element
       if (token.type == TYPE_ELEMENT)
       {
         // process attribute content
         var attrs = getTokenAttrs(token);
         for (var j = 0, attr; attr = token.attrs[j++];)
         {
-          var mode = attr.name;
+          var mode;
 
-          if (token.prefix == 'b' && attr.name == 'value')
+          if (token.prefix == 'b')
           {
-            if (/^(|append-|set-|remove-)class$/.test(token.name))
-              mode = 'class';
-            else if (/^(|append-|set-|remove-)attr$/.test(token.name))
-              mode = attrs.name;
+            // process specified attributes in special tags
+            if (attr.name == 'value')
+            {
+              // parse value attribute in
+              //   <b:class>/<b:append-class>/<b:set-class>/<b:remove-class>
+              //   <b:attr name="name">/<b:append-attr name="name">/<b:set-attr name="name">/<b:remove-attr name="name">
+              if (/^(|append-|set-|remove-)class$/.test(token.name))
+                mode = 'class';
+              else if (/^(|append-|set-|remove-)attr$/.test(token.name))
+                mode = attrs.name;
+            }
+            else if (token.name == 'include')
+            {
+              // parse class and id attributes in <b:include>
+              if (attr.name == 'class')
+                mode = 'class';
+              else if (attr.name == 'id')
+                mode = 'id';
+            }
+          }
+          else
+          {
+            // process every attributes in standart tags
+            mode = attr.name;
           }
 
-          processAttr(mode, attr);
+          if (mode)
+          {
+            // process bindings and decode HTML tokens
+            processAttr(attr, mode);
+          }
+          else
+          {
+            // just decode HTML tokens in value
+            token.value = decodeHTMLTokens(token.value);
+          }
         }
 
         // walk recursive
         walk(token.children);
       }
 
-      // join text nodes
-      if (token.type == TYPE_TEXT && !token.refs)
-        if (prev && prev.type == TYPE_TEXT && !prev.refs)
+      // process text
+      if (token.type == TYPE_TEXT)
+      {
+        // decode HTML tokens in value
+        token.value = decodeHTMLTokens(token.value);
+
+        // try join text tokens
+        if (!token.refs && prev && prev.type == TYPE_TEXT && !prev.refs)
         {
           prev.value += token.value;
           prev.end_ = token.end_;
           tokens.splice(--i, 1);
         }
+      }
+
+      // process comment
+      if (token.type == TYPE_COMMENT)
+      {
+        // decode HTML tokens in value
+        token.value = decodeHTMLTokens(token.value);
+      }
     }
   }
 
@@ -323,7 +374,7 @@ function tokenize(source){
               end_: textEndPos,
               type: TYPE_TEXT,
               len: sourceText.length,
-              value: untoken(sourceText)
+              value: sourceText
             });
         }
 
@@ -488,7 +539,7 @@ function tokenize(source){
         break;
 
       case COMMENT:
-        token.value = untoken(source.substring(bufferPos, pos - 3));
+        token.value = source.substring(bufferPos, pos - 3);
         token.end_ = pos;
         state = TEXT;
         break;
@@ -506,7 +557,7 @@ function tokenize(source){
           if (token.type == TYPE_TEXT)
           {
             pos -= m[2].length - 1;
-            token.value = untoken(source.substring(bufferPos, pos));
+            token.value = source.substring(bufferPos, pos);
             token.end_ = pos;
             state = TEXT;
           }
@@ -534,7 +585,7 @@ function tokenize(source){
         break;
 
       case ATTRIBUTE_VALUE:
-        token.value = untoken(m[1].replace(QUOTE_UNESCAPE, '"'));
+        token.value = m[1].replace(QUOTE_UNESCAPE, '"');
         token.end_ = startPos + m[1].length + 2;
 
         token = {
@@ -552,7 +603,7 @@ function tokenize(source){
           start_: startPos,
           end_: startPos + m[1].length,
           type: TYPE_TEXT,
-          value: untoken(m[1])
+          value: m[1]
         });
 
         lastTag = tagStack.pop();
@@ -573,7 +624,7 @@ function tokenize(source){
       start_: textStateEndPos,
       end_: pos,
       type: TYPE_TEXT,
-      value: untoken(source.substring(textStateEndPos, pos))
+      value: source.substring(textStateEndPos, pos)
     });
 
   // process attributes binding and join text tokens
