@@ -82,11 +82,6 @@
     return template;
   }
 
-
-  //
-  //
-  //
-
   function startUseResource(uri){
     var resource = basis.resource(uri).fetch();
     if (typeof resource.startUse == 'function')
@@ -128,7 +123,7 @@
   function buildTemplate(){
     var decl = getDeclFromSource(this.source, this.baseURI, false, {
       isolate: this.getIsolatePrefix(),
-      templateList: templateList
+      resolveResource: resolveResource   // TODO: remove from options
     });
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens, this);  // makeFunctions
@@ -210,41 +205,59 @@
   // source from script by id
   //
 
-  var sourceByDocumentIdResolvers = {};
-
-  function getTemplateByDocumentId(id){
-    var resolver = resolveSourceByDocumentId(id);
-
-    if (resolver.template)
-      return resolver.template;
-
-    var host = document.getElementById(id);
-    var source = '';
-
-    if (host && host.tagName == 'SCRIPT' && host.type == 'text/basis-template')
-      source = host.textContent || host.text;
-    /** @cut */ else
-    /** @cut */   if (!host)
-    /** @cut */     basis.dev.warn('Template script element with id `' + id + '` not found');
-    /** @cut */   else
-    /** @cut */     basis.dev.warn('Template should be declared in <script type="text/basis-template"> element (id `' + sourceId + '`)');
-
-    return resolver.template = new Template(source);
-  };
+  var sourceByDocumentId = {};
 
   function resolveSourceByDocumentId(sourceId){
-    var resolver = sourceByDocumentIdResolvers[sourceId];
+    var resource = sourceByDocumentId[sourceId];
 
-    if (!resolver)
+    if (!resource)
     {
-      resolver = sourceByDocumentIdResolvers[sourceId] = function(){
-        return getTemplateByDocumentId(sourceId).source;
-      };
-      /** @cut */ resolver.id = sourceId;
-      /** @cut */ resolver.url = '<script id="' + sourceId + '"/>';
+      var host = document.getElementById(sourceId);
+      var source = '';
+
+      if (host && host.tagName == 'SCRIPT' && host.type == 'text/basis-template')
+        source = host.textContent || host.text;
+      /** @cut */ else
+      /** @cut */   if (!host)
+      /** @cut */     basis.dev.warn('Template script element with id `' + id + '` not found');
+      /** @cut */   else
+      /** @cut */     basis.dev.warn('Template should be declared in <script type="text/basis-template"> element (id `' + sourceId + '`)');
+
+      resource = basis.resource.virtual('tmpl', source || '');
+      /** @cut */ resource.id = sourceId;
+      /** @cut */ resource.url = '<script id="' + sourceId + '"/>';
     }
 
-    return resolver;
+    return resource;
+  }
+
+  function resolveResource(src, baseURI){
+    var isTemplateRef = /^#\d+$/.test(src);
+    var isDocumentIdRef = /^id:/.test(src);
+    var resource;
+
+    if (isTemplateRef)
+    {
+      // <b:include src="#123"/>
+      resource = templateList[src.substr(1)];
+    }
+    else if (isDocumentIdRef)
+    {
+      // <b:include src="id:foo"/>
+      resource = resolveSourceByDocumentId(src.substr(3));
+    }
+    else if (/^[a-z0-9\.]+$/i.test(src) && !/\.tmpl$/.test(src))
+    {
+      // <b:include src="foo.bar.baz"/>
+      resource = getSourceByPath(src);
+    }
+    else
+    {
+      // <b:include src="./path/to/file.tmpl"/>
+      resource = basis.resource(basis.resource.resolveURI(src, baseURI, '<b:include src=\"{url}\"/>'));
+    }
+
+    return resource;
   }
 
  /**

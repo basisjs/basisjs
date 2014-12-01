@@ -522,31 +522,7 @@ var makeDeclaration = (function(){
                 var templateSrc = elAttrs.src;
                 if (templateSrc)
                 {
-                  var isTemplateRef = /^#\d+$/.test(templateSrc);
-                  var isDocumentIdRef = /^id:/.test(templateSrc);
-                  var url = isTemplateRef ? templateSrc.substr(1) : templateSrc;
-                  var resource;
-
-                  if (isTemplateRef)
-                  {
-                    // <b:include src="#123"/>
-                    resource = options.templateList[url];
-                  }
-                  else if (isDocumentIdRef)
-                  {
-                    // <b:include src="id:foo"/>
-                    resource = resolveSourceByDocumentId(url.substr(3));
-                  }
-                  else if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
-                  {
-                    // <b:include src="foo.bar.baz"/>
-                    resource = getSourceByPath(url);
-                  }
-                  else
-                  {
-                    // <b:include src="./path/to/file.tmpl"/>
-                    resource = basis.resource(basis.resource.resolveURI(url, template.baseURI,  '<b:include src=\"{url}\"/>'));
-                  }
+                  var resource = options.resolveResource(templateSrc, template.baseURI);
 
                   if (!resource)
                   {
@@ -561,11 +537,8 @@ var makeDeclaration = (function(){
                     var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
                     var decl;
 
-                    if (!isDocumentIdRef)
-                      arrayAdd(template.deps, resource);
-
-                    if (isTemplateRef)
-                    {
+                    if (resource.templateId) // temporary simple check for Template instance
+                    {                        // TODO: make universal solution
                       // source wrapper
                       if (resource.source.bindingBridge)
                         arrayAdd(template.deps, resource.source);

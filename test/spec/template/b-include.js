@@ -2,6 +2,53 @@ module.exports = {
   name: '<b:include>',
   test: [
     {
+      name: 'Various sources',
+      test: [
+        {
+          name: 'file reference <b:include src="./foo.tmpl">',
+          test: function(){
+            var template = createTemplate('<b:include src="./test.tmpl"/>');
+
+            assert(text(template) == text('resource test'));
+          }
+        },
+        {
+          name: 'namespaced file reference <b:include src="ns:./foo.tmpl">',
+          test: function(){
+            var template = createTemplate('<b:include src="fixture:test.tmpl"/>');
+
+            assert(text(template) == text('fixture template'));
+          }
+        },
+        {
+          name: 'script reference <b:include src="id:foo">',
+          test: function(){
+            var template = createTemplate('<b:include src="id:test-template"/>');
+
+            assert(text(template) == text('script test'));
+          }
+        },
+        {
+          name: 'template reference <b:include src="#123">',
+          test: function(){
+            var sourceTemplate = createTemplate('reference test');
+            var template = createTemplate('<b:include src="#' + sourceTemplate.templateId + '"/>');
+
+            assert(text(template) == text('reference test'));
+          }
+        },
+        {
+          name: 'namespace <b:include src="foo.bar"/>',
+          test: function(){
+            nsTemplate.define('include.source.namespace.test', basis.resource.virtual('tmpl', 'namespace test'));
+            var template = createTemplate('<b:include src="include.source.namespace.test"/>');
+
+            assert(text(template) == text('namespace test'));
+          }
+        }
+      ]
+    },
+    {
       name: 'Attribute modification',
       test: [
         {
@@ -12,13 +59,6 @@ module.exports = {
               test: function(){
                 var a = createTemplate('<span title="a"/>');
                 var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
-
-                /*nestedTemplate({
-                  include: '<span title="a"/>',
-                  attrs: {
-                    class: 'b'
-                  }
-                });*/
 
                 this.is(text('<span title="a" class="b"/>'), text(b));
               }
