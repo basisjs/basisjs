@@ -3,11 +3,12 @@ module.exports = {
 
   html: __dirname + 'template.html',
   init: function(){
-    basis.require('basis.dom');
-    basis.require('basis.template.html');
+    var outerHTML = basis.require('basis.dom').outerHTML;
+    var HtmlTemplate = basis.require('basis.template.html').Template;
+    var nsTemplate = basis.require('basis.template');
 
     var createTemplate = function(source){
-      return new basis.template.html.Template(source);
+      return new HtmlTemplate(source);
     };
 
     var getHTML = function(el){
@@ -19,7 +20,7 @@ module.exports = {
 
       while (cursor)
       {
-        res += basis.dom.outerHTML(cursor);
+        res += outerHTML(cursor);
         cursor = cursor.nextSibling;
       }
 
@@ -50,16 +51,16 @@ module.exports = {
             {
               name: 'Template baseURI on theme change, when templates on different locations',
               test: function(){
-                basis.template.theme('base').define('test', basis.resource('./foo/1.tmpl'));
-                basis.template.theme('custom').define('test', basis.resource('./foo/custom/2.tmpl'));
-                basis.template.setTheme('base');
+                nsTemplate.theme('base').define('test', basis.resource('./foo/1.tmpl'));
+                nsTemplate.theme('custom').define('test', basis.resource('./foo/custom/2.tmpl'));
+                nsTemplate.setTheme('base');
 
-                var tmpl = new basis.template.html.Template(basis.template.get('test'));
+                var tmpl = new HtmlTemplate(nsTemplate.get('test'));
                 tmpl.createInstance(); // trigger for template parsing
                 this.is(1, tmpl.resources.length);
                 this.is(basis.path.resolve('foo/1.css'), tmpl.resources[0]);
 
-                basis.template.setTheme('custom');
+                nsTemplate.setTheme('custom');
                 this.is(1, tmpl.resources.length);
                 this.is(basis.path.resolve('foo/custom/2.css'), tmpl.resources[0]);
               }
