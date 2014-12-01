@@ -36,9 +36,9 @@ var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
 * Converts HTML tokens in string to UTF symbols.
 * i.e. '2014 &copy; foo &#8594; bar' -> '2014 © foo → bar'
 * @param {string} string
-* @param {string}
+* @return {string}
 */
-var untoken = (function(){
+var untoken = (function(string){
   var tokenMap = {};
   var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
   var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
@@ -228,8 +228,8 @@ function postProcessing(tokens){
       }
 
       // join text nodes
-      if (token.type == TYPE_TEXT)
-        if (prev && prev.type == TYPE_TEXT)
+      if (token.type == TYPE_TEXT && !token.refs)
+        if (prev && prev.type == TYPE_TEXT && !prev.refs)
         {
           prev.value += token.value;
           prev.end_ = token.end_;
