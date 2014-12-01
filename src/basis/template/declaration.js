@@ -32,14 +32,7 @@ var TEXT_VALUE = consts.TEXT_VALUE;
 var COMMENT_VALUE = consts.COMMENT_VALUE;
 
 var IDENT = /^[a-z_][a-z0-9_\-]*$/i;
-var CLASS_ATTR_PARTS = /(\S+)/g;
-var CLASS_ATTR_BINDING = /^((?:[a-z_][a-z0-9_\-]*)?(?::(?:[a-z_][a-z0-9_\-]*)?)?)\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
-var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
-var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
-var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
 var ATTR_EVENT_RX = /^event-(.+)$/;
-var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
-var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
 
 
 function genIsolateMarker(){
@@ -51,46 +44,12 @@ function genIsolateMarker(){
 * make compiled version of template
 */
 var makeDeclaration = (function(){
-  var tokenMap = {};
-  var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
   var includeStack = [];
   var styleNamespaceIsolate = {};
   var styleNamespaceResource = {};
 
-  // load token map when node evironment, because html parsing is not available
-  // comment it, to not include code to build
-  /** @cut */ if (basis.NODE_ENV || true)
-  /** @cut */   tokenMap = require('./htmlentity.json');
-
   function name(token){
     return (token.prefix ? token.prefix + ':' : '') + token.name;
-  }
-
-  function namedCharReplace(m, token){
-    if (!tokenMap[token])
-    {
-      if (token.charAt(0) == '#')
-      {
-        tokenMap[token] = String.fromCharCode(
-          token.charAt(1) == 'x' || token.charAt(1) == 'X'
-            ? parseInt(token.substr(2), 16)
-            : token.substr(1)
-        );
-      }
-      else
-      {
-        if (tokenElement)
-        {
-          tokenElement.innerHTML = m;
-          tokenMap[token] = tokenElement.firstChild ? tokenElement.firstChild.nodeValue : m;
-        }
-      }
-    }
-    return tokenMap[token] || m;
-  }
-
-  function untoken(value){
-    return value.replace(NAMED_CHARACTER_REF, namedCharReplace);
   }
 
   function refList(token){
@@ -100,117 +59,6 @@ var makeDeclaration = (function(){
       return 0;
 
     return array;
-  }
-
-  function buildAttrExpression(parts){
-    var bindName;
-    var names = [];
-    var expression = [];
-    var map = {};
-
-    for (var j = 0; j < parts.length; j++)
-      if (j % 2)
-      {
-        bindName = parts[j];
-
-        if (!map[bindName])
-        {
-          map[bindName] = names.length;
-          names.push(bindName);
-        }
-
-        expression.push(map[bindName]);
-      }
-      else
-      {
-        if (parts[j])
-          expression.push(untoken(parts[j]));
-      }
-
-    return [names, expression];
-  }
-
-  function processAttr(name, value){
-    var bindings = 0;
-    var parts;
-    var m;
-
-    // other attributes
-    if (value)
-    {
-      switch (name)
-      {
-        case 'class':
-          if (parts = value.match(CLASS_ATTR_PARTS))
-          {
-            var newValue = [];
-
-            bindings = [];
-
-            for (var j = 0, part; part = parts[j]; j++)
-            {
-              if (m = part.match(CLASS_ATTR_BINDING))
-                bindings.push([m[1] || '', m[2]]);
-              else
-                newValue.push(part);
-            }
-
-            // set new value
-            value = newValue.join(' ');
-          }
-          break;
-
-        case 'style':
-          var props = [];
-
-          bindings = [];
-          if (parts = value.match(STYLE_ATTR_PARTS))
-          {
-            for (var j = 0, part; part = parts[j]; j++)
-            {
-              var m = part.match(STYLE_PROPERTY);
-              var propertyName = m[1];
-              var value = m[2].trim();
-
-              var valueParts = value.split(STYLE_ATTR_BINDING);
-              if (valueParts.length > 1)
-              {
-                var expr = buildAttrExpression(valueParts);
-                expr.push(propertyName);
-                bindings.push(expr);
-              }
-              else
-                props.push(propertyName + ': ' + untoken(value));
-            }
-          }
-          else
-          {
-            /** @cut */ if (/\S/.test(value))
-            /** @cut */   basis.dev.warn('Bad value for style attribute (value ignored):', value);
-          }
-
-          value = props.join('; ');
-          if (value)
-            value += ';';
-          break;
-
-        default:
-          parts = value.split(ATTR_BINDING);
-          if (parts.length > 1)
-            bindings = buildAttrExpression(parts);
-          else
-            value = untoken(value);
-      }
-    }
-
-    if (bindings && !bindings.length)
-      bindings = 0;
-
-    return {
-      binding: bindings,
-      value: value,
-      type: ATTR_TYPE_BY_NAME[name] || 2
-    };
   }
 
   function attrs(token, declToken, optimizeSize){
@@ -248,22 +96,21 @@ var makeDeclaration = (function(){
         continue;
       }
 
-      var parsed = processAttr(attr.name, attr.value);
       var item = [
-        parsed.type,            // TOKEN_TYPE = 0
-        parsed.binding,         // TOKEN_BINDINGS = 1
+        attr.type,              // TOKEN_TYPE = 0
+        attr.binding,           // TOKEN_BINDINGS = 1
         refList(attr)           // TOKEN_REFS = 2
       ];
 
       // ATTR_NAME = 3
-      if (parsed.type == 2)
+      if (attr.type == 2)
         item.push(name(attr));
 
       // ATTR_VALUE = 4
-      if (parsed.value && (!optimizeSize || !parsed.binding || parsed.type != 2))
-        item.push(parsed.value);
+      if (attr.value && (!optimizeSize || !attr.binding || attr.type != 2))
+        item.push(attr.value);
 
-      if (parsed.type == TYPE_ATTRIBUTE_STYLE)
+      if (attr.type == TYPE_ATTRIBUTE_STYLE)
         styleAttr = item;
 
       result.push(item);
@@ -280,7 +127,7 @@ var makeDeclaration = (function(){
       if (!styleAttr[1])
         styleAttr[1] = [];
 
-      var displayExpr = buildAttrExpression((display.value || display.name).split(ATTR_BINDING));
+      var displayExpr = display.binding || [[], [display.value]];
 
       if (displayExpr[0].length - displayExpr[1].length)
       {
@@ -345,6 +192,16 @@ var makeDeclaration = (function(){
     return result;
   }
 
+  function tokenAttrs_(token){
+    var result = {};
+
+    if (token.attrs)
+      for (var i = 0, attr; attr = token.attrs[i]; i++)
+        result[name(attr)] = attr;
+
+    return result;
+  }
+
   function addUnique(array, items){
     for (var i = 0; i < items.length; i++)
       arrayAdd(array, items[i]);
@@ -383,6 +240,7 @@ var makeDeclaration = (function(){
 
     function modifyAttr(token, name, action){
       var attrs = tokenAttrs(token);
+      var attrs_ = tokenAttrs_(token);
 
       if (name)
         attrs.name = name;
@@ -460,7 +318,11 @@ var makeDeclaration = (function(){
               }
 
               // other attributes
-              var parsed = processAttr(attrs.name, attrs.value);
+              var valueAttr = attrs_.value || {};
+              var parsed = {
+                value: valueAttr.value || '',
+                binding: valueAttr.binding || ''
+              };
 
               itAttrToken[TOKEN_BINDINGS] = parsed.binding;
 
@@ -479,7 +341,11 @@ var makeDeclaration = (function(){
               break;
 
             case 'append':
-              var parsed = processAttr(attrs.name, attrs.value);
+              var valueAttr = attrs_.value || {};
+              var parsed = {
+                value: valueAttr.value || '',
+                binding: valueAttr.binding || ''
+              };
 
               if (!isEvent)
               {
@@ -581,6 +447,7 @@ var makeDeclaration = (function(){
           if (token.prefix == 'b')
           {
             var elAttrs = tokenAttrs(token);
+            var elAttrs_ = tokenAttrs_(token);
 
             switch (token.name)
             {
@@ -691,7 +558,7 @@ var makeDeclaration = (function(){
                   // prevent recursion
                   if (includeStack.indexOf(resource) == -1)
                   {
-                    var isolatePrefix = 'isolate' in elAttrs ? elAttrs.isolate || genIsolateMarker() : '';
+                    var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
                     var decl;
 
                     if (!isDocumentIdRef)
@@ -723,19 +590,19 @@ var makeDeclaration = (function(){
                     var instructions = (token.children || []).slice();
                     var styleNSPrefixMap = basis.object.slice(decl.styleNSPrefix);
 
-                    if (elAttrs['class'])
+                    if (elAttrs_['class'])
+                    {
                       instructions.push({
                         type: TYPE_ELEMENT,
                         prefix: 'b',
                         name: 'append-class',
                         attrs: [
-                          {
-                            type: TYPE_ATTRIBUTE,
-                            name: 'value',
-                            value: elAttrs['class']
-                          }
+                          basis.object.extend(basis.object.slice(elAttrs_['class']), {
+                            name: 'value'
+                          })
                         ]
                       });
+                    }
 
                     if (elAttrs.id)
                       instructions.push({
@@ -983,7 +850,7 @@ var makeDeclaration = (function(){
 
           // TEXT_VALUE = 3
           if (!refs || token.value != '{' + refs.join('|') + '}')
-            item.push(untoken(token.value));
+            item.push(token.value);
 
           break;
 
@@ -1000,7 +867,7 @@ var makeDeclaration = (function(){
           // COMMENT_VALUE = 3
           if (!options.optimizeSize)
             if (!refs || token.value != '{' + refs.join('|') + '}')
-              item.push(untoken(token.value));
+              item.push(token.value);
 
           break;
       }

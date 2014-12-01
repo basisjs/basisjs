@@ -3,6 +3,7 @@ var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
 var TYPE_TEXT = consts.TYPE_TEXT;
 var TYPE_COMMENT = consts.TYPE_COMMENT;
+var ATTR_TYPE_BY_NAME = consts.ATTR_TYPE_BY_NAME;
 
 // parsing variables
 var SYNTAX_ERROR = 'Invalid or unsupported syntax';
@@ -15,13 +16,230 @@ var COMMENT = /(.|[\r\n])*?-->/g;
 var CLOSE_TAG = /([a-z_][a-z0-9_\-]*(?::[a-z_][a-z0-9_\-]*)?)>/ig;
 var REFERENCE = /([a-z_][a-z0-9_]*)(\||\}\s*)/ig;
 var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
+var QUOTE_UNESCAPE = /\\"/g;
 var BREAK_TAG_PARSE = /^/g;
 var SINGLETON_TAG = /^(area|base|br|col|command|embed|hr|img|input|link|meta|param|source)$/i;
 var TAG_IGNORE_CONTENT = {
   text: /((?:.|[\r\n])*?)(?:<\/b:text>|$)/g,
   style: /((?:.|[\r\n])*?)(?:<\/b:style>|$)/g
 };
-var quoteUnescape = /\\"/g;
+
+var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
+var CLASS_ATTR_PARTS = /(\S+)/g;
+var CLASS_ATTR_BINDING = /^((?:[a-z_][a-z0-9_\-]*)?(?::(?:[a-z_][a-z0-9_\-]*)?)?)\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
+var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
+var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
+var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
+
+
+/**
+* Converts HTML tokens in string to UTF symbols.
+* i.e. '2014 &copy; foo &#8594; bar' -> '2014 © foo → bar'
+* @param {string} string
+* @param {string}
+*/
+var untoken = (function(){
+  var tokenMap = {};
+  var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
+  var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
+
+  // load token map when node evironment, because html parsing is not available
+  // comment it, to not include code to build
+  /** @cut */ if (basis.NODE_ENV || true)
+  /** @cut */   tokenMap = require('./htmlentity.json');
+
+  function namedCharReplace(m, token){
+    if (!tokenMap[token])
+    {
+      if (token.charAt(0) == '#')
+      {
+        tokenMap[token] = String.fromCharCode(
+          token.charAt(1) == 'x' || token.charAt(1) == 'X'
+            ? parseInt(token.substr(2), 16)
+            : token.substr(1)
+        );
+      }
+      else
+      {
+        if (tokenElement)
+        {
+          tokenElement.innerHTML = m;
+          tokenMap[token] = tokenElement.firstChild ? tokenElement.firstChild.nodeValue : m;
+        }
+      }
+    }
+    return tokenMap[token] || m;
+  }
+
+  return function untoken(string){
+    return String(string).replace(NAMED_CHARACTER_REF, namedCharReplace);
+  };
+})();
+
+function buildAttrExpression(parts){
+  var bindName;
+  var names = [];
+  var expression = [];
+  var map = {};
+
+  for (var j = 0; j < parts.length; j++)
+    if (j % 2)
+    {
+      bindName = parts[j];
+
+      if (!map[bindName])
+      {
+        map[bindName] = names.length;
+        names.push(bindName);
+      }
+
+      expression.push(map[bindName]);
+    }
+    else
+    {
+      if (parts[j])
+        expression.push(untoken(parts[j]));
+    }
+
+  return [names, expression];
+}
+
+function processAttr(name, token){
+  var value = token.value;
+  var bindings = 0;
+  var parts;
+  var m;
+
+  // other attributes
+  if (value)
+  {
+    switch (name)
+    {
+      case 'class':
+        if (parts = value.match(CLASS_ATTR_PARTS))
+        {
+          var newValue = [];
+
+          bindings = [];
+
+          for (var j = 0, part; part = parts[j]; j++)
+          {
+            if (m = part.match(CLASS_ATTR_BINDING))
+              bindings.push([m[1] || '', m[2]]);
+            else
+              newValue.push(part);
+          }
+
+          // set new value
+          value = newValue.join(' ');
+        }
+        break;
+
+      case 'style':
+        var props = [];
+
+        bindings = [];
+        if (parts = value.match(STYLE_ATTR_PARTS))
+        {
+          for (var j = 0, part; part = parts[j]; j++)
+          {
+            var m = part.match(STYLE_PROPERTY);
+            var propertyName = m[1];
+            var value = m[2].trim();
+
+            var valueParts = value.split(STYLE_ATTR_BINDING);
+            if (valueParts.length > 1)
+            {
+              var expr = buildAttrExpression(valueParts);
+              expr.push(propertyName);
+              bindings.push(expr);
+            }
+            else
+              props.push(propertyName + ': ' + untoken(value));
+          }
+        }
+        else
+        {
+          /** @cut */ if (/\S/.test(value))
+          /** @cut */   basis.dev.warn('Bad value for style attribute (value ignored):', value);
+        }
+
+        value = props.join('; ');
+        if (value)
+          value += ';';
+        break;
+
+      default:
+        parts = value.split(ATTR_BINDING);
+        if (parts.length > 1)
+          bindings = buildAttrExpression(parts);
+        else
+          value = untoken(value);
+    }
+  }
+
+  if (bindings && !bindings.length)
+    bindings = 0;
+
+  token.binding = bindings;
+  token.value = value;
+  token.type = ATTR_TYPE_BY_NAME[name] || 2;
+}
+
+function postProcessing(tokens){
+  function tokenName(token){
+    return (token.prefix ? token.prefix + ':' : '') + token.name;
+  }
+
+  function getTokenAttrs(token){
+    return token.attrs.reduce(function(res, attr){
+      res[tokenName(attr)] = attr.value;
+      return res;
+    }, {});
+  }
+
+  function walk(tokens){
+    var token;
+    var prev;
+
+    for (var i = 0; token = tokens[i++]; prev = token)
+    {
+      if (token.type == TYPE_ELEMENT)
+      {
+        // process attribute content
+        var attrs = getTokenAttrs(token);
+        for (var j = 0, attr; attr = token.attrs[j++];)
+        {
+          var mode = attr.name;
+
+          if (token.prefix == 'b' && attr.name == 'value')
+          {
+            if (/^(|append-|set-|remove-)class$/.test(token.name))
+              mode = 'class';
+            else if (/^(|append-|set-|remove-)attr$/.test(token.name))
+              mode = attrs.name;
+          }
+
+          processAttr(mode, attr);
+        }
+
+        // walk recursive
+        walk(token.children);
+      }
+
+      // join text nodes
+      if (token.type == TYPE_TEXT)
+        if (prev && prev.type == TYPE_TEXT)
+        {
+          prev.value += token.value;
+          prev.end_ = token.end_;
+          tokens.splice(--i, 1);
+        }
+    }
+  }
+
+  walk(tokens);
+}
 
 /**
 * Parse html into tokens.
@@ -105,7 +323,7 @@ function tokenize(source){
               end_: textEndPos,
               type: TYPE_TEXT,
               len: sourceText.length,
-              value: sourceText
+              value: untoken(sourceText)
             });
         }
 
@@ -270,7 +488,7 @@ function tokenize(source){
         break;
 
       case COMMENT:
-        token.value = source.substring(bufferPos, pos - 3);
+        token.value = untoken(source.substring(bufferPos, pos - 3));
         token.end_ = pos;
         state = TEXT;
         break;
@@ -288,7 +506,7 @@ function tokenize(source){
           if (token.type == TYPE_TEXT)
           {
             pos -= m[2].length - 1;
-            token.value = source.substring(bufferPos, pos);
+            token.value = untoken(source.substring(bufferPos, pos));
             token.end_ = pos;
             state = TEXT;
           }
@@ -316,7 +534,7 @@ function tokenize(source){
         break;
 
       case ATTRIBUTE_VALUE:
-        token.value = m[1].replace(quoteUnescape, '"');
+        token.value = untoken(m[1].replace(QUOTE_UNESCAPE, '"'));
         token.end_ = startPos + m[1].length + 2;
 
         token = {
@@ -334,7 +552,7 @@ function tokenize(source){
           start_: startPos,
           end_: startPos + m[1].length,
           type: TYPE_TEXT,
-          value: m[1]
+          value: untoken(m[1])
         });
 
         lastTag = tagStack.pop();
@@ -355,8 +573,11 @@ function tokenize(source){
       start_: textStateEndPos,
       end_: pos,
       type: TYPE_TEXT,
-      value: source.substring(textStateEndPos, pos)
+      value: untoken(source.substring(textStateEndPos, pos))
     });
+
+  // process attributes binding and join text tokens
+  postProcessing(result);
 
   /** @cut */ if (lastTag.name)
   /** @cut */   result.warns.push('No close tag for <' + lastTag.name + '>');
