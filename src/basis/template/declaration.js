@@ -240,7 +240,7 @@ var makeDeclaration = (function(){
   //
   // main function
   //
-  function process(tokens, template, options, context){
+  function process(tokens, template, options){
 
     function modifyAttr(token, name, action){
       var attrs = tokenAttrs(token);
@@ -457,7 +457,7 @@ var makeDeclaration = (function(){
             {
               case 'style':
                 var styleNamespace = elAttrs.namespace || elAttrs.ns;
-                var styleIsolate = styleNamespace ? styleNamespaceIsolate : (context && context.isolate) || '';
+                var styleIsolate = styleNamespace ? styleNamespaceIsolate : '';
                 var src = addStyle(template, token, elAttrs.src, styleIsolate);
 
                 if (styleNamespace)
