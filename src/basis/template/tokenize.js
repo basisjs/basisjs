@@ -104,7 +104,7 @@ function buildAttrExpression(parts){
   return [names, expression];
 }
 
-function processAttr(token, mode){
+function processAttr(token, mode, convertRange){
   var value = token.value;
   var bindings = 0;
   var parts;
@@ -116,23 +116,42 @@ function processAttr(token, mode){
     switch (mode)
     {
       case 'class':
-        if (parts = value.match(CLASS_ATTR_PARTS))
+        var pos = token.valueRange.start_;
+        var rx = /(\s*)(\S+)/g;
+        var newValue = [];
+        var partMap = [];
+        var binding;
+        bindings = [];
+
+        while (part = rx.exec(value))
         {
-          var newValue = [];
+          var val = part[2];
+          var valInfo = {
+            value: val,
+            range: {
+              start_: pos += part[1].length,
+              end_: pos += val.length
+            }
+          };
 
-          bindings = [];
+          convertRange(valInfo);
 
-          for (var j = 0, part; part = parts[j]; j++)
+          if (m = val.match(CLASS_ATTR_BINDING))
           {
-            if (m = part.match(CLASS_ATTR_BINDING))
-              bindings.push([m[1] || '', m[2]]);
-            else
-              newValue.push(part);
+            binding = [m[1] || '', m[2]];
+            binding.info_ = valInfo;
+            bindings.push(binding);
           }
+          else
+            newValue.push(val);
 
-          // set new value
-          value = newValue.join(' ');
+          partMap.push(valInfo);
         }
+
+        // set new value
+        value = newValue.join(' ');
+        token.map_ = partMap;
+
         break;
 
       case 'style':
@@ -194,7 +213,8 @@ function processAttr(token, mode){
  * @param {[type]} tokens [description]
  * @return {[type]} [description]
  */
-function postProcessing(tokens){
+function postProcessing(tokens, options, source){
+
   function tokenName(token){
     return (token.prefix ? token.prefix + ':' : '') + token.name;
   }
@@ -204,6 +224,64 @@ function postProcessing(tokens){
       res[tokenName(attr)] = attr.value;
       return res;
     }, {});
+  }
+
+  function buildLocationIndex(){
+    var line = 1;
+    var column = 0;
+
+    lineIdx = new Array(source.length);
+    columnIdx = new Array(source.length);
+
+    for (var i = 0; i < source.length + 1; i++)
+    {
+      lineIdx[i] = line;
+      columnIdx[i] = column;
+
+      if (source[i] === '\n')
+      {
+        line++;
+        column = 0;
+      }
+      else
+        column++;
+    }
+  }
+
+
+  function findLocationByOffset(offset){
+    return {
+      line: lineIdx[offset],
+      column: columnIdx[offset]
+    };
+  }
+
+  function getLocationFromRange(range){
+    return {
+      start: findLocationByOffset(range.start_),
+      end: findLocationByOffset(range.end_)
+    };
+  }
+
+  function convertRange(token){
+    if (options.loc)
+    {
+      token.loc = getLocationFromRange(token.range);
+      if (token.valueRange)
+        token.valueLoc = getLocationFromRange(token.valueRange);
+    }
+
+    if (options.range)
+    {
+      token.range = [token.range.start_, token.range.end_];
+      if (token.valueRange)
+        token.valueRange = [token.valueRange.start_, token.valueRange.end_];
+    }
+    else
+    {
+      delete token.range;
+      delete token.valueRange;
+    }
   }
 
   function walk(tokens){
@@ -252,13 +330,15 @@ function postProcessing(tokens){
           if (mode)
           {
             // process bindings and decode HTML tokens
-            processAttr(attr, mode);
+            processAttr(attr, mode, convertRange);
           }
           else
           {
-            // just decode HTML tokens in value
-            token.value = decodeHTMLTokens(token.value);
+            // just decode HTML tokens in attribute value
+            attr.value = decodeHTMLTokens(attr.value);
           }
+
+          convertRange(attr);
         }
 
         // walk recursive
@@ -286,8 +366,16 @@ function postProcessing(tokens){
         // decode HTML tokens in value
         token.value = decodeHTMLTokens(token.value);
       }
+
+      convertRange(token);
     }
   }
+
+  var lineIdx;
+  var columnIdx;
+
+  if (options.loc)
+    buildLocationIndex();
 
   walk(tokens);
 }
@@ -297,24 +385,29 @@ function postProcessing(tokens){
 * @param {string} source Source of template
 * @return {Array.<object>}
 */
-function tokenize(source){
+function tokenize(source, options){
   var result = [];
   var tagStack = [];
   var lastTag = { children: result };
-  var token;
-  var bufferPos;
-  var startPos;
   var parseTag = false;
-  var textStateEndPos = 0;
-  var textEndPos;
-
+  var token;
   var state = TEXT;
   var pos = 0;
+  var textStateEndPos = 0;
+  var textEndPos;
+  var bufferPos;
+  var startPos;
   var m;
 
-  source = source.trim();
   /** @cut */ result.source_ = source;
   /** @cut */ result.warns = [];
+
+  // skip starting whitespaces
+  if (!options || options.trim !== false)
+  {
+    pos = textStateEndPos = source.match(/^\s*/)[0].length;
+    source = source.trimRight();  // TODO: replace for basis.string.trimRight
+  }
 
   while (pos < source.length || state != TEXT)
   {
@@ -370,11 +463,13 @@ function tokenize(source){
 
           if (sourceText)
             lastTag.children.push({
-              start_: textStateEndPos,
-              end_: textEndPos,
               type: TYPE_TEXT,
               len: sourceText.length,
-              value: sourceText
+              value: sourceText,
+              range: {
+                start_: textStateEndPos,
+                end_: textEndPos
+              }
             });
         }
 
@@ -383,20 +478,24 @@ function tokenize(source){
         if (m[3])
         {
           lastTag.children.push({
-            start_: textEndPos,
-            end_: pos,
             type: TYPE_TEXT,
             refs: ['l10n:' + m[3]],
-            value: '{l10n:' + m[3] + '}'
+            value: '{l10n:' + m[3] + '}',
+            range: {
+              start_: textEndPos,
+              end_: pos
+            }
           });
         }
         else if (m[2] == '{')
         {
           bufferPos = pos - 1;
           lastTag.children.push(token = {
-            start_: textEndPos,
-            end_: textEndPos,
-            type: TYPE_TEXT
+            type: TYPE_TEXT,
+            range: {
+              start_: textEndPos,
+              end_: textEndPos
+            }
           });
           state = REFERENCE;
         }
@@ -410,9 +509,11 @@ function tokenize(source){
           else //if (m[3] == '!--')
           {
             lastTag.children.push(token = {
-              start_: textEndPos,
-              end_: textEndPos,
-              type: TYPE_COMMENT
+              type: TYPE_COMMENT,
+              range: {
+                start_: textEndPos,
+                end_: textEndPos
+              }
             });
 
             if (m[5])
@@ -433,11 +534,13 @@ function tokenize(source){
           tagStack.push(lastTag);
 
           lastTag.children.push(token = {
-            start_: textEndPos,
-            end_: textEndPos,
             type: TYPE_ELEMENT,
             attrs: [],
-            children: []
+            children: [],
+            range: {
+              start_: textEndPos,
+              end_: textEndPos
+            }
           });
           lastTag = token;
 
@@ -451,10 +554,12 @@ function tokenize(source){
         {
           //throw 'Wrong close tag';
           lastTag.children.push({
-            start_: startPos - 2,
-            end_: startPos + m[0].length,
             type: TYPE_TEXT,
-            value: '</' + m[0]
+            value: '</' + m[0],
+            range: {
+              start_: startPos - 2,
+              end_: startPos + m[0].length
+            }
           });
         }
         else
@@ -479,7 +584,7 @@ function tokenize(source){
         {
           // store name (it may be null when check for attribute and end)
           token.name = m[1];
-          token.end_ = startPos + m[1].length;
+          token.range.end_ = startPos + m[1].length;
 
           // store attribute
           if (token.type == TYPE_ATTRIBUTE)
@@ -499,7 +604,7 @@ function tokenize(source){
         if (m[3]) // end tag declaration
         {
           parseTag = false;
-          lastTag.end_ = pos;
+          lastTag.range.end_ = pos;
 
           if (m[3] == '/>' ||
               (!lastTag.prefix && SINGLETON_TAG.test(lastTag.name)))
@@ -531,16 +636,18 @@ function tokenize(source){
 
         // m[2] == '\s+' next attr, state doesn't change
         token = {
-          start_: pos,
-          end_: pos,
-          type: TYPE_ATTRIBUTE
+          type: TYPE_ATTRIBUTE,
+          range: {
+            start_: pos,
+            end_: pos
+          }
         };
         state = ATTRIBUTE_NAME_OR_END;
         break;
 
       case COMMENT:
         token.value = source.substring(bufferPos, pos - 3);
-        token.end_ = pos;
+        token.range.end_ = pos;
         state = TEXT;
         break;
 
@@ -558,7 +665,7 @@ function tokenize(source){
           {
             pos -= m[2].length - 1;
             token.value = source.substring(bufferPos, pos);
-            token.end_ = pos;
+            token.range.end_ = pos;
             state = TEXT;
           }
           else if (token.type == TYPE_COMMENT)
@@ -573,9 +680,11 @@ function tokenize(source){
           else // ATTRIBUTE || ELEMENT
           {
             token = {
-              start_: pos,
-              end_: pos,
-              type: TYPE_ATTRIBUTE
+              type: TYPE_ATTRIBUTE,
+              range: {
+                start_: pos,
+                end_: pos
+              }
             };
             state = ATTRIBUTE_NAME_OR_END;
           }
@@ -586,12 +695,18 @@ function tokenize(source){
 
       case ATTRIBUTE_VALUE:
         token.value = m[1].replace(QUOTE_UNESCAPE, '"');
-        token.end_ = startPos + m[1].length + 2;
+        token.range.end_ = pos;
+        token.valueRange = {
+          start_: startPos + 1,
+          end_: pos - 1
+        };
 
         token = {
-          start_: pos,
-          end_: pos,
-          type: TYPE_ATTRIBUTE
+          type: TYPE_ATTRIBUTE,
+          range: {
+            start_: pos,
+            end_: pos
+          }
         };
         state = ATTRIBUTE_NAME_OR_END;
 
@@ -600,10 +715,12 @@ function tokenize(source){
       case TAG_IGNORE_CONTENT.text:
       case TAG_IGNORE_CONTENT.style:
         lastTag.children.push({
-          start_: startPos,
-          end_: startPos + m[1].length,
           type: TYPE_TEXT,
-          value: m[1]
+          value: m[1],
+          range: {
+            start_: startPos,
+            end_: startPos + m[1].length
+          }
         });
 
         lastTag = tagStack.pop();
@@ -621,14 +738,16 @@ function tokenize(source){
 
   if (textStateEndPos != pos)
     lastTag.children.push({
-      start_: textStateEndPos,
-      end_: pos,
       type: TYPE_TEXT,
-      value: source.substring(textStateEndPos, pos)
+      value: source.substring(textStateEndPos, pos),
+      range: {
+        start_: textStateEndPos,
+        end_: pos
+      }
     });
 
-  // process attributes binding and join text tokens
-  postProcessing(result);
+  // process attributes binding, join text tokens, normalize ranges and add location info
+  postProcessing(result, options || {}, source);
 
   /** @cut */ if (lastTag.name)
   /** @cut */   result.warns.push('No close tag for <' + lastTag.name + '>');

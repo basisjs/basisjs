@@ -66,96 +66,6 @@ var makeDeclaration = (function(){
     return array;
   }
 
-  function attrs(token, declToken, optimizeSize){
-    var attrs = token.attrs;
-    var result = [];
-    var styleAttr;
-    var display;
-    var m;
-
-    for (var i = 0, attr; attr = attrs[i]; i++)
-    {
-      // process special attributes (basis namespace)
-      if (attr.prefix == 'b')
-      {
-        switch (attr.name)
-        {
-          case 'ref':
-            var refs = (attr.value || '').trim().split(/\s+/);
-            for (var j = 0; j < refs.length; j++)
-              addTokenRef(declToken, refs[j]);
-            break;
-
-          case 'show':
-          case 'hide':
-            display = attr;
-            break;
-        }
-
-        continue;
-      }
-
-      if (m = attr.name.match(ATTR_EVENT_RX))
-      {
-        result.push(m[1] == attr.value ? [TYPE_ATTRIBUTE_EVENT, m[1]] : [TYPE_ATTRIBUTE_EVENT, m[1], attr.value]);
-        continue;
-      }
-
-      var item = [
-        attr.type,              // TOKEN_TYPE = 0
-        attr.binding,           // TOKEN_BINDINGS = 1
-        refList(attr)           // TOKEN_REFS = 2
-      ];
-
-      // ATTR_NAME = 3
-      if (attr.type == 2)
-        item.push(name(attr));
-
-      // ATTR_VALUE = 4
-      if (attr.value && (!optimizeSize || !attr.binding || attr.type != 2))
-        item.push(attr.value);
-
-      if (attr.type == TYPE_ATTRIBUTE_STYLE)
-        styleAttr = item;
-
-      result.push(item);
-    }
-
-    if (display)
-    {
-      if (!styleAttr)
-      {
-        styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
-        result.push(styleAttr);
-      }
-
-      if (!styleAttr[1])
-        styleAttr[1] = [];
-
-      var displayExpr = display.binding || [[], [display.value]];
-
-      if (displayExpr[0].length - displayExpr[1].length)
-      {
-        // expression has non-binding parts, treat as constant
-        styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') +
-          // visible when:
-          //   show & value is not empty
-          //   or
-          //   hide & value is empty
-          (display.name == 'show' ^ display.value === '' ? '' : 'display: none');
-      }
-      else
-      {
-        if (display.name == 'show')
-          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
-
-        styleAttr[1].push(displayExpr.concat('display', display.name));
-      }
-    }
-
-    return result.length ? result : 0;
-  }
-
   function addTokenRef(token, refName){
     if (!token[TOKEN_REFS])
       token[TOKEN_REFS] = [];
@@ -238,10 +148,126 @@ var makeDeclaration = (function(){
     return url;
   }
 
+  function getLocation(template, loc){
+    if (loc)
+      return template.sourceUrl + ':' + loc.start.line + ':' + loc.end.line;
+  }
+
+  function addTemplateWarn(template, options, message, loc){
+    /** @cut */ if (loc && options.loc)
+    /** @cut */ {
+    /** @cut */   message = Object(message);
+    /** @cut */   message.loc = typeof loc == 'string' ? loc : getLocation(template, loc);
+    /** @cut */ }
+
+    template.warns.push(message);
+  }
+
+  function applyTokenLocation(template, options, dest, source){
+    /** @cut */ if (options.loc && source.loc && !dest.loc)
+    /** @cut */   dest.loc = getLocation(template, source.loc);
+  }
+
   //
   // main function
   //
   function process(tokens, template, options){
+
+    function addTokenLocation(item, token){
+      applyTokenLocation(template, options, item, token);
+    }
+
+    function attrs(token, declToken){
+      var attrs = token.attrs;
+      var result = [];
+      var styleAttr;
+      var display;
+      var m;
+
+      for (var i = 0, attr; attr = attrs[i]; i++)
+      {
+        // process special attributes (basis namespace)
+        if (attr.prefix == 'b')
+        {
+          switch (attr.name)
+          {
+            case 'ref':
+              var refs = (attr.value || '').trim().split(/\s+/);
+              for (var j = 0; j < refs.length; j++)
+                addTokenRef(declToken, refs[j]);
+              break;
+
+            case 'show':
+            case 'hide':
+              display = attr;
+              break;
+          }
+
+          continue;
+        }
+
+        if (m = attr.name.match(ATTR_EVENT_RX))
+        {
+          result.push(m[1] == attr.value ? [TYPE_ATTRIBUTE_EVENT, m[1]] : [TYPE_ATTRIBUTE_EVENT, m[1], attr.value]);
+          continue;
+        }
+
+        var item = [
+          attr.type,              // TOKEN_TYPE = 0
+          attr.binding,           // TOKEN_BINDINGS = 1
+          refList(attr)           // TOKEN_REFS = 2
+        ];
+
+        // ATTR_NAME = 3
+        if (attr.type == 2)
+          item.push(name(attr));
+
+        // ATTR_VALUE = 4
+        if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != 2))
+          item.push(attr.value);
+
+        if (attr.type == TYPE_ATTRIBUTE_STYLE)
+          styleAttr = item;
+
+        /** @cut */ addTokenLocation(item, attr);
+
+        result.push(item);
+      }
+
+      if (display)
+      {
+        if (!styleAttr)
+        {
+          styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
+          result.push(styleAttr);
+        }
+
+        if (!styleAttr[1])
+          styleAttr[1] = [];
+
+        var displayExpr = display.binding || [[], [display.value]];
+
+        if (displayExpr[0].length - displayExpr[1].length)
+        {
+          // expression has non-binding parts, treat as constant
+          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') +
+            // visible when:
+            //   show & value is not empty
+            //   or
+            //   hide & value is empty
+            (display.name == 'show' ^ display.value === '' ? '' : 'display: none');
+        }
+        else
+        {
+          if (display.name == 'show')
+            styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
+
+          styleAttr[1].push(displayExpr.concat('display', display.name));
+        }
+      }
+
+      return result.length ? result : 0;
+    }
 
     function modifyAttr(token, name, action){
       var attrs = tokenAttrs(token);
@@ -764,6 +790,8 @@ var makeDeclaration = (function(){
           item.push.apply(item, attrs(token, item, options.optimizeSize) || []);
           item.push.apply(item, process(token.children, template, options) || []);
 
+          /** @cut */ addTokenLocation(item, token);
+
           break;
 
         case TYPE_TEXT:
@@ -819,6 +847,8 @@ var makeDeclaration = (function(){
           if (!refs || token.value != '{' + refs.join('|') + '}')
             item.push(token.value);
 
+          /** @cut */ addTokenLocation(item, token);
+
           break;
 
         case TYPE_COMMENT:
@@ -835,6 +865,8 @@ var makeDeclaration = (function(){
           if (!options.optimizeSize)
             if (!refs || token.value != '{' + refs.join('|') + '}')
               item.push(token.value);
+
+          /** @cut */ addTokenLocation(item, token);
 
           break;
       }
@@ -940,6 +972,8 @@ var makeDeclaration = (function(){
 
           for (var k = 0, bind; bind = bindings[k]; k++)
           {
+            /** @cut */ applyTokenLocation(template, options, bind, bind.info_);
+
             if (bind.length > 2)  // bind already processed
               continue;
 
@@ -966,7 +1000,7 @@ var makeDeclaration = (function(){
             }
             else
             {
-              /** @cut */ template.warns.push('Unpredictable value `' + bindName + '` in class binding: ' + bind[0] + '{' + bind[1] + '}');
+              /** @cut */ addTemplateWarn(template, options, 'Unpredictable value `' + bindName + '` in class binding: ' + bind[0] + '{' + bind[1] + '} ', bind.loc);
               unpredictable++;
             }
           }
@@ -1067,7 +1101,7 @@ var makeDeclaration = (function(){
     if (!source.templateTokens)
     {
       /** @cut */ source_ = source;
-      source = tokenize(String(source));
+      source = tokenize(String(source), { loc: true || !!options.loc });
     }
 
     // add tokenizer warnings if any
