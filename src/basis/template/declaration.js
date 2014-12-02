@@ -37,6 +37,7 @@ var ATTR_EVENT_RX = /^event-(.+)$/;
 var Template = function(){};
 var L10nProxyToken = function(){};
 var getL10nTemplate = function(){};
+var resolveResource = function(){};
 
 
 function genIsolateMarker(){
@@ -526,7 +527,7 @@ var makeDeclaration = (function(){
                 var templateSrc = elAttrs.src;
                 if (templateSrc)
                 {
-                  var resource = options.resolveResource(templateSrc, template.baseURI);
+                  var resource = resolveResource(templateSrc, template.baseURI);
 
                   if (!resource)
                   {
@@ -539,28 +540,15 @@ var makeDeclaration = (function(){
                   if (includeStack.indexOf(resource) == -1)
                   {
                     var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
-                    var decl;
+                    var decl = getDeclFromSource(resource, '', true, options);
 
                     arrayAdd(template.deps, resource);
 
-                    if (resource.templateId) // temporary simple check for Template instance
-                    {                        // TODO: make universal solution
-                      // source wrapper
-                      if (resource.source.bindingBridge)
-                        arrayAdd(template.deps, resource.source);
-
-                      decl = getDeclFromSource(resource.source, resource.baseURI, true, options);
-                    }
-                    else
-                    {
-                      decl = getDeclFromSource(resource, resource.url ? basis.path.dirname(resource.url) + '/' : '', true, options);
-                    }
+                    if (decl.deps)
+                      addUnique(template.deps, decl.deps);
 
                     if (decl.resources && 'no-style' in elAttrs == false)
                       addStyles(template.resources, decl.resources, isolatePrefix);
-
-                    if (decl.deps)
-                      addUnique(template.deps, decl.deps);
 
                     /** @cut */ if (decl.l10n)
                     /** @cut */   addUnique(template.l10n, decl.l10n);
@@ -1222,18 +1210,11 @@ function getDeclFromSource(source, baseURI, clone, options){
   var result = source;
   var sourceUrl;
 
-  if (typeof source == 'function')
+  if (source.bindingBridge)
   {
-    baseURI = 'baseURI' in source ? source.baseURI : baseURI;
+    baseURI = 'baseURI' in source ? source.baseURI : 'url' in source ? basis.path.dirname(source.url) : baseURI;
     sourceUrl = 'url' in source ? source.url : sourceUrl;
-    result = source();
-  }
-
-  if (result instanceof basis.Token)
-  {
-    baseURI = 'baseURI' in result ? result.baseURI : baseURI;
-    sourceUrl = 'url' in result ? result.url : sourceUrl;
-    result = result.get();
+    result = source.bindingBridge.get(source);
   }
 
   if (Array.isArray(result))
@@ -1259,6 +1240,7 @@ function getDeclFromSource(source, baseURI, clone, options){
 
 // TODO: remove
 resource('../template.js').ready(function(exports){
+  resolveResource = exports.resolveResource;
   Template = exports.Template;
   L10nProxyToken = exports.L10nProxyToken;
   getL10nTemplate = exports.getL10nTemplate;

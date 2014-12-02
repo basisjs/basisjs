@@ -10,6 +10,11 @@ module.exports = {
             var template = createTemplate('<b:include src="./test.tmpl"/>');
 
             assert(text(template) == text('resource test'));
+
+            // included source change
+            var newContent = 'updated resource test';
+            basis.resource('./test.tmpl').update(newContent);
+            assert(text(template) == text(newContent));
           }
         },
         {
@@ -18,6 +23,11 @@ module.exports = {
             var template = createTemplate('<b:include src="fixture:test.tmpl"/>');
 
             assert(text(template) == text('fixture template'));
+
+            // included source change
+            var newContent = 'updated fixture test';
+            basis.resource('fixture:test.tmpl').update(newContent);
+            assert(text(template) == text(newContent));
           }
         },
         {
@@ -35,15 +45,41 @@ module.exports = {
             var template = createTemplate('<b:include src="#' + sourceTemplate.templateId + '"/>');
 
             assert(text(template) == text('reference test'));
+
+            // included source change
+            var newContent = 'updated reference test';
+            sourceTemplate.setSource(newContent);
+            assert(text(template) == text(newContent));
+          }
+        },
+        {
+          name: 'template with resource reference <b:include src="#123">',
+          test: function(){
+            var resource = basis.resource.virtual('tmpl', 'template with resource');
+            var sourceTemplate = createTemplate(resource);
+            var template = createTemplate('<b:include src="#' + sourceTemplate.templateId + '"/>');
+
+            assert(text(template) == text('template with resource'));
+
+            // included source change
+            var newContent = 'updated template with resource';
+            resource.update(newContent);
+            assert(text(template) == text(newContent));
           }
         },
         {
           name: 'namespace <b:include src="foo.bar"/>',
           test: function(){
-            nsTemplate.define('include.source.namespace.test', basis.resource.virtual('tmpl', 'namespace test'));
+            var resource = basis.resource.virtual('tmpl', 'namespace test');
+            nsTemplate.define('include.source.namespace.test', resource);
             var template = createTemplate('<b:include src="include.source.namespace.test"/>');
 
             assert(text(template) == text('namespace test'));
+
+            // included source change
+            var newContent = 'updated namespace test';
+            resource.update(newContent);
+            assert(text(template) == text(newContent));
           }
         }
       ]

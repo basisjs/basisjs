@@ -122,8 +122,7 @@
   */
   function buildTemplate(){
     var decl = getDeclFromSource(this.source, this.baseURI, false, {
-      isolate: this.getIsolatePrefix(),
-      resolveResource: resolveResource   // TODO: remove from options
+      isolate: this.getIsolatePrefix()
     });
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens, this);  // makeFunctions
@@ -352,7 +351,11 @@
 
         /** @cut */ basis.dev.warn('basis.template.Template#bindingBridge.detach: handler & context pair not found, nothing was removed');
       },
-      get: function(){
+      get: function(template){
+        var source = template.source;
+        return source && source.bindingBridge
+          ? source.bindingBridge.get(source)
+          : source;
       }
     },
 
@@ -368,6 +371,11 @@
     createInstance: function(object, actionCallback, updateCallback, bindings, bindingInterface){
       buildTemplate.call(this);
       return this.createInstance(object, actionCallback, updateCallback, bindings, bindingInterface);
+    },
+
+    getBinding: function(bindings){
+      buildTemplate.call(this);
+      return this.getBinding(bindings);
     },
 
    /**
@@ -386,11 +394,10 @@
       return 'i' + this.templateId + '__';
     },
 
-    getBinding: function(bindings){
-      buildTemplate.call(this);
-      return this.getBinding(bindings);
-    },
-
+   /**
+    * Set new content source for template.
+    * @param {string|bb-value} source New content source for template.
+    */
     setSource: function(source){
       var oldSource = this.source;
       if (oldSource != source)
