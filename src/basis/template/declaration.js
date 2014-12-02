@@ -7,8 +7,6 @@ var tokenize = require('./tokenize.js');
 var isolateCss = require('./isolateCss.js');
 var consts = require('./const.js');
 var getL10nToken = require('basis.l10n').token;
-var L10nProxyToken = function(){};
-var getL10nTemplate = function(){};
 
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
@@ -33,6 +31,12 @@ var COMMENT_VALUE = consts.COMMENT_VALUE;
 
 var IDENT = /^[a-z_][a-z0-9_\-]*$/i;
 var ATTR_EVENT_RX = /^event-(.+)$/;
+
+
+// TODO: remove
+var Template = function(){};
+var L10nProxyToken = function(){};
+var getL10nTemplate = function(){};
 
 
 function genIsolateMarker(){
@@ -536,6 +540,8 @@ var makeDeclaration = (function(){
                   {
                     var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
                     var decl;
+
+                    arrayAdd(template.deps, resource);
 
                     if (resource.templateId) // temporary simple check for Template instance
                     {                        // TODO: make universal solution
@@ -1251,7 +1257,9 @@ function getDeclFromSource(source, baseURI, clone, options){
   return result;
 }
 
+// TODO: remove
 resource('../template.js').ready(function(exports){
+  Template = exports.Template;
   L10nProxyToken = exports.L10nProxyToken;
   getL10nTemplate = exports.getL10nTemplate;
 });

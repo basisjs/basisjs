@@ -27,9 +27,9 @@
 
   var DECLARATION_VERSION = 2;
 
-  var consts = require('./template/const.js');
-  var getDeclFromSource = require('./template/declaration.js').getDeclFromSource;
-  var makeDeclaration = require('./template/declaration.js').makeDeclaration;
+  var consts = require('basis.template.const');
+  var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
+  var makeDeclaration = require('basis.template.declaration').makeDeclaration;
 
 
   //
@@ -231,33 +231,21 @@
     return resource;
   }
 
-  function resolveResource(src, baseURI){
-    var isTemplateRef = /^#\d+$/.test(src);
-    var isDocumentIdRef = /^id:/.test(src);
-    var resource;
+  function resolveResource(ref, baseURI){
+    // <b:include src="#123"/>
+    if (/^#\d+$/.test(ref))
+      return templateList[ref.substr(1)];
 
-    if (isTemplateRef)
-    {
-      // <b:include src="#123"/>
-      resource = templateList[src.substr(1)];
-    }
-    else if (isDocumentIdRef)
-    {
-      // <b:include src="id:foo"/>
-      resource = resolveSourceByDocumentId(src.substr(3));
-    }
-    else if (/^[a-z0-9\.]+$/i.test(src) && !/\.tmpl$/.test(src))
-    {
-      // <b:include src="foo.bar.baz"/>
-      resource = getSourceByPath(src);
-    }
-    else
-    {
-      // <b:include src="./path/to/file.tmpl"/>
-      resource = basis.resource(basis.resource.resolveURI(src, baseURI, '<b:include src=\"{url}\"/>'));
-    }
+    // <b:include src="id:foo"/>
+    if (/^id:/.test(ref))
+      return resolveSourceByDocumentId(ref.substr(3));
 
-    return resource;
+    // <b:include src="foo.bar.baz"/>
+    if (/^[a-z0-9\.]+$/i.test(ref) && !/\.tmpl$/.test(ref))
+      return getSourceByPath(ref);
+
+    // <b:include src="./path/to/file.tmpl"/>
+    return basis.resource(basis.resource.resolveURI(ref, baseURI, '<b:include src=\"{url}\"/>'));
   }
 
  /**
@@ -1034,6 +1022,7 @@
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     getL10nTemplate: getL10nTemplate,
+    resolveResource: resolveResource, // TODO: remove
 
     // theme
     Theme: Theme,
