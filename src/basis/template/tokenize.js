@@ -45,8 +45,8 @@ var decodeHTMLTokens = (function(string){
 
   // load token map when node evironment, because html parsing is not available
   // comment it, to not include code to build
-  /** @cut */ if (basis.NODE_ENV || true)
-  /** @cut */   tokenMap = require('./htmlentity.json');
+  /** @cut */ if (basis.NODE_ENV)
+  /** @cut */   tokenMap = __nodejsRequire('./htmlentity.json');
 
   function namedCharReplace(m, token){
     if (!tokenMap[token])

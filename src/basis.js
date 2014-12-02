@@ -2458,7 +2458,10 @@
 
   function compileFunction(sourceURL, args, body){
     try {
-      return new Function(args, body
+      return new Function(args,
+        '"use strict";\n' +
+        /** @cut */ (NODE_ENV ? 'var __nodejsRequire = require;\n' : '') +
+        body
         /** @cut */ + '\n\n//# sourceURL=' + pathUtils.origin + sourceURL
       );
     } catch(e) {
@@ -2498,7 +2501,6 @@
     // compile function if required
     if (typeof compiledSourceCode != 'function')
       compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require', 'asset'],
-        '"use strict";\n' +
         sourceCode
       );
 
@@ -2669,70 +2671,21 @@
   * @param {string} dirname
   * @name require
   */
-  var requireNamespace = (function(filename, dirname){
-    var result;
-
-    if (NODE_ENV)
+  var requireNamespace = function(filename, dirname){
+    if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
     {
-      var moduleProto = module.constructor.prototype;
-      result = function(filename, dirname){
-        if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == '.js')
-        {
-          var _compile = moduleProto._compile;
-          var namespace = getNamespace(filename);
-
-          // patch node.js module._compile
-          moduleProto._compile = function(content, filename){
-            this.basis = basis;
-            content =
-              'var __nodejsRequire = require;\n' +
-              'var basis = module.basis;\n' +
-              'var resource = function(filename){ return basis.resource(__dirname + "/" + filename) };\n' +
-              'var require = function(filename, baseURI){ return basis.require(filename, baseURI || __dirname) };\n' +
-              content;
-            _compile.call(extend(this, namespace), content, filename);
-          };
-
-          var exports = require(__dirname + '/' + filename.replace(/\./g, '/'));
-
-          namespace.exports = exports;
-          if (exports && exports.constructor === Object)
-            complete(namespace, exports);
-
-          // restore node.js module._compile
-          moduleProto._compile = _compile;
-
-          return exports;
-        }
-        else
-        {
-          filename = resolveResourceUri(filename, dirname);
-          return require(filename);
-        }
-      };
+      // namespace, like 'foo.bar.baz'
+      filename = resolveNSFilename(filename);
     }
     else
     {
-      result = function(filename, dirname){
-        if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
-        {
-          // namespace, like 'foo.bar.baz'
-          filename = resolveNSFilename(filename);
-        }
-        else
-        {
-          // regular filename
-          filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
-        }
-
-        return getResource(filename).fetch();
-      };
+      // regular filename
+      filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
     }
 
-    /** @cut */ result.displayName = 'basis.require';
-
-    return result;
-  })();
+    return getResource(filename).fetch();
+  };
+  /** @cut */ requireNamespace.displayName = 'basis.require';
 
 
   function patch(filename, patchFn){
