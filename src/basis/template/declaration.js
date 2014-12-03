@@ -538,7 +538,7 @@ var makeDeclaration = (function(){
                       ];
                       break;
                     /** @cut */ default:
-                    /** @cut */   addTemplateWarn(template, options, 'Bad define type `' + elAttrs.type + '` for ' + elAttrs.name, elAttrs_.type.valueLoc);
+                    /** @cut */   addTemplateWarn(template, options, 'Bad define type `' + elAttrs.type + '` for ' + elAttrs.name, elAttrs_.type && elAttrs_.type.valueLoc);
                   }
 
                   if (define)

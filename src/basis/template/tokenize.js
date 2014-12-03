@@ -335,7 +335,7 @@ function postProcessing(tokens, options, source){
           else
           {
             // just decode HTML tokens in attribute value
-            attr.value = decodeHTMLTokens(attr.value);
+            attr.value = decodeHTMLTokens(attr.value || '');
           }
 
           convertRange(attr);
