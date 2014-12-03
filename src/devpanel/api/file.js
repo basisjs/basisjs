@@ -124,5 +124,13 @@ module.exports = {
       if (file)
         file.save(content);
     }
+  },
+  openFile: function(filename, content){
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+
+    if (basisjsTools && typeof basisjsTools.openFile == 'function')
+    {
+      basisjsTools.openFile(basis.path.resolve(filename));
+    }
   }
 };
