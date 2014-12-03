@@ -150,7 +150,7 @@ var makeDeclaration = (function(){
 
   function getLocation(template, loc){
     if (loc)
-      return template.sourceUrl + ':' + loc.start.line + ':' + loc.end.line;
+      return template.sourceUrl + ':' + loc.start.line + ':' + (loc.start.column + 1);
   }
 
   function addTemplateWarn(template, options, message, loc){
@@ -278,13 +278,13 @@ var makeDeclaration = (function(){
 
       if (!attrs.name)
       {
-        /** @cut */ template.warns.push('Instruction <b:' + token.name + '> has no attribute name');
+        /** @cut */ addTemplateWarn(template, options, 'Instruction <b:' + token.name + '> has no attribute name', token.loc);
         return;
       }
 
       if (!IDENT.test(attrs.name))
       {
-        /** @cut */ template.warns.push('Bad attribute name `' + attrs.name + '`');
+        /** @cut */ addTemplateWarn(template, options, 'Bad attribute name `' + attrs.name + '`', token.loc);
         return;
       }
 
@@ -459,7 +459,7 @@ var makeDeclaration = (function(){
         }
         else
         {
-          /** @cut */ template.warns.push('Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')');
+          /** @cut */ addTemplateWarn(template, options, 'Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')', token.loc);
         }
       }
     }
@@ -500,12 +500,12 @@ var makeDeclaration = (function(){
                   template.isolate = elAttrs.prefix || options.isolate || genIsolateMarker();
 
                 /** @cut */ else
-                /** @cut */   basis.dev.warn('<b:isolate> is set already to `' + template.isolate + '`');
+                /** @cut */   addTemplateWarn(template, options, '<b:isolate> is already set to `' + template.isolate + '`', token.loc);
               break;
 
               case 'l10n':
                 /** @cut */ if (template.l10nResolved)
-                /** @cut */   template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
+                /** @cut */   addTemplateWarn(template, options, '<b:l10n> must be declared before any `l10n:` token (instruction ignored)', token.loc);
 
                 if (elAttrs.src)
                   template.dictURI = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
@@ -513,30 +513,38 @@ var makeDeclaration = (function(){
 
               case 'define':
                 /** @cut */ if ('name' in elAttrs == false)
-                /** @cut */   template.warns.push('Define has no `name` attribute');
+                /** @cut */   addTemplateWarn(template, options, 'Define has no `name` attribute', token.loc);
                 /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
-                /** @cut */   template.warns.push('Define for `' + elAttrs.name + '` has already defined');
+                /** @cut */   addTemplateWarn(template, options, 'Define for `' + elAttrs.name + '` has already defined', token.loc);
 
                 if ('name' in elAttrs && !template.defines[elAttrs.name])
                 {
+                  var define = false;
+
                   switch (elAttrs.type)
                   {
                     case 'bool':
-                      template.defines[elAttrs.name] = [
+                      define = [
                         elAttrs.from || elAttrs.name,
                         elAttrs['default'] == 'true' ? 1 : 0
                       ];
                       break;
                     case 'enum':
                       var values = elAttrs.values ? elAttrs.values.trim().split(' ') : [];
-                      template.defines[elAttrs.name] = [
+                      define = [
                         elAttrs.from || elAttrs.name,
                         values.indexOf(elAttrs['default']) + 1,
                         values
                       ];
                       break;
                     /** @cut */ default:
-                    /** @cut */  template.warns.push('Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
+                    /** @cut */   addTemplateWarn(template, options, 'Bad define type `' + elAttrs.type + '` for ' + elAttrs.name, elAttrs_.type.valueLoc);
+                  }
+
+                  if (define)
+                  {
+                    define.loc = token.loc;
+                    template.defines[elAttrs.name] = define;
                   }
                 }
               break;
@@ -557,8 +565,7 @@ var makeDeclaration = (function(){
 
                   if (!resource)
                   {
-                    /** @cut */ template.warns.push('<b:include src="' + templateSrc + '"> is not resolved, instruction ignored');
-                    /** @cut */ basis.dev.warn('<b:include src="' + templateSrc + '"> is not resolved, instruction ignored');
+                    /** @cut */ addTemplateWarn(template, options, '<b:include src="' + templateSrc + '"> is not resolved, instruction ignored', token.loc);
                     continue;
                   }
 
@@ -572,6 +579,10 @@ var makeDeclaration = (function(){
 
                     if (decl.deps)
                       addUnique(template.deps, decl.deps);
+
+                    // TODO: resolve duplicates issue and uncomment then
+                    // if (decl.warns)
+                    //   template.warns.push.apply(template.warns, decl.warns);
 
                     if (decl.resources && 'no-style' in elAttrs == false)
                       addStyles(template.resources, decl.resources, isolatePrefix);
@@ -734,7 +745,7 @@ var makeDeclaration = (function(){
                             break;
 
                           default:
-                            /** @cut */ template.warns.push('Unknown instruction tag <b:' + child.name + '>');
+                            /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag <b:' + child.name + '>', child.loc);
                         }
                       }
                       else
@@ -1033,6 +1044,7 @@ var makeDeclaration = (function(){
       // if namespace not found, no prefix and show warning
       if (parts[0] in template.styleNSPrefix == false)
       {
+        // TODO: attach warning to location
         /** @cut */ template.warns.push('Namespace `' + parts[0] + '` is not defined in template, no prefix added');
         return name;
       }
@@ -1201,8 +1213,11 @@ var makeDeclaration = (function(){
     }
 
     /** @cut */ for (var key in result.defines)
-    /** @cut */   if (!result.defines[key].used)
-    /** @cut */     warns.push('Unused define for ' + key);
+    /** @cut */ {
+    /** @cut */   var define = result.defines[key];
+    /** @cut */   if (!define.used)
+    /** @cut */     addTemplateWarn(result, options, 'Unused define for ' + key, define.loc);
+    /** @cut */ }
 
     // delete unnecessary keys
     delete result.defines;
