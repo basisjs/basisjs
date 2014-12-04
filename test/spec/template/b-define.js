@@ -231,11 +231,10 @@ module.exports = {
                   name: 'should warn when no `values` attribute',
                   test: function(){
                     var template = createTemplate(
-                      '<b:define name="foo" type="enum"/>' +
-                      '<span class="{foo}"/>'
+                      '<b:define name="foo" type="enum"/>',
+                      true
                     );
 
-                    assert(text(template) === text('<span></span>'));
                     assert(template.decl_.warns.length === 1);
                   }
                 },
@@ -243,27 +242,24 @@ module.exports = {
                   name: 'should warn when `values` attribute has wrong value',
                   test: function(){
                     var template = createTemplate(
-                      '<b:define name="foo" type="enum" values/>' +
-                      '<span class="{foo}"/>'
+                      '<b:define name="foo" type="enum" values/>',
+                      true
                     );
 
-                    assert(text(template) === text('<span></span>'));
                     assert(template.decl_.warns.length === 1);
 
                     var template = createTemplate(
-                      '<b:define name="foo" type="enum" values=""/>' +
-                      '<span class="{foo}"/>'
+                      '<b:define name="foo" type="enum" values=""/>',
+                      true
                     );
 
-                    assert(text(template) === text('<span></span>'));
                     assert(template.decl_.warns.length === 1);
 
                     var template = createTemplate(
-                      '<b:define name="foo" type="enum" values="  "/>' +
-                      '<span class="{foo}"/>'
+                      '<b:define name="foo" type="enum" values="  "/>',
+                      true
                     );
 
-                    assert(text(template) === text('<span></span>'));
                     assert(template.decl_.warns.length === 1);
                   }
                 },

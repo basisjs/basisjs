@@ -520,6 +520,8 @@ var makeDeclaration = (function(){
                 if ('name' in elAttrs && !template.defines[elAttrs.name])
                 {
                   var define = false;
+                  var defaultIndex;
+                  var values;
 
                   switch (elAttrs.type)
                   {
@@ -530,12 +532,32 @@ var makeDeclaration = (function(){
                       ];
                       break;
                     case 'enum':
-                      var values = elAttrs.values ? elAttrs.values.trim().split(' ') : [];
+                      if ('values' in elAttrs == false)
+                      {
+                        /** @cut */ addTemplateWarn(template, options, 'Enum define has no `values` attribute', token);
+                        break;
+                      }
+
+                      values = (elAttrs.values || '').trim();
+
+                      if (!values)
+                      {
+                        /** @cut */ addTemplateWarn(template, options, 'Enum define has no variants (`values` attribute is empty)', elAttrs_.values);
+                        break;
+                      }
+
+                      values = values.split(/\s+/);
+                      defaultIndex = values.indexOf(elAttrs['default']);
+
+                      /** @cut */ if ('default' in elAttrs && defaultIndex == -1)
+                      /** @cut */   addTemplateWarn(template, options, 'Enum define has bad value as default (value ignored)', elAttrs_['default']);
+
                       define = [
                         elAttrs.from || elAttrs.name,
-                        values.indexOf(elAttrs['default']) + 1,
+                        defaultIndex + 1,
                         values
                       ];
+
                       break;
                     /** @cut */ default:
                     /** @cut */   addTemplateWarn(template, options, 'Bad define type `' + elAttrs.type + '` for ' + elAttrs.name, elAttrs_.type && elAttrs_.type.valueLoc);
