@@ -7,8 +7,11 @@ module.exports = {
     var HtmlTemplate = basis.require('basis.template.html').Template;
     var nsTemplate = basis.require('basis.template');
 
-    var createTemplate = function(source){
-      return new HtmlTemplate(source);
+    var createTemplate = function(source, createInstance){
+      var template = new HtmlTemplate(source);
+      if (createInstance)
+        template.createInstance(); // trigger template
+      return template;
     };
 
     var getHTML = function(el){
@@ -54,8 +57,7 @@ module.exports = {
                 nsTemplate.theme('custom').define('test', basis.resource('./foo/custom/2.tmpl'));
                 nsTemplate.setTheme('base');
 
-                var tmpl = new HtmlTemplate(nsTemplate.get('test'));
-                tmpl.createInstance(); // trigger for template parsing
+                var tmpl = createTemplate(nsTemplate.get('test'), true);
                 this.is(1, tmpl.resources.length);
                 this.is(basis.path.resolve('foo/1.css'), tmpl.resources[0]);
 
@@ -104,6 +106,7 @@ module.exports = {
     require('./template/attr-bindings.js'),
     require('./template/text-bindings.js'),
     require('./template/b-include.js'),
+    require('./template/b-define.js'),
     require('./template/isolate.js')
   ]
 };
