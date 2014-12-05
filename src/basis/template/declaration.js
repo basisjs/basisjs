@@ -603,8 +603,8 @@ var makeDeclaration = (function(){
                       addUnique(template.deps, decl.deps);
 
                     // TODO: resolve duplicates issue and uncomment then
-                    // if (decl.warns)
-                    //   template.warns.push.apply(template.warns, decl.warns);
+                    if (decl.warns)
+                      template.warns.push.apply(template.warns, decl.warns);
 
                     if (decl.resources && 'no-style' in elAttrs == false)
                       addStyles(template.resources, decl.resources, isolatePrefix);
@@ -618,7 +618,7 @@ var makeDeclaration = (function(){
 
                     if (elAttrs_['class'])
                     {
-                      instructions.push({
+                      instructions.unshift({
                         type: TYPE_ELEMENT,
                         prefix: 'b',
                         name: 'append-class',
@@ -631,7 +631,7 @@ var makeDeclaration = (function(){
                     }
 
                     if (elAttrs.id)
-                      instructions.push({
+                      instructions.unshift({
                         type: TYPE_ELEMENT,
                         prefix: 'b',
                         name: 'set-attr',
@@ -1005,10 +1005,10 @@ var makeDeclaration = (function(){
 
           for (var k = 0, bind; bind = bindings[k]; k++)
           {
-            /** @cut */ applyTokenLocation(template, options, bind, bind.info_);
-
             if (bind.length > 2)  // bind already processed
               continue;
+
+            /** @cut */ applyTokenLocation(template, options, bind, bind.info_);
 
             var bindNameParts = bind[1].split(':');
             var bindName = bindNameParts.pop();
@@ -1033,6 +1033,7 @@ var makeDeclaration = (function(){
             }
             else
             {
+              bind.push(-1); // mark binding to not processing it anymore
               /** @cut */ addTemplateWarn(template, options, 'Unpredictable value `' + bindName + '` in class binding: ' + bind[0] + '{' + bind[1] + '} ', bind.loc);
               unpredictable++;
             }

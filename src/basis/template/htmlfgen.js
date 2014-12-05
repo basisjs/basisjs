@@ -162,7 +162,7 @@
               {
                 case 'class':
                   for (var k = 0, binding; binding = bindings[k]; k++)
-                    putBinding([2, localPath, binding[1], attrName, binding[0]].concat(binding.slice(2)));
+                    putBinding([2, localPath, binding[1], attrName, binding[0]].concat(binding[2] == -1 ? [] : binding.slice(2)));
                 break;
 
                 case 'style':

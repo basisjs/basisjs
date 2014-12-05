@@ -337,60 +337,7 @@ module.exports = {
           }
         },
         {
-          name: '<b:define> in <b:include> section should apply to included tree',
-          test: function(){
-            var include = createTemplate(
-              '<span class="{foo}"/>'
-            );
-            var template = createTemplate(
-              '<b:include src="#' + include.templateId + '">' +
-                '<b:define name="foo" type="bool" default="true"/>' +
-              '</b:include>'
-            );
-
-            assert(text(template) === text('<span class="foo"></span>'));
-            assert(template.decl_.warns === false);
-          }
-        },
-        {
-          name: '<b:define> in <b:include> section should override <b:define> in included subtree',
-          test: function(){
-            var include = createTemplate(
-              '<b:define name="foo" type="bool"/>' +
-              '<span class="{foo}"/>'
-            );
-            var template = createTemplate(
-              '<b:include src="#' + include.templateId + '">' +
-                '<b:define name="foo" type="bool" default="true"/>' +
-              '</b:include>'
-            );
-
-            assert(text(template) === text('<span class="foo"></span>'));
-            assert(template.decl_.warns === false);
-          }
-        },
-        {
-          name: '<b:define> in <b:include> section should override <b:define> in included subtree, but not nested includes',
-          test: function(){
-            var deep = createTemplate(
-              '<span class="{foo}"/>'
-            );
-            var include = createTemplate(
-              '<span class="{foo}"/>' +
-              '<b:include src="#' + deep.templateId + '"/>'
-            );
-            var template = createTemplate(
-              '<b:include src="#' + include.templateId + '">' +
-                '<b:define name="foo" type="bool" default="true"/>' +
-              '</b:include>'
-            );
-
-            assert(text(template) === text('<span class="foo"></span><span></span>'));
-            assert(template.decl_.warns.length === 1);
-          }
-        },
-        {
-          name: '<b:define> in including source should apply to added attribute bindings',
+          name: '<b:define> in including source should not apply to added attribute bindings',
           test: function(){
             var include = createTemplate(
               '<b:define name="foo" type="bool" default="true"/>' +
@@ -402,12 +349,29 @@ module.exports = {
               '</b:include>'
             );
 
-            assert(text(template) === text('<span class="foo prefix_foo prefix2_foo"></span>'));
-            assert(template.decl_.warns === false);
+            assert(text(template) === text('<span class="foo"></span>'));
+            assert(template.decl_.warns.length === 2);
           }
         },
         {
-          name: '<b:define> in including source should apply to inserted content',
+          name: '<b:define> should apply to added attribute bindings, but not to included subtree',
+          test: function(){
+            var include = createTemplate(
+              '<span class="{foo}"/>'
+            );
+            var template = createTemplate(
+              '<b:define name="foo" type="bool" default="true"/>' +
+              '<b:include src="#' + include.templateId + '" class="prefix_{foo}">' +
+                '<b:class value="prefix2_{foo}"/>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<span class="prefix_foo prefix2_foo"></span>'));
+            assert(template.decl_.warns.length === 1);
+          }
+        },
+        {
+          name: '<b:define> in including source should not apply to inserting content',
           test: function(){
             var include = createTemplate(
               '<b:define name="foo" type="bool" default="true"/>' +
@@ -421,8 +385,27 @@ module.exports = {
               '</b:include>'
             );
 
-            assert(text(template) === text('<span class="foo"><span class="foo"></span></span>'));
-            assert(template.decl_.warns === false);
+            assert(text(template) === text('<span class="foo"><span></span></span>'));
+            assert(template.decl_.warns.length === 1);
+          }
+        },
+        {
+          name: '<b:define> should apply to inserting content but not to subtree',
+          test: function(){
+            var include = createTemplate(
+              '<span class="{foo}"/>'
+            );
+            var template = createTemplate(
+              '<b:define name="foo" type="bool" default="true"/>' +
+              '<b:include src="#' + include.templateId + '">' +
+                '<b:append>' +
+                  '<span class="{foo}"/>' +
+                '</b:append>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<span><span class="foo"></span></span>'));
+            assert(template.decl_.warns.length === 1);
           }
         }
       ]
