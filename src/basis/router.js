@@ -392,11 +392,7 @@
   // export names
   //
 
-  var get_ = function(path){
-    return get(path, true).token;
-  };
-
-  module.exports = basis.object.extend(get_, {
+  module.exports = {
     debug: false,
 
     start: start,
@@ -406,5 +402,7 @@
 
     add: add,
     remove: remove,
-    route: get_
-  });
+    route: function(path){
+      return get(path, true).token;
+    }
+  };
