@@ -2,7 +2,7 @@ module.exports = {
   name: '<b:include>',
   test: [
     {
-      name: 'Various sources',
+      name: 'Various kind of sources',
       test: [
         {
           name: 'file reference <b:include src="./foo.tmpl">',
@@ -85,77 +85,77 @@ module.exports = {
       ]
     },
     {
-      name: 'Attribute modification',
+      name: 'Attributes',
       test: [
         {
-          name: '<b:include> with attributes',
-          test: [
-            {
-              name: '<b:include class> when class attribute does not exist',
-              test: function(){
-                var a = createTemplate('<span title="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
+          name: '<b:include class> when class attribute does not exist',
+          test: function(){
+            var a = createTemplate('<span title="a"/>');
+            var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
 
-                this.is(text('<span title="a" class="b"/>'), text(b));
-              }
-            },
-            {
-              name: '<b:include class> class when class attribute exists',
-              test: function(){
-                var a = createTemplate('<span class="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
-
-                this.is(text('<span class="a b"/>'), text(b));
-              }
-            },
-            {
-              name: '<b:include class> class with binding',
-              test: function(){
-                var a = createTemplate('<span class="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b}"></b:include>');
-
-                this.is(text('<span class="a b"/>'), text(b, { b: 'b' }));
-
-                var a = createTemplate('<span class="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b} {b2}"></b:include>');
-
-                this.is(text('<span class="a b b2"/>'), text(b, { b: 'b', b2: 'b2' }));
-              }
-            },
-            {
-              name: '<b:include class> class binding and value',
-              test: function(){
-                var a = createTemplate('<span class="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b} c"></b:include>');
-
-                this.is(text('<span class="a c b"/>'), text(b, { b: 'b' }));
-
-                var a = createTemplate('<span class="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '" class="a2 {b} {b2} c"></b:include>');
-
-                this.is(text('<span class="a a2 c b b2"/>'), text(b, { b: 'b', b2: 'b2' }));
-              }
-            },
-            {
-              name: '<b:include id> when id attribute does not exist',
-              test: function(){
-                var a = createTemplate('<span title="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
-
-                this.is(text('<span title="a" id="b"/>'), text(b));
-              }
-            },
-            {
-              name: '<b:include id> when id exists',
-              test: function(){
-                var a = createTemplate('<span id="a"/>');
-                var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
-
-                this.is(text('<span id="b"/>'), text(b));
-              }
-            }
-          ]
+            this.is(text('<span title="a" class="b"/>'), text(b));
+          }
         },
+        {
+          name: '<b:include class> class when class attribute exists',
+          test: function(){
+            var a = createTemplate('<span class="a"/>');
+            var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
+
+            this.is(text('<span class="a b"/>'), text(b));
+          }
+        },
+        {
+          name: '<b:include class> class with binding',
+          test: function(){
+            var a = createTemplate('<span class="a"/>');
+            var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b}"></b:include>');
+
+            this.is(text('<span class="a b"/>'), text(b, { b: 'b' }));
+
+            var a = createTemplate('<span class="a"/>');
+            var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b} {b2}"></b:include>');
+
+            this.is(text('<span class="a b b2"/>'), text(b, { b: 'b', b2: 'b2' }));
+          }
+        },
+        {
+          name: '<b:include class> class binding and value',
+          test: function(){
+            var a = createTemplate('<span class="a"/>');
+            var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b} c"></b:include>');
+
+            this.is(text('<span class="a c b"/>'), text(b, { b: 'b' }));
+
+            var a = createTemplate('<span class="a"/>');
+            var b = createTemplate('<b:include src="#' + a.templateId + '" class="a2 {b} {b2} c"></b:include>');
+
+            this.is(text('<span class="a a2 c b b2"/>'), text(b, { b: 'b', b2: 'b2' }));
+          }
+        },
+        {
+          name: '<b:include id> when id attribute does not exist',
+          test: function(){
+            var a = createTemplate('<span title="a"/>');
+            var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
+
+            this.is(text('<span title="a" id="b"/>'), text(b));
+          }
+        },
+        {
+          name: '<b:include id> when id exists',
+          test: function(){
+            var a = createTemplate('<span id="a"/>');
+            var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
+
+            this.is(text('<span id="b"/>'), text(b));
+          }
+        }
+      ]
+    },
+    {
+      name: 'Subtree mofication',
+      test: [
         {
           name: '<b:replace>',
           test: [
@@ -528,7 +528,12 @@ module.exports = {
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      name: 'Attribute modification',
+      test: [
         {
           name: '<b:set-attr>',
           test: [
@@ -1314,6 +1319,75 @@ module.exports = {
                 var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class ref="reference" value="b"/></b:include>');
 
                 this.is(text('<span>{reference}</span>'), text(b));
+              }
+            }
+          ]
+        },
+        {
+          name: '<b:remove-class>',
+          test: [
+            {
+              name: 'non-exists',
+              test: function(){
+                var a = createTemplate('<span title="a"/>');
+                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-class value="foo"/></b:include>');
+
+                assert(text(b) === text('<span title="a"/>'));
+              }
+            },
+            {
+              name: 'exists',
+              test: function(){
+                var a = createTemplate('<span class="foo bar"/>');
+                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-class value="foo"/></b:include>');
+
+                assert(text(b) === text('<span class="bar"/>'));
+              }
+            },
+            {
+              name: 'remove non-exists class should no effect',
+              test: function(){
+                var a = createTemplate('<span class="foo bar"/>');
+                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-class value="baz"/></b:include>');
+
+                assert(text(b) === text('<span class="foo bar"/>'));
+              }
+            },
+            {
+              name: 'remove several static classes',
+              test: function(){
+                var a = createTemplate('<span class="foo bar baz"/>');
+                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-class value="foo baz"/></b:include>');
+
+                assert(text(b) === text('<span class="bar"/>'));
+              }
+            },
+            {
+              name: 'remove class bindings',
+              test: function(){
+                var a = createTemplate('<span class="{foo} bar baz"/>');
+                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-class value="{foo}"/></b:include>');
+
+                assert(text(b, { foo: true }) === text('<span class="bar baz"/>'));
+              }
+            },
+            {
+              name: 'remove several class bindings',
+              test: function(){
+                var a = createTemplate('<span class="{foo} bar prefix_{baz}"/>');
+                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-class value="prefix_{baz} {foo}"/></b:include>');
+
+                assert(text(b, { foo: true, baz: true }) === text('<span class="bar"/>'));
+              }
+            },
+            {
+              name: 'remove from non-element should no effect but warning',
+              test: function(){
+                var a = createTemplate('text');
+                var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-class value="foo"/></b:include>');
+
+                assert(text(b) === text('text'));
+                assert(b.decl_.warns.length === 1);
               }
             }
           ]

@@ -304,7 +304,7 @@ var makeDeclaration = (function(){
             return ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] || token[ATTR_NAME];
           }, ELEMENT_ATTRS);
 
-          if (!itAttrToken && action != 'remove')
+          if (!itAttrToken && action != 'remove' && action != 'remove-class')
           {
             if (isEvent)
             {
@@ -448,6 +448,35 @@ var makeDeclaration = (function(){
                   return;
                 }
 
+              break;
+
+            case 'remove-class':
+              if (itAttrToken)
+              {
+                var valueAttr = attrs_.value || {};
+                var remValues = (valueAttr.value || '').split(' ');
+                var values = itAttrToken[valueIdx].split(' ');
+                var bindings = itAttrToken[TOKEN_BINDINGS];
+
+                if (valueAttr.binding && bindings)
+                {
+                  for (var i = 0, remBinding; remBinding = valueAttr.binding[i]; i++)
+                    for (var j = bindings.length - 1, classBinding; classBinding = bindings[j]; j--)
+                      if (classBinding[0] === remBinding[0] && classBinding[1] == remBinding[1])
+                        bindings.splice(j, 1);
+
+                  if (!bindings.length)
+                    itAttrToken[TOKEN_BINDINGS] = 0;
+                }
+
+                for (var i = 0; i < remValues.length; i++)
+                  arrayRemove(values, remValues[i]);
+
+                itAttrToken[valueIdx] = values.join(' ');
+
+                if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
+                  arrayRemove(itAttrs, itAttrToken);
+              }
               break;
 
             case 'remove':
@@ -685,8 +714,6 @@ var makeDeclaration = (function(){
                             var ref = 'ref' in childAttrs || !replaceOrRemove ? childAttrs.ref : 'element';
                             var tokenRef = ref && tokenRefMap[ref];
 
-                            //if (!tokenRef)
-
                             if (tokenRef)
                             {
                               var pos = tokenRef.owner.indexOf(tokenRef.token);
@@ -743,7 +770,7 @@ var makeDeclaration = (function(){
                             break;
 
                           case 'remove-class':
-                            modifyAttr(child, 'class', 'remove');
+                            modifyAttr(child, 'class', 'remove-class');
                             break;
 
                           case 'add-ref':
@@ -1034,7 +1061,7 @@ var makeDeclaration = (function(){
             else
             {
               bind.push(-1); // mark binding to not processing it anymore
-              /** @cut */ addTemplateWarn(template, options, 'Unpredictable value `' + bindName + '` in class binding: ' + bind[0] + '{' + bind[1] + '} ', bind.loc);
+              /** @cut */ addTemplateWarn(template, options, 'Unpredictable class binding: ' + bind[0] + '{' + bind[1] + '}', bind.loc);
               unpredictable++;
             }
           }
