@@ -698,7 +698,7 @@ function tokenize(source, options){
         token.range.end_ = pos;
         token.valueRange = {
           start_: startPos + 1,
-          end_: pos - 1
+          end_: startPos + 1 + m[1].length
         };
 
         token = {
