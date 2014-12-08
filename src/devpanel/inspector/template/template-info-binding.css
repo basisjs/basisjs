@@ -1,0 +1,29 @@
+.binding
+{
+  margin: 1px 0;
+  display: inline;
+}
+.binding_used
+{
+  display: block;
+}
+.caption
+{
+  color: #888;
+}
+.caption:after
+{
+  content: ',';
+}
+.used:after,
+.caption:last-child
+{
+  content: '';
+}
+.used
+{
+  background: rgb(182, 207, 182);
+  color: black;
+  padding: 2px 4px;
+  display: inline-block;  
+}

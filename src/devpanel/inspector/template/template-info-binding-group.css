@@ -1,0 +1,11 @@
+.caption
+{
+  display: block;
+  font-size: 12px;
+  color: #444;
+}
+.content
+{
+  padding: 4px 8px;
+  line-height: 1.4;
+}

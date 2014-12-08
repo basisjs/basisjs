@@ -1,0 +1,32 @@
+.window
+{
+  position: fixed;
+  background: white;
+  background: rgba(255, 255, 255, .95);
+  padding: 4px 8px;
+  box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, .3);
+}
+.code
+{
+  padding: 0;
+  white-space: pre-wrap;
+  font-family: Monaco, Consolas, Courier New, monospace;
+  font-size: 12px;
+  line-height: 21px;
+  overflow: hidden;
+  max-width: 650px;
+}
+.binding
+{
+  background: rgb(182, 207, 182);
+  padding: 3px;
+}
+
+.bindings
+{
+  float: right;
+  max-width: 300px;
+  border-left: 1px solid #EEE;
+  margin-left: 8px;
+  padding-left: 8px;
+}

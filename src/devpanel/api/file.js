@@ -14,6 +14,7 @@ function sendFile(file){
     data.resources = data.declaration.resources;
     // delete deps as it can has resource and ResourceWrapper which can't be serialized
     data.declaration.deps = [];
+    data.declaration.includes = [];
   }
 
   sendData('updateFile', data);

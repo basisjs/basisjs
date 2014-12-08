@@ -11,6 +11,7 @@ var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
 var transport = require('../api/transport.js');
+var templateInfo = require('./template-info.js');
 
 var inspectDepth = 0;
 var inspectMode = new basis.data.Value({ value: false });
@@ -51,9 +52,12 @@ function pickHandler(event){
       if (basisjsTools && typeof basisjsTools.openFile == 'function' && (event.ctrlKey || event.metaKey))
         basisjsTools.openFile(source.url);
       else
+      {
+        templateInfo.selectedDomNode.set(inspectBasisTemplate.resolveObjectById(pickupTarget.value).element);
         transport.sendData('pickTemplate', {
           filename: source.url
         });
+      }
     }
     else
       transport.sendData('pickTemplate', {
