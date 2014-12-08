@@ -150,7 +150,7 @@ var makeDeclaration = (function(){
 
   function getLocation(template, loc){
     if (loc)
-      return template.sourceUrl + ':' + loc.start.line + ':' + (loc.start.column + 1);
+      return (template.sourceUrl || '') + ':' + loc.start.line + ':' + (loc.start.column + 1);
   }
 
   function addTemplateWarn(template, options, message, loc){
@@ -208,7 +208,14 @@ var makeDeclaration = (function(){
 
         if (m = attr.name.match(ATTR_EVENT_RX))
         {
-          result.push(m[1] == attr.value ? [TYPE_ATTRIBUTE_EVENT, m[1]] : [TYPE_ATTRIBUTE_EVENT, m[1], attr.value]);
+          var item = m[1] == attr.value
+            ? [TYPE_ATTRIBUTE_EVENT, m[1]]
+            : [TYPE_ATTRIBUTE_EVENT, m[1], attr.value];
+
+          /** @cut */ addTokenLocation(item, attr);
+
+          result.push(item);
+
           continue;
         }
 
@@ -239,6 +246,8 @@ var makeDeclaration = (function(){
         if (!styleAttr)
         {
           styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
+          //styleAttr.loc = getLocation(template, display.loc);
+          addTokenLocation(styleAttr, display);
           result.push(styleAttr);
         }
 
@@ -333,6 +342,8 @@ var makeDeclaration = (function(){
             }
 
             itAttrs.push(itAttrToken);
+            //itAttrToken.loc = getLocation(template, token.loc);
+            addTokenLocation(itAttrToken, token);
           }
 
           var classOrStyle = attrs.name == 'class' || attrs.name == 'style';
@@ -594,7 +605,8 @@ var makeDeclaration = (function(){
 
                   if (define)
                   {
-                    define.loc = token.loc;
+                    //define.loc = token.loc;
+                    addTokenLocation(define, token);
                     template.defines[elAttrs.name] = define;
                   }
                 }
@@ -627,6 +639,7 @@ var makeDeclaration = (function(){
                     var decl = getDeclFromSource(resource, '', true, options);
 
                     arrayAdd(template.deps, resource);
+                    template.includes.push([elAttrs_.src, resource, decl.includes]);
 
                     if (decl.deps)
                       addUnique(template.deps, decl.deps);
@@ -1144,7 +1157,8 @@ var makeDeclaration = (function(){
       defines: {},
       unpredictable: true,
       warns: warns,
-      isolate: false
+      isolate: false,
+      includes: []
     };
 
     // resolve l10n dictionary url
@@ -1163,7 +1177,7 @@ var makeDeclaration = (function(){
     if (!source.templateTokens)
     {
       /** @cut */ source_ = source;
-      source = tokenize(String(source), { loc: true || !!options.loc });
+      source = tokenize(String(source), { loc: !!options.loc, range: true });
     }
 
     // add tokenizer warnings if any
