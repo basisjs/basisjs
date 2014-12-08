@@ -369,7 +369,7 @@
         var template = this.template;
         if (template)
         {
-          var nodeDocumentFragment = this.element;
+          var nodeDocumentFragment = this.childNodesElement;
 
           // check for wrong event name in binding
           /** @cut */ var bindingId = this.constructor.basisClassId_ + '_' + this.binding.bindingId;
