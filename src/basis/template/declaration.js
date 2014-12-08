@@ -1149,6 +1149,9 @@ var makeDeclaration = (function(){
     var result = {
       sourceUrl: sourceUrl,
       baseURI: baseURI || '',
+      dictURI: sourceUrl  // resolve l10n dictionary url
+        ? basis.path.resolve(sourceUrl)
+        : baseURI || '',
       tokens: null,
       resources: [],
       styleNSPrefix: {},
@@ -1160,11 +1163,6 @@ var makeDeclaration = (function(){
       isolate: false,
       includes: []
     };
-
-    // resolve l10n dictionary url
-    result.dictURI = sourceUrl
-      ? basis.path.resolve(sourceUrl)
-      : baseURI || '';
 
     // normalize dictionary ext name
     if (result.dictURI)
@@ -1182,7 +1180,9 @@ var makeDeclaration = (function(){
 
     // add tokenizer warnings if any
     if (source.warns)
-      warns.push.apply(warns, source.warns);
+      source.warns.forEach(function(warn){
+        addTemplateWarn(result, options, warn[0], warn[1].loc);
+      });
 
     // start prevent recursion
     includeStack.push((sourceOrigin !== true && sourceOrigin) || {}); // basisjs-tools pass true

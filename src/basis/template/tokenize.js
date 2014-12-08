@@ -610,7 +610,7 @@ function tokenize(source, options){
               (!lastTag.prefix && SINGLETON_TAG.test(lastTag.name)))
           {
             /** @cut */ if (m[3] != '/>')
-            /** @cut */   result.warns.push('Tag <' + lastTag.name + '> doesn\'t closed explicit (use `/>` as tag ending)');
+            /** @cut */   result.warns.push(['Tag <' + lastTag.name + '> doesn\'t closed explicit (use `/>` as tag ending)', lastTag]);
 
             lastTag = tagStack.pop();
           }
@@ -750,7 +750,7 @@ function tokenize(source, options){
   postProcessing(result, options || {}, source);
 
   /** @cut */ if (lastTag.name)
-  /** @cut */   result.warns.push('No close tag for <' + lastTag.name + '>');
+  /** @cut */   result.warns.push(['No close tag for <' + lastTag.name + '>', lastTag]);
   /** @cut */
   /** @cut */ if (!result.warns.length)
   /** @cut */   delete result.warns;
