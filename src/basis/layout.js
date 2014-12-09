@@ -13,6 +13,7 @@
   var document = global.document;
   var documentElement = document.documentElement;
   var getComputedStyle = require('basis.dom.computedStyle').get;
+  var standartsMode = document.compatMode == 'CSS1Compat';
 
 
   //
@@ -43,7 +44,7 @@
     else
     {
       // offset relative to page
-      if (document.compatMode == 'CSS1Compat')
+      if (standartsMode)
       {
         top = global.pageYOffset || documentElement.scrollTop;
         left = global.pageXOffset || documentElement.scrollLeft;
@@ -61,8 +62,8 @@
     }
 
     return {
-      x: left,
-      y: top
+      left: left,
+      top: top
     };
   }
 
@@ -80,8 +81,8 @@
     }
 
     return {
-      top: top + offset.y,
-      left: left + offset.x
+      top: top + offset.top,
+      left: left + offset.left
     };
   }
 
@@ -103,17 +104,18 @@
     }
 
     return {
-      top: top + offset.y,
-      left: left + offset.x,
-      right: right + offset.x,
-      bottom: bottom + offset.y,
+      top: top + offset.top,
+      left: left + offset.left,
+      right: right + offset.left,
+      bottom: bottom + offset.top,
       width: right - left,
       height: bottom - top
     };
   }
 
   function getViewportRect(element, relElement){
-    var point = getTopLeftPoint(element, relElement);
+    var topViewport = standartsMode ? document.documentElement : document.body;
+    var point = element === topViewport && !relElement ? getOffset() : getTopLeftPoint(element, relElement);
     var top = point.top;
     var left = point.left;
     var width;
