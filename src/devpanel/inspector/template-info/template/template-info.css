@@ -26,17 +26,15 @@
   display: inline-block;
   vertical-align: middle;
 
-  /* restore inherit properties*/
+  /* restore inherit properties */
   text-align: left;
   white-space: normal;
 
+  padding: 4px 8px;
   background: white;
   background: rgba(255, 255, 255, .95);
-  padding: 4px 8px;
+  border-radius: 2px;
   box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, .3);
-  z-index: 10000;
-  white-space: nowrap;
-  transition: width .5s;
 }
 .window__inner
 {

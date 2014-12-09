@@ -2,7 +2,9 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
 
-var fileAPI = require('../api/file.js');
+var fileAPI = require('../../api/file.js');
+var parseDom = require('./parse-dom.js');
+var buildTree = require('./build-tree.js');
 var Value = require('basis.data').Value;
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
@@ -76,7 +78,7 @@ var observer = (function(){
   }, 100);
 })();
 
-function nodeToHtml(node){
+selectedDomNode.attach(function(node){
   if (observer)
     observer.disconnect();
 
@@ -91,125 +93,17 @@ function nodeToHtml(node){
       childList: true
     });
 
-  var root = node;
-  var cursor = root.firstChild;
-  var nodes = [root, []];
-  var nodesCursor = nodes;
-  var nodesStack = [nodesCursor];
-  var candidate;
+  var nodes = parseDom(node);
+  var bindings = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]) || [];
 
-  while (cursor && cursor !== root)
-  {
-    var node = [cursor, []];
-    nodesCursor[1].push(node);
-
-    if (!cursor[inspectBasisTemplateMarker] && cursor.firstChild)
-    {
-      cursor = cursor.firstChild;
-      nodesStack.push(nodesCursor);
-      nodesCursor = node;
-      continue;
-    }
-
-    candidate = cursor.nextSibling;
-
-    while (!candidate && cursor.parentNode !== root)
-    {
-      cursor = cursor.parentNode;
-      nodesCursor = nodesStack.pop();
-      if (cursor !== root)
-        candidate = cursor.nextSibling;
-    }
-
-    cursor = candidate;
-  }
-
-  function walk(item, bindings){
-    function findBinding(node){
-      return basis.array.search(bindings, node, 'dom');
-    }
-
-    function fundBindingVal(node){
-      return basis.array.search(bindings, node, 'val');
-    }
-
-    var result = [];
-    var node = item[0];
-    var childrenCount = item[1].length;
-    var nonTextCount = 0;
-    var binding;
-    var value;
-
-    for (var i = 0; i < childrenCount; i++)
-    {
-      nonTextCount = item[1][i][0].nodeType != 3;
-      result.push(walk(item[1][i], bindings));
-    }
-
-    switch (node.nodeType)
-    {
-      case 1:
-        var attrs = Array.prototype.slice.call(node.attributes).map(function(attr){
-          var value = attr.value;
-
-          if (attr.name == 'class')
-            for (var i = 0; i < bindings.length; i++)
-            {
-              var bind = bindings[i];
-              var val = bind.dom === node && bind.attr === attr.name && bind.val;
-              if (val)
-                value = value.replace(new RegExp('\\b' + val + '\\b'), '<span class="' + isolatePrefix + 'binding" data-binding="' + bind.binding + '">$&</span>');
-            }
-
-          return attr.name + (value ? '="' + value + '"' : '');
-        }).join(' ');
-
-        if (nonTextCount)
-          result = '\n  ' + result.map(function(str){
-            return str.replace(/\n/g, '\n  ');
-          }).join('\n  ') + '\n';
-        else
-          result = result.join('');
-
-        var valBinding = fundBindingVal(node);
-
-        return (
-          (valBinding && valBinding.dom !== valBinding.val ? '<span class="' + isolatePrefix + 'binding" data-binding="' + valBinding.binding + '">' : '') +
-          '&lt;' + node.tagName.toLowerCase() +
-          (attrs ? ' ' + attrs : '') +
-          '>' +
-            result +
-          '&lt;/' + node.tagName.toLowerCase() + '>' +
-          (valBinding && valBinding.dom !== valBinding.val ? '</span>' : '')
-        );
-
-        break;
-      case 3:
-        binding = findBinding(node);
-        value = node.nodeValue.replace(/</g, '&lt;');
-
-        if (binding)
-          value = '<span class="' + isolatePrefix + 'binding" data-binding="' + binding.binding + '">' + value + '</span>';
-
-        return value;
-
-      case 8:
-        value = node.nodeValue.replace(/</g, '&lt;');
-        return '&lt;!--' + value + '-->';
-    }
-
-    return '';
-  }
-
-  return walk(nodes, inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]) || []);
-}
+  view.setChildNodes(buildTree(nodes, bindings));
+});
 
 var view = new Window({
   modal: true,
   visible: selectedDomNode.as(Boolean),
   template: resource('./template/template-info.tmpl'),
   binding: {
-    code: selectedDomNode.as(nodeToHtml),
     upName: selectedObject.as(function(object){
       if (object)
         return object.parentNode ? 'parent' : object.owner ? 'owner' : '';

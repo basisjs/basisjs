@@ -11,7 +11,7 @@ var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
 var transport = require('../api/transport.js');
-var templateInfo = require('./template-info.js');
+var templateInfo = require('./template-info/index.js');
 
 var inspectDepth = 0;
 var inspectMode = new basis.data.Value({ value: false });
