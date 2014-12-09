@@ -138,6 +138,7 @@ function nodeToHtml(node){
     var childrenCount = item[1].length;
     var nonTextCount = 0;
     var binding;
+    var value;
 
     for (var i = 0; i < childrenCount; i++)
     {
@@ -185,12 +186,16 @@ function nodeToHtml(node){
         break;
       case 3:
         binding = findBinding(node);
-        return binding
-          ? '<span class="' + isolatePrefix + 'binding" data-binding="' + binding.binding + '">' + node.nodeValue + '</span>'
-          : node.nodeValue;
+        value = node.nodeValue.replace(/</g, '&lt;');
+
+        if (binding)
+          value = '<span class="' + isolatePrefix + 'binding" data-binding="' + binding.binding + '">' + value + '</span>';
+
+        return value;
 
       case 8:
-        return '&lt;!--' + node.nodeValue + '-->';
+        value = node.nodeValue.replace(/</g, '&lt;');
+        return '&lt;!--' + value + '-->';
     }
 
     return '';
