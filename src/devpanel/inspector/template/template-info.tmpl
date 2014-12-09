@@ -1,9 +1,20 @@
 <b:style src="./template-info.css"/>
 <b:isolate/>
+<b:define name="upName" type="bool"/>
 
-<div class="window">
-  <div class="bindings">
-    <!--{bindings}-->
+<div class="window__wrapper">
+  <div class="window">
+    <div class="window__inner">
+      <div class="bindings">
+        <!--{bindings}-->
+      </div>
+      <div class="content">
+        <div class="toolbar">
+          <span class="button button_up button_{upName}" style="margin-left: -3px;" event-click="up">&#x2191; {upName}</span>
+          <span class="button button_source">source</span>
+        </div>
+        <div{code} class="code" event-mouseover="enter" event-mouseleave="leave"/>
+      </div>
+    </div>
   </div>
-  <div{code} class="code"/>
 </div>

@@ -53,7 +53,7 @@ function pickHandler(event){
         basisjsTools.openFile(source.url);
       else
       {
-        templateInfo.selectedDomNode.set(inspectBasisTemplate.resolveObjectById(pickupTarget.value).element);
+        templateInfo.set(inspectBasisTemplate.resolveObjectById(pickupTarget.value).element);
         transport.sendData('pickTemplate', {
           filename: source.url
         });
@@ -178,6 +178,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 function startInspect(){
   if (!inspectMode.value)
   {
+    templateInfo.set();
     basis.dom.event.addGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.addGlobalHandler('mousewheel', mouseWheelHandler);
     inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);

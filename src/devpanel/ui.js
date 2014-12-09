@@ -43,8 +43,11 @@ if (typeof basisjsToolsFileSync != 'undefined')
   isOnline = new basis.Token(basisjsToolsFileSync.isOnline.value);
   basisjsToolsFileSync.isOnline.attach(isOnline.set, isOnline);
 
-  basisjsToolsFileSync.notifications.attach(function(eventName, filename){
+  basisjsToolsFileSync.notifications.attach(function(eventName, filename, content){
     var ext = basis.path.extname(filename);
+
+    if (typeof content == 'string' && basis.resource.isResolved(filename))
+      basis.resource(filename).update(content);
 
     if (eventName == 'new' || ext in inspectBasis.resource.extensions == false)
       return;

@@ -2,34 +2,51 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
 
+var Value = require('basis.data').Value;
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
 var selectedDomNode = new basis.Token();
+var hoveredBinding = new Value();
 var bindingDataset = new Dataset();
 var isolatePrefix;
 
+function valueToString(val){
+  if (typeof val == 'string')
+    return '\'' + val.replace(/\'/g, '\\\'') + '\'';
+
+  return String(val);
+}
+
 selectedDomNode.attach(function(node){
   var items = [];
-  var id = node[inspectBasisTemplateMarker];
-  var object = inspectBasisTemplate.resolveObjectById(id);
-  var objectBinding = object.binding;
-  var template = inspectBasisTemplate.resolveTemplateById(id);
-  var templateBinding = template.getBinding();
 
-  for (var key in objectBinding)
-    if (key != '__extend__' && key != 'bindingId')
-    {
-      var used = templateBinding.names.indexOf(key) != -1;
-      items.push({
-        name: key,
-        value: used ? String(objectBinding[key].getter(object)) : null,
-        used: used
-      });
-    }
+  if (node)
+  {
+    var id = node[inspectBasisTemplateMarker];
+    var object = inspectBasisTemplate.resolveObjectById(id);
+    var objectBinding = object.binding;
+    var template = inspectBasisTemplate.resolveTemplateById(id);
+    var templateBinding = template.getBinding();
+
+    for (var key in objectBinding)
+      if (key != '__extend__' && key != 'bindingId')
+      {
+        var used = templateBinding.names.indexOf(key) != -1;
+        items.push({
+          name: key,
+          value: used ? valueToString(objectBinding[key].getter(object)) : null,
+          used: used
+        });
+      }
+  }
 
   this.set(basis.data.wrap(items, true));
 }, bindingDataset);
+
+var selectedObject = selectedDomNode.as(function(node){
+  return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
+});
 
 // dom mutation observer
 
@@ -104,9 +121,11 @@ function nodeToHtml(node){
 
   function walk(item, bindings){
     function findBinding(node){
-      return basis.array.search(bindings, node, function(item){
-        return item.dom;
-      });
+      return basis.array.search(bindings, node, 'dom');
+    }
+
+    function fundBindingVal(node){
+      return basis.array.search(bindings, node, 'val');
     }
 
     var result = [];
@@ -136,7 +155,7 @@ function nodeToHtml(node){
                 value = value.replace(new RegExp('\\b' + val + '\\b'), '<span class="' + isolatePrefix + 'binding" title="' + bind.binding + '">$&</span>');
             }
 
-          return attr.name + '="' + value + '"';
+          return attr.name + (value ? '="' + value + '"' : '');
         }).join(' ');
 
         if (nonTextCount)
@@ -146,13 +165,16 @@ function nodeToHtml(node){
         else
           result = result.join('');
 
+        var valBinding = fundBindingVal(node);
+
         return (
+          (valBinding && valBinding.dom !== valBinding.val ? '<span class="' + isolatePrefix + 'binding" title="' + valBinding.binding + '">' : '') +
           '&lt;' + node.tagName.toLowerCase() +
           (attrs ? ' ' + attrs : '') +
-          (childrenCount ? '' : '/') +
           '>' +
             result +
-          (childrenCount ? '&lt;/' + node.tagName.toLowerCase() + '>' : '')
+          '&lt;/' + node.tagName.toLowerCase() + '>' +
+          (valBinding && valBinding.dom !== valBinding.val ? '</span>' : '')
         );
 
         break;
@@ -168,16 +190,20 @@ function nodeToHtml(node){
 
     return '';
   }
-
+console.log(inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]));
   return walk(nodes, inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]) || []);
 }
 
 var view = new Window({
-  template: resource('./template/template-info.tmpl'),
-  selectedDomNode: selectedDomNode,
+  modal: true,
   visible: selectedDomNode.as(Boolean),
+  template: resource('./template/template-info.tmpl'),
   binding: {
     code: selectedDomNode.as(nodeToHtml),
+    upName: selectedObject.as(function(object){
+      if (object)
+        return object.parentNode ? 'parent' : object.owner ? 'owner' : '';
+    }),
     bindings: new Node({
       dataSource: bindingDataset,
       sorting: 'data.name',
@@ -200,22 +226,55 @@ var view = new Window({
         binding: {
           name: 'data:',
           value: 'data:',
-          used: 'data:'
+          used: 'data:',
+          highlight: hoveredBinding.compute('update', function(node, value){
+            return node.data.used ? !value || node.data.name === value : false;
+          })
         },
         action: {
+          enter: function(){
+            if (this.data.used)
+              hoveredBinding.set(this.data.name);
+          },
+          leave: function(){
+            hoveredBinding.set();
+          },
           pickValue: function(){
             if (this.data.used)
             {
-              var object = inspectBasisTemplate.resolveObjectById(selectedDomNode.value[inspectBasisTemplateMarker]);
-              console.log(object.binding[this.data.name].getter(object));
+              var object = selectedObject.value;
+              console.log('Value for `' + this.data.name + '` binding:\n', object.binding[this.data.name].getter(object));
             }
           }
         }
       }
     })
+  },
+  action: {
+    up: function(){
+      var object = selectedObject.value;
+      selectedDomNode.set((object.parentNode || object.owner).element);
+    },
+    enter: function(e){
+      hoveredBinding.set(e.sender.title);
+    },
+    leave: function(){
+      hoveredBinding.set();
+    },
+    down: function(e){
+      //if (e.sender.title)
+    }
+  },
+
+  realign: function(){},
+  setZIndex: function(){},
+  init: function(){
+    Window.prototype.init.call(this);
+    this.dde.fixLeft = false;
+    this.dde.fixTop = false;
   }
 });
 
 isolatePrefix = view.template.getIsolatePrefix();
 
-module.exports = view;
+module.exports = selectedDomNode;

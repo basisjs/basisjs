@@ -2,28 +2,44 @@
 {
   margin: 1px 0;
   display: inline;
+  font-size: 12px;
+  font-family: Monaco, Consolas, Courier New, monospace;
 }
 .binding_used
 {
-  display: block;
+  display: flex;
+  align-items: baseline;
 }
 .caption
 {
   color: #888;
 }
-.caption:after
+.caption:not(.caption_used):after
 {
-  content: ',';
+  content: ', ';
 }
-.used:after,
-.caption:last-child
+.binding:last-child .caption:after
 {
   content: '';
 }
-.used
+.caption_used
+{
+  display: inline-block;
+  padding: 2px 5px;
+  margin-right: 5px;
+  background: #EEE;
+  color: #444;
+  cursor: pointer;
+  transition: background-color .15s;
+}
+.caption_highlight
 {
   background: rgb(182, 207, 182);
-  color: black;
-  padding: 2px 4px;
-  display: inline-block;  
+}
+.value
+{
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
