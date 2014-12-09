@@ -10,6 +10,7 @@
   white-space: nowrap;
   z-index: 10000;
   transform: translateZ(0);
+  background: rgba(0, 0, 0, .2);
 }
 .window__wrapper:before
 {
@@ -35,6 +36,7 @@
   box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, .3);
   z-index: 10000;
   white-space: nowrap;
+  transition: width .5s;
 }
 .window__inner
 {
@@ -51,7 +53,7 @@
 }
 .toolbar
 {
-
+  padding-bottom: 1px;
 }
 .button
 {

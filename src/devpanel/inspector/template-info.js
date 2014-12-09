@@ -2,6 +2,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
 
+var fileAPI = require('../api/file.js');
 var Value = require('basis.data').Value;
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
@@ -14,6 +15,9 @@ var isolatePrefix;
 function valueToString(val){
   if (typeof val == 'string')
     return '\'' + val.replace(/\'/g, '\\\'') + '\'';
+
+  if (val && typeof val == 'object' && val.constructor.className)
+    return '[object ' + val.constructor.className + ']';
 
   return String(val);
 }
@@ -36,7 +40,8 @@ selectedDomNode.attach(function(node){
         items.push({
           name: key,
           value: used ? valueToString(objectBinding[key].getter(object)) : null,
-          used: used
+          used: used,
+          loc: objectBinding[key].loc
         });
       }
   }
@@ -152,7 +157,7 @@ function nodeToHtml(node){
               var bind = bindings[i];
               var val = bind.dom === node && bind.attr === attr.name && bind.val;
               if (val)
-                value = value.replace(new RegExp('\\b' + val + '\\b'), '<span class="' + isolatePrefix + 'binding" title="' + bind.binding + '">$&</span>');
+                value = value.replace(new RegExp('\\b' + val + '\\b'), '<span class="' + isolatePrefix + 'binding" data-binding="' + bind.binding + '">$&</span>');
             }
 
           return attr.name + (value ? '="' + value + '"' : '');
@@ -168,7 +173,7 @@ function nodeToHtml(node){
         var valBinding = fundBindingVal(node);
 
         return (
-          (valBinding && valBinding.dom !== valBinding.val ? '<span class="' + isolatePrefix + 'binding" title="' + valBinding.binding + '">' : '') +
+          (valBinding && valBinding.dom !== valBinding.val ? '<span class="' + isolatePrefix + 'binding" data-binding="' + valBinding.binding + '">' : '') +
           '&lt;' + node.tagName.toLowerCase() +
           (attrs ? ' ' + attrs : '') +
           '>' +
@@ -181,7 +186,7 @@ function nodeToHtml(node){
       case 3:
         binding = findBinding(node);
         return binding
-          ? '<span class="' + isolatePrefix + 'binding" title="' + binding.binding + '">' + node.nodeValue + '</span>'
+          ? '<span class="' + isolatePrefix + 'binding" data-binding="' + binding.binding + '">' + node.nodeValue + '</span>'
           : node.nodeValue;
 
       case 8:
@@ -190,7 +195,7 @@ function nodeToHtml(node){
 
     return '';
   }
-console.log(inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]));
+
   return walk(nodes, inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]) || []);
 }
 
@@ -215,6 +220,26 @@ var view = new Window({
             name: function(node){
               return node.data.id ? 'used' : 'notUsed';
             }
+          },
+          action: {
+            log: function(){
+              if (selectedDomNode.value)
+              {
+                var id = selectedDomNode.value[inspectBasisTemplateMarker];
+                var object = inspectBasisTemplate.resolveObjectById(id);
+                var objectBinding = object.binding;
+                var templateBinding = inspectBasisTemplate.resolveTemplateById(id).getBinding();
+                var result = {};
+
+                for (var key in objectBinding)
+                  if (key != '__extend__' && key != 'bindingId')
+                    if (templateBinding.names.indexOf(key) != -1)
+                      result[key] = objectBinding[key].getter(object);  // TODO: return real template values
+
+                global.$lastInspectValue = result;
+                console.log(result);
+              }
+            }
           }
         },
         sorting: function(node){
@@ -227,6 +252,7 @@ var view = new Window({
           name: 'data:',
           value: 'data:',
           used: 'data:',
+          loc: 'data:',
           highlight: hoveredBinding.compute('update', function(node, value){
             return node.data.used ? !value || node.data.name === value : false;
           })
@@ -240,11 +266,14 @@ var view = new Window({
             hoveredBinding.set();
           },
           pickValue: function(){
-            if (this.data.used)
-            {
-              var object = selectedObject.value;
-              console.log('Value for `' + this.data.name + '` binding:\n', object.binding[this.data.name].getter(object));
-            }
+            if (this.data.loc)
+              fileAPI.openFile(this.data.loc);
+
+            // if (this.data.used)
+            // {
+            //   var object = selectedObject.value;
+            //   console.log('Value for `' + this.data.name + '` binding:\n', object.binding[this.data.name].getter(object));
+            // }
           }
         }
       }
@@ -256,13 +285,16 @@ var view = new Window({
       selectedDomNode.set((object.parentNode || object.owner).element);
     },
     enter: function(e){
-      hoveredBinding.set(e.sender.title);
+      hoveredBinding.set(e.sender.getAttribute('data-binding'));
     },
     leave: function(){
       hoveredBinding.set();
     },
     down: function(e){
       //if (e.sender.title)
+    },
+    close: function(){
+      selectedDomNode.set();
     }
   },
 

@@ -17,6 +17,7 @@
 .caption:not(.caption_used):after
 {
   content: ', ';
+  text-decoration: none;
 }
 .binding:last-child .caption:after
 {
@@ -27,7 +28,7 @@
   display: inline-block;
   padding: 2px 5px;
   margin-right: 5px;
-  background: #EEE;
+  background: white;
   color: #444;
   cursor: pointer;
   transition: background-color .15s;
@@ -35,6 +36,15 @@
 .caption_highlight
 {
   background: rgb(182, 207, 182);
+}
+.link_loc
+{
+  text-decoration: underline;
+  cursor: pointer;
+}
+.caption:not(.caption_used):hover .link_loc
+{
+  color: #A00;
 }
 .value
 {
