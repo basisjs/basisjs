@@ -249,7 +249,7 @@
           cssom.setStyle(this.element, style);
 
         if (this.dde)
-          this.dde.setElement(this.element, this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element);
+          this.dde.setElement(this.tmpl.ddelement || this.element, this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element);
 
         if (this.buttonPanel)
           DOM.insert(this.tmpl.content || this.element, this.buttonPanel.element);
