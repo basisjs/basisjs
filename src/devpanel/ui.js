@@ -91,9 +91,10 @@ var panel = new basis.ui.Node({
   },
 
   action: {
-    inspectTemplate: function(){
+    inspectTemplate: function(e){
       cultureList.setDelegate();
       themeList.setDelegate();
+      e.die();
       inspectBasisDomEvent.captureEvent('click', function(){
         inspectBasisDomEvent.releaseEvent('click');
         templateInspector().startInspect();
@@ -102,9 +103,10 @@ var panel = new basis.ui.Node({
     showThemes: function(){
       themeList.setDelegate(this);
     },
-    inspectl10n: function(){
+    inspectl10n: function(e){
       cultureList.setDelegate();
       themeList.setDelegate();
+      e.die();
       inspectBasisDomEvent.captureEvent('click', function(){
         inspectBasisDomEvent.releaseEvent('click');
         l10nInspector().startInspect();
@@ -113,9 +115,10 @@ var panel = new basis.ui.Node({
     showCultures: function(){
       cultureList.setDelegate(this);
     },
-    inspectHeat: function(){
+    inspectHeat: function(e){
       cultureList.setDelegate();
       themeList.setDelegate();
+      e.die();
       inspectBasisDomEvent.captureEvent('click', function(){
         inspectBasisDomEvent.releaseEvent('click');
         heatInspector().startInspect();
