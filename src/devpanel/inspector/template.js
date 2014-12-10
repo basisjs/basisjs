@@ -181,6 +181,8 @@ function startInspect(){
     templateInfo.set();
     basis.dom.event.addGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.addGlobalHandler('mousewheel', mouseWheelHandler);
+    basis.dom.event.addGlobalHandler('wheel', mouseWheelHandler);
+    basis.dom.event.addGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);
     inspectBasisEvent.captureEvent('mouseup', basis.dom.event.kill);
     inspectBasisEvent.captureEvent('contextmenu', endInspect);
@@ -196,6 +198,8 @@ function endInspect(){
   {
     basis.dom.event.removeGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
+    basis.dom.event.removeGlobalHandler('wheel', mouseWheelHandler);
+    basis.dom.event.removeGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.releaseEvent('mousedown');
     inspectBasisEvent.releaseEvent('mouseup');
     inspectBasisEvent.releaseEvent('contextmenu');

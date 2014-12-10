@@ -67,7 +67,7 @@
   };
 
   var BROWSER_EVENTS = {
-    mousewheel: ['mousewheel', 'DOMMouseScroll']
+    mousewheel: ['wheel', 'mousewheel', 'DOMMouseScroll']
   };
 
  /**
@@ -275,11 +275,14 @@
   function wheelDelta(event){
     var delta = 0;
 
-    if ('wheelDelta' in event)
-      delta = event.wheelDelta; // IE, webkit, opera
+    if ('deltaY' in event)
+      delta = -event.deltaY;      // safari & gecko
     else
-      if (event.type == 'DOMMouseScroll')
-        delta = -event.detail;    // gecko
+      if ('wheelDelta' in event)
+        delta = event.wheelDelta; // IE, webkit, opera
+      else
+        if (event.type == 'DOMMouseScroll')
+          delta = -event.detail;  // old gecko
 
     return delta && (delta / Math.abs(delta));
   }
