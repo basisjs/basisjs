@@ -1624,7 +1624,7 @@
     className: namespace + '.KeyObjectMap',
 
     itemClass: DataObject,
-    keyGetter: $self,
+    keyGetter: basis.getter($self),
     autoDestroyMembers: true,
     map_: null,
 
