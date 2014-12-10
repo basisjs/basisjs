@@ -359,6 +359,9 @@
     if (captureHandlers[eventType])
       releaseEvent(eventType);
 
+    if (!handler)
+      handler = kill;
+
     addGlobalHandler(eventType, handler, thisObject);
     captureHandlers[eventType] = {
       handler: handler,
