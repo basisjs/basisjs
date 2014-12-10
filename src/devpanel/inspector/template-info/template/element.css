@@ -7,6 +7,11 @@
   padding-left: 2ex;
   padding-left: 2ch;
 }
+.inline
+{
+  padding: 0 2px;
+  display: inline-block;
+}
 .childrenHidden
 {
   color: #666;
