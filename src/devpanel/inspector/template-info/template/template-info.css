@@ -59,6 +59,7 @@
   padding: 3px 3ex;
   text-align: center;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
   color: #666;
 }
