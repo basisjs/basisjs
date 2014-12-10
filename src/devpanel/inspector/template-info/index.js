@@ -5,58 +5,37 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').mar
 var fileAPI = require('../../api/file.js');
 var parseDom = require('./parse-dom.js');
 var buildTree = require('./build-tree.js');
-var Value = require('basis.data').Value;
+var DataObject = require('basis.data').Object;
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
+var hoveredBinding = require('./binding.js').hover;
 var selectedDomNode = new basis.Token();
-var hoveredBinding = new Value();
-var bindingDataset = new Dataset();
-var isolatePrefix;
-
-function valueToString(val){
-  if (typeof val == 'string')
-    return '\'' + val.replace(/\'/g, '\\\'') + '\'';
-
-  if (val && typeof val == 'object' && val.constructor.className)
-    return '[object ' + val.constructor.className + ']';
-
-  return String(val);
-}
-
-selectedDomNode.attach(function(node){
-  var items = [];
-
-  if (node)
-  {
-    var id = node[inspectBasisTemplateMarker];
-    var object = inspectBasisTemplate.resolveObjectById(id);
-    var objectBinding = object.binding;
-    var template = inspectBasisTemplate.resolveTemplateById(id);
-    var templateBinding = template.getBinding();
-
-    for (var key in objectBinding)
-      if (key != '__extend__' && key != 'bindingId')
-      {
-        var used = templateBinding.names.indexOf(key) != -1;
-        items.push({
-          name: key,
-          value: used ? valueToString(objectBinding[key].getter(object)) : null,
-          used: used,
-          loc: objectBinding[key].loc
-        });
-      }
-  }
-
-  this.set(basis.data.wrap(items, true));
-}, bindingDataset);
-
 var selectedObject = selectedDomNode.as(function(node){
   return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
 });
+var selectedTemplate = selectedDomNode.as(function(node){
+  var template = node ? inspectBasisTemplate.resolveTemplateById(node[inspectBasisTemplateMarker]) : null;
+  if (this.value)
+    this.value.bindingBridge.detach(this.value, syncSelectedNode);
+  if (template)
+    template.bindingBridge.attach(template, syncSelectedNode);
+  return template;
+});
+var bindingDataset = new Dataset();
+var isolatePrefix;
+
+selectedDomNode.as(require('./binding.js').getBindingsFromNode).attach(bindingDataset.set, bindingDataset);
+
+function syncSelectedNode(){
+  var element = selectedObject.value && selectedObject.value.element;
+  if (selectedDomNode.value === element)
+    selectedDomNode.apply();
+  else
+    selectedDomNode.set(element);
+}
 
 // dom mutation observer
-
 var observer = (function(){
   var names = ['MutationObserver', 'WebKitMutationObserver'];
 
@@ -64,34 +43,29 @@ var observer = (function(){
   {
     var ObserverClass = global[name];
     if (typeof ObserverClass == 'function')
-    {
-      var observer = new ObserverClass(function(){
-        selectedDomNode.apply();
-      });
-      return observer;
-    }
+      return new ObserverClass(syncSelectedNode);
   }
 
   // fallback for case if MutationObserver doesn't support
-  setInterval(function(){
-    selectedDomNode.apply();
-  }, 100);
+  setInterval(syncSelectedNode, 100);
 })();
 
 selectedDomNode.attach(function(node){
   if (observer)
     observer.disconnect();
 
-  if (!node)
-    return '';
-
-  if (observer)
+  if (observer && node)
     observer.observe(node, {
       subtree: true,
       attributes: true,
       characterData: true,
       childList: true
     });
+});
+
+selectedDomNode.attach(function(node){
+  if (!node)
+    return view.clear();
 
   var nodes = parseDom(node);
   var bindings = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]) || [];
@@ -107,6 +81,14 @@ var view = new Window({
     upName: selectedObject.as(function(object){
       if (object)
         return object.parentNode ? 'parent' : object.owner ? 'owner' : '';
+    }),
+    sourceTitle: selectedTemplate.as(function(template){
+      if (template)
+        return template.source.url || '[inline]';
+    }),
+    isFile: selectedTemplate.as(function(template){
+      if (template)
+        return !!template.source.url;
     }),
     bindings: new Node({
       dataSource: bindingDataset,
@@ -125,9 +107,9 @@ var view = new Window({
               if (selectedDomNode.value)
               {
                 var id = selectedDomNode.value[inspectBasisTemplateMarker];
-                var object = inspectBasisTemplate.resolveObjectById(id);
+                var object = selectedObject.value;
                 var objectBinding = object.binding;
-                var templateBinding = inspectBasisTemplate.resolveTemplateById(id).getBinding();
+                var templateBinding = selectedTemplate.value.getBinding();
                 var result = {};
 
                 for (var key in objectBinding)
@@ -167,12 +149,6 @@ var view = new Window({
           pickValue: function(){
             if (this.data.loc)
               fileAPI.openFile(this.data.loc);
-
-            // if (this.data.used)
-            // {
-            //   var object = selectedObject.value;
-            //   console.log('Value for `' + this.data.name + '` binding:\n', object.binding[this.data.name].getter(object));
-            // }
           }
         }
       }
@@ -183,17 +159,16 @@ var view = new Window({
       var object = selectedObject.value;
       selectedDomNode.set((object.parentNode || object.owner).element);
     },
-    enter: function(e){
-      hoveredBinding.set(e.sender.getAttribute('data-binding'));
-    },
-    leave: function(){
-      hoveredBinding.set();
-    },
     down: function(e){
       //if (e.sender.title)
     },
     close: function(){
       selectedDomNode.set();
+    },
+    openSource: function(){
+      var template = selectedTemplate.value;
+      if (template && template.source.url)
+        fileAPI.openFile(template.source.url);
     }
   },
 

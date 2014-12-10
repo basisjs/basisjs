@@ -7,3 +7,8 @@
   padding-left: 2ex;
   padding-left: 2ch;
 }
+.childrenHidden
+{
+  color: #666;
+  padding: 0 1px;
+}

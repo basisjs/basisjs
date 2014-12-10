@@ -53,10 +53,28 @@
 {
   padding-bottom: 1px;
 }
+.source-title
+{
+  font-size: 12px;
+  padding: 3px 3ex;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #666;
+}
+.source-title_isFile
+{
+  cursor: pointer;
+  text-decoration: underline;
+}
+.source-title_isFile:hover
+{
+  color: #A00;
+}
 .button
 {
   background: #EEE;
-  padding: 3px 6px;
+  padding: 3px 8px;
   line-height: 1.2;
   font-size: 12px;
 }
@@ -64,9 +82,11 @@
 {
   position: relative;
   left: -3px;
+  padding-left: 6px;
   display: inline-block;
   visibility: hidden;
   cursor: pointer;
+  float: left;
 }
 .button_up.button_upName
 {
@@ -79,15 +99,17 @@
 .button_source
 {
   float: right;
-  margin-right: -4px;
+  margin-right: -5px;
   border-radius: 10px;
 }
 .code
 {
+  padding: 4px 0 2px;
+  clear: both;
   overflow: hidden;
   white-space: pre-wrap;
   color: #444;
-  font-family: Monaco, Consolas, Courier New, monospace;
+  font-family: Consolas, Monaco, Courier New, monospace;
   font-size: 12px;
   line-height: 22px;  
 }

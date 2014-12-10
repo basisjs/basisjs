@@ -26,16 +26,23 @@
 .caption_used
 {
   display: inline-block;
-  padding: 2px 5px;
-  margin-right: 5px;
-  background: transparent;
-  color: #444;
+  padding: 3px;
+  padding: 3px .5ch;
+  margin-left: -3px;
+  margin-left: -.5ch;
+  margin-right: 1ex;
+  border-radius: 2px;
+  color: #333;  
+  background: transparent;  
+  text-shadow: 0px 0px 1px white;
+
   cursor: pointer;
-  transition: background-color .15s;
+  transition: color .15s, background-color .15s;
 }
 .caption_highlight
 {
-  background: rgb(182, 207, 182);
+  color: #353;  
+  background: #B6CFB6;
 }
 .link_loc
 {

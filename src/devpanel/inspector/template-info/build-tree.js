@@ -1,7 +1,24 @@
 var Node = require('basis.ui').Node;
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
+var hoveredBinding = require('./binding.js').hover;
 
-var ValuePart = Node.subclass({
+var DOMNode = Node.subclass({
+  binding: {
+    matchBinding: hoveredBinding.compute(function(node, hover){
+      return node.bindingName && (!hover || hover === node.bindingName);
+    })
+  },
+  action: {
+    enter: function(e){
+      hoveredBinding.set(this.bindingName);
+    },
+    leave: function(e){
+      hoveredBinding.set();
+    }
+  }
+});
+
+var ValuePart = DOMNode.subclass({
   type: 'static',
   template: resource('./template/attribute-value.tmpl'),
   binding: {
@@ -10,7 +27,7 @@ var ValuePart = Node.subclass({
   }
 });
 
-var Attribute = Node.subclass({
+var Attribute = DOMNode.subclass({
   template: resource('./template/attritube.tmpl'),
   binding: {
     name: 'name'
@@ -18,10 +35,11 @@ var Attribute = Node.subclass({
   childClass: ValuePart
 });
 
-var Element = Node.subclass({
+var Element = DOMNode.subclass({
   template: resource('./template/element.tmpl'),
   binding: {
     name: 'name',
+    childrenHidden: 'childrenHidden',
     attributes: 'satellite:',
     singleton: function(node){
       return SINGLETON.indexOf(node.name) != -1;
@@ -42,7 +60,7 @@ var Element = Node.subclass({
   }
 });
 
-var Text = Node.subclass({
+var Text = DOMNode.subclass({
   template: resource('./template/text.tmpl'),
   binding: {
     value: 'value',
@@ -50,7 +68,7 @@ var Text = Node.subclass({
   }
 });
 
-var Comment = Node.subclass({
+var Comment = DOMNode.subclass({
   template: resource('./template/comment.tmpl'),
   binding: {
     value: 'value',
@@ -113,6 +131,7 @@ module.exports = function buildNode(item, bindings){
 
       return new Element({
         name: node.tagName.toLowerCase(),
+        childrenHidden: node.firstChild && !item[1].length,
         attributes: attrs,
         childNodes: item[1].map(function(child){
           return buildNode(child, bindings);

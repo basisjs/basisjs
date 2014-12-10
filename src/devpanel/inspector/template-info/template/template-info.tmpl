@@ -12,8 +12,11 @@
         <div class="toolbar">
           <span class="button button_up button_{upName}" style="margin-left: -3px;" event-click="up">&#x2191; {upName}</span>
           <span class="button button_source">source</span>
+          <div class="source-title source-title_{isFile}" event-click="openSource">
+            {sourceTitle}
+          </div>
         </div>
-        <div{childNodesElement} class="code" event-mouseover="enter" event-mouseleave="leave"/>
+        <div{childNodesElement} class="code"/>
       </div>
     </div>
   </div>
