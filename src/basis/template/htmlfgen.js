@@ -244,6 +244,10 @@
       8: 'bind_comment'
     };
 
+    function simpleStringify(val){
+      return typeof val == 'string' ? '"' + val.replace(/"/g, '\\"') + '"' : val;
+    }
+
    /**
     * @param {object} binding
     * @param {string=} special Possible values: l10n and bool
@@ -568,6 +572,17 @@
               varList.push(bindVar + '="' + defaultExpr + '"');
               putBindCode('bind_attrClass', domRef, bindVar, valueExpr, '"' + prefix + '"', anim);
 
+              /** @cut */ debugList.push('{' + [
+              /** @cut */   'binding:"' + bindName + '"',
+              /** @cut */   'raw:__' + bindName,
+              /** @cut */   'prefix:"' + prefix + '"',
+              /** @cut */   'anim:' + anim,
+              /** @cut */   'dom:' + domRef,
+              /** @cut */   'attr:"' + attrName + '"',
+              /** @cut */   'val:' + bindVar,
+              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */ ] + '}');
+
               break;
 
             case 'style':
@@ -587,40 +602,54 @@
               bindVar = attrExprMap[attrExprId];
               putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, expr);
 
+              /** @cut */ debugList.push('{' + [
+              /** @cut */   'binding:"' + bindName + '"',
+              /** @cut */   'raw:__' + bindName,
+              /** @cut */   'property:"' + binding[6] + '"',
+              /** @cut */   'expr:[[' + binding[5].map(simpleStringify) + '],[' + binding[4].map(simpleStringify) + ']]',
+              /** @cut */   'dom:' + domRef,
+              /** @cut */   'attr:"' + attrName + '"',
+              /** @cut */   'val:' + bindVar,
+              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */ ] + '}');
+
               break;
 
             default:
               specialAttr = SPECIAL_ATTR_MAP[attrName];
 
+              var expr = specialAttr && SPECIAL_ATTR_SINGLE[attrName]
+                    ? buildAttrExpression(binding, 'bool', l10nBindings) + '?"' + attrName + '":""'
+                    : buildAttrExpression(binding, false, l10nBindings);
+
               // resolve expression bind var
               attrExprId = binding[7];
               if (!attrExprMap[attrExprId])
               {
-                varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n', l10nBindings));
+                varList.push(bindVar + '=' + expr);
                 attrExprMap[attrExprId] = bindVar;
               }
 
               bindVar = attrExprMap[attrExprId];
-              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar,
-                specialAttr && SPECIAL_ATTR_SINGLE[attrName]
-                  ? buildAttrExpression(binding, 'bool', l10nBindings) + '?"' + attrName + '":""'
-                  : buildAttrExpression(binding, false, l10nBindings)
-              );
+              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
 
               if (specialAttr && (specialAttr == '*' || specialAttr.indexOf(binding[6].toLowerCase()) != -1))
                 bindCode.push(
                   'if(' + domRef + '.' + attrName + '!=' + bindVar + ')' +
                     domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' + bindVar : bindVar) + ';'
                 );
-          }
 
-          /** @cut */ debugList.push('{' + [
-          /** @cut */   'binding:"' + bindName + '"',
-          /** @cut */   'dom:' + domRef,
-          /** @cut */   'attr:"' + attrName + '"',
-          /** @cut */   'val:' + bindVar,
-          /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
-          /** @cut */ ] + '}');
+              /** @cut */ debugList.push('{' + [
+              /** @cut */   'binding:"' + bindName + '"',
+              /** @cut */   'raw:__' + bindName,
+              /** @cut */   'type:"' + (specialAttr && SPECIAL_ATTR_SINGLE[attrName] ? 'bool' : 'string') + '"',
+              /** @cut */   'expr:[[' + binding[5].map(simpleStringify) + '],[' + binding[4].map(simpleStringify) + ']]',
+              /** @cut */   'dom:' + domRef,
+              /** @cut */   'attr:"' + attrName + '"',
+              /** @cut */   'val:' + bindVar,
+              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */ ] + '}');
+          }
         }
       }
 
