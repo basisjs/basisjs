@@ -92,7 +92,7 @@
 
       for (var name in event)
         /** prevent warnings on deprecated properties */
-        /** @cut*/ if (name != 'returnValue' && name != 'keyLocation' && name != 'layerX' && name != 'layerY')
+        /** @cut*/ if (name != 'returnValue' && name != 'keyLocation' && name != 'layerX' && name != 'layerY' && (event.type != 'progress' || (name != 'totalSize' && name != 'position')))
         if (typeof event[name] != 'function' && name in this == false)
           this[name] = event[name];
 
