@@ -46,10 +46,10 @@
     return function requestEvent(){
       var args = [this].concat(arrayFrom(arguments));
 
-      event.apply(transportDispatcher, args);
-
       if (this.transport)
         this.transport['emit_' + eventName].apply(this.transport, args);
+      else
+        event.apply(transportDispatcher, args);
 
       event.apply(this, arguments);
     };
