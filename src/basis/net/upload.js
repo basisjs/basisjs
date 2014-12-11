@@ -11,6 +11,7 @@
   //
 
   var eventUtils = require('basis.dom.event'); // TODO
+  var STATE = require('basis.data').STATE;
   var basisNet = require('basis.net');
   var AbstractTransport = basisNet.AbstractTransport;
   var AbstractRequest = basisNet.AbstractRequest;
@@ -42,7 +43,7 @@
   {
     var REQUEST_PROGRESS_HANDLER = function(event){
       if (event.lengthComputable)
-        this.setState(basis.data.STATE.PROCESSING, {
+        this.setState(STATE.PROCESSING, {
           loaded: event.loaded,
           total: event.total
         });
@@ -78,6 +79,10 @@
 
       uploadFiles: function(url, files, fileParam){
         var formData = new FormData();
+
+        // if form passed
+        if (url.action)
+          url = url.action;
 
         for (var i = 0, file; file = files[i]; i++)
           formData.append(fileParam || file.name, file);
@@ -125,7 +130,7 @@
     var IFrameRequest = AbstractRequest.subclass({
       className: namespace + '.IFrameRequest',
 
-      state: basis.data.STATE.UNDEFINED,
+      state: STATE.UNDEFINED,
       inprogress: false,
 
       init: function(){
@@ -153,7 +158,7 @@
             that.removeFrame();
           }, 100);
 
-          this.setState(basis.data.STATE.READY);
+          this.setState(STATE.READY);
         }
       },
       isSuccessful: function(){
@@ -181,7 +186,7 @@
         this.transport.emit_start(this);
         this.insertFrame();
         this.inprogress = true;
-        this.setState(basis.data.STATE.PROCESSING);
+        this.setState(STATE.PROCESSING);
 
         form.setAttribute('enctype', 'multipart/form-data');
         form.setAttribute('method', 'POST');
