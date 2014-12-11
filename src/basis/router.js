@@ -1,7 +1,6 @@
 
   basis.require('basis.dom.event');
 
-
  /**
   * @namespace basis.router
   */
@@ -9,27 +8,131 @@
   var namespace = this.path;
   var ns = basis.namespace(String(namespace));
 
+  var PathService = basis.Class(null, {
+    location: null,
+    document: null,
+    history: null,
+    callback: null,
+    started: false,
+    init: function() {
+      this.location = global.location;
+      basis.object.extend(this, {
+        location: global.location,
+        document: global.document,
+        history: global.history
+      })
+    },
+    startWatch: function(callback) {
+      if (!callback) return;
+      this.callback = callback;
+      this.started = true;
+      callback();
+    },
+    stopWatch: function() {
+      this.started = false;
+      this.callback = null;
+    },
+    navigate: function() {
+      if (this.isStarted() && this.callback) this.callback();
+    },
+    getPath: function() {
+      return '';
+    },
+    isStarted: function() {
+      return this.started;
+    }
+  })
+
+  var PathServiceHistoryBased = basis.Class(PathService, {
+    root: '/',
+    init: function(options) {
+      PathService.prototype.init.apply(this, arguments);
+      var options = options || {};
+
+      if (options['root'])
+        this.root = ('/' + options.root + '/').replace(/^\/+|\/+$/g, '/');
+    },
+    startWatch: function(callback) {
+      if (this.isStarted() || !callback) return;
+      basis.dom.event.addHandler(global, 'popstate', callback);
+      PathService.prototype.startWatch.apply(this, arguments);
+    },
+    stopWatch: function(){
+      if (!this.isStarted() || !this.callback) return;
+      basis.dom.event.removeHandler(global, 'popstate', this.callback);
+      PathService.prototype.stopWatch.apply(this, arguments);
+    },
+    navigate: function(path, replace){
+      var url = this.root + (this.getFragment(path || ''));
+      this.history[replace ? 'replaceState' : 'pushState']({}, this.document.title, url);
+      PathService.prototype.navigate.apply(this, arguments);
+    },
+    getFragment: function(fragment) {
+      if (fragment == null) {
+        fragment = this.getPath();
+      }
+      return fragment.replace(/^[#\/]|\s+$/g, '');
+    },
+    getPath: function() {
+      var path = decodeURI(this.location.pathname + this.getSearch());
+      var root = this.root.slice(0, -1);
+      if (!path.indexOf(root)) path = path.slice(root.length);
+      return path.slice(1);
+    },
+    getSearch: function() {
+      var match = this.location.href.replace(/#.*/, '').match(/\?.+/);
+      return match ? match[0] : '';
+    }
+  })
+
+  var PathServiceHashBased = basis.Class(PathService, {
+    eventSupport: null,
+    timer: null,
+    CHECK_INTERVAL: 50,
+    init: function() {
+      PathService.prototype.init.apply(this, arguments);
+
+      var docMode = this.document.documentMode;
+      // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
+      this.eventSupport = 'onhashchange' in global && (docMode === undefined || docMode > 7);
+    },
+    startWatch: function(callback) {
+      if (this.isStarted() || !callback) return;
+      if (this.eventSupport)
+        basis.dom.event.addHandler(global, 'hashchange', callback);
+      else
+        this.timer = setInterval(callback, this.CHECK_INTERVAL);
+      PathService.prototype.startWatch.apply(this, arguments);
+    },
+    stopWatch: function(){
+      if (!this.isStarted() || !this.callback) return;
+      if (this.eventSupport)
+        basis.dom.event.removeHandler(global, 'hashchange', this.callback);
+      else
+        clearInterval(this.timer);
+      PathService.prototype.stopWatch.apply(this, arguments);
+    },
+    navigate: function(path, replace){
+      if (replace)
+        this.location.replace(this.location.pathname + '#' + path);
+      else
+        this.location.hash = path;
+      PathService.prototype.navigate.apply(this, arguments);
+    },
+    getPath: function() {
+      return this.location.hash.substr(1) || '';
+    }
+  })
 
   //
   // main part
   //
-
-  var location = global.location;
-  var document = global.document;
-
-  // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
-  var docMode = document.documentMode;
-  var eventSupport = 'onhashchange' in global && (docMode === undefined || docMode > 7);
-
-  var CHECK_INTERVAL = 50;
-
   var arrayFrom = basis.array.from;
   var routes = {};
   var matched = {};
-  var started = false;
   var currentPath;
-  var timer;
-
+  var service = new PathService;
+  var pathBeforeStart = null;
 
   function pathToRegExp(route){
     var value = String(route || '');
@@ -111,32 +214,28 @@
     return new RegExp('^' + parse(0) + '$', 'i');
   }
 
-  function startWatch(){
-    if (eventSupport)
-      basis.dom.event.addHandler(global, 'hashchange', checkUrl);
-    else
-      timer = setInterval(checkUrl, CHECK_INTERVAL);
+  function hasHtmlHistorySupport() {
+    return global.history && global.history.pushState;
   }
-  function stopWatch(){
-    if (eventSupport)
-      basis.dom.event.removeHandler(global, 'hashchange', checkUrl);
-    else
-      clearInterval(timer);
-  }
-
 
  /**
   * Start router
+  * @param  {object} options: Start options varying service used.
+  * {html5history: true, ...} turns on HTML5 history based.
+  * {root: {string}, ...} sets root url for HTML5 history based
   */
   function start(){
-    if (!started)
+    if (!service.isStarted())
     {
-      startWatch();
+      var options = arguments && arguments.length ? arguments[0] : {};
+      service = new (options['html5history'] && hasHtmlHistorySupport() ? PathServiceHistoryBased : PathServiceHashBased)(options);
+      if (pathBeforeStart) {
+        service.navigate.apply(service, pathBeforeStart);
+        pathBeforeStart = null;
+      }
+      service.startWatch(checkUrl);
 
-      started = true;
       /** @cut */ if (ns.debug) basis.dev.log(namespace + ' started');
-
-      checkUrl();
     }
   }
 
@@ -144,11 +243,9 @@
   * Stop router
   */
   function stop(){
-    if (started)
+    if (service.isStarted())
     {
-      stopWatch();
-
-      started = false;
+      service.stopWatch();
       /** @cut */ if (ns.debug) basis.dev.log(namespace + ' stopped');
     }
   }
@@ -157,7 +254,7 @@
   * Process current location
   */
   function checkUrl(){
-    var newPath = location.hash.substr(1) || '';
+    var newPath = service.getPath();
 
     if (newPath != currentPath)
     {
@@ -305,15 +402,20 @@
  /**
   * Navigate to specified path
   */
-  function navigate(path, replace){
-    if (replace)
-      location.replace(location.pathname + '#' + path);
+  function navigate() {
+    if (service.isStarted())
+      service.navigate.apply(service, arguments);
     else
-      location.hash = path;
-
-    if (started)
-      checkUrl();
+      pathBeforeStart = arguments;
   }
+
+ /**
+  * Get current path
+  */
+  function getPath() {
+    return service.getPath();
+  }
+
 
   //
   // export names
@@ -327,5 +429,6 @@
     stop: stop,
     start: start,
     checkUrl: checkUrl,
-    navigate: navigate
-  };
+    navigate: navigate,
+    getPath: getPath
+  }

@@ -98,6 +98,99 @@ module.exports = {
         router.stop();
         location.hash = '';
       }
+    },
+    {
+      name: 'checkHtml5Url',
+      test: function(){
+        var checker = 0;
+
+        router.start({html5history: true});
+
+        router.add('test', function(){
+          checker++;
+        });
+        router.navigate('test');
+        router.checkUrl();
+
+        this.is(1, checker);
+
+        router.stop();
+        history.back();
+      }
+    },
+    {
+      name: 'navigateHtml5',
+      test: function(){
+        var checker = 0;
+
+        router.start({html5history: true});
+
+        router.add('test', function(){
+          checker++;
+        });
+        router.navigate('test');
+
+        this.is('test', router.getPath());
+        this.is(1, checker);
+
+        router.stop();
+        history.back();
+      }
+    },
+    {
+      name: 'callbacksHtml5',
+      test: function(){
+        var checker = 0;
+
+        router.add('callback', function(){
+          checker++;
+        });
+        router.add('callback2', function(){
+          checker++;
+        });
+        this.is(0, checker);
+
+        router.navigate('callback');
+        this.is(0, checker);
+
+        router.start({html5history: true});
+        this.is(1, checker);
+
+        router.add('callback', function(){
+          checker++;
+        });
+        this.is(2, checker);
+
+        checker = 0;
+        router.navigate('callback2');
+        this.is(1, checker);
+
+        router.stop();
+        history.go(-2);
+      }
+    },
+    {
+      name: 'paramsHtml5',
+      test: function(){
+        var checker;
+
+        router.start({html5history: true});
+
+        router.add('param/:id', function(id){
+          checker = Number(id);
+        });
+        router.navigate('param/5');
+        this.is(5, checker);
+
+        router.add('path/*path', function(path){
+          checker = path;
+        });
+        router.navigate('path/some/stuff');
+        this.is('some/stuff', checker);
+
+        router.stop();
+        history.go(-2);
+      }
     }
   ]
 };
