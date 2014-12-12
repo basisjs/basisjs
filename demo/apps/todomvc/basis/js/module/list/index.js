@@ -1,19 +1,26 @@
-require('basis.ui');
-require('basis.data.index');
-
-//
-// Import names
-//
-
+var Node = require('basis.ui').Node;
 var Todo = require('app.type').Todo;
+var count = require('basis.data.index').count;
 
 
 //
 // List item class
 //
 
-var TodoView = basis.ui.Node.subclass({
+var TodoView = Node.subclass({
   editing: false,
+  startEditing: function(){
+    this.editing = true;
+    this.updateBind('editing');
+    this.focus();
+  },
+  stopEditing: function(value){
+    this.editing = false;
+    this.updateBind('editing');
+    this.update({
+      title: value
+    });
+  },
 
   template: resource('./template/item.tmpl'),
   binding: {
@@ -29,20 +36,14 @@ var TodoView = basis.ui.Node.subclass({
       });
     },
     startEditing: function(){
-      this.editing = true;
-      this.updateBind('editing');
-      this.focus();
+      this.startEditing();
     },
     stopEditing: function(event){
-      this.editing = false;
-      this.updateBind('editing');
-      this.update({
-        title: event.sender.value
-      });
+      this.stopEditing(event.sender.value);
     },
     key: function(event){
       if (event.key == event.KEY.ENTER)
-        this.action.stopEditing.call(this, event);
+        this.stopEditing(event.sender.value);
     },
     destroy: function(){
       this.target.destroy();
@@ -55,13 +56,11 @@ var TodoView = basis.ui.Node.subclass({
 // Main view
 //
 
-module.exports = new basis.ui.Node({
-  dataSource: Todo.selected,
-
+module.exports = new Node({
   template: resource('./template/list.tmpl'),
   binding: {
-    hidden: basis.data.index.count(Todo.all).as(basis.bool.invert),
-    noActive: basis.data.index.count(Todo.active).as(basis.bool.invert)
+    hidden: count(Todo.all).as(basis.bool.invert),
+    noActive: count(Todo.active).as(basis.bool.invert)
   },
   action: {
     toggleCompletedForAll: function(event){
@@ -79,5 +78,6 @@ module.exports = new basis.ui.Node({
   sorting: 'data.id',  // shortcut for function(child){ return child.data.id }
   sortingDesc: true,
 
+  dataSource: Todo.selected,
   childClass: TodoView
 });

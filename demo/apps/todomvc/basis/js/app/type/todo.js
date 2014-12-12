@@ -52,13 +52,11 @@ if (typeof localStorage != 'undefined')
   // read todo list from local storage
   var storedData = localStorage.getItem('todos-basisjs');
   if (storedData)
-    JSON.parse(storedData).forEach(Todo);
+    Todo.readList(JSON.parse(storedData));
 
   // add handler to save todos on page unload
   basis.dom.event.onUnload(function(){
-    localStorage.setItem('todos-basisjs', JSON.stringify(Todo.all.getItems().map(function(item){
-      return item.data;
-    })));
+    localStorage.setItem('todos-basisjs', JSON.stringify(Todo.all.getValues('data')));
   });
 }
 

@@ -1,9 +1,4 @@
-require('basis.ui');
-
-//
-// Import names
-//
-
+var Node = require('basis.ui').Node;
 var Todo = require('app.type').Todo;
 
 
@@ -11,7 +6,7 @@ var Todo = require('app.type').Todo;
 // Main view
 //
 
-module.exports = new basis.ui.Node({
+module.exports = new Node({
   template: resource('./template/form.tmpl'),
   action: {
     create: function(event){

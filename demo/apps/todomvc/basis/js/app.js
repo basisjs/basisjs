@@ -1,12 +1,5 @@
-require('basis.app');
-require('basis.ui');
-require('basis.router');
-require('basis.data.index');
-
-//
-// Import names
-//
-
+var router = require('basis.router');
+var Node = require('basis.ui').Node;
 var Todo = require('app.type').Todo;
 
 
@@ -14,14 +7,14 @@ var Todo = require('app.type').Todo;
 // Create app instance
 //
 
-module.exports = basis.app.create({
+module.exports = require('basis.app').create({
   // replace container with id="todoapp" by app root node element
   replace: 'todoapp',
 
   // init method invoke on document ready
   init: function(){
     // set up router
-    basis.router.add(/^\/(active|completed)$/, {
+    router.add(/^\/(active|completed)$/, {
       // Triggered every time when path starts to match the rule on change.
       // Analogy with onmouseenter
       // No need to define it by default.
@@ -41,10 +34,10 @@ module.exports = basis.app.create({
     });
 
     // start router
-    basis.router.start();
+    router.start();
 
     // return app root node
-    return new basis.ui.Node({
+    return new Node({
       template: resource('./app/template/layout.tmpl'),
       binding: {
         // nested views
