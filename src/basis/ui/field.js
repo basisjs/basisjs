@@ -278,7 +278,13 @@
       UINode.prototype.init.call(this);
 
       if (this.value)
-        this.setValue(this.value);
+      {
+        var value = this.value;
+        this.value = undefined;
+        this.setValue(value);
+      }
+
+      this.init = true;
     },
 
     setExample: function(example){
@@ -307,7 +313,9 @@
       {
         var oldValue = this.value;
         this.value = newValue;
-        this.emit_change(oldValue);
+
+        if (this.init === true)
+          this.emit_change(oldValue);
       }
     },
     reset: function(){
@@ -367,6 +375,8 @@
       this.validators = null;
       this.error = null;
       this.example = null;
+      this.value = null;
+      this.defaultValue = null;
 
       UINode.prototype.destroy.call(this);
     }
@@ -618,8 +628,8 @@
         }
       }
     },
-    emit_change: function(event){
-      Field.prototype.emit_change.call(this, event);
+    emit_change: function(oldValue){
+      Field.prototype.emit_change.call(this, oldValue);
       this.syncIndeterminate();
     },
 
@@ -694,7 +704,7 @@
       select: function(event){
         if (!this.isDisabled())
         {
-          this.select(this.contextSelection ? this.contextSelection.multiple : false);
+          this.select(this.contextSelection && this.contextSelection.multiple);
 
           if (event.sender.tagName != 'INPUT')
             event.die();
@@ -723,11 +733,18 @@
     }
   });
 
-  var COMPLEXFIELD_SELECTION_HANDLER = {
-    itemsChanged: function(){
-      this.emit_change();
-    }
-  };
+  function normValues(value){
+    var result = [];
+
+    if (!Array.isArray(value))
+      value = [value];
+
+    value.forEach(function(item){
+      basis.array.add(this, item);
+    }, result);
+
+    return result;
+  }
 
  /**
   * @class
@@ -736,6 +753,14 @@
     className: namespace + '.ComplexField',
 
     childClass: ComplexFieldItem,
+
+    ignoreSelectionChanges_: false,
+    emit_childNodesModified: function(delta){
+      Field.prototype.emit_childNodesModified.call(this, delta);
+
+      if (this.init)
+        this.syncSelectedChildren_();
+    },
 
     selection: {
       multiple: false
@@ -747,27 +772,77 @@
     },
     listen: {
       selection: {
-        itemsChanged: function(){
-          this.emit_change();
+        itemsChanged: function(selection){
+          if (!this.ignoreSelectionChanges_)
+          {
+            var selected = selection.getValues('getValue()');
+            this.setValue(selection.multiple ? selected : selected[0]);
+          }
         }
       }
     },
 
-    getValue: function(){
-      var value = this.selection.getItems().map(getFieldValue);
-      return this.selection.multiple ? value : value[0];
-    },
-    setValue: function(value){
+    syncSelectedChildren_: function(){
       var selected;
 
       if (this.selection.multiple)
-        selected = this.childNodes.filter(function(item){
-          return this.indexOf(item.getValue()) != -1;
-        }, arrayFrom(value));
+      {
+        selected = this.value.length
+          ? this.childNodes.filter(function(item){
+              return this.value.indexOf(item.getValue()) !== -1;
+            }, this)
+          : [];
+      }
       else
-        selected = [basis.array.search(this.childNodes, value, getFieldValue)];
+      {
+        selected = this.childNodes.filter(function(item){
+          return item.getValue() === this.value;
+        }, this);
+      }
 
+      this.ignoreSelectionChanges_ = true;
       this.selection.set(selected);
+      this.ignoreSelectionChanges_ = false;
+    },
+
+    setValue: function(value){
+      var oldValue = this.value;
+      var selected = [];
+
+      if (value === oldValue)
+        return;
+
+      if (this.selection.multiple)
+      {
+        value = normValues(value);
+
+        if (!Array.isArray(oldValue))
+        {
+          oldValue = value;
+        }
+        else
+        {
+          if (value.length == oldValue.length)
+          {
+            var diff = false;
+
+            for (var i = 0; !diff && i < value.length; i++)
+              diff = oldValue.indexOf(value[i]) == -1;
+
+            if (!diff)
+              return;
+          }
+        }
+      }
+
+      // emit event
+      this.value = value;
+      if (this.init === true && oldValue !== value)
+        this.emit_change(oldValue);
+
+      // update selected state
+      if (this.value === value)
+        this.syncSelectedChildren_();
     }
   });
 
@@ -899,8 +974,8 @@
 
     childClass: ComboboxItem,
 
-    emit_change: function(event){
-      ComplexField.prototype.emit_change.call(this, event);
+    emit_change: function(oldValue){
+      ComplexField.prototype.emit_change.call(this, oldValue);
 
       if (this.property)
       {
@@ -1099,21 +1174,6 @@
       var selected = this.selection.pick();
       return selected && selected.getTitle();
     },
-    getValue: function(){
-      var selected = this.selection.pick();
-      return selected && selected.getValue();
-    },
-    setValue: function(value){
-      if (this.getValue() !== value)
-      {
-        // update value & selection
-        var item = basis.array.search(this.childNodes, value, getFieldValue);
-        if (item)
-          this.selection.set([item]);
-        else
-          this.selection.clear();
-      }
-    },
     destroy: function(){
       this.property = null;
       this.opened = null;
@@ -1281,8 +1341,8 @@
       this.matchFilter.set(this.getValue());
     },
 
-    emit_change: function(event){
-      Text.prototype.emit_change.call(this, event);
+    emit_change: function(oldValue){
+      Text.prototype.emit_change.call(this, oldValue);
       this.matchFilter.set(this.getValue());
     },
 
