@@ -1,10 +1,8 @@
 
   <b:style src="./Window.css"/>
-  <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
   <b:define name="moveable" type="bool"/>
 
-  <div class="Basis-Window Basis-Window_{moveable} {selected} {disabled}" event-mousedown="mousedown" event-keydown="keydown">
+  <div class="Basis-Window Basis-Window_{moveable}" event-mousedown="mousedown" event-keydown="keydown">
     <div class="Basis-Window-Canvas">
       <div class="corner-left-top"/>
       <div class="corner-right-top"/>

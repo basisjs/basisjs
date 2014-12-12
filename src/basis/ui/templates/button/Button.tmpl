@@ -1,10 +1,9 @@
 
   <b:style src="./Button.css"/>
 
-  <b:define name="selected" type="bool"/>
   <b:define name="disabled" type="bool"/>
 
-  <button class="Basis-Button {selected} {disabled}" disabled="{disabled}" event-click="click">
+  <button class="Basis-Button {disabled}" disabled="{disabled}" event-click="click">
     <span class="Basis-Button-Back"/>
     <span class="Basis-Button-Caption">
       {caption}
