@@ -758,7 +758,7 @@
     emit_childNodesModified: function(delta){
       Field.prototype.emit_childNodesModified.call(this, delta);
 
-      if (this.init)
+      if (this.init === true)
         this.syncSelectedChildren_();
     },
 
