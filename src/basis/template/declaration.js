@@ -180,13 +180,13 @@ var makeDeclaration = (function(){
     }
 
     function attrs(token, declToken){
-      var attrs = token.attrs;
       var result = [];
       var styleAttr;
-      var display;
+      var displayAttr;
+      var item;
       var m;
 
-      for (var i = 0, attr; attr = attrs[i]; i++)
+      for (var i = 0, attr; attr = token.attrs[i]; i++)
       {
         // process special attributes (basis namespace)
         if (attr.prefix == 'b')
@@ -201,7 +201,7 @@ var makeDeclaration = (function(){
 
             case 'show':
             case 'hide':
-              display = attr;
+              displayAttr = attr;
               break;
           }
 
@@ -210,71 +210,70 @@ var makeDeclaration = (function(){
 
         if (m = attr.name.match(ATTR_EVENT_RX))
         {
-          var item = m[1] == attr.value
+          item = m[1] == attr.value
             ? [TYPE_ATTRIBUTE_EVENT, m[1]]
             : [TYPE_ATTRIBUTE_EVENT, m[1], attr.value];
-
-          /** @cut */ addTokenLocation(item, attr);
-
-          result.push(item);
-
-          continue;
         }
+        else
+        {
+          item = [
+            attr.type,              // TOKEN_TYPE = 0
+            attr.binding,           // TOKEN_BINDINGS = 1
+            refList(attr)           // TOKEN_REFS = 2
+          ];
 
-        var item = [
-          attr.type,              // TOKEN_TYPE = 0
-          attr.binding,           // TOKEN_BINDINGS = 1
-          refList(attr)           // TOKEN_REFS = 2
-        ];
+          // ATTR_NAME = 3
+          if (attr.type == 2)
+            item.push(name(attr));
 
-        // ATTR_NAME = 3
-        if (attr.type == 2)
-          item.push(name(attr));
+          // ATTR_VALUE = 4
+          if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != 2))
+            item.push(attr.value);
 
-        // ATTR_VALUE = 4
-        if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != 2))
-          item.push(attr.value);
-
-        if (attr.type == TYPE_ATTRIBUTE_STYLE)
-          styleAttr = item;
+          if (attr.type == TYPE_ATTRIBUTE_STYLE)
+            styleAttr = item;
+        }
 
         /** @cut */ addTokenLocation(item, attr);
 
         result.push(item);
       }
 
-      if (display)
+      if (displayAttr)
       {
         if (!styleAttr)
         {
           styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
-          //styleAttr.loc = getLocation(template, display.loc);
-          addTokenLocation(styleAttr, display);
+          //styleAttr.loc = getLocation(template, displayAttr.loc);
+          addTokenLocation(styleAttr, displayAttr);
           result.push(styleAttr);
         }
 
-        if (!styleAttr[1])
-          styleAttr[1] = [];
+        var displayBinding = displayAttr.binding;
+        var addDisplayNone = false;
+        var show = displayAttr.name == 'show';
 
-        var displayExpr = display.binding || [[], [display.value]];
-
-        if (displayExpr[0].length - displayExpr[1].length)
+        if (!displayBinding || displayBinding[0].length != displayBinding[1].length)
         {
           // expression has non-binding parts, treat as constant
-          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') +
-            // visible when:
-            //   show & value is not empty
-            //   or
-            //   hide & value is empty
-            (display.name == 'show' ^ display.value === '' ? '' : 'display: none');
+          // visible when:
+          //   show & value is not empty
+          //   or
+          //   hide & value is empty
+          addDisplayNone = !(show ^ displayAttr.value === '');
         }
         else
         {
-          if (display.name == 'show')
-            styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
+          addDisplayNone = show;
 
-          styleAttr[1].push(displayExpr.concat('display', display.name));
+          if (!styleAttr[1])
+            styleAttr[1] = [];
+
+          styleAttr[1].push(displayBinding.concat('display', displayAttr.name));
         }
+
+        if (addDisplayNone)
+          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
       }
 
       return result.length ? result : 0;
@@ -363,15 +362,11 @@ var makeDeclaration = (function(){
 
               // other attributes
               var valueAttr = attrs_.value || {};
-              var parsed = {
-                value: valueAttr.value || '',
-                binding: valueAttr.binding || ''
-              };
 
-              itAttrToken[TOKEN_BINDINGS] = parsed.binding;
+              itAttrToken[TOKEN_BINDINGS] = valueAttr.binding || 0;
 
               if (!options.optimizeSize || !itAttrToken[TOKEN_BINDINGS] || classOrStyle)
-                itAttrToken[valueIdx] = parsed.value || '';
+                itAttrToken[valueIdx] = valueAttr.value || '';
               else
                 itAttrToken.length = valueIdx;
 
@@ -386,14 +381,12 @@ var makeDeclaration = (function(){
 
             case 'append':
               var valueAttr = attrs_.value || {};
-              var parsed = {
-                value: valueAttr.value || '',
-                binding: valueAttr.binding || ''
-              };
+              var appendValue = valueAttr.value || '';
+              var appendBinding = valueAttr.binding;
 
               if (!isEvent)
               {
-                if (parsed.binding)
+                if (appendBinding)
                 {
                   var attrBindings = itAttrToken[TOKEN_BINDINGS];
                   if (attrBindings)
@@ -401,34 +394,34 @@ var makeDeclaration = (function(){
                     switch (attrs.name)
                     {
                       case 'style':
-                        var oldBindingMap = {};
+                        var currentBindingMap = {};
 
                         for (var i = 0, oldBinding; oldBinding = attrBindings[i]; i++)
-                          oldBindingMap[oldBinding[2]] = i;
+                          currentBindingMap[oldBinding[2]] = i;
 
-                        for (var i = 0, newBinding; newBinding = parsed.binding[i]; i++)
-                          if (newBinding[2] in oldBindingMap)
-                            attrBindings[oldBindingMap[newBinding[2]]] = newBinding;
+                        for (var i = 0, newBinding; newBinding = appendBinding[i]; i++)
+                          if (newBinding[2] in currentBindingMap)
+                            attrBindings[currentBindingMap[newBinding[2]]] = newBinding;
                           else
                             attrBindings.push(newBinding);
 
                         break;
 
                       case 'class':
-                        attrBindings.push.apply(attrBindings, parsed.binding);
+                        attrBindings.push.apply(attrBindings, appendBinding);
                         break;
 
                       default:
-                        parsed.binding[0].forEach(function(name){
+                        appendBinding[0].forEach(function(name){
                           arrayAdd(this, name);
                         }, attrBindings[0]);
 
-                        for (var i = 0; i < parsed.binding[1].length; i++)
+                        for (var i = 0; i < appendBinding[1].length; i++)
                         {
-                          var value = parsed.binding[1][i];
+                          var value = appendBinding[1][i];
 
                           if (typeof value == 'number')
-                            value = attrBindings[0].indexOf(parsed.binding[0][value]);
+                            value = attrBindings[0].indexOf(appendBinding[0][value]);
 
                           attrBindings[1].push(value);
                         }
@@ -436,7 +429,7 @@ var makeDeclaration = (function(){
                   }
                   else
                   {
-                    itAttrToken[TOKEN_BINDINGS] = parsed.binding;
+                    itAttrToken[TOKEN_BINDINGS] = appendBinding;
                     if (!classOrStyle)
                       itAttrToken[TOKEN_BINDINGS][1].unshift(itAttrToken[valueIdx]);
                   }
@@ -448,18 +441,14 @@ var makeDeclaration = (function(){
                 }
               }
 
-              if (parsed.value)
+              if (appendValue)
                 itAttrToken[valueIdx] =
                   (itAttrToken[valueIdx] || '') +
                   (itAttrToken[valueIdx] && (isEvent || classOrStyle) ? ' ' : '') +
-                  parsed.value;
+                  appendValue;
 
-              if (classOrStyle)
-                if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
-                {
-                  arrayRemove(itAttrs, itAttrToken);
-                  return;
-                }
+              if (classOrStyle && !itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
+                arrayRemove(itAttrs, itAttrToken);
 
               break;
 
@@ -468,7 +457,7 @@ var makeDeclaration = (function(){
               {
                 var valueAttr = attrs_.value || {};
                 var remValues = (valueAttr.value || '').split(' ');
-                var values = itAttrToken[valueIdx].split(' ');
+                var values = (itAttrToken[valueIdx] || '').split(' ');
                 var bindings = itAttrToken[TOKEN_BINDINGS];
 
                 if (valueAttr.binding && bindings)
@@ -1042,25 +1031,20 @@ var makeDeclaration = (function(){
   }
 
   function applyDefines(tokens, template, options, stIdx){
-    var unpredictable = 0;
-
     for (var i = stIdx || 0, token; token = tokens[i]; i++)
     {
       var tokenType = token[TOKEN_TYPE];
 
       if (tokenType == TYPE_ELEMENT)
-        unpredictable += applyDefines(token, template, options, ELEMENT_ATTRS);
+        applyDefines(token, template, options, ELEMENT_ATTRS);
 
-      if (tokenType == TYPE_ATTRIBUTE_CLASS || (tokenType == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
+      if (tokenType == TYPE_ATTRIBUTE_CLASS)
       {
         var bindings = token[TOKEN_BINDINGS];
         var valueIdx = ATTR_VALUE_INDEX[tokenType];
 
         if (bindings)
         {
-          var newAttrValue = (token[valueIdx] || '').trim();
-          newAttrValue = newAttrValue == '' ? [] : newAttrValue.split(' ');
-
           for (var k = 0, bind; bind = bindings[k]; k++)
           {
             if (bind.length > 2)  // bind already processed
@@ -1071,32 +1055,28 @@ var makeDeclaration = (function(){
             var bindNameParts = bind[1].split(':');
             var bindName = bindNameParts.pop();
             var bindPrefix = bindNameParts.pop() || '';
-            var bindDef = template.defines[bindName];
+            var define = template.defines[bindName];
 
-            if (bindDef)
+            if (define)
             {
-              bind[1] = (bindPrefix ? bindPrefix + ':' : '') + bindDef[0];
-              bind.push.apply(bind, bindDef.slice(1)); // add define
+              bind[1] = (bindPrefix ? bindPrefix + ':' : '') + define[0];
+              bind.push.apply(bind, define.slice(1)); // add define
 
-              /** @cut */ bindDef.used = true;  // mark as used
+              /** @cut */ define.used = true;  // mark as used
             }
             else
             {
-              bind.push(-1); // mark binding to not processing it anymore
-              unpredictable++;
+              bind.push(0); // mark binding to not processing it anymore
 
               /** @cut */ addTemplateWarn(template, options, 'Unpredictable class binding: ' + bind[0] + '{' + bind[1] + '}', bind.loc);
             }
           }
 
-          token[valueIdx] = newAttrValue.join(' ');
           if (options.optimizeSize && !token[valueIdx])
             token.length = valueIdx;
         }
       }
     }
-
-    return unpredictable;
   }
 
   function isolateTokens(tokens, isolate, template, stIdx){
@@ -1132,7 +1112,7 @@ var makeDeclaration = (function(){
       if (tokenType == TYPE_ELEMENT)
         isolateTokens(token, isolate, template, ELEMENT_ATTRS);
 
-      if (tokenType == TYPE_ATTRIBUTE_CLASS || (tokenType == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
+      if (tokenType == TYPE_ATTRIBUTE_CLASS)
       {
         var bindings = token[TOKEN_BINDINGS];
         var valueIndex = ATTR_VALUE_INDEX[tokenType];
@@ -1151,9 +1131,10 @@ var makeDeclaration = (function(){
   }
 
   return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
-    options = options || {};
     var warns = [];
     /** @cut */ var source_;
+
+    options = options || {};
 
     // result object
     var result = {
@@ -1168,7 +1149,6 @@ var makeDeclaration = (function(){
       deps: [],
       /** @cut for token type change in dev mode */ l10n: [],
       defines: {},
-      unpredictable: true,
       warns: warns,
       isolate: false,
       includes: []
@@ -1218,7 +1198,7 @@ var makeDeclaration = (function(){
     normalizeRefs(result.tokens, result.dictURI);
 
     // deal with defines
-    result.unpredictable = !!applyDefines(result.tokens, result, options);
+    applyDefines(result.tokens, result, options);
 
     /** @cut */ if (/^[^a-z]/i.test(result.isolate))
     /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, otherwise it leads to incorrect css class names and broken styles');

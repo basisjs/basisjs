@@ -23,7 +23,6 @@
   //
 
   var templateList = [];
-  var tmplFilesMap = {};
 
   var DECLARATION_VERSION = 3;
 
@@ -443,14 +442,6 @@
 
         if (oldSource && oldSource.bindingBridge)
         {
-          var tmplList = oldSource.url && tmplFilesMap[oldSource.url];
-          if (tmplList)
-          {
-            arrayRemove(tmplList, this);
-            if (!tmplList.length)
-              delete tmplFilesMap[oldSource.url];
-          }
-
           this.url = '';
           this.baseURI = '';
           oldSource.bindingBridge.detach(oldSource, templateSourceUpdate, this);
@@ -462,9 +453,6 @@
           {
             this.url = source.url;
             this.baseURI = path.dirname(source.url) + '/';
-            if (!tmplFilesMap[source.url])
-              tmplFilesMap[source.url] = [];
-            arrayAdd(tmplFilesMap[source.url], this);
           }
 
           source.bindingBridge.attach(source, templateSourceUpdate, this);
