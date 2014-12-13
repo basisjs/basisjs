@@ -29,6 +29,10 @@
   var consts = require('./const.js');
   var TYPE_ELEMENT = consts.TYPE_ELEMENT;
   var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+  var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
+  var TYPE_ATTRIBUTE_STYLE = consts.TYPE_ATTRIBUTE_STYLE;
+  var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
+
   var TYPE_TEXT = consts.TYPE_TEXT;
   var TYPE_COMMENT = consts.TYPE_COMMENT;
 
@@ -39,12 +43,15 @@
   var ATTR_NAME = consts.ATTR_NAME;
   var ATTR_VALUE = consts.ATTR_VALUE;
   var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
+  var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 
   var ELEMENT_NAME = consts.ELEMENT_NAME;
 
   var TEXT_VALUE = consts.TEXT_VALUE;
   var COMMENT_VALUE = consts.COMMENT_VALUE;
 
+  var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
+  var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 
 
   //
@@ -302,32 +309,48 @@
           break;
 
         case TYPE_ATTRIBUTE:
-          var attrName = token[ATTR_NAME];
-          var attrValue = token[ATTR_VALUE];
-          var eventName = attrName.replace(/^event-/, '');
+          if (!token[TOKEN_BINDINGS])
+            setAttribute(token[ATTR_NAME], token[ATTR_VALUE] || '');
+          break;
 
-          if (eventName != attrName)
-          {
-            setEventAttribute(eventName, attrValue);
-          }
-          else
-          {
-            if (attrName != 'class' && attrName != 'style' ? !token[TOKEN_BINDINGS] : attrValue)
-              setAttribute(attrName, attrValue || '');
-          }
+        case TYPE_ATTRIBUTE_CLASS:
+          var value = token[ATTR_VALUE_INDEX[token[TOKEN_TYPE]]];
+          value = value ? [value] : [];
+
+          if (token[TOKEN_BINDINGS])
+            for (var j = 0, binding; binding = token[TOKEN_BINDINGS][j]; j++)
+            {
+              var defaultValue = binding[3];
+              if (defaultValue)
+                switch (binding[2])
+                {
+                  case CLASS_BINDING_BOOL:
+                    // ['prefix_name','name',CLASS_BINDING_BOOL,defaultValue]
+                    value.push(binding[0]);
+                    break;
+                  case CLASS_BINDING_ENUM:
+                    // ['prefix_','name',CLASS_BINDING_ENUM,defaultValue,['foo','bar']]
+                    // [['prefix_foo','prefix_bar'],'name',CLASS_BINDING_ENUM,defaultValue,['foo','bar']]
+                    value.push(Array.isArray(binding[0]) ? binding[0][defaultValue - 1] : binding[0] + binding[4][defaultValue - 1]);
+                    break;
+                }
+            }
+
+          value = value.join(' ').trim();
+          if (value)
+            setAttribute('class', value);
 
           break;
 
-        case 4:
-        case 5:
-          var attrValue = token[ATTR_VALUE - 1];
+        case TYPE_ATTRIBUTE_STYLE:
+          var attrValue = token[ATTR_VALUE_INDEX[token[TOKEN_TYPE]]];
 
           if (attrValue)
-            setAttribute(ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]], attrValue);
+            setAttribute('style', attrValue);
 
           break;
 
-        case 6:
+        case TYPE_ATTRIBUTE_EVENT:
           setEventAttribute(token[1], token[2] || token[1]);
           break;
 
@@ -473,8 +496,8 @@
     */
     var bind_attrClass = CLASSLIST_SUPPORTED
       // classList supported
-      ? function(domRef, oldClass, newValue, prefix, anim){
-          var newClass = newValue ? prefix + newValue : '';
+      ? function(domRef, oldClass, newValue, anim){
+          var newClass = newValue ? newValue : '';
 
           if (newClass != oldClass)
           {
@@ -498,8 +521,8 @@
           return newClass;
         }
       // old browsers are not support for classList
-      : function(domRef, oldClass, newValue, prefix, anim){
-          var newClass = newValue ? prefix + newValue : '';
+      : function(domRef, oldClass, newValue, anim){
+          var newClass = newValue ? newValue : '';
 
           if (newClass != oldClass)
           {

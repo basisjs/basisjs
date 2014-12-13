@@ -28,6 +28,8 @@ var ELEMENT_ATTRS = consts.ELEMENT_ATTRS;
 var ELEMENT_CHILDS = consts.ELEMENT_CHILDS;
 var TEXT_VALUE = consts.TEXT_VALUE;
 var COMMENT_VALUE = consts.COMMENT_VALUE;
+var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
+var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 
 var IDENT = /^[a-z_][a-z0-9_\-]*$/i;
 var ATTR_EVENT_RX = /^event-(.+)$/;
@@ -568,6 +570,7 @@ var makeDeclaration = (function(){
                     case 'bool':
                       define = [
                         elAttrs.from || elAttrs.name,
+                        CLASS_BINDING_BOOL,
                         elAttrs['default'] == 'true' ? 1 : 0
                       ];
                       break;
@@ -594,6 +597,7 @@ var makeDeclaration = (function(){
 
                       define = [
                         elAttrs.from || elAttrs.name,
+                        CLASS_BINDING_ENUM,
                         defaultIndex + 1,
                         values
                       ];
@@ -1061,14 +1065,16 @@ var makeDeclaration = (function(){
               bind.push.apply(bind, bindDef.slice(1)); // add define
               bindDef.used = true;  // mark as used
 
-              if (bindDef[1])
+              switch (bind[2])
               {
-                if (bindDef.length == 2)
-                  // bool
-                  arrayAdd(newAttrValue, bind[0] + bindName);
-                else
-                  // enum
-                  arrayAdd(newAttrValue, bind[0] + bindDef[2][bindDef[1] - 1]);
+                case CLASS_BINDING_BOOL:
+                  // ['prefix_','bool',CLASS_BINDING_BOOL,0]
+                  // -> ['prefix_bool','bool',CLASS_BINDING_BOOL,0]
+                  bind[0] += bindName;
+                  break;
+                case CLASS_BINDING_ENUM:
+                  // ['prefix_','enum',CLASS_BINDING_ENUM,0,['foo','bar']]
+                  break;
               }
             }
             else

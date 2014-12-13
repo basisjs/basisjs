@@ -10,26 +10,29 @@
   // import names
   //
 
-  var basisTemplate = require('basis.template');
+  var consts = require('basis.template.const');
 
-  var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
-  var TYPE_ATTRIBUTE = basisTemplate.TYPE_ATTRIBUTE;
-  var TYPE_TEXT = basisTemplate.TYPE_TEXT;
-  var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
+  var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+  var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+  var TYPE_TEXT = consts.TYPE_TEXT;
+  var TYPE_COMMENT = consts.TYPE_COMMENT;
 
-  var TOKEN_TYPE = basisTemplate.TOKEN_TYPE;
-  var TOKEN_BINDINGS = basisTemplate.TOKEN_BINDINGS;
-  var TOKEN_REFS = basisTemplate.TOKEN_REFS;
+  var TOKEN_TYPE = consts.TOKEN_TYPE;
+  var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
+  var TOKEN_REFS = consts.TOKEN_REFS;
 
-  var ATTR_NAME = basisTemplate.ATTR_NAME;
-  var ATTR_NAME_BY_TYPE = basisTemplate.ATTR_NAME_BY_TYPE;
+  var ATTR_NAME = consts.ATTR_NAME;
+  var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
 
-  var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
-  var ELEMENT_ATTRS = basisTemplate.ELEMENT_ATTRS;
-  var ELEMENT_CHILDS = basisTemplate.ELEMENT_CHILDS;
+  var ELEMENT_NAME = consts.ELEMENT_NAME;
+  var ELEMENT_ATTRS = consts.ELEMENT_ATTRS;
+  var ELEMENT_CHILDS = consts.ELEMENT_CHILDS;
 
-  var TEXT_VALUE = basisTemplate.TEXT_VALUE;
-  var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
+  var TEXT_VALUE = consts.TEXT_VALUE;
+  var COMMENT_VALUE = consts.COMMENT_VALUE;
+
+  var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
+  var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 
 
   //
@@ -506,76 +509,51 @@
             case 'class':
               var defaultExpr = '';
               var valueExpr = 'value';
-              var prefix = binding[4];
-              var bindingLength = binding.length;
+              var bindingType = binding[5];
+              var defaultValue = binding[6];
 
-              if (bindingLength >= 6)
+
+              switch (bindingType)
               {
-                // predictable binding
+                case CLASS_BINDING_BOOL:
+                  var className = binding[4];
+                  valueExpr = 'value?"' + className + '":""';
 
-                if (bindingLength == 6 || typeof binding[6] == 'string')
-                {
-                  // bool binding
+                  if (defaultValue)
+                    defaultExpr = className;
 
-                  if (bindingLength == 6)
-                  {
-                    valueExpr = 'value?"' + bindName + '":""';
-                    if (binding[5])
-                      defaultExpr = prefix + bindName;
-                  }
-                  else
-                  {
-                    prefix = '';
-                    valueExpr = 'value?"' + binding[6] + '":""';
+                  break;
 
-                    if (binding[5])
-                      defaultExpr = binding[6];
-                  }
-                }
-                else
-                {
-                  // enum binding
+                case CLASS_BINDING_ENUM:
+                  var values = binding[7];
+                  var prefix = binding[4];
+                  var classes = Array.isArray(prefix) ? prefix : values.map(function(val){
+                    return prefix + val;
+                  });
 
-                  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
-                  if (!binding[6].length)
-                    continue;
+                  valueExpr = values.map(function(val, idx){
+                    return 'value=="' + val + '"?"' + classes[idx] + '"';
+                  }).join(':') + ':""';
 
-                  if (bindingLength == 7)
-                  {
-                    valueExpr = binding[6].map(function(val){
-                      return 'value=="' + val + '"';
-                    }).join('||') + '?value:""';
+                  if (defaultValue)
+                    defaultExpr = classes[defaultValue - 1];
 
-                    if (binding[5])
-                      defaultExpr = prefix + binding[6][binding[5] - 1];
-                  }
-                  else
-                  {
-                    prefix = '';
-                    valueExpr = binding[6].map(function(val, idx){
-                      return 'value=="' + val + '"?"' + this[idx] + '"';
-                    }, binding[7]).join(':') + ':""';
-
-                    if (binding[5])
-                      defaultExpr = binding[7][binding[5] - 1];
-                  }
-                }
-              }
-              else
-              {
-                // quirks mode (unpredictable binding)
-                // number || string set as is
-                // otherwise treat as boolean, if new value is true set binding name and empty string in other cases
-                valueExpr = 'typeof value=="string"||typeof value=="number"?value:(value?"' + bindName + '":"")';
+                  break;
+                default:
+                  // quirks mode (unpredictable binding)
+                  // number || string set as is
+                  // otherwise treat as boolean, if new value is true set binding name and empty string in other cases
+                  var prefix = binding[4];
+                  valueExpr = 'typeof value=="string"||typeof value=="number"?"' + prefix + '"+value:(value?"' + prefix + bindName + '":"")';
               }
 
               varList.push(bindVar + '="' + defaultExpr + '"');
-              putBindCode('bind_attrClass', domRef, bindVar, valueExpr, '"' + prefix + '"', anim);
+              putBindCode('bind_attrClass', domRef, bindVar, valueExpr, anim);
 
               /** @cut */ debugList.push('{' + [
               /** @cut */   'binding:"' + bindName + '"',
               /** @cut */   'raw:__' + bindName,
-              /** @cut */   'prefix:"' + prefix + '"',
+              /** @cut */   'prefix:"' + '???' + '"',
               /** @cut */   'anim:' + anim,
               /** @cut */   'dom:' + domRef,
               /** @cut */   'attr:"' + attrName + '"',

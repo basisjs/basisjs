@@ -264,6 +264,26 @@ module.exports = {
                   }
                 },
                 {
+                  name: 'should warn on dublicate values in `values`',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" type="enum" values="bar bar"/>' +
+                      '<span class="{foo}"/>',
+                      true
+                    );
+
+                    assert(template.decl_.warns.length === 1);
+
+                    var template = createTemplate(
+                      '<b:define name="foo" type="enum" values="bar baz bar baz"/>' +
+                      '<span class="{foo}"/>',
+                      true
+                    );
+
+                    assert(template.decl_.warns.length === 2);
+                  }
+                },
+                {
                   name: 'should warn when default has value not in values list',
                   test: function(){
                     var template = createTemplate(
@@ -406,6 +426,71 @@ module.exports = {
 
             assert(text(template) === text('<span><span class="foo"></span></span>'));
             assert(template.decl_.warns.length === 1);
+          }
+        },
+        {
+          name: '<b:define type="bool"> should no left values when binding removing',
+          test: function(){
+            var include = createTemplate(
+              '<b:define name="foo" type="bool" default="true"/>' +
+              '<span class="{foo} prefix_{foo} left_{foo}"/>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + include.templateId + '">' +
+                '<b:remove-class value="{foo}"/>' +
+                '<b:remove-class value="prefix_{foo}"/>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<span class="left_foo"/>'));
+          }
+        },
+        {
+          name: '<b:define type="bool"> should no left values when binding removing',
+          test: function(){
+            var include = createTemplate(
+              '<b:define name="foo" type="enum" values="foo bar" default="bar"/>' +
+              '<span class="{foo} prefix_{foo} left_{foo}"/>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + include.templateId + '">' +
+                '<b:remove-class value="{foo}"/>' +
+                '<b:remove-class value="prefix_{foo}"/>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<span class="left_bar"/>'));
+          }
+        }
+      ]
+    },
+    {
+      name: 'values intersection',
+      test: [
+        {
+          name: 'should warn when intersect with static classes',
+          test: function(){
+            var template = createTemplate(
+              '<b:define name="foo" type="bool"/>' +
+              '<b:define name="enum" type="enum" values="bar baz foo"/>' +
+              '<span class="foo baz {foo} {enum} bar"/>',
+              true
+            );
+
+            assert(template.decl_.warns.length === 3);
+          },
+        },
+        {
+          name: 'should not warn when no intersection with static classes',
+          test: function(){
+            var template = createTemplate(
+              '<b:define name="foo" type="bool"/>' +
+              '<b:define name="enum" type="enum" values="bar baz foo"/>' +
+              '<span class="a_foo b_baz c_{foo} d_{enum} e_baz"/>',
+              true
+            );
+
+            assert(template.decl_.warns === false);
           }
         }
       ]
