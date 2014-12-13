@@ -25,7 +25,7 @@
   var templateList = [];
   var tmplFilesMap = {};
 
-  var DECLARATION_VERSION = 2;
+  var DECLARATION_VERSION = 3;
 
   var consts = require('basis.template.const');
   var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
@@ -1008,6 +1008,8 @@
     ATTR_NAME: consts.ATTR_NAME,
     ATTR_VALUE: consts.ATTR_VALUE,
     ATTR_NAME_BY_TYPE: consts.ATTR_NAME_BY_TYPE,
+    CLASS_BINDING_ENUM: consts.CLASS_BINDING_ENUM,
+    CLASS_BINDING_BOOL: consts.CLASS_BINDING_BOOL,
 
     ELEMENT_NAME: consts.ELEMENT_NAME,
     ELEMENT_ATTRS: consts.ELEMENT_ATTRS,

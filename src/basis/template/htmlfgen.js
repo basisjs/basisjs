@@ -510,22 +510,31 @@
               var defaultExpr = '';
               var valueExpr = 'value';
               var bindingType = binding[5];
-              var defaultValue = binding[6];
-
+              var defaultValue = binding[7];
 
               switch (bindingType)
               {
                 case CLASS_BINDING_BOOL:
-                  var className = binding[4];
-                  valueExpr = 'value?"' + className + '":""';
+                  // [2, localPath, 'binding', attrName, 'prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                  // [2, localPath, 'binding', attrName, ['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
+
+                  var values = [binding[6]];
+                  var prefix = binding[4];
+                  var classes = Array.isArray(prefix) ? prefix : values.map(function(val){
+                    return prefix + val;
+                  });
+
+                  valueExpr = 'value?"' + classes[0] + '":""';
 
                   if (defaultValue)
-                    defaultExpr = className;
+                    defaultExpr = classes[defaultValue - 1];
 
                   break;
 
                 case CLASS_BINDING_ENUM:
-                  var values = binding[7];
+                  // [2, localPath, 'binding', attrName, 'prefix_','binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                  // [2, localPath, 'binding', attrName, ['prefix_foo','prefix_bar'], CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                  var values = binding[8];
                   var prefix = binding[4];
                   var classes = Array.isArray(prefix) ? prefix : values.map(function(val){
                     return prefix + val;

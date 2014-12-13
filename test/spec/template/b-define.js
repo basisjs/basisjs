@@ -165,6 +165,29 @@ module.exports = {
                       { foo: false }
                       ) === text('<span class="bar"></span>'));
                   }
+                },
+                {
+                  name: 'when from is used, should use name as value for class',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" from="bar" type="bool" default="true"/>' +
+                      '<span class="static {foo} prefix_{foo}"/>',
+                      true
+                    );
+
+                    assert(template.decl_.warns === false);
+                    assert(text(template) === text('<span class="static foo prefix_foo"></span>'));
+                    assert(text(template, { bar: false }) === text('<span class="static"></span>'));
+                    assert(text(
+                      '<b:define name="foo" from="bar" type="bool"/>' +
+                      '<span class="{foo} prefix_{foo}"/>'
+                      ) === text('<span></span>'));
+                    assert(text(
+                      '<b:define name="foo" from="bar" type="bool"/>' +
+                      '<span class="{foo} prefix_{foo}"/>',
+                      { bar: true }
+                      ) === text('<span class="foo prefix_foo"></span>'));
+                  }
                 }
                 // {
                 //   name: 'should warn when default has no value',
@@ -293,6 +316,17 @@ module.exports = {
 
                     assert(text(template) === text('<span></span>'));
                     assert(template.decl_.warns.length === 1);
+                  }
+                },
+                {
+                  name: 'use with `from`',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" from="bar" type="enum" values="baz qux"/>' +
+                      '<span class="{foo} prefix_{foo}"/>'
+                    );
+
+                    assert(text(template, { bar: 'qux' }) === text('<span class="qux prefix_qux"></span>'));
                   }
                 }
               ]

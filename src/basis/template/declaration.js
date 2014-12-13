@@ -475,8 +475,18 @@ var makeDeclaration = (function(){
                 {
                   for (var i = 0, remBinding; remBinding = valueAttr.binding[i]; i++)
                     for (var j = bindings.length - 1, classBinding; classBinding = bindings[j]; j--)
-                      if (classBinding[0] === remBinding[0] && classBinding[1] == remBinding[1])
+                    {
+                      // remBinding
+                      //      -> [prefix, name]
+                      // classBinding
+                      //      -> [prefix, bindingName, type, name, defaultValue, values]
+                      //   or -> [prefix, name, -1]
+                      var prefix = classBinding[0];
+                      var bindingName = classBinding[3] || classBinding[1];
+
+                      if (prefix === remBinding[0] && bindingName === remBinding[1])
                         bindings.splice(j, 1);
+                    }
 
                   if (!bindings.length)
                     itAttrToken[TOKEN_BINDINGS] = 0;
@@ -561,6 +571,8 @@ var makeDeclaration = (function(){
 
                 if ('name' in elAttrs && !template.defines[elAttrs.name])
                 {
+                  var bindingName = elAttrs.from || elAttrs.name;
+                  var defineName = elAttrs.name;
                   var define = false;
                   var defaultIndex;
                   var values;
@@ -569,8 +581,9 @@ var makeDeclaration = (function(){
                   {
                     case 'bool':
                       define = [
-                        elAttrs.from || elAttrs.name,
+                        bindingName,
                         CLASS_BINDING_BOOL,
+                        defineName,
                         elAttrs['default'] == 'true' ? 1 : 0
                       ];
                       break;
@@ -596,22 +609,23 @@ var makeDeclaration = (function(){
                       /** @cut */   addTemplateWarn(template, options, 'Enum define has bad value as default (value ignored)', elAttrs_['default']);
 
                       define = [
-                        elAttrs.from || elAttrs.name,
+                        bindingName,
                         CLASS_BINDING_ENUM,
+                        defineName,
                         defaultIndex + 1,
                         values
                       ];
 
                       break;
                     /** @cut */ default:
-                    /** @cut */   addTemplateWarn(template, options, 'Bad define type `' + elAttrs.type + '` for ' + elAttrs.name, elAttrs_.type && elAttrs_.type.valueLoc);
+                    /** @cut */   addTemplateWarn(template, options, 'Bad define type `' + elAttrs.type + '` for ' + defineName, elAttrs_.type && elAttrs_.type.valueLoc);
                   }
 
                   if (define)
                   {
                     //define.loc = token.loc;
                     addTokenLocation(define, token);
-                    template.defines[elAttrs.name] = define;
+                    template.defines[defineName] = define;
                   }
                 }
               break;
@@ -1063,25 +1077,15 @@ var makeDeclaration = (function(){
             {
               bind[1] = (bindPrefix ? bindPrefix + ':' : '') + bindDef[0];
               bind.push.apply(bind, bindDef.slice(1)); // add define
-              bindDef.used = true;  // mark as used
 
-              switch (bind[2])
-              {
-                case CLASS_BINDING_BOOL:
-                  // ['prefix_','bool',CLASS_BINDING_BOOL,0]
-                  // -> ['prefix_bool','bool',CLASS_BINDING_BOOL,0]
-                  bind[0] += bindName;
-                  break;
-                case CLASS_BINDING_ENUM:
-                  // ['prefix_','enum',CLASS_BINDING_ENUM,0,['foo','bar']]
-                  break;
-              }
+              /** @cut */ bindDef.used = true;  // mark as used
             }
             else
             {
               bind.push(-1); // mark binding to not processing it anymore
-              /** @cut */ addTemplateWarn(template, options, 'Unpredictable class binding: ' + bind[0] + '{' + bind[1] + '}', bind.loc);
               unpredictable++;
+
+              /** @cut */ addTemplateWarn(template, options, 'Unpredictable class binding: ' + bind[0] + '{' + bind[1] + '}', bind.loc);
             }
           }
 

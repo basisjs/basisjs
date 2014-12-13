@@ -320,20 +320,32 @@
           if (token[TOKEN_BINDINGS])
             for (var j = 0, binding; binding = token[TOKEN_BINDINGS][j]; j++)
             {
-              var defaultValue = binding[3];
+              var defaultValue = binding[4];
               if (defaultValue)
-                switch (binding[2])
+              {
+                var prefix = binding[0];
+                if (Array.isArray(prefix))
                 {
-                  case CLASS_BINDING_BOOL:
-                    // ['prefix_name','name',CLASS_BINDING_BOOL,defaultValue]
-                    value.push(binding[0]);
-                    break;
-                  case CLASS_BINDING_ENUM:
-                    // ['prefix_','name',CLASS_BINDING_ENUM,defaultValue,['foo','bar']]
-                    // [['prefix_foo','prefix_bar'],'name',CLASS_BINDING_ENUM,defaultValue,['foo','bar']]
-                    value.push(Array.isArray(binding[0]) ? binding[0][defaultValue - 1] : binding[0] + binding[4][defaultValue - 1]);
-                    break;
+                  // precomputed classes
+                  // bool: [['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                  // enum: [['prefix_foo','prefix_bar'],'binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                  value.push(binding[0][defaultValue - 1]);
                 }
+                else
+                {
+                  switch (binding[2])
+                  {
+                    case CLASS_BINDING_BOOL:
+                      // ['prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                      value.push(prefix + binding[3]);
+                      break;
+                    case CLASS_BINDING_ENUM:
+                      // ['prefix_','binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                      value.push(prefix + binding[5][defaultValue - 1]);
+                      break;
+                  }
+                }
+              }
             }
 
           value = value.join(' ').trim();
