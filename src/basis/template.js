@@ -305,6 +305,11 @@
     baseURI: '',
 
    /**
+    * @type {string}
+    */
+    url: '',
+
+   /**
     * @private
     */
     attaches_: null,
@@ -446,6 +451,7 @@
               delete tmplFilesMap[oldSource.url];
           }
 
+          this.url = '';
           this.baseURI = '';
           oldSource.bindingBridge.detach(oldSource, templateSourceUpdate, this);
         }
@@ -454,6 +460,7 @@
         {
           if (source.url)
           {
+            this.url = source.url;
             this.baseURI = path.dirname(source.url) + '/';
             if (!tmplFilesMap[source.url])
               tmplFilesMap[source.url] = [];
