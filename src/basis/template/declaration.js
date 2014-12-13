@@ -37,8 +37,6 @@ var ATTR_EVENT_RX = /^event-(.+)$/;
 
 // TODO: remove
 var Template = function(){};
-var L10nProxyToken = function(){};
-var getL10nTemplate = function(){};
 var resolveResource = function(){};
 
 
@@ -845,9 +843,7 @@ var makeDeclaration = (function(){
                     /** @cut */ var stack = includeStack.slice(includeStack.indexOf(resource) || 0).concat(resource).map(function(res){
                     /** @cut */   if (res instanceof Template)
                     /** @cut */     res = res.source;
-                    /** @cut */   if (res instanceof L10nProxyToken)
-                    /** @cut */     return '{l10n:' + res.token.name + '@' + res.token.dictionary.resource.url + '}';
-                    /** @cut */   return res.url || '[inline template]';
+                    /** @cut */   return res.id || res.url || '[inline template]';
                     /** @cut */ });
                     /** @cut */ template.warns.push('Recursion: ', stack.join(' -> '));
                     /** @cut */ basis.dev.warn('Recursion in template: ', stack.join(' -> '));
@@ -1332,8 +1328,6 @@ function getDeclFromSource(source, baseURI, clone, options){
 resource('../template.js').ready(function(exports){
   resolveResource = exports.resolveResource;
   Template = exports.Template;
-  L10nProxyToken = exports.L10nProxyToken;
-  getL10nTemplate = exports.getL10nTemplate;
 });
 
 module.exports = {

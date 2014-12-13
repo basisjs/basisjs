@@ -118,20 +118,42 @@
 
   // old Firefox has no Node#contains method (Firefox 8 and lower)
   if (Node && !Node.prototype.contains)
-    Node.prototype.contains = function(child){
+    Node.prototype.contains = function(child){  // TODO: don't extend Node, replace for function
       return !!(this.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
     };
 
 
   // l10n
   var l10nTemplates = {};
+
+  function getSourceFromL10nToken(token){
+    var dict = token.dictionary;
+    var url = dict.resource ? dict.resource.url : '';
+    var id = token.name + '@' + url;
+    var result = token.as(function(value){
+      return token.type == 'markup'
+        ? '<span data-basisjs-l10n="' + id + '">' + String(value) + '</span>'
+        : '';
+    });
+
+    result.id = '{l10n:' + id + '}';
+    result.url = url + ':' + token.name;
+
+    return result;
+  }
+
   function getL10nHtmlTemplate(token){
-    var template = getL10nTemplate(token);
-    var id = template.templateId;
+    if (typeof token == 'string')
+      token = getL10nToken(token);
+
+    if (!token)
+      return null;
+
+    var id = token.basisObjectId;
     var htmlTemplate = l10nTemplates[id];
 
     if (!htmlTemplate)
-      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(template.source);
+      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(getSourceFromL10nToken(token));
 
     return htmlTemplate;
   }

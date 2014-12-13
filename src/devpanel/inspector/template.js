@@ -45,7 +45,7 @@ function pickHandler(event){
   {
     var source = template.source;
 
-    if (source.url && template.source instanceof inspectBasisTemplate.L10nProxyToken == false)
+    if (source.url)
     {
       var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
 

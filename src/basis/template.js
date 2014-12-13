@@ -35,52 +35,6 @@
   // Convert tokens to declaration
   //
 
-  var tokenTemplate = {};
-  var L10nProxyToken = basis.Token.subclass({
-    className: namespace + '.L10nProxyToken',
-    token: null,
-    url: '',
-    init: function(token){
-      this.url = token.dictionary.resource.url + ':' + token.name;
-      this.token = token;
-      this.set();
-
-      token.attach(this.set, this);
-    },
-    set: function(){
-      return basis.Token.prototype.set.call(this,
-        this.token.type == 'markup'
-          ? processMarkup(this.token.value, this.token.name + '@' + this.token.dictionary.resource.url)
-          : ''
-      );
-    },
-    destroy: function(){
-      basis.Token.prototype.destroy.call(this);
-      this.token = null;
-    }
-  });
-
-  function processMarkup(value, id){
-    // temporary
-    return '<span class="basisjs-markup" data-basisjs-l10n="' + id + '">' + String(value) + '</span>';
-  }
-
-  function getL10nTemplate(token){
-    if (typeof token == 'string')
-      token = getL10nToken(token);
-
-    if (!token)
-      return null;
-
-    var id = token.basisObjectId;
-    var template = tokenTemplate[id];
-
-    if (!template)
-      template = tokenTemplate[id] = new Template(new L10nProxyToken(token));
-
-    return template;
-  }
-
   function startUseResource(uri){
     var resource = basis.resource(uri).fetch();
     if (typeof resource.startUse == 'function')
@@ -1014,7 +968,6 @@
     COMMENT_VALUE: consts.COMMENT_VALUE,
 
     // classes
-    L10nProxyToken: L10nProxyToken,
     TemplateSwitchConfig: TemplateSwitchConfig,
     TemplateSwitcher: TemplateSwitcher,
     Template: Template,
@@ -1025,7 +978,6 @@
     // for debug purposes
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
-    getL10nTemplate: getL10nTemplate,
     resolveResource: resolveResource, // TODO: remove
 
     // theme
