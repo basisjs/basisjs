@@ -292,7 +292,7 @@
             if (bindingName)
               expression.push(l10n[exprVar.substr(colonPos + 1)]);
             else
-              expression.push('__l10n["' + l10nPath + '"]');
+              expression.push('l10n["' + l10nPath + '"]');
           }
         }
       }
@@ -346,6 +346,7 @@
 
         var namePart = bindName.split(':');
         var anim = namePart[0] == 'anim';
+        var l10n = namePart[0] == 'l10n';
 
         if (anim)
           bindName = namePart[1];
@@ -354,7 +355,7 @@
         bindVar = '_' + i;
         varName = '__' + bindName;
 
-        if (namePart[0] == 'l10n' && namePart[1])
+        if (l10n && namePart[1])
         {
           var l10nFullPath = namePart[1];
           var l10nBinding = null;
@@ -383,8 +384,6 @@
               bindCode.push(varName + '.set(__' + l10nBinding + ');');
             }
 
-            ///
-
             bindName = l10nBindings[l10nFullPath];
             bindVar = '_' + i;
             varName = '__' + bindName;
@@ -402,7 +401,7 @@
               /** @cut */   'binding:"' + bindName + '"',
               /** @cut */   'dom:' + domRef,
               /** @cut */   'val:' + bindVar,
-              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */   'attachment:' + bindName
               /** @cut */ ] + '}');
 
               varList.push(bindVar + '=' + domRef);
@@ -417,7 +416,7 @@
               /** @cut */   'dom:' + domRef,
               /** @cut */   'attr:' + attrName,
               /** @cut */   'val:' + bindVar,
-              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */   'attachment:' + bindName
               /** @cut */ ] + '}');
 
               varList.push(bindVar);
@@ -433,24 +432,35 @@
           if (!bindMap[l10nName])
           {
             bindMap[l10nName] = [];
+            bindMap[l10nName].l10n = '$l10n_' + l10nBindSeed++;
+            varList.push('__' + bindMap[l10nName].l10n + '=l10n["' + l10nName + '"]');
             l10nMap[l10nName] = [];
           }
 
           bindCode = bindMap[l10nName];
-          bindCode.l10n = true;
 
           if (bindType == TYPE_TEXT)
           {
             /** @cut */ debugList.push('{' + [
             /** @cut */   'binding:"' + l10nFullPath + '"',
             /** @cut */   'dom:' + domRef,
-            /** @cut */   'val:__l10n["' + l10nName + '"]',
+            /** @cut */   'val:l10n["' + l10nName + '"]',
             /** @cut */   'attachment:l10nToken("' + l10nName + '")'
             /** @cut */ ] + '}');
             /** @cut */ toolsUsed.l10nToken = true;
 
             l10nMap[l10nName].push(domRef + '.nodeValue=value;');
-            bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"]' + (l10nBinding ? '[__' + l10nBinding + ']' : '') + ';');
+
+            if (!bindCode.nodeBind)
+            {
+              varList.push(bindVar + '=' + domRef);
+              putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
+              bindCode.nodeBind = bindVar;
+            }
+            else
+            {
+              bindCode.push(domRef + '.nodeValue=value;');
+            }
 
             continue;
           }
@@ -628,7 +638,7 @@
 
               /** @cut */ debugList.push('{' + [
               /** @cut */   'binding:"' + bindName + '"',
-              /** @cut */   'raw:__' + bindName,
+              /** @cut */   'raw:' + (l10n ? 'l10n["' + bindName + '"]' : '__' + bindName),
               /** @cut */   'type:"' + (specialAttr && SPECIAL_ATTR_SINGLE[attrName] ? 'bool' : 'string') + '"',
               /** @cut */   'expr:[[' + binding[5].map(simpleStringify) + '],[' + binding[4].map(simpleStringify) + ']]',
               /** @cut */   'dom:' + domRef,
@@ -664,17 +674,16 @@
 
       for (var bindName in bindMap)
       {
-        /** @cut */ if (bindName.indexOf('@') == -1) varList.push('$$' + bindName + '=0');
+        var stateVar = bindMap[bindName].l10n || bindName;
+        /** @cut */ varList.push('$$' + stateVar + '=0');
         result.push(
           'case"' + bindName + '":' +
-          (bindMap[bindName].l10n
-            ? bindMap[bindName].join('')
-            : 'if(__' + bindName + '!==value)' +
-              '{' +
-                /** @cut */ '$$' + bindName + '++;' +
-                '__' + bindName + '=value;' +
-                bindMap[bindName].join('') +
-              '}') +
+            'if(__' + stateVar + '!==value)' +
+            '{' +
+              /** @cut */ '$$' + stateVar + '++;' +
+              '__' + stateVar + '=value;' +
+              bindMap[bindName].join('') +
+            '}' +
           'break;'
         );
       }
@@ -725,7 +734,7 @@
       l10nKeys: basis.object.keys(bindings.l10n)
     };
 
-    // if only one root node, than document fragment isn't used
+    // document fragment isn't using if single root node
     if (tokens.length == 1)
       paths.path[0] = 'a=_';
 
@@ -739,17 +748,17 @@
         code.push(
           'case"' + key + '":' +
             'if(value==null)value="{' + key + '}";' +
-            '__l10n[token]=value;' +
+            'l10n[path]=value;' +
             bindings.l10n[key].join('') +
           'break;'
         );
 
-      result.createL10nSync = compileFunction(['_', '__l10n', 'bind_attr', 'TEXT_BUG'],
+      result.createL10nSync = compileFunction(['_', 'l10n', 'bind_attr', 'TEXT_BUG'],
         /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
         'var ' + paths.path + ';' +
-        'return function(token, value){' +
-          'switch(token){' +
+        'return function(path, value){' +
+          'switch(path){' +
             code.join('') +
           '}' +
         '}'
@@ -758,7 +767,7 @@
       );
     }
 
-    result.createInstance = compileFunction(['tid', 'map', 'proto', 'tools', '__l10n', 'TEXT_BUG'],
+    result.createInstance = compileFunction(['tid', 'map', 'proto', 'tools', 'l10n', 'TEXT_BUG'],
       /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
       'var getBindings=tools.createBindingFunction([' +

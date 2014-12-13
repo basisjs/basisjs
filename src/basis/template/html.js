@@ -839,10 +839,11 @@
       var instances = {};
       var l10nMap = {};
       var l10nLinks = [];
+      var l10nMarkupTokens = [];
       var seed = 0;
-
       var proto = buildHtml(tokens);
       var id = this.templateId;
+
       templates[id] = {
         template: this,
         instances: instances
@@ -852,24 +853,41 @@
       {
         var l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
 
-        for (var i = 0, key; key = fn.l10nKeys[i]; i++)
-          l10nProtoSync(key, getL10nToken(key).value);
-
         if (fn.l10nKeys)
           for (var i = 0, key; key = fn.l10nKeys[i]; i++)
           {
+            var token = getL10nToken(key);
             var link = {
               path: key,
-              token: getL10nToken(key),
+              token: token,
               handler: function(value){
-                l10nProtoSync(this.path, value);
+                var isMarkup = this.token.type == 'markup';
+
+                if (isMarkup)
+                  basis.array.add(l10nMarkupTokens, this);
+                else
+                  basis.array.remove(l10nMarkupTokens, this);
+
+                l10nProtoSync(this.path, isMarkup ? null : value);
                 for (var key in instances)
-                  instances[key].tmpl.set(this.path, value);
+                  instances[key].tmpl.set(this.path, isMarkup ? this.token : value);
               }
             };
             link.token.attach(link.handler, link);
             l10nLinks.push(link);
+
+            if (token.type == 'markup')
+            {
+              l10nMarkupTokens.push(link);
+              l10nProtoSync(key, null);
+            }
+            else
+            {
+              l10nProtoSync(key, token.value);
+            }
+
             link = null;
+            token = null;
           }
       }
 
@@ -879,6 +897,9 @@
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
           var instanceId = seed++;
           var instance = createInstance(instanceId, obj, onAction, onRebuild, bindings, bindingInterface);
+
+          for (var i = 0, len = l10nMarkupTokens.length; i < len; i++)
+            instance.tmpl.set(l10nMarkupTokens[i].path, l10nMarkupTokens[i].token);
 
           instances[instanceId] = instance;
 

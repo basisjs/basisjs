@@ -623,7 +623,7 @@ var makeDeclaration = (function(){
                 var text = token.children[0];
                 tokens[i--] = basis.object.extend(text, {
                   refs: (elAttrs.ref || '').trim().split(/\s+/),
-                  value: 'notrim' in elAttrs ? text.value : text.value.replace(/^\s*[\r\n]+|[\r\n]\s*$/g, '')
+                  value: 'notrim' in elAttrs ? text.value : text.value.replace(/^\s*[\r\n]+|[\r\n]+\s*$/g, '')
                 });
               break;
 
@@ -891,28 +891,15 @@ var makeDeclaration = (function(){
               if (!parts[2])
               {
                 // reset binding with no dictionary
+                bindings = 0;
                 arrayRemove(refs, bindings);
                 if (refs.length == 0)
                   refs = null;
-                bindings = 0;
                 token.value = token.value.replace(/\}$/, '@undefined}');
               }
               else
               {
-                var l10nId = parts.slice(1).join('@');
-                var l10nToken = getL10nToken(l10nId);
-                var l10nTemplate = getL10nTemplate(l10nToken);
-
                 template.l10nResolved = true;
-
-                if (l10nTemplate && l10nToken.type == 'markup')
-                {
-                  tokens[i--] = tokenize('<b:include src="#' + l10nTemplate.templateId + '"/>')[0];
-                  continue;
-                }
-                /** @cut for token type change in dev mode */
-                /** @cut */ else
-                /** @cut */   arrayAdd(template.l10n, l10nId);
               }
             }
           }

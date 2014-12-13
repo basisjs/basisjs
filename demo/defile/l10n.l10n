@@ -1,6 +1,7 @@
 {
   "_meta": {
     "type": {
+      "simpleMarkup": "markup",
       "markupToken": "markup",
       "recursion": "markup",
       "recursion2": "markup",
@@ -10,6 +11,7 @@
     }
   },
   "en-US": {
+    "simpleMarkup": "<<markup: {count} {l10n:default} {l10n:a.{l10n}}>>",
     "markupToken": "test *test* test (count: {count}) (a.b: {l10n:a.b})<br/>{l10n:recursion} ",
     "recursion": "[ recursion >> {l10n:recursion2} {count} ]",
     "recursion2": "[ recursion2 >> {l10n:recursion_}  ]",
@@ -22,6 +24,7 @@
     }
   },
   "ru-RU": {
+    "simpleMarkup": "<<маркап: {count}>>",
     "markupToken": "ТЕСТ *test* test (count: {count}) (a.b: {l10n:a.b})<br/>{l10n:recursion} ",
     "recursion": "[ recursion >> {l10n:recursion2} {count} ]",
     "recursion2": "[ recursion2 >> {l10n:recursion_}  ]",
