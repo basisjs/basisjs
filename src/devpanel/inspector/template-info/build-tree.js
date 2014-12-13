@@ -131,19 +131,20 @@ function buildAttribute(attr, attrBindings){
               };
             else
               // convert expression to value parts
-              value = baseBinding.expr[0].map(function(item){
-                if (typeof item == 'number')
-                  return {
-                    type: 'binding',
-                    value: String(bindingValues[this[item]]),
-                    bindingName: this[item]
-                  };
+              if (baseBinding.expr)
+                value = baseBinding.expr[0].map(function(item){
+                  if (typeof item == 'number')
+                    return {
+                      type: 'binding',
+                      value: String(bindingValues[this[item]]),
+                      bindingName: this[item]
+                    };
 
-                return {
-                  type: 'static',
-                  value: item
-                };
-              }, attrBindings[0].expr[1]);
+                  return {
+                    type: 'static',
+                    value: item
+                  };
+                }, attrBindings[0].expr[1]);
           }
         }
   }

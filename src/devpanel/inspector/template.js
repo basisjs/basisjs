@@ -60,9 +60,12 @@ function pickHandler(event){
       }
     }
     else
+    {
+      templateInfo.set(inspectBasisTemplate.resolveObjectById(pickupTarget.value).element);
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
       });
+    }
 
     endInspect();
   }
