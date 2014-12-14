@@ -52,7 +52,7 @@ var makeDeclaration = (function(){
   var styleNamespaceIsolate = {};
   var styleNamespaceResource = {};
 
-  function name(token){
+  function getTokenName(token){
     return (token.prefix ? token.prefix + ':' : '') + token.name;
   }
 
@@ -101,7 +101,7 @@ var makeDeclaration = (function(){
 
     if (token.attrs)
       for (var i = 0, attr; attr = token.attrs[i]; i++)
-        result[name(attr)] = attr.value;
+        result[getTokenName(attr)] = attr.value;
 
     return result;
   }
@@ -111,7 +111,7 @@ var makeDeclaration = (function(){
 
     if (token.attrs)
       for (var i = 0, attr; attr = token.attrs[i]; i++)
-        result[name(attr)] = attr;
+        result[getTokenName(attr)] = attr;
 
     return result;
   }
@@ -221,7 +221,7 @@ var makeDeclaration = (function(){
 
           // ATTR_NAME = 3
           if (attr.type == 2)
-            item.push(name(attr));
+            item.push(getTokenName(attr));
 
           // ATTR_VALUE = 4
           if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != 2))
@@ -542,9 +542,6 @@ var makeDeclaration = (function(){
               break;
 
               case 'l10n':
-                /** @cut */ if (template.l10nResolved)
-                /** @cut */   addTemplateWarn(template, options, '<b:l10n> must be declared before any `l10n:` token (instruction ignored)', token.loc);
-
                 if (elAttrs.src)
                   template.dictURI = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
               break;
@@ -857,7 +854,7 @@ var makeDeclaration = (function(){
             1,                       // TOKEN_TYPE = 0
             bindings,                // TOKEN_BINDINGS = 1
             refs,                    // TOKEN_REFS = 2
-            name(token)              // ELEMENT_NAME = 3
+            getTokenName(token)      // ELEMENT_NAME = 3
           ];
           item.push.apply(item, attrs(token, item, options.optimizeSize) || []);
           item.push.apply(item, process(token.children, template, options) || []);
@@ -869,32 +866,6 @@ var makeDeclaration = (function(){
         case TYPE_TEXT:
           if (refs && refs.length == 2 && arraySearch(refs, 'element'))
             bindings = refs[+!refs.lastSearchIndex]; // get first one reference but not `element`
-
-          // process l10n
-          if (bindings)
-          {
-            var l10nBinding = absl10n(bindings, template.dictURI);  // l10n:foo.bar.{binding}@dict/path/to.l10n
-            var parts = l10nBinding.split(/[:@\{]/);
-
-            // if prefix is l10n: and token has no value bindings
-            if (parts[0] == 'l10n' && parts.length == 3)
-            {
-              // check for dictionary
-              if (!parts[2])
-              {
-                // reset binding with no dictionary
-                bindings = 0;
-                arrayRemove(refs, bindings);
-                if (refs.length == 0)
-                  refs = null;
-                token.value = token.value.replace(/\}$/, '@undefined}');
-              }
-              else
-              {
-                template.l10nResolved = true;
-              }
-            }
-          }
 
           item = [
             3,                       // TOKEN_TYPE = 0
@@ -940,20 +911,28 @@ var makeDeclaration = (function(){
     return result.length ? result : 0;
   }
 
-  function absl10n(value, dictURI){
-    if (typeof value != 'string')
-      return value;
+  function absl10n(value, dictURI, l10nMap){
+    if (typeof value == 'string')
+    {
+      var parts = value.split(':');
+      var l10n = parts[0] == 'l10n';
 
-    var parts = value.split(':');
-    if (parts.length == 2 && parts[0] == 'l10n' && parts[1].indexOf('@') == -1)
-      parts[1] = parts[1] + '@' + dictURI;
+      if (l10n)
+        if (parts.length == 2 && value.indexOf('@') == -1)
+          parts[1] = parts[1] + '@' + (dictURI || '');
 
-    return parts.join(':');
+      value = parts.join(':');
+
+      if (l10n)
+        l10nMap[value] = true;
+    }
+
+    return value;
   }
 
   function normalizeRefs(tokens, dictURI, map, stIdx){
     if (!map)
-      map = {};
+      map = { ':l10n': {} };
 
     for (var i = stIdx || 0, token; token = tokens[i]; i++)
     {
@@ -988,7 +967,7 @@ var makeDeclaration = (function(){
       switch (token[TOKEN_TYPE])
       {
         case TYPE_TEXT:
-          token[TOKEN_BINDINGS] = absl10n(token[TOKEN_BINDINGS], dictURI);
+          token[TOKEN_BINDINGS] = absl10n(token[TOKEN_BINDINGS], dictURI, map[':l10n']);
           break;
 
         case TYPE_ATTRIBUTE:
@@ -996,7 +975,7 @@ var makeDeclaration = (function(){
           {
             var array = token[TOKEN_BINDINGS][0];
             for (var j = 0; j < array.length; j++)
-              array[j] = absl10n(array[j], dictURI);
+              array[j] = absl10n(array[j], dictURI, map[':l10n']);
           }
           break;
 
@@ -1122,14 +1101,15 @@ var makeDeclaration = (function(){
       dictURI: sourceUrl  // resolve l10n dictionary url
         ? basis.path.resolve(sourceUrl)
         : baseURI || '',
+
       tokens: null,
-      resources: [],
       styleNSPrefix: {},
+      resources: [],
+      includes: [],
       deps: [],
       defines: {},
       warns: warns,
-      isolate: false,
-      includes: []
+      isolate: false
     };
 
     // normalize dictionary ext name
@@ -1143,7 +1123,10 @@ var makeDeclaration = (function(){
     if (!source.templateTokens)
     {
       /** @cut */ source_ = source;
-      source = tokenize(String(source), { loc: !!options.loc, range: true });
+      source = tokenize(String(source), {
+        loc: !!options.loc,
+        range: !!options.range
+      });
     }
 
     // add tokenizer warnings if any
@@ -1173,7 +1156,7 @@ var makeDeclaration = (function(){
 
     // normalize refs
     addTokenRef(result.tokens[0], 'element');
-    normalizeRefs(result.tokens, result.dictURI);
+    var tokenRefMap = normalizeRefs(result.tokens, result.dictURI);
 
     // deal with defines
     applyDefines(result.tokens, result, options);
@@ -1181,6 +1164,7 @@ var makeDeclaration = (function(){
     /** @cut */ if (/^[^a-z]/i.test(result.isolate))
     /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, otherwise it leads to incorrect css class names and broken styles');
 
+    // top-level declaration
     if (includeStack.length == 0)
     {
       // isolate tokens
@@ -1218,11 +1202,9 @@ var makeDeclaration = (function(){
 
           // otherwise create virtual resource with prefixed classes in selectors
           var resource = basis.resource.virtual('css', '').ready(function(cssResource){
+            cssResource.url = url + '?isolate-prefix=' + isolate;
+            cssResource.baseURI = basis.path.dirname(url) + '/';
             sourceResource();
-            basis.object.extend(cssResource, {
-              url: url + '?isolate-prefix=' + isolate,
-              baseURI: basis.path.dirname(url) + '/'
-            });
           });
 
           var sourceResource = basis.resource(url).ready(function(cssResource){
@@ -1244,16 +1226,13 @@ var makeDeclaration = (function(){
         });
     }
 
+    /** @cut */ result.l10nTokens = basis.object.keys(tokenRefMap[':l10n']);
     /** @cut */ for (var key in result.defines)
     /** @cut */ {
     /** @cut */   var define = result.defines[key];
     /** @cut */   if (!define.used)
     /** @cut */     addTemplateWarn(result, options, 'Unused define for ' + key, define.loc);
     /** @cut */ }
-
-    // delete unnecessary keys
-    delete result.defines;
-    delete result.l10nResolved;
 
     if (!warns.length)
       result.warns = false;
