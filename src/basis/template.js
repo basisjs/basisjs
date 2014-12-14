@@ -15,7 +15,6 @@
   var path = basis.path;
   var arrayAdd = basis.array.add;
   var arrayRemove = basis.array.remove;
-  var getL10nToken = require('basis.l10n').token;
 
 
   //
@@ -60,16 +59,6 @@
       cursor.handler.call(cursor.context);
   }
 
-
-  /** @cut for token type change in dev mode */
-  /** @cut */ function l10nHandler(value){
-  /** @cut */   if (this.type != 'markup' && this.token.type == 'markup')
-  /** @cut */   {
-  /** @cut */     //console.log('rebuild!!!', this.token.name);
-  /** @cut */     buildTemplate.call(this.template);
-  /** @cut */   }
-  /** @cut */ }
-
  /**
   * @func
   */
@@ -81,9 +70,6 @@
     var funcs = this.builder(decl.tokens, this);  // makeFunctions
     var deps = this.deps_;
 
-    /** @cut for token type change in dev mode */
-    /** @cut */ var l10n = this.l10n_;
-
     // detach old deps
     if (deps)
     {
@@ -91,12 +77,6 @@
       for (var i = 0, dep; dep = deps[i]; i++)
         dep.bindingBridge.detach(dep, buildTemplate, this);
     }
-
-    /** @cut for token type change in dev mode */
-    /** @cut */ if (l10n)
-    /** @cut */   for (var i = 0, item; item = l10n[i]; i++)
-    /** @cut */     item.token.bindingBridge.detach(item.token, l10nHandler, item);
-
 
     // attach new deps
     if (decl.deps && decl.deps.length)
@@ -106,22 +86,6 @@
       for (var i = 0, dep; dep = deps[i]; i++)
         dep.bindingBridge.attach(dep, buildTemplate, this);
     }
-
-    /** @cut for token type change in dev mode */
-    /** @cut */ if (decl.l10n)
-    /** @cut */ {
-    /** @cut */   l10n = decl.l10n;
-    /** @cut */   this.l10n_ = {};
-    /** @cut */   for (var i = 0, key; key = l10n[i]; i++)
-    /** @cut */   {
-    /** @cut */     var l10nToken = getL10nToken(key);
-    /** @cut */     l10nToken.bindingBridge.attach(l10nToken, l10nHandler, this.l10n_[key] = {
-    /** @cut */       template: this,
-    /** @cut */       token: l10nToken,
-    /** @cut */       type: l10nToken.type
-    /** @cut */     });
-    /** @cut */   }
-    /** @cut */ }
 
     // apply new values
     this.createInstance = funcs.createInstance;

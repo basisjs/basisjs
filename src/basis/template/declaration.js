@@ -6,7 +6,6 @@ var arrayRemove = basis.array.remove;
 var tokenize = require('./tokenize.js');
 var isolateCss = require('./isolateCss.js');
 var consts = require('./const.js');
-var getL10nToken = require('basis.l10n').token;
 
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
@@ -656,9 +655,6 @@ var makeDeclaration = (function(){
                     if (decl.resources && 'no-style' in elAttrs == false)
                       addStyles(template.resources, decl.resources, isolatePrefix);
 
-                    /** @cut */ if (decl.l10n)
-                    /** @cut */   addUnique(template.l10n, decl.l10n);
-
                     var tokenRefMap = normalizeRefs(decl.tokens);
                     var instructions = (token.children || []).slice();
                     var styleNSPrefixMap = basis.object.slice(decl.styleNSPrefix);
@@ -1130,7 +1126,6 @@ var makeDeclaration = (function(){
       resources: [],
       styleNSPrefix: {},
       deps: [],
-      /** @cut for token type change in dev mode */ l10n: [],
       defines: {},
       warns: warns,
       isolate: false,
