@@ -15,106 +15,18 @@
   var path = basis.path;
   var arrayAdd = basis.array.add;
   var arrayRemove = basis.array.remove;
-
-
-  //
-  // Main part
-  //
-
-  var templateList = [];
-
-  var DECLARATION_VERSION = 3;
-
   var consts = require('basis.template.const');
   var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
   var makeDeclaration = require('basis.template.declaration').makeDeclaration;
 
 
   //
-  // Convert tokens to declaration
+  // Main part
   //
 
-  function startUseResource(uri){
-    var resource = basis.resource(uri).fetch();
-    if (typeof resource.startUse == 'function')
-      resource.startUse();
-  }
+  var DECLARATION_VERSION = 3;
 
-  function stopUseResource(uri){
-    var resource = basis.resource(uri).fetch();
-    if (typeof resource.stopUse == 'function')
-      resource.stopUse();
-  }
-
-
- /**
-  * @func
-  */
-  function templateSourceUpdate(){
-    if (this.destroyBuilder)
-      buildTemplate.call(this);
-
-    var cursor = this;
-    while (cursor = cursor.attaches_)
-      cursor.handler.call(cursor.context);
-  }
-
- /**
-  * @func
-  */
-  function buildTemplate(){
-    var decl = getDeclFromSource(this.source, this.baseURI, false, {
-      isolate: this.getIsolatePrefix()
-    });
-    var destroyBuilder = this.destroyBuilder;
-    var funcs = this.builder(decl.tokens, this);  // makeFunctions
-    var deps = this.deps_;
-
-    // detach old deps
-    if (deps)
-    {
-      this.deps_ = null;
-      for (var i = 0, dep; dep = deps[i]; i++)
-        dep.bindingBridge.detach(dep, buildTemplate, this);
-    }
-
-    // attach new deps
-    if (decl.deps && decl.deps.length)
-    {
-      deps = decl.deps;
-      this.deps_ = deps;
-      for (var i = 0, dep; dep = deps[i]; i++)
-        dep.bindingBridge.attach(dep, buildTemplate, this);
-    }
-
-    // apply new values
-    this.createInstance = funcs.createInstance;
-    this.clearInstance = funcs.destroyInstance;
-    this.getBinding = function(){
-      return { names: funcs.keys };
-    };
-    this.destroyBuilder = funcs.destroy;
-
-    /** @cut */ this.instances_ = funcs.instances_;
-    /** @cut */ this.decl_ = decl;
-
-    // apply resources
-    var declResources = decl.resources && decl.resources.length > 0 ? decl.resources : null;
-
-    if (declResources)
-      for (var i = 0, res; res = declResources[i]; i++)
-        startUseResource(res);
-
-    if (this.resources)
-      for (var i = 0, res; res = this.resources[i]; i++)
-        stopUseResource(res);
-
-    this.resources = declResources;
-
-    // destroy old builder instance if exists
-    if (destroyBuilder)
-      destroyBuilder(true);
-  }
+  var templateList = [];
 
 
   //
@@ -123,6 +35,17 @@
 
   var sourceByDocumentId = {};
 
+ /**
+  * Fetch template source from <script> with given id. Script should
+  * has type 'text/basis-template'.
+  * @example
+  *   <script type="text/basis-template" id="my-template"></script>
+  *   ...
+  *   resolveSourceByDocumentId('my-template');
+  *
+  * @param {string} sourceId
+  * @return {basis.Resource} virtual resource that contains content of <script>
+  */
   function resolveSourceByDocumentId(sourceId){
     var resource = sourceByDocumentId[sourceId];
 
@@ -139,7 +62,7 @@
       /** @cut */   else
       /** @cut */     basis.dev.warn('Template should be declared in <script type="text/basis-template"> element (id `' + sourceId + '`)');
 
-      resource = basis.resource.virtual('tmpl', source || '');
+      resource = sourceByDocumentId[sourceId] = basis.resource.virtual('tmpl', source || '');
       /** @cut */ resource.id = sourceId;
       /** @cut */ resource.url = '<script id="' + sourceId + '"/>';
     }
@@ -147,21 +70,113 @@
     return resource;
   }
 
+ /**
+  * Resolve source by given reference.
+  * @param {string} ref
+  * @param {string=} baseURI
+  */
   function resolveResource(ref, baseURI){
-    // <b:include src="#123"/>
+    // ref ~ "#123"
     if (/^#\d+$/.test(ref))
       return templateList[ref.substr(1)];
 
-    // <b:include src="id:foo"/>
+    // ref ~ "id:foo"
     if (/^id:/.test(ref))
       return resolveSourceByDocumentId(ref.substr(3));
 
-    // <b:include src="foo.bar.baz"/>
+    // ref ~ "foo.bar.baz"
     if (/^[a-z0-9\.]+$/i.test(ref) && !/\.tmpl$/.test(ref))
       return getSourceByPath(ref);
 
-    // <b:include src="./path/to/file.tmpl"/>
+    // ref ~ "./path/to/file.tmpl"
     return basis.resource(basis.resource.resolveURI(ref, baseURI, '<b:include src=\"{url}\"/>'));
+  }
+
+
+  //
+  // Template
+  //
+
+ /**
+  * Function calls when bb-value template source is changing
+  */
+  function templateSourceUpdate(){
+    if (this.destroyBuilder)
+      buildTemplate.call(this);
+
+    var cursor = this;
+    while (cursor = cursor.attaches_)
+      cursor.handler.call(cursor.context);
+  }
+
+ /**
+  * Internal function to build declaration by template source,
+  * attach it to template and setup synchronization.
+  */
+  function buildTemplate(){
+    // build new declaration
+    var declaration = getDeclFromSource(this.source, this.baseURI, false, {
+      isolate: this.getIsolatePrefix()
+    });
+
+    // make functions and assign to template
+    var destroyBuilder = this.destroyBuilder;
+    var funcs = this.builder(declaration.tokens, this);
+    this.createInstance = funcs.createInstance;
+    this.clearInstance = funcs.destroyInstance;
+    this.destroyBuilder = funcs.destroy;
+    this.getBinding = function(){
+      return { names: funcs.keys };
+    };
+
+    // for debug purposes only
+    /** @cut */ this.instances_ = funcs.instances_;
+    /** @cut */ this.decl_ = declaration;
+
+
+    // process dependencies
+    var newDeps = declaration.deps;
+    var oldDeps = this.deps_;
+    this.deps_ = newDeps;
+
+    // detach old deps
+    if (oldDeps)
+      for (var i = 0, dep; dep = oldDeps[i]; i++)
+        dep.bindingBridge.detach(dep, buildTemplate, this);
+
+    // attach new deps
+    if (newDeps)
+      for (var i = 0, dep; dep = newDeps[i]; i++)
+        dep.bindingBridge.attach(dep, buildTemplate, this);
+
+
+    // apply resources
+    // start use new resource list and than stop use old resource list,
+    // in this order FOUC is less possible
+    var newResources = declaration.resources;
+    var oldResources = this.resources;
+    this.resources = newResources;
+
+    if (newResources)
+      for (var i = 0, url; url = newResources[i]; i++)
+      {
+        var resource = basis.resource(url).fetch();
+        if (typeof resource.startUse == 'function')
+          resource.startUse();
+      }
+
+    if (oldResources)
+      for (var i = 0, url; url = oldResources[i]; i++)
+      {
+        var resource = basis.resource(url).fetch();
+        if (typeof resource.stopUse == 'function')
+          resource.stopUse();
+      }
+
+
+    // destroy old instances if any
+    if (destroyBuilder)
+      destroyBuilder(true);
   }
 
  /**
@@ -329,25 +344,13 @@
           var m = source.match(/^([a-z]+):/);
           if (m)
           {
-            var prefix = m[1];
-
             source = source.substr(m[0].length);
 
-            switch (prefix)
+            switch (m[1])
             {
-              case 'file':
-                source = basis.resource(source);
-                break;
               case 'id':
                 // source from script element
                 source = resolveSourceByDocumentId(source);
-                break;
-              case 'tokens':
-                source = basis.string.toObject(source);
-                source.isDecl = true;
-                break;
-              case 'raw':
-                //source = source;
                 break;
               case 'path':
                 source = getSourceByPath(source);
