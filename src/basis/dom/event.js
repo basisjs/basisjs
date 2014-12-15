@@ -67,7 +67,7 @@
   };
 
   var BROWSER_EVENTS = {
-    mousewheel: ['mousewheel', 'DOMMouseScroll']
+    mousewheel: ['wheel', 'mousewheel', 'DOMMouseScroll']
   };
 
  /**
@@ -92,7 +92,7 @@
 
       for (var name in event)
         /** prevent warnings on deprecated properties */
-        /** @cut*/ if (name != 'returnValue' && name != 'keyLocation' && name != 'layerX' && name != 'layerY')
+        /** @cut*/ if (name != 'returnValue' && name != 'keyLocation' && name != 'layerX' && name != 'layerY' && (event.type != 'progress' || (name != 'totalSize' && name != 'position')))
         if (typeof event[name] != 'function' && name in this == false)
           this[name] = event[name];
 
@@ -275,11 +275,14 @@
   function wheelDelta(event){
     var delta = 0;
 
-    if ('wheelDelta' in event)
-      delta = event.wheelDelta; // IE, webkit, opera
+    if ('deltaY' in event)
+      delta = -event.deltaY;      // safari & gecko
     else
-      if (event.type == 'DOMMouseScroll')
-        delta = -event.detail;    // gecko
+      if ('wheelDelta' in event)
+        delta = event.wheelDelta; // IE, webkit, opera
+      else
+        if (event.type == 'DOMMouseScroll')
+          delta = -event.detail;  // old gecko
 
     return delta && (delta / Math.abs(delta));
   }
@@ -303,6 +306,24 @@
   var noCaptureScheme = !W3CSUPPORT;
 
  /**
+  * Flush asap handlers
+  */
+  var flushAsap = true;
+  var lastAsapEvent;
+
+
+ /**
+  *
+  */
+  function processAsap(event){
+    if (flushAsap && event !== lastAsapEvent)
+    {
+      lastAsapEvent = event;
+      basis.asap.process();
+    }
+  }
+
+ /**
   * Observe handlers for event
   * @private
   * @param {Event} event
@@ -316,17 +337,20 @@
     {
       captureHandler.handler.call(captureHandler.thisObject, wrappedEvent);
       kill(event);
-      return;
     }
-
-    if (handlers)
+    else
     {
-      for (var i = handlers.length; i-- > 0;)
+      if (handlers)
       {
-        var handlerObject = handlers[i];
-        handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
+        for (var i = handlers.length; i-- > 0;)
+        {
+          var handlerObject = handlers[i];
+          handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
+        }
       }
     }
+
+    processAsap(event);
   }
 
  /**
@@ -337,6 +361,9 @@
   function captureEvent(eventType, handler, thisObject){
     if (captureHandlers[eventType])
       releaseEvent(eventType);
+
+    if (!handler)
+      handler = kill;
 
     addGlobalHandler(eventType, handler, thisObject);
     captureHandlers[eventType] = {
@@ -473,6 +500,8 @@
         // call eventType handlers
         for (var i = 0, wrappedEvent = new Event(event), item; item = eventTypeHandlers[i++];)
           item.handler.call(item.thisObject, wrappedEvent);
+
+        processAsap(event);
       };
 
       if (W3CSUPPORT)
@@ -583,7 +612,14 @@
 
     var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers && handlers[eventType])
+    {
+      try {
+        flushAsap = false;
         handlers[eventType].fireEvent(event);
+      } finally {
+        flushAsap = true;
+      }
+    }
   }
 
   //

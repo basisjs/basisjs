@@ -19,7 +19,7 @@
       refList: {
         existsIf: basis.getter('data.refs'),
         delegate: basis.fn.$self,
-        instanceOf: Node.subclass({
+        satelliteClass: Node.subclass({
           template: resource('./template/tree/refList.tmpl'),
           binding: {
             refs: 'data:'
@@ -84,7 +84,7 @@
     satellite: {
       attributes: {
         existsIf: basis.getter('data.attrs'),
-        instanceOf: Node.subclass({
+        satelliteClass: Node.subclass({
           template: '<span/>',
           childClass: TemplateTreeNode.Attribute
         }),

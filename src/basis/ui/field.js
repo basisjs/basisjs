@@ -22,6 +22,7 @@
   var events = basisEvent.events;
 
   var Value = require('basis.data').Value;
+  var setAccumulateState = require('basis.data').Dataset.setAccumulateState;
   var Selection = require('basis.dom.wrapper').Selection;
   var UINode = require('basis.ui').Node;
   var Popup = require('basis.ui.popup').Popup;
@@ -44,6 +45,14 @@
 
   function getFieldValue(field){
     return field.getValue();
+  }
+
+  function createRevalidateEvent(eventName){
+    createEvent.apply(null, arguments);
+    return function(){
+      this.revalidateRule(eventName);
+      events[eventName].apply(this, arguments);
+    };
   }
 
 
@@ -69,13 +78,19 @@
 
     name: '',
     title: '',
-    validators: null,
-    validity: VALIDITY_INDETERMINATE,
     error: '',
     example: null,
     focused: false,
     defaultValue: undefined,
     value: undefined,
+
+    validators: null,
+    validity: VALIDITY_INDETERMINATE,
+    revalidateEvents: ['change', 'fieldChange'],
+    revalidateRule: function(eventName){
+      if (this.error && this.revalidateEvents.indexOf(eventName) != -1)
+        this.validate();
+    },
 
     /**
     * Identify field can have focus. Useful when search for next/previous node to focus.
@@ -87,44 +102,36 @@
     // events
     //
 
-    emit_commit: createEvent('commit'),
-    emit_change: createEvent('change', 'oldValue'),
+    emit_commit: createRevalidateEvent('commit'),
+    emit_change: createRevalidateEvent('change', 'oldValue'),
     emit_validityChanged: createEvent('validityChanged', 'oldValidity'),
     emit_errorChanged: createEvent('errorChanged'),
     emit_exampleChanged: createEvent('exampleChanged'),
     emit_descriptionChanged: createEvent('descriptionChanged'),
 
-    emit_fieldInput: createEvent('fieldInput', 'event'),
-    emit_fieldChange: createEvent('fieldChange', 'event'),
-    emit_fieldKeydown: createEvent('fieldKeydown', 'event'),
-    emit_fieldKeypress: createEvent('fieldKeypress', 'event'),
-    emit_fieldKeyup: createEvent('fieldKeyup', 'event') && function(event){
+    emit_fieldInput: createRevalidateEvent('fieldInput', 'event'),
+    emit_fieldChange: createRevalidateEvent('fieldChange', 'event'),
+    emit_fieldKeydown: createRevalidateEvent('fieldKeydown', 'event'),
+    emit_fieldKeypress: createRevalidateEvent('fieldKeypress', 'event'),
+    emit_fieldKeyup: createRevalidateEvent('fieldKeyup', 'event') && function(event){
       if (this.nextFieldOnEnter)
-      {
         if (event.key == event.KEY.ENTER || event.key == event.KEY.CTRL_ENTER)
         {
           event.preventDefault();
           this.commit();
         }
-        else
-        {
-          if (event.key != event.KEY.TAB)
-            this.setValidity();
-        }
-      }
 
       events.fieldKeyup.call(this, event);
     },
-    emit_fieldFocus: createEvent('fieldFocus', 'event') && function(event){
+    emit_fieldFocus: createRevalidateEvent('fieldFocus', 'event') && function(event){
       this.focused = true;
-      /*if (this.validity)
-        this.setValidity();*/
+      this.revalidateRule('fieldFocus');
 
       events.fieldFocus.call(this, event);
     },
-    emit_fieldBlur: createEvent('fieldBlur', 'event') && function(event){
-      this.validate(true);
+    emit_fieldBlur: createRevalidateEvent('fieldBlur', 'event') && function(event){
       this.focused = false;
+      this.revalidateRule('fieldBlur');
 
       events.fieldBlur.call(this, event);
     },
@@ -188,7 +195,7 @@
         existsIf: function(owner){
           return owner.example;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Example',
           template: module.template('Example'),
           binding: {
@@ -208,7 +215,7 @@
         existsIf: function(owner){
           return owner.description;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Description',
           template: module.template('Description'),
           binding: {
@@ -238,7 +245,13 @@
       UINode.prototype.init.call(this);
 
       if (this.value)
-        this.setValue(this.value);
+      {
+        var value = this.value;
+        this.value = undefined;
+        this.setValue(value);
+      }
+
+      this.init = true;
     },
 
     setExample: function(example){
@@ -267,7 +280,9 @@
       {
         var oldValue = this.value;
         this.value = newValue;
-        this.emit_change(oldValue);
+
+        if (this.init === true)
+          this.emit_change(oldValue);
       }
     },
     reset: function(){
@@ -327,6 +342,8 @@
       this.validators = null;
       this.error = null;
       this.example = null;
+      this.value = null;
+      this.defaultValue = null;
 
       UINode.prototype.destroy.call(this);
     }
@@ -517,7 +534,7 @@
         existsIf: function(owner){
           return owner.maxLength > 0;
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           className: namespace + '.Counter',
 
           template: module.template('Counter'),
@@ -578,8 +595,8 @@
         }
       }
     },
-    emit_change: function(event){
-      Field.prototype.emit_change.call(this, event);
+    emit_change: function(oldValue){
+      Field.prototype.emit_change.call(this, oldValue);
       this.syncIndeterminate();
     },
 
@@ -654,11 +671,19 @@
       select: function(event){
         if (!this.isDisabled())
         {
-          this.select(this.contextSelection ? this.contextSelection.multiple : false);
+          // use acumulate state, as selection changes could be ignored
+          // it's a temporary solution, until concurrent events can be join
+          setAccumulateState(true);
+          this.select(this.contextSelection && this.contextSelection.multiple);
+          setAccumulateState(false);
 
           if (event.sender.tagName != 'INPUT')
             event.die();
         }
+      },
+      selectByKey: function(event){
+        if (!this.isDisabled() && event.key == event.KEY.SPACE || event.key == event.KEY.ENTER)
+          this.action.select.call(this, event);
       }
     },
 
@@ -683,11 +708,18 @@
     }
   });
 
-  var COMPLEXFIELD_SELECTION_HANDLER = {
-    itemsChanged: function(){
-      this.emit_change();
-    }
-  };
+  function normValues(value){
+    var result = [];
+
+    if (!Array.isArray(value))
+      value = [value];
+
+    value.forEach(function(item){
+      basis.array.add(this, item);
+    }, result);
+
+    return result;
+  }
 
  /**
   * @class
@@ -696,6 +728,14 @@
     className: namespace + '.ComplexField',
 
     childClass: ComplexFieldItem,
+
+    ignoreSelectionChanges_: false,
+    emit_childNodesModified: function(delta){
+      Field.prototype.emit_childNodesModified.call(this, delta);
+
+      if (this.init === true)
+        this.syncSelectedChildren_();
+    },
 
     selection: {
       multiple: false
@@ -707,27 +747,77 @@
     },
     listen: {
       selection: {
-        itemsChanged: function(){
-          this.emit_change();
+        itemsChanged: function(selection){
+          if (!this.ignoreSelectionChanges_)
+          {
+            var selected = selection.getValues('getValue()');
+            this.setValue(selection.multiple ? selected : selected[0]);
+          }
         }
       }
     },
 
-    getValue: function(){
-      var value = this.selection.getItems().map(getFieldValue);
-      return this.selection.multiple ? value : value[0];
-    },
-    setValue: function(value){
+    syncSelectedChildren_: function(){
       var selected;
 
       if (this.selection.multiple)
-        selected = this.childNodes.filter(function(item){
-          return this.indexOf(item.getValue()) != -1;
-        }, arrayFrom(value));
+      {
+        selected = this.value.length
+          ? this.childNodes.filter(function(item){
+              return this.value.indexOf(item.getValue()) !== -1;
+            }, this)
+          : [];
+      }
       else
-        selected = [basis.array.search(this.childNodes, value, getFieldValue)];
+      {
+        selected = this.childNodes.filter(function(item){
+          return item.getValue() === this.value;
+        }, this);
+      }
 
+      this.ignoreSelectionChanges_ = true;
       this.selection.set(selected);
+      this.ignoreSelectionChanges_ = false;
+    },
+
+    setValue: function(value){
+      var oldValue = this.value;
+      var selected = [];
+
+      if (value === oldValue)
+        return;
+
+      if (this.selection.multiple)
+      {
+        value = normValues(value);
+
+        if (!Array.isArray(oldValue))
+        {
+          oldValue = value;
+        }
+        else
+        {
+          if (value.length == oldValue.length)
+          {
+            var diff = false;
+
+            for (var i = 0; !diff && i < value.length; i++)
+              diff = oldValue.indexOf(value[i]) == -1;
+
+            if (!diff)
+              return;
+          }
+        }
+      }
+
+      // emit event
+      this.value = value;
+      if (this.init === true && oldValue !== value)
+        this.emit_change(oldValue);
+
+      // update selected state
+      if (this.value === value)
+        this.syncSelectedChildren_();
     }
   });
 
@@ -859,8 +949,8 @@
 
     childClass: ComboboxItem,
 
-    emit_change: function(event){
-      ComplexField.prototype.emit_change.call(this, event);
+    emit_change: function(oldValue){
+      ComplexField.prototype.emit_change.call(this, oldValue);
 
       if (this.property)
       {
@@ -882,31 +972,26 @@
     popup: null,
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
+      autorotate: true,
+      relElement: 'owner:field',
       template: module.template('ComboboxDropdownList'),
-      autorotate: 1,
       templateSync: function(){
         Popup.prototype.templateSync.call(this);
 
-        // NOTE: for now popups can't has an owner as has a parent node (popup manager)
-        // TODO: use owner when popups can has owner
-        if (this.fieldOwner_ && this.fieldOwner_.childNodesElement)
-          (this.tmpl.content || this.element).appendChild(this.fieldOwner_.childNodesElement);
+        if (this.owner && this.owner.childNodesElement)
+          (this.tmpl.content || this.element).appendChild(this.owner.childNodesElement);
       }
     }),
 
-    template: module.template('Combobox'),
-    binding: {
-      captionItem: 'satellite:',
-      hiddenField: 'satellite:',
-      opened: 'opened'
-    },
-
     satellite: {
+      popup: {
+        config: 'popup'
+      },
       hiddenField: {
         existsIf: function(owner){
           return owner.name;
         },
-        instanceOf: Hidden.subclass({
+        satelliteClass: Hidden.subclass({
           className: namespace + '.ComboboxHidden',
           getValue: function(){
             return this.owner.getValue();
@@ -928,6 +1013,12 @@
       }
     },
 
+    template: module.template('Combobox'),
+    binding: {
+      captionItem: 'satellite:',
+      hiddenField: 'satellite:',
+      opened: 'opened'
+    },
     action: {
       togglePopup: function(){
         if (this.isDisabled() || this.popup.visible)
@@ -952,7 +1043,9 @@
               return;
             }
 
-            next = basis.array.search(DOM.axis(cur || this.firstChild, DOM.AXIS_FOLLOWING_SIBLING), false, 'disabled');
+            next = cur ? cur.nextSibling : this.firstChild;
+            while (next && next.isDisabled())
+              next = next.nextSibling;
           break;
 
           case event.KEY.UP:
@@ -966,7 +1059,9 @@
               return;
             }
 
-            next = basis.array.search(DOM.axis(cur || this.lastChild, DOM.AXIS_PRECEDING_SIBLING), false, 'disabled');
+            next = cur ? cur.previousSibling : this.lastChild;
+            while (next && next.isDisabled())
+              next = next.previousSibling;
           break;
         }
 
@@ -1025,13 +1120,9 @@
       }));
 
       // create items popup
-      this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
-        fieldOwner_: this
-      }, this.popup));
-
-      this.opened = Value.from(this.popup, 'show hide', function(popup){
-        return popup.visible;
-      });
+      this.popup = new this.popupClass(this.popup);
+      this.setSatellite('popup', this.popup);
+      this.opened = Value.from(this.popup, 'show hide', 'visible');
 
       if (this.property)
         this.property.link(this, this.setValue);
@@ -1047,7 +1138,7 @@
     show: function(){
       if (this.tmpl)
       {
-        this.popup.show(this.tmpl.field);
+        this.popup.show();
         this.focus();
       }
     },
@@ -1058,25 +1149,8 @@
       var selected = this.selection.pick();
       return selected && selected.getTitle();
     },
-    getValue: function(){
-      var selected = this.selection.pick();
-      return selected && selected.getValue();
-    },
-    setValue: function(value){
-      if (this.getValue() !== value)
-      {
-        // update value & selection
-        var item = basis.array.search(this.childNodes, value, getFieldValue);
-        if (item)
-          this.selection.set([item]);
-        else
-          this.selection.clear();
-      }
-    },
     destroy: function(){
       this.property = null;
-
-      this.opened.destroy();
       this.opened = null;
 
       this.popup.destroy();
@@ -1242,8 +1316,8 @@
       this.matchFilter.set(this.getValue());
     },
 
-    emit_change: function(event){
-      Text.prototype.emit_change.call(this, event);
+    emit_change: function(oldValue){
+      Text.prototype.emit_change.call(this, oldValue);
       this.matchFilter.set(this.getValue());
     },
 
@@ -1359,6 +1433,11 @@
   //
 
   module.exports = {
+    VALIDITY: {
+      INDETERMINATE: VALIDITY_INDETERMINATE,
+      INVALID: VALIDITY_INVALID,
+      VALID: VALIDITY_VALID
+    },
     validator: Validator,
     ValidatorError: ValidatorError,
 

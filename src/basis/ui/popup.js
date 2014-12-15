@@ -14,20 +14,16 @@
 
   var window = global;
   var document = global.document;
-  var documentElement = document && document.documentElement;
-
-  var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
   var domUtils = require('basis.dom');
   var eventUtils = require('basis.dom.event');
   var cssom = require('basis.cssom');
   var createEvent = require('basis.event').create;
-  var basisLayout = require('basis.layout');
-  var getOffsetParent = basisLayout.getOffsetParent;
-  var getBoundingRect = basisLayout.getBoundingRect;
-  var getViewportRect = basisLayout.getViewportRect;
-  var UINode = require('basis.ui').Node;
+  var getOffsetParent = require('basis.layout').getOffsetParent;
+  var getBoundingRect = require('basis.layout').getBoundingRect;
+  var getViewportRect = require('basis.layout').getViewportRect;
+  var Node = require('basis.ui').Node;
 
 
   //
@@ -109,10 +105,152 @@
   }
 
 
+  //
+  // Popup manager
+  //
+  // NOTE: popupManager adds global event handlers dynamically because click event
+  // which makes popup visible can also hide it (as click outside of popup).
+
+  var popupManager = basis.object.extend([], {
+    body: NaN,
+
+    add: function(popup){
+      if (!this.length)
+      {
+        eventUtils.addGlobalHandler('click', this.hideByClick, this);
+        eventUtils.addGlobalHandler('keydown', this.hideByKey, this);
+        eventUtils.addGlobalHandler('scroll', this.hideByScroll, this);
+        eventUtils.addHandler(window, 'resize', this.realignAll, this);
+      }
+
+      this.unshift(popup);
+      popup.setZIndex(getTopZIndex());
+
+      if (this.body && !domUtils.parentOf(document, popup.element))
+        this.body.appendChild(popup.element);
+    },
+    remove: function(popup){
+      var popupIndex = this.indexOf(popup);
+
+      if (popupIndex == -1)
+        return;
+
+      if (popup.hideOnAnyClick)
+      {
+        var nextPopup = this[popupIndex - 1];
+        if (nextPopup)
+          nextPopup.hide();
+      }
+
+      basis.array.remove(this, popup);
+      if (popup.element.parentNode === this.body)
+        domUtils.remove(popup.element);
+
+      if (!this.length)
+      {
+        eventUtils.removeGlobalHandler('click', this.hideByClick, this);
+        eventUtils.removeGlobalHandler('keydown', this.hideByKey, this);
+        eventUtils.removeGlobalHandler('scroll', this.hideByScroll, this);
+        eventUtils.removeHandler(window, 'resize', this.realignAll, this);
+      }
+    },
+    clear: function(){
+      arrayFrom(this).forEach(function(popup){
+        popup.hide();
+      });
+    },
+
+    realignAll: function(){
+      this.forEach(function(popup){
+        if (popup.autoRealign)
+          popup.realign();
+      });
+    },
+
+    hideByClick: function(event){
+      if (!this.length)
+        return;
+
+      var ancestors = domUtils.axis(event.sender, domUtils.AXIS_ANCESTOR_OR_SELF);
+
+      for (var i = 0, popup; popup = this[i]; i++)
+      {
+        if (ancestors.indexOf(popup.element) != -1 || ancestors.some(function(element){
+          return popup.ignoreClickFor.indexOf(element) != -1;
+        }))
+        {
+          for (var j = i - 1; popup = this[j]; j--)
+            if (popup.hideOnAnyClick)
+            {
+              popup.hide();
+              break;
+            }
+
+          return;
+        }
+      }
+
+      // remove first hideOnAnyClick:true popup
+      var firstOnAnyClickPopup = basis.array.lastSearch(this, true, 'hideOnAnyClick');
+      if (firstOnAnyClickPopup)
+        firstOnAnyClickPopup.hide();
+    },
+    hideByKey: function(event){
+      var popup = this[0];
+
+      if (popup)
+      {
+        var hideOnKey = popup.hideOnKey;
+        var hide;
+
+        if (typeof hideOnKey == 'function')
+          hide = hideOnKey.call(this, event.key);
+
+        if (Array.isArray(hideOnKey))
+          hide = hideOnKey.indexOf(event.key) != -1;
+
+        if (hide)
+          popup.hide();
+      }
+    },
+    hideByScroll: function(event){
+      var sender = event.sender;
+
+      if (domUtils.parentOf(sender, this.element))
+        return;
+
+      arrayFrom(this)
+        .forEach(function(popup){
+          if (popup.hideOnScroll &&
+              popup.relElement_ && !Array.isArray(popup.relElement_) &&
+              popup.offsetParent !== sender &&
+              domUtils.parentOf(sender, popup.relElement_))
+            popup.hide();
+        });
+    }
+  });
+
+  // async document.body ready
+  basis.doc.body.ready(function(body){
+    popupManager.body = body;
+    popupManager.forEach(function(popup){
+      if (!domUtils.parentOf(document, popup.element))
+      {
+        body.appendChild(popup.element);
+        popup.realign();
+      }
+    });
+  });
+
+
+  //
+  // popups
+  //
+
  /**
   * @class
   */
-  var Popup = UINode.subclass({
+  var Popup = Node.subclass({
     className: namespace + '.Popup',
 
     template: module.template('Popup'),
@@ -141,8 +279,17 @@
     emit_hide: createEvent('hide'),
     emit_realign: createEvent('realign'),
     emit_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir'),
+    listen: {
+      owner: {
+        templateChanged: function(owner){
+          if (this.visible)
+            this.show.apply(this, this.visibleArgs_);
+        }
+      }
+    },
 
     visible: false,
+    visibleArgs_: null,
     autorotate: false,
     autoRealign: true,
     zIndex: 0,
@@ -150,6 +297,8 @@
     dir: '',
     defaultDir: DEFAULT_DIR,
     orientation: ORIENTATION.VERTICAL,
+    relElement: null,
+    relElement_: null,
 
     hideOnAnyClick: true,
     hideOnKey: false,
@@ -157,7 +306,7 @@
     ignoreClickFor: null,
 
     init: function(){
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
 
       this.ignoreClickFor = arrayFrom(this.ignoreClickFor);
 
@@ -175,7 +324,7 @@
       this.setLayout(this.defaultDir, this.orientation);
     },
     templateSync: function(){
-      UINode.prototype.templateSync.call(this);
+      Node.prototype.templateSync.call(this);
 
       this.realign();
     },
@@ -239,11 +388,11 @@
 
       return result;
     },
-    isFitToViewport: function(dir){
-      if (this.visible && this.relElement)
+    isFitToViewport: function(dir, relElement){
+      if (this.visible && relElement)
       {
         var offsetParent = getOffsetParent(this.element);
-        var box = resolveRelBox(this.relElement, offsetParent);
+        var box = resolveRelBox(relElement, offsetParent);
         var width = this.element.offsetWidth;
         var height = this.element.offsetHeight;
 
@@ -282,7 +431,8 @@
     realign: function(){
       this.setZIndex(this.zIndex);
 
-      if (this.visible && this.relElement)
+      var relElement = this.visible && this.relElement_;
+      if (relElement)
       {
         var dir = this.dir.split(' ');
         var point;
@@ -295,7 +445,7 @@
 
         while (this.autorotate && rotateOffset <= maxRotate)
         {
-          if (point = this.isFitToViewport(curDir.join(' ')))
+          if (point = this.isFitToViewport(curDir.join(' '), relElement))
           {
             dirH = curDir[2];
             dirV = curDir[3];
@@ -321,7 +471,7 @@
 
         if (!point)
         {
-          var box = resolveRelBox(this.relElement, offsetParent);
+          var box = resolveRelBox(relElement, offsetParent);
 
           point = {
             x: dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()],
@@ -367,9 +517,29 @@
         this.emit_realign();
       }
     },
+    resolveRelElement: function(value){
+      if (typeof value == 'string')
+      {
+        if (value.substr(0, 6) != 'owner:')
+          return domUtils.get(relElement);
+
+        if (this.owner)
+          return (this.owner.tmpl && this.owner.tmpl[value.substr(6)]) || this.owner.element;
+        else
+          return null;
+      }
+
+      if (Array.isArray(value))
+        return value;
+
+      return value || null;
+    },
     show: function(relElement, dir, orientation){
+      // store arguments for re-apply settings
+      this.visibleArgs_ = basis.array(arguments);
+
       // assign new offset element
-      this.relElement = Array.isArray(relElement) ? relElement : domUtils.get(relElement) || this.relElement;
+      this.relElement_ = this.resolveRelElement(relElement || this.relElement);
 
       // set up direction and orientation
       this.setLayout(normalizeDir(dir, this.defaultDir), orientation);
@@ -378,7 +548,7 @@
       if (!this.visible)
       {
         // error on relElement no assigned
-        if (!this.relElement)
+        if (!this.relElement_)
         {
           /** @cut */ basis.dev.warn('Popup#show(): relElement missed');
           return;
@@ -387,7 +557,7 @@
         // make element invisible & insert element into DOM
         cssom.visibility(this.element, false);
 
-        popupManager.appendChild(this);
+        popupManager.add(this);
 
         // dispatch `beforeShow` event, there we can fill popup with content
         this.emit_beforeShow();
@@ -407,13 +577,15 @@
         this.realign();
     },
     hide: function(){
+      this.visibleArgs_ = null;
+      this.relElement_ = null;
+
       if (this.visible)
       {
         // set visible flag
         this.visible = false;
 
-        if (this.parentNode)
-          popupManager.removeChild(this);
+        popupManager.remove(this);
 
         // dispatch event
         this.emit_hide();
@@ -424,8 +596,9 @@
     },
     destroy: function(){
       this.hide();
+      this.relElement = null;
 
-      UINode.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
     }
   });
 
@@ -436,139 +609,6 @@
     className: namespace + '.Balloon',
 
     template: module.template('Balloon')
-  });
-
-
-  //
-  //  Popup manager
-  //
-
-  // NOTE: popupManager adds global event handlers dynamically because click event
-  // which makes popup visible can also hide it (as click outside of popup).
-
-  var popupManager = new UINode({
-    template: module.template('popupManager'),
-
-    selection: true,
-
-    emit_childNodesModified: function(delta){
-      if (delta.deleted)
-        for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
-          item.hide();
-
-      if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
-      {
-        eventUtils.addGlobalHandler('click', this.hideByClick, this);
-        eventUtils.addGlobalHandler('keydown', this.hideByKey, this);
-        eventUtils.addGlobalHandler('scroll', this.hideByScroll, this);
-        eventUtils.addHandler(window, 'resize', this.realignAll, this);
-      }
-
-      if (this.lastChild)
-        this.lastChild.select();
-      else
-      {
-        eventUtils.removeGlobalHandler('click', this.hideByClick, this);
-        eventUtils.removeGlobalHandler('keydown', this.hideByKey, this);
-        eventUtils.removeGlobalHandler('scroll', this.hideByScroll, this);
-        eventUtils.removeHandler(window, 'resize', this.realignAll, this);
-      }
-
-      UINode.prototype.emit_childNodesModified.call(this, delta);
-    },
-
-    insertBefore: function(newChild, refChild){
-      if (UINode.prototype.insertBefore.call(this, newChild, refChild))
-        newChild.setZIndex(getTopZIndex());
-    },
-    removeChild: function(popup){
-      if (popup)
-      {
-        if (popup.hideOnAnyClick && popup.nextSibling)
-          this.removeChild(popup.nextSibling);
-
-        UINode.prototype.removeChild.call(this, popup);
-      }
-    },
-    realignAll: function(){
-      for (var popup = this.firstChild; popup; popup = popup.nextSibling)
-        if (popup.autoRealign)
-          popup.realign();
-    },
-    clear: function(){
-      if (this.firstChild)
-        this.removeChild(this.firstChild);
-    },
-    hideByClick: function(event){
-      if (!this.firstChild)
-        return;
-
-      var ancestorAxis = domUtils.axis(event.sender, domUtils.AXIS_ANCESTOR_OR_SELF);
-
-      for (var popup = this.lastChild; popup; popup = popup.previousSibling)
-      {
-        if (ancestorAxis.indexOf(popup.element) != -1 || ancestorAxis.some(function(element){
-          return popup.ignoreClickFor.indexOf(element) != -1;
-        }))
-        {
-          while (popup = popup.nextSibling)
-          {
-            if (popup.hideOnAnyClick)
-            {
-              this.removeChild(popup);
-              break;
-            }
-          }
-
-          return;
-        }
-      }
-
-      // remove first hideOnAnyClick:true popup
-      this.removeChild(this.getChild(true, 'hideOnAnyClick'));
-    },
-    hideByKey: function(event){
-      var popup = this.lastChild;
-      if (popup && popup.hideOnKey)
-      {
-        var result = false;
-
-        if (typeof popup.hideOnKey == 'function')
-          result = popup.hideOnKey(event.key);
-        else
-          if (Array.isArray(popup.hideOnKey))
-            result = popup.hideOnKey.indexOf(event.key) != -1;
-
-        if (result)
-          popup.hide();
-      }
-    },
-    hideByScroll: function(event){
-      var sender = event.sender;
-
-      if (domUtils.parentOf(sender, this.element))
-        return;
-
-      var popup = this.lastChild;
-      while (popup)
-      {
-        var next = popup.previousSibling;
-
-        if (popup.hideOnScroll &&
-            popup.relElement &&
-            !Array.isArray(popup.relElement) &&
-            popup.offsetParent !== sender &&
-            domUtils.parentOf(sender, popup.relElement))
-          popup.hide();
-
-        popup = next;
-      }
-    }
-  });
-
-  basis.doc.body.ready(function(body){
-    body.insertBefore(popupManager.element, body.firstChild);
-    popupManager.realignAll();
   });
 
 

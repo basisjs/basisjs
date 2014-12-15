@@ -48,7 +48,7 @@
   // It's old behaviour that looks odd. For now we leave everything as is.
   // But we should use context as something to store into, and global as source
   // of global things.
-  // TODO: to do thins stuff right
+  // TODO: to do this stuff right
   global = context;
 
 
@@ -637,6 +637,23 @@
     };
   }
 
+ /**
+  * Generates name for function and registrates it in global scope.
+  * @param {function()} fn Function that should available in global scope.
+  * @param {boolean} permanent If false callback will be removed after fiest invoke.
+  * @return {string} Function name in global scope.
+  */
+  function publicCallback(fn, permanent){
+    var name = 'basisjsCallback' + genUID();
+
+    global[name] = permanent ? fn : function(){
+      delete global[name];
+      fn.apply(this, arguments);
+    };
+
+    return name;
+  }
+
 
   // ============================================
   // safe console method wrappers
@@ -666,13 +683,13 @@
 
 
   //
-  // Support for setImmediate/clearImmediate
+  // Timers
   //
 
   var setImmediate = global.setImmediate || global.msSetImmediate;
   var clearImmediate = global.clearImmediate || global.msSetImmediate;
 
-  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't global
+  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't a global
   if (setImmediate)
     setImmediate = setImmediate.bind(global);
 
@@ -684,6 +701,7 @@
   // Inspired on Domenic Denicola's solution https://github.com/NobleJS/setImmediate
   //
   if (!setImmediate)
+  {
     (function(){
       var MESSAGE_NAME = 'basisjs.setImmediate';
       var runTask = (function(){
@@ -722,8 +740,10 @@
           if (task)
           {
             delete taskById[id];
-            return task.fn.apply(undefined, task.args);
+            task.fn.apply(undefined, task.args);
           }
+
+          asap.process();
         };
       })();
 
@@ -846,6 +866,79 @@
         }
       }
     })();
+  }
+
+  //
+  // asap
+  //
+  var asap = (function(){
+    var queue = [];
+    var processing = false;
+    var timer;
+
+    function process(){
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
+
+      try {
+        var item;
+
+        // mark queue as processing to avoid concurrency
+        processing = true;
+
+        // process queue
+        while (item = queue.shift())
+          item.fn.call(item.context);
+      } finally {
+        // queue is not processing anymore
+        processing = false;
+
+        // if any function in queue than exception was occured,
+        // run rest functions in next code frame
+        if (queue.length)
+          timer = setImmediate(process);
+      }
+    }
+
+   /**
+    * Invoke function as soon as possible. The ideal case is invocation in the end
+    * of current code frame (after all changes done). It's possible when code frame
+    * inited by browser events or timers (setImmediate/clearImmediate/nextTick), so
+    * we can process asap functions right after handler function was invoked.
+    * Asap function invocation can't be aborted.
+    *
+    * Single timer is using for asap functions invocation. Exceptions aren't catching.
+    * If any exception rest functions will be invoked in next code frame.
+    *
+    * @param {function} fn Function that should be invoked ASAP.
+    * @param {*=} context Context for function invocation.
+    */
+    var asap = function(fn, context){
+      // add function to queue
+      queue.push({
+        fn: fn,
+        context: context
+      });
+
+      // set timer to process queue, if timer is not set yet
+      if (!timer)
+        timer = setImmediate(process);
+
+      return true;
+    };
+
+   /**
+    * Run asap functions processing.
+    */
+    asap.process = function(){
+      // run queue process only if queue isn't processing
+      if (!processing)
+        process();
+    };
+
+    return asap;
+  })();
 
 
   // ============================================
@@ -1737,8 +1830,8 @@
     * @type {object}
     */
     bindingBridge: {
-      attach: function(host, fn, context){
-        host.attach(fn, context);
+      attach: function(host, fn, context, onDestroy){
+        host.attach(fn, context, onDestroy);
       },
       detach: function(host, fn, context){
         host.detach(fn, context);
@@ -1780,7 +1873,7 @@
     * @param {function(value)} fn
     * @param {object=} context
     */
-    attach: function(fn, context){
+    attach: function(fn, context, onDestroy){
       /** @cut */ var cursor = this;
       /** @cut */ while (cursor = cursor.handler)
       /** @cut */   if (cursor.fn === fn && cursor.context === context)
@@ -1789,6 +1882,7 @@
       this.handler = {
         fn: fn,
         context: context,
+        destroy: onDestroy || null,
         handler: this.handler
       };
     },
@@ -1807,6 +1901,7 @@
         {
           // make it non-callable
           cursor.fn = $undef;
+          cursor.destroy = cursor.destroy && $undef;
 
           // remove from list
           prev.handler = cursor.handler;
@@ -1846,6 +1941,27 @@
     },
 
    /**
+    * Creates new token from token that contains modified through fn value.
+    * @param {function(value):value} fn
+    * @return {*}
+    */
+    as: function(fn){
+      var token = new Token();
+      var setter = function(value){
+        this.set(fn.call(this, value));
+      };
+
+      setter.call(token, this.get());
+
+      this.attach(setter, token, token.destroy);
+      token.attach($undef, this, function(){
+        this.detach(setter, token);
+      });
+
+      return token;
+    },
+
+   /**
     * Actually it's not require invoke destroy method for token, garbage
     * collector have no problems to free token's memory when all references
     * to token are removed.
@@ -1858,10 +1974,16 @@
         this.deferredToken = null;
       }
 
-      this.handler = null;
-      this.value = null;
       this.attach = $undef;
       this.detach = $undef;
+
+      var cursor = this;
+      while (cursor = cursor.handler)
+        if (cursor.destroy)
+          cursor.destroy.call(cursor.context);
+
+      this.handler = null;
+      this.value = null;
     }
   });
 
@@ -2229,7 +2351,7 @@
     },
 
     extensions: {
-      '.js': extend(function(content, filename){
+      '.js': extend(function processJsResourceContent(content, filename){
         var namespace = filename2namespace[filename];
 
         if (!namespace)
@@ -2305,7 +2427,7 @@
         permanent: true
       }),
 
-      '.css': function(content, url, cssResource){
+      '.css': function processCssResourceContent(content, url, cssResource){
         if (!cssResource)
           cssResource = new CssResource(url);
 
@@ -2314,7 +2436,7 @@
         return cssResource;
       },
 
-      '.json': function(content, url){
+      '.json': function processJsonResourceContent(content, url){
         if (typeof content == 'object')
           return content;
 
@@ -2337,7 +2459,10 @@
 
   function compileFunction(sourceURL, args, body){
     try {
-      return new Function(args, body
+      return new Function(args,
+        '"use strict";\n' +
+        /** @cut */ (NODE_ENV ? 'var __nodejsRequire = require;\n' : '') +
+        body
         /** @cut */ + '\n\n//# sourceURL=' + pathUtils.origin + sourceURL
       );
     } catch(e) {
@@ -2377,12 +2502,13 @@
     // compile function if required
     if (typeof compiledSourceCode != 'function')
       compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require', 'asset'],
-        '"use strict";\n' +
         sourceCode
       );
 
     // run
     if (typeof compiledSourceCode == 'function')
+    {
+      /** @cut */ compiledSourceCode.displayName = '[module] ' + (filename2namespace[sourceURL] || sourceURL);
       compiledSourceCode.call(
         context.exports,
         context.exports,
@@ -2401,6 +2527,7 @@
           return resolveResourceUri(path, baseURL, 'asset(\'{url}\')');
         }
       );
+    }
 
     return context;
   };
@@ -2561,64 +2688,21 @@
   * @param {string} dirname
   * @name require
   */
-  var requireNamespace = (function(filename, dirname){
-    if (NODE_ENV)
+  var requireNamespace = function(filename, dirname){
+    if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
     {
-      var moduleProto = module.constructor.prototype;
-      return function(filename, dirname){
-        if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == '.js')
-        {
-          var _compile = moduleProto._compile;
-          var namespace = getNamespace(filename);
-
-          // patch node.js module._compile
-          moduleProto._compile = function(content, filename){
-            this.basis = basis;
-            content =
-              'var __nodejsRequire = require;\n' +
-              'var basis = module.basis;\n' +
-              'var resource = function(filename){ return basis.resource(__dirname + "/" + filename) };\n' +
-              'var require = function(filename, baseURI){ return basis.require(filename, baseURI || __dirname) };\n' +
-              content;
-            _compile.call(extend(this, namespace), content, filename);
-          };
-
-          var exports = require(__dirname + '/' + filename.replace(/\./g, '/'));
-
-          namespace.exports = exports;
-          if (exports && exports.constructor === Object)
-            complete(namespace, exports);
-
-          // restore node.js module._compile
-          moduleProto._compile = _compile;
-
-          return exports;
-        }
-        else
-        {
-          filename = resolveResourceUri(filename, dirname);
-          return require(filename);
-        }
-      };
+      // namespace, like 'foo.bar.baz'
+      filename = resolveNSFilename(filename);
     }
     else
     {
-      return function(filename, dirname){
-        if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
-        {
-          // namespace, like 'foo.bar.baz'
-          filename = resolveNSFilename(filename);
-        }
-        else
-        {
-          // regular filename
-          filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
-        }
-
-        return getResource(filename).fetch();
-      };
+      // regular filename
+      filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
     }
-  })();
+
+    return getResource(filename).fetch();
+  };
+  /** @cut */ requireNamespace.displayName = 'basis.require';
 
 
   function patch(filename, patchFn){
@@ -3195,6 +3279,9 @@
 
       // remove emergency timer as all handlers are process
       timer = clearImmediate(timer);
+
+      // process asap queue
+      asap.process();
     }
 
     function fireHandlers(e){
@@ -3616,6 +3703,7 @@
     nextTick: function(){
       setImmediate.apply(null, arguments);
     },
+    asap: asap,
 
     // classes
     Class: Class,
@@ -3664,10 +3752,11 @@
       nullGetter: nullGetter,
       wrapper: wrapper,
 
-      // lazy
+      // callbacks
       lazyInit: lazyInit,
       lazyInitAndRun: lazyInitAndRun,
-      runOnce: runOnce
+      runOnce: runOnce,
+      publicCallback: publicCallback
     },
     array: extend(arrayFrom, arrayFunctions),
     string: stringFunctions,
@@ -3695,6 +3784,14 @@
     config.autoload.forEach(function(name){
       requireNamespace(name);
     });
+
+
+  //
+  // extend exports when node.js environment
+  //
+
+  if (NODE_ENV && exports)
+    exports.basis = basis;
 
 
   //

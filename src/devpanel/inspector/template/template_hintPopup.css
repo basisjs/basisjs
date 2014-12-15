@@ -1,6 +1,6 @@
 .popup
 {
-  position: fixed;
+  position: absolute;
   padding: 4px 8px;
   margin: 2px 0;
   border: 1px solid #D0C0AA;
@@ -16,10 +16,10 @@
   z-index: 10001 !important;
 }
 
-.element,
-.rootNodeSelector,
+.name,
 .source,
-.name
+.instance,
+.rootNodeSelector
 {
   display: block;
 }

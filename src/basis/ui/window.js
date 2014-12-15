@@ -13,6 +13,7 @@
 
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
+  var resolveValue = require('basis.data').resolveValue;
   var DOM = require('basis.dom');
   var cssom = require('basis.cssom');
   var createEvent = require('basis.event').create;
@@ -80,19 +81,19 @@
   var Window = Class(Node, {
     className: namespace + '.Window',
 
-    emit_beforeShow: createEvent('beforeShow'),
     emit_open: createEvent('open'),
     emit_close: createEvent('close'),
-    emit_active: createEvent('active'),
 
     closeOnEscape: true,
-
     autocenter: true,
     autocenter_: false,
     modal: false,
     closed: true,
     moveable: true,
     zIndex: 0,
+
+    visible: false,
+    visibleRA_: null,
 
     dde: null,
 
@@ -101,8 +102,8 @@
     template: module.template('Window'),
     binding: {
       title: 'title',
-      titleButtons: 'satellite:',
-      moveable: 'moveable'
+      moveable: 'moveable',
+      titleButtons: 'satellite:'
     },
     action: {
       close: function(){
@@ -146,7 +147,7 @@
         existsIf: function(owner){
           return !owner.titleButton || owner.titleButton.close !== false;
         },
-        instanceOf: Node.subclass({
+        satelliteClass: Node.subclass({
           className: namespace + '.TitleButton',
 
           template: module.template('TitleButton'),
@@ -200,6 +201,26 @@
         this.autocenter = true;
         this.autocenter_ = true;
       }
+
+      /** @deprecated 1.4 */
+      /** @cut */ if (this.closed !== true)
+      /** @cut */   basis.dev.warn(namespace + '.Window: `closed` property can\'t be set on create and deprecated (use `visible` instead)');
+      /** @cut */ basis.dev.warnPropertyAccess(this, 'closed', true, namespace + '.Window: `closed` property is deprecated, use `visible` instead');
+
+      var visible = this.visible;
+
+      this.visible = false;
+      this.closed = true;
+
+      if (visible)
+      {
+        // it's a hack to propertly add to window stack, when visible on init
+        // TODO: find out better solution
+        this.element = document.createComment('');
+
+        // no custom code, as `open` event emit is desired behaviour
+        this.setVisible(visible);
+      }
     },
     setTitle: function(title){
       this.title = title;
@@ -218,7 +239,7 @@
           cssom.setStyle(this.element, style);
 
         if (this.dde)
-          this.dde.setElement(this.element, this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element);
+          this.dde.setElement(this.tmpl.ddelement || this.element, this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element);
 
         if (this.buttonPanel)
           (this.tmpl.content || this.element).appendChild(this.buttonPanel.element);
@@ -254,39 +275,49 @@
     activate: function(){
       this.select();
     },
-    open: function(params){
-      if (this.closed)
+    setVisible: function(visible){
+      visible = !!resolveValue(this, this.setVisible, visible, 'visibleRA_');
+
+      if (this.visible !== visible)
       {
-        cssom.visibility(this.element, false);
+        if (visible)
+        {
+          windowManager.appendChild(this);
 
-        windowManager.appendChild(this);
-        this.closed = false;
+          this.visible = true;
+          this.closed = false;
 
-        this.realign();
+          this.realign();
 
-        this.emit_beforeShow(params);
-        cssom.visibility(this.element, true);
+          this.emit_open();
+        }
+        else
+        {
+          windowManager.removeChild(this);
 
-        this.emit_open(params);
-        //this.emit_active(params);
+          this.visible = false;
+          this.closed = true;
+
+          this.autocenter = this.autocenter_;
+
+          this.emit_close();
+        }
       }
-      else
-      {
+
+      if (visible)
         this.realign();
-      }
+    },
+    open: function(){
+      this.setVisible(true);
     },
     close: function(){
-      if (!this.closed)
-      {
-        windowManager.removeChild(this);
-        this.closed = true;
-
-        this.autocenter = this.autocenter_;
-
-        this.emit_close();
-      }
+      this.setVisible(false);
     },
     destroy: function(){
+      // NOTE: no resolveValue required, as on this.setVisible(false)
+      // resolve adapter will be destroyed
+      this.close();
+
       if (this.dde)
       {
         this.dde.destroy();
@@ -307,56 +338,58 @@
   // Window manager
   //
 
-  var windowManager = new UINode({
+  var windowManager = new Node({
     template: module.template('windowManager'),
-    selection: true,
+
     blocker: basis.fn.lazyInit(function(){
       return new Blocker();
-    })
-  });
+    }),
 
-  windowManager.addHandler({
-    childNodesModified: function(){
-      var modalIndex = -1;
+    selection: true,
+    listen: {
+      selection: {
+        itemsChanged: function(selection){
+          var selected = selection.pick();
+          var lastWin = this.lastChild;
 
-      if (this.lastChild)
-      {
-        for (var i = 0, node; node = this.childNodes[i]; i++)
-        {
-          node.setZIndex(2001 + i * 2);
-
-          if (node.modal)
-            modalIndex = i;
-        }
-
-        this.lastChild.select();
-      }
-
-      if (modalIndex != -1)
-        this.blocker().capture(this.element, 2000 + modalIndex * 2);
-      else
-        this.blocker().release();
-    }
-  });
-
-  windowManager.selection.addHandler({
-    itemsChanged: function(){
-      var selected = this.pick();
-      var lastWin = windowManager.lastChild;
-
-      if (selected)
-      {
-        if (selected.parentNode == windowManager && selected != lastWin)
-        {
-          // put selected on top
-          windowManager.insertBefore(selected);
-          windowManager.emit_childNodesModified({});
+          if (selected)
+          {
+            if (selected.parentNode == this && selected != lastWin)
+            {
+              // put selected on top
+              this.insertBefore(selected);
+              this.emit_childNodesModified({});
+            }
+          }
+          else
+          {
+            if (lastWin)
+              selection.add([lastWin]);
+          }
         }
       }
-      else
-      {
-        if (lastWin)
-          this.add([lastWin]);
+    },
+    handler: {
+      childNodesModified: function(){
+        var modalIndex = -1;
+
+        if (this.lastChild)
+        {
+          for (var i = 0, node; node = this.childNodes[i]; i++)
+          {
+            node.setZIndex(2001 + i * 2);
+
+            if (node.modal)
+              modalIndex = i;
+          }
+
+          this.lastChild.select();
+        }
+
+        if (modalIndex != -1)
+          this.blocker().capture(this.element, 2000 + modalIndex * 2);
+        else
+          this.blocker().release();
       }
     }
   });

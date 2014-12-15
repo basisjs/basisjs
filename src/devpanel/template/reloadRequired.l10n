@@ -1,0 +1,6 @@
+{
+  "_meta": { "type": { "file": "plural" } },
+  "en-US": {
+    "file": ["file", "files"]
+  }
+}

@@ -53,7 +53,27 @@
   * @param {object} extension
   */
   function extendBinding(binding, extension){
+    var loc;
+
     binding.bindingId = bindingSeed++;
+
+    /** @cut */ try { throw new Error(''); } catch(e) {
+    /** @cut */   var stack = String(e.stack);
+    /** @cut */   var m =
+    /** @cut */     stack.match(/devVerboseName\s\((?:.|\s)+?\(([^\)]+)/) ||
+    /** @cut */     stack.match(/createClass(?:\s*\(.+[\r\n]+.+subclass)\s\((?:.|\s)+?\(([^\)]+)/) ||
+    /** @cut */     stack.match(/createClass\s\((?:.|\s)+?\(([^\)]+)/) ||
+    /** @cut */     stack.match(/customExtendProperty\s\((?:.|\s)+?\(([^\)]+)/);
+    /** @cut */   if (m)
+    /** @cut */   {
+    /** @cut */     loc = m[1].replace(/:(\d+)\:(\d+)$/, function(m, line, col){
+    /** @cut */       return ':' + (line - 3) + ':' + col;
+    /** @cut */     });
+    /** @cut */     //console.log(m[1]);
+    /** @cut */   }
+    /** @cut */   //else
+    /** @cut */   //  console.log(String(e.stack));
+    /** @cut */ }
 
     for (var key in extension)
     {
@@ -127,6 +147,9 @@
         }
       }
 
+      /** @cut */ if (def && loc)
+      /** @cut */   def.loc = loc;
+
       binding[key] = def;
     }
   }
@@ -192,6 +215,12 @@
   * Base binding
   */
   var TEMPLATE_BINDING = Class.customExtendProperty({
+    active: {
+      events: 'activeChanged',
+      getter: function(node){
+        return node.active;
+      }
+    },
     state: {
       events: 'stateChanged',
       getter: function(node){
@@ -363,7 +392,7 @@
         var template = this.template;
         if (template)
         {
-          var nodeDocumentFragment = this.element;
+          var nodeDocumentFragment = this.childNodesElement;
 
           // check for wrong event name in binding
           /** @cut */ var bindingId = this.constructor.basisClassId_ + '_' + this.binding.bindingId;
@@ -831,6 +860,15 @@
         events: 'disable enable',
         getter: function(node){
           return !node.isDisabled();
+        }
+      },
+      tabindex: {
+        events: 'enable disable',
+        getter: function(node){
+          // return -1 when node is not focusable
+          // basis.template convert this value for tabindex in proper way rely on tag name
+          // http://nemisj.com/focusable/
+          return node.isDisabled() ? -1 : node.tabindex || 0;
         }
       }
     },

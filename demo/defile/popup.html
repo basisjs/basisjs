@@ -75,22 +75,32 @@
 </head>
 
 <body>
-  <div id="demo-container"></div>
+  <div id="demo-container">
+    <div style="float: right; margin-left: 20px;">
+      <b>Test auto hide on scroll</b>:
+      <div style="width: 100px; height: 100px; overflow: scroll; background: white; border: 1px solid #888; padding: 15px;">
+        Lorem ipsum dolor sit amet, discere admodum scribentur no qui.
+        Ius reque idque dolore ad, appetere perfecto nec ad. Inimicus patrioque hendrerit est cu, his no accumsan nominavi, dico ipsum adipiscing cum eu.
+        Nec ex meis noluisse percipitur, vix omnes noluisse posidonium ut.
+        Duo et deseruisse honestatis, nemore aliquip ad pri. Cum quem porro delicata te.
+      </div>
+    </div>
+  </div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.ui.popup');
-    basis.require('basis.ui.menu');
-    basis.require('basis.ui.button');
-
     // import names
-    var getter = basis.getter;
+    var DOM = basis.require('basis.dom');
+    var Popup = basis.require('basis.ui.popup').Popup;
+    var Balloon = basis.require('basis.ui.popup').Balloon;
+    var Menu = basis.require('basis.ui.menu').Menu;
+    var Button = basis.require('basis.ui.button').Button;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
 
-    var DOM = basis.dom;
-    var Popup = basis.ui.popup.Popup;
-    var Balloon = basis.ui.popup.Balloon;
-    var Menu = basis.ui.menu.Menu;
-    var Button = basis.ui.button.Button;
+    var lorem =
+          'Lorem ipsum dolor sit amet, discere admodum scribentur no qui. ' +
+          'Ius reque idque dolore ad, appetere perfecto nec ad. Inimicus patrioque hendrerit est cu, his no accumsan nominavi, dico ipsum adipiscing cum eu. ' +
+          'Nec ex meis noluisse percipitur, vix omnes noluisse posidonium ut. ' +
+          'Duo et deseruisse honestatis, nemore aliquip ad pri. Cum quem porro delicata te.';
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
@@ -98,27 +108,33 @@
 
     // Popup
 
-    var popup = new Popup({
+    var nestedPopup = new Popup({
       dir: 'left bottom left top',
       autorotate: true,
       childNodes: [
         {
-          template: 'Lorem ipsum dolor sit amet, discere admodum scribentur no qui. ' +
-            'Ius reque idque dolore ad, appetere perfecto nec ad. Inimicus patrioque hendrerit est cu, his no accumsan nominavi, dico ipsum adipiscing cum eu. ' +
-            'Nec ex meis noluisse percipitur, vix omnes noluisse posidonium ut. ' +
-            'Duo et deseruisse honestatis, nemore aliquip ad pri. Cum quem porro delicata te.'
+          template: 'Nested popup: ' + lorem
         }
       ]
     });
-
-    new Button({
-      container: createBlock('Popup'),
-
-      caption: 'Show Popup',
-      click: function(){
-        popup.show(this.element);
-      }
+    var popup = new Popup({
+      dir: 'left bottom left top',
+      autorotate: true,
+      hideOnKey: basis.fn.$true,
+      childNodes: [
+        {
+          template: '<div>' + lorem + '</div>'
+        },
+        new Button({
+          caption: 'Show nested popup',
+          click: function(){
+            nestedPopup.show(this.element);
+          }
+        })
+      ]
     });
+
+
 
     // Ballon
 
@@ -127,22 +143,11 @@
       autorotate: true,
       childNodes: [
         {
-          template: 'Lorem ipsum dolor sit amet, discere admodum scribentur no qui. ' +
-            'Ius reque idque dolore ad, appetere perfecto nec ad. Inimicus patrioque hendrerit est cu, his no accumsan nominavi, dico ipsum adipiscing cum eu. ' +
-            'Nec ex meis noluisse percipitur, vix omnes noluisse posidonium ut.' +
-            'Duo et deseruisse honestatis, nemore aliquip ad pri. Cum quem porro delicata te.'
+          template: lorem
         }
       ]
     });
 
-    new Button({
-      container: createBlock('Balloon'),
-
-      caption: 'Show Balloon',
-      click: function(){
-        balloon.show(this.element);
-      }
-    });
 
     // Menu
 
@@ -182,16 +187,32 @@
       ]
     });
 
-    new Button({
-      container: createBlock('Menu'),
-
-      caption: 'Show Menu',
-      click: function(){
-        menu.show(this.element);
-      }
+    //
+    // buttons
+    //
+    new ButtonPanel({
+      container: createBlock('Popup'),
+      childNodes: [
+        {
+          caption: 'Show Popup',
+          click: function(){
+            popup.show(this.element);
+          }
+        },
+        {
+          caption: 'Show Balloon',
+          click: function(){
+            balloon.show(this.element);
+          }
+        },
+        {
+          caption: 'Show Menu',
+          click: function(){
+            menu.show(this.element);
+          }
+        }
+      ]
     });
-
-
   </script>
 </body>
 

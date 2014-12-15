@@ -52,27 +52,43 @@
       })
     });
 
-    var dict = basis.l10n.dictionary('l10n.l10n');
+    var dict = basis.l10n.dictionary('./l10n.l10n');
 
-    var testNode = new basis.ui.Node({
+    // var testNode = new basis.ui.Node({
+    //   container: document.getElementById('demo-container'),
+    //   data: { count: 5 },
+    //   template: basis.resource('./l10n.tmpl'),
+    //   action: {
+    //     dec: function(){
+    //       this.update({ count: this.data.count - 1 });
+    //     },
+    //     inc: function(){
+    //       this.update({ count: this.data.count + 1 });
+    //     }
+    //   },
+    //   binding: {
+    //     count: 'data:',
+    //     plural: dict.token('plural').compute('update', function(node){
+    //       return node.data.count;
+    //     }),
+    //     markupToken: dict.token('markupToken'),
+    //     markupToken2: dict.token('markupToken')
+    //   }
+    // });
+
+    var node = new basis.ui.Node({
       container: document.getElementById('demo-container'),
-      data: { count: 5 },
-      template: basis.resource('./l10n.tmpl'),
-      action: {
-        dec: function(){
-          this.update({ count: this.data.count - 1 });
-        },
-        inc: function(){
-          this.update({ count: this.data.count + 1 });
-        }
-      },
+      template: '<b:l10n src="./l10n.l10n"/><div>{l10n:simpleMarkup}<br/>{xxx}<br/>{l10n} {l10n:default} {l10n:a.{l10n}} <span foo="{l10n:default}" bar="{l10n:a.{l10n}}"/></div>',
       binding: {
-        count: 'data:',
-        plural: dict.token('plural').compute('update', function(node){
-          return node.data.count;
-        }),
-        markupToken: dict.token('markupToken'),
-        markupToken2: dict.token('markupToken')
+        count: function(){
+          return 'OK';
+        },
+        l10n: function(){
+          return 'b';
+        },
+        xxx: function(){
+          return dict.token('simpleMarkup');
+        }
       }
     });
 

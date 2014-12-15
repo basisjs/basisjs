@@ -613,6 +613,21 @@
         reader: function(data){
           return entityType.reader(data);
         },
+        readList: function(value, map){
+          if (!value)
+            return [];
+
+          if (!Array.isArray(value))
+            value = [value];
+
+          if (typeof map != 'function')
+            map = $self;
+
+          for (var i = 0; i < value.length; i++)
+            value[i] = result(entityType.reader(map(value[i], i)));
+
+          return value;
+        },
 
         extendClass: function(source){
           EntityClass.extend.call(EntityClass, source);
@@ -948,6 +963,8 @@
     fields: null,
     idField: null,
     idFields: null,
+    compositeKey: null,
+    idProperty: null,
     defaults: null,
 
     aliases: null,
@@ -1302,6 +1319,15 @@
     return Class(BaseEntity, {
       className: entityType.name,
 
+      syncEvents: {
+        update: true,
+        stateChanged: true,
+        subscribersChanged: true
+      },
+      isSyncRequired: function(){
+        return DataObject.prototype.isSyncRequired.call(this) && (!entityType.idProperty || this[entityType.idProperty] != null);
+      },
+
       init: function(data){
         // ignore delegate and data
         this.delegate = null;
@@ -1574,6 +1600,9 @@
         }
 
         return update ? delta : false;
+      },
+      read: function(data){
+        return this.update(this.type.reader(data));
       },
       generateData: function(){ // will be overrided
         return {};

@@ -26,24 +26,32 @@
   var TemplateSwitcher = basisTemplate.TemplateSwitcher;
   var Template = basisTemplate.Template;
 
-  var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
-  var TYPE_ATTRIBUTE = basisTemplate.TYPE_ATTRIBUTE;
-  var TYPE_TEXT = basisTemplate.TYPE_TEXT;
-  var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
+  var consts = require('./const.js');
+  var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+  var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+  var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
+  var TYPE_ATTRIBUTE_STYLE = consts.TYPE_ATTRIBUTE_STYLE;
+  var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
 
-  var TOKEN_TYPE = basisTemplate.TOKEN_TYPE;
-  var TOKEN_BINDINGS = basisTemplate.TOKEN_BINDINGS;
-  var TOKEN_REFS = basisTemplate.TOKEN_REFS;
+  var TYPE_TEXT = consts.TYPE_TEXT;
+  var TYPE_COMMENT = consts.TYPE_COMMENT;
 
-  var ATTR_NAME = basisTemplate.ATTR_NAME;
-  var ATTR_VALUE = basisTemplate.ATTR_VALUE;
-  var ATTR_NAME_BY_TYPE = basisTemplate.ATTR_NAME_BY_TYPE;
+  var TOKEN_TYPE = consts.TOKEN_TYPE;
+  var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
+  var TOKEN_REFS = consts.TOKEN_REFS;
 
-  var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
+  var ATTR_NAME = consts.ATTR_NAME;
+  var ATTR_VALUE = consts.ATTR_VALUE;
+  var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
+  var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 
-  var TEXT_VALUE = basisTemplate.TEXT_VALUE;
-  var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
+  var ELEMENT_NAME = consts.ELEMENT_NAME;
 
+  var TEXT_VALUE = consts.TEXT_VALUE;
+  var COMMENT_VALUE = consts.COMMENT_VALUE;
+
+  var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
+  var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 
 
   //
@@ -110,20 +118,42 @@
 
   // old Firefox has no Node#contains method (Firefox 8 and lower)
   if (Node && !Node.prototype.contains)
-    Node.prototype.contains = function(child){
+    Node.prototype.contains = function(child){  // TODO: don't extend Node, replace for function
       return !!(this.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
     };
 
 
   // l10n
   var l10nTemplates = {};
+
+  function getSourceFromL10nToken(token){
+    var dict = token.dictionary;
+    var url = dict.resource ? dict.resource.url : '';
+    var id = token.name + '@' + url;
+    var result = token.as(function(value){
+      return token.type == 'markup'
+        ? '<span data-basisjs-l10n="' + id + '">' + String(value) + '</span>'
+        : '';
+    });
+
+    result.id = '{l10n:' + id + '}';
+    result.url = url + ':' + token.name;
+
+    return result;
+  }
+
   function getL10nHtmlTemplate(token){
-    var template = getL10nTemplate(token);
-    var id = template.templateId;
+    if (typeof token == 'string')
+      token = getL10nToken(token);
+
+    if (!token)
+      return null;
+
+    var id = token.basisObjectId;
     var htmlTemplate = l10nTemplates[id];
 
     if (!htmlTemplate)
-      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(template.source);
+      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(getSourceFromL10nToken(token));
 
     return htmlTemplate;
   }
@@ -301,32 +331,60 @@
           break;
 
         case TYPE_ATTRIBUTE:
-          var attrName = token[ATTR_NAME];
-          var attrValue = token[ATTR_VALUE];
-          var eventName = attrName.replace(/^event-/, '');
+          if (!token[TOKEN_BINDINGS])
+            setAttribute(token[ATTR_NAME], token[ATTR_VALUE] || '');
+          break;
 
-          if (eventName != attrName)
-          {
-            setEventAttribute(eventName, attrValue);
-          }
-          else
-          {
-            if (attrName != 'class' && attrName != 'style' ? !token[TOKEN_BINDINGS] : attrValue)
-              setAttribute(attrName, attrValue || '');
-          }
+        case TYPE_ATTRIBUTE_CLASS:
+          var value = token[ATTR_VALUE_INDEX[token[TOKEN_TYPE]]];
+          value = value ? [value] : [];
+
+          if (token[TOKEN_BINDINGS])
+            for (var j = 0, binding; binding = token[TOKEN_BINDINGS][j]; j++)
+            {
+              var defaultValue = binding[4];
+              if (defaultValue)
+              {
+                var prefix = binding[0];
+                if (Array.isArray(prefix))
+                {
+                  // precomputed classes
+                  // bool: [['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                  // enum: [['prefix_foo','prefix_bar'],'binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                  value.push(binding[0][defaultValue - 1]);
+                }
+                else
+                {
+                  switch (binding[2])
+                  {
+                    case CLASS_BINDING_BOOL:
+                      // ['prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                      value.push(prefix + binding[3]);
+                      break;
+                    case CLASS_BINDING_ENUM:
+                      // ['prefix_','binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                      value.push(prefix + binding[5][defaultValue - 1]);
+                      break;
+                  }
+                }
+              }
+            }
+
+          value = value.join(' ').trim();
+          if (value)
+            setAttribute('class', value);
 
           break;
 
-        case 4:
-        case 5:
-          var attrValue = token[ATTR_VALUE - 1];
+        case TYPE_ATTRIBUTE_STYLE:
+          var attrValue = token[ATTR_VALUE_INDEX[token[TOKEN_TYPE]]];
 
           if (attrValue)
-            setAttribute(ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]], attrValue);
+            setAttribute('style', attrValue);
 
           break;
 
-        case 6:
+        case TYPE_ATTRIBUTE_EVENT:
           setEventAttribute(token[1], token[2] || token[1]);
           break;
 
@@ -472,8 +530,8 @@
     */
     var bind_attrClass = CLASSLIST_SUPPORTED
       // classList supported
-      ? function(domRef, oldClass, newValue, prefix, anim){
-          var newClass = newValue ? prefix + newValue : '';
+      ? function(domRef, oldClass, newValue, anim){
+          var newClass = newValue ? newValue : '';
 
           if (newClass != oldClass)
           {
@@ -497,8 +555,8 @@
           return newClass;
         }
       // old browsers are not support for classList
-      : function(domRef, oldClass, newValue, prefix, anim){
-          var newClass = newValue ? prefix + newValue : '';
+      : function(domRef, oldClass, newValue, anim){
+          var newClass = newValue ? newValue : '';
 
           if (newClass != oldClass)
           {
@@ -803,10 +861,11 @@
       var instances = {};
       var l10nMap = {};
       var l10nLinks = [];
+      var l10nMarkupTokens = [];
       var seed = 0;
-
       var proto = buildHtml(tokens);
       var id = this.templateId;
+
       templates[id] = {
         template: this,
         instances: instances
@@ -816,24 +875,41 @@
       {
         var l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
 
-        for (var i = 0, key; key = fn.l10nKeys[i]; i++)
-          l10nProtoSync(key, getL10nToken(key).value);
-
         if (fn.l10nKeys)
           for (var i = 0, key; key = fn.l10nKeys[i]; i++)
           {
+            var token = getL10nToken(key);
             var link = {
               path: key,
-              token: getL10nToken(key),
+              token: token,
               handler: function(value){
-                l10nProtoSync(this.path, value);
+                var isMarkup = this.token.type == 'markup';
+
+                if (isMarkup)
+                  basis.array.add(l10nMarkupTokens, this);
+                else
+                  basis.array.remove(l10nMarkupTokens, this);
+
+                l10nProtoSync(this.path, isMarkup ? null : value);
                 for (var key in instances)
-                  instances[key].tmpl.set(this.path, value);
+                  instances[key].tmpl.set(this.path, isMarkup ? this.token : value);
               }
             };
             link.token.attach(link.handler, link);
             l10nLinks.push(link);
+
+            if (token.type == 'markup')
+            {
+              l10nMarkupTokens.push(link);
+              l10nProtoSync(key, null);
+            }
+            else
+            {
+              l10nProtoSync(key, token.value);
+            }
+
             link = null;
+            token = null;
           }
       }
 
@@ -843,6 +919,9 @@
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
           var instanceId = seed++;
           var instance = createInstance(instanceId, obj, onAction, onRebuild, bindings, bindingInterface);
+
+          for (var i = 0, len = l10nMarkupTokens.length; i < len; i++)
+            instance.tmpl.set(l10nMarkupTokens[i].path, l10nMarkupTokens[i].token);
 
           instances[instanceId] = instance;
 

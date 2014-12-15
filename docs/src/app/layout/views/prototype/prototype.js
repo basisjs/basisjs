@@ -48,7 +48,7 @@
 
     satellite: {
       jsdocs: {
-        instanceOf: PrototypeJsDocPanel,
+        satelliteClass: PrototypeJsDocPanel,
         delegate: function(owner){
           return JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
         }
@@ -227,7 +227,7 @@
 
     satellite: {
       viewOptions: {
-        instanceOf: ViewOptions,
+        satelliteClass: ViewOptions,
         config: function(owner){
           return {
             title: 'Group by',

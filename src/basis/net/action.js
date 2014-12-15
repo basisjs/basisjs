@@ -15,6 +15,7 @@
   var STATE_ERROR = STATE.ERROR;
 
   var AjaxTransport = require('basis.net.ajax').Transport;
+  var Promise = require('basis.promise');
 
 
   //
@@ -71,6 +72,21 @@
     complete: nothingToDo
   };
 
+  var PROMISE_REQUEST_HANDLER = {
+    success: function(request, data){
+      this.fulfill(data);
+    },
+    abort: function(){
+      this.reject('Request aborted');
+    },
+    failure: function(request, error){
+      this.reject(error);
+    },
+    complete: function(){
+      this.request.removeHandler(PROMISE_REQUEST_HANDLER, this);
+    }
+  };
+
  /**
   * @function
   */
@@ -121,13 +137,25 @@
       {
         fn.prepare.apply(this, arguments);
 
-        this.request = getTransport().request(basis.object.complete({
+        var request = getTransport().request(basis.object.complete({
           origin: this
         }, fn.request.apply(this, arguments)));
+
+        if (request)
+          return new Promise(function(fulfill, reject){
+            request.addHandler(PROMISE_REQUEST_HANDLER, {
+              request: request,
+              fulfill: fulfill,
+              reject: reject
+            });
+          });
+
+        return Promise.reject('Request is not performed');
       }
       else
       {
-        /** @cut */ basis.dev.warn(this + ' has not ready state. Operation aborted');
+        /** @cut */ basis.dev.warn('Context in processing state. Operation aborted. Context: ', this);
+        return Promise.reject('Context in processing state, request is not performed');
       }
     };
   }

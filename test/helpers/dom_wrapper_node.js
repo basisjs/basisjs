@@ -1,6 +1,8 @@
-basis.require('basis.dom.wrapper');
-
-var Node = basis.dom.wrapper.Node;
+var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
+var AbstractNode = require('basis.dom.wrapper').AbstractNode;
+var PartitionNode = require('basis.dom.wrapper').PartitionNode;
+var GroupingNode = require('basis.dom.wrapper').GroupingNode;
+var Node = require('basis.dom.wrapper').Node;
 
 function getGroups(node, withNull){
   var res = basis.array.from(node.grouping.childNodes);
@@ -180,7 +182,7 @@ function checkNode(node){
   //
   if (node.dataSource !== null)
   {
-    if (node.dataSource instanceof basis.data.ReadOnlyDataset === false)
+    if (node.dataSource instanceof ReadOnlyDataset === false)
       return 'dataSource has wrong value (should be null or instance of basis.data.ReadOnlyDataset)';
 
     if (node.dataSource.itemCount !== node.childNodes.length)
@@ -201,7 +203,7 @@ function checkNode(node){
   //
   if (node.owner !== null)
   {
-    if (node.owner instanceof basis.dom.wrapper.AbstractNode == false)
+    if (node.owner instanceof AbstractNode == false)
       return 'owner has bad type (should be an basis.dom.wrapper.AbstractNode instance)';
 
     if (res = checkNodeListen(node, node.owner, 'owner'))
@@ -229,7 +231,7 @@ function checkNode(node){
       {
         var satellite = node.satellite[name];
 
-        if (satellite instanceof basis.dom.wrapper.AbstractNode == false)
+        if (satellite instanceof AbstractNode == false)
           return 'satellite `' + name + '` has bad type (should be an basis.dom.wrapper.AbstractNode instance)';
 
         if (satellite.owner !== node)
@@ -251,7 +253,7 @@ function checkNode(node){
   //
   // custom checks for GroupingNode instances
   //
-  if (node instanceof basis.dom.wrapper.GroupingNode)
+  if (node instanceof GroupingNode)
   {
     if (node.owner)
     {
@@ -279,7 +281,7 @@ function checkNode(node){
   //
   // custom checks for PartitionNode instances
   //
-  if (node instanceof basis.dom.wrapper.PartitionNode)
+  if (node instanceof PartitionNode)
   {
     if (!node.nodes)
       return 'PartitionNode has no child nodes';

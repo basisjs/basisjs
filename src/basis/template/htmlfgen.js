@@ -10,26 +10,29 @@
   // import names
   //
 
-  var basisTemplate = require('basis.template');
+  var consts = require('basis.template.const');
 
-  var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
-  var TYPE_ATTRIBUTE = basisTemplate.TYPE_ATTRIBUTE;
-  var TYPE_TEXT = basisTemplate.TYPE_TEXT;
-  var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
+  var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+  var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+  var TYPE_TEXT = consts.TYPE_TEXT;
+  var TYPE_COMMENT = consts.TYPE_COMMENT;
 
-  var TOKEN_TYPE = basisTemplate.TOKEN_TYPE;
-  var TOKEN_BINDINGS = basisTemplate.TOKEN_BINDINGS;
-  var TOKEN_REFS = basisTemplate.TOKEN_REFS;
+  var TOKEN_TYPE = consts.TOKEN_TYPE;
+  var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
+  var TOKEN_REFS = consts.TOKEN_REFS;
 
-  var ATTR_NAME = basisTemplate.ATTR_NAME;
-  var ATTR_NAME_BY_TYPE = basisTemplate.ATTR_NAME_BY_TYPE;
+  var ATTR_NAME = consts.ATTR_NAME;
+  var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
 
-  var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
-  var ELEMENT_ATTRS = basisTemplate.ELEMENT_ATTRS;
-  var ELEMENT_CHILDS = basisTemplate.ELEMENT_CHILDS;
+  var ELEMENT_NAME = consts.ELEMENT_NAME;
+  var ELEMENT_ATTRS = consts.ELEMENT_ATTRS;
+  var ELEMENT_CHILDS = consts.ELEMENT_CHILDS;
 
-  var TEXT_VALUE = basisTemplate.TEXT_VALUE;
-  var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
+  var TEXT_VALUE = consts.TEXT_VALUE;
+  var COMMENT_VALUE = consts.COMMENT_VALUE;
+
+  var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
+  var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 
 
   //
@@ -162,7 +165,7 @@
               {
                 case 'class':
                   for (var k = 0, binding; binding = bindings[k]; k++)
-                    putBinding([2, localPath, binding[1], attrName, binding[0]].concat(binding.slice(2)));
+                    putBinding([2, localPath, binding[1], attrName, binding[0]].concat(binding[2] == -1 ? [] : binding.slice(2)));
                 break;
 
                 case 'style':
@@ -244,6 +247,10 @@
       8: 'bind_comment'
     };
 
+    function simpleStringify(val){
+      return typeof val == 'string' ? '"' + val.replace(/"/g, '\\"') + '"' : val;
+    }
+
    /**
     * @param {object} binding
     * @param {string=} special Possible values: l10n and bool
@@ -285,7 +292,7 @@
             if (bindingName)
               expression.push(l10n[exprVar.substr(colonPos + 1)]);
             else
-              expression.push('__l10n["' + l10nPath + '"]');
+              expression.push('l10n["' + l10nPath + '"]');
           }
         }
       }
@@ -317,7 +324,6 @@
       var l10nCompute = [];
       var l10nBindings = {};
       var l10nBindSeed = 1;
-      var specialAttr;
       var attrExprId;
       var attrExprMap = {};
       /** @cut */ var debugList = [];
@@ -339,6 +345,7 @@
 
         var namePart = bindName.split(':');
         var anim = namePart[0] == 'anim';
+        var l10n = namePart[0] == 'l10n';
 
         if (anim)
           bindName = namePart[1];
@@ -347,7 +354,7 @@
         bindVar = '_' + i;
         varName = '__' + bindName;
 
-        if (namePart[0] == 'l10n' && namePart[1])
+        if (l10n && namePart[1])
         {
           var l10nFullPath = namePart[1];
           var l10nBinding = null;
@@ -376,8 +383,6 @@
               bindCode.push(varName + '.set(__' + l10nBinding + ');');
             }
 
-            ///
-
             bindName = l10nBindings[l10nFullPath];
             bindVar = '_' + i;
             varName = '__' + bindName;
@@ -395,7 +400,7 @@
               /** @cut */   'binding:"' + bindName + '"',
               /** @cut */   'dom:' + domRef,
               /** @cut */   'val:' + bindVar,
-              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */   'attachment:' + bindName
               /** @cut */ ] + '}');
 
               varList.push(bindVar + '=' + domRef);
@@ -410,7 +415,7 @@
               /** @cut */   'dom:' + domRef,
               /** @cut */   'attr:' + attrName,
               /** @cut */   'val:' + bindVar,
-              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */   'attachment:' + bindName
               /** @cut */ ] + '}');
 
               varList.push(bindVar);
@@ -426,24 +431,35 @@
           if (!bindMap[l10nName])
           {
             bindMap[l10nName] = [];
+            bindMap[l10nName].l10n = '$l10n_' + l10nBindSeed++;
+            varList.push('__' + bindMap[l10nName].l10n + '=l10n["' + l10nName + '"]');
             l10nMap[l10nName] = [];
           }
 
           bindCode = bindMap[l10nName];
-          bindCode.l10n = true;
 
           if (bindType == TYPE_TEXT)
           {
             /** @cut */ debugList.push('{' + [
             /** @cut */   'binding:"' + l10nFullPath + '"',
             /** @cut */   'dom:' + domRef,
-            /** @cut */   'val:__l10n["' + l10nName + '"]',
+            /** @cut */   'val:l10n["' + l10nName + '"]',
             /** @cut */   'attachment:l10nToken("' + l10nName + '")'
             /** @cut */ ] + '}');
             /** @cut */ toolsUsed.l10nToken = true;
 
             l10nMap[l10nName].push(domRef + '.nodeValue=value;');
-            bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"]' + (l10nBinding ? '[__' + l10nBinding + ']' : '') + ';');
+
+            if (!bindCode.nodeBind)
+            {
+              varList.push(bindVar + '=' + domRef);
+              putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
+              bindCode.nodeBind = bindVar;
+            }
+            else
+            {
+              bindCode.push(domRef + '.nodeValue=value;');
+            }
 
             continue;
           }
@@ -502,71 +518,66 @@
             case 'class':
               var defaultExpr = '';
               var valueExpr = 'value';
-              var prefix = binding[4];
-              var bindingLength = binding.length;
+              var bindingType = binding[5];
+              var defaultValue = binding[7];
 
-              if (bindingLength >= 6)
+              switch (bindingType)
               {
-                // predictable binding
+                case CLASS_BINDING_BOOL:
+                  // [2, localPath, 'binding', attrName, 'prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                  // [2, localPath, 'binding', attrName, ['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
 
-                if (bindingLength == 6 || typeof binding[6] == 'string')
-                {
-                  // bool binding
+                  var values = [binding[6]];
+                  var prefix = binding[4];
+                  var classes = Array.isArray(prefix) ? prefix : values.map(function(val){
+                    return prefix + val;
+                  });
 
-                  if (bindingLength == 6)
-                  {
-                    valueExpr = 'value?"' + bindName + '":""';
-                    if (binding[5])
-                      defaultExpr = prefix + bindName;
-                  }
-                  else
-                  {
-                    prefix = '';
-                    valueExpr = 'value?"' + binding[6] + '":""';
+                  valueExpr = 'value?"' + classes[0] + '":""';
 
-                    if (binding[5])
-                      defaultExpr = binding[6];
-                  }
-                }
-                else
-                {
-                  // enum binding
+                  if (defaultValue)
+                    defaultExpr = classes[defaultValue - 1];
 
-                  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
-                  if (!binding[6].length)
-                    continue;
+                  break;
 
-                  if (bindingLength == 7)
-                  {
-                    valueExpr = binding[6].map(function(val){
-                      return 'value=="' + val + '"';
-                    }).join('||') + '?value:""';
+                case CLASS_BINDING_ENUM:
+                  // [2, localPath, 'binding', attrName, 'prefix_','binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                  // [2, localPath, 'binding', attrName, ['prefix_foo','prefix_bar'], CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                  var values = binding[8];
+                  var prefix = binding[4];
+                  var classes = Array.isArray(prefix) ? prefix : values.map(function(val){
+                    return prefix + val;
+                  });
 
-                    if (binding[5])
-                      defaultExpr = prefix + binding[6][binding[5] - 1];
-                  }
-                  else
-                  {
-                    prefix = '';
-                    valueExpr = binding[6].map(function(val, idx){
-                      return 'value=="' + val + '"?"' + this[idx] + '"';
-                    }, binding[7]).join(':') + ':""';
+                  valueExpr = values.map(function(val, idx){
+                    return 'value=="' + val + '"?"' + classes[idx] + '"';
+                  }).join(':') + ':""';
 
-                    if (binding[5])
-                      defaultExpr = binding[7][binding[5] - 1];
-                  }
-                }
-              }
-              else
-              {
-                // quirks mode (unpredictable binding)
-                // number || string set as is
-                // otherwise treat as boolean, if new value is true set binding name and empty string in other cases
-                valueExpr = 'typeof value=="string"||typeof value=="number"?value:(value?"' + bindName + '":"")';
+                  if (defaultValue)
+                    defaultExpr = classes[defaultValue - 1];
+
+                  break;
+                default:
+                  // quirks mode (unpredictable binding)
+                  // number || string set as is
+                  // otherwise treat as boolean, if new value is true set binding name and empty string in other cases
+                  var prefix = binding[4];
+                  valueExpr = 'typeof value=="string"||typeof value=="number"?"' + prefix + '"+value:(value?"' + prefix + bindName + '":"")';
               }
 
               varList.push(bindVar + '="' + defaultExpr + '"');
-              putBindCode('bind_attrClass', domRef, bindVar, valueExpr, '"' + prefix + '"', anim);
+              putBindCode('bind_attrClass', domRef, bindVar, valueExpr, anim);
+
+              /** @cut */ debugList.push('{' + [
+              /** @cut */   'binding:"' + bindName + '"',
+              /** @cut */   'raw:__' + bindName,
+              /** @cut */   'prefix:"' + '???' + '"',
+              /** @cut */   'anim:' + anim,
+              /** @cut */   'dom:' + domRef,
+              /** @cut */   'attr:"' + attrName + '"',
+              /** @cut */   'val:' + bindVar,
+              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */ ] + '}');
 
               break;
 
@@ -587,40 +598,60 @@
               bindVar = attrExprMap[attrExprId];
               putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, expr);
 
+              /** @cut */ debugList.push('{' + [
+              /** @cut */   'binding:"' + bindName + '"',
+              /** @cut */   'raw:__' + bindName,
+              /** @cut */   'property:"' + binding[6] + '"',
+              /** @cut */   'expr:[[' + binding[5].map(simpleStringify) + '],[' + binding[4].map(simpleStringify) + ']]',
+              /** @cut */   'dom:' + domRef,
+              /** @cut */   'attr:"' + attrName + '"',
+              /** @cut */   'val:' + bindVar,
+              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */ ] + '}');
+
               break;
 
             default:
-              specialAttr = SPECIAL_ATTR_MAP[attrName];
+              var specialAttr = SPECIAL_ATTR_MAP[attrName];
+              var tagName = binding[6].toLowerCase();
+
+              var expr = specialAttr && SPECIAL_ATTR_SINGLE[attrName]
+                    ? buildAttrExpression(binding, 'bool', l10nBindings) + '?"' + attrName + '":""'
+                    : buildAttrExpression(binding, false, l10nBindings);
 
               // resolve expression bind var
               attrExprId = binding[7];
               if (!attrExprMap[attrExprId])
               {
-                varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n', l10nBindings));
+                varList.push(bindVar + '=' + expr);
                 attrExprMap[attrExprId] = bindVar;
               }
 
               bindVar = attrExprMap[attrExprId];
-              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar,
-                specialAttr && SPECIAL_ATTR_SINGLE[attrName]
-                  ? buildAttrExpression(binding, 'bool', l10nBindings) + '?"' + attrName + '":""'
-                  : buildAttrExpression(binding, false, l10nBindings)
-              );
+              if (attrName == 'tabindex')
+                putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar,
+                  // to disable tab stop on element, tabindex attribute should be -1 for inputs and no attribute for other elements
+                  expr + '==-1?' + (['input', 'button', 'textarea'].indexOf(tagName) == -1 ? '""' : '-1') + ':' + expr);
+              else
+                putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
 
-              if (specialAttr && (specialAttr == '*' || specialAttr.indexOf(binding[6].toLowerCase()) != -1))
+              if (specialAttr && (specialAttr == '*' || specialAttr.indexOf(tagName) != -1))
                 bindCode.push(
                   'if(' + domRef + '.' + attrName + '!=' + bindVar + ')' +
                     domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' + bindVar : bindVar) + ';'
                 );
-          }
 
-          /** @cut */ debugList.push('{' + [
-          /** @cut */   'binding:"' + bindName + '"',
-          /** @cut */   'dom:' + domRef,
-          /** @cut */   'attr:"' + attrName + '"',
-          /** @cut */   'val:' + bindVar,
-          /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
-          /** @cut */ ] + '}');
+              /** @cut */ debugList.push('{' + [
+              /** @cut */   'binding:"' + bindName + '"',
+              /** @cut */   'raw:' + (l10n ? 'l10n["' + bindName + '"]' : '__' + bindName),
+              /** @cut */   'type:"' + (specialAttr && SPECIAL_ATTR_SINGLE[attrName] ? 'bool' : 'string') + '"',
+              /** @cut */   'expr:[[' + binding[5].map(simpleStringify) + '],[' + binding[4].map(simpleStringify) + ']]',
+              /** @cut */   'dom:' + domRef,
+              /** @cut */   'attr:"' + attrName + '"',
+              /** @cut */   'val:' + bindVar,
+              /** @cut */   'attachment:instance.attaches&&instance.attaches["' + bindName + '"]&&instance.attaches["' + bindName + '"].value'
+              /** @cut */ ] + '}');
+          }
         }
       }
 
@@ -648,17 +679,16 @@
 
       for (var bindName in bindMap)
       {
-        /** @cut */ if (bindName.indexOf('@') == -1) varList.push('$$' + bindName + '=0');
+        var stateVar = bindMap[bindName].l10n || bindName;
+        /** @cut */ varList.push('$$' + stateVar + '=0');
         result.push(
           'case"' + bindName + '":' +
-          (bindMap[bindName].l10n
-            ? bindMap[bindName].join('')
-            : 'if(__' + bindName + '!==value)' +
-              '{' +
-                /** @cut */ '$$' + bindName + '++;' +
-                '__' + bindName + '=value;' +
-                bindMap[bindName].join('') +
-              '}') +
+            'if(__' + stateVar + '!==value)' +
+            '{' +
+              /** @cut */ '$$' + stateVar + '++;' +
+              '__' + stateVar + '=value;' +
+              bindMap[bindName].join('') +
+            '}' +
           'break;'
         );
       }
@@ -709,7 +739,7 @@
       l10nKeys: basis.object.keys(bindings.l10n)
     };
 
-    // if only one root node, than document fragment isn't used
+    // document fragment isn't using if single root node
     if (tokens.length == 1)
       paths.path[0] = 'a=_';
 
@@ -723,17 +753,17 @@
         code.push(
           'case"' + key + '":' +
             'if(value==null)value="{' + key + '}";' +
-            '__l10n[token]=value;' +
+            'l10n[path]=value;' +
             bindings.l10n[key].join('') +
           'break;'
         );
 
-      result.createL10nSync = compileFunction(['_', '__l10n', 'bind_attr', 'TEXT_BUG'],
+      result.createL10nSync = compileFunction(['_', 'l10n', 'bind_attr', 'TEXT_BUG'],
         /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
         'var ' + paths.path + ';' +
-        'return function(token, value){' +
-          'switch(token){' +
+        'return function(path, value){' +
+          'switch(path){' +
             code.join('') +
           '}' +
         '}'
@@ -742,7 +772,7 @@
       );
     }
 
-    result.createInstance = compileFunction(['tid', 'map', 'proto', 'tools', '__l10n', 'TEXT_BUG'],
+    result.createInstance = compileFunction(['tid', 'map', 'proto', 'tools', 'l10n', 'TEXT_BUG'],
       /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
       'var getBindings=tools.createBindingFunction([' +

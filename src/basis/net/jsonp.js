@@ -38,11 +38,9 @@
   var callbackData = {};
 
   function getCallback(){
-    var name = 'basisjsJsonpCallback' + parseInt(Math.random() * 10e10);
-
-    global[name] = function(data){
+    var name = basis.fn.publicCallback(function(data){
       callbackData[name] = data;
-    };
+    });
 
     return name;
   }
@@ -323,7 +321,7 @@
 
     requestClass: Request,
 
-    emit_readyStateChanged: createRequestEvent('readyStateChanged'),
+    emit_readyStateChanged: createTransportEvent('readyStateChanged'),
 
     // transport properties
     encoding: null,
@@ -364,8 +362,7 @@
         encoding: requestData.encoding || this.encoding,
         params: objectMerge(this.params, requestData.params),
         routerParams: requestData.routerParams,
-        callbackParam: requestData.callbackParam || this.callbackParam,
-        influence: requestData.influence
+        callbackParam: requestData.callbackParam || this.callbackParam
       });
 
       return requestData;

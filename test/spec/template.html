@@ -14,15 +14,19 @@
       'foo/1.tmpl': '<b:style src="./1.css"/>',
       'foo/1.css': '',
       'foo/custom/2.tmpl': '<b:style src="./2.css"/>',
-      'foo/custom/2.css': ''
+      'foo/custom/2.css': '',
+      'test.tmpl': 'resource test'
     };
 
     for (var key in __resourcesExt__)
       if (__resourcesExt__.hasOwnProperty(key))
         __resources__[key] = __resourcesExt__[key];
   </script>
-  <script src="../../src/basis.js" data-basis-config></script>
+  <script src="../../src/basis.js" data-basis-config="modules: { fixture: '../' }"></script>
   <link rel="stylesheet" href="../fixture/global_style.css"></link>
+  <script type="text/basis-template" id="test-template">
+    script test
+  </script>
 </head>
 
 <body>

@@ -111,7 +111,7 @@
         dataSource: function(owner){
           return owner.getChildNodesDataset();
         },
-        instanceOf: UINode.subclass({
+        satelliteClass: UINode.subclass({
           template: module.template('HeaderPartitionRow'),
           childClass: HeaderPartitionNode
         })
@@ -178,6 +178,9 @@
 
     action: {
       setColumnSorting: function(){
+        if (!this.colSorting)
+          return;
+
         if (this.selected)
         {
           var owner = this.parentNode && this.parentNode.owner;
@@ -193,8 +196,6 @@
     * @inheritDoc
     */
     init: function(){
-      this.selectable = !!this.colSorting;
-
       UINode.prototype.init.call(this);
 
       if (this.colSorting)

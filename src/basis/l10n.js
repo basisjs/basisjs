@@ -59,10 +59,14 @@
     },
 
     get: function(){
-      var key = this.token.type == 'plural'
-        ? cultures[currentCulture].plural(this.value)
-        : this.value;
-      return this.token.dictionary.getValue(this.token.name + '.' + key);
+      var isPlural = this.token.type == 'plural';
+      var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
+      var value = this.token.dictionary.getValue(this.token.name + '.' + key);
+
+      if (isPlural)
+        value = String(value).replace(/#/g, this.value);
+
+      return value;
     },
 
     toString: function(){
@@ -275,6 +279,13 @@
     path = path ? path + '.' : '';
 
     for (var name in tokens)
+    {
+      if (name.indexOf('.') != -1)
+      {
+        /** @cut */ basis.dev.warn((dictionary.resource ? dictionary.resource.url : '[anonymous dictionary]') + ': wrong token name `' + name + '`, token ignored.');
+        continue;
+      }
+
       if (hasOwnProperty.call(tokens, name))
       {
         var tokenName = path + name;
@@ -285,6 +296,7 @@
         if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
           walkTokens(dictionary, culture, tokenValue, tokenName);
       }
+    }
   }
 
 

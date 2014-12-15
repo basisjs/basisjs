@@ -1,7 +1,7 @@
 module.exports = {
   name: '<b:isolate>',
   init: function(){
-    var isolateCss = basis.require('basis.template').isolateCss;
+    var isolateCss = basis.require('basis.template.isolateCss');
     var Template = basis.require('basis.template.html').Template;
     var DOM = basis.require('basis.dom');
   },
@@ -9,15 +9,55 @@ module.exports = {
     {
       name: 'isolateCss',
       test: function(){
-        assert(isolateCss('.foo.bar{color:red}', 'xxx-') == '.xxx-foo.xxx-bar{color:red}');
-        assert(isolateCss('.asd{color:red}', 'xxx-') == '.xxx-asd{color:red}');
-        assert(isolateCss('.asd, .foo{color:red}', 'xxx-') == '.xxx-asd, .xxx-foo{color:red}');
-        assert(isolateCss('.asd, .foo{} .baz {}', 'xxx-') == '.xxx-asd, .xxx-foo{} .xxx-baz {}');
-        assert(isolateCss('.asd, /* .bar */ .foo{color:red}', 'xxx-') == '.xxx-asd, /* .bar */ .xxx-foo{color:red}');
-        assert(isolateCss('[asd=".asd"], .foo.bar {color:red}', 'xxx-') == '[asd=".asd"], .xxx-foo.xxx-bar {color:red}');
-        assert(isolateCss('[asd=".asd"], .foo.bar {color:.error}', 'xxx-') == '[asd=".asd"], .xxx-foo.xxx-bar {color:.error}');
-        assert(isolateCss(':not(.asd) {color:"}"; val: .error }', 'xxx-') == ':not(.xxx-asd) {color:"}"; val: .error }');
-        assert(isolateCss('/*/ .error */', 'xxx-') == '/*/ .error */');
+        var tests = [
+          '.prefix{color:red}',
+          '..prefix{color:red}',
+          '.2foo{color:red}',
+          '.prefix.preFIX{color:red}',
+          '.PREfix, .preFIX{color:red}',
+          '.prefix, .prefix{color:red}',
+          '.prefix, .prefix{} .prefix {}',
+          '.prefix, /* .bar */ .prefix{color:red}',
+          '[asd=".asd"], .prefix.prefix {color:red}',
+          '[asd=".asd"], .prefix.prefix {color:.error}',
+          '[/* .foo */ asd=".asd"], .prefix.prefix {color:.error}',
+          '[asd=.asd], .prefix.prefix {color:red}',
+          ':not(.prefix) {color:"}"; val: .error }',
+          ':not(/* .foo */ .prefix /* .baz */) { }',
+          ':not([foo=.bar]) { }',
+          ':not .prefix { }',
+          ':not() { }',
+          '[:not(.foo)] { }',
+          ':has(.prefix) { }',
+          ':has([foo=.bar]) { }',
+          ':not(:has(.prefix)) { }',
+          ':matches(.prefix) { }',
+          ':nth-child(2n + 1 of .prefix:not(.prefix)) { }',
+          ':nth-last-child(2n + 1 of .prefix:not(.prefix)) { }',
+          '/*/ .error */',
+          '/* .error {}',
+          '@import url(foo.html)',
+          '@media(min-width:100px){ .prefix {} .prefix.prefix {} }',
+          '@media (min-width:100px){ .prefix {} .prefix.prefix {} }',
+          '@supports(width: .23em){ .prefix {} }',
+          '@supports (something: url(".foo")){ .prefix {} }',
+          '@supports (something: url(.foo)){ .prefix {} }',
+          '@supports (something: .2px){ .prefix {} }',
+          '@supports (something: .error){ .prefix {} }',
+          '@document url(http://example.com/index.html?asd={asd}) { .prefix {} }',
+          '@document url("http://example.com/?asd={asd}") { .prefix {} }',
+          '@document-foo { .prefix {} }',
+          '@keyframes foo { 0% { color: .error } 100% { color: url("}"); content: ".error"; content: "\'\\"}"; } } .prefix {}'
+        ];
+
+        for (var i = 0; i < tests.length; i++)
+        {
+          var css = tests[i];
+          var isolated = isolateCss(css, 'xxx-');
+          var answer = css.replace(/\.(prefix)/ig, '.xxx-$1');
+
+          assert(isolated === answer);
+        }
       }
     },
     {
@@ -519,7 +559,7 @@ module.exports = {
           ]
         },
         {
-          name: 'custom namespaces',
+          name: 'style namespaces',
           test: [
             {
               name: 'using style with namespace w/o isolate',
@@ -718,7 +758,7 @@ module.exports = {
               }
             },
             {
-              name: 'the same style file in various templates with the same prefix',
+              name: 'the same style file for various templates should has the same prefix',
               test: function(){
                 var templateA = new Template(
                   '<b:style src="../fixture/global_style.css" ns="foo"/>' +
@@ -742,6 +782,22 @@ module.exports = {
                 assert(/^(\S+)class \1class_mod$/.test(tmplB.a.className));
 
                 assert(tmplA.a.className == tmplB.a.className);
+              }
+            },
+            {
+              name: 'the same style file for various templates should refer for same resource',
+              test: function(){
+                var templateA = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="foo"/>'
+                );
+                var templateB = new Template(
+                  '<b:style src="../fixture/global_style.css" ns="bar"/>'
+                );
+                var tmplA = templateA.createInstance();
+                var tmplB = templateB.createInstance();
+
+                assert(templateA.resources.length == 1);
+                assert(templateA.resources, templateB.resources);
               }
             }
           ]

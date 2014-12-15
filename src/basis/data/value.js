@@ -71,15 +71,15 @@
 
   var objectSetUpdater = (function(){
     var objects = {};
-    var timer;
+    var sheduled = false;
 
     function process(){
       // set timer to make sure all objects be processed
       // it helps avoid try/catch and process all objects even if any exception
       var etimer = basis.setImmediate(process);
 
-      // reset timer
-      timer = null;
+      // reset shedule, to add new expressions
+      sheduled = false;
 
       // process objects
       for (var id in objects)
@@ -96,8 +96,8 @@
     return {
       add: function(object){
         objects[object.basisObjectId] = object;
-        if (!timer)
-          timer = basis.setImmediate(process);
+        if (!sheduled)
+          sheduled = basis.asap(process);
       },
       remove: function(object){
         delete objects[object.basisObjectId];
@@ -307,58 +307,68 @@
   // Expression
   //
 
+  var EXPRESSION_BBVALUE_HANDLER = function(){
+    objectSetUpdater.add(this);
+  };
+  var EXPRESSION_BBVALUE_DESTROY_HANDLER = function(){
+    this.destroy();
+  };
+  var BBVALUE_GETTER = function(value){
+    return value.bindingBridge.get(value);
+  };
+
  /**
   * @class
   */
   var Expression = Value.subclass({
     className: namespace + '.Expression',
 
+    calc_: null,
+    values_: null,
+
     // use custom constructor
     extendConstructor_: false,
-    init: function(args, calc){
+    init: function(/* [[value,] value, ..] calc */){
       Value.prototype.init.call(this);
 
-      var args = basis.array(arguments);
-      var calc = args.pop();
+      var count = arguments.length - 1;
+      var calc = arguments[count];
 
       if (typeof calc != 'function')
+        throw new Error(this.constructor.className + ': Last argument of constructor must be a function');
+
+      for (var values = new Array(count), i = 0; i < count; i++)
       {
-        /** @cut */ basis.dev.warn(this.constructor.className + ': last argument of constructor must be a function');
-        calc = basis.fn.$undef;
+        var value = values[i] = arguments[i];
+
+        if (!value.bindingBridge)
+          throw new Error(this.constructor.className + ': bb-value required');
+
+        value.bindingBridge.attach(value, EXPRESSION_BBVALUE_HANDLER, this, EXPRESSION_BBVALUE_DESTROY_HANDLER);
       }
 
-      var changeWatcher = new ObjectSet({
-        objects: args,
-        calculateOnInit: true,
-        calculateValue: function(){
-          return calc.apply(this, args.map(function(item){
-            return item.value;
-          }));
-        },
-        handler: {
-          context: this,
-          callbacks: {
-            change: function(){
-              Value.prototype.set.call(this, this.value);
-            },
-            destroy: function(){
-              changeWatcher = null;
-            }
-          }
-        }
-      });
+      this.calc_ = calc;
+      this.values_ = values;
+      this.update();
+    },
 
-      changeWatcher.link(this, Value.prototype.set);
-
-      this.addHandler({
-        destroy: function(){
-          changeWatcher.destroy();
-        }
-      });
+    // override in init
+    update: function(){
+      objectSetUpdater.remove(this);
+      Value.prototype.set.call(this, this.calc_.apply(null, this.values_.map(BBVALUE_GETTER)));
     },
 
     // expressions are read only
     set: function(){
+    },
+
+    destroy: function(){
+      objectSetUpdater.remove(this);
+
+      for (var i = 0, value; value = this.values_[i]; i++)
+        value.bindingBridge.detach(value, EXPRESSION_BBVALUE_HANDLER, this);
+
+      Value.prototype.destroy.call(this);
     }
   });
 

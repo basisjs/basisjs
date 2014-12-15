@@ -1434,11 +1434,11 @@
 
     satellite: {
       chartViewer: {
-        instanceOf: ChartViewer
+        satelliteClass: ChartViewer
       },
       chartSelection: {
-        instanceOf: ChartSelection,
-        existsIf: getter('selection')
+        satelliteClass: ChartSelection,
+        existsIf: 'selection'
       }
     },
 

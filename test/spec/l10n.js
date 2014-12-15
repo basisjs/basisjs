@@ -333,6 +333,52 @@ module.exports = {
         assert(currentCulture() === currentCulture(getCulture()));
         assert(currentCulture() instanceof Culture);
       }
+    },
+    {
+      name: 'types',
+      test: [
+        {
+          name: 'plural',
+          test: [
+            {
+              name: 'simple',
+              test: function(){
+                var sandbox = basis.createSandbox({
+                  name: 'types_plural_simple'
+                });
+                var l10n = sandbox.require('basis.l10n');
+
+                l10n.setCultureList('en-US');
+                var dict = l10n.dictionary(sandbox.resource.virtual('l10n', {
+                  _meta: {
+                    type: {
+                      foo: 'plural',
+                      bar: 'plural'
+                    }
+                  },
+                  'en-US': {
+                    foo: [
+                      'test',
+                      'tests'
+                    ],
+                    bar: [
+                      'example of # test',
+                      'example of # tests'
+                    ]
+                  }
+                }));
+
+                assert(dict.token('foo').token(1).get() == 'test');
+                assert(dict.token('foo').token(2).get() == 'tests');
+                assert(dict.token('foo').computeToken(1).get() == 'test');
+                assert(dict.token('foo').computeToken(2).get() == 'tests');
+                assert(dict.token('bar').computeToken(1).get() == 'example of 1 test');
+                assert(dict.token('bar').computeToken(2).get() == 'example of 2 tests');
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 };

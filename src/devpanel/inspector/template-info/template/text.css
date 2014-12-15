@@ -1,0 +1,19 @@
+.text
+{
+  color: rgb(48, 57, 66);
+}
+.binding
+{
+  padding: 3px;
+  padding: 3px .5ch;
+  border-radius: 2px;
+  background: #EEE;
+  color: #666;
+  text-shadow: 0px 0px 1px white;  
+  transition: color .15s, background-color .15s;
+}
+.matchBinding
+{
+  background: #B6CFB6;
+  color: #353;
+}

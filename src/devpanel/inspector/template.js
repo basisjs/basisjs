@@ -11,6 +11,7 @@ var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
 var transport = require('../api/transport.js');
+var templateInfo = require('./template-info/index.js');
 
 var inspectDepth = 0;
 var inspectMode = new basis.data.Value({ value: false });
@@ -44,21 +45,27 @@ function pickHandler(event){
   {
     var source = template.source;
 
-    if (source.url && template.source instanceof inspectBasisTemplate.L10nProxyToken == false)
+    if (source.url)
     {
       var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
 
       if (basisjsTools && typeof basisjsTools.openFile == 'function' && (event.ctrlKey || event.metaKey))
         basisjsTools.openFile(source.url);
       else
+      {
+        templateInfo.set(inspectBasisTemplate.resolveObjectById(pickupTarget.value).element);
         transport.sendData('pickTemplate', {
           filename: source.url
         });
+      }
     }
     else
+    {
+      templateInfo.set(inspectBasisTemplate.resolveObjectById(pickupTarget.value).element);
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
       });
+    }
 
     endInspect();
   }
@@ -174,8 +181,11 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 function startInspect(){
   if (!inspectMode.value)
   {
+    templateInfo.set();
     basis.dom.event.addGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.addGlobalHandler('mousewheel', mouseWheelHandler);
+    basis.dom.event.addGlobalHandler('wheel', mouseWheelHandler);
+    basis.dom.event.addGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);
     inspectBasisEvent.captureEvent('mouseup', basis.dom.event.kill);
     inspectBasisEvent.captureEvent('contextmenu', endInspect);
@@ -191,6 +201,8 @@ function endInspect(){
   {
     basis.dom.event.removeGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
+    basis.dom.event.removeGlobalHandler('wheel', mouseWheelHandler);
+    basis.dom.event.removeGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.releaseEvent('mousedown');
     inspectBasisEvent.releaseEvent('mouseup');
     inspectBasisEvent.releaseEvent('contextmenu');
