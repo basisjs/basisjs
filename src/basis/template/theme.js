@@ -106,7 +106,6 @@
 
   function getSourceByPath(){
     var path = basis.array(arguments).join('.');
-    var source = sourceByPath[path];
     var source;
 
     if (path.indexOf('@') == -1)
@@ -571,8 +570,7 @@
             if (typeof source == 'string')
               source = basis.resource(basis.path.resolve(this.baseURI, source));
 
-            if (sourceByPath)
-              theme.defineSource(path, source, true);
+            theme.defineSource(path, source, true);
           }
       }
 
