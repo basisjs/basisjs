@@ -87,6 +87,14 @@
     return field.getValue();
   }
 
+  function createRevalidateEvent(eventName){
+    createEvent.apply(null, arguments);
+    return function(){
+      this.revalidateRule(eventName);
+      events[eventName].apply(this, arguments);
+    };
+  }
+
 
   //
   //  Fields
@@ -110,13 +118,19 @@
 
     name: '',
     title: '',
-    validators: null,
-    validity: VALIDITY_INDETERMINATE,
     error: '',
     example: null,
     focused: false,
     defaultValue: undefined,
     value: undefined,
+
+    validators: null,
+    validity: VALIDITY_INDETERMINATE,
+    revalidateEvents: ['change', 'fieldChange'],
+    revalidateRule: function(eventName){
+      if (this.error && this.revalidateEvents.indexOf(eventName) != -1)
+        this.validate();
+    },
 
     /**
     * Identify field can have focus. Useful when search for next/previous node to focus.
@@ -128,44 +142,36 @@
     // events
     //
 
-    emit_commit: createEvent('commit'),
-    emit_change: createEvent('change', 'oldValue'),
+    emit_commit: createRevalidateEvent('commit'),
+    emit_change: createRevalidateEvent('change', 'oldValue'),
     emit_validityChanged: createEvent('validityChanged', 'oldValidity'),
     emit_errorChanged: createEvent('errorChanged'),
     emit_exampleChanged: createEvent('exampleChanged'),
     emit_descriptionChanged: createEvent('descriptionChanged'),
 
-    emit_fieldInput: createEvent('fieldInput', 'event'),
-    emit_fieldChange: createEvent('fieldChange', 'event'),
-    emit_fieldKeydown: createEvent('fieldKeydown', 'event'),
-    emit_fieldKeypress: createEvent('fieldKeypress', 'event'),
-    emit_fieldKeyup: createEvent('fieldKeyup', 'event') && function(event){
+    emit_fieldInput: createRevalidateEvent('fieldInput', 'event'),
+    emit_fieldChange: createRevalidateEvent('fieldChange', 'event'),
+    emit_fieldKeydown: createRevalidateEvent('fieldKeydown', 'event'),
+    emit_fieldKeypress: createRevalidateEvent('fieldKeypress', 'event'),
+    emit_fieldKeyup: createRevalidateEvent('fieldKeyup', 'event') && function(event){
       if (this.nextFieldOnEnter)
-      {
         if (event.key == event.KEY.ENTER || event.key == event.KEY.CTRL_ENTER)
         {
           event.preventDefault();
           this.commit();
         }
-        else
-        {
-          if (event.key != event.KEY.TAB)
-            this.setValidity();
-        }
-      }
 
       events.fieldKeyup.call(this, event);
     },
-    emit_fieldFocus: createEvent('fieldFocus', 'event') && function(event){
+    emit_fieldFocus: createRevalidateEvent('fieldFocus', 'event') && function(event){
       this.focused = true;
-      /*if (this.validity)
-        this.setValidity();*/
+      this.revalidateRule('fieldFocus');
 
       events.fieldFocus.call(this, event);
     },
-    emit_fieldBlur: createEvent('fieldBlur', 'event') && function(event){
-      this.validate(true);
+    emit_fieldBlur: createRevalidateEvent('fieldBlur', 'event') && function(event){
       this.focused = false;
+      this.revalidateRule('fieldBlur');
 
       events.fieldBlur.call(this, event);
     },
@@ -714,6 +720,10 @@
           if (event.sender.tagName != 'INPUT')
             event.die();
         }
+      },
+      selectByKey: function(event){
+        if (!this.isDisabled() && event.key == event.KEY.SPACE || event.key == event.KEY.ENTER)
+          this.action.select.call(this, event);
       }
     },
 
@@ -1463,6 +1473,11 @@
   //
 
   module.exports = {
+    VALIDITY: {
+      INDETERMINATE: VALIDITY_INDETERMINATE,
+      INVALID: VALIDITY_INVALID,
+      VALID: VALIDITY_VALID
+    },
     validator: Validator,
     ValidatorError: ValidatorError,
 
