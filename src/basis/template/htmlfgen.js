@@ -324,7 +324,6 @@
       var l10nCompute = [];
       var l10nBindings = {};
       var l10nBindSeed = 1;
-      var specialAttr;
       var attrExprId;
       var attrExprMap = {};
       /** @cut */ var debugList = [];
@@ -613,7 +612,8 @@
               break;
 
             default:
-              specialAttr = SPECIAL_ATTR_MAP[attrName];
+              var specialAttr = SPECIAL_ATTR_MAP[attrName];
+              var tagName = binding[6].toLowerCase();
 
               var expr = specialAttr && SPECIAL_ATTR_SINGLE[attrName]
                     ? buildAttrExpression(binding, 'bool', l10nBindings) + '?"' + attrName + '":""'
@@ -628,9 +628,14 @@
               }
 
               bindVar = attrExprMap[attrExprId];
-              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
+              if (attrName == 'tabindex')
+                putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar,
+                  // to disable tab stop on element, tabindex attribute should be -1 for inputs and no attribute for other elements
+                  expr + '==-1?' + (['input', 'button', 'textarea'].indexOf(tagName) == -1 ? '""' : '-1') + ':' + expr);
+              else
+                putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
 
-              if (specialAttr && (specialAttr == '*' || specialAttr.indexOf(binding[6].toLowerCase()) != -1))
+              if (specialAttr && (specialAttr == '*' || specialAttr.indexOf(tagName) != -1))
                 bindCode.push(
                   'if(' + domRef + '.' + attrName + '!=' + bindVar + ')' +
                     domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' + bindVar : bindVar) + ';'
