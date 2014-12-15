@@ -22,6 +22,7 @@
   var events = basisEvent.events;
 
   var Value = require('basis.data').Value;
+  var setAccumulateState = require('basis.data').Dataset.setAccumulateState;
   var Selection = require('basis.dom.wrapper').Selection;
   var UINode = require('basis.ui').Node;
   var Popup = require('basis.ui.popup').Popup;
@@ -704,7 +705,11 @@
       select: function(event){
         if (!this.isDisabled())
         {
+          // use acumulate state, as selection changes could be ignored
+          // it's a temporary solution, until concurrent events can be join
+          setAccumulateState(true);
           this.select(this.contextSelection && this.contextSelection.multiple);
+          setAccumulateState(false);
 
           if (event.sender.tagName != 'INPUT')
             event.die();
