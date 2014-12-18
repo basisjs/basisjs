@@ -317,8 +317,10 @@
       var bindMap = {};
       var bindCode;
       var bindVar;
+      var bindVarSeed = 0;
       var varList = [];
       var result = [];
+      var bindingsWoL10nCompute = [];
       var varName;
       var l10nMap;
       var l10nCompute = [];
@@ -331,30 +333,15 @@
         resolve: true
       };
 
+      // process l10n bindings first
       for (var i = 0, binding; binding = bindings[i]; i++)
       {
         var bindType = binding[0];
         var domRef = binding[1];
         var bindName = binding[2];
-
-        if (['get', 'set', 'templateId_'].indexOf(bindName) != -1)
-        {
-          /** @cut */ basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
-          continue;
-        }
-
         var namePart = bindName.split(':');
-        var anim = namePart[0] == 'anim';
-        var l10n = namePart[0] == 'l10n';
 
-        if (anim)
-          bindName = namePart[1];
-
-        bindCode = bindMap[bindName];
-        bindVar = '_' + i;
-        varName = '__' + bindName;
-
-        if (l10n && namePart[1])
+        if (namePart[0] == 'l10n' && namePart[1])
         {
           var l10nFullPath = namePart[1];
           var l10nBinding = null;
@@ -365,7 +352,6 @@
 
           if (l10nBinding)
           {
-
             if (l10nFullPath in l10nBindings == false)
             {
               varName = '$l10n_' + l10nBindSeed++;
@@ -384,7 +370,7 @@
             }
 
             bindName = l10nBindings[l10nFullPath];
-            bindVar = '_' + i;
+            bindVar = '_' + (bindVarSeed++);
             varName = '__' + bindName;
             bindCode = bindMap[bindName];
 
@@ -424,7 +410,36 @@
 
             continue;
           }
+        }
 
+        bindingsWoL10nCompute.push(binding);
+      }
+
+      for (var i = 0, binding; binding = bindingsWoL10nCompute[i]; i++)
+      {
+        var bindType = binding[0];
+        var domRef = binding[1];
+        var bindName = binding[2];
+
+        if (['get', 'set', 'templateId_'].indexOf(bindName) != -1)
+        {
+          /** @cut */ basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
+          continue;
+        }
+
+        var namePart = bindName.split(':');
+        var anim = namePart[0] == 'anim';
+        var l10n = namePart[0] == 'l10n';
+
+        if (anim)
+          bindName = namePart[1];
+
+        bindCode = bindMap[bindName];
+        bindVar = '_' + (bindVarSeed++);
+        varName = '__' + bindName;
+
+        if (l10n && namePart[1])
+        {
           if (!l10nMap)
             l10nMap = {};
 
