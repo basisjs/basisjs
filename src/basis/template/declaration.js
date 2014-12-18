@@ -919,7 +919,11 @@ var makeDeclaration = (function(){
 
       if (l10n)
         if (parts.length == 2 && value.indexOf('@') == -1)
-          parts[1] = parts[1] + '@' + (dictURI || '');
+        {
+          if (!dictURI)
+            return false;  // TODO: add warning that dictionary not found
+          parts[1] = parts[1] + '@' + dictURI;
+        }
 
       value = parts.join(':');
 
@@ -932,16 +936,14 @@ var makeDeclaration = (function(){
 
   function normalizeRefs(tokens, dictURI, map, stIdx){
     if (!map)
-      map = { ':l10n': {} };
+      map = {};
 
     for (var i = stIdx || 0, token; token = tokens[i]; i++)
     {
-      if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
-        continue;
-
+      var tokenType = token[TOKEN_TYPE];
       var refs = token[TOKEN_REFS];
 
-      if (refs)
+      if (tokenType !== TYPE_ATTRIBUTE_EVENT && refs)
       {
         for (var j = refs.length - 1, refName; refName = refs[j]; j--)
         {
@@ -964,25 +966,8 @@ var makeDeclaration = (function(){
         }
       }
 
-      switch (token[TOKEN_TYPE])
-      {
-        case TYPE_TEXT:
-          token[TOKEN_BINDINGS] = absl10n(token[TOKEN_BINDINGS], dictURI, map[':l10n']);
-          break;
-
-        case TYPE_ATTRIBUTE:
-          if (token[TOKEN_BINDINGS])
-          {
-            var array = token[TOKEN_BINDINGS][0];
-            for (var j = 0; j < array.length; j++)
-              array[j] = absl10n(array[j], dictURI, map[':l10n']);
-          }
-          break;
-
-        case TYPE_ELEMENT:
-          normalizeRefs(token, dictURI, map, ELEMENT_ATTRS);
-          break;
-      }
+      if (tokenType === TYPE_ELEMENT)
+        normalizeRefs(token, dictURI, map, ELEMENT_ATTRS);
     }
 
     return map;
@@ -992,47 +977,76 @@ var makeDeclaration = (function(){
     for (var i = stIdx || 0, token; token = tokens[i]; i++)
     {
       var tokenType = token[TOKEN_TYPE];
+      var bindings = token[TOKEN_BINDINGS];
 
-      if (tokenType == TYPE_ELEMENT)
-        applyDefines(token, template, options, ELEMENT_ATTRS);
-
-      if (tokenType == TYPE_ATTRIBUTE_CLASS)
+      switch (token[TOKEN_TYPE])
       {
-        var bindings = token[TOKEN_BINDINGS];
-        var valueIdx = ATTR_VALUE_INDEX[tokenType];
+        case TYPE_ELEMENT:
+          applyDefines(token, template, options, ELEMENT_ATTRS);
+          break;
 
-        if (bindings)
-        {
-          for (var k = 0, bind; bind = bindings[k]; k++)
+        case TYPE_TEXT:
+          if (bindings)
           {
-            if (bind.length > 2)  // bind already processed
-              continue;
+            var binding = absl10n(bindings, template.dictURI, template.l10nTokens);
+            token[TOKEN_BINDINGS] = binding || 0;
+            /** @cut */ if (binding === false)
+            /** @cut */   addTemplateWarn(template, options, 'Dictionary for l10n binding on text node can\'t be resolved: {' + bindings + '}', token.loc);
+          }
+          break;
 
-            /** @cut */ applyTokenLocation(template, options, bind, bind.info_);
-
-            var bindNameParts = bind[1].split(':');
-            var bindName = bindNameParts.pop();
-            var bindPrefix = bindNameParts.pop() || '';
-            var define = template.defines[bindName];
-
-            if (define)
+        case TYPE_ATTRIBUTE:
+          if (bindings)
+          {
+            var array = bindings[0];
+            for (var j = 0; j < array.length; j++)
             {
-              bind[1] = (bindPrefix ? bindPrefix + ':' : '') + define[0];
-              bind.push.apply(bind, define.slice(1)); // add define
-
-              /** @cut */ define.used = true;  // mark as used
-            }
-            else
-            {
-              bind.push(0); // mark binding to not processing it anymore
-
-              /** @cut */ addTemplateWarn(template, options, 'Unpredictable class binding: ' + bind[0] + '{' + bind[1] + '}', bind.loc);
+              var binding = absl10n(array[j], template.dictURI, template.l10nTokens);   // TODO: move l10n binding process in separate function
+              array[j] = binding === false ? '{' + array[j] + '}' : binding;
+              /** @cut */ if (binding === false)
+              /** @cut */   addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
             }
           }
+          break;
 
-          if (options.optimizeSize && !token[valueIdx])
-            token.length = valueIdx;
-        }
+        case TYPE_ATTRIBUTE_CLASS:
+          if (bindings)
+          {
+            for (var k = 0, bind; bind = bindings[k]; k++)
+            {
+              if (bind.length > 2)  // bind already processed
+                continue;
+
+              /** @cut */ applyTokenLocation(template, options, bind, bind.info_);
+
+              var bindNameParts = bind[1].split(':');
+              var bindName = bindNameParts.pop();
+              var bindPrefix = bindNameParts.pop() || '';
+              var define = template.defines[bindName];
+
+              if (define)
+              {
+                bind[1] = (bindPrefix ? bindPrefix + ':' : '') + define[0];
+                bind.push.apply(bind, define.slice(1)); // add define
+
+                /** @cut */ define.used = true;  // mark as used
+              }
+              else
+              {
+                bind.push(0); // mark binding to not processing it anymore
+
+                /** @cut */ addTemplateWarn(template, options, 'Unpredictable class binding: ' + bind[0] + '{' + bind[1] + '}', bind.loc);
+              }
+            }
+
+            if (options.optimizeSize)
+            {
+              var valueIdx = ATTR_VALUE_INDEX[tokenType];
+              if (!token[valueIdx])
+                token.length = valueIdx;
+            }
+          }
+          break;
       }
     }
   }
@@ -1108,6 +1122,7 @@ var makeDeclaration = (function(){
       includes: [],
       deps: [],
       defines: {},
+      l10nTokens: {},
       warns: warns,
       isolate: false
     };
@@ -1156,7 +1171,7 @@ var makeDeclaration = (function(){
 
     // normalize refs
     addTokenRef(result.tokens[0], 'element');
-    var tokenRefMap = normalizeRefs(result.tokens, result.dictURI);
+    normalizeRefs(result.tokens, result.dictURI);
 
     // deal with defines
     applyDefines(result.tokens, result, options);
@@ -1226,7 +1241,6 @@ var makeDeclaration = (function(){
         });
     }
 
-    /** @cut */ result.l10nTokens = basis.object.keys(tokenRefMap[':l10n']);
     /** @cut */ for (var key in result.defines)
     /** @cut */ {
     /** @cut */   var define = result.defines[key];
