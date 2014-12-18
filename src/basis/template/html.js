@@ -25,6 +25,7 @@
   var TemplateSwitchConfig = basisTemplate.TemplateSwitchConfig;
   var TemplateSwitcher = basisTemplate.TemplateSwitcher;
   var Template = basisTemplate.Template;
+  var getSourceByPath = basisTemplate.get;
 
   var consts = require('./const.js');
   var TYPE_ELEMENT = consts.TYPE_ELEMENT;
@@ -133,8 +134,27 @@
     var dict = token.dictionary;
     var url = dict.resource ? dict.resource.url : '';
     var id = token.name + '@' + url;
+    var sourceWrapper;
     var result = token.as(function(value){
-      return token.type == 'markup' ? value : this.value;
+      if (token.type == 'markup')
+      {
+        if (value != this.value)
+          if (sourceWrapper)
+          {
+            sourceWrapper.detach(token, token.apply);
+            sourceWrapper = null;
+          }
+
+        if (value && value.substr(0, 5) == 'path:')
+        {
+          sourceWrapper = getSourceByPath(value.substr(5));
+          sourceWrapper.attach(token, token.apply);
+        }
+
+        return sourceWrapper ? sourceWrapper.bindingBridge.get(sourceWrapper) : value;
+      }
+
+      return this.value;
     });
 
     result.id = '{l10n:' + id + '}';

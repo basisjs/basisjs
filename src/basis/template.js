@@ -20,6 +20,7 @@
   var makeDeclaration = require('basis.template.declaration').makeDeclaration;
   var theme = require('basis.template.theme');
   var getSourceByPath = theme.get;
+  var getTheme = theme.theme; // keep it here for a while, to avoid builder warning
 
 
   //
