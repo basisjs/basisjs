@@ -990,8 +990,11 @@ var makeDeclaration = (function(){
           {
             var binding = absl10n(bindings, template.dictURI, template.l10nTokens);
             token[TOKEN_BINDINGS] = binding || 0;
-            /** @cut */ if (binding === false)
-            /** @cut */   addTemplateWarn(template, options, 'Dictionary for l10n binding on text node can\'t be resolved: {' + bindings + '}', token.loc);
+            if (binding === false)
+            {
+              /** @cut */ addTemplateWarn(template, options, 'Dictionary for l10n binding on text node can\'t be resolved: {' + bindings + '}', token.loc);
+              token[TEXT_VALUE] = '{' + bindings + '}';
+            }
           }
           break;
 
@@ -1163,7 +1166,7 @@ var makeDeclaration = (function(){
 
     // there must be at least one token in result
     if (!result.tokens)
-      result.tokens = [[3, 0, 0, '']];
+      result.tokens = [[TYPE_TEXT, 0, 0, '']];
 
     // store source for debug
     /** @cut */ if (source_)
