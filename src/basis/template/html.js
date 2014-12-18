@@ -116,10 +116,13 @@
     } catch(e) {}
   })();
 
-  // old Firefox has no Node#contains method (Firefox 8 and lower)
+  var contains = function(parent, child){
+    return parent.contains(child);
+  };
   if (Node && !Node.prototype.contains)
-    Node.prototype.contains = function(child){  // TODO: don't extend Node, replace for function
-      return !!(this.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
+    // old Firefox has no Node#contains method (Firefox 8 and lower)
+    contains = function(parent, child){
+      return !!(parent.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
     };
 
 
@@ -204,7 +207,7 @@
         if (insideElementEvent[event.type])
         {
           var relTarget = event.relatedTarget;
-          if (relTarget && (cursor === relTarget || cursor.contains(relTarget)))
+          if (relTarget && (cursor === relTarget || contains(cursor, relTarget)))
             cursor = null;  // prevent action processing
         }
 
