@@ -14,6 +14,9 @@
 
   var TYPE_ELEMENT = consts.TYPE_ELEMENT;
   var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+  var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
+  var TYPE_ATTRIBUTE_STYLE = consts.TYPE_ATTRIBUTE_STYLE;
+  var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
   var TYPE_TEXT = consts.TYPE_TEXT;
   var TYPE_COMMENT = consts.TYPE_COMMENT;
 
@@ -118,7 +121,9 @@
             localPath = putPath(localPath);
           }
 
-          putBinding([token[TOKEN_TYPE], localPath, token[TOKEN_BINDINGS]]);
+          putBinding([token[TOKEN_TYPE], localPath, token[TOKEN_BINDINGS],
+            refs ? refs.indexOf('element') != -1 : false // prohibit node binding
+          ]);
         }
 
 
@@ -146,10 +151,12 @@
 
           for (var j = 0, attr; attr = attrs[j]; j++)
           {
-            if (attr[TOKEN_TYPE] == 6)
+            var attrTokenType = attr[TOKEN_TYPE];
+
+            if (attrTokenType == TYPE_ATTRIBUTE_EVENT)
               continue;
 
-            var attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
+            var attrName = ATTR_NAME_BY_TYPE[attrTokenType] || attr[ATTR_NAME];
 
             if (refs = attr[TOKEN_REFS])
             {
@@ -161,14 +168,14 @@
             {
               explicitRef = true;
 
-              switch (attrName)
+              switch (attrTokenType)
               {
-                case 'class':
+                case TYPE_ATTRIBUTE_CLASS:
                   for (var k = 0, binding; binding = bindings[k]; k++)
                     putBinding([2, localPath, binding[1], attrName, binding[0]].concat(binding[2] == -1 ? [] : binding.slice(2)));
                 break;
 
-                case 'style':
+                case TYPE_ATTRIBUTE_STYLE:
                   for (var k = 0, property; property = bindings[k]; k++)
                   {
                     attrExprId++;
@@ -325,7 +332,7 @@
       var l10nMap;
       var l10nCompute = [];
       var l10nBindings = {};
-      var l10nBindSeed = 1;
+      var l10nBindSeed = 0;
       var attrExprId;
       var attrExprMap = {};
       /** @cut */ var debugList = [];
@@ -339,6 +346,7 @@
         var bindType = binding[0];
         var domRef = binding[1];
         var bindName = binding[2];
+        var nodeBindingProhibited = binding[3];
         var namePart = bindName.split(':');
 
         if (namePart[0] == 'l10n' && namePart[1])
@@ -354,7 +362,7 @@
           {
             if (l10nFullPath in l10nBindings == false)
             {
-              varName = '$l10n_' + l10nBindSeed++;
+              varName = '$l10n_' + (l10nBindSeed++);
               l10nBindings[l10nFullPath] = varName;
               l10nCompute.push('set("' + varName + '",' + varName + ')');
               varList.push(varName + '=tools.l10nToken("' + l10nName + '").computeToken()');
@@ -390,7 +398,7 @@
               /** @cut */ ] + '}');
 
               varList.push(bindVar + '=' + domRef);
-              putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
+              putBindCode(bindFunctions[bindType], domRef, bindVar, 'value', nodeBindingProhibited);
             }
             else
             {
@@ -420,6 +428,7 @@
         var bindType = binding[0];
         var domRef = binding[1];
         var bindName = binding[2];
+        var nodeBindingProhibited = binding[3];
 
         if (['get', 'set', 'templateId_'].indexOf(bindName) != -1)
         {
@@ -440,13 +449,17 @@
 
         if (l10n && namePart[1])
         {
+          var l10nFullPath = namePart[1];
+          var l10nBinding = null;
+          var l10nName = l10nFullPath;
+
           if (!l10nMap)
             l10nMap = {};
 
           if (!bindMap[l10nName])
           {
             bindMap[l10nName] = [];
-            bindMap[l10nName].l10n = '$l10n_' + l10nBindSeed++;
+            bindMap[l10nName].l10n = '$l10n_' + (l10nBindSeed++);
             varList.push('__' + bindMap[l10nName].l10n + '=l10n["' + l10nName + '"]');
             l10nMap[l10nName] = [];
           }
@@ -468,7 +481,7 @@
             if (!bindCode.nodeBind)
             {
               varList.push(bindVar + '=' + domRef);
-              putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
+              putBindCode(bindFunctions[bindType], domRef, bindVar, 'value', nodeBindingProhibited);
               bindCode.nodeBind = bindVar;
             }
             else
@@ -506,7 +519,7 @@
           if (!bindCode.nodeBind)
           {
             varList.push(bindVar + '=' + domRef);
-            putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
+            putBindCode(bindFunctions[bindType], domRef, bindVar, 'value', nodeBindingProhibited);
             bindCode.nodeBind = bindVar;
           }
           else

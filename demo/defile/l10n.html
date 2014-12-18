@@ -78,7 +78,7 @@
 
     var node = new basis.ui.Node({
       container: document.getElementById('demo-container'),
-      template: '<b:l10n src="./l10n.l10n"/><div>{l10n:simpleMarkup}<br/>{xxx}<br/>{l10n} {l10n:default} {l10n:a.{l10n}} <span foo="{l10n:default}" bar="{l10n:a.{l10n}}"/></div>',
+      template: basis.resource('./l10n_simple.tmpl'),
       binding: {
         count: function(){
           return 'OK';

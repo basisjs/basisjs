@@ -3,44 +3,12 @@ module.exports = {
 
   html: __dirname + 'template.html',
   init: function(){
-    var outerHTML = basis.require('basis.dom').outerHTML;
     var HtmlTemplate = basis.require('basis.template.html').Template;
     var nsTemplate = basis.require('basis.template');
 
-    var createTemplate = function(source, createInstance){
-      var template = new HtmlTemplate(source);
-      if (createInstance)
-        template.createInstance(); // trigger template
-      return template;
-    };
-
-    var getHTML = function(el){
-      var cursor = el;
-      var res = '';
-
-      if (cursor.parentNode && cursor.parentNode.nodeType == 11) // DocumentFragment
-        cursor = cursor.parentNode.firstChild;
-
-      while (cursor)
-      {
-        res += outerHTML(cursor);
-        cursor = cursor.nextSibling;
-      }
-
-      return res;
-    };
-
-    var text = function(template, binding){
-      if (typeof template == 'string')
-        template = createTemplate(template);
-
-      var tmpl = template.createInstance();
-      if (binding)
-        for (var key in binding)
-          tmpl.set(key, binding[key]);
-
-      return getHTML(tmpl.element);
-    };
+    var api = basis.require('../helpers/template.js').createSandboxAPI(basis);
+    var createTemplate = api.createTemplate;
+    var text = api.text;
   },
 
   test: [
@@ -58,12 +26,12 @@ module.exports = {
                 nsTemplate.setTheme('base');
 
                 var tmpl = createTemplate(nsTemplate.get('test'), true);
-                this.is(1, tmpl.resources.length);
-                this.is(basis.path.resolve('foo/1.css'), tmpl.resources[0]);
+                assert(tmpl.resources.length === 1);
+                assert(tmpl.resources[0] === basis.path.resolve('foo/1.css'));
 
                 nsTemplate.setTheme('custom');
-                this.is(1, tmpl.resources.length);
-                this.is(basis.path.resolve('foo/custom/2.css'), tmpl.resources[0]);
+                assert(tmpl.resources.length === 1);
+                assert(tmpl.resources[0] === basis.path.resolve('foo/custom/2.css'));
               }
             }
           ]
@@ -83,7 +51,7 @@ module.exports = {
                 var el = document.createElement('div');
                 el.innerHTML = '<span style="color: red; color: green;"></span>';
 
-                this.is(el.innerHTML, text(tmpl));
+                assert(text(tmpl) === el.innerHTML);
               }
             },
             {
@@ -93,10 +61,10 @@ module.exports = {
                 var el = document.createElement('div');
 
                 el.innerHTML = '<span style="color: green;"></span>';
-                this.is(el.innerHTML, text(tmpl));
+                assert(text(tmpl) === el.innerHTML);
 
                 el.innerHTML = '<span style="color: red;"></span>';
-                this.is(el.innerHTML, text(tmpl, { foo: 'red' }));
+                assert(text(tmpl, { foo: 'red' }) === el.innerHTML);
               }
             }
           ]
@@ -107,6 +75,7 @@ module.exports = {
     require('./template/text-bindings.js'),
     require('./template/b-include.js'),
     require('./template/b-define.js'),
-    require('./template/isolate.js')
+    require('./template/isolate.js'),
+    require('./template/l10n.js')
   ]
 };

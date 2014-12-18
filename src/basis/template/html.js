@@ -134,9 +134,7 @@
     var url = dict.resource ? dict.resource.url : '';
     var id = token.name + '@' + url;
     var result = token.as(function(value){
-      return token.type == 'markup'
-        ? '<span data-basisjs-l10n="' + id + '">' + String(value) + '</span>'
-        : '';
+      return token.type == 'markup' ? value : this.value;
     });
 
     result.id = '{l10n:' + id + '}';
@@ -312,10 +310,12 @@
 
 
     var result = parent || document.createDocumentFragment();
+    var tokenType;
 
     for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
     {
-      switch (token[TOKEN_TYPE])
+      tokenType = token[TOKEN_TYPE];
+      switch (tokenType)
       {
         case TYPE_ELEMENT:
           var tagName = token[ELEMENT_NAME];
@@ -339,7 +339,7 @@
           break;
 
         case TYPE_ATTRIBUTE_CLASS:
-          var value = token[ATTR_VALUE_INDEX[token[TOKEN_TYPE]]];
+          var value = token[ATTR_VALUE_INDEX[tokenType]];
           value = value ? [value] : [];
 
           if (token[TOKEN_BINDINGS])
@@ -380,7 +380,7 @@
           break;
 
         case TYPE_ATTRIBUTE_STYLE:
-          var attrValue = token[ATTR_VALUE_INDEX[token[TOKEN_TYPE]]];
+          var attrValue = token[ATTR_VALUE_INDEX[tokenType]];
 
           if (attrValue)
             setAttribute('style', attrValue);
@@ -473,17 +473,36 @@
     */
     var bind_node = W3C_DOM_NODE_SUPPORTED
       // W3C DOM way
-      ? function(domRef, oldNode, newValue){
-          var newNode = newValue && newValue instanceof Node ? newValue : domRef;
+      ? function(domRef, oldNode, newValue, domNodeBindingProhibited){
+          var newNode = !domNodeBindingProhibited && newValue && newValue instanceof Node ? newValue : domRef;
 
           if (newNode !== oldNode)
+          {
+            if (newNode.nodeType === 11 && !newNode.insertedNodes)
+            {
+              newNode.insertBefore(document.createTextNode(''), newNode.firstChild);
+              newNode.insertedNodes = basis.array(newNode.childNodes);
+            }
+
+            if (oldNode.nodeType === 11)
+            {
+              var insertedNodes = oldNode.insertedNodes;
+              if (insertedNodes)
+              {
+                oldNode = insertedNodes[0];
+                for (var i = 1, node; node = insertedNodes[i]; i++)
+                  oldNode.parentNode.removeChild(node);
+              }
+            }
+
             oldNode.parentNode.replaceChild(newNode, oldNode);
+          }
 
           return newNode;
         }
       // Old browsers way (IE6-8 and other)
       : function(domRef, oldNode, newValue){
-          var newNode = newValue && typeof newValue == 'object' ? newValue : domRef;
+          var newNode = !domNodeBindingProhibited && newValue && typeof newValue == 'object' ? newValue : domRef;
 
           if (newNode !== oldNode)
           {
@@ -502,8 +521,8 @@
    /**
     * @func
     */
-    var bind_element = function(domRef, oldNode, newValue){
-      var newNode = bind_node(domRef, oldNode, newValue);
+    var bind_element = function(domRef, oldNode, newValue, domNodeBindingProhibited){
+      var newNode = bind_node(domRef, oldNode, newValue, domNodeBindingProhibited);
 
       if (newNode === domRef && typeof newValue == 'string')  // TODO: save inner nodes on first innerHTML and restore when newValue is not a string
         domRef.innerHTML = newValue;
@@ -519,8 +538,8 @@
    /**
     * @func
     */
-    var bind_textNode = function(domRef, oldNode, newValue){
-      var newNode = bind_node(domRef, oldNode, newValue);
+    var bind_textNode = function(domRef, oldNode, newValue, domNodeBindingProhibited){
+      var newNode = bind_node(domRef, oldNode, newValue, domNodeBindingProhibited);
 
       if (newNode === domRef)
         domRef.nodeValue = newValue;
@@ -665,11 +684,7 @@
             if (oldAttach)
             {
               if (oldAttach.tmpl)
-              {
-                // FIX ME
-                oldAttach.tmpl.element.toString = null;
                 getL10nHtmlTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
-              }
 
               oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             }
@@ -682,14 +697,10 @@
               var bindingInterface = this.bindingInterface;
               tmpl = template.createInstance(context, null, function onRebuild(){
                 tmpl = newAttach.tmpl = template.createInstance(context, null, onRebuild, bindings, bindingInterface);
-                tmpl.element.toString = function(){
-                  return value.value;
-                };
+                tmpl.parent = tmpl.element.parentNode || tmpl.element;
                 updateAttach.call(newAttach);
               }, bindings, bindingInterface);
-              tmpl.element.toString = function(){
-                return value.value;
-              };
+              tmpl.parent = tmpl.element.parentNode || tmpl.element;
             }
 
             if (!this.attaches)
@@ -708,7 +719,7 @@
             tmpl = value && value.type == 'markup' ? oldAttach.tmpl : null;
 
           if (tmpl)
-            return tmpl.element;
+            return tmpl.parent;
 
           value = bridge.get(value);
         }
@@ -719,7 +730,7 @@
             if (oldAttach.tmpl)
             {
               // FIX ME
-              oldAttach.tmpl.element.toString = null;
+              oldAttach.tmpl.container_.toString = null;
               getL10nHtmlTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
             }
 
@@ -832,7 +843,7 @@
             bindingCache[cacheId] = result;
         }
 
-        if (obj && set)
+        if (set)
           result.sync.call(set, obj);
 
         if (!bindingInterface)
