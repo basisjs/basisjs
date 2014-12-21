@@ -76,7 +76,7 @@ selectedDomNode.attach(function(node){
 var view = new Window({
   modal: true,
   visible: selectedDomNode.as(Boolean),
-  template: resource('./template/template-info.tmpl'),
+  template: resource('./template/window.tmpl'),
   binding: {
     upName: selectedObject.as(function(object){
       if (object)

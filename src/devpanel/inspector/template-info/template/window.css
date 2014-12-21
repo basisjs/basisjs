@@ -35,6 +35,8 @@
   background: rgba(255, 255, 255, .95);
   border-radius: 2px;
   box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, .3);
+  font-size: 12px;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
 }
 .window__inner
 {

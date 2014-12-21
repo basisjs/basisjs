@@ -9,6 +9,7 @@
   background: rgba(255, 255, 210, .95);
   pointer-events: none;
   font-size: 11px;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
   line-height: 1.5;
   color: #885500;
     -webkit-transition: all .05s;
