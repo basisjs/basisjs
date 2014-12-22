@@ -881,18 +881,15 @@
     var processing = false;
     var timer;
 
-    function process(){
-      // if any timer - reset it
-      if (timer)
-        timer = clearImmediate(timer);
-
+    // run process queue function only if any task
+    // as try/finally doesn't optimize
+    function processQueue(){
       try {
-        var item;
-
         // mark queue as processing to avoid concurrency
         processing = true;
 
         // process queue
+        var item;
         while (item = queue.shift())
           item.fn.call(item.context);
       } finally {
@@ -904,6 +901,16 @@
         if (queue.length)
           timer = setImmediate(process);
       }
+    }
+
+    function process(){
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
+
+      // process queue only if any task
+      if (queue.length)
+        processQueue();
     }
 
    /**
