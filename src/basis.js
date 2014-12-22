@@ -3335,6 +3335,29 @@
     };
   })();
 
+ /**
+  * Add handler on sandbox teardown.
+  * @param {function()} callback
+  * @param {*=} context
+  */
+  var teardown = (function(callback, context){
+    if ('addEventListener' in global)
+      return function(callback, context){
+        global.addEventListener('unload', function(event){
+          callback.call(context || null, event || global.event);
+        }, false);
+      };
+
+    if ('attachEvent' in global)
+      return function(callback, context){
+        global.attachEvent('onunload', function(event){
+          callback.call(context || null, event || global.event);
+        });
+      };
+
+    return $undef;
+  })();
+
 
  /**
   * Document interface for safe add/remove nodes to/from head and body.
@@ -3475,19 +3498,17 @@
             object[prop] = null;
         }
       }
-      objects.length = 0;
+      objects = [];
     }
 
-    if ('attachEvent' in global)
-      global.attachEvent('onunload', destroy);
-    else
-      if ('addEventListener' in global)
-        global.addEventListener('unload', destroy, false);
-      else
-        return {
-          add: $undef,
-          remove: $undef
-        };
+    // returns interfaces that does nothing if unload is not supported
+    if (teardown === $undef)
+      return {
+        add: $undef,
+        remove: $undef
+      };
+
+    teardown(destroy);
 
     var result = {
       add: function(object){
@@ -3705,16 +3726,19 @@
     Token: Token,
     DeferredToken: DeferredToken,
 
+    // life cycle functions
+    ready: ready,
+    teardown: teardown,
+    cleaner: cleaner,
+
     // util functions
     genUID: genUID,
     getter: getter,
-    ready: ready,
-
-    cleaner: cleaner,
     console: consoleMethods,
     path: pathUtils,
     doc: documentInterface,
 
+    // types utils
     object: {
       extend: extend,
       complete: complete,

@@ -1,7 +1,6 @@
 require('basis.entity');
 require('basis.data.index');
 require('basis.data.dataset');
-require('basis.dom.event');
 
 
 //
@@ -55,7 +54,7 @@ if (typeof localStorage != 'undefined')
     Todo.readList(JSON.parse(storedData));
 
   // add handler to save todos on page unload
-  basis.dom.event.onUnload(function(){
+  basis.teardown(function(){
     localStorage.setItem('todos-basisjs', JSON.stringify(Todo.all.getValues('data')));
   });
 }

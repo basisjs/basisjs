@@ -632,7 +632,9 @@
   * @param {object=} thisObject Context for handler
   */
   function onUnload(handler, thisObject){
-    addHandler(global, 'unload', handler, thisObject);
+    // deprecated in 1.4
+    /** @cut */ basis.dev.warn('basis.dom.event.onUnload() is deprecated, use basis.teardown() instead');
+    basis.teardown(handler, thisObject);
   }
 
 
