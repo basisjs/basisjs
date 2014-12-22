@@ -562,7 +562,9 @@
       var newNode = bind_node(domRef, oldNode, newValue, domNodeBindingProhibited);
 
       if (newNode === domRef)
-        domRef.nodeValue = newValue;
+        // explicit convert to string to be consistent across browsers:
+        // some browsers set string value of null/undefined, but some set empty string instead
+        domRef.nodeValue = String(newValue);
 
       return newNode;
     };
@@ -748,11 +750,7 @@
           if (oldAttach)
           {
             if (oldAttach.tmpl)
-            {
-              // FIX ME
-              oldAttach.tmpl.container_.toString = null;
               getL10nHtmlTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
-            }
 
             oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             this.attaches[bindingName] = null;

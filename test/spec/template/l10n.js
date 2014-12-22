@@ -1,18 +1,3 @@
-// 'en-US': {
-//   'foo': 'foo text',
-//   'plural': ['plural text', 'plural texts'],
-//   'pluralWithPlaceholder': ['# plural text', '# plural texts'],
-//   'markupWithBinding': 'markup test {value}',
-//   'l10nMarkup': 'markup {l10n:plural.{value}} {l10n:foo} {l10n:markupWithBinding}'
-// },
-// 'ru-RU': {
-//   'foo': 'foo текст',
-//   'plural': ['plural текст', 'plural текста', 'plural текстов'],
-//   'pluralWithPlaceholder': ['# plural текст', '# plural текста', '# plural текстов'],
-//   'markupWithBinding': 'markup текст {value}',
-//   'l10nMarkup': 'markup {l10n:plural.{value}} {l10n:foo} {l10n:markupWithBinding}'
-// }
-
 module.exports = {
   name: 'l10n',
   init: function(){
@@ -346,16 +331,81 @@ module.exports = {
                 var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo} {l10n:markupWithBinding}</span>');
                 var bindings = {
                   bindingId: basis.genUID(),
-                  foo: { getter: function(){ return 'bar'; } }
+                  foo: {
+                    getter: function(){
+                      return '[foo]';
+                    }
+                  }
                 };
                 var instance = template.createInstance(null, null, function onUpdate(){
                   instance = template.createInstance(null, null, onUpdate, bindings);
                 }, bindings);
 
-                assert(text(instance) === '<span>bar <b>markup</b> text bar</span>');
+                assert(text(instance) === '<span>[foo] <b>markup</b> text [foo]</span>');
 
                 template.setSource('<b:l10n src="./test.l10n"/><div>{foo} markup: {l10n:markupWithBinding}</div>');
-                assert(text(instance) === '<div>bar markup: <b>markup</b> text bar</div>');
+                assert(text(instance) === '<div>[foo] markup: <b>markup</b> text [foo]</div>');
+              }
+            },
+            {
+              name: 'should not crash on markup token remove',
+              test: function(){
+                var dictionary = sandbox.require('basis.l10n').dictionary('./test.l10n');
+                var bindings = {
+                  bindingId: basis.genUID(),
+                  foo: {
+                    getter: function(){
+                      return '[foo]';
+                    }
+                  }
+                };
+
+                var template = createTemplate('<span>{foo} {bar}</span>');
+                var instance = template.createInstance(null, null, null, bindings);
+
+                assert(text(instance) === '<span>[foo] {bar}</span>');
+                assert(text(instance, { bar: dictionary.token('markupWithBinding') }) === '<span>[foo] <b>markup</b> text [foo]</span>');
+                assert(text(instance, { bar: null }) === '<span>[foo] null</span>');
+              }
+            },
+            {
+              name: 'should not crash on recursion',
+              test: function(){
+                var dictionary = sandbox.require('basis.l10n').dictionary('./test.l10n');
+                var template = createTemplate('<span>{foo}</span>');
+                var instance = template.createInstance();
+
+                assert(text(instance) === '<span>{foo}</span>');
+                assert(text(instance, { foo: dictionary.token('markupWithBinding') }) === '<span><b>markup</b> text {foo}</span>');
+                assert(text(instance, { foo: dictionary.token('l10nMarkup') }) === '<span><b>markup</b> text plural texts foo text <b>markup</b> text {foo}</span>');
+              }
+            },
+            {
+              name: 'should not crash on type change',
+              test: function(){
+                // jscs:disable validateQuoteMarks
+                l10n.setCulture('en-US');
+                var dictionary = l10n.dictionary({
+                  _meta: { type: { test: 'markup' } },
+                  "en-US": {
+                    "test": "<b>markup</b>"
+                  }
+                });
+
+                var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo}</span>');
+                var instance = template.createInstance();
+
+                assert(text(instance) === '<span>{foo}</span>');
+                assert(text(instance, { foo: dictionary.token('test') }) === '<span><b>markup</b></span>');
+
+                dictionary.update({
+                  "en-US": {
+                    "test": "<b>markup</b>"
+                  }
+                });
+                assert(text(instance) === text('<span>&lt;b>markup&lt;/b></span>'));
+
+                // jscs:enable
               }
             }
           ]
