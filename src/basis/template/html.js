@@ -484,7 +484,6 @@
         return document instanceof Node;
       } catch(e) {}
     })() || false;
-    alert(W3C_DOM_NODE_SUPPORTED);
 
 
    /**
