@@ -1,17 +1,18 @@
-require('basis.entity');
-require('basis.data.index');
-require('basis.data.dataset');
+var entity = require('basis.entity');
+var max = require('basis.data.index').max;
+var Value = require('basis.data').Value;
+var Split = require('basis.data.dataset').Split;
 
 
 //
 // Define todo type
 //
 
-var Todo = basis.entity.createType('Todo', {
+var Todo = entity.createType('Todo', {
   id: {
-    type: basis.entity.IntId,
+    type: entity.IntId,
     defValue: function(){
-      return basis.data.index.max(Todo.all, 'data.id').value + 1 || 1;
+      return max(Todo.all, 'data.id').value + 1 || 1;
     }
   },
   title: String,
@@ -23,7 +24,7 @@ var Todo = basis.entity.createType('Todo', {
 // Datasets
 //
 
-var splitByCompleted = new basis.data.dataset.Split({
+var splitByCompleted = new Split({
   source: Todo.all,
   rule: 'data.completed'
 });
@@ -39,7 +40,7 @@ Todo.active = splitByCompleted.getSubset(IS_NOT_COMPLETED, true);
 // Dataset used for list
 //
 
-Todo.selected = new basis.data.Value({ value: Todo.all });
+Todo.selected = new Value({ value: Todo.all });
 
 
 //
