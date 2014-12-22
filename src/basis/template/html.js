@@ -476,16 +476,15 @@
   var builder = (function(){
 
     var WHITESPACE = /\s+/;
-    var W3C_DOM_NODE_SUPPORTED = typeof Node == 'function' && document instanceof Node;
     var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
-    /*var TRANSITION_SUPPORTED = !!(document && (function(){
-      var properties = ['webkitTransition', 'MozTransition', 'msTransition', 'OTransition', 'transition'];
-      var style = document.documentElement.style;
-      for (var i = 0; i < properties.length; i++)
-        if (properties[i] in style)
-          return true;
-      return false;
-    })());*/
+    var W3C_DOM_NODE_SUPPORTED = (function(){
+      try {
+        // typeof Node returns 'object' instead of 'function' in Safari (at least 7.1.2)
+        // so try check document is instanceof Node, but this may occurs to exception in old IE
+        return document instanceof Node;
+      } catch(e) {}
+    })() || false;
+    alert(W3C_DOM_NODE_SUPPORTED);
 
 
    /**
@@ -521,7 +520,7 @@
           return newNode;
         }
       // Old browsers way (IE6-8 and other)
-      : function(domRef, oldNode, newValue){
+      : function(domRef, oldNode, newValue, domNodeBindingProhibited){
           var newNode = !domNodeBindingProhibited && newValue && typeof newValue == 'object' ? newValue : domRef;
 
           if (newNode !== oldNode)
