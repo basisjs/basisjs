@@ -703,10 +703,9 @@
   if (!setImmediate)
   {
     (function(){
-      var MESSAGE_NAME = 'basisjs.setImmediate';
       var runTask = (function(){
         var taskById = {};
-        var taskId = 1;
+        var taskId = 0;
 
         // emulate setImmediate
         setImmediate = function(fn/*, ..args */){
@@ -727,19 +726,19 @@
         };
 
         // emulate clearImmediate
-        clearImmediate = function(id){
-          delete taskById[id];
+        clearImmediate = function(taskId){
+          delete taskById[taskId];
         };
 
         //
         // return result function for task run
         //
-        return function(id){
-          var task = taskById[id];
+        return function(taskId){
+          var task = taskById[taskId];
 
           if (task)
           {
-            delete taskById[id];
+            delete taskById[taskId];
             task.fn.apply(undefined, task.args);
           }
 
@@ -768,58 +767,64 @@
       }
       else
       {
-        if (global.MessageChannel)
-        {
-          var channel = new global.MessageChannel();
+        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+        // where `global.postMessage` means something completely different and can't be used for this purpose.
+        var postMessageSupported = global.postMessage && !global.importScripts;
 
-          channel.port1.onmessage = function(event){
-            var taskId = event.data;
-            runTask(taskId);
+        // IE8 has postMessage implementation, but it is synchronous and can't be used.
+        if (postMessageSupported)
+        {
+          var oldOnMessage = global.onmessage;
+          global.onmessage = function(){
+            postMessageSupported = false;
+          };
+          global.postMessage('', '*');
+          global.onmessage = oldOnMessage;
+        }
+
+        if (postMessageSupported)
+        {
+          // postMessage scheme
+          var taskIdByMessage = {};
+          var setImmediateHandler = function(event){
+            if (event && event.source == global)
+            {
+              var data = event.data;
+              if (hasOwnProperty.call(taskIdByMessage, data))
+              {
+                var taskId = taskIdByMessage[data];
+                delete taskIdByMessage[data];
+                runTask(taskId);
+              }
+            }
           };
 
+          if (global.addEventListener)
+            global.addEventListener('message', setImmediateHandler, true);
+          else
+            global.attachEvent('onmessage', setImmediateHandler);
+
+          // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
+          // invoking our onGlobalMessage listener above.
           addToQueue = function(taskId){
-            channel.port2.postMessage(taskId);
+            var message = genUID(32);
+            taskIdByMessage[message] = taskId;
+            global.postMessage(message, '*');
           };
         }
         else
         {
-          // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-          // where `global.postMessage` means something completely different and can't be used for this purpose.
-          var postMessageSupported = global.postMessage && !global.importScripts;
-
-          // IE8 has postMessage implementation, but it is synchronous and can't be used.
-          if (postMessageSupported)
+          //
+          if (global.MessageChannel)
           {
-            var oldOnMessage = global.onmessage;
-            global.onmessage = function(){
-              postMessageSupported = false;
-            };
-            global.postMessage('', '*');
-            global.onmessage = oldOnMessage;
-          }
+            var channel = new global.MessageChannel();
 
-          if (postMessageSupported)
-          {
-            // postMessage scheme
-            var setImmediateHandler = function(event){
-              if (event && event.source == global)
-              {
-                var taskId = String(event.data).split(MESSAGE_NAME)[1];
-
-                if (taskId)
-                  runTask(taskId);
-              }
+            channel.port1.onmessage = function(event){
+              runTask(event.data);
             };
 
-            if (global.addEventListener)
-              global.addEventListener('message', setImmediateHandler, true);
-            else
-              global.attachEvent('onmessage', setImmediateHandler);
-
-            // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
-            // invoking our onGlobalMessage listener above.
             addToQueue = function(taskId){
-              global.postMessage(MESSAGE_NAME + taskId, '*');
+              channel.port2.postMessage(taskId);
             };
           }
           else
