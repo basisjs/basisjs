@@ -548,6 +548,7 @@ module.exports = {
                 });
 
                 // main part
+                var foo;
                 var node = new TestNode({
                   selection: true,
                   childNodes: [
