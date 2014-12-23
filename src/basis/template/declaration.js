@@ -1248,7 +1248,7 @@ var makeDeclaration = (function(){
     /** @cut */ {
     /** @cut */   var define = result.defines[key];
     /** @cut */   if (!define.used)
-    /** @cut */     addTemplateWarn(result, options, 'Unused define for ' + key, define.loc);
+    /** @cut */     addTemplateWarn(result, options, 'Unused define: ' + key, define.loc);
     /** @cut */ }
 
     if (!warns.length)
