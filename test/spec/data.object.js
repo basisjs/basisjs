@@ -1102,6 +1102,118 @@ module.exports = {
               }
             }
           ]
+        },
+        {
+          name: 'active',
+          test: [
+            {
+              name: 'should add subscription for sources on init',
+              test: function(){
+                var a = new DataObject();
+                var b = new DataObject();
+                var instance = new Merge({
+                  active: true,
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  },
+                  sources: {
+                    a: a,
+                    b: b
+                  }
+                });
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+
+                instance.setActive(false);
+
+                assert(a.subscriberCount === 0);
+                assert(b.subscriberCount === 0);
+
+                instance.setActive(true);
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+              }
+            },
+            {
+              name: 'should add subscription on source set',
+              test: function(){
+                var a = new DataObject();
+                var b = new DataObject();
+                var instance = new Merge({
+                  active: true,
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  }
+                });
+
+                assert(a.subscriberCount === 0);
+                assert(b.subscriberCount === 0);
+
+                instance.setSource('a', a);
+                instance.setSource('b', b);
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+              }
+            },
+            {
+              name: 'should remove subscription on remove',
+              test: function(){
+                var a = new DataObject();
+                var b = new DataObject();
+                var instance = new Merge({
+                  active: true,
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  },
+                  sources: {
+                    a: a,
+                    b: b
+                  }
+                });
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+
+                instance.setSource('a', null);
+                instance.setSource('b', null);
+
+                assert(a.subscriberCount === 0);
+                assert(b.subscriberCount === 0);
+              }
+            },
+            {
+              name: 'should remove subscription on self destroy',
+              test: function(){
+                var a = new DataObject();
+                var b = new DataObject();
+                var instance = new Merge({
+                  active: true,
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  },
+                  sources: {
+                    a: a,
+                    b: b
+                  }
+                });
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+
+                instance.destroy();
+
+                assert(a.subscriberCount === 0);
+                assert(b.subscriberCount === 0);
+              }
+            }
+          ]
         }
       ]
     }

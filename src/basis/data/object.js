@@ -11,6 +11,7 @@
   //
 
   var createEvent = require('basis.event').create;
+  var SUBSCRIPTION = require('basis.data').SUBSCRIPTION;
   var DataObject = require('basis.data').Object;
   var resolveObject = require('basis.data').resolveObject;
 
@@ -28,6 +29,23 @@
       }) +
     '}');
   }
+
+  SUBSCRIPTION.add(
+    'OBJECTSOURCE',
+    {
+      sourceChanged: function(object, name, oldSource){
+        if (oldSource)
+          SUBSCRIPTION.unlink('sources', object, oldSource);
+        if (object.sources[name])
+          SUBSCRIPTION.link('sources', object, object.sources[name]);
+      }
+    },
+    function(action, object){
+      var sources = object.sources;
+      for (var name in sources)
+        action('sources', object, sources[name]);
+    }
+  );
 
  /**
   * Handler for sources of Merge instances.
@@ -148,6 +166,8 @@
   */
   var Merge = DataObject.subclass({
     className: namespace + '.Merge',
+
+    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.OBJECTSOURCE,
 
    /**
     * Emit when one of source reference changes.
