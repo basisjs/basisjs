@@ -410,7 +410,7 @@
       // this -> sourceInfo
       var merge = this.owner;
       var sourcesMap_ = merge.sourcesMap_;
-      var dataset = resolveDataset(this, merge.updateDataset_, source, 'adapter');
+      var dataset = resolveDataset(this, merge.updateDataset_, source, 'adapter', merge);
       var inserted;
       var deleted;
       var delta;

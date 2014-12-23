@@ -2391,12 +2391,12 @@
  /**
   * Resolve dataset from source value.
   */
-  function resolveDataset(context, fn, source, property){
+  function resolveDataset(context, fn, source, property, factoryContext){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
     if (fn !== resolveAdapterProxy && typeof source == 'function')
-      source = source.call(context, context);
+      source = source.call(factoryContext || context, factoryContext || context);
 
     if (source)
     {
@@ -2441,12 +2441,12 @@
  /**
   * Resolve object from source value.
   */
-  function resolveObject(context, fn, source, property){
+  function resolveObject(context, fn, source, property, factoryContext){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
     if (fn !== resolveAdapterProxy && typeof source == 'function')
-      source = source.call(context, context);
+      source = source.call(factoryContext || context, factoryContext || context);
 
     if (source && source.bindingBridge)
     {
@@ -2484,7 +2484,7 @@
  /**
   * Resolve value from source value.
   */
-  function resolveValue(context, fn, source, property){
+  function resolveValue(context, fn, source, property, factoryContext){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
@@ -2492,7 +2492,7 @@
     // i.e. source -> function(){ /* factory code */ }).factory === FACTORY
     // apply only for top-level resolveValue() invocation
     if (source && fn !== resolveAdapterProxy && typeof source == 'function' && source.factory === FACTORY)
-      source = source.call(context, context);
+      source = source.call(factoryContext || context, factoryContext || context);
 
     if (source && source.bindingBridge)
     {

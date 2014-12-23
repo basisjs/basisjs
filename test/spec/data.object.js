@@ -2,6 +2,7 @@ module.exports = {
   name: 'basis.data.object',
   init: function(){
     var moduleEntity = basis.require('basis.entity');
+    var Value = basis.require('basis.data').Value;
     var DataObject = basis.require('basis.data').Object;
     var Merge = basis.require('basis.data.object').Merge;
 
@@ -315,6 +316,32 @@ module.exports = {
                   }
                 });
                 assert({ foo: 'own-foo', bar: 'a-bar', baz: 'b-baz' }, instance.data);
+              }
+            },
+            {
+              name: 'sources defined in subclass should be applied on init',
+              test: function(){
+                var map = [
+                  new DataObject({ data: { bar: 'bar1' } }),
+                  new DataObject({ data: { bar: 'bar2' } })
+                ];
+                var MyMerge = Merge.subclass({
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  },
+                  sources: {
+                    a: new DataObject({ data: { foo: 1 } }),
+                    b: Value.factory('update', function(self){
+                      return map[self.data.foo - 1];
+                    })
+                  }
+                });
+
+                var instance = new MyMerge();
+                assert({ foo: 1, bar: 'bar1' }, instance.data);
+                instance.update({ foo: 2 });
+                assert({ foo: 2, bar: 'bar2' }, instance.data);
               }
             }
           ]
@@ -1061,6 +1088,17 @@ module.exports = {
 
                 merge.destroy();
                 assert(token.handler === null);
+              }
+            },
+            {
+              name: 'should allow use proxy',
+              test: function(){
+                merge.object_ = object2;
+                merge.setSource('a', Value.factory('someEvent', function(self){
+                  return self.object_;
+                }));
+                assert(merge.sources.a === object2);
+                assert({ foo: 'a', bar: 'b' }, merge.data);
               }
             }
           ]

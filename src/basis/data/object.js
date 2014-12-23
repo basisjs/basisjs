@@ -374,7 +374,7 @@
         };
 
       // resolve object from value
-      source = resolveObject(this.sourcesContext_[name], resolveSetSource, source, 'adapter');
+      source = resolveObject(this.sourcesContext_[name], resolveSetSource, source, 'adapter', this);
 
       // main part
       if (oldSource !== source)
