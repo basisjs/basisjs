@@ -1,7 +1,7 @@
 module.exports = {
   name: 'basis.data.object',
   init: function(){
-    basis.require('basis.entity');
+    var moduleEntity = basis.require('basis.entity');
     var DataObject = basis.require('basis.data').Object;
     var Merge = basis.require('basis.data.object').Merge;
 
@@ -773,7 +773,7 @@ module.exports = {
             {
               name: 'merge & entity',
               test: function(){
-                var Type = basis.entity.createType(null, {
+                var Type = moduleEntity.createType(null, {
                   str: String,
                   enum: [1, 2, 3]
                 });
@@ -824,8 +824,8 @@ module.exports = {
             {
               name: 'merge & entity id',
               test: function(){
-                var Type = basis.entity.createType(null, {
-                  id: basis.entity.IntId
+                var Type = moduleEntity.createType(null, {
+                  id: moduleEntity.IntId
                 });
 
                 var lockIdEntity = Type({ id: 1 });
@@ -860,9 +860,9 @@ module.exports = {
             {
               name: 'merge & entity and calc',
               test: function(){
-                var Type = basis.entity.createType(null, {
-                  id: basis.entity.IntId,
-                  calc: basis.entity.calc('id', basis.fn.$self)
+                var Type = moduleEntity.createType(null, {
+                  id: moduleEntity.IntId,
+                  calc: moduleEntity.calc('id', basis.fn.$self)
                 });
 
                 var entity = Type({ id: 1 });
@@ -988,6 +988,79 @@ module.exports = {
                 assert({ foo: 1, bar: 2, baz: 3 }, instance.data);
                 assert({ foo: 2, bar: 2, baz: 2 }, instance.sources.a.data);
                 assert({ foo: 3, bar: 3, baz: 3 }, instance.sources.b.data);
+              }
+            }
+          ]
+        },
+        {
+          name: 'resolveObject source from various values',
+          beforeEach: function(){
+            var merge = new Merge({
+              fields: {
+                foo: 'a',
+                bar: 'a'
+              }
+            });
+            var object1 = new DataObject({
+              data: {
+                foo: 1,
+                bar: 2,
+                baz: 3
+              }
+            });
+            var object2 = new DataObject({
+              data: {
+                foo: 'a',
+                bar: 'b',
+                baz: 'c'
+              }
+            });
+          },
+          test: [
+            {
+              name: 'should resolve object from bb-value',
+              test: function(){
+                var token = new basis.Token(object1);
+
+                merge.setSource('a', token);
+                assert(merge.sources.a === object1);
+                assert({ foo: 1, bar: 2 }, merge.data);
+                assert(merge.sourcesContext_.a.adapter !== null);
+
+                token.set();
+                assert(merge.sources.a === null);
+                assert({ foo: 1, bar: 2 }, merge.data);
+
+                token.set(object2);
+                assert(merge.sources.a === object2);
+                assert({ foo: 'a', bar: 'b' }, merge.data);
+
+                token.destroy();
+                object2.update({ foo: 1 });
+                assert(merge.sources.a === null);
+                assert(merge.sourcesContext_.a.adapter === null);
+                assert({ foo: 'a', bar: 'b' }, merge.data);
+              }
+            },
+            {
+              name: 'should unlink from bb-value',
+              test: function(){
+                var token = new basis.Token(object1);
+
+                merge.setSource('a', token);
+                assert(merge.sources.a === object1);
+                assert({ foo: 1, bar: 2 }, merge.data);
+
+                merge.setSource('a', null);
+                object1.update({ foo: 'a', bar: 'b' });
+                assert({ foo: 1, bar: 2 }, merge.data);
+
+                merge.setSource('a', token);
+                assert({ foo: 'a', bar: 'b' }, merge.data);
+                assert(token.handler !== null);
+
+                merge.destroy();
+                assert(token.handler === null);
               }
             }
           ]

@@ -12,6 +12,7 @@
 
   var createEvent = require('basis.event').create;
   var DataObject = require('basis.data').Object;
+  var resolveObject = require('basis.data').resolveObject;
 
 
  /**
@@ -129,6 +130,15 @@
 
     return result;
   };
+
+ /**
+  * Proxy function that invoke when adapter value changes. Used as we need
+  * pass two argument to Merge#setSource().
+  * @param {*} source
+  */
+  function resolveSetSource(source){
+    this.host.setSource(this.name, source);
+  }
 
 
  /**
@@ -355,9 +365,18 @@
       if (name == '-')
         return;
 
-      if (source instanceof DataObject == false)
-        source = null;
+      // create context for name if not exists yet
+      if (name in this.sourcesContext_ == false)
+        this.sourcesContext_[name] = {
+          host: this,
+          name: name,
+          adapter: null
+        };
 
+      // resolve object from value
+      source = resolveObject(this.sourcesContext_[name], resolveSetSource, source, 'adapter');
+
+      // main part
       if (oldSource !== source)
       {
         var listenHandler = this.listen['source:' + name];
@@ -377,12 +396,6 @@
         // add handler to new source
         if (source)
         {
-          if (name in this.sourcesContext_ == false)
-            this.sourcesContext_[name] = {
-              host: this,
-              name: name
-            };
-
           source.addHandler(MERGE_SOURCE_HANDLER, this.sourcesContext_[name]);
 
           if (listenHandler)
