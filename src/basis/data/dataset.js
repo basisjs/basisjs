@@ -403,7 +403,7 @@
 
    /**
     * Update dataset value by source.
-    * @param {basis.data.ReadOnlyDataset=} source
+    * @param {*} source
     * @private
     */
     updateDataset_: function(source){
@@ -452,15 +452,15 @@
         if (setSourcesTransaction)
         {
           if (delta.inserted)
-            delta.inserted.forEach(function(source){
-              if (!arrayRemove(this.deleted, source))
-                arrayAdd(this.inserted, source);
+            delta.inserted.forEach(function(item){
+              if (!arrayRemove(this.deleted, item))
+                arrayAdd(this.inserted, item);
             }, setSourcesTransaction);
 
           if (delta.deleted)
-            delta.deleted.forEach(function(source){
-              if (!arrayRemove(this.inserted, source))
-                arrayAdd(this.deleted, source);
+            delta.deleted.forEach(function(item){
+              if (!arrayRemove(this.inserted, item))
+                arrayAdd(this.deleted, item);
             }, setSourcesTransaction);
         }
         else
