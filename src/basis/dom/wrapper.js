@@ -2591,7 +2591,7 @@
     setSelected: function(selected, multiple){
       var selection = this.contextSelection;
 
-      selected = !!!!resolveValue(this, this.setSelected, selected, 'selectedRA_');;
+      selected = !!resolveValue(this, this.setSelected, selected, 'selectedRA_');
 
       // special case, when node selected and has selection context check only
       // resolve adapter influence on selected if exists, and restore selection

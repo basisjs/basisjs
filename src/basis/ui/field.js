@@ -818,7 +818,6 @@
 
     setValue: function(value){
       var oldValue = this.value;
-      var selected = [];
 
       if (value === oldValue)
         return;
