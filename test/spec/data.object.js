@@ -343,6 +343,58 @@ module.exports = {
                 instance.update({ foo: 2 });
                 assert({ foo: 2, bar: 'bar2' }, instance.data);
               }
+            },
+            {
+              name: 'should ignore data if no own properties',
+              test: function(){
+                var instance = new Merge({
+                  data: {
+                    foo: 1,
+                    bar: 2
+                  },
+                  fields: {
+                    foo: 'a'
+                  }
+                });
+
+                assert({}, instance.data);
+              }
+            },
+            {
+              name: 'should get only own properties from data',
+              test: function(){
+                var instance = new Merge({
+                  data: {
+                    foo: 1,
+                    bar: 2,
+                    baz: 3
+                  },
+                  fields: {
+                    foo: 'a',
+                    bar: '-'
+                  }
+                });
+
+                assert({ bar: 2 }, instance.data);
+              }
+            },
+            {
+              name: 'should get any properties from data but not other sources properties',
+              test: function(){
+                var instance = new Merge({
+                  data: {
+                    foo: 1,
+                    bar: 2,
+                    baz: 3
+                  },
+                  fields: {
+                    foo: 'a',
+                    '*': '-'
+                  }
+                });
+
+                assert({ bar: 2, baz: 3 }, instance.data);
+              }
             }
           ]
         },
@@ -560,15 +612,12 @@ module.exports = {
             {
               name: 'values from default source should not override other fields',
               test: function(){
-                var MyMerge = Merge.subclass({
+                var instance = new Merge({
                   fields: {
                     foo: '-',
                     bar: 'a',
                     '*': 'b'
-                  }
-                });
-
-                var instance = new MyMerge({
+                  },
                   data: {
                     foo: 'own-foo',
                     bar: 'own-bar',
@@ -596,6 +645,56 @@ module.exports = {
                 });
 
                 assert({ foo: 'own-foo', bar: 'a-bar', baz: 'b-baz' }, instance.data);
+              }
+            },
+            {
+              name: 'should reset',
+              test: function(){
+                var instance = new Merge({
+                  fields: {
+                    foo: 'a',
+                    qux: 'a',
+                    '*': 'b'
+                  },
+                  sources: {
+                    a: new DataObject({
+                      data: {
+                        foo: 'a-foo',
+                        bar: 'a-bar',
+                        qux: 'a-qux'
+                      }
+                    }),
+                    b: new DataObject({
+                      data: {
+                        foo: 'b-foo',
+                        bar: 'b-bar',
+                        baz: 'b-baz'
+                      }
+                    })
+                  }
+                });
+
+                assert({ foo: 'a-foo', bar: 'b-bar', baz: 'b-baz', qux: 'a-qux' }, instance.data);
+
+                // test strict field set
+                instance.setSource('a', new DataObject({
+                  data: {
+                    foo: 'd-foo',
+                    bar: 'd-bar'
+                  }
+                }));
+
+                assert({ foo: 'd-foo', bar: 'b-bar', baz: 'b-baz', qux: undefined }, instance.data);
+
+                // test wildcard field set
+                instance.setSource('b', new DataObject({
+                  data: {
+                    foo: 'c-foo',
+                    bar: 'c-bar'
+                  }
+                }));
+
+                assert({ foo: 'd-foo', bar: 'c-bar', baz: undefined, qux: undefined }, instance.data);
               }
             }
           ]
