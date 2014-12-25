@@ -254,6 +254,9 @@
               case 'stop-propagation':
                 event.stopPropagation();
                 break;
+              case 'log-event':
+                /** @cut */ basis.dev.log('Template event:', event);
+                break;
               default:
                 tmplRef.action.call(tmplRef.context, actionName, event);
             }
