@@ -34,7 +34,8 @@
       size: 'offsetWidth',
       currentVelocity: 'currentVilocityX',
       viewport: 'viewportX',
-      setPosition: 'setPositionX'
+      setPosition: 'setPositionX',
+      addPosition: 'addPositionX'
     },
     vertical: {
       position: 'top',
@@ -42,7 +43,8 @@
       size: 'offsetHeight',
       currentVelocity: 'currentVilocityY',
       viewport: 'viewportY',
-      setPosition: 'setPositionY'
+      setPosition: 'setPositionY',
+      addPosition: 'addPositionY'
     }
   };
 
@@ -103,18 +105,9 @@
     },
 
     syncOffset: function(){
-      var isHorizontal = this.isHorizontal();
-      var offset = 0;
-
-      for (var i = 0, child; child = this.childNodes[i]; i++)
-      {
-        if (child.selected)
-          break;
-
-        offset += child.element[this.properties.offset];
-      }
-
-      this.scroller[this.properties.setPosition](offset);
+      this.scroller[this.properties.setPosition](
+        this.selection.pick().element[this.properties.offset]
+      );
     },
 
     templateSync: function(){
@@ -196,8 +189,6 @@
     adjustRotation: function(leftToRight){
       var selected = this.selection.pick();
 
-      var shiftLength = 0;
-
       var childCount = this.childNodes.length;
       var index = this.childNodes.indexOf(selected);
 
@@ -205,26 +196,23 @@
 
       var firstElement = this.firstChild.element;
       var childSize = firstElement[this.properties.size];
+      var offset = 0;
 
       for (var i = 0; i < Math.abs(delta); i++)
       {
         if (delta > 0)
         {
           this.insertBefore(this.lastChild, this.firstChild);
-          shiftLength += childSize;
+          offset += childSize;
         }
         else
         {
           this.appendChild(this.firstChild);
-          shiftLength -= childSize;
+          offset -= childSize;
         }
       }
 
-      if (this.isHorizontal())
-        this.scroller.addPositionX(shiftLength);
-      else
-        this.scroller.addPositionY(shiftLength);
-
+      this.scroller[this.properties.addPosition](offset);
 
       this.emit_childNodesModified({});
     },
