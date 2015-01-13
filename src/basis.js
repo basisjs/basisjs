@@ -1786,7 +1786,7 @@
           /** @cut */ result.__extend__ = create;
 
           for (var key in keys)
-            if (keys[key])
+            if (hasOwnProperty.call(keys, key) && keys[key])
               result[key] = fn;
         }
 
