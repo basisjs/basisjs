@@ -1750,12 +1750,17 @@
     var nestedExtendProperty = function(extension){
       return customExtendProperty(extension, function(result, extension){
         for (var key in extension)
-        {
-          var value = result[key];
-          result[key] = value && value.__extend__
-            ? value.__extend__(extension[key])
-            : extensibleProperty(extension[key]);
-        }
+          if (hasOwnProperty.call(extension, key))
+          {
+            var value = result[key];
+            var newValue = extension[key];
+            if (newValue)
+              result[key] = value && value.__extend__
+                ? value.__extend__(newValue)
+                : extensibleProperty(newValue);
+            else
+              result[key] = null;
+          }
       }, 'nestedExtendProperty');
     };
 
