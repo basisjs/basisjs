@@ -347,225 +347,146 @@
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
-    var ID = 'basisGetterId' + genUID() + '_';
-    var modificatorSeed = 1;
-    var simplePath = /^[a-z$_][a-z$_0-9]*(\.[a-z$_][a-z$_0-9]*)*$/i;
-
-    var getterMap = [];
+    var GETTER_ID_PREFIX = 'basisGetterId' + genUID() + '_';
+    var GETTER_ID = GETTER_ID_PREFIX + 'root';
+    var ID = GETTER_ID_PREFIX;
+    var getterSeed = 1;
     var pathCache = {};
-    var modCache = {};
+    var formatCache = {};
 
-    function buildFunction(path){
-      if (simplePath.test(path))
+    function as(path){
+      var self = this;
+      var wrapper;
+      var result;
+      var id;
+
+      if (typeof path == 'function' || typeof path == 'string')
       {
-        var parts = path.split('.');
-        var foo = parts[0];
-        var bar = parts[1];
-        var baz = parts[2];
-        var fn;
+        wrapper = resolveFunction(path, self[ID]);
+        id = GETTER_ID_PREFIX + wrapper[ID];
 
-        // This approach helps produce function that could be
-        // optimized (inlined) by js engine. In most cases path contains
-        // from 1 to 3 parts and we don't use a loop in those cases.
-        switch (parts.length)
-        {
-          case 1:
-            fn = function(object){
-              return object != null ? object[foo] : object;
-            };
-            break;
-          case 2:
-            fn = function(object){
-              return object != null ? object[foo][bar] : object;
-            };
-            break;
-          case 3:
-            fn = function(object){
-              return object != null ? object[foo][bar][baz] : object;
-            };
-            break;
-          default:
-            fn = function(object){
-              if (object != null)
-              {
-                object = object[foo][bar][baz];
-                for (var i = 3, key; key = parts[i]; i++)
-                  object = object[key];
-              }
+        if (hasOwnProperty.call(self, id))
+          return self[id];
 
-              return object;
-            };
-        }
+        // recover original function, reduce functions call stack
+        if (typeof wrapper.base == 'function')
+          wrapper = wrapper.base;
 
-        // verbose function code in dev mode
-        /** @cut */ fn = Function('parts', 'return ' + fn.toString()
-        /** @cut */   .replace(/(foo|bar|baz)/g, function(m, w){
-        /** @cut */      return '"' + parts[w == 'foo' ? 0 : (w == 'bar' ? 1 : 2)] + '"';
-        /** @cut */    })
-        /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))(parts);
+        result = function(value){
+          return wrapper(self(value));
+        };
+      }
+      else
+      {
+        // theat non-function/non-string values as maps
+        var map = path;
 
-        return fn;
+        if (!map)
+          return nullGetter;
+
+        result = function(value){
+          return map[self(value)];
+        };
       }
 
-      // for cases when path isn't a property name chain
+      result[ID] = getterSeed++;
+      result.__extend__ = getter;
+      result.as = as;
+
+      // cache function/string getters only
+      if (id)
+        self[id] = result;
+
+      return result;
+    }
+
+    function buildFunction(path){
       return new Function('object', 'return object != null ? object.' + path + ' : object');
     }
 
-    var getterFn = function(path, modificator){
-      var func;
+    function getFormatter(format){
+      if (hasOwnProperty.call(formatCache, format))
+        return formatCache[format];
+
+      return formatCache[format] = function(value){
+        return stringFunctions.format(format, value);
+      };
+    }
+
+    function resolveFunction(value, id){
+      var fn = value;
       var result;
-      var getterId;
 
-      // return nullGetter if no path or nullGetter passed
-      if (!path || path === nullGetter)
+      if (value && typeof value == 'string')
+      {
+        if (hasOwnProperty.call(pathCache, value))
+          return pathCache[value];
+
+        fn = pathCache[value] = buildFunction(value);
+      }
+
+      if (typeof fn != 'function')
+      {
+        /** @cut */ basis.dev.warn('path for root getter should be function or non-empty string');
         return nullGetter;
-
-      // resolve getter by path
-      if (typeof path == 'function')
-      {
-        getterId = path[ID];
-
-        // path is function
-        if (getterId)
-        {
-          // this function used for getter before
-          func = getterMap[Math.abs(getterId) - 1];
-        }
-        else
-        {
-          // this function never used for getter before, wrap and cache it
-
-          // wrap function to prevent function properties rewrite
-          func = function(object){
-            return path(object);
-          };
-          func.base = path;
-          func.__extend__ = getter;
-
-          // add to cache
-          getterId = getterMap.push(func);
-          path[ID] = -getterId;
-          func[ID] = getterId;
-        }
-      }
-      else
-      {
-        // thread path as string, search in cache
-        func = pathCache[path];
-
-        if (func)
-        {
-          // resolve getter id
-          getterId = func[ID];
-        }
-        else
-        {
-          // create getter function
-          func = buildFunction(path);
-          func.base = path;
-          func.__extend__ = getter;
-
-          // add to cache
-          getterId = getterMap.push(func);
-          func[ID] = getterId;
-          pathCache[path] = func;
-        }
       }
 
-      // resolve getter with modificator
-      var modType = modificator != null && typeof modificator;
+      // if function is getter return it
+      if (fn.__extend__ === getter)
+        return fn;
 
-      // if no modificator, return func
-      if (!modType)
-        return func;
+      // check function cache for getter
+      if (hasOwnProperty.call(fn, id))
+        return fn[id];
 
-      var modList = modCache[getterId];
-      var modId;
-
-      // resolve modificator id if possible
-      if (modType == 'string')
-        modId = modType + modificator;
-      else
-        if (modType == 'function')
-          modId = modificator.basisModId_;
-        else
-          if (modType != 'object')
-          {
-            // only string, function and objects are support as modificator
-            /** @cut */ consoleMethods.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
-
-            return func;
-          }
-
-      // try fetch getter from cache
-      if (modId && modList && modList[modId])
-        return modList[modId];
-
-      // recover original function, reduce functions call deep
-      if (typeof func.base == 'function')
-        func = func.base;
-
-      switch (modType)
-      {
-        case 'string':
-          result = function(object){
-            return stringFunctions.format(modificator, func(object));
+      // if no function, create new getter (function wrapper)
+      result = fn[id] = fn !== value
+        ? fn  // don't wrap getter from string
+        : function(value){
+            return fn(value);
           };
-          break;
 
-        case 'function':
-          if (!modId)
-          {
-            // mark function with modificator id
-            modId = modType + modificatorSeed++;
-            modificator.basisModId_ = modId;
-          }
-
-          result = function(object){
-            return modificator(func(object));
-          };
-          break;
-
-        default: //case 'object':
-          result = function(object){
-            return modificator[func(object)];
-          };
-      }
-
-      result.base = func.base || func;
+      result.base = fn;
+      result[ID] = getterSeed++;
       result.__extend__ = getter;
+      result.as = as;
 
-      // NOTE: Only object modificators has no modId. Therefore getters with object
-      // modificator are not caching. It avoid storing (by closure) object that
-      // can't be collected by GC.
-      if (modId)
+      return result;
+    }
+
+    function getter(path, value){
+      var result = path && path !== nullGetter
+        ? resolveFunction(path, GETTER_ID)
+        : nullGetter;
+
+      // backward capability
+      if (value || value === '')
       {
-        if (!modList)
-        {
-          // create new modificator list if it not exists yet
-          modList = {};
-          modCache[getterId] = modList;
-        }
+        /** @cut basis.js 1.4 */ basis.dev.warn('second argument for getter is deprecated, use `as` method of getter instead');
 
-        // cache getter with modificator
-        modList[modId] = result;
-        result.mod = modificator;
+        if (typeof value == 'string')
+          value = getFormatter(value);
 
-        // cache new getter
-        result[ID] = getterMap.push(result);
+        return result.as(value);
       }
 
       return result;
-    };
+    }
 
-    getterFn.ID = ID;
+    getter.ID = ID;
 
-    return getterFn;
+    return getter;
   })();
 
-  var nullGetter = extend(function(){}, {
-    __extend__: getter
-  });
+  var nullGetter = (function(){
+    var nullGetter = function(){};
+    nullGetter[getter.ID] = getter.ID + 'nullGetter';
+    nullGetter.__extend__ = getter,
+    nullGetter.as = function(){
+      return nullGetter;
+    };
+    return nullGetter;
+  })();
 
 
  /**
