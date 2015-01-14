@@ -220,10 +220,15 @@
     action: 'focus blur change keydown keypress keyup input'.split(' ').reduce(
       function(res, item){
         var eventName = 'emit_field' + basis.string.capitalize(item);
-        res[item] = function(event){
+        var fn = function(event){
           this.syncFieldValue_();
           this[eventName](event);
         };
+
+        // verbose dev
+        /** @cut */ fn = new Function('return ' + fn.toString().replace('[eventName]', '.' + eventName))();
+
+        res[item] = fn;
         return res;
       },
       {}
