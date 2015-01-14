@@ -624,7 +624,7 @@
             map = $self;
 
           for (var i = 0; i < value.length; i++)
-            value[i] = result(entityType.reader(map(value[i], i)));
+            value[i] = result(result.reader(map(value[i], i)));
 
           return value;
         },
