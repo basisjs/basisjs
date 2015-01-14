@@ -2,6 +2,7 @@ module.exports = {
   name: 'basis.utils.info',
   init: function(){
     var fnInfo = basis.require('basis.utils.info').fn;
+    var normalizeOffset = basis.require('basis.utils.info').normalizeOffset;
   },
   test: [
     {
@@ -121,7 +122,7 @@ module.exports = {
               assert('', info.args);
               assert(info.name == 'anonymous');
               assert(info.getter == false);
-              assert(info.body == functions[i].toString().replace(/^[^\{]+\{/, '').replace(/\}[^}]*$/, ''));
+              assert(info.body == normalizeOffset(functions[i].toString()).replace(/^[^\{]+\{/, '').replace(/\}[^}]*$/, ''));
             }
           }
         },

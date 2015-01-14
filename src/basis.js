@@ -350,9 +350,10 @@
     var GETTER_ID_PREFIX = 'basisGetterId' + genUID() + '_';
     var GETTER_ID = GETTER_ID_PREFIX + 'root';
     var ID = GETTER_ID_PREFIX;
+    var SOURCE = GETTER_ID_PREFIX + 'base';
+    var PARENT = GETTER_ID_PREFIX + 'parent';
     var getterSeed = 1;
     var pathCache = {};
-    var formatCache = {};
 
     function as(path){
       var self = this;
@@ -369,8 +370,8 @@
           return self[id];
 
         // recover original function, reduce functions call stack
-        if (typeof wrapper.base == 'function')
-          wrapper = wrapper.base;
+        if (typeof wrapper[SOURCE] == 'function')
+          wrapper = wrapper[SOURCE];
 
         result = function(value){
           return wrapper(self(value));
@@ -389,7 +390,9 @@
         };
       }
 
+      /** @cut */ result[PARENT] = self;
       result[ID] = getterSeed++;
+      result[SOURCE] = path;
       result.__extend__ = getter;
       result.as = as;
 
@@ -402,15 +405,6 @@
 
     function buildFunction(path){
       return new Function('object', 'return object != null ? object.' + path + ' : object');
-    }
-
-    function getFormatter(format){
-      if (hasOwnProperty.call(formatCache, format))
-        return formatCache[format];
-
-      return formatCache[format] = function(value){
-        return stringFunctions.format(format, value);
-      };
     }
 
     function resolveFunction(value, id){
@@ -446,8 +440,8 @@
             return fn(value);
           };
 
-      result.base = fn;
       result[ID] = getterSeed++;
+      result[SOURCE] = value;
       result.__extend__ = getter;
       result.as = as;
 
@@ -465,7 +459,7 @@
         /** @cut basis.js 1.4 */ basis.dev.warn('second argument for getter is deprecated, use `as` method of getter instead');
 
         if (typeof value == 'string')
-          value = getFormatter(value);
+          value = stringFunctions.formatter(value);
 
         return result.as(value);
       }
@@ -474,6 +468,8 @@
     }
 
     getter.ID = ID;
+    getter.SOURCE = SOURCE;
+    getter.PARENT = PARENT;
 
     return getter;
   })();
@@ -2952,6 +2948,7 @@
 
   var ESCAPE_FOR_REGEXP = /([\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$])/g;
   var FORMAT_REGEXP = /\{([a-z\d_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
+  var stringFormatCache = {};
 
   complete(String, {
     toLowerCase: function(value){
@@ -3031,6 +3028,27 @@
           return value;
         }
       );
+    },
+    formatter: function(formatString){
+      formatString = String(formatString);
+
+      if (hasOwnProperty.call(stringFormatCache, formatString))
+        return stringFormatCache[formatString];
+
+      var formatter = function(value){
+        return stringFunctions.format(formatString, value);
+      };
+
+      // verbose dev
+      /** @cut */ var escapsedFormatString = '"' + formatString.replace(/"/g, '\\"') + '"';
+      /** @cut */ formatter = new Function('stringFunctions', 'return ' + formatter.toString().replace('formatString', escapsedFormatString))(stringFunctions);
+      /** @cut */ formatter.toString = function(){
+      /** @cut */   return 'basis.string.formatter(' + escapsedFormatString + ')';
+      /** @cut */ };
+
+      stringFormatCache[formatString] = formatter;
+
+      return formatter;
     },
     capitalize: function(this_){
       return this_.charAt(0).toUpperCase() + this_.substr(1).toLowerCase();
