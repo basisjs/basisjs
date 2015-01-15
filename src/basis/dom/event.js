@@ -336,7 +336,6 @@
     if (captureHandler)
     {
       captureHandler.handler.call(captureHandler.thisObject, wrappedEvent);
-      kill(event);
     }
     else
     {
@@ -363,7 +362,7 @@
       releaseEvent(eventType);
 
     if (!handler)
-      handler = kill;
+      handler = basis.fn.$undef;
 
     addGlobalHandler(eventType, handler, thisObject);
     captureHandlers[eventType] = {
