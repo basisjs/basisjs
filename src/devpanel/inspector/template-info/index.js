@@ -1,4 +1,5 @@
 var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
 
@@ -10,6 +11,7 @@ var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
 var hoveredBinding = require('./binding.js').hover;
+var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
 var selectedDomNode = new basis.Token();
 var selectedObject = selectedDomNode.as(function(node){
   return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
@@ -25,7 +27,9 @@ var selectedTemplate = selectedDomNode.as(function(node){
 var bindingDataset = new Dataset();
 var isolatePrefix;
 
-selectedDomNode.as(require('./binding.js').getBindingsFromNode).attach(bindingDataset.set, bindingDataset);
+selectedDomNode
+  .as(getBindingsFromNode)
+  .attach(bindingDataset.set, bindingDataset);
 
 function syncSelectedNode(){
   var element = selectedObject.value && selectedObject.value.element;
@@ -69,9 +73,27 @@ selectedDomNode.attach(function(node){
 
   var nodes = parseDom(node);
   var bindings = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]) || [];
+  var usedBindings = getBindingsFromNode(node).reduce(function(res, binding){
+    if (binding.data.used)
+      res[binding.data.name] = true;
+    return res;
+  }, {});
 
-  view.setChildNodes(buildTree(nodes, bindings));
+  view.setChildNodes(buildTree(nodes, bindings, usedBindings, function(node){
+    selectedDomNode.set(node);
+  }));
 });
+
+var captureEvents = [
+  'click',
+  'mousedown',
+  'mouseup',
+  'mousemove',
+  'mouseout',
+  'mouseover',
+  'mouseenter',
+  'mouseleave'
+];
 
 var view = new Window({
   modal: true,
@@ -133,9 +155,10 @@ var view = new Window({
           name: 'data:',
           value: 'data:',
           used: 'data:',
+          nestedView: 'data:',
           loc: 'data:',
           highlight: hoveredBinding.compute('update', function(node, value){
-            return node.data.used ? !value || node.data.name === value : false;
+            return node.data.used && (!value || node.data.name === value);
           })
         },
         action: {
@@ -178,6 +201,20 @@ var view = new Window({
     Window.prototype.init.call(this);
     this.dde.fixLeft = false;
     this.dde.fixTop = false;
+  },
+
+  handler: {
+    open: function(){
+      captureEvents.forEach(function(eventName){
+        inspectBasisDomEvent.captureEvent(eventName, function(e){
+        });
+      });
+    },
+    close: function(){
+      captureEvents.forEach(function(eventName){
+        inspectBasisDomEvent.releaseEvent(eventName);
+      });
+    }
   }
 });
 

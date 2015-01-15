@@ -31,10 +31,13 @@ function getBindingsFromNode(node){
       if (key != '__extend__' && key != 'bindingId')
       {
         var used = templateBinding.names.indexOf(key) != -1;
+        var value = used ? objectBinding[key].getter(object) : null;
+
         items.push({
           name: key,
-          value: used ? valueToString(objectBinding[key].getter(object)) : null,
+          value: valueToString(value),
           used: used,
+          nestedView: Boolean(value && value[inspectBasisTemplateMarker]),
           loc: objectBinding[key].loc
         });
       }

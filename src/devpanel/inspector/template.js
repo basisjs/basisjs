@@ -39,11 +39,14 @@ function pickHandler(event){
     return;
   }
 
-  var template = pickupTarget.value ? inspectBasisTemplate.resolveTemplateById(pickupTarget.value) : null;
+  var templateId = pickupTarget.value;
+  var template = templateId ? inspectBasisTemplate.resolveTemplateById(templateId) : null;
 
   if (template)
   {
     var source = template.source;
+
+    endInspect();
 
     if (source.url)
     {
@@ -53,7 +56,7 @@ function pickHandler(event){
         basisjsTools.openFile(source.url);
       else
       {
-        templateInfo.set(inspectBasisTemplate.resolveObjectById(pickupTarget.value).element);
+        templateInfo.set(inspectBasisTemplate.resolveObjectById(templateId).element);
         transport.sendData('pickTemplate', {
           filename: source.url
         });
@@ -61,13 +64,12 @@ function pickHandler(event){
     }
     else
     {
-      templateInfo.set(inspectBasisTemplate.resolveObjectById(pickupTarget.value).element);
+      templateInfo.set(inspectBasisTemplate.resolveObjectById(templateId).element);
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
       });
     }
 
-    endInspect();
   }
 }
 

@@ -1,12 +1,15 @@
 <b:style src="./element.css"/>
 <b:isolate/>
+<b:define name="binding" type="bool"/>
+<b:define name="matchBinding" type="bool"/>
 
 <div class="element">
-  &lt;{name}<!--{attributes}-->&gt;
-  <span b:hide="{singleton}">
-    <div{childNodesElement} b:show="{childCount}" class="childNodes {inline}"/>
-    <span b:show="{childrenHidden}" class="childrenHidden">&hellip;</span>
-    &lt;/{name}&gt;
+  <span class="{binding} {matchBinding} {nestedView}" event-click="inspect" event-mouseenter="enter" event-mouseleave="leave">
+    &lt;{name}<!--{attributes}-->&gt;
+    <span b:hide="{singleton}">
+      <div{childNodesElement} b:show="{childCount}" class="childNodes {inline}"/>
+      <span b:show="{childrenHidden}" class="childrenHidden">&hellip;</span>
+      &lt;/{name}&gt;
+    </span>
   </span>
-
 </div>

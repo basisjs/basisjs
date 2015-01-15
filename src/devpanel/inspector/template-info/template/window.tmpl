@@ -2,7 +2,7 @@
 <b:isolate/>
 <b:define name="upName" type="bool"/>
 
-<div class="window__wrapper" event-click="close">
+<div class="window__wrapper" event-click="close" event-mousedown="stop-propagation prevent-default">
   <div{ddelement|ddtrigger} class="window" event-click="stop-propagation">
     <div class="window__inner">
       <div class="bindings">
