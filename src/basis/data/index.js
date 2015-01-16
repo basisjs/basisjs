@@ -1124,13 +1124,13 @@
     },
 
     destroy: function(){
-      this.keyMap.destroy();
-      this.keyMap = null;
-
       for (var indexName in this.indexes)
         this.removeIndex(indexName);
 
       MapFilter.prototype.destroy.call(this);
+
+      this.keyMap.destroy();
+      this.keyMap = null;
 
       this.timer_ = basis.clearImmediate(this.timer_);
       this.calcs = null;
