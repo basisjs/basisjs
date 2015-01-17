@@ -90,7 +90,7 @@
         rule: 'data.id % 2',
         childClass: {
           binding: {
-            title: basis.getter('data.id', { 0: 'even', 1: 'odd' })
+            title: basis.getter('data.id').as(['even', 'odd'])
           }
         }
       },

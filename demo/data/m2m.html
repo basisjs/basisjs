@@ -41,6 +41,10 @@
     {
       height: 2em;
     }
+    .relatedHidden
+    {
+      visibility: hidden;
+    }
 
     .Basis-ButtonPanel
     {
@@ -201,193 +205,148 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.dom');
-    basis.require('basis.dom.event');
-    basis.require('basis.cssom');
-    basis.require('basis.entity');
-    basis.require('basis.ui');
-    basis.require('basis.ui.tree');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.field');
+    var nsEntity = basis.require('basis.entity');
+    var Value = basis.require('basis.data').Value;
+    var KeyObjectMap = basis.require('basis.data').KeyObjectMap;
+    var sum = basis.require('basis.data.index').sum;
+    var Split = basis.require('basis.data.dataset').Split;
+    var MapFilter = basis.require('basis.data.dataset').MapFilter;
+    var UINode = basis.require('basis.ui').Node;
+    var nsTree = basis.require('basis.ui.tree');
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var MatchInput = basis.require('basis.ui.field').MatchInput;
 
-    var Class = basis.Class;
-    var DOM = basis.dom;
-    var Event = basis.dom.event;
+    var cssom = basis.require('basis.cssom');
 
-    var nsEntity = basis.entity;
-    var nsUI = basis.ui;
-    var nsTree = basis.ui.tree;
-    var nsButton = basis.ui.button;
 
-    var cssom = basis.cssom;
-    var classList = basis.cssom.classList;
-    
-    // Определяем типы данных
-    var Field = new nsEntity.EntityType({
-      name: 'Field',
-      fields: {
-        FieldId: nsEntity.IntId,
-        Title: String
-      }
+    // Define data types
+    var Field = nsEntity.createType('Field', {
+      FieldId: nsEntity.IntId,
+      Title: String
     });
 
-    var Word = new nsEntity.EntityType({
-      name: 'Word',
-      fields: {
-        WordId: nsEntity.IntId,
-        Title: String,
-        Freq: Number
-      }
+    var Word = nsEntity.createType('Word', {
+      WordId: nsEntity.IntId,
+      Title: String,
+      Freq: Number
     });
 
-    var Link = new nsEntity.EntityType({
-      name: 'Link',
-      fields: {
-        FieldId: nsEntity.NumberId,
-        WordId: nsEntity.NumberId
-      }
+    var Link = nsEntity.createType('Link', {
+      FieldId: nsEntity.NumberId,
+      WordId: nsEntity.NumberId
     });
 
-    var linkByField = new basis.data.dataset.Split({
-      source: Link.all,
-      rule: 'data.FieldId'
-    });
 
+    // Generate test data
     var words = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.'.toLowerCase().split(/[^a-z]+/);
 
-    // Генерируем тестовый набор данных.
-    for (var i = 0; i < 10; i++)
-    {
-      Field({
+    Field.all.sync(basis.array.create(10, function(i){
+      return {
         FieldId: i,
         Title: 'Field #' + i
-      });
+      };
+    }));
 
-      Word({
+    Word.all.sync(basis.array.create(10, function(i){
+      return {
         WordId: i,
         Title: words[i],
         Freq: (i * 123) % 5
-      });
-    }
+      };
+    }));
 
-    for (var i = 0; i < 25; i++)
-    {
-      var fieldId = parseInt((i * 2347.56) % Field.all.itemCount, 10);
-      var wordId = parseInt((i * 7263.23) % Word.all.itemCount, 10);
-      Link({
-        FieldId: fieldId,
-        WordId: wordId
-      });
-    }
+    Link.all.sync(basis.array.create(25, function(i){
+      return {
+        FieldId: parseInt((i * 2347.56) % Field.all.itemCount, 10),
+        WordId: parseInt((i * 7263.23) % Word.all.itemCount, 10)
+      };
+    }));
+
+    var linkByField = new Split({
+      source: Link.all,
+      rule: 'data.FieldId'
+    });
+    var wordsByLink = new KeyObjectMap({
+      create: function(link){
+        return new MapFilter({
+          source: Value.from(link, 'update', function(link){
+            return linkByField.getSubset(link.data.FieldId, true);
+          }),
+          map: function(link){
+            return Word.get(link.data.WordId);
+          }
+        });
+      }
+    });
+
 
     //
-    // Интерфейс
+    // Interface
     //
 
-    // Главное дерево - список полей
+    // Main tree: field tree
     var masterTree = new nsTree.Tree({
       template: '<b:include src="basis.ui.tree.Tree" id="MasterTree">',
 
       dataSource: Field.all,
 
-      // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
-      sorting: basis.getter('data.Title'),
-
-      // Определяем класс для дочерних узлов
+      sorting: 'data.Title',
       childClass: nsTree.Folder.subclass({
-        template: 
-          '<b:style src="../../src/basis/ui/templates/tree/Node.css"/>' +
-          '<b:style src="../../src/basis/ui/templates/tree/Folder.css"/>' +
-          '<b:style src="../../src/basis/ui/templates/tree/Node_Expander.css"/>' +
+        dataSource: Value.factory('update', function(node){
+          return linkByField.getSubset(node.data.FieldId, true);
+        }),
+
+        template:
+          '<b:style src="basis:ui/templates/tree/Node.css"/>' +
+          '<b:style src="basis:ui/templates/tree/Folder.css"/>' +
+          '<b:style src="basis:ui/templates/tree/Node_Expander.css"/>' +
           '<li class="Basis-TreeNode {hasChildren} {selected}" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
               '<div class="Basis-TreeNode_Expander Basis-TreeNode_Expander__{collapsed}" event-click="toggle"/>' +
               '<span class="Basis-TreeNode-Caption">{title}<span class="count">(Word count: {childCount}, Frequency: {freqSum})</span></span>' +
-            '</div>' + 
-            '<div{childNodesElement} class="Basis-TreeNode-Content Basis-TreeNode-Content__{collapsed}">' + 
+            '</div>' +
+            '<div{childNodesElement} class="Basis-TreeNode-Content Basis-TreeNode-Content__{collapsed}">' +
               '<span class="emptyLabel">No words</span>' +
             '</div>' +
           '</li>',
 
-        freqSum: 0,
         binding: {
           title: 'data:Title',
-          freqSum: 'freqSum'
-        },
-        sorting: function(node){
-          return Word.get(node.data.WordId).data.Title;
-        },
-        handler: {
-          childNodesModified: function(node, delta){
-            // calculate frequency delta sum
-            var deltaSum = 0;
-            var array;
-
-            if (array = delta.inserted)
-              for (var i = 0; i < array.length; i++)
-                deltaSum += Word.get(array[i].data.WordId).data.Freq;
-
-            if (array = delta.deleted)
-              for (var i = 0; i < array.length; i++)
-                deltaSum -= Word.get(array[i].data.WordId).data.Freq;
-
-            if (deltaSum)
-            {
-              this.freqSum += deltaSum;
-              this.updateBind('freqSum');
+          freqSum: {
+            events: 'update',
+            getter: function(node){
+              return sum(wordsByLink.resolve(node.target), 'update', 'data.Freq');
             }
           }
         },
-        init: function(){
-          nsTree.Folder.prototype.init.call(this);
-          this.setDataSource(linkByField.getSubset(this.data.FieldId, true));
-        },
 
-        childFactory: basis.ui.Node.prototype.childFactory,
-        childClass: nsUI.Node.subclass({
+        sorting: function(node){
+          return Word.get(node.data.WordId).data.Title;
+        },
+        childFactory: UINode.prototype.childFactory,
+        childClass: UINode.subclass({
           template:
             '<div class="Field-WordLink">' +
-              '<!--{word}-->' +
+              '<span class="Field-WordLink-Title">{title}</span>' +
               '<span class="Field-WordLink-DeleteButton" event-click="delete">x</span>' +
             '</div>',
 
           binding: {
-            word: 'satellite:'
+            title: function(node){
+              return Value.from(Word.getSlot(node.data.WordId), 'update', 'data.Title');
+            }
           },
 
           action: {
             delete: function(){
               this.target.destroy();
             }
-          },
-
-          satellite: {
-            word: {
-              delegate: basis.getter('data.WordId', Word),
-              satelliteClass: nsUI.Node.subclass({
-                template:
-                  '<span class="Field-WordLink-Title">{title}</span>',
-
-                binding: {
-                  title: 'data:Title'
-                }
-              })
-            }
           }
         })
-      }),
-
-      // Задаем обработчик на событие изменения выборки (Selection).
-      selection: {
-        handler: {
-          itemsChanged: function(){
-            relatedTree.setDelegate(this.pick());
-          }
-        }
-      }
+      })
     });
 
-    var masterButtonPanel = new basis.ui.button.ButtonPanel({
+    var masterButtonPanel = new ButtonPanel({
       childNodes: [
         {
           caption: 'Expand all',
@@ -417,36 +376,34 @@
       ]
     });
 
-    // Зависимый список - список слов
+    // Related list - word list
     var relatedTree = new nsTree.Tree({
       template: '<b:include src="basis.ui.tree.Tree" id="RelatedTree">',
 
-      emit_targetChanged: function(delta){
-        nsTree.Tree.prototype.emit_targetChanged.call(this, delta);
+      delegate: Value.from(masterTree.selection, 'itemsChanged', 'pick()'),
+      dataSource: function(node){
+        var map = new MapFilter({
+          source: Word.all
+        });
 
-        cssom.visibility(this.element.parentNode, !!this.target);
+        Value.from(node, 'update', function(node){
+          var fieldId = node.data.FieldId;
+          if (fieldId)
+            return function(object){
+              return Link.getSlot({
+                FieldId: fieldId,
+                WordId: object.data.WordId
+              });
+            };
+        }).link(map, map.setMap);
 
-        if (this.target)
-        {
-          var fieldId = this.data.FieldId;
-          this.dataSource.setMap(function(object){
-            return Link.getSlot({
-              FieldId: fieldId,
-              WordId: object.data.WordId
-            });
-          });
-        }
+        return map;
       },
-
-      // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
-      sorting: function(node){
-        return node.satellite.word.data.Title;
+      sorting: function(child){
+        return child.satellite.word.data.Title;
       },
-      dataSource: new basis.data.dataset.MapFilter({
-        source: Word.all
-      }),
-      childClass: nsUI.Node.subclass({
-        template: 
+      childClass: UINode.subclass({
+        template:
           '<li class="{checked}" event-click="toggle">' +
             '<input type="checkbox" checked="{checked}"/>' +
             '<!--{word}-->' +
@@ -457,7 +414,7 @@
           checked: {
             events: 'targetChanged',
             getter: function(node){
-              return node.target ? 'checked' : '';
+              return Boolean(node.target);
             }
           }
         },
@@ -472,8 +429,8 @@
         },
         satellite: {
           word: {
-            delegate: basis.getter('data.WordId', Word),
-            satelliteClass: nsUI.Node.subclass({
+            delegate: basis.getter('data.WordId').as(Word),
+            satelliteClass: UINode.subclass({
               template:
                 '<span>' +
                    '{title} ' +
@@ -490,13 +447,13 @@
       })
     });
 
-    var relatedButtonPanel = new basis.ui.button.ButtonPanel({
+    var relatedButtonPanel = new ButtonPanel({
       childNodes: [
         {
           caption: 'Check all',
           groupId: 1,
           click: function(){
-            relatedTree.dataSource.getItems().forEach(function(item){
+            relatedTree.dataSource.forEach(function(item){
               if (!item.target)
                 Link(item.data);
             });
@@ -506,7 +463,7 @@
           caption: 'Uncheck all',
           groupId: 1,
           click: function(){
-            linkByField.getSubset(relatedTree.data.FieldId).getItems().forEach(function(item){
+            linkByField.getSubset(relatedTree.data.FieldId).forEach(function(item){
               item.destroy();
             });
           }
@@ -526,50 +483,62 @@
       ]
     });
 
-    // Вставляем компоненты в документ
-    DOM.insert('demo-container', [
-      DOM.createElement('.ListContainer',
-        masterButtonPanel.element,
-        masterTree.element
-      ),
-      DOM.createElement(
-        {
-          description: '#relatedTreeContainer.ListContainer',
-          css: {
-            visibility: 'hidden'
-          }
-        },
-        relatedButtonPanel.element,
-        new basis.ui.field.MatchInput({
+    // Main view
+    var demoView = new UINode({
+      container: document.getElementById('demo-container'),
+      template:
+        '<div>' +
+          '<div class="ListContainer">' +
+            '<!--{masterButtonPanel}-->' +
+            '<!--{masterTree}-->' +
+          '</div>' +
+          '<div id="relatedTreeContainer" class="ListContainer {relatedHidden}">' +
+            '<!--{relatedButtonPanel}-->' +
+            '<!--{filter}-->' +
+            '<!--{relatedTree}-->' +
+          '</div>' +
+          '<div class="ListContainer">' +
+            '<div class="debug">' +
+              'Debug for (list of links)' +
+            '</div>' +
+            '<!--{links}-->' +
+          '</div>' +
+        '</div>',
+      binding: {
+        masterButtonPanel: masterButtonPanel,
+        masterTree: masterTree,
+        relatedButtonPanel: relatedButtonPanel,
+        filter: new MatchInput({
           matchFilter: {
             node: relatedTree,
             textNodeGetter: basis.getter('satellite.word.tmpl.title')
           }
-        }).element,
-        relatedTree.element
-      ),
-      DOM.createElement('.ListContainer',
-        DOM.createElement('DIV.debug', 'Debug for (list of links)'),
+        }),
+        relatedTree: relatedTree,
+        relatedHidden: Value.from(relatedTree, 'targetChanged', function(relatedTree){
+          return !relatedTree.target;
+        }),
 
-        // NOTE: для отладки - список всех связей
-        new nsTree.Tree({
+        // debug for - all links list
+        links: new nsTree.Tree({
           dataSource: Link.all,
-          sorting: basis.getter('data.FieldId'),
-
-          // Определяем класс для дочерних узлов (описан выше)
+          sorting: 'data.FieldId',
           childClass: {
             binding: {
               title: function(node){
                 var field = Field.get(node.data.FieldId);
                 var property = Word.get(node.data.WordId);
-                return (field ? field.data.Title : '[no field]') + ' <-> ' + (property ? property.data.Title : '[no property]');
+                return (
+                  (field ? field.data.Title : '[no field]') +
+                  ' <-> ' +
+                  (property ? property.data.Title : '[no property]')
+                );
               }
             }
           }
-        }).element
-      )/*,
-      groupsTree.element*/
-    ]);
+        })
+      }
+    });
 
   </script>  
 </body>

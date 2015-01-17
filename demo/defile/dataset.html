@@ -356,7 +356,7 @@
     new DatasetViewer({
       title: 'MapFilter for dataset A: NUMBERS -> WORDS',
       dataSource: new nsDataset.MapFilter({
-        map: basis.getter('data.value - 1', data2),
+        map: basis.getter('data.value - 1').as(data2),
         source: A
       })
     });
@@ -372,7 +372,7 @@
     new DatasetViewer({
       title: 'Split data A: ODD and EVEN',
       dataSource: new nsDataset.Split({
-        rule: basis.getter('data.value % 2 ? "odd" : "even"'),
+        rule: basis.getter('data.value % 2').as(['even', 'odd']),
         source: A
       }),
       childClass: UINode.subclass({
