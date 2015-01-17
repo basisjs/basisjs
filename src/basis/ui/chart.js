@@ -635,8 +635,12 @@
         var tw;
         for (var i = 0; i <= partCount; i++)
         {
-          valueLabels[i] = basis.number.group(Math.round(minValue + gridPart * i));
+          var text = String(basis.number.group(Math.round(minValue + gridPart * i)));
           tw = context.measureText(valueLabels[i]).width;
+          valueLabels[i] = {
+            text: text,
+            width: tw
+          };
 
           if (tw > maxValueTextWidth)
             maxValueTextWidth = tw;
@@ -672,8 +676,8 @@
       var lastXLabelWidth = 0;
       if (this.showXLabels)
       {
-        firstXLabelWidth = xLabels[0].width + 12; // 12 = padding + border
-        lastXLabelWidth = xLabels[(this.invertAxis ? partCount : keysCount) - 1].width + 12;
+        firstXLabelWidth = keyLabels[0].width + 12; // 12 = padding + border
+        lastXLabelWidth = keyLabels[(this.invertAxis ? partCount : keysCount) - 1].width + 12;
       }
 
       var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxKeyTextWidth;
@@ -804,7 +808,7 @@
           skipLabel = skipYLabelCount && (i % (skipYLabelCount + 1) != 0);
 
           if (!skipLabel)
-            context.fillText(label, LEFT - 6, labelY + 2.5);
+            context.fillText(label.text, LEFT - 6, labelY + 2.5);
 
           if (this.showScale && (!skipLabel || !skipScale))
           {
@@ -1686,9 +1690,6 @@
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
       var context = this.context;
-
-      //var values = seria.getValues(keys);
-      //var color = seria.getColor();
 
       context.save();
       context.translate(left, top);
