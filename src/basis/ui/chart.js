@@ -1111,6 +1111,7 @@
     },
 
     template: templates.ChartSelection,
+    ownerElement_: null,
 
     listen: {
       owner: {
@@ -1119,7 +1120,7 @@
           this.draw();
         },
         templateChanged: function(){
-          domEventUtils.addHandlers(this.owner.element, CHART_ELEMENT_HANDLER, this);
+          this.recalc();
         }
       }
     },
@@ -1152,6 +1153,15 @@
       {
         this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
         this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+
+        if (this.ownerElement_ != this.owner.element)
+        {
+          if (this.ownerElement_)
+            domEventUtils.removeHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+          this.ownerElement_ = this.owner.element && this.owner.element.nodeType == 1 ? this.owner.element : null;
+          if (this.ownerElement_)
+            domEventUtils.addHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+        }
       }
 
       this.clientRect = this.owner.clientRect;
@@ -1207,6 +1217,16 @@
       }
 
       this.context.restore();
+    },
+
+    destroy: function(){
+      AbstractCanvas.prototype.call(this);
+
+      if (this.ownerElement_)
+      {
+        domEventUtils.removeHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+        this.ownerElement_ = null;
+      }
     }
   });
 
