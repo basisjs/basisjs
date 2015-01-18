@@ -100,7 +100,7 @@
     * @return {function(basis.event.Emitter)}
     */
     factory: function(events, property){
-      return Value.factory(events, basis.getter(property, STATE.from));
+      return Value.factory(events, basis.getter(property).as(STATE.from));
     },
 
    /**
