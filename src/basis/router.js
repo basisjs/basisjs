@@ -209,11 +209,11 @@
 
         if (match)
         {
-          match = arrayFrom(match, 1);
-          matched[path] = match;
-
           if (!matched[path])
             inserted.push(route);
+
+          match = arrayFrom(match, 1);
+          matched[path] = match;
         }
         else
         {
