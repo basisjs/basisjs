@@ -2,31 +2,30 @@ module.exports = {
   name: 'basis.entity',
 
   init: function(){
-    basis.require('basis.data');
-    basis.require('basis.entity');
+    var nsData = basis.require('basis.data');
+    var nsEntity = basis.require('basis.entity');
+    var basisEvents = basis.require('basis.event').events;
+    var Filter = basis.require('basis.data.dataset').Filter;
 
     (function(){
-      var init_ = basis.entity.BaseEntity.prototype.init;
-      basis.entity.BaseEntity.prototype.init = function(){
+      var init_ = nsEntity.BaseEntity.prototype.init;
+      nsEntity.BaseEntity.prototype.init = function(){
         this.history_ = [];
         this.historyAll_ = [];
         init_.apply(this, arguments);
       };
 
-      basis.entity.BaseEntity.prototype.emit_update = function(delta){
+      nsEntity.BaseEntity.prototype.emit_update = function(delta){
         this.history_.push(delta);
         this.historyAll_.push(['update'].concat([this].concat(basis.array.from(arguments))));
-        basis.event.events.update.call(this, delta);
+        basisEvents.update.call(this, delta);
       };
 
-      basis.entity.BaseEntity.prototype.emit_rollbackUpdate = function(delta){
+      nsEntity.BaseEntity.prototype.emit_rollbackUpdate = function(delta){
         this.historyAll_.push(['rollbackUpdate'].concat([this].concat(basis.array.from(arguments))));
-        basis.event.events.rollbackUpdate.call(this, delta);
+        basisEvents.rollbackUpdate.call(this, delta);
       };
     })();
-
-    var nsData = basis.data;
-    var nsEntity = basis.entity;
 
     function resetHistory(obj){
       obj.history_ = [];
@@ -58,39 +57,39 @@ module.exports = {
         {
           name: 'simple create',
           test: function(){
-            var EntityType = new nsEntity.EntityType({
+            var EntityType = nsEntity.createType({
               fields: {
                 id: Number,
                 value: String
               }
             });
 
-            this.is(true, EntityType.all !== null);
-            this.is(true, EntityType.all instanceof nsData.ReadOnlyDataset);
+            assert(EntityType.all !== null);
+            assert(EntityType.all instanceof nsData.ReadOnlyDataset);
 
             var entityA = EntityType();
-            this.is(undefined, entityA);
-            this.is(0, EntityType.all.itemCount);
+            assert(entityA === undefined);
+            assert(EntityType.all.itemCount === 0);
 
             var entityB = EntityType({});
-            this.is(true, entityB !== null);
-            this.is(1, EntityType.all.itemCount);
-            this.is({ id: 0, value: '' }, entityB.data);
+            assert(entityB !== null);
+            assert(EntityType.all.itemCount === 1);
+            assert.deep({ id: 0, value: '' }, entityB.data);
 
             var entityC = EntityType({ id: '1', value: 'test' });
-            this.is(2, EntityType.all.itemCount);
-            this.is({ id: 1, value: 'test' }, entityC.data);
+            assert(EntityType.all.itemCount === 2);
+            assert.deep({ id: 1, value: 'test' }, entityC.data);
 
             var entityD = EntityType({ id: '1', value: 'test' });
-            this.is(3, EntityType.all.itemCount);
-            this.is(true, entityD != entityC);
-            this.is({ id: 1, value: 'test' }, entityD.data);
+            assert(EntityType.all.itemCount === 3);
+            assert(entityD != entityC);
+            assert.deep({ id: 1, value: 'test' }, entityD.data);
           }
         },
         {
           name: 'resolving by id',
           test: function(){
-            var Type = new nsEntity.createType(basis.genUID(), {
+            var Type = nsEntity.createType(basis.genUID(), {
               id: nsEntity.IntId
             });
 
@@ -119,10 +118,10 @@ module.exports = {
         {
           name: 'resolving by entity instance',
           test: function(){
-            var Type = new nsEntity.createType(basis.genUID(), {
+            var Type = nsEntity.createType(basis.genUID(), {
               id: nsEntity.IntId
             });
-            var Type2 = new nsEntity.createType(basis.genUID(), {
+            var Type2 = nsEntity.createType(basis.genUID(), {
               id: nsEntity.IntId
             });
 
@@ -258,11 +257,15 @@ module.exports = {
         {
           name: 'calc',
           test: function(){
-            var Type = basis.entity.createType(null, {
+            var Type = nsEntity.createType(null, {
               a: String,
               b: Number,
-              c: basis.entity.calc('a', 'b', function(a, b){ return a + b; }),
-              d: basis.entity.calc('b', 'c', function(a, b){ return a + b; })
+              c: nsEntity.calc('a', 'b', function(a, b){
+                return a + b;
+              }),
+              d: nsEntity.calc('b', 'c', function(a, b){
+                return a + b;
+              })
             });
 
             // calc values should be computed even if empty config
@@ -280,61 +283,109 @@ module.exports = {
         },
         {
           name: 'default values',
-          test: function(){
-            var Type = basis.entity.createType(null, {
-              a: {
-                type: Number,
-                defValue: 1
-              },
-              b: {
-                defValue: 'default'
-              },
-              c: {
-                defValue: function(initData){
-                  if ('a' in initData && 'b' in initData)
-                    return initData.a + initData.b;
-                  else
-                    return 'default';
-                }
-              },
-              calcWithDefault: {
-                defValue: 777,
-                calc: basis.entity.calc('a', function(a){ return a * 5; })
+          test: [
+            {
+              name: 'base behaviour',
+              test: function(){
+                var Type = nsEntity.createType(null, {
+                  a: {
+                    type: Number,
+                    defValue: 1
+                  },
+                  b: {
+                    defValue: 'default'
+                  },
+                  c: {
+                    defValue: function(initData){
+                      if ('a' in initData && 'b' in initData)
+                        return initData.a + initData.b;
+                      else
+                        return 'default';
+                    }
+                  },
+                  calcWithDefault: {
+                    defValue: 777,
+                    calc: nsEntity.calc('a', function(a){
+                      return a * 5;
+                    })
+                  }
+                });
+
+                // #1 - defaults only
+                var entity = Type({});
+                this.is({ a: 1, b: 'default', c: 'default', calcWithDefault: 5 }, entity.data);
+
+                // #2 - set all values
+                var entity = Type({ a: 2, b: 3, c: 4, calcWithDefault: 5 });
+                this.is({ a: 2, b: 3, c: 4, calcWithDefault: 10 }, entity.data);
+
+                // #3
+                var entity = Type({ a: 2 });
+                this.is({ a: 2, b: 'default', c: 'default', calcWithDefault: 10 }, entity.data);
+
+                // #4
+                var entity = Type({ a: 2, b: 3 });
+                this.is({ a: 2, b: 3, c: 5, calcWithDefault: 10 }, entity.data);
               }
-            });
+            },
+            {
+              name: 'defValue function should be invoked only when no key in init data',
+              test: function(){
+                var callCount = 0;
+                var Type = nsEntity.createType(null, {
+                  a: {
+                    defValue: function(initData){
+                      callCount++;
+                    }
+                  }
+                });
 
-            // #1 - defaults only
-            var entity = Type({});
-            this.is({ a: 1, b: 'default', c: 'default', calcWithDefault: 5 }, entity.data);
-
-            // #2 - set all values
-            var entity = Type({ a: 2, b: 3, c: 4, calcWithDefault: 5 });
-            this.is({ a: 2, b: 3, c: 4, calcWithDefault: 10 }, entity.data);
-
-            // #3
-            var entity = Type({ a: 2 });
-            this.is({ a: 2, b: 'default', c: 'default', calcWithDefault: 10 }, entity.data);
-
-            // #4
-            var entity = Type({ a: 2, b: 3 });
-            this.is({ a: 2, b: 3, c: 5, calcWithDefault: 10 }, entity.data);
-
-            // =========================
-
-            var callCount = 0;
-            var Type2 = basis.entity.createType(null, {
-              a: {
-                defValue: function(initData){
-                  callCount++;
-                }
+                Type({});
+                assert(callCount == 1);
+                Type({ a: 123 });
+                assert(callCount == 1);
+                Type({ a: undefined });
+                assert(callCount == 1);
               }
-            });
+            },
+            {
+              name: 'default value should be passed through field wrapper',
+              test: function(){
+                var fooCount = 0;
+                var barCount = 0;
+                var Type = nsEntity.createType(null, {
+                  foo: {
+                    type: function(value){
+                      fooCount++;
+                      return Number(value);
+                    },
+                    defValue: '1'
+                  },
+                  bar: {
+                    type: function(value){
+                      barCount++;
+                      return Number(value);
+                    },
+                    defValue: function(){
+                      return '1';
+                    }
+                  }
+                });
 
-            Type2({});
-            assert(callCount == 1);
-            Type2({ a: 123 });
-            assert(callCount == 1);
-          }
+                var instance = Type({});
+                assert(instance.data.foo === 1);
+                assert(instance.data.bar === 1);
+                assert(fooCount === 1);
+                assert(barCount === 1);
+
+                var instance = Type({});
+                assert(instance.data.foo === 1);
+                assert(instance.data.bar === 1);
+                assert(fooCount === 2);
+                assert(barCount === 2);
+              }
+            }
+          ]
         }
       ]
     },
@@ -1117,8 +1168,8 @@ module.exports = {
         {
           name: 'rollback custom fields',
           test: function(){
-            var Type = basis.entity.createType(null, {
-              id: basis.entity.StringId,
+            var Type = nsEntity.createType(null, {
+              id: nsEntity.StringId,
               a: String,
               b: Number,
               c: Number
@@ -1167,13 +1218,13 @@ module.exports = {
         {
           name: 'rollback custom calc fields',
           test: function(){
-            var Type = basis.entity.createType(null, {
-              id: basis.entity.StringId,
+            var Type = nsEntity.createType(null, {
+              id: nsEntity.StringId,
               a: String,
               b: Number,
-              c: basis.entity.calc('a', 'b', function(a, b){ return a + b; }),
-              d: basis.entity.calc('b', 'c', function(a, b){ return a + b; }),
-              e: basis.entity.calc('d', 'c', function(){ return 1; })
+              c: nsEntity.calc('a', 'b', function(a, b){ return a + b; }),
+              d: nsEntity.calc('b', 'c', function(a, b){ return a + b; }),
+              e: nsEntity.calc('d', 'c', function(){ return 1; })
             });
 
             // #1 - calc depends on fields only
@@ -1223,9 +1274,9 @@ module.exports = {
         {
           name: 'test #1',
           test: function(){
-            var index = new basis.entity.Index();
-            var t = basis.entity.createType(null, {
-              x: basis.entity.IntId,
+            var index = new nsEntity.Index();
+            var t = nsEntity.createType(null, {
+              x: nsEntity.IntId,
               y: { type: Number, index: index }
             });
 
@@ -1250,8 +1301,8 @@ module.exports = {
         {
           name: 'test #1',
           test: function(){
-            var index = new basis.entity.Index();
-            var t = basis.entity.createType(null, {
+            var index = new nsEntity.Index();
+            var t = nsEntity.createType(null, {
               id: { type: Number, index: index }
             });
 
@@ -1263,11 +1314,11 @@ module.exports = {
         {
           name: 'named indexes',
           test: function(){
-            var index = new basis.entity.Index();
-            var t1 = basis.entity.createType(null, {
+            var index = new nsEntity.Index();
+            var t1 = nsEntity.createType(null, {
               id: { type: Number, index: 'test_1' }
             });
-            var t2 = basis.entity.createType(null, {
+            var t2 = nsEntity.createType(null, {
               id: { type: Number, index: 'test_1' }
             });
 
@@ -1297,8 +1348,8 @@ module.exports = {
                 {
                   name: 'use name after type declared',
                   test: function(){
-                    var Type1 = basis.entity.createType('fieldTypeTest-declaredTypeName', { value: Number });
-                    var Type2 = basis.entity.createType(null, { nested: 'fieldTypeTest-declaredTypeName' });
+                    var Type1 = nsEntity.createType('fieldTypeTest-declaredTypeName', { value: Number });
+                    var Type2 = nsEntity.createType(null, { nested: 'fieldTypeTest-declaredTypeName' });
                     var instance = Type2({ nested: { value: 123 } });
 
                     assert(typeof instance.data.nested != 'undefined');
@@ -1308,8 +1359,8 @@ module.exports = {
                 {
                   name: 'use name before type declared',
                   test: function(){
-                    var Type1 = basis.entity.createType(null, { nested: 'fieldTypeTest-nonDeclaredTypeName' });
-                    var Type2 = basis.entity.createType('fieldTypeTest-nonDeclaredTypeName', { value: Number });
+                    var Type1 = nsEntity.createType(null, { nested: 'fieldTypeTest-nonDeclaredTypeName' });
+                    var Type2 = nsEntity.createType('fieldTypeTest-nonDeclaredTypeName', { value: Number });
                     var instance = Type1({ nested: { value: 123 } });
 
                     assert(typeof instance.data.nested != 'undefined');
@@ -1324,9 +1375,9 @@ module.exports = {
                 {
                   name: 'use name after type declared',
                   test: function(){
-                    var Type1 = basis.entity.createType(null, { value: Number });
-                    var SetType1 = basis.entity.createSetType('fieldSetTypeTest-declaredTypeName', Type1);
-                    var Type2 = basis.entity.createType(null, { items: 'fieldSetTypeTest-declaredTypeName' });
+                    var Type1 = nsEntity.createType(null, { value: Number });
+                    var SetType1 = nsEntity.createSetType('fieldSetTypeTest-declaredTypeName', Type1);
+                    var Type2 = nsEntity.createType(null, { items: 'fieldSetTypeTest-declaredTypeName' });
                     var instance = Type2({ items: [{ value: 123 }] });
 
                     assert(typeof instance.data.items != 'undefined');
@@ -1337,9 +1388,9 @@ module.exports = {
                 {
                   name: 'use name before type declared',
                   test: function(){
-                    var Type1 = basis.entity.createType(null, { value: Number });
-                    var Type2 = basis.entity.createType(null, { items: 'fieldSetTypeTest-nonDeclaredTypeName' });
-                    var SetType1 = basis.entity.createSetType('fieldSetTypeTest-nonDeclaredTypeName', Type1);
+                    var Type1 = nsEntity.createType(null, { value: Number });
+                    var Type2 = nsEntity.createType(null, { items: 'fieldSetTypeTest-nonDeclaredTypeName' });
+                    var SetType1 = nsEntity.createSetType('fieldSetTypeTest-nonDeclaredTypeName', Type1);
                     var instance = Type2({ items: [{ value: 123 }] });
 
                     assert(typeof instance.data.items != 'undefined');
@@ -1357,7 +1408,7 @@ module.exports = {
             {
               name: 'undefined by default',
               test: function(){
-                var T = basis.entity.createType({
+                var T = nsEntity.createType({
                   fields: {
                     array: Array
                   }
@@ -1374,7 +1425,7 @@ module.exports = {
                 var b = [1, 2, 3];
                 var c = [4, 5, 6];
 
-                var T = basis.entity.createType({
+                var T = nsEntity.createType({
                   fields: {
                     array: Array
                   }
@@ -1410,7 +1461,7 @@ module.exports = {
               test: function(){
                 var a = [1, 2, 3];
 
-                var T = basis.entity.createType({
+                var T = nsEntity.createType({
                   fields: {
                     array: Array
                   }
@@ -1455,7 +1506,7 @@ module.exports = {
                 var b = [1, 2, 3];
                 var c = [4, 5, 6];
 
-                var T = basis.entity.createType({
+                var T = nsEntity.createType({
                   fields: {
                     array: Array
                   }
@@ -1482,7 +1533,7 @@ module.exports = {
                 var a = [1, 2, 3];
                 var b = [1, 2, 3];
 
-                var T = basis.entity.createType({
+                var T = nsEntity.createType({
                   fields: {
                     array: Array
                   }
@@ -1510,7 +1561,7 @@ module.exports = {
                 {
                   name: 'if no defValue get first variant as default',
                   test: function(){
-                    var T = basis.entity.createType({
+                    var T = nsEntity.createType({
                       fields: {
                         enum: ['a', 'b']
                       }
@@ -1523,7 +1574,7 @@ module.exports = {
                 {
                   name: 'take in account defValue as default value',
                   test: function(){
-                    var T = basis.entity.createType({
+                    var T = nsEntity.createType({
                       fields: {
                         enum: {
                           type: ['a', 'b'],
@@ -1539,7 +1590,7 @@ module.exports = {
                 {
                   name: 'ignore defValue if value not in the list',
                   test: function(){
-                    var T = basis.entity.createType({
+                    var T = nsEntity.createType({
                       fields: {
                         enum: {
                           type: ['a', 'b'],
@@ -1551,7 +1602,7 @@ module.exports = {
                     this.is('a', T({}).data.enum);
                     this.is('b', T({ enum: 'b' }).data.enum);
 
-                    var T2 = basis.entity.createType({
+                    var T2 = nsEntity.createType({
                       fields: {
                         enum: {
                           type: ['1', '2'],
@@ -1571,7 +1622,7 @@ module.exports = {
                 {
                   name: 'only value from list can be set',
                   test: function(){
-                    var T = basis.entity.createType({
+                    var T = nsEntity.createType({
                       fields: {
                         enum: ['a', 'b']
                       }
@@ -1589,7 +1640,7 @@ module.exports = {
                 {
                   name: 'should not coerce values',
                   test: function(){
-                    var T = basis.entity.createType({
+                    var T = nsEntity.createType({
                       fields: {
                         enum: ['1', '2']
                       }
@@ -1608,7 +1659,7 @@ module.exports = {
                   name: 'changes of source array should not affect values list',
                   test: function(){
                     var variants = ['a', 'b'];
-                    var T = basis.entity.createType({
+                    var T = nsEntity.createType({
                       fields: {
                         enum: variants
                       }
@@ -1635,7 +1686,7 @@ module.exports = {
             {
               name: 'one value treats as constant',
               test: function(){
-                var T = basis.entity.createType({
+                var T = nsEntity.createType({
                   fields: {
                     enum: ['value']
                   }
@@ -1657,8 +1708,8 @@ module.exports = {
         {
           name: 'no warnings about handler remove on destroy',
           test: function(){
-            var Type = basis.entity.createType();
-            var subset = new basis.data.dataset.Filter({ source: Type.all });
+            var Type = nsEntity.createType();
+            var subset = new Filter({ source: Type.all });
             var instance = Type({});
 
             assert(subset.itemCount == 1);
@@ -1672,8 +1723,8 @@ module.exports = {
         {
           name: 'no warnings on all.sync([])',
           test: function(){
-            var Type = basis.entity.createType();
-            var subset = new basis.data.dataset.Filter({ source: Type.all });
+            var Type = nsEntity.createType();
+            var subset = new Filter({ source: Type.all });
             var eventCount = 0;
 
             Type({});
@@ -1697,19 +1748,19 @@ module.exports = {
         {
           name: 'no warnings on subset sync',
           test: function(){
-            var Type = basis.entity.createType('TestType', {
-              id: basis.entity.IntId,
+            var Type = nsEntity.createType('TestType', {
+              id: nsEntity.IntId,
               group: Number
             });
 
-            var split = new basis.entity.Grouping({
+            var split = new nsEntity.Grouping({
               wrapper: Type,
               source: Type.all,
               rule: 'data.group'
             });
 
             var wrapper = split.getSubset(1, true);
-            var subset = new basis.data.dataset.Filter({
+            var subset = new Filter({
               source: wrapper
             });
 

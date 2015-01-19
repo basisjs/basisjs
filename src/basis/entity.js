@@ -42,13 +42,13 @@
 
   // buildin indexes
   var NumericId = function(value){
-    return isNaN(value) ? null : Number(value);
+    return value == null || isNaN(value) ? null : Number(value);
   };
   var NumberId = function(value){
-    return isNaN(value) ? null : Number(value);
+    return value == null || isNaN(value) ? null : Number(value);
   };
   var IntId = function(value){
-    return isNaN(value) ? null : parseInt(value, 10);
+    return value == null || isNaN(value) ? null : parseInt(value, 10);
   };
   var StringId = function(value){
     return value == null ? null : String(value);
@@ -686,14 +686,17 @@
       {
         var name = 'v' + obj.length;
         var fname = 'f' + obj.length;
-        var value = defaults[key];
+        var defValue = defaults[key];
 
         args.push(name, fname);
-        values.push(value, fields[key]);
-        obj.push('"' + key + '":' +
-          'has.call(data,"' + key + '")' +
-            '?' + fname + '(data["' + key + '"],' + name + ')' +
-            ':' + name + (typeof value == 'function' ? '(data)' : '')
+        values.push(defValue, fields[key]);
+        key = '"' + key.replace(/"/g, '\"') + '"';
+        obj.push(key + ':' +
+          fname + '(' +
+            'has.call(data,' + key + ')' +
+              '?' + 'data[' + key + ']' +
+              ':' + name + (typeof defValue == 'function' ? '(data)' : '') +
+            ')'
         );
       }
 
@@ -805,16 +808,18 @@
         }
         else
         {
+          var defaultValue;
           config.type = function(value, oldValue){
-            var exists = values.indexOf(value) != -1;
+            var exists = value === defaultValue || values.indexOf(value) != -1;
 
             /** @cut */ if (!exists)
             /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ' (new value ignored).\nVariants:', values, '\nIgnored value:', value);
 
-            return exists ? value : oldValue;
+            return exists ? value : oldValue === undefined ? defaultValue : oldValue;
           };
 
-          config.defValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
+          defaultValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
+          config.defValue = defaultValue;
         }
       }
 
