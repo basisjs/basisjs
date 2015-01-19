@@ -256,30 +256,71 @@ module.exports = {
         },
         {
           name: 'calc',
-          test: function(){
-            var Type = nsEntity.createType(null, {
-              a: String,
-              b: Number,
-              c: nsEntity.calc('a', 'b', function(a, b){
-                return a + b;
-              }),
-              d: nsEntity.calc('b', 'c', function(a, b){
-                return a + b;
-              })
-            });
+          test: [
+            {
+              name: 'base behaviour',
+              test: function(){
+                var Type = nsEntity.createType(null, {
+                  a: String,
+                  b: Number,
+                  c: nsEntity.calc('a', 'b', function(a, b){
+                    return a + b;
+                  }),
+                  d: nsEntity.calc('b', 'c', function(a, b){
+                    return a + b;
+                  })
+                });
 
-            // calc values should be computed even if empty config
-            var entity = Type({});
-            this.is({ a: '', b: 0, c: '0', d: '00' }, entity.data);
+                // calc values should be computed even if empty config
+                var entity = Type({});
+                this.is({ a: '', b: 0, c: '0', d: '00' }, entity.data);
 
-            // values for calc fields in config must be ignored
-            var entity = Type({ c: 'xxx' });
-            this.is({ a: '', b: 0, c: '0', d: '00' }, entity.data);
+                // values for calc fields in config must be ignored
+                var entity = Type({ c: 'xxx' });
+                this.is({ a: '', b: 0, c: '0', d: '00' }, entity.data);
 
-            // calc values should be computed
-            var entity = Type({ a: 'xxx' });
-            this.is({ a: 'xxx', b: 0, c: 'xxx0', d: '0xxx0' }, entity.data);
-          }
+                // calc values should be computed
+                var entity = Type({ a: 'xxx' });
+                this.is({ a: 'xxx', b: 0, c: 'xxx0', d: '0xxx0' }, entity.data);
+              }
+            },
+            {
+              name: 'should not warn when calc field not in init data',
+              test: function(){
+                var Type = nsEntity.createType(null, {
+                  foo: Number,
+                  bar: {
+                    calc: nsEntity.calc(function(){
+                      return 2;
+                    })
+                  }
+                });
+
+                assert(catchWarnings(function(){
+                  var instance = Type({ foo: 1 });
+                  assert.deep({ foo: 1, bar: 2 }, instance.data);
+                }) === false);
+              }
+            },
+            {
+              name: 'should warn when set value for calc field on init',
+              test: function(){
+                var Type = nsEntity.createType(null, {
+                  foo: Number,
+                  bar: {
+                    calc: nsEntity.calc(function(){
+                      return 2;
+                    })
+                  }
+                });
+
+                assert(catchWarnings(function(){
+                  var instance = Type({ foo: 1, bar: 3 });
+                  assert.deep({ foo: 1, bar: 2 }, instance.data);
+                }) !== false);
+              }
+            }
+          ]
         },
         {
           name: 'default values',

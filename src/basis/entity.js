@@ -675,26 +675,44 @@
     /** @cut */ basis.dev.warn('Calculate fields are readonly');
     return oldValue;
   };
+  /** @cut */ var warnCalcReadOnly = function(name){
+  /** @cut */   basis.dev.warn('basis.entity: Attempt to set value for `' + name + '` field was ignored as field is calc (read only)');
+  /** @cut */ };
 
-  function getDataBuilder(defaults, fields){
+  function getDataBuilder(defaults, fields, calcs){
     var args = ['has'];
     var values = [hasOwnProperty];
     var obj = [];
 
+    // warn on set value for calc field in dev mode
+    /** @cut */ args.push('warnCalcReadOnly');
+    /** @cut */ values.push(warnCalcReadOnly);
+
     for (var key in defaults)
       if (hasOwnProperty.call(defaults, key))
       {
+        var escapedKey = '"' + key.replace(/"/g, '\"') + '"';
+
+        if (hasOwnProperty.call(calcs, key))
+        {
+          // calcs are read only and always undefined by default
+          obj.push(escapedKey + ':' +
+            // warn on set value for calc field in dev mode
+            /** @cut */ 'has.call(data,' + escapedKey + ')' + '?' + 'warnCalcReadOnly(' + escapedKey + ')' + ':' +
+            'undefined');
+          continue;
+        }
+
         var name = 'v' + obj.length;
         var fname = 'f' + obj.length;
         var defValue = defaults[key];
 
         args.push(name, fname);
         values.push(defValue, fields[key]);
-        key = '"' + key.replace(/"/g, '\"') + '"';
-        obj.push(key + ':' +
+        obj.push(escapedKey + ':' +
           fname + '(' +
-            'has.call(data,' + key + ')' +
-              '?' + 'data[' + key + ']' +
+            'has.call(data,' + escapedKey + ')' +
+              '?' + 'data[' + escapedKey + ']' +
               ':' + name + (typeof defValue == 'function' ? '(data)' : '') +
             ')'
         );
@@ -877,9 +895,6 @@
   }
 
   function addCalcField(entityType, name, wrapper){
-    if (!entityType.calcs)
-      entityType.calcs = [];
-
     var calcs = entityType.calcs;
     var deps = entityType.deps;
     var calcArgs = wrapper.args || [];
@@ -888,7 +903,7 @@
       wrapper: wrapper
     };
 
-    // NOTE: simple dependence calculation
+    // NOTE: simple calc dependency resolving
     // TODO: check, is algoritm make real check for dependencies or not?
     var before = entityType.calcs.length;
     var after = 0;
@@ -971,6 +986,8 @@
     compositeKey: null,
     idProperty: null,
     defaults: null,
+    calcs: null,
+    calcMap: null,
 
     aliases: null,
     slots: null,
@@ -992,6 +1009,7 @@
 
       // init properties
       this.fields = {};
+      this.calcs = [];
       this.deps = {};
       this.idFields = {};
       this.defaults = {};
@@ -1041,6 +1059,16 @@
         config.constrains.forEach(function(item){
           addCalcField(this, null, item);
         }, this);
+
+      // process calculations
+      this.calcMap = this.calcs.reduce(function(map, calc){
+        if (calc.key)
+          map[calc.key] = calc;
+        return map;
+      }, {});
+
+      if (!this.calcs.length)
+        this.calcs = null;
 
       // process id and indexes
       var idFields = keys(this.idFields);
@@ -1125,7 +1153,7 @@
         initDelta[key] = undefined;
 
       // basis.js 1.4
-      /** @cut */ if (hasOwnProperty(config, 'state'))
+      /** @cut */ if (hasOwnProperty.call(config, 'state'))
       /** @cut */   basis.dev.warn('basis.entity: default instance state can\'t be defined via type config anymore, use Type.extendClass({ state: .. }) instead');
 
       // create entity class
@@ -1134,7 +1162,7 @@
         entityType: this,
         type: wrapper,
         typeName: this.name,
-        generateData: getDataBuilder(this.defaults, this.fields),
+        generateData: getDataBuilder(this.defaults, this.fields, this.calcMap),
         initDelta: initDelta
       });
 
