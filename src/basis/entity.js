@@ -1124,13 +1124,16 @@
       for (var key in this.defaults)
         initDelta[key] = undefined;
 
+      // basis.js 1.4
+      /** @cut */ if (hasOwnProperty(config, 'state'))
+      /** @cut */   basis.dev.warn('basis.entity: default instance state can\'t be defined via type config anymore, use Type.extendClass({ state: .. }) instead');
+
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.fields, this.slots);
       this.entityClass.extend({
         entityType: this,
         type: wrapper,
         typeName: this.name,
-        state: config.state || this.entityClass.prototype.state,
         generateData: getDataBuilder(this.defaults, this.fields),
         initDelta: initDelta
       });
