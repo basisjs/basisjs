@@ -787,9 +787,6 @@
   }
 
   function addField(entityType, name, config){
-    // registrate alias
-    entityType.aliases[name] = name;
-
     // normalize config
     if (typeof config == 'string' ||
         Array.isArray(config) ||
@@ -866,7 +863,12 @@
       entityType.fields[name] = calcFieldWrapper;
     }
     else
+    {
       entityType.fields[name] = wrapper;
+
+      // registrate alias only for regular fields
+      entityType.aliases[name] = name;
+    }
 
     entityType.defaults[name] = 'defValue' in config ? config.defValue : wrapper();
 
@@ -881,13 +883,19 @@
   function addFieldAlias(entityType, alias, name){
     if (name in entityType.fields == false)
     {
-      /** @cut */ basis.dev.warn('Can\'t add alias `' + alias + '` for non-exists field `' + name + '`');
+      /** @cut */ basis.dev.warn('basis.entity: Can\'t add alias `' + alias + '` for non-exists field `' + name + '`');
+      return;
+    }
+
+    if (name in entityType.calcMap)
+    {
+      /** @cut */ basis.dev.warn('basis.entity: Can\'t add alias `' + alias + '` for calc field `' + name + '`');
       return;
     }
 
     if (alias in entityType.aliases)
     {
-      /** @cut */ basis.dev.warn('Alias `' + alias + '` already exists');
+      /** @cut */ basis.dev.warn('basis.entity: Alias `' + alias + '` already exists');
       return;
     }
 
@@ -917,6 +925,8 @@
     {
       // natural calc field
       calcConfig.key = name;
+      entityType.calcMap[name] = calcConfig;
+
       for (var i = 0, calc; calc = calcs[i]; i++)
         if (calc.args.indexOf(name) != -1)
         {
@@ -1010,6 +1020,7 @@
       // init properties
       this.fields = {};
       this.calcs = [];
+      this.calcMap = {};
       this.deps = {};
       this.idFields = {};
       this.defaults = {};
@@ -1060,13 +1071,7 @@
           addCalcField(this, null, item);
         }, this);
 
-      // process calculations
-      this.calcMap = this.calcs.reduce(function(map, calc){
-        if (calc.key)
-          map[calc.key] = calc;
-        return map;
-      }, {});
-
+      // reset calcs if no one
       if (!this.calcs.length)
         this.calcs = null;
 

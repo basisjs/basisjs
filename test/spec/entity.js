@@ -319,6 +319,42 @@ module.exports = {
                   assert.deep({ foo: 1, bar: 2 }, instance.data);
                 }) !== false);
               }
+            },
+            {
+              name: 'should not warn when instance init with data filtered by reader',
+              test: function(){
+                var Type = nsEntity.createType(null, {
+                  foo: Number,
+                  bar: nsEntity.calc(function(){
+                    return 2;
+                  })
+                });
+
+                assert(catchWarnings(function(){
+                  var instance = Type(Type.reader({ foo: 1, bar: 3 }));
+                  assert.deep({ foo: 1, bar: 2 }, instance.data);
+                }) === false);
+              }
+            },
+            {
+              name: 'should not define alias for calc field',
+              test: function(){
+                assert(catchWarnings(function(){
+                  var Type = nsEntity.createType({
+                    fields: {
+                      foo: Number,
+                      bar: nsEntity.calc(function(){
+                        return 2;
+                      })
+                    },
+                    aliases: {
+                      baz: 'bar'
+                    }
+                  });
+
+                  assert('baz' in Type.entityType.aliases == false);
+                }) !== false);
+              }
             }
           ]
         },
