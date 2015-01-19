@@ -59,6 +59,7 @@
     var Tree = basis.require('basis.ui.tree').Tree;
     var Table = basis.require('basis.ui.table').Table;
     var RadioGroup = basis.require('basis.ui.field').RadioGroup;
+    var Node = basis.require('basis.ui').Node;
 
     // data
     var data = basis.array.repeat([
@@ -85,7 +86,7 @@
       ]
     });
 
-    new basis.ui.Node({
+    new Node({
       container: document.getElementById('demo-container'),
       template:
         '<div>' +

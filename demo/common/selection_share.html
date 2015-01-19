@@ -69,8 +69,9 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.ui');
-   
+    var Selection = basis.require('basis.dom.wrapper').Selection;
+    var UINode = basis.require('basis.ui').Node;
+
     // data for node
     var data = [
       { data: { title: 'Lorem' } },
@@ -85,11 +86,11 @@
     //
 
     // setup selection for control (multiple mode)
-    var sharedSelection = new basis.dom.wrapper.Selection({
+    var sharedSelection = new Selection({
       multiple: true
     });
 
-    var List = basis.ui.Node.subclass({
+    var List = UINode.subclass({
       template:
         '<div class="demo-list">' +
           '{name}' +
@@ -105,35 +106,39 @@
         }
       }
     });
-  
-    var node1 = new List({
+
+    var list1 = new List({
       name: 'List 1',
-      selection: sharedSelection, 
+      selection: sharedSelection,
       childNodes: data
     });
 
-    var node2 = new List({
+    var list2 = new List({
       name: 'List 2',
       selection: sharedSelection,
       childNodes: data
     });
 
-    var node3 = new List({
+    var list3 = new List({
       name: 'List 3',
-      selection: node2.selection, // pass node2 selection object (it is still sharedSelection)
+      selection: list2.selection, // pass node2 selection object (it is still sharedSelection)
       childNodes: data
     });
 
-    new basis.ui.Node({
+    new UINode({
       container: document.getElementById('demo-container'),
       childNodes: [
-        node1,
-        node2,
-        node3,
+        list1,
+        list2,
+        list3,
 
         // output of selection content
-        new basis.ui.Node({
-          template: '<div>Selected items:</div>',
+        new UINode({
+          template:
+            '<div>' +
+              '<h2>Selected items:</h2>' +
+              '<p><i>Use Ctrl or Meta key for multiple selection</i></p>' +
+            '</div>',
           dataSource: sharedSelection,
           childClass: {
             template: '<div>({name}) {title}</div>',
@@ -141,9 +146,7 @@
               name: function(node){
                 return node.delegate.parentNode.name;
               },
-              title: function(node){
-                return node.data.title;
-              }
+              title: 'data:title'
             }
           }
         })

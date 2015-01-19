@@ -44,14 +44,28 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.data');
-    basis.require('basis.data.value');
-    basis.require('basis.ui.button');
+    var Value = basis.require('basis.data').Value;
+    var ObjectSet = basis.require('basis.data.value').ObjectSet;
+    var Expression = basis.require('basis.data.value').Expression;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var UINode = basis.require('basis.ui').Node;
 
-    var value1 = new basis.data.Value({ value: 0 });
-    var value2 = new basis.data.Value({ value: 0 });
+    // patch Value to compute changes count (for demo purposes)
+    Value.extend(function(super_, cur_){
+      return {
+        updateCount: 0,
+        emit_change: function(){
+          this.updateCount += 1;
+          cur_.emit_change.apply(this, arguments);
+        }
+      };
+    });
 
-    var dataObjectSet = new basis.data.value.ObjectSet({
+    // create objects
+    var value1 = new Value({ value: 0 });
+    var value2 = new Value({ value: 0 });
+
+    var dataObjectSet = new ObjectSet({
       objects: [value1, value2],
       calculateValue: function(){
         return this.objects.reduce(function(value, object){
@@ -60,19 +74,13 @@
       }
     });
 
-    // patch Value to compute changes count
-    var old_emit_change = basis.data.Value.prototype.emit_change;
-    basis.data.Value.extend({
-      updateCount: 0,
-      emit_change: function(){
-        this.updateCount += 1;
-        old_emit_change.apply(this, arguments);
-      }
+    var expression = new Expression(value1, value2, function(a, b){
+      return a + b;
     });
 
-    var container = document.getElementById('demo-container');
-    new basis.ui.button.ButtonPanel({
-      container: container,
+    // control buttons
+    new ButtonPanel({
+      container: document.getElementById('demo-container'),
       childNodes: [
         {
           caption: 'Add 1 to value1',
@@ -103,8 +111,9 @@
       ]
     });
 
-    new basis.ui.Node({
-      container: container,
+    // value representation
+    new UINode({
+      container: document.getElementById('demo-container'),
       childClass: {
         template:
           '<div>' +
@@ -120,23 +129,22 @@
         {
           name: 'value1.value',
           value: value1,
-          updateCount: new basis.data.value.Expression(value1, function(){
-            return value1.updateCount;
-          })
+          updateCount: Value.from(value1, 'change', 'updateCount')
         },
         {
           name: 'value2.value',
           value: value2,
-          updateCount: new basis.data.value.Expression(value2, function(){
-            return value2.updateCount;
-          })
+          updateCount: Value.from(value2, 'change', 'updateCount')
+        },
+        {
+          name: 'Expression (sum of value1.value & value2.value)',
+          value: expression,
+          updateCount: Value.from(expression, 'change', 'updateCount')
         },
         {
           name: 'ObjectSet.value (sum of value1.value & value2.value)',
           value: dataObjectSet,
-          updateCount: new basis.data.value.Expression(dataObjectSet, function(){
-            return dataObjectSet.updateCount;
-          })
+          updateCount: Value.from(dataObjectSet, 'change', 'updateCount')
         }
       ]
     });
