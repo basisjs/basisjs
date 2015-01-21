@@ -248,6 +248,17 @@
       indeterminate: true
     };
 
+    var STYLE_EXPR_VALUE = {
+      'show': '"none"',
+      'visible': '"hidden"'
+    };
+    var STYLE_EXPR_TOGGLE = {
+      'hide': '?"none":""',
+      'show': '?"":"none"',
+      'hidden': '?"hidden":""',
+      'visible': '?"":"hidden"'
+    };
+
     var bindFunctions = {
       1: 'bind_element',
       3: 'bind_textNode',
@@ -617,11 +628,11 @@
               if (!attrExprMap[attrExprId])
               {
                 attrExprMap[attrExprId] = bindVar;
-                varList.push(bindVar + '=' + (binding[7] == 'hide' ? '""' : '"none"'));
+                varList.push(bindVar + '=' + (STYLE_EXPR_VALUE[binding[7]] || '""'));
               }
 
               if (binding[7])
-                expr = expr.replace(/\+""$/, '') + (binding[7] == 'hide' ? '?"none":""' : '?"":"none"');
+                expr = expr.replace(/\+""$/, '') + (STYLE_EXPR_TOGGLE[binding[7]] || '');
 
               bindVar = attrExprMap[attrExprId];
               putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, expr);

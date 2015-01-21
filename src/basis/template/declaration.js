@@ -177,9 +177,46 @@ var makeDeclaration = (function(){
     }
 
     function attrs(token, declToken){
+      function setStylePropertyBinding(attr, property, byDefault, defaultValue){
+        if (!styleAttr)
+        {
+          styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
+          //styleAttr.loc = getLocation(template, attr.loc);
+          addTokenLocation(styleAttr, attr);
+          result.push(styleAttr);
+        }
+
+        var binding = attr.binding;
+        var addDefault = false;
+        var show = attr.name == byDefault;
+
+        if (!binding || binding[0].length != binding[1].length)
+        {
+          // expression has non-binding parts, treat as constant
+          // visible when:
+          //   show & value is not empty
+          //   or
+          //   hide & value is empty
+          addDefault = !(show ^ attr.value === '');
+        }
+        else
+        {
+          addDefault = show;
+
+          if (!styleAttr[1])
+            styleAttr[1] = [];
+
+          styleAttr[1].push(binding.concat(property, attr.name));
+        }
+
+        if (addDefault)
+          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + defaultValue;
+      }
+
       var result = [];
       var styleAttr;
       var displayAttr;
+      var visibilityAttr;
       var item;
       var m;
 
@@ -199,6 +236,11 @@ var makeDeclaration = (function(){
             case 'show':
             case 'hide':
               displayAttr = attr;
+              break;
+
+            case 'visible':
+            case 'hidden':
+              visibilityAttr = attr;
               break;
           }
 
@@ -237,41 +279,10 @@ var makeDeclaration = (function(){
       }
 
       if (displayAttr)
-      {
-        if (!styleAttr)
-        {
-          styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
-          //styleAttr.loc = getLocation(template, displayAttr.loc);
-          addTokenLocation(styleAttr, displayAttr);
-          result.push(styleAttr);
-        }
+        setStylePropertyBinding(displayAttr, 'display', 'show', 'display: none');
 
-        var displayBinding = displayAttr.binding;
-        var addDisplayNone = false;
-        var show = displayAttr.name == 'show';
-
-        if (!displayBinding || displayBinding[0].length != displayBinding[1].length)
-        {
-          // expression has non-binding parts, treat as constant
-          // visible when:
-          //   show & value is not empty
-          //   or
-          //   hide & value is empty
-          addDisplayNone = !(show ^ displayAttr.value === '');
-        }
-        else
-        {
-          addDisplayNone = show;
-
-          if (!styleAttr[1])
-            styleAttr[1] = [];
-
-          styleAttr[1].push(displayBinding.concat('display', displayAttr.name));
-        }
-
-        if (addDisplayNone)
-          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + 'display: none';
-      }
+      if (visibilityAttr)
+        setStylePropertyBinding(visibilityAttr, 'visibility', 'visible', 'visibility: hidden');
 
       return result.length ? result : 0;
     }
