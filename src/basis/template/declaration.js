@@ -83,8 +83,13 @@ var makeDeclaration = (function(){
       token[TOKEN_REFS].splice(idx, 1);
 
       if (indexBinding)
+        // if binding is index in ref list and ref binding index points to is removing
         if (idx == token[TOKEN_BINDINGS] - 1)
+        {
+          // convert index to explicit binding value
           token[TOKEN_BINDINGS] = refName;
+          indexBinding = false;
+        }
 
       if (!token[TOKEN_REFS].length)
         token[TOKEN_REFS] = 0;
