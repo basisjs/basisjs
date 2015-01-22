@@ -115,6 +115,15 @@
       request: nothingToDo
     }, config);
 
+    // if body is function take in account special action context
+    if (typeof config.body == 'function')
+    {
+      var bodyFn = config.body;
+      config.body = function(){
+        return bodyFn.apply(this.context, this.args);
+      };
+    }
+
     // splice properties
     var fn = basis.object.splice(config, ['prepare', 'request']);
     var callback = basis.object.merge(
@@ -137,11 +146,26 @@
       {
         fn.prepare.apply(this, arguments);
 
-        var request = getTransport().request(basis.object.complete({
-          origin: this
-        }, fn.request.apply(this, arguments)));
+        var request;
+        var requestData = basis.object.complete({
+          origin: this,
+          bodyContext: {
+            context: this,
+            args: basis.array(arguments)
+          }
+        }, fn.request.apply(this, arguments));
 
-        if (request)
+        // if body is function take in account special action context
+        if (typeof requestData.body == 'function')
+        {
+          var bodyFn = requestData.body;
+          requestData.body = function(){
+            return bodyFn.apply(this.context, this.args);
+          };
+        }
+
+        // do a request
+        if (request = getTransport().request(requestData))
           return new Promise(function(fulfill, reject){
             request.addHandler(PROMISE_REQUEST_HANDLER, {
               request: request,
