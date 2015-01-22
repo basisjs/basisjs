@@ -37,8 +37,8 @@
 
   var STATE = require('basis.data').STATE;
   var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.split(' ');
-  var IS_POST_REGEXP = /POST/i;
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
+  var URL_METHOD_PREFIX = new RegExp('^(' + METHODS.join('|') + ')\\s+', 'i');
   var JSON_CONTENT_TYPE = /^application\/json/i;
 
 
@@ -596,6 +596,17 @@
         body: this.body,
         responseType: this.responseType
       });
+
+      // process url with method prefix
+      // i.e. 'POST /end/point' makes changes in requestData:
+      //   requestData.method = 'POST'
+      //   requestData.url = '/end/point'
+      var urlMethodPrefix = requestData.url.match(URL_METHOD_PREFIX);
+      if (urlMethodPrefix)
+      {
+        requestData.method = urlMethodPrefix[1];
+        requestData.url = requestData.url.substr(urlMethodPrefix[0].length);
+      }
 
       return requestData;
     }
