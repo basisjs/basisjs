@@ -15,6 +15,7 @@
   var extend = basis.object.extend;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
+  var objectIterate = basis.object.iterate;
   var ua = require('basis.ua');
 
   var basisNet = require('basis.net');
@@ -102,10 +103,26 @@
       }
     }
 
-    basis.object.iterate(extend(headers, requestData.headers), function(key, value){
+    headers = basis.object.merge(headers, requestData.headers);
+
+    objectIterate(requestData.headers, function(name, value){
+      if (name.trim().toLowerCase() == 'content-type')
+      {
+        /** @cut */ basis.dev.warn('basis.net.ajax: `Content-Type` header found in request data, use contentType and encoding properties instead');
+        headers['Content-Type'] = value;
+      }
+      else
+        headers[name] = value;
+    });
+
+    objectIterate(headers, function(key, value){
       if (value != null && typeof value != 'function')
-        this.setRequestHeader(key, value);
-    }, xhr);
+        xhr.setRequestHeader(key, value);
+      else
+        delete headers[key];
+    });
+
+    return headers;
   }
 
 
@@ -375,28 +392,41 @@
       this.responseType = requestData.responseType || '';
 
       // set headers
-      setRequestHeaders(xhr, requestData);
+      var requestHeaders = setRequestHeaders(xhr, requestData);
 
       // save transfer start point time & set timeout
       this.setTimeout(this.timeout);
 
       // prepare post body
-      var payload = requestData.body;
+      var payload = null;
 
-      // BUGFIX: IE fixes for post body
-      if (IS_METHOD_WITH_BODY.test(requestData.method) && ua.test('ie9-'))
+      if (IS_METHOD_WITH_BODY.test(requestData.method))
       {
-        if (typeof payload == 'object' && typeof payload.documentElement != 'undefined' && typeof payload.xml == 'string')
-          // sending xmldocument content as string, otherwise IE override content-type header
-          payload = payload.xml;
-        else
-          if (typeof payload == 'string')
-            // ie stop send payload when found \r
-            payload = payload.replace(/\r/g, '');
+        payload = requestData.body;
+
+        // auto stringify non-string payload if content-type is application/json
+        // NOTE: don't stringify strings to avoid double stringify, as old user code
+        //       stringify object on their side
+        // TODO: remove this restriction, in future versions (introduced in 1.4)
+        if (JSON_CONTENT_TYPE.test(requestHeaders['Content-Type']))
+          if (typeof payload != 'string')
+            payload = JSON.stringify(payload);
+
+        // bug fixes for old IE
+        if (ua.test('ie9-'))
+        {
+          if (typeof payload == 'object' && typeof payload.documentElement != 'undefined' && typeof payload.xml == 'string')
+            // sending xmldocument content as string, otherwise IE override content-type header
+            payload = payload.xml;
           else
-            if (payload == null || payload == '')
-              // IE doesn't accept null, undefined or '' post payload
-              payload = '[No data]';
+            if (typeof payload == 'string')
+              // ie stop send payload when found \r
+              payload = payload.replace(/\r/g, '');
+            else
+              if (payload == null || payload == '')
+                // IE doesn't accept null, undefined or '' post payload
+                payload = '[No data]';
+        }
       }
 
       // send data
