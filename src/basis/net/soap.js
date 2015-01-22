@@ -162,7 +162,7 @@
 
       this.requestEnvelope.getBody(true).setValue(new QName(requestData.methodName, requestData.namespace), requestData.soapBody);
 
-      requestData.postBody = this.requestEnvelope.document;
+      requestData.body = this.requestEnvelope.document;
 
       return requestData;
     },

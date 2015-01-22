@@ -73,7 +73,7 @@
 
         this.request(basis.object.extend(requestConfig, {
           url: form.action,
-          postBody: formData
+          body: formData
         }));
       },
 
@@ -89,7 +89,7 @@
 
         this.request({
           url: url,
-          postBody: formData
+          body: formData
         });
       },
 

@@ -38,6 +38,7 @@
   var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.split(' ');
   var IS_POST_REGEXP = /POST/i;
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
+  var JSON_CONTENT_TYPE = /^application\/json/i;
 
 
  /**
@@ -87,7 +88,7 @@
     {
       // when send a FormData instance, browsers serialize it and
       // set correct content-type header with boundary
-      if (!FormData || requestData.postBody instanceof FormData == false)
+      if (!FormData || requestData.body instanceof FormData == false)
         headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
     }
     else
@@ -262,7 +263,7 @@
       var xhr = this.xhr;
 
       if (!xhr.responseType)
-        if (this.responseType == 'json' || /^application\/json/i.test(this.data.contentType))
+        if (this.responseType == 'json' || JSON_CONTENT_TYPE.test(this.data.contentType))
           return safeJsonParse(xhr.responseText, this.lastRequestUrl_);
 
       if ('response' in xhr)
@@ -313,10 +314,10 @@
 
       params = params.join('&');
 
-      // prepare location & postBody
-      if (!requestData.postBody && IS_METHOD_WITH_BODY.test(requestData.method))
+      // prepare location & body
+      if (!requestData.body && IS_METHOD_WITH_BODY.test(requestData.method))
       {
-        requestData.postBody = params || '';
+        requestData.body = params || '';
         params = '';
       }
 
@@ -380,22 +381,22 @@
       this.setTimeout(this.timeout);
 
       // prepare post body
-      var postBody = requestData.postBody;
+      var payload = requestData.body;
 
       // BUGFIX: IE fixes for post body
       if (IS_METHOD_WITH_BODY.test(requestData.method) && ua.test('ie9-'))
       {
-        if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
+        if (typeof payload == 'object' && typeof payload.documentElement != 'undefined' && typeof payload.xml == 'string')
           // sending xmldocument content as string, otherwise IE override content-type header
-          postBody = postBody.xml;
+          payload = payload.xml;
         else
-          if (typeof postBody == 'string')
-            // ie stop send postBody when found \r
-            postBody = postBody.replace(/\r/g, '');
+          if (typeof payload == 'string')
+            // ie stop send payload when found \r
+            payload = payload.replace(/\r/g, '');
           else
-            if (postBody == null || postBody == '')
-              // IE doesn't accept null, undefined or '' post body
-              postBody = '[No data]';
+            if (payload == null || payload == '')
+              // IE doesn't accept null, undefined or '' post payload
+              payload = '[No data]';
       }
 
       // send data
@@ -407,11 +408,11 @@
         this.sendDelayTimer_ = setTimeout(function(){
           this.sendDelayTimer_ = null;
           if (this.xhr === xhr && xhr.readyState == STATE_OPENED)
-            xhr.send(postBody);
+            xhr.send(payload);
         }.bind(this), this.sendDelay);
       }
       else
-        xhr.send(postBody);
+        xhr.send(payload);
 
       /** @cut */ if (this.debug)
       /** @cut */   basis.dev.log('Request over, waiting for response');
@@ -502,10 +503,19 @@
     params: null,
     routerParams: null,
     url: '',
-    postBody: null,
+    body: null,
 
     init: function(){
       AbstractTransport.prototype.init.call(this);
+
+      /** @deprecated basis.js 1.4 */
+      if ('postBody' in this)
+      {
+        /** @cut */ basis.dev.warn('basis.net.ajax.Transport: `postBody` paramenter is deprecated, use `body` instead');
+        if (this.body == null)
+          this.body = this.postBody;
+        this.postBody = null;
+      }
 
       this.params = objectSlice(this.params);
       this.routerParams = objectSlice(this.routerParams);
@@ -538,13 +548,22 @@
         routerParams: objectMerge(this.routerParams, requestData.routerParams)
       });
 
+      /** @deprecated basis.js 1.4 */
+      if ('postBody' in requestData)
+      {
+        /** @cut */ basis.dev.warn('basis.net.ajax.Transport: `postBody` paramenter is deprecated, use `body` instead');
+        if (this.body == null)
+          requestData.body = requestData.postBody;
+        requestData.postBody = null;
+      }
+
       basis.object.complete(requestData, {
         asynchronous: this.asynchronous,
         url: this.url,
         method: this.method,
         contentType: this.contentType,
         encoding: this.encoding,
-        postBody: this.postBody,
+        body: this.body,
         responseType: this.responseType
       });
 
