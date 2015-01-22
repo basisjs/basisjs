@@ -404,6 +404,10 @@
       {
         payload = requestData.body;
 
+        // if payload is function use it's result
+        if (typeof payload == 'function')
+          payload = payload.call(requestData.bodyContext);
+
         // auto stringify non-string payload if content-type is application/json
         // NOTE: don't stringify strings to avoid double stringify, as old user code
         //       stringify object on their side
@@ -534,6 +538,7 @@
     routerParams: null,
     url: '',
     body: null,
+    bodyContext: null,
 
     init: function(){
       AbstractTransport.prototype.init.call(this);
@@ -594,6 +599,7 @@
         contentType: this.contentType,
         encoding: this.encoding,
         body: this.body,
+        bodyContext: this.bodyContext,
         responseType: this.responseType
       });
 
