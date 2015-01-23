@@ -105,8 +105,9 @@
     },
 
     syncOffset: function(){
+      var selected = this.selection.pick();
       this.scroller[this.properties.setPosition](
-        this.selection.pick().element[this.properties.offset]
+        selected ? selected.element[this.properties.offset] : 0
       );
     },
 
@@ -192,6 +193,9 @@
       var childCount = this.childNodes.length;
       var index = this.childNodes.indexOf(selected);
 
+      if (childCount < 2 || index == -1)
+        return;
+
       var delta = (leftToRight ? Math.ceil(childCount / 2) - 1 : Math.round(childCount / 2)) - index;
 
       var firstElement = this.firstChild.element;
@@ -218,12 +222,18 @@
     },
 
     selectNext: function(){
+      if (this.childNodes.length < 2)
+        return;
+
       if (this.rotate)
         this.adjustRotation(true);
 
       this.scrollToPage(this.selection.pick().nextSibling);
     },
     selectPrev: function(){
+      if (this.childNodes.length < 2)
+        return;
+
       if (this.rotate)
         this.adjustRotation(false);
 
