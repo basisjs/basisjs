@@ -237,6 +237,110 @@ module.exports = {
           ]
         },
         {
+          name: 'Value#pipe',
+          test: [
+            {
+              name: 'should return an instance of Value',
+              test: function(){
+                var pipe = new Value().pipe('activeChanged', 'active');
+
+                assert(pipe instanceof Value);
+              }
+            },
+            {
+              name: 'should return the same instance for the same params',
+              test: function(){
+                var parent = new Value();
+                var pipe = parent.pipe('activeChanged', 'active');
+
+                assert(pipe === parent.pipe('activeChanged', 'active'));
+              }
+            },
+            {
+              name: 'should be read-only',
+              test: function(){
+                var parent = new Value();
+                var pipe = parent.pipe('activeChanged', 'active');
+
+                assert(pipe.value === null);
+
+                pipe.set(true);
+                assert(pipe.value === null);
+              }
+            },
+            {
+              name: 'should store null if no object on some step',
+              test: function(){
+                var parent = new Value();
+                var pipe = parent.pipe('activeChanged', 'active');
+
+                assert(pipe.value === null);
+
+                parent.set(new DataObject());
+                assert(pipe.value === false);
+
+                parent.set();
+                assert(pipe.value === null);
+              }
+            },
+            {
+              name: 'should works through long chains',
+              test: function(){
+                var foo = new DataObject({ active: true });
+                var bar = new DataObject({ active: true });
+                var obj = new DataObject({ delegate: foo });
+                var pipe = new Value({ value: obj })
+                  .pipe('delegateChanged', 'delegate')
+                  .pipe('activeChanged', 'active');
+
+                assert(pipe.value === true);
+
+                foo.setActive(false);
+                assert(pipe.value === false);
+
+                obj.setDelegate(bar);
+                assert(pipe.value === true);
+
+                bar.setActive(false);
+                assert(pipe.value === false);
+
+                foo.setActive(true);
+                assert(pipe.value === false);
+
+                obj.setDelegate(foo);
+                assert(pipe.value === true);
+              }
+            },
+            {
+              name: 'should destroy when parent destroy',
+              test: function(){
+                var parent = new Value();
+                var pipe = parent.pipe('activeChanged', 'active');
+                var pipeDestroyed = false;
+
+                pipe.addHandler({
+                  destroy: function(){
+                    pipeDestroyed = true;
+                  }
+                });
+
+                parent.destroy();
+                assert(pipeDestroyed);
+              }
+            },
+            {
+              name: 'should unlink from parent on destroy',
+              test: function(){
+                var parent = new Value();
+                var pipe = parent.pipe('activeChanged', 'active');
+
+                pipe.destroy();
+                assert(pipe !== parent.pipe('activeChanged', 'active'));
+              }
+            }
+          ]
+        },
+        {
           name: 'Value#lock/unlock',
           test: function(){
             var changeCount = 0;
@@ -310,46 +414,75 @@ module.exports = {
             testValue.unlock();
             assert(testValue.isLocked() === false);
           }
+        }
+      ]
+    },
+    {
+      name: 'Value.from',
+      test: [
+        {
+          name: 'value destroy -> unlink from source',
+          test: function(){
+            var obj = new basis.data.Object();
+            var value = basis.data.Value.from(obj, null, 'basisObjectId');
+
+            assert(obj.debug_handlers().length == 1);
+
+            assert(catchWarnings(function(){
+              value.destroy();
+            }) == false);
+
+            assert(obj.debug_handlers().length == 0);
+            assert(value !== basis.data.Value.from(obj, null, 'basisObjectId'));
+          }
         },
         {
-          name: 'Value.from',
-          test: [
-            {
-              name: 'value destroy -> unlink from source',
-              test: function(){
-                var obj = new basis.data.Object();
-                var value = basis.data.Value.from(obj, null, 'basisObjectId');
+          name: 'source destroy -> value destroy',
+          test: function(){
+            var obj = new basis.data.Object();
+            var value = basis.data.Value.from(obj, null, 'basisObjectId');
+            var destroyCount = 0;
 
-                assert(obj.debug_handlers().length == 1);
-
-                assert(catchWarnings(function(){
-                  value.destroy();
-                }) == false);
-
-                assert(obj.debug_handlers().length == 0);
-                assert(value !== basis.data.Value.from(obj, null, 'basisObjectId'));
+            value.addHandler({
+              destroy: function(){
+                destroyCount++;
               }
-            },
-            {
-              name: 'source destroy -> value destroy',
-              test: function(){
-                var obj = new basis.data.Object();
-                var value = basis.data.Value.from(obj, null, 'basisObjectId');
-                var destroyCount = 0;
+            });
 
-                value.addHandler({
-                  destroy: function(){
-                    destroyCount++;
-                  }
-                });
+            assert(catchWarnings(function(){
+              obj.destroy();
+            }) == false);
+            assert(destroyCount == 1);
+          }
+        }
+      ]
+    },
+    {
+      name: 'Value.factory',
+      test: [
+        {
+          name: 'should return a function that returns the same value as Value.from',
+          test: function(){
+            var factory = Value.factory('foo', 'bar');
+            var obj = new DataObject();
 
-                assert(catchWarnings(function(){
-                  obj.destroy();
-                }) == false);
-                assert(destroyCount == 1);
-              }
-            }
-          ]
+            assert(typeof factory === 'function');
+            assert(factory(obj) === Value.from(obj, 'foo', 'bar'));
+          }
+        },
+        {
+          name: 'should has method pipe and returns the same as Value.from().pipe()',
+          test: function(){
+            var factory = Value
+              .factory('foo', 'bar')
+              .pipe('baz', 'qux');
+            var obj = new DataObject();
+            var value = Value.from(obj, 'foo', 'bar').pipe('baz', 'qux');
+
+            assert(typeof factory === 'function');
+            assert(factory(obj) === value);
+            assert(factory(obj).pipe('a', 'b') === value.pipe('a', 'b'));
+          }
         }
       ]
     },

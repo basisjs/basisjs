@@ -608,6 +608,20 @@
   var valueSyncToken = function(value){
     this.set(this.fn(value));
   };
+  var valueSyncPipe = function(newValue, oldValue){
+    var val = null;
+
+    if (oldValue instanceof Emitter)
+      oldValue.removeHandler(this.pipeHandler, this);
+
+    if (newValue instanceof Emitter)
+    {
+      newValue.addHandler(this.pipeHandler, this);
+      val = newValue;
+    }
+
+    Value.prototype.set.call(this, val);
+  };
 
  /**
   * @class
@@ -668,6 +682,11 @@
     * @type {object}
     */
     links_: null,
+
+   /**
+    * @type {object}
+    */
+    pipes_: null,
 
    /**
     * @type {boolean}
@@ -876,6 +895,51 @@
     },
 
    /**
+    * @param {string|Array.<string>} events
+    * @param {function(obj):any} getter
+    * @return {basis.data.Value}
+    */
+    pipe: function(events, getter){
+      var handler = createEventHandler(events, valueFromSetProxy);
+      var getterId = getter[GETTER_ID] || String(getter);
+      var id = handler.events.join('_') + '_' + getterId;
+      var pipes = this.pipes_;
+      var pipeValue;
+
+      if (!pipes)
+        pipes = this.pipes_ = {};
+      else
+        pipeValue = pipes[id];
+
+      if (!pipeValue)
+      {
+        pipeValue = new Value({
+          parent: this,
+          pipeHandler: handler,
+          proxy: basis.getter(getter),
+          set: basis.fn.$undef,
+          destroy: function(){
+            var parent = this.parent;
+            var parentValue = parent.value;
+
+            if (parentValue instanceof Emitter)
+              parentValue.removeHandler(this.pipeHandler, this);
+
+            parent.pipes_[id] = null;
+            this.parent = null;
+
+            Value.prototype.destroy.call(this);
+          }
+        });
+
+        pipes[id] = pipeValue;
+        this.link(pipeValue, valueSyncPipe, false, pipeValue.destroy);
+      }
+
+      return pipeValue;
+    },
+
+   /**
     * Returns token which value equals to transformed via fn function value.
     * @param {function(value)} fn
     * @param {boolean=} deferred
@@ -1000,20 +1064,22 @@
         this.value.removeHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
 
       // remove event handlers from all basis.event.Emitter instances
-      var cursor = this;
-      while (cursor = cursor.links_)
+      var cursor = this.links_;
+      this.links_ = null;
+      while (cursor)
       {
         if (cursor.context instanceof Emitter)
           cursor.context.removeHandler(VALUE_EMMITER_HANDLER, cursor);
         if (cursor.destroy)
           cursor.destroy.call(cursor.context);
+        cursor = cursor.links_;
       }
 
       this.proxy = null;
       this.initValue = null;
       this.value = null;
       this.lockedValue_ = null;
-      this.links_ = null;
+      this.pipes_ = null;
     }
   });
 
@@ -1102,11 +1168,29 @@
     return result;
   };
 
+  function valuePipeFactory(events, getter){
+    var parent = this;
+    var result = function(value){
+      value = parent(value);
+      return value
+        ? value.pipe(events, getter)
+        : value;
+    };
+
+    result.factory = FACTORY;
+    result.pipe = valuePipeFactory;
+
+    return result;
+  }
+
   Value.factory = function(events, getter){
     var result = function(object){
       return Value.from(object, events, getter);
     };
+
     result.factory = FACTORY;
+    result.pipe = valuePipeFactory;
+
     return result;
   };
 
