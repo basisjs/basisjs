@@ -61,10 +61,10 @@ module.exports = {
               },
               function(){
                 return "12\"'3";
-              },
+              }/*,
               function(){
                 return /\"\//.test('asd');
-              }
+              }*/
             ];
 
             for (var i = 0; i < functions.length; i++)

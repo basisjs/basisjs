@@ -17,5 +17,9 @@ temp/
 tmp/
 test/lib/
 
+node_modules
+
+coverage
+
 # dev
 .idea
