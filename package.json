@@ -26,6 +26,7 @@
   "devDependencies": {
     "karma": "^0.12.31",
     "karma-basisjs-test-runner": "git://github.com/Mavrin/karma-basisjs-test-runner.git",
+    "karma-cli": "0.0.4",
     "karma-firefox-launcher": "^0.1.4"
   },
   "scripts": {
