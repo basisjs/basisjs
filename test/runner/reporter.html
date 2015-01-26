@@ -2,47 +2,18 @@
 
 <html>
 
-<head><meta name="build" content="20140409133749" />
+<head>
+  <meta name="build" content="20150126211840/42a8a843c036d30e96444e4c030a850716709be6" />
   <meta charset="utf-8" />
-  <title>Basis Test Suite</title>
+  <title>Basis Test Runner</title>
 
-  <link rel="stylesheet" type="text/css" media="all" href="style.css?BywF0Hpfq0kPMswOreRtfA" />
+  <link rel="stylesheet" type="text/css" media="all" href="style.css?HcUkFCK6Lyvzz6d7Kba8Cw" />
 
-  <script type="text/javascript">
-    var startTime = new Date;
-  </script>
-  <script type="text/javascript" src="script.js?WOL5gwwY2bc9_hC-XrJXdg"></script>
+  <script type="text/javascript" src="script.js?5CcoX3eDehvmB8vhHxJkYg"></script>
+  
 </head>
 
 <body>
-  <script type="text/javascript">
-    (function() {
-      var app = basis.require("./0.js");
-      var params = location.search.replace(/^\?/, "").split("&").reduce(function(res, pair) {
-        var parts = pair.split("=");
-        res[parts.shift()] = parts.join("=");
-        return res;
-      }, {});
-      if (!params.page) {
-        document.write("Test suite is not specified. Add to page url `?page=path/to/test-suite.html`");
-      } else {
-        var iframe = document.createElement("iframe");
-        iframe.src = params.page;
-        iframe.className = "hide-frame";
-        iframe.onload = function() {
-          if (typeof this.contentWindow.loadTests == "function") {
-            var t = new Date;
-            this.contentWindow.loadTests(app.loadTests);
-            document.title = new Date - t + "/" + (new Date - startTime);
-          }
-        };
-        basis.doc.body.add(iframe);
-        app.setup({
-          element: document.body,
-          baseURI: basis.path.baseURI
-        });
-      }
-    })();
-  </script>
+  <script type="text/javascript">(function(){var b=basis.require("./0.js"),c=location.search.replace(/^\?/,"").split("&").reduce(function(a,c){var b=c.split("=");a[b.shift()]=b.join("=");return a},{});if(c.page){var a=document.createElement("iframe");a.src=c.page;a.className="hide-frame";a.onload=function(){"function"==typeof this.contentWindow.loadTests&&this.contentWindow.loadTests(function(a){b.loadTests(a,c.autorun)})};basis.doc.body.add(a);b.setup({element:document.body,baseURI:basis.path.baseURI})}else document.write("Test suite is not specified. Add to page url `?page=path/to/test-suite.html`")})()</script>
 </body>
 </html>
