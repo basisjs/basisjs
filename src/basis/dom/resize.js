@@ -5,6 +5,7 @@
   function createSensorProto(name){
     var sensorProto = document.createElement(name);
     sensorProto.setAttribute('data-dev-role', 'basis.dom.resize.sensor');
+    sensorProto.setAttribute('tabindex', '-1');
     sensorProto.setAttribute('style', [
       'display: block',
       'pointer-events: none',
