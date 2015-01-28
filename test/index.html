@@ -32,7 +32,7 @@
             return addLoc(test, filename, content, fileMap);
 
           var testSource = test.toString()
-            .replace(/^function[^\(]*\(/, '(')    // browsers may add/remove spaces between function, function name and parameters
+            .replace(/^([^{]|\s)+/, '')    // browsers may add/remove spaces between function, function name and parameters
             .replace(/\{\n"use strict";\n/, '{'); // Firefox adds implicit "use strict" in every function
           var startPos = content.indexOf(testSource, fileMap[testSource] || 0);
 
