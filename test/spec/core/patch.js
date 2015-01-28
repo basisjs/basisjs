@@ -8,38 +8,38 @@ module.exports = {
     {
       name: 'should not define a resource',
       test: function(){
-        this.is(false, basis.resource.exists('./foo.js'));
+        assert(basis.resource.exists('./foo.js') === false);
         basis.patch('./foo.js', function(){});
-        this.is(false, basis.resource.exists('./foo.js'));
+        assert(basis.resource.exists('./foo.js') === false);
       }
     },
     {
       name: 'should not define a namespace',
       test: function(){
-        this.is(undefined, basis.date);
+        assert(basis.date === undefined);
         basis.patch('basis.date', function(){});
-        this.is(undefined, basis.date);
+        assert(basis.date === undefined);
       }
     },
     {
       name: 'patch loaded namespace',
       test: function(){
         var VALUE = {};
+        var basisEvent = basis.require('basis.event');
 
-        basis.require('basis.event');
-        this.is(true, basis.event.test1 === undefined);
+        assert(basisEvent.test1 === undefined);
 
-        basis.patch('basis.event', function(){
-          basis.event.test1 = VALUE;
+        basis.patch('basis.event', function(exports){
+          exports.test1 = VALUE;
         });
 
-        this.is(true, basis.event.test1 === VALUE);
+        assert(basisEvent.test1 === VALUE);
 
-        basis.patch('basis.event', function(){
-          basis.event.test2 = VALUE;
+        basis.patch('basis.event', function(exports){
+          exports.test2 = VALUE;
         });
 
-        this.is(true, basis.event.test2 === VALUE);
+        assert(basisEvent.test2 === VALUE);
       }
     },
     {
@@ -47,20 +47,20 @@ module.exports = {
       test: function(){
         var VALUE = {};
 
-        this.is(true, basis.data === undefined);
+        assert('data' in basis === false);
 
-        basis.patch('basis.data', function(){
-          basis.data.test1 = VALUE;
+        basis.patch('basis.data', function(exports){
+          exports.test1 = VALUE;
         });
 
-        basis.patch('basis.data', function(){
-          basis.data.test2 = VALUE;
+        basis.patch('basis.data', function(exports){
+          exports.test2 = VALUE;
         });
 
-        basis.require('basis.data');
-        this.is(true, basis.data !== undefined);
-        this.is(true, basis.data.test1 === VALUE);
-        this.is(true, basis.data.test2 === VALUE);
+        var basisData = basis.require('basis.data');
+        assert(basisData !== undefined);
+        assert(basisData.test1 === VALUE);
+        assert(basisData.test2 === VALUE);
       }
     },
     {
@@ -69,25 +69,25 @@ module.exports = {
         var VALUE = {};
         var json = basis.require('./fixture/foo.json');
 
-        this.is(true, json.id === 'foo');
-        this.is(true, json.test1 === undefined);
+        assert(json.id === 'foo');
+        assert(json.test1 === undefined);
 
         basis.patch('./fixture/foo.json', function(resourceJSON){
           resourceJSON.test1 = VALUE;
         });
 
-        this.is(true, basis.require('./fixture/foo.json') === json);
-        this.is(true, json.id === 'foo');
-        this.is(true, json.test1 === VALUE);
+        assert(basis.require('./fixture/foo.json') === json);
+        assert(json.id === 'foo');
+        assert(json.test1 === VALUE);
 
         basis.patch('./fixture/foo.json', function(resourceJSON){
           resourceJSON.test2 = VALUE;
         });
 
-        this.is(true, basis.require('./fixture/foo.json') === json);
-        this.is(true, json.id === 'foo');
-        this.is(true, json.test1 === VALUE);
-        this.is(true, json.test2 === VALUE);
+        assert(basis.require('./fixture/foo.json') === json);
+        assert(json.id === 'foo');
+        assert(json.test1 === VALUE);
+        assert(json.test2 === VALUE);
       }
     },
     {
@@ -95,7 +95,7 @@ module.exports = {
       test: function(){
         var VALUE = {};
 
-        this.is(false, basis.resource.exists('./fixture/bar.json'));
+        assert(basis.resource.exists('./fixture/bar.json') === false);
 
         basis.patch('./fixture/bar.json', function(resourceJSON){
           resourceJSON.test1 = VALUE;
@@ -105,8 +105,8 @@ module.exports = {
         });
 
         var json = basis.require('./fixture/bar.json');
-        this.is(true, json.test1 === VALUE);
-        this.is(true, json.test2 === VALUE);
+        assert(json.test1 === VALUE);
+        assert(json.test2 === VALUE);
       }
     }
   ]
