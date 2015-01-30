@@ -2,13 +2,11 @@ module.exports = {
   name: 'basis.crypt',
 
   init: function(){
-    basis.require('basis.crypt');
-
-    var UTF16 = basis.utils.utf16;
-    var UTF8 = basis.utils.utf8;
-    var base64 = basis.utils.base64;
-    var SHA1 = basis.crypt.sha1;
-    var MD5 = basis.crypt.md5;
+    var UTF16 = basis.require('basis.utils.utf16');
+    var UTF8 = basis.require('basis.utils.utf8');
+    var base64 = basis.require('basis.utils.base64');
+    var sha1 = basis.require('basis.crypt').sha1;
+    var md5 = basis.require('basis.crypt').md5;
 
     var utf16Bytes = [];
     utf16Bytes[0] = [63, 4, 64, 4, 56, 4, 50, 4, 53, 4, 66, 4];
@@ -48,6 +46,10 @@ module.exports = {
       var res = value.toString(16);
       return res.length == 1 ? '0' + res : res;
     };
+
+    function bytesToHexString(array){
+      return array.map(hex).join('');
+    }
   },
 
   test: [
@@ -61,72 +63,72 @@ module.exports = {
               name: 'toBytes',
               test: function(){
                 for (var i = 0; i < utf8Bytes.length; i++)
-                  this.is(utf8Bytes[i], UTF8.toBytes(utf8Str[i]));
+                  assert(utf8Bytes[i], UTF8.toBytes(utf8Str[i]));
               }
             },
             {
               name: 'fromBytes',
               test: function(){
                 for (var i = 0; i < utf8Bytes.length; i++)
-                  this.is(utf8Str[i], UTF8.fromBytes(utf8Bytes[i]));
+                  assert(utf8Str[i], UTF8.fromBytes(utf8Bytes[i]));
               }
             },
             {
               name: 'fromUTF16',
               test: function(){
                 for (var i = 0; i < utf16Str.length; i++)
-                  this.is(utf8Str[i], UTF8.fromUTF16(utf16Str[i]));
+                  assert(utf8Str[i], UTF8.fromUTF16(utf16Str[i]));
               }
             },
             {
               name: 'fromUTF16Bytes',
               test: function(){
                 for (var i = 0; i < utf16Bytes.length; i++)
-                  this.is(utf8Str[i], UTF8.fromUTF16Bytes(utf16Bytes[i]));
+                  assert(utf8Str[i], UTF8.fromUTF16Bytes(utf16Bytes[i]));
               }
             },
             {
               name: 'toUTF16',
               test: function(){
                 for (var i = 0; i < utf8Str.length; i++)
-                  this.is(utf16Str[i], UTF8.toUTF16(utf8Str[i]));
+                  assert(utf16Str[i], UTF8.toUTF16(utf8Str[i]));
               }
             },
             {
               name: 'toUTF16Bytes',
               test: function(){
                 for (var i = 0; i < utf16Bytes.length; i++)
-                  this.is(utf16Bytes[i], UTF8.toUTF16Bytes(utf8Str[i]));
+                  assert(utf16Bytes[i], UTF8.toUTF16Bytes(utf8Str[i]));
               }
             },
             {
               name: 'toUTF16 <=> fromUTF16',
               test: function(){
                 var S = 'hello world';
-                this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
+                assert(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
                 var S = 'привет мир';
-                this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
+                assert(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
                 var S = 'hello мир';
-                this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
+                assert(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
                 var S = '\t\r\nhello \rмир\n';
-                this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
+                assert(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
               }
             },
             {
               name: 'toUTF16 <=> fromUTF16 #2',
               test: function(){
                 for (var i = 0; i < utf8Str.length; i++)
-                  this.is(utf16Str[i], UTF8.toUTF16(UTF8.fromUTF16(utf16Str[i])));
+                  assert(utf16Str[i], UTF8.toUTF16(UTF8.fromUTF16(utf16Str[i])));
               }
             },
             {
               name: 'toUTF16 <=> fromUTF16 #3',
               test: function(){
                 for (var i = 0; i < utf16Str.length; i++)
-                  this.is(utf8Str[i], UTF8.fromUTF16(UTF8.toUTF16(utf8Str[i])));
+                  assert(utf8Str[i], UTF8.fromUTF16(UTF8.toUTF16(utf8Str[i])));
               }
             }
           ]
@@ -138,72 +140,72 @@ module.exports = {
               name: 'toBytes',
               test: function(){
                 for (var i = 0; i < utf16Bytes.length; i++)
-                  this.is(utf16Bytes[i], UTF16.toBytes(utf16Str[i]));
+                  assert(utf16Bytes[i], UTF16.toBytes(utf16Str[i]));
               }
             },
             {
               name: 'fromBytes',
               test: function(){
                 for (var i = 0; i < utf16Bytes.length; i++)
-                  this.is(utf16Str[i], UTF16.fromBytes(utf16Bytes[i]));
+                  assert(utf16Str[i], UTF16.fromBytes(utf16Bytes[i]));
               }
             },
             {
               name: 'fromUTF8',
               test: function(){
                 for (var i = 0; i < utf8Str.length; i++)
-                  this.is(utf16Str[i], UTF16.fromUTF8(utf8Str[i]));
+                  assert(utf16Str[i], UTF16.fromUTF8(utf8Str[i]));
               }
             },
             {
               name: 'fromUTF8Bytes',
               test: function(){
                 for (var i = 0; i < utf8Bytes.length; i++)
-                  this.is(utf16Str[i], UTF16.fromUTF8Bytes(utf8Bytes[i]));
+                  assert(utf16Str[i], UTF16.fromUTF8Bytes(utf8Bytes[i]));
               }
             },
             {
               name: 'toUTF8',
               test: function(){
                 for (var i = 0; i < utf16Str.length; i++)
-                  this.is(utf8Str[i], UTF16.toUTF8(utf16Str[i]));
+                  assert(utf8Str[i], UTF16.toUTF8(utf16Str[i]));
               }
             },
             {
               name: 'toUTF8Bytes',
               test: function(){
                 for (var i = 0; i < utf8Bytes.length; i++)
-                  this.is(utf8Bytes[i], UTF16.toUTF8Bytes(utf16Str[i]));
+                  assert(utf8Bytes[i], UTF16.toUTF8Bytes(utf16Str[i]));
               }
             },
             {
               name: 'toUTF8 <=> fromUTF8',
               test: function(){
                 var S = 'hello world';
-                this.is(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
+                assert(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
 
                 var S = [208, 191, 209, 128, 208, 184, 208, 178, 208, 181, 209, 130, 32, 208, 188, 208, 184, 209, 128].map(code2char).join('');
-                this.is(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
+                assert(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
 
                 var S = 'hello ' + [208, 188, 208, 184, 209, 128].map(code2char).join('');
-                this.is(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
+                assert(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
 
                 var S = '\t\r\nhello \r'  + [208, 188, 208, 184, 209, 128].map(code2char).join('') + '\n';
-                this.is(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
+                assert(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
               }
             },
             {
               name: 'toUTF8 <=> fromUTF8 #2',
               test: function(){
                 for (var i = 0; i < utf8Str.length; i++)
-                  this.is(utf8Str[i], UTF16.toUTF8(UTF16.fromUTF8(utf8Str[i])));
+                  assert(utf8Str[i], UTF16.toUTF8(UTF16.fromUTF8(utf8Str[i])));
               }
             },
             {
               name: 'toUTF8 <=> fromUTF8 #3',
               test: function(){
                 for (var i = 0; i < utf16Str.length; i++)
-                  this.is(utf16Str[i], UTF16.fromUTF8(UTF16.toUTF8(utf16Str[i])));
+                  assert(utf16Str[i], UTF16.fromUTF8(UTF16.toUTF8(utf16Str[i])));
               }
             }
           ]
@@ -211,89 +213,49 @@ module.exports = {
       ]
     },
     {
-      name: 'Hashes',
+      name: 'Base64',
       test: [
         {
-          name: 'Base64',
-          test: [
-            {
-              name: 'encode',
-              test: function(){
-                this.is('', base64.encode(''));
-                this.is('aABlAGwAbABvACAAdwBvAHIAbAA=', base64.encode('hello worl'));
-                this.is('aABlAGwAbABvACAAdwBvAHIAbABkAA==', base64.encode('hello world'));
-                this.is('aABlAGwAbABvACAAdwBvAHIAbABkACEA', base64.encode('hello world!'));
-                this.is('PwRABDgEMgQ1BEIEIAA8BDgEQAQ=', base64.encode('привет мир'));
-                this.is('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', base64.encode('Привет мирHello world', true));
-                this.is('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA', base64.encode('Привет мирHello world'));
-              }
-            },
-            {
-              name: 'decode',
-              test: function(){
-                this.is('', base64.decode(''));
-                this.is('hello worl', base64.decode('aABlAGwAbABvACAAdwBvAHIAbAA='));
-                this.is('hello world', base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkAA=='));
-                this.is('hello world!', base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkACEA'));
-                this.is('привет мир', base64.decode('PwRABDgEMgQ1BEIEIAA8BDgEQAQ='));
-                this.is('Привет мирHello world', base64.decode('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', true));
-                this.is('Привет мирHello world', base64.decode('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA'));
-              }
-            }
-          ]
-        },
-        {
-          name: 'SHA1',
+          name: 'encode',
           test: function(){
-            this.is('2fd4e1c67a2d28fced849ee1bb76e7391b93eb12', SHA1('The quick brown fox jumps over the lazy dog', true).map(hex).join(''));
-            this.is('50edb0e47dbb65c8498d1bdd51723d4e9104f2a0', SHA1('Привет мирHello world').map(hex).join(''));
-            this.is('654ff793e9a7c63429041383da52a32b517c60c5', SHA1('Привет мирHello world', true).map(hex).join(''));
+            assert(base64.encode('') === '');
+            assert(base64.encode('hello worl') === 'aABlAGwAbABvACAAdwBvAHIAbAA=');
+            assert(base64.encode('hello world') === 'aABlAGwAbABvACAAdwBvAHIAbABkAA==');
+            assert(base64.encode('hello world!') === 'aABlAGwAbABvACAAdwBvAHIAbABkACEA');
+            assert(base64.encode('привет мир') === 'PwRABDgEMgQ1BEIEIAA8BDgEQAQ=');
+            assert(base64.encode('Привет мирHello world', true) === '0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk');
+            assert(base64.encode('Привет мирHello world') === 'HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA');
           }
         },
         {
-          name: 'MD5',
+          name: 'decode',
           test: function(){
-            this.is('9e107d9d372bb6826bd81d3542a419d6', MD5('The quick brown fox jumps over the lazy dog', true).map(hex).join(''));
-            this.is('1a279ee072886994b2cbd88559e3cdfa', MD5('Привет мирHello world').map(hex).join(''));
-            this.is('42c488cb0b5fa1819d0f1e7d57ac1821', MD5('Привет мирHello world', true).map(hex).join(''));
+            assert(base64.decode('') === '');
+            assert(base64.decode('aABlAGwAbABvACAAdwBvAHIAbAA=') === 'hello worl');
+            assert(base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkAA==') === 'hello world');
+            assert(base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkACEA') === 'hello world!');
+            assert(base64.decode('PwRABDgEMgQ1BEIEIAA8BDgEQAQ=') === 'привет мир');
+            assert(base64.decode('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', true) === 'Привет мирHello world');
+            assert(base64.decode('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA') === 'Привет мирHello world');
           }
         }
       ]
     },
     {
-      name: 'Array & String extension',
-      test: [
-        {
-          name: '.md5()',
-          test: function(){
-          }
-        },
-        {
-          name: '.md5hex()',
-          test: function(){
-          }
-        },
-        {
-          name: '.sha1()',
-          test: function(){
-          }
-        },
-        {
-          name: '.sha1hex()',
-          test: function(){
-          }
-        },
-        {
-          name: '.base64()',
-          test: function(){
-          }
-        },
-        {
-          name: '.hex()',
-          test: function(){
-          }
-        }
-      ]
+      name: 'sha1',
+      test: function(){
+        assert(bytesToHexString(sha1('The quick brown fox jumps over the lazy dog', true)) === '2fd4e1c67a2d28fced849ee1bb76e7391b93eb12');
+        assert(bytesToHexString(sha1('Привет мирHello world')) === '50edb0e47dbb65c8498d1bdd51723d4e9104f2a0');
+        assert(bytesToHexString(sha1('Привет мирHello world', true)) === '654ff793e9a7c63429041383da52a32b517c60c5');
+      }
+    },
+    {
+      name: 'md5',
+      test: function(){
+        assert(bytesToHexString(md5('The quick brown fox jumps over the lazy dog', true)) === '9e107d9d372bb6826bd81d3542a419d6');
+        assert(bytesToHexString(md5('Привет мирHello world')) === '1a279ee072886994b2cbd88559e3cdfa');
+        assert(bytesToHexString(md5('Привет мирHello world', true)) === '42c488cb0b5fa1819d0f1e7d57ac1821');
+      }
     }
   ]
 };

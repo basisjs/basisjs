@@ -2,7 +2,8 @@ module.exports = {
   name: 'Calendar',
 
   init: function(){
-    basis.require('basis.ui.calendar');
+    var Calendar = basis.require('basis.ui.calendar').Calendar;
+    var CalendarSection = basis.require('basis.ui.calendar').CalendarSection;
   },
   test: [
     {
@@ -11,10 +12,10 @@ module.exports = {
         {
           name: 'before binding should work on init',
           test: function(){
-            var calendar = new basis.ui.calendar.Calendar({
+            var calendar = new Calendar({
               date: new Date(2014, 4, 1),
               childNodes: [
-                new basis.ui.calendar.CalendarSection.Month({
+                new CalendarSection.Month({
                   childClass: {
                     template: '<div><span class="{before}"/></div>'
                   }
@@ -32,10 +33,10 @@ module.exports = {
         {
           name: 'after binding should work on init',
           test: function(){
-            var calendar = new basis.ui.calendar.Calendar({
+            var calendar = new Calendar({
               date: new Date(2014, 4, 1),
               childNodes: [
-                new basis.ui.calendar.CalendarSection.Month({
+                new CalendarSection.Month({
                   childClass: {
                     template: '<div><span class="{after}"/></div>'
                   }
@@ -53,11 +54,11 @@ module.exports = {
         {
           name: 'disabled binding should work on init',
           test: function(){
-            var calendar = new basis.ui.calendar.Calendar({
+            var calendar = new Calendar({
               date: new Date(2014, 4, 1),
               minDate: new Date(2014, 4, 1),
               childNodes: [
-                new basis.ui.calendar.CalendarSection.Month({
+                new CalendarSection.Month({
                   childClass: {
                     template: '<div><span class="{disabled}"/></div>'
                   }
