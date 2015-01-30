@@ -126,10 +126,14 @@ var makeDeclaration = (function(){
       arrayAdd(array, items[i]);
   }
 
-  function addStyles(array, items, prefix){
+  function importStyles(array, items, prefix, includeToken){
     for (var i = 0, item; item = items[i]; i++)
+    {
       if (item[1] !== styleNamespaceIsolate)
         item[1] = prefix + item[1];
+      if (!item[3])
+        item[3] = includeToken;
+    }
 
     array.unshift.apply(array, items);
   }
@@ -147,7 +151,7 @@ var makeDeclaration = (function(){
       url = basis.resource.virtual('css', text ? text.value : '', template.sourceUrl).url;
     }
 
-    template.resources.push([url, isolatePrefix]);
+    template.resources.push([url, isolatePrefix, token, false]);
 
     return url;
   }
@@ -661,12 +665,11 @@ var makeDeclaration = (function(){
                     if (decl.deps)
                       addUnique(template.deps, decl.deps);
 
-                    // TODO: resolve duplicates issue and uncomment then
                     if (decl.warns)
                       template.warns.push.apply(template.warns, decl.warns);
 
                     if (decl.resources && 'no-style' in elAttrs == false)
-                      addStyles(template.resources, decl.resources, isolatePrefix);
+                      importStyles(template.resources, decl.resources, isolatePrefix, token);
 
                     var tokenRefMap = normalizeRefs(decl.tokens);
                     var instructions = (token.children || []).slice();
@@ -1211,6 +1214,7 @@ var makeDeclaration = (function(){
             item[1] = result.isolate + item[1];
 
       // isolate styles
+      /** @cut */ result.styles = result.resources.slice(0);
       result.resources = result.resources
         // remove duplicates
         .filter(function(item, idx, array){
