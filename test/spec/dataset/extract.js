@@ -1,13 +1,16 @@
 module.exports = {
   name: 'basis.data.dataset.Extract',
   init: function(){
-    var helpers = basis.require('./spec/dataset/helpers.js');
+    var helpers = basis.require('./helpers/dataset.js');
     var range = helpers.range;
     var generate = helpers.generate;
     var cmpDS = helpers.cmpDS;
     var checkValues = helpers.checkValues;
     var catchWarnings = helpers.catchWarnings;
 
+    var dataWrap = basis.require('basis.data').wrap;
+    var DataObject = basis.require('basis.data').Object;
+    var Value = basis.require('basis.data').Value;
     var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
     var Dataset = basis.require('basis.data').Dataset;
     var Extract = basis.require('basis.data.dataset').Extract;
@@ -72,7 +75,7 @@ module.exports = {
           name: 'with resolvable value as source',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var extract = new Extract({
               source: value
             });
@@ -109,10 +112,10 @@ module.exports = {
           name: 'extract subtree',
           test: function(){
             var dataset = new Dataset({
-              items: basis.data.wrap([
-                { value: 1, items: new basis.data.Dataset({ items: generate(2, 3) }) },
-                { value: 4, items: new basis.data.Dataset({ items: generate(5, 6) }) },
-                { value: 7, items: new basis.data.Dataset({ items: generate(8, 9) }) },
+              items: dataWrap([
+                { value: 1, items: new Dataset({ items: generate(2, 3) }) },
+                { value: 4, items: new Dataset({ items: generate(5, 6) }) },
+                { value: 7, items: new Dataset({ items: generate(8, 9) }) },
                 { value: 10 }
               ], true)
             });
@@ -133,9 +136,9 @@ module.exports = {
           name: 'extract with overlaping',
           test: function(){
             var items = generate(1, 10);
-            items[0].data.items = new basis.data.Dataset({ items: items.slice(1, 6) });
-            items[3].data.items = new basis.data.Dataset({ items: items.slice(3, 8) });
-            items[6].data.items = new basis.data.Dataset({ items: items.slice(2, 10) });
+            items[0].data.items = new Dataset({ items: items.slice(1, 6) });
+            items[3].data.items = new Dataset({ items: items.slice(3, 8) });
+            items[6].data.items = new Dataset({ items: items.slice(2, 10) });
             var dataset = new Dataset({
               items: [
                 items[0],
@@ -161,7 +164,7 @@ module.exports = {
           name: 'recursive references',
           test: function(){
             var dataset = new Dataset();
-            dataset.add(new basis.data.Object({
+            dataset.add(new DataObject({
               data: {
                 value: 1,
                 items: dataset
@@ -220,7 +223,7 @@ module.exports = {
               return item;
             });
             var dataset = new Dataset({ items: [items[0]] });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var extract = new Extract({
               rule: 'data.parent'
             });
@@ -272,7 +275,7 @@ module.exports = {
               return item;
             });
             var dataset = new Dataset({ items: [items[0]] });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var extract = new Extract({
               source: value,
               rule: 'data.parent'
@@ -294,10 +297,10 @@ module.exports = {
           test: function(){
             var dataset = new Dataset({
               items: [
-                new basis.data.Object({
+                new DataObject({
                   data: {
                     value: 1,
-                    items: new basis.data.Dataset({ items: generate(2, 5) })
+                    items: new Dataset({ items: generate(2, 5) })
                   }
                 })
               ]
@@ -322,7 +325,7 @@ module.exports = {
           name: 'destroy object with recursive references',
           test: function(){
             var dataset = new Dataset();
-            dataset.add(new basis.data.Object({
+            dataset.add(new DataObject({
               data: {
                 value: 1,
                 items: dataset
@@ -439,8 +442,8 @@ module.exports = {
         {
           name: 'change object with dataset',
           test: function(){
-            var objectDataset = new basis.data.Dataset({ items: generate(1, 3) });
-            var object = new basis.data.Object({
+            var objectDataset = new Dataset({ items: generate(1, 3) });
+            var object = new DataObject({
               data: {
                 value: 4,
                 items: objectDataset
@@ -470,8 +473,8 @@ module.exports = {
         {
           name: 'change object with recursion',
           test: function(){
-            var objectDataset = new basis.data.Dataset({ items: generate(1, 3) });
-            var object = new basis.data.Object({
+            var objectDataset = new Dataset({ items: generate(1, 3) });
+            var object = new DataObject({
               data: {
                 value: 4,
                 items: objectDataset
@@ -501,8 +504,8 @@ module.exports = {
         {
           name: 'change object dataset',
           test: function(){
-            var objectDataset = new basis.data.Dataset({ items: generate(1, 3) });
-            var object = new basis.data.Object({
+            var objectDataset = new Dataset({ items: generate(1, 3) });
+            var object = new DataObject({
               data: {
                 value: 4,
                 items: objectDataset
@@ -535,14 +538,14 @@ module.exports = {
         {
           name: 'some objects with same dataset',
           test: function(){
-            var objectDataset = new basis.data.Dataset({ items: generate(1, 3) });
-            var objectA = new basis.data.Object({
+            var objectDataset = new Dataset({ items: generate(1, 3) });
+            var objectA = new DataObject({
               data: {
                 value: 4,
                 items: objectDataset
               }
             });
-            var objectB = new basis.data.Object({
+            var objectB = new DataObject({
               data: {
                 value: 5,
                 items: objectDataset
@@ -582,14 +585,14 @@ module.exports = {
         {
           name: 'some objects with dataset as source',
           test: function(){
-            var objectDataset = new basis.data.Dataset();
-            var objectA = new basis.data.Object({
+            var objectDataset = new Dataset();
+            var objectA = new DataObject({
               data: {
                 value: 1,
                 items: objectDataset
               }
             });
-            var objectB = new basis.data.Object({
+            var objectB = new DataObject({
               data: {
                 value: 2,
                 items: objectDataset
@@ -638,14 +641,14 @@ module.exports = {
         {
           name: 'some objects with dataset as source',
           test: function(){
-            var objectDataset = new basis.data.Dataset();
-            var objectA = new basis.data.Object({
+            var objectDataset = new Dataset();
+            var objectA = new DataObject({
               data: {
                 value: 1,
                 items: objectDataset
               }
             });
-            var objectB = new basis.data.Object({
+            var objectB = new DataObject({
               data: {
                 value: 2,
                 items: objectDataset
@@ -716,7 +719,7 @@ module.exports = {
               return item;
             });
             var dataset = new Dataset({ items: [items[0]] });
-            var value = new basis.data.Value();
+            var value = new Value();
             var extract = new Extract({
               source: value,
               rule: 'data.parent'
@@ -801,7 +804,7 @@ module.exports = {
             var items = generate(1, 3);
             var dataset1 = new Dataset({ items: items });
             var dataset2 = new Dataset({ items: items });
-            var object = new basis.data.Object({ data: { value: 4, items: dataset1 } });
+            var object = new DataObject({ data: { value: 4, items: dataset1 } });
             var extract = new Extract({
               source: new Dataset({ items: [object] }),
               rule: 'data.items'
@@ -934,7 +937,7 @@ module.exports = {
           name: 'destroy object\'s dataset but don\'t notify about changes',
           test: function(){
             var objectDataset = new Dataset({ items: generate(2, 3) });
-            var object = new basis.data.Object({
+            var object = new DataObject({
               data: {
                 value: 1,
                 items: objectDataset
@@ -980,7 +983,7 @@ module.exports = {
           name: 'destroy object\'s dataset and notify about changes',
           test: function(){
             var objectDataset = new Dataset({ items: generate(2, 3) });
-            var object = new basis.data.Object({
+            var object = new DataObject({
               data: {
                 value: 1,
                 items: objectDataset
@@ -1025,7 +1028,7 @@ module.exports = {
           name: 'destroy object\'s dataset and notify about changes (another listener order)',
           test: function(){
             var objectDataset = new Dataset({ items: generate(2, 3) });
-            var object = new basis.data.Object({
+            var object = new DataObject({
               data: {
                 value: 1,
                 items: objectDataset

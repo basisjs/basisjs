@@ -2,6 +2,7 @@ module.exports = {
   name: 'basis.getter (backward capability)',
 
   init: function(){
+    basis.dev.warn = function(){};
     var data = [
       { a: 11, b: 21, c: 31 },
       { a: 12, b: 22 },

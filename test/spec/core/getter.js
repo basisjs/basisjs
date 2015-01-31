@@ -131,29 +131,28 @@ module.exports = {
         assert(!basis.fn.$self.getter);
         assert(!basis.fn.$self.__extend__);
 
+        /* jscs: disable */
         assert(basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 1; }));
         assert(basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 2; }));
 
         assert(basis.getter(function(){ return 1; }).as(Number) !== basis.getter(function(){ return 1; }).as(Number));
         assert(basis.getter(function(){ return 1; }).as(Number) !== basis.getter(function(){ return 2; }).as(Number));
 
-        assert(basis.getter(function(){ return 1; }).as('') !== basis.getter(function(){ return 1; }).as(''));
-        assert(basis.getter(function(){ return 1; }).as('') !== basis.getter(function(){ return 2; }).as(''));
-
         assert(basis.getter(function(){ return 1; }).as('f') !== basis.getter(function(){ return 1; }).as('f'));
         assert(basis.getter(function(){ return 1; }).as('f') !== basis.getter(function(){ return 2; }).as('f'));
 
         assert(basis.getter(function(){ return 1; }).as('f') !== basis.getter(function(){ return 1; }).as('fs'));
+        /* jscs: enable */
 
         assert(basis.getter('a').as(Number) !== basis.getter('a'));
         assert(basis.getter('a').as(Number) === basis.getter('a').as(Number));
         assert(basis.getter(basis.fn.$self).as(Number) === basis.getter(basis.fn.$self).as(Number));
-        assert(basis.getter(basis.fn.$self).as('') === basis.getter(basis.fn.$self).as(''));
         assert(basis.getter(basis.fn.$self).as('asd') === basis.getter(basis.fn.$self).as('asd'));
         assert(basis.getter(basis.fn.$self).as(String) !== basis.getter(basis.fn.$self).as(Number));
 
-        assert(basis.getter('a').as('') === basis.getter('a').as(''));
-        assert(basis.getter('a').as('') !== basis.getter('a').as('f'));
+        //assert(basis.getter(basis.fn.$self).as('') === basis.getter(basis.fn.$self).as(''));
+        //assert(basis.getter('a').as('') === basis.getter('a').as(''));
+        //assert(basis.getter('a').as('') !== basis.getter('a').as('f'));
 
         assert(basis.getter('a').as(Number) === basis.getter('a').as(Number));
         assert(basis.getter('a').as(Number) !== basis.getter('a').as(Number).as(Number));
@@ -179,32 +178,32 @@ module.exports = {
     {
       name: 'extensible',
       test: function(){
-        var __extend__ = basis.getter('').__extend__;
+        var __extend__ = basis.getter('x').__extend__;
         var func = function(){};
         var g = basis.getter('random');
 
         assert(typeof __extend__ == 'function');
 
         assert(basis.getter('a').__extend__ === __extend__);
-        assert(basis.getter('a').as('').__extend__ === __extend__);
+        assert(basis.getter('a').as('x').__extend__ === __extend__);
         assert(basis.getter('a').as(function(){}).__extend__ === __extend__);
         assert(basis.getter('a').as({}).__extend__ === __extend__);
         assert(basis.getter('a').as([]).__extend__ === __extend__);
 
         assert(basis.getter(basis.fn.$true).__extend__ === __extend__);
-        assert(basis.getter(basis.fn.$true).as('').__extend__ === __extend__);
+        assert(basis.getter(basis.fn.$true).as('x').__extend__ === __extend__);
         assert(basis.getter(basis.fn.$true).as(function(){}).__extend__ === __extend__);
         assert(basis.getter(basis.fn.$true).as({}).__extend__ === __extend__);
         assert(basis.getter(basis.fn.$true).as([]).__extend__ === __extend__);
 
         assert(basis.getter(function(){}).__extend__ === __extend__);
-        assert(basis.getter(function(){}).as('').__extend__ === __extend__);
+        assert(basis.getter(function(){}).as('x').__extend__ === __extend__);
         assert(basis.getter(function(){}).as(function(){}).__extend__ === __extend__);
         assert(basis.getter(function(){}).as({}).__extend__ === __extend__);
         assert(basis.getter(function(){}).as([]).__extend__ === __extend__);
 
         assert(basis.getter(g).__extend__ === __extend__);
-        assert(basis.getter(g).as('').__extend__ === __extend__);
+        assert(basis.getter(g).as('x').__extend__ === __extend__);
         assert(basis.getter(g).as(g).__extend__ === __extend__);
         assert(basis.getter(g).as({}).__extend__ === __extend__);
         assert(basis.getter(g).as([]).__extend__ === __extend__);

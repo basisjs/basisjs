@@ -62,7 +62,7 @@ module.exports = {
           sortingDesc: true,
           grouping: {
             rule: 'data.group',
-            sorting: basis.getter('data.title', String),
+            sorting: basis.getter('data.title').as(String),
             sortingDesc: true
           },
           childNodes: testSet
@@ -112,7 +112,7 @@ module.exports = {
           sorting: basis.getter('data.value'),
           sortingDesc: true,
           grouping: {
-            rule: basis.getter('data.group', groupNodes),
+            rule: basis.getter('data.group').as(groupNodes),
             sorting: basis.getter('data.title'),
             sortingDesc: true
           },
@@ -168,7 +168,7 @@ module.exports = {
         this.is(false, checkNode(node));
 
         node.setGrouping({
-          rule: basis.getter('data.group', groupNodes),
+          rule: basis.getter('data.group').as(groupNodes),
           sorting: basis.getter('data.title'),
           sortingDesc: true
         });
@@ -235,7 +235,7 @@ module.exports = {
         this.is(false, checkNode(node));
 
         node.setGrouping({
-          rule: basis.getter('data.group', groupNodes),
+          rule: basis.getter('data.group').as(groupNodes),
           sorting: basis.getter('data.title'),
           sortingDesc: true
         });

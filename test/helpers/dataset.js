@@ -1,3 +1,4 @@
+var DataObject = require('basis.data').Object;
 var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
 
 function range(start, end){
@@ -10,7 +11,7 @@ function range(start, end){
 
 function generate(start, end){
   return range(start, end).map(function(val){
-    return new basis.data.Object({
+    return new DataObject({
       data: {
         value: val
       }

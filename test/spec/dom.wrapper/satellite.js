@@ -1790,22 +1790,22 @@ module.exports = {
           }
         });
 
-        this.is(true, node.data.value === object);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.delegate === object);
-        this.is(1, delegateChangedCount);
+        assert(node.data.value === object);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.delegate === object);
+        assert(delegateChangedCount === 1);
 
         node.update({ value: null });
-        this.is(null, node.data.value);
-        this.is(false, 'foo' in node.satellite);
-        this.is(true, satellite.delegate === null);
-        this.is(2, delegateChangedCount);
+        assert(node.data.value === null);
+        assert('foo' in node.satellite === false);
+        assert(satellite.delegate === null);
+        assert(delegateChangedCount === 2);
 
         node.update({ value: object });
-        this.is(true, node.data.value === object);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.delegate === object);
-        this.is(3, delegateChangedCount);
+        assert(node.data.value === object);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.delegate === object);
+        assert(delegateChangedCount === 3);
       }
     },
     {

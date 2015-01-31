@@ -36,9 +36,9 @@ module.exports = {
 
             this.async(function(){
               // check async because ObjectSet update occur by timeout
-              this.is(1, updateCount);
-              this.is('test', s.a.value);
-              this.is(11, s.b.value);
+              assert(updateCount === 1);
+              assert(s.a.value === 'test');
+              assert(s.b.value === 11);
             });
           }
         },
@@ -59,13 +59,13 @@ module.exports = {
               }
             });
 
-            this.is(2, s.objects.length);
-            this.is(0, updateCount);
+            assert(s.objects.length === 2);
+            assert(updateCount === 0);
 
             s.a.destroy();
 
-            this.is(1, s.objects.length);
-            this.is(0, updateCount);
+            assert(s.objects.length === 1);
+            assert(updateCount === 0);
           }
         },
         {
@@ -84,7 +84,7 @@ module.exports = {
 
             s.a.destroy();
 
-            this.is(0, result);
+            assert(result === 0);
           }
         }
       ]

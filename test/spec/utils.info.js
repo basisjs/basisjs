@@ -108,7 +108,7 @@ module.exports = {
                   }
                 });*/
 
-                this.is(text('<span title="a" class="b"/>'), text(b));
+                assert(text(b) === text('<span title="a" class="b"/>'));
               },
               function(){
                 var a = /regexp/;

@@ -5,7 +5,7 @@ module.exports = {
       name: 'when remove reference binding shouldn\'t be lost',
       test: function(){
         var tokens = JSON.stringify(
-          basis.template.makeDeclaration(
+          nsTemplate.makeDeclaration(
             '<div{ref}>' +
               '<div{ref}/>' +
             '</div>'
@@ -18,11 +18,11 @@ module.exports = {
     {
       name: 'the same style from different includes should produce single resource',
       test: function(){
-        var template = new basis.template.Template(
+        var template = new nsTemplate.Template(
           '<b:style src="../fixture/isolate_style.css"/>' +
           '<div/>'
         );
-        var decl = basis.template.makeDeclaration(
+        var decl = nsTemplate.makeDeclaration(
           '<b:include src="#' + template.templateId + '"/>' +
           '<b:include src="#' + template.templateId + '"/>'
         );

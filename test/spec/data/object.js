@@ -742,7 +742,7 @@ module.exports = {
                     var values = [
                       false,
                       new basis.Token(false),
-                      new basis.data.Value({ value: false })
+                      new Value({ value: false })
                     ];
 
                     for (var i = 0; i < values.length; i++)
@@ -765,7 +765,7 @@ module.exports = {
                     var values = [
                       true,
                       new basis.Token(true),
-                      new basis.data.Value({ value: true })
+                      new Value({ value: true })
                     ];
 
                     for (var i = 0; i < values.length; i++)
@@ -888,10 +888,10 @@ module.exports = {
                     var values = [
                       false,
                       new basis.Token(false),
-                      new basis.data.Value({ value: false }),
+                      new Value({ value: false }),
                       true,
                       new basis.Token(true),
-                      new basis.data.Value({ value: true }),
+                      new Value({ value: true }),
                       PROXY
                     ];
 

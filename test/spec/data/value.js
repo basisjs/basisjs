@@ -2,6 +2,7 @@ module.exports = {
   name: 'basis.data.Value',
 
   init: function(){
+    var Emitter = basis.require('basis.event').Emitter;
     var Value = basis.require('basis.data').Value;
     var AbstractData = basis.require('basis.data').AbstractData;
     var DataObject = basis.require('basis.data').Object;
@@ -34,7 +35,7 @@ module.exports = {
           name: 'create',
           test: function(){
             var testValue = new Value({ value: 123 });
-            this.is(123, testValue.value);
+            assert(testValue.value === 123);
           }
         },
         {
@@ -81,7 +82,7 @@ module.exports = {
           name: 'link/unlink',
           test: function(){
             var testValue = new Value({ value: 1 });
-            var object = new basis.data.Object({
+            var object = new DataObject({
               testMethod: function(testValue){
                 this.xxx = testValue;
               }
@@ -110,7 +111,7 @@ module.exports = {
           test: function(){
             // destroy linked object
             var testValue = new Value({ value: 1 });
-            var object = new basis.data.Object();
+            var object = new DataObject();
             testValue.link(object, function(){});
             assert(object.handler !== null);
             assert(testValue.links_ !== null);
@@ -121,7 +122,7 @@ module.exports = {
 
             // destroy testValue with link to emitter
             var testValue = new Value({ value: 1 });
-            var object = new basis.data.Object();
+            var object = new DataObject();
             testValue.link(object, function(){});
 
             testValue.destroy();
@@ -132,7 +133,7 @@ module.exports = {
         {
           name: 'value should be set to null if value instanceof basis.event.Emitter',
           test: function(){
-            var emitter = new basis.event.Emitter;
+            var emitter = new Emitter();
             var testValue = new Value({ value: emitter });
 
             assert(testValue.value === emitter);
@@ -146,7 +147,7 @@ module.exports = {
         {
           name: 'value should correct add/remove handler on value if value instanceof basis.event.Emitter',
           test: function(){
-            var emitter = new basis.event.Emitter;
+            var emitter = new Emitter();
             var testValue = new Value({ value: null });
 
             assert(emitter.handler === null);
@@ -423,8 +424,8 @@ module.exports = {
         {
           name: 'value destroy -> unlink from source',
           test: function(){
-            var obj = new basis.data.Object();
-            var value = basis.data.Value.from(obj, null, 'basisObjectId');
+            var obj = new DataObject();
+            var value = Value.from(obj, null, 'basisObjectId');
 
             assert(obj.debug_handlers().length == 1);
 
@@ -433,14 +434,14 @@ module.exports = {
             }) == false);
 
             assert(obj.debug_handlers().length == 0);
-            assert(value !== basis.data.Value.from(obj, null, 'basisObjectId'));
+            assert(value !== Value.from(obj, null, 'basisObjectId'));
           }
         },
         {
           name: 'source destroy -> value destroy',
           test: function(){
-            var obj = new basis.data.Object();
-            var value = basis.data.Value.from(obj, null, 'basisObjectId');
+            var obj = new DataObject();
+            var value = Value.from(obj, null, 'basisObjectId');
             var destroyCount = 0;
 
             value.addHandler({
