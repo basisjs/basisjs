@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.entity',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var nsData = basis.require('basis.data');
     var nsEntity = basis.require('basis.entity');
     var basisEvents = basis.require('basis.event').events;

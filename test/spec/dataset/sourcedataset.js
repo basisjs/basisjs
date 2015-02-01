@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.data.dataset.SourceDataset',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var Dataset = basis.require('basis.data').Dataset;
     var SourceDataset = basis.require('basis.data.dataset').SourceDataset;
   },

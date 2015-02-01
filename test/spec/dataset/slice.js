@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.data.dataset.Slice',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var DataObject = basis.require('basis.data').Object;
     var Dataset = basis.require('basis.data').Dataset;
     var Slice = basis.require('basis.data.dataset').Slice;

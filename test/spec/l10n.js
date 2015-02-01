@@ -1,10 +1,9 @@
 module.exports = {
   name: 'basis.l10n',
 
-  html: __dirname + 'l10n.html',  // to properly load .l10n file
+  //sandbox: true,
   init: function(){
-    basis.require('basis.l10n');
-    basis.require('basis.ui');
+    //basis = basis.createSandbox();
 
     var Dictionary = basis.require('basis.l10n').Dictionary;
     var Culture = basis.require('basis.l10n').Culture;
@@ -22,8 +21,8 @@ module.exports = {
         {
           name: 'basic',
           test: function(){
-            var res = JSON.parse(basis.require('./l10n.l10n').resource.get(true));
-            var dict = getDictionary('l10n', basis.resource.virtual('l10n', res));
+            var res = JSON.parse(basis.require('./fixture/dict.l10n').resource.get(true));
+            var dict = getDictionary(basis.resource.virtual('l10n', res));
             setCulture('en-US');
             assert(dict.token('value').value === 'base');
 
@@ -71,7 +70,10 @@ module.exports = {
       test: [
         {
           name: 'base',
+          sandbox: true,
           init: function(){
+            basis = basis.createSandbox();
+
             var getDictionary = basis.require('basis.l10n').dictionary;
             var setCultureList = basis.require('basis.l10n').setCultureList;
             var setCulture = basis.require('basis.l10n').setCulture;
@@ -270,15 +272,15 @@ module.exports = {
     {
       name: 'dictionary',
       test: function(){
-        assert(getDictionary('./l10n.l10n') === getDictionary('./l10n.l10n'));
-        assert(getDictionary(basis.resource('./l10n.l10n')) === getDictionary('./l10n.l10n'));
+        assert(getDictionary('./fixture/dict.l10n') === getDictionary('./fixture/dict.l10n'));
+        assert(getDictionary(basis.resource('./fixture/dict.l10n')) === getDictionary('./fixture/dict.l10n'));
 
         // path should be normalized
-        assert(getDictionary('./foo/../l10n.l10n') === getDictionary('./l10n.l10n'));
+        assert(getDictionary('./foo/../fixture/dict.l10n') === getDictionary('./fixture/dict.l10n'));
         // file extension should be replaced for `.l10n`
-        assert(getDictionary('./l10n.l10n') === getDictionary('./l10n.whatever'));
+        assert(getDictionary('./fixture/dict.l10n') === getDictionary('./fixture/dict.whatever'));
         // if no extension, then `.l10n` should be appended
-        assert(getDictionary('./l10n.l10n') === getDictionary('./l10n'));
+        assert(getDictionary('./fixture/dict.l10n') === getDictionary('./fixture/dict'));
       }
     },
     {

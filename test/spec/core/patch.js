@@ -1,7 +1,9 @@
 module.exports = {
   name: 'basis.patch',
-  init: function(){
 
+  sandbox: true,
+  init: function(){
+    basis = basis.createSandbox();
   },
 
   test: [

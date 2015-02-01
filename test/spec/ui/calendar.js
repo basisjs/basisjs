@@ -1,10 +1,14 @@
 module.exports = {
   name: 'Calendar',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var Calendar = basis.require('basis.ui.calendar').Calendar;
     var CalendarSection = basis.require('basis.ui.calendar').CalendarSection;
   },
+
   test: [
     {
       name: 'CalendarNode',

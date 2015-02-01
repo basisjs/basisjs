@@ -333,29 +333,6 @@ module.exports = {
           }
         },
         {
-          name: 'forRegExp()',
-          test: function(){
-          }
-        },
-        {
-          name: 'toRegExp()',
-          test: function(){
-          
-          }
-        },
-        {
-          name: 'sprintf()',
-          test: function(){
-          
-          }
-        },
-        {
-          name: 'format()',
-          test: function(){
-          
-          }
-        },
-        {
           name: 'trimLeft()',
           test: function(){
             this.is('x \n ', ' \n x \n '.trimLeft());

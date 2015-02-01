@@ -1,6 +1,7 @@
 module.exports = {
   name: 'basis.getter',
 
+  sandbox: true,
   init: function(){
     var data = [
       { a: 11, b: 21, c: 31 },

@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.data.index',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var wrap = basis.require('basis.data').wrap;
     var Value = basis.require('basis.data').Value;
     var Dataset = basis.require('basis.data').Dataset;

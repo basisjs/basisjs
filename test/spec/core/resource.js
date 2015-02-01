@@ -1,6 +1,9 @@
 module.exports = {
   name: 'basis.resource',
+
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
     var baseURI = basis.config.modules.basis.path;
   },
 

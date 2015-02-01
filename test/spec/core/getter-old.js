@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.getter (backward capability)',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     basis.dev.warn = function(){};
     var data = [
       { a: 11, b: 21, c: 31 },

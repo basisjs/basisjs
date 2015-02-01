@@ -1,17 +1,18 @@
 module.exports = {
   name: 'basis.router',
 
-  init: function(){
-    function getRouter(){
-      return basis.createSandbox().require('basis.router');
-    }
+  beforeEach: function(){
+    var router = basis.createSandbox().require('basis.router');
+  },
+  afterEach: function(){
+    router.stop();
+    location.hash = '';
   },
 
   test: [
     {
       name: 'checkUrl',
       test: function(){
-        var router = getRouter();
         var checker = 0;
 
         router.start();
@@ -28,15 +29,11 @@ module.exports = {
         });
 
         assert(checker === 2);
-
-        router.stop();
-        location.hash = '';
       }
     },
     {
       name: 'navigate',
       test: function(){
-        var router = getRouter();
         var checker = 0;
 
         router.start();
@@ -47,15 +44,11 @@ module.exports = {
 
         assert(location.hash.substr(1) === 'test');
         assert(checker === 1);
-
-        router.stop();
-        location.hash = '';
       }
     },
     {
       name: 'callbacks',
       test: function(){
-        var router = getRouter();
         var checker = 0;
         var log = [];
 
@@ -80,15 +73,11 @@ module.exports = {
 
         router.navigate('bar');
         assert(['foo', 'foo2', 'bar'], log);
-
-        router.stop();
-        location.hash = '';
       }
     },
     {
       name: 'params',
       test: function(){
-        var router = getRouter();
         var checker;
 
         router.start();
@@ -104,9 +93,6 @@ module.exports = {
         });
         router.navigate('path/some/stuff');
         assert(checker === 'some/stuff');
-
-        router.stop();
-        location.hash = '';
       }
     }
   ]

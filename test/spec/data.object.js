@@ -1,6 +1,10 @@
 module.exports = {
   name: 'basis.data.object',
+
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var moduleEntity = basis.require('basis.entity');
     var Value = basis.require('basis.data').Value;
     var DataObject = basis.require('basis.data').Object;

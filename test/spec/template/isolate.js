@@ -1,10 +1,15 @@
 module.exports = {
   name: '<b:isolate>',
+
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var isolateCss = basis.require('basis.template.isolateCss');
     var Template = basis.require('basis.template.html').Template;
     var DOM = basis.require('basis.dom');
   },
+
   test: [
     {
       name: 'isolateCss',

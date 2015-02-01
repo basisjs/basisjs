@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.date',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var isLeapYear = basis.require('basis.date').isLeapYear;
     var getMonthDayCount = basis.require('basis.date').getMonthDayCount;
     var diff = basis.require('basis.date').diff;

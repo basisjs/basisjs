@@ -1,6 +1,10 @@
 module.exports = {
   name: 'basis.data.dataset.Merge',
+
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var helpers = basis.require('./helpers/dataset.js');
     var range = helpers.range;
     var generate = helpers.generate;
@@ -27,6 +31,7 @@ module.exports = {
       return info && info[eventName] || 0;
     }
   },
+
   test: [
     {
       name: 'create',

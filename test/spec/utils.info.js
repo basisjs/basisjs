@@ -1,9 +1,14 @@
 module.exports = {
   name: 'basis.utils.info',
+
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var fnInfo = basis.require('basis.utils.info').fn;
     var normalizeOffset = basis.require('basis.utils.info').normalizeOffset;
   },
+
   test: [
     {
       name: 'fn',

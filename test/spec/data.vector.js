@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.data.vector',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var DataObject = basis.require('basis.data').Object;
     var Dataset = basis.require('basis.data').Dataset;
     var Vector = basis.require('basis.data.vector').Vector;

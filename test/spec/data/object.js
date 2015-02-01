@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.data.Object',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var DataObject = basis.require('basis.data').Object;
     var isConnected = basis.require('basis.data').isConnected;
     var Value = basis.require('basis.data').Value;

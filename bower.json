@@ -10,5 +10,8 @@
     "test",
     "tour",
     "scripts"
-  ]
+  ],
+  "devDependencies": {
+    "yatra": "1.0.0-beta-build10"
+  }
 }

@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.crypt',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var UTF16 = basis.require('basis.utils.utf16');
     var UTF8 = basis.require('basis.utils.utf8');
     var base64 = basis.require('basis.utils.base64');

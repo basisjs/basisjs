@@ -1,6 +1,10 @@
 module.exports = {
   name: 'l10n',
+
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var sandbox = basis.createSandbox('template-l10n-test');
     var api = basis.require('../helpers/template.js').createSandboxAPI(sandbox);
     var createTemplate = api.createTemplate;
@@ -10,6 +14,7 @@ module.exports = {
     l10n.setCultureList('en-US ru-RU');
     l10n.enableMarkup = true;
   },
+
   test: [
     {
       name: 'basic',

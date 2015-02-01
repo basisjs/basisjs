@@ -11,7 +11,7 @@
   <script src="../src/basis.js"></script>
   <script>
     if (this.top === this)
-      location.href = 'runner/reporter.html?page=../index.html';
+      location.href = '../bower_components/yatra/reporter.html?page=' + location.pathname;
 
     window.loadTests = (function(){
       var originalJsWrapper = basis.resource.extensions['.js'];
@@ -40,8 +40,8 @@
 
           if (startPos != -1)
             cursor.loc = filename +
-              ':' + content.substr(0, startPos).split('\n').length +
-              ':' + (content.lastIndexOf('function', startPos) - content.lastIndexOf('\n', startPos));
+              /* line */ ':' + content.substr(0, startPos).split('\n').length +
+              /* col  */ ':' + (content.lastIndexOf('function', startPos) - content.lastIndexOf('\n', startPos));
         }
       }
 
@@ -60,7 +60,7 @@
       // page reload on spec files update
       // run in next tick, because at code run basisjs-tools file sync
       // script is not loaded yet
-      basis.ready(function attachToSyncTools(){
+      basis.ready(function attachToBasisTools(){
         if (typeof basisjsToolsFileSync != 'undefined')
           basisjsToolsFileSync.notifications.attach(function(type, filename){
             if (type == 'update' &&
@@ -69,7 +69,7 @@
               location.reload();
           });
         else
-          setTimeout(attachToSyncTools, 1000);
+          setTimeout(attachToBasisTools, 1000);
       });
 
       return function(loadTests){

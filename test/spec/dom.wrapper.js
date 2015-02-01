@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.dom.wrapper',
 
+  sandbox: true,
   init: function(){
+    basis = basis.createSandbox();
+
     var Class = basis.Class;
     var DOM = basis.require('basis.dom');
     var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
