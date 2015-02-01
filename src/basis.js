@@ -2291,7 +2291,7 @@
         if (!namespace)
         {
           var implicitNamespace = true;
-          var resolvedFilename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
+          var resolvedFilename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename))).replace(/^\/\//, '/');
 
           for (var ns in nsRootPath)
           {
@@ -2316,13 +2316,13 @@
         /** @cut */ if (requires)
         /** @cut */   arrayFunctions.add(requires, namespace);
 
-        if (!namespaces[namespace])
+        var ns = getNamespace(namespace);
+        if (!ns.inited)
         {
-          var ns = getNamespace(namespace);
-
           /** @cut */ var savedRequires = requires;
           /** @cut */ requires = [];
 
+          ns.inited = true;
           ns.exports = runScriptInContext({
             path: ns.path,
             exports: ns.exports
@@ -2355,7 +2355,7 @@
           /** @cut */ requires = savedRequires;
         }
 
-        return namespaces[namespace].exports;
+        return ns.exports;
       }, {
         permanent: true
       }),
@@ -2565,8 +2565,9 @@
     var rootNs = getRootNamespace(path[0]);
     var cursor = rootNs;
 
-    for (var i = 1, name; name = path[i]; i++)
+    for (var i = 1; i < path.length; i++)
     {
+      var name = path[i];
       var nspath = path.slice(0, i + 1).join('.');
 
       if (!hasOwnProperty.call(rootNs.namespaces_, nspath))
