@@ -26,7 +26,8 @@
   "devDependencies": {
     "karma": "^0.12.31",
     "karma-firefox-launcher": "^0.1.4",
-    "karma-yatra": "0.0.1"
+    "karma-yatra": "0.0.1",
+    "yatra": "~1.0.0"
   },
   "scripts": {
     "test": "node ./node_modules/karma/bin/karma start karma.conf.js"
