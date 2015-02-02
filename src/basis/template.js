@@ -28,7 +28,6 @@
   //
 
   var DECLARATION_VERSION = 3;
-
   var templateList = [];
 
 
