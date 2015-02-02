@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/basisjs/basisjs.svg?branch=master)](https://travis-ci.org/basisjs/basisjs)
+
+# basis.js
+
 [Версия на русском](README.ru.md) (более полная и подробная)
 
 ## What is it?
