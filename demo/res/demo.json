@@ -1,0 +1,196 @@
+[
+  {
+    "title": "Apps",
+    "demos": [
+      {
+        "title": "Basis Docs",
+        "url": "../docs/",
+        "image": "apps/docs.png",
+        "wow": "basisjs docs generates on fly. It analyzes framework structure and source code to show article for any class, function or property."
+      },
+      {
+        "title": "Blog",
+        "url": "apps/blog/",
+        "image": "apps/blog/blog.png",
+        "wow": "Demo of blog contains 5000 posts, builds category list, archive and tag cloud on client side in extremely small time."
+      },
+      {
+        "title": "TodoMVC",
+        "url": "apps/todomvc/basis/",
+        "image": "apps/todomvc/logo.png"
+      }
+    ]
+  },
+  {
+    "title": "UI patterns",
+    "demos": [
+      {
+        "title": "Grouping",
+        "url": "common/grouping.html"
+      },
+      {
+        "title": "Nested grouping",
+        "url": "common/grouping_of_grouping.html"
+      },
+      {
+        "title": "Match input",
+        "url": "common/match.html"
+      },
+      {
+        "title": "Share selection",
+        "url": "common/selection_share.html"
+      },
+      {
+        "title": "Multiple selections",
+        "url": "common/selection_multiple.html"
+      },
+      {
+        "title": "Selection as data source",
+        "url": "common/selection_datasource.html"
+      },
+      {
+        "title": "Using of satellites",
+        "url": "common/satellite.html"
+      },
+      {
+        "title": "Router",
+        "url": "common/router.html"
+      }
+    ]
+  },
+  {
+    "title": "Data flow",
+    "demos": [
+      {
+        "title": "Entity simple",
+        "url": "data/entity.html"
+      },
+      {
+        "title": "Live entity edit",
+        "url": "data/live_edit.html",
+        "wow": "Typed data objects provide ability to change data and store those changes, for future rollback or commit. Look how to do that in this demo."
+      },
+      {
+        "title": "Sync datasets with server data",
+        "url": "data/userlist.html"
+      },
+      {
+        "title": "Using of datasets",
+        "url": "defile/dataset.html",
+        "wow": "Datasets help to automate various operations on data object sets like union of set, subtract, split set for subsets and so on. Look how easy it is."
+      },
+      {
+        "title": "Using of aggregates",
+        "url": "defile/data_index.html"
+      },
+      {
+        "title": "M:M relationship editor",
+        "url": "data/m2m.html"
+      },
+      {
+        "title": "Build tree using dataset",
+        "url": "data/generate_tree.html"
+      },
+      {
+        "title": "Property & ObjectSet",
+        "url": "data/basic.html"
+      },
+      {
+        "title": "Tag cloud",
+        "url": "data/tag_cloud.html"
+      }
+    ]
+  },
+  {
+    "title": "Speed Demos",
+    "demos": [
+      {
+        "title": "Tree generation",
+        "url": "../test/speed/tree.html",
+        "image": "res/img/speed.png",
+        "wow": "Interface nodes implementation based on DOM model, so interface organizes as tree. Look how fast basisjs generates trees."
+      },
+      {
+        "title": "Table generation",
+        "url": "../test/speed/table.html",
+        "image": "res/img/speed.png"
+      },
+      {
+        "title": "Data generation",
+        "url": "../test/speed/DataObject.html",
+        "image": "res/img/speed.png"
+      }
+    ]
+  },
+  {
+    "title": "Components",
+    "demos": [
+      {
+        "title": "basis.ui.tabs",
+        "url": "defile/tabs.html"
+      },
+      {
+        "title": "basis.ui.tree",
+        "url": "defile/tree.html"
+      },
+      {
+        "title": "basis.ui.table",
+        "url": "defile/table.html"
+      },
+      {
+        "title": "basis.ui.form",
+        "url": "defile/form.html"
+      },
+      {
+        "title": "basis.ui.button",
+        "url": "defile/button.html"
+      },
+      {
+        "title": "basis.ui.window",
+        "url": "defile/window.html"
+      },
+      {
+        "title": "basis.ui.popup",
+        "url": "defile/popup.html"
+      },
+      {
+        "title": "basis.ui.calendar",
+        "url": "defile/calendar.html"
+      },
+      {
+        "title": "basis.ui.slider",
+        "url": "defile/slider.html"
+      },
+      {
+        "title": "basis.ui.scroller",
+        "url": "defile/scroller.html"
+      },
+      {
+        "title": "basis.ui.resizer",
+        "url": "defile/resizer.html"
+      },
+      {
+        "title": "basis.ui.paginator",
+        "url": "defile/paginator.html"
+      }
+    ]
+  },
+  {
+    "title": "Charts",
+    "demos": [
+      {
+        "title": "Chart with dynamic threads",
+        "url": "chart/dynamic-threads.html"
+      },
+      {
+        "title": "Chart with range selection",
+        "url": "chart/range.html",
+        "wow": "basisjs ready for thousands of data object. In this demo you can see how efficient it works with big datasets. Try move range and change it size."
+      },
+      {
+        "title": "Bar Chart",
+        "url": "chart/bar.html"
+      }
+    ]
+  }
+]

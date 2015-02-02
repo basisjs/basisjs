@@ -54,19 +54,22 @@
   </div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.dom');
-    basis.require('basis.data.dataset');
-    basis.require('basis.ui.tree');
-    basis.require('basis.ui.button');
+    var domUtils = basis.require('basis.dom');
+    var Split = basis.require('basis.data.dataset').Split;
+    var UINode = basis.require('basis.ui').Node;
+    var Tree = basis.require('basis.ui.tree').Tree;
+    var TreeFolder = basis.require('basis.ui.tree').Folder;
+    var TreeNode = basis.require('basis.ui.tree').Node;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
 
     // button panel
-    new basis.ui.button.ButtonPanel({
-      container: document.getElementById('demo-panel'),
+    new ButtonPanel({
+      container: domUtils.get('demo-panel'),
       childNodes: [
         {
           caption: 'Select all',
           click: function(){
-            tree1.selection.set(basis.dom.axis(tree1, basis.dom.AXIS_DESCENDANT));
+            tree1.selection.set(domUtils.axis(tree1, domUtils.AXIS_DESCENDANT));
           }
         },
         {
@@ -87,17 +90,19 @@
     //
     // Master tree
     //
-    var tree1 = new basis.ui.tree.Tree({
-      container: basis.dom.get('sourceTree'),
-      selection: { multiple: true },
+    var tree1 = new Tree({
+      container: domUtils.get('sourceTree'),
+      selection: {
+        multiple: true
+      },
       childNodes: basis.array.create(8, function(i){
-        return new basis.ui.tree.Folder({
+        return new TreeFolder({
           data: {
             id: i,
             title: 'item #' + i
           },
           childNodes: [
-            new basis.ui.tree.Node({
+            new TreeNode({
               data: {
                 title: 'child of item #' + i
               }
@@ -110,8 +115,8 @@
     //
     // Related tree shows tree1 selected items
     //
-    var tree2 = new basis.ui.tree.Tree({
-      container: basis.dom.get('selectedItemsTree'),
+    var tree2 = new Tree({
+      container: domUtils.get('selectedItemsTree'),
       dataSource: tree1.selection
     });
 
@@ -119,28 +124,24 @@
     // Related tree shows tree1 selected item groups. Each group also can
     // be expanded and shows it's content.
     //
-    var tree3 = new basis.ui.tree.Tree({
-      container: basis.dom.get('selectedItemsByGroupTree'),
-      dataSource: new basis.data.dataset.Split({
-        source: tree1.selection, 
-        rule: basis.getter('data.id % 2', {
+    var tree3 = new Tree({
+      container: domUtils.get('selectedItemsByGroupTree'),
+      dataSource: new Split({
+        source: tree1.selection,
+        rule: basis.getter('data.id % 2').as({
           'NaN': 'Child items',
           '0': 'Even items',
           '1': 'Odd items'
         })
       }),
-      childClass: basis.ui.tree.Folder.subclass({
+      childClass: TreeFolder.subclass({
         collapsed: true,
-        childFactory: basis.ui.Node.prototype.childFactory,
+        childFactory: UINode.prototype.childFactory,
+        dataSource: basis.getter('delegate'),
         template:
           '<b:include src="basis.ui.tree.Folder">' +
             '<b:after ref="title"> ({childCount})</b:after>' +
-          '</b:include>',
-        init: function(){
-          basis.ui.tree.Folder.prototype.init.call(this);
-
-          this.setDataSource(this.delegate);
-        }
+          '</b:include>'
       })
     });
   </script>

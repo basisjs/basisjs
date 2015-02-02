@@ -1,8 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-
-
  /**
   * Namespace overview:
   * - {basis.data.value.Property}
@@ -21,10 +17,11 @@
 
   var getter = basis.getter;
   var cleaner = basis.cleaner;
-  var Emitter = basis.event.Emitter;
-  var AbstractData = basis.data.AbstractData;
-  var Value = basis.data.Value;
-  var STATE = basis.data.STATE;
+
+  var basisData = require('basis.data');
+  var AbstractData = basisData.AbstractData;
+  var Value = basisData.Value;
+  var STATE = basisData.STATE;
 
 
  /**
@@ -72,6 +69,42 @@
     }
   };
 
+  var objectSetUpdater = (function(){
+    var objects = {};
+    var sheduled = false;
+
+    function process(){
+      // set timer to make sure all objects be processed
+      // it helps avoid try/catch and process all objects even if any exception
+      var etimer = basis.setImmediate(process);
+
+      // reset shedule, to add new expressions
+      sheduled = false;
+
+      // process objects
+      for (var id in objects)
+      {
+        var object = objects[id];
+        delete objects[id];
+        object.update();
+      }
+
+      // if no exceptions we will be here, reset emergency timer
+      basis.clearImmediate(etimer);
+    }
+
+    return {
+      add: function(object){
+        objects[object.basisObjectId] = object;
+        if (!sheduled)
+          sheduled = basis.asap(process);
+      },
+      remove: function(object){
+        delete objects[object.basisObjectId];
+      }
+    };
+  })();
+
  /**
   * @class
   */
@@ -118,12 +151,6 @@
     stateChanged_: true,
 
    /**
-    * @type {number}
-    * @private
-    */
-    timer_: false,
-
-   /**
     * @constructor
     */
     init: function(){
@@ -157,7 +184,9 @@
             object.addHandler(OBJECTSET_HANDLER, this);
         }
         else
-          throw this.constructor.className + '#add: Instance of AbstractData required';
+        {
+          /** @cut */ basis.dev.warn(this.constructor.className + '#add: Instance of AbstractData required');
+        }
       }
 
       this.fire(true, true);
@@ -196,8 +225,8 @@
         this.valueChanged_ = this.valueChanged_ || !!valueChanged;
         this.stateChanged_ = this.stateChanged_ || !!stateChanged;
 
-        if (!this.timer_ && (this.valueChanged_ || this.stateChanged_))
-          this.timer_ = basis.setImmediate(this.update.bind(this));
+        if (this.valueChanged_ || this.stateChanged_)
+          objectSetUpdater.add(this);
       }
     },
 
@@ -225,7 +254,7 @@
       this.valueChanged_ = false;
       this.stateChanged_ = false;
 
-      this.timer_ = basis.clearImmediate(this.timer_);
+      objectSetUpdater.remove(this);
 
       if (!cleaner.globalDestroy)
       {
@@ -267,8 +296,7 @@
       this.lock();
       this.clear();
 
-      if (this.timer_)
-        basis.clearImmediate(this.timer_);
+      objectSetUpdater.remove(this);
 
       Value.prototype.destroy.call(this);
     }
@@ -279,52 +307,68 @@
   // Expression
   //
 
+  var EXPRESSION_BBVALUE_HANDLER = function(){
+    objectSetUpdater.add(this);
+  };
+  var EXPRESSION_BBVALUE_DESTROY_HANDLER = function(){
+    this.destroy();
+  };
+  var BBVALUE_GETTER = function(value){
+    return value.bindingBridge.get(value);
+  };
+
  /**
   * @class
   */
-  var Expression = Property.subclass({
+  var Expression = Value.subclass({
     className: namespace + '.Expression',
 
-    init: function(args, calc){
+    calc_: null,
+    values_: null,
+
+    // use custom constructor
+    extendConstructor_: false,
+    init: function(/* [[value,] value, ..] calc */){
       Value.prototype.init.call(this);
 
-      var args = basis.array(arguments);
-      var calc = args.pop();
+      var count = arguments.length - 1;
+      var calc = arguments[count];
 
       if (typeof calc != 'function')
+        throw new Error(this.constructor.className + ': Last argument of constructor must be a function');
+
+      for (var values = new Array(count), i = 0; i < count; i++)
       {
-        /** @cut */ basis.dev.warn(this.constructor.className + ': last argument of constructor must be a function');
-        calc = basis.fn.$undef;
+        var value = values[i] = arguments[i];
+
+        if (!value.bindingBridge)
+          throw new Error(this.constructor.className + ': bb-value required');
+
+        value.bindingBridge.attach(value, EXPRESSION_BBVALUE_HANDLER, this, EXPRESSION_BBVALUE_DESTROY_HANDLER);
       }
 
-      if (args.length == 1)
-      {
-        args[0].link(this, function(value){
-          this.set(calc.call(this, value));
-        });
-      }
+      this.calc_ = calc;
+      this.values_ = values;
+      this.update();
+    },
 
-      if (args.length > 1)
-      {
-        var changeWatcher = new ObjectSet({
-          objects: args,
-          calculateOnInit: true,
-          calculateValue: function(){
-            return calc.apply(this, args.map(function(item){
-              return item.value;
-            }));
-          }
-        });
+    // override in init
+    update: function(){
+      objectSetUpdater.remove(this);
+      Value.prototype.set.call(this, this.calc_.apply(null, this.values_.map(BBVALUE_GETTER)));
+    },
 
-        changeWatcher.link(this, this.set);
+    // expressions are read only
+    set: function(){
+    },
 
-        this.addHandler({
-          destroy: function(){
-            if (!cleaner.globalDestroy)
-              changeWatcher.destroy();
-          }
-        });
-      }
+    destroy: function(){
+      objectSetUpdater.remove(this);
+
+      for (var i = 0, value; value = this.values_[i]; i++)
+        value.bindingBridge.detach(value, EXPRESSION_BBVALUE_HANDLER, this);
+
+      Value.prototype.destroy.call(this);
     }
   });
 

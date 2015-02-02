@@ -2,7 +2,7 @@
   "name": "basisjs",
   "title": "basis.js",
   "description": "JavaScript framework to build single-page applications",
-  "version": "1.3.4",
+  "version": "1.4.0-dev",
   "main": "src/basis.js",
   "homepage": "http://basisjs.com",
   "repository": {
@@ -23,5 +23,13 @@
     }
   ],
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "karma": "^0.12.31",
+    "karma-firefox-launcher": "^0.1.4",
+    "karma-yatra": "0.0.1",
+    "yatra": "~1.0.0"
+  },
+  "scripts": {
+    "test": "node ./node_modules/karma/bin/karma start karma.conf.js"
+  }
 }

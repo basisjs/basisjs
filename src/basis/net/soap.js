@@ -1,9 +1,4 @@
 
-  basis.require('basis.dom');
-  basis.require('basis.xml');
-  basis.require('basis.net.ajax');
-
-
  /**
   * Interface for communication with SOAP services.
   *
@@ -15,13 +10,15 @@
 
   var namespace = this.path;
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
-  var XML = basis.xml;
 
-
+  var DOM = require('basis.dom');
+  var XML = require('basis.xml');
   var QName = XML.QName;
   var addNamespace = XML.addNamespace;
   var XML2Object = XML.XML2Object;
@@ -29,14 +26,14 @@
   var createElementNS = XML.createElementNS;
   var NAMESPACE = XML.NAMESPACE;
 
-  var AjaxTransport = basis.net.ajax.Transport;
-  var AjaxRequest = basis.net.ajax.Request;
+  var basisNetAjax = require('basis.net.ajax');
+  var AjaxTransport = basisNetAjax.Transport;
+  var AjaxRequest = basisNetAjax.Request;
+
 
   //
   // Main part
   //
-
-  // CONST
 
   var SOAP_VERSION   = '1.1';
   var SOAP_PREFIX    = 'soap';
@@ -165,7 +162,7 @@
 
       this.requestEnvelope.getBody(true).setValue(new QName(requestData.methodName, requestData.namespace), requestData.soapBody);
 
-      requestData.postBody = this.requestEnvelope.document;
+      requestData.body = this.requestEnvelope.document;
 
       return requestData;
     },

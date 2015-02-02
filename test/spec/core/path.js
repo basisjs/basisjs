@@ -9,6 +9,7 @@ module.exports = {
       test: function(){
         assert(basis.path.basename('some/path/test-path.js') == 'test-path.js');
         assert(basis.path.basename('some/path/test-path.js', '.js') == 'test-path');
+        assert(basis.path.basename('some/path/test-path.js', '.foo') == 'test-path.js');
         assert(basis.path.basename('') == '');
         assert(basis.path.basename('/dir/basename.ext') == 'basename.ext');
         assert(basis.path.basename('/basename.ext') == 'basename.ext');

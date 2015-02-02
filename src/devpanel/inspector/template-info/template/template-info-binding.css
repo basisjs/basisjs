@@ -1,0 +1,66 @@
+.binding
+{
+  margin: 1px 0;
+  display: inline;
+  font-size: 12px;
+  font-family: Monaco, Consolas, Courier New, monospace;
+}
+.binding_used
+{
+  display: flex;
+  align-items: baseline;
+}
+.caption
+{
+  color: #888;
+}
+.caption:not(.caption_used):after
+{
+  content: ', ';
+  text-decoration: none;
+}
+.binding:last-child .caption:after
+{
+  content: '';
+}
+.caption_used
+{
+  display: inline-block;
+  padding: 3px;
+  padding: 3px .5ch;
+  margin-left: -3px;
+  margin-left: -.5ch;
+  margin-right: 1ex;
+  border-radius: 2px;
+  color: #333;  
+  background: transparent;  
+  text-shadow: 0px 0px 1px white;
+
+  cursor: pointer;
+  transition: color .15s, background-color .15s;
+}
+.caption_highlight
+{
+  color: #353;  
+  background: #B6CFB6;
+}
+.caption_highlight.caption_nestedView
+{
+  background: #E0E4B0;
+}
+.link_loc
+{
+  text-decoration: underline;
+  cursor: pointer;
+}
+.caption:not(.caption_used):hover .link_loc
+{
+  color: #A00;
+}
+.value
+{
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

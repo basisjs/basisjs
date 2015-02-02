@@ -1,13 +1,26 @@
 
-  basis.require('basis.net.ajax');
-
+ /**
+  * @namespace basis.net.upload
+  */
 
   var namespace = this.path;
 
-  var AbstractTransport = basis.net.AbstractTransport;
-  var AbstractRequest = basis.net.AbstractRequest;
-  var AjaxTransport = basis.net.ajax.Transport;
 
+  //
+  // import names
+  //
+
+  var eventUtils = require('basis.dom.event'); // TODO
+  var STATE = require('basis.data').STATE;
+  var basisNet = require('basis.net');
+  var AbstractTransport = basisNet.AbstractTransport;
+  var AbstractRequest = basisNet.AbstractRequest;
+  var AjaxTransport = require('basis.net.ajax').Transport;
+
+
+  //
+  // main part
+  //
 
   // features support detection
 
@@ -21,28 +34,21 @@
     return window.FormData !== undefined;
   }
 
-  function createIFrame(){
-    var frame = document.createElement('iframe');
-    frame.style.position = 'absolute';
-    frame.style.left = '-2000px';
-    frame.style.top = '-2000px';
-    frame.name = frame.id = 'f' + parseInt(Math.random() * 10e10);
-    frame.src = 'about:blank';
-
-    return frame;
-  }
-
-  function getIFrameDocument(frame){
-    return frame.contentWindow ? frame.contentWindow.document : frame.contentDocument ? frame.contentDocument : frame.document;
-  }
-
-  //
-  // FileUploader
-  //
+ /**
+  * @class
+  */
   var FileUploader;
 
   if (fileAPISupport() && formDataSupport()) // XMLHttpRequest2
   {
+    var REQUEST_PROGRESS_HANDLER = function(event){
+      if (event.lengthComputable)
+        this.setState(STATE.PROCESSING, {
+          loaded: event.loaded,
+          total: event.total
+        });
+    };
+
     FileUploader = AjaxTransport.subclass({
       className: namespace + '.FileUploader',
 
@@ -67,43 +73,64 @@
 
         this.request(basis.object.extend(requestConfig, {
           url: form.action,
-          postBody: formData
+          body: formData
         }));
       },
 
       uploadFiles: function(url, files, fileParam){
         var formData = new FormData();
 
+        // if form passed
+        if (url.action)
+          url = url.action;
+
         for (var i = 0, file; file = files[i]; i++)
           formData.append(fileParam || file.name, file);
 
         this.request({
           url: url,
-          postBody: formData
+          body: formData
         });
       },
 
       emit_start: function(request){
-        basis.dom.event.addHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
+        eventUtils.addHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
         AjaxTransport.prototype.emit_start.call(this, request);
       },
       emit_complete: function(request){
-        basis.dom.event.removeHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
+        eventUtils.removeHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
         AjaxTransport.prototype.emit_complete.call(this, request);
       }
     });
-
-    var REQUEST_PROGRESS_HANDLER = function(event){
-      if (event.lengthComputable)
-        this.setState(basis.data.STATE.PROCESSING, { loaded: event.loaded, total: event.total });
-    };
   }
   else //IFrame
   {
+    var createIFrame = function(){
+      var frame = document.createElement('iframe');
+      frame.style.position = 'absolute';
+      frame.style.left = '-2000px';
+      frame.style.top = '-2000px';
+      frame.name = frame.id = 'f' + parseInt(Math.random() * 10e10);
+      frame.src = 'about:blank';
+
+      return frame;
+    };
+
+    var getIFrameDocument = function(frame){
+      return frame.contentWindow
+        ? frame.contentWindow.document
+        : frame.contentDocument
+          ? frame.contentDocument
+          : frame.document;
+    };
+
+   /**
+    * @class
+    */
     var IFrameRequest = AbstractRequest.subclass({
       className: namespace + '.IFrameRequest',
 
-      state: basis.data.STATE.UNDEFINED,
+      state: STATE.UNDEFINED,
       inprogress: false,
 
       init: function(){
@@ -131,7 +158,7 @@
             that.removeFrame();
           }, 100);
 
-          this.setState(basis.data.STATE.READY);
+          this.setState(STATE.READY);
         }
       },
       isSuccessful: function(){
@@ -159,7 +186,7 @@
         this.transport.emit_start(this);
         this.insertFrame();
         this.inprogress = true;
-        this.setState(basis.data.STATE.PROCESSING);
+        this.setState(STATE.PROCESSING);
 
         form.setAttribute('enctype', 'multipart/form-data');
         form.setAttribute('method', 'POST');

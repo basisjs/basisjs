@@ -34,8 +34,10 @@
   // init
   for (var name in browserNames)
   {
+    var prefix = name;
+
     if (name == 'MSIE' && opera)
-      continue;  // opera identifies as IE :(
+      continue;  // Opera identifies as IE :(
 
     if (name == 'Safari' && /chrome/i.test(userAgent))
       continue;  // Chrome identifies as Safari :(
@@ -43,7 +45,12 @@
     if (name == 'AppleWebKit' && /iphone/i.test(userAgent))
       continue;
 
-    if (userAgent.match(new RegExp(name + '.' + '(\\d+(\\.\\d+)*)', 'i')))
+    // IE11 changes user-agent to something like:
+    // Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko
+    if (name == 'MSIE' && /Trident\/\d+/i.test(userAgent) && /rv:\d+/i.test(userAgent))
+      prefix = 'rv';
+
+    if (userAgent.match(new RegExp(prefix + '.(\\d+(\\.\\d+)*)', 'i')))
     {
       var names     = browserNames[name];
       var version   = opera && typeof opera.version == 'function' ? opera.version() : RegExp.$1;
@@ -104,29 +111,6 @@
   }
 
   //
-  // Cookies
-  //
-
-  var cookies = {
-    set: function(name, value, expire, path, domain){
-      document.cookie = name + '=' + (value == null ? '' : escape(value)) +
-                        ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
-                        (expire ? ';expires=' + (new Date(Date.now() + expire * 1000)).toGMTString() : '') +
-                        (domain ? ';domain=' + domain : '');
-    },
-
-    get: function(name){
-      var m = document.cookie.match(new RegExp('(^|;)\\s*' + name + '\\s*=\\s*(.*?)\\s*(;|$)'));
-      return m && unescape(m[2]);
-    },
-
-    remove: function(name, path, domain){
-      document.cookie = name + '=;expires=' + (new Date(0)).toGMTString() + ';path=' + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) + (domain ? ';domain=' + domain : '');
-    }
-  };
-
-
-  //
   // export names
   //
 
@@ -136,8 +120,5 @@
     is: testBrowser,   // single test
     test: function(){  // multiple test
       return basis.array(arguments).some(testBrowser);
-    },
-
-    // cookie interface
-    cookies: cookies
+    }
   };

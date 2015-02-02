@@ -1,9 +1,4 @@
 
-  basis.require('basis.data');
-  basis.require('basis.data.dataset');
-  basis.require('basis.data.value');
-
-
  /**
   * @see ./demo/defile/data_index.html
   * @namespace basis.data.index
@@ -18,13 +13,17 @@
 
   var Class = basis.Class;
 
-  var DataObject = basis.data.Object;
-  var KeyObjectMap = basis.data.KeyObjectMap;
-  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
-  var DatasetWrapper = basis.data.DatasetWrapper;
+  var basisData = require('basis.data');
+  var Value = basisData.Value;
+  var DataObject = basisData.Object;
+  var KeyObjectMap = basisData.KeyObjectMap;
+  var ReadOnlyDataset = basisData.ReadOnlyDataset;
+  var DatasetWrapper = basisData.DatasetWrapper;
+  var resolveDataset = basisData.resolveDataset;
 
-  var Value = basis.data.Value;
-  var MapFilter = basis.data.dataset.MapFilter;
+  var basisDataset = require('basis.data.dataset');
+  var MapFilter = basisDataset.MapFilter;
+  var createRuleEvents = basisDataset.createRuleEvents;
 
 
   //
@@ -69,7 +68,18 @@
   */
   var Index = Class(Value, {
     className: namespace + '.Index',
-    autoDestroy: true,
+
+   /**
+    * Explicit declared
+    * @type {boolean}
+    */
+    explicit: false,
+
+   /**
+    * Count of wrapper indexes
+    * @type {number}
+    */
+    wrapperCount: 0,
 
    /**
     * Map of current values
@@ -428,11 +438,93 @@
   });
 
 
+  var INDEXWRAPPER_HANDLER = {
+    destroy: function(){
+      Value.prototype.set.call(this, this.initValue);
+      this.index = null;
+    }
+  };
+
+ /**
+  * @class
+  */
+  var IndexWrapper = Value.subclass({
+    className: namespace + '.IndexWrapper',
+
+    extendConstructor_: false,
+    source: null,
+    dataset: null,
+    datasetRA_: null,
+    indexConstructor: null,
+    index: null,
+
+    init: function(source, indexConstructor){
+      this.source = source;
+      this.indexConstructor = indexConstructor;
+      this.value = indexConstructorCache[indexConstructor.indexId].indexClass.prototype.value;
+
+      Value.prototype.init.call(this);
+
+      source.bindingBridge.attach(source, basis.fn.$undef, this, this.destroy);
+      this.setDataset(source);
+      this.source[indexConstructor.indexId] = this;
+    },
+    setDataset: function(source){
+      var oldDataset = this.dataset;
+      var newDataset = resolveDataset(this, this.setDataset, source, 'sourceRA_');
+
+      if (newDataset !== oldDataset)
+      {
+        var index = this.index;
+
+        if (index)
+        {
+          index.removeHandler(INDEXWRAPPER_HANDLER, this);
+          index.wrapperCount -= 1;
+          if (!index.wrapperCount && !index.explicit)
+            index.destroy();
+        }
+
+        if (newDataset)
+        {
+          index = getDatasetIndex(newDataset, this.indexConstructor);
+          index.wrapperCount += 1;
+          index.link(this, Value.prototype.set);
+          index.addHandler(INDEXWRAPPER_HANDLER, this);
+        }
+        else
+        {
+          index = null;
+          Value.prototype.set.call(this, this.initValue);
+        }
+
+        this.dataset = newDataset;
+        this.index = index;
+      }
+    },
+    set: function(){
+      /** @cut */ basis.dev.warn(this.className + ': value can\'t be set as IndexWrapper is read only');
+    },
+    destroy: function(){
+      this.source.bindingBridge.detach(this.source, basis.fn.$undef, this);
+      this.setDataset();
+
+      Value.prototype.destroy.call(this);
+
+      delete this.source[this.indexConstructor.indexId];
+      this.source = null;
+      this.indexConstructor = null;
+    }
+  });
+
+
   //
   // Index builder
   //
 
-  var indexConstructors_ = {};
+  var indexConstructorIdPrefix = 'basisjsIndexConstructor' + basis.genUID();
+  var indexConstructorCache = {};
+  var resolveIndexCache = {};
 
   var DATASET_INDEX_HANDLER = {
     destroy: function(object){
@@ -443,7 +535,8 @@
  /**
   * @class
   */
-  function IndexConstructor(){
+  function IndexConstructor(indexId){
+    this.indexId = indexId;
   }
 
  /**
@@ -461,8 +554,8 @@
 
     events = events.trim().split(' ').sort();
 
-    var indexId = [BaseClass.basisClassId_, getter[basis.getter.ID], events].join('_');
-    var indexConstructor = indexConstructors_[indexId];
+    var indexId = indexConstructorIdPrefix + [BaseClass.basisClassId_, getter[basis.getter.ID], events].join('_');
+    var indexConstructor = indexConstructorCache[indexId];
 
     if (indexConstructor)
       return indexConstructor.owner;
@@ -475,8 +568,8 @@
     for (var i = 0; i < events.length; i++)
       events_[events[i]] = true;
 
-    indexConstructor = new IndexConstructor();
-    indexConstructors_[indexId] = {
+    indexConstructor = new IndexConstructor(indexId);
+    indexConstructorCache[indexId] = {
       owner: indexConstructor,
       indexClass: BaseClass.subclass({
         indexId: indexId,
@@ -485,19 +578,16 @@
       })
     };
 
-    indexConstructor.indexId = indexId;
     return indexConstructor;
   }
 
   var createIndexConstructor = function(IndexClass, defGetter){
-    return function(events, getter){
-      var dataset;
-
-      if (events instanceof ReadOnlyDataset || events instanceof DatasetWrapper)
+    return function(source, events, getter){
+      if (typeof source == 'function' || typeof source == 'string')
       {
-        dataset = events;
-        events = getter;
-        getter = arguments[2];
+        getter = events;
+        events = source;
+        source = null;
       }
 
       if (!getter)
@@ -508,10 +598,21 @@
 
       var indexConstructor = getIndexConstructor(IndexClass, getter || defGetter, events);
 
-      if (dataset)
-        return getDatasetIndex(dataset, indexConstructor);
-      else
+      if (!source)
         return indexConstructor;
+
+      if (source instanceof ReadOnlyDataset || source instanceof DatasetWrapper)
+      {
+        var index = getDatasetIndex(source, indexConstructor);
+        index.explicit = true;
+        return index;
+      }
+
+      if (source.bindingBridge)
+        return source[indexConstructor.indexId] || new IndexWrapper(source, indexConstructor);
+
+      /** @cut */ basis.dev.warn(IndexClass.className + ': wrong source value for index (should be instance of basis.data.ReadOnlyDataset, basis.data.DatasetWrapper or bb-value)');
+      return null;
     };
   };
 
@@ -615,7 +716,11 @@
     destroy: function(){
       var indexes = datasetIndexes[this.basisObjectId];
       for (var indexId in indexes)
-        removeDatasetIndex(this, indexes[indexId]);
+      {
+        var index = indexes[indexId];
+        removeDatasetIndex(this, index);
+        index.destroy();
+      }
     }
   };
 
@@ -628,6 +733,7 @@
  /**
   * @param {basis.data.ReadOnlyDataset} dataset
   * @param {basis.data.index.IndexConstructor} indexConstructor
+  * @return {basis.data.index.Index} indexConstructor instance
   */
   function getDatasetIndex(dataset, indexConstructor){
     if (indexConstructor instanceof IndexConstructor == false)
@@ -651,7 +757,7 @@
 
     if (!index)
     {
-      indexConstructor = indexConstructors_[indexId];
+      indexConstructor = indexConstructorCache[indexId];
       if (!indexConstructor)
         throw 'Wrong index constructor';
 
@@ -841,7 +947,7 @@
     },
 
     /** looks like a hack */
-    ruleEvents: basis.data.dataset.createRuleEvents(
+    ruleEvents: createRuleEvents(
       function(sender, delta){
         MapFilter.prototype.ruleEvents.update.call(this, sender, delta);
 
@@ -1018,13 +1124,13 @@
     },
 
     destroy: function(){
-      this.keyMap.destroy();
-      this.keyMap = null;
-
       for (var indexName in this.indexes)
         this.removeIndex(indexName);
 
       MapFilter.prototype.destroy.call(this);
+
+      this.keyMap.destroy();
+      this.keyMap = null;
 
       this.timer_ = basis.clearImmediate(this.timer_);
       this.calcs = null;

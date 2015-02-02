@@ -1,13 +1,12 @@
 
-  basis.require('app.core');
-  basis.require('app.ext.view');
-
   var getter = basis.getter;
-  var classList = basis.cssom.classList;
+  var Node = require('basis.ui').Node;
+  var View = require('app.ext.view').View;
+  var ViewOptions = require('app.ext.view').ViewOptions;
+  var DataObject = require('basis.data').Object;
+  var mapDO = require('app.core').mapDO;
 
-  var mapDO = app.core.mapDO;
-
-  var InheritanceItem = basis.ui.Node.subclass({
+  var InheritanceItem = Node.subclass({
     className: module.path + '.InheritanceItem',
     template: resource('./template/inheritanceItem.tmpl'),
 
@@ -25,18 +24,16 @@
     }
   });
 
-  var viewInheritance = new app.ext.view.View({
+  var viewInheritance = new View({
     title: 'Inheritance',
     viewHeader: 'Inheritance',
 
-    childClass: InheritanceItem,
-
     template: resource('./template/inheritanceView.tmpl'),
     binding: {
-      show_namespace: {
+      showNamespace: {
         events: 'groupingChanged',
         getter: function(node){
-          return node.grouping ? '' : 'show-namespace';
+          return !node.grouping;
         }
       }
     },
@@ -44,12 +41,12 @@
     groupingClass: {
       childClass: {
         template: resource('./template/inheritanceGroup.tmpl'),
-
         binding: {
           title: 'data:'
         }
       }
     },
+    childClass: InheritanceItem,
 
     matchFunction: function(node){
       return node.data.match;
@@ -77,7 +74,7 @@
             if (namespace != lastNamespace)
             {
               lastNamespace = namespace;
-              group = new basis.data.Object({
+              group = new DataObject({
                 data: {
                   title: namespace,
                   namespace: namespace
@@ -86,7 +83,7 @@
               groupId++;
             }
 
-            list.push(new basis.data.Object({
+            list.push(new DataObject({
               group: group,
               data: {
                 match: isClass || (proto && proto.tag),
@@ -108,7 +105,7 @@
 
     satellite: {
       viewOptions: {
-        instanceOf: app.ext.view.ViewOptions,
+        satelliteClass: ViewOptions,
         config: function(owner){
           return {
             title: 'Group by',

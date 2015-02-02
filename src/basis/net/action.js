@@ -1,7 +1,4 @@
 
-  basis.require('basis.data');
-  basis.require('basis.net.ajax');
-
  /**
   * @namespace basis.net.action
   */
@@ -11,10 +8,14 @@
   // import names
   //
 
-  var STATE_UNDEFINED = basis.data.STATE.UNDEFINED;
-  var STATE_READY = basis.data.STATE.READY;
-  var STATE_PROCESSING = basis.data.STATE.PROCESSING;
-  var STATE_ERROR = basis.data.STATE.ERROR;
+  var STATE = require('basis.data').STATE;
+  var STATE_UNDEFINED = STATE.UNDEFINED;
+  var STATE_READY = STATE.READY;
+  var STATE_PROCESSING = STATE.PROCESSING;
+  var STATE_ERROR = STATE.ERROR;
+
+  var AjaxTransport = require('basis.net.ajax').Transport;
+  var Promise = require('basis.promise');
 
 
   //
@@ -71,6 +72,21 @@
     complete: nothingToDo
   };
 
+  var PROMISE_REQUEST_HANDLER = {
+    success: function(request, data){
+      this.fulfill(data);
+    },
+    abort: function(){
+      this.reject('Request aborted');
+    },
+    failure: function(request, error){
+      this.reject(error);
+    },
+    complete: function(){
+      this.request.removeHandler(PROMISE_REQUEST_HANDLER, this);
+    }
+  };
+
  /**
   * @function
   */
@@ -85,7 +101,7 @@
       return config.createTransport(config);
 
     // fallback, create instance of basis.net.ajax.Transport by default, if no other options
-    return new basis.net.ajax.Transport(config);
+    return new AjaxTransport(config);
   }
 
  /**
@@ -98,6 +114,15 @@
       prepare: nothingToDo,
       request: nothingToDo
     }, config);
+
+    // if body is function take in account special action context
+    if (typeof config.body == 'function')
+    {
+      var bodyFn = config.body;
+      config.body = function(){
+        return bodyFn.apply(this.context, this.args);
+      };
+    }
 
     // splice properties
     var fn = basis.object.splice(config, ['prepare', 'request']);
@@ -121,13 +146,40 @@
       {
         fn.prepare.apply(this, arguments);
 
-        this.request = getTransport().request(basis.object.complete({
-          origin: this
-        }, fn.request.apply(this, arguments)));
+        var request;
+        var requestData = basis.object.complete({
+          origin: this,
+          bodyContext: {
+            context: this,
+            args: basis.array(arguments)
+          }
+        }, fn.request.apply(this, arguments));
+
+        // if body is function take in account special action context
+        if (typeof requestData.body == 'function')
+        {
+          var bodyFn = requestData.body;
+          requestData.body = function(){
+            return bodyFn.apply(this.context, this.args);
+          };
+        }
+
+        // do a request
+        if (request = getTransport().request(requestData))
+          return new Promise(function(fulfill, reject){
+            request.addHandler(PROMISE_REQUEST_HANDLER, {
+              request: request,
+              fulfill: fulfill,
+              reject: reject
+            });
+          });
+
+        return Promise.reject('Request is not performed');
       }
       else
       {
-        /** @cut */ basis.dev.warn(this + ' has not ready state. Operation aborted');
+        /** @cut */ basis.dev.warn('Context in processing state. Operation aborted. Context: ', this);
+        return Promise.reject('Context in processing state, request is not performed');
       }
     };
   }

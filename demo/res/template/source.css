@@ -1,0 +1,11 @@
+.view
+{
+  padding-bottom: 2em;
+}
+
+.toggler
+{
+  cursor: pointer;
+  text-decoration: underline;
+  margin-bottom: 1em;
+}

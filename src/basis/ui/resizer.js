@@ -1,15 +1,4 @@
 
-  basis.require('basis.dom');
-  basis.require('basis.dom.computedStyle');
-  basis.require('basis.cssom');
-  basis.require('basis.dragdrop');
-  basis.require('basis.ui');
-
-  var styleRequired = basis.fn.runOnce(function(){
-    resource('./templates/resizer/style.css')().startUse();
-  });
-
-
  /**
   * @see ./demo/defile/resizer.html
   * @namespace basis.ui.resizer
@@ -25,11 +14,10 @@
   var document = global.document;
   var parseFloat = global.parseFloat;
 
-  var dom = basis.dom;
-  var cssom = basis.cssom;
-  var classList = basis.cssom.classList;
-  var computedStyle = basis.dom.computedStyle.get;
-  var DragDropElement = basis.dragdrop.DragDropElement;
+  var cssom = require('basis.cssom');
+  var classList = cssom.classList;
+  var computedStyle = require('basis.dom.computedStyle').get;
+  var DragDropElement = require('basis.dragdrop').DragDropElement;
 
 
   //
@@ -39,6 +27,10 @@
 
   var resizerDisableRule = cssom.createRule('IFRAME');
   var cursorOverrideRule;
+
+  var styleRequired = basis.fn.runOnce(function(){
+    resource('./templates/resizer/style.css').fetch().startUse();
+  });
 
   var PROPERTY_DELTA = {
     width: 'deltaX',
@@ -169,7 +161,8 @@
     init: function(){
       styleRequired();
 
-      this.resizer = dom.createElement('.Basis-Resizer');
+      this.resizer = document.createElement('div');
+      this.resizer.className = 'Basis-Resizer';
       this.cursor = PROPERTY_CURSOR[this.property][1];
       this.resizer.style.cursor = this.cursor;
 
@@ -179,10 +172,10 @@
       super_.setElement.call(this, element, this.resizer);
 
       if (!this.element)
-        dom.remove(this.resizer);
+        basis.doc.remove(this.resizer);
       else
         if (this.resizer.parentNode != this.element)
-          dom.insert(this.element, this.resizer);
+          this.element.appendChild(this.resizer);
     },
     destroy: function(){
       super_.destroy.call(this);

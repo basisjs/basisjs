@@ -1,16 +1,14 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-  basis.require('basis.data.dataset');
-
-
  /**
   * @namespace basis.entity
   */
 
   var namespace = this.path;
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
 
@@ -22,14 +20,17 @@
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
-  var Emitter = basis.event.Emitter;
-  var createEvent = basis.event.create;
+  var basisEvent = require('basis.event');
+  var Emitter = basisEvent.Emitter;
+  var createEvent = basisEvent.create;
 
-  var DataObject = basis.data.Object;
-  var Slot = basis.data.Slot;
-  var Dataset = basis.data.Dataset;
-  var Filter = basis.data.dataset.Filter;
-  var Split = basis.data.dataset.Split;
+  var basisData = require('basis.data');
+  var DataObject = basisData.Object;
+  var Slot = basisData.Slot;
+  var Dataset = basisData.Dataset;
+  var basisDataset = require('basis.data.dataset');
+  var Filter = basisDataset.Filter;
+  var Split = basisDataset.Split;
 
   var NULL_INFO = {};
 
@@ -41,13 +42,13 @@
 
   // buildin indexes
   var NumericId = function(value){
-    return isNaN(value) ? null : Number(value);
+    return value == null || isNaN(value) ? null : Number(value);
   };
   var NumberId = function(value){
-    return isNaN(value) ? null : Number(value);
+    return value == null || isNaN(value) ? null : Number(value);
   };
   var IntId = function(value){
-    return isNaN(value) ? null : parseInt(value, 10);
+    return value == null || isNaN(value) ? null : parseInt(value, 10);
   };
   var StringId = function(value){
     return value == null ? null : String(value);
@@ -110,41 +111,6 @@
     for (var typeName in deferredTypeDef)
       basis.dev.warn(namespace + ': type `' + typeName + '` is not defined, but used by ' + deferredTypeDef[typeName].length + ' type(s)');
   }
-
-
-  /** @cut */ // Define property (if possible) that show warning on access.
-  /** @cut */ var warnPropertyAccess = (function(){
-  /** @cut */   try {
-  /** @cut */     if (Object.defineProperty)
-  /** @cut */     {
-  /** @cut */       // IE8 has Object.defineProperty(), but it works for DOM nodes only
-  /** @cut */       var obj = {};
-  /** @cut */       Object.defineProperty(obj, 'x', {
-  /** @cut */         get: function(){
-  /** @cut */           return true;
-  /** @cut */         }
-  /** @cut */       });
-  /** @cut */
-  /** @cut */       if (obj.x)
-  /** @cut */       {
-  /** @cut */         // looks like we could use Object.defineProperty() here
-  /** @cut */         return function(object, name, value, warning){
-  /** @cut */           Object.defineProperty(object, name, {
-  /** @cut */             get: function(){
-  /** @cut */               basis.dev.warn(warning);
-  /** @cut */               return value;
-  /** @cut */             },
-  /** @cut */             set: function(newValue){
-  /** @cut */               value = newValue;
-  /** @cut */             }
-  /** @cut */           });
-  /** @cut */         };
-  /** @cut */       }
-  /** @cut */     }
-  /** @cut */   } catch(e){ }
-  /** @cut */
-  /** @cut */   return function(){};
-  /** @cut */ })();
 
 
   //
@@ -514,7 +480,7 @@
       });
 
       // deprecated in 1.3.0
-      /** @cut */ warnPropertyAccess(result, 'entitySetType', entitySetType,
+      /** @cut */ basis.dev.warnPropertyAccess(result, 'entitySetType', entitySetType,
       /** @cut */   'basis.entity: EntitySetType.entitySetType is deprecated, use EntitySetType.type instead.'
       /** @cut */ );
 
@@ -647,6 +613,21 @@
         reader: function(data){
           return entityType.reader(data);
         },
+        readList: function(value, map){
+          if (!value)
+            return [];
+
+          if (!Array.isArray(value))
+            value = [value];
+
+          if (typeof map != 'function')
+            map = $self;
+
+          for (var i = 0; i < value.length; i++)
+            value[i] = result(result.reader(map(value[i], i)));
+
+          return value;
+        },
 
         extendClass: function(source){
           EntityClass.extend.call(EntityClass, source);
@@ -673,7 +654,7 @@
       });
 
       // deprecated in 1.3.0
-      /** @cut */ warnPropertyAccess(result, 'entityType', entityType,
+      /** @cut */ basis.dev.warnPropertyAccess(result, 'entityType', entityType,
       /** @cut */   'basis.entity: EntityType.entityType is deprecated, use EntityType.type instead.'
       /** @cut */ );
 
@@ -694,25 +675,46 @@
     /** @cut */ basis.dev.warn('Calculate fields are readonly');
     return oldValue;
   };
+  /** @cut */ var warnCalcReadOnly = function(name){
+  /** @cut */   basis.dev.warn('basis.entity: Attempt to set value for `' + name + '` field was ignored as field is calc (read only)');
+  /** @cut */ };
 
-  function getDataBuilder(defaults, fields){
+  function getDataBuilder(defaults, fields, calcs){
     var args = ['has'];
     var values = [hasOwnProperty];
     var obj = [];
 
+    // warn on set value for calc field in dev mode
+    /** @cut */ args.push('warnCalcReadOnly');
+    /** @cut */ values.push(warnCalcReadOnly);
+
     for (var key in defaults)
       if (hasOwnProperty.call(defaults, key))
       {
+        var escapedKey = '"' + key.replace(/"/g, '\"') + '"';
+
+        if (hasOwnProperty.call(calcs, key))
+        {
+          // calcs are read only and always undefined by default
+          obj.push(escapedKey + ':' +
+            // warn on set value for calc field in dev mode
+            /** @cut */ 'has.call(data,' + escapedKey + ')' + '?' + 'warnCalcReadOnly(' + escapedKey + ')' + ':' +
+            'undefined');
+          continue;
+        }
+
         var name = 'v' + obj.length;
         var fname = 'f' + obj.length;
-        var value = defaults[key];
+        var defValue = defaults[key];
 
         args.push(name, fname);
-        values.push(value, fields[key]);
-        obj.push('"' + key + '":' +
-          'has.call(data,"' + key + '")' +
-            '?' + fname + '(data["' + key + '"],' + name + ')' +
-            ':' + name + (typeof value == 'function' ? '(data)' : '')
+        values.push(defValue, fields[key]);
+        obj.push(escapedKey + ':' +
+          fname + '(' +
+            'has.call(data,' + escapedKey + ')' +
+              '?' + 'data[' + escapedKey + ']' +
+              ':' + name + (typeof defValue == 'function' ? '(data)' : '') +
+            ')'
         );
       }
 
@@ -783,13 +785,10 @@
       return value;
 
     /** @cut */ basis.dev.warn('basis.entity: Bad value for Date field, value ignored');
-    return oldValue;
+    return oldValue || null;
   }
 
   function addField(entityType, name, config){
-    // registrate alias
-    entityType.aliases[name] = name;
-
     // normalize config
     if (typeof config == 'string' ||
         Array.isArray(config) ||
@@ -826,16 +825,18 @@
         }
         else
         {
+          var defaultValue;
           config.type = function(value, oldValue){
-            var exists = values.indexOf(value) != -1;
+            var exists = value === defaultValue || values.indexOf(value) != -1;
 
             /** @cut */ if (!exists)
             /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ' (new value ignored).\nVariants:', values, '\nIgnored value:', value);
 
-            return exists ? value : oldValue;
+            return exists ? value : oldValue === undefined ? defaultValue : oldValue;
           };
 
-          config.defValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
+          defaultValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
+          config.defValue = defaultValue;
         }
       }
 
@@ -864,7 +865,12 @@
       entityType.fields[name] = calcFieldWrapper;
     }
     else
+    {
       entityType.fields[name] = wrapper;
+
+      // registrate alias only for regular fields
+      entityType.aliases[name] = name;
+    }
 
     entityType.defaults[name] = 'defValue' in config ? config.defValue : wrapper();
 
@@ -879,13 +885,19 @@
   function addFieldAlias(entityType, alias, name){
     if (name in entityType.fields == false)
     {
-      /** @cut */ basis.dev.warn('Can\'t add alias `' + alias + '` for non-exists field `' + name + '`');
+      /** @cut */ basis.dev.warn('basis.entity: Can\'t add alias `' + alias + '` for non-exists field `' + name + '`');
+      return;
+    }
+
+    if (name in entityType.calcMap)
+    {
+      /** @cut */ basis.dev.warn('basis.entity: Can\'t add alias `' + alias + '` for calc field `' + name + '`');
       return;
     }
 
     if (alias in entityType.aliases)
     {
-      /** @cut */ basis.dev.warn('Alias `' + alias + '` already exists');
+      /** @cut */ basis.dev.warn('basis.entity: Alias `' + alias + '` already exists');
       return;
     }
 
@@ -893,9 +905,6 @@
   }
 
   function addCalcField(entityType, name, wrapper){
-    if (!entityType.calcs)
-      entityType.calcs = [];
-
     var calcs = entityType.calcs;
     var deps = entityType.deps;
     var calcArgs = wrapper.args || [];
@@ -904,7 +913,7 @@
       wrapper: wrapper
     };
 
-    // NOTE: simple dependence calculation
+    // NOTE: simple calc dependency resolving
     // TODO: check, is algoritm make real check for dependencies or not?
     var before = entityType.calcs.length;
     var after = 0;
@@ -918,6 +927,8 @@
     {
       // natural calc field
       calcConfig.key = name;
+      entityType.calcMap[name] = calcConfig;
+
       for (var i = 0, calc; calc = calcs[i]; i++)
         if (calc.args.indexOf(name) != -1)
         {
@@ -984,7 +995,11 @@
     fields: null,
     idField: null,
     idFields: null,
+    compositeKey: null,
+    idProperty: null,
     defaults: null,
+    calcs: null,
+    calcMap: null,
 
     aliases: null,
     slots: null,
@@ -999,12 +1014,15 @@
       this.name = config.name;
       if (!this.name || namedTypes[this.name])
       {
-        /** @cut */ if (namedTypes[this.name]) basis.dev.warn(namespace + ': Duplicate type name `' + this.name + '`, name ignored');
+        /** @cut */ if (namedTypes[this.name])
+        /** @cut */   basis.dev.warn(namespace + ': Duplicate type name `' + this.name + '`, name ignored');
         this.name = getUntitledName('UntitledEntityType');
       }
 
       // init properties
       this.fields = {};
+      this.calcs = [];
+      this.calcMap = {};
       this.deps = {};
       this.idFields = {};
       this.defaults = {};
@@ -1017,7 +1035,8 @@
       {
         if (index instanceof Index)
           this.index = index;
-        /** @cut */else basis.dev.warn('index must be instanceof basis.entity.Index');
+        /** @cut */ else
+        /** @cut */   basis.dev.warn('index must be instanceof basis.entity.Index');
       }
 
       // wrapper and all instances set
@@ -1053,6 +1072,10 @@
         config.constrains.forEach(function(item){
           addCalcField(this, null, item);
         }, this);
+
+      // reset calcs if no one
+      if (!this.calcs.length)
+        this.calcs = null;
 
       // process id and indexes
       var idFields = keys(this.idFields);
@@ -1136,14 +1159,17 @@
       for (var key in this.defaults)
         initDelta[key] = undefined;
 
+      // basis.js 1.4
+      /** @cut */ if (hasOwnProperty.call(config, 'state'))
+      /** @cut */   basis.dev.warn('basis.entity: default instance state can\'t be defined via type config anymore, use Type.extendClass({ state: .. }) instead');
+
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.fields, this.slots);
       this.entityClass.extend({
         entityType: this,
         type: wrapper,
         typeName: this.name,
-        state: config.state || this.entityClass.prototype.state,
-        generateData: getDataBuilder(this.defaults, this.fields),
+        generateData: getDataBuilder(this.defaults, this.fields, this.calcMap),
         initDelta: initDelta
       });
 
@@ -1335,6 +1361,15 @@
 
     return Class(BaseEntity, {
       className: entityType.name,
+
+      syncEvents: {
+        update: true,
+        stateChanged: true,
+        subscribersChanged: true
+      },
+      isSyncRequired: function(){
+        return DataObject.prototype.isSyncRequired.call(this) && (!entityType.idProperty || this[entityType.idProperty] != null);
+      },
 
       init: function(data){
         // ignore delegate and data
@@ -1608,6 +1643,9 @@
         }
 
         return update ? delta : false;
+      },
+      read: function(data){
+        return this.update(this.type.reader(data));
       },
       generateData: function(){ // will be overrided
         return {};

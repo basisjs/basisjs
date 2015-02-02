@@ -117,7 +117,7 @@
             '</div>',
 
           binding: {
-            title: getter('data.title', { 0: 'even', 1: 'odd' })
+            title: getter('data.title').as(['even', 'odd'])
           }
         }
       },

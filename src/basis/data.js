@@ -1,7 +1,4 @@
 
-  basis.require('basis.event');
-
-
  /**
   * This namespace contains base classes and functions for data maintain.
   *
@@ -16,9 +13,8 @@
   *   {basis.data.ResolveAdapter}
   * - Functions:
   *   {basis.data.isConnected}, {basis.data.getDatasetDelta},
-  *   {basis.data.resolveDataset}, {basis.data.resolveObject},
-  *   {basis.data.wrapData}, {basis.data.wrapObject},
-  *   {basis.data.wrap}
+  *   {basis.data.resolveDataset}, {basis.data.resolveObject}, {basis.data.resolveValue},
+  *   {basis.data.wrapData}, {basis.data.wrapObject}, {basis.data.wrap}
   *
   * @namespace basis.data
   */
@@ -36,9 +32,11 @@
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
-  var Emitter = basis.event.Emitter;
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
+  var basisEvent = require('basis.event');
+  var Emitter = basisEvent.Emitter;
+  var createEvent = basisEvent.create;
+  var createEventHandler = basisEvent.createHandler;
+  var events = basisEvent.events;
 
 
   //
@@ -47,6 +45,7 @@
 
   var NULL_OBJECT = {};
   var EMPTY_ARRAY = [];
+  var FACTORY = {};
 
 
   //
@@ -86,8 +85,31 @@
         this.priority.splice(order, 0, value);
     },
 
+   /**
+    * Returns all registred states
+    * @return {Array.<basis.data.STATE>}
+    */
     getList: function(){
       return values(STATE_EXISTS);
+    },
+
+   /**
+    * Create factory to fetch state from nested object.
+    * @param {string} events
+    * @param {string} property
+    * @return {function(basis.event.Emitter)}
+    */
+    factory: function(events, property){
+      return Value.factory(events, basis.getter(property).as(STATE.from));
+    },
+
+   /**
+    * Helper to get Value with state from source.
+    * @param {basis.data.AbstractData} source
+    * @return {basis.data.Value|null}
+    */
+    from: function(source){
+      return Value.from(source, 'stateChanged', 'state') || STATE.UNDEFINED;
     }
   };
 
@@ -286,6 +308,11 @@
     state: STATE.UNDEFINED,
 
    /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    stateRA_: null,
+
+   /**
     * Fires when state or state.data was changed.
     * @param {object} oldState Object state before changes.
     * @event
@@ -298,6 +325,11 @@
     * @type {boolean}
     */
     active: false,
+
+   /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    activeRA_: null,
 
    /**
     * Fires when state of subscription was changed.
@@ -363,10 +395,20 @@
 
       // activate subscription if active
       if (this.active)
-        this.addHandler(getMaskConfig(this.subscribeTo).handler);
+      {
+        this.active = !!resolveValue(this, this.setActive, this.active, 'activeRA_');
 
+        if (this.active)
+          this.addHandler(getMaskConfig(this.subscribeTo).handler);
+      }
+
+      // resolve state
+      // Q: should we check for `instanceof String` here?
+      if (typeof this.state != 'string')
+        this.state = String(resolveValue(this, this.setState, this.state, 'stateRA_'));
+
+      // apply sync action
       var syncAction = this.syncAction;
-
       if (syncAction)
       {
         this.syncAction = null;
@@ -381,10 +423,16 @@
     * @return {boolean} Current object state.
     */
     setState: function(state, data){
+      state = resolveValue(this, this.setState, state, 'stateRA_');
+
       var stateCode = String(state);
 
       if (!STATE_EXISTS[stateCode])
         throw new Error('Wrong state value');
+
+      // try fetch data from state
+      if (this.stateRA_ && data === undefined)
+        data = state.data;
 
       // set new state for object
       if (this.state != stateCode || this.state.data != data)
@@ -417,7 +465,7 @@
     * @return {boolean} Returns true if {basis.data.Object#active} was changed.
     */
     setActive: function(isActive){
-      isActive = !!isActive;
+      isActive = !!resolveValue(this, this.setActive, isActive, 'activeRA_');
 
       if (this.active != isActive)
       {
@@ -528,6 +576,12 @@
           action(SUBSCRIPTION.unlink, this);
       }
 
+      // clean up adapters
+      if (this.activeRA_)
+        resolveValue(this, false, false, 'activeRA_');
+      if (this.stateRA_)
+        resolveValue(this, false, false, 'stateRA_');
+
       this.state = STATE.UNDEFINED;
     }
   });
@@ -554,6 +608,20 @@
   var valueSyncToken = function(value){
     this.set(this.fn(value));
   };
+  var valueSyncPipe = function(newValue, oldValue){
+    var val = null;
+
+    if (oldValue instanceof Emitter)
+      oldValue.removeHandler(this.pipeHandler, this);
+
+    if (newValue instanceof Emitter)
+    {
+      newValue.addHandler(this.pipeHandler, this);
+      val = newValue;
+    }
+
+    Value.prototype.set.call(this, val);
+  };
 
  /**
   * @class
@@ -575,7 +643,6 @@
       events.change.call(this, oldValue);
 
       var cursor = this;
-
       while (cursor = cursor.links_)
         cursor.fn.call(cursor.context, this.value, oldValue);
     },
@@ -617,6 +684,11 @@
     links_: null,
 
    /**
+    * @type {object}
+    */
+    pipes_: null,
+
+   /**
     * @type {boolean}
     */
     setNullOnEmitterDestroy: true,
@@ -625,8 +697,8 @@
     * Settings for bindings.
     */
     bindingBridge: {
-      attach: function(host, callback, context){
-        host.link(context, callback, true);
+      attach: function(host, callback, context, onDestroy){
+        host.link(context, callback, true, onDestroy);
       },
       detach: function(host, callback, context){
         host.unlink(context, callback);
@@ -743,7 +815,7 @@
         fn = $self;
 
       var hostValue = this;
-      var handler = basis.event.createHandler(events, function(object){
+      var handler = createEventHandler(events, function(object){
         this.set(fn(object, hostValue.value)); // `this` is a token
       });
       var fnId = fn[GETTER_ID] || String(fn);
@@ -781,7 +853,7 @@
         });
 
         getComputeToken = computeFunctions[getComputeTokenId] = function(object){
-          /** @cut */ if (object instanceof basis.event.Emitter == false)
+          /** @cut */ if (object instanceof Emitter == false)
           /** @cut */   basis.dev.warn('basis.data.Value#compute: object should be an instanceof basis.event.Emitter');
 
           var objectId = object.basisObjectId;
@@ -811,6 +883,7 @@
           return pair.token;
         };
 
+        getComputeToken.factory = FACTORY;
         getComputeToken.deferred = function(){
           return function(object){
             return getComputeToken(object).deferred();
@@ -819,6 +892,51 @@
       }
 
       return getComputeToken;
+    },
+
+   /**
+    * @param {string|Array.<string>} events
+    * @param {function(obj):any} getter
+    * @return {basis.data.Value}
+    */
+    pipe: function(events, getter){
+      var handler = createEventHandler(events, valueFromSetProxy);
+      var getterId = getter[GETTER_ID] || String(getter);
+      var id = handler.events.join('_') + '_' + getterId;
+      var pipes = this.pipes_;
+      var pipeValue;
+
+      if (!pipes)
+        pipes = this.pipes_ = {};
+      else
+        pipeValue = pipes[id];
+
+      if (!pipeValue)
+      {
+        pipeValue = new Value({
+          parent: this,
+          pipeHandler: handler,
+          proxy: basis.getter(getter),
+          set: basis.fn.$undef,
+          destroy: function(){
+            var parent = this.parent;
+            var parentValue = parent.value;
+
+            if (parentValue instanceof Emitter)
+              parentValue.removeHandler(this.pipeHandler, this);
+
+            parent.pipes_[id] = null;
+            this.parent = null;
+
+            Value.prototype.destroy.call(this);
+          }
+        });
+
+        pipes[id] = pipeValue;
+        this.link(pipeValue, valueSyncPipe, false, pipeValue.destroy);
+      }
+
+      return pipeValue;
     },
 
    /**
@@ -870,7 +988,7 @@
     * @param {string|function} fn Property or setter function.
     * @return {object} Returns object.
     */
-    link: function(context, fn, noApply){
+    link: function(context, fn, noApply, onDestroy){
       if (typeof fn != 'function')
       {
         var property = String(fn);
@@ -897,6 +1015,7 @@
         value: this,
         context: context,
         fn: fn,
+        destroy: onDestroy || null,
         links_: this.links_
       };
 
@@ -945,16 +1064,22 @@
         this.value.removeHandler(VALUE_EMMITER_DESTROY_HANDLER, this);
 
       // remove event handlers from all basis.event.Emitter instances
-      var cursor = this;
-      while (cursor = cursor.links_)
+      var cursor = this.links_;
+      this.links_ = null;
+      while (cursor)
+      {
         if (cursor.context instanceof Emitter)
           cursor.context.removeHandler(VALUE_EMMITER_HANDLER, cursor);
+        if (cursor.destroy)
+          cursor.destroy.call(cursor.context);
+        cursor = cursor.links_;
+      }
 
       this.proxy = null;
       this.initValue = null;
       this.value = null;
       this.lockedValue_ = null;
-      this.links_ = null;
+      this.pipes_ = null;
     }
   });
 
@@ -963,8 +1088,8 @@
   //
 
   var valueFromMap = {};
-  var valueFromSetProxy = function(object){
-    Value.prototype.set.call(this, object); // `this` is a token
+  var valueFromSetProxy = function(sender){
+    Value.prototype.set.call(this, sender); // `this` is a token
   };
 
   Value.from = function(obj, events, getter){
@@ -984,7 +1109,7 @@
       if (!getter)
         getter = $self;
 
-      var handler = basis.event.createHandler(events, valueFromSetProxy);
+      var handler = createEventHandler(events, valueFromSetProxy);
       var getterId = getter[GETTER_ID] || String(getter);
       var id = handler.events.concat(getterId, obj.basisObjectId).join('_');
 
@@ -1022,10 +1147,17 @@
         if (!result)
         {
           result = valueFromMap[id] = new Value({
-            value: bindingBridge.get(obj)
+            value: bindingBridge.get(obj),
+            set: basis.fn.$undef,
+            handler: {
+              destroy: function(){
+                valueFromMap[id] = null;
+                bindingBridge.detach(obj, Value.prototype.set, result);
+              }
+            }
           });
 
-          bindingBridge.attach(obj, result.set, result);
+          bindingBridge.attach(obj, Value.prototype.set, result, result.destroy);
         }
       }
     }
@@ -1036,10 +1168,30 @@
     return result;
   };
 
+  function valuePipeFactory(events, getter){
+    var parent = this;
+    var result = function(value){
+      value = parent(value);
+      return value
+        ? value.pipe(events, getter)
+        : value;
+    };
+
+    result.factory = FACTORY;
+    result.pipe = valuePipeFactory;
+
+    return result;
+  }
+
   Value.factory = function(events, getter){
-    return function(object){
+    var result = function(object){
       return Value.from(object, events, getter);
     };
+
+    result.factory = FACTORY;
+    result.pipe = valuePipeFactory;
+
+    return result;
   };
 
 
@@ -1189,7 +1341,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    delegateAdapter_: null,
+    delegateRA_: null,
 
    /**
     * @type {Array.<basis.data.Object>}
@@ -1324,7 +1476,7 @@
     * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
-      newDelegate = resolveObject(this, this.setDelegate, newDelegate, 'delegateAdapter_');
+      newDelegate = resolveObject(this, this.setDelegate, newDelegate, 'delegateRA_');
 
       // check is newDelegate can be linked to this object as delegate
       if (newDelegate && newDelegate instanceof DataObject)
@@ -1516,6 +1668,8 @@
       // drop delegate
       if (this.delegate)
         this.setDelegate();
+      if (this.delegateRA_)
+        resolveObject(this, false, false, 'delegateRA_');
 
       // drop data & state
       this.data = NULL_OBJECT;
@@ -1554,7 +1708,7 @@
     className: namespace + '.KeyObjectMap',
 
     itemClass: DataObject,
-    keyGetter: $self,
+    keyGetter: basis.getter($self),
     autoDestroyMembers: true,
     map_: null,
 
@@ -1714,7 +1868,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    datasetAdapter_: null,
+    datasetRA_: null,
 
    /**
     * Fires when dataset was changed.
@@ -1748,7 +1902,7 @@
     * @param {basis.data.ReadOnlyDataset} dataset
     */
     setDataset: function(dataset){
-      dataset = resolveDataset(this, this.setDataset, dataset, 'datasetAdapter_');
+      dataset = resolveDataset(this, this.setDataset, dataset, 'datasetRA_');
 
       if (this.dataset !== dataset)
       {
@@ -1765,10 +1919,11 @@
         }
 
         this.itemCount = dataset ? dataset.itemCount : 0;
+        this.dataset = dataset;
+
         if (delta = getDatasetDelta(oldDataset, dataset))
           this.emit_itemsChanged(delta);
 
-        this.dataset = dataset;
         this.emit_datasetChanged(oldDataset);
       }
     },
@@ -1785,6 +1940,13 @@
     */
     getItems: function(){
       return this.dataset ? this.dataset.getItems() : [];
+    },
+
+   /**
+    * Proxy method for contained dataset.
+    */
+    getValues: function(getter){
+      return this.dataset ? this.dataset.getValues(getter) : [];
     },
 
    /**
@@ -1813,7 +1975,7 @@
     * @destructor
     */
     destroy: function(){
-      if (this.dataset || this.datasetAdapter_)
+      if (this.dataset || this.datasetRA_)
         this.setDataset();
 
       DataObject.prototype.destroy.call(this);
@@ -2244,6 +2406,14 @@
   });
 
 
+  //
+  // resolvers
+  //
+
+  function resolveAdapterProxy(){
+    this.fn.call(this.context, this.source);
+  }
+
  /**
   * @class
   */
@@ -2265,9 +2435,6 @@
     },
     detach: function(){
       this.source.removeHandler(this.handler, this);
-    },
-    proxy: function(){
-      this.fn.call(this.context, this.source);
     }
   };
 
@@ -2279,8 +2446,8 @@
     ResolveAdapter.apply(this, arguments);
   };
   BBResolveAdapter.prototype = new ResolveAdapter();
-  BBResolveAdapter.prototype.attach = function(){
-    this.source.bindingBridge.attach(this.source, this.handler, this);
+  BBResolveAdapter.prototype.attach = function(destroyCallback){
+    this.source.bindingBridge.attach(this.source, this.handler, this, destroyCallback);
   };
   BBResolveAdapter.prototype.detach = function(){
     this.source.bindingBridge.detach(this.source, this.handler, this);
@@ -2290,57 +2457,46 @@
   // adapter handlers
   //
 
-  var TOKEN_ADAPTER_HANDLER = function(){
+  var DEFAULT_CHANGE_ADAPTER_HANDLER = function(){
     this.fn.call(this.context, this.source);
+  };
+  var DEFAULT_DESTROY_ADAPTER_HANDLER = function(){
+    this.fn.call(this.context, null);
+  };
+  var RESOLVEVALUE_DESTROY_ADAPTER_HANDLER = function(){
+    this.fn.call(this.context, resolveValue(NULL_OBJECT, null, this.source.bindingBridge.get(this.source)));
   };
 
   var DATASETWRAPPER_ADAPTER_HANDLER = {
-    datasetChanged: function(){
-      this.fn.call(this.context, this.source);
-    },
-    destroy: function(){
-      this.fn.call(this.context, null);
-    }
-  };
-
-  var VALUE_ADAPTER_HANDLER = {
-    change: function(){
-      this.fn.call(this.context, this.source);
-    },
-    destroy: function(){
-      this.fn.call(this.context, null);
-    }
+    datasetChanged: DEFAULT_CHANGE_ADAPTER_HANDLER,
+    destroy: DEFAULT_DESTROY_ADAPTER_HANDLER
   };
 
  /**
   * Resolve dataset from source value.
   */
-  function resolveDataset(context, fn, source, property){
+  function resolveDataset(context, fn, source, property, factoryContext){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
-    if (typeof source == 'function')
-      source = source.call(context, context);
+    if (fn !== resolveAdapterProxy && typeof source == 'function')
+      source = source.call(factoryContext || context, factoryContext || context);
 
     if (source)
     {
+      // try to re-use old adapter
+      var adapter = newAdapter = oldAdapter && oldAdapter.source === source ? oldAdapter : null;
+
       if (source instanceof DatasetWrapper)
       {
-        newAdapter = new ResolveAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
+        newAdapter = adapter || new ResolveAdapter(context, fn, source, DATASETWRAPPER_ADAPTER_HANDLER);
         source = source.dataset;
       }
-      else
-        if (source instanceof Value)
-        {
-          newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-          source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
-        }
-        else
-          if (source.bindingBridge)
-          {
-            newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-            source = resolveDataset(newAdapter, newAdapter.proxy, source.value, 'next');
-          }
+      else if (source.bindingBridge)
+      {
+        newAdapter = adapter || new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
+        source = resolveDataset(newAdapter, resolveAdapterProxy, source.value, 'next');
+      }
     }
 
     if (source instanceof ReadOnlyDataset == false)
@@ -2358,7 +2514,7 @@
       }
 
       if (newAdapter)
-        newAdapter.attach();
+        newAdapter.attach(DEFAULT_DESTROY_ADAPTER_HANDLER);
 
       context[property] = newAdapter;
     }
@@ -2369,26 +2525,21 @@
  /**
   * Resolve object from source value.
   */
-  function resolveObject(context, fn, source, property){
+  function resolveObject(context, fn, source, property, factoryContext){
     var oldAdapter = context[property] || null;
     var newAdapter = null;
 
-    if (typeof source == 'function')
-      source = source.call(context, context);
+    if (fn !== resolveAdapterProxy && typeof source == 'function')
+      source = source.call(factoryContext || context, factoryContext || context);
 
-    if (source)
+    if (source && source.bindingBridge)
     {
-      if (source instanceof Value)
-      {
-        newAdapter = new ResolveAdapter(context, fn, source, VALUE_ADAPTER_HANDLER);
-        source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
-      }
+      if (!oldAdapter || oldAdapter.source !== source)
+        newAdapter = new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
       else
-        if (source.bindingBridge)
-        {
-          newAdapter = new BBResolveAdapter(context, fn, source, TOKEN_ADAPTER_HANDLER);
-          source = resolveObject(newAdapter, newAdapter.proxy, source.value, 'next');
-        }
+        newAdapter = oldAdapter;
+
+      source = resolveObject(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
     }
 
     if (source instanceof DataObject == false)
@@ -2406,7 +2557,50 @@
       }
 
       if (newAdapter)
-        newAdapter.attach();
+        newAdapter.attach(DEFAULT_DESTROY_ADAPTER_HANDLER);
+
+      context[property] = newAdapter;
+    }
+
+    return source;
+  }
+
+ /**
+  * Resolve value from source value.
+  */
+  function resolveValue(context, fn, source, property, factoryContext){
+    var oldAdapter = context[property] || null;
+    var newAdapter = null;
+
+    // as functions could be a value, invoke only functions with factory property
+    // i.e. source -> function(){ /* factory code */ }).factory === FACTORY
+    // apply only for top-level resolveValue() invocation
+    if (source && fn !== resolveAdapterProxy && typeof source == 'function' && source.factory === FACTORY)
+      source = source.call(factoryContext || context, factoryContext || context);
+
+    if (source && source.bindingBridge)
+    {
+      if (!oldAdapter || oldAdapter.source !== source)
+        newAdapter = new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
+      else
+        newAdapter = oldAdapter;
+
+      source = resolveValue(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
+    }
+
+    if (property && oldAdapter !== newAdapter)
+    {
+      if (oldAdapter)
+      {
+        oldAdapter.detach();
+
+        // destroy nested adapter if exists
+        if (oldAdapter.next)
+          resolveValue(oldAdapter, null, null, 'next');
+      }
+
+      if (newAdapter)
+        newAdapter.attach(RESOLVEVALUE_DESTROY_ADAPTER_HANDLER);
 
       context[property] = newAdapter;
     }
@@ -2625,6 +2819,8 @@
     // const
     STATE: STATE,
     SUBSCRIPTION: SUBSCRIPTION,
+    FACTORY: FACTORY,
+    PROXY: Value.factory('subscribersChanged', 'subscriberCount'),
 
     // classes
     AbstractData: AbstractData,
@@ -2644,6 +2840,7 @@
     ResolveAdapter: ResolveAdapter,
     resolveDataset: resolveDataset,
     resolveObject: resolveObject,
+    resolveValue: resolveValue,
 
     wrapData: wrapData,
     wrapObject: wrapObject,

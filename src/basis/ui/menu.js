@@ -1,8 +1,4 @@
 
-  basis.require('basis.ui');
-  basis.require('basis.ui.popup');
-
-
  /**
   * @namespace basis.ui.menu
   */
@@ -17,18 +13,20 @@
   var Class = basis.Class;
   var getter = basis.getter;
 
-  var DIR = basis.ui.popup.DIR;
-  var Popup = basis.ui.popup.Popup;
-  var UINode = basis.ui.Node;
-  var UIPartitionNode = basis.ui.PartitionNode;
-  var UIGroupingNode = basis.ui.GroupingNode;
+  var basisUi = require('basis.ui');
+  var UINode = basisUi.Node;
+  var UIPartitionNode = basisUi.PartitionNode;
+  var UIGroupingNode = basisUi.GroupingNode;
+  var basisUiPopup = require('basis.ui.popup');
+  var DIR = basisUiPopup.DIR;
+  var Popup = basisUiPopup.Popup;
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     MenuItem: resource('./templates/menu/MenuItem.tmpl'),
     MenuItemSet: resource('./templates/menu/MenuItemSet.tmpl'),
     PartitionNode: resource('./templates/menu/PartitionNode.tmpl'),

@@ -1,8 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.data');
-
-
  /**
   * Namespace overview:
   * - Classes:
@@ -33,20 +29,30 @@
 
   var extend = basis.object.extend;
   var values = basis.object.values;
+  var objectSlice = basis.object.slice;
+  var arrayAdd = basis.array.add;
+  var arrayRemove = basis.array.remove;
   var getter = basis.getter;
   var $self = basis.fn.$self;
   var $true = basis.fn.$true;
   var $false = basis.fn.$false;
   var $undef = basis.fn.$undef;
   var arrayFrom = basis.array.from;
-  var createEvent = basis.event.create;
 
-  var SUBSCRIPTION = basis.data.SUBSCRIPTION;
-  var DataObject = basis.data.Object;
-  var KeyObjectMap = basis.data.KeyObjectMap;
-  var ReadOnlyDataset = basis.data.ReadOnlyDataset;
-  var Dataset = basis.data.Dataset;
-  var DatasetWrapper = basis.data.DatasetWrapper;
+  var basisEvent = require('basis.event');
+  var createEvent = basisEvent.create;
+  var createEventHandler = basisEvent.createHandler;
+  var Emitter = basisEvent.Emitter;
+
+  var basisData = require('basis.data');
+  var SUBSCRIPTION = basisData.SUBSCRIPTION;
+  var Value = basisData.Value;
+  var DataObject = basisData.Object;
+  var KeyObjectMap = basisData.KeyObjectMap;
+  var ReadOnlyDataset = basisData.ReadOnlyDataset;
+  var Dataset = basisData.Dataset;
+  var DatasetWrapper = basisData.DatasetWrapper;
+  var resolveDataset = basisData.resolveDataset;
   var setAccumulateState = Dataset.setAccumulateState;
 
 
@@ -123,7 +129,7 @@
       if (typeof events != 'string' && !Array.isArray(events))
         events = null;
 
-      return extend(basis.event.createHandler(events, fn), {
+      return extend(createEventHandler(events, fn), {
         __extend__: createRuleEventsExtend
       });
     })(events);
@@ -383,7 +389,7 @@
     * @private
     */
     removeDataset_: function(dataset){
-      basis.array.remove(this.sources, dataset);
+      arrayRemove(this.sources, dataset);
 
       // remove event listeners from dataset
       if (this.listen.source)
@@ -397,14 +403,14 @@
 
    /**
     * Update dataset value by source.
-    * @param {basis.data.ReadOnlyDataset=} source
+    * @param {*} source
     * @private
     */
     updateDataset_: function(source){
       // this -> sourceInfo
       var merge = this.owner;
       var sourcesMap_ = merge.sourcesMap_;
-      var dataset = basis.data.resolveDataset(this, merge.updateDataset_, source, 'adapter');
+      var dataset = resolveDataset(this, merge.updateDataset_, source, 'adapter', merge);
       var inserted;
       var deleted;
       var delta;
@@ -446,15 +452,15 @@
         if (setSourcesTransaction)
         {
           if (delta.inserted)
-            delta.inserted.forEach(function(source){
-              if (!basis.array.remove(this.deleted, source))
-                basis.array.add(this.inserted, source);
+            delta.inserted.forEach(function(item){
+              if (!arrayRemove(this.deleted, item))
+                arrayAdd(this.inserted, item);
             }, setSourcesTransaction);
 
           if (delta.deleted)
-            delta.deleted.forEach(function(source){
-              if (!basis.array.remove(this.inserted, source))
-                basis.array.add(this.deleted, source);
+            delta.deleted.forEach(function(item){
+              if (!arrayRemove(this.inserted, item))
+                arrayAdd(this.deleted, item);
             }, setSourcesTransaction);
         }
         else
@@ -504,7 +510,7 @@
       this.sourceValues_.push(sourceInfo);
       this.updateDataset_.call(sourceInfo, source);
 
-      if (this.listen.sourceValue && source instanceof basis.event.Emitter)
+      if (this.listen.sourceValue && source instanceof Emitter)
         source.addHandler(this.listen.sourceValue, this);
     },
 
@@ -517,7 +523,7 @@
       for (var i = 0, sourceInfo; sourceInfo = this.sourceValues_[i]; i++)
         if (sourceInfo.source === source)
         {
-          if (this.listen.sourceValue && source instanceof basis.event.Emitter)
+          if (this.listen.sourceValue && source instanceof Emitter)
             source.removeHandler(this.listen.sourceValue, this);
 
           this.updateDataset_.call(sourceInfo, null);
@@ -564,7 +570,7 @@
       for (var i = 0; i < sources.length; i++)
       {
         var source = sources[i];
-        if (!basis.array.remove(exists, source))
+        if (!arrayRemove(exists, source))
           this.addSource(source);
       }
 
@@ -656,7 +662,7 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      if (!this.minuendAdapter_)
+      if (!this.minuendRA_)
         this.setMinuend(null);
     }
   };
@@ -675,7 +681,7 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      if (!this.subtrahendAdapter_)
+      if (!this.subtrahendRA_)
         this.setSubtrahend(null);
     }
   };
@@ -701,7 +707,7 @@
     * Minuend wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    minuendAdapter_: null,
+    minuendRA_: null,
 
    /**
     * Fires when minuend changed.
@@ -719,7 +725,7 @@
     * Subtrahend wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    subtrahendAdapter_: null,
+    subtrahendRA_: null,
 
    /**
     * Fires when subtrahend changed.
@@ -764,8 +770,8 @@
       var delta;
       var operandsChanged = false;
 
-      minuend = basis.data.resolveDataset(this, this.setMinuend, minuend, 'minuendAdapter_');
-      subtrahend = basis.data.resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendAdapter_');
+      minuend = resolveDataset(this, this.setMinuend, minuend, 'minuendRA_');
+      subtrahend = resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendRA_');
 
       var oldMinuend = this.minuend;
       var oldSubtrahend = this.subtrahend;
@@ -846,7 +852,7 @@
     setMinuend: function(minuend){
       return this.setOperands(
         minuend,
-        this.subtrahendAdapter_ ? this.subtrahendAdapter_.source : this.subtrahend
+        this.subtrahendRA_ ? this.subtrahendRA_.source : this.subtrahend
       );
     },
 
@@ -856,7 +862,7 @@
     */
     setSubtrahend: function(subtrahend){
       return this.setOperands(
-        this.minuendAdapter_ ? this.minuendAdapter_.source : this.minuend,
+        this.minuendRA_ ? this.minuendRA_.source : this.minuend,
         subtrahend
       );
     },
@@ -904,7 +910,7 @@
     * Source wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    sourceAdapter_: null,
+    sourceRA_: null,
 
    /**
     * Map of source objects.
@@ -919,7 +925,7 @@
     listen: {
       source: {
         destroy: function(){
-          if (!this.sourceAdapter_)
+          if (!this.sourceRA_)
             this.setSource();
         }
       }
@@ -946,7 +952,7 @@
     * @param {basis.data.ReadOnlyDataset} source
     */
     setSource: function(source){
-      source = basis.data.resolveDataset(this, this.setSource, source, 'sourceAdapter_');
+      source = resolveDataset(this, this.setSource, source, 'sourceRA_');
 
       // sync with source
       if (this.source !== source)
@@ -1674,6 +1680,16 @@
     index_: null,
 
    /**
+    * @type {object}
+    */
+    left_: null,
+
+   /**
+    * @type {object}
+    */
+    right_: null,
+
+   /**
     * Direction of range.
     * @type {boolean}
     * @readonly
@@ -1812,7 +1828,7 @@
         end = start + this.limit;
       }
 
-      var curSet = basis.object.slice(this.members_);
+      var curSet = objectSlice(this.members_);
       var newSet = this.index_.slice(Math.max(0, start), Math.max(0, end));
       var inserted = [];
       var delta;
@@ -1833,10 +1849,91 @@
       for (var objectId in curSet)
         delete this.members_[objectId];
 
+      // update left tokens
+      if (this.left_)
+        for (var offset in this.left_)
+        {
+          var item = this.index_[this.orderDesc ? end + Number(offset) - 1 : start - Number(offset)];
+          this.left_[offset].set(item ? item.object : null);
+        }
+
+      // update right tokens
+      if (this.right_)
+        for (var offset in this.right_)
+        {
+          var item = this.index_[this.orderDesc ? start - Number(offset) : end + Number(offset) - 1];
+          this.right_[offset].set(item ? item.object : null);
+        }
+
+      // emit event if any delta
       if (delta = getDelta(inserted, values(curSet)))
         this.emit_itemsChanged(delta);
 
       return delta;
+    },
+
+   /**
+    * Returns a Value that refer to [start + offset] item in slice (ordered vector).
+    * @param {number} offset
+    * @return {basis.data.Value}
+    */
+    left: function(offset){
+      offset = parseInt(offset, 10) || 0;
+
+      if (!this.left_)
+        this.left_ = {};
+
+      var value = this.left_[offset];
+      if (!value)
+      {
+        var start = this.offset;
+        var end = start + this.limit;
+
+        if (this.orderDesc)
+        {
+          start = this.index_.length - end;
+          end = start + this.limit;
+        }
+
+        var item = this.index_[this.orderDesc ? end + offset - 1 : start - offset];
+        value = this.left_[offset] = new Value({
+          value: item ? item.object : null
+        });
+      }
+
+      return value;
+    },
+
+   /**
+    * Returns a Value that refer to [start + offset] item in slice (ordered vector).
+    * @param {number} offset
+    * @return {basis.data.Value}
+    */
+    right: function(offset){
+      offset = parseInt(offset, 10) || 0;
+
+      if (!this.right_)
+        this.right_ = {};
+
+      var value = this.right_[offset];
+      if (!value)
+      {
+        var start = this.offset;
+        var end = start + this.limit;
+
+        if (this.orderDesc)
+        {
+          start = this.index_.length - end;
+          end = start + this.limit;
+        }
+
+        var item = this.index_[this.orderDesc ? start - offset : end + offset - 1];
+        value = this.right_[offset] = new Value({
+          value: item ? item.object : null
+        });
+      }
+
+      return value;
     },
 
    /**
@@ -1845,6 +1942,20 @@
     destroy: function(){
       // inherit
       SourceDataset.prototype.destroy.call(this);
+
+      if (this.left_)
+      {
+        for (var offset in this.left_)
+          this.left_[offset].destroy();
+        this.left_ = null;
+      }
+
+      if (this.right_)
+      {
+        for (var offset in this.right_)
+          this.right_[offset].destroy();
+        this.right_ = null;
+      }
 
       // destroy index
       this.index_ = null;

@@ -1,8 +1,4 @@
 
-  basis.require('basis.utils.utf8');
-  basis.require('basis.utils.utf16');
-  basis.require('basis.utils.base64');
-
  /**
   * @namespace basis.crypt
   */
@@ -11,9 +7,9 @@
   var createArray = basis.array.create;
   var repeatArray = basis.array.repeat;
   var flatten = basis.array.flatten;
-  var UTF16 = basis.utils.utf16;
-  var UTF8 = basis.utils.utf8;
-  var base64 = basis.utils.base64;
+  var UTF16 = require('basis.utils.utf16');
+  var UTF8 = require('basis.utils.utf8');
+  var base64 = require('basis.utils.base64');
 
 
   function rotateLeft(number, offset){

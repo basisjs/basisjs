@@ -28,7 +28,12 @@ module.exports = {
 };
 
 // it's a hack to mark basis.js to be updatable
-var xhr = new XMLHttpRequest();
-xhr.open('HEAD', '../src/basis.js', true);
-xhr.setRequestHeader('X-Basis-Resource', 1);
-xhr.send('');
+// do it only when global __resources__ available, which using as a implicit
+// indicator that we run on basisjs-tools dev-server
+if (typeof __resources__ != 'undefined')
+{
+  var xhr = new XMLHttpRequest();
+  xhr.open('HEAD', '../src/basis.js', true);
+  xhr.setRequestHeader('X-Basis-Resource', 1);
+  xhr.send('');
+}

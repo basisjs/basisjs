@@ -1,0 +1,33 @@
+.group
+{
+  padding: 3px 0 4px;
+}
+.caption
+{
+  display: block;
+  font-size: 12px;
+  color: #444;
+}
+.content
+{
+  padding: 4px 0 4px 8px;
+  line-height: 1.4;
+}
+.log__link
+{
+  display: none;
+}
+.log__link_used
+{
+  display: block;
+  float: right;
+  color: red;
+  padding-top: 0px;
+  text-decoration: underline;
+  color: #666;
+  cursor: pointer;
+}
+.log__link_used:hover
+{
+  color: #A00;
+}

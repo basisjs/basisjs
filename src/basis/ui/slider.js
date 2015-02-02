@@ -1,10 +1,4 @@
 
-  basis.require('basis.event');
-  basis.require('basis.layout');
-  basis.require('basis.dragdrop');
-  basis.require('basis.ui');
-
-
  /**
   * @see ./demo/defile/slider.html
   * @namespace basis.ui.slider
@@ -17,20 +11,20 @@
   // import names
   //
 
-  var events = basis.event.events;
-  var createEvent = basis.event.create;
-  var getBoundingRect = basis.layout.getBoundingRect;
-
-  var AbstractNode = basis.dom.wrapper.AbstractNode;
-  var UINode = basis.ui.Node;
-  var DragDropElement = basis.dragdrop.DragDropElement;
+  var basisEvent = require('basis.event');
+  var events = basisEvent.events;
+  var createEvent = basisEvent.create;
+  var getBoundingRect = require('basis.layout').getBoundingRect;
+  var AbstractNode = require('basis.dom.wrapper').AbstractNode;
+  var DragDropElement = require('basis.dragdrop').DragDropElement;
+  var Node = require('basis.ui').Node;
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Slider: resource('./templates/slider/Slider.tmpl'),
     MarkLayers: resource('./templates/slider/MarkLayers.tmpl'),
     MarkLayer: resource('./templates/slider/MarkLayer.tmpl'),
@@ -55,7 +49,7 @@
  /**
   * @class
   */
-  var Mark = UINode.subclass({
+  var Mark = Node.subclass({
     className: namespace + '.Mark',
 
     template: templates.Mark,
@@ -83,7 +77,7 @@
  /**
   * @class
   */
-  var MarkLayer = UINode.subclass({
+  var MarkLayer = Node.subclass({
     className: namespace + '.MarkLayer',
 
     template: templates.MarkLayer,
@@ -96,7 +90,7 @@
     marks: null,
 
     init: function(){
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
       this.apply();
     },
 
@@ -162,7 +156,7 @@
  /**
   * @class
   */
-  var Slider = UINode.subclass({
+  var Slider = Node.subclass({
     className: namespace + '.Slider',
 
     emit_change: createEvent('change', 'oldValue'),
@@ -266,7 +260,7 @@
     * @inheritDoc
     */
     satellite: {
-      marks: UINode.subclass({
+      marks: Node.subclass({
         className: namespace + '.MarkLayers',
         template: templates.MarkLayers,
         childClass: MarkLayer
@@ -286,7 +280,7 @@
       this.value = NaN;
 
       // inherit
-      UINode.prototype.init.call(this);
+      Node.prototype.init.call(this);
 
       // set properties
       this.setRange(this.min, this.max, step || 1);
@@ -302,7 +296,7 @@
     },
 
     templateSync: function(){
-      UINode.prototype.templateSync.call(this);
+      Node.prototype.templateSync.call(this);
 
       if (this.tmpl.scrollThumb)
         this.dde.setElement(this.tmpl.scrollThumb);
@@ -439,7 +433,7 @@
       this.dde.destroy();
       this.dde = null;
 
-      UINode.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
     }
   });
 

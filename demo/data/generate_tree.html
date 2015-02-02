@@ -61,17 +61,12 @@
   </div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.dom');
-    basis.require('basis.data');
-    basis.require('basis.entity');
-    basis.require('basis.ui');
-    basis.require('basis.ui.tree');
-
-    var DOM = basis.dom;
-    var nsData = basis.data;
-    var nsEntity = basis.entity;
-    var nsUI = basis.ui;
-    var nsTree = basis.ui.tree;
+    var Value = basis.require('basis.data').Value;
+    var Split = basis.require('basis.data.dataset').Split;
+    var Merge = basis.require('basis.data.dataset').Merge;
+    var nsUI = basis.require('basis.ui');
+    var nsTree = basis.require('basis.ui.tree');
+    var entity = basis.require('basis.entity');
 
     //
     // DATA
@@ -103,25 +98,21 @@
     // DATA TYPES AND DATASET
     //
 
-    var File = new nsEntity.EntityType({
-      fields: {
-        path: String,
-        name: String
-      }
+    var File = entity.createType('File', {
+      path: String,
+      name: String
     });
 
-    var Folder = new nsEntity.EntityType({
-      fields: {
-        path: String,
-        name: String
-      }
+    var Folder = entity.createType('Folder', {
+      path: String,
+      name: String
     });
 
     files.forEach(File);
     folders.forEach(Folder);
 
-    var goupingByParentId = new nsData.dataset.Split({
-      source: new nsData.dataset.Merge({
+    var goupingByParentId = new Split({
+      source: new Merge({
         sources: [
           Folder.all,
           File.all
@@ -135,7 +126,7 @@
     //
     // CLASSES
     //
-   
+
     var grouping = {
       childClass: nsUI.PartitionNode,
       rule: function(node){
@@ -144,38 +135,38 @@
       sorting: basis.getter('data.id')
     };
 
-    var FolderNode = basis.Class(nsTree.Folder, {
+    var FolderNode = nsTree.Folder.subclass({
       binding: {
         title: 'data:name'
       },
       sorting: basis.getter('data.name'),
       grouping: grouping,
-      init: function(){
-        nsTree.Node.prototype.init.call(this);
-        this.setDataSource(goupingByParentId.getSubset(this.data.path + '' + this.data.name + '/'));
-      }
+      dataSource: Value.factory('update', function(node){
+        return goupingByParentId.getSubset(node.data.path + node.data.name + '/');
+      })
     });
 
-    var LazyFolderNode = basis.Class(nsTree.Folder, {
+    var LazyFolderNode = nsTree.Folder.subclass({
       binding: {
         title: 'data:name'
       },
       sorting: basis.getter('data.name'),
       grouping: grouping,
       collapsed: true,
-      emit_expand: function(){
-        nsTree.Folder.prototype.emit_expand.call(this);
-        this.setDataSource(goupingByParentId.getSubset(this.data.path + '' + this.data.name + '/'));
-      }
+      dataSource: Value.factory('update expand', function(node){
+        return !node.collapsed
+          ? goupingByParentId.getSubset(node.data.path + node.data.name + '/')
+          : null;
+      })
     });
 
-    var FileNode = basis.Class(nsTree.Node, {
+    var FileNode = nsTree.Node.subclass({
       binding: {
         title: 'data:name'
       }
     });
 
-    var FileTree = basis.Class(nsTree.Tree, {
+    var FileTree = nsTree.Tree.subclass({
       dataSource: goupingByParentId.getSubset('/'),
       sorting: basis.getter('data.name'),
       grouping: grouping,

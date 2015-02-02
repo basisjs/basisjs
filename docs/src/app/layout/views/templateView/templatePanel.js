@@ -1,10 +1,13 @@
 
-  basis.require('basis.ui.code');
-
+  var createEvent = require('basis.event').create;
+  var SourceCode = require('basis.ui.code').SourceCode;
+  var Node = require('basis.ui').Node;
+  var fnInfo = require('basis.utils.info').fn;
+  var getDeclFromSource = require('basis.template').getDeclFromSource;
   var buildTemplateTree = require('./buildTemplateTree.js');
 
   function resolveFunction(fn){
-    var info = basis.utils.info.fn(fn);
+    var info = fnInfo(fn);
     var result = {
       asIs: info.source
     };
@@ -18,7 +21,7 @@
  /**
   * @class
   */
-  var bindingsPanel = new basis.ui.Node({
+  var bindingsPanel = new Node({
     template: resource('./template/bindingsPanel.tmpl'),
 
     handler: {
@@ -49,7 +52,7 @@
     sorting: 'data.name',
     childClass: {
       expanded: false,
-      emit_toggle: basis.event.create('toggle'),
+      emit_toggle: createEvent('toggle'),
 
       template: resource('./template/bindingsPanelItem.tmpl'),
       binding: {
@@ -73,7 +76,7 @@
         source: {
           events: 'toggle',
           existsIf: basis.getter('expanded'),
-          instanceOf: basis.ui.code.SourceCode.subclass({
+          satelliteClass: SourceCode.subclass({
             autoDelegate: true,
             lang: 'js',
             lineNumber: false,
@@ -90,7 +93,7 @@
  /**
   *
   */
-  var actionsPanel = new basis.ui.Node({
+  var actionsPanel = new Node({
     handler: {
       update: function(){
         var cls = this.data.obj;
@@ -121,7 +124,7 @@
     sorting: 'data.name',
     childClass: {
       expanded: false,
-      emit_toggle: basis.event.create('toggle'),
+      emit_toggle: createEvent('toggle'),
 
       template: resource('./template/actionsPanelItem.tmpl'),
       binding: {
@@ -144,7 +147,7 @@
         source: {
           events: 'toggle',
           existsIf: basis.getter('expanded'),
-          instanceOf: basis.ui.code.SourceCode.subclass({
+          satelliteClass: SourceCode.subclass({
             autoDelegate: true,
             lang: 'js',
             lineNumber: false,
@@ -171,7 +174,7 @@
  /**
   * @class
   */
-  var TemplatePanel = basis.ui.Node.subclass({
+  var TemplatePanel = Node.subclass({
     template: resource('./template/templatePanel.tmpl'),
     binding: {
       bindings: 'satellite:',
@@ -185,7 +188,7 @@
       })
     },
 
-    emit_templateViewChanged: basis.event.create('templateViewChanged'),
+    emit_templateViewChanged: createEvent('templateViewChanged'),
 
     processTemplate: function(){
       var rootCfg = {};
@@ -198,7 +201,7 @@
       {
         if (!template.docsCache_)
           template.docsCache_ = buildTemplateTree(
-            basis.template.getDeclFromSource(template.source, template.baseURI).tokens
+            getDeclFromSource(template.source, template.baseURI).tokens
           );
 
         rootCfg.childNodes = template.docsCache_;
@@ -210,7 +213,7 @@
       this.emit_templateViewChanged();
     },
     init: function(){
-      basis.ui.Node.prototype.init.call(this);
+      Node.prototype.init.call(this);
       this.processTemplate();
     },
     handler: {

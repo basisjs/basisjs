@@ -1,3 +1,32 @@
+## 1.3.0 → 1.4.0
+
+Rename
+
+  - `basis.require('basis.ua').cookies` → `basis.require('basis.ua.cookie')` (`basis.ua.cookies` moved to separate namespace `basis.ua.cookie`)
+  - `Service#isSecure` → `Service#secure`
+  - `Service#transportClass#needSignature` → `Service#transportClass#secure`
+  - `basis.ui.field.Field#binding.titleText` → `basis.ui.field.Field#binding.title`
+  - `title` → `titleEl` reference in `basis.ui.field` templates
+  - `instanceOf` → `satelliteClass` in satellite config of `basis.dom.wrapper.Node`
+  
+Remove
+
+  - `basis.net.action` isn't add `request` property to context object (on action invocation)
+  - `basis.net` remove `influence` functionality
+
+Deprecated
+
+  - `Service#isSecure` (use `Service#secure` instead)
+  - `Service#transportClass#needSignature` (use `Service#transportClass#secure` instead)
+  - `basis.ui.field.Field#binding.titleText` (use `basis.ui.field.Field#binding.title` instead)
+  - `instanceOf` in satellite config of `basis.dom.wrapper.Node` (use `satelliteClass` instead)
+
+Might break
+
+  - no more `__basisEvents` in `global` (`basis.dom.event` don't store global event handlers in `global`)
+  - `basis.ui.popup.Popup` instances are not children of `popupManager` anymore and could have `parentNode` or `owner`
+  - `basis.net.action` actions return ES6 `Promise` (native or polyfill provided by `basis.promise`)
+
 ## 1.2.5 → 1.3.0
 
 Rename
@@ -24,7 +53,7 @@ Remove
   - `basis.ui.table` drop support for `content` in footer config
   - `basis.template` remove support for `<b:resource>` (use `<b:style>` instead)
 
-Stop use (deprecated)
+Deprecated
 
   - `path` section in `basis-config` (use `modules` instead)
   - `basis.entity.EntityType().entityType` (use `type` instead)
@@ -57,8 +86,8 @@ Might break
 
 Remove
  
-  - `basis.xml.createAttributeNS` (as candidate to remove in DOM level 4)
-  - `basis.xml.setAttributeNodeNS` (as candidate to remove in DOM level 4)
+  - `basis.xml.createAttributeNS` (as candidate to remove in `DOM level 4`)
+  - `basis.xml.setAttributeNodeNS` (as candidate to remove in `DOM level 4`)
 
 ## 1.1.0 → 1.2.0
 

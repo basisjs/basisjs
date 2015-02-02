@@ -7,22 +7,55 @@
   <title>basis.dom</title>
 
   <script>
-    if (typeof __resources__ == undefined)
+    if (typeof __resources__ == 'undefined')
       __resources__ = {};
 
     var __resourcesExt__ = {
       'foo/1.tmpl': '<b:style src="./1.css"/>',
       'foo/1.css': '',
       'foo/custom/2.tmpl': '<b:style src="./2.css"/>',
-      'foo/custom/2.css': ''
+      'foo/custom/2.css': '',
+      'test.tmpl': 'resource test',
+      'test.l10n': {
+        '_meta': {
+          'type': {
+            'plural': 'plural',
+            'pluralWithPlaceholder': 'plural',
+            'simpleMarkup': 'markup',
+            'markupWithBinding': 'markup',
+            'l10nMarkup': 'markup'
+          }
+        },
+        'en-US': {
+          'foo': 'foo text',
+          'enum': { 'foo': 'foo text', 'bar': 'bar text' },
+          'plural': ['plural text', 'plural texts'],
+          'pluralWithPlaceholder': ['# plural text', '# plural texts'],
+          'simpleMarkup': 'simple <b>markup</b> text',
+          'markupWithBinding': '<b>markup</b> text {foo}',
+          'l10nMarkup': '<b>markup</b> text {l10n:plural.{foo}} {l10n:foo} {l10n:markupWithBinding}'
+        },
+        'ru-RU': {
+          'foo': 'foo текст',
+          'enum': { 'foo': 'foo текст', 'bar': 'bar текст' },
+          'plural': ['plural текст', 'plural текста', 'plural текстов'],
+          'pluralWithPlaceholder': ['# plural текст', '# plural текста', '# plural текстов'],
+          'simpleMarkup': 'простой <b>markup</b> текст',
+          'markupWithBinding': '<b>markup</b> текст {foo}',
+          'l10nMarkup': '<b>markup</b> текст {l10n:plural.{foo}} {l10n:foo} {l10n:markupWithBinding}'
+        }
+      }
     };
 
     for (var key in __resourcesExt__)
       if (__resourcesExt__.hasOwnProperty(key))
         __resources__[key] = __resourcesExt__[key];
   </script>
-  <script src="../../src/basis.js" data-basis-config></script>
+  <script src="../../src/basis.js" data-basis-config="modules: { fixture: '../' }"></script>
   <link rel="stylesheet" href="../fixture/global_style.css"></link>
+  <script type="text/basis-template" id="test-template">
+    script test
+  </script>
 </head>
 
 <body>

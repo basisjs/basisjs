@@ -1,20 +1,33 @@
 
-  basis.require('basis.net');
-  basis.require('basis.data');
-
+ /**
+  * @namespace basis.net.jsonp
+  */
 
   var namespace = this.path;
+
+
+  //
+  // import names
+  //
 
   var document = global.document;
   var escapeValue = global.encodeURIComponent;
   var extend = basis.object.extend;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
-  var createTransportEvent = basis.net.createTransportEvent;
-  var createRequestEvent = basis.net.createRequestEvent;
-  var AbstractRequest = basis.net.AbstractRequest;
-  var AbstractTransport = basis.net.AbstractTransport;
-  var STATE = basis.data.STATE;
+
+  var basisNet = require('basis.net');
+  var createTransportEvent = basisNet.createTransportEvent;
+  var createRequestEvent = basisNet.createRequestEvent;
+  var AbstractRequest = basisNet.AbstractRequest;
+  var AbstractTransport = basisNet.AbstractTransport;
+
+  var STATE = require('basis.data').STATE;
+
+
+  //
+  // main part
+  //
 
   /** @const */ var STATE_UNSENT = 0;
   /** @const */ var STATE_OPENED = 1;
@@ -25,11 +38,9 @@
   var callbackData = {};
 
   function getCallback(){
-    var name = 'basisjsJsonpCallback' + parseInt(Math.random() * 10e10);
-
-    global[name] = function(data){
+    var name = basis.fn.publicCallback(function(data){
       callbackData[name] = data;
-    };
+    });
 
     return name;
   }
@@ -310,7 +321,7 @@
 
     requestClass: Request,
 
-    emit_readyStateChanged: createRequestEvent('readyStateChanged'),
+    emit_readyStateChanged: createTransportEvent('readyStateChanged'),
 
     // transport properties
     encoding: null,
@@ -351,8 +362,7 @@
         encoding: requestData.encoding || this.encoding,
         params: objectMerge(this.params, requestData.params),
         routerParams: requestData.routerParams,
-        callbackParam: requestData.callbackParam || this.callbackParam,
-        influence: requestData.influence
+        callbackParam: requestData.callbackParam || this.callbackParam
       });
 
       return requestData;

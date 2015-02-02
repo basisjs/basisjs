@@ -3,14 +3,11 @@ module.exports = {
 
   html: __dirname + 'cssom.html',
   init: function(){
-    basis.require('basis.dom');
-    basis.require('basis.cssom');
+    var DOM = basis.require('basis.dom');
+    var createElement = DOM.createElement;
 
-    var DOM = basis.dom;
-    var createElement = basis.dom.createElement;
-
-    var cssom = basis.cssom;
-    var cssRule = basis.cssom.createRule;
+    var cssom = basis.require('basis.cssom');
+    var cssRule = cssom.createRule;
 
     var pg = DOM.get('playground');
     var pg2 = DOM.get('playground2');
@@ -23,11 +20,8 @@ module.exports = {
         {
           name: 'getStyleSheet',
           test: function(){
-            var styleSheet = cssom.getStyleSheet('testStyleSheet');
-            this.is(false, !!styleSheet);
-
-            styleSheet = cssom.getStyleSheet('testStyleSheet', true);
-            this.is(true, !!styleSheet);
+            assert(cssom.getStyleSheet('testStyleSheet') === undefined);
+            assert(cssom.getStyleSheet('testStyleSheet', true) !== undefined);
           }
         }
       ]
@@ -41,8 +35,8 @@ module.exports = {
             var rule = cssRule('#playground, #playground2');
 
             rule.setStyle({ width: '200px !important' });
-            this.is(200, pg.clientWidth);
-            this.is(200, pg2.clientWidth);
+            assert(pg.clientWidth === 200);
+            assert(pg2.clientWidth === 200);
 
             rule.clear();
           }
@@ -51,55 +45,53 @@ module.exports = {
           name: 'setProperty',
           test: function(){
             var rule = cssRule('#playground');
+
             rule.setStyle({ width: '200px' });
-            this.is(200, pg.clientWidth);
+            assert(pg.clientWidth === 200);
             rule.setStyle({ width: '300px !important' });
-            this.is(300, pg.clientWidth);
+            assert(pg.clientWidth === 300);
             rule.setStyle({ width: '200px !important' });
-            this.is(200, pg.clientWidth);
+            assert(pg.clientWidth === 200);
             rule.setStyle({ width: '100px' });
-            this.is(100, pg.clientWidth);
+            assert(pg.clientWidth === 100);
             rule.setStyle({ width: '150px', height: '100px !important' });
-            this.is(150, pg.clientWidth);
-            this.is(100, pg.clientHeight);
+            assert(pg.clientWidth === 150);
+            assert(pg.clientHeight === 100);
             rule.setStyle({ width: '200px !important', height: '200px !important' });
-            this.is(200, pg.clientWidth);
-            this.is(200, pg.clientHeight);
+            assert(pg.clientWidth === 200);
+            assert(pg.clientHeight === 200);
 
             rule = cssRule('#playground2');
             rule.setStyle({ width: '300px !important' });
-            this.is(300, pg2.clientWidth);
+            assert(pg2.clientWidth === 300);
           }
         },
         {
           name: 'clear #1',
           test: function(){
             var el = document.body.appendChild(createElement('.test_clear1[style="padding:0 !important;border:none !important"]'));
-
             var rule = cssRule('.test_clear1');
 
             rule.setStyle({ width: '200px', height: '200px' });
-            this.is(200, el.offsetWidth);
-            this.is(200, el.offsetHeight);
+            assert(el.offsetWidth === 200);
+            assert(el.offsetHeight === 200);
 
             rule.clear();
-            this.is(true, el.offsetWidth != 200);
-            this.is(true, el.offsetHeight != 200);
-
+            assert(el.offsetWidth !== 200);
+            assert(el.offsetHeight !== 200);
           }
         },
         {
           name: 'clear #2',
           test: function(){
             var el = document.body.appendChild(createElement('.test_clear2[style="padding:0 !important;border:none !important"]'));
-
             var rule = cssRule('.test_clear2');
 
             rule.setStyle({ height: '100px !important' });
-            this.is(100, el.offsetHeight);
+            assert(el.offsetHeight === 100);
 
             rule.clear();
-            this.is(0, el.offsetHeight);
+            assert(el.offsetHeight === 0);
           }
         }
       ]

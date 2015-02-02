@@ -1,7 +1,4 @@
 
-  basis.require('basis.event');
-
-
  /**
   * @namespace basis.l10n
   */
@@ -14,7 +11,7 @@
   //
 
   var Class = basis.Class;
-  var Emitter = basis.event.Emitter;
+  var Emitter = require('basis.event').Emitter;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 
@@ -62,10 +59,14 @@
     },
 
     get: function(){
-      var key = this.token.type == 'plural'
-        ? cultures[currentCulture].plural(this.value)
-        : this.value;
-      return this.token.dictionary.getValue(this.token.name + '.' + key);
+      var isPlural = this.token.type == 'plural';
+      var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
+      var value = this.token.dictionary.getValue(this.token.name + '.' + key);
+
+      if (isPlural)
+        value = String(value).replace(/#/g, this.value);
+
+      return value;
     },
 
     toString: function(){
@@ -144,7 +145,7 @@
     },
 
     setType: function(type){
-      if (type != 'plural' && (!basis.l10n.enableMarkup || type != 'markup'))
+      if (type != 'plural' && (!module.exports.enableMarkup || type != 'markup'))
         type = 'default';
 
       if (this.type != type)
@@ -224,6 +225,10 @@
 
       this.computeTokens = null;
       this.value = null;
+      this.dictionary = null;
+
+      // remove from index
+      tokenIndex[this.index] = null;
 
       basis.Token.prototype.destroy.call(this);
     }
@@ -274,6 +279,13 @@
     path = path ? path + '.' : '';
 
     for (var name in tokens)
+    {
+      if (name.indexOf('.') != -1)
+      {
+        /** @cut */ basis.dev.warn((dictionary.resource ? dictionary.resource.url : '[anonymous dictionary]') + ': wrong token name `' + name + '`, token ignored.');
+        continue;
+      }
+
       if (hasOwnProperty.call(tokens, name))
       {
         var tokenName = path + name;
@@ -284,6 +296,7 @@
         if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
           walkTokens(dictionary, culture, tokenValue, tokenName);
       }
+    }
   }
 
 
@@ -468,7 +481,7 @@
       var extname = basis.path.extname(location);
 
       if (extname != '.l10n')
-        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n';
+        location = location.replace(new RegExp(extname + '([#?]|$)'), '.l10n$1');
 
       source = basis.resource(location);
     }

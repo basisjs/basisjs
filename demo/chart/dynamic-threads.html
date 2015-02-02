@@ -61,86 +61,75 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.date');
-    basis.require('basis.dom');
-    basis.require('basis.data');
-    basis.require('basis.data.dataset');    
-    basis.require('basis.entity');
-    basis.require('basis.ui.chart');
-    basis.require('basis.ui.field');
-
-    var DOM = basis.dom;
-    var nsEntity = basis.entity;
-    var LinearChart = basis.ui.chart.LinearChart;
-    var nsField = basis.ui.field;
+    var monthNumToAbbr = basis.require('basis.date').monthNumToAbbr;
+    var Split = basis.require('basis.data.dataset').Split;
+    var entity = basis.require('basis.entity');
+    var LinearChart = basis.require('basis.ui.chart').LinearChart;
+    var CheckGroup = basis.require('basis.ui.field').CheckGroup;
+    var UINode = basis.require('basis.ui').Node;
 
     //
     // Example
     //
 
-    var Company = new nsEntity.EntityType({
+    var Company = entity.createType({
       name: 'Company',
       fields: {
-        Id: nsEntity.StringId,
-        Title: String
+        id: entity.StringId,
+        title: String
       }
     });
 
-    var CompanyReport = new nsEntity.EntityType({
+    var CompanyReport = entity.createType({
       name: 'CompanyReport',
       fields: {
-        Date: String,
-        Company: Company,
-        Amount: Number
-      },
-      aliases: {
-        CompanyId: 'Company'
+        date: String,
+        company: Company,
+        amount: Number
       }
     });
-    var reportByCompany = new basis.data.dataset.Split({
-      source: CompanyReport.all,
-      rule: 'data.Company'
-    });
 
-    var companies = [
-      { Id: 'apple', Title: 'Apple' },
-      { Id: 'intel', Title: 'Intel' },
-      { Id: 'google', Title: 'Google' },
-      { Id: 'microsoft', Title: 'Microsoft' },
-      { Id: 'oracle', Title: 'Oracle' }
-    ].map(Company);
+    var chartCompanies = new entity.EntitySet({
+      wrapper: Company,
+      items: ['apple', 'microsoft']
+    });
+    var reportByCompany = new Split({
+      source: CompanyReport.all,
+      rule: 'data.company'
+    });
 
     var data = [];
-    var lastValue;
-    var value;
-
-    Math.seedrandom("chart");
-
     var min = 100000;
     var max = 5000000;
-    for (var i = 0, company; company = companies[i]; i++)
-    {
-      lastValue = (max - min) * Math.random() + min; // 100 000 - 5 000 000
-      
+
+    Math.seedrandom('chart');
+
+    Company.all.sync([
+      { id: 'apple', title: 'Apple' },
+      { id: 'intel', title: 'Intel' },
+      { id: 'google', title: 'Google' },
+      { id: 'microsoft', title: 'Microsoft' },
+      { id: 'oracle', title: 'Oracle' }
+    ]);
+
+    Company.all.forEach(function(company){
+      var value = min + (max - min) * Math.random(); // 100 000 - 5 000 000
+
       for (var month = 0; month < 120; month++)
       {
-        value = lastValue + 0.2 * lastValue * (2 * Math.random() - 1); // +/- 20% from last value;
-                         
         data.push({
-          Company: company,
-          Date: (2011 + Math.floor(month / 12)) + '-' + basis.number.lead(1 + month % 12, 2),
-          Amount: value
+          company: company,
+          date: (2011 + Math.floor(month / 12)) + '-' + basis.number.lead(1 + month % 12, 2),
+          amount: value
         });
 
-        lastValue = value;
+        value += 0.2 * value * (2 * Math.random() - 1); // +/- 20% from last value;
       }
-    }
+    });
     CompanyReport.all.sync(data);
 
-    var chartCompanies = new nsEntity.EntitySet({ wrapper: Company });
-
     var chart = new LinearChart({
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       width: 800,
       height: 450,
 
@@ -149,11 +138,11 @@
       dataSource: reportByCompany.getSubset(Company('microsoft')),
       sorting: basis.getter('data.Date'),
       keyGetter: function(object){
-        return object.data.Date;
+        return object.data.date;
       },
       keyTitleGetter: function(object){
-        var date = object.data.Date.split('-');
-        return basis.date.monthNumToAbbr[date[1] - 1].toLowerCase() + ' ' + date[0];
+        var date = object.data.date.split('-');
+        return monthNumToAbbr[date[1] - 1].toLowerCase() + ' ' + date[0];
       },
 
       series: {
@@ -163,22 +152,22 @@
             return reportByCompany.getSubset(object.target);
           },
           legendGetter: function(object){
-            return object.data.Title;
+            return object.data.title;
           },
-          keyGetter: basis.getter('data.Date'),
-          valueGetter: basis.getter('data.Amount')
+          keyGetter: basis.getter('data.date'),
+          valueGetter: basis.getter('data.amount')
         }
       }
     });
 
-    new nsField.CheckGroup({
-      container: DOM.get('demo-container'),
+    new CheckGroup({
+      container: document.getElementById('demo-container'),
       title: 'Companies:',
       dataSource: Company.all,
-      value: ['apple', 'microsoft'],
+      value: chartCompanies.getValues('data.id'),
       childClass: {
-        valueGetter: basis.getter('data.Id'),
-        titleGetter: basis.getter('data.Title')
+        valueGetter: basis.getter('data.id'),
+        titleGetter: basis.getter('data.title')
       },
       handler: {
         change: function(){
@@ -188,20 +177,19 @@
     });
 
 
-    new basis.ui.Node({
-      container: DOM.get('demo-container'),
+    new UINode({
+      container: document.getElementById('demo-container'),
       template: '<div class="selectionContainer"/>',
       dataSource: chart.selection,
       childClass: {
-        template: 
-          '<div>{title}</div>',
+        template: '<div>{title}</div>',
 
         binding: {
           title: {
             events: 'update',
             getter: function(node){
-              var date = node.data.Date.split('-');
-              return basis.date.monthNumToAbbr[date[1] - 1].toLowerCase() + ' ' + date[0];
+              var date = node.data.date.split('-');
+              return monthNumToAbbr[date[1] - 1].toLowerCase() + ' ' + date[0];
             }
           }
         }

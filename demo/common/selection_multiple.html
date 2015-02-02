@@ -65,20 +65,23 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.ui');
-    basis.require('basis.ui.tree');
-
-    var Selection = basis.dom.wrapper.Selection;
+    var Value = basis.require('basis.data').Value;
+    var Selection = basis.require('basis.dom.wrapper').Selection;
+    var Node = basis.require('basis.ui').Node;
+    var tree = basis.require('basis.ui.tree');
 
     //
     // store selections on creation
     //
     var selections = [];
-    var _init = Selection.prototype.init;
-    Selection.prototype.init = function(){
-      _init.call(this);
-      selections.push(this);
-    };
+    Selection.extend(function(proto_, cur_){
+      return {
+        init: function(){
+          cur_.init.call(this);
+          selections.push(this);
+        }
+      };
+    });
 
 
     //
@@ -131,7 +134,7 @@
       { data: { title: 'node4' } }
     ];
 
-    var CustomFolder = basis.ui.tree.Folder.subclass({
+    var CustomFolder = tree.Folder.subclass({
       template:
         '<b:include src="basis.ui.tree.Folder" class="selection-{selectionName}">' +
           '<b:after ref="title"> {selectionTitle}</b:after>' +
@@ -143,11 +146,17 @@
         selectionTitle: function(node){
           return node.selection ? '(' + node.selection.name + ' holder)' : '';
         }
+      },
+      childFactory: function(config){
+        if (config.childNodes)
+          return new CustomFolder(config);
+        else
+          return new tree.Node(config);
       }
     });
 
     // create a tree
-    new basis.ui.tree.Tree({
+    var demoTree = new tree.Tree({
       container: document.getElementById('demo-container'),
       template: '<b:include src="basis.ui.tree.Tree" id="DemoTree"/>',
 
@@ -156,41 +165,30 @@
         multiple: true
       },
 
-      childFactory: function(config){
-        if (config.childNodes)
-          return new CustomFolder(basis.object.extend({ childFactory: this.childFactory }, config));
-        else
-          return new basis.ui.tree.Node(config);
-      },
+      childFactory: CustomFolder.prototype.childFactory,
       childNodes: data
     });
 
     // selection info
-    new basis.ui.Node({
-      container: document.getElementById('demo-container'),
-
-      childNodes: selections.map(function(sel){
-        return new basis.data.DatasetWrapper({
-          dataset: sel
-        });
-      }),
-      childClass: {
-        template:
-          '<div>{name}: {items}</div>',
-        binding: {
-          name: 'delegate.dataset.name',
-          items: function(node){
-            return node.delegate.getItems().map(basis.getter('data.title')).join(', ') || '{no items}';
-          }
-        },
-        listen: {
-          delegate: {
-            itemsChanged: function(){
-              this.updateBind('items');
-            }
+    basis.require('basis.app').create({
+      container: 'demo-container',
+      element: new Node({
+        childNodes: selections.map(function(sel){
+          return {
+            selName: sel.name,
+            selItems: Value.from(sel, 'itemsChanged', function(sel){
+              return sel.getValues('data.title').join(', ') || '{no items}';
+            })
+          };
+        }),
+        childClass: {
+          template: '<div>{name}: {items}</div>',
+          binding: {
+            name: 'selName',
+            items: 'selItems'
           }
         }
-      }
+      })
     });
   </script>
 </body>

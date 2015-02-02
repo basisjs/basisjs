@@ -1,8 +1,14 @@
 module.exports = {
   name: 'basis.utils.info',
+
+  sandbox: true,
   init: function(){
+    var basis = window.basis.createSandbox();
+
     var fnInfo = basis.require('basis.utils.info').fn;
+    var normalizeOffset = basis.require('basis.utils.info').normalizeOffset;
   },
+
   test: [
     {
       name: 'fn',
@@ -107,7 +113,7 @@ module.exports = {
                   }
                 });*/
 
-                this.is(text('<span title="a" class="b"/>'), text(b));
+                assert(text(b) === text('<span title="a" class="b"/>'));
               },
               function(){
                 var a = /regexp/;
@@ -121,7 +127,7 @@ module.exports = {
               assert('', info.args);
               assert(info.name == 'anonymous');
               assert(info.getter == false);
-              assert(info.body == functions[i].toString().replace(/^[^\{]+\{/, '').replace(/\}[^}]*$/, ''));
+              assert(info.body == normalizeOffset(functions[i].toString()).replace(/^[^\{]+\{/, '').replace(/\}[^}]*$/, ''));
             }
           }
         },

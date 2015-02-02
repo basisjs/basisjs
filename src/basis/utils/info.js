@@ -1,17 +1,69 @@
 
-  function resolveGetter(getter){
-    if (getter[basis.getter.ID] > 0)
-    {
-      var result = 'getter(';
+ /**
+  * @namespace basis.utils.info
+  */
 
-      if (typeof getter.base == 'string')
-        result += '"' + getter.base.replace(/"/g, '\\"') + '"';
+  function normalizeOffset(str){
+    var lines = str.split(/\n/);
+
+    if (lines.length < 2)
+      return str;
+
+    var offsets = lines.map(function(line){
+      return line.match(/^(\s*)/)[0].length;
+    });
+    var firstLineOffset = offsets.shift();
+    var otherLinesMinOffset = Math.min.apply(null, offsets);
+    var minOffset = firstLineOffset ? Math.min(firstLineOffset, otherLinesMinOffset) : otherLinesMinOffset;
+
+    if (minOffset)
+      str = lines.map(function(line, idx){
+        return idx || firstLineOffset ? line.substr(minOffset) : line;
+      }).join('\n');
+
+    return str;
+  }
+
+  function toString(value){
+    var host = typeof value == 'function' ? Function : Object;
+    var result = host.prototype.toString.call(value);
+
+    if (host === Function)
+      result = normalizeOffset(result);
+
+    return result;
+  }
+
+  function resolveGetter(getter){
+    if (getter === basis.fn.nullGetter)
+      return 'basis.fn.nullGetter';
+
+    if (getter[basis.getter.ID])
+    {
+      var parent = getter[basis.getter.PARENT];
+      var result = parent ? resolveGetter(parent) + '.as(' : 'basis.getter(';
+      var source = getter[basis.getter.SOURCE];
+
+      if (typeof source == 'string')
+        result += '"' + source.replace(/"/g, '\\"') + '"';
       else
       {
         if (!getter.mod)
-          return resolveGetter(getter.base);
+        {
+          if (typeof source == 'function')
+            result += toString(source);
+          else
+            if (typeof JSON !== 'undefined')
+              try {
+                result += JSON.stringify(source);
+              } catch(e){
+                result += toString(source);
+              }
+            else
+              result += toString(source);
+        }
         else
-          result += resolveGetter(getter.base);
+          result += resolveGetter(source);
       }
 
       if (getter.mod)
@@ -24,8 +76,8 @@
 
       return result + ')';
     }
-    else
-      return Function.prototype.toString.call(getter);
+
+    return toString(getter);
   }
 
   function tokenizeFunctionSource(source){
@@ -163,7 +215,7 @@
   */
   function functionInfo(fn){
     var getter = resolveGetter(fn);
-    var source = Function.prototype.toString.call(fn);
+    var source = toString(fn);
     var tokens = tokenizeFunctionSource(source);
     var name = 'anonymous';
     var argsContext = false;
@@ -219,5 +271,6 @@
   //
 
   module.exports = {
-    fn: functionInfo
+    fn: functionInfo,
+    normalizeOffset: normalizeOffset
   };

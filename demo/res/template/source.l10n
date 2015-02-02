@@ -1,0 +1,8 @@
+{
+  "en-US": {
+    "toggle": {
+      "true": "Hide source code",
+      "false": "Show source code"
+    }
+  }
+}

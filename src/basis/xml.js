@@ -1,8 +1,4 @@
 
-  basis.require('basis.ua');
-  basis.require('basis.dom');
-
-
  /**
   * @namespace basis.xml
   */
@@ -14,12 +10,11 @@
   // import names
   //
 
-  var DOM = basis.dom;
   var Class = basis.Class;
-  var Browser = basis.ua;
-
   var extend = basis.object.extend;
+  var browser = require('basis.ua');
 
+  var DOM = require('basis.dom');
   var ELEMENT_NODE = DOM.ELEMENT_NODE;
   var ATTRIBUTE_NODE = DOM.ATTRIBUTE_NODE;
   var TEXT_NODE = DOM.TEXT_NODE;
@@ -58,7 +53,7 @@
   var XMLNS = {
     PREFIX: 'xmlns',
     NAMESPACE: NS_NAMESPACE,
-    BAD_SUPPORT: Browser.test('webkit528.16-') || Browser.test('opera9-')
+    BAD_SUPPORT: browser.test('webkit528.16-') || browser.test('opera9-')
                           // !!!todo: make a test like
                           // createElementNS(document, 'test', SOAP_NAMESPACE).attributes.length == 0;
   };
@@ -102,7 +97,7 @@
         } catch(e) {}
     }
 
-    throw new Error('Browser doesn\'t support for XML document!');
+    throw new Error('browser doesn\'t support for XML document!');
 
   })();
 

@@ -1,0 +1,10 @@
+<b:style src="./template-info-binding-group.css"/>
+<b:isolate/>
+
+<div class="group">
+  <div class="caption">
+    <span class="log__link log__link_{name}" event-click="log">console.log(values)</span>
+    {l10n:caption.{name}}:
+  </div>
+  <div{childNodesElement} class="content"/>
+</div>

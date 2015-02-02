@@ -1,13 +1,4 @@
 
-  basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.layout');
-  basis.require('basis.data');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.ui');
-  basis.require('basis.ui.canvas');
-
-
  /**
   * @see ./demo/chart/range.html
   * @see ./demo/chart/dynamic-threads.html
@@ -21,9 +12,6 @@
   // import names
   //
 
-  var Event = basis.dom.event;
-  var DOM = basis.dom;
-
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
   var $undef = basis.fn.$undef;
@@ -33,21 +21,25 @@
   var complete = basis.object.complete;
   var objSlice = basis.object.slice;
   var oneFunctionProperty = basis.Class.oneFunctionProperty;
-  var createEvent = basis.event.create;
 
-  var DataObject = basis.data.Object;
-  var AbstractNode = basis.dom.wrapper.AbstractNode;
-  var Node = basis.dom.wrapper.Node;
-  var Selection = basis.dom.wrapper.Selection;
-  var Canvas = basis.ui.canvas.Canvas;
-  var AbstractCanvas = basis.ui.canvas.AbstractCanvas;
+  var getBoundingRect = require('basis.layout').getBoundingRect;
+  var domEventUtils = require('basis.dom.event');
+  var createEvent = require('basis.event').create;
+  var DataObject = require('basis.data').Object;
+  var basisDomWrapper = require('basis.dom.wrapper');
+  var AbstractNode = basisDomWrapper.AbstractNode;
+  var Node = basisDomWrapper.Node;
+  var Selection = basisDomWrapper.Selection;
+  var basisUiCanvas = require('basis.ui.canvas');
+  var Canvas = basisUiCanvas.Canvas;
+  var AbstractCanvas = basisUiCanvas.AbstractCanvas;
 
 
   //
   // definitions
   //
 
-  var templates = basis.template.define(namespace, {
+  var templates = require('basis.template').define(namespace, {
     Chart: resource('./templates/chart/Chart.tmpl'),
     ChartSelection: resource('./templates/chart/ChartSelection.tmpl'),
     ChartViewer: resource('./templates/chart/ChartViewer.tmpl')
@@ -643,8 +635,12 @@
         var tw;
         for (var i = 0; i <= partCount; i++)
         {
-          valueLabels[i] = basis.number.group(Math.round(minValue + gridPart * i));
+          var text = String(basis.number.group(Math.round(minValue + gridPart * i)));
           tw = context.measureText(valueLabels[i]).width;
+          valueLabels[i] = {
+            text: text,
+            width: tw
+          };
 
           if (tw > maxValueTextWidth)
             maxValueTextWidth = tw;
@@ -680,8 +676,8 @@
       var lastXLabelWidth = 0;
       if (this.showXLabels)
       {
-        firstXLabelWidth = xLabels[0].width + 12; // 12 = padding + border
-        lastXLabelWidth = xLabels[(this.invertAxis ? partCount : keysCount) - 1].width + 12;
+        firstXLabelWidth = keyLabels[0].width + 12; // 12 = padding + border
+        lastXLabelWidth = keyLabels[(this.invertAxis ? partCount : keysCount) - 1].width + 12;
       }
 
       var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxKeyTextWidth;
@@ -812,7 +808,7 @@
           skipLabel = skipYLabelCount && (i % (skipYLabelCount + 1) != 0);
 
           if (!skipLabel)
-            context.fillText(label, LEFT - 6, labelY + 2.5);
+            context.fillText(label.text, LEFT - 6, labelY + 2.5);
 
           if (this.showScale && (!skipLabel || !skipScale))
           {
@@ -1034,17 +1030,17 @@
         return;
 
       var chart = this.owner;
-      var x = getChartXByMouseX(chart, Event.mouseX(event));
-      var y = getChartYByMouseY(chart, Event.mouseY(event));
+      var x = getChartXByMouseX(chart, event.mouseX);
+      var y = getChartYByMouseY(chart, event.mouseY);
 
       if (x > 0 && x < this.clientRect.width && y > 0 && y < this.clientRect.height)
       {
         for (var eventName in CHART_SELECTION_GLOBAL_HANDLER)
-          Event.addGlobalHandler(eventName, CHART_SELECTION_GLOBAL_HANDLER[eventName], this);
+          domEventUtils.addGlobalHandler(eventName, CHART_SELECTION_GLOBAL_HANDLER[eventName], this);
 
         addSelectionMode = true; //event.mouseLeft;
 
-        var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
+        var curItemPosition = getChartItemPositionByMouseX(chart, event.mouseX);
         startItemPosition = curItemPosition;
 
         var selectedItems = rebuildChartSelection(chart, curItemPosition, startItemPosition);
@@ -1074,7 +1070,7 @@
     mousemove: function(event){
       var chart = this.owner;
 
-      var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
+      var curItemPosition = getChartItemPositionByMouseX(chart, event.mouseX);
 
       var selectedItems = rebuildChartSelection(chart, curItemPosition, startItemPosition);
       this.draw(selectedItems);
@@ -1082,7 +1078,7 @@
     mouseup: function(event){
       var chart = this.owner;
 
-      var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
+      var curItemPosition = getChartItemPositionByMouseX(chart, event.mouseX);
       var selectedItems = rebuildChartSelection(chart, curItemPosition, startItemPosition);
 
       chart.selection.lastSelectedRange = {
@@ -1092,7 +1088,7 @@
       chart.selection.set(selectedItems);
 
       for (var key in CHART_SELECTION_GLOBAL_HANDLER)
-        Event.removeGlobalHandler(key, CHART_SELECTION_GLOBAL_HANDLER[key], this);
+        domEventUtils.removeGlobalHandler(key, CHART_SELECTION_GLOBAL_HANDLER[key], this);
     }
   };
 
@@ -1115,6 +1111,7 @@
     },
 
     template: templates.ChartSelection,
+    ownerElement_: null,
 
     listen: {
       owner: {
@@ -1123,7 +1120,7 @@
           this.draw();
         },
         templateChanged: function(){
-          Event.addHandlers(this.owner.element, CHART_ELEMENT_HANDLER, this);
+          this.recalc();
         }
       }
     },
@@ -1132,7 +1129,7 @@
       AbstractCanvas.prototype.templateSync.call(this);
 
       this.recalc();
-      Event.addHandlers(this.element, CHART_ELEMENT_HANDLER, this);
+      domEventUtils.addHandlers(this.element, CHART_ELEMENT_HANDLER, this);
     },
 
     emit_ownerChanged: function(oldOwner){
@@ -1156,6 +1153,15 @@
       {
         this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
         this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+
+        if (this.ownerElement_ != this.owner.element)
+        {
+          if (this.ownerElement_)
+            domEventUtils.removeHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+          this.ownerElement_ = this.owner.element && this.owner.element.nodeType == 1 ? this.owner.element : null;
+          if (this.ownerElement_)
+            domEventUtils.addHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+        }
       }
 
       this.clientRect = this.owner.clientRect;
@@ -1211,6 +1217,16 @@
       }
 
       this.context.restore();
+    },
+
+    destroy: function(){
+      AbstractCanvas.prototype.call(this);
+
+      if (this.ownerElement_)
+      {
+        domEventUtils.removeHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+        this.ownerElement_ = null;
+      }
     }
   });
 
@@ -1273,7 +1289,7 @@
       this.reset();
       this.recalc();
 
-      var canvasRect = basis.layout.getBoundingRect(this.element, false, this.owner.element.offsetParent);
+      var canvasRect = getBoundingRect(this.element, false, this.owner.element.offsetParent);
       var x = mx - canvasRect.left - this.clientRect.left;
       var y = my - canvasRect.top - this.clientRect.top;
 
@@ -1454,11 +1470,11 @@
 
     satellite: {
       chartViewer: {
-        instanceOf: ChartViewer
+        satelliteClass: ChartViewer
       },
       chartSelection: {
-        instanceOf: ChartSelection,
-        existsIf: getter('selection')
+        satelliteClass: ChartSelection,
+        existsIf: 'selection'
       }
     },
 
@@ -1694,9 +1710,6 @@
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
       var context = this.context;
-
-      //var values = seria.getValues(keys);
-      //var color = seria.getColor();
 
       context.save();
       context.translate(left, top);

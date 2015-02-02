@@ -1,9 +1,12 @@
 module.exports = {
   name: 'basis.router',
 
-  init: function(){
-    basis.require('basis.router');
-    var router = basis.router;
+  beforeEach: function(){
+    var router = basis.createSandbox().require('basis.router');
+  },
+  afterEach: function(){
+    router.stop();
+    location.hash = '';
   },
 
   test: [
@@ -19,10 +22,13 @@ module.exports = {
         location.hash = 'test';
         router.checkUrl();
 
-        this.is(1, checker);
+        assert(checker === 1);
 
-        router.stop();
-        location.hash = '';
+        router.add('test', function(){
+          checker++;
+        });
+
+        assert(checker === 2);
       }
     },
     {
@@ -36,44 +42,37 @@ module.exports = {
         });
         router.navigate('test');
 
-        this.is('test', location.hash.substr(1));
-        this.is(1, checker);
-
-        router.stop();
-        location.hash = '';
+        assert(location.hash.substr(1) === 'test');
+        assert(checker === 1);
       }
     },
     {
       name: 'callbacks',
       test: function(){
         var checker = 0;
+        var log = [];
 
-        location.hash = '';
-        router.add('callback', function(){
-          checker++;
+        router.add('foo', function(){
+          log.push('foo');
         });
-        router.add('callback2', function(){
-          checker++;
+        router.add('bar', function(){
+          log.push('bar');
         });
-        this.is(0, checker);
+        assert([], log);
 
-        router.navigate('callback');
-        this.is(0, checker);
+        router.navigate('foo');
+        assert([], log);
 
         router.start();
-        this.is(1, checker);
+        assert(['foo'], log);
 
-        router.add('callback', function(){
-          checker++;
+        router.add('foo', function(){
+          log.push('foo2');
         });
-        this.is(2, checker);
+        assert(['foo', 'foo2'], log);
 
-        checker = 0;
-        router.navigate('callback2');
-        this.is(1, checker);
-
-        router.stop();
-        location.hash = '';
+        router.navigate('bar');
+        assert(['foo', 'foo2', 'bar'], log);
       }
     },
     {
@@ -87,16 +86,13 @@ module.exports = {
           checker = Number(id);
         });
         router.navigate('param/5');
-        this.is(5, checker);
+        assert(checker === 5);
 
         router.add('path/*path', function(path){
           checker = path;
         });
         router.navigate('path/some/stuff');
-        this.is('some/stuff', checker);
-
-        router.stop();
-        location.hash = '';
+        assert(checker === 'some/stuff');
       }
     }
   ]

@@ -1,10 +1,4 @@
 
-  basis.require('basis.dom.event');
-  basis.require('basis.l10n');
-  basis.require('basis.template');
-  basis.require('basis.template.htmlfgen');
-
-
  /**
   * @namespace basis.template.html
   */
@@ -17,34 +11,48 @@
   //
 
   var document = global.document;
-  var domEvent = basis.dom.event;
+  var Node = global.Node;
+  var domEvent = require('basis.dom.event');
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
-  var l10nToken = basis.l10n.token;
-  var getFunctions = basis.template.htmlfgen.getFunctions;
+  var basisL10n = require('basis.l10n');
+  var getL10nToken = basisL10n.token;
+  var L10nToken = basisL10n.Token;
+  var getFunctions = require('basis.template.htmlfgen').getFunctions;
 
-  var TemplateSwitchConfig = basis.template.TemplateSwitchConfig;
-  var TemplateSwitcher = basis.template.TemplateSwitcher;
-  var Template = basis.template.Template;
+  var basisTemplate = require('basis.template');
+  var getL10nTemplate = basisTemplate.getL10nTemplate;
+  var TemplateSwitchConfig = basisTemplate.TemplateSwitchConfig;
+  var TemplateSwitcher = basisTemplate.TemplateSwitcher;
+  var Template = basisTemplate.Template;
+  var getSourceByPath = basisTemplate.get;
 
-  var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
-  var TYPE_ATTRIBUTE = basis.template.TYPE_ATTRIBUTE;
-  var TYPE_TEXT = basis.template.TYPE_TEXT;
-  var TYPE_COMMENT = basis.template.TYPE_COMMENT;
+  var consts = require('./const.js');
+  var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+  var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+  var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
+  var TYPE_ATTRIBUTE_STYLE = consts.TYPE_ATTRIBUTE_STYLE;
+  var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
 
-  var TOKEN_TYPE = basis.template.TOKEN_TYPE;
-  var TOKEN_BINDINGS = basis.template.TOKEN_BINDINGS;
-  var TOKEN_REFS = basis.template.TOKEN_REFS;
+  var TYPE_TEXT = consts.TYPE_TEXT;
+  var TYPE_COMMENT = consts.TYPE_COMMENT;
 
-  var ATTR_NAME = basis.template.ATTR_NAME;
-  var ATTR_VALUE = basis.template.ATTR_VALUE;
-  var ATTR_NAME_BY_TYPE = basis.template.ATTR_NAME_BY_TYPE;
+  var TOKEN_TYPE = consts.TOKEN_TYPE;
+  var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
+  var TOKEN_REFS = consts.TOKEN_REFS;
 
-  var ELEMENT_NAME = basis.template.ELEMENT_NAME;
+  var ATTR_NAME = consts.ATTR_NAME;
+  var ATTR_VALUE = consts.ATTR_VALUE;
+  var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
+  var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 
-  var TEXT_VALUE = basis.template.TEXT_VALUE;
-  var COMMENT_VALUE = basis.template.COMMENT_VALUE;
+  var ELEMENT_NAME = consts.ELEMENT_NAME;
 
+  var TEXT_VALUE = consts.TEXT_VALUE;
+  var COMMENT_VALUE = consts.COMMENT_VALUE;
+
+  var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
+  var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 
 
   //
@@ -109,22 +117,64 @@
     } catch(e) {}
   })();
 
-  // old Firefox has no Node#contains method (Firefox 8 and lower)
-  if (typeof Node != 'undefined' && !Node.prototype.contains)
-    Node.prototype.contains = function(child){
-      return !!(this.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
+  var contains = function(parent, child){
+    return parent.contains(child);
+  };
+  if (Node && !Node.prototype.contains)
+    // old Firefox has no Node#contains method (Firefox 8 and lower)
+    contains = function(parent, child){
+      return !!(parent.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
     };
 
 
   // l10n
   var l10nTemplates = {};
-  function getL10nTemplate(token){
-    var template = basis.template.getL10nTemplate(token);
-    var id = template.templateId;
+
+  function getSourceFromL10nToken(token){
+    var dict = token.dictionary;
+    var url = dict.resource ? dict.resource.url : '';
+    var id = token.name + '@' + url;
+    var sourceWrapper;
+    var result = token.as(function(value){
+      if (token.type == 'markup')
+      {
+        if (value != this.value)
+          if (sourceWrapper)
+          {
+            sourceWrapper.detach(token, token.apply);
+            sourceWrapper = null;
+          }
+
+        if (value && value.substr(0, 5) == 'path:')
+        {
+          sourceWrapper = getSourceByPath(value.substr(5));
+          sourceWrapper.attach(token, token.apply);
+        }
+
+        return sourceWrapper ? sourceWrapper.bindingBridge.get(sourceWrapper) : value;
+      }
+
+      return this.value;
+    });
+
+    result.id = '{l10n:' + id + '}';
+    result.url = url + ':' + token.name;
+
+    return result;
+  }
+
+  function getL10nHtmlTemplate(token){
+    if (typeof token == 'string')
+      token = getL10nToken(token);
+
+    if (!token)
+      return null;
+
+    var id = token.basisObjectId;
     var htmlTemplate = l10nTemplates[id];
 
     if (!htmlTemplate)
-      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(template.source);
+      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(getSourceFromL10nToken(token));
 
     return htmlTemplate;
   }
@@ -175,7 +225,7 @@
         if (insideElementEvent[event.type])
         {
           var relTarget = event.relatedTarget;
-          if (relTarget && (cursor === relTarget || cursor.contains(relTarget)))
+          if (relTarget && (cursor === relTarget || contains(cursor, relTarget)))
             cursor = null;  // prevent action processing
         }
 
@@ -203,6 +253,9 @@
                 break;
               case 'stop-propagation':
                 event.stopPropagation();
+                break;
+              case 'log-event':
+                /** @cut */ basis.dev.log('Template event:', event);
                 break;
               default:
                 tmplRef.action.call(tmplRef.context, actionName, event);
@@ -280,10 +333,12 @@
 
 
     var result = parent || document.createDocumentFragment();
+    var tokenType;
 
     for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
     {
-      switch (token[TOKEN_TYPE])
+      tokenType = token[TOKEN_TYPE];
+      switch (tokenType)
       {
         case TYPE_ELEMENT:
           var tagName = token[ELEMENT_NAME];
@@ -302,32 +357,60 @@
           break;
 
         case TYPE_ATTRIBUTE:
-          var attrName = token[ATTR_NAME];
-          var attrValue = token[ATTR_VALUE];
-          var eventName = attrName.replace(/^event-/, '');
+          if (!token[TOKEN_BINDINGS])
+            setAttribute(token[ATTR_NAME], token[ATTR_VALUE] || '');
+          break;
 
-          if (eventName != attrName)
-          {
-            setEventAttribute(eventName, attrValue);
-          }
-          else
-          {
-            if (attrName != 'class' && attrName != 'style' ? !token[TOKEN_BINDINGS] : attrValue)
-              setAttribute(attrName, attrValue || '');
-          }
+        case TYPE_ATTRIBUTE_CLASS:
+          var value = token[ATTR_VALUE_INDEX[tokenType]];
+          value = value ? [value] : [];
+
+          if (token[TOKEN_BINDINGS])
+            for (var j = 0, binding; binding = token[TOKEN_BINDINGS][j]; j++)
+            {
+              var defaultValue = binding[4];
+              if (defaultValue)
+              {
+                var prefix = binding[0];
+                if (Array.isArray(prefix))
+                {
+                  // precomputed classes
+                  // bool: [['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                  // enum: [['prefix_foo','prefix_bar'],'binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                  value.push(binding[0][defaultValue - 1]);
+                }
+                else
+                {
+                  switch (binding[2])
+                  {
+                    case CLASS_BINDING_BOOL:
+                      // ['prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                      value.push(prefix + binding[3]);
+                      break;
+                    case CLASS_BINDING_ENUM:
+                      // ['prefix_','binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
+                      value.push(prefix + binding[5][defaultValue - 1]);
+                      break;
+                  }
+                }
+              }
+            }
+
+          value = value.join(' ').trim();
+          if (value)
+            setAttribute('class', value);
 
           break;
 
-        case 4:
-        case 5:
-          var attrValue = token[ATTR_VALUE - 1];
+        case TYPE_ATTRIBUTE_STYLE:
+          var attrValue = token[ATTR_VALUE_INDEX[tokenType]];
 
           if (attrValue)
-            setAttribute(ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]], attrValue);
+            setAttribute('style', attrValue);
 
           break;
 
-        case 6:
+        case TYPE_ATTRIBUTE_EVENT:
           setEventAttribute(token[1], token[2] || token[1]);
           break;
 
@@ -396,16 +479,14 @@
   var builder = (function(){
 
     var WHITESPACE = /\s+/;
-    var W3C_DOM_NODE_SUPPORTED = typeof Node == 'function' && document instanceof Node;
     var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
-    /*var TRANSITION_SUPPORTED = !!(document && (function(){
-      var properties = ['webkitTransition', 'MozTransition', 'msTransition', 'OTransition', 'transition'];
-      var style = document.documentElement.style;
-      for (var i = 0; i < properties.length; i++)
-        if (properties[i] in style)
-          return true;
-      return false;
-    })());*/
+    var W3C_DOM_NODE_SUPPORTED = (function(){
+      try {
+        // typeof Node returns 'object' instead of 'function' in Safari (at least 7.1.2)
+        // so try check document is instanceof Node, but this may occurs to exception in old IE
+        return document instanceof Node;
+      } catch(e) {}
+    })() || false;
 
 
    /**
@@ -413,17 +494,36 @@
     */
     var bind_node = W3C_DOM_NODE_SUPPORTED
       // W3C DOM way
-      ? function(domRef, oldNode, newValue){
-          var newNode = newValue && newValue instanceof Node ? newValue : domRef;
+      ? function(domRef, oldNode, newValue, domNodeBindingProhibited){
+          var newNode = !domNodeBindingProhibited && newValue && newValue instanceof Node ? newValue : domRef;
 
           if (newNode !== oldNode)
+          {
+            if (newNode.nodeType === 11 && !newNode.insertedNodes)
+            {
+              newNode.insertBefore(document.createTextNode(''), newNode.firstChild);
+              newNode.insertedNodes = basis.array(newNode.childNodes);
+            }
+
+            if (oldNode.nodeType === 11)
+            {
+              var insertedNodes = oldNode.insertedNodes;
+              if (insertedNodes)
+              {
+                oldNode = insertedNodes[0];
+                for (var i = 1, node; node = insertedNodes[i]; i++)
+                  oldNode.parentNode.removeChild(node);
+              }
+            }
+
             oldNode.parentNode.replaceChild(newNode, oldNode);
+          }
 
           return newNode;
         }
       // Old browsers way (IE6-8 and other)
-      : function(domRef, oldNode, newValue){
-          var newNode = newValue && typeof newValue == 'object' ? newValue : domRef;
+      : function(domRef, oldNode, newValue, domNodeBindingProhibited){
+          var newNode = !domNodeBindingProhibited && newValue && typeof newValue == 'object' ? newValue : domRef;
 
           if (newNode !== oldNode)
           {
@@ -442,8 +542,8 @@
    /**
     * @func
     */
-    var bind_element = function(domRef, oldNode, newValue){
-      var newNode = bind_node(domRef, oldNode, newValue);
+    var bind_element = function(domRef, oldNode, newValue, domNodeBindingProhibited){
+      var newNode = bind_node(domRef, oldNode, newValue, domNodeBindingProhibited);
 
       if (newNode === domRef && typeof newValue == 'string')  // TODO: save inner nodes on first innerHTML and restore when newValue is not a string
         domRef.innerHTML = newValue;
@@ -459,11 +559,13 @@
    /**
     * @func
     */
-    var bind_textNode = function(domRef, oldNode, newValue){
-      var newNode = bind_node(domRef, oldNode, newValue);
+    var bind_textNode = function(domRef, oldNode, newValue, domNodeBindingProhibited){
+      var newNode = bind_node(domRef, oldNode, newValue, domNodeBindingProhibited);
 
       if (newNode === domRef)
-        domRef.nodeValue = newValue;
+        // explicit convert to string to be consistent across browsers:
+        // some browsers set string value of null/undefined, but some set empty string instead
+        domRef.nodeValue = String(newValue);
 
       return newNode;
     };
@@ -473,8 +575,8 @@
     */
     var bind_attrClass = CLASSLIST_SUPPORTED
       // classList supported
-      ? function(domRef, oldClass, newValue, prefix, anim){
-          var newClass = newValue ? prefix + newValue : '';
+      ? function(domRef, oldClass, newValue, anim){
+          var newClass = newValue ? newValue : '';
 
           if (newClass != oldClass)
           {
@@ -498,8 +600,8 @@
           return newClass;
         }
       // old browsers are not support for classList
-      : function(domRef, oldClass, newValue, prefix, anim){
-          var newClass = newValue ? prefix + newValue : '';
+      : function(domRef, oldClass, newValue, anim){
+          var newClass = newValue ? newValue : '';
 
           if (newClass != oldClass)
           {
@@ -605,31 +707,23 @@
             if (oldAttach)
             {
               if (oldAttach.tmpl)
-              {
-                // FIX ME
-                oldAttach.tmpl.element.toString = null;
-                getL10nTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
-              }
+                getL10nHtmlTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
 
               oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             }
 
-            if (value.type == 'markup' && value instanceof basis.l10n.Token)
+            if (value.type == 'markup' && value instanceof L10nToken)
             {
-              var template = getL10nTemplate(value);
+              var template = getL10nHtmlTemplate(value);
               var context = this.context;
               var bindings = this.bindings;
               var bindingInterface = this.bindingInterface;
               tmpl = template.createInstance(context, null, function onRebuild(){
                 tmpl = newAttach.tmpl = template.createInstance(context, null, onRebuild, bindings, bindingInterface);
-                tmpl.element.toString = function(){
-                  return value.value;
-                };
+                tmpl.parent = tmpl.element.parentNode || tmpl.element;
                 updateAttach.call(newAttach);
               }, bindings, bindingInterface);
-              tmpl.element.toString = function(){
-                return value.value;
-              };
+              tmpl.parent = tmpl.element.parentNode || tmpl.element;
             }
 
             if (!this.attaches)
@@ -648,7 +742,7 @@
             tmpl = value && value.type == 'markup' ? oldAttach.tmpl : null;
 
           if (tmpl)
-            return tmpl.element;
+            return tmpl.parent;
 
           value = bridge.get(value);
         }
@@ -657,11 +751,7 @@
           if (oldAttach)
           {
             if (oldAttach.tmpl)
-            {
-              // FIX ME
-              oldAttach.tmpl.element.toString = null;
-              getL10nTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
-            }
+              getL10nHtmlTemplate(oldAttach.value).clearInstance(oldAttach.tmpl);
 
             oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             this.attaches[bindingName] = null;
@@ -772,7 +862,7 @@
             bindingCache[cacheId] = result;
         }
 
-        if (obj && set)
+        if (set)
           result.sync.call(set, obj);
 
         if (!bindingInterface)
@@ -794,7 +884,7 @@
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
-      l10nToken: l10nToken,
+      l10nToken: getL10nToken,
       createBindingFunction: createBindingFunction
     };
 
@@ -804,10 +894,11 @@
       var instances = {};
       var l10nMap = {};
       var l10nLinks = [];
+      var l10nMarkupTokens = [];
       var seed = 0;
-
       var proto = buildHtml(tokens);
       var id = this.templateId;
+
       templates[id] = {
         template: this,
         instances: instances
@@ -817,24 +908,41 @@
       {
         var l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
 
-        for (var i = 0, key; key = fn.l10nKeys[i]; i++)
-          l10nProtoSync(key, l10nToken(key).value);
-
         if (fn.l10nKeys)
           for (var i = 0, key; key = fn.l10nKeys[i]; i++)
           {
+            var token = getL10nToken(key);
             var link = {
               path: key,
-              token: l10nToken(key),
+              token: token,
               handler: function(value){
-                l10nProtoSync(this.path, value);
+                var isMarkup = this.token.type == 'markup';
+
+                if (isMarkup)
+                  basis.array.add(l10nMarkupTokens, this);
+                else
+                  basis.array.remove(l10nMarkupTokens, this);
+
+                l10nProtoSync(this.path, isMarkup ? null : value);
                 for (var key in instances)
-                  instances[key].tmpl.set(this.path, value);
+                  instances[key].tmpl.set(this.path, isMarkup ? this.token : value);
               }
             };
             link.token.attach(link.handler, link);
             l10nLinks.push(link);
+
+            if (token.type == 'markup')
+            {
+              l10nMarkupTokens.push(link);
+              l10nProtoSync(key, null);
+            }
+            else
+            {
+              l10nProtoSync(key, token.value);
+            }
+
             link = null;
+            token = null;
           }
       }
 
@@ -844,6 +952,9 @@
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
           var instanceId = seed++;
           var instance = createInstance(instanceId, obj, onAction, onRebuild, bindings, bindingInterface);
+
+          for (var i = 0, len = l10nMarkupTokens.length; i < len; i++)
+            instance.tmpl.set(l10nMarkupTokens[i].path, l10nMarkupTokens[i].token);
 
           instances[instanceId] = instance;
 
@@ -952,7 +1063,7 @@
   // for backward capability
   // TODO: remove
   //
-  basis.template.extend({
+  basis.namespace('basis.template').extend({
     /** @cut using only in dev mode */ getDebugInfoById: getDebugInfoById,
 
     buildHtml: buildHtml,

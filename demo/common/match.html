@@ -80,14 +80,9 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.data');
-    basis.require('basis.dom');
-    basis.require('basis.ui.table');
-    basis.require('basis.ui.field');
-
-    // make shortcut
-    var DOM = basis.dom;
-    var MatchInput = basis.ui.field.MatchInput;
+    var UINode = basis.require('basis.ui').Node;
+    var Table = basis.require('basis.ui.table').Table;
+    var MatchInput = basis.require('basis.ui.field').MatchInput;
 
     // data
     var data = basis.array.sort(basis.array.repeat([
@@ -98,7 +93,7 @@
       { data: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
     ], 5), Math.random);
 
-    var MatchDemo = new basis.ui.Node.subclass({
+    var MatchDemo = UINode.subclass({
       container: document.getElementById('demo-container'),
       template:
         '<div class="Demo-Section">' +
@@ -109,7 +104,7 @@
     });
 
     // Create a list
-    var list = new basis.ui.Node({
+    var list = new UINode({
       template: '<ul/>',
       childClass: {
         template: '<li class="{unmatched}">{title}</li>',
@@ -140,7 +135,7 @@
     });
 
     // Create a table
-    var table = new basis.ui.table.Table({
+    var table = new Table({
       structure: [
         {
           header: 'Title',

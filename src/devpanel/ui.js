@@ -5,9 +5,9 @@ require('basis.ui');
 require('basis.dragdrop');
 
 var inspectBasis = require('devpanel').inspectBasis;
-inspectBasis.require('basis.l10n');
-inspectBasis.require('basis.template');
-inspectBasis.require('basis.dom.event');
+var inspectBasisL10n = inspectBasis.require('basis.l10n');
+var inspectBasisTemplate = inspectBasis.require('basis.template');
+var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
 var l10nInspector = resource('./inspector/l10n.js');
 var templateInspector = resource('./inspector/template.js');
@@ -43,8 +43,11 @@ if (typeof basisjsToolsFileSync != 'undefined')
   isOnline = new basis.Token(basisjsToolsFileSync.isOnline.value);
   basisjsToolsFileSync.isOnline.attach(isOnline.set, isOnline);
 
-  basisjsToolsFileSync.notifications.attach(function(eventName, filename){
+  basisjsToolsFileSync.notifications.attach(function(eventName, filename, content){
     var ext = basis.path.extname(filename);
+
+    if (typeof content == 'string' && basis.resource.isResolved(filename))
+      basis.resource(filename).update(content);
 
     if (eventName == 'new' || ext in inspectBasis.resource.extensions == false)
       return;
@@ -72,7 +75,7 @@ var panel = new basis.ui.Node({
   container: document.body,
 
   activated: false,
-  themeName: inspectBasis.template.currentTheme().name,
+  themeName: inspectBasisTemplate.currentTheme().name,
 
   template: resource('./template/panel.tmpl'),
 
@@ -80,7 +83,7 @@ var panel = new basis.ui.Node({
     activated: 'activated',
     themeName: 'themeName',
     themeList: themeList,
-    cultureName: inspectBasis.l10n.culture,
+    cultureName: inspectBasisL10n.culture,
     cultureList: cultureList,
     isOnline: isOnline,
     inspectMode: inspectMode,
@@ -88,33 +91,36 @@ var panel = new basis.ui.Node({
   },
 
   action: {
-    inspectTemplate: function(){
+    inspectTemplate: function(e){
       cultureList.setDelegate();
       themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
+      e.die();
+      inspectBasisDomEvent.captureEvent('click', function(){
+        inspectBasisDomEvent.releaseEvent('click');
         templateInspector().startInspect();
       });
     },
     showThemes: function(){
       themeList.setDelegate(this);
     },
-    inspectl10n: function(){
+    inspectl10n: function(e){
       cultureList.setDelegate();
       themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
+      e.die();
+      inspectBasisDomEvent.captureEvent('click', function(){
+        inspectBasisDomEvent.releaseEvent('click');
         l10nInspector().startInspect();
       });
     },
     showCultures: function(){
       cultureList.setDelegate(this);
     },
-    inspectHeat: function(){
+    inspectHeat: function(e){
       cultureList.setDelegate();
       themeList.setDelegate();
-      inspectBasis.dom.event.captureEvent('click', function(){
-        inspectBasis.dom.event.releaseEvent('click');
+      e.die();
+      inspectBasisDomEvent.captureEvent('click', function(){
+        inspectBasisDomEvent.releaseEvent('click');
         heatInspector().startInspect();
       });
     },
