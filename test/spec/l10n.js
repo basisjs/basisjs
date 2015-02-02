@@ -1,9 +1,9 @@
 module.exports = {
   name: 'basis.l10n',
 
-  //sandbox: true,
+  sandbox: true,
   init: function(){
-    //basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var Dictionary = basis.require('basis.l10n').Dictionary;
     var Culture = basis.require('basis.l10n').Culture;
@@ -72,7 +72,7 @@ module.exports = {
           name: 'base',
           sandbox: true,
           init: function(){
-            basis = basis.createSandbox();
+            var basis = window.basis.createSandbox();
 
             var getDictionary = basis.require('basis.l10n').dictionary;
             var setCultureList = basis.require('basis.l10n').setCultureList;

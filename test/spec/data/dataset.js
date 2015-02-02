@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var dataWrap = basis.require('basis.data').wrap;
     var Value = basis.require('basis.data').Value;

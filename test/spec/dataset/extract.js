@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var helpers = basis.require('./helpers/dataset.js');
     var range = helpers.range;

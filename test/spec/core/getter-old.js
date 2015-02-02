@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     basis.dev.warn = function(){};
     var data = [

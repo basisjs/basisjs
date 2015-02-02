@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var domUtils = basis.require('basis.dom');
     var Node = basis.require('basis.ui').Node;

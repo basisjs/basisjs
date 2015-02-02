@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var isLeapYear = basis.require('basis.date').isLeapYear;
     var getMonthDayCount = basis.require('basis.date').getMonthDayCount;

@@ -11,11 +11,11 @@ module.exports = {
           dataSource: dataset
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, length > 0);
-        this.is(true, node.dataSource === dataset);
-        this.is(length, node.childNodes.length);
-        this.is(length, dataset.itemCount);
+        assert(checkNode(node) === false);
+        assert(length > 0);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === length);
+        assert(dataset.itemCount === length);
       }
     },
     {
@@ -27,13 +27,13 @@ module.exports = {
           dataSource: dataset
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, node.dataSource === dataset);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
 
         dataset.destroy();
 
-        this.is(false, checkNode(node));
-        this.is(true, node.dataSource === null);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
       }
     },
     {
@@ -47,11 +47,11 @@ module.exports = {
           dataSource: datasetWrapper
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, length > 0);
-        this.is(true, node.dataSource === dataset);
-        this.is(length, node.childNodes.length);
-        this.is(length, dataset.itemCount);
+        assert(checkNode(node) === false);
+        assert(length > 0);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === length);
+        assert(dataset.itemCount === length);
       }
     },
     {
@@ -66,11 +66,11 @@ module.exports = {
           dataSource: value
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, length > 0);
-        this.is(true, node.dataSource === dataset);
-        this.is(length, node.childNodes.length);
-        this.is(length, dataset.itemCount);
+        assert(checkNode(node) === false);
+        assert(length > 0);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === length);
+        assert(dataset.itemCount === length);
       }
     },
     {
@@ -84,14 +84,14 @@ module.exports = {
           dataSource: value
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, node.dataSource === dataset);
-        this.is(true, node.dataSourceRA_.source === value);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.dataSourceRA_.source === value);
 
         node.destroy();
 
-        this.is(null, node.dataSource);
-        this.is(null, node.dataSourceRA_);
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ === null);
 
         // empty dataSource
         var value = new Value();
@@ -100,14 +100,14 @@ module.exports = {
           dataSource: value
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_.source === value);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_.source === value);
 
         node.destroy();
 
-        this.is(null, node.dataSource);
-        this.is(null, node.dataSourceRA_);
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ === null);
       }
     },
     {
@@ -127,15 +127,15 @@ module.exports = {
           dataSource: value
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, node.dataSource === dataset);
-        this.is(true, node.dataSourceRA_.source === value);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.dataSourceRA_.source === value);
 
         dataset.destroy();
-        this.is(null, node.dataSource);
-        this.is(null, value.value);
-        this.is(true, node.dataSourceRA_ !== null);
-        this.is(true, node.dataSourceRA_ !== null && node.dataSourceRA_.source === value);
+        assert(node.dataSource === null);
+        assert(value.value === null);
+        assert(node.dataSourceRA_ !== null);
+        assert(node.dataSourceRA_ !== null && node.dataSourceRA_.source === value);
       }
     },
     {
@@ -149,9 +149,9 @@ module.exports = {
           dataSource: dataset
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, node.dataSource === dataset);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
       }
     },
     {
@@ -165,10 +165,10 @@ module.exports = {
           dataSource: value
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_ != null);
-        this.is(true, node.firstChild == null);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ != null);
+        assert(node.firstChild == null);
       }
     },
     {
@@ -180,53 +180,37 @@ module.exports = {
           dataSource: dataset
         });
 
-        this.is(dataset, node.dataSource);
+        assert(node.dataSource === dataset);
 
         var itemCount = dataset.itemCount;
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.appendChild(new Node);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === dataset);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.insertBefore(new Node);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === dataset);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.removeChild(node.firstChild);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === dataset);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.replaceChild(new Node, node.firstChild);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === dataset);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
       }
     },
     {
@@ -238,57 +222,41 @@ module.exports = {
           dataSource: value
         });
 
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_ !== null);
-        this.is(true, node.dataSourceRA_.source === value);
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ !== null);
+        assert(node.dataSourceRA_.source === value);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.appendChild(new Node);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_ !== null);
-        this.is(true, node.dataSourceRA_.source === value);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ !== null);
+        assert(node.dataSourceRA_.source === value);
+        assert(checkNode(node) === false);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.insertBefore(new Node);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_ !== null);
-        this.is(true, node.dataSourceRA_.source === value);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ !== null);
+        assert(node.dataSourceRA_.source === value);
+        assert(checkNode(node) === false);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.removeChild(node.firstChild);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_ !== null);
-        this.is(true, node.dataSourceRA_.source === value);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ !== null);
+        assert(node.dataSourceRA_.source === value);
+        assert(checkNode(node) === false);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.replaceChild(new Node, node.firstChild);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_ !== null);
-        this.is(true, node.dataSourceRA_.source === value);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ !== null);
+        assert(node.dataSourceRA_.source === value);
+        assert(checkNode(node) === false);
       }
     },
     {
@@ -301,32 +269,21 @@ module.exports = {
         });
 
         var itemCount = dataset.itemCount;
+        assert(node.dataSource === dataset);
 
-        this.is(dataset, node.dataSource);
-
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.clear();
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === dataset);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
 
-        // no exception if dataSource is empty
+        // should no exception if dataSource is empty
         dataset.clear();
-        var exceptionHere = false;
-        try {
-          node.clear();
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === dataset);
-        this.is(0, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(false, exceptionHere);
+        node.clear();
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === 0);
+        assert(checkNode(node) === false);
       }
     },
     {
@@ -339,18 +296,14 @@ module.exports = {
         });
 
         var itemCount = dataset.itemCount;
-        this.is(dataset, node.dataSource);
+        assert(node.dataSource === dataset);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.setChildNodes([new Node]);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(dataset, node.dataSource);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
       }
     },
     {
@@ -362,21 +315,17 @@ module.exports = {
           dataSource: value
         });
 
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_ !== null);
-        this.is(true, node.dataSourceRA_.source === value);
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ !== null);
+        assert(node.dataSourceRA_.source === value);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.setChildNodes([new Node]);
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(true, node.dataSource === null);
-        this.is(true, node.dataSourceRA_ !== null);
-        this.is(true, node.dataSourceRA_.source === value);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === null);
+        assert(node.dataSourceRA_ !== null);
+        assert(node.dataSourceRA_.source === value);
+        assert(checkNode(node) === false);
       }
     },
     {
@@ -389,41 +338,29 @@ module.exports = {
         });
 
         var itemCount = dataset.itemCount;
-        this.is(dataset, node.dataSource);
-        this.is(true, itemCount > 0);
+        assert(node.dataSource === dataset);
+        assert(itemCount > 0 === true);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.insertBefore(dataset.pick());
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(dataset, node.dataSource);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.insertBefore({ delegate: dataset.pick() });
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(dataset, node.dataSource);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
 
-        var exceptionHere = false;
-        try {
+        assert.exception(function(){
           node.insertBefore(new Node({ delegate: dataset.pick() }));
-        } catch(e){
-          exceptionHere = true;
-        }
-        this.is(dataset, node.dataSource);
-        this.is(itemCount, dataset.itemCount);
-        this.is(false, checkNode(node));
-        this.is(true, exceptionHere);
+        });
+        assert(node.dataSource === dataset);
+        assert(dataset.itemCount === itemCount);
+        assert(checkNode(node) === false);
       }
     },
     {
@@ -435,19 +372,19 @@ module.exports = {
         });
 
         node.setDataSource(dataset);
-        this.is(false, checkNode(node));
-        this.is(dataset, node.dataSource);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
 
         node.setDataSource();
-        this.is(false, checkNode(node));
-        this.is(null, node.dataSource);
-        this.is(0, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
+        assert(node.childNodes.length === 0);
 
         node.setDataSource(dataset);
-        this.is(false, checkNode(node));
-        this.is(dataset, node.dataSource);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
       }
     },
     {
@@ -460,24 +397,24 @@ module.exports = {
         });
 
         node.setDataSource(datasetWrapper);
-        this.is(false, checkNode(node));
-        this.is(dataset, node.dataSource);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
 
         node.setDataSource();
-        this.is(false, checkNode(node));
-        this.is(null, node.dataSource);
-        this.is(0, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
+        assert(node.childNodes.length === 0);
 
         node.setDataSource(datasetWrapper);
-        this.is(false, checkNode(node));
-        this.is(dataset, node.dataSource);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
 
         datasetWrapper.setDataset();
-        this.is(false, checkNode(node));
-        this.is(null, node.dataSource);
-        this.is(0, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
+        assert(node.childNodes.length === 0);
       }
     },
     {
@@ -491,24 +428,24 @@ module.exports = {
         });
 
         node.setDataSource(value);
-        this.is(false, checkNode(node));
-        this.is(dataset, node.dataSource);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
 
         node.setDataSource();
-        this.is(false, checkNode(node));
-        this.is(null, node.dataSource);
-        this.is(0, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
+        assert(node.childNodes.length === 0);
 
         node.setDataSource(value);
-        this.is(false, checkNode(node));
-        this.is(dataset, node.dataSource);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
 
         value.set();
-        this.is(false, checkNode(node));
-        this.is(null, node.dataSource);
-        this.is(0, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
+        assert(node.childNodes.length === 0);
       }
     },
     {
@@ -521,23 +458,23 @@ module.exports = {
           dataSource: selectedDataset
         });
 
-        this.is(true, node.dataSource === dataset);  // true
-        this.is(true, node.dataSourceRA_.source === selectedDataset);  // true
+        assert(node.dataSource === dataset);  // true
+        assert(node.dataSourceRA_.source === selectedDataset);  // true
 
         selectedDataset.set(null);
 
-        this.is(true, node.dataSource === null);  // true
-        this.is(true, node.dataSourceRA_.source === selectedDataset);  // true
+        assert(node.dataSource === null);  // true
+        assert(node.dataSourceRA_.source === selectedDataset);  // true
 
         selectedDataset.set(new DatasetWrapper({ dataset: anotherDataset }));
 
-        this.is(true, node.dataSource === anotherDataset);  // true
-        this.is(true, node.dataSourceRA_.source === selectedDataset);  // true
+        assert(node.dataSource === anotherDataset);  // true
+        assert(node.dataSourceRA_.source === selectedDataset);  // true
 
         selectedDataset.value.setDataset(null);
 
-        this.is(true, node.dataSource === null);  // true
-        this.is(true, node.dataSourceRA_.source === selectedDataset);  // true
+        assert(node.dataSource === null);  // true
+        assert(node.dataSourceRA_.source === selectedDataset);  // true
       }
     },
     {
@@ -549,27 +486,27 @@ module.exports = {
           childFactory: nodeFactory,
           childNodes: testSet
         });
-        this.is(false, checkNode(node));
-        this.is(testSet.length, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.childNodes.length === testSet.length);
 
         node.setDataSource(dataset);
-        this.is(false, checkNode(node));
-        this.is(dataset, node.dataSource);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
 
         node.setDataSource();
-        this.is(false, checkNode(node));
-        this.is(null, node.dataSource);
-        this.is(0, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === null);
+        assert(node.childNodes.length === 0);
 
         node.setChildNodes(testSet);
-        this.is(false, checkNode(node));
-        this.is(testSet.length, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.childNodes.length === testSet.length);
 
         node.setDataSource(dataset);
-        this.is(false, checkNode(node));
-        this.is(dataset, node.dataSource);
-        this.is(dataset.itemCount, node.childNodes.length);
+        assert(checkNode(node) === false);
+        assert(node.dataSource === dataset);
+        assert(node.childNodes.length === dataset.itemCount);
 
       }
     },
@@ -584,14 +521,14 @@ module.exports = {
 
         var itemCount = dataset.itemCount;
 
-        this.is(dataset, node.dataSource);
-        this.is(true, itemCount > 0);
-        this.is(false, checkNode(node));
+        assert(node.dataSource === dataset);
+        assert(itemCount > 0);
+        assert(checkNode(node) === false);
 
         dataset.destroy();
 
-        this.is(null, node.dataSource);
-        this.is(false, checkNode(node));
+        assert(node.dataSource === null);
+        assert(checkNode(node) === false);
       }
     },
     {
@@ -616,8 +553,8 @@ module.exports = {
             hasHandler = true;
         }
 
-        this.is(true, !targetNode.delegate);
-        this.is(false, hasHandler);
+        assert(targetNode.delegate === null);
+        assert(hasHandler === false);
       }
     },
     {
@@ -642,8 +579,8 @@ module.exports = {
             hasHandler = true;
         }
 
-        this.is(true, !targetNode.delegate);
-        this.is(false, hasHandler);
+        assert(targetNode.delegate === null);
+        assert(hasHandler === false);
       }
     },
     {

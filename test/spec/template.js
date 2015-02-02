@@ -2,9 +2,9 @@ module.exports = {
   name: 'basis.template',
 
   html: __dirname + 'template.html',
-//  sandbox: true,
+  sandbox: true,
   init: function(){
-    //basis = basis.createSandbox();
+    var basis = window.basis.createSandbox(window.basis.config);
 
     var HtmlTemplate = basis.require('basis.template.html').Template;
     var nsTemplate = basis.require('basis.template');

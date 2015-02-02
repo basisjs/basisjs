@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var fnInfo = basis.require('basis.utils.info').fn;
     var normalizeOffset = basis.require('basis.utils.info').normalizeOffset;

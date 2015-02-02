@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var UTF16 = basis.require('basis.utils.utf16');
     var UTF8 = basis.require('basis.utils.utf8');

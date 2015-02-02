@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var Calendar = basis.require('basis.ui.calendar').Calendar;
     var CalendarSection = basis.require('basis.ui.calendar').CalendarSection;

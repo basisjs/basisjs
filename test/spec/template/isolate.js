@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var isolateCss = basis.require('basis.template.isolateCss');
     var Template = basis.require('basis.template.html').Template;

@@ -3,7 +3,7 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    basis = basis.createSandbox();
+    var basis = window.basis.createSandbox();
 
     var sandbox = basis.createSandbox('template-l10n-test');
     var api = basis.require('../helpers/template.js').createSandboxAPI(sandbox);
