@@ -1144,7 +1144,7 @@
       if (NODE_ENV)
       {
         // node.js env
-        basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
+        basisFilename = process.basisjsFilename || __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
 
         /** @cut */ if (process.basisjsConfig)
         /** @cut */ {
