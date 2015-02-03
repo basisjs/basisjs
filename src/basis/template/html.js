@@ -702,7 +702,7 @@
       {
         if (bridge)
         {
-          if (!oldAttach || value !== oldAttach.value)
+          if (!oldAttach || value !== oldAttach.value || (value.type == 'markup' && !oldAttach.tmpl))
           {
             if (oldAttach)
             {

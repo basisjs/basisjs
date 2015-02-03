@@ -367,12 +367,11 @@ module.exports = {
                 {
                   name: 'should work correct on type change (markup -> normal)',
                   test: function(){
-                    // jscs:disable validateQuoteMarks
                     l10n.setCulture('en-US');
                     var dictionary = l10n.dictionary({
                       _meta: { type: { test: 'markup' } },
-                      "en-US": {
-                        "test": "<b>markup</b>"
+                      'en-US': {
+                        test: '<b>markup</b>'
                       }
                     });
 
@@ -383,23 +382,35 @@ module.exports = {
                     assert(text(instance, { foo: dictionary.token('test') }) === '<span><b>markup</b></span>');
 
                     dictionary.update({
-                      "en-US": {
-                        "test": "<b>markup</b>"
+                      'en-US': {
+                        test: '<b>markup</b>'
                       }
                     });
                     assert(text(instance) === text('<span>&lt;b>markup&lt;/b></span>'));
 
-                    // jscs:enable
+                    dictionary.update({
+                      'en-US': {
+                        test: '<b>markup!!!</b>'
+                      }
+                    });
+                    assert(text(instance) === text('<span>&lt;b>markup!!!&lt;/b></span>'));
+
+                    dictionary.update({
+                      _meta: { type: { test: 'markup' } },
+                      'en-US': {
+                        test: '<b>markup</b>'
+                      }
+                    });
+                    assert(text(instance) === text('<span><b>markup</b></span>'));
                   }
                 },
                 {
                   name: 'should work correct on type change (normal -> markup)',
                   test: function(){
-                    // jscs:disable validateQuoteMarks
                     l10n.setCulture('en-US');
                     var dictionary = l10n.dictionary({
-                      "en-US": {
-                        "test": "<b>markup</b>"
+                      'en-US': {
+                        test: '<b>markup</b>'
                       }
                     });
 
@@ -411,13 +422,26 @@ module.exports = {
 
                     dictionary.update({
                       _meta: { type: { test: 'markup' } },
-                      "en-US": {
-                        "test": "<b>markup</b>"
+                      'en-US': {
+                        test: '<b>markup</b>'
                       }
                     });
                     assert(text(instance) === text('<span><b>markup</b></span>'));
 
-                    // jscs:enable
+                    dictionary.update({
+                      _meta: { type: { test: 'markup' } },
+                      'en-US': {
+                        test: '<b>markup!!!</b>'
+                      }
+                    });
+                    assert(text(instance) === text('<span><b>markup!!!</b></span>'));
+
+                    dictionary.update({
+                      'en-US': {
+                        test: '<b>markup</b>'
+                      }
+                    });
+                    assert(text(instance) === text('<span>&lt;b>markup&lt;/b></span>'));
                   }
                 }
               ]
