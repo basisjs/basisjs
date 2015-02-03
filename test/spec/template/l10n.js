@@ -230,216 +230,282 @@ module.exports = {
       name: 'markup',
       test: [
         {
-          name: 'simple',
+          name: 'text nodes',
           test: [
             {
-              name: 'should set token value to text node',
-              test: function(){
-                // assert(text('<b:l10n src="./test.l10n"/>{l10n:simpleMarkup}') ===
-                //        text('<span>simple <b>markup</b> text</span>'));
-                assert(text('<b:l10n src="./test.l10n"/><span>{l10n:simpleMarkup}</span>') ===
-                       text('<span>simple <b>markup</b> text</span>'));
-              }
+              name: 'simple',
+              test: [
+                {
+                  name: 'should set token value to text node',
+                  test: function(){
+                    // assert(text('<b:l10n src="./test.l10n"/>{l10n:simpleMarkup}') ===
+                    //        text('<span>simple <b>markup</b> text</span>'));
+                    assert(text('<b:l10n src="./test.l10n"/><span>{l10n:simpleMarkup}</span>') ===
+                           text('<span>simple <b>markup</b> text</span>'));
+                  }
+                },
+                {
+                  name: 'should change on token change',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:simpleMarkup}</span>');
+                    var instance = template.createInstance();
+
+                    assert(text(instance, { foo: 'foo' }) === text('<span>simple <b>markup</b> text</span>'));
+
+                    l10n.setCulture('ru-RU');
+                    assert(text(instance) === text('<span>простой <b>markup</b> текст</span>'));
+
+                    l10n.setCulture('en-US');
+                    assert(text(instance) === text('<span>simple <b>markup</b> text</span>'));
+                  }
+                },
+                {
+                  name: 'should behave normal on template source change',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:simpleMarkup}</span>');
+
+                    assert(text(template) === '<span>simple <b>markup</b> text</span>');
+
+                    template.setSource('<b:l10n src="./test.l10n"/><div>markup: {l10n:simpleMarkup}</div>');
+                    assert(text(template) === '<div>markup: simple <b>markup</b> text</div>');
+                  }
+                }
+              ]
             },
             {
-              name: 'should set value to attribute',
-              test: function(){
-                assert(text('<b:l10n src="./test.l10n"/><span title="{l10n:simpleMarkup}"/>') ===
-                       text('<span title="simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
-              }
-            },
-            {
-              name: 'should be used normal in attribute expressions',
-              test: function(){
-                var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:simpleMarkup}"/>');
-                var instance = template.createInstance();
+              name: 'with other l10n bindings',
+              test: [
+                {
+                  name: 'should set token value to text node',
+                  test: function(){
+                    // assert(text('<b:l10n src="./test.l10n"/><span>{l10n:markupWithBinding}</span>') ===
+                    //        text('<span>simple <b>markup</b> text</span>'));
+                    assert(text('<b:l10n src="./test.l10n"/><span>{l10n:markupWithBinding}</span>') ===
+                           text('<span><b>markup</b> text {foo}</span>'));
+                  }
+                },
+                {
+                  name: 'should change on token change',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:markupWithBinding}</span>');
+                    var bindings = {
+                      bindingId: basis.genUID(),
+                      foo: {
+                        getter: function(){
+                          return '[foo]';
+                        }
+                      }
+                    };
+                    var instance = template.createInstance(null, null, function onUpdate(){
+                      instance = template.createInstance(null, null, onUpdate, bindings);
+                    }, bindings);
 
-                assert(text(instance) === text('<span title="test undefined/simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
-                assert(text(instance, { foo: 'foo' }) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
-              }
-            },
-            {
-              name: 'should change on token change',
-              test: function(){
-                var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:simpleMarkup}">{l10n:simpleMarkup}</span>');
-                var instance = template.createInstance();
+                    assert(text(instance) === text('<span><b>markup</b> text [foo]</span>'));
 
-                assert(text(instance, { foo: 'foo' }) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text">simple <b>markup</b> text</span>'));
+                    l10n.setCulture('ru-RU');
+                    assert(text(instance) === text('<span><b>markup</b> текст [foo]</span>'));
 
-                l10n.setCulture('ru-RU');
-                assert(text(instance) === text('<span title="test foo/простой &lt;b&gt;markup&lt;/b&gt; текст">простой <b>markup</b> текст</span>'));
+                    l10n.setCulture('en-US');
+                    assert(text(instance) === text('<span><b>markup</b> text [foo]</span>'));
+                  }
+                },
+                {
+                  name: 'should behave normal on template source change',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo} {l10n:markupWithBinding}</span>');
+                    var bindings = {
+                      bindingId: basis.genUID(),
+                      foo: {
+                        getter: function(){
+                          return '[foo]';
+                        }
+                      }
+                    };
+                    var instance = template.createInstance(null, null, function onUpdate(){
+                      instance = template.createInstance(null, null, onUpdate, bindings);
+                    }, bindings);
 
-                l10n.setCulture('en-US');
-                assert(text(instance) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text">simple <b>markup</b> text</span>'));
-              }
-            },
-            {
-              name: 'should behave normal on template source change',
-              test: function(){
-                var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:simpleMarkup}</span>');
+                    assert(text(instance) === '<span>[foo] <b>markup</b> text [foo]</span>');
 
-                assert(text(template) === '<span>simple <b>markup</b> text</span>');
+                    template.setSource('<b:l10n src="./test.l10n"/><div>{foo} markup: {l10n:markupWithBinding}</div>');
+                    assert(text(instance) === '<div>[foo] markup: <b>markup</b> text [foo]</div>');
+                  }
+                },
+                {
+                  name: 'should not crash on markup token remove',
+                  test: function(){
+                    var dictionary = sandbox.require('basis.l10n').dictionary('./test.l10n');
+                    var bindings = {
+                      bindingId: basis.genUID(),
+                      foo: {
+                        getter: function(){
+                          return '[foo]';
+                        }
+                      }
+                    };
 
-                template.setSource('<b:l10n src="./test.l10n"/><div>markup: {l10n:simpleMarkup}</div>');
-                assert(text(template) === '<div>markup: simple <b>markup</b> text</div>');
-              }
+                    var template = createTemplate('<span>{foo} {bar}</span>');
+                    var instance = template.createInstance(null, null, null, bindings);
+
+                    assert(text(instance) === '<span>[foo] {bar}</span>');
+                    assert(text(instance, { bar: dictionary.token('markupWithBinding') }) === '<span>[foo] <b>markup</b> text [foo]</span>');
+                    assert(text(instance, { bar: null }) === '<span>[foo] null</span>');
+                  }
+                },
+                {
+                  name: 'should not crash on recursion',
+                  test: function(){
+                    var dictionary = sandbox.require('basis.l10n').dictionary('./test.l10n');
+                    var template = createTemplate('<span>{foo}</span>');
+                    var instance = template.createInstance();
+
+                    assert(text(instance) === '<span>{foo}</span>');
+                    assert(text(instance, { foo: dictionary.token('markupWithBinding') }) === '<span><b>markup</b> text {foo}</span>');
+                    assert(text(instance, { foo: dictionary.token('l10nMarkup') }) === '<span><b>markup</b> text plural texts foo text <b>markup</b> text {foo}</span>');
+                  }
+                },
+                {
+                  name: 'should work correct on type change (markup -> normal)',
+                  test: function(){
+                    // jscs:disable validateQuoteMarks
+                    l10n.setCulture('en-US');
+                    var dictionary = l10n.dictionary({
+                      _meta: { type: { test: 'markup' } },
+                      "en-US": {
+                        "test": "<b>markup</b>"
+                      }
+                    });
+
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo}</span>');
+                    var instance = template.createInstance();
+
+                    assert(text(instance) === '<span>{foo}</span>');
+                    assert(text(instance, { foo: dictionary.token('test') }) === '<span><b>markup</b></span>');
+
+                    dictionary.update({
+                      "en-US": {
+                        "test": "<b>markup</b>"
+                      }
+                    });
+                    assert(text(instance) === text('<span>&lt;b>markup&lt;/b></span>'));
+
+                    // jscs:enable
+                  }
+                },
+                {
+                  name: 'should work correct on type change (normal -> markup)',
+                  test: function(){
+                    // jscs:disable validateQuoteMarks
+                    l10n.setCulture('en-US');
+                    var dictionary = l10n.dictionary({
+                      "en-US": {
+                        "test": "<b>markup</b>"
+                      }
+                    });
+
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo}</span>');
+                    var instance = template.createInstance();
+
+                    assert(text(instance) === '<span>{foo}</span>');
+                    assert(text(instance, { foo: dictionary.token('test') }) === text('<span>&lt;b>markup&lt;/b></span>'));
+
+                    dictionary.update({
+                      _meta: { type: { test: 'markup' } },
+                      "en-US": {
+                        "test": "<b>markup</b>"
+                      }
+                    });
+                    assert(text(instance) === text('<span><b>markup</b></span>'));
+
+                    // jscs:enable
+                  }
+                }
+              ]
             }
           ]
         },
         {
-          name: 'with other l10n bindings',
+          name: 'in attributes',
           test: [
             {
-              name: 'should set token value to text node',
-              test: function(){
-                // assert(text('<b:l10n src="./test.l10n"/><span>{l10n:markupWithBinding}</span>') ===
-                //        text('<span>simple <b>markup</b> text</span>'));
-                assert(text('<b:l10n src="./test.l10n"/><span>{l10n:markupWithBinding}</span>') ===
-                       text('<span><b>markup</b> text {foo}</span>'));
-              }
-            },
-            {
-              name: 'should set value to attribute',
-              test: function(){
-                assert(text('<b:l10n src="./test.l10n"/><span title="{l10n:markupWithBinding}"/>') ===
-                       text('<span title="simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
-              }
-            },
-            {
-              name: 'should be used normal in attribute expressions',
-              test: function(){
-                var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:markupWithBinding}"/>');
-                var instance = template.createInstance();
-
-                assert(text(instance) === text('<span title="test undefined/simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
-                assert(text(instance, { foo: 'foo' }) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
-              }
-            },
-            {
-              name: 'should change on token change',
-              test: function(){
-                var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:markupWithBinding}">{l10n:markupWithBinding}</span>');
-                var instance = template.createInstance();
-
-                assert(text(instance, { foo: 'foo' }) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text">simple <b>markup</b> text</span>'));
-
-                l10n.setCulture('ru-RU');
-                assert(text(instance) === text('<span title="test foo/простой &lt;b&gt;markup&lt;/b&gt; текст">простой <b>markup</b> текст</span>'));
-
-                l10n.setCulture('en-US');
-                assert(text(instance) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text">simple <b>markup</b> text</span>'));
-              }
-            },
-            {
-              name: 'should behave normal on template source change',
-              test: function(){
-                var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo} {l10n:markupWithBinding}</span>');
-                var bindings = {
-                  bindingId: basis.genUID(),
-                  foo: {
-                    getter: function(){
-                      return '[foo]';
-                    }
+              name: 'simple',
+              test: [
+                {
+                  pending: true,
+                  name: 'should set value to attribute',
+                  test: function(){
+                    assert(text('<b:l10n src="./test.l10n"/><span title="{l10n:simpleMarkup}"/>') ===
+                           text('<span title="simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
                   }
-                };
-                var instance = template.createInstance(null, null, function onUpdate(){
-                  instance = template.createInstance(null, null, onUpdate, bindings);
-                }, bindings);
+                },
+                {
+                  pending: true,
+                  name: 'should be used normal in attribute expressions',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:simpleMarkup}"/>');
+                    var instance = template.createInstance();
 
-                assert(text(instance) === '<span>[foo] <b>markup</b> text [foo]</span>');
+                    assert(text(instance) === text('<span title="test undefined/simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
+                    assert(text(instance, { foo: 'foo' }) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
+                  }
+                },
+                {
+                  pending: true,
+                  name: 'should change on token change',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:simpleMarkup}"/>');
+                    var instance = template.createInstance();
 
-                template.setSource('<b:l10n src="./test.l10n"/><div>{foo} markup: {l10n:markupWithBinding}</div>');
-                assert(text(instance) === '<div>[foo] markup: <b>markup</b> text [foo]</div>');
-              }
+                    assert(text(instance, { foo: 'foo' }) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"></span>'));
+
+                    l10n.setCulture('ru-RU');
+                    assert(text(instance) === text('<span title="test foo/простой &lt;b&gt;markup&lt;/b&gt; текст"></span>'));
+
+                    l10n.setCulture('en-US');
+                    assert(text(instance) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"></span>'));
+                  }
+                }
+              ]
             },
             {
-              name: 'should not crash on markup token remove',
-              test: function(){
-                var dictionary = sandbox.require('basis.l10n').dictionary('./test.l10n');
-                var bindings = {
-                  bindingId: basis.genUID(),
-                  foo: {
-                    getter: function(){
-                      return '[foo]';
-                    }
+              name: 'with other l10n bindings',
+              test: [
+                {
+                  pending: true,
+                  name: 'should set value to attribute',
+                  test: function(){
+                    assert(text('<b:l10n src="./test.l10n"/><span title="{l10n:markupWithBinding}"/>') ===
+                           text('<span title="simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
                   }
-                };
+                },
+                {
+                  pending: true,
+                  name: 'should be used normal in attribute expressions',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:markupWithBinding}"/>');
+                    var instance = template.createInstance();
 
-                var template = createTemplate('<span>{foo} {bar}</span>');
-                var instance = template.createInstance(null, null, null, bindings);
-
-                assert(text(instance) === '<span>[foo] {bar}</span>');
-                assert(text(instance, { bar: dictionary.token('markupWithBinding') }) === '<span>[foo] <b>markup</b> text [foo]</span>');
-                assert(text(instance, { bar: null }) === '<span>[foo] null</span>');
-              }
-            },
-            {
-              name: 'should not crash on recursion',
-              test: function(){
-                var dictionary = sandbox.require('basis.l10n').dictionary('./test.l10n');
-                var template = createTemplate('<span>{foo}</span>');
-                var instance = template.createInstance();
-
-                assert(text(instance) === '<span>{foo}</span>');
-                assert(text(instance, { foo: dictionary.token('markupWithBinding') }) === '<span><b>markup</b> text {foo}</span>');
-                assert(text(instance, { foo: dictionary.token('l10nMarkup') }) === '<span><b>markup</b> text plural texts foo text <b>markup</b> text {foo}</span>');
-              }
-            },
-            {
-              name: 'should work correct on type change (markup -> normal)',
-              test: function(){
-                // jscs:disable validateQuoteMarks
-                l10n.setCulture('en-US');
-                var dictionary = l10n.dictionary({
-                  _meta: { type: { test: 'markup' } },
-                  "en-US": {
-                    "test": "<b>markup</b>"
+                    assert(text(instance) === text('<span title="test undefined/simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
+                    assert(text(instance, { foo: 'foo' }) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"/>'));
                   }
-                });
+                },
+                {
+                  pending: true,
+                  name: 'should change on token change',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:markupWithBinding}"></span>');
+                    var instance = template.createInstance();
 
-                var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo}</span>');
-                var instance = template.createInstance();
+                    assert(text(instance, { foo: 'foo' }) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"></span>'));
 
-                assert(text(instance) === '<span>{foo}</span>');
-                assert(text(instance, { foo: dictionary.token('test') }) === '<span><b>markup</b></span>');
+                    l10n.setCulture('ru-RU');
+                    assert(text(instance) === text('<span title="test foo/простой &lt;b&gt;markup&lt;/b&gt; текст"></span>'));
 
-                dictionary.update({
-                  "en-US": {
-                    "test": "<b>markup</b>"
+                    l10n.setCulture('en-US');
+                    assert(text(instance) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"></span>'));
                   }
-                });
-                assert(text(instance) === text('<span>&lt;b>markup&lt;/b></span>'));
-
-                // jscs:enable
-              }
-            },
-            {
-              name: 'should work correct on type change (normal -> markup)',
-              test: function(){
-                // jscs:disable validateQuoteMarks
-                l10n.setCulture('en-US');
-                var dictionary = l10n.dictionary({
-                  "en-US": {
-                    "test": "<b>markup</b>"
-                  }
-                });
-
-                var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo}</span>');
-                var instance = template.createInstance();
-
-                assert(text(instance) === '<span>{foo}</span>');
-                assert(text(instance, { foo: dictionary.token('test') }) === text('<span>&lt;b>markup&lt;/b></span>'));
-
-                dictionary.update({
-                  _meta: { type: { test: 'markup' } },
-                  "en-US": {
-                    "test": "<b>markup</b>"
-                  }
-                });
-                assert(text(instance) === text('<span><b>markup</b></span>'));
-
-                // jscs:enable
-              }
+                }
+              ]
             }
           ]
         }

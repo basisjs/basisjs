@@ -17,7 +17,7 @@ module.exports = {
       test: [
         {
           name: 'test #1',
-          test: function(){
+          test: function(done){
             var s = new ObjectSet();
             s.a = new Property(1);
             s.b = new Property(2);
@@ -37,12 +37,13 @@ module.exports = {
 
             s.a.set('test');
 
-            this.async(function(){
+            setTimeout(function(){
               // check async because ObjectSet update occur by timeout
               assert(updateCount === 1);
               assert(s.a.value === 'test');
               assert(s.b.value === 11);
-            });
+              done();
+            }, 10);
           }
         },
         {
