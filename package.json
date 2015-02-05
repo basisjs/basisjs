@@ -30,6 +30,7 @@
     "yatra": "~1.0.0"
   },
   "scripts": {
-    "test": "node ./node_modules/karma/bin/karma start karma.conf.js"
+    "lint": "jscs .",
+    "test": "npm run lint && node ./node_modules/karma/bin/karma start karma.conf.js"
   }
 }
