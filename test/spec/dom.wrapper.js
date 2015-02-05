@@ -15,6 +15,7 @@ module.exports = {
     var Dataset = basis.require('basis.data').Dataset;
     var DatasetWrapper = basis.require('basis.data').DatasetWrapper;
     var READY = basis.require('basis.data').STATE.READY;
+    var AUTO = '__auto__';
 
     Node.extend({
       listen: basis.object.extend({

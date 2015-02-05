@@ -132,7 +132,7 @@ module.exports = {
         assert(!basis.fn.$self.getter);
         assert(!basis.fn.$self.__extend__);
 
-        /* jscs: disable */
+        /* jscs:disable requireKeywordsOnNewLine */
         assert(basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 1; }));
         assert(basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 2; }));
 
@@ -143,7 +143,7 @@ module.exports = {
         assert(basis.getter(function(){ return 1; }).as('f') !== basis.getter(function(){ return 2; }).as('f'));
 
         assert(basis.getter(function(){ return 1; }).as('f') !== basis.getter(function(){ return 1; }).as('fs'));
-        /* jscs: enable */
+        /* jscs:enable */
 
         assert(basis.getter('a').as(Number) !== basis.getter('a'));
         assert(basis.getter('a').as(Number) === basis.getter('a').as(Number));

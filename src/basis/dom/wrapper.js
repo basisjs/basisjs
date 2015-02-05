@@ -57,6 +57,7 @@
   /** @const */ var EXCEPTION_PARENTNODE_OWNER_CONFLICT = namespace + ': Node can\'t has owner and parentNode';
   /** @const */ var EXCEPTION_NO_CHILDCLASS = namespace + ': Node can\'t has children and dataSource as childClass isn\'t specified';
 
+  /** @const */ var AUTO = '__auto__';
   /** @const */ var DELEGATE = {
     ANY: true,
     NONE: false,
@@ -297,7 +298,7 @@
       var satellites = object.satellite;
       if (satellites !== NULL_SATELLITE)
         for (var name in satellites)
-          if (name !== '__auto__')
+          if (name !== AUTO)
             action('satellite', object, satellites[name]);
     }
   );
@@ -989,7 +990,7 @@
 
         if (oldOwner)
         {
-          if (this.ownerSatelliteName && oldOwner.satellite.__auto__ && this.ownerSatelliteName in oldOwner.satellite.__auto__)
+          if (this.ownerSatelliteName && oldOwner.satellite[AUTO] && this.ownerSatelliteName in oldOwner.satellite[AUTO])
           {
             /** @cut */ basis.dev.warn(namespace + ': auto-satellite can\'t change it\'s owner');
             return;
@@ -1025,7 +1026,7 @@
     */
     setSatellite: function(name, satellite, autoSet){
       var oldSatellite = this.satellite[name] || null;
-      var auto = this.satellite.__auto__;
+      var auto = this.satellite[AUTO];
       var autoConfig = auto && auto[name];
       var preserveAuto = autoSet && autoConfig;
 
@@ -1119,7 +1120,7 @@
             {
               if (this.satellite === NULL_SATELLITE)
                 this.satellite = {};
-              auto = this.satellite.__auto__ = {};
+              auto = this.satellite[AUTO] = {};
             }
 
             auto[name] = autoConfig;
@@ -1242,8 +1243,8 @@
       var satellites = this.satellite;
       if (satellites !== NULL_SATELLITE)
       {
-        var auto = satellites.__auto__;
-        delete satellites.__auto__;
+        var auto = satellites[AUTO];
+        delete satellites[AUTO];
 
         for (var name in auto)
         {

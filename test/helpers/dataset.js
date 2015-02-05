@@ -25,8 +25,8 @@ function cmpDS(set1, set2){
   if (set2 instanceof ReadOnlyDataset == false)
     return 'set2 is not an instance of basis.data.ReadOnlyDataset';
 
-  var items1 = set1.getItems().map(function(item){ return item.basisObjectId; }).sort();
-  var items2 = set2.getItems().map(function(item){ return item.basisObjectId; }).sort();
+  var items1 = set1.getValues('basisObjectId').sort();
+  var items2 = set2.getValues('basisObjectId').sort();
 
   if (items1.length != items2.length)
     return 'set1 has ' + items1.length + ' item(s), but set2 has ' + items2.length + ' item(s)';

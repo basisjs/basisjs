@@ -16,6 +16,7 @@ module.exports = {
         {
           name: 'empty function',
           test: function(){
+            // jscs:disable
             var functions = [
               function(){},
               function(){
@@ -35,6 +36,7 @@ module.exports = {
               ) {
               }
             ];
+            // jscs:enable
 
             for (var i = 0; i < functions.length; i++)
             {
@@ -48,6 +50,7 @@ module.exports = {
         {
           name: 'no args function',
           test: function(){
+            // jscs:disable
             var functions = [
               function(){
                 return;
@@ -72,6 +75,7 @@ module.exports = {
                 return /\"\//.test('asd');
               }
             ];
+            // jscs:enable
 
             for (var i = 0; i < functions.length; i++)
             {
@@ -85,6 +89,7 @@ module.exports = {
         {
           name: 'no args function',
           test: function(){
+            // jscs:disable
             var functions = [
               function foo(){
                 return;
@@ -120,6 +125,7 @@ module.exports = {
                 var b = not / a / regexp;
               }
             ];
+            // jscs:enable
 
             for (var i = 0; i < functions.length; i++)
             {

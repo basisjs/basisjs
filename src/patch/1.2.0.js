@@ -63,12 +63,18 @@ basis.patch('basis.layout', function(exports){
       {
         switch (property.toLowerCase())
         {
-          case 'left':   this.left   = value; this.right  = this.left  + this.width; break;
-          case 'right':  this.right  = value; this.left   = this.right - this.width; break;
-          case 'width':  this.width  = value; this.right  = this.left  + this.width; break;
-          case 'top':    this.top    = value; this.bottom = this.top    + this.height; break;
-          case 'bottom': this.bottom = value; this.top    = this.bottom - this.height; break;
-          case 'height': this.height = value; this.bottom = this.top    + this.height; break;
+          case 'left':   this.left   = value; this.right  = this.left  + this.width;
+            break;
+          case 'right':  this.right  = value; this.left   = this.right - this.width;
+            break;
+          case 'width':  this.width  = value; this.right  = this.left  + this.width;
+            break;
+          case 'top':    this.top    = value; this.bottom = this.top    + this.height;
+            break;
+          case 'bottom': this.bottom = value; this.top    = this.bottom - this.height;
+            break;
+          case 'height': this.height = value; this.bottom = this.top    + this.height;
+            break;
         }
 
         if (this.width <= 0 || this.height <= 0)

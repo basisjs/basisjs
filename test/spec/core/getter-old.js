@@ -60,10 +60,14 @@ module.exports = {
     {
       name: 'create from function',
       test: function(){
-        var g = basis.getter(function(object){ return object.a; });
+        var g = basis.getter(function(object){
+          return object.a;
+        });
         this.is(11, g(data[0]));
 
-        var g = basis.getter(function(object){ return object.a; }, 'value: {0:.2}');
+        var g = basis.getter(function(object){
+          return object.a;
+        }, 'value: {0:.2}');
         this.is('value: 11.00', g(data[0]));
       }
     },
@@ -123,6 +127,7 @@ module.exports = {
         this.is(true, !basis.fn.$self.getter);
         this.is(true, !basis.fn.$self.__extend__);
 
+        /* jscs:disable requireKeywordsOnNewLine */
         this.is(true, basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 1; }));
         this.is(true, basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 1; }));
         this.is(true, basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 2; }));
@@ -140,6 +145,7 @@ module.exports = {
         this.is(true, basis.getter(function(){ return 1; }, 'f') !== basis.getter(function(){ return 2; }, 'f'));
 
         this.is(true, basis.getter(function(){ return 1; }, 'f') !== basis.getter(function(){ return 1; }, 'fs'));
+        /* jscs:enable requireKeywordsOnNewLine */
 
         this.is(true, basis.getter('a', Number) !== basis.getter('a'));
         this.is(true, basis.getter('a', Number) === basis.getter('a', Number));

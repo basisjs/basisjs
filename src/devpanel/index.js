@@ -4,10 +4,7 @@ this.inspectBasis = inspectBasis;
 
 // check basis.js instance found
 if (!inspectBasis)
-{
-  basis.dev.warn('inspect basis.js instance doesn\'t found');
-  return;
-}
+  throw new Error('inspect basis.js instance doesn\'t found');
 
 // much strict template isolation, to prevent style mix with inspecting basis app styles,
 // as isolation prefixes based on template id in dev mode

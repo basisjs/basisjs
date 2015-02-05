@@ -257,8 +257,8 @@
   function mouseY(event){
     if (event.changedTouches)             // touch device
       return event.changedTouches[0].pageY;
-    else                                  // all others
-      if ('pageY' in event)
+    else
+      if ('pageY' in event)               // all others
         return event.pageY;
       else
         return 'clientY' in event

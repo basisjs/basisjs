@@ -81,12 +81,24 @@
 
     switch (Math.floor(h1))
     {
-      case 0: rgb = [c, x, 0]; break;
-      case 1: rgb = [x, c, 0]; break;
-      case 2: rgb = [0, c, x]; break;
-      case 3: rgb = [0, x, c]; break;
-      case 4: rgb = [x, 0, c]; break;
-      case 5: rgb = [c, 0, x]; break;
+      case 0:
+        rgb = [c, x, 0];
+        break;
+      case 1:
+        rgb = [x, c, 0];
+        break;
+      case 2:
+        rgb = [0, c, x];
+        break;
+      case 3:
+        rgb = [0, x, c];
+        break;
+      case 4:
+        rgb = [x, 0, c];
+        break;
+      case 5:
+        rgb = [c, 0, x];
+        break;
     }
 
     return [

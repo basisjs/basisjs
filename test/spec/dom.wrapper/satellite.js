@@ -251,7 +251,7 @@ module.exports = {
         this.is(true, !!node.satellite.test);
         this.is(true, node.satellite.test instanceof AbstractNode);
         this.is(true, node.satellite.test.owner === node);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
       }
     },
     {
@@ -269,7 +269,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(false, checkNode(satellite));
         this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, node.satellite.test === satellite);
         this.is(true, node.satellite.test.owner === node);
       }
@@ -520,7 +520,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(false, checkNode(satellite));
         this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(undefined, node.satellite.test);
         this.is(false, satelliteDestroyed);
 
@@ -529,7 +529,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(false, checkNode(satellite));
         this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, node.satellite.test === satellite);
         this.is(true, satellite.owner === node);
 
@@ -540,7 +540,7 @@ module.exports = {
         this.is(undefined, node.satellite.test);
         this.is(false, satelliteDestroyed);
         this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, satellite.owner !== node);
       }
     },
@@ -713,7 +713,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(false, checkNode(satellite));
         this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, satellite.owner === node);
         this.is(false, satelliteDestroyed);
 
@@ -722,7 +722,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(false, checkNode(satellite));
         this.is(false, 'test' in node.satellite);
-        this.is(false, 'test' in node.satellite.__auto__);
+        this.is(false, 'test' in node.satellite[AUTO]);
         this.is(true, satelliteDestroyed);
         this.is(true, satellite.owner === null);
       }
@@ -752,7 +752,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(false, checkNode(satellite));
         this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, satellite.owner === null);
         this.is(false, satelliteDestroyed);
 
@@ -761,7 +761,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(false, checkNode(satellite));
         this.is(false, 'test' in node.satellite);
-        this.is(false, 'test' in node.satellite.__auto__);
+        this.is(false, 'test' in node.satellite[AUTO]);
         this.is(true, satelliteDestroyed);
         this.is(true, satellite.owner === null);
       }
@@ -791,7 +791,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(false, checkNode(satellite));
         this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, satellite.owner === null);
         this.is(false, satelliteDestroyed);
 
@@ -911,7 +911,7 @@ module.exports = {
 
         this.is(false, checkNode(node));
         this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
 
         var warn = basis.dev.warn;
         var warning = false;
@@ -940,7 +940,7 @@ module.exports = {
         this.is(false, warning); // should not be warning
         this.is(true, satelliteDestroyed);
         this.is(true, node.satellite.test === newSatellite);
-        this.is(false, 'test' in node.satellite.__auto__);
+        this.is(false, 'test' in node.satellite[AUTO]);
       }
     },
     {
@@ -956,7 +956,7 @@ module.exports = {
 
         this.is(false, checkNode(node));
         this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
 
         var warn = basis.dev.warn;
         var warning = false;
@@ -975,7 +975,7 @@ module.exports = {
         this.is(false, checkNode(newSatellite));
         this.is(false, warning); // should be warning
         this.is(true, node.satellite.test === newSatellite);
-        this.is(false, 'test' in node.satellite.__auto__);
+        this.is(false, 'test' in node.satellite[AUTO]);
       }
     },
     {
@@ -994,7 +994,7 @@ module.exports = {
 
         this.is(false, checkNode(node));
         this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, node.satellite.test instanceof AbstractNode);
         this.is(1, satelliteChangedEventCount);
 
@@ -1010,7 +1010,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(true, satelliteDestroyed);
         this.is(undefined, node.satellite.test);
-        this.is(false, 'test' in node.satellite.__auto__);
+        this.is(false, 'test' in node.satellite[AUTO]);
         this.is(2, satelliteChangedEventCount);
       }
     },
@@ -1032,7 +1032,7 @@ module.exports = {
 
         this.is(false, checkNode(node));
         this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(0, satelliteChangedEventCount);
 
         node.update({
@@ -1041,7 +1041,7 @@ module.exports = {
 
         this.is(false, checkNode(node));
         this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, node.satellite.test instanceof AbstractNode);
         this.is(1, satelliteChangedEventCount);
 
@@ -1060,7 +1060,7 @@ module.exports = {
         this.is(true, satelliteDestroyed);
         this.is(undefined, node.satellite.test);
         this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(2, satelliteChangedEventCount);
       }
     },
@@ -1080,7 +1080,7 @@ module.exports = {
 
         this.is(false, checkNode(node));
         this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(1, satelliteChangedEventCount);
 
         var satellite = node.satellite.test;
@@ -1099,7 +1099,7 @@ module.exports = {
         this.is(false, checkNode(node));
         this.is(2, satelliteChangedEventCount);
         this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, node.satellite.test !== satellite);
         this.is(true, satelliteDestroyed);
 
@@ -1110,7 +1110,7 @@ module.exports = {
 
         this.is(false, checkNode(node));
         this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(true, node.satellite.test instanceof AbstractNode);
       }
     },
@@ -1361,9 +1361,9 @@ module.exports = {
         this.is(false, checkNode(satellite));
         this.is(true, !!warning);
         this.is(true, node.satellite.test === satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(false, node.satellite.name === satellite);
-        this.is(false, 'name' in node.satellite.__auto__);
+        this.is(false, 'name' in node.satellite[AUTO]);
         this.is(true, satellite.owner === node);
       }
     },
@@ -1395,9 +1395,9 @@ module.exports = {
         this.is(false, checkNode(satellite));
         this.is(true, !!warning);
         this.is(true, node.satellite.test === satellite);
-        this.is(true, 'test' in node.satellite.__auto__);
+        this.is(true, 'test' in node.satellite[AUTO]);
         this.is(false, node.satellite.name === satellite);
-        this.is(false, 'name' in node.satellite.__auto__);
+        this.is(false, 'name' in node.satellite[AUTO]);
         this.is(true, satellite.owner === node);
       }
     },

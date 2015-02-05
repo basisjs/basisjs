@@ -52,9 +52,9 @@
     "requireDotNotation": true,
 
     "validateJSDoc": {
+        //"checkRedundantParams": true,
         "checkParamNames": true,
-        "requireParamTypes": true,
-        "checkRedundantParams": true
+        "requireParamTypes": true
     },
 
     "additionalRules": [

@@ -2482,7 +2482,9 @@
   });
 
   (function(map){
+    // jscs:disable basisIdentifiersStyle
     var map = typeof __namespace_map__ != 'undefined' ? __namespace_map__ : null;
+    // jscs:enable basisIdentifiersStyle
     if (map)
     {
       for (var key in map)
