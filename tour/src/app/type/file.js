@@ -16,7 +16,9 @@ var File = basis.entity.createType('File', {
 File.extend({
   syncAction: function(){
     var res = basis.resource('./slide/' + this.data.filename);
-    res.ready(this.set_content, this);
+    res.ready(function(content){
+      this.set('content', content);
+    }, this);
     this.set('content', res.get(true));
 
     // prevent more than one resource attachment

@@ -30,8 +30,6 @@ module.exports.prototype = {
                 return false;
             return true;
         }
-        //console.log(file);
-        //process.exit();
 
         file.iterateTokensByType('Identifier', function(token){
             if (isBadName(token.value)) {

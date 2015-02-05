@@ -59,5 +59,13 @@
 
     "additionalRules": [
         "scripts/jscs/*.js"
+    ],
+
+    "excludeFiles": [
+        "demo/seedrandom.js",
+        "demo/apps/todomvc/assets/**",
+        "scripts/jscs/**",
+        "tour/lib/**",
+        "node_modules/**"
     ]
 }

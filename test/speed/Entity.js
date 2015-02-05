@@ -1,16 +1,16 @@
 
     basis.require('basis.date');
-    basis.require('basis.cssom');    
+    basis.require('basis.cssom');
     basis.require('basis.dom');
     basis.require('basis.dom.event');
     basis.require('basis.data');
     basis.require('basis.entity');
     basis.require('basis.utils.benchmark');
-    
+
     var MAX_COUNT = 3000;
     var MAX_COUNT_QUATER = MAX_COUNT >> 2;
     var PROFILE = false;
-    
+
     var DOM = basis.dom;
     var Data = basis.data;
     var nsEntity = basis.entity;
@@ -23,7 +23,7 @@
 
     basis.event.Emitter.prototype.debug_emit = function(event){
       eventStat[event.type] = (eventStat[event.type] || 0) + 1;
-    }
+    };
 
     function saveEventStat(){
       savedEventStat_ = basis.object.extend({}, eventStat);
@@ -125,7 +125,7 @@
       return getTime(st);
     }
 
-    function test_fast_insert(){
+    function testFastInsert(){
       var st = getTime();
       var data = [];
       for (var i = 1; i <= MAX_COUNT; i++)
@@ -147,7 +147,7 @@
 
 
     var uniqValue = 1;
-    function test_update(){
+    function testUpdate(){
       var st = getTime();
       for (var i = 1; i <= MAX_COUNT; i++)
       {
@@ -184,7 +184,7 @@
       return getTime(st);
     }
 
-    function fast_clear(){
+    function fastClear(){
       if (Transfer.all.sync)
       {
         var st = getTime();
@@ -197,11 +197,11 @@
         return clear();
     }
 
-    var cold_insert = 0;
-    var hot_update = 0;
-    var hot_update_changes = 0;
-    var clear_time = 0;
-    var fast_clear_time = 0;
+    var coldInsertTime = 0;
+    var hotUpdateTime = 0;
+    var hotUpdateChangesTime = 0;
+    var clearTime = 0;
+    var fastClearTime = 0;
 
     function sec(value){
       return value.toFixed(3) + ' sec';
@@ -209,50 +209,66 @@
 
     function run1(func){
       saveEventStat();
-      var t1 = test(); var s1 = summary(); var es1 = getEventStatElement();
+      var t1 = test();
+      var s1 = summary();
+      var es1 = getEventStatElement();
       saveEventStat();
-      var t2 = test(); var s2 = summary(); var es2 = getEventStatElement();
+      var t2 = test();
+      var s2 = summary();
+      var es2 = getEventStatElement();
       saveEventStat();
-      var t22 = test_update(); var s3 = summary(); var es3 = getEventStatElement();
+      var t22 = testUpdate();
+      var s3 = summary();
+      var es3 = getEventStatElement();
       saveEventStat();
-      var t3 = clear(); var s4 = summary(); var es4 = getEventStatElement();
+      var t3 = clear();
+      var s4 = summary();
+      var es4 = getEventStatElement();
 
-      cold_insert += t1;
-      hot_update += t2;
-      hot_update_changes += t22;
-      clear_time += t3;
+      coldInsertTime += t1;
+      hotUpdateTime += t2;
+      hotUpdateChangesTime += t22;
+      clearTime += t3;
 
       DOM.insert(document.body, [
         DOM.createElement('hr'),
-        DOM.createElement(null, '1st run: ', sec(t1/1000), s1, es1),
-        DOM.createElement(null, '2nd run (no changes): ', sec(t2/1000), s2, es2),
-        DOM.createElement(null, '3rd run (changes): ', sec(t22/1000), s3, es3),
-        DOM.createElement(null, 'Clear all: ', sec(t3/1000), s4, es4)
+        DOM.createElement(null, '1st run: ', sec(t1 / 1000), s1, es1),
+        DOM.createElement(null, '2nd run (no changes): ', sec(t2 / 1000), s2, es2),
+        DOM.createElement(null, '3rd run (changes): ', sec(t22 / 1000), s3, es3),
+        DOM.createElement(null, 'Clear all: ', sec(t3 / 1000), s4, es4)
       ]);
       setTimeout(func, 50);
     }
 
     function run2(func){
       saveEventStat();
-      var t1 = test_fast_insert(); var s1 = summary(); var es1 = getEventStatElement();
+      var t1 = testFastInsert();
+      var s1 = summary();
+      var es1 = getEventStatElement();
       saveEventStat();
-      var t2 = test_fast_insert(); var s2 = summary(); var es2 = getEventStatElement();
+      var t2 = testFastInsert();
+      var s2 = summary();
+      var es2 = getEventStatElement();
       saveEventStat();
-      var t22 = test_update(); var s3 = summary(); var es3 = getEventStatElement();
+      var t22 = testUpdate();
+      var s3 = summary();
+      var es3 = getEventStatElement();
       saveEventStat();
-      var t3 = fast_clear(); var s4 = summary(); var es4 = getEventStatElement();
+      var t3 = fastClear();
+      var s4 = summary();
+      var es4 = getEventStatElement();
 
-      cold_insert += t1;
-      hot_update += t2;
-      hot_update_changes += t22;
-      fast_clear_time += t3;
+      coldInsertTime += t1;
+      hotUpdateTime += t2;
+      hotUpdateChangesTime += t22;
+      fastClearTime += t3;
 
       DOM.insert(document.body, [
         DOM.createElement('hr'),
-        DOM.createElement(null, '1st run: ', sec(t1/1000), s1, es1),
-        DOM.createElement(null, '2nd run (no changes): ', sec(t2/1000), s2, es2),
-        DOM.createElement(null, '3rd run (changes): ', sec(t22/1000), s3, es3),
-        DOM.createElement(null, 'Fast clear all: ', sec(t3/1000), s4, es4)
+        DOM.createElement(null, '1st run: ', sec(t1 / 1000), s1, es1),
+        DOM.createElement(null, '2nd run (no changes): ', sec(t2 / 1000), s2, es2),
+        DOM.createElement(null, '3rd run (changes): ', sec(t22 / 1000), s3, es3),
+        DOM.createElement(null, 'Fast clear all: ', sec(t3 / 1000), s4, es4)
       ]);
       setTimeout(func, 50);
     }
@@ -267,7 +283,9 @@
             padding: '0 2ex'
           }
         },
-        [Transfer.all, Currency.all, User.all].map(function(ds, idx){ return ['Transfer', 'Currency', 'User'][idx] + ' ' + getCount(ds); }).join(', ')
+        [Transfer.all, Currency.all, User.all].map(function(ds, idx){
+          return ['Transfer', 'Currency', 'User'][idx] + ' ' + getCount(ds);
+        }).join(', ')
       );
     }
 
@@ -291,19 +309,19 @@
     function total(){
       DOM.insert(document.body, [
         DOM.createElement('hr'),
-        DOM.createElement('H2', 'SCORE: ', parseInt((cold_insert+hot_update+hot_update_changes + 2*clear_time + 2*fast_clear_time)/4)),
-        DOM.createElement(null, 'First run: ', sec(cold_insert/4000)),
-        DOM.createElement(null, 'Second run (no changes): ', sec(hot_update/4000)),
-        DOM.createElement(null, 'Second run (changes): ', sec(hot_update_changes/4000)),
-        DOM.createElement(null, 'Clear total: ', sec(clear_time/2000)),
-        DOM.createElement(null, 'Fast clear total: ', sec(fast_clear_time/2000))
+        DOM.createElement('H2', 'SCORE: ', parseInt((coldInsertTime + hotUpdateTime + hotUpdateChangesTime + 2 * clearTime + 2 * fastClearTime) / 4)),
+        DOM.createElement(null, 'First run: ', sec(coldInsertTime / 4000)),
+        DOM.createElement(null, 'Second run (no changes): ', sec(hotUpdateTime / 4000)),
+        DOM.createElement(null, 'Second run (changes): ', sec(hotUpdateChangesTime / 4000)),
+        DOM.createElement(null, 'Clear total: ', sec(clearTime / 2000)),
+        DOM.createElement(null, 'Fast clear total: ', sec(fastClearTime / 2000))
       ]);
     }
 
     window.c1count = 0;
     window.c2count = 0;
 
-    function run_test(){
+    function startTest(){
       if (PROFILE) console.profile();
       run1(function(){
         run1(function(){
@@ -336,7 +354,7 @@
         description: 'BUTTON',
         click: function(){
           DOM.remove(this);
-          run_test();
+          startTest();
         }
       }, 'run test')
     );

@@ -20,8 +20,8 @@ var list = new basis.ui.Node({
 
   childClass: BaseItem,
   childFactory: function(config){
-    var childCls = classMap[config.type] || BaseItem;
-    return new childCls(config);
+    var ChildClass = classMap[config.type] || BaseItem;
+    return new ChildClass(config);
   },
   childNodes: [
     { type: 'check', caption: 'foo' },

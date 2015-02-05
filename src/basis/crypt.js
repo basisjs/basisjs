@@ -150,7 +150,6 @@
   //  md5
 
   var md5 = (function(){
-    // jscs:disable disallowImplicitTypeConversion
     var C_2_POW_32 = Math.pow(2, 32);
     var S;
     var K = [];
@@ -165,9 +164,11 @@
       function(x, y, z){
         return x ^ y ^ z;
       },
+      // jscs:disable
       function(x, y, z){
         return y ^ (x | ~z);
       }
+      // jscs:enable
     ];
 
     function initConst(){

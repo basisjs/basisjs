@@ -75,12 +75,12 @@
       speedTest('create with no config', TEST_COUNT, function(){
         t1.push(new DataObject);
       });
-   
+
       // Test #2
       // Measure creation of TEST_REPEAT_COUNT basis.data.Object with data
 
       var t2 = cleanArray();
-      var t2_data = {
+      var t2Data = {
         a: 1,
         b: 2,
         c: 3,
@@ -95,7 +95,7 @@
 
       speedTest('create with data', TEST_COUNT, function(){
         t2.push(new DataObject({
-          data: t2_data
+          data: t2Data
         }));
       });
 
@@ -115,7 +115,7 @@
 
       // Test #4
 
-      var t4_config = {
+      var t4Config = {
         data: {
           a: 1,
           b: 2,
@@ -126,10 +126,10 @@
       };
 
       var t4a = cleanArray(TEST_COUNT, function(){
-        return new DataObject(t4_config);
+        return new DataObject(t4Config);
       });
       var t4b = cleanArray(TEST_COUNT, function(){
-        return new DataObject(t4_config);
+        return new DataObject(t4Config);
       });
 
       speedTest('setDelegate with no update', TEST_COUNT, function(idx){
@@ -138,7 +138,7 @@
 
       // Test #5
 
-      var t5_o_config = {
+      var t5ObjectConfig = {
         data: {
           f: 6,
           k: 7,
@@ -147,7 +147,7 @@
           n: 0
         }
       };
-      var t5_d_config = {
+      var t5DelegateConfig = {
         data: {
           a: 1,
           b: 2,
@@ -158,10 +158,10 @@
       };
 
       var t5o = cleanArray(TEST_COUNT, function(){
-        return new DataObject(t5_o_config);
+        return new DataObject(t5ObjectConfig);
       });
       var t5d = cleanArray(TEST_COUNT, function(){
-        return new DataObject(t5_d_config);
+        return new DataObject(t5DelegateConfig);
       });
 
       speedTest('setDelegate with update', TEST_COUNT, function(idx){

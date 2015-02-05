@@ -41,7 +41,7 @@ slideIndex.ready(function(data){
 }, Slide.all);
 
 Slide.all.setSyncAction(function(){
-  slideIndex.fetch();  
+  slideIndex.fetch();
 });
 
 
