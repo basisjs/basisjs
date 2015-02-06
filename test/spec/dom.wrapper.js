@@ -109,6 +109,10 @@ module.exports = {
         return node.data.value + '(' + node.data.group + ')';
       });
     }
+
+    function getChildValues(node, getter){
+      return node.childNodes.map(basis.getter(getter || 'data.value'));
+    }
   },
 
   test: [

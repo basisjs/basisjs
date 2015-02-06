@@ -95,10 +95,8 @@
   // sorting
   //
 
-  function sortingSearch(node){
-    return node.sortingValue || 0; // it's important return a zero when sortingValue is undefined,
-                                   // because in this case sorting may be broken; it's also not a problem
-                                   // when zero equivalent values (null, false or empty string) converts to zero
+  function getSortingValue(node){
+    return node.sortingValue;
   }
 
   function sortAsc(a, b){
@@ -121,34 +119,59 @@
     );
   }
 
-  function binarySearchPos(array, value, getter_, desc){
+  function binarySearchPos(array, value, valueGetter, desc){
     if (!array.length)  // empty array check
       return 0;
 
     desc = !!desc;
 
-    var pos;
-    var compareValue;
     var l = 0;
     var r = array.length - 1;
+    var valueType = typeof value;
+    var compareValue;
+    var compareValueType;
+    var pos;
 
     do
     {
       pos = (l + r) >> 1;
-      compareValue = getter_(array[pos]);
-      if (desc ? value > compareValue : value < compareValue)
-        r = pos - 1;
-      else
-        if (desc ? value < compareValue : value > compareValue)
+      compareValue = valueGetter(array[pos]);
+      compareValueType = typeof compareValue;
+
+      if (desc)
+      {
+        if (valueType > compareValueType || value > compareValue)
+        {
+          r = pos - 1;
+          continue;
+        }
+        if (valueType < compareValueType || value < compareValue)
+        {
           l = pos + 1;
-        else
-          return value == compareValue ? pos : 0;  // founded element
-                                                    // -1 returns when it seems as founded element,
-                                                    // but not equal (array item or value looked for have wrong data type for compare)
+          continue;
+        }
+      }
+      else
+      {
+        if (valueType < compareValueType || value < compareValue)
+        {
+          r = pos - 1;
+          continue;
+        }
+        if (valueType > compareValueType || value > compareValue)
+        {
+          l = pos + 1;
+          continue;
+        }
+      }
+
+      return value == compareValue ? pos : 0;   // founded element
+                                                // -1 returns when it seems as founded element,
+                                                // but not equal (array item or value looked for have wrong data type for compare)
     }
     while (l <= r);
 
-    return pos + ((compareValue < value) ^ desc);
+    return pos + ((compareValueType < valueType || compareValue < value) ^ desc);
   }
 
   //
@@ -1679,7 +1702,12 @@
         // if sorting is using - refChild is ignore
         refChild = null; // ignore
         sortingDesc = this.sortingDesc;
-        newChildValue = sorting(newChild) || 0;
+        newChildValue = sorting(newChild);
+
+        if (newChildValue == null)
+          newChildValue = -Infinity;
+        else if (typeof newChildValue != 'number' || newChildValue !== newChildValue)
+          newChildValue = String(newChildValue);
 
         // some optimizations if node had already inside current node
         if (isInside)
@@ -1690,14 +1718,21 @@
           }
           else
           {
-            if (
-                (!nextSibling || (sortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue)) &&
-                (!prevSibling || (sortingDesc ? prevSibling.sortingValue >= newChildValue : prevSibling.sortingValue <= newChildValue))
-               )
+            if (sortingDesc)
             {
-              newChild.sortingValue = newChildValue;
-              correctSortPos = true;
+              correctSortPos =
+                (!nextSibling || (typeof nextSibling.sortingValue <= typeof newChildValue && nextSibling.sortingValue <= newChildValue)) &&
+                (!prevSibling || (typeof prevSibling.sortingValue >= typeof newChildValue && prevSibling.sortingValue >= newChildValue));
             }
+            else
+            {
+              correctSortPos =
+                (!nextSibling || (typeof nextSibling.sortingValue >= typeof newChildValue && nextSibling.sortingValue >= newChildValue)) &&
+                (!prevSibling || (typeof prevSibling.sortingValue <= typeof newChildValue && prevSibling.sortingValue <= newChildValue));
+            }
+
+            if (correctSortPos)
+              newChild.sortingValue = newChildValue;
           }
         }
       }
@@ -1726,7 +1761,7 @@
           else
           {
             // when sorting use binary search
-            pos = binarySearchPos(groupNodes, newChildValue, sortingSearch, sortingDesc);
+            pos = binarySearchPos(groupNodes, newChildValue, getSortingValue, sortingDesc);
             newChild.sortingValue = newChildValue;
           }
         }
@@ -1788,7 +1823,7 @@
             return newChild;
 
           // search for refChild
-          pos = binarySearchPos(childNodes, newChildValue, sortingSearch, sortingDesc);
+          pos = binarySearchPos(childNodes, newChildValue, getSortingValue, sortingDesc, this.lll);
           refChild = childNodes[pos];
           newChild.sortingValue = newChildValue; // change sortingValue AFTER search
 
@@ -2308,7 +2343,14 @@
           var nodes;
 
           for (var node = this.firstChild; node; node = node.nextSibling)
-            node.sortingValue = sorting(node) || 0;
+          {
+            var newChildValue = sorting(node);
+            if (newChildValue == null)
+              newChildValue = -Infinity;
+            else if (typeof newChildValue != 'number' || newChildValue !== newChildValue)
+              newChildValue = String(newChildValue);
+            node.sortingValue = newChildValue;
+          }
 
           // Probably strange and dirty solution, but faster (up to 2-5 times).
           // Low dependence of node shuffling. Total permutation count equals to permutation
