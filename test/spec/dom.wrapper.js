@@ -221,6 +221,7 @@ module.exports = {
     },
     require('./dom.wrapper/satellite.js'),
     require('./dom.wrapper/dataSource.js'),
+    require('./dom.wrapper/sorting.js'),
     require('./dom.wrapper/grouping.js'),
     require('./dom.wrapper/selection.js'),
     require('./dom.wrapper/dynamic.js')
