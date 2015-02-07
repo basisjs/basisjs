@@ -1,4 +1,4 @@
-.slide-file-tab
+.tab
 {
   float: left;
   margin-right: 1px;
@@ -8,14 +8,14 @@
   font-size: 90%;
   cursor: pointer;
 }
-.slide-file-tab_selected
+.tab_selected
 {
   padding-bottom: 5px;
   cursor: default;
   color: #EEE;
   background: #272822;
 }
-.slide-file-tab_modified
+.tab_modified
 {
   font-weight: bold;
 }

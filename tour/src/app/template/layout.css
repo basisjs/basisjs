@@ -11,7 +11,7 @@ BODY
   font-family: Tahoma, Verdana, sans-serif;
 }
 
-#layout
+.layout
 {
   position: absolute;
   top: 0;
