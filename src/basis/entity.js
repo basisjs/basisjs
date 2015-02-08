@@ -1782,6 +1782,16 @@
       return namedIndexes[name];
     },
 
+    is: function(value, type){
+      var EntityClass;
+
+      if (typeof type == 'string')
+        type = namedTypes[type];
+
+      EntityClass = type && type.type && type.type.entityClass;
+
+      return value && EntityClass ? value instanceof EntityClass : false;
+    },
     get: function(typeName, value){      // works like Type.get(value)
       var Type = namedTypes[typeName];
       if (Type)
