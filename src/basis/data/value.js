@@ -69,41 +69,9 @@
     }
   };
 
-  var objectSetUpdater = (function(){
-    var objects = {};
-    var sheduled = false;
-
-    function process(){
-      // set timer to make sure all objects be processed
-      // it helps avoid try/catch and process all objects even if any exception
-      var etimer = basis.setImmediate(process);
-
-      // reset shedule, to add new expressions
-      sheduled = false;
-
-      // process objects
-      for (var id in objects)
-      {
-        var object = objects[id];
-        delete objects[id];
-        object.update();
-      }
-
-      // if no exceptions we will be here, reset emergency timer
-      basis.clearImmediate(etimer);
-    }
-
-    return {
-      add: function(object){
-        objects[object.basisObjectId] = object;
-        if (!sheduled)
-          sheduled = basis.asap(process);
-      },
-      remove: function(object){
-        delete objects[object.basisObjectId];
-      }
-    };
-  })();
+  var objectSetUpdater = basis.asap.shedule(function(object){
+    object.update();
+  });
 
  /**
   * @class

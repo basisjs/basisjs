@@ -866,6 +866,47 @@
         process();
     };
 
+   /**
+    * Returns shedule instance. Object queue for which sheduleFn should be apply asap.
+    * @return
+    */
+    asap.shedule = (function(sheduleFn){
+      var objects = {};
+      var sheduled = false;
+
+      function process(){
+        // set timer to make sure all objects be processed
+        // it helps avoid try/catch and process all objects even if any exception
+        var etimer = basis.setImmediate(process);
+
+        // reset shedule, to add new expressions
+        sheduled = false;
+
+        // process objects
+        for (var id in objects)
+        {
+          var object = objects[id];
+          delete objects[id];
+          sheduleFn(object);
+        }
+
+        // if no exceptions we will be here, reset emergency timer and object store
+        objects = {};
+        basis.clearImmediate(etimer);
+      }
+
+      return {
+        add: function(object){
+          objects[object.basisObjectId] = object;
+          if (!sheduled)
+            sheduled = basis.asap(process);
+        },
+        remove: function(object){
+          delete objects[object.basisObjectId];
+        }
+      };
+    });
+
     return asap;
   })();
 
@@ -1925,32 +1966,9 @@
   // Deferred token
   //
 
-  var awaitToApply = (function(){
-    var tokens = {};
-    var timer;
-
-    function applyTokens(){
-      var list = tokens;
-
-      // reset list & timer
-      tokens = {};
-      timer = null;
-
-      // call apply method for all tokens in the list
-      for (var key in list)
-        list[key].apply();
-    }
-
-    return function(token){
-      if (token.basisObjectId in tokens)
-        return;
-
-      tokens[token.basisObjectId] = token;
-
-      if (!timer)
-        setImmediate(applyTokens);
-    };
-  })();
+  var deferredTokenApplyQueue = asap.shedule(function(token){
+    token.apply();
+  });
 
  /**
   * @class
@@ -1966,7 +1984,7 @@
       if (this.value !== value)
       {
         this.value = value;
-        awaitToApply(this);
+        deferredTokenApplyQueue.add(this);
       }
     },
 
