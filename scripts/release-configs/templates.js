@@ -25,7 +25,7 @@ global.bt = module.exports = basis.object.extend(templateWrapper, {
 
     if (config.noConflict)
     {
-      delete window.bt;
+      delete global.bt;
       return this;
     }
   },

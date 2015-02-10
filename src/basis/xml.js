@@ -77,7 +77,7 @@
       };
     }
 
-    if (window.ActiveXObject)
+    if (global.ActiveXObject)
     {
       // http://blogs.msdn.com/xmlteam/archive/2006/10/23/using-the-right-version-of-msxml-in-internet-explorer.aspx
       var progId = ['MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.3.0'];

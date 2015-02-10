@@ -31,7 +31,7 @@
   }
 
   function formDataSupport(){
-    return window.FormData !== undefined;
+    return global.FormData !== undefined;
   }
 
  /**

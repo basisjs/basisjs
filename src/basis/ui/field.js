@@ -547,7 +547,7 @@
     symbolsLeft: 0,
 
     emit_symbolsLeftChanged: createEvent('symbolsLeftChanged'),
-    emit_fieldFocus: !window.opera
+    emit_fieldFocus: !global.opera
       ? TextField.prototype.emit_fieldFocus
         // fix opera's bug: when invisible textarea becomes visible and user
         // changes it content, value property returns empty string instead of field value
