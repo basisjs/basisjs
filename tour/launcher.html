@@ -57,7 +57,7 @@
           tourConsoleMessage(Array.prototype.slice.call(arguments).join(' '), methodName);
           if (console)
             Function.prototype.apply.call(console[methodName], console, arguments);
-        }        
+        };
       }
 
       for (var i = 0, method; method = methods[i++];) {
@@ -69,7 +69,7 @@
 
     window.onerror = function(message){
       document.write(message);
-    }
+    };
   </script>
   <script>
     if (top.launcherCallback)

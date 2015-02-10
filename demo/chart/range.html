@@ -243,11 +243,11 @@
                 context: this,
                 callbacks: {
                   start: function(){
-                    this.offset__ = reportSlice.offset;
+                    this.offset_ = reportSlice.offset;
                   },
                   drag: function(sender, config){
                     var itemCount = reportSlice.index_.length;
-                    var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                    var offset = this.offset_ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
                     reportSlice.setOffset(basis.number.fit(offset, 0, itemCount - reportSlice.limit));
                   }
                 }
@@ -260,11 +260,11 @@
                 context: this,
                 callbacks: {
                   start: function(){
-                    this.limit__ = reportSlice.limit;
+                    this.limit_ = reportSlice.limit;
                   },
                   drag: function(sender, config){
                     var itemCount = reportSlice.index_.length;
-                    var limit = this.limit__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                    var limit = this.limit_ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
                     reportSlice.setLimit(Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
                   }
                 }
@@ -277,12 +277,12 @@
                 context: this,
                 callbacks: {
                   start: function(){
-                    this.offset__ = reportSlice.offset;
-                    this.limit__ = reportSlice.limit;
+                    this.offset_ = reportSlice.offset;
+                    this.limit_ = reportSlice.limit;
                   },
                   drag: function(sender, config){
                     var itemCount = reportSlice.index_.length;
-                    var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
+                    var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset_ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
                     var limit = reportSlice.limit - (offset - reportSlice.offset);
                     reportSlice.setRange(offset, limit);
                   }
