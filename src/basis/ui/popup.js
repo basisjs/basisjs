@@ -532,7 +532,7 @@
       if (typeof value == 'string')
       {
         if (value.substr(0, 6) != 'owner:')
-          return domUtils.get(relElement);
+          return domUtils.get(value);
 
         if (this.owner)
           return (this.owner.tmpl && this.owner.tmpl[value.substr(6)]) || this.owner.element;
