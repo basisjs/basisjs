@@ -45,7 +45,8 @@
 
   var NULL_OBJECT = {};
   var EMPTY_ARRAY = [];
-  var FACTORY = {};
+  var FACTORY = basis.FACTORY;
+  var PROXY = basis.PROXY;
 
 
   //
@@ -396,6 +397,9 @@
       // activate subscription if active
       if (this.active)
       {
+        if (this.active === PROXY)
+          this.active = Value.from(this, 'subscribersChanged', 'subscriberCount');
+
         this.active = !!resolveValue(this, this.setActive, this.active, 'activeRA_');
 
         if (this.active)
@@ -465,6 +469,9 @@
     * @return {boolean} Returns true if {basis.data.Object#active} was changed.
     */
     setActive: function(isActive){
+      if (isActive === PROXY)
+        isActive = Value.from(this, 'subscribersChanged', 'subscriberCount');
+
       isActive = !!resolveValue(this, this.setActive, isActive, 'activeRA_');
 
       if (this.active != isActive)
@@ -2819,8 +2826,6 @@
     // const
     STATE: STATE,
     SUBSCRIPTION: SUBSCRIPTION,
-    FACTORY: FACTORY,
-    PROXY: Value.factory('subscribersChanged', 'subscriberCount'),
 
     // classes
     AbstractData: AbstractData,

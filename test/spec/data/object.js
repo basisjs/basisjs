@@ -10,7 +10,7 @@ module.exports = {
     var Value = basis.require('basis.data').Value;
     var STATE = basis.require('basis.data').STATE;
     var SUBSCRIPTION = basis.require('basis.data').SUBSCRIPTION;
-    var PROXY = basis.require('basis.data').PROXY;
+    var PROXY = basis.PROXY;
 
     (function(){
       var proto = DataObject.prototype;

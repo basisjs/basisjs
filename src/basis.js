@@ -51,6 +51,10 @@
   // TODO: to do this stuff right
   global = context;
 
+  // const
+  var FACTORY = {};
+  var PROXY = {};
+
 
  /**
   * Generates unique id (mix datetime and random).
@@ -3685,6 +3689,8 @@
     asap: asap,
 
     // classes
+    FACTORY: FACTORY,
+    PROXY: PROXY,
     Class: Class,
     Token: Token,
     DeferredToken: DeferredToken,
