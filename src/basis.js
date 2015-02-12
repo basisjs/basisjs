@@ -886,7 +886,7 @@
     * @return
     */
     asap.shedule = (function(sheduleFn){
-      var objects = {};
+      var queue = {};
       var sheduled = false;
 
       function process(){
@@ -894,30 +894,33 @@
         // it helps avoid try/catch and process all objects even if any exception
         var etimer = basis.setImmediate(process);
 
-        // reset shedule, to add new expressions
+        // reset sheduled flag, make possible set new asap for objects added during queue processing
         sheduled = false;
 
         // process objects
-        for (var id in objects)
+        for (var id in queue)
         {
-          var object = objects[id];
-          delete objects[id];
+          var object = queue[id];
+          delete queue[id];
           sheduleFn(object);
         }
 
-        // if no exceptions we will be here, reset emergency timer and object store
-        objects = {};
+        // if no exceptions we will be here, reset emergency timer
         basis.clearImmediate(etimer);
+
+        // reset queue to keep it fast, but if no new task sheduled during queue processing
+        if (!sheduled)
+          queue = {};
       }
 
       return {
         add: function(object){
-          objects[object.basisObjectId] = object;
+          queue[object.basisObjectId] = object;
           if (!sheduled)
             sheduled = basis.asap(process);
         },
         remove: function(object){
-          delete objects[object.basisObjectId];
+          delete queue[object.basisObjectId];
         }
       };
     });
