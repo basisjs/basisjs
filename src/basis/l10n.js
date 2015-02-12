@@ -53,6 +53,7 @@
     */
     init: function(value, token){
       token.computeTokens[this.basisObjectId] = this;
+      this.dictionary = token.dictionary;
       this.token = token;
 
       basis.Token.prototype.init.call(this, value);
@@ -61,12 +62,18 @@
     get: function(){
       var isPlural = this.token.type == 'plural';
       var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
-      var value = this.token.dictionary.getValue(this.token.name + '.' + key);
+      var value = this.dictionary.getValue(this.token.name + '.' + key);
 
       if (isPlural)
         value = String(value).replace(/#/g, this.value);
 
       return value;
+    },
+
+    getType: function(){
+      var isPlural = this.token.type == 'plural';
+      var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
+      return this.dictionary.types[this.token.name + '.' + key] || 'default';
     },
 
     toString: function(){
@@ -76,6 +83,7 @@
     destroy: function(){
       delete this.token.computeTokens[this.basisObjectId];
       this.token = null;
+      this.dictionary = null;
 
       basis.Token.prototype.destroy.call(this);
     }
@@ -142,6 +150,10 @@
 
     set: function(){
       /** @cut */ basis.dev.warn('basis.l10n: Value for l10n token can\'t be set directly, but through dictionary update only');
+    },
+
+    getType: function(){
+      return this.type;
     },
 
     setType: function(type){
@@ -259,6 +271,14 @@
 
       /** @cut */ basis.dev.warn('basis.l10n.token accepts token references in format `token.path@path/to/dict.l10n` only');
     }
+  }
+
+ /**
+  * @param {*} value Value that should be check it is a markup l10n token.
+  * @return {boolean}
+  */
+  function isMarkupToken(value){
+    return (value instanceof Token || value instanceof ComputeToken) && value.getType() == 'markup';
   }
 
 
@@ -798,6 +818,7 @@
     ComputeToken: ComputeToken,
     Token: Token,
     token: resolveToken,
+    isMarkupToken: isMarkupToken,
 
     Dictionary: Dictionary,
     dictionary: resolveDictionary,

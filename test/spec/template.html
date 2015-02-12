@@ -24,13 +24,19 @@
               'pluralWithPlaceholder': 'plural',
               'simpleMarkup': 'markup',
               'markupWithBinding': 'markup',
-              'l10nMarkup': 'markup'
+              'l10nMarkup': 'markup',
+              'enumMarkup.foo': 'markup',
+              'enumMarkup.bar': 'markup',
+              'pluralMarkup': 'plural',
+              'pluralMarkup.0': 'markup'
             }
           },
           'en-US': {
             'foo': 'foo text',
             'enum': { 'foo': 'foo text', 'bar': 'bar text' },
+            'enumMarkup': { 'foo': '<b>foo markup</b>', 'bar': '<b>bar markup</b>', 'baz': '<b>baz markup</b>' },
             'plural': ['plural text', 'plural texts'],
+            'pluralMarkup': ['<b>1 markup</b>', '<b>2 markup</b>'],
             'pluralWithPlaceholder': ['# plural text', '# plural texts'],
             'simpleMarkup': 'simple <b>markup</b> text',
             'markupWithBinding': '<b>markup</b> text {foo}',
@@ -39,7 +45,9 @@
           'ru-RU': {
             'foo': 'foo текст',
             'enum': { 'foo': 'foo текст', 'bar': 'bar текст' },
+            'enumMarkup': { 'foo': '<b>foo маркап</b>', 'bar': '<b>bar маркап</b>', 'baz': '<b>baz маркап</b>' },
             'plural': ['plural текст', 'plural текста', 'plural текстов'],
+            'pluralMarkup': ['<b>1 маркап</b>', '<b>2 маркап</b>', '<b>5 маркап</b>'],
             'pluralWithPlaceholder': ['# plural текст', '# plural текста', '# plural текстов'],
             'simpleMarkup': 'простой <b>markup</b> текст',
             'markupWithBinding': '<b>markup</b> текст {foo}',

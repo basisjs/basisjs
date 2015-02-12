@@ -139,7 +139,6 @@ module.exports = {
                 assert(['z', 'a', 'Z', 'A', 11, 2, 1, null, undefined], getChildValues(node));
 
                 var changesCount = basis.array(node.childNodes).reduce(function(res, child, idx){
-                  console.log(child.data.value, values[idx]);
                   return res + Boolean(child.update({
                     value: values[idx]
                   }));

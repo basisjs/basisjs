@@ -16,6 +16,7 @@
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
   var basisL10n = require('basis.l10n');
+  var isMarkupToken = basisL10n.isMarkupToken;
   var getL10nToken = basisL10n.token;
   var L10nToken = basisL10n.Token;
   var getFunctions = require('basis.template.htmlfgen').getFunctions;
@@ -136,7 +137,7 @@
     var id = token.name + '@' + url;
     var sourceWrapper;
     var result = token.as(function(value){
-      if (token.type == 'markup')
+      if (token.getType() == 'markup')
       {
         if (value != this.value)
           if (sourceWrapper)
@@ -702,7 +703,9 @@
       {
         if (bridge)
         {
-          if (!oldAttach || value !== oldAttach.value || (value.type == 'markup' && !oldAttach.tmpl))
+          if (!oldAttach ||
+              value !== oldAttach.value ||
+              (!oldAttach.tmpl && isMarkupToken(value)))
           {
             if (oldAttach)
             {
@@ -712,7 +715,7 @@
               oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             }
 
-            if (value.type == 'markup' && value instanceof L10nToken)
+            if (isMarkupToken(value))
             {
               var template = getL10nHtmlTemplate(value);
               var context = this.context;
@@ -739,7 +742,7 @@
             bridge.attach(value, updateAttach, newAttach);
           }
           else
-            tmpl = value && value.type == 'markup' ? oldAttach.tmpl : null;
+            tmpl = value && isMarkupToken(value) ? oldAttach.tmpl : null;
 
           if (tmpl)
             return tmpl.parent;
@@ -916,7 +919,7 @@
               path: key,
               token: token,
               handler: function(value){
-                var isMarkup = this.token.type == 'markup';
+                var isMarkup = this.token.getType() == 'markup';
 
                 if (isMarkup)
                   basis.array.add(l10nMarkupTokens, this);
@@ -931,7 +934,7 @@
             link.token.attach(link.handler, link);
             l10nLinks.push(link);
 
-            if (token.type == 'markup')
+            if (token.getType() == 'markup')
             {
               l10nMarkupTokens.push(link);
               l10nProtoSync(key, null);

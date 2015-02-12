@@ -375,7 +375,7 @@ module.exports = {
                       }
                     });
 
-                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo}</span>');
+                    var template = createTemplate('<span>{foo}</span>');
                     var instance = template.createInstance();
 
                     assert(text(instance) === '<span>{foo}</span>');
@@ -414,7 +414,7 @@ module.exports = {
                       }
                     });
 
-                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{foo}</span>');
+                    var template = createTemplate('<span>{foo}</span>');
                     var instance = template.createInstance();
 
                     assert(text(instance) === '<span>{foo}</span>');
@@ -527,6 +527,161 @@ module.exports = {
 
                     l10n.setCulture('en-US');
                     assert(text(instance) === text('<span title="test foo/simple &lt;b&gt;markup&lt;/b&gt; text"></span>'));
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          name: 'nested',
+          test: [
+            {
+              name: 'markup in enum',
+              test: [
+                {
+                  name: 'template binding',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:enumMarkup.{value}}</span>');
+                    var instance = template.createInstance();
+
+                    assert(text(instance, { value: 'foo' }) === '<span><b>foo markup</b></span>');
+                    assert(text(instance, { value: 'bar' }) === '<span><b>bar markup</b></span>');
+                    assert(text(instance, { value: 'baz' }) === '<span>&lt;b&gt;baz markup&lt;/b&gt;</span>');
+                    assert(text(instance, { value: 'foo' }) === '<span><b>foo markup</b></span>');
+                  }
+                },
+                {
+                  name: 'token from binding',
+                  test: function(){
+                    var dictionary = l10n.dictionary({
+                      _meta: {
+                        type: {
+                          'enum.foo': 'markup',
+                          'enum.bar': 'markup'
+                        }
+                      },
+                      'en-US': {
+                        enum: {
+                          foo: '<b>foo markup</b>',
+                          bar: '<b>bar markup</b>',
+                          baz: '<b>baz markup</b>'
+                        }
+                      }
+                    });
+
+                    var template = createTemplate('<span>{token}</span>');
+                    var instance = template.createInstance();
+                    var token = dictionary.token('enum').computeToken('foo');
+
+                    instance.set('token', token);
+                    assert(text(instance) === '<span><b>foo markup</b></span>');
+
+                    token.set('bar');
+                    assert(text(instance) === '<span><b>bar markup</b></span>');
+
+                    token.set('baz');
+                    assert(text(instance) === '<span>&lt;b&gt;baz markup&lt;/b&gt;</span>');
+
+                    token.set('foo');
+                    assert(text(instance) === '<span><b>foo markup</b></span>');
+                  }
+                },
+                {
+                  name: 'token from binding and type changes',
+                  test: function(){
+                    var dictionary = l10n.dictionary({
+                      _meta: { type: { 'enum.foo': 'markup' } },
+                      'en-US': {
+                        enum: {
+                          foo: '<b>foo markup</b>'
+                        }
+                      }
+                    });
+
+                    var template = createTemplate('<span>{token}</span>');
+                    var instance = template.createInstance();
+                    var token = dictionary.token('enum').computeToken('foo');
+
+                    instance.set('token', token);
+                    assert(text(instance) === '<span><b>foo markup</b></span>');
+
+                    dictionary.update({
+                      _meta: { type: { 'enum.foo': 'markup' } },
+                      'en-US': {
+                        enum: {
+                          foo: '<b>foo markup!!!</b>'
+                        }
+                      }
+                    });
+                    assert(text(instance) === '<span><b>foo markup!!!</b></span>');
+
+                    dictionary.update({
+                      'en-US': {
+                        enum: {
+                          foo: '<b>foo markup!!!</b>'
+                        }
+                      }
+                    });
+                    assert(text(instance) === text('<span>&lt;b>foo markup!!!&lt;/b></span>'));
+
+                    dictionary.update({
+                      _meta: { type: { 'enum.foo': 'markup' } },
+                      'en-US': {
+                        enum: {
+                          foo: '<b>foo markup!!!</b>'
+                        }
+                      }
+                    });
+                    assert(text(instance) === text('<span><b>foo markup!!!</b></span>'));
+                  }
+                }
+              ]
+            },
+            {
+              name: 'markup in plural',
+              test: [
+                {
+                  name: 'template binding',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:pluralMarkup.{value}}</span>');
+                    var instance = template.createInstance();
+
+                    assert(text(instance, { value: 1 }) === '<span><b>1 markup</b></span>');
+                    assert(text(instance, { value: 2 }) === '<span>&lt;b&gt;2 markup&lt;/b&gt;</span>');
+                    assert(text(instance, { value: 1 }) === '<span><b>1 markup</b></span>');
+                  }
+                },
+                {
+                  name: 'token from binding',
+                  test: function(){
+                    var dictionary = l10n.dictionary({
+                      _meta: {
+                        type: {
+                          'plural': 'plural',
+                          'plural.0': 'markup'
+                        }
+                      },
+                      'en-US': {
+                        plural: [
+                          '<b>1 markup</b>',
+                          '<b>2 markup</b>'
+                        ]
+                      }
+                    });
+
+                    var template = createTemplate('<span>{token}</span>');
+                    var instance = template.createInstance();
+                    var token = dictionary.token('plural').computeToken(1);
+
+                    instance.set('token', token);
+                    assert(text(instance) === '<span><b>1 markup</b></span>');
+
+                    token.set(2);
+                    assert(text(instance) === '<span>&lt;b&gt;2 markup&lt;/b&gt;</span>');
+
+                    token.set(1);
+                    assert(text(instance) === '<span><b>1 markup</b></span>');
                   }
                 }
               ]
