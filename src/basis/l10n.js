@@ -40,6 +40,29 @@
   var tokenComputeFn = {};
   var tokenComputes = {};
   var updateToken = basis.Token.prototype.set;
+  var tokenType = {
+    'default': true,
+    'plural': true,
+    'markup': true,
+    'plural-markup': true,
+    'enum-markup': true
+  };
+  var nestedType = {
+    'default': 'default',
+    'plural': 'default',
+    'markup': 'default',
+    'plural-markup': 'markup',
+    'enum-markup': 'markup'
+  };
+  var isPluralType = {
+    'plural': true,
+    'plural-markup': true
+  };
+  var isMarkupType = {
+    'markup': true,
+    'plural-markup': true,
+    'enum-markup': true
+  };
 
 
  /**
@@ -60,7 +83,7 @@
     },
 
     get: function(){
-      var isPlural = this.token.type == 'plural';
+      var isPlural = isPluralType[this.token.getType()];
       var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
       var value = this.dictionary.getValue(this.token.name + '.' + key);
 
@@ -71,9 +94,11 @@
     },
 
     getType: function(){
-      var isPlural = this.token.type == 'plural';
-      var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
-      return this.dictionary.types[this.token.name + '.' + key] || 'default';
+      var type = this.token.getType();
+      var key = isPluralType[type] ? cultures[currentCulture].plural(this.value) : this.value;
+      return this.dictionary.types[this.token.name + '.' + key] ||
+             nestedType[type] ||
+             'default';
     },
 
     toString: function(){
@@ -111,7 +136,8 @@
     name: '',
 
    /**
-    * enum default, plural, markup
+    * One of 'default', 'plural', 'markup', 'plural-markup', 'enum-markup'
+    * @type {string}
     */
     type: 'default',
 
@@ -128,13 +154,9 @@
 
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
+      this.parent = tokenName.replace(/(^|\.)[^.]+$/, '');
       this.dictionary = dictionary;
       this.computeTokens = {};
-
-      if (type)
-        this.setType(type);
-      else
-        this.apply();
     },
 
     toString: function(){
@@ -153,18 +175,14 @@
     },
 
     getType: function(){
-      return this.type;
+      return this.dictionary.types[this.name] ||
+             nestedType[this.dictionary.types[this.parent]] ||
+             'default';
     },
 
     setType: function(type){
-      if (type != 'plural' && (!module.exports.enableMarkup || type != 'markup'))
-        type = 'default';
-
-      if (this.type != type)
-      {
-        this.type = type;
-        this.apply();
-      }
+      // basis.js 1.4
+      /** @cut */ basis.dev.warn('basis.l10n: Token#setType() is deprecated');
     },
 
     compute: function(events, getter){
@@ -221,7 +239,7 @@
     },
 
     token: function(name){
-      if (this.type == 'plural')
+      if (isPluralType[this.getType()])
         name = cultures[currentCulture].plural(name);
 
       if (this.dictionary)
@@ -278,7 +296,7 @@
   * @return {boolean}
   */
   function isMarkupToken(value){
-    return (value instanceof Token || value instanceof ComputeToken) && value.getType() == 'markup';
+    return (value instanceof Token || value instanceof ComputeToken) && isMarkupType[value.getType()];
   }
 
 
@@ -408,9 +426,23 @@
         }
 
       // apply types
-      this.types = (data._meta && data._meta.type) || {};
-      for (var key in this.tokens)
-        this.tokens[key].setType(this.types[key]);
+      var newTypes = (data._meta && data._meta.type) || {};
+      var currentTypes = {};
+
+      for (var path in this.tokens)
+        currentTypes[path] = this.tokens[path].getType();
+
+      this.types = {};
+      for (var path in newTypes)
+        if (tokenType[newTypes[path]] == true)
+          this.types[path] = newTypes[path];
+
+      for (var path in this.tokens)
+      {
+        var token = this.tokens[path];
+        if (token.getType() != currentTypes[path])
+          this.tokens[path].apply();
+      }
 
       // update values
       this.syncValues();
