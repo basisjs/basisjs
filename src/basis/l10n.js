@@ -868,3 +868,20 @@
     pluralForms: pluralForms,
     onCultureChange: onCultureChange
   };
+
+  // show warning on set `enableMarkup` as deprecated
+  // basis.js 1.4
+  /** @cut */ (function(){
+  /** @cut */   var value = false;
+  /** @cut */   try { // use try to avoid IE8 problems and unsupported browsers
+  /** @cut */     Object.defineProperty(module.exports, 'enableMarkup', {
+  /** @cut */       get: function(){
+  /** @cut */         return value;
+  /** @cut */       },
+  /** @cut */       set: function(newValue){
+  /** @cut */         basis.dev.warn('basis.l10n: enableMarkup option is deprecated, just remove it from your source code as markup l10n tokens enabled by default now');
+  /** @cut */         value = newValue;
+  /** @cut */       }
+  /** @cut */     });
+  /** @cut */   } catch(e){ }
+  /** @cut */ })();
