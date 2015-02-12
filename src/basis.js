@@ -55,6 +55,10 @@
   var FACTORY = {};
   var PROXY = {};
 
+  // dev verbose names for object const
+  /** @cut */ FACTORY = new (devVerboseName('basis.FACTORY', {}, function(){}));
+  /** @cut */ PROXY = new (devVerboseName('basis.PROXY', {}, function(){}));
+
 
  /**
   * Generates unique id (mix datetime and random).
@@ -573,6 +577,13 @@
     };
 
     return name;
+  }
+
+ /**
+  * dev mode only
+  */
+  function devVerboseName(name, args, fn){
+    return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
   }
 
 
@@ -1452,14 +1463,6 @@
 
       return cursor === superClass;
     }
-
-   /**
-    * dev mode only
-    */
-    function devVerboseName(name, args, fn){
-      return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
-    }
-
 
     // test is toString property enumerable
     var TOSTRING_BUG = (function(){
