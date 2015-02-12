@@ -31,7 +31,7 @@
  /**
   * @class
   */
-  var Route = basis.Class(basis.Token, {
+  var Route = basis.Token.subclass({
     className: namespace + '.Route',
 
     matched: null,
@@ -47,11 +47,27 @@
     },
     param: function(nameOrIdx){
       var idx = typeof nameOrIdx == 'number' ? nameOrIdx : this.names_.indexOf(nameOrIdx);
+
       if (idx in this.params_ == false)
         this.params_[idx] = this.as(function(value){
           return value && value[idx];
         });
+
       return this.params_[idx];
+    },
+    set: function(value){
+      if (value)
+      {
+        // make a copy of value, it also converts value to object (as value is array of matches)
+        value = basis.object.slice(value);
+
+        // extend object with named values
+        for (var key in value)
+          if (key in this.names_)
+            value[this.names_[key]] = value[key];
+      }
+
+      basis.Token.prototype.set.call(this, value);
     }
   });
 
