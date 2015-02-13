@@ -910,6 +910,18 @@
       if (fn.createL10nSync)
       {
         var l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
+        var linkHandler = function(value){
+          var isMarkup = isMarkupToken(this.token);
+
+          if (isMarkup)
+            basis.array.add(l10nMarkupTokens, this);
+          else
+            basis.array.remove(l10nMarkupTokens, this);
+
+          l10nProtoSync(this.path, isMarkup ? null : value);
+          for (var key in instances)
+            instances[key].tmpl.set(this.path, isMarkup ? this.token : value);
+        };
 
         if (fn.l10nKeys)
           for (var i = 0, key; key = fn.l10nKeys[i]; i++)
@@ -918,23 +930,12 @@
             var link = {
               path: key,
               token: token,
-              handler: function(value){
-                var isMarkup = this.token.getType() == 'markup';
-
-                if (isMarkup)
-                  basis.array.add(l10nMarkupTokens, this);
-                else
-                  basis.array.remove(l10nMarkupTokens, this);
-
-                l10nProtoSync(this.path, isMarkup ? null : value);
-                for (var key in instances)
-                  instances[key].tmpl.set(this.path, isMarkup ? this.token : value);
-              }
+              handler: linkHandler
             };
             link.token.attach(link.handler, link);
             l10nLinks.push(link);
 
-            if (token.getType() == 'markup')
+            if (isMarkupToken(token))
             {
               l10nMarkupTokens.push(link);
               l10nProtoSync(key, null);

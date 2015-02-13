@@ -58,11 +58,6 @@
     'plural': true,
     'plural-markup': true
   };
-  var isMarkupType = {
-    'markup': true,
-    'plural-markup': true,
-    'enum-markup': true
-  };
 
 
  /**
@@ -296,7 +291,7 @@
   * @return {boolean}
   */
   function isMarkupToken(value){
-    return (value instanceof Token || value instanceof ComputeToken) && isMarkupType[value.getType()];
+    return (value instanceof Token || value instanceof ComputeToken) && value.getType() == 'markup';
   }
 
 

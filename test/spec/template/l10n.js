@@ -247,6 +247,15 @@ module.exports = {
                   }
                 },
                 {
+                  name: '`enum-markup` and `plural-markup` should not treats as markup',
+                  test: function(){
+                    assert(text('<b:l10n src="./test.l10n"/><span>{l10n:enumMarkup}</span>') ===
+                           text('<span>[object Object]</span>'));
+                    assert(text('<b:l10n src="./test.l10n"/><span>{l10n:pluralMarkup}</span>') ===
+                           text('<span>&lt;b&gt;1 markup&lt;/b&gt;,&lt;b&gt;2 markup&lt;/b&gt;</span>'));
+                  }
+                },
+                {
                   name: 'should change on token change',
                   test: function(){
                     var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:simpleMarkup}</span>');
