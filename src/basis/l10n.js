@@ -235,7 +235,7 @@
 
     token: function(name){
       if (isPluralType[this.getType()])
-        name = cultures[currentCulture].plural(name);
+        return new ComputeToken(name, this);
 
       if (this.dictionary)
         return this.dictionary.token(this.name + '.' + name);
@@ -429,8 +429,7 @@
 
       this.types = {};
       for (var path in newTypes)
-        if (tokenType[newTypes[path]] == true)
-          this.types[path] = newTypes[path];
+        this.types[path] = tokenType[newTypes[path]] == true ? newTypes[path] : 'default';
 
       for (var path in this.tokens)
       {
