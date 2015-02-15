@@ -83,7 +83,7 @@
       var value = this.dictionary.getValue(this.token.name + '.' + key);
 
       if (isPlural)
-        value = String(value).replace(/#/g, this.value);
+        value = String(value).replace(/\{#\}/g, this.value);
 
       return value;
     },

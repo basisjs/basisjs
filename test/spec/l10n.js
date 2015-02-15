@@ -364,8 +364,8 @@ module.exports = {
                       'tests'
                     ],
                     bar: [
-                      'example of # test',
-                      'example of # tests'
+                      'example of {#} test',
+                      'example of {#} tests'
                     ]
                   }
                 }));
