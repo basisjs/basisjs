@@ -53,27 +53,7 @@
   * @param {object} extension
   */
   function extendBinding(binding, extension){
-    var loc;
-
     binding.bindingId = bindingSeed++;
-
-    /** @cut */ try { throw new Error(''); } catch(e) {
-    /** @cut */   var stack = String(e.stack);
-    /** @cut */   var m =
-    /** @cut */     stack.match(/devVerboseName\s\((?:.|\s)+?\(([^\)]+)/) ||
-    /** @cut */     stack.match(/createClass(?:\s*\(.+[\r\n]+.+subclass)\s\((?:.|\s)+?\(([^\)]+)/) ||
-    /** @cut */     stack.match(/createClass\s\((?:.|\s)+?\(([^\)]+)/) ||
-    /** @cut */     stack.match(/customExtendProperty\s\((?:.|\s)+?\(([^\)]+)/);
-    /** @cut */   if (m)
-    /** @cut */   {
-    /** @cut */     loc = m[1].replace(/:(\d+)\:(\d+)$/, function(m, line, col){
-    /** @cut */       return ':' + (line - 3) + ':' + col;
-    /** @cut */     });
-    /** @cut */     //console.log(m[1]);
-    /** @cut */   }
-    /** @cut */   //else
-    /** @cut */   //  console.log(String(e.stack));
-    /** @cut */ }
 
     for (var key in extension)
     {
@@ -146,9 +126,6 @@
             }
         }
       }
-
-      /** @cut */ if (def && loc)
-      /** @cut */   def.loc = loc;
 
       binding[key] = def;
     }
