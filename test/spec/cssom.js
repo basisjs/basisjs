@@ -11,6 +11,16 @@ module.exports = {
 
     var pg = DOM.get('playground');
     var pg2 = DOM.get('playground2');
+
+    function createBlock(){
+      var id = '#' + basis.genUID();
+      var element = document.body.appendChild(createElement(id));
+
+      return {
+        id: id,
+        element: element
+      };
+    }
   },
 
   test: [
@@ -32,11 +42,13 @@ module.exports = {
         {
           name: 'create',
           test: function(){
-            var rule = cssRule('#playground, #playground2');
+            var foo = createBlock();
+            var bar = createBlock();
+            var rule = cssRule([foo.id, bar.id]);
 
             rule.setStyle({ width: '200px !important' });
-            assert(pg.clientWidth === 200);
-            assert(pg2.clientWidth === 200);
+            assert(foo.element.clientWidth === 200);
+            assert(bar.element.clientWidth === 200);
 
             rule.clear();
           }
@@ -44,26 +56,56 @@ module.exports = {
         {
           name: 'setProperty',
           test: function(){
-            var rule = cssRule('#playground');
+            var block = createBlock();
+            var rule = cssRule(block.id);
 
             rule.setStyle({ width: '200px' });
-            assert(pg.clientWidth === 200);
+            assert(block.element.clientWidth === 200);
             rule.setStyle({ width: '300px !important' });
-            assert(pg.clientWidth === 300);
+            assert(block.element.clientWidth === 300);
             rule.setStyle({ width: '200px !important' });
-            assert(pg.clientWidth === 200);
+            assert(block.element.clientWidth === 200);
             rule.setStyle({ width: '100px' });
-            assert(pg.clientWidth === 100);
+            assert(block.element.clientWidth === 100);
             rule.setStyle({ width: '150px', height: '100px !important' });
-            assert(pg.clientWidth === 150);
-            assert(pg.clientHeight === 100);
+            assert(block.element.clientWidth === 150);
+            assert(block.element.clientHeight === 100);
             rule.setStyle({ width: '200px !important', height: '200px !important' });
-            assert(pg.clientWidth === 200);
-            assert(pg.clientHeight === 200);
+            assert(block.element.clientWidth === 200);
+            assert(block.element.clientHeight === 200);
 
-            rule = cssRule('#playground2');
+            rule = cssRule(block.id);
             rule.setStyle({ width: '300px !important' });
-            assert(pg2.clientWidth === 300);
+            assert(block.element.clientWidth === 300);
+          }
+        },
+        {
+          name: 'setProperty',
+          test: function(){
+            var block = createBlock();
+            var rule = cssRule(block.id);
+
+            rule.setStyle({ width: '0px' });
+
+            rule.setStyle({ 'padding-left': '200px' });
+            assert(block.element.offsetWidth === 200);
+            rule.setStyle({ 'padding-left': '300px !important' });
+            assert(block.element.offsetWidth === 300);
+            rule.setStyle({ 'padding-left': '200px !important' });
+            assert(block.element.offsetWidth === 200);
+            rule.setStyle({ 'padding-left': '100px' });
+            assert(block.element.offsetWidth === 100);
+            rule.setStyle({ 'padding-left': '150px', height: '100px !important' });
+            assert(block.element.offsetWidth === 150);
+            assert(block.element.clientHeight === 100);
+            rule.setStyle({ 'padding-left': '200px !important', height: '200px !important' });
+            assert(block.element.offsetWidth === 200);
+            assert(block.element.clientHeight === 200);
+
+            rule = cssRule(block.id);
+            rule.setStyle({ 'padding-left': '300px !important', height: '300px !important' });
+            assert(block.element.offsetWidth === 300);
+            assert(block.element.offsetHeight === 300);
           }
         },
         {
