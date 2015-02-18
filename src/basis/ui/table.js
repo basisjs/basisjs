@@ -401,12 +401,15 @@
           }
           else
           {
-            if (footerConfig)
-              footerConfig.colSpan += 1;
-            else
+            if (!footerConfig)
+            {
               footerConfig = {
                 colSpan: 1
               };
+              cells.push(footerConfig);
+            }
+            else
+              footerConfig.colSpan += 1;
           }
         }
 
