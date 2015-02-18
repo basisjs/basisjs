@@ -476,29 +476,18 @@
 
     if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsAdapter'))
     {
-      if (satellite)
-      {
-        if (config.delegate)
-          satellite.setDelegate(config.delegate(owner));
-
-        if (config.dataSource)
-          satellite.setDataSource(config.dataSource(owner));
-      }
-      else
+      if (!satellite)
       {
         satellite = config.instance;
 
         if (!satellite)
         {
           // create new satellite instance
-          var listenHandler;
           var satelliteConfig = (
             typeof config.config == 'function'
               ? config.config(owner)
               : config.config
           ) || {};
-
-          satelliteConfig.owner = owner;
 
           if (config.delegate)
           {
@@ -511,26 +500,17 @@
 
           satellite = new config.satelliteClass(satelliteConfig);
           satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
-
-          // this statement here, because owner set in config and no listen add in this case
-          // TODO: looks like a hack, fix it
-          if (listenHandler = owner.listen.satellite)
-            satellite.addHandler(listenHandler, owner);
-          if (listenHandler = owner.listen['satellite:' + name])
-            satellite.addHandler(listenHandler, owner);
-        }
-        else
-        {
-          if (config.delegate)
-            satellite.setDelegate(config.delegate(owner));
-
-          if (config.dataSource)
-            satellite.setDataSource(config.dataSource(owner));
         }
 
         this.instance = satellite;
         owner.setSatellite(name, satellite, true);
       }
+
+      if (!satelliteConfig && config.delegate)
+        satellite.setDelegate(config.delegate(owner));
+
+      if (!satelliteConfig && config.dataSource)
+        satellite.setDataSource(config.dataSource(owner));
     }
     else
     {
