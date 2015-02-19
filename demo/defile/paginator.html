@@ -94,7 +94,10 @@
       demoSection.style.width = w + 'px';
     }
     function setPageCount(pageCount){
-      paginators[0].setProperties(pageCount);
+      var paginator = paginators[0];
+      paginator.setPageCount(pageCount);
+      if (paginator.activePage >= paginator.pageCount)
+        paginator.setActivePage(paginator.pageCount);
     }
 
     var paginators = [
