@@ -257,7 +257,7 @@
    /**
     * @param {number} pageCount
     */
-    setPageCount: function(pageCount){
+    setPageCount: function(pageCount, spotlight){
       pageCount = resolveValue(this, this.setPageCount, pageCount, 'pageCountRA_');
 
       var newPageCount = Number(pageCount) || 0;
@@ -267,20 +267,22 @@
       {
         // set new value
         this.pageCount = newPageCount;
+        this.emit_pageCountChanged(oldPageCount);
 
         // sync
         this.syncPages();
-        this.updateSelection();
 
-        // emit event
-        this.emit_pageCountChanged(oldPageCount);
-      }
+        if (spotlight || !this.getActivePageChild())
+          this.spotlightPage(this.activePage);
+
+        this.updateSelection();
+     }
     },
 
    /**
     * @param {number} pageSpan
     */
-    setPageSpan: function(pageSpan){
+    setPageSpan: function(pageSpan, spotlight){
       pageSpan = resolveValue(this, this.setPageSpan, pageSpan, 'pageSpanRA_');
 
       var newPageSpan = Math.max(1, pageSpan);
@@ -290,13 +292,15 @@
       {
         // set new value
         this.pageSpan = newPageSpan;
+        this.emit_pageSpanChanged(oldPageSpan);
 
         // sync
         this.syncPages();
-        this.updateSelection();
 
-        // emit event
-        this.emit_pageSpanChanged(oldPageSpan);
+        if (spotlight || !this.getActivePageChild())
+          this.spotlightPage(this.activePage);
+
+        this.updateSelection();
       }
     },
 
@@ -353,10 +357,10 @@
       if (newSpanStartPage != oldSpanStartPage)
       {
         this.spanStartPage = newSpanStartPage;
+        this.emit_spanStartPageChanged(oldSpanStartPage);
 
         for (var i = 0, child; child = this.childNodes[i]; i++)
           child.setPageNumber(this.pageOffset + this.spanStartPage + i);
-
 
         this.updateSelection();
       }
