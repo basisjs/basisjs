@@ -1,0 +1,8 @@
+{
+  "en-US": {
+    "sourceToggle": {
+      "true": "Hide source",
+      "false": "Show source"
+    }
+  }
+}

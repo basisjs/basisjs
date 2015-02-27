@@ -1,0 +1,21 @@
+.view
+{
+  padding-top: 8px;
+  text-align: left;
+}
+
+.final
+{
+  float: left;
+  width: 50%;
+  box-sizing: border-box;
+  padding-right: 8px;
+}
+.template-tree
+{
+  margin-left: 50%;
+}
+.refs
+{
+  color: #A00;
+}

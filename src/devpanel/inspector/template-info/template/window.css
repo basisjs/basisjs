@@ -26,23 +26,37 @@
   /* vertical center */
   position: relative;
   display: inline-block;
-  overflow: auto;
   vertical-align: middle;
-
-  /* restore inherit properties */
-  text-align: left;
-
+}
+.window__inner-wrapper
+{
+  overflow: auto;
   padding: 4px 8px;
   background: white;
   background: rgba(255, 255, 255, .95);
   border-radius: 2px;
   box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, .3);
-  font-size: 12px;
-  font-family: Tahoma, Verdana, Arial, sans-serif;
 }
 .window__inner
 {
+  text-align: left;
   display: inline-table;
+  font-size: 12px;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+}
+
+.source-toggle-button
+{
+  background: #EEE;
+  margin-top: 8px;
+  padding: 6px;
+  border-radius: 2px;
+  opacity: .8;
+  cursor: pointer;
+}
+.source-toggle-button:hover
+{
+  opacity: 1;
 }
 
 .content

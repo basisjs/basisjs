@@ -12,6 +12,8 @@ var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
 var hoveredBinding = require('./binding.js').hover;
 var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
+var sourceView = require('./source.js');
+var showSource = new basis.Token(false);
 var selectedDomNode = new basis.Token();
 var selectedObject = selectedDomNode.as(function(node){
   return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
@@ -30,6 +32,11 @@ var isolatePrefix;
 selectedDomNode
   .as(getBindingsFromNode)
   .attach(bindingDataset.set, bindingDataset);
+
+selectedTemplate
+  .attach(function(template){
+    this.decl.set(template ? template.decl_ : null);
+  }, sourceView);
 
 function syncSelectedNode(){
   var element = selectedObject.value && selectedObject.value.element;
@@ -112,6 +119,8 @@ var view = new Window({
       if (template)
         return !!template.source.url;
     }),
+    source: sourceView,
+    showSource: showSource,
     bindings: new Node({
       dataSource: bindingDataset,
       sorting: 'data.name',
@@ -192,6 +201,9 @@ var view = new Window({
       var template = selectedTemplate.value;
       if (template && template.source.url)
         fileAPI.openFile(template.source.url);
+    },
+    toggleSource: function(){
+      showSource.set(!showSource.value);
     }
   },
 

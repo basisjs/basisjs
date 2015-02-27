@@ -5,19 +5,27 @@
 <div class="window__wrapper" event-click="close" event-mousedown="stop-propagation prevent-default">
   <div{ddelement|ddtrigger} class="window" event-click="stop-propagation">
     <div class="window__inner">
-      <div class="bindings">
-        <!--{bindings}-->
-      </div>
-      <div class="content">
-        <div class="toolbar">
-          <span class="button button_up button_{upName}" style="margin-left: -3px;" event-click="up">&#x2191; {upName}</span>
-          <span class="button button_source">source</span>
-          <div class="source-title source-title_{isFile}" event-click="openSource" title="{sourceTitle}">
-            {sourceTitle}
-          </div>
+      <div class="window__inner-wrapper">
+        <div class="bindings">
+          <!--{bindings}-->
         </div>
-        <div{childNodesElement} class="code"/>
+        <div class="content">
+          <div class="toolbar">
+            <span class="button button_up button_{upName}" style="margin-left: -3px;" event-click="up">&#x2191; {upName}</span>
+            <!-- <span class="button button_source">source</span> -->
+            <div class="source-title source-title_{isFile}" event-click="openSource" title="{sourceTitle}">
+              {sourceTitle}
+            </div>
+          </div>
+          <div{childNodesElement} class="code"/>
+        </div>
       </div>
     </div>
+    <div class="source-toggle-button" event-click="toggleSource">
+      {l10n:sourceToggle.{showSource}}
+    </div>
+    <span b:show="{showSource}">
+      <!--{source}-->
+    </span>
   </div>
 </div>
