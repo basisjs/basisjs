@@ -593,7 +593,7 @@ var makeDeclaration = (function(){
                     case 'enum':
                       if ('values' in elAttrs == false)
                       {
-                        /** @cut */ addTemplateWarn(template, options, 'Enum define has no `values` attribute', token);
+                        /** @cut */ addTemplateWarn(template, options, 'Enum define has no `values` attribute', token.loc);
                         break;
                       }
 
@@ -601,7 +601,7 @@ var makeDeclaration = (function(){
 
                       if (!values)
                       {
-                        /** @cut */ addTemplateWarn(template, options, 'Enum define has no variants (`values` attribute is empty)', elAttrs_.values);
+                        /** @cut */ addTemplateWarn(template, options, 'Enum define has no variants (`values` attribute is empty)', elAttrs_.values && elAttrs_.values.loc);
                         break;
                       }
 
@@ -609,7 +609,7 @@ var makeDeclaration = (function(){
                       defaultIndex = values.indexOf(elAttrs['default']);
 
                       /** @cut */ if ('default' in elAttrs && defaultIndex == -1)
-                      /** @cut */   addTemplateWarn(template, options, 'Enum define has bad value as default (value ignored)', elAttrs_['default']);
+                      /** @cut */   addTemplateWarn(template, options, 'Enum define has bad value as default (value ignored)', elAttrs_['default'] && elAttrs_['default'].loc);
 
                       define = [
                         bindingName,
