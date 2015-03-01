@@ -1129,6 +1129,7 @@ var makeDeclaration = (function(){
     /** @cut */ var source_;
 
     options = options || {};
+    /** @cut */ options = basis.object.complete({ loc: true, range: true }, options);
 
     // result object
     var result = {
