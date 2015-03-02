@@ -1287,14 +1287,17 @@
       if (!this.context)
         return;
 
-      if (this.tmpl.canvas && this.owner.tmpl.canvas)
+      if (this.owner && this.owner.tmpl)
       {
-        this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
-        this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
-      }
+        if (this.tmpl.canvas && this.owner.tmpl.canvas)
+        {
+          this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
+          this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+        }
 
-      this.clientRect = this.owner.clientRect;
-      //this.max = this.owner.maxValue;
+        this.clientRect = this.owner.clientRect;
+        //this.max = this.owner.maxValue;
+      }
     },
 
     updatePosition: function(mx, my){
