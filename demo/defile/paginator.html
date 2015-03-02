@@ -78,17 +78,11 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.cssom');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.resizer');
-    basis.require('basis.ui.paginator');
-
-    var DOM = basis.dom;
-    var classList = basis.cssom.classList;
-    var ButtonPanel = basis.ui.button.ButtonPanel;
-    var Resizer = basis.ui.resizer.Resizer;
-    var Paginator = basis.ui.paginator.Paginator;
+    var DOM = basis.require('basis.dom');
+    var classList = basis.require('basis.cssom').classList;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var Resizer = basis.require('basis.ui.resizer').Resizer;
+    var Paginator = basis.require('basis.ui.paginator').Paginator;
 
     function setWidth(w){
       demoSection.style.width = w + 'px';

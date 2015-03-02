@@ -230,11 +230,13 @@
   <script type="text/javascript" id="demo-javascript">
     // import names
     var domUtils = basis.require('basis.dom');
+    var setStyle = basis.require('basis.cssom').setStyle;
     var UINode = basis.require('basis.ui').Node;
     var Scroller = basis.require('basis.ui.scroller').Scroller;
     var ScrollPanel = basis.require('basis.ui.scroller').ScrollPanel;
     var ScrollGallery = basis.require('basis.ui.scroller').ScrollGallery;
     var PageSlider = basis.require('basis.ui.pageslider').PageSlider;
+    var DIRECTIONS = basis.require('basis.ui.pageslider').DIRECTIONS;
     var Value = basis.require('basis.data').Value;
 
     function createBlock(header, cssClassName){
@@ -395,7 +397,6 @@
     ];
     var pageSliderTemplate = '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>';
 
-    var DIRECTIONS = basis.ui.pageslider.DIRECTIONS;
     new PageSlider({
         template: pageSliderTemplate,
         container: createBlock('Horizontal Page Slider', 'short'),
@@ -429,7 +430,7 @@
       },
 
       childTransform: function(child, closeness){
-        basis.cssom.setStyle(child.tmpl.image, {
+        setStyle(child.tmpl.image, {
           width: (60 + 70 * closeness) + 'px',
           opacity: (.5 + .5 * closeness),
           margin: -10 * closeness + 'px ' + -40 * closeness + 'px',

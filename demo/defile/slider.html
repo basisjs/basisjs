@@ -82,14 +82,10 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.slider');
-    basis.require('basis.ui.resizer');
-
-    var DOM = basis.dom;
-    var nsButton = basis.ui.button;
-    var Slider = basis.ui.slider.Slider;
+    var DOM = basis.require('basis.dom');
+    var nsButton = basis.require('basis.ui.button');
+    var Slider = basis.require('basis.ui.slider').Slider;
+    var Resizer = basis.require('basis.ui.resizer').Resizer;
 
     var sliders = [
       new Slider({ min: 0, max: 100, step: 10, value: 23 }),
@@ -155,7 +151,7 @@
       })
     );
 
-    new basis.ui.resizer.Resizer({
+    new Resizer({
       element: demoSection
     });
 

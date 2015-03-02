@@ -54,15 +54,11 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.window');
-
     // import names
-    var DOM = basis.dom;
+    var DOM = basis.require('basis.dom');
     var getter = basis.getter;
-    var nsButton = basis.ui.button;
-    var nsWindow = basis.ui.window;
+    var nsButton = basis.require('basis.ui.button');
+    var nsWindow = basis.require('basis.ui.window');
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
