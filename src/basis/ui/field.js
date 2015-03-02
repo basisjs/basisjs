@@ -1014,8 +1014,8 @@
         },
         satelliteClass: Hidden.subclass({
           className: namespace + '.ComboboxHidden',
-          event_ownerChanged: function(oldOwner){
-            Hidden.prototype.event_ownerChanged.call(this, oldOwner);
+          emit_ownerChanged: function(oldOwner){
+            Hidden.prototype.emit_ownerChanged.call(this, oldOwner);
             if (this.owner)
               this.setValue(this.owner.getValue());
           },
