@@ -244,14 +244,9 @@
           className: namespace + '.Example',
           template: templates.Example,
           binding: {
-            example: 'owner.example'
-          },
-          listen: {
-            owner: {
-              exampleChanged: function(){
-                this.updateBind('example');
-              }
-            }
+            example: Value
+              .factory('ownerChanged', 'owner')
+              .pipe('exampleChanged', 'example')
           }
         })
       },
@@ -264,14 +259,9 @@
           className: namespace + '.Description',
           template: templates.Description,
           binding: {
-            description: 'owner.description'
-          },
-          listen: {
-            owner: {
-              descriptionChanged: function(){
-                this.updateBind('description');
-              }
-            }
+            example: Value
+              .factory('ownerChanged', 'owner')
+              .pipe('descriptionChanged', 'description')
           }
         })
       }
@@ -581,20 +571,11 @@
         },
         satelliteClass: UINode.subclass({
           className: namespace + '.Counter',
-
           template: templates.Counter,
           binding: {
-            availChars: function(node){
-              return node.owner.symbolsLeft;
-            }
-          },
-
-          listen: {
-            owner: {
-              symbolsLeftChanged: function(){
-                this.updateBind('availChars');
-              }
-            }
+            availChars: Value
+              .factory('ownerChanged', 'owner')
+              .pipe('symbolsLeftChanged', 'symbolsLeft')
           }
         })
       }
@@ -1033,13 +1014,15 @@
         },
         satelliteClass: Hidden.subclass({
           className: namespace + '.ComboboxHidden',
-          getValue: function(){
-            return this.owner.getValue();
+          event_ownerChanged: function(oldOwner){
+            Hidden.prototype.event_ownerChanged.call(this, oldOwner);
+            if (this.owner)
+              this.setValue(this.owner.getValue());
           },
           listen: {
             owner: {
               change: function(){
-                this.updateBind('value');
+                this.setValue(this.owner.getValue());
               }
             }
           }
