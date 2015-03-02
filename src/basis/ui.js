@@ -483,8 +483,10 @@
         }
 
         // emit event
-        if (oldTmpl)
-          this.emit_templateChanged();
+        // NOTE: we couldn't omit templateChanged on init for now, as it's a single way
+        // to know when tmpl become available; ShadowNode(List) doesn't work otherwise
+        // if (oldTmpl)
+        this.emit_templateChanged();
       },
 
      /**
