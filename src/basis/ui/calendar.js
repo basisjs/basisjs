@@ -205,13 +205,13 @@
       before: {
         events: 'periodChanged',
         getter: function(node){
-          return node.parentNode && node.periodStart < node.parentNode.periodStart;
+          return node.parentNode ? node.periodStart < node.parentNode.periodStart : false;
         }
       },
       after: {
         events: 'periodChanged',
         getter: function(node){
-          return node.parentNode && node.periodEnd > node.parentNode.periodEnd;
+          return node.parentNode ? node.periodEnd > node.parentNode.periodEnd : false;
         }
       }
     },
@@ -220,7 +220,7 @@
         // FIXME: shouldn't access to parent
         var calendar = this.parentNode && this.parentNode.parentNode;
         if (calendar && !this.isDisabled())
-          calendar.templateAction('click', event, this);
+          calendar.selectNodeAction(this);
       }
     },
 
@@ -625,17 +625,6 @@
         this.selectedDate.set(new Date());
       }
     },
-    templateAction: function(actionName, event, node){
-      Node.prototype.templateAction.call(this, actionName, event);
-
-      if (node instanceof CalendarNode)
-      {
-        var newDate = node.periodStart;
-        var activeSection = this.selection.pick();
-        this.selectedDate.set(dateUtils.add(new Date(this.selectedDate.value), activeSection.nodePeriodUnit, dateUtils.diff(this.selectedDate.value, activeSection.nodePeriodUnit, newDate)));
-        this.nextSection(BACKWARD);
-      }
-    },
 
     satellite: {
       shadowTabs: ShadowNodeList.subclass({
@@ -667,6 +656,15 @@
       }
 
       return new SectionClass();
+    },
+    selectNodeAction: function(node){
+      if (node instanceof CalendarNode)
+      {
+        var newDate = node.periodStart;
+        var activeSection = this.selection.pick();
+        this.selectedDate.set(dateUtils.add(new Date(this.selectedDate.value), activeSection.nodePeriodUnit, dateUtils.diff(this.selectedDate.value, activeSection.nodePeriodUnit, newDate)));
+        this.nextSection(BACKWARD);
+      }
     },
 
     date: null,
