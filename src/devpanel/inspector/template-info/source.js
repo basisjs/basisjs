@@ -1,5 +1,6 @@
 var consts = require('basis.template.const');
 var Node = require('basis.ui').Node;
+var fileAPI = require('../../api/file.js');
 var declToken = new basis.Token();
 var declCodeToken = new basis.Token('');
 
@@ -174,6 +175,12 @@ var view = new Node({
     template: resource('./template/source/template.tmpl'),
     binding: {
       url: 'data:',
+      caption: {
+        events: 'update',
+        getter: function(node){
+          return node.data.url || '[inline]';
+        }
+      },
       content: function(node){
         var content = node.data.content;
         var ranges = node.data.includeTokens;
@@ -194,6 +201,12 @@ var view = new Node({
         return res + content.replace(/</g, '&lt;');
       },
       color: 'data:'
+    },
+    action: {
+      openFile: function(){
+        if (this.data.url)
+          fileAPI.openFile(this.data.url);
+      }
     }
   }
 });
@@ -218,7 +231,7 @@ declToken.attach(function(decl){
       var res = inc[1];
       return {
         data: {
-          url: res.url || '[inline]',
+          url: res.url,
           content: res.bindingBridge ? res.bindingBridge.get(res) : res,
           color: this.colorMap.get(res.url || '', 'red'),
           includeTokens: inc[2].map(function(inc){

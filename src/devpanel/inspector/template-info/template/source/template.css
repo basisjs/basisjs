@@ -2,3 +2,13 @@
 {
   padding: 8px 0 0 24px;
 }
+.code-title__hasUrl
+{
+  text-decoration: underline;
+  cursor: pointer;
+  /*background: linear-gradient(to bottom, rgba(128, 128, 128, .25) 1px, transparent 1px) repeat-x 0 1.2em;*/
+}
+.code-title__hasUrl:hover
+{
+  color: #A00;
+}
