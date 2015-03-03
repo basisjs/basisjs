@@ -34,12 +34,20 @@ selectedDomNode
   .attach(bindingDataset.set, bindingDataset);
 
 selectedTemplate
+  .as(function(template){
+    if (this.value)
+      this.value.bindingBridge.detach(this.value, this.apply, this);
+    if (template)
+      template.bindingBridge.attach(template, this.apply, this);
+    return template;
+  })
   .attach(function(template){
-    this.decl.set(template ? template.decl_ : null);
-  }, sourceView);
+    sourceView.decl.set(template ? template.decl_ : null);
+  });
 
 function syncSelectedNode(){
   var element = selectedObject.value && selectedObject.value.element;
+
   if (selectedDomNode.value === element)
     selectedDomNode.apply();
   else
