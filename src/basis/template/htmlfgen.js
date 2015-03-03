@@ -126,13 +126,12 @@
           ]);
         }
 
+        if (path == rootPath)
+          markedElementList.push(localPath + '.' + templateMarker);
 
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
         {
           myRef = -1;
-
-          if (path == rootPath)
-            markedElementList.push(localPath + '.' + templateMarker);
 
           if (!explicitRef)
           {

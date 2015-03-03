@@ -2,7 +2,8 @@
 {
   color: rgb(48, 57, 66);
 }
-.binding
+.binding,
+.nestedView
 {
   padding: 3px;
   padding: 3px .5ch;
@@ -13,8 +14,21 @@
   transition: color .15s, background-color .15s;
   cursor: default;
 }
+.nestedView:not(.binding),
+.matchBinding.nestedView
+{
+  background: #E0E4B0;
+}
+.matchBinding
+{
+  background: #B6CFB6;
+}
 .matchBinding
 {
   background: #B6CFB6;
   color: #353;
+}
+.nestedView
+{
+  cursor: pointer;
 }

@@ -18,7 +18,10 @@ var DOMNode = Node.subclass({
     },
     inspect: function(){
       if (this.selectDomNode && this.domNode)
+      {
+        hoveredBinding.set();
         this.selectDomNode(this.domNode);
+      }
     }
   },
   destroy: function(){
@@ -85,7 +88,8 @@ var Text = DOMNode.subclass({
   template: resource('./template/text.tmpl'),
   binding: {
     value: 'value',
-    binding: 'bindingName'
+    binding: 'bindingName',
+    nestedView: 'nestedView'
   }
 });
 
@@ -93,7 +97,8 @@ var Comment = DOMNode.subclass({
   template: resource('./template/comment.tmpl'),
   binding: {
     value: 'value',
-    binding: 'bindingName'
+    binding: 'bindingName',
+    nestedView: 'nestedView'
   }
 });
 
@@ -182,8 +187,7 @@ module.exports = function buildNode(item, bindings, usedBinding, selectDomNode){
 
   function findNodeBinding(node){
     return basis.array.search(bindings, true, function(binding){
-      if (binding.val !== binding.dom && binding.val === node)
-        return true;
+      return binding.val !== binding.dom && binding.val === node;
     });
   }
 
@@ -247,19 +251,25 @@ module.exports = function buildNode(item, bindings, usedBinding, selectDomNode){
 
       break;
     case 3:
-      binding = findBinding(node);
+      binding = findBinding(node) || findNodeBinding(node);
 
       return new Text({
+        domNode: node,
         bindingName: binding ? binding.binding : null,
-        value: node.nodeValue
+        value: node.nodeValue,
+        nestedView: properties.nestedView,
+        selectDomNode: properties.nestedView ? selectDomNode : null
       });
 
     case 8:
-      binding = findBinding(node);
+      binding = findNodeBinding(node);
 
       return new Comment({
+        domNode: node,
         bindingName: binding ? binding.binding : null,
-        value: node.nodeValue
+        value: node.nodeValue,
+        nestedView: properties.nestedView,
+        selectDomNode: properties.nestedView ? selectDomNode : null
       });
   }
 
