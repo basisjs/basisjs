@@ -44,11 +44,19 @@ var buildHtml = function(tokens, parent, colorMap){
     }, binding[0]).join('');
   }
 
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;');
+  }
+
   function markSource(token, str){
-    //console.log(token.loc, token);
     var loc = token.loc && token.loc.replace(/:\d+:\d+$/, '');
-    var c = loc != null ? colorMap.get(loc) : 'white';
-    return c ? '<span style="background: ' + c + '">' + str + '</span>' : str;
+    var color = loc != null ? colorMap.get(loc) : 'white';
+
+    return color
+      ? '<span style="background: ' + color + '">' + str + '</span>'
+      : str;
   }
 
   function setEventAttribute(eventName, actions, token){
@@ -59,17 +67,20 @@ var buildHtml = function(tokens, parent, colorMap){
     var bindings = token[consts.TOKEN_TYPE] != consts.TYPE_ATTRIBUTE_EVENT ? token[consts.TOKEN_BINDINGS] : 0;
 
     if (bindings)
-      switch (name){
+      switch (name)
+      {
         case 'class':
           value = (value ? value + ' ' : '') + bindings.map(function(b){
             return markSource(b, b[0] + '<span class="refs">{' + b[1] + '}</span>');
           }).join(' ');
           break;
+
         case 'style':
           value = (value ? value + '; ' : '') + bindings.map(function(b){
             return b[2] + ': ' + expression(b);
           }).join('; ');
           break;
+
         default:
           value = expression(bindings);
       }
@@ -123,7 +134,7 @@ var buildHtml = function(tokens, parent, colorMap){
 
       case consts.TYPE_ATTRIBUTE:
         var attrName = token[consts.ATTR_NAME];
-        var attrValue = token[consts.ATTR_VALUE];
+        var attrValue = escapeHtml(token[consts.ATTR_VALUE]);
         var eventName = attrName.replace(/^event-/, '');
 
         if (eventName != attrName)
@@ -140,7 +151,7 @@ var buildHtml = function(tokens, parent, colorMap){
 
       case consts.TYPE_ATTRIBUTE_CLASS:
       case consts.TYPE_ATTRIBUTE_STYLE:
-        var attrValue = token[consts.ATTR_VALUE - 1];
+        var attrValue = escapeHtml(token[consts.ATTR_VALUE - 1]);
 
         if (attrValue || token[consts.TOKEN_BINDINGS])
           setAttribute(consts.ATTR_NAME_BY_TYPE[token[consts.TOKEN_TYPE]], attrValue || '', token);
@@ -152,11 +163,23 @@ var buildHtml = function(tokens, parent, colorMap){
         break;
 
       case consts.TYPE_COMMENT:
-        addToResult(result.children, token, '&lt;!--' + (token[consts.COMMENT_VALUE] || refs(token)) + '-->');
+        addToResult(
+          result.children,
+          token,
+          '&lt;!--' +
+          (token[consts.COMMENT_VALUE] ? escapeHtml(token[consts.COMMENT_VALUE]) : refs(token)) +
+          '-->'
+        );
         break;
 
       case consts.TYPE_TEXT:
-        addToResult(result.children, token, token[consts.TEXT_VALUE] || refs(token) || (token[consts.TOKEN_BINDINGS] ? '{' + token[consts.TOKEN_BINDINGS] + '}' : ''));
+        addToResult(
+          result.children,
+          token,
+          token[consts.TEXT_VALUE]
+            ? escapeHtml(token[consts.TEXT_VALUE])
+            : refs(token) || (token[consts.TOKEN_BINDINGS] ? '{' + token[consts.TOKEN_BINDINGS] + '}' : '')
+        );
         break;
     }
   }
