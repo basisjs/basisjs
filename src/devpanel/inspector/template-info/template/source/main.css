@@ -8,6 +8,7 @@
 {
   float: left;
   width: 50%;
+  -moz-box-sizing: border-box;
   box-sizing: border-box;
   padding-right: 8px;
 }

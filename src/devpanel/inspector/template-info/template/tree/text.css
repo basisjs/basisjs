@@ -6,7 +6,9 @@
 .nestedView
 {
   padding: 3px;
-  padding: 3px .5ch;
+  padding: 3px .65ch;
+  margin-left: -3px;
+  margin-left: -.5ch;
   border-radius: 2px;
   background: #EEE;
   color: #666;
