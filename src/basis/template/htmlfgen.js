@@ -404,6 +404,7 @@
               /** @cut */   'binding:"' + bindName + '"',
               /** @cut */   'dom:' + domRef,
               /** @cut */   'val:' + bindVar,
+              /** @cut */   'l10n:true',
               /** @cut */   'attachment:' + bindName
               /** @cut */ ] + '}');
 
@@ -419,6 +420,7 @@
               /** @cut */   'dom:' + domRef,
               /** @cut */   'attr:' + attrName,
               /** @cut */   'val:' + bindVar,
+              /** @cut */   'l10n:true',
               /** @cut */   'attachment:' + bindName
               /** @cut */ ] + '}');
 
@@ -482,6 +484,7 @@
             /** @cut */   'binding:"' + l10nFullPath + '"',
             /** @cut */   'dom:' + domRef,
             /** @cut */   'val:l10n["' + l10nName + '"]',
+            /** @cut */   'l10n:true',
             /** @cut */   'attachment:l10nToken("' + l10nName + '")'
             /** @cut */ ] + '}');
             /** @cut */ toolsUsed.l10nToken = true;

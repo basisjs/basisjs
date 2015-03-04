@@ -89,6 +89,7 @@ var Text = DOMNode.subclass({
   binding: {
     value: 'value',
     binding: 'bindingName',
+    l10n: 'l10n',
     nestedView: 'nestedView'
   }
 });
@@ -255,8 +256,9 @@ module.exports = function buildNode(item, bindings, usedBinding, selectDomNode){
 
       return new Text({
         domNode: node,
-        bindingName: binding ? binding.binding : null,
+        bindingName: binding && !binding.l10n ? binding.binding : null,
         value: node.nodeValue,
+        l10n: binding ? binding.l10n : false,
         nestedView: properties.nestedView,
         selectDomNode: properties.nestedView ? selectDomNode : null
       });
