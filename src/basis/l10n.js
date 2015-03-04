@@ -39,7 +39,7 @@
   var tokenIndex = [];
   var tokenComputeFn = {};
   var tokenComputes = {};
-  var updateToken = basis.Token.prototype.set;
+  var basisTokenPrototypeSet = basis.Token.prototype.set;
   var tokenType = {
     'default': true,
     'plural': true,
@@ -91,6 +91,7 @@
     getType: function(){
       var type = this.token.getType();
       var key = isPluralType[type] ? cultures[currentCulture].plural(this.value) : this.value;
+
       return this.dictionary.types[this.token.name + '.' + key] ||
              nestedType[type] ||
              'default';
@@ -199,7 +200,7 @@
       var token = this;
       var objectTokenMap = {};
       var updateValue = function(object){
-        updateToken.call(this, getter(object));
+        basisTokenPrototypeSet.call(this, getter(object));
       };
       var handler = {
         destroy: function(object){
@@ -287,11 +288,21 @@
   }
 
  /**
+  * Check value is a l10n token.
+  * @param {*} value Value to check.
+  * @return {boolean}
+  */
+  function isToken(value){
+    return value ? value instanceof Token || value instanceof ComputeToken : false;
+  }
+
+ /**
+  * Check value is a l10n markup token.
   * @param {*} value Value that should be check it is a markup l10n token.
   * @return {boolean}
   */
   function isMarkupToken(value){
-    return (value instanceof Token || value instanceof ComputeToken) && value.getType() == 'markup';
+    return isToken(value) && value.getType() == 'markup';
   }
 
 
@@ -449,7 +460,7 @@
     */
     syncValues: function(){
       for (var tokenName in this.tokens)
-        updateToken.call(this.tokens[tokenName], this.getValue(tokenName));
+        basisTokenPrototypeSet.call(this.tokens[tokenName], this.getValue(tokenName));
     },
 
    /**
@@ -844,6 +855,7 @@
     ComputeToken: ComputeToken,
     Token: Token,
     token: resolveToken,
+    isToken: isToken,
     isMarkupToken: isMarkupToken,
 
     Dictionary: Dictionary,
