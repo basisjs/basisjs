@@ -1170,7 +1170,7 @@ module.exports = {
           name: 'select/unselect',
           test: [
             {
-              name: 'select() methods should drop bb-value',
+              name: 'select() method should be ignored when selected is under bb-value',
               test: function(){
                 var TestNode = Node.subclass({
                   init: function(){
@@ -1183,10 +1183,9 @@ module.exports = {
                   }
                 });
 
-                var tokenTrue = new basis.Token(true);
-                var tokenFalse = new basis.Token(false);
+                var token = new basis.Token(true);
                 var node = new TestNode({
-                  selected: tokenTrue
+                  selected: token
                 });
 
                 assert(node.selected === true);
@@ -1195,25 +1194,21 @@ module.exports = {
                 assert(node.selected === true);
                 assert([], node.events);
 
-                tokenTrue.set(false);
-                assert(node.selected === true);
-                assert([], node.events);
-
-                node.setSelected(tokenFalse);
+                token.set(false);
                 assert(node.selected === false);
                 assert(['unselect'], node.events);
 
                 node.select();
-                assert(node.selected === true);
-                assert(['unselect', 'select'], node.events);
+                assert(node.selected === false);
+                assert(['unselect'], node.events);
 
-                tokenFalse.set(true);
+                token.set(true);
                 assert(node.selected === true);
                 assert(['unselect', 'select'], node.events);
               }
             },
             {
-              name: 'unselect() methods should drop bb-value',
+              name: 'unselect() method should be ignored when selected is under bb-value',
               test: function(){
                 var TestNode = Node.subclass({
                   init: function(){
@@ -1226,10 +1221,9 @@ module.exports = {
                   }
                 });
 
-                var tokenTrue = new basis.Token(true);
-                var tokenFalse = new basis.Token(false);
+                var token = new basis.Token(false);
                 var node = new TestNode({
-                  selected: tokenFalse
+                  selected: token
                 });
 
                 assert(node.selected === false);
@@ -1238,19 +1232,15 @@ module.exports = {
                 assert(node.selected === false);
                 assert([], node.events);
 
-                tokenFalse.set(true);
-                assert(node.selected === false);
-                assert([], node.events);
-
-                node.setSelected(tokenTrue);
+                token.set(true);
                 assert(node.selected === true);
                 assert(['select'], node.events);
 
                 node.unselect();
-                assert(node.selected === false);
-                assert(['select', 'unselect'], node.events);
+                assert(node.selected === true);
+                assert(['select'], node.events);
 
-                tokenTrue.set(123);
+                token.set(0);
                 assert(node.selected === false);
                 assert(['select', 'unselect'], node.events);
               }
