@@ -2589,23 +2589,6 @@
     },
 
    /**
-    * Makes node selected if possible.
-    * @param {boolean} multiple
-    * @return {boolean} Returns true if selected state has been changed.
-    */
-    select: function(multiple){
-      return this.setSelected(true, multiple);
-    },
-
-   /**
-    * Makes node unselected.
-    * @return {boolean} Returns true if selected state has been changed.
-    */
-    unselect: function(){
-      return this.setSelected(false);
-    },
-
-   /**
     * Set new value for selected property.
     * @param {boolean} selected Should be node selected or not.
     * @param {boolean} multiple Apply new state in multiple select mode or not.
@@ -2695,19 +2678,32 @@
     },
 
    /**
-    * Makes node enabled.
-    * @return {boolean} Returns true if disabled property was changed.
+    * Makes node selected if possible.
+    * @param {boolean} multiple
+    * @return {boolean} Returns true if selected state has been changed.
     */
-    enable: function(){
-      return this.setDisabled(false);
+    select: function(multiple){
+      if (this.selectedRA_)
+      {
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by `select()` method. Use `setSelected()` instead.');
+        return false;
+      }
+
+      return this.setSelected(true, multiple);
     },
 
    /**
-    * Makes node disabled.
-    * @return {boolean} Returns true if disabled property was changed.
+    * Makes node unselected.
+    * @return {boolean} Returns true if selected state has been changed.
     */
-    disable: function(){
-      return this.setDisabled(true);
+    unselect: function(){
+      if (this.selectedRA_)
+      {
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by `unselect()` method. Use `setSelected()` instead.');
+        return false;
+      }
+
+      return this.setSelected(false);
     },
 
    /**
@@ -2732,6 +2728,34 @@
       }
 
       return false;
+    },
+
+   /**
+    * Makes node disabled.
+    * @return {boolean} Returns true if disabled property was changed.
+    */
+    disable: function(){
+      if (this.disabledRA_)
+      {
+        /** @cut */ basis.dev.warn('`disabled` property is under bb-value and can\'t be changed by `disable()` method. Use `setDisabled()` instead.');
+        return false;
+      }
+
+      return this.setDisabled(true);
+    },
+
+   /**
+    * Makes node enabled.
+    * @return {boolean} Returns true if disabled property was changed.
+    */
+    enable: function(){
+      if (this.disabledRA_)
+      {
+        /** @cut */ basis.dev.warn('`disabled` property is under bb-value and can\'t be changed by `enable()` method. Use `setDisabled()` instead.');
+        return false;
+      }
+
+      return this.setDisabled(false);
     },
 
    /**

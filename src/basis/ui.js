@@ -249,6 +249,12 @@
       if (this.isDisabled())
         return;
 
+      if (this.selectedRA_)
+      {
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by user action. Override `select` action to make your logic working.');
+        return;
+      }
+
       if (this.contextSelection && this.contextSelection.multiple)
         this.select(event.ctrlKey || event.metaKey);
       else
