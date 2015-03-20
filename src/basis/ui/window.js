@@ -107,7 +107,8 @@
 
     dde: null,
 
-    title: dict.token('emptyTitle'),
+    title: '',
+    titleRA_: null,
 
     template: templates.Window,
     binding: {
@@ -179,6 +180,8 @@
     init: function(){
       Node.prototype.init.call(this);
 
+      this.setTitle(this.title || dict.token('emptyTitle'));
+
       // make window moveable
       if (this.moveable)
         this.dde = new MoveableElement({
@@ -238,8 +241,16 @@
       }
     },
     setTitle: function(title){
-      this.title = title;
-      this.updateBind('title');
+      title = resolveValue(this, this.setTitle, title, 'titleRA_');
+
+      if (this.title != title)
+      {
+        this.title = title;
+
+        // for backward capability
+        if (this.tmpl)
+          this.updateBind('title');
+      }
     },
     templateSync: function(){
       var style;
@@ -345,6 +356,9 @@
       // NOTE: no resolveValue required, as on this.setVisible(false)
       // resolve adapter will be destroyed
       this.setVisible(false);
+
+      if (this.titleRA_)
+        resolveValue(this, null, null, 'titleRA_');
 
       if (this.dde)
       {
