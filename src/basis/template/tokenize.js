@@ -750,7 +750,7 @@ function tokenize(source, options){
   postProcessing(result, options || {}, source);
 
   /** @cut */ if (lastTag.name)
-  /** @cut */   result.warns.push(['No close tag for <' + lastTag.name + '>', lastTag]);
+  /** @cut */   result.warns.push(['No close tag for <' + (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name + '>', lastTag]);
   /** @cut */
   /** @cut */ if (!result.warns.length)
   /** @cut */   delete result.warns;
