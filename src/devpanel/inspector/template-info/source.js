@@ -16,9 +16,12 @@ var colors = [
 ];
 
 var ColorMap = basis.Class.create({}, {
-  init: function(){
+  init: function(sources){
     this.sources = [];
     this.colors = [];
+
+    if (Array.isArray(sources))
+      sources.forEach(this.get, this);
   },
 
   get: function(source, fallback){
@@ -240,7 +243,10 @@ declToken.attach(function(decl){
 
   if (decl)
   {
-    var bb = buildHtml(decl.tokens);
+    var colorMap = new ColorMap([decl.sourceUrl].concat(decl.deps.map(function(dep){
+      return dep.url;
+    })).filter(Boolean));
+    var bb = buildHtml(decl.tokens, false, colorMap);
     var root = [
       null,
       basis.object.extend(new basis.Token(decl.tokens.source_), {
