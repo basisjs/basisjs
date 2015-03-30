@@ -1,24 +1,20 @@
-var Dataset = require('basis.data').Dataset;
-var DataObject = require('basis.data').Object;
 var Node = require('basis.ui').Node;
-var templateSwitcher = require('basis.template').switcher;
 
-var demos = new Dataset({
-  items: require('./demo.json').reduce(function(result, group){
+var demos = require('basis.data').wrap(
+  require('./demo.json').reduce(function(result, group){
     return result.concat(group.demos.map(function(demo, idx){
-      return new DataObject({
-        data: basis.object.extend(demo, {
-          id: result.length + idx,
-          group: group.title,
-          image: demo.image || demo.url.replace('.html', '.png')
-        })
+      return basis.object.merge(demo, {
+        id: result.length + idx,
+        group: group.title,
+        image: demo.image || demo.url.replace('.html', '.png')
       });
     }));
-  }, [])
-});
+  }, []),
+  true
+);
 
 var DemoItem = Node.subclass({
-  template: templateSwitcher('update', function(node){
+  template: require('basis.template').switcher('update', function(node){
     return node.data.wow
       ? resource('./template/item-wow.tmpl')
       : resource('./template/item.tmpl');
@@ -43,8 +39,8 @@ require('basis.app').create({
     return new Node({
       template: resource('./template/list.tmpl'),
 
-      dataSource: demos,
       childClass: DemoItem,
+      childNodes: demos,
 
       sorting: 'data.id',
       grouping: {
