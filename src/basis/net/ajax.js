@@ -12,6 +12,7 @@
 
   var escapeValue = global.encodeURIComponent;
   var FormData = global.FormData;
+  var XMLHttpRequest = global.XMLHttpRequest;
   var extend = basis.object.extend;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
@@ -365,7 +366,7 @@
         status: ''
       });
 
-      // create new XMLHTTPRequest instance for gecko browsers in asynchronous mode
+      // create new XMLHttpRequest instance for gecko browsers in asynchronous mode
       // object crash otherwise
       if (ua.test('gecko1.8.1-') && requestData.asynchronous)
         this.xhr = createXmlHttpRequest();

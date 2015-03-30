@@ -36,6 +36,7 @@
 
   // import names
   var document = global.document;
+  var Node = global.Node;
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
   var getter = basis.getter;

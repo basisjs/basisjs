@@ -40,7 +40,7 @@ var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
  */
 var decodeHTMLTokens = (function(string){
   var tokenMap = {};
-  var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
+  var tokenElement = !basis.NODE_ENV ? global.document.createElement('div') : null;
   var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
 
   // load token map when node evironment, because html parsing is not available

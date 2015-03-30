@@ -42,6 +42,8 @@
   var global = Function('return this')();
   var NODE_ENV = global !== context ? global : false;
   var document = global.document;
+  var location = global.location;
+  var process = global.process;
   var toString = Object.prototype.toString;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -592,6 +594,7 @@
   //
 
   var consoleMethods = (function(){
+    var console = global.console;
     var methods = {
       log: $undef,
       info: $undef,
@@ -599,7 +602,7 @@
       error: $undef
     };
 
-    if (typeof console != 'undefined')
+    if (console)
       iterate(methods, function(methodName){
         methods[methodName] = 'bind' in Function.prototype && typeof console[methodName] == 'function'
           ? Function.prototype.bind.call(console[methodName], console)
@@ -2077,7 +2080,7 @@
 
       if (!NODE_ENV)
       {
-        var req = new XMLHttpRequest();
+        var req = new global.XMLHttpRequest();
         req.open('GET', url, false);
         // set if-modified-since header since begining prevents cache using;
         // otherwise browser could never ask server for new file content

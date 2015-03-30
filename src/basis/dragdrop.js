@@ -265,7 +265,7 @@
 
       this.value = this.read(element);
     },
-    read: function(){
+    read: function(element){
       return element[this.property];
     },
     write: function(element, formattedValue){

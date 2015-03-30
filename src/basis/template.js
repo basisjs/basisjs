@@ -10,6 +10,7 @@
   // import names
   //
 
+  var document = global.document;
   var Class = basis.Class;
   var cleaner = basis.cleaner;
   var path = basis.path;
@@ -60,7 +61,7 @@
         source = host.textContent || host.text;
       /** @cut */ else
       /** @cut */   if (!host)
-      /** @cut */     basis.dev.warn('Template script element with id `' + id + '` not found');
+      /** @cut */     basis.dev.warn('Template script element with id `' + sourceId + '` not found');
       /** @cut */   else
       /** @cut */     basis.dev.warn('Template should be declared in <script type="text/basis-template"> element (id `' + sourceId + '`)');
 
@@ -358,7 +359,7 @@
                 source = getSourceByPath(source);
                 break;
               default:
-                /** @cut */ basis.dev.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.');
+                /** @cut */ basis.dev.warn(namespace + '.Template.setSource: Unknown prefix ' + m[1] + ' for template source was ingnored.');
             }
           }
         }

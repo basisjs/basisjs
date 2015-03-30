@@ -11,6 +11,7 @@
   // import names
   //
 
+  var document = global.document;
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
   var resolveValue = require('basis.data').resolveValue;

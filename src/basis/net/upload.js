@@ -10,6 +10,8 @@
   // import names
   //
 
+  var document = global.document;
+  var FormData = global.FormData;
   var eventUtils = require('basis.dom.event'); // TODO
   var STATE = require('basis.data').STATE;
   var basisNet = require('basis.net');
@@ -31,7 +33,7 @@
   }
 
   function formDataSupport(){
-    return global.FormData !== undefined;
+    return FormData !== undefined;
   }
 
  /**

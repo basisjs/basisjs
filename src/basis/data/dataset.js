@@ -1012,7 +1012,7 @@
   //
 
   var MAPFILTER_SOURCEOBJECT_UPDATE = function(sourceObject){
-    var newMember = this.map ? this.map(sourceObject) : object; // fetch new member ref
+    var newMember = this.map ? this.map(sourceObject) : sourceObject; // fetch new member ref
 
     if (newMember instanceof DataObject == false || this.filter(newMember))
       newMember = null;

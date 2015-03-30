@@ -1249,9 +1249,9 @@ var makeDeclaration = (function(){
           var sourceResource = basis.resource(url).ready(function(cssResource){
             var cssText = isolateCss(cssResource.cssText || '', isolate);
 
-            /** @cut */ if (typeof btoa == 'function')
+            /** @cut */ if (typeof global.btoa == 'function')
             /** @cut */   cssText += '\n/*# sourceMappingURL=data:application/json;base64,' +
-            /** @cut */     btoa('{"version":3,"sources":["' + basis.path.origin + url + '"],' +
+            /** @cut */     global.btoa('{"version":3,"sources":["' + basis.path.origin + url + '"],' +
             /** @cut */     '"mappings":"AAAA' + basis.string.repeat(';AACA', cssText.split('\n').length) +
             /** @cut */     '"}') + ' */';
 
