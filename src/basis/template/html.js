@@ -146,7 +146,7 @@
             sourceWrapper = null;
           }
 
-        if (value && value.substr(0, 5) == 'path:')
+        if (value && String(value).substr(0, 5) == 'path:')
         {
           sourceWrapper = getSourceByPath(value.substr(5));
           sourceWrapper.attach(token, token.apply);
