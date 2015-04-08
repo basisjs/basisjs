@@ -141,10 +141,14 @@
     });
 
     return function action(){
-      // this - instance of DataObject
+      // this - instance of AbstractData
       if (this.state != STATE_PROCESSING)
       {
-        fn.prepare.apply(this, arguments);
+        if (fn.prepare.apply(this, arguments))
+        {
+          /** @cut */ basis.dev.warn('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
+          return Promise.reject('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
+        }
 
         var request;
         var requestData = basis.object.complete({
