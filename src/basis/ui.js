@@ -415,7 +415,7 @@
 
       templateSync: function(){
         var oldElement = this.element;
-        var oldTmpl = this.tmpl;
+        //var oldTmpl = this.tmpl;
         var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
         var noChildNodesElement;
 
@@ -488,10 +488,12 @@
           }
         }
 
-        // emit event
         // NOTE: we couldn't omit templateChanged on init for now, as it's a single way
         // to know when tmpl become available; ShadowNode(List) doesn't work otherwise
+        //
         // if (oldTmpl)
+        //   this.emit_templateChanged();
+
         this.emit_templateChanged();
       },
 

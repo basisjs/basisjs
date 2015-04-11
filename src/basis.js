@@ -91,7 +91,7 @@
   * @param {*} value
   * @param {string} warning Warning messsage
   */
-  var warnPropertyAccess = (function(object, name, value, warning){
+  var warnPropertyAccess = (function(){
     /** @cut */ // show warnings only in dev mode
     /** @cut */ try {
     /** @cut */   if (Object.defineProperty)
@@ -584,9 +584,9 @@
  /**
   * dev mode only
   */
-  function devVerboseName(name, args, fn){
-    return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
-  }
+  /** @cut */ function devVerboseName(name, args, fn){
+  /** @cut */   return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
+  /** @cut */ }
 
 
   // ============================================
@@ -1100,11 +1100,10 @@
       *   basis.path.resolve('foo', 'bar/baz/', '../gif/image.gif');
       *   // if current location is /demo, it returns '/demo/foo/bar/gif/image.gif'
       *
-      * @param {..string=} from
-      * @param {string} to
+      * @param {...string=} paths
       * @return {string}
       */
-      resolve: function(from, to){
+      resolve: function(){
         var args = arrayFrom(arguments).reverse();
         var path = [];
         var absoluteFound = false;
@@ -1263,7 +1262,7 @@
   *
   * Other options copy into basis.config as is.
   */
-  function processConfig(config, verbose){
+  function processConfig(config){
     // make a copy of config
     config = slice(config);
 
@@ -1481,10 +1480,10 @@
    /**
     * Class constructor.
     * @param {function()} SuperClass Class that new one inherits of.
-    * @param {...object} extensions Objects that extends new class prototype.
+    * @param {...(object|function())} extensions Objects that extends new class prototype.
     * @return {function()} A new class.
     */
-    function createClass(SuperClass, extensions){
+    function createClass(SuperClass){
       var classId = classSeed++;
 
       if (typeof SuperClass != 'function')
@@ -1679,10 +1678,9 @@
    /**
     * @param {object} extension
     * @param {function()=} fn
-    * @param {string} devName Dev only
     * @return {object}
     */
-    var customExtendProperty = function(extension, fn, devName){
+    var customExtendProperty = function(extension, fn){
       return {
         __extend__: function(extension){
           if (!extension)
@@ -1692,7 +1690,7 @@
             return extension;
 
           var Base = function(){};
-          /** @cut verbose name in dev */ Base = devVerboseName(devName || 'customExtendProperty', {}, Base);
+          /** @cut verbose name in dev */ Base = devVerboseName(arguments[2] || 'customExtendProperty', {}, Base);
           Base.prototype = this;
 
           var result = new Base;
@@ -2050,7 +2048,7 @@
       }
   }
 
-  var resolveResourceUri = function(url, baseURI, clr){
+  var resolveResourceUri = function(url, baseURI){
     var rootNS = url.match(/^([a-zA-Z0-9\_\-]+):/);
 
     if (rootNS)
@@ -2068,7 +2066,10 @@
     }
 
     /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+    /** @cut */ {
+    /** @cut */   var clr = arguments[2];
     /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+    /** @cut */ }
 
     return url;
   };
@@ -2120,7 +2121,7 @@
     var isVirtual = arguments.length > 1;
     var resolved = false;
     var wrapped = false;
-    /** @cut */ var wrappedContent;
+    var wrappedContent;
 
     if (isVirtual)
       resourceUrl += '#virtual';
@@ -2400,7 +2401,7 @@
         return cssResource;
       },
 
-      '.json': function processJsonResourceContent(content, url){
+      '.json': function processJsonResourceContent(content){
         if (typeof content == 'object')
           return content;
 
@@ -2409,6 +2410,7 @@
           content = String(content);
           result = basis.json.parse(content);
         } catch(e) {
+          /** @cut */ var url = arguments[1];
           /** @cut */ consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
         }
         return result || null;
@@ -3115,7 +3117,7 @@
     var nativeStringSplit = String.prototype.split;
     String.prototype.split = function(pattern, count){
       if (!pattern || pattern instanceof RegExp == false || pattern.source == '')
-        return nativeStringSplit.apply(this, arguments);
+        return nativeStringSplit.call(this, pattern, count);
 
       var result = [];
       var pos = 0;
@@ -3255,7 +3257,7 @@
       asap.process();
     }
 
-    function fireHandlers(e){
+    function fireHandlers(){
       if (!eventFired++)
         processReadyHandler();
     }
@@ -3316,7 +3318,7 @@
   * @param {function()} callback
   * @param {*=} context
   */
-  var teardown = (function(callback, context){
+  var teardown = (function(){
     if ('addEventListener' in global)
       return function(callback, context){
         global.addEventListener('unload', function(event){
@@ -3450,8 +3452,8 @@
   var cleaner = (function(){
     var objects = [];
 
-    function destroy(log){
-      /** @cut */ var logDestroy = log && typeof log == 'boolean';
+    function destroy(){
+      /** @cut */ var logDestroy = arguments[0] === true;
       result.globalDestroy = true;
       result.add = $undef;
       result.remove = $undef;

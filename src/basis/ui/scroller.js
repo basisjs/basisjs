@@ -327,7 +327,7 @@
       event.preventDefault();
     },
 
-    onMouseUp: function(event){
+    onMouseUp: function(){
       this.panningActive = false;
       this.processInertia = true;
 

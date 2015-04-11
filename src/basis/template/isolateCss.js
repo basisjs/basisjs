@@ -15,7 +15,7 @@ function isolateCss(css, prefix){
     i = index !== -1 ? index + str.length : sym.length;
   }
 
-  function parseString(endSym){
+  function parseString(){
     var quote = sym[i];
 
     if (quote !== '"' && quote !== '\'')
@@ -28,7 +28,7 @@ function isolateCss(css, prefix){
     return true;
   }
 
-  function parseBraces(endSym){
+  function parseBraces(){
     var bracket = sym[i];
 
     if (bracket === '(')

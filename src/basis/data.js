@@ -605,7 +605,7 @@
     }
   };
   var VALUE_EMMITER_DESTROY_HANDLER = {
-    destroy: function(object){
+    destroy: function(){
       this.set(null);
     }
   };
@@ -1135,7 +1135,7 @@
           }
         });
 
-        handler.destroy = function(sender){
+        handler.destroy = function(){
           valueFromMap[id] = null;
           this.destroy();
         };
@@ -1728,7 +1728,7 @@
     resolve: function(object){
       return this.get(this.keyGetter(object), object);
     },
-    create: function(key, object){
+    create: function(key/*, object*/){
       var itemConfig;
 
       if (key instanceof DataObject)

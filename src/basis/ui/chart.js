@@ -1029,7 +1029,7 @@
     }
     else
     {
-      for (var i = 0, item, pos; item = applyItems[i]; i++)
+      for (var i = 0, item; item = applyItems[i]; i++)
         basis.array.remove(selectedItems, item);
     }
 
@@ -1068,7 +1068,7 @@
 
       event.die();
     },
-    contextmenu: function(event){
+    contextmenu: function(){
       //event.die();
     },
     blur: function(){
@@ -1314,15 +1314,13 @@
         this.draw(x, y);
     },
 
-    draw: function(x, y){
+    draw: function(x/*, y*/){
       var context = this.context;
 
       if (!context)
         return;
 
-      context.save();
-      context.translate(this.clientRect.left, this.clientRect.top);
-
+      var LEFT = this.clientRect.left;
       var TOP = this.clientRect.top;
       var WIDTH = this.clientRect.width;
       var HEIGHT = this.clientRect.height;
@@ -1334,6 +1332,9 @@
       var step = WIDTH / (keyCount - 1);
       var keyPosition = Math.round(x / step);
       var xPosition = Math.round(keyPosition * step);
+
+      context.save();
+      context.translate(LEFT, TOP);
 
       context.beginPath();
       context.moveTo(xPosition + .5, 0);

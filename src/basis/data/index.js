@@ -903,7 +903,7 @@
         this.calcMember(member);
     },
 
-    removeMemberRef: function(member, sourceObject){
+    removeMemberRef: function(member){
       delete this.memberSourceMap[member.basisObjectId];
 
       if (this.listen.member)
@@ -939,7 +939,7 @@
         }
       },
       member: {
-        subscribersChanged: function(object, delta){
+        subscribersChanged: function(object){
           if (object.subscriberCount > 0)
             this.calcMember(object);
         }

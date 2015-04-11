@@ -86,7 +86,7 @@
   function dateFormat(date, format, useUTC){
     var result = '';
 
-    for (var i = 0, chr, val; i < format.length; i++)
+    for (var i = 0, chr; i < format.length; i++)
     {
       chr = format.charAt(i);
       if (chr == '%')

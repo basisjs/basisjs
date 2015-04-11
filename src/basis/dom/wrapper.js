@@ -1490,7 +1490,7 @@
     stateChanged: function(dataSource){
       this.setChildNodesState(dataSource.state, dataSource.state.data);
     },
-    destroy: function(dataSource){
+    destroy: function(){
       if (!this.dataSourceRA_)
         this.setDataSource();
     }

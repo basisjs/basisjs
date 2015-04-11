@@ -145,7 +145,7 @@
    /**
     * @constructor
     */
-    init: function(dictionary, tokenName, type, value){
+    init: function(dictionary, tokenName, value){
       basis.Token.prototype.init.call(this, value);
 
       this.index = tokenIndex.push(this) - 1;
@@ -176,7 +176,7 @@
              'default';
     },
 
-    setType: function(type){
+    setType: function(){
       // basis.js 1.4
       /** @cut */ basis.dev.warn('basis.l10n: Token#setType() is deprecated');
     },
@@ -499,7 +499,6 @@
         token = this.tokens[tokenName] = new Token(
           this,
           tokenName,
-          this.types[tokenName],
           this.getValue(tokenName)
         );
       }
@@ -572,7 +571,7 @@
   // source: http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html?id=l10n/pluralforms
   var pluralFormsMap = {};
   var pluralForms = [
-    /*  0 */ [1, function(n){
+    /*  0 */ [1, function(){
       return 0;
     }],
     /*  1 */ [2, function(n){

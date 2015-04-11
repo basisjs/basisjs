@@ -123,7 +123,7 @@
       return period.periodStart.getFullYear();
     },
     quarter: function(period){
-      return dict.token('quarter');
+      return dict.token('quarter').token(Math.floor(period.periodStart.getMonth() / 3));
     },
     month: function(period){
       return dict.token('monthShort').token(monthNumToRef[period.periodStart.getMonth()]);
@@ -216,7 +216,7 @@
       }
     },
     action: {
-      click: function(event){
+      click: function(){
         // FIXME: shouldn't access to parent
         var calendar = this.parentNode && this.parentNode.parentNode;
         if (calendar && !this.isDisabled())
@@ -331,7 +331,7 @@
     selection: true,
 
     init: function(){
-      this.childNodes = getPeriods(this).map(function(period){
+      this.childNodes = getPeriods(this).map(function(){
         return {
           nodePeriodName: this.nodePeriodName
         };
@@ -569,7 +569,7 @@
 
     binding: {
       title: dict.token('quarter').compute('periodChanged', function(node){
-        return 1;  // todo: fix me
+        return Math.floor(node.periodEnd.getMonth() / 3);
       })
     }
   });
@@ -872,7 +872,6 @@
     isPeriodEnabled: function(periodStart, periodEnd){
 
       function checkMapDays(mode, month, sday, tday){
-        var result;
         if (!mode)
           // first month: check only for last days
           return month >> sday;

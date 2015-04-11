@@ -143,10 +143,11 @@
  /**
   * safe parse json
   */
-  function safeJsonParse(content, url){
+  function safeJsonParse(content){
     try {
       return basis.json.parse(content);
     } catch(e) {
+      /** @cut */ var url = arguments[1];
       /** @cut */ basis.dev.warn('basis.net.ajax: Can\'t parse JSON from ' + url, { url: url, content: content });
     }
   }

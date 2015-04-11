@@ -112,7 +112,7 @@
         {
           // convert to native document for IE
           if (xml.xml && global.DOMParser)
-            xml = new DOMParser().parseFromString(xml.xml, 'text/xml');
+            xml = new global.DOMParser().parseFromString(xml.xml, 'text/xml');
 
           this.responseEnvelope = new Envelope(xml.documentElement);
         }

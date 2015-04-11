@@ -292,7 +292,7 @@
     emit_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir'),
     listen: {
       owner: {
-        templateChanged: function(owner){
+        templateChanged: function(){
           if (this.visible)
             this.show.apply(this, this.visibleArgs_);
         }

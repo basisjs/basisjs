@@ -322,7 +322,7 @@
     * Remove reference from DOM structure
     * @param {object=} tmpl Storage of DOM references.
     */
-    clearInstance: function(tmpl){
+    clearInstance: function(/*tmpl*/){
     },
 
    /**
@@ -493,14 +493,22 @@
 
  /**
   * Helper to create TemplateSwitchConfig instance
+  * @param {string|string[]} events
+  * @param {function()} rule
   */
   function switcher(events, rule){
-    var args = basis.array(arguments);
-    var rule = args.pop();
+    if (!rule)
+    {
+      rule = events;
+      events = null;
+    }
+
+    if (typeof events == 'string')
+      events = events.split(/\s+/);
 
     return new TemplateSwitchConfig({
       rule: rule,
-      events: args.join(' ').trim().split(/\s+/)
+      events: events
     });
   }
 

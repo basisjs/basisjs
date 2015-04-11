@@ -10,6 +10,8 @@
   // import names
   //
 
+  var document = global.document;
+  var XMLSerializer = global.XMLSerializer;
   var Class = basis.Class;
   var extend = basis.object.extend;
   var browser = require('basis.ua');
@@ -84,12 +86,12 @@
 
       for (var i = 0; i < progId.length; i++)
         try {
-          if (new ActiveXObject(progId[i]))
+          if (new global.ActiveXObject(progId[i]))
           {
             XMLProgId = progId[i];
             isNativeSupport = false;
             return function(namespace, nodename){
-              var xmlDocument = new ActiveXObject(XMLProgId);
+              var xmlDocument = new global.ActiveXObject(XMLProgId);
               xmlDocument.documentElement = createElementNS(xmlDocument, nodename, namespace);
               return xmlDocument;
             };
@@ -396,7 +398,7 @@
   function XML2String(node){
     // modern browsers feature
     if (typeof XMLSerializer != 'undefined')
-      return (new XMLSerializer()).serializeToString(node);
+      return new XMLSerializer().serializeToString(node);
 
     // old IE feature
     if (typeof node.xml == 'string')

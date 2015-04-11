@@ -140,9 +140,9 @@
 
         this.frame = createIFrame();
 
-        basis.dom.event.addHandlers(this.frame, { load: this.onLoad }, this);
+        eventUtils.addHandlers(this.frame, { load: this.onLoad }, this);
       },
-      onLoad: function(event){
+      onLoad: function(){
         if (this.inprogress)
         {
           this.processResponse();

@@ -243,7 +243,7 @@
    /**
     * @type {function(count:number, sourceCount:number):boolean}
     */
-    rule: function(count, sourceCount){
+    rule: function(count){
       return count > 0;
     },
 
@@ -615,7 +615,7 @@
  /**
   * ONLY ONE source INCLUDE item
   */
-  Merge.DIFFERENCE = function(count, sourceCount){
+  Merge.DIFFERENCE = function(count){
     return count == 1;
   };
 
@@ -2481,7 +2481,6 @@
     applyRule: function(){
       var insertedMap = {};
       var deletedMap = {};
-      var array;
       var delta;
 
       for (var key in this.sourceMap_)

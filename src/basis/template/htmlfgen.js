@@ -264,9 +264,9 @@
       8: 'bind_comment'
     };
 
-    function simpleStringify(val){
-      return typeof val == 'string' ? '"' + val.replace(/"/g, '\\"') + '"' : val;
-    }
+    /** @cut */ function simpleStringify(val){
+    /** @cut */   return typeof val == 'string' ? '"' + val.replace(/"/g, '\\"') + '"' : val;
+    /** @cut */ }
 
    /**
     * @param {object} binding
@@ -773,8 +773,6 @@
     var paths = buildPathes(tokens, '_', noTextBug, templateMarker);
     var bindings = buildBindings(paths.binding);
     var objectRefs = paths.markedElementList.join('=');
-    var createInstance;
-    var fnBody;
     var result = {
       keys: bindings.keys,
       l10nKeys: basis.object.keys(bindings.l10n)

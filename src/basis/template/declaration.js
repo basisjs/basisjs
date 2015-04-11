@@ -156,34 +156,34 @@ var makeDeclaration = (function(){
     return url;
   }
 
-  function getLocation(template, loc){
-    if (loc)
-      return (template.sourceUrl || '') + ':' + loc.start.line + ':' + (loc.start.column + 1);
-  }
+  /** @cut */ function getLocation(template, loc){
+  /** @cut */   if (loc)
+  /** @cut */     return (template.sourceUrl || '') + ':' + loc.start.line + ':' + (loc.start.column + 1);
+  /** @cut */ }
 
-  function addTemplateWarn(template, options, message, loc){
-    /** @cut */ if (loc && options.loc)
-    /** @cut */ {
-    /** @cut */   message = Object(message);
-    /** @cut */   message.loc = typeof loc == 'string' ? loc : getLocation(template, loc);
-    /** @cut */ }
+  /** @cut */ function addTemplateWarn(template, options, message, loc){
+  /** @cut */   if (loc && options.loc)
+  /** @cut */   {
+  /** @cut */     message = Object(message);
+  /** @cut */     message.loc = typeof loc == 'string' ? loc : getLocation(template, loc);
+  /** @cut */   }
+  /** @cut */
+  /** @cut */   template.warns.push(message);
+  /** @cut */ }
 
-    template.warns.push(message);
-  }
-
-  function applyTokenLocation(template, options, dest, source){
-    /** @cut */ if (options.loc && source.loc && !dest.loc)
-    /** @cut */   dest.loc = getLocation(template, source.loc);
-  }
+  /** @cut */ function applyTokenLocation(template, options, dest, source){
+  /** @cut */   if (options.loc && source.loc && !dest.loc)
+  /** @cut */     dest.loc = getLocation(template, source.loc);
+  /** @cut */ }
 
   //
   // main function
   //
   function process(tokens, template, options){
 
-    function addTokenLocation(item, token){
-      applyTokenLocation(template, options, item, token);
-    }
+    /** @cut */ function addTokenLocation(item, token){
+    /** @cut */   applyTokenLocation(template, options, item, token);
+    /** @cut */ }
 
     function attrs(token, declToken){
       function setStylePropertyBinding(attr, property, byDefault, defaultValue){
@@ -191,7 +191,7 @@ var makeDeclaration = (function(){
         {
           styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
           //styleAttr.loc = getLocation(template, attr.loc);
-          addTokenLocation(styleAttr, attr);
+          /** @cut */ addTokenLocation(styleAttr, attr);
           result.push(styleAttr);
         }
 
@@ -361,7 +361,7 @@ var makeDeclaration = (function(){
 
             itAttrs.push(itAttrToken);
             //itAttrToken.loc = getLocation(template, token.loc);
-            addTokenLocation(itAttrToken, token);
+            /** @cut */ addTokenLocation(itAttrToken, token);
           }
 
           var classOrStyle = attrs.name == 'class' || attrs.name == 'style';
@@ -627,7 +627,7 @@ var makeDeclaration = (function(){
                   if (define)
                   {
                     //define.loc = token.loc;
-                    addTokenLocation(define, token);
+                    /** @cut */ addTokenLocation(define, token);
                     template.defines[defineName] = define;
                   }
                 }
@@ -1168,10 +1168,10 @@ var makeDeclaration = (function(){
     }
 
     // add tokenizer warnings if any
-    if (source.warns)
-      source.warns.forEach(function(warn){
-        addTemplateWarn(result, options, warn[0], warn[1].loc);
-      });
+    /** @cut */ if (source.warns)
+    /** @cut */   source.warns.forEach(function(warn){
+    /** @cut */     addTemplateWarn(result, options, warn[0], warn[1].loc);
+    /** @cut */   });
 
     // start prevent recursion
     includeStack.push((sourceOrigin !== true && sourceOrigin) || {}); // basisjs-tools pass true

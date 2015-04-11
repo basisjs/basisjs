@@ -38,7 +38,7 @@ var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
  * @param {string} string
  * @return {string}
  */
-var decodeHTMLTokens = (function(string){
+var decodeHTMLTokens = (function(){
   var tokenMap = {};
   var tokenElement = !basis.NODE_ENV ? global.document.createElement('div') : null;
   var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;

@@ -122,7 +122,7 @@
 
     items: null,
 
-    init: function(fn){
+    init: function(){
       this.items = {};
     },
     get: function(value, checkType){
@@ -269,7 +269,7 @@
     };
   };
 
-  var ENTITYSET_SYNC_METHOD = function(superClass){
+  var ENTITYSET_SYNC_METHOD = function(){
     return function(data){
       var destroyItems = basis.object.slice(this.items_);
       var inserted = [];
