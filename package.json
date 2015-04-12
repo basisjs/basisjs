@@ -24,7 +24,7 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "jscs": "1.12.0",
+    "jscs": "1.11.0",
     "karma": "^0.12.31",
     "karma-firefox-launcher": "^0.1.4",
     "karma-yatra": "0.0.1",
