@@ -959,37 +959,41 @@
       {
         var oldSource = this.source;
         var listenHandler = this.listen.source;
+        var itemsChangedHandler;
 
-        this.source = source;
-
+        // add/remove listen
         if (listenHandler)
         {
-          var itemsChangedHandler = listenHandler.itemsChanged;
-          setAccumulateState(true);
+          itemsChangedHandler = listenHandler.itemsChanged;
 
           if (oldSource)
-          {
             oldSource.removeHandler(listenHandler, this);
 
-            if (itemsChangedHandler)
-              itemsChangedHandler.call(this, oldSource, {
-                deleted: oldSource.getItems()
-              });
-          }
-
           if (source)
-          {
             source.addHandler(listenHandler, this);
-
-            if (itemsChangedHandler)
-              itemsChangedHandler.call(this, source, {
-                inserted: source.getItems()
-              });
-          }
-          setAccumulateState(false);
         }
 
+        // change the source
+        this.source = source;
         this.emit_sourceChanged(oldSource);
+
+        // sync items
+        if (itemsChangedHandler)
+        {
+          Dataset.setAccumulateState(true);
+
+          if (oldSource)
+            itemsChangedHandler.call(this, oldSource, {
+              deleted: oldSource.getItems()
+            });
+
+          if (source)
+            itemsChangedHandler.call(this, source, {
+              inserted: source.getItems()
+            });
+
+          Dataset.setAccumulateState(false);
+        }
       }
     },
 
