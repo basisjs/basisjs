@@ -15,6 +15,7 @@ module.exports = {
     var minIndex = basis.require('basis.data.index').min;
     var maxIndex = basis.require('basis.data.index').max;
     var distinctIndex = basis.require('basis.data.index').distinct;
+    var percentOfRange = basis.require('basis.data.index').percentOfRange;
 
     var indexes = [
       {
@@ -68,29 +69,7 @@ module.exports = {
   },
 
   test: [
-    {
-      name: 'IndexMap',
-      test: [
-        {
-          name: 'create & destroy',
-          test: function(){
-            var map = new IndexMap({
-              source: Dataset.from(range(0, 2)),
-              indexes: {
-                sum: sumIndex('data.value')
-              }
-            });
-
-            assert(basis.object.keys(map.indexes).length === 1);
-            assert(map.indexes.sum.value === 3);
-
-            map.destroy();
-
-            assert(basis.object.keys(map.indexes).length === 0);
-          }
-        }
-      ]
-    },
+    require('./data.index/map.js'),
     {
       name: 'indexes',
       test: [

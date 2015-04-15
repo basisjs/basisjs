@@ -141,7 +141,7 @@
           caption: 'remove',
           click: function(){
             if (table.firstChild)
-              dataset.remove(table.firstChild.root);
+              dataset.remove(table.firstChild.root.source);
           }
         },
         {
@@ -168,10 +168,19 @@
       ]
     });
 
+    function indexPercent(name){
+      return {
+        events: 'update',
+        getter: function(node){
+          return (100 * node.data[name]).toFixed(2);
+        }
+      };
+    }
+
     var count = 0;
     var table = new Table({
       container: document.getElementById('demo-container'),
-      dataSource: dataset,
+      dataSource: indexMap,
       structure: [
         {
           header: '#',
@@ -224,39 +233,14 @@
       ],
 
       childClass: {
-        percentOfTotalSum: 0,
-        percentOfTotalRange: 0,
-        percentOfValueMax: 0,
-
         binding: {
           id: 'data:',
           title: 'data:',
           value: 'data:',
           total: 'data:',
-          percentOfTotalSum: 'percentOfTotalSum',
-          percentOfTotalRange: 'percentOfTotalRange',
-          percentOfValueMax: 'percentOfValueMax'
-        },
-        satellite: {
-          indexes: {
-            events: 'rootChanged',
-            delegate: function(owner){
-              return indexMap.getMember(owner.root);
-            },
-            satelliteClass: AbstractNode.subclass({
-              active: true,
-              emit_update: function(delta){
-                nsData.Object.prototype.emit_update.call(this, delta);
-
-                this.owner.percentOfTotalSum = (100 * this.data.percentOfTotalSum).toFixed(2);
-                this.owner.updateBind('percentOfTotalSum');
-                this.owner.percentOfTotalRange = (100 * this.data.percentOfTotalRange).toFixed(2);
-                this.owner.updateBind('percentOfTotalRange');
-                this.owner.percentOfValueMax = (100 * this.data.percentOfValueMax).toFixed(2);
-                this.owner.updateBind('percentOfValueMax');
-              }
-            })
-          }
+          percentOfTotalSum: indexPercent('percentOfTotalSum'),
+          percentOfTotalRange: indexPercent('percentOfTotalRange'),
+          percentOfValueMax: indexPercent('percentOfValueMax')
         }
       },
       selection: {
