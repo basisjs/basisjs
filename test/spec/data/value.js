@@ -273,7 +273,63 @@ module.exports = {
               }
             },
             {
-              name: 'should store null if no object on some step',
+              name: 'should not calc value on init if parent has non-Emitter value',
+              test: function(){
+                var calcCount = 0;
+                var pipe = new Value().pipe('activeChanged', function(){
+                  calcCount++;
+                });
+
+                assert(calcCount === 0);
+              }
+            },
+            {
+              name: 'should calc value only once on init but when parent value has an Emitter value',
+              test: function(){
+                var calcCount = 0;
+                var pipe = new Value({ value: new DataObject() })
+                  .pipe('activeChanged', function(){
+                    calcCount++;
+                  });
+
+                assert(calcCount === 1);
+              }
+            },
+            {
+              name: 'should not recalc on parent value non-Emitter->non-Emitter changes',
+              test: function(){
+                var calcCount = 0;
+                var parent = new Value();
+                var pipe = parent.pipe('activeChanged', function(){
+                  calcCount++;
+                });
+
+                calcCount = 0;
+
+                parent.set(false);
+                assert(calcCount == 0);
+
+                parent.set(new DataObject());
+                assert(calcCount == 1);
+
+                parent.set(new DataObject());
+                assert(calcCount == 2);
+
+                parent.set();
+                assert(calcCount == 3);
+
+                parent.set();
+                assert(calcCount == 3);
+
+                parent.set(null);
+                assert(calcCount == 3);
+
+                parent.set(new DataObject());
+                assert(calcCount == 4);
+              }
+            },
+            {
+              name: 'should store null if prev step stores undefined',
               test: function(){
                 var parent = new Value();
                 var pipe = parent.pipe('activeChanged', 'active');

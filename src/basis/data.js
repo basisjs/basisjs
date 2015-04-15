@@ -616,18 +616,18 @@
     this.set(this.fn(value));
   };
   var valueSyncPipe = function(newValue, oldValue){
-    var val = null;
-
     if (oldValue instanceof Emitter)
       oldValue.removeHandler(this.pipeHandler, this);
+    else
+      oldValue = null;
 
     if (newValue instanceof Emitter)
-    {
       newValue.addHandler(this.pipeHandler, this);
-      val = newValue;
-    }
+    else
+      newValue = null;
 
-    Value.prototype.set.call(this, val);
+    if (newValue !== oldValue)
+      Value.prototype.set.call(this, newValue);
   };
 
  /**
@@ -907,9 +907,9 @@
     * @return {basis.data.Value}
     */
     pipe: function(events, getter){
-      var handler = createEventHandler(events, valueFromSetProxy);
+      var pipeHandler = createEventHandler(events, valueFromSetProxy);
       var getterId = getter[GETTER_ID] || String(getter);
-      var id = handler.events.join('_') + '_' + getterId;
+      var id = pipeHandler.events.join('_') + '_' + getterId;
       var pipes = this.pipes_;
       var pipeValue;
 
@@ -920,27 +920,24 @@
 
       if (!pipeValue)
       {
-        pipeValue = new Value({
-          parent: this,
-          pipeHandler: handler,
-          proxy: basis.getter(getter),
-          set: basis.fn.$undef,
-          destroy: function(){
-            var parent = this.parent;
-            var parentValue = parent.value;
-
-            if (parentValue instanceof Emitter)
-              parentValue.removeHandler(this.pipeHandler, this);
-
-            parent.pipes_[id] = null;
-            this.parent = null;
-
-            Value.prototype.destroy.call(this);
-          }
+        pipeValue = new PipeValue({
+          source: this,
+          pipeId: id,
+          pipeHandler: pipeHandler
         });
 
+        // set value and proxy aside to avoid undesirable calculations
+        pipeValue.proxy = basis.getter(getter);
+        if (this.value instanceof Emitter)
+        {
+          // set pipe value only if source value is Emitter, otherwise value is null
+          pipeValue.value = pipeValue.proxy(this.value);
+          this.value.addHandler(pipeHandler, pipeValue);
+        }
+
+        // add to cache and link
         pipes[id] = pipeValue;
-        this.link(pipeValue, valueSyncPipe, false, pipeValue.destroy);
+        this.link(pipeValue, valueSyncPipe, true, pipeValue.destroy);
       }
 
       return pipeValue;
@@ -1090,6 +1087,32 @@
     }
   });
 
+ /**
+  * @class
+  */
+  var PipeValue = Class(Value, {
+    className: namespace + '.PipeValue',
+    source: null,
+    pipeId: null,
+    pipeHandler: null,
+    set: basis.fn.$undef,
+    destroy: function(){
+      var source = this.source;
+      var sourceValue = source.value;
+
+      if (sourceValue instanceof Emitter)
+        sourceValue.removeHandler(this.pipeHandler, this);
+
+      source.pipes_[this.pipeId] = null;
+
+      this.source = null;
+      this.pipeHandler = null;
+
+      Value.prototype.destroy.call(this);
+    }
+  });
+
+
   //
   // cast to Value
   //
@@ -1124,8 +1147,8 @@
       if (!result)
       {
         result = valueFromMap[id] = new Value({
-          value: obj,
           proxy: basis.getter(getter),
+          value: obj,
           set: basis.fn.$undef,
           handler: {
             destroy: function(){
