@@ -69,7 +69,7 @@
     }
   };
 
-  var objectSetUpdater = basis.asap.shedule(function(object){
+  var objectSetUpdater = basis.asap.schedule(function(object){
     object.update();
   });
 

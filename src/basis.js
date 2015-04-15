@@ -885,42 +885,42 @@
     };
 
    /**
-    * Returns shedule instance. Object queue for which sheduleFn should be apply asap.
+    * Returns schedule instance. Object queue for which scheduleFn should be apply asap.
     * @return
     */
-    asap.shedule = (function(sheduleFn){
+    asap.schedule = (function(scheduleFn){
       var queue = {};
-      var sheduled = false;
+      var scheduled = false;
 
       function process(){
         // set timer to make sure all objects be processed
         // it helps avoid try/catch and process all objects even if any exception
         var etimer = basis.setImmediate(process);
 
-        // reset sheduled flag, make possible set new asap for objects added during queue processing
-        sheduled = false;
+        // reset scheduled flag, make possible set new asap for objects added during queue processing
+        scheduled = false;
 
         // process objects
         for (var id in queue)
         {
           var object = queue[id];
           delete queue[id];
-          sheduleFn(object);
+          scheduleFn(object);
         }
 
         // if no exceptions we will be here, reset emergency timer
         basis.clearImmediate(etimer);
 
-        // reset queue to keep it fast, but if no new task sheduled during queue processing
-        if (!sheduled)
+        // reset queue to keep it fast, but if no new task scheduled during queue processing
+        if (!scheduled)
           queue = {};
       }
 
       return {
         add: function(object){
           queue[object.basisObjectId] = object;
-          if (!sheduled)
-            sheduled = basis.asap(process);
+          if (!scheduled)
+            scheduled = basis.asap(process);
         },
         remove: function(object){
           delete queue[object.basisObjectId];
@@ -1977,7 +1977,7 @@
   // Deferred token
   //
 
-  var deferredTokenApplyQueue = asap.shedule(function(token){
+  var deferredTokenApplyQueue = asap.schedule(function(token){
     token.apply();
   });
 

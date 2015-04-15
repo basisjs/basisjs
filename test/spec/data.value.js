@@ -247,7 +247,7 @@ module.exports = {
               }
             },
             {
-              name: 'destroy expression with sheduled update',
+              name: 'destroy expression with scheduled update',
               test: function(){
                 var a = new Value({ value: 1 });
                 var expr = new Expression(a, function(a){
