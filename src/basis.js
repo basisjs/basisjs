@@ -574,7 +574,13 @@
     var name = 'basisjsCallback' + genUID();
 
     global[name] = permanent ? fn : function(){
-      delete global[name];
+      try {
+        // IE8 and lower can't delete from global
+        delete global[name];
+      } catch(e) {
+        global[name] = undefined;
+      }
+
       fn.apply(this, arguments);
     };
 

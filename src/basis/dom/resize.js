@@ -1,6 +1,7 @@
 
   var document = global.document;
   var resizeHandlers = 'basisjsResizeHandlers' + basis.genUID();
+  var getComputedStyle = require('basis.dom.computedStyle').get;
 
   function createSensorProto(name){
     var sensorProto = document.createElement(name);
@@ -46,17 +47,18 @@
       };
 
       var init = function(){
-        var win = sensor.contentDocument.defaultView;
+        var document = sensor.contentDocument;
+        var win = document.defaultView || document.parentWindow;
         win.onresize = handler;
         win.document.body.onresize = handler;
         handler();
       };
 
-      if (global.getComputedStyle(element).position == 'static')
+      if (getComputedStyle(element, 'position') == 'static')
         element.style.position = 'relative';
 
       // using <object> version
-      // looks the same, but looks like has issues in old IE
+      // looks the same, but has issues in old IE
       // if (!element.attachEvent)
       // {
       //   var sensor = objectSensorProto.cloneNode();

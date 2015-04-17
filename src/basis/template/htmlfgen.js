@@ -44,6 +44,14 @@
 
   var tmplFunctions = {}; // precompiled functions
   var inlineSeed = 1;
+  var SET_NONELEMENT_PROPERTY_SUPPORT = (function(){
+    try {
+      global.document.createTextNode('').x = 1;
+      return true;
+    } catch(e) {
+      return false;
+    }
+  })();
 
 
  /**
@@ -126,7 +134,7 @@
           ]);
         }
 
-        if (path == rootPath)
+        if (path == rootPath && (SET_NONELEMENT_PROPERTY_SUPPORT || token[TOKEN_TYPE] == TYPE_ELEMENT))
           markedElementList.push(localPath + '.' + templateMarker);
 
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)

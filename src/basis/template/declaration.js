@@ -1,4 +1,5 @@
 
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 var arraySearch = basis.array.search;
 var arrayAdd = basis.array.add;
 var arrayRemove = basis.array.remove;
