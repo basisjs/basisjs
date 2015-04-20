@@ -138,16 +138,18 @@ module.exports = {
       ]
     },
     {
-      name: 'inherit isolate from nested <b:include>',
+      name: 'should not inherit isolate from nested templates (<b:include>)',
       test: [
         {
           name: 'one level',
           test: function(){
             var templateA = new Template(
               '<b:isolate prefix="xxx--"/>' +
+              '<b:style>.test{}</b:style>' +
               '<div class="test test_{mod}"/>'
             );
             var templateB = new Template(
+              '<b:style>.outer{}</b:style>' +
               '<div class="outer outer_{mod}">' +
                 '<b:include src="#' + templateA.templateId + '"/>' +
               '</div>'
@@ -155,23 +157,16 @@ module.exports = {
             var tmpl = templateB.createInstance();
             tmpl.set('mod', 'mod');
 
-            var className = tmpl.element.className;
-            assert(className != 'outer outer_mod');
-            assert(/\Bouter\b/.test(className));
-            assert(/\Bouter_mod\b/.test(className));
-            // should be prefix
-            assert(/^(\S+)outer \1outer_mod$/.test(className));
-            // isolate prefix should be ignored
-            assert(className != 'xxx--outer xxx--outer_mod');
+            // should not prefix classes in template
+            assert(tmpl.element.className == 'outer outer_mod');
+            assert(tmpl.element.firstChild.className == 'test test_mod');
 
-            var className = tmpl.element.firstChild.className;
-            assert(className != 'test test_mod');
-            assert(/\Btest\b/.test(className));
-            assert(/\Btest_mod\b/.test(className));
-            // should be prefix
-            assert(/^(\S+)test \1test_mod$/.test(className));
-            // isolate prefix should be ignored
-            assert(className != 'xxx--test xxx--test_mod');
+            // should not prefix classes in css
+            var allStyles = templateB.resources.map(function(r){
+              return basis.resource(r).get(true);
+            }).join('\n');
+            assert(/\.outer\b/.test(allStyles));
+            assert(/\.test\b/.test(allStyles));
           }
         },
         {
@@ -179,12 +174,14 @@ module.exports = {
           test: function(){
             var templateA = new Template(
               '<b:isolate prefix="xxx--"/>' +
+              '<b:style>.test{}</b:style>' +
               '<div class="test test_{mod}"/>'
             );
             var templateB = new Template(
               '<b:include src="#' + templateA.templateId + '"/>'
             );
             var templateC = new Template(
+              '<b:style>.outer{}</b:style>' +
               '<div class="outer outer_{mod}">' +
                 '<b:include src="#' + templateB.templateId + '"/>' +
               '</div>'
@@ -192,23 +189,16 @@ module.exports = {
             var tmpl = templateC.createInstance();
             tmpl.set('mod', 'mod');
 
-            var className = tmpl.element.className;
-            assert(className != 'outer outer_mod');
-            assert(/\Bouter\b/.test(className));
-            assert(/\Bouter_mod\b/.test(className));
-            // should be prefix
-            assert(/^(\S+)outer \1outer_mod$/.test(className));
-            // isolate prefix should be ignored
-            assert(className != 'xxx--outer xxx--outer_mod');
+            // should not prefix classes in template
+            assert(tmpl.element.className == 'outer outer_mod');
+            assert(tmpl.element.firstChild.className == 'test test_mod');
 
-            var className = tmpl.element.firstChild.className;
-            assert(className != 'test test_mod');
-            assert(/\Btest\b/.test(className));
-            assert(/\Btest_mod\b/.test(className));
-            // should be prefix
-            assert(/^(\S+)test \1test_mod$/.test(className));
-            // isolate prefix should be ignored
-            assert(className != 'xxx--test xxx--test_mod');
+            // should not prefix classes in css
+            var allStyles = templateC.resources.map(function(r){
+              return basis.resource(r).get(true);
+            }).join('\n');
+            assert(/\.outer\b/.test(allStyles));
+            assert(/\.test\b/.test(allStyles));
           }
         }
       ]

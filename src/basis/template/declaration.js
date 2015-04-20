@@ -843,10 +843,6 @@ var makeDeclaration = (function(){
                     // isolate
                     if (isolatePrefix)
                       isolateTokens(decl.tokens, isolatePrefix);
-                    else
-                      // inherit isolate from nested template
-                      if (decl.isolate && !template.isolate)
-                        template.isolate = options.isolate || genIsolateMarker();
 
                     //resources.push.apply(resources, tokens.resources);
                     result.push.apply(result, decl.tokens);
