@@ -915,7 +915,7 @@
       return member;
     },
 
-    addMemberRef: function(member, sourceObject){
+    addMemberRef: function(member){
       if (this.listen.member)
         member.addHandler(this.listen.member, this);
     },
