@@ -205,6 +205,15 @@ module.exports = {
 
         this.is(text('<span>{reference}</span>'), text(b));
       }
+    },
+    {
+      name: 'should override duplicate classes',
+      test: function(){
+        var a = createTemplate('<span class="b c">{reference}</span>');
+        var b = createTemplate('<b:include src="#' + a.templateId + '" class="a b"/>');
+
+        this.is(text('<span class="c a b">{reference}</span>'), text(b));
+      }
     }
   ]
 };

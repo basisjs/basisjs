@@ -476,10 +476,30 @@ var makeDeclaration = (function(){
 
               if (appendValue)
               {
-                itAttrToken[valueIdx] =
-                  (itAttrToken[valueIdx] || '') +
-                  (itAttrToken[valueIdx] && (isEvent || isClassOrStyle) ? ' ' : '') +
-                  appendValue;
+                if (isEvent || attrs.name == 'class')
+                {
+                  var parts = (itAttrToken[valueIdx] || '').trim();
+                  var appendParts = appendValue.trim();
+
+                  parts = parts ? parts.split(/\s+/) : [];
+                  appendParts = appendParts ? appendParts.split(/\s+/) : [];
+
+                  for (var i = 0; i < appendParts.length; i++)
+                  {
+                    var part = appendParts[i];
+                    basis.array.remove(parts, part);
+                    parts.push(part);
+                  }
+
+                  itAttrToken[valueIdx] = parts.join(' ');
+                }
+                else
+                {
+                  itAttrToken[valueIdx] =
+                    (itAttrToken[valueIdx] || '') +
+                    (itAttrToken[valueIdx] && isClassOrStyle ? ' ' : '') +
+                    appendValue;
+                }
 
                 /** @cut */ if (valueLocMap)
                 /** @cut */ {
