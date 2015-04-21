@@ -10,7 +10,6 @@ require('basis.data.value');
 require('basis.data.vector');
 require('basis.data');
 require('basis.date');
-require('basis.devpanel');
 require('basis.dom.computedStyle');
 require('basis.dom.event');
 require('basis.dom.resize');
