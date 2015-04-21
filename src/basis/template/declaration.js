@@ -186,6 +186,17 @@ var makeDeclaration = (function(){
     /** @cut */   applyTokenLocation(template, options, item, token);
     /** @cut */ }
 
+    /** @cut */ function getAttributeValueLocationMap(token){
+    /** @cut */   if (!token || !token.map_)
+    /** @cut */     return null;
+    /** @cut */
+    /** @cut */   return token.map_.reduce(function(res, part){
+    /** @cut */     if (!part.binding)
+    /** @cut */       res[part.value] = getLocation(template, part.loc);
+    /** @cut */     return res;
+    /** @cut */   }, {});
+    /** @cut */ }
+
     function attrs(token, declToken){
       function setStylePropertyBinding(attr, property, byDefault, defaultValue){
         if (!styleAttr)
@@ -283,6 +294,7 @@ var makeDeclaration = (function(){
             styleAttr = item;
         }
 
+        /** @cut */ item.valueLocMap = getAttributeValueLocationMap(attr);
         /** @cut */ addTokenLocation(item, attr);
 
         result.push(item);
@@ -323,8 +335,10 @@ var makeDeclaration = (function(){
         {
           var itAttrs = includedToken.token;
           var isEvent = attrs.name.match(ATTR_EVENT_RX);
+          var isClassOrStyle = attrs.name == 'class' || attrs.name == 'style';
           var itType = isEvent ? TYPE_ATTRIBUTE_EVENT : ATTR_TYPE_BY_NAME[attrs.name] || TYPE_ATTRIBUTE;
           var valueIdx = ATTR_VALUE_INDEX[itType] || ATTR_VALUE;
+          /** @cut */ var valueLocMap = getAttributeValueLocationMap(attrs_.value);
           var itAttrToken = itAttrs && arraySearch(itAttrs, attrs.name, function(token){
             if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
               return 'event-' + token[1];
@@ -361,11 +375,10 @@ var makeDeclaration = (function(){
             }
 
             itAttrs.push(itAttrToken);
-            //itAttrToken.loc = getLocation(template, token.loc);
+            /** @cut */ itAttrToken.valueLocMap = valueLocMap;
             /** @cut */ addTokenLocation(itAttrToken, token);
           }
 
-          var classOrStyle = attrs.name == 'class' || attrs.name == 'style';
           switch (action){
             case 'set':
               // event-* attribute special case
@@ -375,6 +388,7 @@ var makeDeclaration = (function(){
                   itAttrToken.length = 2;
                 else
                   itAttrToken[valueIdx] = attrs.value;
+
                 return;
               }
 
@@ -382,13 +396,14 @@ var makeDeclaration = (function(){
               var valueAttr = attrs_.value || {};
 
               itAttrToken[TOKEN_BINDINGS] = valueAttr.binding || 0;
+              /** @cut */ itAttrToken.valueLocMap = valueLocMap;
 
-              if (!options.optimizeSize || !itAttrToken[TOKEN_BINDINGS] || classOrStyle)
+              if (!options.optimizeSize || !itAttrToken[TOKEN_BINDINGS] || isClassOrStyle)
                 itAttrToken[valueIdx] = valueAttr.value || '';
               else
                 itAttrToken.length = valueIdx;
 
-              if (classOrStyle)
+              if (isClassOrStyle)
                 if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
                 {
                   arrayRemove(itAttrs, itAttrToken);
@@ -448,24 +463,35 @@ var makeDeclaration = (function(){
                   else
                   {
                     itAttrToken[TOKEN_BINDINGS] = appendBinding;
-                    if (!classOrStyle)
+                    if (!isClassOrStyle)
                       itAttrToken[TOKEN_BINDINGS][1].unshift(itAttrToken[valueIdx]);
                   }
                 }
                 else
                 {
-                  if (!classOrStyle && itAttrToken[TOKEN_BINDINGS])
+                  if (!isClassOrStyle && itAttrToken[TOKEN_BINDINGS])
                     itAttrToken[TOKEN_BINDINGS][1].push(attrs.value);
                 }
               }
 
               if (appendValue)
+              {
                 itAttrToken[valueIdx] =
                   (itAttrToken[valueIdx] || '') +
-                  (itAttrToken[valueIdx] && (isEvent || classOrStyle) ? ' ' : '') +
+                  (itAttrToken[valueIdx] && (isEvent || isClassOrStyle) ? ' ' : '') +
                   appendValue;
 
-              if (classOrStyle && !itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
+                /** @cut */ if (valueLocMap)
+                /** @cut */ {
+                /** @cut */   if (itAttrToken.valueLocMap)
+                /** @cut */     for (var name in valueLocMap)
+                /** @cut */       itAttrToken.valueLocMap[name] = valueLocMap[name];
+                /** @cut */   else
+                /** @cut */     itAttrToken.valueLocMap = valueLocMap;
+                /** @cut */ }
+              }
+
+              if (isClassOrStyle && !itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
                 arrayRemove(itAttrs, itAttrToken);
 
               break;
@@ -500,7 +526,11 @@ var makeDeclaration = (function(){
                 }
 
                 for (var i = 0; i < remValues.length; i++)
+                {
                   arrayRemove(values, remValues[i]);
+                  /** @cut */ if (itAttrToken.valueLocMap)
+                  /** @cut */   delete itAttrToken.valueLocMap[remValues[i]];
+                }
 
                 itAttrToken[valueIdx] = values.join(' ');
 
@@ -1117,6 +1147,14 @@ var makeDeclaration = (function(){
         if (bindings)
           for (var k = 0, bind; bind = bindings[k]; k++)
             bind[0] = processName(bind[0]);
+
+        /** @cut */ if (token.valueLocMap)
+        /** @cut */ {
+        /** @cut */   var oldValueLocMap = token.valueLocMap;
+        /** @cut */   token.valueLocMap = {};
+        /** @cut */   for (var name in oldValueLocMap)
+        /** @cut */     token.valueLocMap[processName(name)] = oldValueLocMap[name];
+        /** @cut */ }
       }
     }
   }

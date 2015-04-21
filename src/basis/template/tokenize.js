@@ -128,6 +128,7 @@ function processAttr(token, mode, convertRange){
           var val = part[2];
           var valInfo = {
             value: val,
+            binding: false,
             range: {
               start_: pos += part[1].length,
               end_: pos += val.length
@@ -140,6 +141,7 @@ function processAttr(token, mode, convertRange){
           {
             binding = [m[1] || '', m[2]];
             binding.info_ = valInfo;
+            valInfo.binding = true;
             bindings.push(binding);
           }
           else
