@@ -197,6 +197,26 @@ var makeDeclaration = (function(){
     /** @cut */   }, {});
     /** @cut */ }
 
+    function parseIncludeOptions(str){
+      var result = {};
+      var pairs = (str || '').trim().split(/\s*,\s*/);
+
+      for (var i = 0; i < pairs.length; i++)
+      {
+        var pair = pairs[i].split(/\s*:\s*/);
+
+        if (pair.length != 2)
+        {
+          // error
+          return {};
+        }
+
+        result[pair[0]] = pair[1];
+      }
+
+      return result;
+    }
+
     function attrs(token, declToken){
       function setStylePropertyBinding(attr, property, byDefault, defaultValue){
         if (!styleAttr)
@@ -592,15 +612,27 @@ var makeDeclaration = (function(){
             switch (token.name)
             {
               case 'style':
-                var styleNamespace = elAttrs.namespace || elAttrs.ns;
-                var styleIsolate = styleNamespace ? styleNamespaceIsolate : '';
-                var src = addStyle(template, token, elAttrs.src, styleIsolate);
+                var useStyle = true;
 
-                if (styleNamespace)
+                if (elAttrs.options)
                 {
-                  if (src in styleNamespaceIsolate == false)
-                    styleNamespaceIsolate[src] = genIsolateMarker();
-                  template.styleNSPrefix[styleNamespace] = styleNamespaceIsolate[src];
+                  var filterOptions = parseIncludeOptions(elAttrs.options);
+                  for (var name in filterOptions)
+                    useStyle = useStyle && filterOptions[name] == options.includeOptions[name];
+                }
+
+                if (useStyle)
+                {
+                  var styleNamespace = elAttrs.namespace || elAttrs.ns;
+                  var styleIsolate = styleNamespace ? styleNamespaceIsolate : '';
+                  var src = addStyle(template, token, elAttrs.src, styleIsolate);
+
+                  if (styleNamespace)
+                  {
+                    if (src in styleNamespaceIsolate == false)
+                      styleNamespaceIsolate[src] = genIsolateMarker();
+                    template.styleNSPrefix[styleNamespace] = styleNamespaceIsolate[src];
+                  }
                 }
               break;
 
@@ -708,7 +740,11 @@ var makeDeclaration = (function(){
                   if (includeStack.indexOf(resource) == -1)
                   {
                     var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
-                    var decl = getDeclFromSource(resource, '', true, options);
+                    var includeOptions = elAttrs.options ? parseIncludeOptions(elAttrs.options) : null;
+                    var declarationOptions = basis.object.merge(options, {
+                      includeOptions: includeOptions
+                    });
+                    var decl = getDeclFromSource(resource, '', true, declarationOptions);
 
                     arrayAdd(template.deps, resource);
                     template.includes.push([elAttrs_.src, resource, decl.includes]);
@@ -774,15 +810,27 @@ var makeDeclaration = (function(){
                         {
                           case 'style':
                             var childAttrs = tokenAttrs(child);
-                            var styleNamespace = childAttrs.namespace || childAttrs.ns;
-                            var styleIsolate = styleNamespace ? styleNamespaceIsolate : isolatePrefix;
-                            var src = addStyle(template, child, childAttrs.src, styleIsolate);
+                            var useStyle = true;
 
-                            if (styleNamespace)
+                            if (childAttrs.options)
                             {
-                              if (src in styleNamespaceIsolate == false)
-                                styleNamespaceIsolate[src] = genIsolateMarker();
-                              styleNSPrefixMap[styleNamespace] = styleNamespaceIsolate[src];
+                              var filterOptions = parseIncludeOptions(childAttrs.options);
+                              for (var name in filterOptions)
+                                useStyle = useStyle && filterOptions[name] == includeOptions[name];
+                            }
+
+                            if (useStyle)
+                            {
+                              var styleNamespace = childAttrs.namespace || childAttrs.ns;
+                              var styleIsolate = styleNamespace ? styleNamespaceIsolate : isolatePrefix;
+                              var src = addStyle(template, child, childAttrs.src, styleIsolate);
+
+                              if (styleNamespace)
+                              {
+                                if (src in styleNamespaceIsolate == false)
+                                  styleNamespaceIsolate[src] = genIsolateMarker();
+                                styleNSPrefixMap[styleNamespace] = styleNamespaceIsolate[src];
+                              }
                             }
                             break;
 
@@ -1183,8 +1231,12 @@ var makeDeclaration = (function(){
     var warns = [];
     /** @cut */ var source_;
 
-    options = options || {};
-    /** @cut */ options = basis.object.complete({ loc: true, range: true }, options);
+    // make copy of options (as modify it) and normalize
+    options = basis.object.slice(options);
+    options.includeOptions = options.includeOptions || {};
+    // force fetch locations and ranges in dev mode for debug and build purposes
+    /** @cut */ options.loc = true;
+    /** @cut */ options.range = true;
 
     // result object
     var result = {
@@ -1193,7 +1245,6 @@ var makeDeclaration = (function(){
       dictURI: sourceUrl  // resolve l10n dictionary url
         ? basis.path.resolve(sourceUrl)
         : baseURI || '',
-
       tokens: null,
       styleNSPrefix: {},
       resources: [],
@@ -1213,6 +1264,7 @@ var makeDeclaration = (function(){
         result.dictURI = result.dictURI.substr(0, result.dictURI.length - extname.length) + '.l10n';
     }
 
+    // tokenize source if needed
     if (!source.templateTokens)
     {
       /** @cut */ source_ = source;
@@ -1222,7 +1274,7 @@ var makeDeclaration = (function(){
       });
     }
 
-    // add tokenizer warnings if any
+    // copy tokenizer warnings to template if any
     /** @cut */ if (source.warns)
     /** @cut */   source.warns.forEach(function(warn){
     /** @cut */     addTemplateWarn(result, options, warn[0], warn[1].loc);
