@@ -1,12 +1,11 @@
 
-  <b:style src="./FormContent.css"/>
-  <b:define name="disabled" type="bool"/>
+  <b:style src="./Form.css"/>
 
-  <form{form} class="Basis-Form {disabled}"
+  <form{form} class="Basis-Form"
      method="{method}"
      action="{action}"
      target="{target}"
      enctype="{enctype}"
      event-submit="validate">
-    <div{content|childNodesElement} class="Basis-FormContent" />
+    <b:include src="./FormContent.tmpl" />
   </form>

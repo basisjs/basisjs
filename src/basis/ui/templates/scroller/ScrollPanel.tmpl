@@ -1,11 +1,9 @@
 <b:style src="./ScrollPanel.css"/>
-<b:define name="selected" type="bool"/>
-<b:define name="disabled" type="bool"/>
 <b:define name="scrollProcess" type="bool"/>
 <b:define name="bothScrollbars" type="bool"/>
 
 <div class="Basis-ScrollPanel {scrollProcess} {bothScrollbars}" event-mousewheel="onwheel">
-  <div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content {selected} {disabled}"/>
+  <div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content"/>
   <!--{horizontalScrollbar}-->
   <!--{verticalScrollbar}-->
 </div>

@@ -1,10 +1,9 @@
 
   <b:style src="./Section.css"/>
   <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
   <b:define name="sectionName" type="enum" values="Month Year YearDecade Century YearQuarter Quarter"/>
 
-  <div class="Basis-Calendar-Section Basis-Calendar-Section-{sectionName} {selected} {disabled}">
+  <div class="Basis-Calendar-Section Basis-Calendar-Section-{sectionName} {selected}">
     <div class="Basis-Calendar-SectionTitle">{title}</div>
     <div{childNodesElement} class="Basis-Calendar-SectionContent"/>
   </div>

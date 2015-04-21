@@ -4,12 +4,6 @@
     margin: 0;
     position: relative;
   }
-  .Basis-TreeNode-Content
-  {
-    margin: 0;
-    padding-left: 16px;
-    list-style: none;
-  }
   .Basis-TreeNode-Caption
   {
     background: url(res/page.gif) no-repeat 414px .1em;

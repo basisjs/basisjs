@@ -87,15 +87,7 @@
   {
     background-image: none;
   }
-  .Basis-Table-Header .selected .Basis-Table-Header-Cell-SortDirection
+  .Basis-Table-Header-Cell-SortDirection
   {
-    background: url(res/order_asc.gif) no-repeat center center;
-  }
-  .Basis-Table-Header .sort-order-desc .selected .Basis-Table-Header-Cell-SortDirection
-  {
-    background-image: url(res/order_desc.gif);
-  }
-  .Basis-Table-Header .sort-order-asc
-  {
-    
+    background: no-repeat center center;
   }
