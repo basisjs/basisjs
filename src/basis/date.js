@@ -3,16 +3,7 @@
   * @namespace basis.date
   */
 
-  var namespace = this.path;
-
-
-  //
-  // main part
-  //
-
   var ISO_FORMAT = '%Y-%M-%D' + 'T' + '%H:%I:%S.%Z' + 'Z';
-  var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d+))?)?$/;
-  var reFormat = /%([yYdDmMhHipPIsSzZ])/g;
   var reIsoStringSplit = /\D/;
   var reIsoTimezoneDesignator = /(.{10,})([\-\+]\d{1,2}):?(\d{1,2})?$/;
 
@@ -26,8 +17,6 @@
     minute: 60 * 1000,
     second: 1000
   };
-
-  var DATE_PART = 'year month day hour minute second millisecond'.split(' ');
 
   var GETTER = {};
   var SETTER = {};

@@ -14,21 +14,18 @@
   var Class = basis.Class;
   var cleaner = basis.cleaner;
   var path = basis.path;
-  var arrayAdd = basis.array.add;
-  var arrayRemove = basis.array.remove;
   var consts = require('basis.template.const');
+  var DECLARATION_VERSION = require('basis.template.declaration').VERSION;
   var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
   var makeDeclaration = require('basis.template.declaration').makeDeclaration;
   var theme = require('basis.template.theme');
   var getSourceByPath = theme.get;
-  var getTheme = theme.theme; // keep it here for a while, to avoid builder warning
 
 
   //
   // Main part
   //
 
-  var DECLARATION_VERSION = 3;
   var templateList = [];
 
 
@@ -552,8 +549,8 @@
     CLASS_BINDING_ENUM: consts.CLASS_BINDING_ENUM,
     CLASS_BINDING_BOOL: consts.CLASS_BINDING_BOOL,
     ELEMENT_NAME: consts.ELEMENT_NAME,
-    ELEMENT_ATTRS: consts.ELEMENT_ATTRS,
-    ELEMENT_CHILDS: consts.ELEMENT_CHILDS,
+    //ELEMENT_ATTRS: consts.ELEMENT_ATTRIBUTES_AND_CHILDREN, // for backward capability 2015-04-24
+    ELEMENT_ATTRIBUTES_AND_CHILDREN: consts.ELEMENT_ATTRIBUTES_AND_CHILDREN,
     TEXT_VALUE: consts.TEXT_VALUE,
     COMMENT_VALUE: consts.COMMENT_VALUE,
 

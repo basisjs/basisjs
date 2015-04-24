@@ -12,7 +12,6 @@
   //
 
   var Class = basis.Class;
-  var complete = basis.object.complete;
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
@@ -22,8 +21,6 @@
   var events = basisEvent.events;
 
   var Value = require('basis.data').Value;
-  var setAccumulateState = require('basis.data').Dataset.setAccumulateState;
-  var Selection = require('basis.dom.wrapper').Selection;
   var UINode = require('basis.ui').Node;
   var Popup = require('basis.ui.popup').Popup;
 
@@ -82,10 +79,6 @@
   /** @const */ var VALIDITY_INDETERMINATE = 'indeterminate';
   /** @const */ var VALIDITY_VALID = 'valid';
   /** @const */ var VALIDITY_INVALID = 'invalid';
-
-  function getFieldValue(field){
-    return field.getValue();
-  }
 
   function createRevalidateEvent(eventName){
     createEvent.apply(null, arguments);

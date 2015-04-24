@@ -10,10 +10,8 @@
   // import names
   //
 
-  var createArray = basis.array.create;
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;
-  var events = basisEvent.events;
   var resolveValue = require('basis.data').resolveValue;
   var getBoundingRect = require('basis.layout').getBoundingRect;
   var DragDropElement = require('basis.dragdrop').DragDropElement;

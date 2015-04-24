@@ -13,16 +13,13 @@
   var document = global.document;
   var Node = global.Node;
   var domEvent = require('basis.dom.event');
-  var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
   var basisL10n = require('basis.l10n');
   var isMarkupToken = basisL10n.isMarkupToken;
   var getL10nToken = basisL10n.token;
-  var L10nToken = basisL10n.Token;
   var getFunctions = require('basis.template.htmlfgen').getFunctions;
 
   var basisTemplate = require('basis.template');
-  var getL10nTemplate = basisTemplate.getL10nTemplate;
   var TemplateSwitchConfig = basisTemplate.TemplateSwitchConfig;
   var TemplateSwitcher = basisTemplate.TemplateSwitcher;
   var Template = basisTemplate.Template;
@@ -44,7 +41,6 @@
 
   var ATTR_NAME = consts.ATTR_NAME;
   var ATTR_VALUE = consts.ATTR_VALUE;
-  var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
   var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 
   var ELEMENT_NAME = consts.ELEMENT_NAME;
@@ -60,7 +56,6 @@
   // main part
   //
 
-  var eventAttr = /^event-(.+)+/;
   var basisTemplateIdMarker = 'basisTemplateId_' + basis.genUID();
 
   // dictionaries
@@ -463,11 +458,11 @@
     return templateRef && templateRef.tmpl;
   }
 
-  function getDebugInfoById(refId){
-    var templateRef = resolveInstanceById(refId);
-
-    return templateRef && templateRef.debug && templateRef.debug();
-  }
+  /** @cut */ function getDebugInfoById(refId){
+  /** @cut */   var templateRef = resolveInstanceById(refId);
+  /** @cut */
+  /** @cut */   return templateRef && templateRef.debug && templateRef.debug();
+  /** @cut */ }
 
 
   //

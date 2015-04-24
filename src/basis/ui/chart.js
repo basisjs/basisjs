@@ -25,7 +25,6 @@
   var getBoundingRect = require('basis.layout').getBoundingRect;
   var domEventUtils = require('basis.dom.event');
   var createEvent = require('basis.event').create;
-  var DataObject = require('basis.data').Object;
   var basisDomWrapper = require('basis.dom.wrapper');
   var AbstractNode = basisDomWrapper.AbstractNode;
   var Node = basisDomWrapper.Node;

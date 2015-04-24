@@ -12,7 +12,6 @@
   //
 
   var basisEvent = require('basis.event');
-  var events = basisEvent.events;
   var createEvent = basisEvent.create;
   var getBoundingRect = require('basis.layout').getBoundingRect;
   var AbstractNode = require('basis.dom.wrapper').AbstractNode;

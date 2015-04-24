@@ -25,7 +25,6 @@ var TAG_IGNORE_CONTENT = {
 };
 
 var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
-var CLASS_ATTR_PARTS = /(\S+)/g;
 var CLASS_ATTR_BINDING = /^((?:[a-z_][a-z0-9_\-]*)?(?::(?:[a-z_][a-z0-9_\-]*)?)?)\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
 var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
 var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
@@ -731,7 +730,7 @@ function tokenize(source, options){
         break;
 
       default:
-        throw 'Parser bug'; // Must never to be here; bug in parser otherwise
+        throw SYNTAX_ERROR; // Must never to be here; bug in parser otherwise
     }
 
     if (state == TEXT)

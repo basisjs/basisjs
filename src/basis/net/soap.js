@@ -35,7 +35,6 @@
   // Main part
   //
 
-  var SOAP_VERSION   = '1.1';
   var SOAP_PREFIX    = 'soap';
   var SOAP_NAMESPACE = String('http://schemas.xmlsoap.org/soap/envelope/');
   var SOAP_ENCODING  = String('http://schemas.xmlsoap.org/soap/encoding/');
@@ -43,7 +42,6 @@
   var SOAP_ENVELOPE = 'Envelope';
   var SOAP_HEADER   = 'Header';
   var SOAP_BODY     = 'Body';
-  var SOAP_FAULT    = 'Fault';
 
 
  /**

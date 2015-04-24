@@ -17,7 +17,6 @@
   var extend = basis.object.extend;
   var complete = basis.object.complete;
   var $self = basis.fn.$self;
-  var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
   var basisEvent = require('basis.event');
@@ -1042,7 +1041,7 @@
       // wrapper and all instances set
       this.wrapper = wrapper;
       if ('all' in config == false || config.all || config.singleton)
-        this.all = new ReadOnlyEntitySet(basis.object.complete({
+        this.all = new ReadOnlyEntitySet(complete({
           wrapper: wrapper
         }, config.all));
 
@@ -1257,9 +1256,9 @@
   //  Entity
   //
 
-  function entityWarn(entity, message){
-    basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity);
-  }
+  /** @cut */ function entityWarn(entity, message){
+  /** @cut */   basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity);
+  /** @cut */ }
 
  /**
   * @class

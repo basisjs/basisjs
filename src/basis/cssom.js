@@ -11,8 +11,6 @@
   //
 
   var document = global.document;
-  var location = global.location;
-  var path = basis.path;
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
   var Class = basis.Class;

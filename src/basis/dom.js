@@ -845,9 +845,9 @@
   // Checkers
   //
 
-  function is(element, names){ // names may be a string (comma or space separated tag names) or an array
-    return (new RegExp('(^|\\W)' + element.tagName + '(\\W|$)')).test(names);
-  }
+  // function is(element, names){ // names may be a string (comma or space separated tag names) or an array
+  //   return (new RegExp('(^|\\W)' + element.tagName + '(\\W|$)')).test(names);
+  // }
 
  /**
   * Returns true if child is descendant of parent.

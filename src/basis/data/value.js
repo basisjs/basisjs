@@ -15,9 +15,7 @@
 
   // import names
 
-  var getter = basis.getter;
   var cleaner = basis.cleaner;
-
   var basisData = require('basis.data');
   var AbstractData = basisData.AbstractData;
   var Value = basisData.Value;

@@ -10,10 +10,8 @@
   // import names
   //
 
-  var extend = basis.object.extend;
   var arrayFrom = basis.array.from;
   var objectSlice = basis.object.slice;
-  var objectMerge = basis.object.merge;
 
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;

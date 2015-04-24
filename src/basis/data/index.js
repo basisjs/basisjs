@@ -17,7 +17,6 @@
   var basisData = require('basis.data');
   var Value = basisData.Value;
   var DataObject = basisData.Object;
-  var KeyObjectMap = basisData.KeyObjectMap;
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var DatasetWrapper = basisData.DatasetWrapper;
   var resolveDataset = basisData.resolveDataset;
@@ -525,7 +524,6 @@
 
   var indexConstructorIdPrefix = 'basisjsIndexConstructor' + basis.genUID();
   var indexConstructorCache = {};
-  var resolveIndexCache = {};
 
   var DATASET_INDEX_HANDLER = {
     destroy: function(object){

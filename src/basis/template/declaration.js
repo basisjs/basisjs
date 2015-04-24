@@ -1,5 +1,4 @@
 
-var hasOwnProperty = Object.prototype.hasOwnProperty;
 var arraySearch = basis.array.search;
 var arrayAdd = basis.array.add;
 var arrayRemove = basis.array.remove;
@@ -23,11 +22,8 @@ var ATTR_VALUE = consts.ATTR_VALUE;
 var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
 var ATTR_TYPE_BY_NAME = consts.ATTR_TYPE_BY_NAME;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
-var ELEMENT_NAME = consts.ELEMENT_NAME;
-var ELEMENT_ATTRS = consts.ELEMENT_ATTRS;
-var ELEMENT_CHILDS = consts.ELEMENT_CHILDS;
+var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var TEXT_VALUE = consts.TEXT_VALUE;
-var COMMENT_VALUE = consts.COMMENT_VALUE;
 var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
 var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 
@@ -364,7 +360,7 @@ var makeDeclaration = (function(){
               return 'event-' + token[1];
 
             return ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] || token[ATTR_NAME];
-          }, ELEMENT_ATTRS);
+          }, ELEMENT_ATTRIBUTES_AND_CHILDREN);
 
           if (!itAttrToken && action != 'remove' && action != 'remove-class')
           {
@@ -652,7 +648,7 @@ var makeDeclaration = (function(){
               case 'define':
                 /** @cut */ if ('name' in elAttrs == false)
                 /** @cut */   addTemplateWarn(template, options, 'Define has no `name` attribute', token.loc);
-                /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
+                /** @cut */ if (Object.prototype.hasOwnProperty.call(template.defines, elAttrs.name))
                 /** @cut */   addTemplateWarn(template, options, 'Define for `' + elAttrs.name + '` has already defined', token.loc);
 
                 if ('name' in elAttrs && !template.defines[elAttrs.name])
@@ -870,7 +866,7 @@ var makeDeclaration = (function(){
                               var children = process(child.children, template, options) || [];
 
                               if (child.name == 'prepend')
-                                token.splice.apply(token, [ELEMENT_ATTRS, 0].concat(children));
+                                token.splice.apply(token, [ELEMENT_ATTRIBUTES_AND_CHILDREN, 0].concat(children));
                               else
                                 token.push.apply(token, children);
                             }
@@ -1081,7 +1077,7 @@ var makeDeclaration = (function(){
       }
 
       if (tokenType === TYPE_ELEMENT)
-        normalizeRefs(token, dictURI, map, ELEMENT_ATTRS);
+        normalizeRefs(token, dictURI, map, ELEMENT_ATTRIBUTES_AND_CHILDREN);
     }
 
     return map;
@@ -1096,7 +1092,7 @@ var makeDeclaration = (function(){
       switch (token[TOKEN_TYPE])
       {
         case TYPE_ELEMENT:
-          applyDefines(token, template, options, ELEMENT_ATTRS);
+          applyDefines(token, template, options, ELEMENT_ATTRIBUTES_AND_CHILDREN);
           break;
 
         case TYPE_TEXT:
@@ -1199,7 +1195,7 @@ var makeDeclaration = (function(){
       var tokenType = token[TOKEN_TYPE];
 
       if (tokenType == TYPE_ELEMENT)
-        isolateTokens(token, isolate, template, ELEMENT_ATTRS);
+        isolateTokens(token, isolate, template, ELEMENT_ATTRIBUTES_AND_CHILDREN);
 
       if (tokenType == TYPE_ATTRIBUTE_CLASS)
       {
@@ -1450,6 +1446,7 @@ resource('../template.js').ready(function(exports){
 });
 
 module.exports = {
+  VERSION: 3,
   makeDeclaration: makeDeclaration,
   getDeclFromSource: getDeclFromSource
 };

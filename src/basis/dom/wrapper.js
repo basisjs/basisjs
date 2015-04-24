@@ -27,7 +27,6 @@
   var $undef = basis.fn.$undef;
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
-  var oneFunctionProperty = Class.oneFunctionProperty;
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;
   var events = basisEvent.events;
@@ -38,7 +37,6 @@
   var SUBSCRIPTION = basisData.SUBSCRIPTION;
   var STATE = basisData.STATE;
 
-  var AbstractData = basisData.AbstractData;
   var DataObject = basisData.Object;
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var Dataset = basisData.Dataset;
@@ -1493,15 +1491,6 @@
     destroy: function(){
       if (!this.dataSourceRA_)
         this.setDataSource();
-    }
-  };
-
-  var MIXIN_DATASOURCE_WRAPPER_HANDLER = {
-    datasetChanged: function(wrapper){
-      this.setDataSource(wrapper);
-    },
-    destroy: function(){
-      this.setDataSource();
     }
   };
 

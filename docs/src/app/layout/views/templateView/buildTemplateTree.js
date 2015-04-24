@@ -139,8 +139,7 @@
   /** @const */ var ATTR_VALUE = basisTemplate.ATTR_VALUE;
 
   /** @const */ var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
-  /** @const */ var ELEMENT_ATTRS = basisTemplate.ELEMENT_ATTRS;
-  /** @const */ var ELEMENT_CHILDS = basisTemplate.ELEMENT_CHILDS;
+  /** @const */ var ELEMENT_ATTRIBUTES_AND_CHILDREN = basisTemplate.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 
   /** @const */ var TEXT_VALUE = basisTemplate.TEXT_VALUE;
   /** @const */ var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
@@ -167,7 +166,7 @@
           var attrs = [];
           var attrNodes = [];
           var children = [];
-          for (var j = ELEMENT_ATTRS, t; t = token[j]; j++)
+          for (var j = ELEMENT_ATTRIBUTES_AND_CHILDREN, t; t = token[j]; j++)
             if (t[TOKEN_TYPE] == TYPE_ELEMENT || t[TOKEN_TYPE] == TYPE_TEXT || t[TOKEN_TYPE] == TYPE_COMMENT)
               children.push(t);
             else

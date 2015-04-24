@@ -25,8 +25,6 @@
   //
 
   var Class = basis.Class;
-  var oneFunctionProperty = Class.oneFunctionProperty;
-
   var extend = basis.object.extend;
   var values = basis.object.values;
   var objectSlice = basis.object.slice;

@@ -24,7 +24,6 @@
   var extend = basis.object.extend;
 
   var basisEvent = require('basis.event');
-  var Emitter = basisEvent.Emitter;
   var createEvent = basisEvent.create;
   var basisDomWrapper = require('basis.dom.wrapper');
   var GroupingNode = basisDomWrapper.GroupingNode;

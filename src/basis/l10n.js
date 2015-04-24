@@ -21,24 +21,12 @@
   };
 
 
-  // get own object keys
-  function ownKeys(object){
-    var result = [];
-
-    for (var key in object)
-      if (hasOwnProperty.call(object, key))
-        result.push(key);
-
-    return result;
-  }
-
   //
   // Token
   //
 
   var tokenIndex = [];
   var tokenComputeFn = {};
-  var tokenComputes = {};
   var basisTokenPrototypeSet = basis.Token.prototype.set;
   var tokenType = {
     'default': true,

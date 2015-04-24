@@ -12,10 +12,8 @@
   //
 
   var Class = basis.Class;
-
-  var arrayFrom = basis.array.from;
-  var getter = basis.getter;
   var dateUtils = require('basis.date');
+  var monthNumToRef = dateUtils.monthNumToAbbr;
   var createEvent = require('basis.event').create;
   var Value = require('basis.data').Value;
   var basisUI = require('basis.ui');
@@ -30,11 +28,6 @@
   var YEAR = 'year';
   var MONTH = 'month';
   var DAY = 'day';
-  var HOUR = 'hour';
-  var FORWARD = true;
-  var BACKWARD = false;
-
-  var monthNumToRef = dateUtils.monthNumToAbbr;
 
 
   //
@@ -663,7 +656,7 @@
         var newDate = node.periodStart;
         var activeSection = this.selection.pick();
         this.selectedDate.set(dateUtils.add(new Date(this.selectedDate.value), activeSection.nodePeriodUnit, dateUtils.diff(this.selectedDate.value, activeSection.nodePeriodUnit, newDate)));
-        this.nextSection(BACKWARD);
+        this.nextSection();
       }
     },
 

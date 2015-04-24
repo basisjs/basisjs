@@ -3,13 +3,6 @@
   * @namespace basis.ua.visibility
   */
 
-  var namespace = this.path;
-
-
-  //
-  // Main part
-  //
-
   var document = global.document;
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;

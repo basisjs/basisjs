@@ -8,7 +8,6 @@
   var repeatArray = basis.array.repeat;
   var flatten = basis.array.flatten;
   var UTF16 = require('basis.utils.utf16');
-  var UTF8 = require('basis.utils.utf8');
   var base64 = require('basis.utils.base64');
 
 
@@ -319,11 +318,6 @@
   function wrap(target){
     cryptTarget = target || '';
     return context_;
-  };
-
-  var a = {
-    a: 1,
-    b: 2,
   };
 
 

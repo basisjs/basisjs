@@ -32,8 +32,8 @@
 
   /** @const */ var STATE_UNSENT = 0;
   /** @const */ var STATE_OPENED = 1;
-  /** @const */ var STATE_HEADERS_RECEIVED = 2;
-  /** @const */ var STATE_LOADING = 3;
+  // var STATE_HEADERS_RECEIVED = 2;
+  // var STATE_LOADING = 3;
   /** @const */ var STATE_DONE = 4;
 
   var STATE = require('basis.data').STATE;

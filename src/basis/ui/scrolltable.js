@@ -12,11 +12,9 @@
   //
 
   var Class = basis.Class;
-  var createArray = basis.array.create;
-  var DOM = require('basis.dom');
-  var createElement = DOM.createElement;
+  var domUtils = require('basis.dom');
+  var createElement = domUtils.createElement;
   var cssom = require('basis.cssom');
-  var layout = require('basis.layout');
   var listenResize = require('basis.dom.resize').add;
   var Table = require('basis.ui.table').Table;
 
@@ -55,7 +53,7 @@
   }
 
   function replaceTemplateNode(owner, refName, newNode){
-    DOM.replace(owner.tmpl[refName],
+    domUtils.replace(owner.tmpl[refName],
       owner.tmpl[refName] = newNode
     );
   }
@@ -188,7 +186,7 @@
       //
       // Sync header html
       //
-      var headerOuterHTML = DOM.outerHTML(headerElement);
+      var headerOuterHTML = domUtils.outerHTML(headerElement);
       if (this.shadowHeaderHTML_ != headerOuterHTML)
       {
         this.shadowHeaderHTML_ = headerOuterHTML;
@@ -200,7 +198,7 @@
       //
       if (footerElement)
       {
-        var footerOuterHTML = DOM.outerHTML(footerElement);
+        var footerOuterHTML = domUtils.outerHTML(footerElement);
         if (this.shadowFooterHtml_ != footerOuterHTML)
         {
           this.shadowFooterHtml_ = footerOuterHTML;

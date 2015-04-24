@@ -3,13 +3,6 @@
   * @namespace basis.template.htmlfgen
   */
 
-  var namespace = this.path;
-
-
-  //
-  // import names
-  //
-
   var consts = require('basis.template.const');
 
   var TYPE_ELEMENT = consts.TYPE_ELEMENT;
@@ -28,11 +21,7 @@
   var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
 
   var ELEMENT_NAME = consts.ELEMENT_NAME;
-  var ELEMENT_ATTRS = consts.ELEMENT_ATTRS;
-  var ELEMENT_CHILDS = consts.ELEMENT_CHILDS;
-
-  var TEXT_VALUE = consts.TEXT_VALUE;
-  var COMMENT_VALUE = consts.COMMENT_VALUE;
+  var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 
   var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
   var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
@@ -42,8 +31,8 @@
   // main part
   //
 
+  /** @cut */ var inlineSeed = 1;
   var tmplFunctions = {}; // precompiled functions
-  var inlineSeed = 1;
   var SET_NONELEMENT_PROPERTY_SUPPORT = (function(){
     try {
       global.document.createTextNode('').x = 1;
@@ -150,7 +139,7 @@
           // TODO: temporary solution, rewrite function
           var attrs = [];
           var children = [];
-          for (var j = ELEMENT_ATTRS, t; t = token[j]; j++)
+          for (var j = ELEMENT_ATTRIBUTES_AND_CHILDREN, t; t = token[j]; j++)
             if (t[TOKEN_TYPE] == TYPE_ELEMENT || t[TOKEN_TYPE] == TYPE_TEXT || t[TOKEN_TYPE] == TYPE_COMMENT)
               children.push(t);
             else
