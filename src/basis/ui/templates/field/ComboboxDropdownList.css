@@ -1,0 +1,20 @@
+  .Basis-DropdownList-Popup
+  {
+    padding: 0 !important;
+    -moz-opacity: .95;
+    -khtml-opacity: .95;
+    opacity: .95;
+    position: absolute;
+    border: 1px solid #87C4E0;
+    border-bottom: none !important;
+    background: white;
+    /*margin: 1px 0 0;*/
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content
+  {
+    padding: 0;
+    margin-bottom: -1px;
+    border-bottom: 1px solid #87C4E0;
+    _width: 142px;
+    font-size: 85%;
+  }

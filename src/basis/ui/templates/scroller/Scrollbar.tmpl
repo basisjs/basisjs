@@ -1,6 +1,7 @@
 <b:style src="./Scrollbar.css"/>
+<b:style src="./ScrollPanel-Scrollbar.css" ns="ss"/>
 <b:define name="orientation" type="enum" values="horizontal vertical"/>
 
-<div class="Basis-Scrollbar {orientation}">
-  <div{trackElement} class="Basis-Scrollbar-Track"></div>
+<div class="Basis-Scrollbar {orientation} ss:{orientation}">
+  <div{trackElement} class="Basis-Scrollbar-Track ss:scrollbar"></div>
 </div>

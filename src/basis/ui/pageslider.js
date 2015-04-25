@@ -20,7 +20,8 @@
   //
 
   var templates = require('basis.template').define(namespace, {
-    PageSlider: resource('./templates/pageslider/PageSlider.tmpl')
+    PageSlider: resource('./templates/pageslider/PageSlider.tmpl'),
+    Page: resource('./templates/pageslider/Page.tmpl')
   });
 
   var DIRECTIONS  = {
@@ -60,6 +61,9 @@
     properties: PROPERTIES[DIRECTIONS.HORIZONTAL],
 
     template: templates.PageSlider,
+    childClass: {
+      template: templates.Page
+    },
 
     listen: {
       selection: {

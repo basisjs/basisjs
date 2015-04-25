@@ -1,17 +1,18 @@
 <b:style src="./Combobox.css"/>
+<b:style src="./Combobox-Item.css" ns="ci"/>
 <b:define name="disabled" type="bool"/>
 <b:define name="opened" type="bool"/>
 
 <b:include src="basis.ui.field.Field">
   <b:replace ref="fieldPlace">
-    <span{field|focus} class="Basis-DropdownList Basis-DropdownList-{opened} {disabled}"
+    <span{field|focus} class="Basis-DropdownList ci:combobox Basis-DropdownList-{opened} {disabled}"
        event-click="togglePopup"
        event-keyup="keyup"
        event-keydown="keydown"
        event-keypressed="keypressed"
        event-focus="focus"
        event-blur="blur"
-       tabindex="0"
+       tabindex="{tabindex}"
       >
       <span class="Basis-DropdownList-Caption">
         <!--{captionItem}-->

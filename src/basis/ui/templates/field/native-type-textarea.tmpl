@@ -1,4 +1,8 @@
+<b:style src="./native-type-textarea.css"/>
+<b:define name="validity" type="enum" values="invalid"/>
+
 <textarea{field|focus}
+  class="native-textarea native-textarea_{validity}"
   name="{name}"
   value="{value}"
   readonly="{readonly}"

@@ -155,15 +155,15 @@
     }
 
 
-    .Page-Slider
+    .Basis-PageSlider
     {
       height: 400px !important;
     }
-    .Page-Slider .Basis-Page
+    .Basis-PageSlider-Page
     {
       background: #DDD;
     }
-    .Page-Slider .PageContent
+    .Basis-PageSlider-Page .PageContent
     {
       margin-top: 125px;
 
@@ -379,7 +379,7 @@
 
     var childClassSettings = {
         template:
-            '<b:include src="basis.ui.tabs.Page">' +
+            '<b:include src="basis.ui.pageslider.Page">' +
               '<b:append ref="content">' +
                 '<div class="PageContent">' +
                   '{text}' +
@@ -395,17 +395,14 @@
         { text: 'Page 2' },
         { text: 'Page 3' }
     ];
-    var pageSliderTemplate = '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>';
 
     new PageSlider({
-        template: pageSliderTemplate,
         container: createBlock('Horizontal Page Slider', 'short'),
         childClass: childClassSettings,
         childNodes: childNodesData
     });
 
     new PageSlider({
-        template: pageSliderTemplate,
         container: createBlock('Vertical Page Slider', 'short'),
         direction: DIRECTIONS.VERTICAL,
         childClass: childClassSettings,

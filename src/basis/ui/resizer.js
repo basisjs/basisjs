@@ -15,9 +15,9 @@
   var parseFloat = global.parseFloat;
 
   var cssom = require('basis.cssom');
-  var classList = cssom.classList;
   var computedStyle = require('basis.dom.computedStyle').get;
   var DragDropElement = require('basis.dragdrop').DragDropElement;
+  var Node = require('basis.ui').Node;
 
 
   //
@@ -27,10 +27,6 @@
 
   var resizerDisableRule = cssom.createRule('IFRAME');
   var cursorOverrideRule;
-
-  var styleRequired = basis.fn.runOnce(function(){
-    resource('./templates/resizer/style.css').fetch().startUse();
-  });
 
   var PROPERTY_DELTA = {
     width: 'deltaX',
@@ -47,6 +43,16 @@
       '1': 's-resize'
     }
   };
+ /**
+  * @class
+  */
+  var ResizerView = Node.subclass({
+    template: resource('./templates/resizer/resizer.tmpl'),
+    binding: {
+      cursor: 'cursor',
+      hovered: 'hovered'
+    }
+  });
 
  /**
   * @class
@@ -80,7 +86,7 @@
       emit_start: function(dragData, event){
         super_.emit_start.call(this, dragData, event);
 
-        cursorOverrideRule.setProperty('cursor', this.cursor + ' !important');
+        cursorOverrideRule.setProperty('cursor', this.resizerNode.cursor + ' !important');
 
         dragData.delta = PROPERTY_DELTA[this.property];
         dragData.factor = this.factor;
@@ -129,7 +135,7 @@
         }
 
         dragData.offsetStartInPercent = 100 / parentNodeSize;
-        classList(this.resizer).add('selected');
+        this.resizerNode.hovered.set(true);
       },
       emit_drag: function(dragData, event){
         super_.emit_drag.call(this, dragData, event);
@@ -149,7 +155,7 @@
       emit_over: function(dragData, event){
         super_.emit_over.call(this, dragData, event);
 
-        classList(this.resizer).remove('selected');
+        this.resizerNode.hovered.set(false);
         resizerDisableRule.setProperty('pointerEvents', 'auto');
 
         cursorOverrideRule.destroy();
@@ -160,23 +166,23 @@
       * @constructor
       */
       init: function(){
-        styleRequired();
-
-        this.resizer = document.createElement('div');
-        this.resizer.className = 'Basis-Resizer';
-        this.cursor = PROPERTY_CURSOR[this.property][1];
-        this.resizer.style.cursor = this.cursor;
+        this.resizerNode = new ResizerView({
+          cursor: PROPERTY_CURSOR[this.property][1],
+          hovered: new basis.Token(false)
+        });
+        this.resizer = this.resizerNode.element;
 
         super_.init.call(this);
       },
       setElement: function(element){
-        super_.setElement.call(this, element, this.resizer);
+        var resizerElement = this.resizer;
+        super_.setElement.call(this, element, resizerElement);
 
         if (!this.element)
-          basis.doc.remove(this.resizer);
+          basis.doc.remove(resizerElement);
         else
-          if (this.resizer.parentNode != this.element)
-            this.element.appendChild(this.resizer);
+          if (resizerElement.parentNode != this.element)
+            this.element.appendChild(resizerElement);
       },
       destroy: function(){
         super_.destroy.call(this);

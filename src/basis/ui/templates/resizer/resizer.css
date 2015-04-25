@@ -19,7 +19,8 @@
   }
 
   .Basis-Resizer:hover,
-  .Basis-Resizer.selected
+  .Basis-Resizer.selected,
+  .Basis-Resizer.hovered
   {
     /*cursor: w-resize;*/
     opacity: .25;

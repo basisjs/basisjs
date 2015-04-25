@@ -26,11 +26,6 @@
     border-right: 1px solid #D5D5D5;
     background: url(res/hline_left.gif) no-repeat left top;
   }
-  .Basis-Table-Header-GroupContent .Basis-Table-Header-Cell-Content
-  {
-    margin-bottom: -2px;
-    text-align: center;
-  }
   .Basis-Table-Header-Cell-Title
   {
     display: block;
@@ -47,43 +42,21 @@
 
 
   /*
-   * :hover
-   */
-  .Basis-Table-Header-Cell-sortable:hover
-  {
-    cursor: pointer;
-    background-color: #B7E7FB;
-    background-image: url(res/hover_bg.gif);
-  }
-  .Basis-Table-Header-Cell-sortable:hover .Basis-Table-Header-Cell-Content
-  {
-    background-image: url(res/hover_hline.gif);
-    border-color: #93C9E3;
-    border-left: none;
-    padding-left: 1px;
-  }
-  .Basis-Table-Header-Cell-sortable:hover .Basis-Table-Header-Cell-Title
-  {
-    background-image: url(res/hover_hline.gif);
-  }
-
-
-  /*
    * selected
    */
-  .Basis-Table-Header .selected
+  .Basis-Table-Header-Cell_selected
   {
     background-color: #D8ECF6;
     background-image: url(res/selected_bg.gif);
   }
-  .Basis-Table-Header .selected .Basis-Table-Header-Cell-Content
+  .Basis-Table-Header-Cell_selected .Basis-Table-Header-Cell-Content
   {
     background-image: none;
     border-color: #96D9F9;
     border-left: 1px solid #96D9F9;
     padding-left: 0;
   }
-  .Basis-Table-Header .selected .Basis-Table-Header-Cell-Title
+  .Basis-Table-Header-Cell_selected .Basis-Table-Header-Cell-Title
   {
     background-image: none;
   }

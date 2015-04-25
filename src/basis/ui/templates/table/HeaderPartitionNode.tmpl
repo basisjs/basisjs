@@ -1,10 +1,11 @@
 
   <b:style src="./HeaderCell.css"/>
+  <b:style src="./HeaderPartition-HeaderCell.css" ns="hp"/>
   <b:define name="selected" type="bool"/>
 
-  <th class="Basis-Table-Header-Cell {selected}" colspan="{colSpan}">
+  <th class="Basis-Table-Header-Cell Basis-Table-Header-Cell_{selected}" colspan="{colSpan}">
     <div class="Basis-Table-Header-Cell-SortDirection"/>
-    <div class="Basis-Table-Header-Cell-Content"> 
+    <div class="Basis-Table-Header-Cell-Content hp:cell-content"> 
       <span class="Basis-Table-Header-Cell-Title">
         {title}
       </span>

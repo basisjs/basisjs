@@ -11,6 +11,7 @@
     cursor: pointer;
   }
 
+
   .Basis-Calendar-Node.disabled,
   .Basis-Calendar-Node.disabled:hover
   {
@@ -47,28 +48,6 @@
 
 
   /* century, year, month, quater */
-
-  .Basis-Calendar-Section-Century .Basis-Calendar-Node,
-  .Basis-Calendar-Section-Year .Basis-Calendar-Node,
-  .Basis-Calendar-Section-YearDecade .Basis-Calendar-Node
-  {
-    width: 25%;
-    padding: 1.25em 0;
-  }
-  .Basis-Calendar-Section-Century .Basis-Calendar-Node
-  {
-    padding: .75em 0;      
-  }
-  .Basis-Calendar-Section-YearQuarter .Basis-Calendar-Node
-  {
-    width: 50%;
-    padding: 2.125em 0;
-  }
-  .Basis-Calendar-Section-Quarter .Basis-Calendar-Node
-  {
-    width: 100%;
-    padding: 1.25em 0;
-  }
 
   .Basis-Calendar-Node.month,
   .Basis-Calendar-Node.year,

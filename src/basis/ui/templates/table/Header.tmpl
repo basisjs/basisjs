@@ -1,7 +1,6 @@
   <b:style src="./Header-HeaderCell.css" ns="hhc"/>
-  <b:define name="disabled" type="bool"/>
   <b:define name="order" type="enum" values="desc asc"/>
 
-  <thead{groupRowsElement} class="Basis-Table-Header {disabled}">
+  <thead{groupRowsElement}>
     <tr{childNodesElement} class="hhc:sort-order-{order}"/>
   </thead>

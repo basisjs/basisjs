@@ -1,6 +1,9 @@
+<b:style src="./native-type-text.css"/>
+<b:define name="validity" type="enum" values="invalid"/>
+
 <input{field|focus}
   type="text"
-  class="native-type-text"
+  class="native-type-text native-type-text_{validity}"
 
   name="{name}"
   value="{value}"

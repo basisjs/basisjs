@@ -9,37 +9,3 @@
   {
     margin-right: 0;
   }
-
-  .Basis-ButtonGroup .Basis-Button .Basis-Button-Back
-  {
-    /* remove border radius, only first and last buttons has border-radius */
-      -webkit-border-radius: 0;
-      -moz-border-radius: 0;
-    border-radius: 0;
-  }
-  .Basis-ButtonGroup .Basis-Button + .Basis-Button .Basis-Button-Back
-  {
-    /* overlay for 1px on right */
-    margin-left: -1px;
-  }
-
-  .Basis-ButtonGroup .Basis-Button:first-child .Basis-Button-Back
-  {
-      -webkit-border-top-left-radius: 2px;
-      -moz-border-radius-topleft: 2px;
-    border-top-left-radius: 2px;
-
-      -webkit-border-bottom-left-radius: 2px;
-      -moz-border-radius-bottomleft: 2px;
-    border-bottom-left-radius: 2px;
-  }
-  .Basis-ButtonGroup .Basis-Button:last-child .Basis-Button-Back
-  {
-      -webkit-border-top-right-radius: 2px;
-      -moz-border-radius-topright: 2px;
-    border-top-right-radius: 2px;
-
-      -webkit-border-bottom-right-radius: 2px;
-      -moz-border-radius-bottomright: 2px;
-    border-bottom-right-radius: 2px;
-  }
