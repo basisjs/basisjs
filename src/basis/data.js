@@ -1876,6 +1876,7 @@
   var DatasetWrapper = Class(DataObject, {
     className: namespace + '.DatasetWrapper',
 
+    active: basis.PROXY,
     subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASET,
 
     listen: {

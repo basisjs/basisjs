@@ -215,9 +215,7 @@
   var Merge = Class(ReadOnlyDataset, {
     className: namespace + '.Merge',
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
@@ -691,9 +689,7 @@
   var Subtract = Class(ReadOnlyDataset, {
     className: namespace + '.Subtract',
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.MINUEND + SUBSCRIPTION.SUBTRAHEND,
 
    /**
@@ -886,9 +882,7 @@
   var SourceDataset = Class(ReadOnlyDataset, {
     className: namespace + '.SourceDataset',
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
