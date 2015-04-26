@@ -37,7 +37,7 @@ var resolveResource = function(){};
 
 
 function genIsolateMarker(){
-  return 'i' + basis.genUID() + '__';
+  return basis.genUID() + '__';
 }
 
 
@@ -754,9 +754,13 @@ var makeDeclaration = (function(){
                     if (decl.resources && 'no-style' in elAttrs == false)
                       importStyles(template.resources, decl.resources, isolatePrefix, token);
 
-                    var tokenRefMap = normalizeRefs(decl.tokens);
                     var instructions = (token.children || []).slice();
-                    var styleNSPrefixMap = basis.object.slice(decl.styleNSPrefix);
+                    var styleNSIsolatePrefix = genIsolateMarker();
+                    var tokenRefMap = normalizeRefs(decl.tokens, styleNSIsolatePrefix);
+                    var styleNSPrefixMap = {};
+
+                    for (var key in decl.styleNSPrefix)
+                      styleNSPrefixMap[styleNSIsolatePrefix + key] = decl.styleNSPrefix[key];
 
                     if (elAttrs_['class'])
                     {
@@ -825,7 +829,7 @@ var makeDeclaration = (function(){
                               {
                                 if (src in styleNamespaceIsolate == false)
                                   styleNamespaceIsolate[src] = genIsolateMarker();
-                                styleNSPrefixMap[styleNamespace] = styleNamespaceIsolate[src];
+                                styleNSPrefixMap[styleNSIsolatePrefix + styleNamespace] = styleNamespaceIsolate[src];
                               }
                             }
                             break;
@@ -1044,7 +1048,7 @@ var makeDeclaration = (function(){
     return value;
   }
 
-  function normalizeRefs(tokens, dictURI, map, stIdx){
+  function normalizeRefs(tokens, isolate, map, stIdx){
     if (!map)
       map = {};
 
@@ -1053,7 +1057,21 @@ var makeDeclaration = (function(){
       var tokenType = token[TOKEN_TYPE];
       var refs = token[TOKEN_REFS];
 
-      if (tokenType !== TYPE_ATTRIBUTE_EVENT && refs)
+      if (isolate && tokenType == TYPE_ATTRIBUTE_CLASS)
+      {
+        var bindings = token[TOKEN_BINDINGS];
+        var valueIndex = ATTR_VALUE_INDEX[tokenType];
+
+        if (token[valueIndex])
+          token[valueIndex] = token[valueIndex].replace(/(^|\s)(\S+:)/g, '$1' + isolate + '$2');
+
+        if (bindings)
+          for (var k = 0, bind; bind = bindings[k]; k++)
+            if (bind[0].indexOf(':') > 0)
+              bind[0] = isolate + bind[0];
+      }
+
+      if (tokenType != TYPE_ATTRIBUTE_EVENT && refs)
       {
         for (var j = refs.length - 1, refName; refName = refs[j]; j--)
         {
@@ -1077,7 +1095,7 @@ var makeDeclaration = (function(){
       }
 
       if (tokenType === TYPE_ELEMENT)
-        normalizeRefs(token, dictURI, map, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+        normalizeRefs(token, isolate, map, ELEMENT_ATTRIBUTES_AND_CHILDREN);
     }
 
     return map;
@@ -1166,14 +1184,14 @@ var makeDeclaration = (function(){
 
   function isolateTokens(tokens, isolate, template, stIdx){
     function processName(name){
-      var parts = name.split(':');
-
-      if (parts.length == 1)
-        return isolate + parts[0];
+      if (name.indexOf(':') == -1)
+        return isolate + name;
 
       // don't resolve namespaced names if not template isolate mode
       if (!template)
         return name;
+
+      var parts = name.split(':');
 
       // global namespace
       if (!parts[0])
@@ -1279,9 +1297,7 @@ var makeDeclaration = (function(){
     // start prevent recursion
     includeStack.push((sourceOrigin !== true && sourceOrigin) || {}); // basisjs-tools pass true
 
-    //
     // main task
-    //
     result.tokens = process(source, result, options);
 
     // stop prevent recursion
@@ -1297,7 +1313,7 @@ var makeDeclaration = (function(){
 
     // normalize refs
     addTokenRef(result.tokens[0], 'element');
-    normalizeRefs(result.tokens, result.dictURI);
+    normalizeRefs(result.tokens);
 
     // deal with defines
     applyDefines(result.tokens, result, options);
