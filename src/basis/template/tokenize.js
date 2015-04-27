@@ -400,6 +400,7 @@ function tokenize(source, options){
   var startPos;
   var m;
 
+  /** @cut */ var attrMap;  // map to detect attribute duplicates
   /** @cut */ result.source_ = source;
   /** @cut */ result.warns = [];
 
@@ -546,6 +547,9 @@ function tokenize(source, options){
           lastTag = token;
 
           state = TAG_NAME;
+
+          // create attribute map
+          /** @cut */ attrMap = {};
         }
 
         break;
@@ -589,7 +593,15 @@ function tokenize(source, options){
 
           // store attribute
           if (token.type == TYPE_ATTRIBUTE)
+          {
+            // detect attribute duplicates
+            /** @cut */ var fullName = (token.prefix ? token.prefix + ':' : '') + token.name;
+            /** @cut */ if (Object.prototype.hasOwnProperty.call(attrMap, fullName))
+            /** @cut */   result.warns.push(['Duplicate attribute: ' + fullName, token]);
+            /** @cut */ attrMap[fullName] = true;
+
             lastTag.attrs.push(token);
+          }
         }
 
         if (m[2] == '{')
