@@ -557,6 +557,18 @@ module.exports = {
           name: 'style namespaces',
           test: [
             {
+              name: 'should warn when namespace is not used',
+              test: function(){
+                var template = new Template(
+                  '<b:style ns="foo"/>' +
+                  '<div/>'
+                );
+                var tmpl = template.createInstance();
+
+                assert(template.decl_.warns && template.decl_.warns.length == 1);
+              }
+            },
+            {
               name: 'using style with namespace w/o isolate',
               test: function(){
                 var template = new Template(
@@ -609,14 +621,16 @@ module.exports = {
               name: 'should not spread namespace to include',
               test: function(){
                 var include = new Template(
+                  '<b:define name="mod" type="bool"/>' +
                   '<div{b} class="foo:global-class foo:global-class_{mod}"/>'
                 );
                 var template = new Template(
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:style ns="foo">' +
                     '.global-class { width: 66px; }' +
                     '.global-class_mod { height: 66px; }' +
                   '</b:style>' +
-                  '<div>' +
+                  '<div style="width: 123px;">' +
                     '<div{a} class="foo:global-class foo:global-class_{mod}"/>' +
                     '<b:include src="#' + include.templateId + '"/>' +
                   '</div>'
@@ -630,27 +644,30 @@ module.exports = {
                 assert(tmpl.a.offsetWidth == 66);
                 assert(tmpl.a.offsetHeight == 66);
 
-                assert(/^(\S+:)global-class \1global-class_mod$/.test(tmpl.b.className));
-                assert(tmpl.b.offsetWidth == tmpl.b.parentNode.offsetWidth);
+                assert(tmpl.b.className === '');
+                assert(tmpl.b.offsetWidth == 123);
                 assert(tmpl.b.offsetHeight == 0);
 
                 assert(tmpl.a.className != tmpl.b.className);
+                assert(template.decl_.warns && template.decl_.warns.length == 2);
               }
             },
             {
               name: 'should not use namespace from include',
               test: function(){
                 var include = new Template(
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:style src="../fixture/global_style.css" ns="foo"/>' +
                   '<div{b} class="foo:global-class foo:global-class_{mod}"/>'
                 );
                 var template = new Template(
                   '<b:isolate prefix="xxx-"/>' +
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:style>' +
                     '.global-class { width: 66px; }' +
                     '.global-class_mod { height: 66px; }' +
                   '</b:style>' +
-                  '<div>' +
+                  '<div style="width: 123px">' +
                     '<div{a} class="foo:global-class foo:global-class_{mod}"/>' +
                     '<b:include src="#' + include.templateId + '"/>' +
                   '</div>'
@@ -659,20 +676,24 @@ module.exports = {
                 tmpl.set('mod', 'mod');
                 document.body.appendChild(tmpl.element);
 
-                assert(tmpl.a.className != 'xxx-global-class xxx-global-class_mod');
-                assert(/^(foo:)global-class \1global-class_mod$/.test(tmpl.a.className));
+                assert(tmpl.a.className === '');
+                assert(tmpl.a.offsetWidth == 123);
                 assert(tmpl.a.offsetHeight == 0);
 
                 assert(tmpl.b.className != 'xxx-global-class xxx-global-class_mod');
                 assert(/^(\S+)global-class \1global-class_mod$/.test(tmpl.b.className));
                 assert(tmpl.b.offsetWidth == 73);
                 assert(tmpl.b.offsetHeight == 73);
+
+                assert(tmpl.a.className != tmpl.b.className);
+                assert(template.decl_.warns && template.decl_.warns.length == 2);
               }
             },
             {
               name: 'should has own namespace that doesn\'t depend from includes',
               test: function(){
                 var include = new Template(
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:style ns="foo">' +
                     '.class { width: 1px; }' +
                     '.class_mod { height: 1px; }' +
@@ -681,6 +702,7 @@ module.exports = {
                 );
                 var template = new Template(
                   '<b:isolate prefix="xxx-"/>' +
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:style ns="foo">' +
                     '.class { width: 2px; }' +
                     '.class_mod { height: 2px; }' +
@@ -705,12 +727,14 @@ module.exports = {
                 assert(tmpl.b.offsetHeight == 1);
 
                 assert(tmpl.a.className != tmpl.b.className);
+                assert(template.decl_.warns === false);
               }
             },
             {
               name: '<b:style> inside include should override template\'s namespace',
               test: function(){
                 var include = new Template(
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:style ns="foo">' +
                     '.class { width: 1px; }' +
                     '.class_mod { height: 1x; }' +
@@ -719,7 +743,8 @@ module.exports = {
                 );
                 var template = new Template(
                   '<b:isolate prefix="xxx-"/>' +
-                  '<div>' +
+                  '<b:define name="mod" type="bool"/>' +
+                  '<div style="width: 123px;">' +
                     '<div{a} class="foo:class foo:class_{mod}"/>' +
                     '<b:include src="#' + include.templateId + '">' +
                       '<b:style ns="foo">' +
@@ -733,8 +758,8 @@ module.exports = {
                 tmpl.set('mod', 'mod');
                 document.body.appendChild(tmpl.element);
 
-                assert(tmpl.a.className != 'xxx-class xxx-class_mod');
-                assert(/^(foo:)class \1class_mod$/.test(tmpl.a.className));
+                assert(tmpl.a.className === '');
+                assert(tmpl.a.offsetWidth == 123);
                 assert(tmpl.a.offsetHeight == 0);
 
                 assert(tmpl.b.className != 'xxx-class xxx-class_mod');
@@ -743,12 +768,96 @@ module.exports = {
                 assert(tmpl.b.offsetHeight == 2);
 
                 assert(tmpl.a.className != tmpl.b.className);
+                assert(template.decl_.warns && template.decl_.warns.length == 2);
+              }
+            },
+            {
+              name: 'should add classes with own namespace into includes',
+              test: function(){
+                var include = new Template(
+                  '<b:define name="mod" type="bool"/>' +
+                  '<b:style ns="foo"/>' +
+                  '<div{a} class="foo:class foo:class_{mod}"/>'
+                );
+                var template = new Template(
+                  '<b:define name="mod" type="bool"/>' +
+                  '<b:style ns="foo"/>' +
+                  '<div>' +
+                    '<b:include src="#' + include.templateId + '" class="foo:class foo:class_{mod}"/>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                var classes = tmpl.a.className.split(/\s+/);
+                var duplicates = 0;
+
+                classes.forEach(function(cls, idx, ar){
+                  duplicates += ar.indexOf(cls, idx + 1) != -1;
+                });
+
+                assert(classes.length === 4);
+                assert(duplicates === 0);
+                assert(template.decl_.warns === false);
+              }
+            },
+            {
+              name: 'should add classes with own namespace into includes',
+              test: function(){
+                var include = new Template(
+                  '<b:define name="mod" type="bool"/>' +
+                  '<b:style ns="foo"/>' +
+                  '<div{a} class="foo:class foo:class_{mod}">' +
+                    '<div{b} class="foo:class foo:class_{mod}"/>' +
+                  '</div>'
+                );
+                var template = new Template(
+                  '<b:define name="mod" type="bool"/>' +
+                  '<b:style ns="foo"/>' +
+                  '<div>' +
+                    '<b:include src="#' + include.templateId + '">' +
+                      '<b:set-class value="foo:class foo:class_{mod}"/>' +
+                    '</b:include>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                assert(tmpl.a.className !== tmpl.b.className);
+                assert(template.decl_.warns === false);
+              }
+            },
+            {
+              name: 'should remove classes with foreign namespace in includes',
+              test: function(){
+                var include = new Template(
+                  '<b:define name="mod" type="bool"/>' +
+                  '<b:style ns="foo"/>' +
+                  '<div{a} class="foo:class foo:class_{mod}"/>'
+                );
+                var template = new Template(
+                  '<b:style ns="foo"/>' +
+                  '<div>' +
+                    '<b:include src="#' + include.templateId + '">' +
+                      '<b:remove-class value="foo:class foo:class_{mod}"/>' +
+                    '</b:include>' +
+                  '</div>'
+                );
+                var tmpl = template.createInstance();
+                tmpl.set('mod', 'mod');
+                document.body.appendChild(tmpl.element);
+
+                assert(tmpl.a.className == '');
+                assert(template.decl_.warns && template.decl_.warns.length === 1); // unused namespace `foo` in template
               }
             },
             {
               name: 'override namespace priority',
               test: function(){
                 var include = new Template(
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:style ns="foo">' +
                     '.class { width: 1px; }' +
                     '.class_mod { height: 1x; }' +
@@ -757,6 +866,7 @@ module.exports = {
                 );
                 var template = new Template(
                   '<b:isolate prefix="xxx-"/>' +
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:style ns="foo">' +
                     '.class { width: 3px; }' +
                     '.class_mod { height: 3px; }' +
@@ -784,6 +894,9 @@ module.exports = {
                 assert(/^(\S+)class \1class_mod$/.test(tmpl.b.className));
                 assert(tmpl.b.offsetWidth == 2);
                 assert(tmpl.b.offsetHeight == 2);
+
+                assert(tmpl.a.className != tmpl.b.className);
+                assert(template.decl_.warns === false);
               }
             },
             {
@@ -791,11 +904,13 @@ module.exports = {
               test: function(){
                 var templateA = new Template(
                   '<b:style src="../fixture/global_style.css" ns="foo"/>' +
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:isolate/>' +
                   '<div{a} class="foo:class foo:class_{mod}"/>'
                 );
                 var templateB = new Template(
                   '<b:style src="../fixture/global_style.css" ns="bar"/>' +
+                  '<b:define name="mod" type="bool"/>' +
                   '<b:isolate/>' +
                   '<div{a} class="bar:class bar:class_{mod}"/>'
                 );
@@ -811,6 +926,8 @@ module.exports = {
                 assert(/^(\S+)class \1class_mod$/.test(tmplB.a.className));
 
                 assert(tmplA.a.className == tmplB.a.className);
+                assert(templateA.decl_.warns === false);
+                assert(templateB.decl_.warns === false);
               }
             },
             {

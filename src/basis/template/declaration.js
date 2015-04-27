@@ -1,4 +1,5 @@
 
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 var arraySearch = basis.array.search;
 var arrayAdd = basis.array.add;
 var arrayRemove = basis.array.remove;
@@ -619,7 +620,8 @@ var makeDeclaration = (function(){
 
                 if (useStyle)
                 {
-                  var styleNamespace = elAttrs.namespace || elAttrs.ns;
+                  var namespaceAttrName = elAttrs.namespace ? 'namespace' : 'ns';
+                  var styleNamespace = elAttrs[namespaceAttrName];
                   var styleIsolate = styleNamespace ? styleNamespaceIsolate : '';
                   var src = addStyle(template, token, elAttrs.src, styleIsolate);
 
@@ -627,7 +629,12 @@ var makeDeclaration = (function(){
                   {
                     if (src in styleNamespaceIsolate == false)
                       styleNamespaceIsolate[src] = genIsolateMarker();
-                    template.styleNSPrefix[styleNamespace] = styleNamespaceIsolate[src];
+                    template.styleNSPrefix[styleNamespace] = {
+                      /** @cut */ loc: getLocation(template, elAttrs_[namespaceAttrName].loc),
+                      name: styleNamespace,
+                      prefix: styleNamespaceIsolate[src],
+                      used: false
+                    };
                   }
                 }
               break;
@@ -648,7 +655,7 @@ var makeDeclaration = (function(){
               case 'define':
                 /** @cut */ if ('name' in elAttrs == false)
                 /** @cut */   addTemplateWarn(template, options, 'Define has no `name` attribute', token.loc);
-                /** @cut */ if (Object.prototype.hasOwnProperty.call(template.defines, elAttrs.name))
+                /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
                 /** @cut */   addTemplateWarn(template, options, 'Define for `' + elAttrs.name + '` has already defined', token.loc);
 
                 if ('name' in elAttrs && !template.defines[elAttrs.name])
@@ -754,16 +761,19 @@ var makeDeclaration = (function(){
                     if (decl.resources && 'no-style' in elAttrs == false)
                       importStyles(template.resources, decl.resources, isolatePrefix, token);
 
-                    var instructions = (token.children || []).slice();
-                    var styleNSIsolatePrefix = genIsolateMarker();
-                    var tokenRefMap = normalizeRefs(decl.tokens, styleNSIsolatePrefix);
-                    var styleNSPrefixMap = {};
+                    var instructions = basis.array(token.children);
+                    var styleNSIsolate = {
+                      /** @cut */ map: options.styleNSIsolateMap,
+                      prefix: genIsolateMarker()
+                    };
+                    var tokenRefMap = normalizeRefs(decl.tokens, styleNSIsolate);
 
                     for (var key in decl.styleNSPrefix)
-                      styleNSPrefixMap[styleNSIsolatePrefix + key] = decl.styleNSPrefix[key];
+                      template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
+                        used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+                      });
 
                     if (elAttrs_['class'])
-                    {
                       instructions.unshift({
                         type: TYPE_ELEMENT,
                         prefix: 'b',
@@ -774,7 +784,6 @@ var makeDeclaration = (function(){
                           })
                         ]
                       });
-                    }
 
                     if (elAttrs.id)
                       instructions.unshift({
@@ -810,6 +819,7 @@ var makeDeclaration = (function(){
                         {
                           case 'style':
                             var childAttrs = tokenAttrs(child);
+                            var childAttrs_ = tokenAttrs_(child);
                             var useStyle = true;
 
                             if (childAttrs.options)
@@ -821,7 +831,8 @@ var makeDeclaration = (function(){
 
                             if (useStyle)
                             {
-                              var styleNamespace = childAttrs.namespace || childAttrs.ns;
+                              var namespaceAttrName = childAttrs.namespace ? 'namespace' : 'ns';
+                              var styleNamespace = childAttrs[namespaceAttrName];
                               var styleIsolate = styleNamespace ? styleNamespaceIsolate : isolatePrefix;
                               var src = addStyle(template, child, childAttrs.src, styleIsolate);
 
@@ -829,7 +840,12 @@ var makeDeclaration = (function(){
                               {
                                 if (src in styleNamespaceIsolate == false)
                                   styleNamespaceIsolate[src] = genIsolateMarker();
-                                styleNSPrefixMap[styleNSIsolatePrefix + styleNamespace] = styleNamespaceIsolate[src];
+                                template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
+                                  /** @cut */ loc: getLocation(template, childAttrs_[namespaceAttrName].loc),
+                                  name: styleNamespace,
+                                  prefix: styleNamespaceIsolate[src],
+                                  used: false
+                                };
                               }
                             }
                             break;
@@ -899,6 +915,33 @@ var makeDeclaration = (function(){
                             break;
 
                           case 'remove-class':
+                            var childAttrs_ = tokenAttrs_(child);
+                            var valueAttr = childAttrs_.value;
+
+                            // apply namespace prefix for values
+                            if (valueAttr)
+                            {
+                              valueAttr.value = valueAttr.value
+                                .split(/\s+/)
+                                .map(function(name){
+                                  return name.indexOf(':') > 0 ? styleNSIsolate.prefix + name : name;
+                                })
+                                .join(' ');
+
+                              if (valueAttr.binding)
+                                valueAttr.binding.forEach(function(bind){
+                                  if (bind[0].indexOf(':') > 0)
+                                    bind[0] = styleNSIsolate.prefix + bind[0];
+                                });
+
+                              // probably should be removed, as map_ is not used
+                              if (valueAttr.map_)
+                                valueAttr.map_.forEach(function(item){
+                                  if (item.value.indexOf(':') > 0)
+                                    item.value = styleNSIsolate.prefix + item.value;
+                                });
+                            }
+
                             modifyAttr(child, 'class', 'remove-class');
                             break;
 
@@ -934,9 +977,6 @@ var makeDeclaration = (function(){
 
                     if (tokenRefMap.element)
                       removeTokenRef(tokenRefMap.element.token, 'element');
-
-                    // complete template namespace prefix map
-                    basis.object.complete(template.styleNSPrefix, styleNSPrefixMap);
 
                     // isolate
                     if (isolatePrefix)
@@ -1049,6 +1089,17 @@ var makeDeclaration = (function(){
   }
 
   function normalizeRefs(tokens, isolate, map, stIdx){
+    function processName(name){
+      // add prefix only for `ns:name` and ignore global namespace `:name`
+      if (name.indexOf(':') <= 0)
+        return name;
+
+      var prefix = name.split(':')[0];
+      isolate.map[isolate.prefix + prefix] = prefix;
+
+      return isolate.prefix + name;
+    }
+
     if (!map)
       map = {};
 
@@ -1063,12 +1114,22 @@ var makeDeclaration = (function(){
         var valueIndex = ATTR_VALUE_INDEX[tokenType];
 
         if (token[valueIndex])
-          token[valueIndex] = token[valueIndex].replace(/(^|\s)(\S+:)/g, '$1' + isolate + '$2');
+          token[valueIndex] = token[valueIndex]
+            .split(/\s+/)
+            .map(processName)
+            .join(' ');
+
+        /** @cut */ if (token.valueLocMap)
+        /** @cut */ {
+        /** @cut */   var oldValueLocMap = token.valueLocMap;
+        /** @cut */   token.valueLocMap = {};
+        /** @cut */   for (var name in oldValueLocMap)
+        /** @cut */     token.valueLocMap[processName(name)] = oldValueLocMap[name];
+        /** @cut */ }
 
         if (bindings)
           for (var k = 0, bind; bind = bindings[k]; k++)
-            if (bind[0].indexOf(':') > 0)
-              bind[0] = isolate + bind[0];
+            bind[0] = processName(bind[0]);
       }
 
       if (tokenType != TYPE_ATTRIBUTE_EVENT && refs)
@@ -1182,7 +1243,7 @@ var makeDeclaration = (function(){
     }
   }
 
-  function isolateTokens(tokens, isolate, template, stIdx){
+  function isolateTokens(tokens, isolate, template, options, stIdx){
     function processName(name){
       if (name.indexOf(':') == -1)
         return isolate + name;
@@ -1197,15 +1258,28 @@ var makeDeclaration = (function(){
       if (!parts[0])
         return parts[1];
 
-      // if namespace not found, no prefix and show warning
-      if (parts[0] in template.styleNSPrefix == false)
-      {
-        // TODO: attach warning to location
-        /** @cut */ template.warns.push('Namespace `' + parts[0] + '` is not defined in template, no prefix added');
-        return name;
-      }
+      var namespace = hasOwnProperty.call(template.styleNSPrefix, parts[0]) ? template.styleNSPrefix[parts[0]] : false;
 
-      return template.styleNSPrefix[parts[0]] + parts[1];
+      // if namespace not found, no prefix and show warning
+      if (!namespace)
+      {
+        /** @cut */ var isolatedPrefix = options.styleNSIsolateMap[parts[0]];
+        /** @cut */ var oldPrefix = parts[0];
+        /** @cut */ var fullName = arguments[1];
+        /** @cut */ var loc = arguments[2];
+        /** @cut */ if (fullName)
+        /** @cut */ {
+        /** @cut */   if (isolatedPrefix)
+        /** @cut */     fullName = fullName.replace(oldPrefix, isolatedPrefix);
+        /** @cut */   addTemplateWarn(template, options, 'Namespace `' + (isolatedPrefix || oldPrefix) + '` is not defined: ' + fullName, loc);
+        /** @cut */ }
+        return false;
+      }
+      else
+      {
+        namespace.used = true;
+        return namespace.prefix + parts[1];
+      }
     }
 
     for (var i = stIdx || 0, token; token = tokens[i]; i++)
@@ -1213,7 +1287,7 @@ var makeDeclaration = (function(){
       var tokenType = token[TOKEN_TYPE];
 
       if (tokenType == TYPE_ELEMENT)
-        isolateTokens(token, isolate, template, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+        isolateTokens(token, isolate, template, options, ELEMENT_ATTRIBUTES_AND_CHILDREN);
 
       if (tokenType == TYPE_ATTRIBUTE_CLASS)
       {
@@ -1223,19 +1297,45 @@ var makeDeclaration = (function(){
         if (token[valueIndex])
           token[valueIndex] = token[valueIndex]
             .split(/\s+/)
-            .map(processName)
+            .map(function(name){
+              return processName(name, name, token.valueLocMap ? token.valueLocMap[name] : null);
+            })
+            .filter(Boolean)
             .join(' ');
 
         if (bindings)
-          for (var k = 0, bind; bind = bindings[k]; k++)
-            bind[0] = processName(bind[0]);
+        {
+          for (var j = 0, bind, prefix, removed; bind = bindings[j]; j++)
+          {
+            prefix = processName(bind[0], bind[0] + '{' + bind[1] + '}', bind.loc);
+
+            if (prefix === false)
+            {
+              // prefix is false for non-resolved namespaced prefixes -> remove binding
+              removed = true;
+              bindings[j] = null;
+            }
+            else
+              bind[0] = prefix;
+          }
+
+          if (removed)
+          {
+            bindings = bindings.filter(Boolean);
+            token[TOKEN_BINDINGS] = bindings.length ? bindings : 0;
+          }
+        }
 
         /** @cut */ if (token.valueLocMap)
         /** @cut */ {
         /** @cut */   var oldValueLocMap = token.valueLocMap;
         /** @cut */   token.valueLocMap = {};
         /** @cut */   for (var name in oldValueLocMap)
-        /** @cut */     token.valueLocMap[processName(name)] = oldValueLocMap[name];
+        /** @cut */   {
+        /** @cut */     var newKey = processName(name);
+        /** @cut */     if (newKey)
+        /** @cut */       token.valueLocMap[newKey] = oldValueLocMap[name];
+        /** @cut */   }
         /** @cut */ }
       }
     }
@@ -1248,6 +1348,7 @@ var makeDeclaration = (function(){
     // make copy of options (as modify it) and normalize
     options = basis.object.slice(options);
     options.includeOptions = options.includeOptions || {};
+    /** @cut */ options.styleNSIsolateMap = {};
     // force fetch locations and ranges in dev mode for debug and build purposes
     /** @cut */ options.loc = true;
     /** @cut */ options.range = true;
@@ -1325,7 +1426,15 @@ var makeDeclaration = (function(){
     if (includeStack.length == 0)
     {
       // isolate tokens
-      isolateTokens(result.tokens, result.isolate || '', result);
+      isolateTokens(result.tokens, result.isolate || '', result, options);
+
+      // check for unused namespaces
+      /** @cut */ for (var key in result.styleNSPrefix)
+      /** @cut */ {
+      /** @cut */   var styleNSPrefix = result.styleNSPrefix[key];
+      /** @cut */   if (!styleNSPrefix.used)
+      /** @cut */     addTemplateWarn(result, options, 'Unused namespace: ' + styleNSPrefix.name, styleNSPrefix.loc);
+      /** @cut */ }
 
       // resolve style prefix
       if (result.isolate)
