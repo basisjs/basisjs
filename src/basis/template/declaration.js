@@ -1454,6 +1454,7 @@ var makeDeclaration = (function(){
           var url = item[0];
           var isolate = item[1];
           var namespaceIsolate = isolate === styleNamespaceIsolate;
+          var cssMap;
 
           // resolve namespaced style
           if (namespaceIsolate)
@@ -1471,19 +1472,21 @@ var makeDeclaration = (function(){
           var resource = basis.resource.virtual('css', '').ready(function(cssResource){
             cssResource.url = url + '?isolate-prefix=' + isolate;
             cssResource.baseURI = basis.path.dirname(url) + '/';
+            cssResource.map = cssMap;
             sourceResource();
           });
 
           var sourceResource = basis.resource(url).ready(function(cssResource){
-            var cssText = isolateCss(cssResource.cssText || '', isolate);
+            var isolated = isolateCss(cssResource.cssText || '', isolate, true);
 
             /** @cut */ if (typeof global.btoa == 'function')
-            /** @cut */   cssText += '\n/*# sourceMappingURL=data:application/json;base64,' +
+            /** @cut */   isolated.css += '\n/*# sourceMappingURL=data:application/json;base64,' +
             /** @cut */     global.btoa('{"version":3,"sources":["' + basis.path.origin + url + '"],' +
-            /** @cut */     '"mappings":"AAAA' + basis.string.repeat(';AACA', cssText.split('\n').length) +
+            /** @cut */     '"mappings":"AAAA' + basis.string.repeat(';AACA', isolated.css.split('\n').length) +
             /** @cut */     '"}') + ' */';
 
-            resource.update(cssText);
+            cssMap = isolated.map;
+            resource.update(isolated.css);
           });
 
           if (namespaceIsolate)
