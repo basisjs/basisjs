@@ -1443,7 +1443,7 @@ var makeDeclaration = (function(){
             item[1] = result.isolate + item[1];
 
       // isolate styles
-      /** @cut */ result.styles = result.resources.slice(0);
+      /** @cut */ result.styles = [];
       result.resources = result.resources
         // remove duplicates
         .filter(function(item, idx, array){
@@ -1455,6 +1455,11 @@ var makeDeclaration = (function(){
           var isolate = item[1];
           var namespaceIsolate = isolate === styleNamespaceIsolate;
           var cssMap;
+
+          /** @cut */ var style = basis.array(item);
+          /** @cut */ if (namespaceIsolate)
+          /** @cut */   style[1] = styleNamespaceIsolate[style[0]];
+          /** @cut */ result.styles.push(style);
 
           // resolve namespaced style
           if (namespaceIsolate)
