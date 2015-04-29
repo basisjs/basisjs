@@ -3,7 +3,8 @@
 
 <div class="group">
   <div class="caption">
-    <span class="log__link log__link_{name}" event-click="log">console.log(values)</span>
+    <span class="log__link" event-click="logDeclaration" title="Log template declaration into console and saves as $lastInspectDeclaration">declaration</span>
+    <span class="log__link" event-click="logValues" title="Log values into console and saves as $lastInspectValues">values</span>
     {l10n:caption.{name}}:
   </div>
   <div{childNodesElement} class="content"/>

@@ -142,7 +142,7 @@ var view = new Window({
             }
           },
           action: {
-            log: function(){
+            logValues: function(){
               if (selectedDomNode.value)
               {
                 var id = selectedDomNode.value[inspectBasisTemplateMarker];
@@ -156,7 +156,16 @@ var view = new Window({
                     if (templateBinding.names.indexOf(key) != -1)
                       result[key] = objectBinding[key].getter(object);  // TODO: return real template values
 
-                global.$lastInspectValue = result;
+                global.$lastInspectValues = result;
+                console.log(result);
+              }
+            },
+            logDeclaration: function(){
+              if (sourceView.decl.value)
+              {
+                var result = sourceView.decl.value;
+
+                global.$lastInspectDeclaration = result;
                 console.log(result);
               }
             }
