@@ -136,20 +136,15 @@ var makeDeclaration = (function(){
     array.unshift.apply(array, items);
   }
 
-  function addStyle(template, token, src, isolatePrefix){
-    var url;
+  function addStyle(template, token, src, isolatePrefix, namespace){
+    var text = token.children[0];
+    var url = src
+      ? basis.resource.resolveURI(src, template.baseURI, '<b:style src=\"{url}\"/>')
+      : basis.resource.virtual('css', text ? text.value : '', template.sourceUrl).url;
 
-    if (src)
-    {
-      url = basis.resource.resolveURI(src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
-    }
-    else
-    {
-      var text = token.children[0];
-      url = basis.resource.virtual('css', text ? text.value : '', template.sourceUrl).url;
-    }
+    /** @cut */ token.sourceUrl = template.sourceUrl;
 
-    template.resources.push([url, isolatePrefix, token, false]);
+    template.resources.push([url, isolatePrefix, token, null, src ? false : text || true, namespace]);
 
     return url;
   }
@@ -623,7 +618,7 @@ var makeDeclaration = (function(){
                   var namespaceAttrName = elAttrs.namespace ? 'namespace' : 'ns';
                   var styleNamespace = elAttrs[namespaceAttrName];
                   var styleIsolate = styleNamespace ? styleNamespaceIsolate : '';
-                  var src = addStyle(template, token, elAttrs.src, styleIsolate);
+                  var src = addStyle(template, token, elAttrs.src, styleIsolate, styleNamespace);
 
                   if (styleNamespace)
                   {
@@ -834,7 +829,7 @@ var makeDeclaration = (function(){
                               var namespaceAttrName = childAttrs.namespace ? 'namespace' : 'ns';
                               var styleNamespace = childAttrs[namespaceAttrName];
                               var styleIsolate = styleNamespace ? styleNamespaceIsolate : isolatePrefix;
-                              var src = addStyle(template, child, childAttrs.src, styleIsolate);
+                              var src = addStyle(template, child, childAttrs.src, styleIsolate, styleNamespace);
 
                               if (styleNamespace)
                               {
@@ -982,7 +977,6 @@ var makeDeclaration = (function(){
                     if (isolatePrefix)
                       isolateTokens(decl.tokens, isolatePrefix);
 
-                    //resources.push.apply(resources, tokens.resources);
                     result.push.apply(result, decl.tokens);
                   }
                   else
@@ -1341,6 +1335,10 @@ var makeDeclaration = (function(){
     }
   }
 
+  function styleHash(style){
+    return style[0] + '|' + style[1];
+  }
+
   return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
     var warns = [];
     /** @cut */ var source_;
@@ -1442,24 +1440,19 @@ var makeDeclaration = (function(){
           if (item[1] !== styleNamespaceIsolate)  // ignore namespaced styles
             item[1] = result.isolate + item[1];
 
-      // isolate styles
-      /** @cut */ result.styles = [];
-      result.resources = result.resources
-        // remove duplicates
+      // remove duplicates
+      var uniqueResources = result.resources
         .filter(function(item, idx, array){
-          return !basis.array.search(array, String(item), String, idx + 1);
-        })
-        // isolate
+          return !basis.array.search(array, styleHash(item), styleHash, idx + 1);
+        });
+
+      // map and isolate styles
+      result.resources = uniqueResources
         .map(function(item){
           var url = item[0];
           var isolate = item[1];
           var namespaceIsolate = isolate === styleNamespaceIsolate;
           var cssMap;
-
-          /** @cut */ var style = basis.array(item);
-          /** @cut */ if (namespaceIsolate)
-          /** @cut */   style[1] = styleNamespaceIsolate[style[0]];
-          /** @cut */ result.styles.push(style);
 
           // resolve namespaced style
           if (namespaceIsolate)
@@ -1499,6 +1492,18 @@ var makeDeclaration = (function(){
 
           return resource.url;
         });
+
+      /** @cut */ result.styles = uniqueResources.map(function(item, idx){
+      /** @cut */   return {
+      /** @cut */     resource: result.resources[idx],
+      /** @cut */     from: item[0] === result.resources[idx] ? null : item[0],
+      /** @cut */     isolate: item[1] === styleNamespaceIsolate ? styleNamespaceIsolate[item[0]] : item[1] || false,
+      /** @cut */     namespace: item[5] || false,
+      /** @cut */     inline: item[4],
+      /** @cut */     styleToken: item[2],
+      /** @cut */     includeToken: item[3]
+      /** @cut */   };
+      /** @cut */ });
     }
 
     /** @cut */ for (var key in result.defines)
