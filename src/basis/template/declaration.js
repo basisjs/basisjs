@@ -573,7 +573,14 @@ var makeDeclaration = (function(){
 
             case 'remove':
               if (itAttrToken)
+              {
                 arrayRemove(itAttrs, itAttrToken);
+                /** @cut */ template.removals.push({
+                /** @cut */   reason: '<b:' + token.name + '>',
+                /** @cut */   reasonToken: token,
+                /** @cut */   token: itAttrToken
+                /** @cut */ });
+              }
 
               break;
           }
@@ -753,6 +760,9 @@ var makeDeclaration = (function(){
                     if (decl.warns)
                       template.warns.push.apply(template.warns, decl.warns);
 
+                    /** @cut */ if (decl.removals)
+                    /** @cut */   template.removals.push.apply(template.removals, decl.removals);
+
                     if (decl.resources && 'no-style' in elAttrs == false)
                       importStyles(template.resources, decl.resources, isolatePrefix, token);
 
@@ -856,7 +866,8 @@ var makeDeclaration = (function(){
 
                             if (tokenRef)
                             {
-                              var pos = tokenRef.owner.indexOf(tokenRef.token);
+                              var parent = tokenRef.owner;
+                              var pos = parent.indexOf(tokenRef.token);
                               if (pos != -1)
                               {
                                 var args = [pos + (child.name == 'after'), replaceOrRemove];
@@ -864,7 +875,14 @@ var makeDeclaration = (function(){
                                 if (child.name != 'remove')
                                   args = args.concat(process(child.children, template, options) || []);
 
-                                tokenRef.owner.splice.apply(tokenRef.owner, args);
+                                parent.splice.apply(parent, args);
+
+                                /** @cut */ if (replaceOrRemove)
+                                /** @cut */   template.removals.push({
+                                /** @cut */     reason: '<b:' + child.name + '>',
+                                /** @cut */     reasonToken: child,
+                                /** @cut */     token: tokenRef.token
+                                /** @cut */   });
                               }
                             }
                             break;
@@ -1369,6 +1387,8 @@ var makeDeclaration = (function(){
       isolate: false
     };
 
+    /** @cut */ result.removals = [];
+
     // normalize dictionary ext name
     if (result.dictURI)
     {
@@ -1414,8 +1434,8 @@ var makeDeclaration = (function(){
     addTokenRef(result.tokens[0], 'element');
     normalizeRefs(result.tokens);
 
-    // deal with defines
-    applyDefines(result.tokens, result, options);
+    ///** @cut */ if (result.removals)
+    ///** @cut */   applyDefines(result.removals.map(''), result, options);
 
     /** @cut */ if (/^[^a-z]/i.test(result.isolate))
     /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, otherwise it leads to incorrect css class names and broken styles');
@@ -1423,6 +1443,9 @@ var makeDeclaration = (function(){
     // top-level declaration
     if (includeStack.length == 0)
     {
+      // deal with defines
+      applyDefines(result.tokens, result, options);
+
       // isolate tokens
       isolateTokens(result.tokens, result.isolate || '', result, options);
 
@@ -1441,7 +1464,7 @@ var makeDeclaration = (function(){
             item[1] = result.isolate + item[1];
 
       // save all styles for debug purposes as it will be filtered
-      /** cut */ var styles = result.resources;
+      /** @cut */ var styles = result.resources;
 
       // map and isolate styles
       result.resources = result.resources
