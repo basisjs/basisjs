@@ -1440,14 +1440,15 @@ var makeDeclaration = (function(){
           if (item[1] !== styleNamespaceIsolate)  // ignore namespaced styles
             item[1] = result.isolate + item[1];
 
-      // remove duplicates
-      var uniqueResources = result.resources
-        .filter(function(item, idx, array){
-          return !basis.array.search(array, styleHash(item), styleHash, idx + 1);
-        });
+      // save all styles for debug purposes as it will be filtered
+      /** cut */ var styles = result.resources;
 
       // map and isolate styles
-      result.resources = uniqueResources
+      result.resources = result.resources
+        // remove duplicates
+        .filter(function(item, idx, array){
+          return !basis.array.search(array, styleHash(item), styleHash, idx + 1);
+        })
         .map(function(item){
           var url = item[0];
           var isolate = item[1];
@@ -1459,12 +1460,18 @@ var makeDeclaration = (function(){
           {
             isolate = styleNamespaceIsolate[url];
             if (url in styleNamespaceResource)
+            {
+              /** @cut */ item.url = styleNamespaceResource[url].url;
               return styleNamespaceResource[url].url;
+            }
           }
 
           // if no isolate prefix -> nothing todo
           if (!isolate)
+          {
+            /** @cut */ item.url = url;
             return url;
+          }
 
           // otherwise create virtual resource with prefixed classes in selectors
           var resource = basis.resource.virtual('css', '').ready(function(cssResource){
@@ -1490,12 +1497,14 @@ var makeDeclaration = (function(){
           if (namespaceIsolate)
             styleNamespaceResource[url] = resource;
 
+          /** @cut */ item.url = resource.url;
           return resource.url;
         });
 
-      /** @cut */ result.styles = uniqueResources.map(function(item, idx){
+      // process styles list
+      /** @cut */ result.styles = styles.map(function(item, idx){
       /** @cut */   return {
-      /** @cut */     resource: result.resources[idx],
+      /** @cut */     resource: item.url || false,
       /** @cut */     from: item[0] === result.resources[idx] ? null : item[0],
       /** @cut */     isolate: item[1] === styleNamespaceIsolate ? styleNamespaceIsolate[item[0]] : item[1] || false,
       /** @cut */     namespace: item[5] || false,
