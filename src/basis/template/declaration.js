@@ -688,12 +688,14 @@ var makeDeclaration = (function(){
               break;
 
               case 'define':
-                /** @cut */ if ('name' in elAttrs == false)
-                /** @cut */   addTemplateWarn(template, options, 'Define has no `name` attribute', token.loc);
+                /** @cut */ if ('name' in elAttrs == false || 'type' in elAttrs == false)
+                /** @cut */   addTemplateWarn(template, options, '<b:define> has no `name` attribute', token.loc);
+                /** @cut */ if ('type' in elAttrs == false)
+                /** @cut */   addTemplateWarn(template, options, '<b:define> has no `type` attribute', token.loc);
                 /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
-                /** @cut */   addTemplateWarn(template, options, 'Define for `' + elAttrs.name + '` has already defined', token.loc);
+                /** @cut */   addTemplateWarn(template, options, '<b:define> for `' + elAttrs.name + '` has already defined', token.loc);
 
-                if ('name' in elAttrs && !template.defines[elAttrs.name])
+                if ('name' in elAttrs && 'type' in elAttrs && !template.defines[elAttrs.name])
                 {
                   var bindingName = elAttrs.from || elAttrs.name;
                   var defineName = elAttrs.name;
@@ -714,7 +716,7 @@ var makeDeclaration = (function(){
                     case 'enum':
                       if ('values' in elAttrs == false)
                       {
-                        /** @cut */ addTemplateWarn(template, options, 'Enum define has no `values` attribute', token.loc);
+                        /** @cut */ addTemplateWarn(template, options, 'Enum <b:define> has no `values` attribute', token.loc);
                         break;
                       }
 
@@ -722,7 +724,7 @@ var makeDeclaration = (function(){
 
                       if (!values)
                       {
-                        /** @cut */ addTemplateWarn(template, options, 'Enum define has no variants (`values` attribute is empty)', elAttrs_.values && elAttrs_.values.loc);
+                        /** @cut */ addTemplateWarn(template, options, 'Enum <b:define> has no variants (`values` attribute is empty)', elAttrs_.values && elAttrs_.values.loc);
                         break;
                       }
 
@@ -730,7 +732,7 @@ var makeDeclaration = (function(){
                       defaultIndex = values.indexOf(elAttrs['default']);
 
                       /** @cut */ if ('default' in elAttrs && defaultIndex == -1)
-                      /** @cut */   addTemplateWarn(template, options, 'Enum define has bad value as default (value ignored)', elAttrs_['default'] && elAttrs_['default'].loc);
+                      /** @cut */   addTemplateWarn(template, options, 'Enum <b:define> has bad value as default (value ignored)', elAttrs_['default'] && elAttrs_['default'].loc);
 
                       define = [
                         bindingName,
@@ -742,12 +744,11 @@ var makeDeclaration = (function(){
 
                       break;
                     /** @cut */ default:
-                    /** @cut */   addTemplateWarn(template, options, 'Bad define type `' + elAttrs.type + '` for ' + defineName, elAttrs_.type && elAttrs_.type.valueLoc);
+                    /** @cut */   addTemplateWarn(template, options, 'Bad type in <b:define> for `' + defineName + '`: ' + elAttrs.type, elAttrs_.type && elAttrs_.type.valueLoc);
                   }
 
                   if (define)
                   {
-                    //define.loc = token.loc;
                     /** @cut */ addTokenLocation(define, token);
                     template.defines[defineName] = define;
                   }
