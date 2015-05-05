@@ -291,7 +291,7 @@ var makeDeclaration = (function(){
           item = [
             attr.type,              // TOKEN_TYPE = 0
             attr.binding,           // TOKEN_BINDINGS = 1
-            refList(attr)           // TOKEN_REFS = 2
+            0                       // TOKEN_REFS = 2
           ];
 
           // ATTR_NAME = 3
@@ -407,6 +407,12 @@ var makeDeclaration = (function(){
               // other attributes
               var valueAttr = attrs_.value || {};
 
+              /** @cut */ template.removals.push({
+              /** @cut */   reason: '<b:' + token.name + '>',
+              /** @cut */   removeToken: token,
+              /** @cut */   token: basis.array.from(itAttrToken)
+              /** @cut */ });
+
               itAttrToken[TOKEN_BINDINGS] = valueAttr.binding || 0;
               /** @cut */ itAttrToken.valueLocMap = valueLocMap;
 
@@ -415,6 +421,7 @@ var makeDeclaration = (function(){
               else
                 itAttrToken.length = valueIdx;
 
+              // if no bindgings and no value -> remove attribute from element
               if (isClassOrStyle)
                 if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
                 {
@@ -499,7 +506,7 @@ var makeDeclaration = (function(){
                   for (var i = 0; i < appendParts.length; i++)
                   {
                     var part = appendParts[i];
-                    basis.array.remove(parts, part);
+                    basis.array.remove(parts, part); // TODO: add to removals?
                     parts.push(part);
                   }
 
@@ -532,16 +539,18 @@ var makeDeclaration = (function(){
               if (itAttrToken)
               {
                 var valueAttr = attrs_.value || {};
-                var remValues = (valueAttr.value || '').split(' ');
                 var values = (itAttrToken[valueIdx] || '').split(' ');
+                var removeValues = (valueAttr.value || '').split(' ');
                 var bindings = itAttrToken[TOKEN_BINDINGS];
+                /** @cut */ var removedValues = [];
+                /** @cut */ var removedBindings = 0;
 
                 if (valueAttr.binding && bindings)
                 {
-                  for (var i = 0, remBinding; remBinding = valueAttr.binding[i]; i++)
+                  for (var i = 0, removeBinding; removeBinding = valueAttr.binding[i]; i++)
                     for (var j = bindings.length - 1, classBinding; classBinding = bindings[j]; j--)
                     {
-                      // remBinding
+                      // removeBinding
                       //      -> [prefix, name]
                       // classBinding
                       //      -> [prefix, bindingName, type, name, defaultValue, values]
@@ -549,31 +558,62 @@ var makeDeclaration = (function(){
                       var prefix = classBinding[0];
                       var bindingName = classBinding[3] || classBinding[1];
 
-                      if (prefix === remBinding[0] && bindingName === remBinding[1])
+                      if (prefix === removeBinding[0] && bindingName === removeBinding[1])
+                      {
                         bindings.splice(j, 1);
+
+                        /** @cut */ if (!removedBindings)
+                        /** @cut */   removedBindings = [classBinding];
+                        /** @cut */ else
+                        /** @cut */   removedBindings.push(classBinding);
+                      }
                     }
 
                   if (!bindings.length)
                     itAttrToken[TOKEN_BINDINGS] = 0;
                 }
 
-                for (var i = 0; i < remValues.length; i++)
+                for (var i = 0; i < removeValues.length; i++)
                 {
-                  arrayRemove(values, remValues[i]);
+                  /** @cut */ if (values.indexOf(removeValues[i]) != -1)
+                  /** @cut */   removedValues.push(removeValues[i]);
+
+                  arrayRemove(values, removeValues[i]);
+
                   /** @cut */ if (itAttrToken.valueLocMap)
-                  /** @cut */   delete itAttrToken.valueLocMap[remValues[i]];
+                  /** @cut */   delete itAttrToken.valueLocMap[removeValues[i]];
                 }
 
                 itAttrToken[valueIdx] = values.join(' ');
 
-                if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
+                if (!bindings.length && !values.length)
                   arrayRemove(itAttrs, itAttrToken);
+
+                /** @cut */ if (removedValues.length || removedBindings.length)
+                /** @cut */   template.removals.push({
+                /** @cut */     reason: '<b:' + token.name + '>',
+                /** @cut */     removeToken: token,
+                /** @cut */     token: [
+                /** @cut */       TYPE_ATTRIBUTE_CLASS,
+                /** @cut */       removedBindings,
+                /** @cut */       0,
+                /** @cut */       removedValues.join(' ')
+                /** @cut */     ]
+                /** @cut */   });
               }
               break;
 
             case 'remove':
               if (itAttrToken)
+              {
                 arrayRemove(itAttrs, itAttrToken);
+
+                /** @cut */ template.removals.push({
+                /** @cut */   reason: '<b:' + token.name + '>',
+                /** @cut */   removeToken: token,
+                /** @cut */   token: itAttrToken
+                /** @cut */ });
+              }
 
               break;
           }
@@ -753,6 +793,9 @@ var makeDeclaration = (function(){
                     if (decl.warns)
                       template.warns.push.apply(template.warns, decl.warns);
 
+                    /** @cut */ if (decl.removals)
+                    /** @cut */   template.removals.push.apply(template.removals, decl.removals);
+
                     if (decl.resources && 'no-style' in elAttrs == false)
                       importStyles(template.resources, decl.resources, isolatePrefix, token);
 
@@ -856,7 +899,8 @@ var makeDeclaration = (function(){
 
                             if (tokenRef)
                             {
-                              var pos = tokenRef.owner.indexOf(tokenRef.token);
+                              var parent = tokenRef.owner;
+                              var pos = parent.indexOf(tokenRef.token);
                               if (pos != -1)
                               {
                                 var args = [pos + (child.name == 'after'), replaceOrRemove];
@@ -864,7 +908,14 @@ var makeDeclaration = (function(){
                                 if (child.name != 'remove')
                                   args = args.concat(process(child.children, template, options) || []);
 
-                                tokenRef.owner.splice.apply(tokenRef.owner, args);
+                                parent.splice.apply(parent, args);
+
+                                /** @cut */ if (replaceOrRemove)
+                                /** @cut */   template.removals.push({
+                                /** @cut */     reason: '<b:' + child.name + '>',
+                                /** @cut */     removeToken: child,
+                                /** @cut */     token: tokenRef.token
+                                /** @cut */   });
                               }
                             }
                             break;
@@ -975,7 +1026,14 @@ var makeDeclaration = (function(){
 
                     // isolate
                     if (isolatePrefix)
+                    {
                       isolateTokens(decl.tokens, isolatePrefix);
+
+                      /** @cut */ if (decl.removals)
+                      /** @cut */   decl.removals.forEach(function(item){
+                      /** @cut */     isolateTokens([item.token], isolatePrefix);
+                      /** @cut */   });
+                    }
 
                     result.push.apply(result, decl.tokens);
                   }
@@ -1369,6 +1427,8 @@ var makeDeclaration = (function(){
       isolate: false
     };
 
+    /** @cut */ result.removals = [];
+
     // normalize dictionary ext name
     if (result.dictURI)
     {
@@ -1426,6 +1486,14 @@ var makeDeclaration = (function(){
       // isolate tokens
       isolateTokens(result.tokens, result.isolate || '', result, options);
 
+      /** @cut */ result.warns = [];
+      /** @cut */ if (result.removals)
+      /** @cut */   result.removals.forEach(function(item){
+      /** @cut */     isolateTokens([item.token], result.isolate || '', result, options);
+      /** @cut */   });
+      /** @cut */ result.warns = warns;
+
+
       // check for unused namespaces
       /** @cut */ for (var key in result.styleNSPrefix)
       /** @cut */ {
@@ -1441,7 +1509,7 @@ var makeDeclaration = (function(){
             item[1] = result.isolate + item[1];
 
       // save all styles for debug purposes as it will be filtered
-      /** cut */ var styles = result.resources;
+      /** @cut */ var styles = result.resources;
 
       // map and isolate styles
       result.resources = result.resources
