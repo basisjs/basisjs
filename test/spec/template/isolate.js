@@ -342,7 +342,7 @@ module.exports = {
           }
         },
         {
-          name: 'class modifications should works with <b:include> with isolate attribute as expected',
+          name: 'class modifications should on with <b:include> with isolate should not to be isolated',
           test: function(){
             var templateA = new Template(
               '<b:isolate prefix="xxx--"/>' +
@@ -361,7 +361,7 @@ module.exports = {
             assert(className == 'zzz--outer zzz--outer_mod');
 
             var className = tmpl.element.firstChild.className;
-            assert(className == 'zzz--yyy--test zzz--yyy--foo zzz--yyy--test_mod zzz--yyy--foo_mod');
+            assert(className == 'zzz--yyy--test zzz--foo zzz--yyy--test_mod zzz--foo_mod');
           }
         },
         {

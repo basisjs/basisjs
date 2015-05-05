@@ -811,6 +811,18 @@ var makeDeclaration = (function(){
                         used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
                       });
 
+                    // isolate
+                    if (isolatePrefix)
+                    {
+                      isolateTokens(decl.tokens, isolatePrefix);
+
+                      /** @cut */ if (decl.removals)
+                      /** @cut */   decl.removals.forEach(function(item){
+                      /** @cut */     isolateTokens([item.token], isolatePrefix);
+                      /** @cut */   });
+                    }
+
+                    // <b:include class=".."> -> <b:append-class value="..">
                     if (elAttrs_['class'])
                       instructions.unshift({
                         type: TYPE_ELEMENT,
@@ -823,6 +835,7 @@ var makeDeclaration = (function(){
                         ]
                       });
 
+                    // <b:include id=".."> -> <b:set-attr name="id" value="..">
                     if (elAttrs.id)
                       instructions.unshift({
                         type: TYPE_ELEMENT,
@@ -842,6 +855,7 @@ var makeDeclaration = (function(){
                         ]
                       });
 
+                    // <b:include ref=".."> -> <b:add-ref name="id" value="..">
                     if (elAttrs.ref)
                       if (tokenRefMap.element)
                         elAttrs.ref.trim().split(/\s+/).map(function(refName){
@@ -1023,17 +1037,6 @@ var makeDeclaration = (function(){
 
                     if (tokenRefMap.element)
                       removeTokenRef(tokenRefMap.element.token, 'element');
-
-                    // isolate
-                    if (isolatePrefix)
-                    {
-                      isolateTokens(decl.tokens, isolatePrefix);
-
-                      /** @cut */ if (decl.removals)
-                      /** @cut */   decl.removals.forEach(function(item){
-                      /** @cut */     isolateTokens([item.token], isolatePrefix);
-                      /** @cut */   });
-                    }
 
                     result.push.apply(result, decl.tokens);
                   }
