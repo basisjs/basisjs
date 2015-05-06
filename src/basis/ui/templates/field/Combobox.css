@@ -55,9 +55,6 @@
 
     background: url(res/dropdown_arrow.gif) no-repeat right center;
     border: 1px solid #87C4E0;
-
-      -moz-border-radius: 2px;
-      -webkit-border-radius: 2px;
     border-radius: 2px;
 
     cursor: pointer;

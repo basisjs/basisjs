@@ -33,8 +33,6 @@
     height: 4px;
     background: #CCC;
     margin: 5px 0;
-      -webkit-border-radius: 2px;
-      -moz-border-radius: 2px;
     border-radius: 2px;
     cursor: pointer;
     cursor: hand;
@@ -59,8 +57,6 @@
     height: 4px;
     font-size: 1px;
     background: #666;
-      -webkit-border-radius: 3px;
-      -moz-border-radius: 3px;
     border-radius: 3px;
     cursor: pointer;
     cursor: hand;
@@ -98,7 +94,5 @@
     height: 4px;
     overflow: hidden;
     background: #0066CC;
-      -webkit-border-radius: 2px;
-      -moz-border-radius: 2px;
     border-radius: 2px;
   }

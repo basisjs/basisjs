@@ -5,6 +5,7 @@
     padding: 0 5px; /* horizontal padding = border-width + content padding */
     font-size: 82%;
 
+      -ms-user-select: none;
       -moz-user-select: none;
       -webkit-user-select: none;
     user-select: none;
@@ -84,8 +85,6 @@
     background: white;
     border: 3px solid #D9E8FB;
     border-top-width: 1px;
-      -moz-border-radius: 0 0 3px 3px;
-      -webkit-border-radius: 0 0 3px 3px;
     border-radius: 0 0 3px 3px;
   }
 

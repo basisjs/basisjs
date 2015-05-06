@@ -12,7 +12,9 @@
     background-image: url(res/bg.gif);
     background-color: #F1F2F4;
     white-space: nowrap;
+    -ms-user-select: none;
     -moz-user-select: none;
+    -webkit-user-select: none;
     user-select: none;
     cursor: default;
   }

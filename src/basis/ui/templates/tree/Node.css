@@ -18,10 +18,7 @@
     font-size: 85%;
     line-height: 1em;
 
-    cursor: pointer;/*
-      -moz-user-select: none;
-      -webkit-user-select: none;
-    user-select: none;*/
+    cursor: pointer;
   }
 
   .Basis-TreeNode-Caption__disabled
