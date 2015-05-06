@@ -237,6 +237,59 @@ module.exports = {
           ]
         }
       ]
+    },
+    {
+      name: '',
+      test: function(){
+        var node = new Node({
+          grouping: {
+            rule: 'data.year',
+            sorting: 'data.title',
+            sortingDesc: true
+          },
+          sorting: function(node){
+            return Number(node.data.date);
+          },
+          sortingDesc: true,
+          invertSorting: function(){
+            debugger;
+            this.setSorting(this.sorting, !this.sortingDesc);
+            assert(checkNode(node) === false);
+            this.grouping.setSorting(this.grouping.sorting, !this.grouping.sortingDesc);
+            assert(checkNode(node) === false);
+          },
+          childNodes: [
+            1402099200000,
+            1404691200000,
+            1407369600000,
+            1410048000000,
+            1412640000000,
+            1415318400000,
+            1417910400000,
+            1420588800000,
+            1423267200000
+          ].map(function(time){
+            var date = new Date(time);
+            return new Node({
+              data: {
+                year: date.getFullYear(),
+                date: date
+              }
+            });
+          })
+        });
+
+        assert(checkNode(node) === false);
+        assert(checkNode(node.grouping) === false);
+
+        node.invertSorting();
+        assert(checkNode(node) === false);
+        assert(checkNode(node.grouping) === false);
+
+        node.invertSorting();
+        assert(checkNode(node) === false);
+        assert(checkNode(node.grouping) === false);
+      }
     }
   ]
 };

@@ -1514,17 +1514,18 @@
     for (var i = 0, child; child = order[i]; i++)
       child.groupNode.nodes.push(child);
 
-    order.length = 0;
-    for (var group = node.grouping.nullGroup; group; group = group.nextSibling)
+    var groups = [node.grouping.nullGroup].concat(node.grouping.childNodes);
+    var result = []; // new order
+    for (var i = 0, group; group = groups[i]; i++)
     {
       var nodes = group.nodes;
       group.first = nodes[0] || null;
       group.last = nodes[nodes.length - 1] || null;
-      order.push.apply(order, nodes);
+      result.push.apply(result, nodes);
       group.emit_childNodesModified({ inserted: nodes });
     }
 
-    return order;
+    return result;
   }
 
   function createChildByFactory(node, config){
@@ -2331,7 +2332,8 @@
           // NOTE: Nodes selected state will remain (sometimes it can be important)
           if (this.grouping)
           {
-            for (var group = this.grouping.nullGroup; group; group = group.nextSibling)
+            var groups = [this.grouping.nullGroup].concat(this.grouping.childNodes);
+            for (var i = 0, group; group = groups[i]; i++)
             {
               // sort, clear and set new order, no override childNodes
               nodes = group.nodes = sortChildNodes({ childNodes: group.nodes, sortingDesc: this.sortingDesc });
@@ -2818,8 +2820,6 @@
     */
     emit_childNodesModified: function(delta){
       events.childNodesModified.call(this, delta);
-
-      this.nullGroup.nextSibling = this.firstChild;
 
       var array;
       if (array = delta.inserted)
