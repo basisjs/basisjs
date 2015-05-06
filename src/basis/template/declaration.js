@@ -695,7 +695,7 @@ var makeDeclaration = (function(){
                 /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
                 /** @cut */   addTemplateWarn(template, options, '<b:define> for `' + elAttrs.name + '` has already defined', token.loc);
 
-                if ('name' in elAttrs && 'type' in elAttrs && !template.defines[elAttrs.name])
+                if ('name' in elAttrs && 'type' in elAttrs && !hasOwnProperty.call(template.defines, elAttrs.name))
                 {
                   var bindingName = elAttrs.from || elAttrs.name;
                   var defineName = elAttrs.name;
@@ -1273,10 +1273,10 @@ var makeDeclaration = (function(){
               var bindNameParts = bind[1].split(':');
               var bindName = bindNameParts.pop();
               var bindPrefix = bindNameParts.pop() || '';
-              var define = template.defines[bindName];
 
-              if (define)
+              if (hasOwnProperty.call(template.defines, bindName))
               {
+                var define = template.defines[bindName];
                 bind[1] = (bindPrefix ? bindPrefix + ':' : '') + define[0];
                 bind.push.apply(bind, define.slice(1)); // add define
 

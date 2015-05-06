@@ -20,6 +20,19 @@ module.exports = {
 
             assert(template.decl_.warns.length === 3);
           }
+        },
+        {
+          name: 'should work well with buildin names',
+          test: function(){
+            var template = createTemplate('<span class="{toString}"/>', true);
+            assert(template.decl_.warns.length === 1);
+
+            var template = createTemplate('<b:define name="toString" type="bool"/>', true);
+            assert(template.decl_.warns.length === 1);
+
+            var template = createTemplate('<b:define name="toString" type="bool"/><span class="{toString}"/>', true);
+            assert(template.decl_.warns === false);
+          }
         }
       ]
     },

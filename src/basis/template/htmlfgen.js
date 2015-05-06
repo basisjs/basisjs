@@ -3,6 +3,7 @@
   * @namespace basis.template.htmlfgen
   */
 
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
   var consts = require('basis.template.const');
 
   var TYPE_ELEMENT = consts.TYPE_ELEMENT;
@@ -452,7 +453,7 @@
         if (anim)
           bindName = namePart[1];
 
-        bindCode = bindMap[bindName];
+        bindCode = hasOwnProperty.call(bindMap, bindName) ? bindMap[bindName] : null;
         bindVar = '_' + (bindVarSeed++);
         varName = '__' + bindName;
 
