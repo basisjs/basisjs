@@ -2286,6 +2286,9 @@
         }
 
         this.emit_groupingChanged(oldGrouping);
+
+        if (oldGrouping && !alive)
+          oldGrouping.destroy();
       }
     },
 

@@ -236,6 +236,33 @@ module.exports = {
           }
         },
         {
+          name: 'changing grouping with no alive flag should destroy old grouping',
+          test: function(){
+            var groupingDestroyed = false;
+            var node = new Node({
+              grouping: {
+                handler: {
+                  destroy: function(){
+                    groupingDestroyed = true;
+                  }
+                }
+              }
+            });
+            var grouping = node.grouping;
+
+            assert(checkNode(node) === false);
+            assert(checkNode(grouping) === false);
+            assert(basis.Class.isClass(node.groupingClass));
+            assert(grouping instanceof node.groupingClass);
+            assert(grouping.owner === node);
+
+            node.setGrouping();
+            assert(checkNode(node) === false);
+            assert(node.grouping === null);
+            assert(groupingDestroyed === true);
+          }
+        },
+        {
           name: 'set grouping and clear childNodes',
           test: function(){
             var node = new Node({
@@ -722,7 +749,7 @@ module.exports = {
             this.is(10, node.childNodes.length);
             this.is(10, grouping.nullGroup.nodes.length);
 
-            node.setGrouping();
+            node.setGrouping(null, true);
             this.is(false, checkNode(node));
             this.is(false, checkNode(grouping));
             this.is(10, node.childNodes.length);
