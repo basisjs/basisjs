@@ -557,7 +557,6 @@ function tokenize(source, options){
       case CLOSE_TAG:
         if (m[1] !== (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name)
         {
-          //throw 'Wrong close tag';
           lastTag.children.push({
             type: TYPE_TEXT,
             value: '</' + m[0],
@@ -566,6 +565,7 @@ function tokenize(source, options){
               end_: startPos + m[0].length
             }
           });
+          /** @cut */ result.warns.push(['Wrong close tag: ' + source.substr(startPos - 2, m[0].length + 2), lastTag.children[lastTag.children.length - 1]]);
         }
         else
           lastTag = tagStack.pop();

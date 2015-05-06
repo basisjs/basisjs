@@ -1027,7 +1027,7 @@ var makeDeclaration = (function(){
                             break;
 
                           default:
-                            /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag <b:' + child.name + '>', child.loc);
+                            /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + child.name + '>', child.loc);
                         }
                       }
                       else
@@ -1054,6 +1054,9 @@ var makeDeclaration = (function(){
                 }
 
               break;
+
+              default:
+                /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + token.name + '>', token.loc);
             }
 
             // don't add to declaration
