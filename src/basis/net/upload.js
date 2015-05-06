@@ -54,7 +54,7 @@
   */
   var FileUploader;
 
-  if (false && fileAPISupport() && formDataSupport()) // XMLHttpRequest2
+  if (fileAPISupport() && formDataSupport()) // XMLHttpRequest2
   {
     var REQUEST_PROGRESS_HANDLER = function(event){
       if (event.lengthComputable)
