@@ -38,7 +38,7 @@ module.exports = {
                 );
 
                 assert(text(template) === text('<span></span>'));
-                assert(template.decl_.warns.length === 1);
+                assert(template.decl_.warns.length === 2);
               }
             },
             {

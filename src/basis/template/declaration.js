@@ -688,7 +688,7 @@ var makeDeclaration = (function(){
               break;
 
               case 'define':
-                /** @cut */ if ('name' in elAttrs == false || 'type' in elAttrs == false)
+                /** @cut */ if ('name' in elAttrs == false)
                 /** @cut */   addTemplateWarn(template, options, '<b:define> has no `name` attribute', token.loc);
                 /** @cut */ if ('type' in elAttrs == false)
                 /** @cut */   addTemplateWarn(template, options, '<b:define> has no `type` attribute', token.loc);
