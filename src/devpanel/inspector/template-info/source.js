@@ -48,7 +48,7 @@ var buildHtml = function(tokens, parent, colorMap){
   }
 
   function escapeHtml(str){
-    return String(str)
+    return String(str || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;');
   }
