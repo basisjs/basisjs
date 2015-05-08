@@ -358,8 +358,25 @@ var makeDeclaration = (function(){
             return ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] || token[ATTR_NAME];
           }, ELEMENT_ATTRIBUTES_AND_CHILDREN);
 
-          if (!itAttrToken && action != 'remove' && action != 'remove-class')
+          // if set operation and attribute exists than remove it first
+          if (itAttrToken && action == 'set')
           {
+            /** @cut */ template.removals.push({
+            /** @cut */   reason: '<b:' + token.name + '>',
+            /** @cut */   removeToken: token,
+            /** @cut */   token: itAttrToken
+            /** @cut */ });
+
+            arrayRemove(itAttrs, itAttrToken);
+            itAttrToken = null;
+          }
+
+          // if set/append operation and no attribute exists than create new one
+          if (!itAttrToken && (action == 'set' || action == 'append'))
+          {
+            // if attribute isn't exist, it's always `set` operation
+            action = 'set';
+
             if (isEvent)
             {
               itAttrToken = [
@@ -406,12 +423,6 @@ var makeDeclaration = (function(){
 
               // other attributes
               var valueAttr = attrs_.value || {};
-
-              /** @cut */ template.removals.push({
-              /** @cut */   reason: '<b:' + token.name + '>',
-              /** @cut */   removeToken: token,
-              /** @cut */   token: basis.array.from(itAttrToken)
-              /** @cut */ });
 
               itAttrToken[TOKEN_BINDINGS] = valueAttr.binding || 0;
               /** @cut */ itAttrToken.valueLocMap = valueLocMap;

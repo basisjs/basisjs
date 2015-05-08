@@ -53,8 +53,8 @@ var buildHtml = function(tokens, parent, colorMap){
       .replace(/</g, '&lt;');
   }
 
-  function markSource(token, str){
-    var loc = token.loc && token.loc.replace(/:\d+:\d+$/, '');
+  function markSource(loc, str){
+    loc = loc ? loc.replace(/:\d+:\d+$/, '') : null;
     var color = loc != null ? colorMap.get(loc) : 'white';
 
     return color
@@ -73,8 +73,13 @@ var buildHtml = function(tokens, parent, colorMap){
       switch (name)
       {
         case 'class':
+          if (value && token.valueLocMap)
+            value = value.split(/(\s+)/).map(function(name){
+              return /^\S/.test(name) ? markSource(token.valueLocMap[name], name) : name;
+            }).join('');
+
           value = (value ? value + ' ' : '') + bindings.map(function(b){
-            return markSource(b, b[0] + '<span class="refs">{' + b[1] + '}</span>');
+            return markSource(b.loc, b[0] + '<span class="refs">{' + b[1] + '}</span>');
           }).join(' ');
           break;
 
@@ -96,7 +101,7 @@ var buildHtml = function(tokens, parent, colorMap){
   }
 
   function addToResult(array, token, value){
-    array.push(markSource(token, value));
+    array.push(markSource(token.loc, value));
   }
 
   if (!colorMap)
