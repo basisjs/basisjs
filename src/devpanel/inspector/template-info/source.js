@@ -98,7 +98,7 @@ var buildHtml = function(tokens, parent, colorMap){
           break;
 
         case 'style':
-          value = (value ? value + '; ' : '') + bindings.map(function(b){
+          value = (value ? value + ' ' : '') + bindings.map(function(b){
             return b[2] + ': ' + expression(b);
           }).join('; ');
           break;

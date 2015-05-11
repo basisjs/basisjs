@@ -29,7 +29,7 @@ var CLASS_ATTR_BINDING = /^((?:[a-z_][a-z0-9_\-]*)?(?::(?:[a-z_][a-z0-9_\-]*)?)?
 var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
 var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
 var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
-var ATRRIBUTE_MODE = /^(?:|append-|set-|remove-)(class|attr)$/;
+var ATTRIBUTE_MODE = /^(?:|append-|set-|remove-)(class|attr)$/;
 
 
 /**
@@ -299,43 +299,21 @@ function postProcessing(tokens, options, source){
         var attrs = getTokenAttrs(token);
         for (var j = 0, attr; attr = token.attrs[j++];)
         {
-          var mode;
+          var mode = attr.name;
 
-          if (token.prefix == 'b')
+          // special case modification instruction in <b:include>
+          if (token.prefix == 'b' && attr.name == 'value')
           {
-            // process specified attributes in special tags
-            if (attr.name == 'value')
-            {
-              // parse value attribute in
-              //   <b:class>/<b:append-class>/<b:set-class>/<b:remove-class>
-              //   <b:attr name="name">/<b:append-attr name="name">/<b:set-attr name="name">/<b:remove-attr name="name">
-              var m = token.name.match(ATRRIBUTE_MODE);
-              if (m)
-                mode = m[1] == 'class' ? 'class' : attrs.name;
-            }
-            else if (token.name == 'include')
-            {
-              // parse class and id attributes in <b:include>
-              if (attr.name == 'class' || attr.name == 'id')
-                mode = attr.name;
-            }
-          }
-          else
-          {
-            // process every attributes in standart tags
-            mode = attr.name;
+            // parse value attribute in
+            //   <b:class>/<b:append-class>/<b:set-class>/<b:remove-class>
+            //   <b:attr name="name">/<b:append-attr name="name">/<b:set-attr name="name">/<b:remove-attr name="name">
+            var m = token.name.match(ATTRIBUTE_MODE);
+            if (m)
+              mode = m[1] == 'class' ? 'class' : attrs.name;
           }
 
-          if (mode)
-          {
-            // process bindings and decode HTML tokens
-            processAttr(attr, mode, convertRange);
-          }
-          else
-          {
-            // just decode HTML tokens in attribute value
-            attr.value = decodeHTMLTokens(attr.value || '');
-          }
+          // process bindings and decode HTML tokens
+          processAttr(attr, mode, convertRange);
 
           convertRange(attr);
         }

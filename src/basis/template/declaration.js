@@ -165,7 +165,7 @@ var makeDeclaration = (function(){
   /** @cut */ }
 
   /** @cut */ function applyTokenLocation(template, options, dest, source){
-  /** @cut */   if (options.loc && source.loc && !dest.loc)
+  /** @cut */   if (options.loc && source && source.loc && !dest.loc)
   /** @cut */     dest.loc = getLocation(template, source.loc);
   /** @cut */ }
 
@@ -209,43 +209,87 @@ var makeDeclaration = (function(){
       return result;
     }
 
-    function attrs(token, declToken){
-      function setStylePropertyBinding(attr, property, byDefault, defaultValue){
-        if (!styleAttr)
-        {
-          styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
-          //styleAttr.loc = getLocation(template, attr.loc);
-          /** @cut */ addTokenLocation(styleAttr, attr);
-          result.push(styleAttr);
-        }
-
-        var binding = attr.binding;
-        var addDefault = false;
-        var show = attr.name == byDefault;
-
-        if (!binding || binding[0].length != binding[1].length)
-        {
-          // expression has non-binding parts, treat as constant
-          // visible when:
-          //   show & value is not empty
-          //   or
-          //   hide & value is empty
-          addDefault = !(show ^ attr.value === '');
-        }
+    function getAttrByName(token, name){
+      var offset = typeof token[0] == 'number' ? ELEMENT_ATTRIBUTES_AND_CHILDREN : 0;
+      for (var i = offset, attr, attrName; attr = token[i]; i++)
+      {
+        if (attr[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
+          attrName = 'event-' + attr[1];
         else
-        {
-          addDefault = show;
+          attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
 
-          if (!styleAttr[1])
-            styleAttr[1] = [];
+        if (attrName == name)
+          return attr;
+      }
+    }
 
-          styleAttr[1].push(binding.concat(property, attr.name));
-        }
+    function getStyleBindingProperty(attr, name){
+      var bindings = attr[TOKEN_BINDINGS];
 
-        if (addDefault)
-          styleAttr[3] = (styleAttr[3] ? styleAttr[3] + '; ' : '') + defaultValue;
+      if (bindings)
+        for (var i = 0, binding; binding = bindings[i]; i++)
+          if (binding[2] == name)
+            return binding;
+    }
+
+    function setStylePropertyBinding(host, attr, property, showByDefault, defaultValue){
+      var styleAttr = getAttrByName(host, 'style');
+
+      if (!styleAttr)
+      {
+        styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
+        /** @cut */ addTokenLocation(styleAttr, attr);
+        host.push(styleAttr);
       }
 
+      var binding = attr.binding;
+      var addDefault = false;
+      var show = attr.name == showByDefault;
+      var value = styleAttr[3];
+
+      if (!binding || binding[0].length != binding[1].length)
+      {
+        // expression has non-binding parts, treat as constant
+        // visible when:
+        //   show & value is not empty
+        //   or
+        //   hide & value is empty
+        addDefault = !(show ^ attr.value === '');
+      }
+      else
+      {
+        var bindings = styleAttr[TOKEN_BINDINGS];
+        binding = binding.concat(property, attr.name);
+
+        addDefault = show;
+
+        if (bindings)
+        {
+          arrayRemove(bindings, getStyleBindingProperty(styleAttr, property));
+          bindings.push(binding);
+        }
+        else
+          styleAttr[TOKEN_BINDINGS] = [binding];
+      }
+
+      if (value)
+        value = value.replace(new RegExp(property + '\\s*:\\s*[^;]+(;|$)'), '');
+
+      if (addDefault)
+        value = (value ? value + ' ' : '') + defaultValue;
+
+      styleAttr[3] = value;
+    }
+
+    function applyShowHideAttribute(host, attr){
+      if (attr.name == 'show' || attr.name == 'hide')
+        setStylePropertyBinding(host, attr, 'display', 'show', 'display: none;');
+
+      if (attr.name == 'visible' || attr.name == 'hidden')
+        setStylePropertyBinding(host, attr, 'visibility', 'visible', 'visibility: hidden;');
+    }
+
+    function processAttrs(token, declToken){
       var result = [];
       var styleAttr;
       var displayAttr;
@@ -314,10 +358,9 @@ var makeDeclaration = (function(){
       }
 
       if (displayAttr)
-        setStylePropertyBinding(displayAttr, 'display', 'show', 'display: none');
-
+        applyShowHideAttribute(result, displayAttr);
       if (visibilityAttr)
-        setStylePropertyBinding(visibilityAttr, 'visibility', 'visible', 'visibility: hidden');
+        applyShowHideAttribute(result, visibilityAttr);
 
       return result.length ? result : 0;
     }
@@ -331,7 +374,7 @@ var makeDeclaration = (function(){
 
       if (!attrs.name)
       {
-        /** @cut */ addTemplateWarn(template, options, 'Instruction <b:' + token.name + '> has no attribute name', token.loc);
+        /** @cut */ addTemplateWarn(template, options, 'Instruction <b:' + token.name + '> has no `name` attribute', token.loc);
         return;
       }
 
@@ -352,12 +395,7 @@ var makeDeclaration = (function(){
           var itType = isEvent ? TYPE_ATTRIBUTE_EVENT : ATTR_TYPE_BY_NAME[attrs.name] || TYPE_ATTRIBUTE;
           var valueIdx = ATTR_VALUE_INDEX[itType] || ATTR_VALUE;
           /** @cut */ var valueLocMap = getAttributeValueLocationMap(attrs_.value);
-          var itAttrToken = itAttrs && arraySearch(itAttrs, attrs.name, function(token){
-            if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
-              return 'event-' + token[1];
-
-            return ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] || token[ATTR_NAME];
-          }, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+          var itAttrToken = itAttrs && getAttrByName(itAttrs, attrs.name);
 
           // if set operation and attribute exists than remove it first
           if (itAttrToken && action == 'set')
@@ -459,16 +497,11 @@ var makeDeclaration = (function(){
                     switch (attrs.name)
                     {
                       case 'style':
-                        var currentBindingMap = {};
-
-                        for (var i = 0, oldBinding; oldBinding = attrBindings[i]; i++)
-                          currentBindingMap[oldBinding[2]] = i;
-
                         for (var i = 0, newBinding; newBinding = appendBinding[i]; i++)
-                          if (newBinding[2] in currentBindingMap)
-                            attrBindings[currentBindingMap[newBinding[2]]] = newBinding;
-                          else
-                            attrBindings.push(newBinding);
+                        {
+                          arrayRemove(attrBindings, getStyleBindingProperty(itAttrToken, newBinding[2]));
+                          attrBindings.push(newBinding);
+                        }
 
                         break;
 
@@ -848,45 +881,61 @@ var makeDeclaration = (function(){
                       /** @cut */   });
                     }
 
-                    // <b:include class=".."> -> <b:append-class value="..">
-                    if (elAttrs_['class'])
-                      instructions.unshift({
-                        type: TYPE_ELEMENT,
-                        prefix: 'b',
-                        name: 'append-class',
-                        attrs: [
-                          basis.object.extend(basis.object.slice(elAttrs_['class']), {
-                            name: 'value'
-                          })
-                        ]
-                      });
+                    for (var includeAttrName in elAttrs_)
+                      switch (includeAttrName)
+                      {
+                        case 'class':
+                          // <b:include class=".."> -> <b:append-class value="..">
+                          instructions.unshift({
+                            type: TYPE_ELEMENT,
+                            prefix: 'b',
+                            name: 'append-class',
+                            attrs: [
+                              basis.object.complete({
+                                name: 'value'
+                              }, elAttrs_['class'])
+                            ]
+                          });
+                          break;
 
-                    // <b:include id=".."> -> <b:set-attr name="id" value="..">
-                    if (elAttrs.id)
-                      instructions.unshift({
-                        type: TYPE_ELEMENT,
-                        prefix: 'b',
-                        name: 'set-attr',
-                        attrs: [
-                          {
-                            type: TYPE_ATTRIBUTE,
-                            name: 'name',
-                            value: 'id'
-                          },
-                          {
-                            type: TYPE_ATTRIBUTE,
-                            name: 'value',
-                            value: elAttrs.id
-                          }
-                        ]
-                      });
+                        case 'id':
+                          // <b:include id=".."> -> <b:set-attr name="id" value="..">
+                          instructions.unshift({
+                            type: TYPE_ELEMENT,
+                            prefix: 'b',
+                            name: 'set-attr',
+                            attrs: [
+                              {
+                                type: TYPE_ATTRIBUTE,
+                                name: 'name',
+                                value: 'id'
+                              },
+                              basis.object.complete({
+                                name: 'value'
+                              }, elAttrs_.id)
+                            ]
+                          });
+                          break;
 
-                    // <b:include ref=".."> -> <b:add-ref name="id" value="..">
-                    if (elAttrs.ref)
-                      if (tokenRefMap.element)
-                        elAttrs.ref.trim().split(/\s+/).map(function(refName){
-                          addTokenRef(tokenRefMap.element.token, refName);
-                        });
+                        case 'ref':
+                          // <b:include ref="..">
+                          if (tokenRefMap.element)
+                            elAttrs.ref.trim().split(/\s+/).map(function(refName){
+                              addTokenRef(tokenRefMap.element.token, refName);
+                            });
+                          break;
+
+                        case 'show':
+                        case 'hide':
+                        case 'visible':
+                        case 'hidden':
+                          var tokenRef = tokenRefMap.element;
+                          var token = tokenRef && tokenRef.token;
+
+                          if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
+                            applyShowHideAttribute(token, elAttrs_[includeAttrName]);
+                          break;
+                      }
 
                     for (var j = 0, child; child = instructions[j]; j++)
                     {
@@ -983,6 +1032,32 @@ var makeDeclaration = (function(){
                               else
                                 token.push.apply(token, children);
                             }
+                            break;
+
+                          case 'show':
+                          case 'hide':
+                          case 'visible':
+                          case 'hidden':
+                            var childAttrs = tokenAttrs(child);
+                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                            var tokenRef = ref && tokenRefMap[ref];
+                            var token = tokenRef && tokenRef.token;
+
+                            if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
+                            {
+                              var expr = tokenAttrs_(child).expr;
+
+                              if (!expr)
+                              {
+                                /** @cut */ addTemplateWarn(template, options, 'Instruction <b:' + child.name + '> has no `expr` attribute', child.loc);
+                                break;
+                              }
+
+                              applyShowHideAttribute(token, basis.object.complete({
+                                name: child.name,
+                              }, tokenAttrs_(child).expr));
+                            }
+
                             break;
 
                           case 'attr':
@@ -1101,7 +1176,7 @@ var makeDeclaration = (function(){
             refs,                    // TOKEN_REFS = 2
             getTokenName(token)      // ELEMENT_NAME = 3
           ];
-          item.push.apply(item, attrs(token, item, options.optimizeSize) || []);
+          item.push.apply(item, processAttrs(token, item, options.optimizeSize) || []);
           item.push.apply(item, process(token.children, template, options) || []);
 
           /** @cut */ addTokenLocation(item, token);
