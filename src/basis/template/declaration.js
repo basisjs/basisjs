@@ -307,6 +307,7 @@ var makeDeclaration = (function(){
         }
 
         /** @cut */ item.valueLocMap = getAttributeValueLocationMap(attr);
+        /** @cut */ item.sourceToken = attr;
         /** @cut */ addTokenLocation(item, attr);
 
         result.push(item);
@@ -321,7 +322,7 @@ var makeDeclaration = (function(){
       return result.length ? result : 0;
     }
 
-    function modifyAttr(token, name, action){
+    function modifyAttr(include, token, name, action){
       var attrs = tokenAttrs(token);
       var attrs_ = tokenAttrs_(token);
 
@@ -364,6 +365,7 @@ var makeDeclaration = (function(){
             /** @cut */ template.removals.push({
             /** @cut */   reason: '<b:' + token.name + '>',
             /** @cut */   removeToken: token,
+            /** @cut */   includeToken: include,
             /** @cut */   token: itAttrToken
             /** @cut */ });
 
@@ -604,6 +606,7 @@ var makeDeclaration = (function(){
                 /** @cut */   template.removals.push({
                 /** @cut */     reason: '<b:' + token.name + '>',
                 /** @cut */     removeToken: token,
+                /** @cut */     includeToken: include,
                 /** @cut */     token: [
                 /** @cut */       TYPE_ATTRIBUTE_CLASS,
                 /** @cut */       removedBindings,
@@ -622,6 +625,7 @@ var makeDeclaration = (function(){
                 /** @cut */ template.removals.push({
                 /** @cut */   reason: '<b:' + token.name + '>',
                 /** @cut */   removeToken: token,
+                /** @cut */   includeToken: include,
                 /** @cut */   token: itAttrToken
                 /** @cut */ });
               }
@@ -675,6 +679,7 @@ var makeDeclaration = (function(){
                   {
                     if (src in styleNamespaceIsolate == false)
                       styleNamespaceIsolate[src] = genIsolateMarker();
+
                     template.styleNSPrefix[styleNamespace] = {
                       /** @cut */ loc: getLocation(template, elAttrs_[namespaceAttrName].loc),
                       name: styleNamespace,
@@ -683,6 +688,11 @@ var makeDeclaration = (function(){
                     };
                   }
                 }
+                /** @cut */ else
+                /** @cut */ {
+                /** @cut */   token.sourceUrl = template.sourceUrl;
+                /** @cut */   template.resources.push([null, styleIsolate, token, null, elAttrs.src ? false : token.children[0] || true, styleNamespace]);
+                /** @cut */ }
               break;
 
               case 'isolate':
@@ -797,7 +807,11 @@ var makeDeclaration = (function(){
                     var decl = getDeclFromSource(resource, '', true, declarationOptions);
 
                     arrayAdd(template.deps, resource);
-                    template.includes.push([elAttrs_.src, resource, decl.includes]);
+                    template.includes.push({
+                      token: token,
+                      resource: resource,
+                      nested: decl.includes
+                    });
 
                     if (decl.deps)
                       addUnique(template.deps, decl.deps);
@@ -904,6 +918,7 @@ var makeDeclaration = (function(){
                               {
                                 if (src in styleNamespaceIsolate == false)
                                   styleNamespaceIsolate[src] = genIsolateMarker();
+
                                 template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
                                   /** @cut */ loc: getLocation(template, childAttrs_[namespaceAttrName].loc),
                                   name: styleNamespace,
@@ -912,6 +927,11 @@ var makeDeclaration = (function(){
                                 };
                               }
                             }
+                            /** @cut */ else
+                            /** @cut */ {
+                            /** @cut */   child.sourceUrl = template.sourceUrl;
+                            /** @cut */   template.resources.push([null, styleIsolate, child, token, childAttrs.src ? false : child.children[0] || true, styleNamespace]);
+                            /** @cut */ }
                             break;
 
                           case 'replace':
@@ -940,6 +960,7 @@ var makeDeclaration = (function(){
                                 /** @cut */   template.removals.push({
                                 /** @cut */     reason: '<b:' + child.name + '>',
                                 /** @cut */     removeToken: child,
+                                /** @cut */     includeToken: token,
                                 /** @cut */     token: tokenRef.token
                                 /** @cut */   });
                               }
@@ -966,24 +987,24 @@ var makeDeclaration = (function(){
 
                           case 'attr':
                           case 'set-attr':
-                            modifyAttr(child, false, 'set');
+                            modifyAttr(token, child, false, 'set');
                             break;
 
                           case 'append-attr':
-                            modifyAttr(child, false, 'append');
+                            modifyAttr(token, child, false, 'append');
                             break;
 
                           case 'remove-attr':
-                            modifyAttr(child, false, 'remove');
+                            modifyAttr(token, child, false, 'remove');
                             break;
 
                           case 'class':
                           case 'append-class':
-                            modifyAttr(child, 'class', 'append');
+                            modifyAttr(token, child, 'class', 'append');
                             break;
 
                           case 'set-class':
-                            modifyAttr(child, 'class', 'set');
+                            modifyAttr(token, child, 'class', 'set');
                             break;
 
                           case 'remove-class':
@@ -1014,7 +1035,7 @@ var makeDeclaration = (function(){
                                 });
                             }
 
-                            modifyAttr(child, 'class', 'remove-class');
+                            modifyAttr(token, child, 'class', 'remove-class');
                             break;
 
                           case 'add-ref':
@@ -1084,6 +1105,7 @@ var makeDeclaration = (function(){
           item.push.apply(item, process(token.children, template, options) || []);
 
           /** @cut */ addTokenLocation(item, token);
+          /** @cut */ item.sourceToken = token;
 
           break;
 
@@ -1102,6 +1124,7 @@ var makeDeclaration = (function(){
             item.push(token.value);
 
           /** @cut */ addTokenLocation(item, token);
+          /** @cut */ item.sourceToken = token;
 
           break;
 
@@ -1121,6 +1144,7 @@ var makeDeclaration = (function(){
               item.push(token.value);
 
           /** @cut */ addTokenLocation(item, token);
+          /** @cut */ item.sourceToken = token;
 
           break;
       }
@@ -1533,7 +1557,7 @@ var makeDeclaration = (function(){
       result.resources = result.resources
         // remove duplicates
         .filter(function(item, idx, array){
-          return !basis.array.search(array, styleHash(item), styleHash, idx + 1);
+          return item[0] && !basis.array.search(array, styleHash(item), styleHash, idx + 1);
         })
         .map(function(item){
           var url = item[0];
@@ -1589,9 +1613,10 @@ var makeDeclaration = (function(){
 
       // process styles list
       /** @cut */ result.styles = styles.map(function(item, idx){
+      /** @cut */   var sourceUrl = item[0] || tokenAttrs(item[2]).src;
       /** @cut */   return {
       /** @cut */     resource: item.url || false,
-      /** @cut */     from: item[0] === result.resources[idx] ? null : item[0],
+      /** @cut */     sourceUrl: basis.resource.resolveURI(sourceUrl),
       /** @cut */     isolate: item[1] === styleNamespaceIsolate ? styleNamespaceIsolate[item[0]] : item[1] || false,
       /** @cut */     namespace: item[5] || false,
       /** @cut */     inline: item[4],
