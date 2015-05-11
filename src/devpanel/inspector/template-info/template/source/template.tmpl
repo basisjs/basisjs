@@ -4,9 +4,9 @@
 <b:define name="hasUrl" from="url" type="bool"/>
 
 <div class="template">
-  <div class="code">
+  <div class="code" event-click="stop-propagation">
     <div class="code-title code-title__{hasUrl}" event-click="openFile">{caption}</div>
-    <span{content} style="background: {color}"/>
+    <span{content}/>
   </div>
   <div{childNodesElement} class="nested"/>
 </div>

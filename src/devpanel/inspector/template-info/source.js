@@ -40,6 +40,20 @@ var ColorMap = basis.Class.create({}, {
   }
 });
 
+function getTokenName(token){
+  return (token.prefix ? token.prefix + ':' : '') + token.name;
+}
+
+function getTokenAttrs(token){
+  var result = {};
+
+  if (token.attrs)
+    for (var i = 0, attr; attr = token.attrs[i]; i++)
+      result[getTokenName(attr)] = attr;
+
+  return result;
+}
+
 var buildHtml = function(tokens, parent, colorMap){
   function expression(binding){
     return binding[1].map(function(sb){
@@ -213,23 +227,33 @@ var view = new Node({
         }
       },
       content: function(node){
+        function wrap(color, str){
+          if (!str)
+            return '';
+
+          str = str.replace(/</g, '&lt;');
+
+          return color
+            ? '<span style="background: ' + color + '">' + str + '</span>'
+            : str;
+        }
+
         var content = node.data.content;
-        var ranges = node.data.includeTokens;
+        var ranges = node.data.ranges;
+        var color = node.data.color;
         var offset = 0;
         var res = '';
 
         for (var i = 0, range; range = ranges[i]; i++)
         {
-          var orig = content;
+          res +=
+            wrap(color, content.substring(offset, range[0])) +
+            wrap(range[2], content.substring(range[0], range[1]));
 
-          res += orig.substring(0, range[0] - offset).replace(/</g, '&lt;') +
-            '<span style="background: ' + (range[2] || 'white') + '">' + content.substring(range[0] - offset, range[1] - offset).replace(/</g, '&lt;') + '</span>';
-
-          content = content.substring(range[1] - offset);
           offset = range[1];
         }
 
-        return res + content.replace(/</g, '&lt;');
+        return res + wrap(color, content.substring(offset));
       },
       color: 'data:'
     },
@@ -252,31 +276,50 @@ declToken.attach(function(decl){
       return dep.url;
     })).filter(Boolean));
     var bb = buildHtml(decl.tokens, false, colorMap);
-    var root = [
-      null,
-      basis.object.extend(new basis.Token(decl.tokens.source_), {
+    var root = {
+      token: null,
+      src: null,
+      resource: basis.object.extend(new basis.Token(decl.tokens.source_), {
         url: decl.sourceUrl || ''
       }),
-      decl.includes
-    ];
+      nested: decl.includes
+    };
 
     code = bb.children.join('\n');
     children = [root].map(function processInclude(inc){
-      var res = inc[1];
+      var resource = inc.resource;
       return {
         data: {
-          url: res.url,
-          content: res.bindingBridge ? res.bindingBridge.get(res) : res,
-          color: this.colorMap.get(res.url || '', 'red'),
-          includeTokens: inc[2].map(function(inc){
-            return [
-              inc[0].valueRange[0],
-              inc[0].valueRange[1],
-              this.colorMap.get(inc[1].url || inc[1])
-            ];
-          }, this)
+          url: resource.url,
+          content: resource.bindingBridge ? resource.bindingBridge.get(resource) : resource,
+          color: this.colorMap.get(resource.url || '', 'red'),
+          ranges: []
+            .concat(
+              decl.styles.filter(function(style){
+                return style.includeToken === inc.token && !style.resource && !style.namespace;
+              }).map(function(style){
+                return style.styleToken.range;
+              })
+            )
+            .concat(
+              decl.removals.filter(function(removal){
+                return removal.includeToken === inc.token && removal.token.sourceToken;
+              }).map(function(removal){
+                return removal.token.sourceToken.range;
+              })
+            )
+            .concat(
+              inc.nested.map(function(item){
+                return getTokenAttrs(item.token).src.valueRange.concat(
+                  this.colorMap.get(item.resource.url || item.resource)
+                );
+              }, this)
+            )
+            .sort(function(a, b){
+              return a[0] - b[0];
+            })
         },
-        childNodes: inc[2].map(processInclude, this)
+        childNodes: inc.nested.map(processInclude, this)
       };
     }, bb);
   }
