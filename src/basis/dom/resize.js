@@ -47,15 +47,16 @@
       };
 
       var init = function(){
+        if (getComputedStyle(element, 'position') == 'static')
+          element.style.position = 'relative';
+
         var document = sensor.contentDocument;
         var win = document.defaultView || document.parentWindow;
         win.onresize = handler;
         win.document.body.onresize = handler;
+
         handler();
       };
-
-      if (getComputedStyle(element, 'position') == 'static')
-        element.style.position = 'relative';
 
       // using <object> version
       // looks the same, but has issues in old IE
