@@ -640,6 +640,28 @@ module.exports = {
       }
     },
     {
+      name: 'dataSource should has actual value when all old dataset items are removed',
+      test: function(){
+        var dataset = new Dataset({
+          items: basis.data.wrap(basis.array.create(3), true)
+        });
+        var node = new Node({
+          dataSource: dataset,
+          childFactory: nodeFactory,
+          handler: {
+            childNodesModified: function(){
+              assert(this.dataSource === dataset);
+            }
+          }
+        });
+
+        assert(node.dataSource === dataset);
+
+        dataset.clear();
+        assert(node.dataSource === dataset);
+      }
+    },
+    {
       name: 'destroyDataSourceMember',
       test: [
         {

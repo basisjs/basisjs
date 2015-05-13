@@ -1424,10 +1424,8 @@
             unlockDataSourceItemNode(child);
 
           // optimization: if all old nodes deleted -> clear childNodes
-          var tmp = this.dataSource;
-          this.dataSource = null;
+          this.dataSourceMap_ = null; // prevents exception on clear
           this.clear(true);   // keep alive, event fires
-          this.dataSource = tmp;
           this.dataSourceMap_ = {};
         }
         else
@@ -2049,7 +2047,8 @@
     */
     clear: function(alive){
       // clear possible only if dataSource is empty
-      if (this.dataSource && this.dataSource.itemCount)
+      // NOTE: when this.dataSourceMap_ is falsy than fast child nodes replacement case
+      if (this.dataSource && this.dataSourceMap_ && this.dataSource.itemCount)
         throw EXCEPTION_DATASOURCE_CONFLICT;
 
       // if node haven't childs nothing to do (event don't fire)
