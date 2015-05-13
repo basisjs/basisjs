@@ -332,7 +332,7 @@
     node.setAttribute(name, value);
   }
 
-  var buildHtml = function(tokens, parent){
+  var buildDOM = function(tokens, parent){
     var result = parent || document.createDocumentFragment();
     var offset = parent ? ELEMENT_ATTRIBUTES_AND_CHILDREN : 0;
 
@@ -349,7 +349,7 @@
             : document.createElement(tagName);
 
           // precess for children and attributes
-          buildHtml(token, element);
+          buildDOM(token, element);
 
           // add to result
           result.appendChild(element);
@@ -894,23 +894,51 @@
 
     return function(tokens){
       var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG, basisTemplateIdMarker);
+      var hasL10n = fn.createL10nSync;
       var createInstance;
+      var l10nProtoSync;
       var instances = {};
       var l10nMap = {};
       var l10nLinks = [];
       var l10nMarkupTokens = [];
       var seed = 0;
-      var proto = buildHtml(tokens);
       var id = this.templateId;
+      var proto;
 
       templates[id] = {
         template: this,
         instances: instances
       };
 
-      if (fn.createL10nSync)
+      var createDOM = function(){
+        // if (seed < 2)
+        //   return buildDOM(tokens);
+
+        if (!proto)
+        {
+          proto = buildDOM(tokens);
+          if (hasL10n)
+          {
+            l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
+            for (var i = 0, l10nToken; l10nToken = l10nLinks[i]; i++)
+              if (l10nToken.isMarkup)
+              {
+                l10nMap[l10nToken.path] = null;
+                l10nProtoSync(l10nToken.path, null);
+              }
+              else
+              {
+                l10nMap[l10nToken.path] = l10nToken.token.value == null ? '{' + l10nToken.token.path + '}' : l10nToken.token.value;
+                l10nProtoSync(l10nToken.path, l10nMap[l10nToken.path]);
+              }
+          }
+        }
+
+        return proto.cloneNode(true);
+      };
+
+      if (hasL10n)
       {
-        var l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
         var linkHandler = function(value){
           var isMarkup = isMarkupToken(this.token);
 
@@ -919,7 +947,10 @@
           else
             basis.array.remove(l10nMarkupTokens, this);
 
-          l10nProtoSync(this.path, isMarkup ? null : value);
+          l10nMap[this.path] = value == null ? '{' + this.path + '}' : value;
+          if (l10nProtoSync)
+            l10nProtoSync(this.path, isMarkup ? null : l10nMap[this.path]);
+
           for (var key in instances)
             instances[key].tmpl.set(this.path, isMarkup ? this.token : value);
         };
@@ -933,33 +964,28 @@
               token: token,
               handler: linkHandler
             };
+
             link.token.attach(link.handler, link);
             l10nLinks.push(link);
 
             if (isMarkupToken(token))
-            {
               l10nMarkupTokens.push(link);
-              l10nProtoSync(key, null);
-            }
-            else
-            {
-              l10nProtoSync(key, token.value);
-            }
 
             link = null;
             token = null;
           }
       }
 
-      createInstance = fn.createInstance(id, instances, proto, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
+      createInstance = fn.createInstance(id, instances, createDOM, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
 
       return {
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
           var instanceId = seed++;
           var instance = createInstance(instanceId, obj, onAction, onRebuild, bindings, bindingInterface);
 
-          for (var i = 0, len = l10nMarkupTokens.length; i < len; i++)
-            instance.tmpl.set(l10nMarkupTokens[i].path, l10nMarkupTokens[i].token);
+          if (hasL10n)
+            for (var i = 0, l10nToken; l10nToken = l10nMarkupTokens[i]; i++)
+              instance.tmpl.set(l10nToken.path, l10nToken.token);
 
           instances[instanceId] = instance;
 
@@ -1071,7 +1097,7 @@
   basis.namespace('basis.template').extend({
     /** @cut using only in dev mode */ getDebugInfoById: getDebugInfoById,
 
-    buildHtml: buildHtml,
+    buildDOM: buildDOM,
 
     resolveTemplateById: resolveTemplateById,
     resolveObjectById: resolveObjectById,

@@ -789,8 +789,6 @@
       for (var key in bindings.l10n)
         code.push(
           'case"' + key + '":' +
-            'if(value==null)value="{' + key + '}";' +
-            'l10n[path]=value;' +
             bindings.l10n[key].join('') +
           'break;'
         );
@@ -809,7 +807,7 @@
       );
     }
 
-    result.createInstance = compileFunction(['tid', 'map', 'proto', 'tools', 'l10n', 'TEXT_BUG'],
+    result.createInstance = compileFunction(['tid', 'map', 'createDOM', 'tools', 'l10n', 'TEXT_BUG'],
       /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
       'var getBindings=tools.createBindingFunction([' +
@@ -823,7 +821,7 @@
         return key + ':null';
       }) + '};' +
       'return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface){' +
-        'var _=proto.cloneNode(true),' +
+        'var _=createDOM(),' +
         paths.path.concat(bindings.vars) + ',' +
         'instance={' +
           'context:obj,' +
