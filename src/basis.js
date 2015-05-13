@@ -565,6 +565,23 @@
   }
 
  /**
+  * Make factory function from getter.
+  * @param {function(value)|string} fn Base for getter.
+  * @return {function(value)} Factory function.
+  */
+  function factory(fn){
+    if (typeof fn != 'function')
+      fn = getter(fn);
+
+    var result = function(value){
+      return fn(value);
+    };
+    result.factory = FACTORY;
+
+    return result;
+  }
+
+ /**
   * Generates name for function and registrates it in global scope.
   * @param {function()} fn Function that should available in global scope.
   * @param {boolean} permanent If false callback will be removed after fiest invoke.
@@ -3756,6 +3773,7 @@
       getter: getter,
       nullGetter: nullGetter,
       wrapper: wrapper,
+      factory: factory,
 
       // callbacks
       lazyInit: lazyInit,
