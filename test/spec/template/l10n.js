@@ -57,16 +57,16 @@ module.exports = {
         {
           name: 'should change on token change',
           test: function(){
-            var template = createTemplate('<b:l10n src="./test.l10n"/>{l10n:foo}');
+            var template = createTemplate('<b:l10n src="./test.l10n"/><span title="{{l10n:foo}}"/>{l10n:foo}');
             var instance = template.createInstance();
 
-            assert(text(instance) === 'foo text');
+            assert(text(instance) === '<span title="{foo text}"></span>foo text');
 
             l10n.setCulture('ru-RU');
-            assert(text(instance) === 'foo текст');
+            assert(text(instance) === '<span title="{foo текст}"></span>foo текст');
 
             l10n.setCulture('en-US');
-            assert(text(instance) === 'foo text');
+            assert(text(instance) === '<span title="{foo text}"></span>foo text');
           }
         },
         {
@@ -79,8 +79,8 @@ module.exports = {
 
             assert(text(instance) === 'foo text');
 
-            template.setSource('<b:l10n src="./test.l10n"/>{l10n:foo} {l10n:foo}');
-            assert(text(instance) === 'foo text foo text');
+            template.setSource('<b:l10n src="./test.l10n"/><span title="{{l10n:foo}}"/>{l10n:foo} {l10n:foo}');
+            assert(text(instance) === '<span title="{foo text}"></span>foo text foo text');
           }
         }
       ]

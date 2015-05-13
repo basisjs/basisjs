@@ -89,7 +89,10 @@
     var htmlTemplate = l10nTemplates[id];
 
     if (!htmlTemplate)
+    {
       htmlTemplate = l10nTemplates[id] = new HtmlTemplate(getSourceFromL10nToken(token));
+      htmlTemplate.protoOnly = true;
+    }
 
     return htmlTemplate;
   }
@@ -525,38 +528,38 @@
       var l10nLinks = [];
       var l10nMarkupTokens = [];
       var seed = 0;
-      var id = this.templateId;
-      var proto;
+      var proto = {
+        cloneNode: function(){
+          if (!protoOnly && seed == 1)
+            return buildDOM(tokens);
 
-      var createDOM = function(){
-        // if (seed < 2)
-        //   return buildDOM(tokens);
-
-        if (!proto)
-        {
           proto = buildDOM(tokens);
           if (hasL10n)
           {
             l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
             for (var i = 0, l10nToken; l10nToken = l10nLinks[i]; i++)
-              if (l10nToken.isMarkup)
-              {
-                l10nMap[l10nToken.path] = null;
-                l10nProtoSync(l10nToken.path, null);
-              }
-              else
-              {
-                l10nMap[l10nToken.path] = l10nToken.token.value == null ? '{' + l10nToken.token.path + '}' : l10nToken.token.value;
-                l10nProtoSync(l10nToken.path, l10nMap[l10nToken.path]);
-              }
+              l10nProtoSync(l10nToken.path, l10nMap[l10nToken.path]);
           }
-        }
 
+          return proto.cloneNode(true);
+        }
+      };
+
+      // temporary solution as l10n markup token templates aren't work
+      // with no proto cloning (tests fail with exception)
+      // TODO: investigate case and remove this flag
+      var protoOnly = this.protoOnly;
+
+      var createDOM = function(){
         return proto.cloneNode(true);
       };
 
       if (hasL10n)
       {
+        var initL10n = function(set){
+          for (var i = 0, token; token = l10nLinks[i]; i++)
+            set(token.path, l10nMap[token.path]);
+        };
         var linkHandler = function(value){
           var isMarkup = isMarkupToken(this.token);
 
@@ -565,45 +568,50 @@
           else
             basis.array.remove(l10nMarkupTokens, this);
 
-          l10nMap[this.path] = value == null ? '{' + this.path + '}' : value;
+          l10nMap[this.path] = isMarkup ? undefined : value == null ? '{' + this.path + '}' : value;
           if (l10nProtoSync)
-            l10nProtoSync(this.path, isMarkup ? null : l10nMap[this.path]);
+            l10nProtoSync(this.path, l10nMap[this.path]);
 
           for (var key in instances)
             instances[key].tmpl.set(this.path, isMarkup ? this.token : value);
         };
 
-        if (fn.l10nKeys)
-          for (var i = 0, key; key = fn.l10nKeys[i]; i++)
-          {
-            var token = getL10nToken(key);
-            var link = {
-              path: key,
-              token: token,
-              handler: linkHandler
-            };
+        l10nLinks = fn.l10nKeys.map(function(key){
+          var token = getL10nToken(key);
+          var link = {
+            path: key,
+            token: token,
+            handler: linkHandler
+          };
 
-            link.token.attach(link.handler, link);
-            l10nLinks.push(link);
+          token.attach(linkHandler, link);
 
-            if (isMarkupToken(token))
-              l10nMarkupTokens.push(link);
+          if (isMarkupToken(token))
+            l10nMarkupTokens.push(link);
+          else
+            l10nMap[key] = token.value == null ? '{' + key + '}' : token.value;
 
-            link = null;
-            token = null;
-          }
+          return link;
+        });
       }
 
-      createInstance = fn.createInstance(id, instances, createDOM, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG);
+      createInstance = fn.createInstance(
+        this.templateId, instances, createDOM, tools,
+        l10nMap, CLONE_NORMALIZATION_TEXT_BUG
+      );
 
       return {
         keys: fn.keys,
 
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
           var instanceId = seed++;
-          var instance = createInstance(instanceId, obj, onAction, onRebuild, bindings, bindingInterface);
+          var instance = createInstance(
+            instanceId, obj, onAction, onRebuild,
+            bindings, bindingInterface,
+            hasL10n && !instanceId && !protoOnly ? initL10n : null
+          );
 
-          if (hasL10n)
+          if (hasL10n && l10nMarkupTokens.length)
             for (var i = 0, l10nToken; l10nToken = l10nMarkupTokens[i]; i++)
               instance.tmpl.set(l10nToken.path, l10nToken.token);
 
