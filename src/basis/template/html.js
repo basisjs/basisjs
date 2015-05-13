@@ -12,11 +12,10 @@
 
   var document = global.document;
   var Node = global.Node;
-  var domEvent = require('basis.dom.event');
   var camelize = basis.string.camelize;
-  var basisL10n = require('basis.l10n');
-  var isMarkupToken = basisL10n.isMarkupToken;
-  var getL10nToken = basisL10n.token;
+  var eventUtils = require('basis.dom.event');
+  var isMarkupToken = require('basis.l10n').isMarkupToken;
+  var getL10nToken = require('basis.l10n').token;
   var getFunctions = require('basis.template.htmlfgen').getFunctions;
 
   var basisTemplate = require('basis.template');
@@ -44,6 +43,7 @@
   var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 
   var ELEMENT_NAME = consts.ELEMENT_NAME;
+  var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 
   var TEXT_VALUE = consts.TEXT_VALUE;
   var COMMENT_VALUE = consts.COMMENT_VALUE;
@@ -70,19 +70,20 @@
   var afterEventAction = {};
   var insideElementEvent = {};
   var MOUSE_ENTER_LEAVE_SUPPORT = 'onmouseenter' in document.documentElement;
-  var CAPTURE_FALLBACK = !document.addEventListener && '__basisTemplate' + parseInt(1e9 * Math.random());
-  if (CAPTURE_FALLBACK)
-    global[CAPTURE_FALLBACK] = function(eventName, event){
+  var CAPTURE_FALLBACK = false;
+
+  if (!document.addEventListener)
+    CAPTURE_FALLBACK = basis.publicCallback(function(eventName, event){
        // trigger global handlers proceesing
-      domEvent.fireEvent(document, eventName);
+      eventUtils.fireEvent(document, eventName);
 
       // prevent twice global handlers processing
       event.returnValue = true;
 
       var listener = tmplEventListeners[eventName];
       if (listener)
-        listener(new domEvent.Event(event));
-    };
+        listener(new eventUtils.Event(event));
+    }, true);
 
   // test for browser (IE) normalize text nodes during cloning
   var CLONE_NORMALIZATION_TEXT_BUG = (function(){
@@ -113,17 +114,22 @@
     } catch(e) {}
   })();
 
-  var contains = function(parent, child){
-    return parent.contains(child);
-  };
+  var contains;
   if (Node && !Node.prototype.contains)
     // old Firefox has no Node#contains method (Firefox 8 and lower)
     contains = function(parent, child){
-      return !!(parent.compareDocumentPosition(child) & 16); // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
+      // Node.DOCUMENT_POSITION_CONTAINED_BY = 16
+      return parent.compareDocumentPosition(child) & 16;
+    };
+  else
+    contains = function(parent, child){
+      return parent.contains(child);
     };
 
 
+  //
   // l10n
+  //
   var l10nTemplates = {};
 
   function getSourceFromL10nToken(token){
@@ -180,9 +186,6 @@
   // Constructs dom structure
   //
 
- /**
-  * @func
-  */
   function createEventHandler(attrName){
    /**
     * @param {basis.dom.event.Event} event
@@ -237,26 +240,25 @@
           cursor = cursor.parentNode;
         }
 
-        if (tmplRef && tmplRef.action)
-        {
-          var actions = attr.trim().split(/\s+/);
-          event.actionTarget = actionTarget;
-          for (var i = 0, actionName; actionName = actions[i++];)
-            switch (actionName)
-            {
-              case 'prevent-default':
-                event.preventDefault();
-                break;
-              case 'stop-propagation':
-                event.stopPropagation();
-                break;
-              case 'log-event':
-                /** @cut */ basis.dev.log('Template event:', event);
-                break;
-              default:
-                tmplRef.action.call(tmplRef.context, actionName, event);
-            }
-        }
+        var actions = attr.trim().split(/\s+/);
+        var actionCallback = tmplRef && tmplRef.action;
+        event.actionTarget = actionTarget;
+        for (var i = 0, actionName; actionName = actions[i++];)
+          switch (actionName)
+          {
+            case 'prevent-default':
+              event.preventDefault();
+              break;
+            case 'stop-propagation':
+              event.stopPropagation();
+              break;
+            case 'log-event':
+              /** @cut */ basis.dev.log('Template event:', event);
+              break;
+            default:
+              if (actionCallback)
+                actionCallback.call(tmplRef.context, actionName, event);
+          }
       }
 
       if (event.type in afterEventAction)
@@ -264,84 +266,87 @@
     };
   }
 
+  function emulateEvent(origEventName, emulEventName){
+    regEventHandler(emulEventName);
+    insideElementEvent[origEventName] = true;
 
- /**
-  * Creates dom structure by declaration.
-  */
-  var buildHtml = function(tokens, parent){
-    function emulateEvent(origEventName, emulEventName){
-      regEventHandler(emulEventName);
-      insideElementEvent[origEventName] = true;
-      afterEventAction[emulEventName] = function(event){
-        event = new domEvent.Event(event);
-        event.type = origEventName;
-        tmplEventListeners[origEventName](event);
-      };
-      afterEventAction[origEventName] = function(event, cursor){
-        cursor = cursor && cursor.parentNode;
-        if (cursor)
-        {
-          event = new domEvent.Event(event);
-          event.type = origEventName;
-          event.sender = cursor;
-          tmplEventListeners[origEventName](event);
-        }
-      };
-    }
+    afterEventAction[emulEventName] = function(event){
+      event = new eventUtils.Event(event);
+      event.type = origEventName;
+      tmplEventListeners[origEventName](event);
+    };
 
-    function regEventHandler(eventName){
-      if (!tmplEventListeners[eventName])
-      {
-        tmplEventListeners[eventName] = createEventHandler('event-' + eventName);
+    afterEventAction[origEventName] = function(event, cursor){
+      if (!cursor || !cursor.parentNode)
+        return;
 
-        if (!CAPTURE_FALLBACK)
-        {
-          if (!MOUSE_ENTER_LEAVE_SUPPORT && eventName == 'mouseenter')
-            return emulateEvent(eventName, 'mouseover');
-          if (!MOUSE_ENTER_LEAVE_SUPPORT && eventName == 'mouseleave')
-            return emulateEvent(eventName, 'mouseout');
+      event = new eventUtils.Event(event);
+      event.type = origEventName;
+      event.sender = cursor.parentNode;
+      tmplEventListeners[origEventName](event);
+    };
+  }
 
-          for (var i = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[i]; i++)
-            domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
-        }
-      }
-    }
+  function regEventHandler(eventName){
+    if (hasOwnProperty.call(tmplEventListeners, eventName))
+      return;
 
-    function setEventAttribute(eventName, actions){
-      regEventHandler(eventName);
+    tmplEventListeners[eventName] = createEventHandler('event-' + eventName);
 
-      // hack for non-bubble events in IE<=8
-      if (CAPTURE_FALLBACK)
-        result.setAttribute('on' + eventName, CAPTURE_FALLBACK + '("' + eventName + '",event)');
+    if (CAPTURE_FALLBACK)
+      return;
 
-      result.setAttribute('event-' + eventName, actions);
-    }
-
-    function setAttribute(name, value){
-      if (SET_CLASS_ATTRIBUTE_BUG && name == 'class')
-        name = 'className';
-
-      if (SET_STYLE_ATTRIBUTE_BUG && name == 'style')
-        return result.style.cssText = value;
-
-      result.setAttribute(name, value);
-    }
-
-
-    var result = parent || document.createDocumentFragment();
-    var tokenType;
-
-    for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
+    if (!MOUSE_ENTER_LEAVE_SUPPORT)
     {
-      tokenType = token[TOKEN_TYPE];
+      if (eventName == 'mouseenter')
+        return emulateEvent(eventName, 'mouseover');
+      if (eventName == 'mouseleave')
+        return emulateEvent(eventName, 'mouseout');
+    }
+
+    for (var i = 0, names = eventUtils.browserEvents(eventName), browserEventName; browserEventName = names[i]; i++)
+      eventUtils.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
+  }
+
+
+  //
+  // Creates dom structure by declaration.
+  //
+  function setEventAttribute(node, eventName, actions){
+    regEventHandler(eventName);
+
+    // hack for non-bubble events in IE<=8
+    if (CAPTURE_FALLBACK)
+      node.setAttribute('on' + eventName, CAPTURE_FALLBACK + '("' + eventName + '",event)');
+
+    node.setAttribute('event-' + eventName, actions);
+  }
+
+  function setAttribute(node, name, value){
+    if (SET_CLASS_ATTRIBUTE_BUG && name == 'class')
+      name = 'className';
+
+    if (SET_STYLE_ATTRIBUTE_BUG && name == 'style')
+      return node.style.cssText = value;
+
+    node.setAttribute(name, value);
+  }
+  console.log(__dirname);
+
+  var buildHtml = function(tokens, parent){
+    var result = parent || document.createDocumentFragment();
+    var offset = parent ? ELEMENT_ATTRIBUTES_AND_CHILDREN : 0;
+
+    for (var i = offset, token; token = tokens[i]; i++)
+    {
+      var tokenType = token[TOKEN_TYPE];
       switch (tokenType)
       {
         case TYPE_ELEMENT:
           var tagName = token[ELEMENT_NAME];
-          var parts = tagName.split(/:/);
-
-          var element = parts.length > 1
-            ? document.createElementNS(namespaceURI[parts[0]], tagName)
+          var colonIndex = tagName.indexOf(':');
+          var element = colonIndex != -1
+            ? document.createElementNS(namespaceURI[tagName.substr(0, colonIndex)], tagName)
             : document.createElement(tagName);
 
           // precess for children and attributes
@@ -354,12 +359,12 @@
 
         case TYPE_ATTRIBUTE:
           if (!token[TOKEN_BINDINGS])
-            setAttribute(token[ATTR_NAME], token[ATTR_VALUE] || '');
+            setAttribute(result, token[ATTR_NAME], token[ATTR_VALUE] || '');
           break;
 
         case TYPE_ATTRIBUTE_CLASS:
-          var value = token[ATTR_VALUE_INDEX[tokenType]];
-          value = value ? [value] : [];
+          var attrValue = token[ATTR_VALUE_INDEX[tokenType]];
+          attrValue = attrValue ? [attrValue] : [];
 
           if (token[TOKEN_BINDINGS])
             for (var j = 0, binding; binding = token[TOKEN_BINDINGS][j]; j++)
@@ -373,7 +378,7 @@
                   // precomputed classes
                   // bool: [['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
                   // enum: [['prefix_foo','prefix_bar'],'binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
-                  value.push(binding[0][defaultValue - 1]);
+                  attrValue.push(prefix[defaultValue - 1]);
                 }
                 else
                 {
@@ -381,20 +386,19 @@
                   {
                     case CLASS_BINDING_BOOL:
                       // ['prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
-                      value.push(prefix + binding[3]);
+                      attrValue.push(prefix + binding[3]);
                       break;
                     case CLASS_BINDING_ENUM:
                       // ['prefix_','binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
-                      value.push(prefix + binding[5][defaultValue - 1]);
+                      attrValue.push(prefix + binding[5][defaultValue - 1]);
                       break;
                   }
                 }
               }
             }
 
-          value = value.join(' ').trim();
-          if (value)
-            setAttribute('class', value);
+          if (attrValue.length)
+            setAttribute(result, 'class', attrValue.join(' '));
 
           break;
 
@@ -402,12 +406,12 @@
           var attrValue = token[ATTR_VALUE_INDEX[tokenType]];
 
           if (attrValue)
-            setAttribute('style', attrValue);
+            setAttribute(result, 'style', attrValue);
 
           break;
 
         case TYPE_ATTRIBUTE_EVENT:
-          setEventAttribute(token[1], token[2] || token[1]);
+          setEventAttribute(result, token[1], token[2] || token[1]);
           break;
 
         case TYPE_COMMENT:
@@ -431,6 +435,9 @@
     return result;
   };
 
+  //
+  // resolve
+  //
   function resolveTemplateById(refId){
     var templateId = refId & 0xFFF;
     var object = templates[templateId];
