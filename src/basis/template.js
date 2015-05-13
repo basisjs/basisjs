@@ -18,6 +18,7 @@
   var DECLARATION_VERSION = require('basis.template.declaration').VERSION;
   var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
   var makeDeclaration = require('basis.template.declaration').makeDeclaration;
+  var store = require('basis.template.store');
   var theme = require('basis.template.theme');
   var getSourceByPath = theme.get;
 
@@ -121,7 +122,8 @@
 
     // make functions and assign to template
     var destroyBuilder = this.destroyBuilder;
-    var funcs = this.builder(declaration.tokens, this);
+    var instances = {};
+    var funcs = this.builder(declaration.tokens, instances);
     this.createInstance = funcs.createInstance;
     this.clearInstance = funcs.destroyInstance;
     this.destroyBuilder = funcs.destroy;
@@ -129,8 +131,10 @@
       return { names: funcs.keys };
     };
 
+    store.add(this.templateId, this, instances);
+
     // for debug purposes only
-    /** @cut */ this.instances_ = funcs.instances_;
+    /** @cut */ this.instances_ = instances;
     /** @cut */ this.decl_ = declaration;
 
 
@@ -387,7 +391,10 @@
 
     destroy: function(){
       if (this.destroyBuilder)
+      {
+        store.remove(this.templateId);
         this.destroyBuilder();
+      }
 
       this.attaches_ = null;
       this.createInstance = null;
@@ -549,7 +556,7 @@
     CLASS_BINDING_ENUM: consts.CLASS_BINDING_ENUM,
     CLASS_BINDING_BOOL: consts.CLASS_BINDING_BOOL,
     ELEMENT_NAME: consts.ELEMENT_NAME,
-    //ELEMENT_ATTRS: consts.ELEMENT_ATTRIBUTES_AND_CHILDREN, // for backward capability 2015-04-24
+    ELEMENT_ATTRS: consts.ELEMENT_ATTRIBUTES_AND_CHILDREN, // for backward capability 2015-04-24
     ELEMENT_ATTRIBUTES_AND_CHILDREN: consts.ELEMENT_ATTRIBUTES_AND_CHILDREN,
     TEXT_VALUE: consts.TEXT_VALUE,
     COMMENT_VALUE: consts.COMMENT_VALUE,
@@ -565,6 +572,12 @@
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     resolveResource: resolveResource, // TODO: remove
+    // for backward capability
+    // TODO: remove
+    /** @cut dev mode only */ getDebugInfoById: store.getDebugInfoById,
+    resolveTemplateById: store.resolveTemplateById,
+    resolveObjectById: store.resolveObjectById,
+    resolveTmplById: store.resolveTmplById,
 
     // theme
     SourceWrapper: theme.SourceWrapper,

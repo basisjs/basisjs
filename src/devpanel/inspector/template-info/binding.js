@@ -1,6 +1,6 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 
 var wrap = require('basis.data').wrap;
 var Value = require('basis.data').Value;

@@ -1,3 +1,5 @@
+var MARKER = 'basisTemplateId_' + basis.genUID();
+
 // token types
 /** @const */ var TYPE_ELEMENT = 1;
 /** @const */ var TYPE_ATTRIBUTE = 2;
@@ -42,12 +44,23 @@ var CLASS_BINDING_INVERT = 3;
 var CLASS_BINDING_EQUAL = 4;
 var CLASS_BINDING_NOTEQUAL = 5;
 
+// test for browser (IE) normalize text nodes during cloning
+var document = global.document;
+var CLONE_NORMALIZATION_TEXT_BUG = !document ? true : (function(){
+  var element = document.createElement('div');
+  element.appendChild(document.createTextNode('a'));
+  element.appendChild(document.createTextNode('a'));
+  return element.cloneNode(true).childNodes.length == 1;
+})();
 
-  //
-  // export
-  //
+
+//
+// export
+//
 
 module.exports = {
+  MARKER: MARKER,
+
   TYPE_ELEMENT: TYPE_ELEMENT,
   TYPE_ATTRIBUTE: TYPE_ATTRIBUTE,
   TYPE_ATTRIBUTE_CLASS: TYPE_ATTRIBUTE_CLASS,
@@ -72,5 +85,7 @@ module.exports = {
   CLASS_BINDING_BOOL: CLASS_BINDING_BOOL,
   CLASS_BINDING_INVERT: CLASS_BINDING_INVERT,
   CLASS_BINDING_EQUAL: CLASS_BINDING_EQUAL,
-  CLASS_BINDING_NOTEQUAL: CLASS_BINDING_NOTEQUAL
+  CLASS_BINDING_NOTEQUAL: CLASS_BINDING_NOTEQUAL,
+
+  CLONE_NORMALIZATION_TEXT_BUG: CLONE_NORMALIZATION_TEXT_BUG
 };

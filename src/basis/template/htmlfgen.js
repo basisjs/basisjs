@@ -6,6 +6,8 @@
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var consts = require('basis.template.const');
 
+  var MARKER = consts.MARKER;
+
   var TYPE_ELEMENT = consts.TYPE_ELEMENT;
   var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
   var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
@@ -76,7 +78,7 @@
       bindingList.push(binding);
     }
 
-    function processTokens(tokens, path, noTextBug, templateMarker){
+    function processTokens(tokens, path, noTextBug){
       var localPath;
       var refs;
       var myRef;
@@ -125,7 +127,7 @@
         }
 
         if (path == rootPath && (SET_NONELEMENT_PROPERTY_SUPPORT || token[TOKEN_TYPE] == TYPE_ELEMENT))
-          markedElementList.push(localPath + '.' + templateMarker);
+          markedElementList.push(localPath + '.' + MARKER);
 
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
         {
@@ -198,7 +200,7 @@
       }
     }
 
-    return function(tokens, path, noTextBug, templateMarker){
+    return function(tokens, path, noTextBug){
       pathList = [];
       refList = [];
       bindingList = [];
@@ -206,7 +208,7 @@
       rootPath = path || '_';
       attrExprId = 0;
 
-      processTokens(tokens, rootPath, noTextBug, templateMarker);
+      processTokens(tokens, rootPath, noTextBug);
 
       return {
         path: pathList,
@@ -760,7 +762,7 @@
     /** @cut */ }
   }
 
-  var getFunctions = function(tokens, debug, uri, source, noTextBug, templateMarker){
+  var getFunctions = function(tokens, debug, uri, source, noTextBug){
     // try get functions from cache by templateId
     var fn = tmplFunctions[uri && basis.path.relative(uri)];
 
@@ -768,7 +770,7 @@
       return fn;
 
     // build functions
-    var paths = buildPathes(tokens, '_', noTextBug, templateMarker);
+    var paths = buildPathes(tokens, '_', noTextBug);
     var bindings = buildBindings(paths.binding);
     var objectRefs = paths.markedElementList.join('=');
     var result = {

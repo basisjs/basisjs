@@ -6,7 +6,7 @@ require('basis.ui.popup');
 
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;

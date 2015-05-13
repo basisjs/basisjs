@@ -15,9 +15,8 @@
   var Class = basis.Class;
   var createEvent = require('basis.event').create;
 
-  var basisTemplateHtml = require('basis.template.html');
-  var HtmlTemplate = basisTemplateHtml.Template;
-  var htmlTemplateIdMarker = basisTemplateHtml.marker;
+  var HtmlTemplate = require('basis.template.html').Template;
+  var htmlTemplateIdMarker = require('basis.template.const').MARKER;
   var TemplateSwitcher = require('basis.template').TemplateSwitcher;
   var basisDomWrapper = require('basis.dom.wrapper');
   var DWNode = basisDomWrapper.Node;
