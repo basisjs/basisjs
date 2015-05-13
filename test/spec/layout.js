@@ -1,7 +1,7 @@
 module.exports = {
   name: 'basis.layout',
 
-  html: __dirname + 'layout.html',
+  html: __dirname + '/layout.html',
   init: function(){
     var getBoundingRect = basis.require('basis.layout').getBoundingRect;
     var getViewportRect = basis.require('basis.layout').getViewportRect;

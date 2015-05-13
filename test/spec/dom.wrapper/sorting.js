@@ -252,7 +252,6 @@ module.exports = {
           },
           sortingDesc: true,
           invertSorting: function(){
-            debugger;
             this.setSorting(this.sorting, !this.sortingDesc);
             assert(checkNode(node) === false);
             this.grouping.setSorting(this.grouping.sorting, !this.grouping.sortingDesc);

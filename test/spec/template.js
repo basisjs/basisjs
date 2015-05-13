@@ -1,7 +1,7 @@
 module.exports = {
   name: 'basis.template',
 
-  html: __dirname + 'template.html',
+  html: __dirname + '/template.html',
   sandbox: true,
   init: function(){
     var basis = window.basis.createSandbox(window.basis.config);

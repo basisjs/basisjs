@@ -1,7 +1,7 @@
 module.exports = {
   name: 'basis.dom',
 
-  html: __dirname + 'dom.html',
+  html: __dirname + '/dom.html',
   init: function(){
     var domUtils = basis.require('basis.dom');
     var pg = domUtils.get('playground');

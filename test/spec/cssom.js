@@ -1,7 +1,7 @@
 module.exports = {
   name: 'basis.cssom',
 
-  html: __dirname + 'cssom.html',
+  html: __dirname + '/cssom.html',
   init: function(){
     var DOM = basis.require('basis.dom');
     var createElement = DOM.createElement;

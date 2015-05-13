@@ -331,7 +331,6 @@
 
     node.setAttribute(name, value);
   }
-  console.log(__dirname);
 
   var buildHtml = function(tokens, parent){
     var result = parent || document.createDocumentFragment();
