@@ -2465,7 +2465,7 @@
   }
 
   var runScriptInContext = function(context, sourceURL, sourceCode){
-    var baseURL = pathUtils.dirname(sourceURL) + '/';
+    var baseURL = pathUtils.dirname(sourceURL);
     var compiledSourceCode = sourceCode;
 
     if (!context.exports)
