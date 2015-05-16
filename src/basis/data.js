@@ -29,6 +29,7 @@
   var Class = basis.Class;
 
   var sliceArray = Array.prototype.slice;
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
@@ -97,11 +98,11 @@
    /**
     * Create factory to fetch state from nested object.
     * @param {string} events
-    * @param {string} property
+    * @param {string|function()} getter
     * @return {function(basis.event.Emitter)}
     */
-    factory: function(events, property){
-      return Value.factory(events, basis.getter(property).as(STATE.from));
+    factory: function(events, getter){
+      return Value.factory(events, basis.getter(getter).as(STATE.from));
     },
 
    /**
@@ -110,7 +111,9 @@
     * @return {basis.data.Value|null}
     */
     from: function(source){
-      return Value.from(source, 'stateChanged', 'state') || STATE.UNDEFINED;
+      return source instanceof AbstractData
+        ? Value.from(source, 'stateChanged', 'state')
+        : STATE.UNDEFINED;
     }
   };
 
@@ -408,8 +411,21 @@
 
       // resolve state
       // Q: should we check for `instanceof String` here?
-      if (typeof this.state != 'string')
-        this.state = String(resolveValue(this, this.setState, this.state, 'stateRA_'));
+      if (this.state != STATE.UNDEFINED)
+      {
+        var state = this.state;
+
+        if (typeof this.state != 'string')
+          state = resolveValue(this, this.setState, state, 'stateRA_');
+
+        if (state && !hasOwnProperty.call(STATE_EXISTS, state))
+        {
+          /** @cut */ basis.dev.error('Wrong value for state (value has been ignored and state set to STATE.UNDEFINED)', state);
+          state = false;
+        }
+
+        this.state = state || STATE.UNDEFINED;
+      }
 
       // apply sync action
       var syncAction = this.syncAction;
@@ -427,12 +443,15 @@
     * @return {boolean} Current object state.
     */
     setState: function(state, data){
-      state = resolveValue(this, this.setState, state, 'stateRA_');
+      state = resolveValue(this, this.setState, state, 'stateRA_') || STATE.UNDEFINED;
 
       var stateCode = String(state);
 
-      if (!STATE_EXISTS[stateCode])
-        throw new Error('Wrong state value');
+      if (!hasOwnProperty.call(STATE_EXISTS, stateCode))
+      {
+        /** @cut */ basis.dev.error('Wrong value for state (value has been ignored)', stateCode);
+        return false;
+      }
 
       // try fetch data from state
       if (this.stateRA_ && data === undefined)
