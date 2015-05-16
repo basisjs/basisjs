@@ -927,16 +927,15 @@
     * @constructor
     */
     init: function(){
+      var source = this.source;
+
+      this.source = null;
       this.sourceMap_ = {};
 
       ReadOnlyDataset.prototype.init.call(this);
 
-      var source = this.source;
       if (source)
-      {
-        this.source = null;
         this.setSource(source);
-      }
     },
 
    /**
