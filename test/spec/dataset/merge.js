@@ -10,7 +10,7 @@ module.exports = {
     var generate = helpers.generate;
     var cmpDS = helpers.cmpDS;
     var checkValues = helpers.checkValues;
-    var catchWarnings = helpers.catchWarnings;
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
 
     var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
     var Value = basis.require('basis.data').Value;

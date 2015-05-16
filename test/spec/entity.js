@@ -11,6 +11,8 @@ module.exports = {
     var basisEvents = basis.require('basis.event').events;
     var Filter = basis.require('basis.data.dataset').Filter;
 
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
+
     (function(){
       var init_ = nsEntity.BaseEntity.prototype.init;
       nsEntity.BaseEntity.prototype.init = function(){
@@ -40,23 +42,6 @@ module.exports = {
       return entity.historyAll_.filter(function(arg){
         return arg[0] == 'rollbackUpdate';
       });
-    }
-
-    function catchWarnings(fn){
-      var warn = basis.dev.warn;
-      var warnings = [];
-
-      try {
-        basis.dev.warn = function(message){
-          warnings.push(message);
-        };
-
-        fn();
-      } finally {
-        basis.dev.warn = warn;
-      }
-
-      return warnings.length ? warnings : false;
     }
   },
 
