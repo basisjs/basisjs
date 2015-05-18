@@ -309,19 +309,25 @@
   * Flush asap handlers
   */
   var flushAsap = true;
-  var lastAsapEvent;
+  var lastFrameStartEvent;
+  var lastFrameFinishEvent;
 
 
- /**
-  *
-  */
-  function processAsap(event){
-    if (flushAsap && event !== lastAsapEvent)
+  function startFrame(event){
+    if (flushAsap && event !== lastFrameStartEvent)
     {
-      lastAsapEvent = event;
-      basis.asap.process();
+      lastFrameStartEvent = event;
+      basis.codeFrame.start();
     }
   }
+  function finishFrame(event){
+    if (flushAsap && event !== lastFrameFinishEvent)
+    {
+      lastFrameFinishEvent = event;
+      basis.codeFrame.finish();
+    }
+  }
+
 
  /**
   * Observe handlers for event
@@ -332,6 +338,8 @@
     var handlers = arrayFrom(globalHandlers[event.type]);
     var captureHandler = captureHandlers[event.type];
     var wrappedEvent = new Event(event);
+
+    startFrame(event);
 
     if (captureHandler)
     {
@@ -349,7 +357,7 @@
       }
     }
 
-    processAsap(event);
+    finishFrame(event);
   }
 
  /**
@@ -496,11 +504,13 @@
           }
         }
 
+        startFrame(event);
+
         // call eventType handlers
         for (var i = 0, wrappedEvent = new Event(event), item; item = eventTypeHandlers[i++];)
           item.handler.call(item.thisObject, wrappedEvent);
 
-        processAsap(event);
+        finishFrame(event);
       };
 
       if (W3CSUPPORT)

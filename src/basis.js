@@ -918,7 +918,7 @@
       function process(){
         // set timer to make sure all objects be processed
         // it helps avoid try/catch and process all objects even if any exception
-        var etimer = basis.setImmediate(process);
+        var etimer = setImmediate(process);
 
         // reset scheduled flag, make possible set new asap for objects added during queue processing
         scheduled = false;
@@ -932,7 +932,7 @@
         }
 
         // if no exceptions we will be here, reset emergency timer
-        basis.clearImmediate(etimer);
+        clearImmediate(etimer);
 
         // reset queue to keep it fast, but if no new task scheduled during queue processing
         if (!scheduled)
@@ -952,6 +952,26 @@
     });
 
     return asap;
+  })();
+
+
+  //
+  // Code frame
+  //
+  var codeFrame = (function(){
+    var count = 0;
+    var info = {
+      id: count,
+      start: function(){
+        info.id = count++;
+      },
+      finish: function(){
+        asap.process();
+        info.id = 'unknown';
+      }
+    };
+
+    return info;
   })();
 
 
@@ -3729,7 +3749,8 @@
     Token: Token,
     DeferredToken: DeferredToken,
 
-    // life cycle functions
+    // life cycle
+    codeFrame: codeFrame,
     ready: ready,
     teardown: teardown,
     cleaner: cleaner,
