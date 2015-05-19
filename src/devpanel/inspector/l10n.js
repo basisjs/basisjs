@@ -225,7 +225,8 @@ function domTreeHighlight(root){
       var debugInfo = inspectBasisTemplate.getDebugInfoById(child[inspectBasisTemplateMarker]);
       if (debugInfo)
       {
-        for (var j = 0, binding; binding = debugInfo[j]; j++)
+        var bindings = debugInfo.bindings;
+        for (var j = 0, binding; binding = bindings[j]; j++)
         {
           var token = binding.attachment;
 

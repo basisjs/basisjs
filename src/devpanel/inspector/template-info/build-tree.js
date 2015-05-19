@@ -181,7 +181,7 @@ function buildAttribute(attr, attrBindings){
   };
 }
 
-module.exports = function buildNode(item, bindings, usedBinding, selectDomNode){
+module.exports = function buildNode(item, bindings, selectDomNode){
   function findBinding(node){
     return basis.array.search(bindings, node, 'dom');
   }
@@ -227,7 +227,7 @@ module.exports = function buildNode(item, bindings, usedBinding, selectDomNode){
           });
 
       children = children.map(function(child){
-        return buildNode(child, bindings, usedBinding, selectDomNode);
+        return buildNode(child, bindings, selectDomNode);
       });
 
       inline =

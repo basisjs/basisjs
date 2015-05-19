@@ -127,9 +127,6 @@
     this.createInstance = funcs.createInstance;
     this.clearInstance = funcs.destroyInstance;
     this.destroyBuilder = funcs.destroy;
-    this.getBinding = function(){
-      return { names: funcs.keys };
-    };
 
     store.add(this.templateId, this, instances);
 
@@ -314,11 +311,6 @@
       return this.createInstance(object, actionCallback, updateCallback, bindings, bindingInterface);
     },
 
-    getBinding: function(bindings){
-      buildTemplate.call(this);
-      return this.getBinding(bindings);
-    },
-
    /**
     * Remove reference from DOM structure
     * @param {object=} tmpl Storage of DOM references.
@@ -398,7 +390,6 @@
 
       this.attaches_ = null;
       this.createInstance = null;
-      this.getBinding = null;
       this.resources = null;
       this.source = null;
 

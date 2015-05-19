@@ -87,14 +87,10 @@ selectedDomNode.attach(function(node){
     return view.clear();
 
   var nodes = parseDom(node);
-  var bindings = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]) || [];
-  var usedBindings = getBindingsFromNode(node).reduce(function(res, binding){
-    if (binding.data.used)
-      res[binding.data.name] = true;
-    return res;
-  }, {});
+  var debugInfo = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]);
+  var bindings = debugInfo.bindings || [];
 
-  view.setChildNodes(buildTree(nodes, bindings, usedBindings, function(node){
+  view.setChildNodes(buildTree(nodes, bindings, function(node){
     selectedDomNode.set(node);
   }));
 });
@@ -142,19 +138,23 @@ var view = new Window({
             }
           },
           action: {
+            logObject: function(){
+              var result = selectedObject.value;
+
+              global.$lastInspectObject = result || null;
+              console.log(result || 'No object attached to template');
+            },
             logValues: function(){
               if (selectedDomNode.value)
               {
                 var id = selectedDomNode.value[inspectBasisTemplateMarker];
                 var object = selectedObject.value;
                 var objectBinding = object.binding;
-                var templateBinding = selectedTemplate.value.getBinding();
-                var result = {};
+                var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+                var result = (debugInfo || {}).values || null;
 
-                for (var key in objectBinding)
-                  if (key != '__extend__' && key != 'bindingId')
-                    if (templateBinding.names.indexOf(key) != -1)
-                      result[key] = objectBinding[key].getter(object);  // TODO: return real template values
+                if (result)
+                  result = basis.object.slice(result, basis.object.keys(objectBinding));
 
                 global.$lastInspectValues = result;
                 console.log(result);

@@ -601,8 +601,6 @@
       );
 
       return {
-        keys: fn.keys,
-
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
           var instanceId = seed++;
           var instance = createInstance(

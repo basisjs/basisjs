@@ -24,14 +24,14 @@ function getBindingsFromNode(node){
     var id = node[inspectBasisTemplateMarker];
     var object = inspectBasisTemplate.resolveObjectById(id);
     var objectBinding = object.binding;
-    var template = inspectBasisTemplate.resolveTemplateById(id);
-    var templateBinding = template.getBinding();
+    var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+    var usedValues = debugInfo.values;
 
     for (var key in objectBinding)
       if (key != '__extend__' && key != 'bindingId')
       {
-        var used = templateBinding.names.indexOf(key) != -1;
-        var value = used ? objectBinding[key].getter(object) : null;
+        var used = Object.prototype.hasOwnProperty.call(usedValues, key);
+        var value = used ? usedValues[key] : undefined;
 
         items.push({
           name: key,

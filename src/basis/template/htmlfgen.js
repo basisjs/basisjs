@@ -826,10 +826,17 @@
         'var _=createDOM(),l10n=initL10n?{}:l10nMap,' +
         paths.path.concat(bindings.vars) + ',' +
         'instance={' +
+          /** @cut */ (debug ? 'debug:function debug(){' +
+          /** @cut */   'return {' +
+          /** @cut */     'bindings:[' + bindings.debugList + '],' +
+          /** @cut */     'values:{' + bindings.keys.map(function(key){
+          /** @cut */       return '"' + key + '":__' + key;
+          /** @cut */     }) + '}' +
+          /** @cut */   '}' +
+          /** @cut */ '},' : '') +
           'context:obj,' +
           'action:onAction,' +
           'rebuild:onRebuild,' +
-          /** @cut */ (debug ? 'debug:function debug(){return[' + bindings.debugList + ']},' : '') +
           'handler:null,' +
           'bindings:bindings,' +
           'bindingInterface:bindingInterface,' +
