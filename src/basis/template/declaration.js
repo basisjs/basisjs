@@ -746,10 +746,10 @@ var makeDeclaration = (function(){
                 /** @cut */   addTemplateWarn(template, options, '<b:define> has no `name` attribute', token.loc);
                 /** @cut */ if ('type' in elAttrs == false)
                 /** @cut */   addTemplateWarn(template, options, '<b:define> has no `type` attribute', token.loc);
-                /** @cut */ if (hasOwnProperty.call(template.defines, elAttrs.name))
+                /** @cut */ if (hasOwnProperty.call(options.defines, elAttrs.name))
                 /** @cut */   addTemplateWarn(template, options, '<b:define> for `' + elAttrs.name + '` has already defined', token.loc);
 
-                if ('name' in elAttrs && 'type' in elAttrs && !hasOwnProperty.call(template.defines, elAttrs.name))
+                if ('name' in elAttrs && 'type' in elAttrs && !hasOwnProperty.call(options.defines, elAttrs.name))
                 {
                   var bindingName = elAttrs.from || elAttrs.name;
                   var defineName = elAttrs.name;
@@ -804,7 +804,7 @@ var makeDeclaration = (function(){
                   if (define)
                   {
                     /** @cut */ addTokenLocation(define, token);
-                    template.defines[defineName] = define;
+                    options.defines[defineName] = define;
                   }
                 }
               break;
@@ -1384,9 +1384,9 @@ var makeDeclaration = (function(){
               var bindName = bindNameParts.pop();
               var bindPrefix = bindNameParts.pop() || '';
 
-              if (hasOwnProperty.call(template.defines, bindName))
+              if (hasOwnProperty.call(options.defines, bindName))
               {
-                var define = template.defines[bindName];
+                var define = options.defines[bindName];
                 bind[1] = (bindPrefix ? bindPrefix + ':' : '') + define[0];
                 bind.push.apply(bind, define.slice(1)); // add define
 
@@ -1521,6 +1521,7 @@ var makeDeclaration = (function(){
     // make copy of options (as modify it) and normalize
     options = basis.object.slice(options);
     options.includeOptions = options.includeOptions || {};
+    options.defines = {};
     /** @cut */ options.styleNSIsolateMap = {};
     // force fetch locations and ranges in dev mode for debug and build purposes
     /** @cut */ options.loc = true;
@@ -1538,7 +1539,6 @@ var makeDeclaration = (function(){
       resources: [],
       includes: [],
       deps: [],
-      defines: {},
       l10nTokens: {},
       warns: warns,
       isolate: false
@@ -1701,9 +1701,9 @@ var makeDeclaration = (function(){
       /** @cut */ });
     }
 
-    /** @cut */ for (var key in result.defines)
+    /** @cut */ for (var key in options.defines)
     /** @cut */ {
-    /** @cut */   var define = result.defines[key];
+    /** @cut */   var define = options.defines[key];
     /** @cut */   if (!define.used)
     /** @cut */     addTemplateWarn(result, options, 'Unused define: ' + key, define.loc);
     /** @cut */ }
