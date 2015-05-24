@@ -715,9 +715,9 @@ var makeDeclaration = (function(){
 
                     template.styleNSPrefix[styleNamespace] = {
                       /** @cut */ loc: getLocation(template, elAttrs_[namespaceAttrName].loc),
+                      /** @cut */ used: false,
                       name: styleNamespace,
-                      prefix: styleNamespaceIsolate[src],
-                      used: false
+                      prefix: styleNamespaceIsolate[src]
                     };
                   }
                 }
@@ -867,7 +867,7 @@ var makeDeclaration = (function(){
 
                     for (var key in decl.styleNSPrefix)
                       template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
-                        used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+                        /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
                       });
 
                     // isolate
@@ -970,9 +970,9 @@ var makeDeclaration = (function(){
 
                                 template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
                                   /** @cut */ loc: getLocation(template, childAttrs_[namespaceAttrName].loc),
+                                  /** @cut */ used: false,
                                   name: styleNamespace,
-                                  prefix: styleNamespaceIsolate[src],
-                                  used: false
+                                  prefix: styleNamespaceIsolate[src]
                                 };
                               }
                             }
@@ -1446,7 +1446,7 @@ var makeDeclaration = (function(){
       }
       else
       {
-        namespace.used = true;
+        /** @cut */ namespace.used = true;
         return namespace.prefix + parts[1];
       }
     }
