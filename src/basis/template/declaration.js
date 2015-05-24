@@ -1346,7 +1346,7 @@ var makeDeclaration = (function(){
         case TYPE_TEXT:
           if (bindings)
           {
-            var binding = absl10n(bindings, options.dictURI, template.l10nTokens);
+            var binding = absl10n(bindings, options.dictURI, template.l10n);
             token[TOKEN_BINDINGS] = binding || 0;
             if (binding === false)
             {
@@ -1362,7 +1362,7 @@ var makeDeclaration = (function(){
             var array = bindings[0];
             for (var j = 0; j < array.length; j++)
             {
-              var binding = absl10n(array[j], options.dictURI, template.l10nTokens);   // TODO: move l10n binding process in separate function
+              var binding = absl10n(array[j], options.dictURI, template.l10n);   // TODO: move l10n binding process in separate function
               array[j] = binding === false ? '{' + array[j] + '}' : binding;
               /** @cut */ if (binding === false)
               /** @cut */   addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
@@ -1539,7 +1539,7 @@ var makeDeclaration = (function(){
       resources: [],
       includes: [],
       deps: [],
-      l10nTokens: {},
+      l10n: {},
       warns: warns,
       isolate: false
     };
@@ -1710,6 +1710,11 @@ var makeDeclaration = (function(){
 
     if (!warns.length)
       result.warns = false;
+
+    // for backward capability with basisjs-tools
+    // l10nTokens was implemented and renamed to l10n during 1.4 developing
+    // TODO: remove before 1.4 release
+    /** @cut */ result.l10nTokens = result.l10n;
 
     return result;
   };
