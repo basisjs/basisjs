@@ -738,7 +738,7 @@ var makeDeclaration = (function(){
 
               case 'l10n':
                 if (elAttrs.src)
-                  template.dictURI = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
+                  options.dictURI = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
               break;
 
               case 'define':
@@ -1346,7 +1346,7 @@ var makeDeclaration = (function(){
         case TYPE_TEXT:
           if (bindings)
           {
-            var binding = absl10n(bindings, template.dictURI, template.l10nTokens);
+            var binding = absl10n(bindings, options.dictURI, template.l10nTokens);
             token[TOKEN_BINDINGS] = binding || 0;
             if (binding === false)
             {
@@ -1362,7 +1362,7 @@ var makeDeclaration = (function(){
             var array = bindings[0];
             for (var j = 0; j < array.length; j++)
             {
-              var binding = absl10n(array[j], template.dictURI, template.l10nTokens);   // TODO: move l10n binding process in separate function
+              var binding = absl10n(array[j], options.dictURI, template.l10nTokens);   // TODO: move l10n binding process in separate function
               array[j] = binding === false ? '{' + array[j] + '}' : binding;
               /** @cut */ if (binding === false)
               /** @cut */   addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
@@ -1522,6 +1522,9 @@ var makeDeclaration = (function(){
     options = basis.object.slice(options);
     options.includeOptions = options.includeOptions || {};
     options.defines = {};
+    options.dictURI = sourceUrl  // resolve l10n dictionary url
+      ? basis.path.resolve(sourceUrl)
+      : baseURI || '';
     /** @cut */ options.styleNSIsolateMap = {};
     // force fetch locations and ranges in dev mode for debug and build purposes
     /** @cut */ options.loc = true;
@@ -1531,9 +1534,6 @@ var makeDeclaration = (function(){
     var result = {
       sourceUrl: sourceUrl,
       baseURI: baseURI || '',
-      dictURI: sourceUrl  // resolve l10n dictionary url
-        ? basis.path.resolve(sourceUrl)
-        : baseURI || '',
       tokens: null,
       styleNSPrefix: {},
       resources: [],
@@ -1547,11 +1547,11 @@ var makeDeclaration = (function(){
     /** @cut */ result.removals = [];
 
     // normalize dictionary ext name
-    if (result.dictURI)
+    if (options.dictURI)
     {
-      var extname = basis.path.extname(result.dictURI);
+      var extname = basis.path.extname(options.dictURI);
       if (extname && extname != '.l10n')
-        result.dictURI = result.dictURI.substr(0, result.dictURI.length - extname.length) + '.l10n';
+        options.dictURI = options.dictURI.substr(0, options.dictURI.length - extname.length) + '.l10n';
     }
 
     // tokenize source if needed
