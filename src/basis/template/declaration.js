@@ -1238,20 +1238,20 @@ var makeDeclaration = (function(){
     if (typeof value == 'string')
     {
       var parts = value.split(':');
-      var l10n = parts[0] == 'l10n';
+      var key = parts[1];
 
-      if (l10n)
-        if (parts.length == 2 && value.indexOf('@') == -1)
+      if (parts[0] == 'l10n')
+      {
+        if (parts.length == 2 && key.indexOf('@') == -1)
         {
           if (!dictURI)
-            return false;  // TODO: add warning that dictionary not found
-          parts[1] = parts[1] + '@' + dictURI;
+            return false;  // TODO: add warning that dictionary is not found
+
+          key = key + '@' + dictURI;
+          value = 'l10n:' + key;
         }
-
-      value = parts.join(':');
-
-      if (l10n)
-        l10nMap[value] = true;
+        arrayAdd(l10nMap, key);
+      }
     }
 
     return value;
@@ -1534,14 +1534,18 @@ var makeDeclaration = (function(){
     var result = {
       sourceUrl: sourceUrl,
       baseURI: baseURI || '',
+
       tokens: null,
-      styleNSPrefix: {},
-      resources: [],
       includes: [],
       deps: [],
-      l10n: {},
-      warns: warns,
-      isolate: false
+
+      isolate: false,
+      styleNSPrefix: {},  // TODO: investigate, could we remove this from declaration?
+      resources: [],      // probably we should use `styles` instead of `resources`
+
+      l10n: [],
+
+      warns: warns
     };
 
     /** @cut */ result.removals = [];
