@@ -762,7 +762,13 @@
         null,
         String(isoDateString || '')
           .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
-            tz = i ? h * 60 + i * 1 : h * 1;
+            // designator formats:
+            //   <datetime>Z
+            //   <datetime>±hh:mm
+            //   <datetime>±hhmm
+            //   <datetime>±hh
+            // http://en.wikipedia.org/wiki/ISO_8601#Time_zone_designators
+            tz = Number(h || 0) * 60 + Number(i || 0);
             return pre;
           })
           .split(reIsoStringSplit)
