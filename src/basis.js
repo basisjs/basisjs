@@ -2105,14 +2105,14 @@
     }
     else
     {
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+      /** @cut */ {
+      /** @cut */   var clr = arguments[2];
+      /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '.\nFilenames should starts with `./`, `..` or `/`. Otherwise it may treats as special reference in next releases.');
+      /** @cut */ }
+
       url = pathUtils.resolve(baseURI, url);
     }
-
-    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
-    /** @cut */ {
-    /** @cut */   var clr = arguments[2];
-    /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-    /** @cut */ }
 
     return url;
   };
@@ -2304,12 +2304,12 @@
  /**
   * @name resource
   */
-  var getResource = function(url){
+  var getResource = function(url, baseURI){
     var resource = resources[url];
 
     if (!resource)
     {
-      var resolvedUrl = resolveResourceUri(url, null, 'basis.resource(\'{url}\')');
+      var resolvedUrl = resolveResourceUri(url, baseURI, 'basis.resource(\'{url}\')');
 
       resource = resources[resolvedUrl] || createResource(resolvedUrl);
       resources[url] = resource;
@@ -2527,10 +2527,10 @@
         sourceURL,
         baseURL,
         function(path){
-          return getResource(resolveResourceUri(path, baseURL, 'resource(\'{url}\')'));
+          return getResource(path, baseURL);
         },
-        function(path, base){
-          return requireNamespace(path, base || baseURL);
+        function(path){
+          return requireNamespace(path, baseURL);
         },
         function(path){
           return resolveResourceUri(path, baseURL, 'asset(\'{url}\')');
@@ -2678,27 +2678,26 @@
 
 
  /**
-  * @param {string} filename
-  * @param {string} dirname
+  * @param {string} path
+  * @param {string} baseURI
   * @name require
   */
-  var requireNamespace = function(filename, dirname){
-    if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
+  var requireNamespace = function(path, baseURI){
+    if (!/[^a-z0-9_\.]/i.test(path) && pathUtils.extname(path) != '.js')
     {
       // namespace, like 'foo.bar.baz'
-      filename = resolveNSFilename(filename);
-    }
-    else
-    {
-      // regular filename
-      filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
+      path = resolveNSFilename(path);
+      baseURI = null;
     }
 
-    return getResource(filename).fetch();
+    return getResource(path, baseURI).fetch();
   };
   /** @cut */ requireNamespace.displayName = 'basis.require';
 
-
+ /**
+  * @param {string} filename
+  * @param {function} patchFn
+  */
   function patch(filename, patchFn){
     if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
     {
