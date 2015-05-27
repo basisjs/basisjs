@@ -2056,6 +2056,7 @@
   //
 
   var resources = {};
+  var resourceRequestCache = {};
   var resourceContentCache = {};
   var resourcePatch = {};
   var virtualResourceSeed = 1;
@@ -2091,7 +2092,7 @@
       }
   }
 
-  var resolveResourceUri = function(url, baseURI){
+  var resolveResourceFilename = function(url, baseURI){
     var rootNS = url.match(/^([a-zA-Z0-9\_\-]+):/);
 
     if (rootNS)
@@ -2297,6 +2298,7 @@
 
     // cache it
     resources[resourceUrl] = resource;
+    resourceRequestCache[resourceUrl] = resource;
 
     return resource;
   };
@@ -2305,14 +2307,15 @@
   * @name resource
   */
   var getResource = function(url, baseURI){
-    var resource = resources[url];
+    var reference = baseURI ? baseURI + '\x00' + url : url;
+    var resource = resourceRequestCache[reference];
 
     if (!resource)
     {
-      var resolvedUrl = resolveResourceUri(url, baseURI, 'basis.resource(\'{url}\')');
+      var resolvedUrl = resolveResourceFilename(url, baseURI, 'basis.resource(\'{url}\')');
 
       resource = resources[resolvedUrl] || createResource(resolvedUrl);
-      resources[url] = resource;
+      resourceRequestCache[reference] = resource;
     }
 
     // return resource or create it
@@ -2320,7 +2323,7 @@
   };
 
   extend(getResource, {
-    resolveURI: resolveResourceUri,
+    resolveURI: resolveResourceFilename,
     // onUpdate: function(fn, context){
     //   resourceUpdateNotifier.attach(fn, context);
     // },
@@ -2333,10 +2336,10 @@
       return resource ? resource.isResolved() : false;
     },
     exists: function(resourceUrl){
-      return hasOwnProperty.call(resources, resolveResourceUri(resourceUrl, null, 'basis.resource.exists(\'{url}\')'));
+      return hasOwnProperty.call(resources, resolveResourceFilename(resourceUrl, null, 'basis.resource.exists(\'{url}\')'));
     },
     get: function(resourceUrl){
-      resourceUrl = resolveResourceUri(resourceUrl, null, 'basis.resource.get(\'{url}\')');
+      resourceUrl = resolveResourceFilename(resourceUrl, null, 'basis.resource.get(\'{url}\')');
 
       if (!getResource.exists(resourceUrl))
         return null;
@@ -2533,7 +2536,7 @@
           return requireNamespace(path, baseURL);
         },
         function(path){
-          return resolveResourceUri(path, baseURL, 'asset(\'{url}\')');
+          return resolveResourceFilename(path, baseURL, 'asset(\'{url}\')');
         }
       );
     }
@@ -2594,7 +2597,7 @@
     {
       var parts = namespace.split('.');
       var namespaceRoot = parts.shift();
-      var filename = resolveResourceUri(namespaceRoot + ':' + parts.join('/') + '.js').replace(/\/\.js$/, '.js');
+      var filename = resolveResourceFilename(namespaceRoot + ':' + parts.join('/') + '.js').replace(/\/\.js$/, '.js');
 
       namespace2filename[namespace] = filename;
       filename2namespace[filename] = namespace;
@@ -2687,10 +2690,15 @@
     {
       // namespace, like 'foo.bar.baz'
       path = resolveNSFilename(path);
-      baseURI = null;
+    }
+    else
+    {
+      // resolve filename, but not for path with # or ? (used by virtual resources)
+      if (!/[\?#]/.test(path))
+        path = resolveResourceFilename(path, baseURI, 'basis.require(\'{url}\')');
     }
 
-    return getResource(path, baseURI).fetch();
+    return getResource(path).fetch();
   };
   /** @cut */ requireNamespace.displayName = 'basis.require';
 
@@ -2707,7 +2715,7 @@
     else
     {
       // regular filename
-      filename = resolveResourceUri(filename, null, 'basis.patch(\'{url}\')');
+      filename = resolveResourceFilename(filename, null, 'basis.patch(\'{url}\')');
     }
 
     if (!resourcePatch[filename])
@@ -3730,7 +3738,7 @@
     require: requireNamespace,
     resource: getResource,
     asset: function(path){
-      return resolveResourceUri(path, null, 'basis.asset(\'{url}\')');
+      return resolveResourceFilename(path, null, 'basis.asset(\'{url}\')');
     },
 
     // timers
