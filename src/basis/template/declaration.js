@@ -189,6 +189,18 @@ var makeDeclaration = (function(){
     /** @cut */   }, {});
     /** @cut */ }
 
+    /** @cut */ function addStateInfo(name, type, value){
+    /** @cut */   if (!hasOwnProperty.call(template.states, name))
+    /** @cut */     template.states[name] = {};
+    /** @cut */
+    /** @cut */   var info = template.states[name];
+    /** @cut */
+    /** @cut */   if (!hasOwnProperty.call(info, type) || !Array.isArray(value))
+    /** @cut */     info[type] = value;
+    /** @cut */   else
+    /** @cut */     addUnique(info[type], value);
+    /** @cut */ }
+
     function parseIncludeOptions(str){
       var result = {};
       var pairs = (str || '').trim().split(/\s*,\s*/);
@@ -766,7 +778,11 @@ var makeDeclaration = (function(){
                         defineName,
                         elAttrs['default'] == 'true' ? 1 : 0
                       ];
+
+                      /** @cut */ addStateInfo(bindingName, 'bool', true);
+
                       break;
+
                     case 'enum':
                       if ('values' in elAttrs == false)
                       {
@@ -796,7 +812,10 @@ var makeDeclaration = (function(){
                         values
                       ];
 
+                      /** @cut */ addStateInfo(bindingName, 'enum', values);
+
                       break;
+
                     /** @cut */ default:
                     /** @cut */   addTemplateWarn(template, options, 'Bad type in <b:define> for `' + defineName + '`: ' + elAttrs.type, elAttrs_.type && elAttrs_.type.valueLoc);
                   }
@@ -1549,6 +1568,7 @@ var makeDeclaration = (function(){
     };
 
     /** @cut */ result.removals = [];
+    /** @cut */ result.states = {};
 
     // normalize dictionary ext name
     if (options.dictURI)
