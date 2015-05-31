@@ -823,16 +823,16 @@
         'var _=createDOM(),' +
         (bindings.l10n ? 'l10n=initL10n?{}:l10nMap,' : '') +
         paths.path.concat(bindings.vars) +
-        // /** @cut */// ';instance.history=[]' +
-        // /** @cut */ (debug ? ';instance.debug=function debug(){' +
-        // /** @cut */   'return {' +
-        // /** @cut */     'bindings:[' + bindings.debugList + '],' +
-        // /** @cut *///     'history:Array.prototype.slice.call(history),' +
-        // /** @cut */     'values:{' + bindings.keys.map(function(key){
-        // /** @cut */       return '"' + key + '":__' + key;
-        // /** @cut */     }) + '}' +
-        // /** @cut */   '}' +
-        // /** @cut */ '}' : '') +
+        /** @cut */// ';instance.history=[]' +
+        /** @cut */ (debug ? ';instance.debug=function debug(){' +
+        /** @cut */   'return {' +
+        /** @cut */     'bindings:[' + bindings.debugList + '],' +
+        /** @cut *///     'history:Array.prototype.slice.call(history),' +
+        /** @cut */     'values:{' + bindings.keys.map(function(key){
+        /** @cut */       return '"' + key + '":__' + key;
+        /** @cut */     }) + '}' +
+        /** @cut */   '}' +
+        /** @cut */ '}' : '') +
         ';instance.tmpl={' + [
           paths.ref,
           'templateId_:id',

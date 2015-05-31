@@ -439,7 +439,8 @@
       var bindingCache = {};
 
      /**
-      * @param {object} bindings
+      * @param {object} instance
+      * @param {function(name, value)} set
       */
       return function getBinding(instance, set){
         var bindings = instance.bindings;
