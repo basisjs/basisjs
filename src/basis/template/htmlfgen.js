@@ -726,6 +726,7 @@
           'case"' + bindName + '":' +
             'if(__' + stateVar + '!==value)' +
             '{' +
+              ///** @cut */ 'history.push({binding:"' + stateVar + '",value:value});' +
               /** @cut */ '$$' + stateVar + '++;' +
               '__' + stateVar + '=value;' +
               bindMap[bindName].join('') +
@@ -809,56 +810,47 @@
       );
     }
 
-    result.createInstance = compileFunction(['tid', 'map', 'createDOM', 'tools', 'l10nMap', 'TEXT_BUG'],
+    result.createInstanceFactory = compileFunction(['tid', 'createDOM', 'tools', 'l10nMap', 'l10nMarkup', 'getBindings', 'TEXT_BUG'],
       /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
-      'var getBindings=tools.createBindingFunction([' +
-        bindings.keys.map(function(key){
-          return '"' + key + '"';
-        }) +
-      ']),' +
+      'var ' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
       'Attaches=function(){};' +
       'Attaches.prototype={' + bindings.keys.map(function(key){
         return key + ':null';
       }) + '};' +
-      'return function createInstance_(id,obj,onAction,onRebuild,bindings,bindingInterface,initL10n){' +
-        'var _=createDOM(),l10n=initL10n?{}:l10nMap,' +
-        paths.path.concat(bindings.vars) + ',' +
-        'instance={' +
-          /** @cut */ (debug ? 'debug:function debug(){' +
-          /** @cut */   'return {' +
-          /** @cut */     'bindings:[' + bindings.debugList + '],' +
-          /** @cut */     'values:{' + bindings.keys.map(function(key){
-          /** @cut */       return '"' + key + '":__' + key;
-          /** @cut */     }) + '}' +
-          /** @cut */   '}' +
-          /** @cut */ '},' : '') +
-          'context:obj,' +
-          'action:onAction,' +
-          'rebuild:onRebuild,' +
-          'handler:null,' +
-          'bindings:bindings,' +
-          'bindingInterface:bindingInterface,' +
-          'attaches:null,' +
-          'tmpl:{' + [
-            paths.ref,
-            'templateId_:id',
-            'set:set'
-            ] +
-          '}' +
+      'return function createTmpl_(id,instance,initL10n){' +
+        'var _=createDOM(),' +
+        (bindings.l10n ? 'l10n=initL10n?{}:l10nMap,' : '') +
+        paths.path.concat(bindings.vars) +
+        // /** @cut */// ';instance.history=[]' +
+        // /** @cut */ (debug ? ';instance.debug=function debug(){' +
+        // /** @cut */   'return {' +
+        // /** @cut */     'bindings:[' + bindings.debugList + '],' +
+        // /** @cut *///     'history:Array.prototype.slice.call(history),' +
+        // /** @cut */     'values:{' + bindings.keys.map(function(key){
+        // /** @cut */       return '"' + key + '":__' + key;
+        // /** @cut */     }) + '}' +
+        // /** @cut */   '}' +
+        // /** @cut */ '}' : '') +
+        ';instance.tmpl={' + [
+          paths.ref,
+          'templateId_:id',
+          'set:set'
+          ] +
         '}' +
 
-        (objectRefs ? ';if(obj||onAction)' + objectRefs + '=(id<<12)|tid' : '') +
+        (objectRefs ? ';if(instance.context||instance.onAction)' + objectRefs + '=(id<<12)|tid' : '') +
 
         bindings.set +
 
         // sync template with bindings
-        ';if(initL10n){l10n=l10nMap;initL10n(set)}' +
-        ';if(bindings)instance.handler=getBindings(bindings,obj,set,bindingInterface)' +
+        (bindings.l10n
+          ? ';if(initL10n){l10n=l10nMap;initL10n(set)}' +
+            ';if(l10nMarkup.length)for(var idx=0,token;token=l10nMarkup[idx];idx++)set(token.path,token.token);'
+          : '') +
+        ';if(instance.bindings)instance.handler=getBindings(instance,set)' +
         ';' + bindings.l10nCompute +
-
-        ';return instance' +
       '}'
 
       /** @cut */ + '\n\n//# sourceURL=' + basis.path.origin + uri

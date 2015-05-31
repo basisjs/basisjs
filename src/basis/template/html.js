@@ -441,7 +441,9 @@
      /**
       * @param {object} bindings
       */
-      return function getBinding(bindings, obj, set, bindingInterface){
+      return function getBinding(instance, set){
+        var bindings = instance.bindings;
+
         if (!bindings)
           return {};
 
@@ -494,13 +496,13 @@
         }
 
         if (set)
-          result.sync.call(set, obj);
+          result.sync.call(set, instance.context);
 
-        if (!bindingInterface)
+        if (!instance.bindingInterface)
           return;
 
         if (result.handler)
-          bindingInterface.attach(obj, result.handler, set);
+          instance.bindingInterface.attach(instance.context, result.handler, set);
 
         return result.handler;
       };
@@ -515,14 +517,13 @@
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
-      l10nToken: getL10nToken,
-      createBindingFunction: createBindingFunction
+      l10nToken: getL10nToken
     };
 
     return function(tokens, instances){
       var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG);
       var hasL10n = fn.createL10nSync;
-      var createInstance;
+      var initInstance;
       var l10nProtoSync;
       var l10nMap = {};
       var l10nLinks = [];
@@ -595,24 +596,28 @@
         });
       }
 
-      createInstance = fn.createInstance(
-        this.templateId, instances, createDOM, tools,
-        l10nMap, CLONE_NORMALIZATION_TEXT_BUG
+      initInstance = fn.createInstanceFactory(
+        this.templateId, createDOM, tools,
+        l10nMap, l10nMarkupTokens,
+        createBindingFunction(fn.keys),
+        CLONE_NORMALIZATION_TEXT_BUG
       );
 
       return {
         createInstance: function(obj, onAction, onRebuild, bindings, bindingInterface){
           var instanceId = seed++;
-          var instance = createInstance(
-            instanceId, obj, onAction, onRebuild,
-            bindings, bindingInterface,
-            hasL10n && !instanceId && !protoOnly ? initL10n : null
-          );
+          var instance = {
+            context: obj,
+            action: onAction,
+            rebuild: onRebuild,
+            handler: null,
+            bindings: bindings,
+            bindingInterface: bindingInterface,
+            attaches: null,
+            tmpl: null
+          };
 
-          if (hasL10n && l10nMarkupTokens.length)
-            for (var i = 0, l10nToken; l10nToken = l10nMarkupTokens[i]; i++)
-              instance.tmpl.set(l10nToken.path, l10nToken.token);
-
+          initInstance(instanceId, instance, !instanceId && !protoOnly ? initL10n : null);
           instances[instanceId] = instance;
 
           return instance.tmpl;
