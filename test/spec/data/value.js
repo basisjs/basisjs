@@ -687,6 +687,27 @@ module.exports = {
 
             assert(factory(obj) === value);
           }
+        },
+        {
+          name: '`as` factory should support pipe method',
+          test: function(){
+            var foo = new DataObject({ data: { bar: 1 } });
+            var obj = new DataObject({ data: { foo: foo } });
+            var value = Value
+              .from(obj, 'update', 'data.foo')
+              .as(Object)
+              .pipe('update', 'data.bar');
+            var factory = Value
+              .factory('update', 'data.foo')
+              .as(Object)
+              .pipe('update', 'data.bar');
+
+            assert(factory(obj) === value);
+            assert(factory(obj).value === 1);
+
+            foo.update({ bar: 2 });
+            assert(factory(obj).value === 2);
+          }
         }
       ]
     },

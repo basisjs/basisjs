@@ -1293,10 +1293,7 @@
     };
 
     result.factory = FACTORY;
-    //result.pipe = valuePipeFactory;
-    result.pipe = function(){
-      /** @cut */ basis.dev.warn('basis.data: `as` factory is not supported for `pipe` method yet (coming soon)');
-    };
+    result.pipe = valuePipeFactory;
     result.as = valueAsFactory;
 
     return result;
