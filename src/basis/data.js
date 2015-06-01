@@ -1217,6 +1217,25 @@
     return result;
   };
 
+  function valueAsFactory(getter){
+    var parent = this;
+    var result = function(value){
+      value = parent(value);
+      return value
+        ? value.as(getter)
+        : value;
+    };
+
+    result.factory = FACTORY;
+    //result.pipe = valuePipeFactory;
+    result.pipe = function(){
+      /** @cut */ basis.dev.warn('basis.data: `as` factory is not supported for `pipe` method yet (coming soon)');
+    };
+    result.as = valueAsFactory;
+
+    return result;
+  }
+
   function valuePipeFactory(events, getter){
     var parent = this;
     var result = function(value){
@@ -1228,6 +1247,7 @@
 
     result.factory = FACTORY;
     result.pipe = valuePipeFactory;
+    result.as = valueAsFactory;
 
     return result;
   }
@@ -1239,6 +1259,7 @@
 
     result.factory = FACTORY;
     result.pipe = valuePipeFactory;
+    result.as = valueAsFactory;
 
     return result;
   };

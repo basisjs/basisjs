@@ -516,17 +516,48 @@ module.exports = {
           }
         },
         {
-          name: 'should has method pipe and returns the same as Value.from().pipe()',
+          name: 'should has `pipe` method that returns new factory',
           test: function(){
-            var factory = Value
-              .factory('foo', 'bar')
+            var factory = Value.factory('foo', 'bar')
               .pipe('baz', 'qux');
+
+            assert(basis.fn.isFactory(factory));
+            assert(typeof factory.pipe === 'function');
+            assert(typeof factory.as === 'function');
+          }
+        },
+        {
+          name: '`pipe` factory should return the same value as Value.from().pipe()',
+          test: function(){
             var obj = new DataObject();
             var value = Value.from(obj, 'foo', 'bar').pipe('baz', 'qux');
+            var factory = Value.factory('foo', 'bar')
+              .pipe('baz', 'qux');
 
-            assert(typeof factory === 'function');
             assert(factory(obj) === value);
             assert(factory(obj).pipe('a', 'b') === value.pipe('a', 'b'));
+          }
+        },
+        {
+          name: 'should has `as` method and returns new factory',
+          test: function(){
+            var factory = Value.factory('update', 'data.foo')
+              .as(Boolean);
+
+            assert(basis.fn.isFactory(factory));
+            assert(typeof factory.pipe === 'function');
+            assert(typeof factory.as === 'function');
+          }
+        },
+        {
+          name: '`as` factory should return the same value as Value.from().as()',
+          test: function(){
+            var obj = new DataObject({ data: { foo: 1 } });
+            var value = Value.from(obj, 'update', 'data.foo').as(Boolean);
+            var factory = Value.factory('update', 'data.foo')
+              .as(Boolean);
+
+            assert(factory(obj) === value);
           }
         }
       ]
