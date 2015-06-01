@@ -582,6 +582,15 @@
   }
 
  /**
+  * Check value is factory.
+  * @param {*} value Value to check
+  * @return {boolean} Returns true if value is factory.
+  */
+  function isFactory(value){
+    return typeof value === 'function' && value.factory === FACTORY;
+  }
+
+ /**
   * Generates name for function and registrates it in global scope.
   * @param {function()} fn Function that should available in global scope.
   * @param {boolean} permanent If false callback will be removed after fiest invoke.
@@ -3802,6 +3811,7 @@
       nullGetter: nullGetter,
       wrapper: wrapper,
       factory: factory,
+      isFactory: isFactory,
 
       // callbacks
       lazyInit: lazyInit,
