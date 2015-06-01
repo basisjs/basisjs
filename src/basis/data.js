@@ -631,8 +631,8 @@
 
   var computeFunctions = {};
   var valueSetters = {};
-  var valueSyncToken = function(value){
-    this.set(this.fn(value));
+  var valueSyncAs = function(value){
+    Value.prototype.set.call(this, value);
   };
   var valueSyncPipe = function(newValue, oldValue){
     if (oldValue instanceof Emitter)
@@ -708,6 +708,11 @@
     * @type {object}
     */
     links_: null,
+
+   /**
+    * @type {basis.data.DeferredValue}
+    */
+    deferred_: null,
 
    /**
     * @type {object}
@@ -966,11 +971,11 @@
     * Returns token which value equals to transformed via fn function value.
     * @param {function(value)} fn
     * @param {boolean=} deferred
-    * @return {basis.Token|basis.DeferredToken}
+    * @return {basis.data.Value|basis.data.DeferredValue}
     */
     as: function(fn, deferred){
-      if (!fn)
-        fn = $self;
+      if (!fn || fn === $self)
+        return deferred ? this.deferred() : this;
 
       if (this.links_)
       {
@@ -981,29 +986,37 @@
         while (cursor = cursor.links_)
         {
           var context = cursor.context;
-          if (context instanceof basis.Token &&
-              (context.fn[GETTER_ID] || String(context.fn)) == fnId) // compare functions by id
+          if (context instanceof ReadOnlyValue &&
+              (context.proxy[GETTER_ID] || String(context.proxy)) == fnId) // compare functions by id
             return deferred
               ? context.deferred()
               : context;
         }
       }
 
-      // create token
-      var token = new basis.Token();
-      token.fn = fn;
+      // create transform value
+      var result = new ReadOnlyValue({
+        proxy: fn,
+        value: this.value
+      });
 
-      this.link(token, valueSyncToken);
+      this.link(result, valueSyncAs, true, result.destroy);
 
-      return deferred ? token.deferred() : token;
+      return deferred ? result.deferred() : result;
     },
 
    /**
     * @param {function(value)} fn
-    * @return {basis.DeferredToken}
+    * @return {basis.data.DeferredValue}
     */
     deferred: function(fn){
-      return this.as(fn, true);
+      if (!this.deferred_)
+        this.deferred_ = new DeferredValue({
+          source: this,
+          value: this.value
+        });
+
+      return this.deferred_;
     },
 
    /**
@@ -1102,19 +1115,74 @@
       this.initValue = null;
       this.value = null;
       this.lockedValue_ = null;
+      this.deferred_ = null;
       this.pipes_ = null;
+    }
+  });
+
+  //
+  // Read only value
+  //
+
+  var ReadOnlyValue = Class(Value, {
+    className: namespace + '.ReadOnlyValue',
+    set: basis.fn.$false
+  });
+
+  //
+  // Deferred value
+  //
+
+  var DEFERRED_HANDLER = {
+    change: function(source){
+      if (!this.isLocked())
+      {
+        this.lock();
+        deferredSchedule.add(this);
+      }
+
+      Value.prototype.set.call(this, source.value);
+    },
+    destroy: function(){
+      this.destroy();
+    }
+  };
+  var deferredSchedule = basis.asap.schedule(function(value){
+    value.unlock();
+  });
+
+ /**
+  * @class
+  */
+  var DeferredValue = Class(ReadOnlyValue, {
+    className: namespace + '.DeferredValue',
+    setNullOnEmitterDestroy: false,
+    source: null,
+
+    init: function(){
+      Value.prototype.init.call(this);
+      this.source.addHandler(DEFERRED_HANDLER, this);
+    },
+
+    deferred: function(){
+      return this;
+    },
+
+    destroy: function(){
+      deferredSchedule.remove(this);
+      this.source = null;
+      Value.prototype.destroy.call(this);
     }
   });
 
  /**
   * @class
   */
-  var PipeValue = Class(Value, {
+  var PipeValue = Class(ReadOnlyValue, {
     className: namespace + '.PipeValue',
     source: null,
     pipeId: null,
     pipeHandler: null,
-    set: basis.fn.$undef,
     destroy: function(){
       var source = this.source;
       var sourceValue = source.value;
@@ -1165,10 +1233,9 @@
       result = valueFromMap[id];
       if (!result)
       {
-        result = valueFromMap[id] = new Value({
+        result = valueFromMap[id] = new ReadOnlyValue({
           proxy: basis.getter(getter),
           value: obj,
-          set: basis.fn.$undef,
           handler: {
             destroy: function(){
               valueFromMap[id] = null;
@@ -1195,9 +1262,8 @@
         result = valueFromMap[id];
         if (!result)
         {
-          result = valueFromMap[id] = new Value({
+          result = valueFromMap[id] = new ReadOnlyValue({
             value: bindingBridge.get(obj),
-            set: basis.fn.$undef,
             handler: {
               destroy: function(){
                 valueFromMap[id] = null;
@@ -2893,7 +2959,12 @@
 
     // classes
     AbstractData: AbstractData,
+
     Value: Value,
+    ReadOnlyValue: ReadOnlyValue,
+    DeferredValue: DeferredValue,
+    PipeValue: PipeValue,
+
     Object: DataObject,
     Slot: Slot,
 

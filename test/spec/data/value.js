@@ -11,6 +11,8 @@ module.exports = {
     var DataObject = basis.require('basis.data').Object;
     var resolveValue = basis.require('basis.data').resolveValue;
     var ResolveAdapter = basis.require('basis.data').ResolveAdapter;
+    var ReadOnlyValue = basis.require('basis.data').ReadOnlyValue;
+    var DeferredValue = basis.require('basis.data').DeferredValue;
 
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
   },
@@ -161,7 +163,7 @@ module.exports = {
                 var a = testValue.as(fn);
                 var b = testValue.as(fn);
 
-                assert(a instanceof basis.Token);
+                assert(a instanceof ReadOnlyValue);
                 assert(a === b);
               }
             },
@@ -173,8 +175,17 @@ module.exports = {
                 var a = testValue.as(fn, true);
                 var b = testValue.as(fn, true);
 
-                assert(a instanceof basis.DeferredToken);
+                assert(a instanceof DeferredValue);
                 assert(a === b);
+              }
+            },
+            {
+              name: 'result for as and deferred should be equal',
+              test: function(){
+                var testValue = new Value();
+
+                assert(testValue.as(null, true) === testValue.deferred());
+                assert(testValue.as(basis.fn.$self, true) === testValue.deferred());
               }
             },
             {
@@ -184,7 +195,7 @@ module.exports = {
                 var a = testValue.as(function(){});
                 var b = testValue.as(function(){});
 
-                assert(a instanceof basis.Token);
+                assert(a instanceof ReadOnlyValue);
                 assert(a === b);
               }
             },
@@ -196,9 +207,9 @@ module.exports = {
                 var b = testValue.as(basis.getter('data.bar'));
                 var c = testValue.as(basis.getter('data.foo'));
 
-                assert(a instanceof basis.Token);
-                assert(b instanceof basis.Token);
-                assert(c instanceof basis.Token);
+                assert(a instanceof ReadOnlyValue);
+                assert(b instanceof ReadOnlyValue);
+                assert(c instanceof ReadOnlyValue);
                 assert(a !== b);
                 assert(a === c);
               }
@@ -221,6 +232,123 @@ module.exports = {
 
                 assert(a.value === 16);
                 assert(b.value === 4);
+              }
+            },
+            {
+              name: 'value produced by as method should destroy on source value destroy',
+              test: function(){
+                var destroyed = false;
+                var value = new Value({ value: 3 });
+                var as = value.as(function(v){
+                  return v * v;
+                });
+
+                as.addHandler({
+                  destroy: function(){
+                    destroyed = true;
+                  }
+                });
+
+                value.destroy();
+                assert(destroyed === true);
+              }
+            }
+          ]
+        },
+        {
+          name: 'Value#deferred',
+          test: [
+            {
+              name: 'should return DeferredValue instance',
+              test: function(){
+                var value = new Value();
+
+                assert(value.deferred() instanceof DeferredValue);
+              }
+            },
+            {
+              name: 'should return the same value all the time',
+              test: function(){
+                var value = new Value();
+
+                assert(value.deferred() === value.deferred());
+              }
+            },
+            {
+              name: 'deferred value should update when source value change',
+              test: function(){
+                var value = new Value({ value: 1 });
+                var deferred = value.deferred();
+
+                assert(deferred.value === 1);
+
+                value.set(2);
+                assert(deferred.value === 2);
+
+                value.set(3);
+                assert(deferred.value === 3);
+              }
+            },
+            {
+              name: 'deferred value should fire change event async (asap)',
+              test: function(){
+                var changeCount = 0;
+                var value = new Value({ value: 1 });
+                var deferred = value.deferred();
+                deferred.addHandler({
+                  change: function(){
+                    changeCount++;
+                  }
+                });
+
+                value.set(2);
+                value.set(3);
+                assert(deferred.value === 3);
+                assert(changeCount === 0);
+
+                setTimeout(function(){
+                  assert(changeCount === 1);
+                }, 20);
+              }
+            },
+            {
+              name: 'deferred value should not fire change event if value is the same as on last change event',
+              test: function(){
+                var changeCount = 0;
+                var value = new Value({ value: 1 });
+                var deferred = value.deferred();
+                deferred.addHandler({
+                  change: function(){
+                    changeCount++;
+                  }
+                });
+
+                value.set(2);
+                value.set(3);
+                value.set(1);
+                assert(deferred.value === 1);
+                assert(changeCount === 0);
+
+                setTimeout(function(){
+                  assert(changeCount === 0);
+                }, 20);
+              }
+            },
+            {
+              name: 'deferred value should when source value destroy',
+              test: function(){
+                var destroyed = false;
+                var value = new Value();
+                var deferred = value.deferred();
+
+                deferred.addHandler({
+                  destroy: function(){
+                    destroyed = true;
+                  }
+                });
+
+                value.destroy();
+                assert(destroyed === true);
               }
             }
           ]
