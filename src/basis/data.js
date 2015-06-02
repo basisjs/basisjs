@@ -847,82 +847,77 @@
 
       var hostValue = this;
       var handler = createEventHandler(events, function(object){
-        this.set(fn(object, hostValue.value)); // `this` is a token
+        Value.prototype.set.call(this, fn(object, hostValue.value)); // `this` is a compute value
       });
       var fnId = fn[GETTER_ID] || String(fn);
-      var getComputeTokenId = handler.events.concat(fnId, this.basisObjectId).join('_');
-      var getComputeToken = computeFunctions[getComputeTokenId];
+      var getComputeValueId = handler.events.concat(fnId, this.basisObjectId).join('_');
+      var getComputeValue = computeFunctions[getComputeValueId];
 
-      if (!getComputeToken)
+      if (!getComputeValue)
       {
-        var tokenMap = {};
+        var computeMap = {};
 
         handler.destroy = function(object){
-          delete tokenMap[object.basisObjectId];
-          this.destroy(); // `this` is a token
+          delete computeMap[object.basisObjectId];
+          this.destroy(); // `this` is a compute value
         };
 
         this.addHandler({
           change: function(){
-            for (var key in tokenMap)
+            for (var key in computeMap)
             {
-              var pair = tokenMap[key];
-              pair.token.set(fn(pair.object, this.value));
+              var pair = computeMap[key];
+              Value.prototype.set.call(pair.value, fn(pair.object, this.value));
             }
           },
           destroy: function(){
-            for (var key in tokenMap)
+            for (var key in computeMap)
             {
-              var pair = tokenMap[key];
-              pair.object.removeHandler(handler, pair.token);
-              pair.token.destroy();
+              var pair = computeMap[key];
+              pair.object.removeHandler(handler, pair.value);
+              pair.value.destroy();
             }
 
-            tokenMap = null;
+            computeMap = null;
             hostValue = null;
           }
         });
 
-        getComputeToken = computeFunctions[getComputeTokenId] = function(object){
+        getComputeValue = computeFunctions[getComputeValueId] = chainValueFactory(function(object){
           /** @cut */ if (object instanceof Emitter == false)
           /** @cut */   basis.dev.warn('basis.data.Value#compute: object should be an instanceof basis.event.Emitter');
 
           var objectId = object.basisObjectId;
-          var pair = tokenMap[objectId];
+          var pair = computeMap[objectId];
           var value = fn(object, hostValue.value);
 
           if (!pair)
           {
             // create token with computed value
-            var token = new basis.Token(value);
+            var computeValue = new ReadOnlyValue({
+              value: value
+            });
 
             // attach handler re-evaluate handler to object
-            object.addHandler(handler, token);
+            object.addHandler(handler, computeValue);
 
             // store to map
-            pair = tokenMap[objectId] = {
-              token: token,
+            pair = computeMap[objectId] = {
+              value: computeValue,
               object: object
             };
           }
           else
           {
             // recalc value
-            pair.token.set(value);
+            Value.prototype.set.call(pair.value, value);
           }
 
-          return pair.token;
-        };
-
-        getComputeToken.factory = FACTORY;
-        getComputeToken.deferred = function(){
-          return function(object){
-            return getComputeToken(object).deferred();
-          };
-        };
+          return pair.value;
+        });
       }
 
-      return getComputeToken;
+      return getComputeValue;
     },
 
    /**
@@ -1283,48 +1278,68 @@
     return result;
   };
 
+  //
+  // Value factories
+  //
+
+  function chainValueFactory(fn){
+    fn.factory = FACTORY;
+    fn.deferred = valueDeferredFactory;
+    fn.compute = valueComputeFactory;
+    fn.pipe = valuePipeFactory;
+    fn.as = valueAsFactory;
+
+    return fn;
+  }
+
+  function valueDeferredFactory(){
+    var factory = this;
+
+    return chainValueFactory(function(value){
+      value = factory(value);
+      return value
+        ? value.deferred()
+        : value;
+    });
+  }
+
+  function valueComputeFactory(events, getter){
+    var factory = this;
+
+    return chainValueFactory(function(sourceValue){
+      var value = factory(sourceValue);
+      return value
+        ? value.compute(events, getter)(sourceValue)
+        : value;
+    });
+  }
+
   function valueAsFactory(getter){
-    var parent = this;
-    var result = function(value){
-      value = parent(value);
+    var factory = this;
+
+    return chainValueFactory(function(value){
+      value = factory(value);
       return value
         ? value.as(getter)
         : value;
-    };
-
-    result.factory = FACTORY;
-    result.pipe = valuePipeFactory;
-    result.as = valueAsFactory;
-
-    return result;
+    });
   }
 
   function valuePipeFactory(events, getter){
-    var parent = this;
-    var result = function(value){
-      value = parent(value);
+    var factory = this;
+
+    return chainValueFactory(function(value){
+      value = factory(value);
       return value
         ? value.pipe(events, getter)
         : value;
-    };
-
-    result.factory = FACTORY;
-    result.pipe = valuePipeFactory;
-    result.as = valueAsFactory;
-
-    return result;
+    });
   }
 
   Value.factory = function(events, getter){
-    var result = function(object){
+    return chainValueFactory(function(object){
       return Value.from(object, events, getter);
-    };
-
-    result.factory = FACTORY;
-    result.pipe = valuePipeFactory;
-    result.as = valueAsFactory;
-
-    return result;
+    });
   };
 
 

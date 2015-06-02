@@ -514,79 +514,302 @@ module.exports = {
           ]
         },
         {
-          name: 'Value#lock/unlock',
-          test: function(){
-            var changeCount = 0;
-            var testValue = new Value({
-              value: 1,
-              handler: {
-                change: function(){
-                  changeCount++;
-                }
+          name: 'Value#compute',
+          test: [
+            {
+              name: 'should return instance of ReadOnlyValue',
+              test: function(){
+                var value = new Value();
+                var compute = value.compute('update', Boolean);
+                var object = new DataObject();
+
+                assert(compute(object) instanceof ReadOnlyValue);
               }
-            });
+            },
+            {
+              name: 'should return the same value for same source object',
+              test: function(){
+                var value = new Value();
+                var compute = value.compute('update', Boolean);
+                var object = new DataObject();
 
-            assert(changeCount === 0);
-            assert(testValue.value === 1);
-            assert(testValue.isLocked() === false);
+                assert(compute(object) === compute(object));
+              }
+            },
+            {
+              name: 'should compute correct value on init',
+              test: function(){
+                var value = new Value({ value: 2 });
+                var compute = value.compute('update', function(object, value){
+                  return object.data.foo * value;
+                });
+                var object = new DataObject({
+                  data: {
+                    foo: 3
+                  }
+                });
 
-            testValue.lock();
-            testValue.set(2);
+                assert(compute(object).value === 6);
+              }
+            },
+            {
+              name: 'should update value on arguments changes',
+              test: function(){
+                var value = new Value({ value: 2 });
+                var compute = value.compute('update', function(object, value){
+                  return object.data.foo * value;
+                });
+                var object = new DataObject({
+                  data: {
+                    foo: 3
+                  }
+                });
+                var computeValue = compute(object);
 
-            assert(changeCount === 0);
-            assert(testValue.value === 2);
-            assert(testValue.isLocked() === true);
+                assert(computeValue.value === 6);
 
-            testValue.unlock();
-            assert(changeCount === 1);
-            assert(testValue.value === 2);
-            assert(testValue.isLocked() === false);
-            assert(testValue.lockedValue_ === null);
+                value.set(3);
+                assert(computeValue.value === 9);
 
-            testValue.lock();
-            assert(testValue.lockedValue_ === 2);
-            testValue.unlock();
-            assert(testValue.value === 2);
-            assert(testValue.isLocked() === false);
-            assert(testValue.lockedValue_ === null);
-          }
+                object.update({ foo: 4 });
+                assert(computeValue.value === 12);
+              }
+            },
+            {
+              name: 'chaining',
+              test: [
+                {
+                  name: 'should has `deferred` method',
+                  test: function(){
+                    var value = new Value({ value: 2 });
+                    var compute = value
+                      .compute('update', function(object, value){
+                        return object.data.foo * value;
+                      })
+                      .deferred();
+                    var object = new DataObject({
+                      data: {
+                        foo: 3
+                      }
+                    });
+                    var deferredComputeValue = compute(object);
+
+                    var changeCount = 0;
+                    deferredComputeValue.addHandler({
+                      change: function(){
+                        changeCount++;
+                      }
+                    });
+
+                    assert(deferredComputeValue.value === 6);
+                    assert(changeCount === 0);
+
+                    value.set(3);
+                    assert(deferredComputeValue.value === 9);
+                    assert(changeCount === 0);
+
+                    object.update({
+                      foo: 4
+                    });
+                    assert(deferredComputeValue.value === 12);
+                    assert(changeCount === 0);
+
+                    setTimeout(function(){
+                      assert(changeCount === 1);
+                    }, 20);
+                  }
+                },
+                {
+                  name: '`deferred` method should be chainable',
+                  test: function(){
+                    var value = new Value({ value: 2 });
+                    var compute = value
+                      .compute('update', function(object, value){
+                        return object.data.foo * value;
+                      })
+                      .deferred()
+                      .as(String);
+                    var object = new DataObject({
+                      data: {
+                        foo: 3
+                      }
+                    });
+                    var deferredComputeValue = compute(object);
+
+                    assert(deferredComputeValue.value === '6');
+
+                    value.set(3);
+                    object.update({
+                      foo: 4
+                    });
+                    assert(deferredComputeValue.value === '6');
+
+                    setTimeout(function(){
+                      assert(deferredComputeValue.value === '12');
+                    }, 20);
+                  }
+                },
+                {
+                  name: 'should has `as` method',
+                  test: function(){
+                    var value = new Value({ value: 2 });
+                    var compute = value
+                      .compute('update', function(object, value){
+                        return object.data.foo * value;
+                      })
+                      .as(String);
+                    var object = new DataObject({
+                      data: {
+                        foo: 3
+                      }
+                    });
+
+                    assert(compute(object).value === '6');
+                  }
+                },
+                {
+                  name: 'should has `compute` method',
+                  test: function(){
+                    var value = new Value({ value: 2 });
+                    var compute = value
+                      .compute('update', function(object, value){
+                        return object.data.foo * value;
+                      })
+                      .compute('update', function(object, value){
+                        return object.data.bar * value;
+                      });
+                    var object = new DataObject({
+                      data: {
+                        foo: 3,
+                        bar: 4
+                      }
+                    });
+
+                    assert(compute(object).value === 24);
+                  }
+                },
+                {
+                  name: 'should has `pipe` method',
+                  test: function(){
+                    var value = new Value({ value: 'delegate' });
+                    var compute = value
+                      .compute('delegateChanged', function(object, value){
+                        return object[value];
+                      })
+                      .pipe('update', 'data.foo');
+                    var object = new DataObject({
+                      delegate: new DataObject({
+                        data: {
+                          foo: 1
+                        }
+                      })
+                    });
+                    var computeValue = compute(object);
+
+                    assert(computeValue.value === 1);
+
+                    object.delegate.update({
+                      foo: 2
+                    });
+                    assert(computeValue.value === 2);
+
+                    object.setDelegate(new DataObject({
+                      data: {
+                        foo: 3
+                      }
+                    }));
+                    assert(computeValue.value === 3);
+
+                    value.set('xxx');
+                    assert(computeValue.value === null);
+
+                    value.set('delegate');
+                    assert(computeValue.value === 3);
+                  }
+                }
+              ]
+            }
+          ]
         },
         {
-          name: 'multiple Value#lock/unlock',
-          test: function(){
-            var changeCount = 0;
-            var testValue = new Value({
-              value: 1,
-              handler: {
-                change: function(){
-                  changeCount++;
-                }
+          name: 'Value#lock/unlock',
+          test: [
+            {
+              name: 'base test',
+              test: function(){
+                var changeCount = 0;
+                var testValue = new Value({
+                  value: 1,
+                  handler: {
+                    change: function(){
+                      changeCount++;
+                    }
+                  }
+                });
+
+                assert(changeCount === 0);
+                assert(testValue.value === 1);
+                assert(testValue.isLocked() === false);
+
+                testValue.lock();
+                testValue.set(2);
+
+                assert(changeCount === 0);
+                assert(testValue.value === 2);
+                assert(testValue.isLocked() === true);
+
+                testValue.unlock();
+                assert(changeCount === 1);
+                assert(testValue.value === 2);
+                assert(testValue.isLocked() === false);
+                assert(testValue.lockedValue_ === null);
+
+                testValue.lock();
+                assert(testValue.lockedValue_ === 2);
+                testValue.unlock();
+                assert(testValue.value === 2);
+                assert(testValue.isLocked() === false);
+                assert(testValue.lockedValue_ === null);
               }
-            });
+            },
+            {
+              name: 'multiple Value#lock/unlock',
+              test: function(){
+                var changeCount = 0;
+                var testValue = new Value({
+                  value: 1,
+                  handler: {
+                    change: function(){
+                      changeCount++;
+                    }
+                  }
+                });
 
-            assert(testValue.isLocked() === false);
+                assert(testValue.isLocked() === false);
 
-            testValue.lock();
-            testValue.lock();
-            testValue.unlock();
+                testValue.lock();
+                testValue.lock();
+                testValue.unlock();
 
-            assert(testValue.isLocked() === true);
+                assert(testValue.isLocked() === true);
 
-            testValue.unlock();
-            assert(testValue.isLocked() === false);
+                testValue.unlock();
+                assert(testValue.isLocked() === false);
 
-            testValue.unlock();
-            assert(testValue.isLocked() === false);
+                testValue.unlock();
+                assert(testValue.isLocked() === false);
 
-            testValue.unlock();
-            assert(testValue.isLocked() === false);
+                testValue.unlock();
+                assert(testValue.isLocked() === false);
 
-            testValue.lock();
-            assert(testValue.isLocked() === true);
+                testValue.lock();
+                assert(testValue.isLocked() === true);
 
-            testValue.unlock();
-            assert(testValue.isLocked() === false);
-          }
+                testValue.unlock();
+                assert(testValue.isLocked() === false);
+              }
+            }
+          ]
         }
       ]
     },
@@ -634,80 +857,203 @@ module.exports = {
       name: 'Value.factory',
       test: [
         {
-          name: 'should return a function that returns the same value as Value.from',
+          name: 'should return factory',
+          test: function(){
+            var factory = Value.factory('foo', 'bar');
+
+            assert(basis.fn.isFactory(factory));
+            assert(typeof factory.deferred === 'function');
+            assert(typeof factory.compute === 'function');
+            assert(typeof factory.pipe === 'function');
+            assert(typeof factory.as === 'function');
+          }
+        },
+        {
+          name: 'should returns the same value as Value.from',
           test: function(){
             var factory = Value.factory('foo', 'bar');
             var obj = new DataObject();
 
-            assert(typeof factory === 'function');
             assert(factory(obj) === Value.from(obj, 'foo', 'bar'));
           }
         },
         {
-          name: 'should has `pipe` method that returns new factory',
-          test: function(){
-            var factory = Value.factory('foo', 'bar')
-              .pipe('baz', 'qux');
+          name: 'chaining',
+          test: [
+            {
+              name: 'deferred',
+              test: [
+                {
+                  name: 'should return new factory',
+                  test: function(){
+                    var factory = Value.factory('foo', 'bar')
+                      .deferred();
 
-            assert(basis.fn.isFactory(factory));
-            assert(typeof factory.pipe === 'function');
-            assert(typeof factory.as === 'function');
-          }
-        },
-        {
-          name: '`pipe` factory should return the same value as Value.from().pipe()',
-          test: function(){
-            var obj = new DataObject();
-            var value = Value.from(obj, 'foo', 'bar').pipe('baz', 'qux');
-            var factory = Value.factory('foo', 'bar')
-              .pipe('baz', 'qux');
+                    assert(basis.fn.isFactory(factory));
+                    assert(typeof factory.deferred === 'function');
+                    assert(typeof factory.compute === 'function');
+                    assert(typeof factory.pipe === 'function');
+                    assert(typeof factory.as === 'function');
+                  }
+                },
+                {
+                  name: 'should return the same value as Value.from().deferred()',
+                  test: function(){
+                    var obj = new DataObject();
+                    var value = Value.from(obj, 'foo', 'bar').deferred();
+                    var factory = Value.factory('foo', 'bar')
+                      .deferred();
 
-            assert(factory(obj) === value);
-            assert(factory(obj).pipe('a', 'b') === value.pipe('a', 'b'));
-          }
-        },
-        {
-          name: 'should has `as` method and returns new factory',
-          test: function(){
-            var factory = Value.factory('update', 'data.foo')
-              .as(Boolean);
+                    assert(factory(obj) === value);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'compute',
+              test: [
+                {
+                  name: 'should return new factory',
+                  test: function(){
+                    var factory = Value.factory('foo', Boolean)
+                      .compute('baz', Boolean);
 
-            assert(basis.fn.isFactory(factory));
-            assert(typeof factory.pipe === 'function');
-            assert(typeof factory.as === 'function');
-          }
-        },
-        {
-          name: '`as` factory should return the same value as Value.from().as()',
-          test: function(){
-            var obj = new DataObject({ data: { foo: 1 } });
-            var value = Value.from(obj, 'update', 'data.foo').as(Boolean);
-            var factory = Value.factory('update', 'data.foo')
-              .as(Boolean);
+                    assert(basis.fn.isFactory(factory));
+                    assert(typeof factory.deferred === 'function');
+                    assert(typeof factory.compute === 'function');
+                    assert(typeof factory.pipe === 'function');
+                    assert(typeof factory.as === 'function');
+                  }
+                },
+                {
+                  name: 'should return the same value as Value.from().compute()',
+                  test: function(){
+                    var obj = new DataObject();
+                    var value = Value.from(obj, 'foo', 'bar').compute('baz', Boolean)(obj);
+                    var factory = Value.factory('foo', 'bar')
+                      .compute('baz', Boolean);
 
-            assert(factory(obj) === value);
-          }
-        },
-        {
-          name: '`as` factory should support pipe method',
-          test: function(){
-            var foo = new DataObject({ data: { bar: 1 } });
-            var obj = new DataObject({ data: { foo: foo } });
-            var value = Value
-              .from(obj, 'update', 'data.foo')
-              .as(Object)
-              .pipe('update', 'data.bar');
-            var factory = Value
-              .factory('update', 'data.foo')
-              .as(Object)
-              .pipe('update', 'data.bar');
+                    assert(factory(obj) === value);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'pipe',
+              test: [
+                {
+                  name: 'should return new factory',
+                  test: function(){
+                    var factory = Value.factory('foo', 'bar')
+                      .pipe('baz', 'qux');
 
-            assert(factory(obj) === value);
-            assert(factory(obj).value === 1);
+                    assert(basis.fn.isFactory(factory));
+                    assert(typeof factory.deferred === 'function');
+                    assert(typeof factory.compute === 'function');
+                    assert(typeof factory.pipe === 'function');
+                    assert(typeof factory.as === 'function');
+                  }
+                },
+                {
+                  name: 'should return the same value as Value.from().pipe()',
+                  test: function(){
+                    var obj = new DataObject();
+                    var value = Value.from(obj, 'foo', 'bar').pipe('baz', 'qux');
+                    var factory = Value.factory('foo', 'bar')
+                      .pipe('baz', 'qux');
 
-            foo.update({ bar: 2 });
-            assert(factory(obj).value === 2);
-          }
+                    assert(factory(obj) === value);
+                    assert(factory(obj).pipe('a', 'b') === value.pipe('a', 'b'));
+                  }
+                }
+              ]
+            },
+            {
+              name: 'as',
+              test: [
+                {
+                  name: 'should return new factory',
+                  test: function(){
+                    var factory = Value.factory('update', 'data.foo')
+                      .as(Boolean);
+
+                    assert(basis.fn.isFactory(factory));
+                    assert(typeof factory.deferred === 'function');
+                    assert(typeof factory.compute === 'function');
+                    assert(typeof factory.pipe === 'function');
+                    assert(typeof factory.as === 'function');
+                  }
+                },
+                {
+                  name: '`should return the same value as Value.from().as()',
+                  test: function(){
+                    var obj = new DataObject({ data: { foo: 1 } });
+                    var value = Value.from(obj, 'update', 'data.foo').as(Boolean);
+                    var factory = Value.factory('update', 'data.foo')
+                      .as(Boolean);
+
+                    assert(factory(obj) === value);
+                  }
+                },
+                {
+                  name: 'should support pipe method',
+                  test: function(){
+                    var foo = new DataObject({ data: { bar: 1 } });
+                    var obj = new DataObject({ data: { foo: foo } });
+                    var value = Value
+                      .from(obj, 'update', 'data.foo')
+                      .as(Object)
+                      .pipe('update', 'data.bar');
+                    var factory = Value
+                      .factory('update', 'data.foo')
+                      .as(Object)
+                      .pipe('update', 'data.bar');
+
+                    assert(factory(obj) === value);
+                    assert(factory(obj).value === 1);
+
+                    foo.update({ bar: 2 });
+                    assert(factory(obj).value === 2);
+                  }
+                },
+                {
+                  name: 'should invoke even if previous steps are can\'t to be computed',
+                  test: function(){
+                    var factory = Value.factory('update', 'data.foo')
+                      .pipe('update', 'data.bar')
+                      .as(String);
+                    var object = new DataObject({
+                      data: {
+                        foo: new DataObject({
+                          data: {
+                            bar: 1
+                          }
+                        })
+                      }
+                    });
+                    var computedValue = factory(object);
+
+                    assert(computedValue.value === '1');
+
+                    object.update({
+                      foo: null
+                    });
+                    assert(computedValue.value === 'null');
+
+                    object.update({
+                      foo: new DataObject()
+                    });
+                    assert(computedValue.value === 'undefined');
+
+                    object.data.foo.update({
+                      bar: 'hello'
+                    });
+                    assert(computedValue.value === 'hello');
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     },
