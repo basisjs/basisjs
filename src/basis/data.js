@@ -96,24 +96,21 @@
     },
 
    /**
-    * Create factory to fetch state from nested object.
-    * @param {string} events
-    * @param {string|function()} getter
-    * @return {function(basis.event.Emitter)}
+    * NOTE: was implemented and deprecated during 1.4 developing.
+    * @deprecated
     */
     factory: function(events, getter){
-      return Value.factory(events, basis.getter(getter).as(STATE.from));
+      /** @cut */ basis.dev.warn('basis.data.STATE.factory() is deprecated, use basis.data.Value.stateFactory() instead.');
+      return Value.stateFactory(events, getter);
     },
 
    /**
-    * Helper to get Value with state from source.
-    * @param {basis.data.AbstractData} source
-    * @return {basis.data.Value|null}
+    * NOTE: was implemented and deprecated during 1.4 developing.
+    * @deprecated
     */
     from: function(source){
-      return source instanceof AbstractData
-        ? Value.from(source, 'stateChanged', 'state')
-        : STATE.UNDEFINED;
+      /** @cut */ basis.dev.warn('basis.data.STATE.state() is deprecated, use basis.data.Value.state() instead.');
+      return Value.state(source);
     }
   };
 
@@ -1340,6 +1337,35 @@
     return chainValueFactory(function(object){
       return Value.from(object, events, getter);
     });
+  };
+
+  // state helpers
+
+ /**
+  * Helper to get Value with state from source.
+  * @param {basis.data.AbstractData} source
+  * @return {basis.data.Value|null}
+  */
+
+  Value.state = function(source){
+    return source instanceof AbstractData
+      ? Value.from(source, 'stateChanged', 'state')
+      : STATE.UNDEFINED;
+  };
+
+ /**
+  * Create factory to fetch state from nested object.
+  * @param {string} events
+  * @param {string|function()} getter
+  * @return {function(basis.event.Emitter)}
+  */
+  Value.stateFactory = function(events, getter){
+    return Value
+      .factory(events, getter)
+      .pipe('stateChanged', 'state')
+      .as(function(state){
+        return state || STATE.UNDEFINED;
+      });
   };
 
 
