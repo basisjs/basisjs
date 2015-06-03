@@ -960,18 +960,21 @@
     },
 
    /**
-    * Returns token which value equals to transformed via fn function value.
+    * Returns Value instance which value equals to transformed via fn function.
     * @param {function(value)} fn
-    * @param {boolean=} deferred
-    * @return {basis.data.Value|basis.data.DeferredValue}
+    * @return {basis.data.Value}
     */
-    as: function(fn, deferred){
+    as: function(fn){
+      // obsolete in 1.4
+      /** @cut */ if (arguments.length > 1)
+      /** @cut */   basis.dev.warn('basis.data.Value#as() doesn\'t accept deferred flag as second parameter anymore. Use value.as(fn).deferred() instead.');
+
       if (!fn || fn === $self)
-        return deferred ? this.deferred() : this;
+        return this;
 
       if (this.links_)
       {
-        // try to find token with the same function
+        // try to find value with the same function
         var cursor = this;
         var fnId = fn[GETTER_ID] || String(fn);
 
@@ -980,9 +983,7 @@
           var context = cursor.context;
           if (context instanceof ReadOnlyValue &&
               (context.proxy[GETTER_ID] || String(context.proxy)) == fnId) // compare functions by id
-            return deferred
-              ? context.deferred()
-              : context;
+            return context;
         }
       }
 
@@ -994,14 +995,17 @@
 
       this.link(result, valueSyncAs, true, result.destroy);
 
-      return deferred ? result.deferred() : result;
+      return result;
     },
 
    /**
-    * @param {function(value)} fn
     * @return {basis.data.DeferredValue}
     */
-    deferred: function(fn){
+    deferred: function(){
+      // obsolete in 1.4
+      /** @cut */ if (arguments.length > 0)
+      /** @cut */   basis.dev.warn('basis.data.Value#deferred() doesn\'t accept parameters anymore. Use value.as(fn).deferred() instead.');
+
       if (!this.deferred_)
         this.deferred_ = new DeferredValue({
           source: this,
