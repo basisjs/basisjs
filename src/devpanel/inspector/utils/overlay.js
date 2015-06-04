@@ -52,7 +52,7 @@ var updateOnScroll = function(){
   left.set(global.pageXOffset || scrollElement.scrollLeft);
   top.set(global.pageYOffset || scrollElement.scrollTop);
 
-  activeOverlay.value.apply();
+  //activeOverlay.value.apply();
 };
 
 var updateOnResize = (function(){
@@ -101,15 +101,9 @@ function muteEvents(toMute){
     {
       mutedEvents[eventName] = Boolean(toMute[eventName]);
       if (toMute[eventName])
-      {
-        console.log(eventName, 'mute');
         inspectBasisEvent.captureEvent(eventName, eventUtils.kill);
-      }
       else
-      {
-        console.log(eventName, 'unmute');
         inspectBasisEvent.releaseEvent(eventName);
-      }
     }
 }
 
@@ -118,6 +112,7 @@ function muteEvents(toMute){
 // Current overlay if any
 //
 
+var refreshTimer;
 var activeOverlay = new Value();
 activeOverlay.link(null, function(newOverlay, oldOverlay){
   if (oldOverlay)
@@ -128,6 +123,10 @@ activeOverlay.link(null, function(newOverlay, oldOverlay){
   else
   {
     startWatch();
+    refreshTimer = setInterval(function(){
+      if (activeOverlay.value)
+        activeOverlay.value.apply();
+    }, 250);
   }
 
   if (newOverlay)
@@ -139,6 +138,7 @@ activeOverlay.link(null, function(newOverlay, oldOverlay){
   }
   else
   {
+    clearInterval(refreshTimer);
     muteEvents({}); // unmute all
     stopWatch();
   }
@@ -154,6 +154,7 @@ var Overlay = Node.subclass({
   active: activeOverlay.compute(function(node, value){
     return node === value;
   }),
+  processTextLines: false,
   muteEvents: false,
   hide: hide,
   left: left,
@@ -218,20 +219,28 @@ var Overlay = Node.subclass({
     var rectNode = domNode;
     var rect;
 
+    if (!domNode.parentNode)
+      return;
+
     if (rectNode.nodeType == domUtils.TEXT_NODE)
     {
+      if (!rectNode.nodeValue)
+        return;
+
       rectNode = document.createRange();
       rectNode.selectNodeContents(domNode);
     }
 
     rect = getBoundingRect(rectNode);
 
-    if (rect && rect.width && domNode.parentNode)
+    if (rect && rect.width)
     {
       var node = this.getChild(domNode, 'domNode');
       var data = basis.object.extend({
         top: rect.top,
         left: rect.left,
+        right: rect.right,
+        bottom: rect.bottom,
         width: rect.width,
         height: rect.height
       }, options);
@@ -261,7 +270,7 @@ var Overlay = Node.subclass({
     {
       this.processNode(child);
 
-      if (child.nodeType == 1)
+      if (child.nodeType == 1 && !child.hasAttribute('basis-devpanel-ignore'))
         this.traverse(child);
     }
   }

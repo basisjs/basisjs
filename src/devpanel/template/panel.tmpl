@@ -4,7 +4,9 @@
 <b:define name="isOnline" type="bool"/>
 <b:define name="inspectMode" type="bool"/>
 
-<div class="panel panel_{activated} panel_{isOnline} panel_{inspectMode}" event-mousemove="storePosition">
+<div class="panel panel_{activated} panel_{isOnline} panel_{inspectMode}"
+  basis-devpanel-ignore
+  event-mousemove="storePosition">
   <div{dragElement} class="panel__dd-trigger">&nbsp;</div>
   <div class="panel__section">
     <div class="panel__button panel__button_template" event-mousedown="inspectTemplate">&nbsp;</div>
@@ -23,6 +25,11 @@
   <div class="panel__section">
     <div class="panel__button" event-mousedown="inspectHeat">
       Heat map
+    </div>
+  </div>
+  <div class="panel__section" b:show="{hasGrid}">
+    <div class="panel__button" event-mousedown="inspectTypography">
+      Typography
     </div>
   </div>
   <!-- <div class="panel__section panel__section_FileInspector">

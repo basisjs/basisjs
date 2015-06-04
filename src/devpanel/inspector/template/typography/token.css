@@ -1,0 +1,13 @@
+.token
+{
+  position: absolute;
+  z-index: 65000;
+  border-tsop: 1px solid rgba(255, 0, 0, .85);
+}
+.token_miss
+{
+  border-top: 1px solid rgba(255, 0, 0, .85);
+  border-bottom: 1px solid rgba(255, 255, 255, .25);
+  padding: 0 5px;
+  margin-left: -5px;
+}

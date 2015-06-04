@@ -7,15 +7,23 @@
   left: 0;
   right: 0;
   z-index: 10000;
-  background: rgba(110, 163, 217, 0.2);
 }
 .content
 {
   position: absolute;
   top: 0;
   left: 0;
+  bottom: -2000px;
+  right: 0;
+
   opacity: 1;
   transition: opacity .3s;
+  background: repeating-linear-gradient(to bottom,
+    rgba(128, 128, 128, .25) 0,
+    rgba(128, 128, 128, .25) 50%,
+    transparent 50%,
+    transparent 100%);
+  mix-blend-mode: exclusion;
 }
 .content_hide
 {

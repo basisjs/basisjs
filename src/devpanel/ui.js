@@ -12,6 +12,7 @@ var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 var l10nInspector = resource('./inspector/l10n.js');
 var templateInspector = resource('./inspector/template.js');
 var heatInspector = resource('./inspector/heatmap.js');
+var typographyInspector = resource('./inspector/typography.js');
 
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
@@ -20,7 +21,12 @@ var cultureList = require('./cultureList.js');
 var inspectors = new basis.data.Dataset();
 var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
 
-[l10nInspector, templateInspector, heatInspector].forEach(function(inspectorRes){
+[
+  l10nInspector,
+  templateInspector,
+  heatInspector,
+  typographyInspector
+].forEach(function(inspectorRes){
   inspectorRes.ready(function(inspector){
     inspectors.add(inspector.inspectMode.link(new basis.data.Object, function(value){
       this.update({ mode: value });
@@ -87,7 +93,11 @@ var panel = new basis.ui.Node({
     cultureList: cultureList,
     isOnline: isOnline,
     inspectMode: inspectMode,
-    reloadRequired: 'satellite:'
+    reloadRequired: 'satellite:',
+    hasGrid: function(){
+      var config = inspectBasis.config.devpanel;
+      return Boolean(config && config.grid);
+    }
   },
 
   action: {
@@ -122,6 +132,15 @@ var panel = new basis.ui.Node({
       inspectBasisDomEvent.captureEvent('click', function(){
         inspectBasisDomEvent.releaseEvent('click');
         heatInspector().startInspect();
+      });
+    },
+    inspectTypography: function(e){
+      cultureList.setDelegate();
+      themeList.setDelegate();
+      e.die();
+      inspectBasisDomEvent.captureEvent('click', function(){
+        inspectBasisDomEvent.releaseEvent('click');
+        typographyInspector().startInspect();
       });
     },
     // inspectFile: function(){
