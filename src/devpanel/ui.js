@@ -127,7 +127,7 @@ var panel = new basis.ui.Node({
     // inspectFile: function(){
     //   fileInspector().toggle();
     // },
-    storePosition: function(event){
+    storePosition: function(){
       if (localStorage)
         localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
     }
@@ -169,7 +169,7 @@ var panel = new basis.ui.Node({
 });
 
 themeList.selection.addHandler({
-  itemsChanged: function(object, delta){
+  itemsChanged: function(){
     var theme = this.pick();
     panel.themeName = theme.value;
     panel.updateBind('themeName');

@@ -126,7 +126,7 @@ module.exports = {
         file.save(content);
     }
   },
-  openFile: function(filename, content){
+  openFile: function(filename){
     var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
 
     if (basisjsTools && typeof basisjsTools.openFile == 'function')

@@ -6,7 +6,6 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 var fileAPI = require('../../api/file.js');
 var parseDom = require('./parse-dom.js');
 var buildTree = require('./build-tree.js');
-var DataObject = require('basis.data').Object;
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;

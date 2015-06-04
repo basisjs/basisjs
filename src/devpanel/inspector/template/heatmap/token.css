@@ -1,0 +1,20 @@
+.token
+{
+  position: absolute;
+  z-index: 65000;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: verdana;
+  line-height: 13px;
+  text-indent: 1px;
+  color: black;
+  outline: 1px solid;
+  text-shadow:
+    0 -1px 0 white,
+    0 1px 0 white,
+   -1px 0 0 white,
+    1px 0 0 white,
+    1px 1px 1px black,
+   -1px -1px 1px black;
+}

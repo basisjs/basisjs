@@ -1,0 +1,11 @@
+<b:style src="./overlay.css"/>
+<b:style src="./overlay-token.css" ns="ot"/>
+<b:isolate/>
+<b:define name="hide" type="bool"/>
+
+<div class="overlay">
+  <div{childNodesElement}
+    class="content ot:content content_{hide}"
+    style="top: -{top}px; left: -{left}px"
+  />
+</div>
