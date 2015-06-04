@@ -194,9 +194,10 @@ var makeDeclaration = (function(){
     /** @cut */     template.states[name] = {};
     /** @cut */
     /** @cut */   var info = template.states[name];
+    /** @cut */   var isArray = Array.isArray(value);
     /** @cut */
-    /** @cut */   if (!hasOwnProperty.call(info, type) || !Array.isArray(value))
-    /** @cut */     info[type] = value;
+    /** @cut */   if (!hasOwnProperty.call(info, type) || !isArray)
+    /** @cut */     info[type] = isArray ? basis.array(value) : value;
     /** @cut */   else
     /** @cut */     addUnique(info[type], value);
     /** @cut */ }
