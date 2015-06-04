@@ -168,27 +168,6 @@ module.exports = {
               }
             },
             {
-              name: 'result for same function and deferred should be equal',
-              test: function(){
-                var testValue = new Value();
-                var fn = function(){};
-                var a = testValue.as(fn, true);
-                var b = testValue.as(fn, true);
-
-                assert(a instanceof DeferredValue);
-                assert(a === b);
-              }
-            },
-            {
-              name: 'result for as and deferred should be equal',
-              test: function(){
-                var testValue = new Value();
-
-                assert(testValue.as(null, true) === testValue.deferred());
-                assert(testValue.as(basis.fn.$self, true) === testValue.deferred());
-              }
-            },
-            {
               name: 'result for different functions but the same source code should be the same',
               test: function(){
                 var testValue = new Value();
