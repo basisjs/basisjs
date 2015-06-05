@@ -3,6 +3,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 var domUtils = require('basis.dom');
 var eventUtils = require('basis.dom.event');
+var getOffset = require('basis.layout').getOffset;
 var getBoundingRect = require('basis.layout').getBoundingRect;
 var Node = require('basis.ui').Node;
 var Value = require('basis.data').Value;
@@ -216,8 +217,46 @@ var Overlay = Node.subclass({
   },
 
   highlight: function(domNode, options){
+    function findChild(childNodes, domNode, index){
+      for (var i = 0; i < childNodes.length; i++)
+      {
+        var child = childNodes[i];
+        if (child.domNode === domNode && child.domIndex == index)
+          return child;
+      }
+    }
+
+    function apply(rect, domNode, domIndex){
+      if (rect && rect.width)
+      {
+        var node = findChild(this.childNodes, domNode, domIndex);
+        var data = basis.object.extend({
+          top: rect.top,
+          left: rect.left,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height
+        }, options);
+
+        if (!node)
+        {
+          node = this.appendChild({
+            domNode: domNode,
+            domIndex: domIndex,
+            data: data
+          });
+        }
+        else
+        {
+          node.update(data);
+        }
+
+        node.generation = this.generation;
+      }
+    }
+
     var rectNode = domNode;
-    var rect;
 
     if (!domNode.parentNode)
       return;
@@ -229,37 +268,30 @@ var Overlay = Node.subclass({
 
       rectNode = document.createRange();
       rectNode.selectNodeContents(domNode);
+
+      if (this.processTextLines)
+      {
+        var offset = getOffset();
+        var rects = rectNode.getClientRects();
+
+        for (var i = 0; i < rects.length; i++)
+        {
+          var rect = rects[i];
+          apply.call(this, {
+            top: rect.top + offset.top,
+            left: rect.left + offset.left,
+            right: rect.right + offset.left,
+            bottom: rect.bottom + offset.top,
+            width: rect.width,
+            height: rect.height
+          }, domNode, i);
+        }
+
+        return;
+      }
     }
 
-    rect = getBoundingRect(rectNode);
-
-    if (rect && rect.width)
-    {
-      var node = this.getChild(domNode, 'domNode');
-      var data = basis.object.extend({
-        top: rect.top,
-        left: rect.left,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height
-      }, options);
-
-      if (!node)
-      {
-        //this.decorate(element, options, rect, node);
-        node = this.appendChild({
-          domNode: domNode,
-          data: data
-        });
-      }
-      else
-      {
-        node.update(data);
-      }
-
-      node.generation = this.generation;
-    }
+    apply.call(this, getBoundingRect(rectNode), domNode, 0);
   },
   processNode: function(domNode){
     // should be overrided

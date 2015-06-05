@@ -143,6 +143,7 @@
   //
 
   module.exports = {
+    getOffset: getOffset,
     getOffsetParent: getOffsetParent,
     getTopLeftPoint: getTopLeftPoint,
     getBoundingRect: getBoundingRect,
