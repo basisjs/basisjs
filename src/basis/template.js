@@ -566,6 +566,9 @@
     // for backward capability
     // TODO: remove
     /** @cut dev mode only */ getDebugInfoById: store.getDebugInfoById,
+    /** @cut dev mode only */ getTemplateCount: function(){
+    /** @cut dev mode only */   return templateList.length;
+    /** @cut dev mode only */ },
     resolveTemplateById: store.resolveTemplateById,
     resolveObjectById: store.resolveObjectById,
     resolveTmplById: store.resolveTmplById,

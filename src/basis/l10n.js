@@ -61,6 +61,7 @@
       token.computeTokens[this.basisObjectId] = this;
       this.dictionary = token.dictionary;
       this.token = token;
+      this.name = token.name + '.{compute}';
 
       basis.Token.prototype.init.call(this, value);
     },

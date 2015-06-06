@@ -47,7 +47,7 @@
 
   function getSourceFromL10nToken(token){
     var dict = token.dictionary;
-    var url = dict.resource ? dict.resource.url : '';
+    var url = dict.resource ? dict.resource.url : 'dictionary' + dict.basisObjectId;
     var id = token.name + '@' + url;
     var sourceWrapper;
     var result = token.as(function(value){
@@ -85,12 +85,16 @@
     if (!token)
       return null;
 
-    var id = token.basisObjectId;
+    var tokenTemplate = token.template_;
+    if (!tokenTemplate)
+      tokenTemplate = token.template_ = getSourceFromL10nToken(token);
+
+    var id = tokenTemplate.id;
     var htmlTemplate = l10nTemplates[id];
 
     if (!htmlTemplate)
     {
-      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(getSourceFromL10nToken(token));
+      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(tokenTemplate);
       htmlTemplate.protoOnly = true;
     }
 

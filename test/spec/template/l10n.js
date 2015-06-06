@@ -7,12 +7,12 @@ module.exports = {
 
     var sandbox = basis.createSandbox('template-l10n-test');
     var api = basis.require('../helpers/template.js').createSandboxAPI(sandbox);
+    var getTemplateCount = sandbox.require('basis.template').getTemplateCount;
     var createTemplate = api.createTemplate;
     var text = api.text;
 
     var l10n = sandbox.require('basis.l10n');
     l10n.setCultureList('en-US ru-RU');
-    l10n.enableMarkup = true;
   },
 
   test: [
@@ -846,6 +846,34 @@ module.exports = {
                text('<span>foo text foo text simple <b>markup</b> text</span>'));
 
       }
+    },
+    {
+      name: 'special cases',
+      test: [
+        {
+          name: 'computed l10n tokens should not produce new templates',
+          test: function(){
+            var template = createTemplate(
+              '<b:l10n src="../fixture/dict-markup.l10n"/>' +
+              '<span>{l10n:enum.{foo}}</span>'
+            );
+
+            var a = template.createInstance();
+            a.set('foo', 'a');
+            a.set('foo', 'b');
+
+            var count = getTemplateCount();
+
+            var b = template.createInstance();
+            b.set('foo', 'b');
+            assert(getTemplateCount() == count);
+
+            var c = template.createInstance();
+            c.set('foo', 'a');
+            assert(getTemplateCount() == count);
+          }
+        }
+      ]
     }
   ]
 };
