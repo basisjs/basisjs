@@ -871,6 +871,24 @@ module.exports = {
             c.set('foo', 'a');
             assert(getTemplateCount() == count);
           }
+        },
+        {
+          name: 'l10n compute tokens should be destroy on template destroy',
+          test: function(){
+            var template = createTemplate(
+              '<b:l10n src="../fixture/dict-markup.l10n"/>' +
+              '<span>{l10n:enum.{foo}}</span>'
+            );
+
+            var token = l10n.dictionary('../fixture/dict-markup.l10n').token('enum');
+            var computeCount = Object.keys(token.computeTokens).length;
+
+            var instance = template.createInstance();
+            assert(Object.keys(token.computeTokens).length === computeCount + 1);
+
+            template.clearInstance(instance);
+            assert(Object.keys(token.computeTokens).length === computeCount);
+          }
         }
       ]
     }

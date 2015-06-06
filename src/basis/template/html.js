@@ -85,16 +85,16 @@
     if (!token)
       return null;
 
-    var tokenTemplate = token.template_;
-    if (!tokenTemplate)
-      tokenTemplate = token.template_ = getSourceFromL10nToken(token);
+    var templateSource = token.templateSource_;
+    if (!templateSource)
+      templateSource = token.templateSource_ = getSourceFromL10nToken(token);
 
-    var id = tokenTemplate.id;
+    var id = templateSource.id;
     var htmlTemplate = l10nTemplates[id];
 
     if (!htmlTemplate)
     {
-      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(tokenTemplate);
+      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(templateSource);
       htmlTemplate.protoOnly = true;
     }
 
@@ -619,6 +619,7 @@
             bindings: bindings,
             bindingInterface: bindingInterface,
             attaches: null,
+            compute: null,
             tmpl: null
           };
 
@@ -636,6 +637,13 @@
             // detach handler if any
             if (instance.handler)
               instance.bindingInterface.detach(instance.context, instance.handler, instance.tmpl.set);
+
+            if (instance.compute)
+            {
+              for (var i = 0; i < instance.compute.length; i++)
+                instance.compute[i].destroy();
+              instance.compute = null;
+            }
 
             // detach attaches
             for (var key in instance.attaches)

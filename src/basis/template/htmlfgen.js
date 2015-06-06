@@ -374,7 +374,7 @@
             {
               varName = '$l10n_' + (l10nBindSeed++);
               l10nBindings[l10nFullPath] = varName;
-              l10nCompute.push('set("' + varName + '",' + varName + ')');
+              l10nCompute.push(varName);
               varList.push(varName + '=tools.l10nToken("' + l10nName + '").computeToken()');
 
               bindCode = bindMap[l10nBinding];
@@ -830,9 +830,11 @@
         /** @cut *///     'history:Array.prototype.slice.call(history),' +
         /** @cut */     'values:{' + bindings.keys.map(function(key){
         /** @cut */       return '"' + key + '":__' + key;
-        /** @cut */     }) + '}' +
+        /** @cut */     }) + '},' +
+        /** @cut */     'compute:Array.prototype.slice.call(instance.compute || [])' +
         /** @cut */   '}' +
         /** @cut */ '}' : '') +
+        (bindings.l10nCompute.length ? ';instance.compute=[' + bindings.l10nCompute + ']' : '') +
         ';instance.tmpl={' + [
           paths.ref,
           'templateId_:id',
@@ -850,7 +852,9 @@
             ';if(l10nMarkup.length)for(var idx=0,token;token=l10nMarkup[idx];idx++)set(token.path,token.token);'
           : '') +
         ';if(instance.bindings)instance.handler=getBindings(instance,set)' +
-        ';' + bindings.l10nCompute +
+        ';' + bindings.l10nCompute.map(function(varName){
+          return 'set("' + varName + '",' + varName + ')';
+        }) +
       '}'
 
       /** @cut */ + '\n\n//# sourceURL=' + basis.path.origin + uri
