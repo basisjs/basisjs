@@ -55,21 +55,34 @@
     className: namespace + '.ComputeToken',
 
    /**
+    * @type {basis.l10n.Dictionary}
+    */
+    dictionary: null,
+
+   /**
+    * @type {basis.l10n.Token}
+    */
+    token: null,
+
+   /**
+    * @type {string}
+    */
+    name: '',
+
+   /**
     * @constructor
     */
-    init: function(value, token){
-      token.computeTokens[this.basisObjectId] = this;
-      this.dictionary = token.dictionary;
-      this.token = token;
-      this.name = token.name + '.{compute}';
+    init: function(value){
+      this.token.computeTokens[this.basisObjectId] = this;
 
       basis.Token.prototype.init.call(this, value);
     },
 
     get: function(){
-      var isPlural = isPluralType[this.token.getType()];
+      var sourceToken = this.token;
+      var isPlural = isPluralType[sourceToken.getType()];
       var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
-      var value = this.dictionary.getValue(this.token.name + '.' + key);
+      var value = this.dictionary.getValue(sourceToken.name + '.' + key);
 
       if (isPlural)
         value = String(value).replace(/\{#\}/g, this.value);
@@ -78,10 +91,11 @@
     },
 
     getType: function(){
-      var type = this.token.getType();
+      var sourceToken = this.token;
+      var type = sourceToken.getType();
       var key = isPluralType[type] ? cultures[currentCulture].plural(this.value) : this.value;
 
-      return this.dictionary.types[this.token.name + '.' + key] ||
+      return this.dictionary.types[sourceToken.name + '.' + key] ||
              nestedType[type] ||
              'default';
     },
@@ -92,8 +106,6 @@
 
     destroy: function(){
       delete this.token.computeTokens[this.basisObjectId];
-      this.token = null;
-      this.dictionary = null;
 
       basis.Token.prototype.destroy.call(this);
     }
@@ -127,9 +139,14 @@
     type: 'default',
 
    /**
-    *
+    * @type {object}
     */
     computeTokens: null,
+
+   /**
+    * @type {function}
+    */
+    computeTokenClass: null,
 
    /**
     * @constructor
@@ -211,7 +228,7 @@
 
         if (!computeToken)
         {
-          computeToken = objectTokenMap[objectId] = new ComputeToken(getter(object), token);
+          computeToken = objectTokenMap[objectId] = token.computeToken(getter(object));
           object.addHandler(handler, computeToken);
         }
 
@@ -220,12 +237,21 @@
     },
 
     computeToken: function(value){
-      return new ComputeToken(value, this);
+      var ComputeTokenClass = this.computeTokenClass;
+
+      if (!ComputeTokenClass)
+        ComputeTokenClass = this.computeTokenClass = ComputeToken.subclass({
+          dictionary: this.dictionary,
+          token: this,
+          name: this.name + '.{compute}'
+        });
+
+      return new ComputeTokenClass(value);
     },
 
     token: function(name){
       if (isPluralType[this.getType()])
-        return new ComputeToken(name, this);
+        return this.computeToken(name, this);
 
       if (this.dictionary)
         return this.dictionary.token(this.name + '.' + name);
@@ -238,6 +264,7 @@
       for (var key in this.computeTokens)
         this.computeTokens[key].destroy();
 
+      this.computeTokenClass = null;
       this.computeTokens = null;
       this.value = null;
       this.dictionary = null;

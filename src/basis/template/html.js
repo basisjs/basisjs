@@ -43,37 +43,43 @@
   //
   // l10n
   //
-  var l10nTemplates = {};
+  var l10nTemplate = {};
+  var l10nTemplateSource = {};
 
   function getSourceFromL10nToken(token){
     var dict = token.dictionary;
     var url = dict.resource ? dict.resource.url : 'dictionary' + dict.basisObjectId;
     var id = token.name + '@' + url;
+    var result = l10nTemplateSource[id];
     var sourceWrapper;
-    var result = token.as(function(value){
-      if (token.getType() == 'markup')
-      {
-        if (value != this.value)
-          if (sourceWrapper)
+
+    if (!result)
+    {
+      result = l10nTemplateSource[id] = token.as(function(value){
+        if (token.getType() == 'markup')
+        {
+          if (value != this.value)
+            if (sourceWrapper)
+            {
+              sourceWrapper.detach(token, token.apply);
+              sourceWrapper = null;
+            }
+
+          if (value && String(value).substr(0, 5) == 'path:')
           {
-            sourceWrapper.detach(token, token.apply);
-            sourceWrapper = null;
+            sourceWrapper = getSourceByPath(value.substr(5));
+            sourceWrapper.attach(token, token.apply);
           }
 
-        if (value && String(value).substr(0, 5) == 'path:')
-        {
-          sourceWrapper = getSourceByPath(value.substr(5));
-          sourceWrapper.attach(token, token.apply);
+          return sourceWrapper ? sourceWrapper.bindingBridge.get(sourceWrapper) : value;
         }
 
-        return sourceWrapper ? sourceWrapper.bindingBridge.get(sourceWrapper) : value;
-      }
+        return this.value;
+      });
 
-      return this.value;
-    });
-
-    result.id = '{l10n:' + id + '}';
-    result.url = url + ':' + token.name;
+      result.id = '{l10n:' + id + '}';
+      result.url = url + ':' + token.name;
+    }
 
     return result;
   }
@@ -90,11 +96,11 @@
       templateSource = token.templateSource_ = getSourceFromL10nToken(token);
 
     var id = templateSource.id;
-    var htmlTemplate = l10nTemplates[id];
+    var htmlTemplate = l10nTemplate[id];
 
     if (!htmlTemplate)
     {
-      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(templateSource);
+      htmlTemplate = l10nTemplate[id] = new HtmlTemplate(templateSource);
       htmlTemplate.protoOnly = true;
     }
 
