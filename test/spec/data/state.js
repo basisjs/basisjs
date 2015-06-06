@@ -75,36 +75,6 @@ module.exports = {
           }
         }
       ]
-    },
-    {
-      name: 'helpers',
-      test: [
-        {
-          name: 'STATE.factory',
-          test: [
-            {
-              name: 'should return undefined state when called for subject with null property',
-              test: function(){
-                var factory = STATE.factory('foo', 'bar');
-                var state = factory(new DataObject());
-
-                assert(state.value === STATE.UNDEFINED);
-              }
-            },
-            {
-              name: 'should return undefined state when called for subject with null property',
-              test: function(){
-                var object = new DataObject({
-                  state: STATE.factory('delegateChanged', 'delegate'),
-                  delegate: new basis.Token(null)
-                });
-
-                assert(object.state == STATE.UNDEFINED);
-              }
-            }
-          ]
-        }
-      ]
     }
   ]
 };

@@ -6,6 +6,7 @@ module.exports = {
     var basis = window.basis.createSandbox();
 
     var Emitter = basis.require('basis.event').Emitter;
+    var STATE = basis.require('basis.data').STATE;
     var Value = basis.require('basis.data').Value;
     var AbstractData = basis.require('basis.data').AbstractData;
     var DataObject = basis.require('basis.data').Object;
@@ -1033,6 +1034,31 @@ module.exports = {
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      name: 'Value.stateFactory',
+      test: [
+        {
+          name: 'should return undefined state when called for subject with null property',
+          test: function(){
+            var factory = Value.stateFactory('foo', 'bar');
+            var state = factory(new DataObject());
+
+            assert(state.value === STATE.UNDEFINED);
+          }
+        },
+        {
+          name: 'should return undefined state when called for subject with null property',
+          test: function(){
+            var object = new DataObject({
+              state: Value.stateFactory('delegateChanged', 'delegate'),
+              delegate: new basis.Token(null)
+            });
+
+            assert(object.state == STATE.UNDEFINED);
+          }
         }
       ]
     },

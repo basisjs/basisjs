@@ -3,15 +3,14 @@ module.exports = {
 
   sandbox: true,
   init: function(){
-    var basis = window.basis.createSandbox();
+    var basis = window.basis.createSandbox('template-l10n-test');
 
-    var sandbox = basis.createSandbox('template-l10n-test');
-    var api = basis.require('../helpers/template.js').createSandboxAPI(sandbox);
-    var getTemplateCount = sandbox.require('basis.template').getTemplateCount;
+    var api = basis.require('../helpers/template.js').createSandboxAPI(basis);
+    var getTemplateCount = basis.require('basis.template').getTemplateCount;
     var createTemplate = api.createTemplate;
     var text = api.text;
 
-    var l10n = sandbox.require('basis.l10n');
+    var l10n = basis.require('basis.l10n');
     l10n.setCultureList('en-US ru-RU');
   },
 
@@ -345,7 +344,7 @@ module.exports = {
                 {
                   name: 'should not crash on markup token remove',
                   test: function(){
-                    var dictionary = sandbox.require('basis.l10n').dictionary('./test.l10n');
+                    var dictionary = l10n.dictionary('./test.l10n');
                     var bindings = {
                       bindingId: basis.genUID(),
                       foo: {
@@ -366,7 +365,7 @@ module.exports = {
                 {
                   name: 'should not crash on recursion',
                   test: function(){
-                    var dictionary = sandbox.require('basis.l10n').dictionary('./test.l10n');
+                    var dictionary = l10n.dictionary('./test.l10n');
                     var template = createTemplate('<span>{foo}</span>');
                     var instance = template.createInstance();
 

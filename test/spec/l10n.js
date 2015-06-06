@@ -21,7 +21,11 @@ module.exports = {
         {
           name: 'basic',
           test: function(){
-            var res = JSON.parse(basis.require('./fixture/dict.l10n').resource.get(true));
+            var res = {
+              'en-US': {
+                'value': 'base'
+              }
+            };
             var dict = getDictionary(basis.resource.virtual('l10n', res));
             setCulture('en-US');
             assert(dict.token('value').value === 'base');

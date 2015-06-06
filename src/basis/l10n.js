@@ -397,7 +397,6 @@
       }
       else
       {
-        /** @cut */ basis.dev.warn('Use object as content of dictionary is experimental and not production-ready');
         this.update(content || {});
       }
     },
