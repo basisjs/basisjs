@@ -2704,49 +2704,56 @@
   }
 
  /**
-  * Resolve object from source value.
+  * Produce function to resove value of some class.
   */
-  function resolveObject(context, fn, source, property, factoryContext){
-    var oldAdapter = context[property] || null;
-    var newAdapter = null;
+  function createResolveFunction(Class){
+    return function resolveObject(context, fn, source, property, factoryContext){
+      var oldAdapter = context[property] || null;
+      var newAdapter = null;
 
-    if (fn !== resolveAdapterProxy && typeof source == 'function')
-      source = source.call(factoryContext || context, factoryContext || context);
+      if (fn !== resolveAdapterProxy && typeof source == 'function')
+        source = source.call(factoryContext || context, factoryContext || context);
 
-    if (source && source.bindingBridge)
-    {
-      if (!oldAdapter || oldAdapter.source !== source)
-        newAdapter = new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
-      else
-        newAdapter = oldAdapter;
-
-      source = resolveObject(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
-    }
-
-    if (source instanceof DataObject == false)
-      source = null;
-
-    if (property && oldAdapter !== newAdapter)
-    {
-      var cursor = oldAdapter;
-
-      // drop old adapter chain
-      while (cursor)
+      if (source && source.bindingBridge)
       {
-        var adapter = cursor;
-        adapter.detach();
-        cursor = adapter.next;
-        adapter.next = null;
+        if (!oldAdapter || oldAdapter.source !== source)
+          newAdapter = new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
+        else
+          newAdapter = oldAdapter;
+
+        source = resolveObject(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
       }
 
-      if (newAdapter)
-        newAdapter.attach(DEFAULT_DESTROY_ADAPTER_HANDLER);
+      if (source instanceof Class == false)
+        source = null;
 
-      context[property] = newAdapter;
-    }
+      if (property && oldAdapter !== newAdapter)
+      {
+        var cursor = oldAdapter;
 
-    return source;
+        // drop old adapter chain
+        while (cursor)
+        {
+          var adapter = cursor;
+          adapter.detach();
+          cursor = adapter.next;
+          adapter.next = null;
+        }
+
+        if (newAdapter)
+          newAdapter.attach(DEFAULT_DESTROY_ADAPTER_HANDLER);
+
+        context[property] = newAdapter;
+      }
+
+      return source;
+    };
   }
+
+ /**
+  * Resolve object from source value.
+  */
+  var resolveObject = createResolveFunction(DataObject);
 
  /**
   * Resolve value from source value.
@@ -2758,7 +2765,7 @@
     // as functions could be a value, invoke only functions with factory property
     // i.e. source -> function(){ /* factory code */ }).factory === FACTORY
     // apply only for top-level resolveValue() invocation
-    if (source && fn !== resolveAdapterProxy && typeof source == 'function' && source.factory === FACTORY)
+    if (source && fn !== resolveAdapterProxy && basis.fn.isFactory(source))
       source = source.call(factoryContext || context, factoryContext || context);
 
     if (source && source.bindingBridge)
@@ -3026,6 +3033,7 @@
     getDatasetDelta: getDatasetDelta,
 
     ResolveAdapter: ResolveAdapter,
+    createResolveFunction: createResolveFunction,
     resolveDataset: resolveDataset,
     resolveObject: resolveObject,
     resolveValue: resolveValue,
