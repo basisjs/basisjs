@@ -105,7 +105,7 @@
 
     satellite: {
       viewOptions: {
-        satelliteClass: ViewOptions,
+        instance: ViewOptions,
         config: function(owner){
           return {
             title: 'Group by',

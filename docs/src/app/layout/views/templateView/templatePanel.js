@@ -76,7 +76,7 @@
         source: {
           events: 'toggle',
           existsIf: basis.getter('expanded'),
-          satelliteClass: SourceCode.subclass({
+          instance: SourceCode.subclass({
             autoDelegate: true,
             lang: 'js',
             lineNumber: false,
@@ -147,7 +147,7 @@
         source: {
           events: 'toggle',
           existsIf: basis.getter('expanded'),
-          satelliteClass: SourceCode.subclass({
+          instance: SourceCode.subclass({
             autoDelegate: true,
             lang: 'js',
             lineNumber: false,

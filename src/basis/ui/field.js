@@ -233,7 +233,7 @@
         existsIf: function(owner){
           return owner.example;
         },
-        satelliteClass: UINode.subclass({
+        instance: UINode.subclass({
           className: namespace + '.Example',
           template: templates.Example,
           binding: {
@@ -248,7 +248,7 @@
         existsIf: function(owner){
           return owner.description;
         },
-        satelliteClass: UINode.subclass({
+        instance: UINode.subclass({
           className: namespace + '.Description',
           template: templates.Description,
           binding: {
@@ -562,7 +562,7 @@
         existsIf: function(owner){
           return owner.maxLength > 0;
         },
-        satelliteClass: UINode.subclass({
+        instance: UINode.subclass({
           className: namespace + '.Counter',
           template: templates.Counter,
           binding: {
@@ -1005,7 +1005,7 @@
         existsIf: function(owner){
           return owner.name;
         },
-        satelliteClass: Hidden.subclass({
+        instance: Hidden.subclass({
           className: namespace + '.ComboboxHidden',
           emit_ownerChanged: function(oldOwner){
             Hidden.prototype.emit_ownerChanged.call(this, oldOwner);

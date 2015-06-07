@@ -71,7 +71,7 @@ var Element = DOMNode.subclass({
   },
   satellite: {
     attributes: {
-      satelliteClass: Node.subclass({
+      instance: Node.subclass({
         template: resource('./template/tree/attritubes.tmpl'),
         childClass: Attribute
       }),

@@ -19,7 +19,7 @@ basis.ready(function(){
         existsIf: function(){
           return !!document.getElementById('demo-javascript');
         },
-        satelliteClass: Node,
+        instance: Node,
         config: function(){
           return {
             sourceVisible: new basis.Token(false),

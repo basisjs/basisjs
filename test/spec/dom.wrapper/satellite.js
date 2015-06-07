@@ -19,12 +19,12 @@ module.exports = {
         });
         var node2 = new Node();
 
-        this.is(false, checkNode(node1));
-        this.is(false, checkNode(node2));
-        this.is(false, checkNode(satellite));
-        this.is(true, node1.satellite.example === satellite);
-        this.is(true, node1.satellite.example.owner === node1);
-        this.is(1, ownerChangedCount);
+        assert(checkNode(node1) === false);
+        assert(checkNode(node2) === false);
+        assert(checkNode(satellite) === false);
+        assert(node1.satellite.example === satellite);
+        assert(node1.satellite.example.owner === node1);
+        assert(ownerChangedCount === 1);
 
         var warn = basis.dev.warn;
         var warning = false;
@@ -38,14 +38,14 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node1));
-        this.is(false, checkNode(node2));
-        this.is(false, checkNode(satellite));
-        this.is(false, warning);
-        this.is(2, ownerChangedCount);
-        this.is(true, node1.satellite.example === undefined);
-        this.is(true, node2.satellite.somename === satellite);
-        this.is(true, satellite.owner === node2);
+        assert(checkNode(node1) === false);
+        assert(checkNode(node2) === false);
+        assert(checkNode(satellite) === false);
+        assert(warning === false);
+        assert(ownerChangedCount === 2);
+        assert(node1.satellite.example === undefined);
+        assert(node2.satellite.somename === satellite);
+        assert(satellite.owner === node2);
       }
     },
     {
@@ -66,12 +66,12 @@ module.exports = {
         });
         var node2 = new Node();
 
-        this.is(false, checkNode(node1));
-        this.is(false, checkNode(node2));
-        this.is(false, checkNode(satellite));
-        this.is(true, node1.satellite.example === satellite);
-        this.is(true, node1.satellite.example.owner === node1);
-        this.is(1, ownerChangedCount);
+        assert(checkNode(node1) === false);
+        assert(checkNode(node2) === false);
+        assert(checkNode(satellite) === false);
+        assert(node1.satellite.example === satellite);
+        assert(node1.satellite.example.owner === node1);
+        assert(true, ownerChangedCount === 1);
 
         var warn = basis.dev.warn;
         var warning = false;
@@ -85,13 +85,13 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node1));
-        this.is(false, checkNode(node2));
-        this.is(false, checkNode(satellite));
-        this.is(false, warning);
-        this.is(2, ownerChangedCount);
-        this.is(true, node1.satellite.example === undefined);
-        this.is(true, satellite.owner === node2);
+        assert(checkNode(node1) === false);
+        assert(checkNode(node2) === false);
+        assert(checkNode(satellite) === false);
+        assert(warning === false);
+        assert(true, ownerChangedCount === 2);
+        assert(node1.satellite.example === undefined);
+        assert(satellite.owner === node2);
       }
     },
     {
@@ -104,10 +104,10 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, satellite.owner === node);
-        this.is(true, node.satellite.test === satellite);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(satellite.owner === node);
+        assert(node.satellite.test === satellite);
 
         var warn = basis.dev.warn;
         var warning = false;
@@ -121,11 +121,11 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(false, warning);
-        this.is(null, satellite.owner);
-        this.is(undefined, node.satellite.test);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(warning === false);
+        assert(satellite.owner === null);
+        assert(node.satellite.test === undefined);
       }
     },
     {
@@ -156,21 +156,21 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, satellite.owner === node);
-        this.is(true, node.satellite.test === satellite);
-        this.is(1, satelliteChangedEventCount);
-        this.is(1, ownerChangedEventCount);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(satellite.owner === node);
+        assert(node.satellite.test === satellite);
+        assert(satelliteChangedEventCount === 1);
+        assert(ownerChangedEventCount === 1);
 
         node.setSatellite('newName', satellite);
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, satellite.owner === node);
-        this.is(undefined, node.satellite.test);
-        this.is(true, node.satellite.newName === satellite);
-        this.is(3, satelliteChangedEventCount);
-        this.is(1, ownerChangedEventCount);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(satellite.owner === node);
+        assert(node.satellite.test === undefined);
+        assert(node.satellite.newName === satellite);
+        assert(satelliteChangedEventCount === 3);
+        assert(ownerChangedEventCount === 1);
       }
     },
     {
@@ -183,10 +183,10 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, satellite.owner === node);
-        this.is(true, node.satellite.test === satellite);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(satellite.owner === node);
+        assert(node.satellite.test === satellite);
 
         var satelliteDestroyed = false;
         satellite.addHandler({
@@ -197,11 +197,11 @@ module.exports = {
 
         node.destroy();
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, satelliteDestroyed);
-        this.is(null, node.satellite);
-        this.is(null, satellite.owner);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(satelliteDestroyed === true);
+        assert(node.satellite === null);
+        assert(satellite.owner === null);
       }
     },
     {
@@ -225,17 +225,17 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(owner));
-        this.is(true, node.owner === owner);
+        assert(checkNode(node) === false);
+        assert(checkNode(owner) === false);
+        assert(node.owner === owner);
 
         owner.destroy();
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(owner));
-        this.is(false, nodeDestroyed);
-        this.is(true, ownerDestroyed);
-        this.is(null, node.owner);
+        assert(checkNode(node) === false);
+        assert(checkNode(owner) === false);
+        assert(nodeDestroyed === false);
+        assert(ownerDestroyed === true);
+        assert(node.owner === null);
       }
     },
     {
@@ -247,11 +247,11 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, !!node.satellite.test);
-        this.is(true, node.satellite.test instanceof AbstractNode);
-        this.is(true, node.satellite.test.owner === node);
-        this.is(true, 'test' in node.satellite[AUTO]);
+        assert(checkNode(node) === false);
+        assert(!!node.satellite.test === true);
+        assert(node.satellite.test instanceof AbstractNode);
+        assert(node.satellite.test.owner === node);
+        assert('test' in node.satellite[AUTO]);
       }
     },
     {
@@ -266,12 +266,12 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert('test' in node.satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.test === satellite);
+        assert(node.satellite.test.owner === node);
       }
     },
     {
@@ -287,15 +287,15 @@ module.exports = {
         });
 
         // should not exists
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
 
         // should be created
         node.update({ value: true });
-        this.is(false, checkNode(node));
-        this.is(true, !!node.satellite.test);
-        this.is(true, node.satellite.test instanceof AbstractNode);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(!!node.satellite.test === true);
+        assert(node.satellite.test instanceof AbstractNode);
+        assert(node.satellite.test.owner === node);
 
         // should be destroyed
         var satelliteDestroyed = false;
@@ -305,9 +305,9 @@ module.exports = {
           }
         });
         node.update({ value: false });
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
-        this.is(true, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
+        assert(satelliteDestroyed === true);
       }
     },
     {
@@ -324,15 +324,15 @@ module.exports = {
         });
 
         // should not exists
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
 
         // should be created
         token.set(true);
-        this.is(false, checkNode(node));
-        this.is(true, !!node.satellite.test);
-        this.is(true, node.satellite.test instanceof AbstractNode);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(!!node.satellite.test === true);
+        assert(node.satellite.test instanceof AbstractNode);
+        assert(node.satellite.test.owner === node);
 
         // should be destroyed
         var satelliteDestroyed = false;
@@ -343,9 +343,9 @@ module.exports = {
         });
 
         token.set(false);
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
-        this.is(true, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
+        assert(satelliteDestroyed === true);
         assert(token.handler != null);
 
         node.destroy();
@@ -365,11 +365,11 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
-        this.is(true, !node.handler && !node.handler);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
+        assert(node.handler === null);
         node.update({ value: true });
-        this.is(undefined, node.satellite.test);
+        assert(node.satellite.test === undefined);
 
         // set false
         var node = new Node({
@@ -381,11 +381,11 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
-        this.is(true, !node.handler);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
+        assert(!node.handler === true);
         node.update({ value: true });
-        this.is(undefined, node.satellite.test);
+        assert(node.satellite.test === undefined);
 
         // set empty string
         var node = new Node({
@@ -397,11 +397,11 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
-        this.is(true, !node.handler);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
+        assert(!node.handler === true);
         node.update({ value: true });
-        this.is(undefined, node.satellite.test);
+        assert(node.satellite.test === undefined);
 
         // set empty array
         var node = new Node({
@@ -413,11 +413,11 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
-        this.is(true, !node.handler);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
+        assert(!node.handler === true);
         node.update({ value: true });
-        this.is(undefined, node.satellite.test);
+        assert(node.satellite.test === undefined);
       }
     },
     {
@@ -434,9 +434,9 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
-        this.is('bar', node.satellite.test.foo);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
+        assert(node.satellite.test.foo === 'bar');
 
         // config as function
         var node = new Node({
@@ -452,10 +452,10 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
-        this.is('bar', node.satellite.test.foo);
-        this.is(node.basisObjectId, node.satellite.test.ownerObjectId);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
+        assert(node.satellite.test.foo === 'bar');
+        assert(node.satellite.test.ownerObjectId === node.basisObjectId);
       }
     },
     {
@@ -474,8 +474,8 @@ module.exports = {
         });
 
         // should be created
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
 
         var events = [];
         node.satellite.test.addHandler({
@@ -490,9 +490,9 @@ module.exports = {
         });
 
         node.update({ value: false });
-        this.is(false, checkNode(node));
-        this.is(false, 'test' in node.satellite);
-        this.is(['satelliteChanged', 'destroy'], events);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite === false);
+        assert(['satelliteChanged', 'destroy'], events);
       }
     },
     {
@@ -517,31 +517,31 @@ module.exports = {
         });
 
         // should not exists
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(undefined, node.satellite.test);
-        this.is(false, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.test === undefined);
+        assert(satelliteDestroyed === false);
 
         // should be created
         node.update({ value: true });
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, satellite.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert('test' in node.satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.test === satellite);
+        assert(satellite.owner === node);
 
         // should not be destroyed
         node.update({ value: false });
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(undefined, node.satellite.test);
-        this.is(false, satelliteDestroyed);
-        this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, satellite.owner !== node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(node.satellite.test === undefined);
+        assert(satelliteDestroyed === false);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO]);
+        assert(satellite.owner !== node);
       }
     },
     {
@@ -555,7 +555,7 @@ module.exports = {
           _dataSource: dataSource,
           satellite: {
             test: {
-              satelliteClass: Node,
+              instance: Node,
               delegate: '_delegate',
               dataSource: '_dataSource'
             }
@@ -565,10 +565,10 @@ module.exports = {
         var satellite = node.satellite.test;
 
         // should be created
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, satellite.delegate === delegate);
-        this.is(true, satellite.dataSource === dataSource);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(satellite.delegate === delegate);
+        assert(satellite.dataSource === dataSource);
       }
     },
     {
@@ -586,7 +586,7 @@ module.exports = {
           _dataSource: dataSource,
           satellite: {
             test: {
-              satelliteClass: Node.subclass({
+              instance: Node.subclass({
                 handler: {
                   delegateChanged: function(){
                     delegateSet = true;
@@ -610,12 +610,12 @@ module.exports = {
         var satellite = node.satellite.test;
 
         // should be created
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, delegateSetBeforePostInit);
-        this.is(true, dataSourceSetBeforePostInit);
-        this.is(true, satellite.delegate === delegate);
-        this.is(true, satellite.dataSource === dataSource);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(delegateSetBeforePostInit === true);
+        assert(dataSourceSetBeforePostInit === true);
+        assert(satellite.delegate === delegate);
+        assert(satellite.dataSource === dataSource);
       }
     },
     {
@@ -639,10 +639,10 @@ module.exports = {
         var satellite = node.satellite.test;
 
         // should be created
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, satellite.delegate === delegate);
-        this.is(true, satellite.dataSource === dataSource);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(satellite.delegate === delegate);
+        assert(satellite.dataSource === dataSource);
       }
     },
     {
@@ -666,27 +666,27 @@ module.exports = {
         });
 
         // instance is not linked and delegate/dataSource is not set
-        this.is(false, checkNode(node));
-        this.is(false, 'test' in node.satellite);
-        this.is(true, satellite.owner === null);
-        this.is(true, satellite.delegate === null);
-        this.is(true, satellite.dataSource === null);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite === false);
+        assert(satellite.owner === null);
+        assert(satellite.delegate === null);
+        assert(satellite.dataSource === null);
 
         // set delegate/dataSource when instance in use
         node.update({ value: true });
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, satellite.owner === node);
-        this.is(true, satellite.delegate === delegate);
-        this.is(true, satellite.dataSource === dataSource);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
+        assert(satellite.owner === node);
+        assert(satellite.delegate === delegate);
+        assert(satellite.dataSource === dataSource);
 
         // reset delegate/dataSource when instance not in use
         node.update({ value: false });
-        this.is(false, checkNode(node));
-        this.is(false, 'test' in node.satellite);
-        this.is(true, satellite.owner === null);
-        this.is(true, satellite.delegate === null);
-        this.is(true, satellite.dataSource === null);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite === false);
+        assert(satellite.owner === null);
+        assert(satellite.delegate === null);
+        assert(satellite.dataSource === null);
       }
     },
     {
@@ -710,21 +710,21 @@ module.exports = {
         });
 
         // should not exists
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, satellite.owner === node);
-        this.is(false, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert('test' in node.satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(satellite.owner === node);
+        assert(satelliteDestroyed === false);
 
         // should unlink from owner
         satellite.destroy();
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(false, 'test' in node.satellite);
-        this.is(false, 'test' in node.satellite[AUTO]);
-        this.is(true, satelliteDestroyed);
-        this.is(true, satellite.owner === null);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO] === false);
+        assert(satelliteDestroyed === true);
+        assert(satellite.owner === null);
       }
     },
     {
@@ -749,21 +749,21 @@ module.exports = {
         });
 
         // should not exists
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, satellite.owner === null);
-        this.is(false, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO]);
+        assert(satellite.owner === null);
+        assert(satelliteDestroyed === false);
 
         // should unlink from owner
         satellite.destroy();
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(false, 'test' in node.satellite);
-        this.is(false, 'test' in node.satellite[AUTO]);
-        this.is(true, satelliteDestroyed);
-        this.is(true, satellite.owner === null);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO] === false);
+        assert(satelliteDestroyed === true);
+        assert(satellite.owner === null);
       }
     },
     {
@@ -788,19 +788,19 @@ module.exports = {
         });
 
         // should not exists
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, satellite.owner === null);
-        this.is(false, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO]);
+        assert(satellite.owner === null);
+        assert(satelliteDestroyed === false);
 
         // should unlink from owner
         node.destroy();
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, satelliteDestroyed);
-        this.is(true, satellite.owner === null);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(satelliteDestroyed === true);
+        assert(satellite.owner === null);
       }
     },
     {
@@ -817,20 +817,20 @@ module.exports = {
         });
 
         // should not exists
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
 
         // should not be created (no changes on update event)
         node.update({ value: true });
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
 
         // should be created
         node.setState(READY, '1');
-        this.is(false, checkNode(node));
-        this.is(true, !!node.satellite.test);
-        this.is(true, node.satellite.test instanceof AbstractNode);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(!!node.satellite.test === true);
+        assert(node.satellite.test instanceof AbstractNode);
+        assert(node.satellite.test.owner === node);
 
         // should not be destroyed (no changes on update event)
         var satelliteDestroyed = false;
@@ -840,15 +840,15 @@ module.exports = {
           }
         });
         node.update({ value: false });
-        this.is(false, checkNode(node));
-        this.is(true, !!node.satellite.test);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(!!node.satellite.test === true);
+        assert(node.satellite.test.owner === node);
 
         // should be destroyed
         node.setActive(!node.active);
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
-        this.is(true, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
+        assert(satelliteDestroyed === true);
 
       }
     },
@@ -866,20 +866,20 @@ module.exports = {
         });
 
         // should not exists
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
 
         // should not be created (no changes on update event)
         node.update({ value: true });
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
 
         // should be created
         node.setState(READY, '1');
-        this.is(false, checkNode(node));
-        this.is(true, !!node.satellite.test);
-        this.is(true, node.satellite.test instanceof AbstractNode);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(!!node.satellite.test === true);
+        assert(node.satellite.test instanceof AbstractNode);
+        assert(node.satellite.test.owner === node);
 
         // should not be destroyed (no changes on update event)
         var satelliteDestroyed = false;
@@ -889,15 +889,15 @@ module.exports = {
           }
         });
         node.update({ value: false });
-        this.is(false, checkNode(node));
-        this.is(true, !!node.satellite.test);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(!!node.satellite.test === true);
+        assert(node.satellite.test.owner === node);
 
         // should be destroyed
         node.setActive(!node.active);
-        this.is(false, checkNode(node));
-        this.is(undefined, node.satellite.test);
-        this.is(true, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(node.satellite.test === undefined);
+        assert(satelliteDestroyed === true);
       }
     },
     {
@@ -909,9 +909,9 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
+        assert('test' in node.satellite[AUTO]);
 
         var warn = basis.dev.warn;
         var warning = false;
@@ -935,12 +935,12 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(false, warning); // should not be warning
-        this.is(true, satelliteDestroyed);
-        this.is(true, node.satellite.test === newSatellite);
-        this.is(false, 'test' in node.satellite[AUTO]);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(warning === false); // should not be warning
+        assert(satelliteDestroyed === true);
+        assert(node.satellite.test === newSatellite);
+        assert('test' in node.satellite[AUTO] === false);
       }
     },
     {
@@ -954,9 +954,9 @@ module.exports = {
           }
         });
 
-        this.is(false, checkNode(node));
-        this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO]);
 
         var warn = basis.dev.warn;
         var warning = false;
@@ -971,11 +971,11 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(newSatellite));
-        this.is(false, warning); // should be warning
-        this.is(true, node.satellite.test === newSatellite);
-        this.is(false, 'test' in node.satellite[AUTO]);
+        assert(checkNode(node) === false);
+        assert(checkNode(newSatellite) === false);
+        assert(warning === false); // should be warning
+        assert(node.satellite.test === newSatellite);
+        assert('test' in node.satellite[AUTO] === false);
       }
     },
     {
@@ -992,11 +992,11 @@ module.exports = {
 
         node.setSatellite('test', {});
 
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, node.satellite.test instanceof AbstractNode);
-        this.is(1, satelliteChangedEventCount);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.test instanceof AbstractNode);
+        assert(satelliteChangedEventCount === 1);
 
         var satelliteDestroyed = false;
         node.satellite.test.addHandler({
@@ -1007,11 +1007,11 @@ module.exports = {
 
         node.setSatellite('test', null);
 
-        this.is(false, checkNode(node));
-        this.is(true, satelliteDestroyed);
-        this.is(undefined, node.satellite.test);
-        this.is(false, 'test' in node.satellite[AUTO]);
-        this.is(2, satelliteChangedEventCount);
+        assert(checkNode(node) === false);
+        assert(satelliteDestroyed === true);
+        assert(node.satellite.test === undefined);
+        assert('test' in node.satellite[AUTO] === false);
+        assert(satelliteChangedEventCount === 2);
       }
     },
     {
@@ -1030,20 +1030,20 @@ module.exports = {
           existsIf: 'data.value'
         });
 
-        this.is(false, checkNode(node));
-        this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(0, satelliteChangedEventCount);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO]);
+        assert(satelliteChangedEventCount === 0);
 
         node.update({
           value: true
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, node.satellite.test instanceof AbstractNode);
-        this.is(1, satelliteChangedEventCount);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.test instanceof AbstractNode);
+        assert(satelliteChangedEventCount === 1);
 
         var satelliteDestroyed = false;
         node.satellite.test.addHandler({
@@ -1056,12 +1056,12 @@ module.exports = {
           value: false
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, satelliteDestroyed);
-        this.is(undefined, node.satellite.test);
-        this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(2, satelliteChangedEventCount);
+        assert(checkNode(node) === false);
+        assert(satelliteDestroyed === true);
+        assert(node.satellite.test === undefined);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO]);
+        assert(satelliteChangedEventCount === 2);
       }
     },
     {
@@ -1078,10 +1078,10 @@ module.exports = {
 
         node.setSatellite('test', {});
 
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(1, satelliteChangedEventCount);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(satelliteChangedEventCount === 1);
 
         var satellite = node.satellite.test;
         var satelliteDestroyed = false;
@@ -1096,22 +1096,22 @@ module.exports = {
           existsIf: 'data.value'
         });
 
-        this.is(false, checkNode(node));
-        this.is(2, satelliteChangedEventCount);
-        this.is(false, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, node.satellite.test !== satellite);
-        this.is(true, satelliteDestroyed);
+        assert(checkNode(node) === false);
+        assert(satelliteChangedEventCount === 2);
+        assert('test' in node.satellite === false);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.test !== satellite);
+        assert(satelliteDestroyed === true);
 
         // satellite.test -> AbstractNode instance
         node.update({
           value: 1
         });
 
-        this.is(false, checkNode(node));
-        this.is(true, 'test' in node.satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(true, node.satellite.test instanceof AbstractNode);
+        assert(checkNode(node) === false);
+        assert('test' in node.satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.test instanceof AbstractNode);
       }
     },
     {
@@ -1136,11 +1136,11 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning); // should be warning
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, satellite.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning); // should be warning
+        assert(node.satellite.test === satellite);
+        assert(satellite.owner === node);
       }
     },
     {
@@ -1167,11 +1167,11 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning); // should be warning
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, satellite.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning); // should be warning
+        assert(node.satellite.test === satellite);
+        assert(satellite.owner === node);
       }
     },
     {
@@ -1197,12 +1197,12 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(false, checkNode(newOwner));
-        this.is(true, !!warning); // should be warning
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, satellite.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(checkNode(newOwner) === false);
+        assert(!!warning); // should be warning
+        assert(node.satellite.test === satellite);
+        assert(satellite.owner === node);
       }
     },
     {
@@ -1230,12 +1230,12 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(newOwner));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning); // should be warning
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, satellite.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(newOwner) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning); // should be warning
+        assert(node.satellite.test === satellite);
+        assert(satellite.owner === node);
       }
     },
     {
@@ -1264,11 +1264,11 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(newOwner));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning); // should be warning
-        this.is(null, satellite.owner);
+        assert(checkNode(node) === false);
+        assert(checkNode(newOwner) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning); // should be warning
+        assert(satellite.owner === null);
       }
     },
     {
@@ -1294,12 +1294,12 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(newOwner));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning); // should be warning
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(newOwner) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning); // should be warning
+        assert(node.satellite.test === satellite);
+        assert(node.satellite.test.owner === node);
       }
     },
     {
@@ -1327,12 +1327,12 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(newOwner));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning); // should be warning
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, satellite.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(newOwner) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning); // should be warning
+        assert(node.satellite.test === satellite);
+        assert(satellite.owner === node);
       }
     },
     {
@@ -1357,14 +1357,14 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning);
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(false, node.satellite.name === satellite);
-        this.is(false, 'name' in node.satellite[AUTO]);
-        this.is(true, satellite.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning === true);
+        assert(node.satellite.test === satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.name !== satellite);
+        assert('name' in node.satellite[AUTO] === false);
+        assert(satellite.owner === node);
       }
     },
     {
@@ -1391,14 +1391,14 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning);
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, 'test' in node.satellite[AUTO]);
-        this.is(false, node.satellite.name === satellite);
-        this.is(false, 'name' in node.satellite[AUTO]);
-        this.is(true, satellite.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning === true);
+        assert(node.satellite.test === satellite);
+        assert('test' in node.satellite[AUTO]);
+        assert(node.satellite.name !== satellite);
+        assert('name' in node.satellite[AUTO] === false);
+        assert(satellite.owner === node);
       }
     },
     {
@@ -1423,11 +1423,11 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, checkNode(satellite));
-        this.is(true, !!warning); // should be warning
-        this.is(true, node.satellite.test === satellite);
-        this.is(true, node.satellite.test.owner === node);
+        assert(checkNode(node) === false);
+        assert(checkNode(satellite) === false);
+        assert(!!warning); // should be warning
+        assert(node.satellite.test === satellite);
+        assert(node.satellite.test.owner === node);
       }
     },
     {
@@ -1478,15 +1478,15 @@ module.exports = {
           basis.dev.warn = warn;
         }
 
-        this.is(false, checkNode(node));
-        this.is(false, warning); // no warnings
-        this.is(true, autoCreateSatelliteDestroyed);
-        this.is(true, autoSatelliteDestroyed);
-        this.is(true, regularSatelliteDestroyed);
-        this.is(null, node.satellite);
-        this.is(null, autoCreateSatellite.owner);
-        this.is(null, autoSatellite.owner);
-        this.is(null, regularSatellite.owner);
+        assert(checkNode(node) === false);
+        assert(warning === false); // no warnings
+        assert(autoCreateSatelliteDestroyed === true);
+        assert(autoSatelliteDestroyed === true);
+        assert(regularSatelliteDestroyed === true);
+        assert(node.satellite === null);
+        assert(autoCreateSatellite.owner === null);
+        assert(autoSatellite.owner === null);
+        assert(regularSatellite.owner === null);
       }
     },
     {
@@ -1509,19 +1509,19 @@ module.exports = {
           }
         });
 
-        this.is(true, node.data.value);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.dataSource === dataset);
+        assert(node.data.value === true);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.dataSource === dataset);
 
         node.update({ value: false });
-        this.is(false, node.data.value);
-        this.is(false, 'foo' in node.satellite);
-        this.is(true, satellite.dataSource === dataset);
+        assert(node.data.value === false);
+        assert('foo' in node.satellite === false);
+        assert(satellite.dataSource === dataset);
 
         node.update({ value: true });
-        this.is(true, node.data.value);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.dataSource === dataset);
+        assert(node.data.value === true);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.dataSource === dataset);
       }
     },
     {
@@ -1546,19 +1546,19 @@ module.exports = {
           }
         });
 
-        this.is(true, node.data.dataset === nodeDataset);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.dataSource === nodeDataset);
+        assert(node.data.dataset === nodeDataset);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.dataSource === nodeDataset);
 
         node.update({ dataset: null });
-        this.is(true, node.data.dataset === null);
-        this.is(false, 'foo' in node.satellite);
-        this.is(true, satellite.dataSource === null);
+        assert(node.data.dataset === null);
+        assert('foo' in node.satellite === false);
+        assert(satellite.dataSource === null);
 
         node.update({ dataset: nodeDataset });
-        this.is(true, node.data.dataset === nodeDataset);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.dataSource === nodeDataset);
+        assert(node.data.dataset === nodeDataset);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.dataSource === nodeDataset);
       }
     },
     {
@@ -1581,19 +1581,19 @@ module.exports = {
           }
         });
 
-        this.is(true, node.data.value);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.delegate === object);
+        assert(node.data.value === true);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.delegate === object);
 
         node.update({ value: false });
-        this.is(false, node.data.value);
-        this.is(false, 'foo' in node.satellite);
-        this.is(true, satellite.delegate === object);
+        assert(node.data.value === false);
+        assert('foo' in node.satellite === false);
+        assert(satellite.delegate === object);
 
         node.update({ value: true });
-        this.is(true, node.data.value);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.delegate === object);
+        assert(node.data.value === true);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.delegate === object);
       }
     },
     {
@@ -1617,19 +1617,19 @@ module.exports = {
           }
         });
 
-        this.is(true, node.data.value);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.delegate === node);
+        assert(node.data.value === true);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.delegate === node);
 
         node.update({ value: false });
-        this.is(false, node.data.value);
-        this.is(false, 'foo' in node.satellite);
-        this.is(true, satellite.delegate === null);
+        assert(node.data.value === false);
+        assert('foo' in node.satellite === false);
+        assert(satellite.delegate === null);
 
         node.update({ value: true });
-        this.is(true, node.data.value);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.delegate === node);
+        assert(node.data.value === true);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.delegate === node);
       }
     },
     {
@@ -1645,7 +1645,7 @@ module.exports = {
             foo: {
               events: 'update',
               existsIf: 'data.value',
-              satelliteClass: Node,
+              instance: Node,
               config: {
                 autoDelegate: true,
                 handler: {
@@ -1658,21 +1658,21 @@ module.exports = {
           }
         });
 
-        this.is(true, node.data.value === object);
-        this.is(true, 'foo' in node.satellite);
-        this.is(true, node.satellite.foo.delegate === node);
-        this.is(1, delegateChangedCount);
+        assert(node.data.value === object);
+        assert('foo' in node.satellite);
+        assert(node.satellite.foo.delegate === node);
+        assert(delegateChangedCount === 1);
 
         node.update({ value: null });
-        this.is(null, node.data.value);
-        this.is(false, 'foo' in node.satellite);
-        this.is(1, delegateChangedCount);
+        assert(node.data.value === null);
+        assert('foo' in node.satellite === false);
+        assert(delegateChangedCount === 1);
 
         node.update({ value: object });
-        this.is(true, node.data.value === object);
-        this.is(true, 'foo' in node.satellite);
-        this.is(true, node.satellite.foo.delegate === node);
-        this.is(2, delegateChangedCount);
+        assert(node.data.value === object);
+        assert('foo' in node.satellite);
+        assert(node.satellite.foo.delegate === node);
+        assert(delegateChangedCount === 2);
       }
     },
     {
@@ -1689,7 +1689,7 @@ module.exports = {
               events: 'update',
               existsIf: 'data.value',
               delegate: 'data.value',
-              satelliteClass: Node,
+              instance: Node,
               config: {
                 autoDelegate: true,
                 handler: {
@@ -1702,21 +1702,21 @@ module.exports = {
           }
         });
 
-        this.is(true, node.data.value === object);
-        this.is(true, 'foo' in node.satellite);
-        this.is(true, node.satellite.foo.delegate === object);
-        this.is(1, delegateChangedCount);
+        assert(node.data.value === object);
+        assert('foo' in node.satellite);
+        assert(node.satellite.foo.delegate === object);
+        assert(delegateChangedCount === 1);
 
         node.update({ value: null });
-        this.is(null, node.data.value);
-        this.is(false, 'foo' in node.satellite);
-        this.is(1, delegateChangedCount);
+        assert(node.data.value === null);
+        assert('foo' in node.satellite === false);
+        assert(delegateChangedCount === 1);
 
         node.update({ value: object });
-        this.is(true, node.data.value === object);
-        this.is(true, 'foo' in node.satellite);
-        this.is(true, node.satellite.foo.delegate === object);
-        this.is(2, delegateChangedCount);
+        assert(node.data.value === object);
+        assert('foo' in node.satellite);
+        assert(node.satellite.foo.delegate === object);
+        assert(delegateChangedCount === 2);
       }
     },
     {
@@ -1745,22 +1745,22 @@ module.exports = {
           }
         });
 
-        this.is(true, node.data.value === object);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.delegate === node);
-        this.is(1, delegateChangedCount);
+        assert(node.data.value === object);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.delegate === node);
+        assert(delegateChangedCount === 1);
 
         node.update({ value: null });
-        this.is(null, node.data.value);
-        this.is(false, 'foo' in node.satellite);
-        this.is(true, satellite.delegate === null);
-        this.is(2, delegateChangedCount);
+        assert(node.data.value === null);
+        assert('foo' in node.satellite === false);
+        assert(satellite.delegate === null);
+        assert(delegateChangedCount === 2);
 
         node.update({ value: object });
-        this.is(true, node.data.value === object);
-        this.is(true, node.satellite.foo === satellite);
-        this.is(true, satellite.delegate === node);
-        this.is(3, delegateChangedCount);
+        assert(node.data.value === object);
+        assert(node.satellite.foo === satellite);
+        assert(satellite.delegate === node);
+        assert(delegateChangedCount === 3);
       }
     },
     {
@@ -1829,6 +1829,363 @@ module.exports = {
         assert(bar.satellite.foo === undefined);
         assert('foo' in bar.satellite == false);
       }
+    },
+    {
+      name: 'various types of value for instance',
+      test: [
+        {
+          name: 'factory',
+          test: [
+            {
+              name: 'should accept any function as factory',
+              test: function(){
+                var satellite = new Node();
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      instance: function(){
+                        return satellite;
+                      }
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === satellite);
+              }
+            },
+            {
+              name: 'should pass owner to factory function',
+              test: function(){
+                var node = new Node({
+                  foo: new Node(),
+                  satellite: {
+                    test: {
+                      instance: function(owner){
+                        return owner.foo;
+                      }
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === node.foo);
+              }
+            },
+            {
+              name: 'should convert string to simple getter',
+              test: function(){
+                var node = new Node({
+                  foo: new Node(),
+                  satellite: {
+                    test: {
+                      instance: 'foo'
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === node.foo);
+              }
+            },
+            {
+              name: 'should be invoked only once',
+              test: function(){
+                var count = 0;
+                var satellite = new Node();
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      existsIf: 'data.exists',
+                      instance: function(){
+                        count++;
+                        return satellite;
+                      }
+                    }
+                  }
+                });
+
+                assert(count === 0);
+                assert(node.satellite.test === undefined);
+
+                node.update({
+                  exists: true
+                });
+                assert(count === 1);
+                assert(node.satellite.test === satellite);
+
+                node.update({
+                  exists: false
+                });
+                assert(count === 1);
+                assert(node.satellite.test === undefined);
+
+                node.update({
+                  exists: true
+                });
+                assert(count === 1);
+                assert(node.satellite.test === satellite);
+              }
+            },
+          ]
+        },
+        {
+          name: 'bb-value',
+          test: [
+            {
+              name: 'should resolve bb-value for instance property',
+              test: function(){
+                var token = new basis.Token();
+                var foo = new Node();
+                var bar = new Node();
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      instance: token
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === undefined);
+                assert('test' in node.satellite == false);
+
+                token.set(foo);
+                assert(node.satellite.test === foo);
+
+                token.set(bar);
+                assert(node.satellite.test === bar);
+
+                token.set(null);
+                assert(node.satellite.test === undefined);
+                assert('test' in node.satellite == false);
+
+                token.set(foo);
+                assert(node.satellite.test === foo);
+              }
+            },
+            {
+              name: 'should works fine with existsIf',
+              test: function(){
+                var foo = new Node();
+                var token = new basis.Token(foo);
+                var exists = new basis.Token(true);
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      existsIf: exists,
+                      instance: token
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === foo);
+
+                token.set();
+                assert(node.satellite.test === undefined);
+
+                token.set(foo);
+                assert(node.satellite.test === foo);
+
+                token.set();
+                assert(node.satellite.test === undefined);
+
+                exists.set(false);
+                assert(node.satellite.test === undefined);
+
+                token.set(foo);
+                assert(node.satellite.test === undefined);
+
+                exists.set(true);
+                assert(node.satellite.test === foo);
+              }
+            },
+            {
+              name: 'complex case with value resolve and destroy',
+              test: function(){
+                var foo = new Node();
+                var bar = new Node();
+                var baz = new Node();
+                var bbValue = Value.from(bar, 'delegateChanged', 'delegate');
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      instance: bbValue
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === undefined);
+                assert('test' in node.satellite == false);
+
+                bar.setDelegate(foo);
+                assert(node.satellite.test === foo);
+
+                foo.destroy();
+                assert(node.satellite.test === undefined);
+                assert('test' in node.satellite == false);
+
+                bar.setDelegate(baz);
+                assert(node.satellite.test === baz);
+              }
+            },
+            {
+              name: 'node should lost satellite delivered by bb-value when another node capture it value via bb-value',
+              test: function(){
+                var foo = new Node();
+                var token = new basis.Token(foo);
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      instance: token
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === foo);
+
+                var anotherNode = new Node({
+                  satellite: {
+                    test: token
+                  }
+                });
+
+                assert(node.satellite.test === foo);
+                assert(node.satellite.test.delegate === null);
+                assert(anotherNode.satellite.test === undefined);
+                assert(anotherNode.satellite[AUTO].test === undefined);
+              }
+            },
+            {
+              name: 'node should not lost satellite delivered by bb-value when another node capture it value',
+              test: function(){
+                var foo = new Node();
+                var token = new basis.Token(foo);
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      instance: token
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === foo);
+
+                var anotherNode = new Node({
+                  satellite: {
+                    test: foo
+                  }
+                });
+
+                assert(node.satellite.test === foo);
+                assert(node.satellite.test.delegate === null);
+                assert(anotherNode.satellite.test === undefined);
+                assert(anotherNode.satellite[AUTO] === undefined);
+              }
+            }
+          ]
+        },
+        {
+          name: 'resource as instance value',
+          test: [
+            {
+              name: 'should accept resource as instance value',
+              test: function(){
+                var resource = basis.resource.virtual('js', function(exports, module){
+                  module.exports = new Node();
+                });
+
+                var node = new Node({
+                  satellite: {
+                    foo: {
+                      instance: resource
+                    }
+                  }
+                });
+
+                assert('foo' in node.satellite);
+                assert(node.satellite.foo instanceof Node);
+                assert(node.satellite.foo === resource.fetch());
+              }
+            },
+            {
+              name: 'should accept resource as implicit instance value',
+              test: function(){
+                var resource = basis.resource.virtual('js', function(exports, module){
+                  module.exports = new Node();
+                });
+
+                var node = new Node({
+                  satellite: {
+                    foo: resource
+                  }
+                });
+
+                assert('foo' in node.satellite);
+                assert(node.satellite.foo instanceof Node);
+                assert(node.satellite.foo === resource.fetch());
+              }
+            },
+            {
+              name: 'resource should be resolved only when used',
+              test: function(){
+                var resource = basis.resource.virtual('js', function(exports, module){
+                  module.exports = new Node();
+                });
+
+                var node = new Node({
+                  satellite: {
+                    foo: {
+                      existsIf: 'data.exist',
+                      instance: resource
+                    }
+                  }
+                });
+
+                assert('foo' in node.satellite === false);
+                assert(node.satellite.foo === undefined);
+                assert(resource.isResolved() === false);
+
+                node.update({
+                  exist: true
+                });
+                assert('foo' in node.satellite);
+                assert(node.satellite.foo instanceof Node);
+                assert(node.satellite.foo === resource.fetch());
+              }
+            },
+            {
+              name: 'node should not lost satellite delivered by resource when another node try to capture it',
+              test: function(){
+                var resource = basis.resource.virtual('js', function(exports, module){
+                  module.exports = new Node();
+                });
+
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      instance: resource
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === resource.fetch());
+
+                var delegate = new Node();
+                var anotherNode = new Node({
+                  satellite: {
+                    test: {
+                      delegate: delegate,
+                      instance: resource
+                    }
+                  }
+                });
+
+                assert(node.satellite.test === resource.fetch());
+                assert(node.satellite.test.delegate === null);
+                assert(anotherNode.satellite.test === undefined);
+                assert(anotherNode.satellite[AUTO].test === undefined);
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 };

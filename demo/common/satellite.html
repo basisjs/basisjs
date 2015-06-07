@@ -243,7 +243,7 @@
           group: {
             existsIf: 'data.group',
             delegate: 'data.group',
-            satelliteClass: Node.subclass({
+            instance: Node.subclass({
               template: '{title}',
               binding: {
                 title: 'data:'

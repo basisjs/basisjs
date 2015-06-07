@@ -1485,10 +1485,10 @@
 
     satellite: {
       chartViewer: {
-        satelliteClass: ChartViewer
+        instance: ChartViewer
       },
       chartSelection: {
-        satelliteClass: ChartSelection,
+        instance: ChartSelection,
         existsIf: 'selection'
       }
     },

@@ -33,6 +33,7 @@
   var basisData = require('basis.data');
   var resolveValue = basisData.resolveValue;
   var resolveDataset = basisData.resolveDataset;
+  var createResolveFunction = basisData.createResolveFunction;
 
   var SUBSCRIPTION = basisData.SUBSCRIPTION;
   var STATE = basisData.STATE;
@@ -329,6 +330,26 @@
   // AbstractNode
   //
 
+  function processInstanceClass(InstanceClass){
+    if (!InstanceClass.isSubclassOf(AbstractNode))
+    {
+      /** @cut */ basis.dev.warn(namespace + ': Bad class for instance, should be subclass of basis.dom.wrapper.AbstractNode');
+      return AbstractNode;
+    }
+
+    return InstanceClass;
+  }
+
+  function createInstanceConfig(getter){
+    if (typeof getter == 'string')
+      getter = basis.getter(getter);
+
+    if (typeof getter != 'function')
+      getter = basis.fn.$const(getter);
+
+    return getter;
+  }
+
   function processSatelliteConfig(satelliteConfig){
     if (!satelliteConfig)
       return null;
@@ -339,110 +360,122 @@
     if (satelliteConfig instanceof AbstractNode)
       return satelliteConfig;
 
-    if (Class.isClass(satelliteConfig))
+    if (satelliteConfig.constructor !== Object)
       satelliteConfig = {
-        satelliteClass: satelliteConfig
+        instance: satelliteConfig
       };
 
-    if (satelliteConfig.constructor === Object)
+    var handlerRequired = false;
+    var events = 'update';
+    var satelliteClass;
+    var config = {
+      isSatelliteConfig: true
+    };
+
+    for (var key in satelliteConfig)
     {
-      var handlerRequired = false;
-      var events = 'update';
-      var satelliteClass;
-      var config = {
-        isSatelliteConfig: true
-      };
-
-      for (var key in satelliteConfig)
+      var value = satelliteConfig[key];
+      switch (key)
       {
-        var value = satelliteConfig[key];
-        switch (key)
-        {
-          case 'instance':
-            if (value instanceof AbstractNode)
-              config[key] = value;
-            /** @cut */ else
-            /** @cut */   basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
-            break;
-
-          case 'instanceOf': // deprecated
-          case 'satelliteClass':
-            if (key == 'instanceOf')
-            {
-              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config is deprecated, use `satelliteClass` instead');
-              if ('satelliteClass' in satelliteConfig)
-              {
-                /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config has ignored, as `satelliteClass` is specified');
-                break;
-              }
-            }
-
-            if (Class.isClass(value) && value.isSubclassOf(AbstractNode))
-              satelliteClass = value;
-            /** @cut */ else
-            /** @cut */   basis.dev.warn(namespace + ': `satelliteClass` value in satellite config should be a subclass of basis.dom.wrapper.AbstractNode');
-            break;
-
-          case 'existsIf':
-          case 'delegate':
-          case 'dataSource':
-            if (value)
+        case 'instance':
+          if (value instanceof AbstractNode)
+          {
+            config.instance = value;
+          }
+          else
+          {
+            if (Class.isClass(value))
+              config.instanceClass = processInstanceClass(value);
+            else
             {
               if (typeof value == 'string')
-                value = getter(value);
+                value = basis.getter(value);
 
-              if (typeof value != 'function')
-                value = basis.fn.$const(value);
-              else
-                handlerRequired = true;
+              config.getInstance = value;
             }
-
-            config[key] = value;
-            break;
-
-          case 'config':
-            config[key] = typeof value == 'string' ? getter(value) : value;
-            break;
-
-          case 'events':
-            events = satelliteConfig.events;
-            break;
-
-          default:
-            /** @cut */ basis.dev.warn('Unknown satellite config option – ' + key);
-        }
-      }
-
-      if (!config.instance)
-        config.satelliteClass = satelliteClass || AbstractNode;
-      else
-      {
-        /** @cut */ if (satelliteClass)
-        /** @cut */   basis.dev.warn(namespace + ': `satelliteClass` can\'t be set with `instance` value in satellite config, value ignored');
-      }
-
-      if (handlerRequired)
-      {
-        if (Array.isArray(events))
-          events = events.join(' ');
-
-        if (typeof events == 'string')
-        {
-          var handler = {};
-          events = events.split(/\s+/);
-
-          for (var i = 0, eventName; eventName = events[i]; i++)
-          {
-            handler[eventName] = SATELLITE_UPDATE;
-            config.handler = handler;
           }
-        }
-      }
 
-      return config;
+          break;
+
+        case 'instanceOf': // deprecated
+        case 'satelliteClass':
+          if (key == 'instanceOf')
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config is deprecated, use `instance` instead');
+            if ('satelliteClass' in satelliteConfig)
+            {
+              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config has been ignored, as `satelliteClass` is specified');
+              break;
+            }
+          }
+
+          if ('instance' in satelliteConfig)
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `' + key + '` in satellite config has been ignored, as `instance` is specified');
+            break;
+          }
+
+          if (Class.isClass(value))
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `satelliteClass` in satellite config is deprecated, use `instance` instead');
+            config.instanceClass = processInstanceClass(value);
+          }
+          /** @cut */ else
+          /** @cut */   basis.dev.warn(namespace + ': bad value for `' + key + '` in satellite config, value should be a subclass of basis.dom.wrapper.AbstractNode');
+          break;
+
+        case 'existsIf':
+        case 'delegate':
+        case 'dataSource':
+          if (value)
+          {
+            if (typeof value == 'string')
+              value = getter(value);
+
+            if (typeof value != 'function')
+              value = basis.fn.$const(value);
+            else
+              handlerRequired = true;
+          }
+
+          config[key] = value;
+          break;
+
+        case 'config':
+          config.config = createInstanceConfig(value);
+          break;
+
+        case 'events':
+          events = satelliteConfig.events;
+          break;
+
+        default:
+          /** @cut */ basis.dev.warn('Unknown satellite config option – ' + key);
+      }
     }
 
-    return null;
+    if (!config.instance && !config.getInstance && !config.instanceClass)
+      config.instanceClass = processInstanceClass(AbstractNode);
+
+    if (handlerRequired)
+    {
+      if (Array.isArray(events))
+        events = events.join(' ');
+
+      if (typeof events == 'string')
+      {
+        var handler = {};
+        events = events.split(/\s+/);
+
+        for (var i = 0, eventName; eventName = events[i]; i++)
+        {
+          handler[eventName] = SATELLITE_UPDATE;
+          config.handler = handler;
+        }
+      }
+    }
+
+    return config;
   }
 
   function applySatellites(node, satellites){
@@ -469,23 +502,19 @@
     var config = this.config;
     var owner = this.owner;
 
-    var satellite = this.instance;
     var exists = ('existsIf' in config == false) || config.existsIf(owner);
 
-    if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsAdapter'))
+    if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsRA_'))
     {
+      var satellite = config.instance;
+      var justCreated = false;
+
       if (!satellite)
       {
-        satellite = config.instance;
-
-        if (!satellite)
+        if (typeof config.instanceClass == 'function')
         {
-          // create new satellite instance
-          var satelliteConfig = (
-            typeof config.config == 'function'
-              ? config.config(owner)
-              : config.config
-          ) || {};
+          var satelliteConfig = (config.config && config.config(owner)) || {};
+          var justCreated = true;
 
           if (config.delegate)
           {
@@ -496,22 +525,35 @@
           if (config.dataSource)
             satelliteConfig.dataSource = config.dataSource(owner);
 
-          satellite = new config.satelliteClass(satelliteConfig);
+          satellite = new config.instanceClass(satelliteConfig);
           satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
         }
-
-        this.instance = satellite;
-        owner.setSatellite(name, satellite, true);
+        else
+        {
+          if (typeof config.getInstance == 'function')
+            config.getInstance = config.getInstance.call(owner, owner);
+          satellite = resolveAbstractNode(this, SATELLITE_UPDATE, config.getInstance, 'instanceRA_');
+        }
       }
 
-      if (!satelliteConfig && config.delegate)
-        satellite.setDelegate(config.delegate(owner));
+      if (this.instance !== satellite)
+      {
+        this.instance = satellite || null;
+        owner.setSatellite(name, this.instance, true);
+      }
 
-      if (!satelliteConfig && config.dataSource)
-        satellite.setDataSource(config.dataSource(owner));
+      if (satellite && !justCreated && satellite.owner === owner)
+      {
+        if (config.delegate)
+          satellite.setDelegate(config.delegate(owner));
+
+        if (config.dataSource)
+          satellite.setDataSource(config.dataSource(owner));
+      }
     }
     else
     {
+      var satellite = this.instance;
       if (satellite)
       {
         if (config.instance)
@@ -531,7 +573,8 @@
 
   var AUTO_SATELLITE_INSTANCE_HANDLER = {
     destroy: function(){
-      this.owner.setSatellite(this.name, null);
+      if (!this.instanceRA_)
+        this.owner.setSatellite(this.name, null);
     }
   };
 
@@ -1103,7 +1146,8 @@
               name: name,
               config: satellite,
               instance: null,
-              existsAdapter: null
+              instanceRA_: null,
+              existsRA_: null
             };
 
             // auto-create satellite
@@ -1156,7 +1200,10 @@
 
             // if owner doesn't changed nothing to do
             if (satellite.owner !== this)
+            {
+              this.setSatellite(name, null);
               return;
+            }
 
             if (satelliteListen)
               satellite.addHandler(satelliteListen, this);
@@ -1251,8 +1298,10 @@
         {
           if (auto[name].config.instance && !auto[name].instance)
             auto[name].config.instance.destroy();
-          if (auto[name].existsAdapter)
-            resolveValue(auto[name], null, null, 'existsAdapter');
+          if (auto[name].existsRA_)
+            resolveValue(auto[name], null, null, 'existsRA_');
+          if (auto[name].instanceRA_)
+            resolveValue(auto[name], null, null, 'instanceRA_');
         }
 
         for (var name in satellites)
@@ -1276,6 +1325,9 @@
       this.childNodes = null;
     }
   });
+
+  var resolveAbstractNode = createResolveFunction(AbstractNode);
+
 
  /**
   * @class

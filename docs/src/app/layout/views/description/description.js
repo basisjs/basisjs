@@ -16,7 +16,7 @@ module.exports = new View({
 
   satellite: {
     content: {
-      satelliteClass: JsDocPanel,
+      instance: JsDocPanel,
       existsIf: 'data.fullPath',
       delegate: function(owner){
         return JsDocEntity.getSlot(owner.data.fullPath);
