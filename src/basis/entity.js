@@ -98,11 +98,12 @@
 
     return function(value, oldValue){
       var Type = namedTypes[typeName];
+
       if (Type)
         return Type(value, oldValue);
 
-      /** @cut */ if (arguments.length) // don't warn on default value calculation
-      /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for ' + field + ', but function called');
+      /** @cut */ if (arguments.length && value != null) // don't warn on default value calculation and wrapper call for null
+      /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for `' + field + '`, but function called');
     };
   }
 

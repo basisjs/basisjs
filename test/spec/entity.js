@@ -1423,12 +1423,26 @@ module.exports = {
                 {
                   name: 'use name before type declared',
                   test: function(){
-                    var Type1 = nsEntity.createType(null, { nested: 'fieldTypeTest-nonDeclaredTypeName' });
+                    var Type1;
+                    assert(catchWarnings(function(){
+                      Type1 = nsEntity.createType(null, { nested: 'fieldTypeTest-nonDeclaredTypeName' });
+                    }) === false);
+
                     var Type2 = nsEntity.createType('fieldTypeTest-nonDeclaredTypeName', { value: Number });
                     var instance = Type1({ nested: { value: 123 } });
 
                     assert(typeof instance.data.nested != 'undefined');
                     assert(instance.data.nested.data.value == 123);
+                  }
+                },
+                {
+                  name: 'create type instance with null/undefined value for non-declared type field should not produce warnings',
+                  test: function(){
+                    var Type1 = nsEntity.createType(null, { nested: 'fieldTypeTest-nonDeclaredTypeName-noWarnings' });;
+
+                    assert(catchWarnings(function(){
+                      Type1({});
+                    }) === false);
                   }
                 }
               ]
