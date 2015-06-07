@@ -902,6 +902,26 @@ module.exports = {
                     token.set(1);
                     assert(text(instance) === '<span><b>1 markup 1</b></span>');
                   }
+                },
+                {
+                  name: 'bb-value as argument for compute token',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:pluralMarkupWithPlaceholder.{value}}</span>');
+                    var instance = template.createInstance();
+                    var value = new basis.Token(1);
+
+                    instance.set('value', value);
+                    assert(text(instance) === '<span><b>1 markup 1</b></span>');
+
+                    value.set(2);
+                    assert(text(instance) === '<span><b>2 markups 2</b></span>');
+
+                    value.set(3);
+                    assert(text(instance) === '<span><b>3 markups 3</b></span>');
+
+                    value.set(1);
+                    assert(text(instance) === '<span><b>1 markup 1</b></span>');
+                  }
                 }
               ]
             }
