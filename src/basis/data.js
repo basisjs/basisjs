@@ -2683,13 +2683,15 @@
 
     if (property && oldAdapter !== newAdapter)
     {
-      if (oldAdapter)
-      {
-        oldAdapter.detach();
+      var cursor = oldAdapter;
 
-        // destroy nested adapter if exists
-        if (oldAdapter.next)
-          resolveDataset(oldAdapter, null, null, 'next');
+      // drop old adapter chain
+      while (cursor)
+      {
+        var adapter = cursor;
+        adapter.detach();
+        cursor = adapter.next;
+        adapter.next = null;
       }
 
       if (newAdapter)
@@ -2726,13 +2728,15 @@
 
     if (property && oldAdapter !== newAdapter)
     {
-      if (oldAdapter)
-      {
-        oldAdapter.detach();
+      var cursor = oldAdapter;
 
-        // destroy nested adapter if exists
-        if (oldAdapter.next)
-          resolveObject(oldAdapter, null, null, 'next');
+      // drop old adapter chain
+      while (cursor)
+      {
+        var adapter = cursor;
+        adapter.detach();
+        cursor = adapter.next;
+        adapter.next = null;
       }
 
       if (newAdapter)
@@ -2769,13 +2773,15 @@
 
     if (property && oldAdapter !== newAdapter)
     {
-      if (oldAdapter)
-      {
-        oldAdapter.detach();
+      var cursor = oldAdapter;
 
-        // destroy nested adapter if exists
-        if (oldAdapter.next)
-          resolveValue(oldAdapter, null, null, 'next');
+      // drop old adapter chain
+      while (cursor)
+      {
+        var adapter = cursor;
+        adapter.detach();
+        cursor = adapter.next;
+        adapter.next = null;
       }
 
       if (newAdapter)
