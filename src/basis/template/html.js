@@ -338,8 +338,6 @@
       var oldAttach = this.attaches && this.attaches[bindingName];
       var tmpl = null;
 
-      console.log('resolveValue', arguments);
-
       if (bridge || oldAttach)
       {
         if (bridge)
