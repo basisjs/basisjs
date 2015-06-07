@@ -67,7 +67,7 @@
    /**
     * @type {string}
     */
-    name: '',
+    parent: '',
 
    /**
     * @constructor
@@ -79,25 +79,34 @@
     },
 
     get: function(){
-      var sourceToken = this.token;
-      var isPlural = isPluralType[sourceToken.getType()];
-      var key = isPlural ? cultures[currentCulture].plural(this.value) : this.value;
-      var value = this.dictionary.getValue(sourceToken.name + '.' + key);
+      var value = this.dictionary.getValue(this.getName());
 
-      if (isPlural)
+      if (isPluralType[this.token.getType()])
         value = String(value).replace(/\{#\}/g, this.value);
 
       return value;
     },
 
-    getType: function(){
-      var sourceToken = this.token;
-      var type = sourceToken.getType();
-      var key = isPluralType[type] ? cultures[currentCulture].plural(this.value) : this.value;
+    getName: function(){
+      var type = this.token.getType();
+      var key = this.value;
 
-      return this.dictionary.types[sourceToken.name + '.' + key] ||
+      if (isPluralType[this.token.getType()])
+        key = cultures[currentCulture].plural(key);
+
+      return this.parent + '.' + key;
+    },
+
+    getType: function(){
+      var type = this.token.getType();
+
+      return this.dictionary.types[this.getName()] ||
              nestedType[type] ||
              'default';
+    },
+
+    getParentType: function(){
+      return this.token.getType();
     },
 
     toString: function(){
@@ -176,10 +185,20 @@
       /** @cut */ basis.dev.warn('basis.l10n: Value for l10n token can\'t be set directly, but through dictionary update only');
     },
 
+    getName: function(){
+      return this.name;
+    },
+
     getType: function(){
       return this.dictionary.types[this.name] ||
              nestedType[this.dictionary.types[this.parent]] ||
              'default';
+    },
+
+    getParentType: function(){
+      return this.parent
+        ? this.dictionary.token(this.parent).getType()
+        : 'default';
     },
 
     setType: function(){
@@ -243,7 +262,7 @@
         ComputeTokenClass = this.computeTokenClass = ComputeToken.subclass({
           dictionary: this.dictionary,
           token: this,
-          name: this.name + '.{compute}'
+          parent: this.name
         });
 
       return new ComputeTokenClass(value);
@@ -313,8 +332,17 @@
   }
 
  /**
+  * Check value is a l10n plural token.
+  * @param {*} value Value that should be check.
+  * @return {boolean}
+  */
+  function isPluralToken(value){
+    return isToken(value) && isPluralType[value.getType()];
+  }
+
+/**
   * Check value is a l10n markup token.
-  * @param {*} value Value that should be check it is a markup l10n token.
+  * @param {*} value Value that should be check.
   * @return {boolean}
   */
   function isMarkupToken(value){
@@ -870,6 +898,7 @@
     Token: Token,
     token: resolveToken,
     isToken: isToken,
+    isPluralToken: isPluralToken,
     isMarkupToken: isMarkupToken,
 
     Dictionary: Dictionary,

@@ -220,6 +220,17 @@ module.exports = {
                 assert(text(instance, { foo: 1 }) === text('plural text<span title="test 1/plural text"/>'));
                 assert(text(instance, { foo: 2 }) === text('plural texts<span title="test 2/plural texts"/>'));
               }
+            },
+            {
+              name: 'should replace placeholder',
+              test: function(){
+                var template = createTemplate('<b:l10n src="./test.l10n"/>{l10n:pluralWithPlaceholder.{foo}}<span title="test {foo}/{l10n:pluralWithPlaceholder.{foo}}"/>');
+                var instance = template.createInstance();
+
+                assert(text(instance, { foo: 1 }) === text('1 plural text 1<span title="test 1/1 plural text 1"/>'));
+                assert(text(instance, { foo: 2 }) === text('2 plural texts 2<span title="test 2/2 plural texts 2"/>'));
+                assert(text(instance, { foo: 3 }) === text('3 plural texts 3<span title="test 3/3 plural texts 3"/>'));
+              }
             }
           ]
         }
@@ -251,7 +262,7 @@ module.exports = {
                     assert(text('<b:l10n src="./test.l10n"/><span>{l10n:enumMarkup}</span>') ===
                            text('<span>[object Object]</span>'));
                     assert(text('<b:l10n src="./test.l10n"/><span>{l10n:pluralMarkup}</span>') ===
-                           text('<span>&lt;b&gt;1 markup&lt;/b&gt;,&lt;b&gt;2 markup&lt;/b&gt;</span>'));
+                           text('<span>&lt;b&gt;1 markup&lt;/b&gt;,&lt;b&gt;2 markups&lt;/b&gt;</span>'));
                   }
                 },
                 {
@@ -798,7 +809,9 @@ module.exports = {
                     var instance = template.createInstance();
 
                     assert(text(instance, { value: 1 }) === '<span><b>1 markup</b></span>');
-                    assert(text(instance, { value: 2 }) === '<span><b>2 markup</b></span>');
+                    assert(text(instance, { value: 2 }) === '<span><b>2 markups</b></span>');
+                    assert(text(instance, { value: 3 }) === '<span><b>2 markups</b></span>');
+                    assert(text(instance, { value: 1 }) === '<span><b>1 markup</b></span>');
                   }
                 },
                 {
@@ -830,6 +843,64 @@ module.exports = {
 
                     token.set(1);
                     assert(text(instance) === '<span><b>1 markup</b></span>');
+                  }
+                },
+                {
+                  name: 'should replace placeholder',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:pluralMarkupWithPlaceholder.{value}}</span>');
+                    var instance = template.createInstance();
+
+                    assert(text(instance, { value: 1 }) === '<span><b>1 markup 1</b></span>');
+                    assert(text(instance, { value: 2 }) === '<span><b>2 markups 2</b></span>');
+                    assert(text(instance, { value: 3 }) === '<span><b>3 markups 3</b></span>');
+                  }
+                },
+                {
+                  name: 'value for placeholder should not intersect across templates',
+                  test: function(){
+                    var template = createTemplate('<b:l10n src="./test.l10n"/><span>{l10n:pluralMarkupWithPlaceholder.{value}}</span>');
+                    var foo = template.createInstance();
+                    var bar = template.createInstance();
+
+                    assert(text(foo, { value: 1 }) === '<span><b>1 markup 1</b></span>');
+                    assert(text(bar, { value: 1 }) === '<span><b>1 markup 1</b></span>');
+                    assert(text(foo, { value: 2 }) === '<span><b>2 markups 2</b></span>');
+                    assert(text(bar) === '<span><b>1 markup 1</b></span>');
+                  }
+                },
+                {
+                  name: 'token from binding should work with placeholder',
+                  test: function(){
+                    var dictionary = l10n.dictionary({
+                      _meta: {
+                        type: {
+                          'plural': 'plural-markup'
+                        }
+                      },
+                      'en-US': {
+                        plural: [
+                          '<b>{#} markup {#}</b>',
+                          '<b>{#} markups {#}</b>'
+                        ]
+                      }
+                    });
+
+                    var template = createTemplate('<span>{token}</span>');
+                    var instance = template.createInstance();
+                    var token = dictionary.token('plural').computeToken(1);
+
+                    instance.set('token', token);
+                    assert(text(instance) === '<span><b>1 markup 1</b></span>');
+
+                    token.set(2);
+                    assert(text(instance) === '<span><b>2 markups 2</b></span>');
+
+                    token.set(3);
+                    assert(text(instance) === '<span><b>3 markups 3</b></span>');
+
+                    token.set(1);
+                    assert(text(instance) === '<span><b>1 markup 1</b></span>');
                   }
                 }
               ]

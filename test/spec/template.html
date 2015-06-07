@@ -29,6 +29,7 @@
               'enumWithMarkup.foo': 'markup',
               'enumWithMarkup.bar': 'markup',
               'pluralMarkup': 'plural-markup',
+              'pluralMarkupWithPlaceholder': 'plural-markup',
               'pluralWithMarkup': 'plural',
               'pluralWithMarkup.0': 'markup'
             }
@@ -39,9 +40,10 @@
             'enumMarkup': { 'foo': '<b>foo markup</b>', 'bar': '<b>bar markup</b>', 'baz': '<b>baz markup</b>' },
             'enumWithMarkup': { 'foo': '<b>foo markup</b>', 'bar': '<b>bar markup</b>', 'baz': '<b>baz markup</b>' },
             'plural': ['plural text', 'plural texts'],
-            'pluralMarkup': ['<b>1 markup</b>', '<b>2 markup</b>'],
+            'pluralWithPlaceholder': ['{#} plural text {#}', '{#} plural texts {#}'],
+            'pluralMarkup': ['<b>1 markup</b>', '<b>2 markups</b>'],
+            'pluralMarkupWithPlaceholder': ['<b>{#} markup {#}</b>', '<b>{#} markups {#}</b>'],
             'pluralWithMarkup': ['<b>1 markup</b>', '<b>2 markup</b>'],
-            'pluralWithPlaceholder': ['# plural text', '# plural texts'],
             'simpleMarkup': 'simple <b>markup</b> text',
             'markupWithBinding': '<b>markup</b> text {foo}',
             'l10nMarkup': '<b>markup</b> text {l10n:plural.{foo}} {l10n:foo} {l10n:markupWithBinding}'
@@ -52,7 +54,7 @@
             'enumWithMarkup': { 'foo': '<b>foo маркап</b>', 'bar': '<b>bar маркап</b>', 'baz': '<b>baz маркап</b>' },
             'plural': ['plural текст', 'plural текста', 'plural текстов'],
             'pluralWithMarkup': ['<b>1 маркап</b>', '<b>2 маркап</b>', '<b>5 маркап</b>'],
-            'pluralWithPlaceholder': ['# plural текст', '# plural текста', '# plural текстов'],
+            'pluralWithPlaceholder': ['{#} plural текст {#}', '{#} plural текста {#}', '{#} plural текстов {#}'],
             'simpleMarkup': 'простой <b>markup</b> текст',
             'markupWithBinding': '<b>markup</b> текст {foo}',
             'l10nMarkup': '<b>markup</b> текст {l10n:plural.{foo}} {l10n:foo} {l10n:markupWithBinding}'
