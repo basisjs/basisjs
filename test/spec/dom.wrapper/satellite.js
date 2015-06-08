@@ -292,136 +292,175 @@ module.exports = {
       name: 'auto-create satellite',
       test: [
         {
-          name: 'should create satellite when config is empty',
-          test: function(){
-            var node = new Node({
-              satellite: {
-                test: {}
-              }
-            });
-
-            assert(checkNode(node) === false);
-            assert(!!node.satellite.test === true);
-            assert(node.satellite.test instanceof AbstractNode);
-            assert(node.satellite.test.owner === node);
-            assert('test' in node.satellite[AUTO]);
-          }
-        },
-        {
-          name: 'should use value of config when creates new instance',
-          test: function(){
-            // config as object
-            var node = new Node({
-              satellite: {
-                test: {
-                  config: {
-                    foo: 'bar'
+          name: 'create',
+          test: [
+            {
+              name: 'should create satellite when config is empty',
+              test: function(){
+                var node = new Node({
+                  satellite: {
+                    test: {}
                   }
-                }
+                });
+
+                assert(checkNode(node) === false);
+                assert(!!node.satellite.test === true);
+                assert(node.satellite.test instanceof AbstractNode);
+                assert(node.satellite.test.owner === node);
+                assert('test' in node.satellite[AUTO]);
               }
-            });
-
-            assert(checkNode(node) === false);
-            assert('test' in node.satellite);
-            assert(node.satellite.test.foo === 'bar');
-
-            // config as function
-            var node = new Node({
-              satellite: {
-                test: {
-                  config: function(owner){
-                    return {
-                      ownerObjectId: owner.basisObjectId,
-                      foo: 'bar'
-                    };
+            },
+            {
+              name: 'should use value of config when creates new instance',
+              test: function(){
+                // config as object
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      config: {
+                        foo: 'bar'
+                      }
+                    }
                   }
-                }
+                });
+
+                assert(checkNode(node) === false);
+                assert('test' in node.satellite);
+                assert(node.satellite.test.foo === 'bar');
+
+                // config as function
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      config: function(owner){
+                        return {
+                          ownerObjectId: owner.basisObjectId,
+                          foo: 'bar'
+                        };
+                      }
+                    }
+                  }
+                });
+
+                assert(checkNode(node) === false);
+                assert('test' in node.satellite);
+                assert(node.satellite.test.foo === 'bar');
+                assert(node.satellite.test.ownerObjectId === node.basisObjectId);
               }
-            });
+            },
+            {
+              name: 'should create satellite only when existsIf is true',
+              test: function(){
+                // use existsIf config
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      existsIf: 'data.value'
+                    }
+                  }
+                });
 
-            assert(checkNode(node) === false);
-            assert('test' in node.satellite);
-            assert(node.satellite.test.foo === 'bar');
-            assert(node.satellite.test.ownerObjectId === node.basisObjectId);
-          }
-        },
-        {
-          name: 'should create satellite only when existsIf is true',
-          test: function(){
-            // use existsIf config
-            var node = new Node({
-              satellite: {
-                test: {
-                  existsIf: 'data.value'
-                }
+                // should not exists
+                assert(checkNode(node) === false);
+                assert(node.satellite.test === undefined);
+
+                // should be created
+                node.update({ value: true });
+                assert(checkNode(node) === false);
+                assert(!!node.satellite.test === true);
+                assert(node.satellite.test instanceof AbstractNode);
+                assert(node.satellite.test.owner === node);
+
+                // should be destroyed
+                var satelliteDestroyed = false;
+                node.satellite.test.addHandler({
+                  destroy: function(){
+                    satelliteDestroyed = true;
+                  }
+                });
+                node.update({ value: false });
+                assert(checkNode(node) === false);
+                assert(node.satellite.test === undefined);
+                assert(satelliteDestroyed === true);
               }
-            });
+            },
+            {
+              name: 'should not create new instance on events',
+              test: function(){
+                // use existsIf config
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      existsIf: basis.fn.$true  // otherwise event listener wouldn't be added
+                    }
+                  }
+                });
+                var satellite = node.satellite.test;
+                var satelliteDestroyed = false;
+                var updated = false;
 
-            // should not exists
-            assert(checkNode(node) === false);
-            assert(node.satellite.test === undefined);
+                node.addHandler({
+                  update: function(){
+                    updated = true;
+                  }
+                });
+                satellite.addHandler({
+                  destroy: function(){
+                    satelliteDestroyed = true;
+                  }
+                });
 
-            // should be created
-            node.update({ value: true });
-            assert(checkNode(node) === false);
-            assert(!!node.satellite.test === true);
-            assert(node.satellite.test instanceof AbstractNode);
-            assert(node.satellite.test.owner === node);
-
-            // should be destroyed
-            var satelliteDestroyed = false;
-            node.satellite.test.addHandler({
-              destroy: function(){
-                satelliteDestroyed = true;
+                node.update({ value: NaN });
+                assert(checkNode(node) === false);
+                assert(satelliteDestroyed === false);
+                assert(updated === true);
+                assert(node.satellite.test === satellite);
+                assert(satellite.owner === node);
               }
-            });
-            node.update({ value: false });
-            assert(checkNode(node) === false);
-            assert(node.satellite.test === undefined);
-            assert(satelliteDestroyed === true);
-          }
-        },
-        {
-          name: 'should resolve value of bb-value set for existsIf',
-          test: function(){
-            // use existsIf config
-            var token = new basis.Token(false);
-            var node = new Node({
-              satellite: {
-                test: {
-                  existsIf: token
-                }
+            },
+            {
+              name: 'should resolve value of bb-value set for existsIf',
+              test: function(){
+                // use existsIf config
+                var token = new basis.Token(false);
+                var node = new Node({
+                  satellite: {
+                    test: {
+                      existsIf: token
+                    }
+                  }
+                });
+
+                // should not exists
+                assert(checkNode(node) === false);
+                assert(node.satellite.test === undefined);
+
+                // should be created
+                token.set(true);
+                assert(checkNode(node) === false);
+                assert(!!node.satellite.test === true);
+                assert(node.satellite.test instanceof AbstractNode);
+                assert(node.satellite.test.owner === node);
+
+                // should be destroyed
+                var satelliteDestroyed = false;
+                node.satellite.test.addHandler({
+                  destroy: function(){
+                    satelliteDestroyed = true;
+                  }
+                });
+
+                token.set(false);
+                assert(checkNode(node) === false);
+                assert(node.satellite.test === undefined);
+                assert(satelliteDestroyed === true);
+                assert(token.handler != null);
+
+                node.destroy();
+                assert(token.handler == null);
               }
-            });
-
-            // should not exists
-            assert(checkNode(node) === false);
-            assert(node.satellite.test === undefined);
-
-            // should be created
-            token.set(true);
-            assert(checkNode(node) === false);
-            assert(!!node.satellite.test === true);
-            assert(node.satellite.test instanceof AbstractNode);
-            assert(node.satellite.test.owner === node);
-
-            // should be destroyed
-            var satelliteDestroyed = false;
-            node.satellite.test.addHandler({
-              destroy: function(){
-                satelliteDestroyed = true;
-              }
-            });
-
-            token.set(false);
-            assert(checkNode(node) === false);
-            assert(node.satellite.test === undefined);
-            assert(satelliteDestroyed === true);
-            assert(token.handler != null);
-
-            node.destroy();
-            assert(token.handler == null);
-          }
+            }
+          ]
         },
         {
           name: 'events',
@@ -702,9 +741,9 @@ module.exports = {
                   node.setSatellite('test', newSatellite);
                 }) === false);
 
-                assert(checkNode(node) === false);
-                assert(checkNode(satellite) === false);
                 assert(satelliteDestroyed === true);
+                assert(checkNode(node) === false);
+                assert(checkNode(newSatellite) === false);
                 assert(node.satellite.test === newSatellite);
                 assert('test' in node.satellite[AUTO] === false);
               }
@@ -1851,43 +1890,141 @@ module.exports = {
             },
             {
               name: 'should be invoked only once',
-              test: function(){
-                var count = 0;
-                var satellite = new Node();
-                var node = new Node({
-                  satellite: {
-                    test: {
-                      existsIf: 'data.exists',
-                      instance: function(){
-                        count++;
-                        return satellite;
+              test: [
+                {
+                  name: 'instance',
+                  test: function(){
+                    var count = 0;
+                    var satellite = new Node();
+                    var node = new Node({
+                      satellite: {
+                        test: {
+                          existsIf: 'data.exists',
+                          instance: function(){
+                            count++;
+                            return satellite;
+                          }
+                        }
                       }
-                    }
+                    });
+
+                    assert(count === 0);
+                    assert(node.satellite.test === undefined);
+
+                    node.update({
+                      exists: true
+                    });
+                    assert(count === 1);
+                    assert(node.satellite.test === satellite);
+
+                    node.update({
+                      exists: false
+                    });
+                    assert(count === 1);
+                    assert(node.satellite.test === undefined);
+
+                    node.update({
+                      exists: true
+                    });
+                    assert(count === 1);
+                    assert(node.satellite.test === satellite);
                   }
-                });
+                },
+                {
+                  name: 'class',
+                  test: function(){
+                    var count = 0;
+                    var FirstClass;
+                    var node = new Node({
+                      satellite: {
+                        test: {
+                          existsIf: 'data.exists',
+                          instance: function(){
+                            var Class = Node.subclass({});
+                            count++;
+                            if (!FirstClass)
+                              FirstClass = Class;
+                            return Class;
+                          }
+                        }
+                      }
+                    });
 
-                assert(count === 0);
-                assert(node.satellite.test === undefined);
+                    assert(count === 0);
+                    assert(node.satellite.test === undefined);
 
-                node.update({
-                  exists: true
-                });
-                assert(count === 1);
-                assert(node.satellite.test === satellite);
+                    node.update({
+                      exists: 1
+                    });
+                    assert(count === 1);
+                    assert(node.satellite.test instanceof FirstClass);
 
-                node.update({
-                  exists: false
-                });
-                assert(count === 1);
-                assert(node.satellite.test === undefined);
+                    node.update({
+                      exists: 2
+                    });
+                    assert(count === 1);
+                    assert(node.satellite.test instanceof FirstClass);
 
-                node.update({
-                  exists: true
-                });
-                assert(count === 1);
-                assert(node.satellite.test === satellite);
-              }
-            },
+                    node.update({
+                      exists: 0
+                    });
+                    assert(count === 1);
+                    assert(node.satellite.test === undefined);
+
+                    node.update({
+                      exists: 3
+                    });
+                    assert(count === 1);
+                    assert(node.satellite.test instanceof FirstClass);
+                  }
+                },
+                {
+                  name: 'should corrupt other object with same config',
+                  test: function(){
+                    var count = 0;
+                    var NodeSubclass = Node.subclass({
+                      satellite: {
+                        fn: Value.factory('node'),
+                        cls: {
+                          existsIf: function(owner){
+                            return !owner.data.nonExists;
+                          },
+                          instance: function(owner){
+                            count++;
+                            return Node.subclass({
+                              test: owner
+                            });
+                          }
+                        }
+                      }
+                    });
+
+                    var fooSatellite = new Node();
+                    var foo = new NodeSubclass({
+                      node: fooSatellite
+                    });
+                    var barSatellite = new Node();
+                    var bar = new NodeSubclass({
+                      node: barSatellite
+                    });
+
+                    assert(count === 2);
+                    assert(foo.satellite.fn === fooSatellite);
+                    assert(foo.satellite.cls.test === foo);
+                    assert(bar.satellite.fn === barSatellite);
+                    assert(bar.satellite.cls.test === bar);
+
+                    foo.update({ nonExists: true });
+                    assert(count === 2);
+                    assert(foo.satellite.cls === undefined);
+
+                    foo.update({ nonExists: false });
+                    assert(count === 2);
+                    assert(foo.satellite.cls.test === foo);
+                  }
+                }
+              ]
+            }
           ]
         },
         {

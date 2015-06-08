@@ -340,16 +340,6 @@
     return InstanceClass;
   }
 
-  function createInstanceConfig(getter){
-    if (typeof getter == 'string')
-      getter = basis.getter(getter);
-
-    if (typeof getter != 'function')
-      getter = basis.fn.$const(getter);
-
-    return getter;
-  }
-
   function processSatelliteConfig(satelliteConfig){
     if (!satelliteConfig)
       return null;
@@ -442,7 +432,10 @@
           break;
 
         case 'config':
-          config.config = createInstanceConfig(value);
+          if (typeof value == 'string')
+            value = getter(value);
+
+          config.config = value;
           break;
 
         case 'events':
@@ -496,7 +489,11 @@
     //   owner: owner,
     //   name: satelliteName,
     //   config: satelliteConfig,
-    //   instance: satelliteInstance or null
+    //   instance: satelliteInstance or null,
+    //   instanceRA_: ResolveAdapter or null,
+    //   existsRA_: ResolveAdapter or null
+    //   factoryType: 'value' or 'class'
+    //   factory: class or any
     // }
     var name = this.name;
     var config = this.config;
@@ -506,23 +503,31 @@
 
     if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsRA_'))
     {
-      var satellite = config.instance;
-      var justCreated = false;
+      var satellite = this.instance || config.instance;
 
-      if (!satellite)
+      if (!satellite || this.factoryType == 'value')
       {
-        if (typeof config.getInstance == 'function')
+        if (!this.factoryType)
         {
-          var value = config.getInstance.call(owner, owner);
-          if (Class.isClass(value))
-            config.instanceClass = processInstanceClass(value);
-          else
-            config.getInstance = value;
+          var instanceValue = config.getInstance;
+          var instanceClass = config.instanceClass;
+
+          if (typeof instanceValue == 'function')
+          {
+            instanceValue = instanceValue.call(owner, owner);
+            if (Class.isClass(instanceValue))
+              instanceClass = processInstanceClass(instanceValue);
+          }
+
+          this.factoryType = instanceClass ? 'class' : 'value';
+          this.factory = instanceClass || instanceValue;
         }
 
-        if (typeof config.instanceClass == 'function')
+        if (this.factoryType == 'class')
         {
-          var satelliteConfig = (config.config && config.config(owner)) || {};
+          var satelliteConfig = {
+            destroy: warnOnAutoSatelliteDestoy // auto-create satellite marker, lock destroy method invocation
+          };
 
           if (config.delegate)
           {
@@ -533,14 +538,20 @@
           if (config.dataSource)
             satelliteConfig.dataSource = config.dataSource(owner);
 
-          justCreated = true;
-          satellite = new config.instanceClass(satelliteConfig);
-          satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
+          if (config.config)
+            basis.object.complete(satelliteConfig, typeof config.config == 'function'
+              ? config.config(owner)
+              : config.config
+            );
+
+          this.instance = new this.factory(satelliteConfig);
+          owner.setSatellite(name, this.instance, true);
+
+          return;
         }
-        else
-        {
-          satellite = resolveAbstractNode(this, SATELLITE_UPDATE, config.getInstance, 'instanceRA_');
-        }
+
+        // factoryType == 'value'
+        satellite = resolveAbstractNode(this, SATELLITE_UPDATE, this.factory, 'instanceRA_');
       }
 
       if (this.instance !== satellite)
@@ -549,7 +560,7 @@
         owner.setSatellite(name, this.instance, true);
       }
 
-      if (satellite && !justCreated && satellite.owner === owner)
+      if (satellite && satellite.owner === owner)
       {
         if (config.delegate)
           satellite.setDelegate(config.delegate(owner));
@@ -1152,6 +1163,8 @@
               owner: this,
               name: name,
               config: satellite,
+              factoryType: null,
+              factory: null,
               instance: null,
               instanceRA_: null,
               existsRA_: null
