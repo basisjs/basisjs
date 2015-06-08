@@ -5,6 +5,7 @@ module.exports = {
   init: function(){
     var basis = window.basis.createSandbox();
 
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
     var Class = basis.Class;
     var DOM = basis.require('basis.dom');
     var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
