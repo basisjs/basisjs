@@ -94,9 +94,9 @@ var panel = new basis.ui.Node({
     isOnline: isOnline,
     inspectMode: inspectMode,
     reloadRequired: 'satellite:',
-    hasGrid: function(){
+    grid: function(){
       var config = inspectBasis.config.devpanel;
-      return Boolean(config && config.grid);
+      return Number(config && config.grid) || 0;
     }
   },
 
