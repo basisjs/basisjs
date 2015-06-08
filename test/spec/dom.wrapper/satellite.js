@@ -1834,7 +1834,7 @@ module.exports = {
       name: 'various types of value for instance',
       test: [
         {
-          name: 'factory',
+          name: 'function & factory',
           test: [
             {
               name: 'should accept any function as factory',
@@ -1871,6 +1871,38 @@ module.exports = {
               }
             },
             {
+              name: 'should work with factories as expected',
+              test: function(){
+                var foo = new Node();
+                var bar = new Node();
+                var node = new Node({
+                  data: {
+                    test: foo
+                  },
+                  satellite: {
+                    test: Value.factory('update', 'data.test')
+                  }
+                });
+
+                assert(node.satellite.test === foo);
+
+                node.update({
+                  test: bar
+                });
+                assert(node.satellite.test === bar);
+
+                node.update({
+                  test: null
+                });
+                assert(node.satellite.test === undefined);
+
+                node.update({
+                  test: foo
+                });
+                assert(node.satellite.test === foo);
+              }
+            },
+            {
               name: 'should convert string to simple getter',
               test: function(){
                 var node = new Node({
@@ -1883,6 +1915,21 @@ module.exports = {
                 });
 
                 assert(node.satellite.test === node.foo);
+              }
+            },
+            {
+              name: 'function could return class it should be used to build instance',
+              test: function(){
+                var NodeSubclass = Node.subclass();
+                var node = new Node({
+                  satellite: {
+                    test: function(){
+                      return NodeSubclass;
+                    }
+                  }
+                });
+
+                assert(node.satellite.test instanceof NodeSubclass);
               }
             },
             {
@@ -2148,6 +2195,24 @@ module.exports = {
                 assert('foo' in node.satellite);
                 assert(node.satellite.foo instanceof Node);
                 assert(node.satellite.foo === resource.fetch());
+              }
+            },
+            {
+              name: 'resource could return class and it should be used to build instance',
+              test: function(){
+                var resource = basis.resource.virtual('js', function(exports, module){
+                  module.exports = Node.subclass();
+                });
+
+                var node = new Node({
+                  satellite: {
+                    foo: resource
+                  }
+                });
+
+                assert('foo' in node.satellite);
+                assert(node.satellite.foo instanceof Node);
+                assert(node.satellite.foo instanceof resource.fetch());
               }
             },
             {

@@ -511,10 +511,18 @@
 
       if (!satellite)
       {
+        if (typeof config.getInstance == 'function')
+        {
+          var value = config.getInstance.call(owner, owner);
+          if (Class.isClass(value))
+            config.instanceClass = processInstanceClass(value);
+          else
+            config.getInstance = value;
+        }
+
         if (typeof config.instanceClass == 'function')
         {
           var satelliteConfig = (config.config && config.config(owner)) || {};
-          var justCreated = true;
 
           if (config.delegate)
           {
@@ -525,13 +533,12 @@
           if (config.dataSource)
             satelliteConfig.dataSource = config.dataSource(owner);
 
+          justCreated = true;
           satellite = new config.instanceClass(satelliteConfig);
           satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
         }
         else
         {
-          if (typeof config.getInstance == 'function')
-            config.getInstance = config.getInstance.call(owner, owner);
           satellite = resolveAbstractNode(this, SATELLITE_UPDATE, config.getInstance, 'instanceRA_');
         }
       }
