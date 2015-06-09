@@ -253,9 +253,63 @@
   // EntitySet
   //
 
+ /**
+  * Returns delta object
+  * @return {object|undefined}
+  */
+  function getDelta(inserted, deleted){
+    var delta = {};
+    var result;
+
+    if (inserted && inserted.length)
+      result = delta.inserted = inserted;
+
+    if (deleted && deleted.length)
+      result = delta.deleted = deleted;
+
+    if (result)
+      return delta;
+  }
+
   var ENTITYSET_WRAP_METHOD = function(superClass, method){
     return function(data){
-      return superClass.prototype[method].call(this, data && data.map(this.wrapper));
+      var needToWrap = Array.isArray(data) && !data.wrapped_;
+
+      if (needToWrap)
+      {
+        if (this.localId)
+        {
+          var items = arrayFrom(this.getItems());
+
+          data = data.map(function(newItem){
+            for (var i = 0; i < items.length; i++)
+              if (this.localId(newItem, items[i]))
+                return this.wrapper(newItem, items[i]);
+
+            newItem = this.wrapper(newItem);
+            items.push(newItem);
+            return newItem;
+          }, this);
+        }
+        else
+        {
+          data = data.map(this.wrapper);
+        }
+        data.wrapped_ = true;
+      }
+
+      var delta = superClass.prototype[method].call(this, data);
+
+      if (needToWrap && this.localId && delta && delta.deleted)
+      {
+        // TODO: make it deferred
+        Dataset.setAccumulateState(true);
+        for (var i = 0; i < delta.deleted.length; i++)
+          delta.deleted[i].destroy();
+        Dataset.setAccumulateState(false);
+      }
+
+      return delta;
     };
   };
 
@@ -271,9 +325,14 @@
 
   var ENTITYSET_SYNC_METHOD = function(){
     return function(data){
+      if (this.localId)
+        return this.set(data);
+
+      var isAll = this.wrapper.all !== this;
       var destroyItems = basis.object.slice(this.items_);
       var inserted = [];
       var deleted = [];
+      var delta;
 
       if (data)
       {
@@ -282,14 +341,18 @@
         {
           var entity = this.wrapper(data[i]);
           if (entity)
+          {
+            if (entity.basisObjectId in destroyItems == false)
+            {
+              inserted.push(entity);
+              // if (!isAll)
+              //   this.members_[entity.basisObjectId] = entity;
+            }
             destroyItems[entity.basisObjectId] = false;
+          }
         }
         Dataset.setAccumulateState(false);
       }
-
-      for (var key in this.items_)
-        if (key in destroyItems == false)
-          inserted.push(this.items_[key]);
 
       for (var key in destroyItems)
         if (destroyItems[key])
@@ -299,6 +362,9 @@
         this.wrapper.all.emit_itemsChanged({
           deleted: deleted
         });
+
+      // if (!isAll && (delta = getDelta(inserted, deleted)))
+      //   this.emit_itemsChanged(delta);
 
       Dataset.setAccumulateState(true);
       for (var i = 0; i < deleted.length; i++)
@@ -324,6 +390,20 @@
     set: ENTITYSET_WRAP_METHOD(Dataset, 'set'),
     add: ENTITYSET_WRAP_METHOD(Dataset, 'add'),
     remove: ENTITYSET_WRAP_METHOD(Dataset, 'remove'),
+    clear: function(){
+      var delta = Dataset.prototype.clear.call(this);
+
+      if (this.localId && delta && delta.deleted)
+      {
+        // TODO: make it deferred
+        Dataset.setAccumulateState(true);
+        for (var i = 0; i < delta.deleted.length; i++)
+          delta.deleted[i].destroy();
+        Dataset.setAccumulateState(false);
+      }
+
+      return delta;
+    },
 
     destroy: function(){
       Dataset.prototype.destroy.call(this);
@@ -394,7 +474,17 @@
   // EntitySetWrapper
   //
 
-  var EntitySetWrapper = function(wrapper, name){
+  var EntitySetWrapper = function(wrapper, name, options){
+    function createLocalId(id){
+      if (typeof id == 'string')
+        return function(data, item){
+          return data[id] == item.data[id];
+        };
+
+      if (typeof id == 'function')
+        return id;
+    }
+
     if (this instanceof EntitySetWrapper)
     {
       if (!wrapper)
@@ -410,7 +500,8 @@
         entitySetClass: {
           /** @cut */ className: namespace + '.EntitySet(' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + ')',
           /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + '}',
-          wrapper: wrapper
+          wrapper: wrapper,
+          localId: createLocalId(options && options.localId)
         }
       });
 
@@ -1762,13 +1853,39 @@
     return new EntityTypeWrapper(config);
   }
 
-  function createSetType(nameOrWrapper, wrapper){
+  function createSetType(name, type, options){
     /** @cut */ if (this instanceof createSetType)
     /** @cut */   basis.dev.warn('`new` operator was used with basis.entity.createSetType, it\'s a mistake');
 
-    return arguments.length > 1
-      ? new EntitySetWrapper(wrapper, nameOrWrapper)
-      : new EntitySetWrapper(nameOrWrapper);
+    switch (arguments.length)
+    {
+      case 0:
+      case 1:
+        if (name && name.constructor === Object)
+        {
+          options = basis.object.slice(name);
+          type = basis.object.splice(options).type;
+          name = basis.object.splice(options).name;
+        }
+        else
+        {
+          type = name;
+          name = undefined;
+        }
+
+        break;
+
+      case 2:
+        if (type && type.constructor === Object)
+        {
+          options = type;
+          type = name;
+          name = undefined;
+        }
+        break;
+    }
+
+    return new EntitySetWrapper(type, name, options);
   }
 
   //
