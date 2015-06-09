@@ -289,7 +289,7 @@ module.exports = {
       ]
     },
     {
-      name: 'auto-create satellite',
+      name: 'Auto-create satellite',
       test: [
         {
           name: 'create',
@@ -1162,7 +1162,7 @@ module.exports = {
       ]
     },
     {
-      name: 'auto-attach satellite',
+      name: 'Auto-attach satellite',
       test: [
         {
           name: 'should attach instance',
@@ -1787,7 +1787,7 @@ module.exports = {
       ]
     },
     {
-      name: 'various types of value for instance',
+      name: 'Various types of value for instance',
       test: [
         {
           name: 'function & factory',
@@ -2095,6 +2095,34 @@ module.exports = {
 
                 exists.set(true);
                 assert(node.satellite.test === foo);
+              }
+            },
+            {
+              name: 'should use resource content when bb-value returns resource',
+              test: function(){
+                var foo = basis.resource.virtual('js', function(exports, module){
+                  module.exports = new Node();
+                });
+                var bar = basis.resource.virtual('js', function(exports, module){
+                  module.exports = new Node();
+                });
+
+                var token = new basis.Token('foo');
+                var node = new Node({
+                  satellite: {
+                    test: token.as(function(name){
+                      return name == 'foo' ? foo : bar;
+                    })
+                  }
+                });
+
+                assert(node.satellite.test === foo.fetch());
+
+                token.set('bar');
+                assert(node.satellite.test === bar.fetch());
+
+                token.set('foo');
+                assert(node.satellite.test === foo.fetch());
               }
             },
             {
