@@ -4,10 +4,11 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 
 var Node = global.Node;
 var Value = require('basis.data').Value;
-var max = require('basis.data.index').max;
 var Overlay = require('./utils/overlay.js');
 var children = new basis.Token();
-var maxUpdates = max(children, 'update', 'data.updates').deferred();
+var maxUpdates = require('basis.data.index')
+  .max(children, 'update', 'data.updates')
+  .deferred();
 
 var overlay = new Overlay({
   template: resource('./template/heatmap/overlay.tmpl'),

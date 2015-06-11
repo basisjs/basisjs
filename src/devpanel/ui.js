@@ -13,6 +13,7 @@ var l10nInspector = resource('./inspector/l10n.js');
 var templateInspector = resource('./inspector/template.js');
 var heatInspector = resource('./inspector/heatmap.js');
 var gridInspector = resource('./inspector/grid.js');
+var rolesInspector = resource('./inspector/roles.js');
 
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
@@ -25,7 +26,8 @@ var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(B
   l10nInspector,
   templateInspector,
   heatInspector,
-  gridInspector
+  gridInspector,
+  rolesInspector
 ].forEach(function(inspectorRes){
   inspectorRes.ready(function(inspector){
     inspectors.add(inspector.inspectMode.link(new basis.data.Object, function(value){
@@ -134,13 +136,22 @@ var panel = new basis.ui.Node({
         heatInspector().startInspect();
       });
     },
-    inspectTypography: function(e){
+    inspectGrid: function(e){
       cultureList.setDelegate();
       themeList.setDelegate();
       e.die();
       inspectBasisDomEvent.captureEvent('click', function(){
         inspectBasisDomEvent.releaseEvent('click');
         gridInspector().startInspect();
+      });
+    },
+    inspectRoles: function(e){
+      cultureList.setDelegate();
+      themeList.setDelegate();
+      e.die();
+      inspectBasisDomEvent.captureEvent('click', function(){
+        inspectBasisDomEvent.releaseEvent('click');
+        rolesInspector().startInspect();
       });
     },
     // inspectFile: function(){

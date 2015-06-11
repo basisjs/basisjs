@@ -1,0 +1,29 @@
+.token
+{
+  position: absolute;
+  z-index: 65000;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: verdana;
+  line-height: 13px;
+  text-indent: 1px;
+  color: black;
+  background: rgba(100, 200, 100, .3);
+  border: 1px solid rgba(100, 200, 100, .5);
+  box-sizing: border-box;
+  overflow: hidden;
+  text-shadow:
+    0 -1px 0 white,
+    0 1px 0 white,
+   -1px 0 0 white,
+    1px 0 0 white,
+    1px 1px 1px black,
+   -1px -1px 1px black;
+}
+
+.bug
+{
+  background-color: rgba(255, 100, 100, .3);
+  border-color: rgba(255, 100, 100, .5);
+}

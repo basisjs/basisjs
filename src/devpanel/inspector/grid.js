@@ -12,7 +12,7 @@ if (inspectBasisConfig)
 var overlay = new Overlay({
   processTextLines: true,
 
-  template: resource('./template/typography/overlay.tmpl'),
+  template: resource('./template/grid/overlay.tmpl'),
   binding: {
     gridSize: function(){
       return gridSize;
@@ -23,7 +23,7 @@ var overlay = new Overlay({
   },
 
   childClass: {
-    template: resource('./template/typography/token.tmpl'),
+    template: resource('./template/grid/token.tmpl'),
     binding: {
       miss: {
         events: 'update',
