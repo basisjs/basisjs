@@ -17,6 +17,11 @@ var hide = new basis.Token(false);
 // Watching for changes
 //
 
+function update(){
+  if (activeOverlay.value)
+    activeOverlay.value.apply();
+}
+
 var observer = (function(){
   var names = ['MutationObserver', 'WebKitMutationObserver'];
 
@@ -31,7 +36,7 @@ var observer = (function(){
       var target = records[i].target;
       if (target.id != 'devpanelSharedDom' && !domUtils.parentOf(overlayElement, target))
       {
-        activeOverlay.value.apply();
+        update();
         break;
       }
     }
@@ -45,7 +50,7 @@ var observer = (function(){
   }
 })();
 
-var updateOnScroll = function(){
+var updateOnScroll = function(e){
   var scrollElement = document.compatMode == 'CSS1Compat'
     ? document.documentElement
     : document.body;
@@ -53,7 +58,7 @@ var updateOnScroll = function(){
   left.set(global.pageXOffset || scrollElement.scrollLeft);
   top.set(global.pageYOffset || scrollElement.scrollTop);
 
-  //activeOverlay.value.apply();
+  update();
 };
 
 var updateOnResize = (function(){
@@ -62,7 +67,7 @@ var updateOnResize = (function(){
     clearTimeout(resizeTimer);
     hide.set(true);
     resizeTimer = setTimeout(function(){
-      activeOverlay.value.apply();
+      update();
       hide.set(false);
     }, 100);
   };
@@ -70,6 +75,12 @@ var updateOnResize = (function(){
 
 function startWatch(){
   eventUtils.addGlobalHandler('scroll', updateOnScroll);
+  eventUtils.addGlobalHandler('mousemove', update);
+  eventUtils.addGlobalHandler('pointermove', update);
+  eventUtils.addGlobalHandler('focus', update);
+  eventUtils.addGlobalHandler('focusIn', update);
+  eventUtils.addGlobalHandler('focusOut', update);
+  eventUtils.addGlobalHandler('blur', update);
   eventUtils.addHandler(global, 'resize', updateOnResize);
   inspectBasisEvent.captureEvent('contextmenu', function(){
     activeOverlay.set();
@@ -89,6 +100,12 @@ function stopWatch(){
     observer.disconnect();
 
   eventUtils.removeGlobalHandler('scroll', updateOnScroll);
+  eventUtils.removeGlobalHandler('mousemove', update);
+  eventUtils.removeGlobalHandler('pointermove', update);
+  eventUtils.removeGlobalHandler('focus', update);
+  eventUtils.removeGlobalHandler('focusIn', update);
+  eventUtils.removeGlobalHandler('focusOut', update);
+  eventUtils.removeGlobalHandler('blur', update);
   eventUtils.removeHandler(global, 'resize', updateOnResize);
   inspectBasisEvent.releaseEvent('contextmenu');
 }
@@ -124,10 +141,7 @@ activeOverlay.link(null, function(newOverlay, oldOverlay){
   else
   {
     startWatch();
-    refreshTimer = setInterval(function(){
-      if (activeOverlay.value)
-        activeOverlay.value.apply();
-    }, 250);
+    refreshTimer = setInterval(update, 250);
   }
 
   if (newOverlay)
@@ -145,6 +159,7 @@ activeOverlay.link(null, function(newOverlay, oldOverlay){
   }
 });
 
+var checkTimer;
 
 /**
 * @class
@@ -201,6 +216,7 @@ var Overlay = Node.subclass({
   deactivate: function(){
     if (this.active)
     {
+      clearInterval(checkTimer);
       activeOverlay.set();
       this.clear();
     }
@@ -300,9 +316,12 @@ var Overlay = Node.subclass({
   traverse: function(domNode){
     for (var i = 0, child; child = domNode.childNodes[i]; i++)
     {
+      if (child.nodeType == 1 && child.hasAttribute('basis-devpanel-ignore'))
+        continue;
+
       this.processNode(child);
 
-      if (child.nodeType == 1 && !child.hasAttribute('basis-devpanel-ignore'))
+      if (child.nodeType == 1)
         this.traverse(child);
     }
   }
