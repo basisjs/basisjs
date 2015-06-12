@@ -264,8 +264,15 @@
       8: 'bind_comment'
     };
 
+    function quoteString(value){
+      return '"' + value
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r') + '"';
+    }
+
     /** @cut */ function simpleStringify(val){
-    /** @cut */   return typeof val == 'string' ? '"' + val.replace(/"/g, '\\"') + '"' : val;
+    /** @cut */   return typeof val == 'string' ? quoteString(val) : val;
     /** @cut */ }
 
    /**
@@ -282,7 +289,7 @@
       for (var j = 0; j < symbols.length; j++)
       {
         if (typeof symbols[j] == 'string')
-          expression.push('"' + symbols[j].replace(/"/g, '\\"') + '"');
+          expression.push(quoteString(symbols[j]));
         else
         {
           exprVar = dictionary[symbols[j]];
