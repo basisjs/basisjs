@@ -227,7 +227,7 @@
     hideByScroll: function(event){
       var sender = event.sender;
 
-      if (domUtils.parentOf(sender, this.element))
+      if (domUtils.parentOf(sender, this.body))
         return;
 
       arrayFrom(this)
