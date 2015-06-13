@@ -332,6 +332,15 @@ var makeDeclaration = (function(){
             case 'hidden':
               visibilityAttr = attr;
               break;
+
+            case 'role':
+              result.push([
+                attr.type,
+                [['$role'], [0, attr.value || '']],
+                0,
+                'role-marker'
+              ]);
+              break;
           }
 
           continue;
@@ -352,11 +361,11 @@ var makeDeclaration = (function(){
           ];
 
           // ATTR_NAME = 3
-          if (attr.type == 2)
+          if (attr.type == TYPE_ATTRIBUTE)
             item.push(getTokenName(attr));
 
           // ATTR_VALUE = 4
-          if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != 2))
+          if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != TYPE_ATTRIBUTE))
             item.push(attr.value);
 
           if (attr.type == TYPE_ATTRIBUTE_STYLE)
@@ -1265,7 +1274,7 @@ var makeDeclaration = (function(){
         if (parts.length == 2 && key.indexOf('@') == -1)
         {
           if (!dictURI)
-            return false;  // TODO: add warning that dictionary is not found
+            return false; // warning will be added at place where absl10n() was called
 
           key = key + '@' + dictURI;
           value = 'l10n:' + key;

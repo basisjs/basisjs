@@ -177,6 +177,7 @@ var Overlay = Node.subclass({
   top: top,
 
   generation: 1,
+  order: 0,
 
   binding: {
     hide: 'hide',
@@ -184,6 +185,7 @@ var Overlay = Node.subclass({
     top: 'top'
   },
 
+  sorting: 'data.order',
   childClass: {
     domNode: null,
     binding: {
@@ -223,6 +225,7 @@ var Overlay = Node.subclass({
   },
 
   apply: function(){
+    this.order = 0;
     this.generation += 1;
     this.traverse(document.body);
 
@@ -252,7 +255,8 @@ var Overlay = Node.subclass({
           right: rect.right,
           bottom: rect.bottom,
           width: rect.width,
-          height: rect.height
+          height: rect.height,
+          order: this.order
         }, options);
 
         if (!node)
@@ -319,6 +323,7 @@ var Overlay = Node.subclass({
       if (child.nodeType == 1 && child.hasAttribute('basis-devpanel-ignore'))
         continue;
 
+      this.order += 1;
       this.processNode(child);
 
       if (child.nodeType == 1)

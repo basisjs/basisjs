@@ -2,28 +2,30 @@
 {
   position: absolute;
   z-index: 65000;
-  cursor: pointer;
-  font-size: 10px;
-  font-weight: bold;
-  font-family: verdana;
-  line-height: 13px;
-  text-indent: 1px;
-  color: black;
-  background: rgba(100, 200, 100, .3);
-  border: 1px solid rgba(100, 200, 100, .5);
   box-sizing: border-box;
+  background: rgba(100, 200, 100, .25);
+  border: 1px solid rgba(50, 150, 50, .4);
   overflow: hidden;
-  text-shadow:
-    0 -1px 0 white,
-    0 1px 0 white,
-   -1px 0 0 white,
-    1px 0 0 white,
-    1px 1px 1px black,
-   -1px -1px 1px black;
+  line-height: 12px;
+  font-size: 9px;
+  font-family: Tahoma, Verdana, sans-serif;
+  text-shadow: 0 0 1px rgba(0, 0, 0, .5);
 }
 
-.bug
+.problem
 {
-  background-color: rgba(255, 100, 100, .3);
-  border-color: rgba(255, 100, 100, .5);
+  background-color: rgba(255, 100, 100, .25);
+  border-color: rgba(200, 100, 100, .4);
+}
+
+.caption
+{
+  white-space: nowrap;
+  padding: 2px 3px;
+  background: rgba(50, 150, 50, .4);
+  color: white;
+}
+.caption_problem
+{
+  background: rgba(200, 100, 100, .4);
 }

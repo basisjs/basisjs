@@ -24,6 +24,12 @@ var events = [
   'pointermove',
   'pointercancel',
 
+  'touchstart',
+  'touchend',
+  'touchcancel',
+  'touchleave',
+  'touchmove',
+
   'keyup',
   'keydown',
   'keypress',
@@ -65,7 +71,19 @@ var overlay = new Overlay({
   childClass: {
     template: resource('./template/roles/token.tmpl'),
     binding: {
-      bug: 'data:bug'
+      missedActions: 'data:missedActions',
+      role: {
+        events: 'update',
+        getter: function(node){
+          return node.data.role || '(no role)';
+        }
+      },
+      problem: {
+        events: 'update',
+        getter: function(node){
+          return !node.data.role || node.data.missedActions;
+        }
+      }
     }
   },
 
@@ -73,19 +91,24 @@ var overlay = new Overlay({
     if (domNode.nodeType == 1)
     {
       var actions = getActions(domNode);
-      if (actions)
+      var roleMarker = domNode.getAttribute('role-marker') || '';
+      if (actions || roleMarker)
       {
-        var object = findObject(domNode);
+        var object = actions ? findObject(domNode) : false;
         var brokenActions = false;
 
         if (object && object.action)
           brokenActions = actions.filter(function(actionName){
-            return typeof object.action[actionName] != 'function';
+            return typeof object.action[actionName] != 'function' &&
+              actionName != 'prevent-default' &&
+              actionName != 'stop-propagation' &&
+              actionName != 'log-event';
           });
 
         this.highlight(domNode, {
-          bug: brokenActions && brokenActions.length
-            ? brokenActions
+          role: roleMarker,
+          missedActions: brokenActions && brokenActions.length
+            ? brokenActions.join(' ')
             : ''
         });
       }

@@ -191,6 +191,11 @@
   * Base binding
   */
   var TEMPLATE_BINDING = Class.customExtendProperty({
+    '$role': function(node){
+      if (Object.prototype.hasOwnProperty.call(node, 'role'))
+        return node.role;
+      return '';
+    },
     active: {
       events: 'activeChanged',
       getter: function(node){
