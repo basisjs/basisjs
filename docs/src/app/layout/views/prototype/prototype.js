@@ -99,9 +99,9 @@
   var PROTOTYPE_GROUPING_TYPE = {
     type: 'type',
     rule: 'data.kind',
-    sorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT),
+    sorting: getter('data.id').as(PROTOTYPE_ITEM_WEIGHT),
     childClass: {
-      titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE)
+      titleGetter: getter('data.id').as(PROTOTYPE_ITEM_TITLE)
     }
   };
 

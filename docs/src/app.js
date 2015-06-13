@@ -14,7 +14,6 @@ var l10n = require('basis.l10n');
 var VerticalPanelStack = require('basis.ui.panel').VerticalPanelStack;
 
 l10n.setCultureList('en-US/ru-RU ru-RU'); // en-US temporary fallback on ru-RU
-l10n.enableMarkup = true;
 //basis.l10n.setCulture('ru-RU');
 
 require('basis.app').create({

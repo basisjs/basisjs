@@ -37,12 +37,12 @@
   };
 
   var nodeTypeGrouping = {
-    sorting: basis.getter('data.id', groupWeight),
+    sorting: basis.getter('data.id').as(groupWeight),
     rule: function(node){
       return node.data.isClassMember ? 'ClassMember' : capitalize(node.data.kind);
     },
     childClass: {
-      titleGetter: basis.getter('data.id', groupTitle),
+      titleGetter: basis.getter('data.id').as(groupTitle),
       template: resource('./docTree/template/docTreePartitionNode.tmpl')
     }
   };

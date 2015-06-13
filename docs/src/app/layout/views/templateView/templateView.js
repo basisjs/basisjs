@@ -28,7 +28,7 @@
     satellite: {
       viewOptions: {
         instance: ViewOptions,
-        config: function(owner){
+        config: function(){
           return {
             title: 'References',
             showMode: '',

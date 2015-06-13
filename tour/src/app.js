@@ -6,7 +6,6 @@ var types = require('app.type');
 // temporary here
 l10n.setCultureList('en-US/ru-RU ru-RU');
 l10n.setCulture('ru-RU');
-l10n.enableMarkup = true;
 
 var view;
 module.exports = require('basis.app').create({
