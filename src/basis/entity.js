@@ -1970,3 +1970,13 @@
     Collection: EntityCollection,
     Grouping: EntityGrouping
   };
+
+  // deprecated in 1.4.0
+  /** @cut */ basis.resource(__filename).ready(function(){
+  /** @cut */   basis.dev.warnPropertyAccess(module.exports, 'Collection', EntityCollection,
+  /** @cut */     'basis.entity: Collection class is deprecated, use basis.data.dataset.Filter instead.'
+  /** @cut */   );
+  /** @cut */   basis.dev.warnPropertyAccess(module.exports, 'Grouping', EntityGrouping,
+  /** @cut */     'basis.entity: Grouping class is deprecated, use basis.data.dataset.Split instead.'
+  /** @cut */   );
+  /** @cut */ });
