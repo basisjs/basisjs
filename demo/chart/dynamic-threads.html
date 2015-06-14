@@ -104,7 +104,7 @@
 
     Math.seedrandom('chart');
 
-    Company.all.sync([
+    Company.all.setAndDestroyRemoved([
       { id: 'apple', title: 'Apple' },
       { id: 'intel', title: 'Intel' },
       { id: 'google', title: 'Google' },
@@ -126,7 +126,7 @@
         value += 0.2 * value * (2 * Math.random() - 1); // +/- 20% from last value;
       }
     });
-    CompanyReport.all.sync(data);
+    CompanyReport.all.setAndDestroyRemoved(data);
 
     var chart = new LinearChart({
       container: document.getElementById('demo-container'),

@@ -404,8 +404,8 @@
     wrapper: $self,
 
     init: ENTITYSET_INIT_METHOD(Dataset, 'EntitySet'),
-    sync: ENTITYSET_SYNC_METHOD(Dataset),
 
+    setAndDestroyRemoved: ENTITYSET_SYNC_METHOD(Dataset),
     set: ENTITYSET_WRAP_METHOD(Dataset, 'set'),
     add: ENTITYSET_WRAP_METHOD(Dataset, 'add'),
     remove: ENTITYSET_WRAP_METHOD(Dataset, 'remove'),
@@ -458,8 +458,7 @@
 
     name: null,
 
-    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection'),
-    sync: ENTITYSET_SYNC_METHOD(Filter)
+    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection')
   });
 
   //
@@ -477,7 +476,6 @@
     subsetClass: ReadOnlyEntitySet,
 
     init: ENTITYSET_INIT_METHOD(Split, 'EntityGrouping'),
-    sync: ENTITYSET_SYNC_METHOD(Split),
 
     getSubset: function(object, autocreate){
       var group = Split.prototype.getSubset.call(this, object, autocreate);

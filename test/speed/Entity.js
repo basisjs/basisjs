@@ -141,7 +141,7 @@
           CreateDate: date
         });
       }
-      Transfer.all.sync(data);
+      Transfer.all.setAndDestroyRemoved(data);
       return getTime(st);
     }
 
@@ -185,12 +185,12 @@
     }
 
     function fastClear(){
-      if (Transfer.all.sync)
+      if (Transfer.all.setAndDestroyRemoved)
       {
         var st = getTime();
-        Transfer.all.sync([]);
-        User.all.sync([]);
-        Currency.all.sync([]);
+        Transfer.all.setAndDestroyRemoved([]);
+        User.all.setAndDestroyRemoved([]);
+        Currency.all.setAndDestroyRemoved([]);
         return getTime(st);
       }
       else

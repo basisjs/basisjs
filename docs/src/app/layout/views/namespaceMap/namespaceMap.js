@@ -102,7 +102,7 @@
             }
           }
 
-          namespaceClassDS.sync(basis.object.values(result));
+          namespaceClassDS.setAndDestroyRemoved(basis.object.values(result));
         }
       }
     }

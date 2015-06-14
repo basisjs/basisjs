@@ -240,14 +240,14 @@
     // Generate test data
     var words = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.'.toLowerCase().split(/[^a-z]+/);
 
-    Field.all.sync(basis.array.create(10, function(i){
+    Field.all.setAndDestroyRemoved(basis.array.create(10, function(i){
       return {
         FieldId: i,
         Title: 'Field #' + i
       };
     }));
 
-    Word.all.sync(basis.array.create(10, function(i){
+    Word.all.setAndDestroyRemoved(basis.array.create(10, function(i){
       return {
         WordId: i,
         Title: words[i],
@@ -255,7 +255,7 @@
       };
     }));
 
-    Link.all.sync(basis.array.create(25, function(i){
+    Link.all.setAndDestroyRemoved(basis.array.create(25, function(i){
       return {
         FieldId: parseInt((i * 2347.56) % Field.all.itemCount, 10),
         WordId: parseInt((i * 7263.23) % Word.all.itemCount, 10)

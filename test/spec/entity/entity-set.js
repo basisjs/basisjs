@@ -74,7 +74,7 @@ module.exports = {
               }
             });
 
-            var inserted = entityType.all.sync([{ id: 1 }, { id: 3 }]);
+            var inserted = entityType.all.setAndDestroyRemoved([{ id: 1 }, { id: 3 }]);
             assert(entityType.all.itemCount === 2);
             assert([1, 3], entityType.all.getValues('data.id').sort());
             assert(allChangesCount === 2);
@@ -114,7 +114,7 @@ module.exports = {
               }
             });
 
-            var inserted = entitySet.sync([{ id: 1 }, { id: 3 }]);
+            var inserted = entitySet.setAndDestroyRemoved([{ id: 1 }, { id: 3 }]);
             assert(entitySet.itemCount === 2);
             assert([1, 3], entitySet.getValues('data.id').sort());
             assert(itemsChanged === 1);
@@ -263,7 +263,7 @@ module.exports = {
                 assert(entitySet.has(two));
 
                 // change set
-                entitySet.sync([{ id: 1, value: 2 }, { id: 3, value: 2 }]);
+                entitySet.setAndDestroyRemoved([{ id: 1, value: 2 }, { id: 3, value: 2 }]);
                 assert(entitySet.itemCount === 2);
                 assert(entitySet.has(one));
                 assert(entitySet.has(two) === false);
