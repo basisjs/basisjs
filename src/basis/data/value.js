@@ -19,6 +19,7 @@
   var basisData = require('basis.data');
   var AbstractData = basisData.AbstractData;
   var Value = basisData.Value;
+  var ReadOnlyValue = basisData.ReadOnlyValue;
   var STATE = basisData.STATE;
 
 
@@ -286,7 +287,7 @@
  /**
   * @class
   */
-  var Expression = Value.subclass({
+  var Expression = ReadOnlyValue.subclass({
     className: namespace + '.Expression',
 
     calc_: null,
@@ -295,7 +296,7 @@
     // use custom constructor
     extendConstructor_: false,
     init: function(/* [[value,] value, ..] calc */){
-      Value.prototype.init.call(this);
+      ReadOnlyValue.prototype.init.call(this);
 
       var count = arguments.length - 1;
       var calc = arguments[count];
@@ -324,17 +325,13 @@
       Value.prototype.set.call(this, this.calc_.apply(null, this.values_.map(BBVALUE_GETTER)));
     },
 
-    // expressions are read only
-    set: function(){
-    },
-
     destroy: function(){
       objectSetUpdater.remove(this);
 
       for (var i = 0, value; value = this.values_[i]; i++)
         value.bindingBridge.detach(value, EXPRESSION_BBVALUE_HANDLER, this);
 
-      Value.prototype.destroy.call(this);
+      ReadOnlyValue.prototype.destroy.call(this);
     }
   });
 
