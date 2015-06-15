@@ -982,6 +982,7 @@
         {
           var context = cursor.context;
           if (context instanceof ReadOnlyValue &&
+              context.proxy &&
               (context.proxy[GETTER_ID] || String(context.proxy)) == fnId) // compare functions by id
             return context;
         }
