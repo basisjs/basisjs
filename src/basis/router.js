@@ -418,7 +418,10 @@
 
     add: add,
     remove: remove,
-    route: function(path){
-      return get(path, true).token;
+    route: function(path, transformer){
+      var route = get(path, true).token;
+      return transformer
+        ? route.as(transformer)
+        : route;
     }
   };
