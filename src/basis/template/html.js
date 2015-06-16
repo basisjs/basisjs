@@ -128,6 +128,25 @@
       } catch(e) {}
     })() || false;
 
+    function collapseDomFragment(fragment){
+      var startMarker = fragment.startMarker;
+      var endMarker = fragment.endMarker;
+      var cursor = startMarker.nextSibling;
+
+      while (cursor && cursor !== endMarker)
+      {
+        var tmp = cursor;
+        cursor = cursor.nextSibling;
+        fragment.appendChild(tmp);
+      }
+
+      endMarker.parentNode.removeChild(endMarker);
+      fragment.startMarker = null;
+      fragment.endMarker = null;
+
+      return startMarker;
+    }
+
 
    /**
     * @func
@@ -139,22 +158,16 @@
 
           if (newNode !== oldNode)
           {
-            if (newNode.nodeType === 11 && !newNode.insertedNodes)
+            if (newNode.nodeType === 11 && !newNode.startMarker)
             {
-              newNode.insertBefore(document.createTextNode(''), newNode.firstChild);
-              newNode.insertedNodes = basis.array(newNode.childNodes);
+              newNode.startMarker = document.createTextNode('');
+              newNode.endMarker = document.createTextNode('');
+              newNode.insertBefore(newNode.startMarker, newNode.firstChild);
+              newNode.appendChild(newNode.endMarker);
             }
 
-            if (oldNode.nodeType === 11)
-            {
-              var insertedNodes = oldNode.insertedNodes;
-              if (insertedNodes)
-              {
-                oldNode = insertedNodes[0];
-                for (var i = 1, node; node = insertedNodes[i]; i++)
-                  oldNode.parentNode.removeChild(node);
-              }
-            }
+            if (oldNode.nodeType === 11 && oldNode.startMarker)
+              oldNode = collapseDomFragment(oldNode);
 
             oldNode.parentNode.replaceChild(newNode, oldNode);
           }
