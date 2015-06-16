@@ -1989,6 +1989,9 @@
         this.set(fn.call(this, value));
       };
 
+      if (typeof fn != 'function')
+        fn = getter(fn);
+
       setter.call(token, this.get());
 
       this.attach(setter, token, token.destroy);
