@@ -404,6 +404,11 @@
       checkUrl();
   }
 
+
+  // start watch for location by default
+  start();
+
+
   //
   // export names
   //
