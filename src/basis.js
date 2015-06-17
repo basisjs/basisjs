@@ -37,7 +37,7 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.4.0-dev';
+  var VERSION = '1.4.0';
 
   var global = Function('return this')();
   var NODE_ENV = global !== context ? global : false;
