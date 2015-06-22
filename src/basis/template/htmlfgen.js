@@ -353,7 +353,6 @@
       var attrExprId;
       var attrExprMap = {};
       /** @cut */ var debugList = [];
-      //var roleAttributes = [];
       var toolsUsed = {
         resolve: true
       };
@@ -566,12 +565,7 @@
           {
             case 'role-marker':
               varList.push(bindVar + '=""');
-              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, 'value' + (binding[5][1] ? '+' + quoteString('/' + binding[5][1]) : ''));
-
-              // toolsUsed.bind_attr = true;
-              // roleAttributes.push([
-              //   'bind_attr(' + domRef + ',"' + attrName + '","",value' + (binding[5][1] ? '+' + quoteString('/' + binding[5][1]) : '') + ');'
-              // ]);
+              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, 'value?value' + (binding[5][1] ? '+' + quoteString('/' + binding[5][1]) : '') + ':""');
               break;
 
             case 'class':
@@ -738,9 +732,6 @@
 
       for (var bindName in bindMap)
       {
-        // if (bindName == '$role')
-        //   continue;
-
         var stateVar = bindMap[bindName].l10n || bindName;
         /** @cut */ varList.push('$$' + stateVar + '=0');
         result.push(
@@ -755,20 +746,6 @@
           'break;'
         );
       }
-
-      // if (roleAttributes.length)
-      // {
-      //   varList.push('roleSet=false');
-      //   result.push(
-      //     'case"$role":' +
-      //       'if(!__$role&&value)' +
-      //       '{' +
-      //         '__$role=value;' +
-      //         roleAttributes.join('') +
-      //       '}' +
-      //     'break;'
-      //   );
-      // }
 
       result.push('}}');
 
