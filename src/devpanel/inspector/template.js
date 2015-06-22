@@ -233,6 +233,7 @@ function stopInspect(){
     inspectMode.set(false);
     transport.sendData('endInspect', 'template');
     pickupTarget.set();
+    templateInfo.set();
   }
 }
 

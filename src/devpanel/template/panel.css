@@ -40,7 +40,7 @@
 .panel:hover,
 .panel_activated
 {
-  opacity: 1;
+  opacity: .999999;
   box-shadow:
     0 0 7px 1px rgba(0, 0, 0, .3),
     0 0 0px 1px rgba(255, 255, 255, 1);
@@ -66,15 +66,15 @@
   background: no-repeat center center;
 }
 .panel__button:hover,
-.panel__button_templateActivated,
-.panel__button_l10nActivated,
-.panel__button_heatMapActivated,
-.panel__button_rolesActivated,
-.panel__button_gridActivated
+.panel__button_active-template,
+.panel__button_active-l10n,
+.panel__button_active-heatmap,
+.panel__button_active-roles,
+.panel__button_active-grid
 {
   background-color: rgba(255, 255, 255, 0.2);
 }
-.panel__button:last-child
+.panel__section:last-child .panel__button
 {
   border-right: none;
   border-radius: 0 4px 4px 0;
