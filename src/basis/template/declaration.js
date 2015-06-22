@@ -1745,11 +1745,6 @@ var makeDeclaration = (function(){
     if (!warns.length)
       result.warns = false;
 
-    // for backward capability with basisjs-tools
-    // l10nTokens was implemented and renamed to l10n during 1.4 developing
-    // TODO: remove before 1.4 release
-    /** @cut */ result.l10nTokens = result.l10n;
-
     return result;
   };
 })();

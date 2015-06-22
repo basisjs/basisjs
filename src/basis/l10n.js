@@ -88,7 +88,6 @@
     },
 
     getName: function(){
-      var type = this.token.getType();
       var key = this.value;
 
       if (isPluralType[this.token.getType()])

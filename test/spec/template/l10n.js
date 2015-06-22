@@ -930,12 +930,75 @@ module.exports = {
       ]
     },
     {
-      name: 'mixed types',
-      test: function(){
-        assert(text('<b:l10n src="./test.l10n"/><span>{l10n:foo} {l10n:enum.{foo}} {l10n:simpleMarkup}</span>', { foo: 'foo' }) ===
-               text('<span>foo text foo text simple <b>markup</b> text</span>'));
+      name: 'complex cases',
+      test: [
+        {
+          name: 'mixed types',
+          test: function(){
+            assert(text('<b:l10n src="./test.l10n"/><span>{l10n:foo} {l10n:enum.{foo}} {l10n:simpleMarkup}</span>', { foo: 'foo' }) ===
+                   text('<span>foo text foo text simple <b>markup</b> text</span>'));
 
-      }
+          }
+        },
+        {
+          name: 'xx',
+          test: function(){
+            var dictionary = l10n.dictionary(basis.resource('./complex.l10n')); // use resource to resolve nested tokens
+            dictionary.update({
+              _meta: {
+                type: {
+                  'label': 'enum-markup',
+                  'nested': 'enum-markup'
+                }
+              },
+              'en-US': {
+                label: {
+                  one: 'text {l10n:nested.{nested}}',
+                  two: 'text'
+                },
+                nested: {
+                  one: 'foo',
+                  two: 'bar'
+                }
+              }
+            });
+
+            var fns = [];
+            var nested = 'two';
+            var instance = createTemplate(
+              '<span>{test}</span>'
+            ).createInstance({}, null, null, {
+              bindingId: basis.genUID(),
+              nested: {
+                events: 'x',
+                getter: function(){
+                  return nested;
+                }
+              }
+            }, {
+              attach: function(ctx, handler, set){
+                basis.array.add(fns, set);
+              },
+              detach: function(ctx, handler, set){
+                basis.array.remove(fns, set);
+              }
+            });
+
+            function updateBinding(name, value){
+              fns.forEach(function(fn){
+                fn(name, value);
+              });
+            }
+
+            instance.set('test', dictionary.token('label.one'));
+            assert(text(instance) === '<span>text bar</span>');
+
+            updateBinding('nested', nested = 'one');
+            instance.set('test', dictionary.token('label.two'));
+            assert(text(instance) === '<span>text</span>');
+          }
+        }
+      ]
     },
     {
       name: 'special cases',

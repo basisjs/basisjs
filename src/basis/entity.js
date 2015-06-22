@@ -271,9 +271,13 @@
       return delta;
   }
 
+  var WRAPPED_MARKER = 'wrapped' + basis.genUID();
   var ENTITYSET_WRAP_METHOD = function(superClass, method){
     return function(data){
-      var needToWrap = Array.isArray(data) && !data.wrapped_;
+      if (data && !Array.isArray(data))
+        data = [data];
+
+      var needToWrap = data && !data[WRAPPED_MARKER];
 
       if (needToWrap)
       {
@@ -295,18 +299,23 @@
         {
           data = data.map(this.wrapper);
         }
-        data.wrapped_ = true;
+        data[WRAPPED_MARKER] = true;
       }
 
       var delta = superClass.prototype[method].call(this, data);
 
-      if (needToWrap && this.localId && delta && delta.deleted)
+      if (needToWrap)
       {
-        // TODO: make it deferred
-        Dataset.setAccumulateState(true);
-        for (var i = 0; i < delta.deleted.length; i++)
-          delta.deleted[i].destroy();
-        Dataset.setAccumulateState(false);
+        data[WRAPPED_MARKER] = false;
+        if (this.localId && delta && delta.deleted)
+        {
+          // TODO: make it deferred
+          Dataset.setAccumulateState(true);
+          for (var i = 0; i < delta.deleted.length; i++)
+            if (delta.deleted[i].root) // it's a hack to prevent double object destroy
+              delta.deleted[i].destroy();
+          Dataset.setAccumulateState(false);
+        }
       }
 
       return delta;
@@ -328,8 +337,9 @@
       if (this.localId)
         return this.set(data);
 
-      var isAll = this.wrapper.all !== this;
+      var isAll = this.wrapper.all === this;
       var destroyItems = basis.object.slice(this.items_);
+      var listenHandler = this.listen.item;
       var inserted = [];
       var deleted = [];
       var delta;
@@ -343,11 +353,7 @@
           if (entity)
           {
             if (entity.basisObjectId in destroyItems == false)
-            {
               inserted.push(entity);
-              // if (!isAll)
-              //   this.members_[entity.basisObjectId] = entity;
-            }
             destroyItems[entity.basisObjectId] = false;
           }
         }
@@ -358,13 +364,26 @@
         if (destroyItems[key])
           deleted.push(destroyItems[key]);
 
+      if (!isAll && (delta = getDelta(inserted, deleted)))
+      {
+        if (listenHandler)
+        {
+          if (delta.deleted)
+            for (var i = 0; i < delta.deleted.length; i++)
+              delta.deleted[i].removeHandler(listenHandler, this);
+          if (delta.inserted)
+            for (var i = 0; i < delta.inserted.length; i++)
+              delta.inserted[i].addHandler(listenHandler, this);
+        }
+
+        this.emit_itemsChanged(delta);
+      }
+
+      // try to optimize deletion by batch changes
       if (deleted.length && this.wrapper.all)
         this.wrapper.all.emit_itemsChanged({
           deleted: deleted
         });
-
-      // if (!isAll && (delta = getDelta(inserted, deleted)))
-      //   this.emit_itemsChanged(delta);
 
       Dataset.setAccumulateState(true);
       for (var i = 0; i < deleted.length; i++)
@@ -385,8 +404,8 @@
     wrapper: $self,
 
     init: ENTITYSET_INIT_METHOD(Dataset, 'EntitySet'),
-    sync: ENTITYSET_SYNC_METHOD(Dataset),
 
+    setAndDestroyRemoved: ENTITYSET_SYNC_METHOD(Dataset),
     set: ENTITYSET_WRAP_METHOD(Dataset, 'set'),
     add: ENTITYSET_WRAP_METHOD(Dataset, 'add'),
     remove: ENTITYSET_WRAP_METHOD(Dataset, 'remove'),
@@ -439,8 +458,7 @@
 
     name: null,
 
-    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection'),
-    sync: ENTITYSET_SYNC_METHOD(Filter)
+    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection')
   });
 
   //
@@ -458,7 +476,6 @@
     subsetClass: ReadOnlyEntitySet,
 
     init: ENTITYSET_INIT_METHOD(Split, 'EntityGrouping'),
-    sync: ENTITYSET_SYNC_METHOD(Split),
 
     getSubset: function(object, autocreate){
       var group = Split.prototype.getSubset.call(this, object, autocreate);
@@ -1951,3 +1968,13 @@
     Collection: EntityCollection,
     Grouping: EntityGrouping
   };
+
+  // deprecated in 1.4.0
+  /** @cut */ basis.resource(__filename).ready(function(){
+  /** @cut */   basis.dev.warnPropertyAccess(module.exports, 'Collection', EntityCollection,
+  /** @cut */     'basis.entity: Collection class is deprecated, use basis.data.dataset.Filter instead.'
+  /** @cut */   );
+  /** @cut */   basis.dev.warnPropertyAccess(module.exports, 'Grouping', EntityGrouping,
+  /** @cut */     'basis.entity: Grouping class is deprecated, use basis.data.dataset.Split instead.'
+  /** @cut */   );
+  /** @cut */ });

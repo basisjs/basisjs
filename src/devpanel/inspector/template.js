@@ -29,6 +29,12 @@ var overlay = basis.dom.createElement({
     background: 'rgba(110,163,217,0.7)'
   }
 });
+var boxElement = basis.dom.createElement({
+  css: {
+    visibility: 'hidden',
+    position: 'absolute'
+  }
+});
 
 function pickHandler(event){
   event.die();
@@ -80,21 +86,35 @@ var pickupTarget = new basis.data.Value({
 
       if (tmpl)
       {
-        var rect = basis.layout.getBoundingRect(tmpl.element);
+        var rectNode = tmpl.element;
+        var rect;
+
+        if (rectNode.nodeType == 3)
+        {
+          rectNode = document.createRange();
+          rectNode.selectNodeContents(tmpl.element);
+        }
+
+        rect = basis.layout.getBoundingRect(rectNode);
+
         if (rect)
         {
-          basis.cssom.setStyle(overlay, {
+          var style = {
             left: rect.left + 'px',
             top: rect.top + 'px',
             width: rect.width + 'px',
             height: rect.height + 'px'
-          });
+          };
+          basis.cssom.setStyle(overlay, style);
+          basis.cssom.setStyle(boxElement, style);
           document.body.appendChild(overlay);
+          document.body.appendChild(boxElement);
         }
       }
       else
       {
         basis.dom.remove(overlay);
+        basis.dom.remove(boxElement);
         inspectDepth = 0;
       }
 
@@ -137,8 +157,8 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           if (node.data.tmpl)
           {
             var el = node.data.tmpl.element;
-            var cls = (typeof el.className == 'string' ? el.className : el.className.baseVal);
-            return el.tagName + (el.id ? '#' + el.id : '') + (cls ? '.' + cls.split(' ').join('.') : '');
+            var cls = el.nodeType == 1 ? (typeof el.className == 'string' ? el.className : el.className.baseVal) : '';
+            return (el.nodeType == 3 ? '#text' : el.tagName) + (el.id ? '#' + el.id : '') + (cls ? '.' + cls.split(' ').join('.') : '');
           }
         }
       },
@@ -167,7 +187,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     handler: {
       update: function(){
         if (this.data.tmpl)
-          this.show(this.data.tmpl.element);
+          this.show(boxElement);
         else
           this.hide();
       },

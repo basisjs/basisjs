@@ -37,7 +37,7 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.4.0-dev';
+  var VERSION = '1.4.1-dev';
 
   var global = Function('return this')();
   var NODE_ENV = global !== context ? global : false;
@@ -1988,6 +1988,9 @@
       var setter = function(value){
         this.set(fn.call(this, value));
       };
+
+      if (typeof fn != 'function')
+        fn = getter(fn);
 
       setter.call(token, this.get());
 

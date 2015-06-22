@@ -357,7 +357,6 @@
 
     var handlerRequired = false;
     var events = 'update';
-    var satelliteClass;
     var config = {
       isSatelliteConfig: true
     };

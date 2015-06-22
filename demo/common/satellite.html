@@ -149,7 +149,7 @@
     });
 
     // data
-    UserGroup.all.sync([
+    UserGroup.all.setAndDestroyRemoved([
       { groupId: 1, title: 'Red' },
       { groupId: 2, title: 'Green' },
       { groupId: 3, title: 'Blue' },
@@ -158,7 +158,7 @@
       { groupId: 6, title: 'Yellow' }
     ]);
 
-    User.all.sync([
+    User.all.setAndDestroyRemoved([
       { userId: 1,  groupId: 1, title: 'Norman Yuen' },
       { userId: 2,  groupId: 2, title: 'Casto' },
       { userId: 4,  groupId: 6, title: 'Jose Crutcher' },

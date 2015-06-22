@@ -104,7 +104,7 @@
     UserGroup.all.setSyncAction(service.createAction({
       url: '../res/data/groups.json',
       success: function(data){
-        this.sync(UserGroup.readList(data));
+        this.setAndDestroyRemoved(UserGroup.readList(data));
       }
     }));
 
@@ -122,7 +122,7 @@
         syncAction: service.createAction({
           url: '../res/data/users.json',
           success: function(data){
-            this.sync(User.readList(data));
+            this.setAndDestroyRemoved(User.readList(data));
           }
         })
       }

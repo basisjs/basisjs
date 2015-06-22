@@ -232,6 +232,19 @@ module.exports = {
                 value.destroy();
                 assert(destroyed === true);
               }
+            },
+            {
+              name: 'Value#as used with link to ReadOnlyValue issue',
+              test: function(){
+                var value = new Value({ value: 2 });
+
+                value.link(new ReadOnlyValue, function(){});
+                var asValue = value.as(function(value){
+                  return value * 2;
+                });
+
+                assert(asValue.value === 4);
+              }
             }
           ]
         },

@@ -982,6 +982,7 @@
         {
           var context = cursor.context;
           if (context instanceof ReadOnlyValue &&
+              context.proxy &&
               (context.proxy[GETTER_ID] || String(context.proxy)) == fnId) // compare functions by id
             return context;
         }
@@ -2531,12 +2532,21 @@
       return delta;
     },
 
+
+   /**
+    * @deprecated use Dataset#setAndDestroyRemoved
+    */
+    sync: function(items){
+      /** @cut */ basis.dev.warn('basis.data.Dataset#sync() method is deprecated, use basis.data.Dataset#setAndDestroyRemoved() instead.');
+      return this.setAndDestroyRemoved(items);
+    },
+
    /**
     * Set new item set and destroy deleted items.
     * @param {Array.<basis.data.Object>} items
     * @return {Array.<basis.data.Object>|undefined} Returns array of inserted items or undefined if nothing inserted.
     */
-    sync: function(items){
+    setAndDestroyRemoved: function(items){
       var delta = this.set(items) || {};
       var deleted = delta.deleted;
 

@@ -396,7 +396,7 @@ module.exports = {
             });
 
             // clear and destroy dataset items
-            dataset.sync();
+            dataset.setAndDestroyRemoved();
 
             assert.deep({}, map.sourceMap_);
             assert(destroyCount === 3);

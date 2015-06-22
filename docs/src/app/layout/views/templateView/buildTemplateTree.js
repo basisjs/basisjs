@@ -123,7 +123,6 @@
 
   // token types
   /** @const */ var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
-  /** @const */ var TYPE_ATTRIBUTE = basisTemplate.TYPE_ATTRIBUTE;
   /** @const */ var TYPE_TEXT = basisTemplate.TYPE_TEXT;
   /** @const */ var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
   /** @const */ var TYPE_ATTRIBUTE_CLASS = basisTemplate.TYPE_ATTRIBUTE_CLASS;

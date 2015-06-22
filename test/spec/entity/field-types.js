@@ -532,7 +532,7 @@ module.exports = {
       }
     },
     {
-      name: 'no warnings on all.sync([])',
+      name: 'no warnings on all.setAndDestroyRemoved([])',
       test: function(){
         var Type = nsEntity.createType();
         var subset = new Filter({ source: Type.all });
@@ -549,7 +549,7 @@ module.exports = {
 
         assert(subset.itemCount == 2);
         assert(catchWarnings(function(){
-          Type.all.sync([]);
+          Type.all.setAndDestroyRemoved([]);
         }) == false);
 
         assert(subset.itemCount == 0);
@@ -576,13 +576,13 @@ module.exports = {
         });
 
         assert(catchWarnings(function(){
-          wrapper.dataset.sync([{ id: 1, group: 1 }]);
+          wrapper.dataset.setAndDestroyRemoved([{ id: 1, group: 1 }]);
         }) == false);
         assert(wrapper.itemCount == 1);
         assert(subset.itemCount == 1);
 
         assert(catchWarnings(function(){
-          wrapper.dataset.sync([{ id: 2, group: 1 }]);
+          wrapper.dataset.setAndDestroyRemoved([{ id: 2, group: 1 }]);
         }) == false);
         assert(wrapper.itemCount == 1);
         assert(subset.itemCount == 1);

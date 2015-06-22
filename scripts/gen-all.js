@@ -27,4 +27,4 @@ process.chdir(__dirname + '/..');
   });
 })('src/basis');
 
-fs.writeFileSync('src/basis/all.js', requires.join('\n') + '\n');
+fs.writeFileSync('src/basis/all.js', requires.sort().join('\n') + '\n');

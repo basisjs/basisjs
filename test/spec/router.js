@@ -15,7 +15,6 @@ module.exports = {
       test: function(){
         var checker = 0;
 
-        router.start();
         router.add('test', function(){
           checker++;
         });
@@ -36,7 +35,6 @@ module.exports = {
       test: function(){
         var checker = 0;
 
-        router.start();
         router.add('test', function(){
           checker++;
         });
@@ -49,6 +47,7 @@ module.exports = {
     {
       name: 'callbacks',
       test: function(){
+        router.stop();  // router starts by default
         var checker = 0;
         var log = [];
 
@@ -79,8 +78,6 @@ module.exports = {
       name: 'params',
       test: function(){
         var checker;
-
-        router.start();
 
         router.add('param/:id', function(id){
           checker = Number(id);

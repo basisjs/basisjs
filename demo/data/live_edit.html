@@ -116,7 +116,7 @@
     });
 
     // Generate data
-    Article.all.sync(basis.array.create(8, function(idx){
+    Article.all.setAndDestroyRemoved(basis.array.create(8, function(idx){
       var id = idx + 1;
       return {
         id: id,

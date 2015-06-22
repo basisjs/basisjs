@@ -74,15 +74,15 @@ module.exports = {
               }
             });
 
-            console.log('!!!!!!!!!');
-            var inserted = entityType.all.sync([{ id: 1 }, { id: 3 }]);
-            console.log('!!!!');
+            var inserted = entityType.all.setAndDestroyRemoved([{ id: 1 }, { id: 3 }]);
             assert(entityType.all.itemCount === 2);
             assert([1, 3], entityType.all.getValues('data.id').sort());
             assert(allChangesCount === 2);
             assert(Array.isArray(inserted));
             assert(inserted.length === 1);
-            assert([3], inserted.map(function(item){ return item.data.id }));
+            assert([3], inserted.map(function(item){
+              return item.data.id;
+            }));
           }
         },
         {
@@ -114,7 +114,7 @@ module.exports = {
               }
             });
 
-            var inserted = entitySet.sync([{ id: 1 }, { id: 3 }]);
+            var inserted = entitySet.setAndDestroyRemoved([{ id: 1 }, { id: 3 }]);
             assert(entitySet.itemCount === 2);
             assert([1, 3], entitySet.getValues('data.id').sort());
             assert(itemsChanged === 1);
@@ -263,7 +263,7 @@ module.exports = {
                 assert(entitySet.has(two));
 
                 // change set
-                entitySet.sync([{ id: 1, value: 2 }, { id: 3, value: 2 }]);
+                entitySet.setAndDestroyRemoved([{ id: 1, value: 2 }, { id: 3, value: 2 }]);
                 assert(entitySet.itemCount === 2);
                 assert(entitySet.has(one));
                 assert(entitySet.has(two) === false);
@@ -410,6 +410,49 @@ module.exports = {
                 entitySetType([], entitySet);
                 assert(entitySet.itemCount == 0);
                 assert(oneDestroyed === true);
+              }
+            },
+            {
+              name: 'should destroy items on remove',
+              test: function(){
+                var entityType = nsEntity.createType(null, {
+                  id: Number,
+                  value: Number
+                });
+                var entitySetType = nsEntity.createSetType({
+                  type: entityType,
+                  localId: 'id'
+                });
+
+                var entitySet = entitySetType([{ id: 1, value: 1 }, { id: 2, value: 1 }]);
+                var one = entitySet.getItems()[0];
+                var two = entitySet.getItems()[1];
+
+                assert(entitySet.itemCount === 2);
+                assert(entitySet.has(one));
+                assert(entitySet.has(two));
+
+                var oneDestroyed = false;
+                var twoDestroyed = false;
+                one.addHandler({
+                  destroy: function(){
+                    oneDestroyed = true;
+                  }
+                });
+                two.addHandler({
+                  destroy: function(){
+                    twoDestroyed = true;
+                  }
+                });
+
+                // change set
+                entitySet.remove(entitySet.pick());
+                entitySet.remove(entitySet.pick());
+                assert(entitySet.itemCount == 0);
+                assert(entitySet.has(one) === false);
+                assert(oneDestroyed === true);
+                assert(entitySet.has(two) === false);
+                assert(twoDestroyed === true);
               }
             },
             {
