@@ -5,6 +5,7 @@ var domUtils = require('basis.dom');
 var eventUtils = require('basis.dom.event');
 var getOffset = require('basis.layout').getOffset;
 var getBoundingRect = require('basis.layout').getBoundingRect;
+var getComputedStyle = require('basis.dom.computedStyle').get;
 var Node = require('basis.ui').Node;
 var Value = require('basis.data').Value;
 
@@ -171,6 +172,7 @@ var Overlay = Node.subclass({
     return node === value;
   }),
   processTextLines: false,
+  ignoreInvisibleElements: true,
   muteEvents: false,
   hide: hide,
   left: left,
@@ -317,17 +319,22 @@ var Overlay = Node.subclass({
     // should be overrided
   },
 
-  traverse: function(domNode){
+  traverse: function(domNode, invisible){
     for (var i = 0, child; child = domNode.childNodes[i]; i++)
     {
       if (child.nodeType == 1 && child.hasAttribute('basis-devpanel-ignore'))
         continue;
 
+      var visible = this.ignoreInvisibleElements
+        ? !invisible && (child.nodeType != 1 || getComputedStyle(child, 'visibility') != 'hidden')
+        : true;
+
       this.order += 1;
-      this.processNode(child);
+      if (visible)
+        this.processNode(child);
 
       if (child.nodeType == 1)
-        this.traverse(child);
+        this.traverse(child, !visible);
     }
   }
 });
