@@ -61,10 +61,11 @@ var overlay = new Overlay({
 //
 
 module.exports = {
+  name: 'Grid',
   startInspect: function(){
     overlay.activate();
   },
-  endInspect: function(){
+  stopInspect: function(){
     overlay.deactivate();
   },
   inspectMode: Value.from(overlay, 'activeChanged', 'active'),

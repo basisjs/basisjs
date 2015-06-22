@@ -9,6 +9,7 @@ var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
+var Value = require('basis.data').Value;
 var l10nInspector = resource('./inspector/l10n.js');
 var templateInspector = resource('./inspector/template.js');
 var heatInspector = resource('./inspector/heatmap.js');
@@ -21,6 +22,19 @@ var cultureList = require('./cultureList.js');
 
 var inspectors = new basis.data.Dataset();
 var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
+var currentInspector = new Value({
+  handler: {
+    change: function(sender, oldValue){
+      if (oldValue)
+        oldValue.stopInspect();
+      if (this.value)
+        this.value.startInspect();
+    }
+  }
+});
+var currentInspectorName = currentInspector.as(function(inspector){
+  return inspector ? inspector.name : '';
+});
 
 [
   l10nInspector,
@@ -31,6 +45,12 @@ var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(B
 ].forEach(function(inspectorRes){
   inspectorRes.ready(function(inspector){
     inspectors.add(inspector.inspectMode.link(new basis.data.Object, function(value){
+      if (value)
+        currentInspector.set(inspector);
+      else
+        if (currentInspector.value === inspector)
+          currentInspector.set();
+
       this.update({ mode: value });
     }));
   });
@@ -79,6 +99,16 @@ else
   isOnline = inspectBasis.devtools && basis.data.Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
 }
 
+function activateInspector(inspector, e){
+  cultureList.setDelegate();
+  themeList.setDelegate();
+  e.die();
+  inspectBasisDomEvent.captureEvent('click', function(){
+    inspectBasisDomEvent.releaseEvent('click');
+    currentInspector.set(inspector());
+  });
+}
+
 var panel = new basis.ui.Node({
   container: document.body,
 
@@ -94,8 +124,12 @@ var panel = new basis.ui.Node({
     cultureName: inspectBasisL10n.culture,
     cultureList: cultureList,
     isOnline: isOnline,
+    permanentFilesChangedCount: permamentFilesCount,
     inspectMode: inspectMode,
-    reloadRequired: 'satellite:',
+    inspector: currentInspectorName,
+    inspectorId: currentInspectorName.as(function(value){
+      return value ? value.replace(/\s/g, '').toLowerCase() : '';
+    }),
     grid: function(){
       var config = inspectBasis.config.devpanel;
       return Number(config && config.grid) || 0;
@@ -103,56 +137,26 @@ var panel = new basis.ui.Node({
   },
 
   action: {
-    inspectTemplate: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        templateInspector().startInspect();
-      });
-    },
     showThemes: function(){
       themeList.setDelegate(this);
-    },
-    inspectl10n: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        l10nInspector().startInspect();
-      });
     },
     showCultures: function(){
       cultureList.setDelegate(this);
     },
+    inspectTemplate: function(e){
+      activateInspector(templateInspector, e);
+    },
+    inspectl10n: function(e){
+      activateInspector(l10nInspector, e);
+    },
     inspectHeat: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        heatInspector().startInspect();
-      });
+      activateInspector(heatInspector, e);
     },
     inspectGrid: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        gridInspector().startInspect();
-      });
+      activateInspector(gridInspector, e);
     },
     inspectRoles: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        rolesInspector().startInspect();
-      });
+      activateInspector(rolesInspector, e);
     },
     // inspectFile: function(){
     //   fileInspector().toggle();
@@ -160,23 +164,12 @@ var panel = new basis.ui.Node({
     storePosition: function(){
       if (localStorage)
         localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
-    }
-  },
-
-  satellite: {
-    reloadRequired: {
-      instance: new basis.ui.Node({
-        template: resource('./template/reloadRequired.tmpl'),
-        binding: {
-          visible: permamentFilesCount.as(Boolean),
-          count: permamentFilesCount
-        },
-        action: {
-          reload: function(){
-            global.location.reload();
-          }
-        }
-      })
+    },
+    cancelInspect: function(){
+      currentInspector.set();
+    },
+    reload: function(){
+      global.location.reload();
     }
   },
 

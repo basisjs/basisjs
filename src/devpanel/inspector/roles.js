@@ -121,10 +121,11 @@ var overlay = new Overlay({
 //
 
 module.exports = {
+  name: 'Roles',
   startInspect: function(){
     overlay.activate();
   },
-  endInspect: function(){
+  stopInspect: function(){
     overlay.deactivate();
   },
   inspectMode: Value.from(overlay, 'activeChanged', 'active'),

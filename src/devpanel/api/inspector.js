@@ -14,12 +14,12 @@ module.exports = {
     l10nInspector.startInspect();
   },
   l10nEndInspect: function(){
-    l10nInspector.endInspect();
+    l10nInspector.stopInspect();
   },
   templateStartInspect: function(){
     templateInspector.startInspect();
   },
   templateEndInspect: function(){
-    templateInspector.endInspect();
+    templateInspector.stopInspect();
   }
 };

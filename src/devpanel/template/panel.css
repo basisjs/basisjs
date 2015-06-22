@@ -8,7 +8,7 @@
 
   opacity: 0.5;
   background: #999;
-  border-radius: 5px;
+  border-radius: 3px;
   box-shadow:
     0 0 7px 1px rgba(0, 0, 0, 0),
     0 0 0px 1px rgba(255, 255, 255, .75);
@@ -38,8 +38,7 @@
 }
 
 .panel:hover,
-.panel_activated,
-.panel_inspectMode
+.panel_activated
 {
   opacity: 1;
   box-shadow:
@@ -50,11 +49,6 @@
 .panel_isOnline
 {
   background: #4B77CC;
-}
-
-.panel_inspectMode
-{
-  pointer-events: none;
 }
 
 .panel__section
@@ -71,7 +65,12 @@
   min-width: 10px;
   background: no-repeat center center;
 }
-.panel__button:hover
+.panel__button:hover,
+.panel__button_templateActivated,
+.panel__button_l10nActivated,
+.panel__button_heatMapActivated,
+.panel__button_rolesActivated,
+.panel__button_gridActivated
 {
   background-color: rgba(255, 255, 255, 0.2);
 }
@@ -103,4 +102,12 @@
   height: 100%;
   cursor: move;
   background: url(img/drag.png) no-repeat center;
+}
+
+.info-panels
+{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
 }

@@ -57,10 +57,11 @@ children.set(overlay.getChildNodesDataset());
 //
 
 module.exports = {
+  name: 'Heat map',
   startInspect: function(){
     overlay.activate();
   },
-  endInspect: function(){
+  stopInspect: function(){
     overlay.deactivate();
   },
   inspectMode: Value.from(overlay, 'activeChanged', 'active'),
