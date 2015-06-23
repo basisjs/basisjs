@@ -964,6 +964,18 @@ var makeDeclaration = (function(){
                           if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
                             applyShowHideAttribute(token, elAttrs_[includeAttrName]);
                           break;
+
+                        case 'role':
+                          var role = elAttrs_.role.value;
+                          if (role)
+                          {
+                            applyRole(decl.tokens, role);
+                          }
+                          else
+                          {
+                            // add warning
+                          }
+                          break;
                       }
 
                     for (var j = 0, child; child = instructions[j]; j++)
@@ -1286,6 +1298,30 @@ var makeDeclaration = (function(){
     return value;
   }
 
+  function applyRole(tokens, role, stIdx){
+    for (var i = stIdx || 0, token; token = tokens[i]; i++)
+    {
+      var tokenType = token[TOKEN_TYPE];
+
+      switch (tokenType)
+      {
+        case TYPE_ELEMENT:
+          applyRole(token, role, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+          break;
+
+        case TYPE_ATTRIBUTE:
+          if (token[ATTR_NAME] == 'role-marker')
+          {
+            var roleExpression = token[TOKEN_BINDINGS][1];
+            var currentRole = roleExpression[1];
+
+            roleExpression[1] = role + (currentRole ? '/' + currentRole : '');
+          }
+          break;
+      }
+    }
+  }
+
   function normalizeRefs(tokens, isolate, map, stIdx){
     function processName(name){
       // add prefix only for `ns:name` and ignore global namespace `:name`
@@ -1366,7 +1402,7 @@ var makeDeclaration = (function(){
       var tokenType = token[TOKEN_TYPE];
       var bindings = token[TOKEN_BINDINGS];
 
-      switch (token[TOKEN_TYPE])
+      switch (tokenType)
       {
         case TYPE_ELEMENT:
           applyDefines(token, template, options, ELEMENT_ATTRIBUTES_AND_CHILDREN);

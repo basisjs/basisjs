@@ -194,8 +194,13 @@
     '$role': {
       events: 'ownerSatelliteNameChanged',
       getter: function(node){
-        if (Object.prototype.hasOwnProperty.call(node, 'role'))
-          return node.role;
+        if (node.role)
+        {
+          var roleId = node.roleId && node.binding[node.roleId];
+          var id = roleId && typeof roleId.getter == 'function' ? roleId.getter(node) : undefined;
+          return node.role + (id !== undefined ? '(' + id + ')' : '');
+        }
+
         return node.ownerSatelliteName || '';
       }
     },
@@ -565,6 +570,8 @@
 
         if (getter && this.tmpl)
           this.tmpl.set(bindName, getter(this));
+        if (this.roleId == bindName)
+          this.updateBind('$roleId');
       },
 
      /**

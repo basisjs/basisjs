@@ -669,6 +669,8 @@
 
     childClass: null,
     name: '',
+    role: 'variant',
+    roleId: 'value',
 
     binding: {
       name: 'name',
