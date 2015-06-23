@@ -28,6 +28,8 @@
   // main part
   //
 
+  var eventTracker = new basis.Token();
+
 
   //
   // debug
@@ -582,6 +584,30 @@
       templateAction: function(actionName, event){
         var action = this.action[actionName];
 
+        if (eventTracker.handler)
+        {
+          var cursor = event.actionTarget;
+          var path = [];
+          var role;
+
+          if (cursor.hasAttribute('role-marker'))
+          {
+            while (cursor && cursor !== document)
+            {
+              var role = cursor.getAttribute('role-marker');
+              if (role)
+                path.push(role);
+              cursor = cursor.parentNode;
+            }
+
+            eventTracker.set({
+              path: path.reverse(),
+              event: event.type,
+              action: actionName
+            });
+          }
+        }
+
         if (action)
           action.call(this, event);
 
@@ -956,6 +982,8 @@
     /** @cut */ debug_getInstances: function(){
     /** @cut */   return basis.object.values(instances);
     /** @cut */ },
+
+    tracker: eventTracker,
 
     BINDING_PRESET: BINDING_PRESET,
 
