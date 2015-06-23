@@ -967,14 +967,10 @@ var makeDeclaration = (function(){
 
                         case 'role':
                           var role = elAttrs_.role.value;
+
                           if (role)
-                          {
                             applyRole(decl.tokens, role);
-                          }
-                          else
-                          {
-                            // add warning
-                          }
+
                           break;
                       }
 
