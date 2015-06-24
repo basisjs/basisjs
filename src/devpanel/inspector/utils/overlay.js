@@ -1,3 +1,5 @@
+var REFRESH_TIMER = 25000;
+
 var document = global.document;
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
@@ -142,7 +144,7 @@ activeOverlay.link(null, function(newOverlay, oldOverlay){
   else
   {
     startWatch();
-    refreshTimer = setInterval(update, 250);
+    refreshTimer = setInterval(update, REFRESH_TIMER);
   }
 
   if (newOverlay)
@@ -275,6 +277,8 @@ var Overlay = Node.subclass({
         }
 
         node.generation = this.generation;
+
+        return node;
       }
     }
 
@@ -295,25 +299,26 @@ var Overlay = Node.subclass({
       {
         var offset = getOffset();
         var rects = rectNode.getClientRects();
+        var result = [];
 
         for (var i = 0; i < rects.length; i++)
         {
           var rect = rects[i];
-          apply.call(this, {
+          result.push(apply.call(this, {
             top: rect.top + offset.top,
             left: rect.left + offset.left,
             right: rect.right + offset.left,
             bottom: rect.bottom + offset.top,
             width: rect.width,
             height: rect.height
-          }, domNode, i);
+          }, domNode, i));
         }
 
-        return;
+        return result;
       }
     }
 
-    apply.call(this, getBoundingRect(rectNode), domNode, 0);
+    return apply.call(this, getBoundingRect(rectNode), domNode, 0);
   },
   processNode: function(domNode){
     // should be overrided

@@ -1,8 +1,9 @@
 <b:style src="./overlay.css"/>
 <b:isolate/>
 <b:define name="hide" type="bool"/>
+<b:define name="pickMode" type="bool"/>
 
-<div class="overlay" basis-devpanel-ignore>
+<div class="overlay {pickMode}" basis-devpanel-ignore>
   <div{childNodesElement}
     class="content content_{hide}"
     style="top: -{top}px; left: -{left}px"

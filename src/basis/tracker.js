@@ -55,13 +55,13 @@ resource('./ui.js').ready(function(exports){
               {
                 var role = cursor.getAttribute('role-marker');
                 if (role)
-                  path.push(role);
+                  path.unshift(role);
                 cursor = cursor.parentNode;
               }
 
               track({
                 type: 'ui',
-                path: path.reverse(),
+                path: path,
                 event: event.type,
                 action: actionName
               });

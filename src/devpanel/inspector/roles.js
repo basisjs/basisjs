@@ -1,6 +1,9 @@
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisUI = inspectBasis.require('basis.ui');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
+var inspectBasisTracker = inspectBasis.require('basis.tracker');
 
 var Node = global.Node;
 var Value = require('basis.data').Value;
@@ -50,7 +53,13 @@ function findObject(domNode){
     return inspectBasisTemplate.resolveObjectById(cursor[inspectBasisTemplateMarker]);
 }
 
-function getActions(domNode){
+function getEvents(domNode){
+  return events.filter(function(eventName){
+    return domNode.hasAttribute('event-' + eventName);
+  });
+}
+
+function getActions(domNode, events){
   var result = events
     .map(function(eventName){
       return domNode.getAttribute('event-' + eventName);
@@ -65,13 +74,55 @@ function getActions(domNode){
   return false;
 }
 
+function getTrackInfo(domNode, path, events, actions){
+  var result = [];
+  var role;
+
+  if (events.length || actions.length)
+  {
+    for (var i = 0; i < events.length; i++)
+    {
+      var data = inspectBasisTracker.getData({
+        type: 'ui',
+        path: path,
+        event: events[i]
+      });
+
+      if (data)
+        result.push(data);
+    }
+
+    for (var i = 0; i < actions.length; i++)
+    {
+      var data = inspectBasisTracker.getData({
+        type: 'ui',
+        path: path,
+        action: actions[i]
+      });
+
+      if (data)
+        result.push(data);
+    }
+  }
+
+  return result.length ? result : false;
+}
+
 var overlay = new Overlay({
+  pickMode: new basis.Token(false),
+
   template: resource('./template/roles/overlay.tmpl'),
+  binding: {
+    pickMode: 'pickMode'
+  },
 
   childClass: {
     template: resource('./template/roles/token.tmpl'),
     binding: {
-      missedActions: 'data:missedActions',
+      hasActions: 'data:',
+      missedActions: 'data:',
+      conflict: 'data:',
+      track: 'data:',
       role: {
         events: 'update',
         getter: function(node){
@@ -81,21 +132,60 @@ var overlay = new Overlay({
       problem: {
         events: 'update',
         getter: function(node){
-          return !node.data.role || node.data.missedActions;
+          return !node.data.role || node.data.missedActions || node.data.conflict;
         }
       }
+    },
+    action: {
+      showPath: function(){
+        global.prompt('Path:', this.data.path);
+      }
     }
+  },
+
+  apply: function(){
+    this.pathMap = {};
+    Overlay.prototype.apply.call(this);
   },
 
   processNode: function(domNode){
     if (domNode.nodeType == 1)
     {
-      var actions = getActions(domNode);
+      var events = getEvents(domNode);
+      var actions = getActions(domNode, events);
       var roleMarker = domNode.getAttribute('role-marker') || '';
+
       if (actions || roleMarker)
       {
         var object = actions ? findObject(domNode) : false;
         var brokenActions = false;
+        var path = [];
+        var knownPath = false;
+
+        if (roleMarker)
+        {
+          var cursor = domNode;
+
+          while (cursor && cursor !== document)
+          {
+            var role = cursor.getAttribute('role-marker');
+            if (role)
+              path.unshift(role);
+            cursor = cursor.parentNode;
+          }
+
+          knownPath = hasOwnProperty.call(this.pathMap, path);
+          if (knownPath)
+          {
+            if (this.pathMap[path] !== true)
+            {
+              this.pathMap[path].update({
+                conflict: true
+              });
+              this.pathMap[path] = true;
+            }
+          }
+        }
 
         if (object && object.action)
           brokenActions = actions.filter(function(actionName){
@@ -105,12 +195,18 @@ var overlay = new Overlay({
               actionName != 'log-event';
           });
 
-        this.highlight(domNode, {
+        var node = this.highlight(domNode, {
           role: roleMarker,
-          missedActions: brokenActions && brokenActions.length
-            ? brokenActions.join(' ')
-            : ''
+          hasActions: !!actions,
+          missedActions: brokenActions && brokenActions.length ? brokenActions.join(' ') : '',
+          conflict: knownPath,
+          track: !!getTrackInfo(domNode, path, events, actions),
+          path: path.join(' ')
         });
+
+
+        if (roleMarker && !knownPath && node)
+          this.pathMap[path] = node;
       }
     }
   }
@@ -129,6 +225,7 @@ module.exports = {
     overlay.deactivate();
   },
   inspectMode: Value.from(overlay, 'activeChanged', 'active'),
+  pickMode: overlay.pickMode,
   isActive: function(){
     return overlay.active;
   }

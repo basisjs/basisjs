@@ -10,6 +10,7 @@ var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
 var Value = require('basis.data').Value;
+var Expression = require('basis.data.value').Expression;
 var l10nInspector = resource('./inspector/l10n.js');
 var templateInspector = resource('./inspector/template.js');
 var heatInspector = resource('./inspector/heatmap.js');
@@ -127,8 +128,13 @@ var panel = new basis.ui.Node({
     permanentFilesChangedCount: permamentFilesCount,
     inspectMode: inspectMode,
     inspector: currentInspectorName,
-    inspectorId: currentInspectorName.as(function(value){
-      return value ? value.replace(/\s/g, '').toLowerCase() : '';
+    inspectorId: new Expression(currentInspectorName, rolesInspector().pickMode, function(inspectorName, pickMode){
+      inspectorName = inspectorName ? inspectorName.replace(/\s/g, '').toLowerCase() : '';
+
+      if (inspectorName == 'roles')
+        return pickMode ? 'pickRoles' : 'roles';
+
+      return inspectorName;
     }),
     grid: function(){
       var config = inspectBasis.config.devpanel;
@@ -155,8 +161,13 @@ var panel = new basis.ui.Node({
     inspectGrid: function(e){
       activateInspector(gridInspector, e);
     },
+    inspectPickRoles: function(e){
+      activateInspector(rolesInspector, e);
+      rolesInspector().pickMode.set(true);
+    },
     inspectRoles: function(e){
       activateInspector(rolesInspector, e);
+      rolesInspector().pickMode.set(false);
     },
     // inspectFile: function(){
     //   fileInspector().toggle();

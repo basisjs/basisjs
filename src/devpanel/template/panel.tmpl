@@ -6,6 +6,7 @@
 <b:define name="templateActivated" from="inspectorId" type="enum" values="template"/>
 <b:define name="l10nActivated" from="inspectorId" type="enum" values="l10n"/>
 <b:define name="heatMapActivated" from="inspectorId" type="enum" values="heatmap"/>
+<b:define name="rolesPickActivated" from="inspectorId" type="enum" values="pickRoles"/>
 <b:define name="rolesActivated" from="inspectorId" type="enum" values="roles"/>
 <b:define name="gridActivated" from="inspectorId" type="enum" values="grid"/>
 
@@ -15,14 +16,14 @@
   <div{dragElement} class="panel__dd-trigger">&nbsp;</div>
   <div class="panel__section">
     <div class="panel__button panel__button_template panel__button_active-{templateActivated}" event-mousedown="inspectTemplate">&nbsp;</div>
-    <div{themeButton} class="panel__button" event-click="showThemes">
+    <div class="panel__button" event-click="showThemes">
       {themeName}
     </div>
     <!--{themeList}-->
   </div>
   <div class="panel__section">  
     <div class="panel__button panel__button_l10n panel__button_active-{l10nActivated}" event-mousedown="inspectl10n">&nbsp;</div>
-    <div{cultureButton} class="panel__button" event-click="showCultures">
+    <div class="panel__button" event-click="showCultures">
       {cultureName}
     </div>
     <!--{cultureList}-->
@@ -33,6 +34,7 @@
     </div>
   </div>
   <div class="panel__section">
+    <div class="panel__button panel__button_roles panel__button_active-{rolesPickActivated}" event-mousedown="inspectPickRoles">&nbsp;</div>
     <div class="panel__button panel__button_active-{rolesActivated}" event-mousedown="inspectRoles">
       Roles
     </div>

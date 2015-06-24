@@ -69,6 +69,7 @@
 .panel__button_active-template,
 .panel__button_active-l10n,
 .panel__button_active-heatmap,
+.panel__button_active-pickRoles,
 .panel__button_active-roles,
 .panel__button_active-grid
 {
@@ -88,10 +89,10 @@
 {
   background-image: url(img/inspect-l10n.png);
 }
-/*.panel__button.fileInspector
+.panel__button_roles
 {
-  background-image: url(img/folder.png);
-}*/
+  background-image: url(img/inspect-roles.png);
+}
 
 .panel__dd-trigger
 {
