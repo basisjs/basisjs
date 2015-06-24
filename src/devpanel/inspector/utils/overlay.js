@@ -1,4 +1,4 @@
-var REFRESH_TIMER = 25000;
+var REFRESH_TIMER = 250;
 
 var document = global.document;
 var inspectBasis = require('devpanel').inspectBasis;
