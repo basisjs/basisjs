@@ -229,9 +229,10 @@ var Overlay = Node.subclass({
   },
 
   apply: function(){
+    this.contextStack = [];
     this.order = 0;
     this.generation += 1;
-    this.traverse(document.body);
+    this.traverse(document.body, this.getInitialContext());
 
     basis.array(this.childNodes).forEach(function(child){
       if (child.generation != this.generation)
@@ -324,22 +325,48 @@ var Overlay = Node.subclass({
     // should be overrided
   },
 
-  traverse: function(domNode, invisible){
+  shouldTraverseDeep: function(){
+    return true;
+  },
+
+  getInitialContext: function(){
+    return {};
+  },
+  getContext: function(domNode, context){
+    return context;
+  },
+
+  traverse: function(domNode, context, invisible){
     for (var i = 0, child; child = domNode.childNodes[i]; i++)
     {
-      if (child.nodeType == 1 && child.hasAttribute('basis-devpanel-ignore'))
+      var isElement = child.nodeType == 1;
+
+      if (isElement && child.hasAttribute('basis-devpanel-ignore'))
         continue;
 
       var visible = this.ignoreInvisibleElements
-        ? !invisible && (child.nodeType != 1 || getComputedStyle(child, 'visibility') != 'hidden')
+        ? !invisible && (!isElement || getComputedStyle(child, 'visibility') != 'hidden')
         : true;
 
       this.order += 1;
       if (visible)
-        this.processNode(child);
+        this.processNode(child, context);
 
-      if (child.nodeType == 1)
-        this.traverse(child, !visible);
+      if (isElement)
+      {
+        var nodeContext = this.getContext(child, context);
+
+        if (!nodeContext)
+          continue;
+
+        if (nodeContext !== context)
+          this.contextStack.push(nodeContext);
+
+        this.traverse(child, nodeContext, !visible);
+
+        if (nodeContext !== context)
+          this.contextStack.pop();
+      }
     }
   }
 });
