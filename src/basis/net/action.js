@@ -56,7 +56,7 @@
       this.abort.call(origin);
 
       if (origin.state == STATE_PROCESSING)
-        origin.setState(STATE_UNDEFINED);
+        origin.setState(transport.stateOnAbort || request.stateOnAbort || STATE_UNDEFINED);
     },
     complete: function(transport, request){
       this.complete.call(request.requestData.origin);
