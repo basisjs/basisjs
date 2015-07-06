@@ -842,6 +842,12 @@
     satellite: NULL_SATELLITE,
 
    /**
+    * @param {string} name Name of satellite
+    * @param {basis.data.AbstractData} oldSattelite Old satellite for name
+    */
+    emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
+
+   /**
     * Key in owner.satellite map.
     * @type {string}
     * @readonly
@@ -850,9 +856,9 @@
 
    /**
     * @param {string} name Name of satellite
-    * @param {basis.data.AbstractData} oldSattelite Old satellite for name
+    * @param {string|null} oldName Old satellite name
     */
-    emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
+    emit_ownerSatelliteNameChanged: createEvent('ownerSatelliteNameChanged', 'name', 'oldName'),
 
    /**
     * Node owner. Generaly using by satellites and GroupingNode.
@@ -1043,12 +1049,6 @@
       {
         var listenHandler = this.listen.owner;
 
-        // if (this.destroy === warnOnAutoSatelliteDestoy)
-        // {
-        //   /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change it\'s owner');
-        //   return;
-        // }
-
         if (oldOwner)
         {
           if (this.ownerSatelliteName && oldOwner.satellite[AUTO] && this.ownerSatelliteName in oldOwner.satellite[AUTO])
@@ -1131,7 +1131,12 @@
         {
           // unlink old satellite
           delete this.satellite[name];
-          oldSatellite.ownerSatelliteName = null;
+          var oldSatelliteName = oldSatellite.ownerSatelliteName;
+          if (oldSatelliteName != null)
+          {
+            oldSatellite.ownerSatelliteName = null;
+            oldSatellite.emit_ownerSatelliteNameChanged(oldSatelliteName);
+          }
 
           if (autoConfig && oldSatellite.destroy === warnOnAutoSatelliteDestoy)
           {
@@ -1217,7 +1222,7 @@
             else
               satellite.setOwner(this);
 
-            // if owner doesn't changed nothing to do
+            // reset satellite if owner was not set
             if (satellite.owner !== this)
             {
               this.setSatellite(name, null);
@@ -1243,7 +1248,12 @@
             this.satellite = {};
 
           this.satellite[name] = satellite;
-          satellite.ownerSatelliteName = name;
+          var oldSatelliteName = satellite.ownerSatelliteName;
+          if (oldSatelliteName != name)
+          {
+            satellite.ownerSatelliteName = name;
+            satellite.emit_ownerSatelliteNameChanged(oldSatelliteName);
+          }
         }
 
         this.emit_satelliteChanged(name, oldSatellite);

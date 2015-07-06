@@ -41,7 +41,7 @@ function pickHandler(event){
 
   if (event.mouseRight)
   {
-    endInspect();
+    stopInspect();
     return;
   }
 
@@ -52,7 +52,7 @@ function pickHandler(event){
   {
     var source = template.source;
 
-    endInspect();
+    stopInspect();
 
     if (source.url)
     {
@@ -210,7 +210,7 @@ function startInspect(){
     basis.dom.event.addGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);
     inspectBasisEvent.captureEvent('mouseup', basis.dom.event.kill);
-    inspectBasisEvent.captureEvent('contextmenu', endInspect);
+    inspectBasisEvent.captureEvent('contextmenu', stopInspect);
     inspectBasisEvent.captureEvent('click', pickHandler);
 
     inspectMode.set(true);
@@ -218,7 +218,7 @@ function startInspect(){
   }
 }
 
-function endInspect(){
+function stopInspect(){
   if (inspectMode.value)
   {
     basis.dom.event.removeGlobalHandler('mousemove', mousemoveHandler);
@@ -299,8 +299,9 @@ function mouseWheelHandler(event){
 //  exports
 //
 module.exports = {
+  name: 'Template',
   startInspect: startInspect,
-  endInspect: endInspect,
+  stopInspect: stopInspect,
   inspectMode: inspectMode,
   isActive: function(){
     return inspectMode.value;

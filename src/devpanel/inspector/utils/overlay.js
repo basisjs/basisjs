@@ -1,3 +1,5 @@
+var REFRESH_TIMER = 250;
+
 var document = global.document;
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
@@ -5,6 +7,7 @@ var domUtils = require('basis.dom');
 var eventUtils = require('basis.dom.event');
 var getOffset = require('basis.layout').getOffset;
 var getBoundingRect = require('basis.layout').getBoundingRect;
+var getComputedStyle = require('basis.dom.computedStyle').get;
 var Node = require('basis.ui').Node;
 var Value = require('basis.data').Value;
 
@@ -141,7 +144,7 @@ activeOverlay.link(null, function(newOverlay, oldOverlay){
   else
   {
     startWatch();
-    refreshTimer = setInterval(update, 250);
+    refreshTimer = setInterval(update, REFRESH_TIMER);
   }
 
   if (newOverlay)
@@ -171,12 +174,14 @@ var Overlay = Node.subclass({
     return node === value;
   }),
   processTextLines: false,
+  ignoreInvisibleElements: true,
   muteEvents: false,
   hide: hide,
   left: left,
   top: top,
 
   generation: 1,
+  order: 0,
 
   binding: {
     hide: 'hide',
@@ -184,6 +189,7 @@ var Overlay = Node.subclass({
     top: 'top'
   },
 
+  sorting: 'data.order',
   childClass: {
     domNode: null,
     binding: {
@@ -223,8 +229,10 @@ var Overlay = Node.subclass({
   },
 
   apply: function(){
+    this.contextStack = [];
+    this.order = 0;
     this.generation += 1;
-    this.traverse(document.body);
+    this.traverse(document.body, this.getInitialContext());
 
     basis.array(this.childNodes).forEach(function(child){
       if (child.generation != this.generation)
@@ -252,7 +260,8 @@ var Overlay = Node.subclass({
           right: rect.right,
           bottom: rect.bottom,
           width: rect.width,
-          height: rect.height
+          height: rect.height,
+          order: this.order
         }, options);
 
         if (!node)
@@ -269,6 +278,8 @@ var Overlay = Node.subclass({
         }
 
         node.generation = this.generation;
+
+        return node;
       }
     }
 
@@ -289,40 +300,73 @@ var Overlay = Node.subclass({
       {
         var offset = getOffset();
         var rects = rectNode.getClientRects();
+        var result = [];
 
         for (var i = 0; i < rects.length; i++)
         {
           var rect = rects[i];
-          apply.call(this, {
+          result.push(apply.call(this, {
             top: rect.top + offset.top,
             left: rect.left + offset.left,
             right: rect.right + offset.left,
             bottom: rect.bottom + offset.top,
             width: rect.width,
             height: rect.height
-          }, domNode, i);
+          }, domNode, i));
         }
 
-        return;
+        return result;
       }
     }
 
-    apply.call(this, getBoundingRect(rectNode), domNode, 0);
+    return apply.call(this, getBoundingRect(rectNode), domNode, 0);
   },
   processNode: function(domNode){
     // should be overrided
   },
 
-  traverse: function(domNode){
+  shouldTraverseDeep: function(){
+    return true;
+  },
+
+  getInitialContext: function(){
+    return {};
+  },
+  getContext: function(domNode, context){
+    return context;
+  },
+
+  traverse: function(domNode, context, invisible){
     for (var i = 0, child; child = domNode.childNodes[i]; i++)
     {
-      if (child.nodeType == 1 && child.hasAttribute('basis-devpanel-ignore'))
+      var isElement = child.nodeType == 1;
+
+      if (isElement && child.hasAttribute('basis-devpanel-ignore'))
         continue;
 
-      this.processNode(child);
+      var visible = this.ignoreInvisibleElements
+        ? !invisible && (!isElement || getComputedStyle(child, 'visibility') != 'hidden')
+        : true;
 
-      if (child.nodeType == 1)
-        this.traverse(child);
+      this.order += 1;
+      if (visible)
+        this.processNode(child, context);
+
+      if (isElement)
+      {
+        var nodeContext = this.getContext(child, context);
+
+        if (!nodeContext)
+          continue;
+
+        if (nodeContext !== context)
+          this.contextStack.push(nodeContext);
+
+        this.traverse(child, nodeContext, !visible);
+
+        if (nodeContext !== context)
+          this.contextStack.pop();
+      }
     }
   }
 });

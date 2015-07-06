@@ -563,6 +563,11 @@
 
           switch (attrName)
           {
+            case 'role-marker':
+              varList.push(bindVar + '=""');
+              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, 'value?value' + (binding[5][1] ? '+' + quoteString('/' + binding[5][1]) : '') + ':""');
+              break;
+
             case 'class':
               var defaultExpr = '';
               var valueExpr = 'value';
@@ -619,7 +624,7 @@
               /** @cut */ debugList.push('{' + [
               /** @cut */   'binding:"' + bindName + '"',
               /** @cut */   'raw:__' + bindName,
-              /** @cut */   'prefix:"' + '???' + '"',
+              /** @cut */   'prefix:"' + prefix + '"',
               /** @cut */   'anim:' + anim,
               /** @cut */   'dom:' + domRef,
               /** @cut */   'attr:"' + attrName + '"',
