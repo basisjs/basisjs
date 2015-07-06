@@ -91,6 +91,79 @@ module.exports = {
         router.navigate('path/some/stuff');
         assert(checker === 'some/stuff');
       }
+    },
+    {
+      name: 'route',
+      test: [
+        {
+          name: 'should be the same token for one path',
+          test: function(){
+            assert(router.route('foo') === router.route('foo'));
+            assert(router.route(/foo/) === router.route(/foo/));
+          }
+        },
+        {
+          name: 'router.route(route) should route itself',
+          test: function(){
+            var route = router.route('foo');
+            assert(router.route(route) === route);
+          }
+        },
+        {
+          name: 'should match the same values when router.add() invoke for route and route.path',
+          test: function(){
+            var matches = 0;
+            var paramName = basis.genUID();
+            var paramValue = basis.genUID();
+            var route = router.route(':' + paramName);
+            router.navigate(paramValue);
+
+            router.add(route, function(param){
+              matches++;
+              assert(param === paramValue);
+            });
+
+            router.add(route.path, function(param){
+              matches++;
+              assert(param === paramValue);
+            });
+
+            assert(matches === 2);
+          }
+        },
+        {
+          name: 'callback added via rotuer.add() should invoke async or asap',
+          test: function(done){
+            function checkDone(){
+              if (matches === 2)
+                done();
+
+              assert(matches === 1 || matches === 2);
+            }
+
+            var matches = 0;
+            var paramName = basis.genUID();
+            var paramValue = basis.genUID();
+
+            router.navigate(paramValue);
+
+            var route = router.route(':' + paramName).add(function(){
+              assert(route.matched);
+              matches++;
+              checkDone();
+            });
+
+            router.add(route, function(){
+              assert(route.matched);
+              matches++;
+              checkDone();
+            });
+
+            assert(matches === 0);
+            assert(route.matched.value === false);
+          }
+        }
+      ]
     }
   ]
 };

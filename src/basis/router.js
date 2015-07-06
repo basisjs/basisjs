@@ -22,10 +22,84 @@
 
   var arrayFrom = basis.array.from;
   var routes = {};
-  var matched = {};
   var started = false;
   var currentPath;
   var timer;
+
+
+  //
+  // debug
+  //
+
+  /** @cut */ var log = [];
+  /** @cut */ var flushLog = function(message){
+  /** @cut */   var entries = log.splice(0);
+  /** @cut */   if (module.exports.debug)
+  /** @cut */     basis.dev.info.apply(basis.dev, [message].concat(entries.length ? entries : '\n<no matches>'));
+  /** @cut */ };
+
+
+  //
+  // apply route changes
+  //
+
+  function routeEnter(route){
+    if (!route.inited)
+      return;
+
+    var callbacks = arrayFrom(route.callbacks);
+    for (var j = 0, item; item = callbacks[j]; j++)
+      if (item.callback.enter)
+      {
+        item.callback.enter.call(item.context);
+        /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: item, route: route.token });
+      }
+  }
+
+  function routeLeave(route){
+    if (!route.inited)
+      return;
+
+    var callbacks = arrayFrom(route.callbacks);
+    for (var j = 0, item; item = callbacks[j]; j++)
+      if (item.callback.leave)
+      {
+        item.callback.leave.call(item.context);
+        /** @cut */ log.push('\n', { type: 'leave', path: route.id, cb: item, route: route.token });
+      }
+  }
+
+  function routeMatch(route){
+    if (!route.inited)
+      return;
+
+    var callbacks = arrayFrom(route.callbacks);
+    for (var j = 0, item; item = callbacks[j]; j++)
+      if (item.callback.match)
+      {
+        item.callback.match.apply(item.context, route.matched);
+        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route.token, args: route.matched });
+      }
+
+    route.token.set(route.matched);
+  }
+
+  var initSchedule = basis.asap.schedule(function routeInit(token){
+    var route = get(token);
+    route.inited = true;
+
+    if (typeof currentPath != 'string')
+      return;
+
+    var match = currentPath.match(route.regexp);
+    if (match)
+    {
+      route.matched = arrayFrom(match, 1);
+
+      routeEnter(route);
+      routeMatch(route);
+    }
+  });
 
 
  /**
@@ -34,13 +108,15 @@
   var Route = basis.Token.subclass({
     className: namespace + '.Route',
 
+    path: null,
     matched: null,
     params_: null,
     names_: null,
 
-    init: function(names){
+    init: function(names, path){
       basis.Token.prototype.init.call(this, null);
 
+      this.path = path;
       this.matched = this.as(Boolean);
       this.names_ = Array.isArray(names) ? names : [];
       this.params_ = {};
@@ -68,6 +144,13 @@
       }
 
       basis.Token.prototype.set.call(this, value);
+    },
+
+    add: function(callback, context){
+      return add(this, callback, context);
+    },
+    remove: function(callback, context){
+      remove(this, callback, context);
     }
   });
 
@@ -214,6 +297,7 @@
     {
       var inserted = [];
       var deleted = [];
+      var matched = [];
       /** @cut */ var log = [];
 
       currentPath = newPath;
@@ -223,20 +307,23 @@
         var route = routes[path];
         var match = newPath.match(route.regexp);
 
+        route.inited = true;
+        initSchedule.remove(route.token);
+
         if (match)
         {
-          if (!matched[path])
+          if (!route.matched)
             inserted.push(route);
 
-          match = arrayFrom(match, 1);
-          matched[path] = match;
+          route.matched = arrayFrom(match, 1);
+          matched.push(route);
         }
         else
         {
-          if (matched[path])
+          if (route.matched)
           {
             deleted.push(route);
-            delete matched[path];
+            route.matched = null;
             route.token.set(null);
           }
         }
@@ -244,79 +331,46 @@
 
       // callback off for previous matched
       for (var i = 0, route; route = deleted[i]; i++)
-      {
-        var callbacks = arrayFrom(route.callbacks);
-        for (var j = 0, item; item = callbacks[j]; j++)
-          if (item.callback.leave)
-          {
-            item.callback.leave.call(item.context);
-            /** @cut */ log.push('\n', { type: 'leave', path: route.id, cb: item, route: route });
-          }
-      }
+        routeLeave(route);
 
       // callback off for previous matched
       for (var i = 0, route; route = inserted[i]; i++)
-      {
-        var callbacks = arrayFrom(route.callbacks);
-        for (var j = 0, item; item = callbacks[j]; j++)
-          if (item.callback.enter)
-          {
-            item.callback.enter.call(item.context);
-            /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: item, route: route });
-          }
-      }
+        routeEnter(route);
 
       // callback for matched
-      for (var path in matched)
-      {
-        var route = routes[path];
-        var args = matched[path];
-        var callbacks = arrayFrom(route.callbacks);
+      for (var i = 0, route; route = matched[i]; i++)
+        routeMatch(route);
 
-        for (var i = 0, item; item = callbacks[i]; i++)
-          if (item.callback.match)
-          {
-            item.callback.match.apply(item.context, args);
-            /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route, args: args });
-          }
-
-        route.token.set(args);
-      }
-
-      /** @cut */ if (module.exports.debug)
-      /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': hash changed to "' + newPath + '"'].concat(log.length ? log : '\n<no matches>'));
+      /** @cut */ flushLog(namespace + ': hash changed to "' + newPath + '"');
     }
   }
 
  /**
-  * Returns route
+  * Returns route descriptor
   */
   function get(path, autocreate){
-    var route = path instanceof Route ? path : routes[path];
+    if (path instanceof Route)
+      path = path.path;
+
+    var route = routes[path];
 
     if (!route && autocreate)
     {
       var regexp = Object.prototype.toString.call(path) == '[object RegExp]'
         ? path
         : pathToRegExp(path);
+      var token = new Route(regexp.params, path);
 
       route = routes[path] = {
         id: path,
         callbacks: [],
-        token: new Route(regexp.params),
+        inited: false,
+        matched: null,
+        token: token,
         regexp: regexp
       };
 
-      if (typeof currentPath == 'string')
-      {
-        var match = currentPath.match(route.regexp);
-        if (match)
-        {
-          match = arrayFrom(match, 1);
-          matched[path] = match;
-          route.token.set(match);
-        }
-      }
+      initSchedule.add(token);
     }
 
     return route;
@@ -327,38 +381,40 @@
   */
   function add(path, callback, context){
     var route = get(path, true);
-    var config;
-    /** @cut */ var log = [];
-
-    config = {
+    var token = route.token;
+    var callback = typeof callback != 'function' ? callback || {} : {
+      match: callback
+    };
+    var config = {
       cb_: callback,
       context: context,
-      callback: typeof callback != 'function' ? callback || {} : {
-        match: callback
-      }
+      callback: callback
     };
 
     route.callbacks.push(config);
 
-    if (route.id in matched)
+    if (route.matched)
     {
-      if (config.callback.enter)
+      /** @cut */ var log = [];
+
+      if (callback.enter)
       {
-        config.callback.enter.call(context);
-        /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: config, route: route });
+        callback.enter.call(context);
+        /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: config, route: token });
       }
 
-      if (config.callback.match)
+      if (callback.match)
       {
-        config.callback.match.apply(context, matched[path]);
-        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: config, route: route, args: matched[path] });
+        callback.match.apply(context, route.matched);
+        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: config, route: token, args: route.matched });
       }
+
+      /** @cut */ if (module.exports.debug)
+      /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': add handler for route `' + path + '`'].concat(log.length ? log : '\n<no matches>'));
     }
 
-    /** @cut */ if (module.exports.debug)
-    /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': add handler for route `' + path + '`'].concat(log.length ? log : '\n<no matches>'));
 
-    return route.token;
+    return token;
   }
 
  /**
@@ -372,18 +428,26 @@
       for (var i = 0, cb; cb = route.callbacks[i]; i++)
         if (cb.cb_ === callback && cb.context === context)
         {
-          var token = route.token;
-
           route.callbacks.splice(i, 1);
+
+          if (callback && callback.leave)
+          {
+            callback.leave.call(context);
+
+            /** @cut */ if (module.exports.debug)
+            /** @cut */   basis.dev.info.apply(basis.dev, [
+            /** @cut */     namespace + ': add handler for route `' + path + '`\n',
+            /** @cut */     { type: 'leave', path: route.id, cb: item, route: route.token }
+            /** @cut */   ]);
+          }
 
           if (!route.callbacks.length)
           {
+            var token = route.token;
+
             // check no attaches to route token
             if ((!token.handler || !token.handler.handler) && !token.matched.handler)
-            {
               delete routes[route.id];
-              delete matched[route.id];
-            }
           }
 
           break;
