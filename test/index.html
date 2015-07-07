@@ -11,21 +11,56 @@
   <script src="../src/basis.js"></script>
   <script>
     if (this.top === this)
-      location.href = 'runner/reporter.html?page=../index.html';
+      location.href = '../node_modules/yatra/reporter.html?page=' + location.pathname;
 
-    (function(){
+    window.loadTests = (function(){
       var originalJsWrapper = basis.resource.extensions['.js'];
+      var loadTestsToRunner;
+
+      function addLoc(cursor, filename, content, fileMap){
+        if (Array.isArray(cursor))
+          return cursor.forEach(function(item){
+            addLoc(item, filename, content, fileMap);
+          });
+
+
+        if (cursor && !cursor.filename_)
+        {
+          var test = cursor.test;
+
+          if (typeof test != 'function')
+            return addLoc(test, filename, content, fileMap);
+
+          var testSource = test.toString()
+            .replace(/^([^{]|\s)+/, '')    // browsers may add/remove spaces between function, function name and parameters
+            .replace(/\{\n"use strict";\n/, '{'); // Firefox adds implicit "use strict" in every function
+          var startPos = content.indexOf(testSource, fileMap[testSource] || 0);
+
+          fileMap[testSource] = startPos + 1;
+
+          if (startPos != -1)
+            cursor.loc = filename +
+              /* line */ ':' + content.substr(0, startPos).split('\n').length +
+              /* col  */ ':' + (content.lastIndexOf('function', startPos) - content.lastIndexOf('\n', startPos));
+        }
+      }
+
       basis.resource.extensions['.js'] = function(content, url){
         var exports = originalJsWrapper(content, url);
+
         if (exports)
+        {
+          addLoc(exports, url, content, {});
           exports.filename_ = url;
+        }
+
         return exports;
       };
 
       // page reload on spec files update
       // run in next tick, because at code run basisjs-tools file sync
       // script is not loaded yet
-      basis.ready(function attachToSyncTools(){
+      basis.ready(function attachToBasisTools(){
         if (typeof basisjsToolsFileSync != 'undefined')
           basisjsToolsFileSync.notifications.attach(function(type, filename){
             if (type == 'update' &&
@@ -34,13 +69,25 @@
               location.reload();
           });
         else
-          setTimeout(attachToSyncTools, 1000);
+          setTimeout(attachToBasisTools, 1000);
       });
-    })();
 
-    function loadTests(loadTests){
-      loadTests(basis.require('./index.js'));
-    }
+      return function(loadTests){
+        loadTestsToRunner = loadTests;
+        loadTestsToRunner(basis.require('./index.js'), function(topic, data){
+          switch (topic)
+          {
+            case 'loc':
+              var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : null;
+              if (basisjsTools && typeof basisjsTools.openFile == 'function')
+                basisjsTools.openFile(basis.path.resolve(data));
+              break;
+            default:
+              basis.dev.warn('Unknown topic from test runner:', topic);
+          }
+        });
+      };
+    })();
   </script>
 </body>
 

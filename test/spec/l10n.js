@@ -1,10 +1,9 @@
 module.exports = {
   name: 'basis.l10n',
 
-  html: __dirname + 'l10n.html',  // to properly load .l10n file
+  sandbox: true,
   init: function(){
-    basis.require('basis.l10n');
-    basis.require('basis.ui');
+    var basis = window.basis.createSandbox();
 
     var Dictionary = basis.require('basis.l10n').Dictionary;
     var Culture = basis.require('basis.l10n').Culture;
@@ -22,8 +21,12 @@ module.exports = {
         {
           name: 'basic',
           test: function(){
-            var res = JSON.parse(basis.require('./l10n.l10n').resource.get(true));
-            var dict = getDictionary('l10n', basis.resource.virtual('l10n', res));
+            var res = {
+              'en-US': {
+                'value': 'base'
+              }
+            };
+            var dict = getDictionary(basis.resource.virtual('l10n', res));
             setCulture('en-US');
             assert(dict.token('value').value === 'base');
 
@@ -71,7 +74,10 @@ module.exports = {
       test: [
         {
           name: 'base',
+          sandbox: true,
           init: function(){
+            var basis = window.basis.createSandbox();
+
             var getDictionary = basis.require('basis.l10n').dictionary;
             var setCultureList = basis.require('basis.l10n').setCultureList;
             var setCulture = basis.require('basis.l10n').setCulture;
@@ -270,15 +276,15 @@ module.exports = {
     {
       name: 'dictionary',
       test: function(){
-        assert(getDictionary('./l10n.l10n') === getDictionary('./l10n.l10n'));
-        assert(getDictionary(basis.resource('./l10n.l10n')) === getDictionary('./l10n.l10n'));
+        assert(getDictionary('./fixture/dict.l10n') === getDictionary('./fixture/dict.l10n'));
+        assert(getDictionary(basis.resource('./fixture/dict.l10n')) === getDictionary('./fixture/dict.l10n'));
 
         // path should be normalized
-        assert(getDictionary('./foo/../l10n.l10n') === getDictionary('./l10n.l10n'));
+        assert(getDictionary('./foo/../fixture/dict.l10n') === getDictionary('./fixture/dict.l10n'));
         // file extension should be replaced for `.l10n`
-        assert(getDictionary('./l10n.l10n') === getDictionary('./l10n.whatever'));
+        assert(getDictionary('./fixture/dict.l10n') === getDictionary('./fixture/dict.whatever'));
         // if no extension, then `.l10n` should be appended
-        assert(getDictionary('./l10n.l10n') === getDictionary('./l10n'));
+        assert(getDictionary('./fixture/dict.l10n') === getDictionary('./fixture/dict'));
       }
     },
     {
@@ -336,44 +342,232 @@ module.exports = {
     },
     {
       name: 'types',
+      sandbox: true,
+      init: function(){
+        var basis = window.basis.createSandbox();
+        var l10n = basis.require('basis.l10n');
+        var getDictionary = l10n.dictionary;
+        var isMarkupToken = l10n.isMarkupToken;
+
+        l10n.setCultureList('en-US');
+      },
       test: [
+        {
+          name: 'getType()',
+          test: [
+            {
+              name: 'should be default if type is not defined',
+              test: function(){
+                var dict = getDictionary(basis.resource.virtual('l10n', {
+                  'en-US': {
+                    foo: 'test'
+                  }
+                }));
+
+                assert(dict.token('foo').getType() === 'default');
+              }
+            },
+            {
+              name: 'should be default if wrong type',
+              test: function(){
+                var dict = getDictionary(basis.resource.virtual('l10n', {
+                  _meta: {
+                    type: {
+                      foo: 'foo'
+                    }
+                  },
+                  'en-US': {
+                    foo: 'test'
+                  }
+                }));
+
+                assert(dict.token('foo').getType() === 'default');
+              }
+            },
+            {
+              name: 'should be same type as defined',
+              test: function(){
+                var dict = getDictionary(basis.resource.virtual('l10n', {
+                  _meta: {
+                    type: {
+                      'default': 'default',
+                      'plural': 'plural',
+                      'markup': 'markup',
+                      'plural-markup': 'plural-markup',
+                      'enum-markup': 'enum-markup'
+                    }
+                  },
+                  'en-US': {
+                    'default': 'default',
+                    'plural': 'plural',
+                    'markup': 'markup',
+                    'plural-markup': 'plural-markup',
+                    'enum-markup': 'enum-markup'
+                  }
+                }));
+
+                assert(dict.token('default').getType() === 'default');
+                assert(dict.token('plural').getType() === 'plural');
+                assert(dict.token('markup').getType() === 'markup');
+                assert(dict.token('plural-markup').getType() === 'plural-markup');
+                assert(dict.token('enum-markup').getType() === 'enum-markup');
+              }
+            },
+            {
+              name: 'should be markup when parent is `enum-markup` or `plural-markup`',
+              test: function(){
+                var dict = getDictionary(basis.resource.virtual('l10n', {
+                  _meta: {
+                    type: {
+                      foo: 'markup',
+                      bar: 'plural-markup',
+                      baz: 'enum-markup'
+                    }
+                  },
+                  'en-US': {
+                    foo: 'markup',
+                    bar: [
+                      'bar',
+                      'bars'
+                    ],
+                    baz: {
+                      qux: 'quz'
+                    }
+                  }
+                }));
+
+                assert(dict.token('bar').token(1).getType() === 'markup');
+                assert(dict.token('baz.quz').getType() === 'markup');
+              }
+            },
+            {
+              name: 'implicit type definition should be `enum-markup`',
+              test: function(){
+                var dict = getDictionary(basis.resource.virtual('l10n', {
+                  _meta: {
+                    type: {
+                      enum: 'enum-markup',
+                      'enum.bar': 'default',
+                      'enum.baz': 'plural',
+                      'enum.qux': 'wrong-type'
+                    }
+                  },
+                  'en-US': {
+                    enum: {
+                      foo: 'foo',
+                      bar: 'bar',
+                      baz: ['plural', 'plurals'],
+                      qux: 'qux'
+                    }
+                  }
+                }));
+
+                assert(dict.token('enum.foo').getType() === 'markup');
+                assert(dict.token('enum.bar').getType() === 'default');
+                assert(dict.token('enum.baz').getType() === 'plural');
+                assert(dict.token('enum.qux').getType() === 'default');
+              }
+            }
+          ]
+        },
+        {
+          name: 'isMarkupToken',
+          test: function(){
+            var dict = getDictionary(basis.resource.virtual('l10n', {
+              _meta: {
+                type: {
+                  'default': 'default',
+                  'plural': 'plural',
+                  'markup': 'markup',
+                  'plural-markup': 'plural-markup',
+                  'enum-markup': 'enum-markup'
+                }
+              },
+              'en-US': {
+                'default': 'default',
+                'plural': 'plural',
+                'markup': 'markup',
+                'plural-markup': ['one', 'many'],
+                'enum-markup': {
+                  foo: 'foo'
+                }
+              }
+            }));
+
+            assert(isMarkupToken(dict.token('default')) === false);
+            assert(isMarkupToken(dict.token('plural')) === false);
+            assert(isMarkupToken(dict.token('plural-markup')) === false);
+            assert(isMarkupToken(dict.token('enum-markup')) === false);
+            assert(isMarkupToken(dict.token('markup')) === true);
+            assert(isMarkupToken(dict.token('plural-markup').token(1)) === true);
+            assert(isMarkupToken(dict.token('enum-markup.foo')) === true);
+          }
+        },
         {
           name: 'plural',
           test: [
             {
               name: 'simple',
               test: function(){
-                var sandbox = basis.createSandbox({
-                  name: 'types_plural_simple'
-                });
-                var l10n = sandbox.require('basis.l10n');
-
-                l10n.setCultureList('en-US');
-                var dict = l10n.dictionary(sandbox.resource.virtual('l10n', {
+                var dict = getDictionary(basis.resource.virtual('l10n', {
                   _meta: {
                     type: {
-                      foo: 'plural',
-                      bar: 'plural'
+                      'plural': 'plural',
+                      'plural-markup': 'plural-markup'
                     }
                   },
                   'en-US': {
-                    foo: [
+                    'plural': [
                       'test',
                       'tests'
                     ],
-                    bar: [
-                      'example of # test',
-                      'example of # tests'
+                    'plural-markup': [
+                      'test',
+                      'tests'
                     ]
                   }
                 }));
 
-                assert(dict.token('foo').token(1).get() == 'test');
-                assert(dict.token('foo').token(2).get() == 'tests');
-                assert(dict.token('foo').computeToken(1).get() == 'test');
-                assert(dict.token('foo').computeToken(2).get() == 'tests');
-                assert(dict.token('bar').computeToken(1).get() == 'example of 1 test');
-                assert(dict.token('bar').computeToken(2).get() == 'example of 2 tests');
+                assert(dict.token('plural').token(1).get() == 'test');
+                assert(dict.token('plural').token(2).get() == 'tests');
+                assert(dict.token('plural').computeToken(1).get() == 'test');
+                assert(dict.token('plural').computeToken(2).get() == 'tests');
+                assert(dict.token('plural-markup').token(1).get() == 'test');
+                assert(dict.token('plural-markup').token(2).get() == 'tests');
+                assert(dict.token('plural-markup').computeToken(1).get() == 'test');
+                assert(dict.token('plural-markup').computeToken(2).get() == 'tests');
+              }
+            },
+            {
+              name: 'should use placeholder',
+              test: function(){
+                var dict = getDictionary(basis.resource.virtual('l10n', {
+                  _meta: {
+                    type: {
+                      'plural': 'plural',
+                      'plural-markup': 'plural-markup'
+                    }
+                  },
+                  'en-US': {
+                    'plural': [
+                      '{#} test {#}',
+                      '{#} tests {#}'
+                    ],
+                    'plural-markup': [
+                      '{#} test {#}',
+                      '{#} tests {#}'
+                    ]
+                  }
+                }));
+
+                assert(dict.token('plural').token(1).get() == '1 test 1');
+                assert(dict.token('plural').token(2).get() == '2 tests 2');
+                assert(dict.token('plural').computeToken(1).get() == '1 test 1');
+                assert(dict.token('plural').computeToken(2).get() == '2 tests 2');
+                assert(dict.token('plural-markup').token(1).get() == '1 test 1');
+                assert(dict.token('plural-markup').token(2).get() == '2 tests 2');
+                assert(dict.token('plural-markup').computeToken(1).get() == '1 test 1');
+                assert(dict.token('plural-markup').computeToken(2).get() == '2 tests 2');
               }
             }
           ]

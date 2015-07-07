@@ -1,6 +1,6 @@
-basis.require('basis.ui');
+var Node = require('basis.ui').Node;
 
-var list = new basis.ui.Node({
+var list = new Node({
   container: document.body,
   template: '<ul/>',
 

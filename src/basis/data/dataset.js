@@ -25,8 +25,6 @@
   //
 
   var Class = basis.Class;
-  var oneFunctionProperty = Class.oneFunctionProperty;
-
   var extend = basis.object.extend;
   var values = basis.object.values;
   var objectSlice = basis.object.slice;
@@ -217,9 +215,7 @@
   var Merge = Class(ReadOnlyDataset, {
     className: namespace + '.Merge',
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
@@ -243,7 +239,7 @@
    /**
     * @type {function(count:number, sourceCount:number):boolean}
     */
-    rule: function(count, sourceCount){
+    rule: function(count){
       return count > 0;
     },
 
@@ -403,14 +399,14 @@
 
    /**
     * Update dataset value by source.
-    * @param {basis.data.ReadOnlyDataset=} source
+    * @param {*} source
     * @private
     */
     updateDataset_: function(source){
       // this -> sourceInfo
       var merge = this.owner;
       var sourcesMap_ = merge.sourcesMap_;
-      var dataset = resolveDataset(this, merge.updateDataset_, source, 'adapter');
+      var dataset = resolveDataset(this, merge.updateDataset_, source, 'adapter', merge);
       var inserted;
       var deleted;
       var delta;
@@ -452,15 +448,15 @@
         if (setSourcesTransaction)
         {
           if (delta.inserted)
-            delta.inserted.forEach(function(source){
-              if (!arrayRemove(this.deleted, source))
-                arrayAdd(this.inserted, source);
+            delta.inserted.forEach(function(item){
+              if (!arrayRemove(this.deleted, item))
+                arrayAdd(this.inserted, item);
             }, setSourcesTransaction);
 
           if (delta.deleted)
-            delta.deleted.forEach(function(source){
-              if (!arrayRemove(this.inserted, source))
-                arrayAdd(this.deleted, source);
+            delta.deleted.forEach(function(item){
+              if (!arrayRemove(this.inserted, item))
+                arrayAdd(this.deleted, item);
             }, setSourcesTransaction);
         }
         else
@@ -615,7 +611,7 @@
  /**
   * ONLY ONE source INCLUDE item
   */
-  Merge.DIFFERENCE = function(count, sourceCount){
+  Merge.DIFFERENCE = function(count){
     return count == 1;
   };
 
@@ -693,9 +689,7 @@
   var Subtract = Class(ReadOnlyDataset, {
     className: namespace + '.Subtract',
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.MINUEND + SUBSCRIPTION.SUBTRAHEND,
 
    /**
@@ -888,9 +882,7 @@
   var SourceDataset = Class(ReadOnlyDataset, {
     className: namespace + '.SourceDataset',
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
@@ -935,16 +927,15 @@
     * @constructor
     */
     init: function(){
+      var source = this.source;
+
+      this.source = null;
       this.sourceMap_ = {};
 
       ReadOnlyDataset.prototype.init.call(this);
 
-      var source = this.source;
       if (source)
-      {
-        this.source = null;
         this.setSource(source);
-      }
     },
 
    /**
@@ -959,37 +950,41 @@
       {
         var oldSource = this.source;
         var listenHandler = this.listen.source;
+        var itemsChangedHandler;
 
-        this.source = source;
-
+        // add/remove listen
         if (listenHandler)
         {
-          var itemsChangedHandler = listenHandler.itemsChanged;
-          setAccumulateState(true);
+          itemsChangedHandler = listenHandler.itemsChanged;
 
           if (oldSource)
-          {
             oldSource.removeHandler(listenHandler, this);
 
-            if (itemsChangedHandler)
-              itemsChangedHandler.call(this, oldSource, {
-                deleted: oldSource.getItems()
-              });
-          }
-
           if (source)
-          {
             source.addHandler(listenHandler, this);
-
-            if (itemsChangedHandler)
-              itemsChangedHandler.call(this, source, {
-                inserted: source.getItems()
-              });
-          }
-          setAccumulateState(false);
         }
 
+        // change the source
+        this.source = source;
         this.emit_sourceChanged(oldSource);
+
+        // sync items
+        if (itemsChangedHandler)
+        {
+          Dataset.setAccumulateState(true);
+
+          if (oldSource)
+            itemsChangedHandler.call(this, oldSource, {
+              deleted: oldSource.getItems()
+            });
+
+          if (source)
+            itemsChangedHandler.call(this, source, {
+              inserted: source.getItems()
+            });
+
+          Dataset.setAccumulateState(false);
+        }
       }
     },
 
@@ -1012,7 +1007,7 @@
   //
 
   var MAPFILTER_SOURCEOBJECT_UPDATE = function(sourceObject){
-    var newMember = this.map ? this.map(sourceObject) : object; // fetch new member ref
+    var newMember = this.map ? this.map(sourceObject) : sourceObject; // fetch new member ref
 
     if (newMember instanceof DataObject == false || this.filter(newMember))
       newMember = null;
@@ -2481,7 +2476,6 @@
     applyRule: function(){
       var insertedMap = {};
       var deletedMap = {};
-      var array;
       var delta;
 
       for (var key in this.sourceMap_)

@@ -52,12 +52,20 @@
     "requireDotNotation": true,
 
     "validateJSDoc": {
+        //"checkRedundantParams": true,
         "checkParamNames": true,
-        "requireParamTypes": true,
-        "checkRedundantParams": true
+        "requireParamTypes": true
     },
 
     "additionalRules": [
         "scripts/jscs/*.js"
+    ],
+
+    "excludeFiles": [
+        "demo/seedrandom.js",
+        "demo/apps/todomvc/assets/**",
+        "scripts/jscs/**",
+        "tour/lib/**",
+        "node_modules/**"
     ]
 }

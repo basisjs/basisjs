@@ -4,6 +4,7 @@
   var Node = require('basis.ui').Node;
   var fnInfo = require('basis.utils.info').fn;
   var getDeclFromSource = require('basis.template').getDeclFromSource;
+  var getFunctions = require('basis.template.htmlfgen').getFunctions;
   var buildTemplateTree = require('./buildTemplateTree.js');
 
   function resolveFunction(fn){
@@ -31,7 +32,7 @@
 
         if (template)
         {
-          var matchBinding = template.getBinding(this.data.obj.prototype.binding);
+          var matchBinding = getFunctions(getDeclFromSource(template.source).tokens, true, '', '').keys;
           binding = basis.object.iterate(this.data.obj.prototype.binding, function(key, value){
             if (typeof value == 'object')
               return {
@@ -39,7 +40,7 @@
                   name: key,
                   getter: value.getter,
                   events: value.events,
-                  used: matchBinding && matchBinding.names.indexOf(key) != -1
+                  used: matchBinding && matchBinding.indexOf(key) != -1
                 }
               };
           }).filter(Boolean);
@@ -76,7 +77,7 @@
         source: {
           events: 'toggle',
           existsIf: basis.getter('expanded'),
-          satelliteClass: SourceCode.subclass({
+          instance: SourceCode.subclass({
             autoDelegate: true,
             lang: 'js',
             lineNumber: false,
@@ -147,7 +148,7 @@
         source: {
           events: 'toggle',
           existsIf: basis.getter('expanded'),
-          satelliteClass: SourceCode.subclass({
+          instance: SourceCode.subclass({
             autoDelegate: true,
             lang: 'js',
             lineNumber: false,

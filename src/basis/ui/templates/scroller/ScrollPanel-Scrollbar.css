@@ -1,0 +1,18 @@
+.scrollProcess .scrollbar
+{
+  opacity: 1;
+  visibility: visible;
+
+    -moz-transition: none;
+    -webkit-transition: none;
+  transition: none;
+}
+
+.bothScrollbars .horizontal
+{
+  right: 10px;
+}
+.bothScrollbars .vertical
+{
+  bottom: 10px;
+}

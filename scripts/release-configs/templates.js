@@ -1,4 +1,5 @@
-basis.require('basis.template.html');
+var resolveTemplateById = require('basis.template').resolveTemplateById;
+var HtmlTemplate = require('basis.template.html').Template;
 //;;;basis.require('basis.devpanel');
 
 var srcMap = [];
@@ -9,7 +10,7 @@ function templateWrapper(src){
   if (index != -1)
     return tmplMap[index];
 
-  var template = new basis.template.html.Template(src);
+  var template = new HtmlTemplate(src);
 
   srcMap.push(src);
   tmplMap.push(template);
@@ -17,20 +18,20 @@ function templateWrapper(src){
   return template;
 }
 
-global['bt'] = module.exports = basis.object.extend(templateWrapper, {
+global.bt = module.exports = basis.object.extend(templateWrapper, {
   init: function(config){
     if (!config)
       return this;
 
     if (config.noConflict)
     {
-      delete window.bt;
+      delete global.bt;
       return this;
     }
   },
 
   dispose: function(tmpl){
-    var template = basis.template.resolveTemplateById(tmpl.templateId_);
+    var template = resolveTemplateById(tmpl.templateId_);
 
     if (!template)
     {

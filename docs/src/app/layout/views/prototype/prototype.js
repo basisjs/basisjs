@@ -48,7 +48,7 @@
 
     satellite: {
       jsdocs: {
-        satelliteClass: PrototypeJsDocPanel,
+        instance: PrototypeJsDocPanel,
         delegate: function(owner){
           return JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
         }
@@ -99,9 +99,9 @@
   var PROTOTYPE_GROUPING_TYPE = {
     type: 'type',
     rule: 'data.kind',
-    sorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT),
+    sorting: getter('data.id').as(PROTOTYPE_ITEM_WEIGHT),
     childClass: {
-      titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE)
+      titleGetter: getter('data.id').as(PROTOTYPE_ITEM_TITLE)
     }
   };
 
@@ -227,7 +227,7 @@
 
     satellite: {
       viewOptions: {
-        satelliteClass: ViewOptions,
+        instance: ViewOptions,
         config: function(owner){
           return {
             title: 'Group by',

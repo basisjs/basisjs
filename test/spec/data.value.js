@@ -1,7 +1,10 @@
 module.exports = {
   name: 'basis.data.value',
 
+  sandbox: true,
   init: function(){
+    var basis = window.basis.createSandbox();
+
     var Value = basis.require('basis.data').Value;
     var Property = basis.require('basis.data.value').Property;
     var ObjectSet = basis.require('basis.data.value').ObjectSet;
@@ -14,7 +17,7 @@ module.exports = {
       test: [
         {
           name: 'test #1',
-          test: function(){
+          test: function(done){
             var s = new ObjectSet();
             s.a = new Property(1);
             s.b = new Property(2);
@@ -34,12 +37,13 @@ module.exports = {
 
             s.a.set('test');
 
-            this.async(function(){
+            setTimeout(function(){
               // check async because ObjectSet update occur by timeout
-              this.is(1, updateCount);
-              this.is('test', s.a.value);
-              this.is(11, s.b.value);
-            });
+              assert(updateCount === 1);
+              assert(s.a.value === 'test');
+              assert(s.b.value === 11);
+              done();
+            }, 10);
           }
         },
         {
@@ -59,13 +63,13 @@ module.exports = {
               }
             });
 
-            this.is(2, s.objects.length);
-            this.is(0, updateCount);
+            assert(s.objects.length === 2);
+            assert(updateCount === 0);
 
             s.a.destroy();
 
-            this.is(1, s.objects.length);
-            this.is(0, updateCount);
+            assert(s.objects.length === 1);
+            assert(updateCount === 0);
           }
         },
         {
@@ -84,7 +88,7 @@ module.exports = {
 
             s.a.destroy();
 
-            this.is(0, result);
+            assert(result === 0);
           }
         }
       ]
@@ -243,7 +247,7 @@ module.exports = {
               }
             },
             {
-              name: 'destroy expression with sheduled update',
+              name: 'destroy expression with scheduled update',
               test: function(){
                 var a = new Value({ value: 1 });
                 var expr = new Expression(a, function(a){

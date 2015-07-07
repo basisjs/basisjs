@@ -216,7 +216,7 @@
     hideByScroll: function(event){
       var sender = event.sender;
 
-      if (domUtils.parentOf(sender, this.element))
+      if (domUtils.parentOf(sender, this.body))
         return;
 
       arrayFrom(this)
@@ -281,7 +281,7 @@
     emit_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir'),
     listen: {
       owner: {
-        templateChanged: function(owner){
+        templateChanged: function(){
           if (this.visible)
             this.show.apply(this, this.visibleArgs_);
         }
@@ -521,7 +521,7 @@
       if (typeof value == 'string')
       {
         if (value.substr(0, 6) != 'owner:')
-          return domUtils.get(relElement);
+          return domUtils.get(value);
 
         if (this.owner)
           return (this.owner.tmpl && this.owner.tmpl[value.substr(6)]) || this.owner.element;

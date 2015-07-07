@@ -97,15 +97,16 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.entity');
-    basis.require('basis.ui');
-    basis.require('basis.ui.form');
-    basis.require('basis.ui.button');
+    var entity = basis.require('basis.entity');
+    var Value = basis.require('basis.data').Value;
+    var UINode = basis.require('basis.ui').Node;
+    var FormContent = basis.require('basis.ui.form').FormContent;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
 
     //
     // Data
     //
-    var Article = new basis.entity.EntityType({
+    var Article = entity.createType({
       name: 'Article',
       fields: {
         id: Number,
@@ -115,17 +116,19 @@
     });
 
     // Generate data
-    for (var i = 1; i <= 8; i++)
-      Article({
-        id: i,
-        title: 'Article #' + i,
-        content: basis.string.repeat(i + ' ', 20)
-      });
+    Article.all.setAndDestroyRemoved(basis.array.create(8, function(idx){
+      var id = idx + 1;
+      return {
+        id: id,
+        title: 'Article #' + id,
+        content: basis.string.repeat(id + ' ', 20)
+      };
+    }));
 
     //
     // Define new node class for Article
     //
-    var ArticleNode = basis.Class(basis.ui.Node, {
+    var ArticleNode = UINode.subclass({
       template:
         '<div class="Article {selected} {modified}" event-click="select">' +
           '<div class="Article-Title">{title}</div>' +
@@ -136,20 +139,14 @@
         title: 'data:',
         content: 'data:',
         modified: function(node){
-          return node.target && node.target.modified ? 'modified' : '';
+          return Value.from(node.target, 'rollbackUpdate', function(target){
+            return Boolean(target.modified);
+          }) || false;
         }
       },
       action: {
         select: function(event){
           this.select(event.ctrlKey || event.metaKey);
-        }
-      },
-
-      listen: {
-        target: {
-          rollbackUpdate: function(){
-            this.updateBind('modified');
-          }
         }
       }
     });
@@ -157,19 +154,12 @@
     //
     // Article list
     //
-    var articleList = new basis.ui.Node({
+    var articleList = new UINode({
       template: '<div id="ArticleList"/>',
       dataSource: Article.all,  // set data source
       childClass: ArticleNode,  // set class for child nodes
-      sorting: basis.getter('data.title', String.toLowerCase),  // sorting for child nodes
-      selection: {              // we need for selection, define config for it
-        handler: {
-          itemsChanged: function(){
-            // this -> articleList.selection
-            articleEditor.setDelegate(this.pick());
-          }
-        }
-      }           
+      sorting: basis.getter('data.title').as(String.toLowerCase),  // sorting by title
+      selection: true
     });
 
     //
@@ -177,12 +167,15 @@
     //
 
     function updateObject(){
-      if (myForm && myForm.target)
-        myForm.target.set(this.name, this.getValue(), true);
+      var form = this.parentNode;
+      if (form.target)
+        form.target.set(this.name, this.getValue(), true);
     }
 
-    var myForm = new basis.ui.form.FormContent({
-      disabled: true,             // disable by default
+    var myForm = new FormContent({
+      disabled: Value.factory('targetChanged', function(form){ // disable if no target
+        return !form.target;
+      }),
       autoDelegate: true,         // delegate parent
       childNodes: [               // define fields
         {
@@ -204,62 +197,47 @@
           }
         }
       ],
-      handler: {                 // add handler for form
+      handler: {
+        update: function(){
+          this.loadData(this.data);
+        },
         targetChanged: function(){
-          // this -> myForm
-          if (this.target)
-          {
-            this.loadData(this.data); // if have got a target, load data to form
-            this.enable();            // and enable editing
-          }
-          else
-          {
-            this.reset();             // if no target - clear form
-            this.disable();           // and disable editing
-          }
+          if (!this.target)
+            this.update({ // if no target - clear form
+              title: '',
+              content: ''
+            });
         }
       }
     });
 
-    var formPanel = new basis.ui.button.ButtonPanel({
+    var formPanel = new ButtonPanel({
       autoDelegate: true,
-      disabled: true,
+      disabled: Value.factory('targetChanged', function(node){
+        return Value.from(node.target, 'rollbackUpdate', function(target){
+          return !target.modified;
+        }) || true;
+      }),
       childNodes: [
         {
+          autoDelegate: true,
           caption: 'Save',
           click: function(){
-            myForm.target.commit();
+            this.target.commit();
           }
         },
         {
+          autoDelegate: true,
           caption: 'Cancel',
           click: function(){
-            myForm.target.rollback();
-            myForm.loadData(myForm.data);
+            this.target.rollback();
           }
         }
-      ],
-      handler: {
-        targetChanged: function(){
-          if (this.target && this.target.modified)
-            this.enable();
-          else
-            this.disable();
-        }
-      },
-      listen: {
-        target: {
-          rollbackUpdate: function(object){
-            if (object.modified)
-              this.enable();
-            else
-              this.disable();
-          }
-        }
-      }
+      ]
     });
 
-    var articleEditor = new basis.ui.Node({
+    var articleEditor = new UINode({
+      delegate: Value.from(articleList.selection, 'itemsChanged', 'pick()'),
       template:
         '<div id="EditForm">' +
           '<!--{form}-->' +
@@ -271,7 +249,7 @@
       }
     });
 
-    new basis.ui.Node({
+    var demoView = new UINode({
       container: document.getElementById('demo-container'),
       template:
         '<div>' +

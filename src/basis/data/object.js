@@ -11,22 +11,28 @@
   //
 
   var createEvent = require('basis.event').create;
+  var SUBSCRIPTION = require('basis.data').SUBSCRIPTION;
   var DataObject = require('basis.data').Object;
+  var resolveObject = require('basis.data').resolveObject;
 
 
- /**
-  * Getter generator for quick field values fetch from source object.
-  * TODO: cache?
-  */
-  function generateGetData(nameMap){
-    return new Function('data', 'return {' +
-      basis.object.iterate(nameMap, function(ownName, sourceName){
-        ownName = ownName.replace(/"/g, '\\"');
-        sourceName = sourceName.replace(/"/g, '\\"');
-        return '"' + ownName + '": data["' + sourceName + '"]';
-      }) +
-    '}');
-  }
+  // define new subscription type
+  SUBSCRIPTION.add(
+    'OBJECTSOURCE',
+    {
+      sourceChanged: function(object, name, oldSource){
+        if (oldSource)
+          SUBSCRIPTION.unlink('sources', object, oldSource);
+        if (object.sources[name])
+          SUBSCRIPTION.link('sources', object, object.sources[name]);
+      }
+    },
+    function(action, object){
+      var sources = object.sources;
+      for (var name in sources)
+        action('sources', object, sources[name]);
+    }
+  );
 
  /**
   * Handler for sources of Merge instances.
@@ -59,6 +65,21 @@
       this.host.setSource(this.name, null);
     }
   };
+
+
+ /**
+  * Getter generator for quick field values fetch from source object.
+  * TODO: cache?
+  */
+  function generateDataGetter(nameMap){
+    return new Function('data', 'return {' +
+      basis.object.iterate(nameMap, function(ownName, sourceName){
+        ownName = ownName.replace(/"/g, '\\"');
+        sourceName = sourceName.replace(/"/g, '\\"');
+        return '"' + ownName + '": data["' + sourceName + '"]';
+      }) +
+    '}');
+  }
 
 
  /**
@@ -115,7 +136,7 @@
 
     // generate source values getters
     for (var sourceName in toNames)
-      sources[sourceName] = generateGetData(toNames[sourceName]);
+      sources[sourceName] = generateDataGetter(toNames[sourceName]);
 
     // generate values getter for default source
     if (result.defaultSource)
@@ -130,14 +151,23 @@
     return result;
   };
 
+ /**
+  * Proxy function that invokes on adapter value changes. It required as we need
+  * pass two parameters to Merge#setSource() - name and source object.
+  * @param {*} source
+  */
+  function resolveSetSource(source){
+    this.host.setSource(this.name, source);
+  }
+
 
  /**
   * @class
-  * TODO:
-  *   - subscription for sources
   */
   var Merge = DataObject.subclass({
     className: namespace + '.Merge',
+
+    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.OBJECTSOURCE,
 
    /**
     * Emit when one of source reference changes.
@@ -192,19 +222,34 @@
       /** @cut */ if (this.delegate)
       /** @cut */   basis.dev.warn(this.constructor.className + ' can\'t has a delegate');
 
-      this.data = {};       // reset data, as instance can has fields according to config
       this.delegate = null; // instance can't has delegate
+
+      // if data present, apply values but only for own properties
+      if (data && '-' in this.fields.sources)
+      {
+        if (this.fields.defaultSource !== '-')
+        {
+          this.data = this.fields.sources['-'](data);
+        }
+        else
+        {
+          this.data = {};
+          for (var key in data)
+          {
+            var name = this.fields.fieldSource[key] || this.fields.defaultSource;
+            if (name == '-')
+              this.data[key] = data[key];
+          }
+        }
+      }
+      else
+      {
+        // reset data if no data or instance has no own properties
+        this.data = {};
+      }
 
       // inherit
       DataObject.prototype.init.call(this);
-
-      // if data present in config, apply values but only for own properties
-      for (var key in data)
-      {
-        var name = this.fields.fieldSource[key] || this.fields.defaultSource;
-        if (name == '-')
-          this.data[key] = data[key];
-      }
 
       // init sources maps
       this.sources = {};
@@ -355,9 +400,18 @@
       if (name == '-')
         return;
 
-      if (source instanceof DataObject == false)
-        source = null;
+      // create context for name if not exists yet
+      if (name in this.sourcesContext_ == false)
+        this.sourcesContext_[name] = {
+          host: this,
+          name: name,
+          adapter: null
+        };
 
+      // resolve object from value
+      source = resolveObject(this.sourcesContext_[name], resolveSetSource, source, 'adapter', this);
+
+      // main part
       if (oldSource !== source)
       {
         var listenHandler = this.listen['source:' + name];
@@ -377,19 +431,21 @@
         // add handler to new source
         if (source)
         {
-          if (name in this.sourcesContext_ == false)
-            this.sourcesContext_[name] = {
-              host: this,
-              name: name
-            };
-
           source.addHandler(MERGE_SOURCE_HANDLER, this.sourcesContext_[name]);
 
           if (listenHandler)
             source.addHandler(listenHandler, this);
 
           // apply new source data
-          this.update(this.fields.sources[name](source.data));
+          var newData = this.fields.sources[name](source.data);
+
+          // reset properties missed in new source if source is defaultSource
+          if (this.fields.defaultSource == name)
+            for (var key in this.data)
+              if (!this.fields.fieldSource.hasOwnProperty(key) && !newData.hasOwnProperty(key))
+                newData[key] = undefined;
+
+          this.update(newData);
         }
 
         this.emit_sourceChanged(name, oldSource);

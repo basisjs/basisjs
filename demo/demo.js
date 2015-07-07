@@ -2,7 +2,7 @@ basis.ready(function(){
   var Node = basis.require('basis.ui').Node;
   var highlight = basis.require('basis.utils.highlight');
 
-  var mainView = new Node({
+  new Node({
     container: document.body,
     template: basis.resource('../res/template/demo-page.tmpl'),
     binding: {
@@ -19,7 +19,7 @@ basis.ready(function(){
         existsIf: function(){
           return !!document.getElementById('demo-javascript');
         },
-        satelliteClass: Node,
+        instance: Node,
         config: function(){
           return {
             sourceVisible: new basis.Token(false),

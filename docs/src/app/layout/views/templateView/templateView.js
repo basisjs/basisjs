@@ -27,8 +27,8 @@
 
     satellite: {
       viewOptions: {
-        satelliteClass: ViewOptions,
-        config: function(owner){
+        instance: ViewOptions,
+        config: function(){
           return {
             title: 'References',
             showMode: '',
@@ -72,7 +72,7 @@
       template: {
         existsIf: hasTemplate,
         delegate: basis.fn.$self,
-        satelliteClass: TemplatePanel
+        instance: TemplatePanel
       }
     }
   });

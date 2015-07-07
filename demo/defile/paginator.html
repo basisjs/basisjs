@@ -78,26 +78,23 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.cssom');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.resizer');
-    basis.require('basis.ui.paginator');
+    var DOM = basis.require('basis.dom');
+    var classList = basis.require('basis.cssom').classList;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var Resizer = basis.require('basis.ui.resizer').Resizer;
+    var Paginator = basis.require('basis.ui.paginator').Paginator;
 
-    var DOM = basis.dom;
-    var classList = basis.cssom.classList;
-    var ButtonPanel = basis.ui.button.ButtonPanel;
-    var Resizer = basis.ui.resizer.Resizer;
-    var Paginator = basis.ui.paginator.Paginator;
+    function setWidth(w){
+      demoSection.style.width = w + 'px';
+    }
+    function setPageCount(pageCount){
+      var paginator = paginators[0];
+      paginator.setPageCount(pageCount);
+      if (paginator.activePage >= paginator.pageCount)
+        paginator.setActivePage(paginator.pageCount);
+    }
 
-	  function setWidth(w){
-	    demoSection.style.width = w + 'px';
-	  }
-	  function setPageCount(pageCount){
-	    paginators[0].setProperties(pageCount);
-	  }
-
-	  var paginators = [ 
+    var paginators = [
       new Paginator({ pageCount: 1024, pageSpan: 10, activePage: 350 }),
       new Paginator({ pageCount: 100, pageSpan: 13, activePage: 70 }),
       new Paginator({ pageCount: 50, pageSpan: 15, activePage: 15 }),
@@ -105,11 +102,11 @@
       new Paginator({ pageCount: 5, pageSpan: 1, activePage: 5 })
     ];
 
-	  var demoSection = DOM.createElement('#Demo-Section',
+    var demoSection = DOM.createElement('#Demo-Section',
       paginators.map(function(paginator){
         return DOM.createElement('',
           paginator.element,
-          DOM.createElement(".paginator_pages", paginator.pageCount + ' pages')
+          DOM.createElement('.paginator_pages', paginator.pageCount + ' pages')
         );
       })
     );
@@ -135,7 +132,7 @@
           }
         ]
       }).element,
-      DOM.createElement('', 
+      DOM.createElement('',
         'Set paginators container width: ',
         new ButtonPanel({
           childNodes: [300, 450, 600, 750, 900].map(function(width){
@@ -149,7 +146,7 @@
           })
         }).element
       ),
-      DOM.createElement('', 
+      DOM.createElement('',
         'Set first paginator page count: ',
         new ButtonPanel({
           childNodes: [5, 10, 100, 200, 1024].map(function(pageCount){

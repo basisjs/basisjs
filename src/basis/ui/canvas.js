@@ -24,7 +24,7 @@
   */
   var Shape = dwNode.subclass({
     className: namespace + '.Shape',
-    draw: function(context){
+    draw: function(/*context*/){
       // context.save();
       // context.fillStyle = 'red';
       // context.fillRect(this.data.value * 10,10,30,30);

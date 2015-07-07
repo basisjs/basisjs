@@ -1,13 +1,16 @@
 module.exports = {
   name: 'basis.data.Object',
 
+  sandbox: true,
   init: function(){
+    var basis = window.basis.createSandbox();
+
     var DataObject = basis.require('basis.data').Object;
     var isConnected = basis.require('basis.data').isConnected;
     var Value = basis.require('basis.data').Value;
     var STATE = basis.require('basis.data').STATE;
     var SUBSCRIPTION = basis.require('basis.data').SUBSCRIPTION;
-    var PROXY = basis.require('basis.data').PROXY;
+    var PROXY = basis.PROXY;
 
     (function(){
       var proto = DataObject.prototype;
@@ -742,7 +745,7 @@ module.exports = {
                     var values = [
                       false,
                       new basis.Token(false),
-                      new basis.data.Value({ value: false })
+                      new Value({ value: false })
                     ];
 
                     for (var i = 0; i < values.length; i++)
@@ -765,7 +768,7 @@ module.exports = {
                     var values = [
                       true,
                       new basis.Token(true),
-                      new basis.data.Value({ value: true })
+                      new Value({ value: true })
                     ];
 
                     for (var i = 0; i < values.length; i++)
@@ -888,10 +891,10 @@ module.exports = {
                     var values = [
                       false,
                       new basis.Token(false),
-                      new basis.data.Value({ value: false }),
+                      new Value({ value: false }),
                       true,
                       new basis.Token(true),
-                      new basis.data.Value({ value: true }),
+                      new Value({ value: true }),
                       PROXY
                     ];
 

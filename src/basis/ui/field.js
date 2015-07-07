@@ -12,7 +12,6 @@
   //
 
   var Class = basis.Class;
-  var complete = basis.object.complete;
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
@@ -22,8 +21,6 @@
   var events = basisEvent.events;
 
   var Value = require('basis.data').Value;
-  var setAccumulateState = require('basis.data').Dataset.setAccumulateState;
-  var Selection = require('basis.dom.wrapper').Selection;
   var UINode = require('basis.ui').Node;
   var Popup = require('basis.ui.popup').Popup;
 
@@ -42,10 +39,6 @@
   /** @const */ var VALIDITY_INDETERMINATE = 'indeterminate';
   /** @const */ var VALIDITY_VALID = 'valid';
   /** @const */ var VALIDITY_INVALID = 'invalid';
-
-  function getFieldValue(field){
-    return field.getValue();
-  }
 
   function createRevalidateEvent(eventName){
     createEvent.apply(null, arguments);
@@ -180,10 +173,15 @@
     action: 'focus blur change keydown keypress keyup input'.split(' ').reduce(
       function(res, item){
         var eventName = 'emit_field' + basis.string.capitalize(item);
-        res[item] = function(event){
+        var fn = function(event){
           this.syncFieldValue_();
           this[eventName](event);
         };
+
+        // verbose dev
+        /** @cut */ fn = new Function('return ' + fn.toString().replace('[eventName]', '.' + eventName))();
+
+        res[item] = fn;
         return res;
       },
       {}
@@ -195,18 +193,13 @@
         existsIf: function(owner){
           return owner.example;
         },
-        satelliteClass: UINode.subclass({
+        instance: UINode.subclass({
           className: namespace + '.Example',
           template: module.template('Example'),
           binding: {
-            example: 'owner.example'
-          },
-          listen: {
-            owner: {
-              exampleChanged: function(){
-                this.updateBind('example');
-              }
-            }
+            example: Value
+              .factory('ownerChanged', 'owner')
+              .pipe('exampleChanged', 'example')
           }
         })
       },
@@ -215,18 +208,13 @@
         existsIf: function(owner){
           return owner.description;
         },
-        satelliteClass: UINode.subclass({
+        instance: UINode.subclass({
           className: namespace + '.Description',
           template: module.template('Description'),
           binding: {
-            description: 'owner.description'
-          },
-          listen: {
-            owner: {
-              descriptionChanged: function(){
-                this.updateBind('description');
-              }
-            }
+            example: Value
+              .factory('ownerChanged', 'owner')
+              .pipe('descriptionChanged', 'description')
           }
         })
       }
@@ -502,7 +490,7 @@
     symbolsLeft: 0,
 
     emit_symbolsLeftChanged: createEvent('symbolsLeftChanged'),
-    emit_fieldFocus: !window.opera
+    emit_fieldFocus: !global.opera
       ? TextField.prototype.emit_fieldFocus
         // fix opera's bug: when invisible textarea becomes visible and user
         // changes it content, value property returns empty string instead of field value
@@ -534,22 +522,13 @@
         existsIf: function(owner){
           return owner.maxLength > 0;
         },
-        satelliteClass: UINode.subclass({
+        instance: UINode.subclass({
           className: namespace + '.Counter',
-
           template: module.template('Counter'),
           binding: {
-            availChars: function(node){
-              return node.owner.symbolsLeft;
-            }
-          },
-
-          listen: {
-            owner: {
-              symbolsLeftChanged: function(){
-                this.updateBind('availChars');
-              }
-            }
+            availChars: Value
+              .factory('ownerChanged', 'owner')
+              .pipe('symbolsLeftChanged', 'symbolsLeft')
           }
         })
       }
@@ -650,6 +629,8 @@
 
     childClass: null,
     name: '',
+    role: 'variant',
+    roleId: 'value',
 
     binding: {
       name: 'name',
@@ -671,11 +652,7 @@
       select: function(event){
         if (!this.isDisabled())
         {
-          // use acumulate state, as selection changes could be ignored
-          // it's a temporary solution, until concurrent events can be join
-          setAccumulateState(true);
           this.select(this.contextSelection && this.contextSelection.multiple);
-          setAccumulateState(false);
 
           if (event.sender.tagName != 'INPUT')
             event.die();
@@ -782,7 +759,6 @@
 
     setValue: function(value){
       var oldValue = this.value;
-      var selected = [];
 
       if (value === oldValue)
         return;
@@ -991,15 +967,17 @@
         existsIf: function(owner){
           return owner.name;
         },
-        satelliteClass: Hidden.subclass({
+        instance: Hidden.subclass({
           className: namespace + '.ComboboxHidden',
-          getValue: function(){
-            return this.owner.getValue();
+          emit_ownerChanged: function(oldOwner){
+            Hidden.prototype.emit_ownerChanged.call(this, oldOwner);
+            if (this.owner)
+              this.setValue(this.owner.getValue());
           },
           listen: {
             owner: {
               change: function(){
-                this.updateBind('value');
+                this.setValue(this.owner.getValue());
               }
             }
           }

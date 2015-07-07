@@ -1,4 +1,4 @@
-var DECLARATION_VERSION = 2;
+var MARKER = 'basisTemplateId_' + basis.genUID();
 
 // token types
 /** @const */ var TYPE_ELEMENT = 1;
@@ -33,8 +33,7 @@ var ATTR_VALUE_INDEX = {
 };
 
 /** @const */ var ELEMENT_NAME = 3;
-/** @const */ var ELEMENT_ATTRS = 4;
-/** @const */ var ELEMENT_CHILDS = 5;
+/** @const */ var ELEMENT_ATTRIBUTES_AND_CHILDREN = 4;
 
 /** @const */ var TEXT_VALUE = 3;
 /** @const */ var COMMENT_VALUE = 3;
@@ -45,12 +44,23 @@ var CLASS_BINDING_INVERT = 3;
 var CLASS_BINDING_EQUAL = 4;
 var CLASS_BINDING_NOTEQUAL = 5;
 
+// test for browser (IE) normalize text nodes during cloning
+var document = global.document;
+var CLONE_NORMALIZATION_TEXT_BUG = !document ? true : (function(){
+  var element = document.createElement('div');
+  element.appendChild(document.createTextNode('a'));
+  element.appendChild(document.createTextNode('a'));
+  return element.cloneNode(true).childNodes.length == 1;
+})();
 
-  //
-  // export
-  //
+
+//
+// export
+//
 
 module.exports = {
+  MARKER: MARKER,
+
   TYPE_ELEMENT: TYPE_ELEMENT,
   TYPE_ATTRIBUTE: TYPE_ATTRIBUTE,
   TYPE_ATTRIBUTE_CLASS: TYPE_ATTRIBUTE_CLASS,
@@ -67,8 +77,7 @@ module.exports = {
   ATTR_TYPE_BY_NAME: ATTR_TYPE_BY_NAME,
   ATTR_VALUE_INDEX: ATTR_VALUE_INDEX,
   ELEMENT_NAME: ELEMENT_NAME,
-  ELEMENT_ATTRS: ELEMENT_ATTRS,
-  ELEMENT_CHILDS: ELEMENT_CHILDS,
+  ELEMENT_ATTRIBUTES_AND_CHILDREN: ELEMENT_ATTRIBUTES_AND_CHILDREN,
   TEXT_VALUE: TEXT_VALUE,
   COMMENT_VALUE: COMMENT_VALUE,
 
@@ -76,5 +85,7 @@ module.exports = {
   CLASS_BINDING_BOOL: CLASS_BINDING_BOOL,
   CLASS_BINDING_INVERT: CLASS_BINDING_INVERT,
   CLASS_BINDING_EQUAL: CLASS_BINDING_EQUAL,
-  CLASS_BINDING_NOTEQUAL: CLASS_BINDING_NOTEQUAL
+  CLASS_BINDING_NOTEQUAL: CLASS_BINDING_NOTEQUAL,
+
+  CLONE_NORMALIZATION_TEXT_BUG: CLONE_NORMALIZATION_TEXT_BUG
 };

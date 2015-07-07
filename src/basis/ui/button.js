@@ -12,6 +12,7 @@
   //
 
   var Node = require('basis.ui').Node;
+  var resolveValue = require('basis.data').resolveValue;
 
 
   //
@@ -40,21 +41,44 @@
     * Button caption text.
     * @type {string}
     */
-    caption: '[no caption]',
+    caption: '',
+    captionRA_: null,
 
    /**
     * Set new caption and update binding.
-    * @param {string} newCaption
+    * @param {string} caption
     */
-    setCaption: function(newCaption){
-      this.caption = newCaption;
-      this.updateBind('caption');
+    setCaption: function(caption){
+      caption = resolveValue(this, this.setCaption, caption, 'captionRA_');
+
+      if (this.caption != caption)
+      {
+        this.caption = caption;
+
+        // for backward capability
+        if (this.tmpl)
+          this.updateBind('caption');
+      }
     },
 
    /**
     * Actions on click.
     */
     click: function(){
+      // nothing to do
+    },
+
+    init: function(){
+      Node.prototype.init.call(this);
+
+      this.setCaption(this.caption || '\xA0');
+    },
+
+    destroy: function(){
+      if (this.captionRA_)
+        resolveValue(this, null, null, 'captionRA_');
+
+      Node.prototype.destroy.call(this);
     }
   });
 

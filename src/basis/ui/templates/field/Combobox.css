@@ -45,13 +45,6 @@
     text-overflow: ellipsis;
   }
 
-  .Basis-DropdownList-Caption .Basis-Combobox-Item
-  {
-    overflow: hidden;
-      -o-text-overflow: ellipsis;
-    text-overflow: ellipsis;
-  }
-
   .Basis-DropdownList-Trigger
   {
     position: absolute;
@@ -62,9 +55,6 @@
 
     background: url(res/dropdown_arrow.gif) no-repeat right center;
     border: 1px solid #87C4E0;
-
-      -moz-border-radius: 2px;
-      -webkit-border-radius: 2px;
     border-radius: 2px;
 
     cursor: pointer;
@@ -91,51 +81,4 @@
   .Basis-DropdownList-PopupContent
   {
     
-  }
-
-  .Basis-DropdownList-Popup
-  {
-    padding: 0 !important;
-    -moz-opacity: .95;
-    -khtml-opacity: .95;
-    opacity: .95;
-    position: absolute;
-    border: 1px solid #87C4E0;
-    border-bottom: none !important;
-    background: white;
-    /*margin: 1px 0 0;*/
-  }
-  .Basis-DropdownList-Popup .Basis-Popup-Content
-  {
-    padding: 0;
-    margin-bottom: -1px;
-    border-bottom: 1px solid #87C4E0;
-    _width: 142px;
-    font-size: 85%;
-  }
-  .Basis-DropdownList-Popup .Basis-Popup-Content .Basis-Combobox-Item
-  {
-    padding: .3em 6px .35em;
-    zoom: 1;
-    display: block;
-    color: black;
-    text-decoration: none;
-    white-space: nowrap;
-    min-width: 130px;  /* important min-width here (not on parent nodes) - otherwise IE7 bug. but this bring bug to opera 9.2 */
-    min-height: 1em;
-    cursor: pointer;
-  }
-  .Basis-DropdownList-Popup .Basis-Popup-Content .Basis-Combobox-Item:hover
-  {
-    background-color: #E8E8E8;
-  }
-  .Basis-DropdownList-Popup .Basis-Popup-Content .Basis-Combobox-Item.selected
-  {
-    background-color: #E1F1F9;
-  }
-  .Basis-DropdownList-Popup .Basis-Popup-Content .Basis-Combobox-Item.disabled
-  {
-    color: #AAA;
-    background: none !important;
-    cursor: default;
   }

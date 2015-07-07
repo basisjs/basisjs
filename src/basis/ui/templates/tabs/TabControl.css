@@ -2,8 +2,10 @@
   .Basis-TabControl
   {
     border-bottom: 1px solid #898C95;
+    -ms-user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
+    user-select: none;
     font-family: Tahoma, Verdana, sans-serif;
   }
   .Basis-TabControl-Start
@@ -19,30 +21,4 @@
   .Basis-TabControl-End
   {
     clear: both;
-  }
-
-  .Basis-TabControl .Basis-Tab__selected
-  {
-    margin: -2px -2px -1px -2px;
-    cursor: default;
-    position: relative;
-    z-index: 100;
-    background-image: none;
-    background-color: white;
-  }
-  .Basis-TabControl .Basis-Tab__selected .Basis-Tab-Content
-  {
-    padding: .1em 8px .2em 8px;
-    background-color: white;
-    background-image: none;
-    border-top-color: white;
-  }
-  .Basis-TabControl .Basis-Tab__selected .Basis-Tab-Caption
-  {
-    padding-bottom: 3px;
-  }
-  .Basis-TabControl .Basis-Tab
-  {
-    border-bottom: none;
-    float: left;
   }

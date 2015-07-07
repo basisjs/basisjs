@@ -1,7 +1,11 @@
 module.exports = {
   name: 'basis.dom.wrapper',
 
+  sandbox: true,
   init: function(){
+    var basis = window.basis.createSandbox();
+
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
     var Class = basis.Class;
     var DOM = basis.require('basis.dom');
     var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
@@ -12,6 +16,7 @@ module.exports = {
     var Dataset = basis.require('basis.data').Dataset;
     var DatasetWrapper = basis.require('basis.data').DatasetWrapper;
     var READY = basis.require('basis.data').STATE.READY;
+    var AUTO = '__auto__';
 
     Node.extend({
       listen: basis.object.extend({
@@ -45,22 +50,22 @@ module.exports = {
 
 
     var testSet = [
-      { data: { title: 'node0', value: 0, group: 1 } },
-      { data: { title: 'node1', value: 1, group: 2 } },
-      { data: { title: 'node2', value: 2, group: 1 } },
-      { data: { title: 'node3', value: 3, group: 3 } },
-      { data: { title: 'node4', value: 4, group: 4 } },
-      { data: { title: 'node5', value: 5, group: 2 } },
-      { data: { title: 'node6', value: 6, group: 2 } },
-      { data: { title: 'node7', value: 7, group: 1 } },
-      { data: { title: 'node8', value: 8, group: 3 } },
-      { data: { title: 'node9', value: 9, group: 1 } }
+      { title: 'node0', value: 0, group: 1 },
+      { title: 'node1', value: 1, group: 2 },
+      { title: 'node2', value: 2, group: 1 },
+      { title: 'node3', value: 3, group: 3 },
+      { title: 'node4', value: 4, group: 4 },
+      { title: 'node5', value: 5, group: 2 },
+      { title: 'node6', value: 6, group: 2 },
+      { title: 'node7', value: 7, group: 1 },
+      { title: 'node8', value: 8, group: 3 },
+      { title: 'node9', value: 9, group: 1 }
     ].map(function(item){
-      item.data.groupObj = groupDatasetByGroupMap[item.data.group];
-      return item;
+      item.groupObj = groupDatasetByGroupMap[item.group];
+      return { data: item };
     });
 
-    var convertToNode = basis.getter(basis.fn.$self, testSet);
+    var convertToNode = basis.getter(basis.fn.$self).as(testSet);
 
     function getTestSet(){
       return testSet.map(function(item){
@@ -105,6 +110,10 @@ module.exports = {
         return node.data.value + '(' + node.data.group + ')';
       });
     }
+
+    function getChildValues(node, getter){
+      return node.childNodes.map(basis.getter(getter || 'data.value'));
+    }
   },
 
   test: [
@@ -115,10 +124,10 @@ module.exports = {
           name: 'create',
           test: function(){
             var node = new Node();
-            this.is(false, checkNode(node));
+            assert(checkNode(node) === false);
 
             var node = new Node({ data: { a: 1, b: 2 } });
-            this.is({ a: 1, b: 2 }, node.data);
+            assert({ a: 1, b: 2 }, node.data);
           }
         },
         {
@@ -126,15 +135,15 @@ module.exports = {
           test: function(){
             var testSet = getTestSet();
             var node = new Node({ childNodes: testSet.map(nodeFactory) });
-            this.is(false, checkNode(node));
-            this.is(testSet.length, node.childNodes.length);
-            this.is($values(testSet), $values(node.childNodes));
+            assert(checkNode(node) === false);
+            assert(node.childNodes.length === testSet.length);
+            assert($values(testSet), $values(node.childNodes));
 
             var testSet = getTestSet();
             var node = new Node({ childFactory: nodeFactory, childNodes: testSet });
-            this.is(false, checkNode(node));
-            this.is(testSet.length, node.childNodes.length);
-            this.is($values(testSet), $values(node.childNodes));
+            assert(checkNode(node) === false);
+            assert(node.childNodes.length === testSet.length);
+            assert($values(testSet), $values(node.childNodes));
           }
         },
         {
@@ -144,9 +153,9 @@ module.exports = {
             var testSet = getTestSet();
             for (var i = 0; i < testSet.length; i++)
               node.appendChild(new Node(testSet[i]));
-            this.is(false, checkNode(node));
-            this.is(testSet.length, node.childNodes.length);
-            this.is($values(testSet), $values(node.childNodes));
+            assert(checkNode(node) === false);
+            assert(node.childNodes.length === testSet.length);
+            assert($values(testSet), $values(node.childNodes));
           }
         },
         {
@@ -157,18 +166,18 @@ module.exports = {
             for (var i = 0; i < testSet.length; i++)
               node.insertBefore(new Node(testSet[i]));
 
-            this.is(false, checkNode(node));
-            this.is(testSet.length, node.childNodes.length);
-            this.is($values(testSet), $values(node.childNodes));
+            assert(checkNode(node) === false);
+            assert(node.childNodes.length === testSet.length);
+            assert($values(testSet), $values(node.childNodes));
 
             var testSet = getTestSet();
             var node = new Node();
             for (var i = 0; i < testSet.length; i++)
               node.insertBefore(new Node(testSet[i]), node.firstChild);
 
-            this.is(false, checkNode(node));
-            this.is(testSet.length, node.childNodes.length);
-            this.is($values(testSet).reverse(), $values(node.childNodes));
+            assert(checkNode(node) === false);
+            assert(node.childNodes.length === testSet.length);
+            assert($values(testSet).reverse(), $values(node.childNodes));
           }
         },
         {
@@ -177,16 +186,16 @@ module.exports = {
             var testSet = getTestSet();
             var node = new Node();
             DOM.insert(node, testSet.map(nodeFactory));
-            this.is(false, checkNode(node));
-            this.is(testSet.length, node.childNodes.length);
-            this.is($values(testSet), $values(node.childNodes));
+            assert(checkNode(node) === false);
+            assert(node.childNodes.length === testSet.length);
+            assert($values(testSet), $values(node.childNodes));
 
             var testSet = getTestSet();
             var node = new Node({ childFactory: nodeFactory });
             DOM.insert(node, testSet);
-            this.is(false, checkNode(node));
-            this.is(testSet.length, node.childNodes.length);
-            this.is($values(testSet), $values(node.childNodes));
+            assert(checkNode(node) === false);
+            assert(node.childNodes.length === testSet.length);
+            assert($values(testSet), $values(node.childNodes));
           }
         }
       ]
@@ -202,21 +211,22 @@ module.exports = {
               owner: owner
             });
 
-            this.is(false, checkNode(node));
-            this.is(false, checkNode(owner));
-            this.is(true, node.owner === owner);
+            assert(checkNode(node) === false);
+            assert(checkNode(owner) === false);
+            assert(node.owner === owner);
 
             owner.destroy();
 
-            this.is(false, checkNode(node));
-            this.is(false, checkNode(owner));
-            this.is(null, node.owner);
+            assert(checkNode(node) === false);
+            assert(checkNode(owner) === false);
+            assert(node.owner === null);
           }
         }
       ]
     },
     require('./dom.wrapper/satellite.js'),
     require('./dom.wrapper/dataSource.js'),
+    require('./dom.wrapper/sorting.js'),
     require('./dom.wrapper/grouping.js'),
     require('./dom.wrapper/selection.js'),
     require('./dom.wrapper/dynamic.js')

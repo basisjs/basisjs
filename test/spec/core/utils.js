@@ -79,16 +79,25 @@ module.exports = {
               name: 'every()',
               test: function(){
                 var a = [1, 2, 3, 4, 5];
-                this.is(true,  a.every(function(item){ return item > 0; }));
+                this.is(true,  a.every(function(item){
+                  return item > 0;
+                }));
                 this.is([1, 2, 3, 4, 5], a);
 
-                this.is(false, a.every(function(item){ return item > 1; }));
+                this.is(false, a.every(function(item){
+                  return item > 1;
+                }));
 
                 a[100] = 1;
-                this.is(true, a.every(function(item){ return typeof item != 'undefined'; }));
+                this.is(true, a.every(function(item){
+                  return typeof item != 'undefined';
+                }));
 
                 var counter = 0;
-                this.is(true, a.every(function(item){ counter++; return true; }));
+                this.is(true, a.every(function(item){
+                  counter++;
+                  return true;
+                }));
                 this.is(6, counter);
               }
             },
@@ -96,16 +105,25 @@ module.exports = {
               name: 'some()',
               test: function(){
                 var a = [1, 2, 3, 4, 5];
-                this.is(true,  a.some(function(item){ return item > 4; }));
+                this.is(true,  a.some(function(item){
+                  return item > 4;
+                }));
                 this.is([1, 2, 3, 4, 5], a);
 
-                this.is(false, a.some(function(item){ return item > 10; }));
+                this.is(false, a.some(function(item){
+                  return item > 10;
+                }));
 
                 a[100] = 1;
-                this.is(false, a.some(function(item){ return typeof item == 'undefined'; }));
+                this.is(false, a.some(function(item){
+                  return typeof item == 'undefined';
+                }));
 
                 var counter = 0;
-                this.is(false, a.some(function(item){ counter++; return false; }));
+                this.is(false, a.some(function(item){
+                  counter++;
+                  return false;
+                }));
                 this.is(6, counter);
               }
             },
@@ -113,7 +131,9 @@ module.exports = {
               name: 'filter()',
               test: function(){
                 var a = [1, 2, 3, 4, 5];
-                this.is([1, 3, 5], a.filter(function(item){ return item % 2; }));
+                this.is([1, 3, 5], a.filter(function(item){
+                  return item % 2;
+                }));
                 this.is([1, 2, 3, 4, 5], a);
 
                 a[100] = 1;
@@ -131,11 +151,15 @@ module.exports = {
               name: 'map()',
               test: function(){
                 var a = [1, 2, 3];
-                this.is([2, 4, 6], a.map(function(item){ return item * 2; }));
+                this.is([2, 4, 6], a.map(function(item){
+                  return item * 2;
+                }));
                 this.is([1, 2, 3], a);
 
                 a[5] = 1;
-                this.is([2, 4, 6, undefined, undefined, 2], a.map(function(item){ return item * 2; }));
+                this.is([2, 4, 6, undefined, undefined, 2], a.map(function(item){
+                  return item * 2;
+                }));
 
                 var counter = 0;
                 this.is([undefined, undefined, undefined, undefined, undefined, undefined], a.map(function(item){ counter++; }));
@@ -330,29 +354,6 @@ module.exports = {
 
             var S = ' \t \n\n\n \r\n\r';
             this.is([], basis.string.qw(S));
-          }
-        },
-        {
-          name: 'forRegExp()',
-          test: function(){
-          }
-        },
-        {
-          name: 'toRegExp()',
-          test: function(){
-          
-          }
-        },
-        {
-          name: 'sprintf()',
-          test: function(){
-          
-          }
-        },
-        {
-          name: 'format()',
-          test: function(){
-          
           }
         },
         {

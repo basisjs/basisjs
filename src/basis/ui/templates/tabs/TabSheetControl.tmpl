@@ -1,15 +1,7 @@
 
   <b:style src="./TabSheetControl.css"/>
-  <b:style src="./TabControl.css"/>
-  <b:style src="./PageControl.css"/>
-  <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
 
-  <div class="Basis-TabSheetControl {selected} {disabled}">
-    <div{tabsElement} class="Basis-TabControl">
-      <div class="Basis-TabControl-Start"/>
-      <div{content|childNodesElement} class="Basis-TabControl-Content"/>
-      <div class="Basis-TabControl-End"/>
-    </div>
-    <div{pagesElement} class="Basis-PageControl"/>
+  <div class="Basis-TabSheetControl">
+    <b:include src="./TabControl.tmpl" ref="tabsElement"/>
+    <b:include src="./PageControl.tmpl" ref="pagesElement"/>
   </div>

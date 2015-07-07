@@ -3,7 +3,7 @@
   * @namespace basis.utils.benchmark
   */
 
-  var host = typeof performance !== 'undefined' ? performance : Date;
+  var host = global.performance || Date;
   var nowMethod = 'webkitNow' in host ? 'webkitNow' : 'now';
 
   module.exports = {

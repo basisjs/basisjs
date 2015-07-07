@@ -1,0 +1,11 @@
+.Basis-CheckGroup-Item,
+.Basis-CheckGroup-Item.selected,
+.Basis-CheckGroup-Item.disabled
+{
+  
+}
+.Basis-CheckGroup-Item__text
+{
+  display: inline-block;
+  vertical-align: middle;
+}

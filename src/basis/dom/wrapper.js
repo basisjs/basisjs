@@ -27,18 +27,17 @@
   var $undef = basis.fn.$undef;
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
-  var oneFunctionProperty = Class.oneFunctionProperty;
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;
   var events = basisEvent.events;
   var basisData = require('basis.data');
   var resolveValue = basisData.resolveValue;
   var resolveDataset = basisData.resolveDataset;
+  var createResolveFunction = basisData.createResolveFunction;
 
   var SUBSCRIPTION = basisData.SUBSCRIPTION;
   var STATE = basisData.STATE;
 
-  var AbstractData = basisData.AbstractData;
   var DataObject = basisData.Object;
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var Dataset = basisData.Dataset;
@@ -57,6 +56,7 @@
   /** @const */ var EXCEPTION_PARENTNODE_OWNER_CONFLICT = namespace + ': Node can\'t has owner and parentNode';
   /** @const */ var EXCEPTION_NO_CHILDCLASS = namespace + ': Node can\'t has children and dataSource as childClass isn\'t specified';
 
+  /** @const */ var AUTO = '__auto__';
   /** @const */ var DELEGATE = {
     ANY: true,
     NONE: false,
@@ -94,10 +94,8 @@
   // sorting
   //
 
-  function sortingSearch(node){
-    return node.sortingValue || 0; // it's important return a zero when sortingValue is undefined,
-                                   // because in this case sorting may be broken; it's also not a problem
-                                   // when zero equivalent values (null, false or empty string) converts to zero
+  function getSortingValue(node){
+    return node.sortingValue;
   }
 
   function sortAsc(a, b){
@@ -120,34 +118,59 @@
     );
   }
 
-  function binarySearchPos(array, value, getter_, desc){
+  function binarySearchPos(array, value, valueGetter, desc){
     if (!array.length)  // empty array check
       return 0;
 
     desc = !!desc;
 
-    var pos;
-    var compareValue;
     var l = 0;
     var r = array.length - 1;
+    var valueType = typeof value;
+    var compareValue;
+    var compareValueType;
+    var pos;
 
     do
     {
       pos = (l + r) >> 1;
-      compareValue = getter_(array[pos]);
-      if (desc ? value > compareValue : value < compareValue)
-        r = pos - 1;
-      else
-        if (desc ? value < compareValue : value > compareValue)
+      compareValue = valueGetter(array[pos]);
+      compareValueType = typeof compareValue;
+
+      if (desc)
+      {
+        if (valueType > compareValueType || value > compareValue)
+        {
+          r = pos - 1;
+          continue;
+        }
+        if (valueType < compareValueType || value < compareValue)
+        {
           l = pos + 1;
-        else
-          return value == compareValue ? pos : 0;  // founded element
-                                                    // -1 returns when it seems as founded element,
-                                                    // but not equal (array item or value looked for have wrong data type for compare)
+          continue;
+        }
+      }
+      else
+      {
+        if (valueType < compareValueType || value < compareValue)
+        {
+          r = pos - 1;
+          continue;
+        }
+        if (valueType > compareValueType || value > compareValue)
+        {
+          l = pos + 1;
+          continue;
+        }
+      }
+
+      return value == compareValue ? pos : 0;   // founded element
+                                                // -1 returns when it seems as founded element,
+                                                // but not equal (array item or value looked for have wrong data type for compare)
     }
     while (l <= r);
 
-    return pos + ((compareValue < value) ^ desc);
+    return pos + ((compareValueType < valueType || compareValue < value) ^ desc);
   }
 
   //
@@ -297,7 +320,7 @@
       var satellites = object.satellite;
       if (satellites !== NULL_SATELLITE)
         for (var name in satellites)
-          if (name !== '__auto__')
+          if (name !== AUTO)
             action('satellite', object, satellites[name]);
     }
   );
@@ -306,6 +329,16 @@
   //
   // AbstractNode
   //
+
+  function processInstanceClass(InstanceClass){
+    if (!InstanceClass.isSubclassOf(AbstractNode))
+    {
+      /** @cut */ basis.dev.warn(namespace + ': Bad class for instance, should be subclass of basis.dom.wrapper.AbstractNode');
+      return AbstractNode;
+    }
+
+    return InstanceClass;
+  }
 
   function processSatelliteConfig(satelliteConfig){
     if (!satelliteConfig)
@@ -317,110 +350,124 @@
     if (satelliteConfig instanceof AbstractNode)
       return satelliteConfig;
 
-    if (Class.isClass(satelliteConfig))
+    if (satelliteConfig.constructor !== Object)
       satelliteConfig = {
-        satelliteClass: satelliteConfig
+        instance: satelliteConfig
       };
 
-    if (satelliteConfig.constructor === Object)
+    var handlerRequired = false;
+    var events = 'update';
+    var config = {
+      isSatelliteConfig: true
+    };
+
+    for (var key in satelliteConfig)
     {
-      var handlerRequired = false;
-      var events = 'update';
-      var satelliteClass;
-      var config = {
-        isSatelliteConfig: true
-      };
-
-      for (var key in satelliteConfig)
+      var value = satelliteConfig[key];
+      switch (key)
       {
-        var value = satelliteConfig[key];
-        switch (key)
-        {
-          case 'instance':
-            if (value instanceof AbstractNode)
-              config[key] = value;
-            /** @cut */ else
-            /** @cut */   basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
-            break;
-
-          case 'instanceOf': // deprecated
-          case 'satelliteClass':
-            if (key == 'instanceOf')
-            {
-              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config is deprecated, use `satelliteClass` instead');
-              if ('satelliteClass' in satelliteConfig)
-              {
-                /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config has ignored, as `satelliteClass` is specified');
-                break;
-              }
-            }
-
-            if (Class.isClass(value) && value.isSubclassOf(AbstractNode))
-              satelliteClass = value;
-            /** @cut */ else
-            /** @cut */   basis.dev.warn(namespace + ': `satelliteClass` value in satellite config should be a subclass of basis.dom.wrapper.AbstractNode');
-            break;
-
-          case 'existsIf':
-          case 'delegate':
-          case 'dataSource':
-            if (value)
+        case 'instance':
+          if (value instanceof AbstractNode)
+          {
+            config.instance = value;
+          }
+          else
+          {
+            if (Class.isClass(value))
+              config.instanceClass = processInstanceClass(value);
+            else
             {
               if (typeof value == 'string')
-                value = getter(value);
+                value = basis.getter(value);
 
-              if (typeof value != 'function')
-                value = basis.fn.$const(value);
-              else
-                handlerRequired = true;
+              config.getInstance = value;
             }
-
-            config[key] = value;
-            break;
-
-          case 'config':
-            config[key] = typeof value == 'string' ? getter(value) : value;
-            break;
-
-          case 'events':
-            events = satelliteConfig.events;
-            break;
-
-          default:
-            /** @cut */ basis.dev.warn('Unknown satellite config option – ' + key);
-        }
-      }
-
-      if (!config.instance)
-        config.satelliteClass = satelliteClass || AbstractNode;
-      else
-      {
-        /** @cut */ if (satelliteClass)
-        /** @cut */   basis.dev.warn(namespace + ': `satelliteClass` can\'t be set with `instance` value in satellite config, value ignored');
-      }
-
-      if (handlerRequired)
-      {
-        if (Array.isArray(events))
-          events = events.join(' ');
-
-        if (typeof events == 'string')
-        {
-          var handler = {};
-          events = events.split(/\s+/);
-
-          for (var i = 0, eventName; eventName = events[i]; i++)
-          {
-            handler[eventName] = SATELLITE_UPDATE;
-            config.handler = handler;
           }
-        }
-      }
 
-      return config;
+          break;
+
+        case 'instanceOf': // deprecated
+        case 'satelliteClass':
+          if (key == 'instanceOf')
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config is deprecated, use `instance` instead');
+            if ('satelliteClass' in satelliteConfig)
+            {
+              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config has been ignored, as `satelliteClass` is specified');
+              break;
+            }
+          }
+
+          if ('instance' in satelliteConfig)
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `' + key + '` in satellite config has been ignored, as `instance` is specified');
+            break;
+          }
+
+          if (Class.isClass(value))
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `satelliteClass` in satellite config is deprecated, use `instance` instead');
+            config.instanceClass = processInstanceClass(value);
+          }
+          /** @cut */ else
+          /** @cut */   basis.dev.warn(namespace + ': bad value for `' + key + '` in satellite config, value should be a subclass of basis.dom.wrapper.AbstractNode');
+          break;
+
+        case 'existsIf':
+        case 'delegate':
+        case 'dataSource':
+          if (value)
+          {
+            if (typeof value == 'string')
+              value = getter(value);
+
+            if (typeof value != 'function')
+              value = basis.fn.$const(value);
+            else
+              handlerRequired = true;
+          }
+
+          config[key] = value;
+          break;
+
+        case 'config':
+          if (typeof value == 'string')
+            value = getter(value);
+
+          config.config = value;
+          break;
+
+        case 'events':
+          events = satelliteConfig.events;
+          break;
+
+        default:
+          /** @cut */ basis.dev.warn('Unknown satellite config option – ' + key);
+      }
     }
 
-    return null;
+    if (!config.instance && !config.getInstance && !config.instanceClass)
+      config.instanceClass = processInstanceClass(AbstractNode);
+
+    if (handlerRequired)
+    {
+      if (Array.isArray(events))
+        events = events.join(' ');
+
+      if (typeof events == 'string')
+      {
+        var handler = {};
+        events = events.split(/\s+/);
+
+        for (var i = 0, eventName; eventName = events[i]; i++)
+        {
+          handler[eventName] = SATELLITE_UPDATE;
+          config.handler = handler;
+        }
+      }
+    }
+
+    return config;
   }
 
   function applySatellites(node, satellites){
@@ -441,40 +488,45 @@
     //   owner: owner,
     //   name: satelliteName,
     //   config: satelliteConfig,
-    //   instance: satelliteInstance or null
+    //   instance: satelliteInstance or null,
+    //   instanceRA_: ResolveAdapter or null,
+    //   existsRA_: ResolveAdapter or null
+    //   factoryType: 'value' or 'class'
+    //   factory: class or any
     // }
     var name = this.name;
     var config = this.config;
     var owner = this.owner;
 
-    var satellite = this.instance;
     var exists = ('existsIf' in config == false) || config.existsIf(owner);
 
-    if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsAdapter'))
+    if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsRA_'))
     {
-      if (satellite)
-      {
-        if (config.delegate)
-          satellite.setDelegate(config.delegate(owner));
+      var satellite = this.instance || config.instance;
 
-        if (config.dataSource)
-          satellite.setDataSource(config.dataSource(owner));
-      }
-      else
+      if (!satellite || this.factoryType == 'value')
       {
-        satellite = config.instance;
-
-        if (!satellite)
+        if (!this.factoryType)
         {
-          // create new satellite instance
-          var listenHandler;
-          var satelliteConfig = (
-            typeof config.config == 'function'
-              ? config.config(owner)
-              : config.config
-          ) || {};
+          var instanceValue = config.getInstance;
+          var instanceClass = config.instanceClass;
 
-          satelliteConfig.owner = owner;
+          if (typeof instanceValue == 'function')
+          {
+            instanceValue = instanceValue.call(owner, owner);
+            if (Class.isClass(instanceValue))
+              instanceClass = processInstanceClass(instanceValue);
+          }
+
+          this.factoryType = instanceClass ? 'class' : 'value';
+          this.factory = instanceClass || instanceValue;
+        }
+
+        if (this.factoryType == 'class')
+        {
+          var satelliteConfig = {
+            destroy: warnOnAutoSatelliteDestoy // auto-create satellite marker, lock destroy method invocation
+          };
 
           if (config.delegate)
           {
@@ -485,31 +537,40 @@
           if (config.dataSource)
             satelliteConfig.dataSource = config.dataSource(owner);
 
-          satellite = new config.satelliteClass(satelliteConfig);
-          satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
+          if (config.config)
+            basis.object.complete(satelliteConfig, typeof config.config == 'function'
+              ? config.config(owner)
+              : config.config
+            );
 
-          // this statement here, because owner set in config and no listen add in this case
-          // TODO: looks like a hack, fix it
-          if (listenHandler = owner.listen.satellite)
-            satellite.addHandler(listenHandler, owner);
-          if (listenHandler = owner.listen['satellite:' + name])
-            satellite.addHandler(listenHandler, owner);
-        }
-        else
-        {
-          if (config.delegate)
-            satellite.setDelegate(config.delegate(owner));
+          this.instance = new this.factory(satelliteConfig);
+          owner.setSatellite(name, this.instance, true);
 
-          if (config.dataSource)
-            satellite.setDataSource(config.dataSource(owner));
+          return;
         }
 
-        this.instance = satellite;
-        owner.setSatellite(name, satellite, true);
+        // factoryType == 'value'
+        satellite = resolveAbstractNode(this, SATELLITE_UPDATE, this.factory, 'instanceRA_');
+      }
+
+      if (this.instance !== satellite)
+      {
+        this.instance = satellite || null;
+        owner.setSatellite(name, this.instance, true);
+      }
+
+      if (satellite && satellite.owner === owner)
+      {
+        if (config.delegate)
+          satellite.setDelegate(config.delegate(owner));
+
+        if (config.dataSource)
+          satellite.setDataSource(config.dataSource(owner));
       }
     }
     else
     {
+      var satellite = this.instance;
       if (satellite)
       {
         if (config.instance)
@@ -529,7 +590,8 @@
 
   var AUTO_SATELLITE_INSTANCE_HANDLER = {
     destroy: function(){
-      this.owner.setSatellite(this.name, null);
+      if (!this.instanceRA_)
+        this.owner.setSatellite(this.name, null);
     }
   };
 
@@ -780,6 +842,12 @@
     satellite: NULL_SATELLITE,
 
    /**
+    * @param {string} name Name of satellite
+    * @param {basis.data.AbstractData} oldSattelite Old satellite for name
+    */
+    emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
+
+   /**
     * Key in owner.satellite map.
     * @type {string}
     * @readonly
@@ -788,9 +856,9 @@
 
    /**
     * @param {string} name Name of satellite
-    * @param {basis.data.AbstractData} oldSattelite Old satellite for name
+    * @param {string|null} oldName Old satellite name
     */
-    emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
+    emit_ownerSatelliteNameChanged: createEvent('ownerSatelliteNameChanged', 'name', 'oldName'),
 
    /**
     * Node owner. Generaly using by satellites and GroupingNode.
@@ -981,15 +1049,9 @@
       {
         var listenHandler = this.listen.owner;
 
-        // if (this.destroy === warnOnAutoSatelliteDestoy)
-        // {
-        //   /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change it\'s owner');
-        //   return;
-        // }
-
         if (oldOwner)
         {
-          if (this.ownerSatelliteName && oldOwner.satellite.__auto__ && this.ownerSatelliteName in oldOwner.satellite.__auto__)
+          if (this.ownerSatelliteName && oldOwner.satellite[AUTO] && this.ownerSatelliteName in oldOwner.satellite[AUTO])
           {
             /** @cut */ basis.dev.warn(namespace + ': auto-satellite can\'t change it\'s owner');
             return;
@@ -1025,7 +1087,7 @@
     */
     setSatellite: function(name, satellite, autoSet){
       var oldSatellite = this.satellite[name] || null;
-      var auto = this.satellite.__auto__;
+      var auto = this.satellite[AUTO];
       var autoConfig = auto && auto[name];
       var preserveAuto = autoSet && autoConfig;
 
@@ -1069,7 +1131,12 @@
         {
           // unlink old satellite
           delete this.satellite[name];
-          oldSatellite.ownerSatelliteName = null;
+          var oldSatelliteName = oldSatellite.ownerSatelliteName;
+          if (oldSatelliteName != null)
+          {
+            oldSatellite.ownerSatelliteName = null;
+            oldSatellite.emit_ownerSatelliteNameChanged(oldSatelliteName);
+          }
 
           if (autoConfig && oldSatellite.destroy === warnOnAutoSatelliteDestoy)
           {
@@ -1100,8 +1167,11 @@
               owner: this,
               name: name,
               config: satellite,
+              factoryType: null,
+              factory: null,
               instance: null,
-              existsAdapter: null
+              instanceRA_: null,
+              existsRA_: null
             };
 
             // auto-create satellite
@@ -1119,7 +1189,7 @@
             {
               if (this.satellite === NULL_SATELLITE)
                 this.satellite = {};
-              auto = this.satellite.__auto__ = {};
+              auto = this.satellite[AUTO] = {};
             }
 
             auto[name] = autoConfig;
@@ -1152,9 +1222,12 @@
             else
               satellite.setOwner(this);
 
-            // if owner doesn't changed nothing to do
+            // reset satellite if owner was not set
             if (satellite.owner !== this)
+            {
+              this.setSatellite(name, null);
               return;
+            }
 
             if (satelliteListen)
               satellite.addHandler(satelliteListen, this);
@@ -1175,7 +1248,12 @@
             this.satellite = {};
 
           this.satellite[name] = satellite;
-          satellite.ownerSatelliteName = name;
+          var oldSatelliteName = satellite.ownerSatelliteName;
+          if (oldSatelliteName != name)
+          {
+            satellite.ownerSatelliteName = name;
+            satellite.emit_ownerSatelliteNameChanged(oldSatelliteName);
+          }
         }
 
         this.emit_satelliteChanged(name, oldSatellite);
@@ -1242,15 +1320,17 @@
       var satellites = this.satellite;
       if (satellites !== NULL_SATELLITE)
       {
-        var auto = satellites.__auto__;
-        delete satellites.__auto__;
+        var auto = satellites[AUTO];
+        delete satellites[AUTO];
 
         for (var name in auto)
         {
           if (auto[name].config.instance && !auto[name].instance)
             auto[name].config.instance.destroy();
-          if (auto[name].existsAdapter)
-            resolveValue(auto[name], null, null, 'existsAdapter');
+          if (auto[name].existsRA_)
+            resolveValue(auto[name], null, null, 'existsRA_');
+          if (auto[name].instanceRA_)
+            resolveValue(auto[name], null, null, 'instanceRA_');
         }
 
         for (var name in satellites)
@@ -1274,6 +1354,9 @@
       this.childNodes = null;
     }
   });
+
+  var resolveAbstractNode = createResolveFunction(AbstractNode);
+
 
  /**
   * @class
@@ -1422,10 +1505,8 @@
             unlockDataSourceItemNode(child);
 
           // optimization: if all old nodes deleted -> clear childNodes
-          var tmp = this.dataSource;
-          this.dataSource = null;
+          this.dataSourceMap_ = null; // prevents exception on clear
           this.clear(true);   // keep alive, event fires
-          this.dataSource = tmp;
           this.dataSourceMap_ = {};
         }
         else
@@ -1486,18 +1567,9 @@
     stateChanged: function(dataSource){
       this.setChildNodesState(dataSource.state, dataSource.state.data);
     },
-    destroy: function(dataSource){
+    destroy: function(){
       if (!this.dataSourceRA_)
         this.setDataSource();
-    }
-  };
-
-  var MIXIN_DATASOURCE_WRAPPER_HANDLER = {
-    datasetChanged: function(wrapper){
-      this.setDataSource(wrapper);
-    },
-    destroy: function(){
-      this.setDataSource();
     }
   };
 
@@ -1521,17 +1593,18 @@
     for (var i = 0, child; child = order[i]; i++)
       child.groupNode.nodes.push(child);
 
-    order.length = 0;
-    for (var group = node.grouping.nullGroup; group; group = group.nextSibling)
+    var groups = [node.grouping.nullGroup].concat(node.grouping.childNodes);
+    var result = []; // new order
+    for (var i = 0, group; group = groups[i]; i++)
     {
       var nodes = group.nodes;
       group.first = nodes[0] || null;
       group.last = nodes[nodes.length - 1] || null;
-      order.push.apply(order, nodes);
+      result.push.apply(result, nodes);
       group.emit_childNodesModified({ inserted: nodes });
     }
 
-    return order;
+    return result;
   }
 
   function createChildByFactory(node, config){
@@ -1678,7 +1751,12 @@
         // if sorting is using - refChild is ignore
         refChild = null; // ignore
         sortingDesc = this.sortingDesc;
-        newChildValue = sorting(newChild) || 0;
+        newChildValue = sorting(newChild);
+
+        if (newChildValue == null)
+          newChildValue = -Infinity;
+        else if (typeof newChildValue != 'number' || newChildValue !== newChildValue)
+          newChildValue = String(newChildValue);
 
         // some optimizations if node had already inside current node
         if (isInside)
@@ -1689,14 +1767,21 @@
           }
           else
           {
-            if (
-                (!nextSibling || (sortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue)) &&
-                (!prevSibling || (sortingDesc ? prevSibling.sortingValue >= newChildValue : prevSibling.sortingValue <= newChildValue))
-               )
+            if (sortingDesc)
             {
-              newChild.sortingValue = newChildValue;
-              correctSortPos = true;
+              correctSortPos =
+                (!nextSibling || (typeof nextSibling.sortingValue <= typeof newChildValue && nextSibling.sortingValue <= newChildValue)) &&
+                (!prevSibling || (typeof prevSibling.sortingValue >= typeof newChildValue && prevSibling.sortingValue >= newChildValue));
             }
+            else
+            {
+              correctSortPos =
+                (!nextSibling || (typeof nextSibling.sortingValue >= typeof newChildValue && nextSibling.sortingValue >= newChildValue)) &&
+                (!prevSibling || (typeof prevSibling.sortingValue <= typeof newChildValue && prevSibling.sortingValue <= newChildValue));
+            }
+
+            if (correctSortPos)
+              newChild.sortingValue = newChildValue;
           }
         }
       }
@@ -1725,7 +1810,7 @@
           else
           {
             // when sorting use binary search
-            pos = binarySearchPos(groupNodes, newChildValue, sortingSearch, sortingDesc);
+            pos = binarySearchPos(groupNodes, newChildValue, getSortingValue, sortingDesc);
             newChild.sortingValue = newChildValue;
           }
         }
@@ -1787,7 +1872,7 @@
             return newChild;
 
           // search for refChild
-          pos = binarySearchPos(childNodes, newChildValue, sortingSearch, sortingDesc);
+          pos = binarySearchPos(childNodes, newChildValue, getSortingValue, sortingDesc, this.lll);
           refChild = childNodes[pos];
           newChild.sortingValue = newChildValue; // change sortingValue AFTER search
 
@@ -2043,7 +2128,8 @@
     */
     clear: function(alive){
       // clear possible only if dataSource is empty
-      if (this.dataSource && this.dataSource.itemCount)
+      // NOTE: when this.dataSourceMap_ is falsy than fast child nodes replacement case
+      if (this.dataSource && this.dataSourceMap_ && this.dataSource.itemCount)
         throw EXCEPTION_DATASOURCE_CONFLICT;
 
       // if node haven't childs nothing to do (event don't fire)
@@ -2281,6 +2367,9 @@
         }
 
         this.emit_groupingChanged(oldGrouping);
+
+        if (oldGrouping && !alive)
+          oldGrouping.destroy();
       }
     },
 
@@ -2307,7 +2396,14 @@
           var nodes;
 
           for (var node = this.firstChild; node; node = node.nextSibling)
-            node.sortingValue = sorting(node) || 0;
+          {
+            var newChildValue = sorting(node);
+            if (newChildValue == null)
+              newChildValue = -Infinity;
+            else if (typeof newChildValue != 'number' || newChildValue !== newChildValue)
+              newChildValue = String(newChildValue);
+            node.sortingValue = newChildValue;
+          }
 
           // Probably strange and dirty solution, but faster (up to 2-5 times).
           // Low dependence of node shuffling. Total permutation count equals to permutation
@@ -2316,7 +2412,8 @@
           // NOTE: Nodes selected state will remain (sometimes it can be important)
           if (this.grouping)
           {
-            for (var group = this.grouping.nullGroup; group; group = group.nextSibling)
+            var groups = [this.grouping.nullGroup].concat(this.grouping.childNodes);
+            for (var i = 0, group; group = groups[i]; i++)
             {
               // sort, clear and set new order, no override childNodes
               nodes = group.nodes = sortChildNodes({ childNodes: group.nodes, sortingDesc: this.sortingDesc });
@@ -2566,23 +2663,6 @@
     },
 
    /**
-    * Makes node selected if possible.
-    * @param {boolean} multiple
-    * @return {boolean} Returns true if selected state has been changed.
-    */
-    select: function(multiple){
-      return this.setSelected(true, multiple);
-    },
-
-   /**
-    * Makes node unselected.
-    * @return {boolean} Returns true if selected state has been changed.
-    */
-    unselect: function(){
-      return this.setSelected(false);
-    },
-
-   /**
     * Set new value for selected property.
     * @param {boolean} selected Should be node selected or not.
     * @param {boolean} multiple Apply new state in multiple select mode or not.
@@ -2591,7 +2671,7 @@
     setSelected: function(selected, multiple){
       var selection = this.contextSelection;
 
-      selected = !!!!resolveValue(this, this.setSelected, selected, 'selectedRA_');;
+      selected = !!resolveValue(this, this.setSelected, selected, 'selectedRA_');
 
       // special case, when node selected and has selection context check only
       // resolve adapter influence on selected if exists, and restore selection
@@ -2672,19 +2752,32 @@
     },
 
    /**
-    * Makes node enabled.
-    * @return {boolean} Returns true if disabled property was changed.
+    * Makes node selected if possible.
+    * @param {boolean} multiple
+    * @return {boolean} Returns true if selected state has been changed.
     */
-    enable: function(){
-      return this.setDisabled(false);
+    select: function(multiple){
+      if (this.selectedRA_)
+      {
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by `select()` method. Use `setSelected()` instead.');
+        return false;
+      }
+
+      return this.setSelected(true, multiple);
     },
 
    /**
-    * Makes node disabled.
-    * @return {boolean} Returns true if disabled property was changed.
+    * Makes node unselected.
+    * @return {boolean} Returns true if selected state has been changed.
     */
-    disable: function(){
-      return this.setDisabled(true);
+    unselect: function(){
+      if (this.selectedRA_)
+      {
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by `unselect()` method. Use `setSelected()` instead.');
+        return false;
+      }
+
+      return this.setSelected(false);
     },
 
    /**
@@ -2707,6 +2800,36 @@
 
         return true;
       }
+
+      return false;
+    },
+
+   /**
+    * Makes node disabled.
+    * @return {boolean} Returns true if disabled property was changed.
+    */
+    disable: function(){
+      if (this.disabledRA_)
+      {
+        /** @cut */ basis.dev.warn('`disabled` property is under bb-value and can\'t be changed by `disable()` method. Use `setDisabled()` instead.');
+        return false;
+      }
+
+      return this.setDisabled(true);
+    },
+
+   /**
+    * Makes node enabled.
+    * @return {boolean} Returns true if disabled property was changed.
+    */
+    enable: function(){
+      if (this.disabledRA_)
+      {
+        /** @cut */ basis.dev.warn('`disabled` property is under bb-value and can\'t be changed by `enable()` method. Use `setDisabled()` instead.');
+        return false;
+      }
+
+      return this.setDisabled(false);
     },
 
    /**
@@ -2777,8 +2900,6 @@
     */
     emit_childNodesModified: function(delta){
       events.childNodesModified.call(this, delta);
-
-      this.nullGroup.nextSibling = this.firstChild;
 
       var array;
       if (array = delta.inserted)

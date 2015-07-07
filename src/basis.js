@@ -37,11 +37,13 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.4.0-dev';
+  var VERSION = '1.5.0-dev';
 
   var global = Function('return this')();
   var NODE_ENV = global !== context ? global : false;
   var document = global.document;
+  var location = global.location;
+  var process = global.process;
   var toString = Object.prototype.toString;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -50,6 +52,14 @@
   // of global things.
   // TODO: to do this stuff right
   global = context;
+
+  // const
+  var FACTORY = {};
+  var PROXY = {};
+
+  // dev verbose names for object const
+  /** @cut */ FACTORY = new (devVerboseName('basis.FACTORY', {}, function(){}));
+  /** @cut */ PROXY = new (devVerboseName('basis.PROXY', {}, function(){}));
 
 
  /**
@@ -81,7 +91,7 @@
   * @param {*} value
   * @param {string} warning Warning messsage
   */
-  var warnPropertyAccess = (function(object, name, value, warning){
+  var warnPropertyAccess = (function(){
     /** @cut */ // show warnings only in dev mode
     /** @cut */ try {
     /** @cut */   if (Object.defineProperty)
@@ -347,225 +357,142 @@
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
-    var ID = 'basisGetterId' + genUID() + '_';
-    var modificatorSeed = 1;
-    var simplePath = /^[a-z$_][a-z$_0-9]*(\.[a-z$_][a-z$_0-9]*)*$/i;
-
-    var getterMap = [];
+    var GETTER_ID_PREFIX = 'basisGetterId' + genUID() + '_';
+    var GETTER_ID = GETTER_ID_PREFIX + 'root';
+    var ID = GETTER_ID_PREFIX;
+    var SOURCE = GETTER_ID_PREFIX + 'base';
+    var PARENT = GETTER_ID_PREFIX + 'parent';
+    var getterSeed = 1;
     var pathCache = {};
-    var modCache = {};
 
-    function buildFunction(path){
-      if (simplePath.test(path))
+    function as(path){
+      var self = this;
+      var wrapper;
+      var result;
+      var id;
+
+      if (typeof path == 'function' || typeof path == 'string')
       {
-        var parts = path.split('.');
-        var foo = parts[0];
-        var bar = parts[1];
-        var baz = parts[2];
-        var fn;
+        wrapper = resolveFunction(path, self[ID]);
+        id = GETTER_ID_PREFIX + wrapper[ID];
 
-        // This approach helps produce function that could be
-        // optimized (inlined) by js engine. In most cases path contains
-        // from 1 to 3 parts and we don't use a loop in those cases.
-        switch (parts.length)
-        {
-          case 1:
-            fn = function(object){
-              return object != null ? object[foo] : object;
-            };
-            break;
-          case 2:
-            fn = function(object){
-              return object != null ? object[foo][bar] : object;
-            };
-            break;
-          case 3:
-            fn = function(object){
-              return object != null ? object[foo][bar][baz] : object;
-            };
-            break;
-          default:
-            fn = function(object){
-              if (object != null)
-              {
-                object = object[foo][bar][baz];
-                for (var i = 3, key; key = parts[i]; i++)
-                  object = object[key];
-              }
+        if (hasOwnProperty.call(self, id))
+          return self[id];
 
-              return object;
-            };
-        }
+        // recover original function, reduce functions call stack
+        if (typeof wrapper[SOURCE] == 'function')
+          wrapper = wrapper[SOURCE];
 
-        // verbose function code in dev mode
-        /** @cut */ fn = Function('parts', 'return ' + fn.toString()
-        /** @cut */   .replace(/(foo|bar|baz)/g, function(m, w){
-        /** @cut */      return '"' + parts[w == 'foo' ? 0 : (w == 'bar' ? 1 : 2)] + '"';
-        /** @cut */    })
-        /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))(parts);
+        result = function(value){
+          return wrapper(self(value));
+        };
+      }
+      else
+      {
+        // theat non-function/non-string values as maps
+        var map = path;
 
-        return fn;
+        if (!map)
+          return nullGetter;
+
+        result = function(value){
+          return map[self(value)];
+        };
       }
 
-      // for cases when path isn't a property name chain
+      /** @cut */ result[PARENT] = self;
+      result[ID] = getterSeed++;
+      result[SOURCE] = path;
+      result.__extend__ = getter;
+      result.as = as;
+
+      // cache function/string getters only
+      if (id)
+        self[id] = result;
+
+      return result;
+    }
+
+    function buildFunction(path){
       return new Function('object', 'return object != null ? object.' + path + ' : object');
     }
 
-    var getterFn = function(path, modificator){
-      var func;
+    function resolveFunction(value, id){
+      var fn = value;
       var result;
-      var getterId;
 
-      // return nullGetter if no path or nullGetter passed
-      if (!path || path === nullGetter)
+      if (value && typeof value == 'string')
+      {
+        if (hasOwnProperty.call(pathCache, value))
+          return pathCache[value];
+
+        fn = pathCache[value] = buildFunction(value);
+      }
+
+      if (typeof fn != 'function')
+      {
+        /** @cut */ basis.dev.warn('path for root getter should be function or non-empty string');
         return nullGetter;
-
-      // resolve getter by path
-      if (typeof path == 'function')
-      {
-        getterId = path[ID];
-
-        // path is function
-        if (getterId)
-        {
-          // this function used for getter before
-          func = getterMap[Math.abs(getterId) - 1];
-        }
-        else
-        {
-          // this function never used for getter before, wrap and cache it
-
-          // wrap function to prevent function properties rewrite
-          func = function(object){
-            return path(object);
-          };
-          func.base = path;
-          func.__extend__ = getter;
-
-          // add to cache
-          getterId = getterMap.push(func);
-          path[ID] = -getterId;
-          func[ID] = getterId;
-        }
-      }
-      else
-      {
-        // thread path as string, search in cache
-        func = pathCache[path];
-
-        if (func)
-        {
-          // resolve getter id
-          getterId = func[ID];
-        }
-        else
-        {
-          // create getter function
-          func = buildFunction(path);
-          func.base = path;
-          func.__extend__ = getter;
-
-          // add to cache
-          getterId = getterMap.push(func);
-          func[ID] = getterId;
-          pathCache[path] = func;
-        }
       }
 
-      // resolve getter with modificator
-      var modType = modificator != null && typeof modificator;
+      // if function is getter return it
+      if (fn.__extend__ === getter)
+        return fn;
 
-      // if no modificator, return func
-      if (!modType)
-        return func;
+      // check function cache for getter
+      if (hasOwnProperty.call(fn, id))
+        return fn[id];
 
-      var modList = modCache[getterId];
-      var modId;
-
-      // resolve modificator id if possible
-      if (modType == 'string')
-        modId = modType + modificator;
-      else
-        if (modType == 'function')
-          modId = modificator.basisModId_;
-        else
-          if (modType != 'object')
-          {
-            // only string, function and objects are support as modificator
-            /** @cut */ consoleMethods.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
-
-            return func;
-          }
-
-      // try fetch getter from cache
-      if (modId && modList && modList[modId])
-        return modList[modId];
-
-      // recover original function, reduce functions call deep
-      if (typeof func.base == 'function')
-        func = func.base;
-
-      switch (modType)
-      {
-        case 'string':
-          result = function(object){
-            return stringFunctions.format(modificator, func(object));
+      // if no function, create new getter (function wrapper)
+      result = fn[id] = fn !== value
+        ? fn  // don't wrap getter from string
+        : function(value){
+            return fn(value);
           };
-          break;
 
-        case 'function':
-          if (!modId)
-          {
-            // mark function with modificator id
-            modId = modType + modificatorSeed++;
-            modificator.basisModId_ = modId;
-          }
-
-          result = function(object){
-            return modificator(func(object));
-          };
-          break;
-
-        default: //case 'object':
-          result = function(object){
-            return modificator[func(object)];
-          };
-      }
-
-      result.base = func.base || func;
+      result[ID] = getterSeed++;
+      result[SOURCE] = value;
       result.__extend__ = getter;
+      result.as = as;
 
-      // NOTE: Only object modificators has no modId. Therefore getters with object
-      // modificator are not caching. It avoid storing (by closure) object that
-      // can't be collected by GC.
-      if (modId)
+      return result;
+    }
+
+    function getter(path, value){
+      var result = path && path !== nullGetter
+        ? resolveFunction(path, GETTER_ID)
+        : nullGetter;
+
+      // backward capability
+      if (value || value === '')
       {
-        if (!modList)
-        {
-          // create new modificator list if it not exists yet
-          modList = {};
-          modCache[getterId] = modList;
-        }
+        /** @cut basis.js 1.4 */ basis.dev.warn('second argument for getter is deprecated, use `as` method of getter instead');
 
-        // cache getter with modificator
-        modList[modId] = result;
-        result.mod = modificator;
+        if (typeof value == 'string')
+          value = stringFunctions.formatter(value);
 
-        // cache new getter
-        result[ID] = getterMap.push(result);
+        return result.as(value);
       }
 
       return result;
-    };
+    }
 
-    getterFn.ID = ID;
+    getter.ID = ID;
+    getter.SOURCE = SOURCE;
+    getter.PARENT = PARENT;
 
-    return getterFn;
+    return getter;
   })();
 
-  var nullGetter = extend(function(){}, {
-    __extend__: getter
-  });
+  var nullGetter = (function(){
+    var nullGetter = function(){};
+    nullGetter[getter.ID] = getter.ID + 'nullGetter';
+    nullGetter.__extend__ = getter,
+    nullGetter.as = function(){
+      return nullGetter;
+    };
+    return nullGetter;
+  })();
 
 
  /**
@@ -638,6 +565,32 @@
   }
 
  /**
+  * Make factory function from getter.
+  * @param {function(value)|string} fn Base for getter.
+  * @return {function(value)} Factory function.
+  */
+  function factory(fn){
+    if (typeof fn != 'function')
+      fn = getter(fn);
+
+    var result = function(value){
+      return fn(value);
+    };
+    result.factory = FACTORY;
+
+    return result;
+  }
+
+ /**
+  * Check value is factory.
+  * @param {*} value Value to check
+  * @return {boolean} Returns true if value is factory.
+  */
+  function isFactory(value){
+    return typeof value === 'function' && value.factory === FACTORY;
+  }
+
+ /**
   * Generates name for function and registrates it in global scope.
   * @param {function()} fn Function that should available in global scope.
   * @param {boolean} permanent If false callback will be removed after fiest invoke.
@@ -647,12 +600,25 @@
     var name = 'basisjsCallback' + genUID();
 
     global[name] = permanent ? fn : function(){
-      delete global[name];
+      try {
+        // IE8 and lower can't delete from global
+        delete global[name];
+      } catch(e) {
+        global[name] = undefined;
+      }
+
       fn.apply(this, arguments);
     };
 
     return name;
   }
+
+ /**
+  * dev mode only
+  */
+  /** @cut */ function devVerboseName(name, args, fn){
+  /** @cut */   return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
+  /** @cut */ }
 
 
   // ============================================
@@ -660,6 +626,7 @@
   //
 
   var consoleMethods = (function(){
+    var console = global.console;
     var methods = {
       log: $undef,
       info: $undef,
@@ -667,7 +634,7 @@
       error: $undef
     };
 
-    if (typeof console != 'undefined')
+    if (console)
       iterate(methods, function(methodName){
         methods[methodName] = 'bind' in Function.prototype && typeof console[methodName] == 'function'
           ? Function.prototype.bind.call(console[methodName], console)
@@ -703,10 +670,9 @@
   if (!setImmediate)
   {
     (function(){
-      var MESSAGE_NAME = 'basisjs.setImmediate';
       var runTask = (function(){
         var taskById = {};
-        var taskId = 1;
+        var taskId = 0;
 
         // emulate setImmediate
         setImmediate = function(fn/*, ..args */){
@@ -727,19 +693,19 @@
         };
 
         // emulate clearImmediate
-        clearImmediate = function(id){
-          delete taskById[id];
+        clearImmediate = function(taskId){
+          delete taskById[taskId];
         };
 
         //
         // return result function for task run
         //
-        return function(id){
-          var task = taskById[id];
+        return function(taskId){
+          var task = taskById[taskId];
 
           if (task)
           {
-            delete taskById[id];
+            delete taskById[taskId];
             task.fn.apply(undefined, task.args);
           }
 
@@ -768,58 +734,64 @@
       }
       else
       {
-        if (global.MessageChannel)
-        {
-          var channel = new global.MessageChannel();
+        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+        // where `global.postMessage` means something completely different and can't be used for this purpose.
+        var postMessageSupported = global.postMessage && !global.importScripts;
 
-          channel.port1.onmessage = function(event){
-            var taskId = event.data;
-            runTask(taskId);
+        // IE8 has postMessage implementation, but it is synchronous and can't be used.
+        if (postMessageSupported)
+        {
+          var oldOnMessage = global.onmessage;
+          global.onmessage = function(){
+            postMessageSupported = false;
+          };
+          global.postMessage('', '*');
+          global.onmessage = oldOnMessage;
+        }
+
+        if (postMessageSupported)
+        {
+          // postMessage scheme
+          var taskIdByMessage = {};
+          var setImmediateHandler = function(event){
+            if (event && event.source == global)
+            {
+              var data = event.data;
+              if (hasOwnProperty.call(taskIdByMessage, data))
+              {
+                var taskId = taskIdByMessage[data];
+                delete taskIdByMessage[data];
+                runTask(taskId);
+              }
+            }
           };
 
+          if (global.addEventListener)
+            global.addEventListener('message', setImmediateHandler, true);
+          else
+            global.attachEvent('onmessage', setImmediateHandler);
+
+          // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
+          // invoking our onGlobalMessage listener above.
           addToQueue = function(taskId){
-            channel.port2.postMessage(taskId);
+            var message = genUID(32);
+            taskIdByMessage[message] = taskId;
+            global.postMessage(message, '*');
           };
         }
         else
         {
-          // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-          // where `global.postMessage` means something completely different and can't be used for this purpose.
-          var postMessageSupported = global.postMessage && !global.importScripts;
-
-          // IE8 has postMessage implementation, but it is synchronous and can't be used.
-          if (postMessageSupported)
+          //
+          if (global.MessageChannel)
           {
-            var oldOnMessage = global.onmessage;
-            global.onmessage = function(){
-              postMessageSupported = false;
-            };
-            global.postMessage('', '*');
-            global.onmessage = oldOnMessage;
-          }
+            var channel = new global.MessageChannel();
 
-          if (postMessageSupported)
-          {
-            // postMessage scheme
-            var setImmediateHandler = function(event){
-              if (event && event.source == global)
-              {
-                var taskId = String(event.data).split(MESSAGE_NAME)[1];
-
-                if (taskId)
-                  runTask(taskId);
-              }
+            channel.port1.onmessage = function(event){
+              runTask(event.data);
             };
 
-            if (global.addEventListener)
-              global.addEventListener('message', setImmediateHandler, true);
-            else
-              global.attachEvent('onmessage', setImmediateHandler);
-
-            // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
-            // invoking our onGlobalMessage listener above.
             addToQueue = function(taskId){
-              global.postMessage(MESSAGE_NAME + taskId, '*');
+              channel.port2.postMessage(taskId);
             };
           }
           else
@@ -876,18 +848,15 @@
     var processing = false;
     var timer;
 
-    function process(){
-      // if any timer - reset it
-      if (timer)
-        timer = clearImmediate(timer);
-
+    // run process queue function only if any task
+    // as try/finally doesn't optimize
+    function processQueue(){
       try {
-        var item;
-
         // mark queue as processing to avoid concurrency
         processing = true;
 
         // process queue
+        var item;
         while (item = queue.shift())
           item.fn.call(item.context);
       } finally {
@@ -899,6 +868,16 @@
         if (queue.length)
           timer = setImmediate(process);
       }
+    }
+
+    function process(){
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
+
+      // process queue only if any task
+      if (queue.length)
+        processQueue();
     }
 
    /**
@@ -937,7 +916,71 @@
         process();
     };
 
+   /**
+    * Returns schedule instance. Object queue for which scheduleFn should be apply asap.
+    * @return
+    */
+    asap.schedule = (function(scheduleFn){
+      var queue = {};
+      var scheduled = false;
+
+      function process(){
+        // set timer to make sure all objects be processed
+        // it helps avoid try/catch and process all objects even if any exception
+        var etimer = setImmediate(process);
+
+        // reset scheduled flag, make possible set new asap for objects added during queue processing
+        scheduled = false;
+
+        // process objects
+        for (var id in queue)
+        {
+          var object = queue[id];
+          delete queue[id];
+          scheduleFn(object);
+        }
+
+        // if no exceptions we will be here, reset emergency timer
+        clearImmediate(etimer);
+
+        // reset queue to keep it fast, but if no new task scheduled during queue processing
+        if (!scheduled)
+          queue = {};
+      }
+
+      return {
+        add: function(object){
+          queue[object.basisObjectId] = object;
+          if (!scheduled)
+            scheduled = basis.asap(process);
+        },
+        remove: function(object){
+          delete queue[object.basisObjectId];
+        }
+      };
+    });
+
     return asap;
+  })();
+
+
+  //
+  // Code frame
+  //
+  var codeFrame = (function(){
+    var count = 0;
+    var info = {
+      id: count,
+      start: function(){
+        info.id = count++;
+      },
+      finish: function(){
+        asap.process();
+        info.id = 'unknown';
+      }
+    };
+
+    return info;
   })();
 
 
@@ -1109,11 +1152,10 @@
       *   basis.path.resolve('foo', 'bar/baz/', '../gif/image.gif');
       *   // if current location is /demo, it returns '/demo/foo/bar/gif/image.gif'
       *
-      * @param {..string=} from
-      * @param {string} to
+      * @param {...string=} paths
       * @return {string}
       */
-      resolve: function(from, to){
+      resolve: function(){
         var args = arrayFrom(arguments).reverse();
         var path = [];
         var absoluteFound = false;
@@ -1215,7 +1257,7 @@
       if (NODE_ENV)
       {
         // node.js env
-        basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
+        basisFilename = process.basisjsFilename;
 
         /** @cut */ if (process.basisjsConfig)
         /** @cut */ {
@@ -1272,7 +1314,7 @@
   *
   * Other options copy into basis.config as is.
   */
-  function processConfig(config, verbose){
+  function processConfig(config){
     // make a copy of config
     config = slice(config);
 
@@ -1479,14 +1521,6 @@
       return cursor === superClass;
     }
 
-   /**
-    * dev mode only
-    */
-    function devVerboseName(name, args, fn){
-      return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
-    }
-
-
     // test is toString property enumerable
     var TOSTRING_BUG = (function(){
       for (var key in { toString: 1 })
@@ -1498,10 +1532,10 @@
    /**
     * Class constructor.
     * @param {function()} SuperClass Class that new one inherits of.
-    * @param {...object} extensions Objects that extends new class prototype.
+    * @param {...(object|function())} extensions Objects that extends new class prototype.
     * @return {function()} A new class.
     */
-    function createClass(SuperClass, extensions){
+    function createClass(SuperClass){
       var classId = classSeed++;
 
       if (typeof SuperClass != 'function')
@@ -1696,10 +1730,9 @@
    /**
     * @param {object} extension
     * @param {function()=} fn
-    * @param {string} devName Dev only
     * @return {object}
     */
-    var customExtendProperty = function(extension, fn, devName){
+    var customExtendProperty = function(extension, fn){
       return {
         __extend__: function(extension){
           if (!extension)
@@ -1709,7 +1742,7 @@
             return extension;
 
           var Base = function(){};
-          /** @cut verbose name in dev */ Base = devVerboseName(devName || 'customExtendProperty', {}, Base);
+          /** @cut verbose name in dev */ Base = devVerboseName(arguments[2] || 'customExtendProperty', {}, Base);
           Base.prototype = this;
 
           var result = new Base;
@@ -1738,12 +1771,17 @@
     var nestedExtendProperty = function(extension){
       return customExtendProperty(extension, function(result, extension){
         for (var key in extension)
-        {
-          var value = result[key];
-          result[key] = value && value.__extend__
-            ? value.__extend__(extension[key])
-            : extensibleProperty(extension[key]);
-        }
+          if (hasOwnProperty.call(extension, key))
+          {
+            var value = result[key];
+            var newValue = extension[key];
+            if (newValue)
+              result[key] = value && value.__extend__
+                ? value.__extend__(newValue)
+                : extensibleProperty(newValue);
+            else
+              result[key] = null;
+          }
       }, 'nestedExtendProperty');
     };
 
@@ -1769,7 +1807,7 @@
           /** @cut */ result.__extend__ = create;
 
           for (var key in keys)
-            if (keys[key])
+            if (hasOwnProperty.call(keys, key) && keys[key])
               result[key] = fn;
         }
 
@@ -1951,6 +1989,9 @@
         this.set(fn.call(this, value));
       };
 
+      if (typeof fn != 'function')
+        fn = getter(fn);
+
       setter.call(token, this.get());
 
       this.attach(setter, token, token.destroy);
@@ -1991,32 +2032,9 @@
   // Deferred token
   //
 
-  var awaitToApply = (function(){
-    var tokens = {};
-    var timer;
-
-    function applyTokens(){
-      var list = tokens;
-
-      // reset list & timer
-      tokens = {};
-      timer = null;
-
-      // call apply method for all tokens in the list
-      for (var key in list)
-        list[key].apply();
-    }
-
-    return function(token){
-      if (token.basisObjectId in tokens)
-        return;
-
-      tokens[token.basisObjectId] = token;
-
-      if (!timer)
-        setImmediate(applyTokens);
-    };
-  })();
+  var deferredTokenApplyQueue = asap.schedule(function(token){
+    token.apply();
+  });
 
  /**
   * @class
@@ -2032,7 +2050,7 @@
       if (this.value !== value)
       {
         this.value = value;
-        awaitToApply(this);
+        deferredTokenApplyQueue.add(this);
       }
     },
 
@@ -2050,6 +2068,7 @@
   //
 
   var resources = {};
+  var resourceRequestCache = {};
   var resourceContentCache = {};
   var resourcePatch = {};
   var virtualResourceSeed = 1;
@@ -2085,7 +2104,7 @@
       }
   }
 
-  var resolveResourceUri = function(url, baseURI, clr){
+  var resolveResourceFilename = function(url, baseURI){
     var rootNS = url.match(/^([a-zA-Z0-9\_\-]+):/);
 
     if (rootNS)
@@ -2099,11 +2118,14 @@
     }
     else
     {
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+      /** @cut */ {
+      /** @cut */   var clr = arguments[2];
+      /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '.\nFilenames should starts with `./`, `..` or `/`. Otherwise it may treats as special reference in next releases.');
+      /** @cut */ }
+
       url = pathUtils.resolve(baseURI, url);
     }
-
-    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
-    /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '.\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
 
     return url;
   };
@@ -2115,7 +2137,7 @@
 
       if (!NODE_ENV)
       {
-        var req = new XMLHttpRequest();
+        var req = new global.XMLHttpRequest();
         req.open('GET', url, false);
         // set if-modified-since header since begining prevents cache using;
         // otherwise browser could never ask server for new file content
@@ -2155,7 +2177,7 @@
     var isVirtual = arguments.length > 1;
     var resolved = false;
     var wrapped = false;
-    /** @cut */ var wrappedContent;
+    var wrappedContent;
 
     if (isVirtual)
       resourceUrl += '#virtual';
@@ -2288,6 +2310,7 @@
 
     // cache it
     resources[resourceUrl] = resource;
+    resourceRequestCache[resourceUrl] = resource;
 
     return resource;
   };
@@ -2295,15 +2318,16 @@
  /**
   * @name resource
   */
-  var getResource = function(url){
-    var resource = resources[url];
+  var getResource = function(url, baseURI){
+    var reference = baseURI ? baseURI + '\x00' + url : url;
+    var resource = resourceRequestCache[reference];
 
     if (!resource)
     {
-      var resolvedUrl = resolveResourceUri(url, null, 'basis.resource(\'{url}\')');
+      var resolvedUrl = resolveResourceFilename(url, baseURI, 'basis.resource(\'{url}\')');
 
       resource = resources[resolvedUrl] || createResource(resolvedUrl);
-      resources[url] = resource;
+      resourceRequestCache[reference] = resource;
     }
 
     // return resource or create it
@@ -2311,7 +2335,7 @@
   };
 
   extend(getResource, {
-    resolveURI: resolveResourceUri,
+    resolveURI: resolveResourceFilename,
     // onUpdate: function(fn, context){
     //   resourceUpdateNotifier.attach(fn, context);
     // },
@@ -2324,10 +2348,10 @@
       return resource ? resource.isResolved() : false;
     },
     exists: function(resourceUrl){
-      return hasOwnProperty.call(resources, resolveResourceUri(resourceUrl, null, 'basis.resource.exists(\'{url}\')'));
+      return hasOwnProperty.call(resources, resolveResourceFilename(resourceUrl, null, 'basis.resource.exists(\'{url}\')'));
     },
     get: function(resourceUrl){
-      resourceUrl = resolveResourceUri(resourceUrl, null, 'basis.resource.get(\'{url}\')');
+      resourceUrl = resolveResourceFilename(resourceUrl, null, 'basis.resource.get(\'{url}\')');
 
       if (!getResource.exists(resourceUrl))
         return null;
@@ -2357,7 +2381,7 @@
         if (!namespace)
         {
           var implicitNamespace = true;
-          var resolvedFilename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
+          var resolvedFilename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename))).replace(/^\/\//, '/');
 
           for (var ns in nsRootPath)
           {
@@ -2394,6 +2418,7 @@
           module.exports = ns.exports;
 
           ns.exports = runScriptInContext(module, filename, content).exports;
+          module.exports = ns.exports;
 
           if (ns.exports && ns.exports.constructor === Object)
           {
@@ -2422,7 +2447,7 @@
           /** @cut */ requires = savedRequires;
         }
 
-        return namespaces[namespace].exports;
+        return namespaces[namespace];
       }, {
         permanent: true
       }),
@@ -2436,7 +2461,7 @@
         return cssResource;
       },
 
-      '.json': function processJsonResourceContent(content, url){
+      '.json': function processJsonResourceContent(content){
         if (typeof content == 'object')
           return content;
 
@@ -2445,6 +2470,7 @@
           content = String(content);
           result = basis.json.parse(content);
         } catch(e) {
+          /** @cut */ var url = arguments[1];
           /** @cut */ consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
         }
         return result || null;
@@ -2493,7 +2519,7 @@
   }
 
   var runScriptInContext = function(context, sourceURL, sourceCode){
-    var baseURL = pathUtils.dirname(sourceURL) + '/';
+    var baseURL = pathUtils.dirname(sourceURL);
     var compiledSourceCode = sourceCode;
 
     if (!context.exports)
@@ -2518,13 +2544,13 @@
         sourceURL,
         baseURL,
         function(path){
-          return getResource(resolveResourceUri(path, baseURL, 'resource(\'{url}\')'));
-        },
-        function(path, base){
-          return requireNamespace(path, base || baseURL);
+          return getResource(path, baseURL);
         },
         function(path){
-          return resolveResourceUri(path, baseURL, 'asset(\'{url}\')');
+          return requireNamespace(path, baseURL);
+        },
+        function(path){
+          return resolveResourceFilename(path, baseURL, 'asset(\'{url}\')');
         }
       );
     }
@@ -2601,7 +2627,7 @@
     {
       var parts = namespace.split('.');
       var namespaceRoot = parts.shift();
-      var filename = resolveResourceUri(namespaceRoot + ':' + parts.join('/') + '.js').replace(/\/\.js$/, '.js');
+      var filename = resolveResourceFilename(namespaceRoot + ':' + parts.join('/') + '.js').replace(/\/\.js$/, '.js');
 
       namespace2filename[namespace] = filename;
       filename2namespace[filename] = namespace;
@@ -2648,8 +2674,9 @@
     var rootNs = getRootNamespace(path[0]);
     var cursor = rootNs;
 
-    for (var i = 1, name; name = path[i]; i++)
+    for (var i = 1; i < path.length; i++)
     {
+      var name = path[i];
       var nspath = path.slice(0, i + 1).join('.');
 
       if (!hasOwnProperty.call(rootNs.namespaces_, nspath))
@@ -2684,27 +2711,31 @@
 
 
  /**
-  * @param {string} filename
-  * @param {string} dirname
+  * @param {string} path
+  * @param {string} baseURI
   * @name require
   */
-  var requireNamespace = function(filename, dirname){
-    if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
+  var requireNamespace = function(path, baseURI){
+    if (!/[^a-z0-9_\.]/i.test(path) && pathUtils.extname(path) != '.js')
     {
       // namespace, like 'foo.bar.baz'
-      filename = resolveNSFilename(filename);
+      path = resolveNSFilename(path);
     }
     else
     {
-      // regular filename
-      filename = resolveResourceUri(filename, dirname, 'require(\'{url}\')');
+      // resolve filename, but not for path with # or ? (used by virtual resources)
+      if (!/[\?#]/.test(path))
+        path = resolveResourceFilename(path, baseURI, 'basis.require(\'{url}\')');
     }
 
-    return getResource(filename).fetch();
+    return getResource(path).fetch();
   };
   /** @cut */ requireNamespace.displayName = 'basis.require';
 
-
+ /**
+  * @param {string} filename
+  * @param {function} patchFn
+  */
   function patch(filename, patchFn){
     if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
     {
@@ -2714,7 +2745,7 @@
     else
     {
       // regular filename
-      filename = resolveResourceUri(filename, null, 'basis.patch(\'{url}\')');
+      filename = resolveResourceFilename(filename, null, 'basis.patch(\'{url}\')');
     }
 
     if (!resourcePatch[filename])
@@ -3031,6 +3062,7 @@
 
   var ESCAPE_FOR_REGEXP = /([\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$])/g;
   var FORMAT_REGEXP = /\{([a-z\d_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
+  var stringFormatCache = {};
 
   complete(String, {
     toLowerCase: function(value){
@@ -3111,6 +3143,27 @@
         }
       );
     },
+    formatter: function(formatString){
+      formatString = String(formatString);
+
+      if (hasOwnProperty.call(stringFormatCache, formatString))
+        return stringFormatCache[formatString];
+
+      var formatter = function(value){
+        return stringFunctions.format(formatString, value);
+      };
+
+      // verbose dev
+      /** @cut */ var escapsedFormatString = '"' + formatString.replace(/"/g, '\\"') + '"';
+      /** @cut */ formatter = new Function('stringFunctions', 'return ' + formatter.toString().replace('formatString', escapsedFormatString))(stringFunctions);
+      /** @cut */ formatter.toString = function(){
+      /** @cut */   return 'basis.string.formatter(' + escapsedFormatString + ')';
+      /** @cut */ };
+
+      stringFormatCache[formatString] = formatter;
+
+      return formatter;
+    },
     capitalize: function(this_){
       return this_.charAt(0).toUpperCase() + this_.substr(1).toLowerCase();
     },
@@ -3144,7 +3197,7 @@
     var nativeStringSplit = String.prototype.split;
     String.prototype.split = function(pattern, count){
       if (!pattern || pattern instanceof RegExp == false || pattern.source == '')
-        return nativeStringSplit.apply(this, arguments);
+        return nativeStringSplit.call(this, pattern, count);
 
       var result = [];
       var pos = 0;
@@ -3284,7 +3337,7 @@
       asap.process();
     }
 
-    function fireHandlers(e){
+    function fireHandlers(){
       if (!eventFired++)
         processReadyHandler();
     }
@@ -3338,6 +3391,29 @@
       // add handler to queue
       readyHandlers.push([callback, context]);
     };
+  })();
+
+ /**
+  * Add handler on sandbox teardown.
+  * @param {function()} callback
+  * @param {*=} context
+  */
+  var teardown = (function(){
+    if ('addEventListener' in global)
+      return function(callback, context){
+        global.addEventListener('unload', function(event){
+          callback.call(context || null, event || global.event);
+        }, false);
+      };
+
+    if ('attachEvent' in global)
+      return function(callback, context){
+        global.attachEvent('onunload', function(event){
+          callback.call(context || null, event || global.event);
+        });
+      };
+
+    return $undef;
   })();
 
 
@@ -3456,8 +3532,8 @@
   var cleaner = (function(){
     var objects = [];
 
-    function destroy(log){
-      /** @cut */ var logDestroy = log && typeof log == 'boolean';
+    function destroy(){
+      /** @cut */ var logDestroy = arguments[0] === true;
       result.globalDestroy = true;
       result.add = $undef;
       result.remove = $undef;
@@ -3480,19 +3556,17 @@
             object[prop] = null;
         }
       }
-      objects.length = 0;
+      objects = [];
     }
 
-    if ('attachEvent' in global)
-      global.attachEvent('onunload', destroy);
-    else
-      if ('addEventListener' in global)
-        global.addEventListener('unload', destroy, false);
-      else
-        return {
-          add: $undef,
-          remove: $undef
-        };
+    // returns interfaces that does nothing if unload is not supported
+    if (teardown === $undef)
+      return {
+        add: $undef,
+        remove: $undef
+      };
+
+    teardown(destroy);
 
     var result = {
       add: function(object){
@@ -3694,7 +3768,7 @@
     require: requireNamespace,
     resource: getResource,
     asset: function(path){
-      return resolveResourceUri(path, null, 'basis.asset(\'{url}\')');
+      return resolveResourceFilename(path, null, 'basis.asset(\'{url}\')');
     },
 
     // timers
@@ -3706,20 +3780,26 @@
     asap: asap,
 
     // classes
+    FACTORY: FACTORY,
+    PROXY: PROXY,
     Class: Class,
     Token: Token,
     DeferredToken: DeferredToken,
 
+    // life cycle
+    codeFrame: codeFrame,
+    ready: ready,
+    teardown: teardown,
+    cleaner: cleaner,
+
     // util functions
     genUID: genUID,
     getter: getter,
-    ready: ready,
-
-    cleaner: cleaner,
     console: consoleMethods,
     path: pathUtils,
     doc: documentInterface,
 
+    // types utils
     object: {
       extend: extend,
       complete: complete,
@@ -3751,6 +3831,8 @@
       getter: getter,
       nullGetter: nullGetter,
       wrapper: wrapper,
+      factory: factory,
+      isFactory: isFactory,
 
       // callbacks
       lazyInit: lazyInit,

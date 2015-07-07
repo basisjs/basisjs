@@ -1,15 +1,32 @@
 
   .Basis-Tab
   {
+    float: left;
     font-size: 85%;
     margin: 0;
     border: 1px solid #898C95;
+    border-bottom: none;
     cursor: pointer;
     color: black;
     background-color: #F3F3F3;
     background-image: url(res/not_active_border.gif);
     background-repeat: repeat-x;
   }
+  .Basis-Tab__selected
+  {
+    margin: -2px -2px -1px -2px;
+    cursor: default;
+    position: relative;
+    z-index: 100;
+    background-image: none;
+    background-color: white;
+  }
+  .Basis-Tab__disabled
+  {
+    color: #A0A0A0;
+    cursor: default;
+  }
+
   .Basis-Tab-Content
   {
     display: block;
@@ -20,14 +37,20 @@
     background-image: url(res/not_active_bg.gif);
     background-repeat: repeat-x;
   }
+  .Basis-Tab-Content__selected
+  {
+    padding: .1em 8px .2em 8px;
+    background-color: white;
+    background-image: none;
+    border-top-color: white;
+  }
+
   .Basis-Tab-Caption
   {
     white-space: nowrap;
     display: block;
   }
-
-  .Basis-Tab__disabled
+  .Basis-Tab-Caption__selected
   {
-    color: #A0A0A0;
-    cursor: default;
+    padding-bottom: 3px;
   }

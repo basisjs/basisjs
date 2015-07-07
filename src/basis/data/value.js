@@ -15,12 +15,11 @@
 
   // import names
 
-  var getter = basis.getter;
   var cleaner = basis.cleaner;
-
   var basisData = require('basis.data');
   var AbstractData = basisData.AbstractData;
   var Value = basisData.Value;
+  var ReadOnlyValue = basisData.ReadOnlyValue;
   var STATE = basisData.STATE;
 
 
@@ -69,41 +68,9 @@
     }
   };
 
-  var objectSetUpdater = (function(){
-    var objects = {};
-    var sheduled = false;
-
-    function process(){
-      // set timer to make sure all objects be processed
-      // it helps avoid try/catch and process all objects even if any exception
-      var etimer = basis.setImmediate(process);
-
-      // reset shedule, to add new expressions
-      sheduled = false;
-
-      // process objects
-      for (var id in objects)
-      {
-        var object = objects[id];
-        delete objects[id];
-        object.update();
-      }
-
-      // if no exceptions we will be here, reset emergency timer
-      basis.clearImmediate(etimer);
-    }
-
-    return {
-      add: function(object){
-        objects[object.basisObjectId] = object;
-        if (!sheduled)
-          sheduled = basis.asap(process);
-      },
-      remove: function(object){
-        delete objects[object.basisObjectId];
-      }
-    };
-  })();
+  var objectSetUpdater = basis.asap.schedule(function(object){
+    object.update();
+  });
 
  /**
   * @class
@@ -320,7 +287,7 @@
  /**
   * @class
   */
-  var Expression = Value.subclass({
+  var Expression = ReadOnlyValue.subclass({
     className: namespace + '.Expression',
 
     calc_: null,
@@ -329,7 +296,7 @@
     // use custom constructor
     extendConstructor_: false,
     init: function(/* [[value,] value, ..] calc */){
-      Value.prototype.init.call(this);
+      ReadOnlyValue.prototype.init.call(this);
 
       var count = arguments.length - 1;
       var calc = arguments[count];
@@ -358,17 +325,13 @@
       Value.prototype.set.call(this, this.calc_.apply(null, this.values_.map(BBVALUE_GETTER)));
     },
 
-    // expressions are read only
-    set: function(){
-    },
-
     destroy: function(){
       objectSetUpdater.remove(this);
 
       for (var i = 0, value; value = this.values_[i]; i++)
         value.bindingBridge.detach(value, EXPRESSION_BBVALUE_HANDLER, this);
 
-      Value.prototype.destroy.call(this);
+      ReadOnlyValue.prototype.destroy.call(this);
     }
   });
 

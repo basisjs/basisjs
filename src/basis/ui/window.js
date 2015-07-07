@@ -11,6 +11,7 @@
   // import names
   //
 
+  var document = global.document;
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
   var resolveValue = require('basis.data').resolveValue;
@@ -97,7 +98,8 @@
 
     dde: null,
 
-    title: dict.token('emptyTitle'),
+    title: '',
+    titleRA_: null,
 
     template: module.template('Window'),
     binding: {
@@ -107,6 +109,12 @@
     },
     action: {
       close: function(){
+        if (this.visibleRA_)
+        {
+          /** @cut */ basis.dev.warn('`visible` property is under bb-value and can\'t be changed by user action. Override `close` action to make your logic working.');
+          return;
+        }
+
         this.close();
       },
       mousedown: function(){
@@ -117,7 +125,7 @@
         {
           case event.KEY.ESCAPE:
             if (this.closeOnEscape)
-              this.close();
+              this.action.close.call(this, event);
             break;
 
           case event.KEY.ENTER:
@@ -147,13 +155,13 @@
         existsIf: function(owner){
           return !owner.titleButton || owner.titleButton.close !== false;
         },
-        satelliteClass: Node.subclass({
+        instance: Node.subclass({
           className: namespace + '.TitleButton',
 
           template: module.template('TitleButton'),
           action: {
-            close: function(){
-              this.owner.close();
+            close: function(event){
+              this.owner.action.close.call(this.owner, event);
             }
           }
         })
@@ -162,6 +170,8 @@
 
     init: function(){
       Node.prototype.init.call(this);
+
+      this.setTitle(this.title || dict.token('emptyTitle'));
 
       // make window moveable
       if (this.moveable)
@@ -205,12 +215,11 @@
       /** @deprecated 1.4 */
       /** @cut */ if (this.closed !== true)
       /** @cut */   basis.dev.warn(namespace + '.Window: `closed` property can\'t be set on create and deprecated (use `visible` instead)');
+      /** @cut */ this.closed = true;
       /** @cut */ basis.dev.warnPropertyAccess(this, 'closed', true, namespace + '.Window: `closed` property is deprecated, use `visible` instead');
 
       var visible = this.visible;
-
       this.visible = false;
-      this.closed = true;
 
       if (visible)
       {
@@ -223,11 +232,20 @@
       }
     },
     setTitle: function(title){
-      this.title = title;
-      this.updateBind('title');
+      title = resolveValue(this, this.setTitle, title, 'titleRA_');
+
+      if (this.title != title)
+      {
+        this.title = title;
+
+        // for backward capability
+        if (this.tmpl)
+          this.updateBind('title');
+      }
     },
     templateSync: function(){
       var style;
+
       if (!this.autocenter && this.element.nodeType == 1)
         style = basis.object.slice(this.element.style, ['left', 'top', 'margin']);
 
@@ -308,15 +326,30 @@
         this.realign();
     },
     open: function(){
+      if (this.visibleRA_)
+      {
+        /** @cut */ basis.dev.warn('`visible` property is under bb-value and can\'t be changed by `open()` method. Use `setVisible()` instead.');
+        return false;
+      }
+
       this.setVisible(true);
     },
     close: function(){
+      if (this.visibleRA_)
+      {
+        /** @cut */ basis.dev.warn('`visible` property is under bb-value and can\'t be changed by `close()` method. Use `setVisible()` instead.');
+        return false;
+      }
+
       this.setVisible(false);
     },
     destroy: function(){
       // NOTE: no resolveValue required, as on this.setVisible(false)
       // resolve adapter will be destroyed
-      this.close();
+      this.setVisible(false);
+
+      if (this.titleRA_)
+        resolveValue(this, null, null, 'titleRA_');
 
       if (this.dde)
       {

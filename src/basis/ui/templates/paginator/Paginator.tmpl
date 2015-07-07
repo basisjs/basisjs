@@ -1,11 +1,9 @@
 
   <b:style src="./Paginator.css"/>
-  <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
   <b:define name="noScroll" type="bool"/>
   <b:define name="outOfRange" type="bool"/>
 
-	<div class="Basis-Paginator Basis-Paginator-{noScroll} {selected} {disabled}" event-mousewheel="scroll">
+	<div class="Basis-Paginator Basis-Paginator-{noScroll}" event-mousewheel="scroll">
     <table>
       <tbody>
         <tr{childNodesElement}/>

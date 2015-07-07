@@ -3,14 +3,6 @@
   * @namespace basis.ua
   */
 
-  var namespace = this.path;
-
-
-  //
-  // main part
-  //
-
-  var document = global.document;
   var userAgent = (global.navigator && global.navigator.userAgent) || '';
   var opera = global.opera;
   var versions = {};

@@ -14,7 +14,7 @@ function createDictionaryFileContent(data){
   var dictionaryData = {};
 
   if (data.tokenTypes)
-    dictionaryData['_meta'] = {
+    dictionaryData._meta = {
       type: data.tokenTypes
     };
 

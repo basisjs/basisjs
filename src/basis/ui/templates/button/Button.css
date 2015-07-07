@@ -79,13 +79,9 @@
     /*-ms-filter: "progid:DXImageTransform.Microsoft.Gradient(GradientType=0,StartColorStr=#F2F2F2,EndColorStr=#CFCFCF)";*/
 
     /* 1px inset border */
-      -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
-      -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
 
     border: 1px solid #C0C0C0;
-      -webkit-border-radius: 2px;
-      -moz-border-radius: 2px;
     border-radius: 2px;
 
     /* animation */
@@ -117,8 +113,6 @@
   .Basis-Button:focus .Basis-Button-Back
   {
     border-color: #888;
-      -webkit-box-shadow: 0 0 3px 1px #B7D9FE inset;
-      -moz-box-shadow: 0 0 3px 1px #B7D9FE inset;
     box-shadow: 0 0 3px 1px #B7D9FE inset;
   }
 
@@ -126,9 +120,6 @@
   {
     background-color: #BCD7F2;
     border-color: #888;
-
-      -webkit-box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;
-      -moz-box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;
     box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;
   }
 
@@ -142,8 +133,5 @@
   {
     background-color: #F4F4F4;
     border-color: #C0C0C0;
-
-      -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
-      -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
   }

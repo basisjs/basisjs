@@ -1,4 +1,4 @@
-.app-toc-item
+.item
 {
   padding: .2em .2em .2em 1em;
   background: #F8F8F8;
@@ -6,7 +6,7 @@
   cursor: pointer;
 }
 
-.app-toc-item:hover
+.item:hover
 {
   background: gold;
 }

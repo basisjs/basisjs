@@ -10,14 +10,15 @@
   // import names
   //
 
+  var document = global.document;
   var Class = basis.Class;
   var cleaner = basis.cleaner;
   var path = basis.path;
-  var arrayAdd = basis.array.add;
-  var arrayRemove = basis.array.remove;
   var consts = require('basis.template.const');
+  var DECLARATION_VERSION = require('basis.template.declaration').VERSION;
   var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
   var makeDeclaration = require('basis.template.declaration').makeDeclaration;
+  var store = require('basis.template.store');
   var theme = require('basis.template.theme');
   var getSourceByPath = theme.get;
 
@@ -25,8 +26,6 @@
   //
   // Main part
   //
-
-  var DECLARATION_VERSION = 3;
 
   var templateList = [];
 
@@ -60,7 +59,7 @@
         source = host.textContent || host.text;
       /** @cut */ else
       /** @cut */   if (!host)
-      /** @cut */     basis.dev.warn('Template script element with id `' + id + '` not found');
+      /** @cut */     basis.dev.warn('Template script element with id `' + sourceId + '` not found');
       /** @cut */   else
       /** @cut */     basis.dev.warn('Template should be declared in <script type="text/basis-template"> element (id `' + sourceId + '`)');
 
@@ -123,16 +122,16 @@
 
     // make functions and assign to template
     var destroyBuilder = this.destroyBuilder;
-    var funcs = this.builder(declaration.tokens, this);
+    var instances = {};
+    var funcs = this.builder(declaration.tokens, instances);
     this.createInstance = funcs.createInstance;
     this.clearInstance = funcs.destroyInstance;
     this.destroyBuilder = funcs.destroy;
-    this.getBinding = function(){
-      return { names: funcs.keys };
-    };
+
+    store.add(this.templateId, this, instances);
 
     // for debug purposes only
-    /** @cut */ this.instances_ = funcs.instances_;
+    /** @cut */ this.instances_ = instances;
     /** @cut */ this.decl_ = declaration;
 
 
@@ -312,16 +311,11 @@
       return this.createInstance(object, actionCallback, updateCallback, bindings, bindingInterface);
     },
 
-    getBinding: function(bindings){
-      buildTemplate.call(this);
-      return this.getBinding(bindings);
-    },
-
    /**
     * Remove reference from DOM structure
     * @param {object=} tmpl Storage of DOM references.
     */
-    clearInstance: function(tmpl){
+    clearInstance: function(/*tmpl*/){
     },
 
    /**
@@ -358,7 +352,7 @@
                 source = getSourceByPath(source);
                 break;
               default:
-                /** @cut */ basis.dev.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.');
+                /** @cut */ basis.dev.warn(namespace + '.Template.setSource: Unknown prefix ' + m[1] + ' for template source was ingnored.');
             }
           }
         }
@@ -389,11 +383,13 @@
 
     destroy: function(){
       if (this.destroyBuilder)
+      {
+        store.remove(this.templateId);
         this.destroyBuilder();
+      }
 
       this.attaches_ = null;
       this.createInstance = null;
-      this.getBinding = null;
       this.resources = null;
       this.source = null;
 
@@ -461,14 +457,22 @@
 
  /**
   * Helper to create TemplateSwitchConfig instance
+  * @param {string|string[]} events
+  * @param {function()} rule
   */
   function switcher(events, rule){
-    var args = basis.array(arguments);
-    var rule = args.pop();
+    if (!rule)
+    {
+      rule = events;
+      events = null;
+    }
+
+    if (typeof events == 'string')
+      events = events.split(/\s+/);
 
     return new TemplateSwitchConfig({
       rule: rule,
-      events: args.join(' ').trim().split(/\s+/)
+      events: events
     });
   }
 
@@ -512,8 +516,8 @@
     CLASS_BINDING_ENUM: consts.CLASS_BINDING_ENUM,
     CLASS_BINDING_BOOL: consts.CLASS_BINDING_BOOL,
     ELEMENT_NAME: consts.ELEMENT_NAME,
-    ELEMENT_ATTRS: consts.ELEMENT_ATTRS,
-    ELEMENT_CHILDS: consts.ELEMENT_CHILDS,
+    ELEMENT_ATTRS: consts.ELEMENT_ATTRIBUTES_AND_CHILDREN, // for backward capability 2015-04-24
+    ELEMENT_ATTRIBUTES_AND_CHILDREN: consts.ELEMENT_ATTRIBUTES_AND_CHILDREN,
     TEXT_VALUE: consts.TEXT_VALUE,
     COMMENT_VALUE: consts.COMMENT_VALUE,
 
@@ -528,6 +532,15 @@
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     resolveResource: resolveResource, // TODO: remove
+    // for backward capability
+    // TODO: remove
+    /** @cut dev mode only */ getDebugInfoById: store.getDebugInfoById,
+    /** @cut dev mode only */ getTemplateCount: function(){
+    /** @cut dev mode only */   return templateList.length;
+    /** @cut dev mode only */ },
+    resolveTemplateById: store.resolveTemplateById,
+    resolveObjectById: store.resolveObjectById,
+    resolveTmplById: store.resolveTmplById,
 
     // theme
     Package: theme.Package,

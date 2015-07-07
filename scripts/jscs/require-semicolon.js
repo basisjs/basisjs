@@ -52,16 +52,10 @@ module.exports.prototype = {
             }
 
             // search for last token inside node
-            var token;
-            for (var i = file.getTokenPosByRangeStart(node.range[0]) + 1; i < tokens.length; i++) {
-                if (tokens[i].range[0] >= node.range[1]) {
-                    break;
-                }
-                token = tokens[i];
-            }
+            var token = file.getLastNodeToken(node);
 
             // check token is semicolon
-            if (!tokenIsPunctuator(token, ';')) {
+            if (!token || token.type !== 'Punctuator' || token.value !== ';') {
                 errors.add(
                     'Missing semicolon after statement',
                     (token || node).loc.end

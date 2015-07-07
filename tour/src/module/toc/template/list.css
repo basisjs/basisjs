@@ -1,13 +1,13 @@
-.app-toc-list
+.toc
 {
   float: right;
   width: 40%;
 }
-.app-toc-list H2
+.header
 {
   margin: 0 0 .5em;
 }
-.app-toc-list UL
+.items
 {
   list-style: none;
   padding: 0;

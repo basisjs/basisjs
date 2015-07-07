@@ -19,7 +19,7 @@
       refList: {
         existsIf: basis.getter('data.refs'),
         delegate: basis.fn.$self,
-        satelliteClass: Node.subclass({
+        instance: Node.subclass({
           template: resource('./template/tree/refList.tmpl'),
           binding: {
             refs: 'data:'
@@ -84,7 +84,7 @@
     satellite: {
       attributes: {
         existsIf: basis.getter('data.attrs'),
-        satelliteClass: Node.subclass({
+        instance: Node.subclass({
           template: '<span/>',
           childClass: TemplateTreeNode.Attribute
         }),
@@ -123,7 +123,6 @@
 
   // token types
   /** @const */ var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
-  /** @const */ var TYPE_ATTRIBUTE = basisTemplate.TYPE_ATTRIBUTE;
   /** @const */ var TYPE_TEXT = basisTemplate.TYPE_TEXT;
   /** @const */ var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
   /** @const */ var TYPE_ATTRIBUTE_CLASS = basisTemplate.TYPE_ATTRIBUTE_CLASS;
@@ -139,8 +138,7 @@
   /** @const */ var ATTR_VALUE = basisTemplate.ATTR_VALUE;
 
   /** @const */ var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
-  /** @const */ var ELEMENT_ATTRS = basisTemplate.ELEMENT_ATTRS;
-  /** @const */ var ELEMENT_CHILDS = basisTemplate.ELEMENT_CHILDS;
+  /** @const */ var ELEMENT_ATTRIBUTES_AND_CHILDREN = basisTemplate.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 
   /** @const */ var TEXT_VALUE = basisTemplate.TEXT_VALUE;
   /** @const */ var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
@@ -167,7 +165,7 @@
           var attrs = [];
           var attrNodes = [];
           var children = [];
-          for (var j = ELEMENT_ATTRS, t; t = token[j]; j++)
+          for (var j = ELEMENT_ATTRIBUTES_AND_CHILDREN, t; t = token[j]; j++)
             if (t[TOKEN_TYPE] == TYPE_ELEMENT || t[TOKEN_TYPE] == TYPE_TEXT || t[TOKEN_TYPE] == TYPE_COMMENT)
               children.push(t);
             else

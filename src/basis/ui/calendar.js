@@ -12,9 +12,6 @@
   //
 
   var Class = basis.Class;
-
-  var arrayFrom = basis.array.from;
-  var getter = basis.getter;
   var dateUtils = require('basis.date');
   var monthNumToRef = dateUtils.monthNumToAbbr;
   var createEvent = require('basis.event').create;
@@ -30,9 +27,6 @@
   var YEAR = 'year';
   var MONTH = 'month';
   var DAY = 'day';
-  var HOUR = 'hour';
-  var FORWARD = true;
-  var BACKWARD = false;
 
 
   //
@@ -115,7 +109,7 @@
       return period.periodStart.getFullYear();
     },
     quarter: function(period){
-      return dict.token('quarter');
+      return dict.token('quarter').token(Math.floor(period.periodStart.getMonth() / 3));
     },
     month: function(period){
       return dict.token('monthShort').token(monthNumToRef[period.periodStart.getMonth()]);
@@ -198,22 +192,22 @@
       before: {
         events: 'periodChanged',
         getter: function(node){
-          return node.parentNode && node.periodStart < node.parentNode.periodStart;
+          return node.parentNode ? node.periodStart < node.parentNode.periodStart : false;
         }
       },
       after: {
         events: 'periodChanged',
         getter: function(node){
-          return node.parentNode && node.periodEnd > node.parentNode.periodEnd;
+          return node.parentNode ? node.periodEnd > node.parentNode.periodEnd : false;
         }
       }
     },
     action: {
-      click: function(event){
+      click: function(){
         // FIXME: shouldn't access to parent
         var calendar = this.parentNode && this.parentNode.parentNode;
         if (calendar && !this.isDisabled())
-          calendar.templateAction('click', event, this);
+          calendar.selectNodeAction(this);
       }
     },
 
@@ -325,7 +319,7 @@
     selection: true,
 
     init: function(){
-      this.childNodes = getPeriods(this).map(function(period){
+      this.childNodes = getPeriods(this).map(function(){
         return {
           nodePeriodName: this.nodePeriodName
         };
@@ -563,7 +557,7 @@
 
     binding: {
       title: dict.token('quarter').compute('periodChanged', function(node){
-        return 1;  // todo: fix me
+        return Math.floor(node.periodEnd.getMonth() / 3);
       })
     }
   });
@@ -619,17 +613,6 @@
         this.selectedDate.set(new Date());
       }
     },
-    templateAction: function(actionName, event, node){
-      Node.prototype.templateAction.call(this, actionName, event);
-
-      if (node instanceof CalendarNode)
-      {
-        var newDate = node.periodStart;
-        var activeSection = this.selection.pick();
-        this.selectedDate.set(dateUtils.add(new Date(this.selectedDate.value), activeSection.nodePeriodUnit, dateUtils.diff(this.selectedDate.value, activeSection.nodePeriodUnit, newDate)));
-        this.nextSection(BACKWARD);
-      }
-    },
 
     satellite: {
       shadowTabs: ShadowNodeList.subclass({
@@ -661,6 +644,15 @@
       }
 
       return new SectionClass();
+    },
+    selectNodeAction: function(node){
+      if (node instanceof CalendarNode)
+      {
+        var newDate = node.periodStart;
+        var activeSection = this.selection.pick();
+        this.selectedDate.set(dateUtils.add(new Date(this.selectedDate.value), activeSection.nodePeriodUnit, dateUtils.diff(this.selectedDate.value, activeSection.nodePeriodUnit, newDate)));
+        this.nextSection();
+      }
     },
 
     date: null,

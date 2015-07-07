@@ -1,9 +1,11 @@
 module.exports = {
   name: 'basis.ua',
 
+  sandbox: true,
   init: function(){
-    var cookie = basis.require('basis.ua.cookie');
+    var basis = window.basis.createSandbox();
 
+    var cookie = basis.require('basis.ua.cookie');
     var cookieName = 'test-cookie-' + basis.genUID();
   },
 

@@ -171,7 +171,7 @@
         continue;
 
       // get or create theme
-      var theme = getTheme(name);
+      // var theme = getTheme(name);
 
       // mark theme as used (theme could be only once in list)
       // and add to lists
@@ -212,7 +212,7 @@
     getSourceByPath(path).set();
   }
 
-  function syncCurrentTheme(changed){
+  function syncCurrentTheme(){
     /** @cut */ basis.dev.log('re-apply templates');
 
     for (var path in sourceByPath)
@@ -295,15 +295,12 @@
           }
 
           // re-compure fallback for dependant themes
-          var currentFallback = themes[currentThemeName].fallback;
           for (var themeName in changed)
-          {
             if (themeHasEffect(themeName))
             {
               syncCurrentTheme();
               break;
             }
-          }
         }
 
         var result = themes[name].fallback.slice(1); // skip theme itself

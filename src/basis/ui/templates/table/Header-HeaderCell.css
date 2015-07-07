@@ -1,0 +1,8 @@
+  .sort-order-asc .Basis-Table-Header-Cell-SortDirection__selected
+  {
+    background-image: url(res/order_asc.gif);
+  }
+  .sort-order-desc .Basis-Table-Header-Cell-SortDirection__selected
+  {
+    background-image: url(res/order_desc.gif);
+  }

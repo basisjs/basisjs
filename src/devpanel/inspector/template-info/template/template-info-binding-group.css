@@ -16,18 +16,19 @@
 .log__link
 {
   display: none;
-}
-.log__link_used
-{
-  display: block;
   float: right;
   color: red;
+  margin-left: 1ex;
   padding-top: 0px;
   text-decoration: underline;
   color: #666;
   cursor: pointer;
 }
-.log__link_used:hover
+.group:first-child .log__link
+{
+  display: block;
+}
+.log__link:hover
 {
   color: #A00;
 }

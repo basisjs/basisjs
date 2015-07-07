@@ -261,7 +261,9 @@
         },
         SelectionInverse: function(){
           var d = getTime();
-          this.selection.set(DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ return !node.selected; }));
+          this.selection.set(DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){
+            return !node.selected;
+          }));
           DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + (getTime(d) / 1000).toFixed(3));
         },
         DeleteSelected: function(){

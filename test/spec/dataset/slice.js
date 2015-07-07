@@ -1,14 +1,19 @@
 module.exports = {
   name: 'basis.data.dataset.Slice',
 
+  sandbox: true,
   init: function(){
-    basis.require('basis.event');
-    basis.require('basis.data');
-    basis.require('basis.data.dataset');
+    var basis = window.basis.createSandbox();
+
+    var DataObject = basis.require('basis.data').Object;
+    var Dataset = basis.require('basis.data').Dataset;
+    var Slice = basis.require('basis.data.dataset').Slice;
 
     (function(){
-      var eventTypeFilter = function(event){ return event.type == this; };
-      var proto = basis.event.Emitter.prototype;
+      var eventTypeFilter = function(event){
+        return event.type == this;
+      };
+      var proto = basis.require('basis.event').Emitter.prototype;
       var eventsMap = {};
       var seed = 1;
 
@@ -61,10 +66,6 @@ module.exports = {
         items: items
       });
     }
-
-    var DataObject = basis.data.Object;
-    var Dataset = basis.data.Dataset;
-    var Slice = basis.data.dataset.Slice;
   },
 
   test: [
@@ -82,7 +83,7 @@ module.exports = {
 
         var dataset = new Dataset({
           items: basis.array.create(10, function(v){
-            return new basis.data.Object({
+            return new DataObject({
               data: { value: v % 3 }
             });
           })
@@ -95,7 +96,7 @@ module.exports = {
         });
 
         // check index on create
-        this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
+        assert(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
 
         // update items
         dataset.forEach(function(item){
@@ -104,11 +105,11 @@ module.exports = {
           });
         });
 
-        this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
+        assert(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
 
         // random item update
         slice.index_[9].object.update({ value: 10 });
-        this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
+        assert(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
 
         // set 1 value to every item
         var items = dataset.getItems().slice(0);
@@ -117,8 +118,10 @@ module.exports = {
         });
 
         // check correct sorting and all index value must be 1
-        this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
-        this.is(basis.array.create(10, 1), slice.index_.map(function(i){ return i.value; }));
+        assert(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
+        assert(basis.array.create(10, 1), slice.index_.map(function(i){
+          return i.value;
+        }));
 
         // set 2 value to every item in random order
         var i = 3;
@@ -131,8 +134,10 @@ module.exports = {
           });
 
         // correct sorting and all index value must be 2
-        this.is(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
-        this.is(basis.array.create(10, 2), slice.index_.map(function(i){ return i.value; }));
+        assert(sliceMap(slice.index_.slice(0).sort(sliceSort)), sliceMap(slice.index_));
+        assert(basis.array.create(10, 2), slice.index_.map(function(i){
+          return i.value;
+        }));
       }
     },
     {

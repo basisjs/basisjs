@@ -257,8 +257,8 @@
   function mouseY(event){
     if (event.changedTouches)             // touch device
       return event.changedTouches[0].pageY;
-    else                                  // all others
-      if ('pageY' in event)
+    else
+      if ('pageY' in event)               // all others
         return event.pageY;
       else
         return 'clientY' in event
@@ -309,19 +309,25 @@
   * Flush asap handlers
   */
   var flushAsap = true;
-  var lastAsapEvent;
+  var lastFrameStartEvent;
+  var lastFrameFinishEvent;
 
 
- /**
-  *
-  */
-  function processAsap(event){
-    if (flushAsap && event !== lastAsapEvent)
+  function startFrame(event){
+    if (flushAsap && event !== lastFrameStartEvent)
     {
-      lastAsapEvent = event;
-      basis.asap.process();
+      lastFrameStartEvent = event;
+      basis.codeFrame.start();
     }
   }
+  function finishFrame(event){
+    if (flushAsap && event !== lastFrameFinishEvent)
+    {
+      lastFrameFinishEvent = event;
+      basis.codeFrame.finish();
+    }
+  }
+
 
  /**
   * Observe handlers for event
@@ -333,10 +339,11 @@
     var captureHandler = captureHandlers[event.type];
     var wrappedEvent = new Event(event);
 
+    startFrame(event);
+
     if (captureHandler)
     {
       captureHandler.handler.call(captureHandler.thisObject, wrappedEvent);
-      kill(event);
     }
     else
     {
@@ -350,7 +357,7 @@
       }
     }
 
-    processAsap(event);
+    finishFrame(event);
   }
 
  /**
@@ -363,7 +370,7 @@
       releaseEvent(eventType);
 
     if (!handler)
-      handler = kill;
+      handler = basis.fn.$undef;
 
     addGlobalHandler(eventType, handler, thisObject);
     captureHandlers[eventType] = {
@@ -497,11 +504,13 @@
           }
         }
 
+        startFrame(event);
+
         // call eventType handlers
         for (var i = 0, wrappedEvent = new Event(event), item; item = eventTypeHandlers[i++];)
           item.handler.call(item.thisObject, wrappedEvent);
 
-        processAsap(event);
+        finishFrame(event);
       };
 
       if (W3CSUPPORT)
@@ -632,7 +641,9 @@
   * @param {object=} thisObject Context for handler
   */
   function onUnload(handler, thisObject){
-    addHandler(global, 'unload', handler, thisObject);
+    // deprecated in 1.4
+    /** @cut */ basis.dev.warn('basis.dom.event.onUnload() is deprecated, use basis.teardown() instead');
+    basis.teardown(handler, thisObject);
   }
 
 

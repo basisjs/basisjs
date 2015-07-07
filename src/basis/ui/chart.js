@@ -25,7 +25,6 @@
   var getBoundingRect = require('basis.layout').getBoundingRect;
   var domEventUtils = require('basis.dom.event');
   var createEvent = require('basis.event').create;
-  var DataObject = require('basis.data').Object;
   var basisDomWrapper = require('basis.dom.wrapper');
   var AbstractNode = basisDomWrapper.AbstractNode;
   var Node = basisDomWrapper.Node;
@@ -69,12 +68,24 @@
 
     switch (Math.floor(h1))
     {
-      case 0: rgb = [c, x, 0]; break;
-      case 1: rgb = [x, c, 0]; break;
-      case 2: rgb = [0, c, x]; break;
-      case 3: rgb = [0, x, c]; break;
-      case 4: rgb = [x, 0, c]; break;
-      case 5: rgb = [c, 0, x]; break;
+      case 0:
+        rgb = [c, x, 0];
+        break;
+      case 1:
+        rgb = [x, c, 0];
+        break;
+      case 2:
+        rgb = [0, c, x];
+        break;
+      case 3:
+        rgb = [0, x, c];
+        break;
+      case 4:
+        rgb = [x, 0, c];
+        break;
+      case 5:
+        rgb = [c, 0, x];
+        break;
     }
 
     return [
@@ -623,8 +634,12 @@
         var tw;
         for (var i = 0; i <= partCount; i++)
         {
-          valueLabels[i] = basis.number.group(Math.round(minValue + gridPart * i));
+          var text = String(basis.number.group(Math.round(minValue + gridPart * i)));
           tw = context.measureText(valueLabels[i]).width;
+          valueLabels[i] = {
+            text: text,
+            width: tw
+          };
 
           if (tw > maxValueTextWidth)
             maxValueTextWidth = tw;
@@ -660,8 +675,8 @@
       var lastXLabelWidth = 0;
       if (this.showXLabels)
       {
-        firstXLabelWidth = xLabels[0].width + 12; // 12 = padding + border
-        lastXLabelWidth = xLabels[(this.invertAxis ? partCount : keysCount) - 1].width + 12;
+        firstXLabelWidth = keyLabels[0].width + 12; // 12 = padding + border
+        lastXLabelWidth = keyLabels[(this.invertAxis ? partCount : keysCount) - 1].width + 12;
       }
 
       var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxKeyTextWidth;
@@ -792,7 +807,7 @@
           skipLabel = skipYLabelCount && (i % (skipYLabelCount + 1) != 0);
 
           if (!skipLabel)
-            context.fillText(label, LEFT - 6, labelY + 2.5);
+            context.fillText(label.text, LEFT - 6, labelY + 2.5);
 
           if (this.showScale && (!skipLabel || !skipScale))
           {
@@ -1001,7 +1016,7 @@
     }
     else
     {
-      for (var i = 0, item, pos; item = applyItems[i]; i++)
+      for (var i = 0, item; item = applyItems[i]; i++)
         basis.array.remove(selectedItems, item);
     }
 
@@ -1040,7 +1055,7 @@
 
       event.die();
     },
-    contextmenu: function(event){
+    contextmenu: function(){
       //event.die();
     },
     blur: function(){
@@ -1095,6 +1110,7 @@
     },
 
     template: module.template('ChartSelection'),
+    ownerElement_: null,
 
     listen: {
       owner: {
@@ -1103,7 +1119,7 @@
           this.draw();
         },
         templateChanged: function(){
-          domEventUtils.addHandlers(this.owner.element, CHART_ELEMENT_HANDLER, this);
+          this.recalc();
         }
       }
     },
@@ -1136,6 +1152,15 @@
       {
         this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
         this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+
+        if (this.ownerElement_ != this.owner.element)
+        {
+          if (this.ownerElement_)
+            domEventUtils.removeHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+          this.ownerElement_ = this.owner.element && this.owner.element.nodeType == 1 ? this.owner.element : null;
+          if (this.ownerElement_)
+            domEventUtils.addHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+        }
       }
 
       this.clientRect = this.owner.clientRect;
@@ -1191,6 +1216,16 @@
       }
 
       this.context.restore();
+    },
+
+    destroy: function(){
+      AbstractCanvas.prototype.call(this);
+
+      if (this.ownerElement_)
+      {
+        domEventUtils.removeHandlers(this.ownerElement_, CHART_ELEMENT_HANDLER, this);
+        this.ownerElement_ = null;
+      }
     }
   });
 
@@ -1239,14 +1274,17 @@
       if (!this.context)
         return;
 
-      if (this.tmpl.canvas && this.owner.tmpl.canvas)
+      if (this.owner && this.owner.tmpl)
       {
-        this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
-        this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
-      }
+        if (this.tmpl.canvas && this.owner.tmpl.canvas)
+        {
+          this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
+          this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+        }
 
-      this.clientRect = this.owner.clientRect;
-      //this.max = this.owner.maxValue;
+        this.clientRect = this.owner.clientRect;
+        //this.max = this.owner.maxValue;
+      }
     },
 
     updatePosition: function(mx, my){
@@ -1263,15 +1301,13 @@
         this.draw(x, y);
     },
 
-    draw: function(x, y){
+    draw: function(x/*, y*/){
       var context = this.context;
 
       if (!context)
         return;
 
-      context.save();
-      context.translate(this.clientRect.left, this.clientRect.top);
-
+      var LEFT = this.clientRect.left;
       var TOP = this.clientRect.top;
       var WIDTH = this.clientRect.width;
       var HEIGHT = this.clientRect.height;
@@ -1283,6 +1319,9 @@
       var step = WIDTH / (keyCount - 1);
       var keyPosition = Math.round(x / step);
       var xPosition = Math.round(keyPosition * step);
+
+      context.save();
+      context.translate(LEFT, TOP);
 
       context.beginPath();
       context.moveTo(xPosition + .5, 0);
@@ -1434,10 +1473,10 @@
 
     satellite: {
       chartViewer: {
-        satelliteClass: ChartViewer
+        instance: ChartViewer
       },
       chartSelection: {
-        satelliteClass: ChartSelection,
+        instance: ChartSelection,
         existsIf: 'selection'
       }
     },
@@ -1674,9 +1713,6 @@
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
       var context = this.context;
-
-      //var values = seria.getValues(keys);
-      //var color = seria.getColor();
 
       context.save();
       context.translate(left, top);

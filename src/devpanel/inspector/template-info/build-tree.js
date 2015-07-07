@@ -9,18 +9,39 @@ var DOMNode = Node.subclass({
     })
   },
   action: {
-    enter: function(e){
-      hoveredBinding.set(this.bindingName);
+    enter: function(){
+      if (this.bindingName)
+        hoveredBinding.set(this.bindingName);
     },
-    leave: function(e){
+    leave: function(){
       hoveredBinding.set();
+    },
+    inspect: function(){
+      if (this.selectDomNode && this.domNode)
+      {
+        hoveredBinding.set();
+        this.selectDomNode(this.domNode);
+      }
     }
+  },
+  destroy: function(){
+    Node.prototype.destroy.call(this);
+
+    // clean up references
+    for (var property in this)
+      if (hasOwnProperty.call(this, property))
+        if (this[property] && typeof this[property] == 'object')
+          this[property] = null;
   }
 });
 
 var ValuePart = DOMNode.subclass({
   type: 'static',
-  template: resource('./template/attribute-value.tmpl'),
+  template: basis.template.switcher(function(node){
+    return node.type == 'static'
+      ? resource('./template/tree/attribute-value-static.tmpl')
+      : resource('./template/tree/attribute-value.tmpl');
+  }),
   binding: {
     type: 'type',
     value: 'value'
@@ -28,7 +49,7 @@ var ValuePart = DOMNode.subclass({
 });
 
 var Attribute = DOMNode.subclass({
-  template: resource('./template/attritube.tmpl'),
+  template: resource('./template/tree/attritube.tmpl'),
   binding: {
     name: 'name'
   },
@@ -36,9 +57,11 @@ var Attribute = DOMNode.subclass({
 });
 
 var Element = DOMNode.subclass({
-  template: resource('./template/element.tmpl'),
+  template: resource('./template/tree/element.tmpl'),
   binding: {
     name: 'name',
+    binding: 'bindingName',
+    nestedView: 'nestedView',
     childrenHidden: 'childrenHidden',
     inline: 'inlineChildren',
     attributes: 'satellite:',
@@ -48,8 +71,8 @@ var Element = DOMNode.subclass({
   },
   satellite: {
     attributes: {
-      satelliteClass: Node.subclass({
-        template: resource('./template/attritubes.tmpl'),
+      instance: Node.subclass({
+        template: resource('./template/tree/attritubes.tmpl'),
         childClass: Attribute
       }),
       config: function(owner){
@@ -62,18 +85,21 @@ var Element = DOMNode.subclass({
 });
 
 var Text = DOMNode.subclass({
-  template: resource('./template/text.tmpl'),
+  template: resource('./template/tree/text.tmpl'),
   binding: {
     value: 'value',
-    binding: 'bindingName'
+    binding: 'bindingName',
+    l10n: 'l10n',
+    nestedView: 'nestedView'
   }
 });
 
 var Comment = DOMNode.subclass({
-  template: resource('./template/comment.tmpl'),
+  template: resource('./template/tree/comment.tmpl'),
   binding: {
     value: 'value',
-    binding: 'bindingName'
+    binding: 'bindingName',
+    nestedView: 'nestedView'
   }
 });
 
@@ -155,30 +181,56 @@ function buildAttribute(attr, attrBindings){
   };
 }
 
-module.exports = function buildNode(item, bindings){
+module.exports = function buildNode(item, bindings, selectDomNode){
   function findBinding(node){
     return basis.array.search(bindings, node, 'dom');
   }
 
-  function fundBindingVal(node){
-    return basis.array.search(bindings, node, 'val');
+  function findNodeBinding(node){
+    return basis.array.search(bindings, true, function(binding){
+      return binding.val !== binding.dom && binding.val === node;
+    });
   }
 
   var node = item[0];
+  var children = item[1];
+  var properties = item[2];
   var binding;
 
   switch (node.nodeType)
   {
     case 1:
-      var attrs = basis.array(node.attributes).map(function(attr){
-        return buildAttribute(attr, bindings.filter(function(bind){
-          return bind.dom === node && bind.attr === attr.name;
-        }));
+      var binding = findNodeBinding(node);
+      var nestedView = properties.nestedView;
+      var attrs;
+      var inline;
+
+      if (binding && binding.binding == 'element')
+        binding = null;
+
+      attrs = binding || nestedView
+        ? basis.array(node.attributes).map(function(attr){
+            return {
+              name: attr.name,
+              childNodes: [
+                {
+                  type: 'static',
+                  value: attr.value
+                }
+              ]
+            };
+          })
+        : basis.array(node.attributes).map(function(attr){
+            return buildAttribute(attr, bindings.filter(function(bind){
+              return bind.dom === node && bind.attr === attr.name;
+            }));
+          });
+
+      children = children.map(function(child){
+        return buildNode(child, bindings, selectDomNode);
       });
-      var children = item[1].map(function(child){
-        return buildNode(child, bindings);
-      });
-      var inline =
+
+      inline =
         children.every(function(node){
           return node instanceof Text;
         }) &&
@@ -187,28 +239,39 @@ module.exports = function buildNode(item, bindings){
         }, 0) < 32;
 
       return new Element({
+        domNode: node,
         name: node.tagName.toLowerCase(),
-        childrenHidden: node.firstChild && !item[1].length,
+        bindingName: binding ? binding.binding : null,
+        childrenHidden: node.firstChild && !children.length,
         inlineChildren: inline,
+        nestedView: nestedView,
+        selectDomNode: nestedView ? selectDomNode : null,
         attributes: attrs,
         childNodes: children
       });
 
       break;
     case 3:
-      binding = findBinding(node);
+      binding = findBinding(node) || findNodeBinding(node);
 
       return new Text({
-        bindingName: binding ? binding.binding : null,
-        value: node.nodeValue
+        domNode: node,
+        bindingName: binding && !binding.l10n ? binding.binding : null,
+        value: node.nodeValue,
+        l10n: binding ? binding.l10n : false,
+        nestedView: properties.nestedView,
+        selectDomNode: properties.nestedView ? selectDomNode : null
       });
 
     case 8:
-      binding = findBinding(node);
+      binding = findNodeBinding(node);
 
       return new Comment({
+        domNode: node,
         bindingName: binding ? binding.binding : null,
-        value: node.nodeValue
+        value: node.nodeValue,
+        nestedView: properties.nestedView,
+        selectDomNode: properties.nestedView ? selectDomNode : null
       });
   }
 

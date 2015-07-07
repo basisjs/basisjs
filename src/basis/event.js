@@ -10,8 +10,6 @@
   //
 
   var Class = basis.Class;
-  var extend = basis.object.extend;
-  var slice = Array.prototype.slice;
 
 
   //
@@ -94,17 +92,17 @@
       };
 
       // function wrapper for more verbose in development mode
-      /** @cut */ eventFunction = new Function('slice',
+      /** @cut */ eventFunction = new Function(
       /** @cut */   'return {"' + namespace + '.events.' + eventName + '":\n\n      ' +
       /** @cut */
-      /** @cut */     'function(' + slice.call(arguments, 1).join(', ') + '){' +
+      /** @cut */     'function(' + basis.array(arguments, 1).join(', ') + '){' +
       /** @cut */       eventFunction.toString()
       /** @cut */         .replace(/\beventName\b/g, '"' + eventName + '"')
       /** @cut */         .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') +
       /** @cut */     '}' +
       /** @cut */
       /** @cut */   '\n\n}["' + namespace + '.events.' + eventName + '"];'
-      /** @cut */ )(slice);
+      /** @cut */ )();
 
       events[eventName] = eventFunction;
     }

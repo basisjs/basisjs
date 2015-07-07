@@ -44,6 +44,10 @@
   color: #353;  
   background: #B6CFB6;
 }
+.caption_highlight.caption_nestedView
+{
+  background: #E0E4B0;
+}
 .link_loc
 {
   text-decoration: underline;

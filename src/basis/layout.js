@@ -3,13 +3,6 @@
   * @namespace basis.layout
   */
 
-  var namespace = this.path;
-
-
-  //
-  // import names
-  //
-
   var document = global.document;
   var documentElement = document.documentElement;
   var getComputedStyle = require('basis.dom.computedStyle').get;
@@ -150,6 +143,7 @@
   //
 
   module.exports = {
+    getOffset: getOffset,
     getOffsetParent: getOffsetParent,
     getTopLeftPoint: getTopLeftPoint,
     getBoundingRect: getBoundingRect,

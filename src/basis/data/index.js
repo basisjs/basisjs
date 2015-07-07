@@ -12,13 +12,14 @@
   //
 
   var Class = basis.Class;
+  var iterate = basis.object.iterate;
 
   var basisData = require('basis.data');
   var Value = basisData.Value;
   var DataObject = basisData.Object;
-  var KeyObjectMap = basisData.KeyObjectMap;
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var DatasetWrapper = basisData.DatasetWrapper;
+  var resolveDataset = basisData.resolveDataset;
 
   var basisDataset = require('basis.data.dataset');
   var MapFilter = basisDataset.MapFilter;
@@ -67,7 +68,18 @@
   */
   var Index = Class(Value, {
     className: namespace + '.Index',
-    autoDestroy: true,
+
+   /**
+    * Explicit declared
+    * @type {boolean}
+    */
+    explicit: false,
+
+   /**
+    * Count of wrapper indexes
+    * @type {number}
+    */
+    wrapperCount: 0,
 
    /**
     * Map of current values
@@ -426,11 +438,92 @@
   });
 
 
+  var INDEXWRAPPER_HANDLER = {
+    destroy: function(){
+      Value.prototype.set.call(this, this.initValue);
+      this.index = null;
+    }
+  };
+
+ /**
+  * @class
+  */
+  var IndexWrapper = Value.subclass({
+    className: namespace + '.IndexWrapper',
+
+    extendConstructor_: false,
+    source: null,
+    dataset: null,
+    datasetRA_: null,
+    indexConstructor: null,
+    index: null,
+
+    init: function(source, indexConstructor){
+      this.source = source;
+      this.indexConstructor = indexConstructor;
+      this.value = indexConstructorCache[indexConstructor.indexId].indexClass.prototype.value;
+
+      Value.prototype.init.call(this);
+
+      source.bindingBridge.attach(source, basis.fn.$undef, this, this.destroy);
+      this.setDataset(source);
+      this.source[indexConstructor.indexId] = this;
+    },
+    setDataset: function(source){
+      var oldDataset = this.dataset;
+      var newDataset = resolveDataset(this, this.setDataset, source, 'sourceRA_');
+
+      if (newDataset !== oldDataset)
+      {
+        var index = this.index;
+
+        if (index)
+        {
+          index.removeHandler(INDEXWRAPPER_HANDLER, this);
+          index.wrapperCount -= 1;
+          if (!index.wrapperCount && !index.explicit)
+            index.destroy();
+        }
+
+        if (newDataset)
+        {
+          index = getDatasetIndex(newDataset, this.indexConstructor);
+          index.wrapperCount += 1;
+          index.link(this, Value.prototype.set);
+          index.addHandler(INDEXWRAPPER_HANDLER, this);
+        }
+        else
+        {
+          index = null;
+          Value.prototype.set.call(this, this.initValue);
+        }
+
+        this.dataset = newDataset;
+        this.index = index;
+      }
+    },
+    set: function(){
+      /** @cut */ basis.dev.warn(this.className + ': value can\'t be set as IndexWrapper is read only');
+    },
+    destroy: function(){
+      this.source.bindingBridge.detach(this.source, basis.fn.$undef, this);
+      this.setDataset();
+
+      Value.prototype.destroy.call(this);
+
+      delete this.source[this.indexConstructor.indexId];
+      this.source = null;
+      this.indexConstructor = null;
+    }
+  });
+
+
   //
   // Index builder
   //
 
-  var indexConstructors_ = {};
+  var indexConstructorIdPrefix = 'basisjsIndexConstructor' + basis.genUID();
+  var indexConstructorCache = {};
 
   var DATASET_INDEX_HANDLER = {
     destroy: function(object){
@@ -441,7 +534,8 @@
  /**
   * @class
   */
-  function IndexConstructor(){
+  function IndexConstructor(indexId){
+    this.indexId = indexId;
   }
 
  /**
@@ -459,8 +553,8 @@
 
     events = events.trim().split(' ').sort();
 
-    var indexId = [BaseClass.basisClassId_, getter[basis.getter.ID], events].join('_');
-    var indexConstructor = indexConstructors_[indexId];
+    var indexId = indexConstructorIdPrefix + [BaseClass.basisClassId_, getter[basis.getter.ID], events].join('_');
+    var indexConstructor = indexConstructorCache[indexId];
 
     if (indexConstructor)
       return indexConstructor.owner;
@@ -473,8 +567,8 @@
     for (var i = 0; i < events.length; i++)
       events_[events[i]] = true;
 
-    indexConstructor = new IndexConstructor();
-    indexConstructors_[indexId] = {
+    indexConstructor = new IndexConstructor(indexId);
+    indexConstructorCache[indexId] = {
       owner: indexConstructor,
       indexClass: BaseClass.subclass({
         indexId: indexId,
@@ -483,19 +577,16 @@
       })
     };
 
-    indexConstructor.indexId = indexId;
     return indexConstructor;
   }
 
   var createIndexConstructor = function(IndexClass, defGetter){
-    return function(events, getter){
-      var dataset;
-
-      if (events instanceof ReadOnlyDataset || events instanceof DatasetWrapper)
+    return function(source, events, getter){
+      if (typeof source == 'function' || typeof source == 'string')
       {
-        dataset = events;
-        events = getter;
-        getter = arguments[2];
+        getter = events;
+        events = source;
+        source = null;
       }
 
       if (!getter)
@@ -506,10 +597,21 @@
 
       var indexConstructor = getIndexConstructor(IndexClass, getter || defGetter, events);
 
-      if (dataset)
-        return getDatasetIndex(dataset, indexConstructor);
-      else
+      if (!source)
         return indexConstructor;
+
+      if (source instanceof ReadOnlyDataset || source instanceof DatasetWrapper)
+      {
+        var index = getDatasetIndex(source, indexConstructor);
+        index.explicit = true;
+        return index;
+      }
+
+      if (source.bindingBridge)
+        return source[indexConstructor.indexId] || new IndexWrapper(source, indexConstructor);
+
+      /** @cut */ basis.dev.warn(IndexClass.className + ': wrong source value for index (should be instance of basis.data.ReadOnlyDataset, basis.data.DatasetWrapper or bb-value)');
+      return null;
     };
   };
 
@@ -613,7 +715,11 @@
     destroy: function(){
       var indexes = datasetIndexes[this.basisObjectId];
       for (var indexId in indexes)
-        removeDatasetIndex(this, indexes[indexId]);
+      {
+        var index = indexes[indexId];
+        removeDatasetIndex(this, index);
+        index.destroy();
+      }
     }
   };
 
@@ -626,6 +732,7 @@
  /**
   * @param {basis.data.ReadOnlyDataset} dataset
   * @param {basis.data.index.IndexConstructor} indexConstructor
+  * @return {basis.data.index.Index} indexConstructor instance
   */
   function getDatasetIndex(dataset, indexConstructor){
     if (indexConstructor instanceof IndexConstructor == false)
@@ -649,7 +756,7 @@
 
     if (!index)
     {
-      indexConstructor = indexConstructors_[indexId];
+      indexConstructor = indexConstructorCache[indexId];
       if (!indexConstructor)
         throw 'Wrong index constructor';
 
@@ -692,6 +799,14 @@
   // IndexMap
   //
 
+  var indexMapRecalcShedule = basis.asap.schedule(function(indexMap){
+    indexMap.recalc();
+  });
+  var calcIndexPresetSeed = 1;
+  function getUniqueCalcIndexId(){
+    return 'calc-index-preset-' + basis.number.lead(calcIndexPresetSeed++, 8);
+  }
+
  /**
   * @class
   */
@@ -702,11 +817,9 @@
     calc: basis.fn.$null
   });
 
-  var calcIndexPresetSeed = 1;
-  function getUniqueCalcIndexId(){
-    return 'calc-index-preset-' + basis.number.lead(calcIndexPresetSeed++, 8);
-  }
-
+  //
+  // index map helpers
+  //
   function percentOfRange(events, getter){
     var minIndex = 'min_' + getUniqueCalcIndexId();
     var maxIndex = 'max_' + getUniqueCalcIndexId();
@@ -768,198 +881,123 @@
     className: namespace + '.IndexMap',
 
     calcs: null,
+    copyDataFromSource: true,
 
     indexes: null,
-    indexes_: null,
-    indexesBind_: null,
-
-    timer_: undefined,
-    indexUpdated: null,
     indexValues: null,
-    memberSourceMap: null,
-    keyMap: null,
+    indexUpdated: false,
 
-    map: function(item){
-      return this.keyMap.get(item, true);
+    itemClass: DataObject,
+
+    map: function(sourceObject){
+      var member = this.getMember(sourceObject);
+
+      if (!member)
+      {
+        var data = {};
+
+        for (var calcName in this.calcs)
+          data[calcName] = this.calcs[calcName](sourceObject.data, this.indexValues, sourceObject);
+
+        if (this.copyDataFromSource)
+          for (var key in sourceObject.data)
+            if (!this.calcs.hasOwnProperty(key))
+              data[key] = sourceObject.data[key];
+
+        member = new this.itemClass({
+          source: sourceObject,
+          data: data
+        });
+      }
+
+      return member;
     },
 
-    addMemberRef: function(member, sourceObject){
-      this.memberSourceMap[member.basisObjectId] = sourceObject.basisObjectId;
-
+    addMemberRef: function(member){
       if (this.listen.member)
         member.addHandler(this.listen.member, this);
-
-      this.sourceMap_[sourceObject.basisObjectId].updated = true;
-
-      if (member.subscriberCount > 0)
-        this.calcMember(member);
     },
 
-    removeMemberRef: function(member, sourceObject){
-      delete this.memberSourceMap[member.basisObjectId];
-
+    removeMemberRef: function(member){
       if (this.listen.member)
         member.removeHandler(this.listen.member, this);
-    },
 
-    emit_sourceChanged: function(oldSource){
-      MapFilter.prototype.emit_sourceChanged.call(this, oldSource);
-
-      for (var indexName in this.indexes_)
-      {
-        var index = this.indexes_[indexName];
-
-        if (oldSource)
-        {
-          this.removeIndex(indexName);
-          removeDatasetIndex(oldSource, this.indexes[indexName]);
-        }
-
-        if (this.source)
-          this.addIndex(indexName, getDatasetIndex(this.source, index));
-      }
-    },
-
-    listen: {
-      index: {
-        change: function(sender){
-          var indexMap = this.indexMap;
-
-          indexMap.indexValues[this.key] = sender.value;
-          indexMap.indexUpdated = true;
-          indexMap.recalcRequest();
-        }
-      },
-      member: {
-        subscribersChanged: function(object, delta){
-          if (object.subscriberCount > 0)
-            this.calcMember(object);
-        }
-      }
+      member.source = null;
+      member.destroy();
     },
 
     /** looks like a hack */
     ruleEvents: createRuleEvents(
-      function(sender, delta){
-        MapFilter.prototype.ruleEvents.update.call(this, sender, delta);
+      function(sender){
+        MapFilter.prototype.ruleEvents.update.call(this, sender);
 
         this.sourceMap_[sender.basisObjectId].updated = true;
-        this.recalcRequest();
+        this.scheduleRecalc();
       },
       'update'
     ),
 
 
     init: function(){
-      this.recalc = this.recalc.bind(this);
-
-      this.indexUpdated = false;
-      this.indexesBind_ = {};
-      this.memberSourceMap = {};
-
       var indexes = this.indexes;
       this.indexes = {};
-      this.indexes_ = {};
       this.indexValues = {};
 
       var calcs = this.calcs;
       this.calcs = {};
 
-      if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
-        this.keyMap = new KeyObjectMap(basis.object.complete({
-          create: function(key, config){
-            return new this.itemClass(config);
-          }
-        }, this.keyMap));
-
       MapFilter.prototype.init.call(this);
 
-      basis.object.iterate(indexes, this.addIndex, this);
-      basis.object.iterate(calcs, this.addCalc, this);
-    },
-
-    addIndex: function(key, index){
-      if (!this.indexes[key])
+      iterate(indexes, this.addIndex, this);
+      for (var name in calcs)
       {
-        if (index instanceof IndexConstructor)
+        var calcCfg = calcs[name];
+        if (calcCfg instanceof CalcIndexPreset)
         {
-          if (!this.indexes_[key])
-          {
-            this.indexes_[key] = index;
-            index = this.source ? getDatasetIndex(this.source, index) : null;
-          }
-          else
-          {
-            /** @cut */ basis.dev.warn('Index `' + key + '` already exists');
-            return;
-          }
+          iterate(calcCfg.indexes, this.addIndex, this);
+          calcCfg = calcCfg.calc;
         }
 
-        if (index instanceof Index)
-        {
-          this.indexValues[key] = index.value;
-          this.indexes[key] = index;
-          this.indexesBind_[key] = {
-            key: key,
-            indexMap: this
-          };
-
-          var listenHandler = this.listen.index;
-          if (listenHandler)
-          {
-            index.addHandler(listenHandler, this.indexesBind_[key]);
-
-            if (listenHandler.change)
-              listenHandler.change.call(this.indexesBind_[key], index, index.value);
-          }
-        }
-        else
-        {
-          /** @cut */ basis.dev.warn('Index should be instance of `basis.data.index.Index`');
-        }
-      }
-      else
-      {
-        /** @cut */ basis.dev.warn('Index `' + key + '` already exists');
-      }
-    },
-
-    removeIndex: function(key){
-      if (this.indexes_[key] || this.indexes[key])
-      {
-        if (this.indexes[key] && this.listen.index)
-          this.indexes[key].removeHandler(this.listen.index, this.indexesBind_[key]);
-
-        delete this.indexValues[key];
-        delete this.indexesBind_[key];
-        delete this.indexes[key];
-        delete this.indexes_[key];
-      }
-    },
-
-    addCalc: function(name, calcCfg){
-      if (calcCfg instanceof CalcIndexPreset)
-      {
-        this.calcs[name] = calcCfg.calc;
-        for (var indexName in calcCfg.indexes)
-          this.addIndex(indexName, calcCfg.indexes[indexName]);
-      }
-      else
         this.calcs[name] = calcCfg;
-
-      this.recalcRequest();
-    },
-    removeCalc: function(name){
-      var calcCfg = this.calcs[name];
-
-      if (calcCfg && calcCfg.preset instanceof CalcIndexPreset)
-      {
-        var indexes = calcCfg.preset.indexes;
-        for (var indexName in indexes)
-          this.removeIndex(indexName, indexes[indexName]);
       }
 
-      delete this.calcs[name];
+      if (this.itemCount)
+        this.recalc();
+    },
+
+    addIndex: function(key, indexConstructor){
+      if (indexConstructor instanceof IndexConstructor == false)
+      {
+        /** @cut */ basis.dev.warn('MapIndex.addIndex(): `index` should be instance of `basis.data.index.IndexConstructor`');
+        return;
+      }
+
+      if (this.indexes[key])
+      {
+        /** @cut */ basis.dev.warn('MapIndex.addIndex(): Index `' + key + '` already exists');
+        return;
+      }
+
+      var index = new IndexWrapper(Value.from(this, 'sourceChanged', 'source'), indexConstructor);
+      this.indexes[key] = index;
+      this.indexValues[key] = index.value;
+
+      index.link(this, function(value){
+        this.indexValues[key] = value;
+        this.indexUpdated = true;
+        this.scheduleRecalc();
+      });
+    },
+    removeIndex: function(key){
+      var index = this.indexes[key];
+
+      if (index)
+      {
+        delete this.indexes[key];
+        delete this.indexValues[key];
+
+        index.destroy();
+      }
     },
 
     lock: function(){
@@ -971,66 +1009,83 @@
         this.indexes[indexId].unlock();
     },
 
-    recalcRequest: function(){
-      if (!this.timer_)
-        this.timer_ = basis.setImmediate(this.recalc);
+    scheduleRecalc: function(){
+      indexMapRecalcShedule.add(this);
     },
-
     recalc: function(){
-      for (var idx in this.items_)
-        this.calcMember(this.items_[idx]);
+      for (var id in this.sourceMap_)
+        this.calcMember(this.sourceMap_[id]);
 
       this.indexUpdated = false;
-      this.timer_ = basis.clearImmediate(this.timer_);
+      indexMapRecalcShedule.remove(this);
     },
 
-    calcMember: function(member){
-      var sourceObject = this.sourceMap_[this.memberSourceMap[member.basisObjectId]];
+    calcMember: function(memberInfo){
+      var member = memberInfo.member;
 
-      if (member.subscriberCount && (sourceObject.updated || this.indexUpdated))
+      if (memberInfo.updated || this.indexUpdated)
       {
-        sourceObject.updated = false;
-
-        var data = {};
+        var sourceObject = memberInfo.sourceObject;
+        var delta = {};
         var newValue;
         var oldValue;
         var update;
+
         for (var calcName in this.calcs)
         {
-          newValue = this.calcs[calcName](sourceObject.sourceObject.data, this.indexValues, sourceObject.sourceObject);
+          newValue = this.calcs[calcName](sourceObject.data, this.indexValues, sourceObject);
           oldValue = member.data[calcName];
-          if (member.data[calcName] !== newValue && (typeof newValue != 'number' || typeof oldValue != 'number' || !isNaN(newValue) || !isNaN(oldValue)))
+          if (oldValue !== newValue && (newValue === newValue || oldValue === oldValue))
           {
-            data[calcName] = newValue;
+            delta[calcName] = newValue;
             update = true;
           }
         }
 
+        if (this.copyDataFromSource)
+        {
+          for (var key in sourceObject.data)
+            if (!this.calcs.hasOwnProperty(key))
+            {
+              newValue = sourceObject.data[key];
+              oldValue = member.data[key];
+              if (oldValue !== newValue && (newValue === newValue || oldValue === oldValue))
+              {
+                delta[key] = newValue;
+                update = true;
+              }
+            }
+
+          for (var key in member.data)
+            if (!this.calcs.hasOwnProperty(key) && !sourceObject.data.hasOwnProperty(key))
+            {
+              delta[key] = undefined;
+              update = true;
+            }
+        }
+
         if (update)
-          member.update(data);
+          member.update(delta);
+
+        memberInfo.updated = false;
       }
     },
 
     getMember: function(sourceObject){
-      return this.keyMap.get(sourceObject, true);
+      var memberInfo = sourceObject && this.sourceMap_[sourceObject.basisObjectId];
+      return memberInfo ? memberInfo.member : null;
     },
 
     destroy: function(){
-      this.keyMap.destroy();
-      this.keyMap = null;
-
-      for (var indexName in this.indexes)
-        this.removeIndex(indexName);
+      iterate(this.indexes, this.removeIndex, this);
 
       MapFilter.prototype.destroy.call(this);
 
-      this.timer_ = basis.clearImmediate(this.timer_);
+      indexMapRecalcShedule.remove(this);
+
       this.calcs = null;
       this.indexes = null;
-      this.indexes_ = null;
       this.indexValues = null;
-      this.memberSourceMap = null;
-      this.indexesBind_ = null;
     }
   });
 

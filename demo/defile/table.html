@@ -65,26 +65,24 @@
 
   <script type="text/javascript" id="demo-javascript">
 
-    basis.require('basis.dom');
-    basis.require('basis.date');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.table');
-    basis.require('basis.ui.scrolltable');
-    basis.require('basis.ui.resizer');
-    
     // import names
 
     var getter = basis.getter;
-    var DOM = basis.dom;
-    var Table = basis.ui.table.Table;
-    var ScrollTable = basis.ui.scrolltable.ScrollTable;
+    var dateUtils = basis.require('basis.date');
+    var domUtils = basis.require('basis.dom');
+    var cssUtils = basis.require('basis.cssom');
+    var Table = basis.require('basis.ui.table').Table;
+    var ScrollTable = basis.require('basis.ui.scrolltable').ScrollTable;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var Resizer = basis.require('basis.ui.resizer').Resizer;
+
 
     //
     // Main part
     //
 
     function createBlock(header){
-      return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
+      return domUtils.insert(domUtils.get('demo-container'), domUtils.createElement('.DemoBlock', domUtils.createElement('H2', header)));
     }
 
     var data = [
@@ -129,31 +127,31 @@
       };
     });
     var lastUpdateGetter = function(node){
-      return basis.date.format(node.data.lastUpdate, '%M/%D/%Y');
+      return dateUtils.format(node.data.lastUpdate, '%M/%D/%Y');
     };
 
     new Table({
       container: createBlock('table'),
       structure: [
         { header: 'Company', body: getter('data.title'), sorting: getter('data.title'), autosorting: true },
-        { header: 'Price', body: getter('data.price', '${0:.2}'), autosorting: true, sorting: getter('data.price') },
-        { header: 'Change', body: getter('data.change', '{0:.2}') },
-        { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
+        { header: 'Price', body: getter('data.price').as(basis.string.formatter('${0:.2}')), autosorting: true, sorting: getter('data.price') },
+        { header: 'Change', body: getter('data.change').as(basis.string.formatter('{0:.2}')) },
+        { header: '% Change', body: getter('data.percentChange').as(basis.string.formatter('{0:.2}%')) },
         { header: 'Last Updated', body: lastUpdateGetter }
       ],
       childNodes: data
     });
 
     basis.ready(function(){
-      new basis.ui.button.ButtonPanel({
+      new ButtonPanel({
         container: createBlock('tests'),
         childNodes: [
           {
             caption: 'test remove/add to document',
             click: function(){
-              basis.dom.remove(table.element);
+              domUtils.remove(table.element);
               table.firstChild.update({ price: table.firstChild.data.price + 'xx' });
-              basis.dom.insert(container, table.element);
+              domUtils.insert(container, table.element);
             }
           },
           {
@@ -167,7 +165,7 @@
         ]
       });
 
-      var container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));      
+      var container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(domUtils.createElement('.scrollTableContainer'));
 
       var table = new ScrollTable({
         container: container,
@@ -180,16 +178,16 @@
         },
         structure: [
           { groupId: 2, header: 'Company', body: getter('data.title'), sorting: getter('data.title') },
-          { header: 'Price', body: getter('data.price', '${0:.2}'), sorting: getter('data.price') },
-          { header: 'Change', body: getter('data.change', '{0:.2}') },
-          { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
+          { header: 'Price', body: getter('data.price').as(basis.string.formatter('${0:.2}')), sorting: getter('data.price') },
+          { header: 'Change', body: getter('data.change').as(basis.string.formatter('{0:.2}')) },
+          { header: '% Change', body: getter('data.percentChange').as(basis.string.formatter('{0:.2}%')) },
           { header: 'Last Updated', body: lastUpdateGetter }
         ],
         childNodes: data
       });
 
-      var r = new basis.ui.resizer.Resizer({ element: container.parentNode });
-      basis.cssom.setStyle(r.resizer, {
+      var r = new Resizer({ element: container.parentNode });
+      cssUtils.setStyle(r.resizer, {
         height: '100%',
         width: '5px',
         top: 0,
@@ -205,13 +203,13 @@
         },
         structure: [
           { groupId: 2, header: 'Company', body: getter('data.title'), sorting: getter('data.title') },
-          { header: 'Price', body: getter('data.price', '${0:.2}'), sorting: getter('data.price'), footer: 'xxx' },
-          { header: 'Change', body: getter('data.change', '{0:.2}') },
-          { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
+          { header: 'Price', body: getter('data.price').as(basis.string.formatter('${0:.2}')), sorting: getter('data.price'), footer: 'xxx' },
+          { header: 'Change', body: getter('data.change').as(basis.string.formatter('{0:.2}')) },
+          { header: '% Change', body: getter('data.percentChange').as(basis.string.formatter('{0:.2}%')) },
           { header: 'Last Updated', body: lastUpdateGetter }
         ],
         childNodes: data
-      }); 
+      });
 
     });
 

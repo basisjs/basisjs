@@ -1,12 +1,14 @@
 
   <b:style src="./HeaderCell.css"/>
+  <b:style src="./HeaderCell-sortable.css"/>
+  <b:style src="./HeaderPartition-HeaderCell.css" ns="hp"/>
+  <b:style src="./Header-HeaderCell.css" ns="hhc"/>
   <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
   <b:define name="sortable" type="bool"/>
 
-  <th class="Basis-Table-Header-Cell Basis-Table-Header-Cell-{sortable} {selected} {disabled}" event-click="setColumnSorting">
-    <div class="Basis-Table-Header-Cell-SortDirection"/>
-    <div class="Basis-Table-Header-Cell-Content"> 
+  <th class="Basis-Table-Header-Cell Basis-Table-Header-Cell-{sortable} Basis-Table-Header-Cell_{selected}" event-click="setColumnSorting">
+    <div class="Basis-Table-Header-Cell-SortDirection hhc:Basis-Table-Header-Cell-SortDirection__{selected}"/>
+    <div class="Basis-Table-Header-Cell-Content hp:cell-content"> 
       <span class="Basis-Table-Header-Cell-Title">
         {title}
       </span>

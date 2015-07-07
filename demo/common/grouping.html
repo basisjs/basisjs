@@ -56,9 +56,10 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.ui.tree');
-    basis.require('basis.ui.table');
-    basis.require('basis.ui.field');
+    var Tree = basis.require('basis.ui.tree').Tree;
+    var Table = basis.require('basis.ui.table').Table;
+    var RadioGroup = basis.require('basis.ui.field').RadioGroup;
+    var Node = basis.require('basis.ui').Node;
 
     // data
     var data = basis.array.repeat([
@@ -73,11 +74,11 @@
     // Create controls
     //
 
-    var tree = new basis.ui.tree.Tree({
+    var tree = new Tree({
       childNodes: data
     });
 
-    var table = new basis.ui.table.Table({
+    var table = new Table({
       childNodes: data,
       structure: [
         { header: 'Title', body: basis.getter('data.title') },
@@ -85,7 +86,7 @@
       ]
     });
 
-    new basis.ui.Node({
+    new Node({
       container: document.getElementById('demo-container'),
       template:
         '<div>' +
@@ -104,7 +105,7 @@
       binding: {
         tree: tree,
         table: table,
-        groupingSelect: new basis.ui.field.RadioGroup({
+        groupingSelect: new RadioGroup({
           handler: {
             change: function(){
               tree.setGrouping(this.getValue());
@@ -128,7 +129,7 @@
                 sorting: 'data.title',
                 childClass: {
                   binding: {
-                    title: basis.getter('data.title', 'Group for letter <{0}>')
+                    title: basis.getter('data.title').as(basis.string.formatter('Group for letter <{0}>'))
                   }
                 }
               }

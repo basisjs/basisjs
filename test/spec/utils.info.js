@@ -1,8 +1,14 @@
 module.exports = {
   name: 'basis.utils.info',
+
+  sandbox: true,
   init: function(){
+    var basis = window.basis.createSandbox();
+
     var fnInfo = basis.require('basis.utils.info').fn;
+    var normalizeOffset = basis.require('basis.utils.info').normalizeOffset;
   },
+
   test: [
     {
       name: 'fn',
@@ -10,6 +16,7 @@ module.exports = {
         {
           name: 'empty function',
           test: function(){
+            // jscs:disable
             var functions = [
               function(){},
               function(){
@@ -29,6 +36,7 @@ module.exports = {
               ) {
               }
             ];
+            // jscs:enable
 
             for (var i = 0; i < functions.length; i++)
             {
@@ -42,6 +50,7 @@ module.exports = {
         {
           name: 'no args function',
           test: function(){
+            // jscs:disable
             var functions = [
               function(){
                 return;
@@ -66,6 +75,7 @@ module.exports = {
                 return /\"\//.test('asd');
               }
             ];
+            // jscs:enable
 
             for (var i = 0; i < functions.length; i++)
             {
@@ -79,6 +89,7 @@ module.exports = {
         {
           name: 'no args function',
           test: function(){
+            // jscs:disable
             var functions = [
               function foo(){
                 return;
@@ -107,13 +118,14 @@ module.exports = {
                   }
                 });*/
 
-                this.is(text('<span title="a" class="b"/>'), text(b));
+                assert(text(b) === text('<span title="a" class="b"/>'));
               },
               function(){
                 var a = /regexp/;
                 var b = not / a / regexp;
               }
             ];
+            // jscs:enable
 
             for (var i = 0; i < functions.length; i++)
             {
@@ -121,7 +133,7 @@ module.exports = {
               assert('', info.args);
               assert(info.name == 'anonymous');
               assert(info.getter == false);
-              assert(info.body == functions[i].toString().replace(/^[^\{]+\{/, '').replace(/\}[^}]*$/, ''));
+              assert(info.body == normalizeOffset(functions[i].toString()).replace(/^[^\{]+\{/, '').replace(/\}[^}]*$/, ''));
             }
           }
         },

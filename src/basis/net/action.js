@@ -56,7 +56,7 @@
       this.abort.call(origin);
 
       if (origin.state == STATE_PROCESSING)
-        origin.setState(STATE_UNDEFINED);
+        origin.setState(transport.stateOnAbort || request.stateOnAbort || STATE_UNDEFINED);
     },
     complete: function(transport, request){
       this.complete.call(request.requestData.origin);
@@ -115,6 +115,15 @@
       request: nothingToDo
     }, config);
 
+    // if body is function take in account special action context
+    if (typeof config.body == 'function')
+    {
+      var bodyFn = config.body;
+      config.body = function(){
+        return bodyFn.apply(this.context, this.args);
+      };
+    }
+
     // splice properties
     var fn = basis.object.splice(config, ['prepare', 'request']);
     var callback = basis.object.merge(
@@ -132,16 +141,35 @@
     });
 
     return function action(){
-      // this - instance of DataObject
+      // this - instance of AbstractData
       if (this.state != STATE_PROCESSING)
       {
-        fn.prepare.apply(this, arguments);
+        if (fn.prepare.apply(this, arguments))
+        {
+          /** @cut */ basis.dev.warn('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
+          return Promise.reject('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
+        }
 
-        var request = getTransport().request(basis.object.complete({
-          origin: this
-        }, fn.request.apply(this, arguments)));
+        var request;
+        var requestData = basis.object.complete({
+          origin: this,
+          bodyContext: {
+            context: this,
+            args: basis.array(arguments)
+          }
+        }, fn.request.apply(this, arguments));
 
-        if (request)
+        // if body is function take in account special action context
+        if (typeof requestData.body == 'function')
+        {
+          var bodyFn = requestData.body;
+          requestData.body = function(){
+            return bodyFn.apply(this.context, this.args);
+          };
+        }
+
+        // do a request
+        if (request = getTransport().request(requestData))
           return new Promise(function(fulfill, reject){
             request.addHandler(PROMISE_REQUEST_HANDLER, {
               request: request,

@@ -1,5 +1,6 @@
 {
   "base": {
-    "PageSlider": "./templates/pageslider/PageSlider.tmpl"
+    "PageSlider": "./templates/pageslider/PageSlider.tmpl",
+    "Page": "./templates/pageslider/Page.tmpl"
   }
 }

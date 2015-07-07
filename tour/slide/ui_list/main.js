@@ -1,6 +1,6 @@
-basis.require('basis.ui');
+var Node = require('basis.ui').Node;
 
-var Item = basis.ui.Node.subclass({
+var Item = Node.subclass({
   className: 'Item',
   template: '<li>{title}</li>',
   binding: {
@@ -8,7 +8,7 @@ var Item = basis.ui.Node.subclass({
   }
 });
 
-var list = new basis.ui.Node({
+var list = new Node({
   container: document.body,
   template: '<ul/>',
   childNodes: [

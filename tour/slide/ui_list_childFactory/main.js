@@ -1,6 +1,6 @@
-basis.require('basis.ui');
+var Node = require('basis.ui').Node;
 
-var BaseItem = basis.ui.Node.subclass({
+var BaseItem = Node.subclass({
   binding: {
     caption: 'caption'
   }
@@ -14,14 +14,14 @@ var classMap = {
   })
 };
 
-var list = new basis.ui.Node({
+var list = new Node({
   container: document.body,
   template: '<ul/>',
 
   childClass: BaseItem,
   childFactory: function(config){
-    var childCls = classMap[config.type] || BaseItem;
-    return new childCls(config);
+    var ChildClass = classMap[config.type] || BaseItem;
+    return new ChildClass(config);
   },
   childNodes: [
     { type: 'check', caption: 'foo' },

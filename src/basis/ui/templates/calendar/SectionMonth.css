@@ -1,4 +1,7 @@
-
+  .Basis-Calendar-Section-Month
+  {
+    
+  }
   .Basis-Calendar-MonthWeekDays
   {
     float: left;
@@ -15,8 +18,4 @@
     display: block;
     float: left;
   }
-  .Basis-Calendar-Section-Month .Basis-Calendar-Node
-  {
-    width: 4ex;
-    padding: .25em 0;
-  }
+

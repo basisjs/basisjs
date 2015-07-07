@@ -10,10 +10,9 @@
   // import names
   //
 
-  var createArray = basis.array.create;
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;
-  var events = basisEvent.events;
+  var resolveValue = require('basis.data').resolveValue;
   var getBoundingRect = require('basis.layout').getBoundingRect;
   var DragDropElement = require('basis.dragdrop').DragDropElement;
   var Node = require('basis.ui').Node;
@@ -58,15 +57,15 @@
 
     click: function(){
       if (this.parentNode)
-        this.parentNode.setActivePage(this.pageNumber);
+        this.parentNode.selectPage(this.pageNumber);
     },
 
     setPageNumber: function(pageNumber){
-      if (this.pageNumber != pageNumber)
-      {
-        var oldPageNumber = this.pageNumber;
-        this.pageNumber = pageNumber;
+      var oldPageNumber = this.pageNumber;
 
+      if (oldPageNumber != pageNumber)
+      {
+        this.pageNumber = pageNumber;
         this.emit_pageNumberChanged(oldPageNumber);
       }
     }
@@ -84,10 +83,11 @@
       var pos = basis.number.fit((this.initOffset + dragData.deltaX) / this.tmpl.scrollThumbWrapper.offsetWidth, 0, 1);
       this.scrollThumbLeft_ = percent(pos);
       this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
+      this.emit_scrollThumbChanged();
     },
     over: function(){
       this.scrollThumbLeft_ = NaN;
-      this.setSpanStartPage(this.spanStartPage_);
+      this.emit_scrollThumbChanged();
     }
   };
 
@@ -130,6 +130,7 @@
         events: 'pageCountChanged activePageChanged',
         getter: function(node){
           var activePage = basis.number.fit(node.activePage, 0, node.pageCount - 1);
+
           return percent(activePage / Math.max(node.pageCount - 1, 1));
         }
       },
@@ -152,10 +153,10 @@
         }
       },
       scrollThumbLeft: {
-        events: 'pageCountChanged pageSpanChanged',
+        events: 'pageCountChanged pageSpanChanged spanStartPageChanged scrollThumbChanged',
         getter: function(node){
           return node.scrollThumbLeft_ ||
-                 percent(basis.number.fit(node.spanStartPage_ / Math.max(node.pageCount - node.pageSpan, 1), 0, 1));
+                 percent(basis.number.fit(node.spanStartPage / Math.max(node.pageCount - node.pageSpan, 1), 0, 1));
         }
       }
     },
@@ -172,7 +173,7 @@
         if (delta)
         {
           // set new offset
-          this.setSpanStartPage(this.spanStartPage_ + delta);
+          this.setSpanStartPage(this.spanStartPage + delta);
 
           // prevent page scrolling
           event.die();
@@ -186,13 +187,18 @@
     emit_activePageChanged: createEvent('activePageChanged', 'oldActivePahe'),
     emit_pageCountChanged: createEvent('pageCountChanged', 'oldPageCount'),
     emit_pageSpanChanged: createEvent('pageSpanChanged', 'oldPageSpan'),
+    emit_spanStartPageChanged: createEvent('spanStartPageChanged', 'oldSpanStartPage'),
+    emit_scrollThumbChanged: createEvent('scrollThumbChanged'),
 
     pageOffset: 1,
     pageSpan: 5,
+    pageSpanRA_: null,
     pageCount: 1,
+    pageCountRA_: null,
     activePage: 1,
+    activePageRA_: null,
+    spanStartPage: 1,
 
-    spanStartPage_: -1,
     scrollThumbLeft_: NaN,
 
     dde: null,
@@ -213,7 +219,7 @@
 
       this.setPageCount(pageCount);
       this.setPageSpan(pageSpan);
-      this.setActivePage(activePage, true);
+      this.setActivePage(activePage);
 
       this.dde = new DragDropElement({
         handler: {
@@ -239,7 +245,9 @@
    /**
     * @param {number} pageCount
     */
-    setPageCount: function(pageCount){
+    setPageCount: function(pageCount, spotlight){
+      pageCount = resolveValue(this, this.setPageCount, pageCount, 'pageCountRA_');
+
       var newPageCount = Number(pageCount) || 0;
       var oldPageCount = this.pageCount;
 
@@ -247,20 +255,24 @@
       {
         // set new value
         this.pageCount = newPageCount;
+        this.emit_pageCountChanged(oldPageCount);
 
         // sync
         this.syncPages();
-        this.updateSelection();
 
-        // emit event
-        this.emit_pageCountChanged(oldPageCount);
-      }
+        if (spotlight || !this.getActivePageChild())
+          this.spotlightPage(this.activePage);
+
+        this.updateSelection();
+     }
     },
 
    /**
     * @param {number} pageSpan
     */
-    setPageSpan: function(pageSpan){
+    setPageSpan: function(pageSpan, spotlight){
+      pageSpan = resolveValue(this, this.setPageSpan, pageSpan, 'pageSpanRA_');
+
       var newPageSpan = Math.max(1, pageSpan);
       var oldPageSpan = this.pageSpan;
 
@@ -268,13 +280,15 @@
       {
         // set new value
         this.pageSpan = newPageSpan;
+        this.emit_pageSpanChanged(oldPageSpan);
 
         // sync
         this.syncPages();
-        this.updateSelection();
 
-        // emit event
-        this.emit_pageSpanChanged(oldPageSpan);
+        if (spotlight || !this.getActivePageChild())
+          this.spotlightPage(this.activePage);
+
+        this.updateSelection();
       }
     },
 
@@ -283,6 +297,8 @@
     * @param {boolean} spotlight
     */
     setActivePage: function(activePage, spotlight){
+      activePage = resolveValue(this, this.setActivePage, activePage, 'activePageRA_');
+
       var newActivePage = Math.ceil(activePage - this.pageOffset) || 0;
       var oldActivePage = this.activePage;
 
@@ -291,11 +307,25 @@
         this.activePage = newActivePage;
         this.emit_activePageChanged(oldActivePage);
 
-        if (spotlight)
+        if (spotlight || !this.getActivePageChild())
           this.spotlightPage(this.activePage);
 
         this.updateSelection();
       }
+    },
+
+   /**
+    * @return {basis.ui.paginator.PaginatorNode}
+    */
+    getActivePageChild: function(){
+      return this.getChild(this.pageOffset + this.activePage, 'pageNumber');
+    },
+
+   /**
+    * @param {number} pageNumber
+    */
+    selectPage: function(pageNumber){
+      this.setActivePage(pageNumber);
     },
 
    /**
@@ -309,30 +339,25 @@
     * @param {number} pageNumber
     */
     setSpanStartPage: function(pageNumber){
-      pageNumber = basis.number.fit(pageNumber, 0, this.pageCount < this.pageSpan ? 0 : this.pageCount - this.pageSpan);
+      var oldSpanStartPage = this.spanStartPage;
+      var newSpanStartPage = basis.number.fit(pageNumber, 0, this.pageCount < this.pageSpan ? 0 : this.pageCount - this.pageSpan);
 
-      if (pageNumber != this.spanStartPage_)
+      if (newSpanStartPage != oldSpanStartPage)
       {
-        this.spanStartPage_ = pageNumber;
+        this.spanStartPage = newSpanStartPage;
+        this.emit_spanStartPageChanged(oldSpanStartPage);
 
         for (var i = 0, child; child = this.childNodes[i]; i++)
-          child.setPageNumber(this.pageOffset + pageNumber + i);
+          child.setPageNumber(this.pageOffset + this.spanStartPage + i);
 
         this.updateSelection();
       }
-
-      this.updateBind('scrollThumbLeft');
     },
 
    /**
     */
     updateSelection: function(){
-      var node = basis.array.search(this.childNodes, this.activePage + this.pageOffset, 'pageNumber');
-
-      if (node)
-        node.select();
-      else
-        this.selection.clear();
+      this.selection.set(this.getActivePageChild());
     },
 
    /**
@@ -346,11 +371,11 @@
 
       for (var i = 0; i < pageCount; i++)
         pages.push({
-          pageNumber: this.pageOffset + this.spanStartPage_ + i
+          pageNumber: this.pageOffset + this.spanStartPage + i
         });
 
       this.setChildNodes(pages);
-      this.setSpanStartPage(this.spanStartPage_);
+      this.setSpanStartPage(this.spanStartPage);
     },
 
    /**
@@ -359,6 +384,13 @@
     destroy: function(){
       this.dde.destroy();
       this.dde = null;
+
+      if (this.pageSpanRA_)
+        resolveValue(this, null, null, 'pageSpanRA_');
+      if (this.pageCountRA_)
+        resolveValue(this, null, null, 'pageCountRA_');
+      if (this.activePageRA_)
+        resolveValue(this, null, null, 'activePageRA_');
 
       Node.prototype.destroy.call(this);
     }

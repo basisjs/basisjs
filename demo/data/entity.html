@@ -105,19 +105,16 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.entity');
-    basis.require('basis.ui');
-    basis.require('basis.ui.form');
-    basis.require('basis.ui.button');
-    
+    var entity = basis.require('basis.entity');
+    var UINode = basis.require('basis.ui').Node;
+    var FormContent = basis.require('basis.ui.form').FormContent;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+
     // define data type
-    var Article = new basis.entity.EntityType({
-      name: 'Article',
-      fields: {
-        id: basis.entity.IntId,
-        title: String,
-        content: String
-      }
+    var Article = entity.createType('Article', {
+      id: entity.IntId,
+      title: String,
+      content: String
     });
 
     // generate data
@@ -129,7 +126,7 @@
       });
 
     // article node
-    var ArticleNode = basis.Class(basis.ui.Node, {
+    var ArticleNode = UINode.subclass({
       template:
         '<div class="Article {selected}" event-click="select">' +
           '<div class="Article-Title">[{id}] {title}</div>' +
@@ -143,7 +140,7 @@
     });
 
     // list
-    var myList = new basis.ui.Node({
+    var myList = new UINode({
       template: '<div id="ArticleList"/>',
 
       dataSource: Article.all,
@@ -160,7 +157,7 @@
     });
 
     // form
-    var myForm = new basis.ui.form.FormContent({
+    var myForm = new FormContent({
       disabled: true,
       childNodes: [
         {
@@ -192,7 +189,7 @@
     });
 
     // panel
-    var myButtonPanel = new basis.ui.button.ButtonPanel({
+    var myButtonPanel = new ButtonPanel({
       childNodes: [
         {
           caption: 'Save',
@@ -210,28 +207,20 @@
     });
 
     // add views to document
-    var myEditor = new basis.ui.Node({
-      template:
-        '<div id="EditForm">' +
-          '<!--{form}-->' +
-          '<!--{buttonPanel}-->' +
-        '</div>',
-      binding: {
-        form: myForm,
-        buttonPanel: myButtonPanel
-      }
-    });
-
-    new basis.ui.Node({
+    new UINode({
       container: document.getElementById('demo-container'),
       template:
         '<div>' +
           '<!--{articleList}-->' +
-          '<!--{editor}-->' +
+          '<div id="EditForm">' +
+            '<!--{form}-->' +
+            '<!--{buttonPanel}-->' +
+          '</div>' +
         '</div>',
       binding: {
         articleList: myList,
-        editor: myEditor
+        form: myForm,
+        buttonPanel: myButtonPanel
       }
     });
 

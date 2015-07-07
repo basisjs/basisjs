@@ -108,13 +108,9 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.cssom');
-    basis.require('basis.ui.resizer');
-
-    var DOM = basis.dom;
-    var classList = basis.cssom.classList;
-    var Resizer = basis.ui.resizer.Resizer;
+    var DOM = basis.require('basis.dom');
+    var classList = basis.require('basis.cssom').classList;
+    var Resizer = basis.require('basis.ui.resizer').Resizer;
 
     var horPanel = DOM.createElement('#HorPanel',
       DOM.createElement('H2', 'Vertical panel'),

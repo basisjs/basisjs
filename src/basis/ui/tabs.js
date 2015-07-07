@@ -12,7 +12,6 @@
   //
 
   var Class = basis.Class;
-  var getter = basis.getter;
   var Node = require('basis.ui').Node;
   var ShadowNodeList = require('basis.ui').ShadowNodeList;
 

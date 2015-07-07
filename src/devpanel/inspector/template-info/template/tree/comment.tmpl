@@ -1,0 +1,11 @@
+<b:style src="./comment.css"/>
+<b:isolate/>
+<b:define name="binding" type="bool"/>
+<b:define name="matchBinding" type="bool"/>
+<b:define name="nestedView" type="bool"/>
+
+<div class="comment">
+  <span class="caption {binding} {matchBinding} {nestedView}" event-click="inspect" event-mouseenter="enter" event-mouseleave="leave">
+    &lt;!--{value}--&gt;
+  </span>
+</div>

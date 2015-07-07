@@ -15,9 +15,8 @@
   var Class = basis.Class;
   var createEvent = require('basis.event').create;
 
-  var basisTemplateHtml = require('basis.template.html');
-  var HtmlTemplate = basisTemplateHtml.Template;
-  var htmlTemplateIdMarker = basisTemplateHtml.marker;
+  var HtmlTemplate = require('basis.template.html').Template;
+  var htmlTemplateIdMarker = require('basis.template.const').MARKER;
   var TemplateSwitcher = require('basis.template').TemplateSwitcher;
   var basisDomWrapper = require('basis.dom.wrapper');
   var DWNode = basisDomWrapper.Node;
@@ -28,7 +27,6 @@
   //
   // main part
   //
-
 
   //
   // debug
@@ -53,27 +51,7 @@
   * @param {object} extension
   */
   function extendBinding(binding, extension){
-    var loc;
-
     binding.bindingId = bindingSeed++;
-
-    /** @cut */ try { throw new Error(''); } catch(e) {
-    /** @cut */   var stack = String(e.stack);
-    /** @cut */   var m =
-    /** @cut */     stack.match(/devVerboseName\s\((?:.|\s)+?\(([^\)]+)/) ||
-    /** @cut */     stack.match(/createClass(?:\s*\(.+[\r\n]+.+subclass)\s\((?:.|\s)+?\(([^\)]+)/) ||
-    /** @cut */     stack.match(/createClass\s\((?:.|\s)+?\(([^\)]+)/) ||
-    /** @cut */     stack.match(/customExtendProperty\s\((?:.|\s)+?\(([^\)]+)/);
-    /** @cut */   if (m)
-    /** @cut */   {
-    /** @cut */     loc = m[1].replace(/:(\d+)\:(\d+)$/, function(m, line, col){
-    /** @cut */       return ':' + (line - 3) + ':' + col;
-    /** @cut */     });
-    /** @cut */     //console.log(m[1]);
-    /** @cut */   }
-    /** @cut */   //else
-    /** @cut */   //  console.log(String(e.stack));
-    /** @cut */ }
 
     for (var key in extension)
     {
@@ -147,9 +125,6 @@
         }
       }
 
-      /** @cut */ if (def && loc)
-      /** @cut */   def.loc = loc;
-
       binding[key] = def;
     }
   }
@@ -215,6 +190,19 @@
   * Base binding
   */
   var TEMPLATE_BINDING = Class.customExtendProperty({
+    '$role': {
+      events: 'ownerSatelliteNameChanged',
+      getter: function(node){
+        if (node.role)
+        {
+          var roleId = node.roleId && node.binding[node.roleId];
+          var id = roleId && typeof roleId.getter == 'function' ? roleId.getter(node) : undefined;
+          return node.role + (id !== undefined ? '(' + id + ')' : '');
+        }
+
+        return node.ownerSatelliteName || '';
+      }
+    },
     active: {
       events: 'activeChanged',
       getter: function(node){
@@ -271,6 +259,12 @@
     select: function(event){
       if (this.isDisabled())
         return;
+
+      if (this.selectedRA_)
+      {
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by user action. Override `select` action to make your logic working.');
+        return;
+      }
 
       if (this.contextSelection && this.contextSelection.multiple)
         this.select(event.ctrlKey || event.metaKey);
@@ -432,7 +426,7 @@
 
       templateSync: function(){
         var oldElement = this.element;
-        var oldTmpl = this.tmpl;
+        //var oldTmpl = this.tmpl;
         var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
         var noChildNodesElement;
 
@@ -505,9 +499,13 @@
           }
         }
 
-        // emit event
-        if (oldTmpl)
-          this.emit_templateChanged();
+        // NOTE: we couldn't omit templateChanged on init for now, as it's a single way
+        // to know when tmpl become available; ShadowNode(List) doesn't work otherwise
+        //
+        // if (oldTmpl)
+        //   this.emit_templateChanged();
+
+        this.emit_templateChanged();
       },
 
      /**
@@ -571,6 +569,8 @@
 
         if (getter && this.tmpl)
           this.tmpl.set(bindName, getter(this));
+        if (this.roleId == bindName)
+          this.updateBind('$roleId');
       },
 
      /**

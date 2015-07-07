@@ -1,4 +1,4 @@
-basis.require('basis.template.html');
+var HtmlTemplate = require('basis.template.html').Template;
 //;;;basis.require('basis.devpanel');
 
 var srcMap = [];
@@ -9,7 +9,7 @@ function templateWrapper(src){
   if (index != -1)
     return tmplMap[index];
 
-  var template = new basis.template.html.Template(src);
+  var template = new HtmlTemplate(src);
 
   srcMap.push(src);
   tmplMap.push(template);
@@ -35,8 +35,8 @@ var backboneTemplate = (function(){
       this.tmpl.set(bindName, getter(this));
   }
 
-  var g_bindings = {};
-  var g_seed = 1;
+  var gBindings = {};
+  var gSeed = 1;
   var BINDING_TEMPLATE_INTERFACE = {
     attach: function(object, handler, context){
       for (var event in handler) {
@@ -57,26 +57,27 @@ var backboneTemplate = (function(){
       }
     }
   };
-  
+
   return function(source){
     var tmpl = templateWrapper(source);
     return function(){
       var binding;
       if (this.binding)
       {
-        binding = g_bindings[this.binding.id_];
+        binding = gBindings[this.binding.id_];
         if (!binding)
         {
           if (!this.binding.id_)
-            this.binding.id_ = g_seed++;
+            this.binding.id_ = gSeed++;
 
-          binding = g_bindings[this.binding.id_] = {
+          binding = gBindings[this.binding.id_] = {
             bindingId: this.binding.id_
           };
-          
+
           for (var key in this.binding) {
             if (this.binding[key]) {
-              if (typeof this.binding[key] == 'string') {
+              if (typeof this.binding[key] == 'string')
+              {
                 var m = this.binding[key].match(/^model:(.*)$/);
                 if (m) {
                   binding[key] = (function(key){
@@ -87,7 +88,9 @@ var backboneTemplate = (function(){
                       }
                     };
                   })(m[1] || key);
-                } else {
+                }
+                else
+                {
                   binding[key] = (function(key){
                     return {
                       getter: function(view){
@@ -96,7 +99,9 @@ var backboneTemplate = (function(){
                     };
                   })(key);
                 }
-              } else {
+              }
+              else
+              {
                 if (typeof this.binding[key] == 'string' || typeof this.binding[key] == 'object')
                   binding[key] = this.binding[key];
               }
@@ -109,11 +114,11 @@ var backboneTemplate = (function(){
       this.updateBind = updateBind;
 
       return this.tmpl.element;
-    }
-  }
+    };
+  };
 })();
 
-global['bbt'] = module.exports = basis.object.extend(backboneTemplate, {
+global.bbt = module.exports = basis.object.extend(backboneTemplate, {
   init: function(config){
     if (!config)
       return this;

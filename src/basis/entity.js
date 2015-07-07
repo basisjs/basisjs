@@ -17,7 +17,6 @@
   var extend = basis.object.extend;
   var complete = basis.object.complete;
   var $self = basis.fn.$self;
-  var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
   var basisEvent = require('basis.event');
@@ -42,13 +41,13 @@
 
   // buildin indexes
   var NumericId = function(value){
-    return isNaN(value) ? null : Number(value);
+    return value == null || isNaN(value) ? null : Number(value);
   };
   var NumberId = function(value){
-    return isNaN(value) ? null : Number(value);
+    return value == null || isNaN(value) ? null : Number(value);
   };
   var IntId = function(value){
-    return isNaN(value) ? null : parseInt(value, 10);
+    return value == null || isNaN(value) ? null : parseInt(value, 10);
   };
   var StringId = function(value){
     return value == null ? null : String(value);
@@ -99,11 +98,12 @@
 
     return function(value, oldValue){
       var Type = namedTypes[typeName];
+
       if (Type)
         return Type(value, oldValue);
 
-      /** @cut */ if (arguments.length) // don't warn on default value calculation
-      /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for ' + field + ', but function called');
+      /** @cut */ if (arguments.length && value != null) // don't warn on default value calculation and wrapper call for null
+      /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for `' + field + '`, but function called');
     };
   }
 
@@ -122,7 +122,7 @@
 
     items: null,
 
-    init: function(fn){
+    init: function(){
       this.items = {};
     },
     get: function(value, checkType){
@@ -253,9 +253,72 @@
   // EntitySet
   //
 
+ /**
+  * Returns delta object
+  * @return {object|undefined}
+  */
+  function getDelta(inserted, deleted){
+    var delta = {};
+    var result;
+
+    if (inserted && inserted.length)
+      result = delta.inserted = inserted;
+
+    if (deleted && deleted.length)
+      result = delta.deleted = deleted;
+
+    if (result)
+      return delta;
+  }
+
+  var WRAPPED_MARKER = 'wrapped' + basis.genUID();
   var ENTITYSET_WRAP_METHOD = function(superClass, method){
     return function(data){
-      return superClass.prototype[method].call(this, data && data.map(this.wrapper));
+      if (data && !Array.isArray(data))
+        data = [data];
+
+      var needToWrap = data && !data[WRAPPED_MARKER];
+
+      if (needToWrap)
+      {
+        if (this.localId)
+        {
+          var items = arrayFrom(this.getItems());
+
+          data = data.map(function(newItem){
+            for (var i = 0; i < items.length; i++)
+              if (this.localId(newItem, items[i]))
+                return this.wrapper(newItem, items[i]);
+
+            newItem = this.wrapper(newItem);
+            items.push(newItem);
+            return newItem;
+          }, this);
+        }
+        else
+        {
+          data = data.map(this.wrapper);
+        }
+        data[WRAPPED_MARKER] = true;
+      }
+
+      var delta = superClass.prototype[method].call(this, data);
+
+      if (needToWrap)
+      {
+        data[WRAPPED_MARKER] = false;
+        if (this.localId && delta && delta.deleted)
+        {
+          // TODO: make it deferred
+          Dataset.setAccumulateState(true);
+          for (var i = 0; i < delta.deleted.length; i++)
+            if (delta.deleted[i].root) // it's a hack to prevent double object destroy
+              delta.deleted[i].destroy();
+          Dataset.setAccumulateState(false);
+        }
+      }
+
+      return delta;
     };
   };
 
@@ -269,11 +332,17 @@
     };
   };
 
-  var ENTITYSET_SYNC_METHOD = function(superClass){
+  var ENTITYSET_SYNC_METHOD = function(){
     return function(data){
+      if (this.localId)
+        return this.set(data);
+
       var destroyItems = basis.object.slice(this.items_);
+      var itemsChangedFired = false;
+      var listenHandler = this.listen.item;
       var inserted = [];
       var deleted = [];
+      var delta;
 
       if (data)
       {
@@ -282,19 +351,42 @@
         {
           var entity = this.wrapper(data[i]);
           if (entity)
+          {
+            if (entity.basisObjectId in destroyItems == false)
+              inserted.push(entity);
             destroyItems[entity.basisObjectId] = false;
+          }
         }
+        var checkHandler = {
+          itemsChanged: function(){
+            itemsChangedFired = true;
+          }
+        };
+        this.addHandler(checkHandler);
         Dataset.setAccumulateState(false);
+        this.removeHandler(checkHandler);
       }
-
-      for (var key in this.items_)
-        if (key in destroyItems == false)
-          inserted.push(this.items_[key]);
 
       for (var key in destroyItems)
         if (destroyItems[key])
           deleted.push(destroyItems[key]);
 
+      if (!itemsChangedFired && (delta = getDelta(inserted, deleted)))
+      {
+        if (listenHandler)
+        {
+          if (delta.deleted)
+            for (var i = 0; i < delta.deleted.length; i++)
+              delta.deleted[i].removeHandler(listenHandler, this);
+          if (delta.inserted)
+            for (var i = 0; i < delta.inserted.length; i++)
+              delta.inserted[i].addHandler(listenHandler, this);
+        }
+
+        this.emit_itemsChanged(delta);
+      }
+
+      // try to optimize deletion by batch changes
       if (deleted.length && this.wrapper.all)
         this.wrapper.all.emit_itemsChanged({
           deleted: deleted
@@ -319,11 +411,25 @@
     wrapper: $self,
 
     init: ENTITYSET_INIT_METHOD(Dataset, 'EntitySet'),
-    sync: ENTITYSET_SYNC_METHOD(Dataset),
 
+    setAndDestroyRemoved: ENTITYSET_SYNC_METHOD(Dataset),
     set: ENTITYSET_WRAP_METHOD(Dataset, 'set'),
     add: ENTITYSET_WRAP_METHOD(Dataset, 'add'),
     remove: ENTITYSET_WRAP_METHOD(Dataset, 'remove'),
+    clear: function(){
+      var delta = Dataset.prototype.clear.call(this);
+
+      if (this.localId && delta && delta.deleted)
+      {
+        // TODO: make it deferred
+        Dataset.setAccumulateState(true);
+        for (var i = 0; i < delta.deleted.length; i++)
+          delta.deleted[i].destroy();
+        Dataset.setAccumulateState(false);
+      }
+
+      return delta;
+    },
 
     destroy: function(){
       Dataset.prototype.destroy.call(this);
@@ -359,8 +465,7 @@
 
     name: null,
 
-    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection'),
-    sync: ENTITYSET_SYNC_METHOD(Filter)
+    init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection')
   });
 
   //
@@ -378,7 +483,6 @@
     subsetClass: ReadOnlyEntitySet,
 
     init: ENTITYSET_INIT_METHOD(Split, 'EntityGrouping'),
-    sync: ENTITYSET_SYNC_METHOD(Split),
 
     getSubset: function(object, autocreate){
       var group = Split.prototype.getSubset.call(this, object, autocreate);
@@ -394,7 +498,17 @@
   // EntitySetWrapper
   //
 
-  var EntitySetWrapper = function(wrapper, name){
+  var EntitySetWrapper = function(wrapper, name, options){
+    function createLocalId(id){
+      if (typeof id == 'string')
+        return function(data, item){
+          return data[id] == item.data[id];
+        };
+
+      if (typeof id == 'function')
+        return id;
+    }
+
     if (this instanceof EntitySetWrapper)
     {
       if (!wrapper)
@@ -410,7 +524,8 @@
         entitySetClass: {
           /** @cut */ className: namespace + '.EntitySet(' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + ')',
           /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.type || wrapper).name || 'UnknownType') + '}',
-          wrapper: wrapper
+          wrapper: wrapper,
+          localId: createLocalId(options && options.localId)
         }
       });
 
@@ -624,7 +739,7 @@
             map = $self;
 
           for (var i = 0; i < value.length; i++)
-            value[i] = result(entityType.reader(map(value[i], i)));
+            value[i] = result(result.reader(map(value[i], i)));
 
           return value;
         },
@@ -675,25 +790,46 @@
     /** @cut */ basis.dev.warn('Calculate fields are readonly');
     return oldValue;
   };
+  /** @cut */ var warnCalcReadOnly = function(name){
+  /** @cut */   basis.dev.warn('basis.entity: Attempt to set value for `' + name + '` field was ignored as field is calc (read only)');
+  /** @cut */ };
 
-  function getDataBuilder(defaults, fields){
+  function getDataBuilder(defaults, fields, calcs){
     var args = ['has'];
     var values = [hasOwnProperty];
     var obj = [];
 
+    // warn on set value for calc field in dev mode
+    /** @cut */ args.push('warnCalcReadOnly');
+    /** @cut */ values.push(warnCalcReadOnly);
+
     for (var key in defaults)
       if (hasOwnProperty.call(defaults, key))
       {
+        var escapedKey = '"' + key.replace(/"/g, '\"') + '"';
+
+        if (hasOwnProperty.call(calcs, key))
+        {
+          // calcs are read only and always undefined by default
+          obj.push(escapedKey + ':' +
+            // warn on set value for calc field in dev mode
+            /** @cut */ 'has.call(data,' + escapedKey + ')' + '?' + 'warnCalcReadOnly(' + escapedKey + ')' + ':' +
+            'undefined');
+          continue;
+        }
+
         var name = 'v' + obj.length;
         var fname = 'f' + obj.length;
-        var value = defaults[key];
+        var defValue = defaults[key];
 
         args.push(name, fname);
-        values.push(value, fields[key]);
-        obj.push('"' + key + '":' +
-          'has.call(data,"' + key + '")' +
-            '?' + fname + '(data["' + key + '"],' + name + ')' +
-            ':' + name + (typeof value == 'function' ? '(data)' : '')
+        values.push(defValue, fields[key]);
+        obj.push(escapedKey + ':' +
+          fname + '(' +
+            'has.call(data,' + escapedKey + ')' +
+              '?' + 'data[' + escapedKey + ']' +
+              ':' + name + (typeof defValue == 'function' ? '(data)' : '') +
+            ')'
         );
       }
 
@@ -726,6 +862,8 @@
     return oldArray;
   }
 
+  var reIsoStringSplit = /\D/;
+  var reIsoTimezoneDesignator = /(.{10,})([\-\+]\d{1,2}):?(\d{1,2})?$/;
   var fromISOString = (function(){
     function fastDateParse(y, m, d, h, i, s, ms){
       var date = new Date(y, m - 1, d, h || 0, 0, s || 0, ms ? ms.substr(0, 3) : 0);
@@ -740,7 +878,13 @@
         null,
         String(isoDateString || '')
           .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
-            tz = i ? h * 60 + i * 1 : h * 1;
+            // designator formats:
+            //   <datetime>Z
+            //   <datetime>±hh:mm
+            //   <datetime>±hhmm
+            //   <datetime>±hh
+            // http://en.wikipedia.org/wiki/ISO_8601#Time_zone_designators
+            tz = Number(h || 0) * 60 + Number(i || 0);
             return pre;
           })
           .split(reIsoStringSplit)
@@ -749,10 +893,10 @@
   })();
 
   function dateField(value, oldValue){
-    if (typeof value == 'string')
+    if (typeof value == 'string' && value)
       return fromISOString(value);
 
-    if (typeof value == 'number')
+    if (typeof value == 'number' && isNaN(value) == false)
       return new Date(value);
 
     if (value == null)
@@ -762,13 +906,10 @@
       return value;
 
     /** @cut */ basis.dev.warn('basis.entity: Bad value for Date field, value ignored');
-    return oldValue;
+    return oldValue || null;
   }
 
   function addField(entityType, name, config){
-    // registrate alias
-    entityType.aliases[name] = name;
-
     // normalize config
     if (typeof config == 'string' ||
         Array.isArray(config) ||
@@ -805,16 +946,18 @@
         }
         else
         {
+          var defaultValue;
           config.type = function(value, oldValue){
-            var exists = values.indexOf(value) != -1;
+            var exists = value === defaultValue || values.indexOf(value) != -1;
 
             /** @cut */ if (!exists)
             /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ' (new value ignored).\nVariants:', values, '\nIgnored value:', value);
 
-            return exists ? value : oldValue;
+            return exists ? value : oldValue === undefined ? defaultValue : oldValue;
           };
 
-          config.defValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
+          defaultValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
+          config.defValue = defaultValue;
         }
       }
 
@@ -843,7 +986,12 @@
       entityType.fields[name] = calcFieldWrapper;
     }
     else
+    {
       entityType.fields[name] = wrapper;
+
+      // registrate alias only for regular fields
+      entityType.aliases[name] = name;
+    }
 
     entityType.defaults[name] = 'defValue' in config ? config.defValue : wrapper();
 
@@ -858,13 +1006,19 @@
   function addFieldAlias(entityType, alias, name){
     if (name in entityType.fields == false)
     {
-      /** @cut */ basis.dev.warn('Can\'t add alias `' + alias + '` for non-exists field `' + name + '`');
+      /** @cut */ basis.dev.warn('basis.entity: Can\'t add alias `' + alias + '` for non-exists field `' + name + '`');
+      return;
+    }
+
+    if (name in entityType.calcMap)
+    {
+      /** @cut */ basis.dev.warn('basis.entity: Can\'t add alias `' + alias + '` for calc field `' + name + '`');
       return;
     }
 
     if (alias in entityType.aliases)
     {
-      /** @cut */ basis.dev.warn('Alias `' + alias + '` already exists');
+      /** @cut */ basis.dev.warn('basis.entity: Alias `' + alias + '` already exists');
       return;
     }
 
@@ -872,9 +1026,6 @@
   }
 
   function addCalcField(entityType, name, wrapper){
-    if (!entityType.calcs)
-      entityType.calcs = [];
-
     var calcs = entityType.calcs;
     var deps = entityType.deps;
     var calcArgs = wrapper.args || [];
@@ -883,7 +1034,7 @@
       wrapper: wrapper
     };
 
-    // NOTE: simple dependence calculation
+    // NOTE: simple calc dependency resolving
     // TODO: check, is algoritm make real check for dependencies or not?
     var before = entityType.calcs.length;
     var after = 0;
@@ -897,6 +1048,8 @@
     {
       // natural calc field
       calcConfig.key = name;
+      entityType.calcMap[name] = calcConfig;
+
       for (var i = 0, calc; calc = calcs[i]; i++)
         if (calc.args.indexOf(name) != -1)
         {
@@ -966,6 +1119,8 @@
     compositeKey: null,
     idProperty: null,
     defaults: null,
+    calcs: null,
+    calcMap: null,
 
     aliases: null,
     slots: null,
@@ -987,6 +1142,8 @@
 
       // init properties
       this.fields = {};
+      this.calcs = [];
+      this.calcMap = {};
       this.deps = {};
       this.idFields = {};
       this.defaults = {};
@@ -1006,7 +1163,7 @@
       // wrapper and all instances set
       this.wrapper = wrapper;
       if ('all' in config == false || config.all || config.singleton)
-        this.all = new ReadOnlyEntitySet(basis.object.complete({
+        this.all = new ReadOnlyEntitySet(complete({
           wrapper: wrapper
         }, config.all));
 
@@ -1036,6 +1193,10 @@
         config.constrains.forEach(function(item){
           addCalcField(this, null, item);
         }, this);
+
+      // reset calcs if no one
+      if (!this.calcs.length)
+        this.calcs = null;
 
       // process id and indexes
       var idFields = keys(this.idFields);
@@ -1119,14 +1280,17 @@
       for (var key in this.defaults)
         initDelta[key] = undefined;
 
+      // basis.js 1.4
+      /** @cut */ if (hasOwnProperty.call(config, 'state'))
+      /** @cut */   basis.dev.warn('basis.entity: default instance state can\'t be defined via type config anymore, use Type.extendClass({ state: .. }) instead');
+
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.fields, this.slots);
       this.entityClass.extend({
         entityType: this,
         type: wrapper,
         typeName: this.name,
-        state: config.state || this.entityClass.prototype.state,
-        generateData: getDataBuilder(this.defaults, this.fields),
+        generateData: getDataBuilder(this.defaults, this.fields, this.calcMap),
         initDelta: initDelta
       });
 
@@ -1214,9 +1378,9 @@
   //  Entity
   //
 
-  function entityWarn(entity, message){
-    basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity);
-  }
+  /** @cut */ function entityWarn(entity, message){
+  /** @cut */   basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity);
+  /** @cut */ }
 
  /**
   * @class
@@ -1713,13 +1877,39 @@
     return new EntityTypeWrapper(config);
   }
 
-  function createSetType(nameOrWrapper, wrapper){
+  function createSetType(name, type, options){
     /** @cut */ if (this instanceof createSetType)
     /** @cut */   basis.dev.warn('`new` operator was used with basis.entity.createSetType, it\'s a mistake');
 
-    return arguments.length > 1
-      ? new EntitySetWrapper(wrapper, nameOrWrapper)
-      : new EntitySetWrapper(nameOrWrapper);
+    switch (arguments.length)
+    {
+      case 0:
+      case 1:
+        if (name && name.constructor === Object)
+        {
+          options = basis.object.slice(name);
+          type = basis.object.splice(options).type;
+          name = basis.object.splice(options).name;
+        }
+        else
+        {
+          type = name;
+          name = undefined;
+        }
+
+        break;
+
+      case 2:
+        if (type && type.constructor === Object)
+        {
+          options = type;
+          type = name;
+          name = undefined;
+        }
+        break;
+    }
+
+    return new EntitySetWrapper(type, name, options);
   }
 
   //
@@ -1739,6 +1929,16 @@
       return namedIndexes[name];
     },
 
+    is: function(value, type){
+      var EntityClass;
+
+      if (typeof type == 'string')
+        type = namedTypes[type];
+
+      EntityClass = type && type.type && type.type.entityClass;
+
+      return value && EntityClass ? value instanceof EntityClass : false;
+    },
     get: function(typeName, value){      // works like Type.get(value)
       var Type = namedTypes[typeName];
       if (Type)
@@ -1775,3 +1975,13 @@
     Collection: EntityCollection,
     Grouping: EntityGrouping
   };
+
+  // deprecated in 1.4.0
+  /** @cut */ basis.resource(__filename).ready(function(){
+  /** @cut */   basis.dev.warnPropertyAccess(module.exports, 'Collection', EntityCollection,
+  /** @cut */     'basis.entity: Collection class is deprecated, use basis.data.dataset.Filter instead.'
+  /** @cut */   );
+  /** @cut */   basis.dev.warnPropertyAccess(module.exports, 'Grouping', EntityGrouping,
+  /** @cut */     'basis.entity: Grouping class is deprecated, use basis.data.dataset.Split instead.'
+  /** @cut */   );
+  /** @cut */ });

@@ -26,7 +26,6 @@
   //
 
   var testElement = document.createElement('div');
-  var SUPPORT_ONRESIZE = typeof testElement.onresize != 'undefined';
   var SUPPORT_DISPLAYBOX = (function(){
     var prefixes = ['', '-webkit-'];
 

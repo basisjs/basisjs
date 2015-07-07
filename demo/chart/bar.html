@@ -30,53 +30,43 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.entity');
-    basis.require('basis.ui.chart');
-
-
-    var DOM = basis.dom;
-    var nsEntity = basis.entity;
-    var BarChart = basis.ui.chart.BarChart;
-    var StackedBarChart = basis.ui.chart.StackedBarChart;
+    var nsEntity = basis.require('basis.entity');
+    var wrapData = basis.require('basis.data').wrap;
+    var BarChart = basis.require('basis.ui.chart').BarChart;
+    var StackedBarChart = basis.require('basis.ui.chart').StackedBarChart;
 
 
     //
     // Example
     //
 
-    var countries = ['Russia', 'United States', 'China', 'UK', 'Germany'];
-
-    var data = [];
-    var lastValue;
-    var value;
-
-    Math.seedrandom("bar chart");
+    Math.seedrandom('bar chart');
 
     var min = 10000;
     var max = 50000;
-    for (var i = 0, country; country = countries[i]; i++)
-    {
+    var countries = ['Russia', 'United States', 'China', 'UK', 'Germany'];
+    var data = countries.map(function(country){
+      var value = min + (max - min) * Math.random(); // 10 000 - 50 000
       var row = {
         Country: country
       };
-      
-      lastValue = (max - min) * Math.random() + min; // 10 000 - 50 000
+
       for (var year = 2010; year <= 2012; year++)
       {
-        lastValue = row[year] = lastValue + 0.2 * lastValue * (2 * Math.random() - 1); // +/- 20% from last value;
+        row[year] = value;
+        value += 0.2 * value * (2 * Math.random() - 1); // +/- 20% from last value;
       }
 
-      data.push(row);
-    }
+      return row;
+    });
 
     var barChartConfig = {
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       width: 500,
       height: 450,
 
       keyGetter: basis.getter('data.Country'),
-      childNodes: basis.data.wrap(data),
+      childNodes: wrapData(data),
       series: {
         childNodes: [
           {
@@ -97,15 +87,15 @@
 
     new BarChart(barChartConfig);
 
-    new BarChart(basis.object.extend({
+    new BarChart(basis.object.merge(barChartConfig, {
       invertAxis: true
-    }, barChartConfig));
+    }));
 
     new StackedBarChart(barChartConfig);
 
-    new StackedBarChart(basis.object.extend({
+    new StackedBarChart(basis.object.merge(barChartConfig, {
       invertAxis: true
-    }, barChartConfig));
+    }));
 
   </script>
 </body>

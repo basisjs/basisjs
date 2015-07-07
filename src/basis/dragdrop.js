@@ -163,7 +163,7 @@
 
     prepareDrag: basis.fn.$undef,
     startRule: basis.fn.$true,
-    ignoreTarget: function(target, event){
+    ignoreTarget: function(target/*, event*/){
       return /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName);
     },
 
@@ -265,7 +265,7 @@
 
       this.value = this.read(element);
     },
-    read: function(){
+    read: function(element){
       return element[this.property];
     },
     write: function(element, formattedValue){
@@ -284,7 +284,7 @@
   */
   var StyleDeltaWriter = DeltaWriter.subclass({
     className: namespace + '.StyleDeltaWriter',
-    format: function(value, delta){
+    format: function(value/*, delta*/){
       return value + 'px';
     },
     read: function(element){

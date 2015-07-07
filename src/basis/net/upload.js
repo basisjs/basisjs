@@ -10,6 +10,8 @@
   // import names
   //
 
+  var document = global.document;
+  var FormData = global.FormData;
   var eventUtils = require('basis.dom.event'); // TODO
   var STATE = require('basis.data').STATE;
   var basisNet = require('basis.net');
@@ -22,6 +24,18 @@
   // main part
   //
 
+  var JSON_CONTENT_TYPE = /^application\/json/i;
+
+  function safeJsonParse(content){
+    try {
+      return basis.json.parse(content);
+    } catch(e) {
+      /** @cut */ var url = arguments[1];
+      /** @cut */ basis.dev.warn('basis.net.ajax: Can\'t parse JSON from ' + url, { url: url, content: content });
+    }
+  }
+
+
   // features support detection
 
   function fileAPISupport(){
@@ -31,8 +45,9 @@
   }
 
   function formDataSupport(){
-    return window.FormData !== undefined;
+    return FormData !== undefined;
   }
+
 
  /**
   * @class
@@ -73,7 +88,7 @@
 
         this.request(basis.object.extend(requestConfig, {
           url: form.action,
-          postBody: formData
+          body: formData
         }));
       },
 
@@ -89,7 +104,7 @@
 
         this.request({
           url: url,
-          postBody: formData
+          body: formData
         });
       },
 
@@ -110,7 +125,7 @@
       frame.style.position = 'absolute';
       frame.style.left = '-2000px';
       frame.style.top = '-2000px';
-      frame.name = frame.id = 'f' + parseInt(Math.random() * 10e10);
+      frame.name = frame.id = 'uploadFrame' + basis.genUID();
       frame.src = 'about:blank';
 
       return frame;
@@ -123,6 +138,7 @@
           ? frame.contentDocument
           : frame.document;
     };
+
 
    /**
     * @class
@@ -138,48 +154,63 @@
 
         this.frame = createIFrame();
 
-        basis.dom.event.addHandlers(this.frame, { load: this.onLoad }, this);
+        eventUtils.addHandlers(this.frame, { load: this.onLoad }, this);
       },
-      onLoad: function(event){
+      onLoad: function(){
         if (this.inprogress)
         {
-          this.processResponse();
+          this.inprogress = false;
+          setTimeout(this.removeFrame.bind(this), 100);
+
+          var newState;
+          var newStateData;
 
           if (this.isSuccessful())
-            this.transport.emit_success(this);
+          {
+            newState = STATE.READY;
+            this.emit_success(this.getResponseData());
+          }
           else
-            this.transport.emit_failure(this);
+          {
+            newState = STATE.ERROR;
+            newStateData = 'error';
+            this.emit_failure('error');
+          }
 
           this.transport.emit_complete(this);
 
-          this.inprogress = false;
-          var that = this;
-          setTimeout(function(){
-            that.removeFrame();
-          }, 100);
-
-          this.setState(STATE.READY);
+          this.setState(newState, newStateData);
         }
       },
       isSuccessful: function(){
         return true;
       },
-      processResponse: function(){
+      getResponseData: function(){
         var doc = getIFrameDocument(this.frame);
-        var docRoot = doc.body ? doc.body : doc.documentElement;
-        this.update({
-          responseText: docRoot ? docRoot.innerHTML : null,
-          responseXML: doc.XMLDocument ? doc.XMLDocument : doc
-        });
+        var docRoot = doc.body || doc.documentElement;
+
+        if (docRoot)
+        {
+          var response = docRoot.textContent || docRoot.innerHTML;
+          var contentType = doc.contentType;
+
+          if (JSON_CONTENT_TYPE.test(contentType))
+            response = safeJsonParse(response, this.requestData.form.action);
+
+          return response;
+        }
+        else
+          return doc.XMLDocument || doc;
       },
       insertFrame: function(){
-        document.body.appendChild(this.frame);
+        basis.doc.body.add(this.frame);
       },
       removeFrame: function(){
-        document.body.removeChild(this.frame);
+        basis.doc.remove(this.frame);
       },
       doRequest: function(){
         var form = this.requestData.form;
+
         if (!form)
           return;
 
@@ -205,7 +236,7 @@
         this.removeFrame();
         delete this.frame;
 
-        AbstractRequest.prototype.destroy.call();
+        AbstractRequest.prototype.destroy.call(this);
       }
     });
 
@@ -215,8 +246,8 @@
       requestClass: IFrameRequest,
 
       formSubmit: function(form, requestData){
-        var requestConfig = basis.object.extend({}, requestData);
-        this.request(basis.object.extend(requestConfig, { form: form }));
+        var requestConfig = basis.object.merge(requestData, { form: form });
+        this.request(requestConfig);
       }
     });
   }

@@ -1,0 +1,9 @@
+.Basis-Calendar-Section-Month,
+.Basis-Calendar-Section-Year,
+.Basis-Calendar-Section-YearDecade,
+.Basis-Calendar-Section-Century,
+.Basis-Calendar-Section-YearQuarter,
+.Basis-Calendar-Section-Quarter
+{
+  /* to avoid warnings */
+}

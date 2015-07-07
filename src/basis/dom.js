@@ -36,6 +36,7 @@
 
   // import names
   var document = global.document;
+  var Node = global.Node;
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
@@ -120,9 +121,9 @@
         return POSITION_DISCONNECTED | POSITION_IMPLEMENTATION_SPECIFIC;
 
       if (nodeA.sourceIndex > nodeB.sourceIndex)
-        return POSITION_PRECEDING | (POSITION_CONTAINS * nodeB.contains(nodeA));
+        return POSITION_PRECEDING | (POSITION_CONTAINS * contains(nodeB, nodeA));
       else
-        return POSITION_FOLLOWING | (POSITION_CONTAINED_BY * nodeA.contains(nodeB));
+        return POSITION_FOLLOWING | (POSITION_CONTAINED_BY * contains(nodeA, nodeB));
     };
   }
 
@@ -132,6 +133,7 @@
   * @return {boolean}
   */
   var isNode;
+  var contains;
 
   if (typeof Node != 'undefined')
   {
@@ -141,8 +143,12 @@
 
     // add support for node.contains (generally for Firefox)
     if (!Node.prototype.contains)
-      Node.prototype.contains = function(node){
-        return !!(this.compareDocumentPosition(node) & POSITION_CONTAINED_BY);
+      contains = function(parent, child){
+        return !!(parent.compareDocumentPosition(child) & POSITION_CONTAINED_BY);
+      };
+    else
+      contains = function(parent, child){
+        return parent.contains(child);
       };
   }
   else
@@ -150,6 +156,10 @@
     // IE6-IE8 version
     isNode = function(node){
       return node && node.ownerDocument === document;
+    };
+
+    contains = function(parent, child){
+      return parent === document ? document.documentElement.contains(child) : parent.contains(child);
     };
   }
 
@@ -835,9 +845,9 @@
   // Checkers
   //
 
-  function is(element, names){ // names may be a string (comma or space separated tag names) or an array
-    return (new RegExp('(^|\\W)' + element.tagName + '(\\W|$)')).test(names);
-  }
+  // function is(element, names){ // names may be a string (comma or space separated tag names) or an array
+  //   return (new RegExp('(^|\\W)' + element.tagName + '(\\W|$)')).test(names);
+  // }
 
  /**
   * Returns true if child is descendant of parent.
@@ -846,7 +856,7 @@
   * @return {boolean}
   */
   function parentOf(node, child){
-    return node.contains(child);
+    return contains(node, child);
   }
 
  /**
@@ -856,7 +866,7 @@
   * @return {Node}
   */
   function isInside(node, root){
-    return node == root || root.contains(node);
+    return node == root || contains(root, node);
   }
 
   //

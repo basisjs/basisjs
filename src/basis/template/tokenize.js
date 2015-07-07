@@ -25,11 +25,11 @@ var TAG_IGNORE_CONTENT = {
 };
 
 var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*(?:\.\{[a-z_][a-z0-9_]*\})?)\}/i;
-var CLASS_ATTR_PARTS = /(\S+)/g;
 var CLASS_ATTR_BINDING = /^((?:[a-z_][a-z0-9_\-]*)?(?::(?:[a-z_][a-z0-9_\-]*)?)?)\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
 var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
 var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
 var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
+var ATTRIBUTE_MODE = /^(?:|append-|set-|remove-)(class|attr)$/;
 
 
 /**
@@ -38,9 +38,9 @@ var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
  * @param {string} string
  * @return {string}
  */
-var decodeHTMLTokens = (function(string){
+var decodeHTMLTokens = (function(){
   var tokenMap = {};
-  var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
+  var tokenElement = !basis.NODE_ENV ? global.document.createElement('div') : null;
   var NAMED_CHARACTER_REF = /&([a-z]+\d*|#\d+|#x[0-9a-f]{1,4});?/gi;
 
   // load token map when node evironment, because html parsing is not available
@@ -128,6 +128,7 @@ function processAttr(token, mode, convertRange){
           var val = part[2];
           var valInfo = {
             value: val,
+            binding: false,
             range: {
               start_: pos += part[1].length,
               end_: pos += val.length
@@ -140,6 +141,7 @@ function processAttr(token, mode, convertRange){
           {
             binding = [m[1] || '', m[2]];
             binding.info_ = valInfo;
+            valInfo.binding = true;
             bindings.push(binding);
           }
           else
@@ -297,46 +299,21 @@ function postProcessing(tokens, options, source){
         var attrs = getTokenAttrs(token);
         for (var j = 0, attr; attr = token.attrs[j++];)
         {
-          var mode;
+          var mode = attr.name;
 
-          if (token.prefix == 'b')
+          // special case modification instruction in <b:include>
+          if (token.prefix == 'b' && attr.name == 'value')
           {
-            // process specified attributes in special tags
-            if (attr.name == 'value')
-            {
-              // parse value attribute in
-              //   <b:class>/<b:append-class>/<b:set-class>/<b:remove-class>
-              //   <b:attr name="name">/<b:append-attr name="name">/<b:set-attr name="name">/<b:remove-attr name="name">
-              if (/^(|append-|set-|remove-)class$/.test(token.name))
-                mode = 'class';
-              else if (/^(|append-|set-|remove-)attr$/.test(token.name))
-                mode = attrs.name;
-            }
-            else if (token.name == 'include')
-            {
-              // parse class and id attributes in <b:include>
-              if (attr.name == 'class')
-                mode = 'class';
-              else if (attr.name == 'id')
-                mode = 'id';
-            }
-          }
-          else
-          {
-            // process every attributes in standart tags
-            mode = attr.name;
+            // parse value attribute in
+            //   <b:class>/<b:append-class>/<b:set-class>/<b:remove-class>
+            //   <b:attr name="name">/<b:append-attr name="name">/<b:set-attr name="name">/<b:remove-attr name="name">
+            var m = token.name.match(ATTRIBUTE_MODE);
+            if (m)
+              mode = m[1] == 'class' ? 'class' : attrs.name;
           }
 
-          if (mode)
-          {
-            // process bindings and decode HTML tokens
-            processAttr(attr, mode, convertRange);
-          }
-          else
-          {
-            // just decode HTML tokens in attribute value
-            attr.value = decodeHTMLTokens(attr.value || '');
-          }
+          // process bindings and decode HTML tokens
+          processAttr(attr, mode, convertRange);
 
           convertRange(attr);
         }
@@ -399,6 +376,7 @@ function tokenize(source, options){
   var startPos;
   var m;
 
+  /** @cut */ var attrMap;  // map to detect attribute duplicates
   /** @cut */ result.source_ = source;
   /** @cut */ result.warns = [];
 
@@ -545,6 +523,9 @@ function tokenize(source, options){
           lastTag = token;
 
           state = TAG_NAME;
+
+          // create attribute map
+          /** @cut */ attrMap = {};
         }
 
         break;
@@ -552,7 +533,6 @@ function tokenize(source, options){
       case CLOSE_TAG:
         if (m[1] !== (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name)
         {
-          //throw 'Wrong close tag';
           lastTag.children.push({
             type: TYPE_TEXT,
             value: '</' + m[0],
@@ -561,6 +541,7 @@ function tokenize(source, options){
               end_: startPos + m[0].length
             }
           });
+          /** @cut */ result.warns.push(['Wrong close tag: ' + source.substr(startPos - 2, m[0].length + 2), lastTag.children[lastTag.children.length - 1]]);
         }
         else
           lastTag = tagStack.pop();
@@ -588,7 +569,15 @@ function tokenize(source, options){
 
           // store attribute
           if (token.type == TYPE_ATTRIBUTE)
+          {
+            // detect attribute duplicates
+            /** @cut */ var fullName = (token.prefix ? token.prefix + ':' : '') + token.name;
+            /** @cut */ if (Object.prototype.hasOwnProperty.call(attrMap, fullName))
+            /** @cut */   result.warns.push(['Duplicate attribute: ' + fullName, token]);
+            /** @cut */ attrMap[fullName] = true;
+
             lastTag.attrs.push(token);
+          }
         }
 
         if (m[2] == '{')
@@ -729,7 +718,7 @@ function tokenize(source, options){
         break;
 
       default:
-        throw 'Parser bug'; // Must never to be here; bug in parser otherwise
+        throw SYNTAX_ERROR; // Must never to be here; bug in parser otherwise
     }
 
     if (state == TEXT)
@@ -750,7 +739,7 @@ function tokenize(source, options){
   postProcessing(result, options || {}, source);
 
   /** @cut */ if (lastTag.name)
-  /** @cut */   result.warns.push(['No close tag for <' + lastTag.name + '>', lastTag]);
+  /** @cut */   result.warns.push(['No close tag for <' + (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name + '>', lastTag]);
   /** @cut */
   /** @cut */ if (!result.warns.length)
   /** @cut */   delete result.warns;

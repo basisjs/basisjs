@@ -1,0 +1,10 @@
+.native-textarea
+{
+  border: 1px solid #808080;
+  background-color: white;
+  padding: 2px;
+}
+.native-textarea_invalid
+{
+  border-color: #DD0000;
+}

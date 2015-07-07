@@ -12,6 +12,7 @@
 
   var PageControl = require('basis.ui.tabs').PageControl;
   var Scroller = require('basis.ui.scroller').Scroller;
+  var resize = require('basis.dom.resize');
 
 
   //
@@ -19,8 +20,28 @@
   //
 
   var DIRECTIONS  = {
-    HORIZONTAL:'horizontal',
-    VERTICAL:'vertical'
+    HORIZONTAL: 'horizontal',
+    VERTICAL: 'vertical'
+  };
+  var PROPERTIES = {
+    horizontal: {
+      position: 'left',
+      offset: 'offsetLeft',
+      size: 'offsetWidth',
+      currentVelocity: 'currentVilocityX',
+      viewport: 'viewportX',
+      setPosition: 'setPositionX',
+      addPosition: 'addPositionX'
+    },
+    vertical: {
+      position: 'top',
+      offset: 'offsetTop',
+      size: 'offsetHeight',
+      currentVelocity: 'currentVilocityY',
+      viewport: 'viewportY',
+      setPosition: 'setPositionY',
+      addPosition: 'addPositionY'
+    }
   };
 
   //
@@ -30,8 +51,15 @@
   var PageSlider = PageControl.subclass({
     className: namespace + '.PageSlider',
 
-    template: module.template('PageSlider'),
+    rotate: false,
     direction: DIRECTIONS.HORIZONTAL,
+    properties: PROPERTIES[DIRECTIONS.HORIZONTAL],
+
+    template: module.template('PageSlider'),
+    childClass: {
+      template: module.template('Page')
+    },
+
     listen: {
       selection: {
         itemsChanged: function(selection, delta){
@@ -53,18 +81,18 @@
     emit_childNodesModified: function(delta){
       PageControl.prototype.emit_childNodesModified.call(this, delta);
 
-      var property = this.isHorizontal() ? 'left' : 'top';
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        child.element.style[property] = (100 * i) + '%';
+        child.element.style[this.properties.position] = (100 * i) + '%';
     },
-    isHorizontal: function(){
-      return this.direction === DIRECTIONS.HORIZONTAL;
-    },
+
     init: function(){
+      this.properties = PROPERTIES[this.direction];
+
       PageControl.prototype.init.call(this);
+
       this.scroller = new Scroller(basis.object.extend({
-        scrollY: !this.isHorizontal(),
-        scrollX: this.isHorizontal(),
+        scrollY: this.direction == DIRECTIONS.VERTICAL,
+        scrollX: this.direction == DIRECTIONS.HORIZONTAL,
         minScrollDelta: 10,
         handler: {
           context: this,
@@ -75,7 +103,17 @@
       }, this.scrollerConfig));
     },
 
+    syncOffset: function(){
+      var selected = this.selection.pick();
+      this.scroller[this.properties.setPosition](
+        selected ? selected.element[this.properties.offset] : 0
+      );
+    },
+
     templateSync: function(){
+      if (this.tmpl)
+        resize.remove(this.element, this.syncOffset, this);
+
       PageControl.prototype.templateSync.call(this);
 
       if (this.childNodesElement)
@@ -87,6 +125,13 @@
 
         this.realign();
       }
+
+      if (this.tmpl)
+        resize.add(this.element, this.syncOffset, this);
+    },
+
+    isHorizontal: function(){
+      return this.direction == DIRECTIONS.HORIZONTAL;
     },
 
     realign: function(){
@@ -100,13 +145,13 @@
         return;
 
       var currentElement = currentPage.element;
-      var pageSize = this.isHorizontal() ? currentElement.offsetWidth : currentElement.offsetHeight;
-      var pagePosition = this.isHorizontal() ? currentElement.offsetLeft : currentElement.offsetTop;
+      var pageSize = currentElement[this.properties.size];
+      var pagePosition = currentElement[this.properties.offset];
       var pageScrollTo;
 
       var scroller = this.scroller;
-      var currentVelocity = this.isHorizontal() ? scroller.currentVelocityX : scroller.currentVelocityY;
-      var viewPort = this.isHorizontal() ? scroller.viewportX : scroller.viewportY;
+      var currentVelocity = scroller[this.properties.currentVelocity];
+      var viewPort = scroller[this.properties.viewport];
       if (currentVelocity)
       {
         pageScrollTo = currentVelocity > 0
@@ -134,62 +179,60 @@
         page.select();
 
         var element = page.element;
-        var offsetSize = this.isHorizontal() ? element.offsetWidth : element.offsetHeight;
-        if (offsetSize > 0)
-        {
-          var offsetPosition = this.isHorizontal() ? element.offsetLeft : element.offsetTop;
-          if (this.isHorizontal())
-            this.scroller.setPositionX(offsetPosition, !noSmooth);
-          else
-            this.scroller.setPositionY(offsetPosition, !noSmooth);
-        }
+        var offsetSize = element[this.properties.size];
 
+        if (offsetSize > 0)
+          this.scroller[this.properties.setPosition](element[this.properties.offset], !noSmooth);
       }
     },
 
     adjustRotation: function(leftToRight){
       var selected = this.selection.pick();
 
-      var shiftLength = 0;
-
       var childCount = this.childNodes.length;
       var index = this.childNodes.indexOf(selected);
+
+      if (childCount < 2 || index == -1)
+        return;
 
       var delta = (leftToRight ? Math.ceil(childCount / 2) - 1 : Math.round(childCount / 2)) - index;
 
       var firstElement = this.firstChild.element;
-      var childSize = this.isHorizontal() ? firstElement.offsetWidth : firstElement.offsetHeight;
+      var childSize = firstElement[this.properties.size];
+      var offset = 0;
 
       for (var i = 0; i < Math.abs(delta); i++)
       {
         if (delta > 0)
         {
           this.insertBefore(this.lastChild, this.firstChild);
-          shiftLength += childSize;
+          offset += childSize;
         }
         else
         {
           this.appendChild(this.firstChild);
-          shiftLength -= childSize;
+          offset -= childSize;
         }
       }
 
-      if (this.isHorizontal())
-        this.scroller.addPositionX(shiftLength);
-      else
-        this.scroller.addPositionY(shiftLength);
-
+      this.scroller[this.properties.addPosition](offset);
 
       this.emit_childNodesModified({});
     },
 
     selectNext: function(){
+      if (this.childNodes.length < 2)
+        return;
+
       if (this.rotate)
         this.adjustRotation(true);
 
       this.scrollToPage(this.selection.pick().nextSibling);
     },
     selectPrev: function(){
+      if (this.childNodes.length < 2)
+        return;
+
       if (this.rotate)
         this.adjustRotation(false);
 

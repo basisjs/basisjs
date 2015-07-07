@@ -191,7 +191,5 @@
     background: white;
     border: 1px solid #C5D3E5;
     padding: 4px;
-      -webkit-border-radius: 2px;
-      -moz-border-radius: 2px;
     border-radius: 2px;
   }

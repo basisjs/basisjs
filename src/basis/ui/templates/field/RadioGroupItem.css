@@ -1,0 +1,11 @@
+.Basis-RadioGroup-Item,
+.Basis-RadioGroup-Item.selected,
+.Basis-RadioGroup-Item.disabled
+{
+
+}
+.Basis-RadioGroup-Item__text
+{
+  display: inline-block;
+  vertical-align: middle;
+}

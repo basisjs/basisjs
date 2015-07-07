@@ -1,6 +1,6 @@
-basis.require('basis.ui');
+var Node = require('basis.ui').Node;
 
-var editor = new basis.ui.Node({
+var editor = new Node({
   container: document.body,
   template:
     '<input{focus} value="{title}" event-keyup="update" event-change="update"/>',
@@ -16,7 +16,7 @@ var editor = new basis.ui.Node({
   }
 });
 
-var list = new basis.ui.Node({
+var list = new Node({
   container: document.body,
   template: resource('./list.tmpl'),
 

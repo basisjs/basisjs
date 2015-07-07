@@ -1,15 +1,18 @@
 var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 
 var fileAPI = require('../../api/file.js');
 var parseDom = require('./parse-dom.js');
 var buildTree = require('./build-tree.js');
-var DataObject = require('basis.data').Object;
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
 var hoveredBinding = require('./binding.js').hover;
+var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
+var sourceView = require('./source.js');
+var showSource = new basis.Token(false);
 var selectedDomNode = new basis.Token();
 var selectedObject = selectedDomNode.as(function(node){
   return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
@@ -25,10 +28,25 @@ var selectedTemplate = selectedDomNode.as(function(node){
 var bindingDataset = new Dataset();
 var isolatePrefix;
 
-selectedDomNode.as(require('./binding.js').getBindingsFromNode).attach(bindingDataset.set, bindingDataset);
+selectedDomNode
+  .as(getBindingsFromNode)
+  .attach(bindingDataset.set, bindingDataset);
+
+selectedTemplate
+  .as(function(template){
+    if (this.value)
+      this.value.bindingBridge.detach(this.value, this.apply, this);
+    if (template)
+      template.bindingBridge.attach(template, this.apply, this);
+    return template;
+  })
+  .attach(function(template){
+    sourceView.decl.set(template ? template.decl_ : null);
+  });
 
 function syncSelectedNode(){
   var element = selectedObject.value && selectedObject.value.element;
+
   if (selectedDomNode.value === element)
     selectedDomNode.apply();
   else
@@ -68,15 +86,29 @@ selectedDomNode.attach(function(node){
     return view.clear();
 
   var nodes = parseDom(node);
-  var bindings = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]) || [];
+  var debugInfo = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]);
+  var bindings = debugInfo.bindings || [];
 
-  view.setChildNodes(buildTree(nodes, bindings));
+  view.setChildNodes(buildTree(nodes, bindings, function(node){
+    selectedDomNode.set(node);
+  }));
 });
+
+var captureEvents = [
+  'click',
+  'mousedown',
+  'mouseup',
+  'mousemove',
+  'mouseout',
+  'mouseover',
+  'mouseenter',
+  'mouseleave'
+];
 
 var view = new Window({
   modal: true,
   visible: selectedDomNode.as(Boolean),
-  template: resource('./template/template-info.tmpl'),
+  template: resource('./template/window.tmpl'),
   binding: {
     upName: selectedObject.as(function(object){
       if (object)
@@ -90,6 +122,8 @@ var view = new Window({
       if (template)
         return !!template.source.url;
     }),
+    source: sourceView,
+    showSource: showSource,
     bindings: new Node({
       dataSource: bindingDataset,
       sorting: 'data.name',
@@ -103,21 +137,34 @@ var view = new Window({
             }
           },
           action: {
-            log: function(){
+            logObject: function(){
+              var result = selectedObject.value;
+
+              global.$lastInspectObject = result || null;
+              console.log(result || 'No object attached to template');
+            },
+            logValues: function(){
               if (selectedDomNode.value)
               {
                 var id = selectedDomNode.value[inspectBasisTemplateMarker];
                 var object = selectedObject.value;
                 var objectBinding = object.binding;
-                var templateBinding = selectedTemplate.value.getBinding();
-                var result = {};
+                var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+                var result = (debugInfo || {}).values || null;
 
-                for (var key in objectBinding)
-                  if (key != '__extend__' && key != 'bindingId')
-                    if (templateBinding.names.indexOf(key) != -1)
-                      result[key] = objectBinding[key].getter(object);  // TODO: return real template values
+                if (result)
+                  result = basis.object.slice(result, basis.object.keys(objectBinding));
 
-                global.$lastInspectValue = result;
+                global.$lastInspectValues = result;
+                console.log(result);
+              }
+            },
+            logDeclaration: function(){
+              if (sourceView.decl.value)
+              {
+                var result = sourceView.decl.value;
+
+                global.$lastInspectDeclaration = result;
                 console.log(result);
               }
             }
@@ -133,9 +180,10 @@ var view = new Window({
           name: 'data:',
           value: 'data:',
           used: 'data:',
+          nestedView: 'data:',
           loc: 'data:',
           highlight: hoveredBinding.compute('update', function(node, value){
-            return node.data.used ? !value || node.data.name === value : false;
+            return node.data.used && (!value || node.data.name === value);
           })
         },
         action: {
@@ -169,6 +217,9 @@ var view = new Window({
       var template = selectedTemplate.value;
       if (template && template.source.url)
         fileAPI.openFile(template.source.url);
+    },
+    toggleSource: function(){
+      showSource.set(!showSource.value);
     }
   },
 
@@ -178,6 +229,20 @@ var view = new Window({
     Window.prototype.init.call(this);
     this.dde.fixLeft = false;
     this.dde.fixTop = false;
+  },
+
+  handler: {
+    open: function(){
+      captureEvents.forEach(function(eventName){
+        inspectBasisDomEvent.captureEvent(eventName, function(e){
+        });
+      });
+    },
+    close: function(){
+      captureEvents.forEach(function(eventName){
+        inspectBasisDomEvent.releaseEvent(eventName);
+      });
+    }
   }
 });
 

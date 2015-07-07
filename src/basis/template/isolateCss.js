@@ -6,16 +6,16 @@ var CSS_FNSELECTOR = /^(not|has|matches|nth-child|nth-last-child)\(/i;
 var CSS_FNSELECTOR_MAXLEN = 15; // maxlength(not | has | matches | nth-child | nth-last-child) + '(' = 15 symbols
 
 function genIsolateMarker(){
-  return 'i' + basis.genUID() + '__';
+  return basis.genUID() + '__';
 }
 
-function isolateCss(css, prefix){
+function isolateCss(css, prefix, info){
   function jumpAfter(str, offset){
     var index = css.indexOf(str, offset);
     i = index !== -1 ? index + str.length : sym.length;
   }
 
-  function parseString(endSym){
+  function parseString(){
     var quote = sym[i];
 
     if (quote !== '"' && quote !== '\'')
@@ -28,7 +28,7 @@ function isolateCss(css, prefix){
     return true;
   }
 
-  function parseBraces(endSym){
+  function parseBraces(){
     var bracket = sym[i];
 
     if (bracket === '(')
@@ -113,6 +113,7 @@ function isolateCss(css, prefix){
     if (m)
     {
       i++;
+      map[i + (result.length / 2) * prefix.length - 1] = i;
       result.push(css.substring(lastMatchPos, i), prefix);
       lastMatchPos = i;
     }
@@ -133,6 +134,7 @@ function isolateCss(css, prefix){
     }
   }
 
+  var map = {};
   var result = [];
   var sym = css.split('');
   var len = sym.length;
@@ -144,8 +146,11 @@ function isolateCss(css, prefix){
     prefix = genIsolateMarker();
 
   parseStyleSheet(false);
+  result = result.join('') + css.substring(lastMatchPos);
 
-  return result.join('') + css.substring(lastMatchPos);
+  return info
+    ? { css: result, map: map, prefix: prefix }
+    : result;
 }
 
 module.exports = isolateCss;
