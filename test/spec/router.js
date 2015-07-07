@@ -208,6 +208,91 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'recursion aware',
+      test: [
+        {
+          name: 'should delay url check if cycle in same frame',
+          test: function(done){
+            function finish(){
+              assert(counter < 10);
+              stopped = true;
+              done();
+            }
+
+            var counter = 0;
+            var stopped = false;
+
+            router.add('foo', function(){
+              if (stopped)
+                return;
+
+              if (++counter < 10)
+                router.navigate('bar');
+              else
+                finish();
+            });
+
+            router.add('bar', function(){
+              if (stopped)
+                return;
+
+              if (++counter < 10)
+                router.navigate('foo');
+              else
+                finish();
+            });
+
+            router.navigate('foo');
+            setTimeout(finish, 20);
+          }
+        },
+        {
+          name: 'should delay url check if cycle in short period',
+          test: function(done){
+            function finish(){
+              assert(counter < 10);
+              stopped = true;
+              done();
+            }
+
+            var counter = 0;
+            var stopped = false;
+
+            router.add('foo', function(){
+              if (stopped)
+                return;
+
+              if (++counter < 10)
+                setTimeout(function(){
+                  router.start(); // due to bug in yatra, afterEach invokes before done
+                  router.navigate('bar')
+                }, 10);
+              else
+                finish();
+            });
+
+            router.add('bar', function(){
+              if (stopped)
+                return;
+
+              if (++counter < 10)
+                setTimeout(function(){
+                  router.start(); // due to bug in yatra, afterEach invokes before done
+                  router.navigate('foo')
+                }, 10);
+              else
+                finish();
+            });
+
+            router.navigate('foo');
+            setTimeout(function(){
+              finish();
+            }, 200);
+          }
+        }
+      ]
     }
   ]
 };

@@ -26,6 +26,9 @@
   var currentPath;
   var timer;
 
+  var routeHistory = [];
+  var checkDelayTimer;
+
 
   //
   // debug
@@ -269,6 +272,37 @@
     }
   }
 
+  function preventRecursion(path){
+    if (checkDelayTimer)
+      return true;
+
+    // filter too old entries
+    var currentTime = Date.now();
+    routeHistory = routeHistory.filter(function(item){
+      return (currentTime - item.time) < 200;
+    });
+    
+    // search path in history
+    // if more than two occurrence than delay checkUrl
+    // one occurency is legal as we can go to url and then back for some reason
+    var last = basis.array.lastSearch(routeHistory, path, 'path');
+    if (last && basis.array.lastSearch(routeHistory, path, 'path', routeHistory.lastSearchIndex))
+    {
+      // set timer to delay url check
+      checkDelayTimer = setTimeout(function(){
+        checkDelayTimer = null;
+        checkUrl();
+      }, 200);
+
+      return true;
+    }
+
+    routeHistory.push({
+      time: Date.now(),
+      path: path
+    });
+  }
+
  /**
   * Process current location
   */
@@ -282,8 +316,14 @@
       var matched = [];
       /** @cut */ var log = [];
 
+      // check for recursion
+      if (preventRecursion(newPath))
+        return;
+
+      // save current path
       currentPath = newPath;
 
+      // update route states
       for (var path in routes)
       {
         var route = routes[path];
