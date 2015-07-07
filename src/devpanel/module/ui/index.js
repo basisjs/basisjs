@@ -52,7 +52,14 @@ var ViewNode = basis.ui.Node.subclass({
     namespace: 'namespace',
     name: 'mainName',
     id: 'data.id',
+    role: 'data:',
     satelliteName: 'data:',
+    equalNames: {
+      events: 'update',
+      getter: function(node){
+        return node.data.role == node.data.satelliteName;
+      }
+    },
     nestedViewCount: function(node){
       return basis.data.index.count(node.subset);
     }
@@ -74,6 +81,9 @@ var ViewNode = basis.ui.Node.subclass({
     }
   },
   childClass: basis.Class.SELF,
+  sorting: function(node){
+    return node.data.satelliteName || node.data.role || node.data.childIndex;
+  },
   groupingClass: {
     rule: function(node){
       if (node.data.satelliteName)
@@ -82,7 +92,7 @@ var ViewNode = basis.ui.Node.subclass({
         return instanceMap[node.data.groupNode];
       return 0;
     },
-    sorting: 'data.id',
+    sorting: 'data.childIndex',
     childClass: {
       template: resource('./template/group.tmpl'),
       binding: {
@@ -136,11 +146,13 @@ var ViewNode = basis.ui.Node.subclass({
   init: function(){
     basis.ui.Node.prototype.init.call(this);
 
-    var name = this.data.instance.constructor.className.split('.');
-    this.instanceId = this.data.instance.basisObjectId;
+    var className = this.data.instance.constructor.className || 'unknown';
+    var name = className.split('.');
+
     this.mainName = name.pop();
     this.namespace = name.length ? name.join('.') : '';
-    this.subset = splitByParent.getSubset(this.data.instance.basisObjectId, true);
+    this.subset = splitByParent.getSubset(this.data.id, true);
+
     if (this.data.grouping)
       this.setGrouping({
         delegate: instanceMap[this.data.grouping]
@@ -154,7 +166,13 @@ var ViewNode = basis.ui.Node.subclass({
 
 var view = new basis.ui.Node({
   container: document.body,
+
   template: resource('./template/view.tmpl'),
+  binding: {
+    instanceCount: basis.data.index.count(uiInfo.instances)
+  },
+
   childClass: ViewNode,
-  dataSource: splitByParent.getSubset(null, true)
+  dataSource: splitByParent.getSubset(null, true),
+  sorting: 'data.id'
 });

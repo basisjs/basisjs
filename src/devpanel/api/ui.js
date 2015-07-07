@@ -9,13 +9,22 @@ var updateInfoQueue = {};
 var updateInfoTimer_ = null;
 
 var config = { data: null };
-var updateObj = { parent: null, satelliteName: null, groupNode: null, grouping: null };
+var updateObj = {
+  timestamp: 0,
+  parent: null,
+  childIndex: -1,
+  satelliteName: null,
+  groupNode: null,
+  grouping: null,
+  role: null
+};
 
 var allInstances = new basis.data.Dataset();
 
 function updateInfo(){
   var queue = updateInfoQueue;
   var models = [];
+  var timestamp = Date.now();
 
   updateInfoQueue = {};
   updateInfoTimer_ = null;
@@ -38,11 +47,20 @@ function updateInfo(){
     var model = instances[id];
     var instance = model.data.instance;
     var parent = instance.parentNode || instance.owner;
+    var roleGetter = instance.binding && instance.binding.$role;
+
+    if (!model.data.timestamp)
+      updateObj.timestamp = timestamp;
 
     updateObj.parent = parent && parent.basisObjectId;  // reuse updateObj to less GC
     updateObj.groupNode = instance.groupNode && instance.groupNode.basisObjectId;  // reuse updateObj to less GC
     updateObj.grouping = instance.grouping && instance.grouping.basisObjectId;
     updateObj.satelliteName = instance.ownerSatelliteName;
+    updateObj.role = roleGetter && typeof roleGetter.getter == 'function' ? roleGetter.getter(instance) : null;
+
+    updateObj.childIndex = !updateObj.satelliteName && updateObj.parent
+      ? parent.childNodes.indexOf(instance)
+      : -1;
 
     instances[id].update(updateObj);
     models.push(model);

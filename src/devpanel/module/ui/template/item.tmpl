@@ -4,8 +4,13 @@
 <div class="item">
   <div class="title" event-click="toggle" event-mouseenter="enter" event-mouseleave="leave">
     <div b:show="{nestedViewCount}" class="expander"/>
-    <span b:show="{satelliteName}" class="satelliteName">
+    <span b:show="{satelliteName}" class="satelliteName satelliteName_{equalNames}">
       {satelliteName}
+    </span>
+    <span b:hide="{equalNames}">
+      <span b:show="{role}" class="role">
+        {role}
+      </span>
     </span>
     <span b:show="{namespace}" class="namespace">
       {namespace}.
