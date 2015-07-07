@@ -35,7 +35,7 @@
   /** @cut */ var flushLog = function(message){
   /** @cut */   var entries = log.splice(0);
   /** @cut */   if (module.exports.debug)
-  /** @cut */     basis.dev.info.apply(basis.dev, [message].concat(entries.length ? entries : '\n<no matches>'));
+  /** @cut */     basis.dev.info.apply(basis.dev, [message].concat(entries.length ? entries : '\n<no actions>'));
   /** @cut */ };
 
 
@@ -43,25 +43,20 @@
   // apply route changes
   //
 
-  function routeEnter(route){
-    if (!route.inited)
-      return;
-
+  function routeEnter(route, nonInitedOnly){
     var callbacks = arrayFrom(route.callbacks);
-    for (var j = 0, item; item = callbacks[j]; j++)
-      if (item.callback.enter)
+    for (var i = 0, item; item = callbacks[i]; i++)
+      if ((!nonInitedOnly || !item.enterInited) && item.callback.enter)
       {
+        item.enterInited = true;
         item.callback.enter.call(item.context);
         /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: item, route: route.token });
       }
   }
 
   function routeLeave(route){
-    if (!route.inited)
-      return;
-
     var callbacks = arrayFrom(route.callbacks);
-    for (var j = 0, item; item = callbacks[j]; j++)
+    for (var i = 0, item; item = callbacks[i]; i++)
       if (item.callback.leave)
       {
         item.callback.leave.call(item.context);
@@ -69,35 +64,26 @@
       }
   }
 
-  function routeMatch(route){
-    if (!route.inited)
-      return;
-
+  function routeMatch(route, nonInitedOnly){
     var callbacks = arrayFrom(route.callbacks);
-    for (var j = 0, item; item = callbacks[j]; j++)
-      if (item.callback.match)
+    for (var i = 0, item; item = callbacks[i]; i++)
+      if ((!nonInitedOnly || !item.matchInited) && item.callback.match)
       {
+        item.matchInited = true;
         item.callback.match.apply(item.context, route.matched);
         /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route.token, args: route.matched });
       }
-
-    route.token.set(route.matched);
   }
 
-  var initSchedule = basis.asap.schedule(function routeInit(token){
+  var initSchedule = basis.asap.schedule(function(token){
     var route = get(token);
-    route.inited = true;
 
-    if (typeof currentPath != 'string')
-      return;
-
-    var match = currentPath.match(route.regexp);
-    if (match)
+    if (route.matched)
     {
-      route.matched = arrayFrom(match, 1);
+      routeEnter(route, true);
+      routeMatch(route, true);
 
-      routeEnter(route);
-      routeMatch(route);
+      /** @cut */ flushLog(namespace + ': init callbacks for route `' + route.id + '`');
     }
   });
 
@@ -243,32 +229,23 @@
     return regexp;
   }
 
-  function startWatch(){
-    if (eventSupport)
-      eventUtils.addHandler(global, 'hashchange', checkUrl);
-    else
-      timer = setInterval(checkUrl, CHECK_INTERVAL);
-  }
-  function stopWatch(){
-    if (eventSupport)
-      eventUtils.removeHandler(global, 'hashchange', checkUrl);
-    else
-      clearInterval(timer);
-  }
-
-
  /**
   * Start router
   */
   function start(){
     if (!started)
     {
-      startWatch();
-      started = true;
+      // start watch for hash changes
+      if (eventSupport)
+        eventUtils.addHandler(global, 'hashchange', checkUrl);
+      else
+        timer = setInterval(checkUrl, CHECK_INTERVAL);
 
       /** @cut */ if (module.exports.debug)
       /** @cut */   basis.dev.log(namespace + ' started');
 
+      // mark as started and check current hash
+      started = true;
       checkUrl();
     }
   }
@@ -279,8 +256,13 @@
   function stop(){
     if (started)
     {
-      stopWatch();
       started = false;
+
+      // stop watch for hash changes
+      if (eventSupport)
+        eventUtils.removeHandler(global, 'hashchange', checkUrl);
+      else
+        clearInterval(timer);
 
       /** @cut */ if (module.exports.debug)
       /** @cut */   basis.dev.log(namespace + ' stopped');
@@ -324,14 +306,16 @@
           {
             deleted.push(route);
             route.matched = null;
-            route.token.set(null);
           }
         }
       }
 
       // callback off for previous matched
       for (var i = 0, route; route = deleted[i]; i++)
+      {
+        route.token.set(null);
         routeLeave(route);
+      }
 
       // callback off for previous matched
       for (var i = 0, route; route = inserted[i]; i++)
@@ -339,9 +323,26 @@
 
       // callback for matched
       for (var i = 0, route; route = matched[i]; i++)
+      {
+        route.token.set(route.matched);
         routeMatch(route);
+      }
 
       /** @cut */ flushLog(namespace + ': hash changed to "' + newPath + '"');
+    }
+    else
+    {
+      for (var path in routes)
+      {
+        var route = routes[path];
+        if (route.matched)
+        {
+          routeEnter(route, true);
+          routeMatch(route, true);
+        }
+      }
+
+      /** @cut */ flushLog(namespace + ': checkUrl()');
     }
   }
 
@@ -363,14 +364,24 @@
 
       route = routes[path] = {
         id: path,
-        callbacks: [],
-        inited: false,
+        regexp: regexp,
+        enterInited: false,
+        matchInited: false,
         matched: null,
         token: token,
-        regexp: regexp
+        callbacks: []
       };
 
-      initSchedule.add(token);
+      if (typeof currentPath == 'string')
+      {
+        var match = currentPath.match(route.regexp);
+        if (match)
+        {
+          match = arrayFrom(match, 1);
+          route.matched = match;
+          route.token.set(match);
+        }
+      }
     }
 
     return route;
@@ -381,40 +392,19 @@
   */
   function add(path, callback, context){
     var route = get(path, true);
-    var token = route.token;
-    var callback = typeof callback != 'function' ? callback || {} : {
-      match: callback
-    };
-    var config = {
+
+    route.callbacks.push({
+      inited: false,
       cb_: callback,
       context: context,
-      callback: callback
-    };
-
-    route.callbacks.push(config);
-
-    if (route.matched)
-    {
-      /** @cut */ var log = [];
-
-      if (callback.enter)
-      {
-        callback.enter.call(context);
-        /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: config, route: token });
+      callback: typeof callback != 'function' ? callback || {} : {
+        match: callback
       }
+    });
 
-      if (callback.match)
-      {
-        callback.match.apply(context, route.matched);
-        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: config, route: token, args: route.matched });
-      }
+    initSchedule.add(route.token);
 
-      /** @cut */ if (module.exports.debug)
-      /** @cut */   basis.dev.info.apply(basis.dev, [namespace + ': add handler for route `' + path + '`'].concat(log.length ? log : '\n<no matches>'));
-    }
-
-
-    return token;
+    return route.token;
   }
 
  /**
@@ -423,36 +413,38 @@
   function remove(path, callback, context){
     var route = get(path);
 
-    if (route)
-    {
-      for (var i = 0, cb; cb = route.callbacks[i]; i++)
-        if (cb.cb_ === callback && cb.context === context)
+    if (!route)
+      return;
+
+    for (var i = 0, cb; cb = route.callbacks[i]; i++)
+      if (cb.cb_ === callback && cb.context === context)
+      {
+        route.callbacks.splice(i, 1);
+
+        if (route.matched && callback && callback.leave)
         {
-          route.callbacks.splice(i, 1);
+          callback.leave.call(context);
 
-          if (callback && callback.leave)
-          {
-            callback.leave.call(context);
-
-            /** @cut */ if (module.exports.debug)
-            /** @cut */   basis.dev.info.apply(basis.dev, [
-            /** @cut */     namespace + ': add handler for route `' + path + '`\n',
-            /** @cut */     { type: 'leave', path: route.id, cb: item, route: route.token }
-            /** @cut */   ]);
-          }
-
-          if (!route.callbacks.length)
-          {
-            var token = route.token;
-
-            // check no attaches to route token
-            if ((!token.handler || !token.handler.handler) && !token.matched.handler)
-              delete routes[route.id];
-          }
-
-          break;
+          /** @cut */ if (module.exports.debug)
+          /** @cut */   basis.dev.info(
+          /** @cut */     namespace + ': add handler for route `' + path + '`\n',
+          /** @cut */     { type: 'leave', path: route.id, cb: item, route: route.token }
+          /** @cut */   );
         }
-    }
+
+        if (!route.callbacks.length)
+        {
+          var token = route.token;
+
+          // check no attaches to route token
+          if ((!token.handler || !token.handler.handler) && !token.matched.handler)
+            delete routes[route.id];
+        }
+
+        break;
+      }
+
+    /** @cut */ basis.dev.warn(namespace + ': no callback removed', { callback: callback, context: context });
   }
 
  /**

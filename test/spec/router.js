@@ -26,7 +26,9 @@ module.exports = {
         router.add('test', function(){
           checker++;
         });
+        assert(checker === 1);
 
+        router.checkUrl();
         assert(checker === 2);
       }
     },
@@ -68,6 +70,9 @@ module.exports = {
         router.add('foo', function(){
           log.push('foo2');
         });
+        assert(['foo'], log);
+
+        router.checkUrl();
         assert(['foo', 'foo2'], log);
 
         router.navigate('bar');
@@ -128,11 +133,14 @@ module.exports = {
               assert(param === paramValue);
             });
 
+            assert(matches === 0);
+
+            router.checkUrl();
             assert(matches === 2);
           }
         },
         {
-          name: 'callback added via rotuer.add() should invoke async or asap',
+          name: 'callback added via router.add() should invoke async or asap',
           test: function(done){
             function checkDone(){
               if (matches === 2)
@@ -148,19 +156,55 @@ module.exports = {
             router.navigate(paramValue);
 
             var route = router.route(':' + paramName).add(function(){
-              assert(route.matched);
+              assert(route.matched.value);
               matches++;
               checkDone();
             });
 
             router.add(route, function(){
-              assert(route.matched);
+              assert(route.matched.value);
               matches++;
               checkDone();
             });
 
             assert(matches === 0);
-            assert(route.matched.value === false);
+            assert(route.matched.value === true);
+          }
+        },
+        {
+          name: 'when handler removes leave callback should be invoked if route matched',
+          test: function(){
+            var matches = 0;
+
+            router.navigate('123');
+
+            var matchHandler = {
+              leave: function(){
+                matches++;
+              }
+            };
+
+            var nonmatchHandler = {
+              leave: function(){
+                matches++;
+              }
+            };
+
+            router.add('1:foo', matchHandler);
+            router.add('2:foo', nonmatchHandler);
+
+            assert(matches === 0);
+
+            router.checkUrl();
+            assert(matches === 0);
+
+            router.navigate('222');
+            assert(matches === 1);
+
+            router.remove('1:foo', matchHandler);
+            router.remove('2:foo', nonmatchHandler);
+
+            assert(matches === 2);
           }
         }
       ]
