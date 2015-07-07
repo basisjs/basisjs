@@ -22,7 +22,7 @@
   var ButtonPanel = require('basis.ui.button').ButtonPanel;
   var MoveableElement = require('basis.dragdrop').MoveableElement;
 
-  var dict = basis.l10n.dictionary(__filename);
+  var dict = require('basis.l10n').dictionary(__filename);
 
 
   //

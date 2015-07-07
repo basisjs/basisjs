@@ -2447,7 +2447,7 @@
           /** @cut */ requires = savedRequires;
         }
 
-        return namespaces[namespace];
+        return namespaces[namespace].exports;
       }, {
         permanent: true
       }),
