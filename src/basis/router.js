@@ -281,7 +281,7 @@
     routeHistory = routeHistory.filter(function(item){
       return (currentTime - item.time) < 200;
     });
-    
+
     // search path in history
     // if more than two occurrence than delay checkUrl
     // one occurency is legal as we can go to url and then back for some reason

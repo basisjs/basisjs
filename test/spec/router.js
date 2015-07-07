@@ -267,7 +267,7 @@ module.exports = {
               if (++counter < 10)
                 setTimeout(function(){
                   router.start(); // due to bug in yatra, afterEach invokes before done
-                  router.navigate('bar')
+                  router.navigate('bar');
                 }, 10);
               else
                 finish();
@@ -280,7 +280,7 @@ module.exports = {
               if (++counter < 10)
                 setTimeout(function(){
                   router.start(); // due to bug in yatra, afterEach invokes before done
-                  router.navigate('foo')
+                  router.navigate('foo');
                 }, 10);
               else
                 finish();
