@@ -51,6 +51,8 @@
   * @param {object} extension
   */
   function extendBinding(binding, extension){
+    /** @cut */ var info = basis.dev.getInfo(extension, 'map');
+
     binding.bindingId = bindingSeed++;
 
     for (var key in extension)
@@ -124,6 +126,9 @@
             }
         }
       }
+
+      /** @cut */ if (info && info.hasOwnProperty(key))
+      /** @cut */   def.loc = info[key];
 
       binding[key] = def;
     }

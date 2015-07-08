@@ -10,7 +10,6 @@ var updateInfoTimer_ = null;
 
 var config = { data: null };
 var updateObj = {
-  timestamp: 0,
   parent: null,
   childIndex: -1,
   satelliteName: null,
@@ -24,7 +23,6 @@ var allInstances = new basis.data.Dataset();
 function updateInfo(){
   var queue = updateInfoQueue;
   var models = [];
-  var timestamp = Date.now();
 
   updateInfoQueue = {};
   updateInfoTimer_ = null;
@@ -48,9 +46,6 @@ function updateInfo(){
     var instance = model.data.instance;
     var parent = instance.parentNode || instance.owner;
     var roleGetter = instance.binding && instance.binding.$role;
-
-    if (!model.data.timestamp)
-      updateObj.timestamp = timestamp;
 
     updateObj.parent = parent && parent.basisObjectId;  // reuse updateObj to less GC
     updateObj.groupNode = instance.groupNode && instance.groupNode.basisObjectId;  // reuse updateObj to less GC
@@ -76,12 +71,19 @@ function processEvent(event){
   {
     case 'create':
       //console.log('create', id);
+      var devInfo = inspectBasis.dev.getInfo(instance);
 
       // reuse config for less garbage
       config.data = {
         id: id,
         instance: instance,
-        parent: null
+        loc: devInfo ? devInfo.loc || null : null,
+        parent: null,
+        childIndex: -1,
+        satelliteName: null,
+        groupNode: null,
+        grouping: null,
+        role: null
       };
 
       instances[id] = new basis.data.Object(config);

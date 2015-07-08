@@ -62,10 +62,27 @@ function pickHandler(event){
         basisjsTools.openFile(source.url);
       else
       {
-        templateInfo.set(inspectBasisTemplate.resolveObjectById(templateId).element);
-        transport.sendData('pickTemplate', {
-          filename: source.url
-        });
+        var object = inspectBasisTemplate.resolveObjectById(templateId);
+
+        if (event.altKey)
+        {
+          var info = inspectBasis.dev.getInfo(object);
+
+          if (info && info.loc)
+          {
+            if (basisjsTools && typeof basisjsTools.openFile == 'function')
+              basisjsTools.openFile(info.loc);
+          }
+          else
+            console.info('Object create location doesn\'t resolved:', object, info);
+        }
+        else
+        {
+          templateInfo.set(object.element);
+          transport.sendData('pickTemplate', {
+            filename: source.url
+          });
+        }
       }
     }
     else

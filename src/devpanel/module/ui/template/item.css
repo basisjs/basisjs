@@ -3,14 +3,19 @@
   padding: 3px 2px 4px 18px;
   position: relative;
   font-size: 12px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
 }
 .title:hover
 {
   background: rgba(0,0,0,.1);
   cursor: pointer;
+}
+
+.caption
+{
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .expander
@@ -23,6 +28,20 @@
   border: 1px solid #AAA;
   background: #CCC;
   border-radius: 2px;
+}
+
+.loc
+{
+  padding: 0 5px;
+  margin-right: 3px;
+  background: red;
+  float: right;
+  border-radius: 3px;
+  background: #ACD;
+}
+.loc:hover
+{
+  background: #9BC;
 }
 
 .satelliteName

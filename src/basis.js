@@ -3719,6 +3719,28 @@
   // export names
   //
 
+  var devInfoResolver = (function(){
+    var get = function(){};
+    var set = function(info, value){
+      return value;
+    };
+
+    /** @cut */ var resolver = config.devInfoResolver || {};
+    /** @cut */ var test = {};
+    /** @cut */ if (typeof resolver.get == 'function')
+    /** @cut */   get = resolver.get;
+    /** @cut */ if (typeof resolver.set == 'function' && resolver.set(null, test) === test)
+    /** @cut */   set = resolver.set;
+
+    return {
+      setInfo: set,
+      getInfo: function(value, property){
+        var info = get(value);
+        return info && property ? info[property] : info;
+      }
+    };
+  })();
+
   // create and extend basis namespace
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
@@ -3739,6 +3761,7 @@
     },
     dev: (new Namespace('basis.dev'))
       .extend(consoleMethods)
+      .extend(devInfoResolver)
       .extend({
         warnPropertyAccess: warnPropertyAccess
       }),

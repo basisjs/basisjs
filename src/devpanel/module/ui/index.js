@@ -49,11 +49,12 @@ var ViewNode = basis.ui.Node.subclass({
   template: resource('./template/item.tmpl'),
   collapsed: true,
   binding: {
+    id: 'data.id',
+    loc: 'data.loc',
     namespace: 'namespace',
     name: 'mainName',
-    id: 'data.id',
-    role: 'data:',
     satelliteName: 'data:',
+    role: 'data:',
     equalNames: {
       events: 'update',
       getter: function(node){
@@ -69,6 +70,11 @@ var ViewNode = basis.ui.Node.subclass({
       this.collapsed = !this.collapsed;
       this.updateBind('collapsed');
       this.setDataSource(!this.collapsed ? this.subset : null);
+    },
+    openLoc: function(){
+      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+      if (basisjsTools && typeof basisjsTools.openFile == 'function')
+        basisjsTools.openFile(this.data.loc);
     },
     enter: function(event){
       hoverView.set(this);
@@ -169,7 +175,8 @@ var view = new basis.ui.Node({
 
   template: resource('./template/view.tmpl'),
   binding: {
-    instanceCount: basis.data.index.count(uiInfo.instances)
+    instanceCount: basis.data.index.count(uiInfo.instances),
+    withLoc: basis.data.index.count(uiInfo.instances, 'data.loc')
   },
 
   childClass: ViewNode,

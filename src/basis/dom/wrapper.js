@@ -1615,7 +1615,13 @@
       child = node.childFactory(config);
 
       if (child instanceof node.childClass)
+      {
+        /** @cut */ var info = basis.dev.getInfo(config);
+        /** @cut */ if (info)
+        /** @cut */   basis.dev.setInfo(info, child);
+
         return child;
+      }
     }
 
     if (!child)
