@@ -952,7 +952,7 @@
         add: function(object){
           queue[object.basisObjectId] = object;
           if (!scheduled)
-            scheduled = basis.asap(process);
+            scheduled = asap(process);
         },
         remove: function(object){
           delete queue[object.basisObjectId];
