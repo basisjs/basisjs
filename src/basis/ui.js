@@ -34,6 +34,15 @@
 
   /** @cut */ var instances = {};
   /** @cut */ var notifier = new basis.Token();
+  /** @cut */ var notifyCreateSchedule = basis.asap.schedule(function(instance){
+  /** @cut */   instances[instance.basisObjectId] = instance;
+  /** @cut */   notifier.set({ action: 'create', instance: instance });
+  /** @cut */ });
+  /** @cut */ var notifyDestroySchedule = basis.asap.schedule(function(instance){
+  /** @cut */   delete instances[instance.basisObjectId];
+  /** @cut */   notifier.set({ action: 'destroy', instance: instance });
+  /** @cut */ });
+
 
 
   //
@@ -425,8 +434,7 @@
           }
         }
 
-        /** @cut */ instances[this.basisObjectId] = this;
-        /** @cut */ notifier.set({ action: 'create', instance: this });
+        /** @cut */ notifyCreateSchedule.add(this);
       },
 
       templateSync: function(){
@@ -631,8 +639,10 @@
       * @inheritDoc
       */
       destroy: function(){
-        /** @cut */ delete instances[this.basisObjectId];
-        /** @cut */ notifier.set({ action: 'destroy', instance: this });
+        /** @cut */ if (instances[this.basisObjectId])
+        /** @cut */   notifyDestroySchedule.add(this);
+        /** @cut */ else
+        /** @cut */   notifyCreateSchedule.remove(this);
 
         var template = this.template;
         var element = this.element;
