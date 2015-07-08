@@ -1,29 +1,30 @@
-require('basis.data.index');
-require('basis.layout');
-require('basis.ui');
-
+var Value = require('basis.data').Value;
+var Split = require('basis.data.dataset').Split;
+var Node = require('basis.ui').Node;
+var count = require('basis.data.index').count;
+var getBoundingRect = require('basis.layout').getBoundingRect;
 var uiInfo = require('devpanel.api.ui');
 var instanceMap = uiInfo.instanceMap;
-var splitByParent = new basis.data.dataset.Split({
+
+var splitByParent = new Split({
   source: uiInfo.instances,
   rule: 'data.parent'
 });
 
 var hoverTimer;
-var hoverView = new basis.data.Value();
+var hoverView = new Value();
 var overlay = document.createElement('div');
 overlay.style.position = 'absolute';
-overlay.style.background = 'red';
 overlay.style.transition = 'all .05s';
 overlay.style.zIndex = 10000;
 overlay.style.background = 'rgba(110, 163, 217, .7)';
 overlay.style.pointerEvents = 'none';
-var hoverEl = new basis.data.Value({
+var hoverEl = new Value({
   handler: {
     change: function(){
       if (this.value)
       {
-        var rect = basis.layout.getBoundingRect(this.value);
+        var rect = getBoundingRect(this.value);
         if (rect)
         {
           overlay.style.left = rect.left + 'px';
@@ -45,7 +46,7 @@ hoverView.link(hoverEl, function(value){
   this.set(value ? value.data.instance.element : null);
 });
 
-var ViewNode = basis.ui.Node.subclass({
+var ViewNode = Node.subclass({
   template: resource('./template/item.tmpl'),
   collapsed: true,
   binding: {
@@ -62,7 +63,7 @@ var ViewNode = basis.ui.Node.subclass({
       }
     },
     nestedViewCount: function(node){
-      return basis.data.index.count(node.subset);
+      return count(node.subset);
     }
   },
   action: {
@@ -88,7 +89,9 @@ var ViewNode = basis.ui.Node.subclass({
   },
   childClass: basis.Class.SELF,
   sorting: function(node){
-    return node.data.satelliteName || node.data.role || node.data.childIndex;
+    return node.data.childIndex == -1
+      ? node.data.satelliteName || node.data.role
+      : node.data.childIndex;
   },
   groupingClass: {
     rule: function(node){
@@ -114,7 +117,7 @@ var ViewNode = basis.ui.Node.subclass({
     groupingClass: basis.Class.SELF,
 
     emit_update: function(delta){
-      basis.ui.Node.prototype.groupingClass.prototype.emit_update.call(this, delta);
+      Node.prototype.groupingClass.prototype.emit_update.call(this, delta);
 
       if ('grouping' in delta)
       {
@@ -127,7 +130,7 @@ var ViewNode = basis.ui.Node.subclass({
       }
     },
     init: function(){
-      basis.ui.Node.prototype.groupingClass.prototype.init.call(this);
+      Node.prototype.groupingClass.prototype.init.call(this);
       if (this.data.grouping)
         this.setGrouping({
           delegate: instanceMap[this.data.grouping]
@@ -136,7 +139,7 @@ var ViewNode = basis.ui.Node.subclass({
   },
 
   emit_update: function(delta){
-    basis.ui.Node.prototype.emit_update.call(this, delta);
+    Node.prototype.emit_update.call(this, delta);
 
     if ('grouping' in delta)
     {
@@ -150,7 +153,7 @@ var ViewNode = basis.ui.Node.subclass({
   },
 
   init: function(){
-    basis.ui.Node.prototype.init.call(this);
+    Node.prototype.init.call(this);
 
     var className = this.data.instance.constructor.className || 'unknown';
     var name = className.split('.');
@@ -166,17 +169,17 @@ var ViewNode = basis.ui.Node.subclass({
   },
   destroy: function(){
     this.subset = null;
-    basis.ui.Node.prototype.destroy.call(this);
+    Node.prototype.destroy.call(this);
   }
 });
 
-var view = new basis.ui.Node({
+var view = new Node({
   container: document.body,
 
   template: resource('./template/view.tmpl'),
   binding: {
-    instanceCount: basis.data.index.count(uiInfo.instances),
-    withLoc: basis.data.index.count(uiInfo.instances, 'data.loc')
+    instanceCount: count(uiInfo.instances),
+    withLoc: count(uiInfo.instances, 'data.loc')
   },
 
   childClass: ViewNode,

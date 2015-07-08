@@ -1,8 +1,8 @@
-require('basis.data');
-require('basis.data.dataset');
-
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisUI = inspectBasis.require('basis.ui');
+
+var DataObject = require('basis.data').Object;
+var Dataset = require('basis.data').Dataset;
 
 var instances = {};
 var updateInfoQueue = {};
@@ -18,7 +18,7 @@ var updateObj = {
   role: null
 };
 
-var allInstances = new basis.data.Dataset();
+var allInstances = new Dataset();
 
 function updateInfo(){
   var queue = updateInfoQueue;
@@ -53,7 +53,7 @@ function updateInfo(){
     updateObj.satelliteName = instance.ownerSatelliteName;
     updateObj.role = roleGetter && typeof roleGetter.getter == 'function' ? roleGetter.getter(instance) : null;
 
-    updateObj.childIndex = !updateObj.satelliteName && updateObj.parent
+    updateObj.childIndex = !updateObj.satelliteName && parent
       ? parent.childNodes.indexOf(instance)
       : -1;
 
@@ -86,7 +86,7 @@ function processEvent(event){
         role: null
       };
 
-      instances[id] = new basis.data.Object(config);
+      instances[id] = new DataObject(config);
 
       updateInfoQueue[id] = true;
       if (!updateInfoTimer_)
