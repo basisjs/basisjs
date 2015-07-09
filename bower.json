@@ -9,6 +9,10 @@
     "demo",
     "test",
     "tour",
-    "scripts"
+    "scripts",
+    "basis.config",
+    "bower.json",
+    "index.html",
+    "karma.conf.js"
   ]
 }
