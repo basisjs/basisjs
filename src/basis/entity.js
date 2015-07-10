@@ -1964,6 +1964,8 @@
     CalculateField: CalculateField,
     ConcatStringField: ConcatStringField,
     calc: CalculateField,
+    arrayField: arrayField,
+    dateField: dateField,
 
     EntityType: EntityTypeWrapper,
     Entity: createEntityClass,
