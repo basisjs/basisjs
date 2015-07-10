@@ -334,12 +334,16 @@ var makeDeclaration = (function(){
               break;
 
             case 'role':
-              result.push([
-                attr.type,
-                [['$role'], [0, attr.value || '']],
-                0,
-                'role-marker'
-              ]);
+              if (!/\//.test(attr.value))
+                result.push([
+                  attr.type,
+                  [['$role'], [0, attr.value || '']],
+                  0,
+                  'role-marker'
+                ]);
+              /** @cut */ else
+              /** @cut */   addTemplateWarn(template, options, 'Attribute b:role was ignored as value can\'t contains: ' + attr.value, attr.loc);
+
               break;
           }
 
