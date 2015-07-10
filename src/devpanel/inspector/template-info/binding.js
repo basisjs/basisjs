@@ -38,7 +38,7 @@ function getBindingsFromNode(node){
           value: valueToString(value),
           used: used,
           nestedView: Boolean(value && value[inspectBasisTemplateMarker]),
-          loc: objectBinding[key].loc
+          loc: objectBinding[key] ? objectBinding[key].loc : null
         });
       }
   }

@@ -4,8 +4,9 @@
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var eventUtils = require('basis.dom.event');
+var getComputedStyle = require('basis.dom.computedStyle').get;
+var getBoundingRect = require('basis.layout').getBoundingRect;
 var tracker = new basis.Token();
-var map = {};
 var selectorMap = {};
 var eventMap = {};
 
@@ -72,6 +73,56 @@ function track(event){
 //   });
 // });
 
+//
+// show
+//
+
+var checkTimer;
+
+function checkShow(){
+  function isVisible(element){
+    if (getComputedStyle(element, 'visibility') != 'visible')
+      return false;
+
+    var box = getBoundingRect(element);
+
+    if (!box.width || !box.height)
+      return false;
+
+    return true;
+  }
+
+  var list = getSelectorList('show');
+
+  for (var i = 0; i < list.length; i++)
+  {
+    var selector = list[i];
+    var element = document.querySelector(getCssSelectorFromPath(selector.selector));
+    var visible = element ? isVisible(element) : false;
+    var state;
+
+    if (!hasOwnProperty.call(list.visible, selector.selectorStr))
+      state = list.visible[selector.selectorStr] = false;
+    else
+      state = list.visible[selector.selectorStr];
+
+    list.visible[selector.selectorStr] = visible;
+
+    if (state == false && visible)
+      track({
+        type: 'ui',
+        path: stringifyPath(getPathByNode(element)),
+        selector: selector.selectorStr,
+        event: 'show',
+        data: selector.data
+      });
+  }
+}
+
+//
+// main API
+//
+
 var roleRegExp = /^(.+?)(?:\((.+)\))?$/;
 var subroleRegExp = /\/([^\/\(\)]+)$/;
 function parseRole(str){
@@ -97,6 +148,43 @@ function parseRole(str){
     roleId: roleId,
     subrole: subrole
   };
+}
+
+function stringifyRole(role){
+  if (typeof role == 'string')
+    return role;
+
+  if (!role)
+    return '';
+
+  return [
+    role.role || '',
+    role.roleId ? '(' + role.roleId + ')' : '',
+    role.subrole ? '/' + role.subrole : ''
+  ].join('');
+}
+
+function parsePath(value){
+  if (!Array.isArray(value))
+    value = String(value || '').trim().split(/\s+/);
+
+  return value.map(function(part){
+    if (typeof part == 'string')
+      return parseRole(part);
+
+    return part || {
+      role: '',
+      roleId: '',
+      subrole: ''
+    };
+  });
+}
+
+function stringifyPath(path){
+  if (typeof path == 'string')
+    return path;
+
+  return path.map(stringifyRole).join(' ');
 }
 
 function isPathMatchSelector(path, selector){
@@ -140,16 +228,31 @@ function getPathByNode(node){
   return path;
 }
 
-function stringifyPath(path){
-  if (typeof path == 'string')
-    return path;
+function escapeQuotes(value){
+  return String(value).replace(/\"/g, '\\"');
+}
 
-  return path.map(function(item){
-    return [
-      item.role || '',
-      item.roleId ? '(' + item.roleId + ')' : '',
-      item.subrole ? '/' + item.subrole : ''
-    ].join('');
+function getCssSelectorFromPath(path, selector){
+  return parsePath(path).map(function(role){
+    if (!role.role)
+      return '';
+
+    var start = escapeQuotes(role.role);
+    var end = (role.subrole ? '/' + escapeQuotes(role.subrole) : '') + '"]';
+
+    if (role.roleId)
+    {
+      if (selector && role.roleId == '*')
+        start = '[role-marker^="' + start + '("][role-marker$=")';
+      else
+        start = '[role-marker="' + start + '(' + escapeQuotes(role.roleId) + ')';
+    }
+    else
+    {
+      start = '[role-marker="' + start;
+    }
+
+    return start + end;
   }).join(' ');
 }
 
@@ -159,21 +262,29 @@ function getSelectorList(eventName){
 
   var selectorList = eventMap[eventName] = [];
 
-  eventUtils.addGlobalHandler(eventName, function(event){
-    var path = getPathByNode(event.sender);
+  switch (eventName) {
+    case 'show':
+      selectorList.visible = {};
+      checkTimer = setInterval(checkShow, 250);
+      break;
 
-    if (path.length)
-      selectorList.forEach(function(item){
-        if (isPathMatchSelector(path, item.selector))
-          track({
-            type: 'ui',
-            path: stringifyPath(path),
-            selector: stringifyPath(item.selector),
-            event: event.type,
-            data: item.data
+    default:
+      eventUtils.addGlobalHandler(eventName, function(event){
+        var path = getPathByNode(event.sender);
+
+        if (path.length)
+          selectorList.forEach(function(item){
+            if (isPathMatchSelector(path, item.selector))
+              track({
+                type: 'ui',
+                path: stringifyPath(path),
+                selector: stringifyPath(item.selector),
+                event: event.type,
+                data: item.data
+              });
           });
       });
-  });
+  }
 
   return selectorList;
 }
@@ -232,7 +343,7 @@ function loadMap(map){
       continue;
     }
 
-    var selector = key.trim().split(/\s+/).map(parseRole);
+    var selector = parsePath(key);
     var selectorStr = stringifyPath(selector);
     for (var events in eventsMap)
     {
