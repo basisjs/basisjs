@@ -3,7 +3,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisUI = inspectBasis.require('basis.ui');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
-var inspectBasisTracker = inspectBasis.require('basis.tracker');
+var getTrackInfo = inspectBasis.require('basis.tracker').getInfo;
 
 var Node = global.Node;
 var Value = require('basis.data').Value;
@@ -72,40 +72,6 @@ function getActions(domNode, events){
     return result.split(/\s+/);
 
   return false;
-}
-
-function getTrackInfo(domNode, path, events, actions){
-  var result = [];
-  var role;
-
-  if (events.length || actions.length)
-  {
-    for (var i = 0; i < events.length; i++)
-    {
-      var data = inspectBasisTracker.getData({
-        type: 'ui',
-        path: path,
-        event: events[i]
-      });
-
-      if (data)
-        result.push(data);
-    }
-
-    for (var i = 0; i < actions.length; i++)
-    {
-      var data = inspectBasisTracker.getData({
-        type: 'ui',
-        path: path,
-        action: actions[i]
-      });
-
-      if (data)
-        result.push(data);
-    }
-  }
-
-  return result.length ? result : false;
 }
 
 var overlay = new Overlay({
@@ -200,7 +166,7 @@ var overlay = new Overlay({
           hasActions: !!actions,
           missedActions: brokenActions && brokenActions.length ? brokenActions.join(' ') : '',
           conflict: knownPath,
-          track: !!getTrackInfo(domNode, path, events, actions),
+          track: !!getTrackInfo(path),
           path: path.join(' ')
         });
 
