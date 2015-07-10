@@ -335,12 +335,19 @@ var makeDeclaration = (function(){
 
             case 'role':
               if (!/\//.test(attr.value))
-                result.push([
+              {
+                item = [
                   attr.type,
-                  [['$role'], [0, attr.value || '']],
+                  [['$role'], [0, attr.value ? '/' + attr.value : '']],
                   0,
                   'role-marker'
-                ]);
+                ];
+
+                /** @cut */ item.sourceToken = attr;
+                /** @cut */ addTokenLocation(item, attr);
+
+                result.push(item);
+              }
               /** @cut */ else
               /** @cut */   addTemplateWarn(template, options, 'Attribute b:role was ignored as value can\'t contains: ' + attr.value, attr.loc);
 

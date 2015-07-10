@@ -565,7 +565,7 @@
           {
             case 'role-marker':
               varList.push(bindVar + '=""');
-              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, 'value?value' + (binding[5][1] ? '+' + quoteString('/' + binding[5][1]) : '') + ':""');
+              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, 'value?value' + (binding[5][1] ? '+' + quoteString(binding[5][1]) : '') + ':""');
               break;
 
             case 'class':
