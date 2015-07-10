@@ -334,7 +334,7 @@ var makeDeclaration = (function(){
               break;
 
             case 'role':
-              if (!/\//.test(attr.value))
+              if (!/[\/\(\)]/.test(attr.value))
               {
                 item = [
                   attr.type,
@@ -349,7 +349,7 @@ var makeDeclaration = (function(){
                 result.push(item);
               }
               /** @cut */ else
-              /** @cut */   addTemplateWarn(template, options, 'Attribute b:role was ignored as value can\'t contains: ' + attr.value, attr.loc);
+              /** @cut */   addTemplateWarn(template, options, 'Attribute b:role was ignored as value can\'t contains ["/", "(", ")"]: ' + attr.value, attr.loc);
 
               break;
           }
