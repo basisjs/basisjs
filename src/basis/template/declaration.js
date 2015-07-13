@@ -302,6 +302,22 @@ var makeDeclaration = (function(){
         setStylePropertyBinding(host, attr, 'visibility', 'visible', 'visibility: hidden;');
     }
 
+    function addRoleAttribute(host, role, sourceToken){
+      if (!/[\/\(\)]/.test(role))
+      {
+        var item = [
+          TYPE_ATTRIBUTE,
+          [['$role'], [0, role ? '/' + role : '']],
+          0,
+          'role-marker'
+        ];
+
+        host.push(item);
+      }
+      /** @cut */ else
+      /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, sourceToken.loc);
+    }
+
     function processAttrs(token, declToken){
       var result = [];
       var styleAttr;
@@ -334,23 +350,7 @@ var makeDeclaration = (function(){
               break;
 
             case 'role':
-              if (!/[\/\(\)]/.test(attr.value))
-              {
-                item = [
-                  attr.type,
-                  [['$role'], [0, attr.value ? '/' + attr.value : '']],
-                  0,
-                  'role-marker'
-                ];
-
-                /** @cut */ item.sourceToken = attr;
-                /** @cut */ addTokenLocation(item, attr);
-
-                result.push(item);
-              }
-              /** @cut */ else
-              /** @cut */   addTemplateWarn(template, options, 'Attribute b:role was ignored as value can\'t contains ["/", "(", ")"]: ' + attr.value, attr.loc);
-
+              addRoleAttribute(result, attr.value || '', attr);
               break;
           }
 
@@ -980,7 +980,12 @@ var makeDeclaration = (function(){
                           var role = elAttrs_.role.value;
 
                           if (role)
-                            applyRole(decl.tokens, role);
+                          {
+                            if (!/[\/\(\)]/.test(role))
+                              applyRole(decl.tokens, role);
+                            /** @cut */ else
+                            /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
+                          }
 
                           break;
                       }
@@ -1181,6 +1186,30 @@ var makeDeclaration = (function(){
                               removeTokenRef(token, childAttrs.name || childAttrs.ref);
                             break;
 
+                          case 'role':
+                          case 'set-role':
+                            var childAttrs = tokenAttrs(child);
+                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                            var tokenRef = ref && tokenRefMap[ref];
+                            var token = tokenRef && tokenRef.token;
+
+                            if (token)
+                            {
+                              arrayRemove(token, getAttrByName(token, 'role-marker'));
+                              addRoleAttribute(token, childAttrs.value || '', child);
+                            }
+                            break;
+
+                          case 'remove-role':
+                            var childAttrs = tokenAttrs(child);
+                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                            var tokenRef = ref && tokenRefMap[ref];
+                            var token = tokenRef && tokenRef.token;
+
+                            if (token)
+                              arrayRemove(token, getAttrByName(token, 'role-marker'));
+                            break;
+
                           default:
                             /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + child.name + '>', child.loc);
                         }
@@ -1322,7 +1351,7 @@ var makeDeclaration = (function(){
             var roleExpression = token[TOKEN_BINDINGS][1];
             var currentRole = roleExpression[1];
 
-            roleExpression[1] = role + (currentRole ? '/' + currentRole : '');
+            roleExpression[1] = '/' + role + (currentRole ? '/' + currentRole : '');
           }
           break;
       }
