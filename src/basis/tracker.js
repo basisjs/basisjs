@@ -344,7 +344,6 @@ function loadMap(map){
     }
 
     var selector = parsePath(key);
-    var selectorStr = stringifyPath(selector);
     for (var events in eventsMap)
     {
       var data = eventsMap[events];

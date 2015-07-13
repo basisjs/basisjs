@@ -302,7 +302,9 @@ var makeDeclaration = (function(){
         setStylePropertyBinding(host, attr, 'visibility', 'visible', 'visibility: hidden;');
     }
 
-    function addRoleAttribute(host, role, sourceToken){
+    function addRoleAttribute(host, role/*, sourceToken*/){
+      /** @cut */ var sourceToken = arguments[2];
+
       if (!/[\/\(\)]/.test(role))
       {
         var item = [
@@ -985,7 +987,11 @@ var makeDeclaration = (function(){
                           if (role)
                           {
                             if (!/[\/\(\)]/.test(role))
-                              applyRole(decl.tokens, role, elAttrs_.role, getLocation(template, elAttrs_.role.loc));
+                            {
+                              var loc;
+                              /** @cut */ loc = getLocation(template, elAttrs_.role.loc);
+                              applyRole(decl.tokens, role, elAttrs_.role, loc);
+                            }
                             /** @cut */ else
                             /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
                           }
