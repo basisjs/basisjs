@@ -312,6 +312,9 @@ var makeDeclaration = (function(){
           'role-marker'
         ];
 
+        /** @cut */ item.sourceToken = sourceToken;
+        /** @cut */ addTokenLocation(item, sourceToken);
+
         host.push(item);
       }
       /** @cut */ else
@@ -982,7 +985,7 @@ var makeDeclaration = (function(){
                           if (role)
                           {
                             if (!/[\/\(\)]/.test(role))
-                              applyRole(decl.tokens, role);
+                              applyRole(decl.tokens, role, elAttrs_.role, getLocation(template, elAttrs_.role.loc));
                             /** @cut */ else
                             /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
                           }
@@ -1334,7 +1337,7 @@ var makeDeclaration = (function(){
     return value;
   }
 
-  function applyRole(tokens, role, stIdx){
+  function applyRole(tokens, role, sourceToken, location, stIdx){
     for (var i = stIdx || 0, token; token = tokens[i]; i++)
     {
       var tokenType = token[TOKEN_TYPE];
@@ -1342,7 +1345,7 @@ var makeDeclaration = (function(){
       switch (tokenType)
       {
         case TYPE_ELEMENT:
-          applyRole(token, role, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+          applyRole(token, role, sourceToken, location, ELEMENT_ATTRIBUTES_AND_CHILDREN);
           break;
 
         case TYPE_ATTRIBUTE:
@@ -1352,6 +1355,9 @@ var makeDeclaration = (function(){
             var currentRole = roleExpression[1];
 
             roleExpression[1] = '/' + role + (currentRole ? '/' + currentRole : '');
+
+            /** @cut */ token.sourceToken = sourceToken;
+            /** @cut */ token.loc = location;
           }
           break;
       }

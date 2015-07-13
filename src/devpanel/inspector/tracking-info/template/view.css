@@ -1,0 +1,64 @@
+.window__wrapper
+{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 40px 0;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 10001;
+  transform: translateZ(0);
+  background: rgba(0, 0, 0, .2);
+  overflow: auto;
+}
+.window__wrapper:before
+{
+  content: '';
+  display: inline-block;
+  height: 100%;
+  vertical-align: middle;
+}
+.window
+{
+  /* vertical center */
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+.window__inner-wrapper
+{
+  overflow: auto;
+  padding: 4px 8px;
+  background: white;
+  background: rgba(255, 255, 255, .95);
+  border-radius: 2px;
+  box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, .3);
+}
+.window__inner
+{
+  text-align: left;
+  display: inline-table;
+  font-size: 12px;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+}
+
+.sidebar
+{
+  float: left;
+  min-width: 300px;
+  max-width: 350px;
+  max-height: 500px;
+  overflow: auto;
+  overflow-x: hidden;
+  margin-left: -4px;
+  border: 1px solid #E8E8E8;
+}
+.content
+{
+  min-width: 400px;
+  overflow: hidden;
+  padding: 20px;
+}

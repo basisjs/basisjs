@@ -26,7 +26,6 @@ var selectedTemplate = selectedDomNode.as(function(node){
   return template;
 });
 var bindingDataset = new Dataset();
-var isolatePrefix;
 
 selectedDomNode
   .as(getBindingsFromNode)
@@ -234,8 +233,7 @@ var view = new Window({
   handler: {
     open: function(){
       captureEvents.forEach(function(eventName){
-        inspectBasisDomEvent.captureEvent(eventName, function(e){
-        });
+        inspectBasisDomEvent.captureEvent(eventName, function(){});
       });
     },
     close: function(){
@@ -245,7 +243,5 @@ var view = new Window({
     }
   }
 });
-
-isolatePrefix = view.template.getIsolatePrefix();
 
 module.exports = selectedDomNode;

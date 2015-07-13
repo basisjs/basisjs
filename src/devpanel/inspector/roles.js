@@ -4,6 +4,7 @@ var inspectBasisUI = inspectBasis.require('basis.ui');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var getTrackInfo = inspectBasis.require('basis.tracker').getInfo;
+var trackingInfo = resource('./tracking-info/index.js');
 
 var Node = global.Node;
 var Value = require('basis.data').Value;
@@ -104,9 +105,17 @@ var overlay = new Overlay({
     },
     action: {
       showPath: function(){
-        global.prompt('Path:', this.data.path);
+        trackingInfo().set(this.domNode);
+        overlay.deactivate();
       }
     }
+  },
+
+  activate: function(){
+    if (trackingInfo.isResolved())
+      trackingInfo().set();
+
+    Overlay.prototype.activate.apply(this, arguments);
   },
 
   apply: function(){
@@ -176,6 +185,19 @@ var overlay = new Overlay({
       }
     }
   }
+});
+
+overlay.pickMode.attach(function(pickMode){
+  var events = {};
+
+  if (pickMode)
+    events = {
+      click: true,
+      mousedown: true,
+      mouseup: true
+    };
+
+  overlay.setMuteEvents(events);
 });
 
 //

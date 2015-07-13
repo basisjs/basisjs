@@ -11,7 +11,7 @@ var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
 var transport = require('../api/transport.js');
-var templateInfo = require('./template-info/index.js');
+var templateInfo = resource('./template-info/index.js');
 
 var inspectDepth = 0;
 var inspectMode = new basis.data.Value({ value: false });
@@ -78,7 +78,7 @@ function pickHandler(event){
         }
         else
         {
-          templateInfo.set(object.element);
+          templateInfo().set(object.element);
           transport.sendData('pickTemplate', {
             filename: source.url
           });
@@ -87,7 +87,7 @@ function pickHandler(event){
     }
     else
     {
-      templateInfo.set(inspectBasisTemplate.resolveObjectById(templateId).element);
+      templateInfo().set(inspectBasisTemplate.resolveObjectById(templateId).element);
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
       });
@@ -220,7 +220,9 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 function startInspect(){
   if (!inspectMode.value)
   {
-    templateInfo.set();
+    if (templateInfo.isResolved())
+      templateInfo().set();
+
     basis.dom.event.addGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.addGlobalHandler('mousewheel', mouseWheelHandler);
     basis.dom.event.addGlobalHandler('wheel', mouseWheelHandler);

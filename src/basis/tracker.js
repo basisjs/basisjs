@@ -359,17 +359,30 @@ function loadMap(map){
 function getInfo(path){
   var result = [];
 
+  if (typeof path == 'string')
+    path = parsePath(path);
+
   for (var key in selectorMap)
     if (isPathMatchSelector(path, selectorMap[key].selector))
-      result.push.apply(result, selectorMap[key]);
+      result.push.apply(result, selectorMap[key].map(function(item){
+        return basis.object.extend({
+          selector: selectorMap[key].selector,
+          selectorStr: selectorMap[key].selectorStr
+        }, item);
+      }));
 
   return result.length ? result : false;
 }
 
 
 module.exports = {
-  getInfo: getInfo,
+  parsePath: parsePath,
   parseRole: parseRole,
+  stringifyPath: stringifyPath,
+  stringifyRole: stringifyRole,
+
+  getInfo: getInfo,
+  getPathByNode: getPathByNode,
   isPathMatchSelector: isPathMatchSelector,
 
   loadMap: loadMap,
