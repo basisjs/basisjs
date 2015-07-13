@@ -143,12 +143,12 @@
     // detach old deps
     if (oldDeps)
       for (var i = 0, dep; dep = oldDeps[i]; i++)
-        dep.bindingBridge.detach(dep, buildTemplate, this);
+        dep.bindingBridge.detach(dep, templateSourceUpdate, this);
 
     // attach new deps
     if (newDeps)
       for (var i = 0, dep; dep = newDeps[i]; i++)
-        dep.bindingBridge.attach(dep, buildTemplate, this);
+        dep.bindingBridge.attach(dep, templateSourceUpdate, this);
 
 
     // apply resources
