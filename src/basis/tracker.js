@@ -11,10 +11,7 @@ var selectorMap = {};
 var eventMap = {};
 
 function track(event){
-  tracker.set({
-    event: event,
-    data: event.data
-  });
+  tracker.set(event);
 }
 
 // ui activity

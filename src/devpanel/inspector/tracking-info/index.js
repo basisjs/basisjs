@@ -43,7 +43,7 @@ var trackingList = new Node({
       event: 'data:event',
       selector: 'data:selectorStr',
       data: function(node){
-        return JSON.stringify(node.data.data);
+        return JSON.stringify(node.data.data, null, 2);
       }
     }
   }

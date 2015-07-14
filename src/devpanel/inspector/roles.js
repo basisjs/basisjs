@@ -3,12 +3,13 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisUI = inspectBasis.require('basis.ui');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
-var getTrackInfo = inspectBasis.require('basis.tracker').getInfo;
+var inspectBasisTracker = inspectBasis.require('basis.tracker');
+var getTrackInfo = inspectBasisTracker.getInfo;
 var trackingInfo = resource('./tracking-info/index.js');
 
-var Node = global.Node;
-var Value = require('basis.data').Value;
 var Overlay = require('./utils/overlay.js');
+var Value = require('basis.data').Value;
+var Node = require('basis.ui').Node;
 var events = [
   'click',
   'mousedown',
@@ -75,12 +76,41 @@ function getActions(domNode, events){
   return false;
 }
 
+var eventLog = new Node({
+  template: resource('./template/roles/event-log.tmpl'),
+  childClass: {
+    template: resource('./template/roles/event-log-entry.tmpl'),
+    binding: {
+      event: 'data:',
+      selector: 'data:',
+      data: function(node){
+        return JSON.stringify(node.data.data, null, 2);
+      },
+      destroing: 'data:'
+    },
+    init: function(){
+      Node.prototype.init.call(this);
+      setTimeout(this.destroy.bind(this), 8000);
+      setTimeout(function(){
+        this.update({ destroing: true });
+      }.bind(this), 7500);
+    }
+  }
+});
+
+inspectBasisTracker.attach(function(event){
+  eventLog.appendChild({
+    data: event
+  });
+});
+
 var overlay = new Overlay({
   pickMode: new basis.Token(false),
 
   template: resource('./template/roles/overlay.tmpl'),
   binding: {
-    pickMode: 'pickMode'
+    pickMode: 'pickMode',
+    eventLog: eventLog
   },
 
   childClass: {
