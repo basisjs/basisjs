@@ -10,6 +10,8 @@ var tracker = new basis.Token();
 var selectorMap = {};
 var eventMap = {};
 
+var VISIBLE_CHECK_INTERVAL = 250;
+
 function track(event){
   tracker.set(event);
 }
@@ -94,8 +96,9 @@ function checkShow(){
   for (var i = 0; i < list.length; i++)
   {
     var selector = list[i];
-    var element = document.querySelector(getCssSelectorFromPath(selector.selector));
-    var visible = element ? isVisible(element) : false;
+    var elements = document.querySelectorAll(getCssSelectorFromPath(selector.selector, true));
+    var visibleElement = basis.array.search(basis.array(elements), true, isVisible);
+    var visible = Boolean(visibleElement);
     var state;
 
     if (!hasOwnProperty.call(list.visible, selector.selectorStr))
@@ -108,7 +111,7 @@ function checkShow(){
     if (state == false && visible)
       track({
         type: 'ui',
-        path: stringifyPath(getPathByNode(element)),
+        path: stringifyPath(getPathByNode(visibleElement)),
         selector: selector.selectorStr,
         event: 'show',
         data: selector.data
@@ -262,7 +265,7 @@ function getSelectorList(eventName){
   switch (eventName) {
     case 'show':
       selectorList.visible = {};
-      checkTimer = setInterval(checkShow, 250);
+      checkTimer = setInterval(checkShow, VISIBLE_CHECK_INTERVAL);
       break;
 
     default:
