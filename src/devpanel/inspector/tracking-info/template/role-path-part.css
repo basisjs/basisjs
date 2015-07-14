@@ -1,4 +1,7 @@
 .item
 {
-  margin-right: 1ex;
+}
+.item:last-child .split
+{
+  display: none;
 }

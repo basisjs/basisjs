@@ -79,6 +79,11 @@ var rolesTree = new Node({
       select: function(){
         selectedDomNode.set(this.node);
       }
+    },
+    handler: {
+      select: function(){
+        this.element.scrollIntoView(true);
+      }
     }
   }
 });
@@ -137,6 +142,7 @@ var captureEvents = [
 
 var view = new Window({
   modal: true,
+  moveable: false,
   visible: selectedDomNode.as(Boolean),
   realign: function(){},
   setZIndex: function(){},
