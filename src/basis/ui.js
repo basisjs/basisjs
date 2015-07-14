@@ -210,8 +210,15 @@
         if (node.role)
         {
           var roleId = node.roleId && node.binding[node.roleId];
-          var id = roleId && typeof roleId.getter == 'function' ? roleId.getter(node) : undefined;
-          return node.role + (id !== undefined ? '(' + id + ')' : '');
+
+          if (roleId && typeof roleId.getter == 'function')
+          {
+            roleId = roleId.getter(node);
+            if (roleId === undefined)
+              return '';
+          }
+
+          return node.role + (roleId !== undefined ? '(' + roleId + ')' : '');
         }
 
         return node.ownerSatelliteName || '';
