@@ -78,6 +78,20 @@
     return BROWSER_EVENTS[eventName] || [eventName];
   }
 
+  function getPath(node){
+    var path = [];
+
+    do
+    {
+      path.push(node);
+    }
+    while (node = node.parentNode);
+
+    path.push(global);
+
+    return path;
+  }
+
 
  /**
   * @class
@@ -102,6 +116,7 @@
 
         sender: target,
         target: target,
+        path: event.path ? basis.array(event.path) : getPath(target),
 
         key: key(event),
         charCode: charCode(event),

@@ -13,7 +13,11 @@ var eventMap = {};
 var VISIBLE_CHECK_INTERVAL = 250;
 
 function track(event){
-  tracker.set(event);
+  try {
+    tracker.set(event);
+  } catch(e) {
+    /** @cut */ basis.dev.error('Error during tracking event processing', event, e);
+  }
 }
 
 // ui activity
@@ -270,7 +274,12 @@ function getSelectorList(eventName){
 
     default:
       eventUtils.addGlobalHandler(eventName, function(event){
-        var path = getPathByNode(event.sender);
+        var path = event.path.reduce(function(res, node){
+          var role = node.getAttribute ? node.getAttribute('role-marker') : null;
+          if (role)
+            res.unshift(parseRole(role));
+          return res;
+        }, []);
 
         if (path.length)
           selectorList.forEach(function(item){
