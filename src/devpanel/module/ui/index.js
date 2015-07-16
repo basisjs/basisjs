@@ -73,7 +73,7 @@ var ViewNode = Node.subclass({
       this.setDataSource(!this.collapsed ? this.subset : null);
     },
     openLoc: function(){
-      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : null;
       if (basisjsTools && typeof basisjsTools.openFile == 'function')
         basisjsTools.openFile(this.data.loc);
     },
