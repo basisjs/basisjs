@@ -150,33 +150,80 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     template: resource('./template/template_hintPopup.tmpl'),
     autorotate: [
       'left top left bottom',
-      'left bottom left bottom',
+      'center center center center',
       'left top left top',
+      'left bottom left bottom',
       'right bottom right top',
       'right top right bottom',
       'right bottom right bottom',
       'right top right top'
     ],
     binding: {
+      openFileSupported: {
+        events: 'delegateChanged update',
+        getter: function(){
+          var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+          return basisjsTools && typeof basisjsTools.openFile == 'function';
+        }
+      },
+      instanceNamespace: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.constructor.className.replace(/\.[^\.]+$/, '');
+        }
+      },
       instanceName: {
         events: 'delegateChanged update',
         getter: function(node){
           var object = node.data.object;
           if (object)
+            return object.constructor.className.split('.').pop();
+        }
+      },
+      instanceId: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.basisObjectId;
+        }
+      },
+      satelliteName: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.ownerSatelliteName;
+        }
+      },
+      equalNames: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
           {
-            return object.constructor.className + '#' + object.basisObjectId;
+            var roleGetter = object.binding && object.binding.$role && object.binding.$role.getter;
+            return typeof roleGetter == 'function' ? roleGetter(object) == object.ownerSatelliteName : undefined;
           }
         }
       },
-      rootNodeSelector: {
+      role: {
         events: 'delegateChanged update',
         getter: function(node){
-          if (node.data.tmpl)
+          var object = node.data.object;
+          if (object)
           {
-            var el = node.data.tmpl.element;
-            var cls = el.nodeType == 1 ? (typeof el.className == 'string' ? el.className : el.className.baseVal) : '';
-            return (el.nodeType == 3 ? '#text' : el.tagName) + (el.id ? '#' + el.id : '') + (cls ? '.' + cls.split(' ').join('.') : '');
+            var roleGetter = object.binding && object.binding.$role && object.binding.$role.getter;
+            return typeof roleGetter == 'function' ? roleGetter(object) : undefined;
           }
+        }
+      },
+      instanceLocation: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          return inspectBasis.dev.getInfo(node.data.object, 'loc');
         }
       },
       source: {
@@ -190,13 +237,27 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           }
         }
       },
+      namespace: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          if (node.data.template)
+          {
+            var source = node.data.template.source;
+            return source instanceof inspectBasisTemplate.SourceWrapper
+              ? source.path.replace(/\.[^\.]+$/, '')
+              : '';
+          }
+        }
+      },
       name: {
         events: 'delegateChanged update',
         getter: function(node){
           if (node.data.template)
           {
             var source = node.data.template.source;
-            return source instanceof inspectBasisTemplate.SourceWrapper ? source.path : '';
+            return source instanceof inspectBasisTemplate.SourceWrapper
+              ? source.path.split('.').pop()
+              : '';
           }
         }
       }
