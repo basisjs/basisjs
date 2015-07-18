@@ -136,7 +136,7 @@
         }
       }
 
-      /** @cut */ if (info && info.hasOwnProperty(key))
+      /** @cut */ if (def && info && info.hasOwnProperty(key))
       /** @cut */   def.loc = info[key];
 
       binding[key] = def;
