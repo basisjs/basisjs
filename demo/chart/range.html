@@ -172,7 +172,7 @@
         var date = object.data.date;
         return date.getDate() + ' ' + monthNumToAbbr[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
-      sorting: basis.getter('data.date'),
+      sorting: basis.getter('data.date').as(Number),
       series: [
         {
           color: 'red',
@@ -303,7 +303,7 @@
       fillArea: true,
       keyGetter: basis.getter('data.date'),
       dataSource: chartValues,
-      sorting: basis.getter('data.date'),
+      sorting: basis.getter('data.date').as(Number),
       series: [
         basis.getter('data.amount')
       ],
