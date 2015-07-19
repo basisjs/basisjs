@@ -20,6 +20,7 @@
   // import names
   //
 
+  /** @cut */ var hasOwnProperty = Object.prototype.hasOwnProperty;
   var Class = basis.Class;
   var complete = basis.object.complete;
   var arrayFrom = basis.array;
@@ -341,6 +342,8 @@
   }
 
   function processSatelliteConfig(satelliteConfig){
+    /** @cut */ var loc;
+
     if (!satelliteConfig)
       return null;
 
@@ -354,6 +357,8 @@
       satelliteConfig = {
         instance: satelliteConfig
       };
+    /** @cut */ else
+    /** @cut */   loc = basis.dev.getInfo(satelliteConfig, 'loc');
 
     var handlerRequired = false;
     var events = 'update';
@@ -467,6 +472,8 @@
       }
     }
 
+    /** @cut */ basis.dev.setInfo(loc ? { loc: loc } : undefined, config);
+
     return config;
   }
 
@@ -478,8 +485,15 @@
 
   // default satellite map
   var NULL_SATELLITE = Class.customExtendProperty({}, function(result, extend){
+    /** @cut */ var map = basis.dev.getInfo(extend, 'map');
+
     for (var name in extend)
+    {
       result[name] = processSatelliteConfig(extend[name]);
+
+      /** @cut */ if (map && !basis.dev.getInfo(result[name]) && hasOwnProperty.call(map, name))
+      /** @cut */   basis.dev.setInfo({ loc: map[name] }, result[name]);
+    }
   });
 
   // satellite update handler
@@ -545,6 +559,10 @@
 
           this.instance = new this.factory(satelliteConfig);
           owner.setSatellite(name, this.instance, true);
+
+          /** @cut */ var loc = basis.dev.getInfo(config, 'loc');
+          /** @cut */ if (loc)
+          /** @cut */   basis.dev.setInfo({ loc: loc }, this.instance);
 
           return;
         }
