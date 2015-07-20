@@ -4,6 +4,7 @@ require('basis.layout');
 require('basis.ui');
 require('basis.ui.popup');
 
+var fileAPI = require('../api/file.js');
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
@@ -56,10 +57,10 @@ function pickHandler(event){
 
     if (source.url)
     {
-      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
-
-      if (basisjsTools && typeof basisjsTools.openFile == 'function' && (event.ctrlKey || event.metaKey))
-        basisjsTools.openFile(source.url);
+      if (event.ctrlKey || event.metaKey)
+      {
+        fileAPI.openFile(source.url);
+      }
       else
       {
         var object = inspectBasisTemplate.resolveObjectById(templateId);
@@ -69,10 +70,7 @@ function pickHandler(event){
           var info = inspectBasis.dev.getInfo(object);
 
           if (info && info.loc)
-          {
-            if (basisjsTools && typeof basisjsTools.openFile == 'function')
-              basisjsTools.openFile(info.loc);
-          }
+            fileAPI.openFile(info.loc);
           else
             console.info('Object create location doesn\'t resolved:', object, info);
         }
