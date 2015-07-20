@@ -1,3 +1,5 @@
+var inspectBasis = require('devpanel').inspectBasis;
+var fileAPI = require('../../api/file.js');
 var Node = require('basis.ui').Node;
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var hoveredBinding = require('./binding.js').hover;
@@ -44,7 +46,14 @@ var ValuePart = DOMNode.subclass({
   }),
   binding: {
     type: 'type',
-    value: 'value'
+    value: 'value',
+    loc: 'loc'
+  },
+  action: {
+    openLoc: function(){
+      if (this.loc)
+        fileAPI.openFile(this.loc);
+    }
   }
 });
 
@@ -103,7 +112,7 @@ var Comment = DOMNode.subclass({
   }
 });
 
-function buildAttribute(attr, attrBindings){
+function buildAttribute(attr, attrBindings, actions){
   var value = {
     type: 'static',
     value: attr.value
@@ -136,7 +145,13 @@ function buildAttribute(attr, attrBindings){
     default:
       if (attr.value)
         if (/^event-/.test(attr.name))
-          value.type = 'action';
+          value = attr.value.split(/(\s+)/).map(function(value){
+            return {
+              type: /\S/.test(value) ? 'action' : 'static',
+              value: value,
+              loc: inspectBasis.dev.getInfo(actions[value], 'loc') || ''
+            };
+          });
         else
         {
           if (attrBindings.length)
@@ -181,7 +196,7 @@ function buildAttribute(attr, attrBindings){
   };
 }
 
-module.exports = function buildNode(item, bindings, selectDomNode){
+module.exports = function buildNode(item, bindings, actions, selectDomNode){
   function findBinding(node){
     return basis.array.search(bindings, node, 'dom');
   }
@@ -223,11 +238,11 @@ module.exports = function buildNode(item, bindings, selectDomNode){
         : basis.array(node.attributes).map(function(attr){
             return buildAttribute(attr, bindings.filter(function(bind){
               return bind.dom === node && bind.attr === attr.name;
-            }));
+            }), actions);
           });
 
       children = children.map(function(child){
-        return buildNode(child, bindings, selectDomNode);
+        return buildNode(child, bindings, actions, selectDomNode);
       });
 
       inline =

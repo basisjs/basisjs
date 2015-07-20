@@ -2,7 +2,9 @@
 <b:isolate/>
 <b:define name="type" type="enum" values="binding action"/>
 <b:define name="matchBinding" type="bool"/>
+<b:define name="hasLocation" from="loc" type="bool"/>
 
-<span class="{type} {matchBinding}" event-mouseenter="enter" event-mouseleave="leave">
+<span class="{type} {matchBinding} {hasLocation}" title="{loc}"
+  event-click="openLoc" event-mouseenter="enter" event-mouseleave="leave">
   {value}
 </span>

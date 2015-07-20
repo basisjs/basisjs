@@ -85,10 +85,13 @@ selectedDomNode.attach(function(node){
     return view.clear();
 
   var nodes = parseDom(node);
-  var debugInfo = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]);
+  var templateId = nodes[0][inspectBasisTemplateMarker];
+  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId);
+  var object = inspectBasisTemplate.resolveObjectById(templateId);
+  var actions = object ? object.action || {} : {};
   var bindings = debugInfo.bindings || [];
 
-  view.setChildNodes(buildTree(nodes, bindings, function(node){
+  view.setChildNodes(buildTree(nodes, bindings, actions, function(node){
     selectedDomNode.set(node);
   }));
 });

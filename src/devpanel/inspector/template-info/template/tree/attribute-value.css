@@ -26,3 +26,8 @@
   text-shadow: 0px 0px 1px white;
   cursor: default;
 }
+.hasLocation
+{
+  text-decoration: underline;
+  cursor: pointer;
+}
