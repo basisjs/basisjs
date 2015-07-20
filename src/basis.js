@@ -2483,11 +2483,14 @@
 
   function compileFunction(sourceURL, args, body){
     try {
+      /** @cut */ body = devInfoResolver.fixSourceOffset(body, 1); // function wrapper prefix lines + 'use strict' line
+      /** @cut */ if (!/\/\/# sourceMappingURL=[^\r\n]+[\s]*$/.test(body))
+      /** @cut */   body += '\n\n//# sourceURL=' + pathUtils.origin + sourceURL;
+
       return new Function(args,
         '"use strict";\n' +
         /** @cut */ (NODE_ENV ? 'var __nodejsRequire = require;\n' : '') +
         body
-        /** @cut */ + (!/\/\/# sourceMappingURL=[^\r\n]+[\s]*$/.test(body) ? '\n\n//# sourceURL=' + pathUtils.origin + sourceURL : '')
       );
     } catch(e) {
       /** @cut */ if (document && 'line' in e == false && 'addEventListener' in global)
@@ -3720,6 +3723,9 @@
   //
 
   var devInfoResolver = (function(){
+    var fixSourceOffset = function(source){
+      return source;
+    };
     var get = function(){};
     var set = function(info, value){
       return value;
@@ -3727,12 +3733,15 @@
 
     /** @cut */ var resolver = config.devInfoResolver || {};
     /** @cut */ var test = {};
+    /** @cut */ if (typeof resolver.fixSourceOffset == 'function')
+    /** @cut */   fixSourceOffset = resolver.fixSourceOffset;
     /** @cut */ if (typeof resolver.get == 'function')
     /** @cut */   get = resolver.get;
     /** @cut */ if (typeof resolver.set == 'function' && resolver.set(null, test) === test)
     /** @cut */   set = resolver.set;
 
     return {
+      fixSourceOffset: fixSourceOffset,
       setInfo: set,
       getInfo: function(value, property){
         var info = get(value);
