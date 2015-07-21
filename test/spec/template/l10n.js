@@ -57,7 +57,6 @@ module.exports = {
             var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:foo}"/>');
 
             assert(text(template, { foo: 'value' }) === text('<span title="test value/foo text"/>'));
-
           }
         },
         {
@@ -137,6 +136,17 @@ module.exports = {
                 assert(text(template, { foo: 'foo' }) === text('<span title="test foo/foo text"/>'));
                 assert(text(template, { foo: 'bar' }) === text('<span title="test bar/bar text"/>'));
                 assert(text(template, { foo: 'baz' }) === text('<span title="test baz/undefined"/>'));
+              }
+            },
+            {
+              name: 'should be used normal in attribute expressions with regular l10n tokens',
+              test: function(){
+                var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {l10n:foo}/{foo}/{l10n:enum.{foo}}"/>');
+
+                assert(text(template) === text('<span/>'));
+                assert(text(template, { foo: 'foo' }) === text('<span title="test foo text/foo/foo text"/>'));
+                assert(text(template, { foo: 'bar' }) === text('<span title="test foo text/bar/bar text"/>'));
+                assert(text(template, { foo: 'baz' }) === text('<span title="test foo text/baz/undefined"/>'));
               }
             },
             {

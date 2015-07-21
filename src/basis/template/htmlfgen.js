@@ -314,7 +314,13 @@
             });
 
             if (bindingName)
+            {
+              // if no l10n bindings return nothing
+              if (l10n === false)
+                return false;
+
               expression.push(l10n[exprVar.substr(colonPos + 1)]);
+            }
             else
               expression.push('l10n["' + l10nPath + '"]');
           }
@@ -513,8 +519,13 @@
           }
           else
           {
+            // build expression, it can't contains any dynamic l10n tokens
+            var expr = buildAttrExpression(binding, 'l10n', false);
+            if (expr === false)
+              continue;
+
             // use NaN value to make sure it trigger in any case
-            l10nMap[l10nName].push('bind_attr(' + [domRef, '"' + binding[ATTR_NAME] + '"', 'NaN', buildAttrExpression(binding, 'l10n', l10nBindings)] + ');');
+            l10nMap[l10nName].push('bind_attr(' + [domRef, '"' + binding[ATTR_NAME] + '"', 'NaN', expr] + ');');
 
             // attribute binding will be processed as common attribute binding
           }
