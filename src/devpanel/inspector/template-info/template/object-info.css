@@ -1,0 +1,37 @@
+.panel
+{
+  padding-top: 4px;
+}
+.caption
+{
+  font-size: 10px;
+  color: #888;
+}
+.content
+{
+  padding: 6px 4px 8px;
+}
+.object-title
+{
+  font-size: 12px;
+}
+.object-loc
+{
+  padding-top: 4px;
+  display: block;
+  font-size: 11px;
+  color: #AAA;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.loc
+{
+  color: #888;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.loc:hover
+{
+  color: #A00;
+}

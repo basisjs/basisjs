@@ -9,7 +9,6 @@ var buildTree = require('./build-tree.js');
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
-var hoveredBinding = require('./binding.js').hover;
 var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
 var sourceView = require('./source.js');
 var showSource = new basis.Token(false);
@@ -124,90 +123,26 @@ var view = new Window({
       if (template)
         return !!template.source.url;
     }),
+    objectClassName: selectedObject.as(function(object){
+      if (object)
+        return object.constructor.className || '';
+    }),
+    objectId: selectedObject.as(function(object){
+      if (object)
+        return object.basisObjectId;
+    }),
+    objectLocation: selectedObject.as(function(object){
+      return inspectBasis.dev.getInfo(object, 'loc');
+    }),
     source: sourceView,
     showSource: showSource,
-    bindings: new Node({
-      dataSource: bindingDataset,
-      sorting: 'data.name',
-      grouping: {
-        rule: 'data.used',
-        childClass: {
-          template: resource('./template/template-info-binding-group.tmpl'),
-          binding: {
-            name: function(node){
-              return node.data.id ? 'used' : 'notUsed';
-            }
-          },
-          action: {
-            logObject: function(){
-              var result = selectedObject.value;
-
-              global.$lastInspectObject = result || null;
-              console.log(result || 'No object attached to template');
-            },
-            logValues: function(){
-              if (selectedDomNode.value)
-              {
-                var id = selectedDomNode.value[inspectBasisTemplateMarker];
-                var object = selectedObject.value;
-                var objectBinding = object.binding;
-                var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
-                var result = (debugInfo || {}).values || null;
-
-                if (result)
-                  result = basis.object.slice(result, basis.object.keys(objectBinding));
-
-                global.$lastInspectValues = result;
-                console.log(result);
-              }
-            },
-            logDeclaration: function(){
-              if (sourceView.decl.value)
-              {
-                var result = sourceView.decl.value;
-
-                global.$lastInspectDeclaration = result;
-                console.log(result);
-              }
-            }
-          }
-        },
-        sorting: function(node){
-          return Number(!node.data.id);
-        }
-      },
-      childClass: {
-        template: resource('./template/template-info-binding.tmpl'),
-        binding: {
-          name: 'data:',
-          value: 'data:',
-          used: 'data:',
-          nestedView: 'data:',
-          loc: 'data:',
-          highlight: hoveredBinding.compute('update', function(node, value){
-            return node.data.used && (!value || node.data.name === value);
-          })
-        },
-        action: {
-          enter: function(){
-            if (this.data.used)
-              hoveredBinding.set(this.data.name);
-          },
-          leave: function(){
-            hoveredBinding.set();
-          },
-          pickValue: function(){
-            if (this.data.loc)
-              fileAPI.openFile(this.data.loc);
-          }
-        }
-      }
-    })
+    bindings: 'satellite:'
   },
   action: {
     up: function(){
       var object = selectedObject.value;
-      selectedDomNode.set((object.parentNode || object.owner).element);
+      if (object)
+        selectedDomNode.set((object.parentNode || object.owner).element);
     },
     down: function(e){
       //if (e.sender.title)
@@ -220,8 +155,62 @@ var view = new Window({
       if (template && template.source.url)
         fileAPI.openFile(template.source.url);
     },
+    openObjectLocation: function(){
+      var loc = inspectBasis.dev.getInfo(selectedObject.value, 'loc');
+      if (loc)
+        fileAPI.openFile(loc);
+    },
     toggleSource: function(){
+      var object = selectedObject.value;
       showSource.set(!showSource.value);
+    },
+    logObject: function(){
+      var result = selectedObject.value;
+
+      global.$lastInspectObject = result || null;
+      console.log(result || 'No object attached to template');
+    },
+    logDebugInfo: function(){
+      if (selectedDomNode.value)
+      {
+        var id = selectedDomNode.value[inspectBasisTemplateMarker];
+        var result = inspectBasisTemplate.getDebugInfoById(id);
+
+        global.$lastInspectDebugInfo = result;
+        console.log(result);
+      }
+    },
+    logValues: function(){
+      if (selectedDomNode.value)
+      {
+        var id = selectedDomNode.value[inspectBasisTemplateMarker];
+        var object = selectedObject.value;
+        var objectBinding = object.binding;
+        var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+        var result = (debugInfo || {}).values || null;
+
+        if (result)
+          result = basis.object.slice(result, basis.object.keys(objectBinding));
+
+        global.$lastInspectValues = result;
+        console.log(result);
+      }
+    },
+    logDeclaration: function(){
+      if (sourceView.decl.value)
+      {
+        var result = sourceView.decl.value;
+
+        global.$lastInspectDeclaration = result;
+        console.log(result);
+      }
+    }
+  },
+
+  satellite: {
+    bindings: {
+      dataSource: bindingDataset,
+      instance: resource('./binding-list.js')
     }
   },
 

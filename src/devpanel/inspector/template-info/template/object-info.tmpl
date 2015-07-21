@@ -1,0 +1,14 @@
+<b:style src="./object-info.css"/>
+<b:isolate/>
+
+<div class="panel">
+  <div class="caption">
+    Owner object
+  </div>
+  <div class="content">
+    <span class="object-title">{objectClassName} #{objectId}</span>
+    <span class="object-loc" b:show="{objectLocation}">
+      created at <span class="loc" event-click="openObjectLocation" title="{objectLocation}">{objectLocation}</span>
+    </span>
+  </div>
+</div>
