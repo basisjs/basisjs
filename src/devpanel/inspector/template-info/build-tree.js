@@ -47,7 +47,8 @@ var ValuePart = DOMNode.subclass({
   binding: {
     type: 'type',
     value: 'value',
-    loc: 'loc'
+    l10n: 'l10n || ""',
+    loc: 'loc || ""'
   },
   action: {
     openLoc: function(){
@@ -173,19 +174,42 @@ function buildAttribute(attr, attrBindings, actions){
             else
               // convert expression to value parts
               if (baseBinding.expr)
-                value = baseBinding.expr[0].map(function(item){
+              {
+                var expr = baseBinding.expr[0];
+                var bindingNames = baseBinding.expr[1];
+                var bindingKeys = baseBinding.expr[2];
+                var newValue = expr.map(function(item){
                   if (typeof item == 'number')
-                    return {
-                      type: 'binding',
-                      value: String(bindingValues[this[item]]),
-                      bindingName: this[item]
-                    };
+                  {
+                    var name = bindingNames[item];
+                    var value = String(bindingValues[bindingKeys[item]]);
+                    if (/^l10n:/.test(name))
+                      return {
+                        type: 'l10n',
+                        value: value,
+                        l10n: name
+                      };
+                    else
+                      return {
+                        type: 'binding',
+                        value: value,
+                        bindingName: name
+                      };
+                  }
 
                   return {
                     type: 'static',
                     value: item
                   };
-                }, attrBindings[0].expr[1]);
+                });
+
+                var newValueStr = newValue.map(function(item){
+                  return item.value;
+                }).join('');
+
+                if (newValueStr == attr.value)
+                  value = newValue;
+              }
           }
         }
   }
