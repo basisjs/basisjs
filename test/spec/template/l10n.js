@@ -41,7 +41,14 @@ module.exports = {
             var template = createTemplate('<b:l10n src="./test.l10n"/><span title="{l10n:foo}"/>');
 
             assert(text(template) === text('<span title="foo text"/>'));
+          }
+        },
+        {
+          name: 'unresolved tokens should be static strings',
+          test: function(){
+            var template = createTemplate('<span title="{l10n:foo}"/>');
 
+            assert(text(template) === text('<span title="{l10n:foo}"/>'));
           }
         },
         {

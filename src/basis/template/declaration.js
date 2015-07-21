@@ -1473,12 +1473,34 @@ var makeDeclaration = (function(){
           if (bindings)
           {
             var array = bindings[0];
-            for (var j = 0; j < array.length; j++)
+            for (var j = array.length - 1; j >= 0; j--)
             {
               var binding = absl10n(array[j], options.dictURI, template.l10n);   // TODO: move l10n binding process in separate function
-              array[j] = binding === false ? '{' + array[j] + '}' : binding;
-              /** @cut */ if (binding === false)
-              /** @cut */   addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
+              if (binding === false)
+              {
+                /** @cut */ addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
+
+                // make l10n binding static, i.e.
+                //   [['l10n:unresolved', 'x'], [0, '-', 1]]
+                // ->
+                //   [['x'], ['{l10n:unresolved}', '-', 0]]
+                var expr = bindings[1];
+                for (var k = 0; k < expr.length; k++)
+                  if (typeof expr[k] == 'number')
+                  {
+                    if (expr[k] == j)
+                      expr[k] = '{' + array[j] + '}';
+                    else if (expr[k] > j)
+                      expr[k] = expr[k] - 1;
+                  }
+
+                array.splice(j, 1);
+
+                if (!array.length)
+                  token[TOKEN_BINDINGS] = 0;
+              }
+              else
+                array[j] = binding;
             }
           }
           break;
