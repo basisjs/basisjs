@@ -275,6 +275,12 @@
     /** @cut */   return typeof val == 'string' ? quoteString(val) : val;
     /** @cut */ }
 
+    /** @cut */ function stringifyBindingNames(val){
+    /** @cut */   if (val.indexOf('l10n:') == 0)
+    /** @cut */     val = this[val.substr(5)] || val;
+    /** @cut */   return quoteString(val);
+    /** @cut */ }
+
    /**
     * @param {object} binding
     * @param {string=} special Possible values: l10n and bool
@@ -351,6 +357,7 @@
       var varList = [];
       var result = [];
       var bindingsWoL10nCompute = [];
+      var l10nComputeBindings = [];
       var varName;
       var l10nMap;
       var l10nCompute = [];
@@ -363,13 +370,9 @@
         resolve: true
       };
 
-      // process l10n bindings first
       for (var i = 0, binding; binding = bindings[i]; i++)
       {
-        var bindType = binding[0];
-        var domRef = binding[1];
         var bindName = binding[2];
-        var nodeBindingProhibited = binding[3];
         var namePart = bindName.split(':');
 
         if (namePart[0] == 'l10n' && namePart[1])
@@ -383,6 +386,8 @@
 
           if (l10nBinding)
           {
+            l10nComputeBindings.push(binding);
+
             if (l10nFullPath in l10nBindings == false)
             {
               varName = '$l10n_' + (l10nBindSeed++);
@@ -400,52 +405,74 @@
               bindCode.push(varName + '.set(__' + l10nBinding + ');');
             }
 
-            bindName = l10nBindings[l10nFullPath];
-            bindVar = '_' + (bindVarSeed++);
-            varName = '__' + bindName;
-            bindCode = bindMap[bindName];
-
-            if (!bindCode)
-            {
-              bindCode = bindMap[bindName] = [];
-              varList.push(varName);
-            }
-
-            if (bindType == TYPE_TEXT)
-            {
-              /** @cut */ debugList.push('{' + [
-              /** @cut */   'binding:"' + bindName + '"',
-              /** @cut */   'dom:' + domRef,
-              /** @cut */   'val:' + bindVar,
-              /** @cut */   'l10n:true',
-              /** @cut */   'attachment:' + bindName
-              /** @cut */ ] + '}');
-
-              varList.push(bindVar + '=' + domRef);
-              putBindCode(bindFunctions[bindType], domRef, bindVar, 'value', nodeBindingProhibited);
-            }
-            else
-            {
-              attrName = '"' + binding[ATTR_NAME] + '"';
-
-              /** @cut */ debugList.push('{' + [
-              /** @cut */   'binding:"' + l10nFullPath + '"',
-              /** @cut */   'dom:' + domRef,
-              /** @cut */   'attr:' + attrName,
-              /** @cut */   'val:' + bindVar,
-              /** @cut */   'l10n:true',
-              /** @cut */   'attachment:' + bindName
-              /** @cut */ ] + '}');
-
-              varList.push(bindVar);
-              putBindCode('bind_attr', domRef, attrName, bindVar, buildAttrExpression(binding, false, l10nBindings));
-            }
-
             continue;
           }
         }
 
         bindingsWoL10nCompute.push(binding);
+      }
+
+      // process l10n bindings first
+      for (var i = 0, binding; binding = l10nComputeBindings[i]; i++)
+      {
+        var bindType = binding[0];
+        var domRef = binding[1];
+        var bindName = binding[2];
+        var nodeBindingProhibited = binding[3];
+        var l10nFullPath = bindName.split(':')[1];
+
+        bindName = l10nBindings[l10nFullPath];
+        bindVar = '_' + (bindVarSeed++);
+        varName = '__' + bindName;
+        bindCode = bindMap[bindName];
+
+        if (!bindCode)
+        {
+          bindCode = bindMap[bindName] = [];
+          varList.push(varName);
+        }
+
+        if (bindType == TYPE_TEXT)
+        {
+          /** @cut */ debugList.push('{' + [
+          /** @cut */   'binding:"' + bindName + '"',
+          /** @cut */   'dom:' + domRef,
+          /** @cut */   'val:' + bindVar,
+          /** @cut */   'l10n:true',
+          /** @cut */   'attachment:' + bindName
+          /** @cut */ ] + '}');
+
+          varList.push(bindVar + '=' + domRef);
+          putBindCode(bindFunctions[bindType], domRef, bindVar, 'value', nodeBindingProhibited);
+        }
+        else
+        {
+          var expr = buildAttrExpression(binding, false, l10nBindings);
+
+          attrExprId = binding[7];
+          if (!attrExprMap[attrExprId])
+          {
+            varList.push(bindVar);
+            attrExprMap[attrExprId] = bindVar;
+          }
+
+          bindVar = attrExprMap[attrExprId];
+          attrName = '"' + binding[ATTR_NAME] + '"';
+
+          /** @cut */ debugList.push('{' + [
+          /** @cut */   'binding:"' + bindName + '"',
+          /** @cut */   'raw:' + bindName + '.get()',
+          /** @cut */   'l10n:true',
+          /** @cut */   'type:"l10n"',
+          /** @cut */   'expr:[[' + binding[5].map(simpleStringify) + '],[' + binding[4].map(simpleStringify) + '],[' + binding[4].map(stringifyBindingNames, l10nBindings) + ']]',
+          /** @cut */   'dom:' + domRef,
+          /** @cut */   'attr:' + attrName,
+          /** @cut */   'val:' + bindVar,
+          /** @cut */   'attachment:' + bindName
+          /** @cut */ ] + '}');
+
+          putBindCode('bind_attr', domRef, attrName, bindVar, expr);
+        }
       }
 
       for (var i = 0, binding; binding = bindingsWoL10nCompute[i]; i++)
@@ -521,11 +548,11 @@
           {
             // build expression, it can't contains any dynamic l10n tokens
             var expr = buildAttrExpression(binding, 'l10n', false);
-            if (expr === false)
-              continue;
-
-            // use NaN value to make sure it trigger in any case
-            l10nMap[l10nName].push('bind_attr(' + [domRef, '"' + binding[ATTR_NAME] + '"', 'NaN', expr] + ');');
+            if (expr !== false)
+            {
+              // use NaN value to make sure it trigger in any case
+              l10nMap[l10nName].push('bind_attr(' + [domRef, '"' + binding[ATTR_NAME] + '"', 'NaN', expr] + ');');
+            }
 
             // attribute binding will be processed as common attribute binding
           }
@@ -687,7 +714,7 @@
               attrExprId = binding[7];
               if (!attrExprMap[attrExprId])
               {
-                varList.push(bindVar + '=' + expr);
+                varList.push(bindVar);
                 attrExprMap[attrExprId] = bindVar;
               }
 
@@ -707,9 +734,9 @@
 
               /** @cut */ debugList.push('{' + [
               /** @cut */   'binding:"' + bindName + '"',
-              /** @cut */   'raw:' + (l10n ? 'l10n["' + bindName + '"]' : '__' + bindName),
+              /** @cut */   'raw:' + (l10n ? 'l10n["' + l10nFullPath + '"]' : '__' + bindName),
               /** @cut */   'type:"' + (specialAttr && SPECIAL_ATTR_SINGLE[attrName] ? 'bool' : 'string') + '"',
-              /** @cut */   'expr:[[' + binding[5].map(simpleStringify) + '],[' + binding[4].map(simpleStringify) + ']]',
+              /** @cut */   'expr:[[' + binding[5].map(simpleStringify) + '],[' + binding[4].map(simpleStringify) + '],[' + binding[4].map(stringifyBindingNames, l10nBindings) + ']]',
               /** @cut */   'dom:' + domRef,
               /** @cut */   'attr:"' + attrName + '"',
               /** @cut */   'val:' + bindVar,
