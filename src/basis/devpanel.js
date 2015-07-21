@@ -6,6 +6,7 @@
 /** @cut */   basis.createSandbox({
 /** @cut */     inspect: basis,
 /** @cut */     implicitExt: true, // TODO: remove, when devpanel migrate on exports
+/** @cut */     devInfoResolver: basis.config.devInfoResolver,
 /** @cut */     modules: {
 /** @cut */       devpanel: {
 /** @cut */         autoload: true,
