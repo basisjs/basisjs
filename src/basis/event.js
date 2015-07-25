@@ -147,6 +147,8 @@
     // use extend constructor
     extendConstructor_: true,
 
+    propertyChangeEvents: Class.extensibleProperty(),
+
    /**
     * Head of event handler set list.
     * @type {object}

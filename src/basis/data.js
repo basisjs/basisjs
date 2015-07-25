@@ -301,6 +301,11 @@
   */
   var AbstractData = Class(Emitter, {
     className: namespace + '.AbstractData',
+    propertyChangeEvents: {
+      state: 'stateChanged',
+      active: 'activeChanged',
+      subscriberCount: 'subscribersChanged'
+    },
 
    /**
     * State of object. Might be managed by delegate object (if used).
@@ -1280,6 +1285,47 @@
     return result;
   };
 
+  Value.query = function(object, path){
+    function chain(result, path){
+      return result
+        .as(function(val){
+          //console.log(path, val);
+          var events = object.propertyChangeEvents[path];
+          if (typeof events != 'string')
+            console.warn('No events for path part', path);
+
+          if (val instanceof Emitter)
+            return Value.from(val, val.propertyChangeEvents[path], path);
+        })
+        .pipe('change', 'value');
+    }
+
+    if (arguments.length == 1)
+    {
+      path = object;
+      return chainValueFactory(function(object){
+        return Value.query(object, path);
+      });
+    }
+
+    if (object instanceof Emitter == false)
+      throw 'Bad object type';
+
+    if (!Array.isArray(path))
+      path = path.split('.');
+
+    var events = object.propertyChangeEvents[path[0]];
+    if (typeof events != 'string')
+      console.warn('No events for path part', path[0]);
+
+    var result = Value.from(object, events, path[0]);
+
+    for (var i = 1; i < path.length; i++)
+      result = chain(result, path[i]);
+
+    return result;
+  };
+
   //
   // Value factories
   //
@@ -1458,6 +1504,13 @@
   */
   var DataObject = Class(AbstractData, {
     className: namespace + '.Object',
+
+    propertyChangeEvents: {
+      delegate: 'delegateChanged',
+      data: 'update',
+      target: 'targetChanged',
+      root: 'rootChanged'
+    },
 
    /**
     * @inheritDoc

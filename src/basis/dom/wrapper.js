@@ -620,6 +620,14 @@
   var AbstractNode = Class(DataObject, {
     className: namespace + '.AbstractNode',
 
+    propertyChangeEvents: {
+      owner: 'ownerChanged',
+      parentNode: 'parentChanged',
+      childNodes: 'childNodesModified',
+      childNodesState: 'childNodesStateChanged',
+      'getChildNodesDataset()': ''
+    },
+
    /**
     * @inheritDoc
     */
@@ -2484,6 +2492,11 @@
   */
   var Node = Class(AbstractNode, DomMixin, {
     className: namespace + '.Node',
+
+    propertyChangeEvents: {
+      selected: 'select unselect',
+      disabled: 'disable enable'
+    },
 
    /**
     * Occurs after disabled property has been set to false.
