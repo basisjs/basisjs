@@ -2481,12 +2481,19 @@
   // script compilation and execution
   //
 
-  function compileFunction(sourceURL, args, body){
-    try {
-      /** @cut */ body = devInfoResolver.fixSourceOffset(body, 1); // function wrapper prefix lines + 'use strict' line
-      /** @cut */ if (!/\/\/# sourceMappingURL=[^\r\n]+[\s]*$/.test(body))
-      /** @cut */   body += '\n\n//# sourceURL=' + pathUtils.origin + sourceURL;
+  var SOURCE_OFFSET;
 
+  function compileFunction(sourceURL, args, body){
+    /** @cut */ if (isNaN(SOURCE_OFFSET))
+    /** @cut */ {
+    /** @cut */   var marker = basis.genUID();
+    /** @cut */   SOURCE_OFFSET = new Function(args, marker).toString().split(marker)[0].split(/\n/).length - 1;
+    /** @cut */ }
+    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1); // function wrapper prefix lines + 'use strict' line
+    /** @cut */ if (!/\/\/# sourceMappingURL=[^\r\n]+[\s]*$/.test(body))
+    /** @cut */   body += '\n\n//# sourceURL=' + pathUtils.origin + sourceURL;
+
+    try {
       return new Function(args,
         '"use strict";\n' +
         /** @cut */ (NODE_ENV ? 'var __nodejsRequire = require;\n' : '') +
