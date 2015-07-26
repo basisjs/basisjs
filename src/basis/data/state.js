@@ -47,24 +47,6 @@ var STATE = {
   */
   isValid: function(value){
     return hasOwnProperty.call(STATE_EXISTS, value);
-  },
-
-  /**
-  * NOTE: was implemented and deprecated during 1.4 developing.
-  * @deprecated
-  */
-  factory: function(events, getter){
-    /** @cut */ basis.dev.warn('basis.data.STATE.factory() is deprecated, use basis.data.Value.stateFactory() instead.');
-    return Value.stateFactory(events, getter);
-  },
-
-  /**
-  * NOTE: was implemented and deprecated during 1.4 developing.
-  * @deprecated
-  */
-  from: function(source){
-    /** @cut */ basis.dev.warn('basis.data.STATE.state() is deprecated, use basis.data.Value.state() instead.');
-    return Value.state(source);
   }
 };
 
