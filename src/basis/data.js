@@ -301,7 +301,7 @@
   */
   var AbstractData = Class(Emitter, {
     className: namespace + '.AbstractData',
-    propertyChangeEvents: {
+    propertyDescriptors: {
       state: 'stateChanged',
       active: 'activeChanged',
       subscriberCount: 'subscribersChanged'
@@ -656,6 +656,9 @@
   */
   var Value = Class(AbstractData, {
     className: namespace + '.Value',
+    propertyDescriptors: {
+      value: 'change'
+    },
 
    /**
     * @inheritDoc
@@ -1208,7 +1211,8 @@
 
   var valueFromMap = {};
   var valueFromSetProxy = function(sender){
-    Value.prototype.set.call(this, sender); // `this` is a token
+    // `this` -> value instance
+    Value.prototype.set.call(this, sender);
   };
 
   Value.from = function(obj, events, getter){
@@ -1280,48 +1284,101 @@
     }
 
     if (!result)
-      throw 'Bad object type';
+      throw new Error('Bad object type');
 
     return result;
   };
 
-  Value.query = function(object, path){
-    function chain(result, path){
-      return result
-        .as(function(val){
-          //console.log(path, val);
-          var events = object.propertyChangeEvents[path];
-          if (typeof events != 'string')
-            console.warn('No events for path part', path);
+  var UNDEFINED_VALUE = new ReadOnlyValue({
+    value: undefined
+  });
+  Value.query = function(target, path){
+    function getPathFragment(target, path, index){
+      var pathFragment = path[index];
+      var isStatic = false;
+      var descriptor;
+      var events;
 
-          if (val instanceof Emitter)
-            return Value.from(val, val.propertyChangeEvents[path], path);
-        })
-        .pipe('change', 'value');
+      if (/^<static>/.test(pathFragment))
+      {
+        isStatic = true;
+        pathFragment = pathFragment.substr(8);
+      }
+
+      var descriptor = target.propertyDescriptors[pathFragment];
+      var events = descriptor ? descriptor.events : null;
+
+      if (descriptor && descriptor.isStatic)
+        isStatic = true;
+
+      if (events)
+      {
+        if (isStatic)
+        {
+          events = null;
+          /** @cut */ var warnMessage = '<static> was applied for path part that has events: ';
+          /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+          /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
+          /** @cut */   basis.string.repeat('^', '<static>'.length) + '\n' +
+          /** @cut */   'Propably is\'t a bug and <static> should be removed from path'
+          /** @cut */ );
+        }
+        else
+        {
+          if (descriptor && descriptor.nested && index < path.length - 1)
+            pathFragment += '.' + path[++index];
+        }
+      }
+      else
+      {
+        if (!isStatic)
+        {
+          /** @cut */ var warnMessage = 'No events found for path part: ';
+          /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+          /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
+          /** @cut */   basis.string.repeat('^', pathFragment.length) + '\n' +
+          /** @cut */   'If a property never changes use `<static>` before property name, i.e. ' + path.slice(0, index).join('.') + (index ? '.' : '') + '<static>' + path.slice(index).join('.')
+          /** @cut */ );
+          return;
+        }
+      }
+
+      return {
+        path: pathFragment,
+        rest: path.slice(index + 1).join('.'),
+        events: events || null
+      };
     }
 
     if (arguments.length == 1)
     {
-      path = object;
-      return chainValueFactory(function(object){
-        return Value.query(object, path);
+      path = target;
+      return chainValueFactory(function(target){
+        return Value.query(target, path);
       });
     }
 
-    if (object instanceof Emitter == false)
-      throw 'Bad object type';
+    if (target instanceof Emitter == false)
+      throw new Error('Bad target type');
 
-    if (!Array.isArray(path))
-      path = path.split('.');
+    if (typeof path != 'string')
+      throw new Error('Path should be a string');
 
-    var events = object.propertyChangeEvents[path[0]];
-    if (typeof events != 'string')
-      console.warn('No events for path part', path[0]);
+    var pathFragment = getPathFragment(target, path.split('.'), 0);
+    var result;
 
-    var result = Value.from(object, events, path[0]);
+    if (!pathFragment)
+      return UNDEFINED_VALUE;
 
-    for (var i = 1; i < path.length; i++)
-      result = chain(result, path[i]);
+    result = Value.from(target, pathFragment.events, pathFragment.path);
+
+    if (pathFragment.rest)
+      result = result
+        .as(function(target){
+          if (target instanceof Emitter)
+            return Value.query(target, pathFragment.rest);
+        })
+        .pipe('change', 'value');
 
     return result;
   };
@@ -1504,12 +1561,14 @@
   */
   var DataObject = Class(AbstractData, {
     className: namespace + '.Object',
-
-    propertyChangeEvents: {
+    propertyDescriptors: {
       delegate: 'delegateChanged',
-      data: 'update',
       target: 'targetChanged',
-      root: 'rootChanged'
+      root: 'rootChanged',
+      data: {
+        nested: true,
+        events: 'update'
+      }
     },
 
    /**
@@ -2077,6 +2136,9 @@
   */
   var DatasetWrapper = Class(DataObject, {
     className: namespace + '.DatasetWrapper',
+    propertyDescriptors: {
+      dataset: 'datasetChanged'
+    },
 
     active: basis.PROXY,
     subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASET,
@@ -2221,6 +2283,11 @@
   */
   var ReadOnlyDataset = Class(AbstractData, {
     className: namespace + '.ReadOnlyDataset',
+    propertyDescriptors: {
+      'itemCount': 'itemsChanged',
+      'pick()': 'itemsChanged',
+      'getItems()': 'itemsChanged'
+    },
 
    /**
     * Cardinality of set.

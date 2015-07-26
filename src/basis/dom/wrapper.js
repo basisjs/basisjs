@@ -619,13 +619,23 @@
   */
   var AbstractNode = Class(DataObject, {
     className: namespace + '.AbstractNode',
-
-    propertyChangeEvents: {
+    propertyDescriptors: {
       owner: 'ownerChanged',
       parentNode: 'parentChanged',
       childNodes: 'childNodesModified',
       childNodesState: 'childNodesStateChanged',
-      'getChildNodesDataset()': ''
+      dataSource: 'dataSourceChanged',
+      'getChildNodesDataset()': {
+        isStatic: true
+      },
+      satellite: {
+        nested: true,
+        events: 'satelliteChanged'
+      },
+      sorting: 'sortingChanged',
+      sortingDesc: 'sortingChanged',
+      grouping: 'groupingChanged',
+      ownerSatelliteName: 'ownerSatelliteNameChanged'
     },
 
    /**
@@ -2492,11 +2502,42 @@
   */
   var Node = Class(AbstractNode, DomMixin, {
     className: namespace + '.Node',
-
-    propertyChangeEvents: {
+    propertyDescriptors: {
       selected: 'select unselect',
       disabled: 'disable enable'
     },
+
+   /**
+    * @param {string} name
+    * @param {basis.data.Object} oldSatellite Old satellite for key
+    */
+    emit_satelliteChanged: function(name, oldSatellite){
+      AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
+
+      if (this.satellite[name] instanceof Node)
+        updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
+    },
+
+   /**
+    * @type {boolean}
+    * @readonly
+    */
+    contextDisabled: false,
+
+   /**
+    * Indicate node is disabled. Use isDisabled method to determine disabled
+    * node state instead of check for this property value (ancestor nodes may
+    * be disabled and current node will be disabled too, but node disabled property
+    * could has false value).
+    * @type {boolean}
+    * @readonly
+    */
+    disabled: false,
+
+   /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    disabledRA_: null,
 
    /**
     * Occurs after disabled property has been set to false.
@@ -2521,45 +2562,22 @@
     },
 
    /**
-    * @param {string} name
-    * @param {basis.data.Object} oldSatellite Old satellite for key
+    * Set of selected child nodes.
+    * @type {basis.dom.wrapper.Selection}
     */
-    emit_satelliteChanged: function(name, oldSatellite){
-      AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
-
-      if (this.satellite[name] instanceof Node)
-        updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
-    },
+    selection: null,
 
    /**
-    * Occurs after selected property has been set to true.
+    * Occurs after selecttion property has been changed.
     * @event
     */
-    emit_select: createEvent('select'),
+    emit_selectionChanged: createEvent('selectionChanged', 'oldSelection'),
 
    /**
-    * Occurs after selected property has been set to false.
-    * @event
+    * @type {basis.dom.wrapper.Selection}
+    * @private
     */
-    emit_unselect: createEvent('unselect'),
-
-   /**
-    * Occurs after matched property has been set to true.
-    * @event
-    */
-    emit_match: createEvent('match'),
-
-   /**
-    * Occurs after matched property has been set to false.
-    * @event
-    */
-    emit_unmatch: createEvent('unmatch'),
-
-   /**
-    * Occurs after matchFunction property has been changed.
-    * @event
-    */
-    emit_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
+    contextSelection: null,
 
    /**
     * Indicate node is selected.
@@ -2574,22 +2592,16 @@
     selectedRA_: null,
 
    /**
-    * Set of selected child nodes.
-    * @type {basis.dom.wrapper.Selection}
+    * Occurs after selected property has been set to true.
+    * @event
     */
-    selection: null,
+    emit_select: createEvent('select'),
 
    /**
-    * @type {basis.dom.wrapper.Selection}
-    * @private
+    * Occurs after selected property has been set to false.
+    * @event
     */
-    contextSelection: null,
-
-   /**
-    * @type {function()|null}
-    * @readonly
-    */
-    matchFunction: null,
+    emit_unselect: createEvent('unselect'),
 
    /**
     * @type {boolean}
@@ -2598,25 +2610,28 @@
     matched: true,
 
    /**
-    * Indicate node is disabled. Use isDisabled method to determine disabled
-    * node state instead of check for this property value (ancestor nodes may
-    * be disabled and current node will be disabled too, but node disabled property
-    * could has false value).
-    * @type {boolean}
-    * @readonly
+    * Occurs after matched property has been set to true.
+    * @event
     */
-    disabled: false,
+    emit_match: createEvent('match'),
 
    /**
-    * @type {basis.data.ResolveAdapter}
+    * Occurs after matched property has been set to false.
+    * @event
     */
-    disabledRA_: null,
+    emit_unmatch: createEvent('unmatch'),
 
    /**
-    * @type {boolean}
+    * @type {function()|null}
     * @readonly
     */
-    contextDisabled: false,
+    matchFunction: null,
+
+   /**
+    * Occurs after matchFunction property has been changed.
+    * @event
+    */
+    emit_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
 
    /**
     * Extend owner listener
@@ -2649,7 +2664,7 @@
       if (selection)
       {
         this.selection = null;
-        this.setSelection(selection);
+        this.setSelection(selection, true);
       }
 
       // inherit
@@ -2677,23 +2692,29 @@
     * @param {basis.dom.wrapper.Selection=} selection New selection value for node.
     * @return {boolean} Returns true if selection was changed.
     */
-    setSelection: function(selection){
+    setSelection: function(selection, silent){
+      var oldSelection = this.selection;
+
       if (selection instanceof Selection === false)
         selection = selection ? new Selection(selection) : null;
 
-      if (this.selection !== selection)
+      if (oldSelection !== selection)
       {
         // change context selection for child nodes
-        updateNodeContextSelection(this, this.selection || this.contextSelection, selection || this.contextSelection, false, true);
+        updateNodeContextSelection(this, oldSelection || this.contextSelection, selection || this.contextSelection, false, true);
 
-        if (this.selection && this.listen.selection)
-          this.selection.removeHandler(this.listen.selection, this);
+        if (this.listen.selection)
+        {
+          if (oldSelection)
+            oldSelection.removeHandler(this.listen.selection, this);
+          if (selection)
+            selection.addHandler(this.listen.selection, this);
+        }
 
         // update selection
         this.selection = selection;
-
-        if (selection && this.listen.selection)
-          selection.addHandler(this.listen.selection, this);
+        if (!silent)
+          this.emit_selectionChanged(oldSelection);
 
         return true;
       }

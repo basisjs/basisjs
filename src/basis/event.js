@@ -147,7 +147,14 @@
     // use extend constructor
     extendConstructor_: true,
 
-    propertyChangeEvents: Class.extensibleProperty(),
+    propertyDescriptors: Class.customExtendProperty({}, function(result, extension){
+      for (var property in extension)
+        result[property] = typeof extension[property] != 'string'
+          ? extension[property]
+          : {
+              events: extension[property]
+            };
+    }),
 
    /**
     * Head of event handler set list.

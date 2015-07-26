@@ -341,6 +341,11 @@
   */
   var TemplateMixin = function(super_){
     return {
+      propertyDescriptors: {
+        template: 'templateChanged',
+        tmpl: 'templateChanged'
+      },
+
      /**
       * Template for object.
       * @type {basis.template.html.Template}
