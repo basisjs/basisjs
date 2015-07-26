@@ -29,10 +29,10 @@
   var Class = basis.Class;
 
   var sliceArray = Array.prototype.slice;
-  var hasOwnProperty = Object.prototype.hasOwnProperty;
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
+  var STATE = require('basis.data.state');
   var basisEvent = require('basis.event');
   var Emitter = basisEvent.Emitter;
   var createEvent = basisEvent.create;
@@ -48,79 +48,6 @@
   var EMPTY_ARRAY = [];
   var FACTORY = basis.FACTORY;
   var PROXY = basis.PROXY;
-
-
-  //
-  // State scheme
-  //
-
-  var STATE_EXISTS = {};
-
- /**
-  * @enum {string}
-  */
-  var STATE = {
-    priority: [],
-    values: {},
-
-   /**
-    * Register new state
-    * @param {string} state
-    * @param {string=} order
-    */
-    add: function(state, order){
-      var name = state;
-      var value = state.toLowerCase();
-
-      STATE[name] = value;
-      STATE_EXISTS[value] = name;
-      this.values[value] = name;
-
-      if (order)
-        order = this.priority.indexOf(order);
-      else
-        order = -1;
-
-      if (order == -1)
-        this.priority.push(value);
-      else
-        this.priority.splice(order, 0, value);
-    },
-
-   /**
-    * Returns all registred states
-    * @return {Array.<basis.data.STATE>}
-    */
-    getList: function(){
-      return values(STATE_EXISTS);
-    },
-
-   /**
-    * NOTE: was implemented and deprecated during 1.4 developing.
-    * @deprecated
-    */
-    factory: function(events, getter){
-      /** @cut */ basis.dev.warn('basis.data.STATE.factory() is deprecated, use basis.data.Value.stateFactory() instead.');
-      return Value.stateFactory(events, getter);
-    },
-
-   /**
-    * NOTE: was implemented and deprecated during 1.4 developing.
-    * @deprecated
-    */
-    from: function(source){
-      /** @cut */ basis.dev.warn('basis.data.STATE.state() is deprecated, use basis.data.Value.state() instead.');
-      return Value.state(source);
-    }
-  };
-
-  // Register base states
-
-  STATE.add('READY');
-  STATE.add('DEPRECATED');
-  STATE.add('UNDEFINED');
-  STATE.add('ERROR');
-  STATE.add('PROCESSING');
 
 
   //
@@ -420,7 +347,7 @@
         if (typeof this.state != 'string')
           state = resolveValue(this, this.setState, state, 'stateRA_');
 
-        if (state && !hasOwnProperty.call(STATE_EXISTS, state))
+        if (state && !STATE.isValid(state))
         {
           /** @cut */ basis.dev.error('Wrong value for state (value has been ignored and state set to STATE.UNDEFINED)', state);
           state = false;
@@ -449,7 +376,7 @@
 
       var stateCode = String(state);
 
-      if (!hasOwnProperty.call(STATE_EXISTS, stateCode))
+      if (!STATE.isValid(stateCode))
       {
         /** @cut */ basis.dev.error('Wrong value for state (value has been ignored)', stateCode);
         return false;
