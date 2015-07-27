@@ -4,8 +4,9 @@
   margin-top: 6px;
   padding: 8px 16px 8px 10px;
   min-height: 1em;
-  min-width: 350px;
+  min-width: 300px;
   background-color: white;
+  background-color: rgba(255, 255, 255, .95);
   border: 1px solid #e6e9ed;
   border-radius: 2px;
   box-shadow: 0 0 6px rgba(46, 53, 62, .11);
@@ -47,7 +48,11 @@
 .balloon_v-left-top,
 .balloon_v-left-bottom
 {
-  margin-left: -20px;
+  margin-left: -38px;
+}
+.balloon_v-left-bottom
+{
+  margin-bottom: 5px;
 }
 .balloon_v-right-top,
 .balloon_v-right-bottom
@@ -69,7 +74,7 @@
 .tail_v-left-top,
 .tail_v-left-bottom
 {
-  left: 12px;
+  left: 36px;
 }
 .tail_v-right-top,
 .tail_v-right-bottom
@@ -115,9 +120,8 @@
   margin: 0;
   padding: 0;
   font-family: Consolas, Monaco, monospace;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
-  background: white;
 }
 .source [class~="line"]
 {
