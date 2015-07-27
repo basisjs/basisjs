@@ -2894,6 +2894,7 @@
     ReadOnlyValue: ReadOnlyValue,
     DeferredValue: DeferredValue,
     PipeValue: PipeValue,
+    chainValueFactory: chainValueFactory,
 
     Object: DataObject,
     Slot: Slot,
