@@ -176,46 +176,33 @@ var view = new Window({
       var object = selectedObject.value;
       showSource.set(!showSource.value);
     },
-    logObject: function(){
-      var result = selectedObject.value;
+    logInfo: function(){
+      var object = selectedObject.value;
+      var result = {};
+      var debugInfo = '<no info>';
+      var values = '<no info>';
 
-      global.$lastInspectObject = result || null;
-      console.log(result || 'No object attached to template');
-    },
-    logDebugInfo: function(){
       if (selectedDomNode.value)
       {
         var id = selectedDomNode.value[inspectBasisTemplateMarker];
-        var result = inspectBasisTemplate.getDebugInfoById(id);
+        var objectBinding = object ? object.binding : {};
 
-        global.$lastInspectDebugInfo = result;
-        console.log(result);
+        debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+        values = (debugInfo || {}).values || null;
+
+        if (values)
+          values = basis.object.slice(values, basis.object.keys(objectBinding));
       }
-    },
-    logValues: function(){
-      if (selectedDomNode.value)
-      {
-        var id = selectedDomNode.value[inspectBasisTemplateMarker];
-        var object = selectedObject.value;
-        var objectBinding = object.binding;
-        var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
-        var result = (debugInfo || {}).values || null;
 
-        if (result)
-          result = basis.object.slice(result, basis.object.keys(objectBinding));
-
-        global.$lastInspectValues = result;
-        console.log(result);
-      }
-    },
-    logDeclaration: function(){
-      if (sourceView.decl.value)
-      {
-        var result = sourceView.decl.value;
-
-        global.$lastInspectDeclaration = result;
-        console.log(result);
-      }
+      global.$basisjsInfo = {
+        object: object,
+        template: {
+          debugInfo: debugInfo,
+          declaration: sourceView.decl.value || '<no info>',
+          values: values
+        }
+      };
+      console.log($basisjsInfo);
     }
   },
 

@@ -8,10 +8,7 @@
       <div class="window__inner-wrapper">
         <div class="sidebar">
           <div class="info-links">
-            <span class="log__link" event-click="logDeclaration" title="Log template declaration into console and saves as $lastInspectDeclaration">declaration</span>
-            <span class="log__link" event-click="logValues" title="Log values into console and saves as $lastInspectValues">values</span>
-            <span class="log__link" event-click="logDebugInfo" title="Log template debug info into console and saves as $lastInspectDebugInfo">debug info</span>
-            <span class="log__link" event-click="logObject" title="Log template owner object into console and saves as $lastInspectObject">object</span>
+            <span class="log__link" event-click="logInfo" title="Output various runtime information about instance and template in console save it as $basisjsInfo">console.log(info)</span>
           </div>
           <b:include src="./object-info.tmpl" isolate/>
           <!--{bindings}-->
