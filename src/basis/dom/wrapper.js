@@ -2504,7 +2504,8 @@
     className: namespace + '.Node',
     propertyDescriptors: {
       selected: 'select unselect',
-      disabled: 'disable enable'
+      disabled: 'disable enable',
+      selection: 'selectionChanged'
     },
 
    /**
