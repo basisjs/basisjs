@@ -2481,7 +2481,7 @@
   // script compilation and execution
   //
 
-  var SOURCE_OFFSET;
+  /** @cut */ var SOURCE_OFFSET;
 
   function compileFunction(sourceURL, args, body){
     /** @cut */ if (isNaN(SOURCE_OFFSET))
