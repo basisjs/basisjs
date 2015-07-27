@@ -149,11 +149,20 @@
 
     propertyDescriptors: Class.customExtendProperty({}, function(result, extension){
       for (var property in extension)
-        result[property] = typeof extension[property] != 'string'
-          ? extension[property]
-          : {
-              events: extension[property]
-            };
+      {
+        var value = extension[property];
+
+        if (value === true || value == '<static>')
+          value = {
+            isStatic: true
+          };
+        else if (typeof value == 'string')
+          value = {
+            events: value
+          };
+
+        result[property] = value;
+      }
     }),
 
    /**
