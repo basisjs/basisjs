@@ -3,6 +3,7 @@ var fileAPI = require('../../api/file.js');
 var Node = require('basis.ui').Node;
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var hoveredBinding = require('./binding.js').hover;
+var jsSourcePopup = require('./js-source-popup.js');
 
 var DOMNode = Node.subclass({
   binding: {
@@ -14,9 +15,15 @@ var DOMNode = Node.subclass({
     enter: function(){
       if (this.bindingName)
         hoveredBinding.set(this.bindingName);
+      if (this.loc)
+      {
+        jsSourcePopup.loc.set(this.loc);
+        jsSourcePopup.show(this.element);
+      }
     },
     leave: function(){
       hoveredBinding.set();
+      jsSourcePopup.hide();
     },
     inspect: function(){
       if (this.selectDomNode && this.domNode)
