@@ -10,14 +10,14 @@
   display: flex;
   align-items: baseline;
 }
-.caption
-{
-  color: #888;
-}
-.caption:not(.caption_used):after
+.binding:not(.binding_used):after
 {
   content: ', ';
   text-decoration: none;
+}
+.caption
+{
+  color: #888;
 }
 .binding:last-child .caption:after
 {

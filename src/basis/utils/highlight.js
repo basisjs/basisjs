@@ -48,7 +48,7 @@
       var result = [];
       var sym = text.split('');
       var lastMatchPos = 0;
-      var rangeWrapper = '<span class="' + rangeName + '" data-is-range>';
+      var rangeWrapper = '<span class="' + rangeName + '">';
       var inRange = false;
       var resultRangeStart = -1;
       var resultRangeEnd;
@@ -368,44 +368,40 @@
   */
   function highlight(text, lang, options){
 
-    function normalize(text){
-      text = text
-        .trimRight()
-        .replace(/\r\n|\n\r|\r/g, '\n');
-
-      if (!options.keepFormat)
-      {
-        // cut first empty lines
-        text = text.replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
-
-        // fix empty strings
-        text = text.replace(/\n[ \t]+\n/g, '\n\n');
-
-        // normalize text offset
-        var minOffset = 1000;
-        var lines = text.split(/\n+/);
-        var startLine = Number(text.match(/^function/) != null); // fix for function.toString()
-
-        for (var i = startLine; i < lines.length; i++)
-        {
-          var m = lines[i].match(/^\s*/);
-          if (m[0].length < minOffset)
-            minOffset = m[0].length;
-          if (minOffset == 0)
-            break;
-        }
-
-        if (minOffset > 0)
-          text = text.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
-      }
-
-      return text;
-    }
-
-    function escape(str){
+    function makeSafe(str){
       return str
+        .replace(/\r\n|\n\r|\r/g, '\n')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;');
+    }
+
+    function normalize(text){
+      text = text
+        // cut first empty lines
+        .replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1')
+        .trimRight();
+
+      // fix empty strings
+      text = text.replace(/\n[ \t]+\n/g, '\n\n');
+
+      // normalize text offset
+      var minOffset = 1000;
+      var lines = text.split(/\n+/);
+      var startLine = Number(text.match(/^function/) != null); // fix for function.toString()
+
+      for (var i = startLine; i < lines.length; i++)
+      {
+        var m = lines[i].match(/^\s*/);
+        if (m[0].length < minOffset)
+          minOffset = m[0].length;
+        if (minOffset == 0)
+          break;
+      }
+
+      if (minOffset > 0)
+        text = text.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
+
+      return text;
     }
 
     function defaultWrapper(line, idx){
@@ -432,13 +428,12 @@
     var rangeStart = -1;
     var rangeEnd = -1;
     var rangeName = '';
-    text = normalize(text || '');
 
     if (options.range)
     {
-      var left = escape(text.substr(0, options.range[0]));
-      var range = escape(text.substring(options.range[0], options.range[1]));
-      var right = escape(text.substr(options.range[1]));
+      var left = makeSafe(text.substr(0, options.range[0]));
+      var range = makeSafe(text.substring(options.range[0], options.range[1]));
+      var right = makeSafe(text.substr(options.range[1]));
 
       rangeStart = left.length;
       rangeEnd = rangeStart + range.length;
@@ -448,8 +443,11 @@
     }
     else
     {
-      text = escape(text);
+      text = makeSafe(text);
     }
+
+    if (!options.keepFormat)
+      text = normalize(text || '');
 
     var parser = LANG_PARSER[lang] || LANG_PARSER.text;
     var html = parser(text, rangeStart, rangeEnd, rangeName);
@@ -457,15 +455,17 @@
     var lines = html.split('\n');
     var numberWidth = String(lines.length).length;
     var lineClass = (options.noLineNumber ? '' : ' hasLineNumber');
+    var offsetRx = new RegExp('^(<span class="' + rangeName + '">)?([ \\t]+)');
 
-    return lines
+    lines = lines
       .map(function(line){
-        return line.replace(/^[ \t]+/, function(m){
-          return repeat('\xA0', m.replace(/\t/g, '  ').length);
+        return line.replace(offsetRx, function(m, rangeSpan, spaces){
+          return (rangeSpan || '') + repeat('\xA0', spaces.replace(/\t/g, '  ').length);
         });
       })
-      .map(options.wrapper || defaultWrapper)
-      .join('');
+      .map(options.wrapper || defaultWrapper);
+
+    return options.lines ? lines : lines.join('');
   }
 
 

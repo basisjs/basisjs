@@ -11,6 +11,7 @@ var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
 var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
 var sourceView = require('./source.js');
+var jsSourcePopup = require('./js-source-popup.js');
 var showSource = new basis.Token(false);
 var selectedDomNode = new basis.Token();
 var selectedObject = selectedDomNode.as(function(node){
@@ -159,6 +160,17 @@ var view = new Window({
       var loc = inspectBasis.dev.getInfo(selectedObject.value, 'loc');
       if (loc)
         fileAPI.openFile(loc);
+    },
+    enterObjectLocation: function(e){
+      var loc = inspectBasis.dev.getInfo(selectedObject.value, 'loc');
+      if (loc)
+      {
+        jsSourcePopup.loc.set(loc);
+        jsSourcePopup.show(e.actionTarget);
+      }
+    },
+    leaveObjectLocation: function(){
+      jsSourcePopup.hide();
     },
     toggleSource: function(){
       var object = selectedObject.value;

@@ -1,6 +1,7 @@
 var Node = require('basis.ui').Node;
 var fileAPI = require('../../api/file.js');
 var hoveredBinding = require('./binding.js').hover;
+var jsSourcePopup = require('./js-source-popup.js');
 
 module.exports = new Node({
   sorting: 'data.name',
@@ -31,12 +32,19 @@ module.exports = new Node({
       })
     },
     action: {
-      enter: function(){
+      enter: function(e){
         if (this.data.used)
           hoveredBinding.set(this.data.name);
+
+        if (this.data.loc)
+        {
+          jsSourcePopup.loc.set(this.data.loc);
+          jsSourcePopup.show(e.actionTarget);
+        }
       },
       leave: function(){
         hoveredBinding.set();
+        jsSourcePopup.hide();
       },
       pickValue: function(){
         if (this.data.loc)

@@ -8,7 +8,13 @@
   <div class="content">
     <span class="object-title">{objectClassName} #{objectId}</span>
     <span class="object-loc" b:show="{objectLocation}">
-      created at <span class="loc" event-click="openObjectLocation" title="{objectLocation}">{objectLocation}</span>
+      created at <span
+        class="loc"
+        event-click="openObjectLocation"
+        event-mouseenter="enterObjectLocation"
+        event-mouseleave="leaveObjectLocation">
+        {objectLocation}
+      </span>
     </span>
   </div>
 </div>
