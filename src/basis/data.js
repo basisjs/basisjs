@@ -648,6 +648,13 @@
               value: value
             });
 
+            /** @cut */ basis.dev.setInfo(computeValue, 'sourceInfo', {
+            /** @cut */   type: 'Value#compute',
+            /** @cut */   source: [object, hostValue],
+            /** @cut */   events: events,
+            /** @cut */   transform: fn
+            /** @cut */ });
+
             // attach handler re-evaluate handler to object
             object.addHandler(handler, computeValue);
 
@@ -707,6 +714,13 @@
         // add to cache and link
         pipes[id] = pipeValue;
         this.link(pipeValue, valueSyncPipe, true, pipeValue.destroy);
+
+        /** @cut */ basis.dev.setInfo(pipeValue, 'sourceInfo', {
+        /** @cut */   type: 'Value#pipe',
+        /** @cut */   source: this,
+        /** @cut */   events: events,
+        /** @cut */   transform: pipeValue.proxy
+        /** @cut */ });
       }
 
       return pipeValue;
@@ -747,6 +761,12 @@
         value: this.value
       });
 
+      /** @cut */ basis.dev.setInfo(result, 'sourceInfo', {
+      /** @cut */   type: 'Value#as',
+      /** @cut */   source: this,
+      /** @cut */   transform: fn
+      /** @cut */ });
+
       this.link(result, valueSyncAs, true, result.destroy);
 
       return result;
@@ -761,10 +781,17 @@
       /** @cut */   basis.dev.warn('basis.data.Value#deferred() doesn\'t accept parameters anymore. Use value.as(fn).deferred() instead.');
 
       if (!this.deferred_)
+      {
         this.deferred_ = new DeferredValue({
           source: this,
           value: this.value
         });
+
+        /** @cut */ basis.dev.setInfo(this.deferred_, 'sourceInfo', {
+        /** @cut */   type: 'Value#deferred',
+        /** @cut */   source: this
+        /** @cut */ });
+      }
 
       return this.deferred_;
     },
@@ -994,6 +1021,13 @@
             }
           }
         });
+
+        /** @cut */ basis.dev.setInfo(result, 'sourceInfo', {
+        /** @cut */   type: 'Value.from',
+        /** @cut */   source: obj,
+        /** @cut */   events: events,
+        /** @cut */   transform: result.proxy
+        /** @cut */ });
 
         handler.destroy = function(){
           valueFromMap[id] = null;

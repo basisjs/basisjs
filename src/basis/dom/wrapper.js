@@ -472,7 +472,8 @@
       }
     }
 
-    /** @cut */ basis.dev.setInfo(loc ? { loc: loc } : undefined, config);
+    /** @cut */ if (loc)
+    /** @cut */   basis.dev.setInfo(config, 'loc', loc);
 
     return config;
   }
@@ -492,7 +493,7 @@
       result[name] = processSatelliteConfig(extend[name]);
 
       /** @cut */ if (map && !basis.dev.getInfo(result[name]) && hasOwnProperty.call(map, name))
-      /** @cut */   basis.dev.setInfo({ loc: map[name] }, result[name]);
+      /** @cut */   basis.dev.setInfo(result[name], 'loc', map[name]);
     }
   });
 
@@ -562,7 +563,7 @@
 
           /** @cut */ var loc = basis.dev.getInfo(config, 'loc');
           /** @cut */ if (loc)
-          /** @cut */   basis.dev.setInfo({ loc: loc }, this.instance);
+          /** @cut */   basis.dev.setInfo(this.instance, 'loc', loc);
 
           return;
         }
@@ -1654,7 +1655,8 @@
       {
         /** @cut */ var info = basis.dev.getInfo(config);
         /** @cut */ if (info)
-        /** @cut */   basis.dev.setInfo(info, child);
+        /** @cut */   for (var key in info)
+        /** @cut */     basis.dev.setInfo(child, key, info[key]);
 
         return child;
       }

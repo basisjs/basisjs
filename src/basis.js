@@ -3730,30 +3730,40 @@
   //
 
   var devInfoResolver = (function(){
-    var fixSourceOffset = function(source){
-      return source;
+    /** @cut */ var getExternalInfo = $undef;
+    var fixSourceOffset = $self;
+    var set = function(target, key, info){};
+    var get = function(target, key){
+      /** @cut */ var externalInfo = getExternalInfo(target);
+      /** @cut */ var ownInfo = map.get(target);
+      /** @cut */
+      /** @cut */ if (externalInfo || ownInfo)
+      /** @cut */ {
+      /** @cut */   var info = merge(externalInfo, ownInfo);
+      /** @cut */   return key ? info[key] : info;
+      /** @cut */ }
     };
-    var get = function(){};
-    var set = function(info, value){
-      return value;
-    };
+
+    /** @cut */ var map = typeof WeakMap == 'function' ? new WeakMap() : false;
+    /** @cut */ if (map)
+    /** @cut */   set = function(target, key, value){
+    /** @cut */     var info = map.get(target);
+    /** @cut */     if (!info)
+    /** @cut */       map.set(target, info = {});
+    /** @cut */     info[key] = value;
+    /** @cut */   };
 
     /** @cut */ var resolver = config.devInfoResolver || {};
     /** @cut */ var test = {};
     /** @cut */ if (typeof resolver.fixSourceOffset == 'function')
     /** @cut */   fixSourceOffset = resolver.fixSourceOffset;
     /** @cut */ if (typeof resolver.get == 'function')
-    /** @cut */   get = resolver.get;
-    /** @cut */ if (typeof resolver.set == 'function' && resolver.set(null, test) === test)
-    /** @cut */   set = resolver.set;
+    /** @cut */   getExternalInfo = resolver.get;
 
     return {
       fixSourceOffset: fixSourceOffset,
       setInfo: set,
-      getInfo: function(value, property){
-        var info = get(value);
-        return info && property ? info[property] : info;
-      }
+      getInfo: get
     };
   })();
 
