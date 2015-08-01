@@ -2193,7 +2193,7 @@
       /** @cut    recursion warning */
       /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
       /** @cut */ if (idx != -1)
-      /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+      /** @cut */   consoleMethods.warn('basis.resource recursion: ' + resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
       /** @cut */ resourceResolvingStack.push(resourceUrl);
 
       // if resource type has wrapper - wrap it, or use url content as result
@@ -3796,7 +3796,7 @@
         complete({ noConflict: true }, config)
       );
     },
-    dev: (new Namespace('basis.dev'))
+    dev: consoleMethods = (new Namespace('basis.dev'))
       .extend(consoleMethods)
       .extend(devInfoResolver)
       .extend({
