@@ -124,7 +124,7 @@ function isolateCss(css, prefix, info){
   function parseStyleSheet(nested){
     for (nestedStyleSheet = false; i < len; i++)
     {
-      if (parseComment() || parseAtRule() || parsePseudo() || parseBraces() || parseClassName())
+      if (parseComment() || parseAtRule() || parsePseudo() || parseBraces() || parseString() || parseClassName())
         continue;
 
       if (nested && sym[i] == '}')

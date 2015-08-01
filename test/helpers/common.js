@@ -4,7 +4,7 @@ function catchWarnings(fn){
 
   try {
     basis.dev.warn = function(message){
-      warnings.push(message);
+      warnings.push(basis.array(arguments));
     };
 
     fn();
