@@ -1,5 +1,6 @@
 var base64 = require('basis.utils.base64');
 var highlight = require('basis.utils.highlight').highlight;
+var sourceCache = {};
 
 function findSourceInMap(map, filename){
   if (Array.isArray(map.sources))
@@ -18,8 +19,11 @@ function findSourceInMap(map, filename){
 }
 
 function getSource(uri){
+  if (sourceCache[uri])
+    return sourceCache[uri];
+
   var resource = basis.resource(uri);
-  var source = resource.get(true);
+  var source = basis.dev.fixSourceOffset(resource.get(true));
   var sourceMap = source.match(/\/\/# sourceMappingURL=([^\r\n]+)[\s\r\n]*$/);
 
   if (sourceMap)
@@ -29,13 +33,15 @@ function getSource(uri){
       sourceMap = base64.decode(sourceMap.substr(7), true);
     sourceMap = JSON.parse(sourceMap);
 
-    return findSourceInMap(sourceMap, resource.url);
+    source = findSourceInMap(sourceMap, resource.url) || source;
   }
+
+  sourceCache[uri] = source;
 
   return source;
 }
 
-function getSourceFragment(str, start, end){
+function sliceString(str, start, end){
   var lines = str
     .split('\n')
     .slice(start.line - 1, end.line);
@@ -43,6 +49,30 @@ function getSourceFragment(str, start, end){
     .concat(lines.pop().substr(0, end.column))
     .join('\n')
     .substr(start.column - 1);
+}
+
+function getSourceFragment(loc, start, end){
+  function ifNaN(value, fallback){
+    return isNaN(value) ? fallback : value;
+  }
+
+  var m = loc.match(/^(.*?)(?::(\d+):(\d+)(?::(\d+):(\d+))?)?$/);
+  var source = getSource(m[1]);
+  var numbers = m.slice(2).map(Number);
+
+  if (!start)
+    start = {
+      line: numbers[0] || 0,
+      column: numbers[1] || 0
+    };
+
+  if (!end)
+    end = {
+      line: ifNaN(numbers[2], 10e6),
+      column: ifNaN(numbers[2], 10e6)
+    };
+
+  return sliceString(source, start, end);
 }
 
 function convertToRange(source, start, end){
