@@ -392,6 +392,7 @@ module.exports = {
   getInfo: getInfo,
   getPathByNode: getPathByNode,
   isPathMatchSelector: isPathMatchSelector,
+  getCssSelectorFromPath: getCssSelectorFromPath,
 
   loadMap: loadMap,
   attach: function(fn, context){
