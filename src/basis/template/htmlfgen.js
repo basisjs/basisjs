@@ -287,6 +287,7 @@
     */
     function buildAttrExpression(binding, special, l10n){
       var expression = [];
+      var cond = [];
       var symbols = binding[5];
       var dictionary = binding[4];
       var exprVar;
@@ -310,6 +311,9 @@
                      : '__' + exprVar
                   )
             );
+
+            if (!special)
+              cond.push('__' + exprVar + '!==undefined');
           }
           else
           {
@@ -326,6 +330,9 @@
                 return false;
 
               expression.push(l10n[exprVar.substr(colonPos + 1)]);
+
+              if (!special)
+                cond.push(l10n[exprVar.substr(colonPos + 1)] + '!==undefined');
             }
             else
               expression.push('l10n["' + l10nPath + '"]');
@@ -336,7 +343,12 @@
       if (expression.length == 1)
         expression.push('""');
 
-      return expression.join('+');
+      expression = expression.join('+');
+
+      if (!special && cond.length)
+        expression = cond.join('&&') + '?(' + expression + '):""';
+
+      return expression;
     }
 
    /**
@@ -673,7 +685,7 @@
               break;
 
             case 'style':
-              var expr = buildAttrExpression(binding, false, l10nBindings);
+              var expr = buildAttrExpression(binding, 'style', l10nBindings);
 
               // resolve expression bind var
               attrExprId = binding[8];

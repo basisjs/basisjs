@@ -10,7 +10,7 @@ module.exports = {
         assert(instance.element.title == '');
 
         instance.set('foo', 'x');
-        assert(instance.element.title == 'xundefined'); // bar is undefined
+        assert(instance.element.title == ''); // bar is undefined
 
         instance.set('bar', 'x');
         assert(instance.element.title == 'xx');
