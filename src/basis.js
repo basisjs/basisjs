@@ -3744,9 +3744,20 @@
       /** @cut */ }
     };
 
+    /** @cut */ // old Firefox has bugs in WeakMap implementation, don't use dev info for them
+    /** @cut */ // https://bugzilla.mozilla.org/show_bug.cgi?id=1127827
+    /** @cut */ try { new WeakMap().get(1); } catch(e) { get = function(){}; }
+
     /** @cut */ var map = typeof WeakMap == 'function' ? new WeakMap() : false;
+    /** @cut */
     /** @cut */ if (map)
     /** @cut */   set = function(target, key, value){
+    /** @cut */     if (!target || (typeof target != 'object' && typeof target != 'function'))
+    /** @cut */     {
+    /** @cut */       consoleMethods.warn('Set dev info for non-object or non-function was ignored');
+    /** @cut */       return;
+    /** @cut */     }
+    /** @cut */
     /** @cut */     var info = map.get(target);
     /** @cut */     if (!info)
     /** @cut */       map.set(target, info = {});
