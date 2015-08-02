@@ -18,6 +18,7 @@
   var DECLARATION_VERSION = require('basis.template.declaration').VERSION;
   var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
   var makeDeclaration = require('basis.template.declaration').makeDeclaration;
+  var setIsolatePrefixGenerator = require('basis.template.declaration').setIsolatePrefixGenerator;
   var store = require('basis.template.store');
   var theme = require('basis.template.theme');
   var getSourceByPath = theme.get;
@@ -563,6 +564,7 @@
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     resolveResource: resolveResource, // TODO: remove
+    /** @cut */ setIsolatePrefixGenerator: setIsolatePrefixGenerator,
     // for backward capability
     // TODO: remove
     /** @cut dev mode only */ getDebugInfoById: store.getDebugInfoById,

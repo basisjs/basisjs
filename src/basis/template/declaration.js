@@ -1921,5 +1921,8 @@ resource('../template.js').ready(function(exports){
 module.exports = {
   VERSION: 3,
   makeDeclaration: makeDeclaration,
-  getDeclFromSource: getDeclFromSource
+  getDeclFromSource: getDeclFromSource,
+  setIsolatePrefixGenerator: function(fn){
+    genIsolateMarker = fn;
+  }
 };
