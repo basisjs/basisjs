@@ -232,6 +232,7 @@
     function normalAttrClass(domRef, oldClass, newValue, anim){
       var classList = domRef.classList;
 
+      // IE11 and lower doesn't support classList for SVG
       if (!classList)
         return legacyAttrClass(domRef, oldClass, newValue, anim);
 
@@ -259,8 +260,8 @@
       return newClass;
     }
 
-    // old browsers are not support for classList at all
-    // IE10 and lower doesn't support classList for SVG nodes
+    // old browsers have no support for classList at all
+    // IE11 and lower doesn't support classList for SVG
     function legacyAttrClass(domRef, oldClass, newValue, anim){
       var newClass = newValue || '';
 
