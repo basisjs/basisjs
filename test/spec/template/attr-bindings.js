@@ -762,6 +762,22 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'special cases',
+      test: [
+        {
+          name: 'should no show errors in console when use expression in svg attributes (issue #25)',
+          test: function(){
+            var template = createTemplate('<svg:svg viewBox="0 0 {width} {height}"/>');
+
+            assert(text(template) === text('<svg:svg>'));
+            assert(text(template, { width: 100 }) === text('<svg:svg>'));
+            assert(text(template, { height: 100 }) === text('<svg:svg>'));
+            assert(text(template, { width: 100, height: 100 }) === text('<svg:svg viewBox="0 0 100 100">'));
+          }
+        }
+      ]
     }
   ]
 };
