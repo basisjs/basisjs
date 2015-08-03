@@ -155,6 +155,9 @@
       used[name] = true;
       result.push(name);
 
+      // fallback theme can not yet be initialized
+      getTheme(name);
+
       // add theme fallback list
       list.splice.apply(list, [i + 1, 0].concat(themes[name].fallback));
     }

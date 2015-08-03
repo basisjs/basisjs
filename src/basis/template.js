@@ -564,7 +564,7 @@
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     resolveResource: resolveResource, // TODO: remove
-    /** @cut */ setIsolatePrefixGenerator: setIsolatePrefixGenerator,
+    setIsolatePrefixGenerator: setIsolatePrefixGenerator,
     // for backward capability
     // TODO: remove
     /** @cut dev mode only */ getDebugInfoById: store.getDebugInfoById,
