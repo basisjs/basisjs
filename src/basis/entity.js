@@ -64,7 +64,6 @@
   var namedTypes = {};
   var namedIndexes = {};
   var deferredTypeDef = {};
-  var TYPE_DEFINITION_PLACEHOLDER = function TYPE_DEFINITION_PLACEHOLDER(){};
 
   function resolveType(typeName, type){
     var list = deferredTypeDef[typeName];
