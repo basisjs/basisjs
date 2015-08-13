@@ -777,6 +777,9 @@
     syncSelectedChildren_: function(){
       var selected;
 
+      if (!this.selection)
+        return;
+
       if (this.selection.multiple)
       {
         selected = this.value.length
