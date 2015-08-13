@@ -20,10 +20,12 @@
   var eventUtils = require('basis.dom.event');
   var cssom = require('basis.cssom');
   var createEvent = require('basis.event').create;
+  var getComputedStyle = require('basis.dom.computedStyle').get;
   var getOffsetParent = require('basis.layout').getOffsetParent;
   var getBoundingRect = require('basis.layout').getBoundingRect;
   var getViewportRect = require('basis.layout').getViewportRect;
   var Node = require('basis.ui').Node;
+  var CHECK_INTERVAL = 50;
 
 
   //
@@ -115,6 +117,20 @@
     return basisUiWindow ? basisUiWindow.fetch().getWindowTopZIndex() : 2001;
   }
 
+  function isVisible(element){
+    if (!domUtils.parentOf(document.documentElement, element))
+      return false;
+
+    if (getComputedStyle(element, 'visibility') != 'visible')
+      return false;
+
+    var box = getBoundingRect(element);
+    if (!box.width || !box.height)
+      return false;
+
+    return true;
+  }
+
 
   //
   // Popup manager
@@ -124,6 +140,8 @@
 
   var popupManager = basis.object.extend([], {
     body: NaN,
+    trackingCount: 0,
+    trackingTimer: null,
 
     add: function(popup){
       if (!this.length)
@@ -139,6 +157,14 @@
 
       if (this.body && !domUtils.parentOf(document, popup.element))
         this.body.appendChild(popup.element);
+
+      if (popup.trackRelElement)
+      {
+        if (!this.trackingCount)
+          this.trackingTimer = setInterval(this.checkRelElement.bind(this), CHECK_INTERVAL);
+
+        this.trackingCount++;
+      }
     },
     remove: function(popup){
       var popupIndex = this.indexOf(popup);
@@ -151,6 +177,13 @@
         var nextPopup = this[popupIndex - 1];
         if (nextPopup)
           nextPopup.hide();
+      }
+
+      if (popup.trackRelElement)
+      {
+        this.trackingCount--;
+        if (!this.trackingCount)
+          clearInterval(this.trackingTimer);
       }
 
       basis.array.remove(this, popup);
@@ -168,6 +201,14 @@
     clear: function(){
       arrayFrom(this).forEach(function(popup){
         popup.hide();
+      });
+    },
+
+    checkRelElement: function(){
+      arrayFrom(this).forEach(function(popup){
+        console.log(popup.trackRelElement, popup.relElement_, popup.relElement_ && isVisible(popup.relElement_));
+        if (popup.trackRelElement && popup.relElement_ && !isVisible(popup.relElement_))
+          popup.hide();
       });
     },
 
@@ -315,6 +356,8 @@
     hideOnKey: false,
     hideOnScroll: true,
     ignoreClickFor: null,
+    trackRelElement: true,
+    trackRelElementTimer_: null,
 
     init: function(){
       Node.prototype.init.call(this);
