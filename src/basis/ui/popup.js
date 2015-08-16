@@ -206,7 +206,6 @@
 
     checkRelElement: function(){
       arrayFrom(this).forEach(function(popup){
-        console.log(popup.trackRelElement, popup.relElement_, popup.relElement_ && isVisible(popup.relElement_));
         if (popup.trackRelElement && popup.relElement_ && !isVisible(popup.relElement_))
           popup.hide();
       });
