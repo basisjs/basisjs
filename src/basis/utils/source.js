@@ -5,7 +5,7 @@ var sourceCache = {};
 function findSourceInMap(map, filename){
   if (Array.isArray(map.sources))
     for (var i = 0; i < map.sources.length; i++)
-      if (map.sources[i] == filename)
+      if (basis.path.normalize(map.sources[i]) == filename)
       {
         if (Array.isArray(map.sourcesContent))
           return map.sourcesContent[i] || '';
@@ -23,7 +23,7 @@ function getSource(uri){
     return sourceCache[uri];
 
   var resource = basis.resource(uri);
-  var source = basis.dev.fixSourceOffset(resource.get(true));
+  var source = resource.get(true);
   var sourceMap = source.match(/\/\/# sourceMappingURL=([^\r\n]+)[\s\r\n]*$/);
 
   if (sourceMap)
