@@ -984,6 +984,60 @@ module.exports = {
                   }
                 },
                 {
+                  name: 'set active to proxy and back several times',
+                  test: function(){
+                    var target = new DataObject();
+                    var obj = new DataObject({
+                      delegate: target
+                    });
+                    var trigger = new DataObject({
+                      active: true,
+                      delegate: obj
+                    });
+
+                    assert(obj.active === false);
+                    assert(eventCount(obj, 'activeChanged') === 0);
+                    assert(target.subscriberCount === 0);
+
+                    obj.setActive(PROXY);
+                    assert(obj.active === true);
+                    assert(eventCount(obj, 'activeChanged') === 1);
+                    assert(target.subscriberCount === 1);
+
+                    obj.setActive(PROXY);
+                    assert(obj.active === true);
+                    assert(eventCount(obj, 'activeChanged') === 1);
+                    assert(target.subscriberCount === 1);
+
+                    trigger.setActive(false);
+                    assert(obj.active === false);
+                    assert(eventCount(obj, 'activeChanged') === 2);
+                    assert(target.subscriberCount === 0);
+
+                    trigger.setActive(true);
+                    assert(obj.active === true);
+                    assert(eventCount(obj, 'activeChanged') === 3);
+                    assert(target.subscriberCount === 1);
+
+                    obj.setActive(true);
+                    trigger.setActive(false);
+                    assert(obj.active === true);
+                    assert(eventCount(obj, 'activeChanged') === 3);
+                    assert(target.subscriberCount === 1);
+
+                    obj.setActive(false);
+                    assert(obj.active === false);
+                    assert(eventCount(obj, 'activeChanged') === 4);
+                    assert(target.subscriberCount === 0);
+
+                    trigger.setActive(true);
+                    obj.setActive(PROXY);
+                    assert(obj.active === true);
+                    assert(eventCount(obj, 'activeChanged') === 5);
+                    assert(target.subscriberCount === 1);
+                  }
+                },
+                {
                   name: 'set function should not invoke function',
                   test: function(){
                     var obj = new DataObject();

@@ -61,6 +61,12 @@
   // Abstract data
   //
 
+  var ABSTRACTDATA_ACTIVE_SYNC_HANDLER = {
+    subscribersChanged: function(host){
+      this.set(host.subscriberCount > 0);
+    }
+  };
+
  /**
   * Base class for any data type class.
   * @class
@@ -169,7 +175,10 @@
       if (this.active)
       {
         if (this.active === PROXY)
-          this.active = Value.from(this, 'subscribersChanged', 'subscriberCount');
+        {
+          this.active = new basis.Token(this.subscriberCount > 0);
+          this.addHandler(ABSTRACTDATA_ACTIVE_SYNC_HANDLER, this.active);
+        }
 
         this.active = !!resolveValue(this, this.setActive, this.active, 'activeRA_');
 
@@ -256,10 +265,31 @@
     * @return {boolean} Returns true if {basis.data.Object#active} was changed.
     */
     setActive: function(isActive){
+      var proxyToken = this.activeRA_ && this.activeRA_.proxyToken;
+
       if (isActive === PROXY)
-        isActive = Value.from(this, 'subscribersChanged', 'subscriberCount');
+      {
+        if (!proxyToken)
+        {
+          proxyToken = new basis.Token(this.subscriberCount > 0);
+          this.addHandler(ABSTRACTDATA_ACTIVE_SYNC_HANDLER, proxyToken);
+        }
+
+        isActive = proxyToken;
+      }
+      else
+      {
+        if (proxyToken && isActive !== proxyToken)
+        {
+          this.removeHandler(ABSTRACTDATA_ACTIVE_SYNC_HANDLER, proxyToken);
+          proxyToken = null;
+        }
+      }
 
       isActive = !!resolveValue(this, this.setActive, isActive, 'activeRA_');
+
+      if (proxyToken && this.activeRA_)
+        this.activeRA_.proxyToken = proxyToken;
 
       if (this.active != isActive)
       {
