@@ -122,7 +122,6 @@
     (function(){
       basis.require('basis.dom');
       basis.require('basis.dom.event');
-      basis.require('basis.data.generator');
       basis.require('basis.ui.tree');
       basis.require('basis.ui.button');
       basis.require('basis.utils.benchmark');
@@ -130,7 +129,7 @@
       var DOM = basis.dom;
       var Event = basis.dom.event;
 
-      var gString = basis.data.generator.string;
+      var gString = basis.require('./generator.js').string;
       var getTime = basis.utils.benchmark.time;
 
       var Tree = basis.ui.tree.Tree;
