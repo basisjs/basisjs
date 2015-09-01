@@ -1,9 +1,9 @@
 var basisEvent = require('basis.event');
 var Emitter = basisEvent.Emitter;
 var createEvent = basisEvent.create;
-var STATE = require('basis.data.state');
-var SUBSCRIPTION = require('basis.data.subscription');
-var resolveValue = require('basis.data.resolve').resolveValue;
+var STATE = require('./state.js');
+var SUBSCRIPTION = require('./subscription.js');
+var resolveValue = require('./resolve.js').resolveValue;
 var PROXY = basis.PROXY;
 var ABSTRACTDATA_ACTIVE_SYNC_HANDLER = {
   subscribersChanged: function(host){

@@ -615,6 +615,9 @@
   // Deferred value
   //
 
+  var deferredSchedule = basis.asap.schedule(function(value){
+    value.unlock();
+  });
   var DEFERRED_HANDLER = {
     change: function(source){
       if (!this.isLocked())
@@ -629,9 +632,6 @@
       this.destroy();
     }
   };
-  var deferredSchedule = basis.asap.schedule(function(value){
-    value.unlock();
-  });
 
  /**
   * @class
@@ -642,7 +642,7 @@
     source: null,
 
     init: function(){
-      Value.prototype.init.call(this);
+      ReadOnlyValue.prototype.init.call(this);
       this.source.addHandler(DEFERRED_HANDLER, this);
     },
 
@@ -653,7 +653,7 @@
     destroy: function(){
       deferredSchedule.remove(this);
       this.source = null;
-      Value.prototype.destroy.call(this);
+      ReadOnlyValue.prototype.destroy.call(this);
     }
   });
 
@@ -677,7 +677,7 @@
       this.source = null;
       this.pipeHandler = null;
 
-      Value.prototype.destroy.call(this);
+      ReadOnlyValue.prototype.destroy.call(this);
     }
   });
 
