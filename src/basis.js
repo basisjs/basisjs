@@ -1549,7 +1549,6 @@
 
       /** @cut */ if (!className)
       /** @cut */   className = SuperClass.className + '._Class' + classId;
-      /** @cut */ // consoleMethods.warn('Class has no name');
 
       // temp class constructor with no init call
       var NewClassProto = function(){};

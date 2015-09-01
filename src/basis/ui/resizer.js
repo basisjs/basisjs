@@ -47,6 +47,7 @@
   * @class
   */
   var ResizerView = Node.subclass({
+    className: namespace + '.ResizerView',
     template: resource('./templates/resizer/resizer.tmpl'),
     binding: {
       cursor: 'cursor',

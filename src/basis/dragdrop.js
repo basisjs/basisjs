@@ -299,6 +299,7 @@
   * @class
   */
   var StylePositionX = StyleDeltaWriter.subclass({
+    className: namespace + '.StylePositionX',
     property: function(element){
       return getComputedStyle(element, 'left') == 'auto' && getComputedStyle(element, 'right') != 'auto'
         ? 'right'
@@ -313,6 +314,7 @@
   * @class
   */
   var StylePositionY = StyleDeltaWriter.subclass({
+    className: namespace + '.StylePositionY',
     property: function(element){
       return getComputedStyle(element, 'top') == 'auto' && getComputedStyle(element, 'bottom') != 'auto'
         ? 'bottom'
