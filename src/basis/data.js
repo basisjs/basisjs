@@ -797,6 +797,18 @@
       var descriptor = target.propertyDescriptors[pathFragment];
       var events = descriptor ? descriptor.events : null;
 
+      if (descriptor && descriptor.isPrivate)
+      {
+        isStatic = true;
+        events = null;
+
+        /** @cut */ var warnMessage = 'Property can\'t be accessed via query: ';
+        /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+        /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
+        /** @cut */   basis.string.repeat('^', pathFragment.length)
+        /** @cut */ );
+      }
+
       if (descriptor && descriptor.isStatic)
         isStatic = true;
 
@@ -805,7 +817,7 @@
         if (isStatic)
         {
           events = null;
-          /** @cut */ var warnMessage = '<static> was applied for path part that has events: ';
+          /** @cut */ var warnMessage = '<static> was applied for property that has events: ';
           /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
           /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
           /** @cut */   basis.string.repeat('^', '<static>'.length) + '\n' +
@@ -822,7 +834,7 @@
       {
         if (!isStatic)
         {
-          /** @cut */ var warnMessage = 'No events found for path part: ';
+          /** @cut */ var warnMessage = 'No events found for property: ';
           /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
           /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
           /** @cut */   basis.string.repeat('^', pathFragment.length) + '\n' +
