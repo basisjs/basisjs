@@ -342,8 +342,12 @@
   var TemplateMixin = function(super_){
     return {
       propertyDescriptors: {
+        action: false,
+        binding: false,
         template: 'templateChanged',
-        tmpl: 'templateChanged'
+        tmpl: 'templateChanged',
+        element: false,
+        childNodesElement: false
       },
 
      /**

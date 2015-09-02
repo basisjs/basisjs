@@ -70,6 +70,12 @@
   var Index = Class(Value, {
     className: namespace + '.Index',
 
+    propertyDescriptors: {
+      explicit: false,
+      wrapperCount: false,
+      updateEvents: false
+    },
+
    /**
     * Explicit declared
     * @type {boolean}

@@ -107,7 +107,12 @@
   var Value = Class(AbstractData, {
     className: namespace + '.Value',
     propertyDescriptors: {
-      value: 'change'
+      value: 'change',
+      bindingBridge: false,
+      initValue: false,
+      locked: false,
+      proxy: false,
+      setNullOnEmitterDestroy: false
     },
 
    /**

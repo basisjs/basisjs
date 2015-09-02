@@ -1178,7 +1178,10 @@
   var MapFilter = Class(SourceDataset, {
     className: namespace + '.MapFilter',
     propertyDescriptors: {
-      rule: 'ruleChanged'
+      rule: 'ruleChanged',
+      addMemberRef: false,
+      removeMemberRef: false,
+      ruleEvents: false
     },
 
    /**

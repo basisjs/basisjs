@@ -20,7 +20,10 @@ var AbstractData = Emitter.subclass({
   propertyDescriptors: {
     state: 'stateChanged',
     active: 'activeChanged',
-    subscriberCount: 'subscribersChanged'
+    subscriberCount: 'subscribersChanged',
+    subscribeTo: false,
+    syncAction: false,
+    syncEvents: false
   },
 
  /**

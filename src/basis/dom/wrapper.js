@@ -626,9 +626,7 @@
       childNodes: 'childNodesModified',
       childNodesState: 'childNodesStateChanged',
       dataSource: 'dataSourceChanged',
-      'getChildNodesDataset()': {
-        isStatic: true
-      },
+      'getChildNodesDataset()': true,
       satellite: {
         nested: true,
         events: 'satelliteChanged'
@@ -636,7 +634,16 @@
       sorting: 'sortingChanged',
       sortingDesc: 'sortingChanged',
       grouping: 'groupingChanged',
-      ownerSatelliteName: 'ownerSatelliteNameChanged'
+      ownerSatelliteName: 'ownerSatelliteNameChanged',
+      firstChild: false,
+      lastChild: false,
+      previousSibling: false,
+      nextSibling: false,
+      groupNode: false,
+      groupId: true,
+      autoDelegate: false,
+      destroyDataSourceMember: false,
+      name: true
     },
 
    /**
@@ -2505,9 +2512,13 @@
   var Node = Class(AbstractNode, DomMixin, {
     className: namespace + '.Node',
     propertyDescriptors: {
-      selected: 'select unselect',
       disabled: 'disable enable',
-      selection: 'selectionChanged'
+      contextDisabled: false,
+      selected: 'select unselect',
+      contextSelection: false,
+      selection: 'selectionChanged',
+      matched: 'match unmatch',
+      matchFunction: 'matchFunctionChanged'
     },
 
    /**
