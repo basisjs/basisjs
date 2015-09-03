@@ -1,5 +1,6 @@
 {
   "build": {
+    "base": "../..",
     "file": "./basis-library.html",
     "output": "build.tmp",
     "outputScript": "basis.js"

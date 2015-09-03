@@ -1,0 +1,11 @@
+<b:style src="./text.css"/>
+<b:style src="./element_text.css" ns="element"/>
+<b:isolate/>
+<b:define name="binding" type="bool"/>
+<b:define name="matchBinding" type="bool"/>
+<b:define name="nestedView" type="bool"/>
+<b:define name="l10n" type="bool"/>
+
+<span class="text element:text {binding} {matchBinding} {nestedView} {l10n}" event-click="inspect" event-mouseenter="enter" event-mouseleave="leave">
+  {value}
+</span>

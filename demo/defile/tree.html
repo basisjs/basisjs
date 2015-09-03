@@ -44,12 +44,9 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.ui.tree');
-    
     // make shortcut
-    var dom = basis.dom;
-    var nsTree = basis.ui.tree;
+    var dom = basis.require('basis.dom');
+    var nsTree = basis.require('basis.ui.tree');
 
     // data for tree
     var data = [
@@ -90,7 +87,7 @@
         rule: 'data.id % 2',
         childClass: {
           binding: {
-            title: basis.getter('data.id', { 0: 'even', 1: 'odd' })
+            title: basis.getter('data.id').as(['even', 'odd'])
           }
         }
       },

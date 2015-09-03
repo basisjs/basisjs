@@ -1,9 +1,10 @@
-basis.require('basis.data');
-basis.require('basis.ui');
+var DataObject = require('basis.data').Object;
+var Dataset = require('basis.data').Dataset;
+var Node = require('basis.ui').Node;
 
-var dataset = new basis.data.Dataset({
+var dataset = new Dataset({
   items: ['foo', 'bar', 'baz'].map(function(value){
-    return new basis.data.Object({
+    return new DataObject({
       data: {
         name: value
       }
@@ -11,7 +12,7 @@ var dataset = new basis.data.Dataset({
   })
 });
 
-var list = new basis.ui.Node({
+var list = new Node({
   container: document.body,
   dataSource: dataset,
   template: '<ul/>',
@@ -24,7 +25,7 @@ var list = new basis.ui.Node({
 });
 
 dataset.remove(dataset.pick());
-dataset.add(new basis.data.Object({
+dataset.add(new DataObject({
   data: {
     name: 'extra'
   }

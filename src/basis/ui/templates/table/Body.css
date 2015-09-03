@@ -7,10 +7,6 @@
   {
     background-image: url(res/plus.gif);
   }
-  .Basis-Table-Body__collapsed .Basis-Table-Row
-  {
-    display: none;
-  }
 
   .Basis-Table-GroupHeader TD
   {

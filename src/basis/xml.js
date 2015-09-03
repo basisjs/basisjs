@@ -10,14 +10,14 @@
   // import names
   //
 
+  var document = global.document;
+  var XMLSerializer = global.XMLSerializer;
   var Class = basis.Class;
-  var extend = basis.object.extend;
   var browser = require('basis.ua');
 
-  var DOM = require('basis.dom');
-  var ELEMENT_NODE = DOM.ELEMENT_NODE;
-  var ATTRIBUTE_NODE = DOM.ATTRIBUTE_NODE;
-  var TEXT_NODE = DOM.TEXT_NODE;
+  var domUtils = require('basis.dom');
+  var ELEMENT_NODE = domUtils.ELEMENT_NODE;
+  var TEXT_NODE = domUtils.TEXT_NODE;
 
 
   //
@@ -77,19 +77,19 @@
       };
     }
 
-    if (window.ActiveXObject)
+    if (global.ActiveXObject)
     {
       // http://blogs.msdn.com/xmlteam/archive/2006/10/23/using-the-right-version-of-msxml-in-internet-explorer.aspx
-      var progId = ['MSXML2.DOMDocument.6.0', 'MSXML2.DOMDocument.3.0'];
+      var progId = ['MSXML2.domUtilsDocument.6.0', 'MSXML2.domUtilsDocument.3.0'];
 
       for (var i = 0; i < progId.length; i++)
         try {
-          if (new ActiveXObject(progId[i]))
+          if (new global.ActiveXObject(progId[i]))
           {
             XMLProgId = progId[i];
             isNativeSupport = false;
             return function(namespace, nodename){
-              var xmlDocument = new ActiveXObject(XMLProgId);
+              var xmlDocument = new global.ActiveXObject(XMLProgId);
               xmlDocument.documentElement = createElementNS(xmlDocument, nodename, namespace);
               return xmlDocument;
             };
@@ -396,17 +396,17 @@
   function XML2String(node){
     // modern browsers feature
     if (typeof XMLSerializer != 'undefined')
-      return (new XMLSerializer()).serializeToString(node);
+      return new XMLSerializer().serializeToString(node);
 
     // old IE feature
     if (typeof node.xml == 'string')
       return node.xml;
 
     // other browsers
-    if (node.nodeType == DOM.DOCUMENT_NODE)
+    if (node.nodeType == domUtils.DOCUMENT_NODE)
       node = node.documentElement;
 
-    return DOM.outerHTML(node);
+    return domUtils.outerHTML(node);
   }
 
 

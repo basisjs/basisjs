@@ -52,20 +52,21 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.ui');
-    basis.require('basis.router');
+    var Node = basis.require('basis.ui').Node;
+    var router = basis.require('basis.router');
+    var Value = basis.require('basis.data').Value;
 
     //
     // Solution #1
     //
-    var pages = new basis.ui.Node({
+    var pages = new Node({
       container: document.getElementById('demo-container'),
       template: '<div>Solution #1</div>',
       selection: true,
       childClass: {
         template:
           '<div class="page page-{unselected}">' +
-            '{name}' + 
+            '{name}' +
           '</div>',
         binding: {
           name: 'name'
@@ -77,7 +78,7 @@
       ]
     });
 
-    basis.router.add('page:num', function(num){
+    router.add('page:num', function(num){
       var page = pages.getChildByName('page' + num);
       if (page)
         page.select();
@@ -87,27 +88,27 @@
     // Solution #2
     //
 
-    var _postInit = basis.ui.Node.prototype.postInit;
-    basis.ui.Node.extend({   // or you can create special subclass instead
+    var _postInit = Node.prototype.postInit;
+    Node.extend({   // or you can create special subclass instead
       postInit: function(){
         _postInit.call(this);
 
         if (this.router)
-          basis.router.add(this.router, this.routerCallback, this);
+          router.add(this.router, this.routerCallback, this);
       },
       routerCallback: function(){
         this.select();
       }
     });
 
-    new basis.ui.Node({
+    new Node({
       container: document.getElementById('demo-container'),
       template: '<div>Solution #2</div>',
       selection: true,
       childClass: {
         template:
           '<div class="page page-{unselected}">' +
-            '{name}' + 
+            '{name}' +
           '</div>',
         binding: {
           name: 'name'
@@ -120,10 +121,43 @@
     });
 
     //
+    // Solution #3
+    //
+
+    // router.get('page:num').param('num');
+    // router('page:num').get('num');
+    // router('page:num', 'num');
+    // router('path:num').num;
+    // router('page:num').get(function(){
+    //   return this.num + this.num;
+    // });
+
+    new Node({
+      container: document.getElementById('demo-container'),
+      template: '<div>Solution #3</div>',
+      childClass: {
+        template:
+          '<div class="page page-{unselected}">' +
+            '{name}' +
+          '</div>',
+        binding: {
+          name: 'name',
+          unselected: Value.from(router.route('page:num').param('num')).compute(function(node, num){
+            return node.name != 'page' + num;
+          })
+        }
+      },
+      childNodes: [
+        { name: 'page1' },
+        { name: 'page2' }
+      ]
+    });
+
+    //
     // start router
     //
 
-    basis.router.start();
+    router.start();
 
   </script>
 </body>

@@ -1,0 +1,26 @@
+.Basis-Combobox-Item
+{
+  padding: .3em 6px .35em;
+  zoom: 1;
+  display: block;
+  color: black;
+  text-decoration: none;
+  white-space: nowrap;
+  min-width: 130px;  /* important min-width here (not on parent nodes) - otherwise IE7 bug. but this bring bug to opera 9.2 */
+  min-height: 1em;
+  cursor: pointer;
+}
+.Basis-Combobox-Item:hover
+{
+  background-color: #E8E8E8;
+}
+.Basis-Combobox-Item.selected
+{
+  background-color: #E1F1F9;
+}
+.Basis-Combobox-Item.disabled
+{
+  color: #AAA;
+  background: none !important;
+  cursor: default;
+}

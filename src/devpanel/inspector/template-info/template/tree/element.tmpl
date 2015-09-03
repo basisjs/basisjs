@@ -1,0 +1,18 @@
+<b:style src="./element.css"/>
+<b:style src="./element_text.css" ns="text"/>
+<b:isolate/>
+<b:define name="binding" type="bool"/>
+<b:define name="matchBinding" type="bool"/>
+<b:define name="nestedView" type="bool"/>
+<b:define name="inline" type="bool"/>
+
+<div class="element">
+  <span class="{binding} {matchBinding} {nestedView}" event-click="inspect" event-mouseenter="enter" event-mouseleave="leave">
+    &lt;{name}<!--{attributes}-->&gt;
+    <span b:hide="{singleton}">
+      <div{childNodesElement} b:show="{childCount}" class="childNodes {inline} text:{inline}"/>
+      <span b:show="{childrenHidden}" class="childrenHidden">&hellip;</span>
+      &lt;/{name}&gt;
+    </span>
+  </span>
+</div>

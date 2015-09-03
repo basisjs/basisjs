@@ -1,21 +1,62 @@
 <b:style src="./template_hintPopup.css"/>
 <b:isolate/>
+<b:define name="equalNames" type="bool"/>
 
 <div class="popup">
-  <span b:show="{name}" class="name">
-    <span class="propertyTitle">Reference: </span>
-    {name}
-  </span>
-  <span class="source">
-    <span class="propertyTitle">Source: </span>
-    {source}
-  </span>
-  <span class="instance">
-    <span class="propertyTitle">Instance: </span>
-    {instanceName}
-  </span>
-  <span class="rootNodeSelector">
-    <span class="propertyTitle">Root node: </span>
-    {rootNodeSelector}
-  </span>
+  <div class="section">
+    <div class="section__title">
+      <span class="section__title-text">Template</span>
+    </div>
+    <div class="section__content">
+      <span b:show="{name}">
+        <span class="name">
+          <span b:show="{namespace}" class="namespace">
+            {namespace}.
+          </span>
+          {name}
+        </span>
+        <span class="source">
+          Resolved to <span class="location">/{source}</span>
+        </span>
+      </span>
+      <span b:hide="{name}" class="name location">
+        /{source}
+      </span>
+      <span b:show="{openFileSupported}" class="ui-hint">
+        Use ctrl + click to open file in editor
+      </span>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section__title">
+      <span class="section__title-text">Instance</span>
+    </div>
+    <div class="section__content">
+      <span class="name">
+        <span b:show="{satelliteName}" class="satelliteName satelliteName_{equalNames}">
+          {satelliteName}
+        </span>
+        <span b:hide="{equalNames}">
+          <span b:show="{role}" class="role">
+            {role}
+          </span>
+        </span>
+        <span b:show="{instanceNamespace}" class="namespace">
+          {instanceNamespace}.
+        </span>
+        {instanceName}
+        <span class="id">
+          #{instanceId}
+        </span>
+      </span>
+      <span b:show="{instanceLocation}">
+        <span class="source">
+          Created at <span class="location">{instanceLocation}</span>
+        </span>
+        <span b:show="{openFileSupported}" class="ui-hint">
+          Use alt + click to open place in editor
+        </span>
+      </span>
+    </div>
+  </div>
 </div>

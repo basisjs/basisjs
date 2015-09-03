@@ -327,7 +327,7 @@
       event.preventDefault();
     },
 
-    onMouseUp: function(event){
+    onMouseUp: function(){
       this.panningActive = false;
       this.processInertia = true;
 
@@ -673,13 +673,13 @@
 
     satellite: {
       horizontalScrollbar: {
-        instanceOf: HorizontalScrollbar,
+        instance: HorizontalScrollbar,
         existsIf: function(object){
           return object.useScrollbars && object.scrollX;
         }
       },
       verticalScrollbar: {
-        instanceOf: VerticalScrollbar,
+        instance: VerticalScrollbar,
         existsIf: function(object){
           return object.useScrollbars && object.scrollY;
         }

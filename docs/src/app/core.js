@@ -1,5 +1,4 @@
 
-  var getter = basis.getter;
   var appStat = require('app.stat');
   var createEvent = require('basis.event').create;
   var nsData = require('basis.data');

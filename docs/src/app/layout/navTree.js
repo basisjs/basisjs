@@ -8,7 +8,7 @@ var navTree = new DocTree({
   childNodes: [
     {
       data: { kind: 'Section', title: 'basis', fullPath: 'basis' },
-      selectable: false,
+      action: { select: function(){} }, // selectable: false
       childNodes: basis.object.iterate(basis.namespaces_, function(key){
         if (key in mapDO == false) debugger;
         return mapDO[key];

@@ -1,13 +1,19 @@
 module.exports = {
   name: 'basis.data.dataset.Subtract',
+
+  sandbox: true,
   init: function(){
-    var helpers = basis.require('./spec/dataset/helpers.js');
+    var basis = window.basis.createSandbox();
+
+    var helpers = basis.require('./helpers/dataset.js');
     var range = helpers.range;
     var generate = helpers.generate;
     var cmpDS = helpers.cmpDS;
     var checkValues = helpers.checkValues;
-    var catchWarnings = helpers.catchWarnings;
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
 
+    var Value = basis.require('basis.data').Value;
+    var DataObject = basis.require('basis.data').Object;
     var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
     var Dataset = basis.require('basis.data').Dataset;
     var Subtract = basis.require('basis.data.dataset').Subtract;
@@ -26,6 +32,7 @@ module.exports = {
       return info && info[eventName] || 0;
     }
   },
+
   test: [
     {
       name: 'create',
@@ -100,7 +107,7 @@ module.exports = {
           test: function(){
             var items = generate(0, 8);
             var dataset = new Dataset({ items: items.slice(0, 6) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var token = new basis.Token(new Dataset({ items: items.slice(3, 8) }));
             var subtract = new Subtract({
               minuend: value,
@@ -119,7 +126,7 @@ module.exports = {
         {
           name: 'the same dataset for both operands, change dataset',
           test: function(){
-            var dataset = new basis.data.Dataset();
+            var dataset = new Dataset();
             var subtract = new Subtract({
               minuend: dataset,
               subtrahend: dataset
@@ -127,7 +134,7 @@ module.exports = {
 
             assert(eventCount(subtract, 'itemsChanged') == 0);
 
-            dataset.add(new basis.data.Object());
+            dataset.add(new DataObject());
 
             assert(eventCount(subtract, 'itemsChanged') == 0);
           }
@@ -135,7 +142,7 @@ module.exports = {
         {
           name: 'the same dataset for both operands, destroy dataset',
           test: function(){
-            var dataset = new basis.data.Dataset();
+            var dataset = new Dataset();
             var subtract = new Subtract({
               minuend: dataset,
               subtrahend: dataset
@@ -178,8 +185,8 @@ module.exports = {
             var items = generate(0, 8);
             var dataset1 = new Dataset({ items: items.slice(0, 6) });
             var dataset2 = new Dataset({ items: items.slice(3, 8) });
-            var value1 = new basis.data.Value({ value: dataset1 });
-            var value2 = new basis.data.Value({ value: dataset2 });
+            var value1 = new Value({ value: dataset1 });
+            var value2 = new Value({ value: dataset2 });
             var subtract = new Subtract();
 
             subtract.setOperands(value1, value2);
@@ -227,8 +234,8 @@ module.exports = {
             var items = generate(0, 8);
             var dataset1 = new Dataset({ items: items.slice(0, 6) });
             var dataset2 = new Dataset({ items: items.slice(3, 8) });
-            var value1 = new basis.data.Value({ value: dataset1 });
-            var value2 = new basis.data.Value({ value: dataset2 });
+            var value1 = new Value({ value: dataset1 });
+            var value2 = new Value({ value: dataset2 });
             var subtract = new Subtract();
 
             subtract.setOperands(value1, value2);
@@ -276,8 +283,8 @@ module.exports = {
             var items = generate(0, 8);
             var dataset1 = new Dataset({ items: items.slice(0, 6) });
             var dataset2 = new Dataset({ items: items.slice(3, 8) });
-            var value1 = new basis.data.Value({ value: dataset1 });
-            var value2 = new basis.data.Value({ value: dataset2 });
+            var value1 = new Value({ value: dataset1 });
+            var value2 = new Value({ value: dataset2 });
             var subtract = new Subtract({
               minuend: value1,
               subtrahend: value2
@@ -314,8 +321,8 @@ module.exports = {
             var items = generate(0, 8);
             var dataset1 = new Dataset({ items: items.slice(0, 6) });
             var dataset2 = new Dataset({ items: items.slice(3, 8) });
-            var value1 = new basis.data.Value({ value: dataset1 });
-            var value2 = new basis.data.Value({ value: dataset2 });
+            var value1 = new Value({ value: dataset1 });
+            var value2 = new Value({ value: dataset2 });
             var subtract = new Subtract({
               minuend: value1,
               subtrahend: value2

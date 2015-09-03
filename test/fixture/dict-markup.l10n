@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "type": {
+      "enum.a": "markup",
+      "enum.b": "markup"
+    }
+  },
+  "en-US": {
+    "enum": {
+      "a": "<b>a</b>",
+      "b": "<b>b</b>"
+    }
+  }
+}

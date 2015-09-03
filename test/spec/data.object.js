@@ -1,26 +1,16 @@
 module.exports = {
   name: 'basis.data.object',
+
+  sandbox: true,
   init: function(){
-    basis.require('basis.entity');
+    var basis = window.basis.createSandbox();
+
+    var moduleEntity = basis.require('basis.entity');
+    var Value = basis.require('basis.data').Value;
     var DataObject = basis.require('basis.data').Object;
     var Merge = basis.require('basis.data.object').Merge;
 
-    function catchWarnings(fn){
-      var warn = basis.dev.warn;
-      var warnings = [];
-
-      try {
-        basis.dev.warn = function(message){
-          warnings.push(message);
-        };
-
-        fn();
-      } finally {
-        basis.dev.warn = warn;
-      }
-
-      return warnings.length ? warnings : false;
-    }
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
   },
 
   test: [
@@ -316,6 +306,84 @@ module.exports = {
                 });
                 assert({ foo: 'own-foo', bar: 'a-bar', baz: 'b-baz' }, instance.data);
               }
+            },
+            {
+              name: 'sources defined in subclass should be applied on init',
+              test: function(){
+                var map = [
+                  new DataObject({ data: { bar: 'bar1' } }),
+                  new DataObject({ data: { bar: 'bar2' } })
+                ];
+                var MyMerge = Merge.subclass({
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  },
+                  sources: {
+                    a: new DataObject({ data: { foo: 1 } }),
+                    b: Value.factory('update', function(self){
+                      return map[self.data.foo - 1];
+                    })
+                  }
+                });
+
+                var instance = new MyMerge();
+                assert({ foo: 1, bar: 'bar1' }, instance.data);
+                instance.update({ foo: 2 });
+                assert({ foo: 2, bar: 'bar2' }, instance.data);
+              }
+            },
+            {
+              name: 'should ignore data if no own properties',
+              test: function(){
+                var instance = new Merge({
+                  data: {
+                    foo: 1,
+                    bar: 2
+                  },
+                  fields: {
+                    foo: 'a'
+                  }
+                });
+
+                assert({}, instance.data);
+              }
+            },
+            {
+              name: 'should get only own properties from data',
+              test: function(){
+                var instance = new Merge({
+                  data: {
+                    foo: 1,
+                    bar: 2,
+                    baz: 3
+                  },
+                  fields: {
+                    foo: 'a',
+                    bar: '-'
+                  }
+                });
+
+                assert({ bar: 2 }, instance.data);
+              }
+            },
+            {
+              name: 'should get any properties from data but not other sources properties',
+              test: function(){
+                var instance = new Merge({
+                  data: {
+                    foo: 1,
+                    bar: 2,
+                    baz: 3
+                  },
+                  fields: {
+                    foo: 'a',
+                    '*': '-'
+                  }
+                });
+
+                assert({ bar: 2, baz: 3 }, instance.data);
+              }
             }
           ]
         },
@@ -533,15 +601,12 @@ module.exports = {
             {
               name: 'values from default source should not override other fields',
               test: function(){
-                var MyMerge = Merge.subclass({
+                var instance = new Merge({
                   fields: {
                     foo: '-',
                     bar: 'a',
                     '*': 'b'
-                  }
-                });
-
-                var instance = new MyMerge({
+                  },
                   data: {
                     foo: 'own-foo',
                     bar: 'own-bar',
@@ -569,6 +634,56 @@ module.exports = {
                 });
 
                 assert({ foo: 'own-foo', bar: 'a-bar', baz: 'b-baz' }, instance.data);
+              }
+            },
+            {
+              name: 'should reset',
+              test: function(){
+                var instance = new Merge({
+                  fields: {
+                    foo: 'a',
+                    qux: 'a',
+                    '*': 'b'
+                  },
+                  sources: {
+                    a: new DataObject({
+                      data: {
+                        foo: 'a-foo',
+                        bar: 'a-bar',
+                        qux: 'a-qux'
+                      }
+                    }),
+                    b: new DataObject({
+                      data: {
+                        foo: 'b-foo',
+                        bar: 'b-bar',
+                        baz: 'b-baz'
+                      }
+                    })
+                  }
+                });
+
+                assert({ foo: 'a-foo', bar: 'b-bar', baz: 'b-baz', qux: 'a-qux' }, instance.data);
+
+                // test strict field set
+                instance.setSource('a', new DataObject({
+                  data: {
+                    foo: 'd-foo',
+                    bar: 'd-bar'
+                  }
+                }));
+
+                assert({ foo: 'd-foo', bar: 'b-bar', baz: 'b-baz', qux: undefined }, instance.data);
+
+                // test wildcard field set
+                instance.setSource('b', new DataObject({
+                  data: {
+                    foo: 'c-foo',
+                    bar: 'c-bar'
+                  }
+                }));
+
+                assert({ foo: 'd-foo', bar: 'c-bar', baz: undefined, qux: undefined }, instance.data);
               }
             }
           ]
@@ -773,7 +888,7 @@ module.exports = {
             {
               name: 'merge & entity',
               test: function(){
-                var Type = basis.entity.createType(null, {
+                var Type = moduleEntity.createType(null, {
                   str: String,
                   enum: [1, 2, 3]
                 });
@@ -824,8 +939,8 @@ module.exports = {
             {
               name: 'merge & entity id',
               test: function(){
-                var Type = basis.entity.createType(null, {
-                  id: basis.entity.IntId
+                var Type = moduleEntity.createType(null, {
+                  id: moduleEntity.IntId
                 });
 
                 var lockIdEntity = Type({ id: 1 });
@@ -860,9 +975,9 @@ module.exports = {
             {
               name: 'merge & entity and calc',
               test: function(){
-                var Type = basis.entity.createType(null, {
-                  id: basis.entity.IntId,
-                  calc: basis.entity.calc('id', basis.fn.$self)
+                var Type = moduleEntity.createType(null, {
+                  id: moduleEntity.IntId,
+                  calc: moduleEntity.calc('id', basis.fn.$self)
                 });
 
                 var entity = Type({ id: 1 });
@@ -988,6 +1103,202 @@ module.exports = {
                 assert({ foo: 1, bar: 2, baz: 3 }, instance.data);
                 assert({ foo: 2, bar: 2, baz: 2 }, instance.sources.a.data);
                 assert({ foo: 3, bar: 3, baz: 3 }, instance.sources.b.data);
+              }
+            }
+          ]
+        },
+        {
+          name: 'resolveObject source from various values',
+          beforeEach: function(){
+            var merge = new Merge({
+              fields: {
+                foo: 'a',
+                bar: 'a'
+              }
+            });
+            var object1 = new DataObject({
+              data: {
+                foo: 1,
+                bar: 2,
+                baz: 3
+              }
+            });
+            var object2 = new DataObject({
+              data: {
+                foo: 'a',
+                bar: 'b',
+                baz: 'c'
+              }
+            });
+          },
+          test: [
+            {
+              name: 'should resolve object from bb-value',
+              test: function(){
+                var token = new basis.Token(object1);
+
+                merge.setSource('a', token);
+                assert(merge.sources.a === object1);
+                assert({ foo: 1, bar: 2 }, merge.data);
+                assert(merge.sourcesContext_.a.adapter !== null);
+
+                token.set();
+                assert(merge.sources.a === null);
+                assert({ foo: 1, bar: 2 }, merge.data);
+
+                token.set(object2);
+                assert(merge.sources.a === object2);
+                assert({ foo: 'a', bar: 'b' }, merge.data);
+
+                token.destroy();
+                object2.update({ foo: 1 });
+                assert(merge.sources.a === null);
+                assert(merge.sourcesContext_.a.adapter === null);
+                assert({ foo: 'a', bar: 'b' }, merge.data);
+              }
+            },
+            {
+              name: 'should unlink from bb-value',
+              test: function(){
+                var token = new basis.Token(object1);
+
+                merge.setSource('a', token);
+                assert(merge.sources.a === object1);
+                assert({ foo: 1, bar: 2 }, merge.data);
+
+                merge.setSource('a', null);
+                object1.update({ foo: 'a', bar: 'b' });
+                assert({ foo: 1, bar: 2 }, merge.data);
+
+                merge.setSource('a', token);
+                assert({ foo: 'a', bar: 'b' }, merge.data);
+                assert(token.handler !== null);
+
+                merge.destroy();
+                assert(token.handler === null);
+              }
+            },
+            {
+              name: 'should allow use proxy',
+              test: function(){
+                merge.object_ = object2;
+                merge.setSource('a', Value.factory('someEvent', function(self){
+                  return self.object_;
+                }));
+                assert(merge.sources.a === object2);
+                assert({ foo: 'a', bar: 'b' }, merge.data);
+              }
+            }
+          ]
+        },
+        {
+          name: 'active',
+          test: [
+            {
+              name: 'should add subscription for sources on init',
+              test: function(){
+                var a = new DataObject();
+                var b = new DataObject();
+                var instance = new Merge({
+                  active: true,
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  },
+                  sources: {
+                    a: a,
+                    b: b
+                  }
+                });
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+
+                instance.setActive(false);
+
+                assert(a.subscriberCount === 0);
+                assert(b.subscriberCount === 0);
+
+                instance.setActive(true);
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+              }
+            },
+            {
+              name: 'should add subscription on source set',
+              test: function(){
+                var a = new DataObject();
+                var b = new DataObject();
+                var instance = new Merge({
+                  active: true,
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  }
+                });
+
+                assert(a.subscriberCount === 0);
+                assert(b.subscriberCount === 0);
+
+                instance.setSource('a', a);
+                instance.setSource('b', b);
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+              }
+            },
+            {
+              name: 'should remove subscription on remove',
+              test: function(){
+                var a = new DataObject();
+                var b = new DataObject();
+                var instance = new Merge({
+                  active: true,
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  },
+                  sources: {
+                    a: a,
+                    b: b
+                  }
+                });
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+
+                instance.setSource('a', null);
+                instance.setSource('b', null);
+
+                assert(a.subscriberCount === 0);
+                assert(b.subscriberCount === 0);
+              }
+            },
+            {
+              name: 'should remove subscription on self destroy',
+              test: function(){
+                var a = new DataObject();
+                var b = new DataObject();
+                var instance = new Merge({
+                  active: true,
+                  fields: {
+                    foo: 'a',
+                    bar: 'b'
+                  },
+                  sources: {
+                    a: a,
+                    b: b
+                  }
+                });
+
+                assert(a.subscriberCount === 1);
+                assert(b.subscriberCount === 1);
+
+                instance.destroy();
+
+                assert(a.subscriberCount === 0);
+                assert(b.subscriberCount === 0);
               }
             }
           ]

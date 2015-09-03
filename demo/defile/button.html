@@ -83,16 +83,13 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.ui.button');
-    
     // import names
-    var DOM = basis.dom;
-    var Button = basis.ui.button.Button;
-    var ButtonPanel = basis.ui.button.ButtonPanel;
+    var domUtils = basis.require('basis.dom');
+    var Button = basis.require('basis.ui.button').Button;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
 
     function createBlock(header){
-      return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
+      return domUtils.insert(domUtils.get('demo-container'), domUtils.createElement('.DemoBlock', domUtils.createElement('H2', header)));
     }
 
     function alertCaption(){
@@ -217,7 +214,7 @@
     });
 
     var button16Container = createBlock('Button with 50% Width');
-    basis.dom.insert(button16Container, basis.dom.createElement('[style="width: 50%; font-size: 10px; text-align: center; margin-bottom: 3px;"]', basis.dom.createElement('[style="border: solid #666; border-width: 2px 1px 0; color: black;"]', '50%')));
+    domUtils.insert(button16Container, domUtils.createElement('[style="width: 50%; font-size: 10px; text-align: center; margin-bottom: 3px;"]', domUtils.createElement('[style="border: solid #666; border-width: 2px 1px 0; color: black;"]', '50%')));
     new Button({
       template: '<b:include src="basis.ui.button.Button" class="fixedWidthButton"/>',
       caption: 'Button16',

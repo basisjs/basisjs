@@ -1,14 +1,19 @@
 module.exports = {
   name: 'basis.data.dataset.Merge',
+
+  sandbox: true,
   init: function(){
-    var helpers = basis.require('./spec/dataset/helpers.js');
+    var basis = window.basis.createSandbox();
+
+    var helpers = basis.require('./helpers/dataset.js');
     var range = helpers.range;
     var generate = helpers.generate;
     var cmpDS = helpers.cmpDS;
     var checkValues = helpers.checkValues;
-    var catchWarnings = helpers.catchWarnings;
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
 
     var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
+    var Value = basis.require('basis.data').Value;
     var Dataset = basis.require('basis.data').Dataset;
     var Merge = basis.require('basis.data.dataset').Merge;
 
@@ -26,6 +31,7 @@ module.exports = {
       return info && info[eventName] || 0;
     }
   },
+
   test: [
     {
       name: 'create',
@@ -95,7 +101,7 @@ module.exports = {
           name: 'with value as source',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value
@@ -112,7 +118,7 @@ module.exports = {
           name: 'with 2 same value as source',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value,
@@ -131,7 +137,7 @@ module.exports = {
           name: 'with 2 same value and 2 same dataset as sources',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value,
@@ -213,7 +219,7 @@ module.exports = {
           name: 'add value',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge();
 
             merge.addSource(value);
@@ -245,7 +251,7 @@ module.exports = {
           name: 'add value and dataset',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value
@@ -273,8 +279,8 @@ module.exports = {
           test: function(){
             var dataset1 = new Dataset({ items: generate(1, 5) });
             var dataset2 = new Dataset({ items: generate(6, 10) });
-            var value1 = new basis.data.Value({ value: dataset1 });
-            var value2 = new basis.data.Value({ value: dataset2 });
+            var value1 = new Value({ value: dataset1 });
+            var value2 = new Value({ value: dataset2 });
             var merge = new Merge();
 
             merge.addSource(value1);
@@ -317,7 +323,7 @@ module.exports = {
           name: 'destroy dataset that value points on',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value
@@ -390,7 +396,7 @@ module.exports = {
           name: 'destroy value',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value
@@ -466,7 +472,7 @@ module.exports = {
           name: 'try to remove resolved dataset',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value
@@ -489,7 +495,7 @@ module.exports = {
           name: 'remove value',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 10) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value,
@@ -575,8 +581,8 @@ module.exports = {
           test: function(){
             var dataset1 = new Dataset({ items: generate(1, 5) });
             var dataset2 = new Dataset({ items: generate(6, 10) });
-            var value1 = new basis.data.Value({ value: dataset1 });
-            var value2 = new basis.data.Value({ value: dataset2 });
+            var value1 = new Value({ value: dataset1 });
+            var value2 = new Value({ value: dataset2 });
             var merge = new Merge();
 
             merge.setSources([
@@ -595,7 +601,7 @@ module.exports = {
           name: 'mixed 2 values that resolves to one dataset',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 5) });
-            var value = new basis.data.Value({ value: dataset });
+            var value = new Value({ value: dataset });
             var merge = new Merge();
 
             merge.setSources([
@@ -614,8 +620,8 @@ module.exports = {
           name: 'set the same but via another value',
           test: function(){
             var dataset = new Dataset({ items: generate(1, 5) });
-            var value1 = new basis.data.Value({ value: dataset });
-            var value2 = new basis.data.Value({ value: dataset });
+            var value1 = new Value({ value: dataset });
+            var value2 = new Value({ value: dataset });
             var merge = new Merge({
               sources: [
                 value1

@@ -32,7 +32,7 @@
   var catList = ['javascript', 'basis', 'style', 'usability', 'css', 'html', 'framework', 'browser'];
   var date = new Date();
   for (var i = 0; i < COUNT; i++)
-  {  
+  {
     date.setSeconds(-3600 * 24 / (1 + randoms[randomsIdx++ % RND_COUNT] * (COUNT / 1234)));
     posts.push({
       id: COUNT - i,

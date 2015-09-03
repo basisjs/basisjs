@@ -1,8 +1,9 @@
 
   <b:style src="./Body.css"/>
+  <b:style src="./Body-Row.css" ns="br"/>
   <b:define name="collapsed" type="bool"/>
 
-  <tbody class="Basis-Table-Body Basis-Table-Body__{collapsed}">
+  <tbody class="Basis-Table-Body Basis-Table-Body__{collapsed} br:{collapsed}">
     <tr class="Basis-Table-GroupHeader" event-click="toggle">
       <td{content} colspan="100">
         <span class="expander"/>

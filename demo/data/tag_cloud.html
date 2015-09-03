@@ -68,9 +68,15 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.data');
-    basis.require('basis.data.index');
-    basis.require('basis.ui');
+    var wrapData = basis.require('basis.data').wrap;
+    var Value = basis.require('basis.data').Value;
+    var Dataset = basis.require('basis.data').Dataset;
+    var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
+    var Cloud = basis.require('basis.data.dataset').Cloud;
+    var count = basis.require('basis.data.index').count;
+    var percentOfRange = basis.require('basis.data.index').percentOfRange;
+    var IndexMap = basis.require('basis.data.index').IndexMap;
+    var UINode = basis.require('basis.ui').Node;
 
     //
     // Data generation
@@ -94,30 +100,28 @@
       return res;
     }
 
-    var data = new basis.data.Dataset({
-      items: basis.array.create(256, function(idx){
-        return new basis.data.Object({
-          data: {
-            id: idx,
-            tags: genTags(1, 6)
-          }
-        });
-      })
+    var data = new Dataset({
+      items: wrapData(basis.array.create(256, function(idx){
+        return {
+          id: idx,
+          tags: genTags(1, 6)
+        };
+      }), true)
     });
 
     //
     // Build tag cloud
     //
 
-    var cloud = new basis.data.dataset.Cloud({
+    var cloud = new Cloud({
       source: data,
-      rule: basis.getter('data.tags')
+      rule: 'data.tags'
     });
 
-    var indexMap = new basis.data.index.IndexMap({
+    var indexMap = new IndexMap({
       source: cloud,
       calcs: {
-        percentOfRange: basis.data.index.percentOfRange('itemsChanged', 'itemCount')
+        percentOfRange: percentOfRange('itemsChanged', 'itemCount')
       }
     });
 
@@ -125,7 +129,7 @@
     // Visualization
     //
 
-    var tagCloud = new basis.ui.Node({
+    var tagCloud = new UINode({
       container: document.getElementById('demo-container'),
       template: '<div id="TagCloud"/>',
 
@@ -133,10 +137,8 @@
       sorting: 'data.title',
 
       childClass: {
-        fontSize: 0,
-
         template:
-          '<span class="tag" style="font-size: {fontSize}">' +
+          '<span class="tag" style="font-size: {fontSize}%">' +
             '{title}' +
             '<sub>{count}</sub>' +
             '<wbr/>' +
@@ -144,32 +146,31 @@
 
         binding: {
           title: 'data:',
-          count: 'delegate.itemCount',
-          fontSize: 'fontSize'
-        },
-
-        listen: {
-          delegate: {
-            itemsChanged: function(dataset){
-              this.updateBind('count');
+          count: {
+            events: 'delegateChanged',
+            getter: function(node){
+              return count(node.delegate);
+            }
+          },
+          fontSize: {
+            events: 'rootChanged',
+            getter: function(node){
+              return Value.from(indexMap.getMember(node.root), 'update', function(obj){
+                return (50 + 200 * obj.data.percentOfRange).toFixed(2);
+              });
             }
           }
         },
 
+        // TODO: remove satellite; it uses to trigger index calculation
         satellite: {
           indexes: {
             events: 'rootChanged',
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },
-            instanceOf: basis.dom.wrapper.AbstractNode.subclass({
-              active: true,
-              emit_update: function(delta){
-                basis.dom.wrapper.AbstractNode.prototype.emit_update.call(this, delta);
-
-                this.owner.fontSize = basis.string.format('{0:.2}%', 50 + 200 * this.data.percentOfRange);
-                this.owner.updateBind('fontSize');
-              }
+            instance: AbstractNode.subclass({
+              active: true
             })
           }
         }

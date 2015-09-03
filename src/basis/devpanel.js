@@ -5,10 +5,13 @@
 /** @cut */   // do it only in dev mode
 /** @cut */   basis.createSandbox({
 /** @cut */     inspect: basis,
+/** @cut */     implicitExt: true, // TODO: remove, when devpanel migrate on exports
+/** @cut */     devInfoResolver: basis.config.devInfoResolver,
 /** @cut */     modules: {
 /** @cut */       devpanel: {
 /** @cut */         autoload: true,
-/** @cut */         filename: basis.path.dirname(basis.filename_) + '/devpanel/index.js'
+/** @cut */         path: basis.path.dirname(basis.filename_) + '/devpanel/',
+/** @cut */         filename: 'index.js'
 /** @cut */       }
 /** @cut */     }
 /** @cut */   });

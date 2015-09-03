@@ -1,3 +1,491 @@
+## 1.4.0 (June 17, 2015)
+
+## Core
+
+### Modules and path resolving
+
+- **NEW**: support for root namespace prefix in resource paths (a.e. `basis:ui/button.js`)
+- **CHANGE**: `basis.asset()` is now resolves paths as `basis.resource()`
+- **NEW**: local `asset()` function in modules scope (works like `basis.asset()` but resolves paths relative to module path)
+- IMPROVE: use `basis.resource.resolveURI()` for every function that accepts path to resource
+- CHANGE: improve `require()` interoperability with `resource()`
+  - `[basis.]require()` behave as `[basis.]resource().fetch()` in all cases, except one: namespaces processing (i.e. `foo.bar.baz`)
+  - `require()` doesn't accept `baseURI` as second argument anymore
+  - `basis.resource()` accepts `baseURI` as second argument (as `basis.require()` does)
+- FIX: `__dirname` has no trailing slash anymore
+- FIX: edge cases with namespace and filename resolving
+- FIX: `basis.resource.getFiles()` returns absolute paths and ignore virtual resources now
+- FIX: `basis.patch()` is notify when apply to resolved resource now
+
+### Timers
+
+- IMPROVE: `setImmediate()` polyfill 
+  - try use `postMessage()` first instead of `MessageChannel` as more predictable task order in multi-sandbox mode
+  - make `postMessage()` usage more safe across sandboxes by random generated message id
+- **NEW**: `basis.asap(fn)` function that invoke function as soon as possible (line `nextTick()`, but tries do it in current code frame)
+- **NEW**: `basis.asap.schedule()` function to create task queue (with `add()` and `remove()` methods) that processed asap
+- NEW: experimental `basis.codeFrame`
+
+### basis.Token
+
+- **NEW**: `basis.Token#as(fn)` method to get new token that stores transformed by `fn` value of originated token
+- NEW: `basis.Token#attach()` support destroy callback as third argument (i.e. `token.attach(fn, context, onDestroy)`)
+- CHANGE: `basis.Token#deferred()` uses `get()` method instead of value read from `value` property
+
+### Misc
+
+- **NEW**: new config option `implicitExt` to prevent implicit namespace extension, set to `warn` by default; convert all modules to use `exports`, but not implicit namespace extensions
+- NEW: `basis.fn.publicCallback(fn, permanent)` function that adds global reference to `fn`, that could be used once or permanent
+- NEW: `basis.fn.factory(value)` function that makes a factory from given `value` (function with `FACTORY` marker)
+- NEW: `basis.fn.isFactory(value)` function to check `value` is a factory
+- NEW: `FACTORY` and `PROXY` constants
+- NEW: `basis.teardown(callback, context)` function to registrate handlers that should be invoked on page or sandbox unload
+- CHANGE: invoke `basis.ready()` handlers async and in order of addiction
+- **CHANGE**: new implementation of `basis.getter()` with `getter.as()` method support (i.e. `basis.getter('foo').as(Number).as(Boolean)`)
+- **CHANGE**: `basis.getter()` with two arguments is deprecated now (old code should be changed this way `basis.getter(fn1, fn2)` → `basis.getter(f1).as(fn2)`)
+- CHANGE: `Class.nestedExtendProperty()` iterates only own keys and don't set property value to `null` if new value is not truthly
+- CHANGE: `Class.oneFunctionProperty()` iterates only own object keys
+- IMPROVE: add possibility to set config for `basis` core before load, `node.js` env fixes
+- FIX: make `Object.defineProperty()` usage aware of `IE8`
+
+
+## Data
+
+### basis.data
+
+- IMPROVE: all private property naming for reactive adapters are now ends with `RA_` (i.e. `activeRA_`, `datasetRA_`)
+- IMPROVE: `resolveDataset()` and `resolveObject()` re-use resolve adapter when possible (performance)
+- IMPROVE: new `factoryContext` argument for `resolve*` functions (fix factory issue with some complex classes)
+- NEW: `createResolveFunction(class)` function factory
+- **NEW**: `resolveValue()` function, similar to `resolveObject()` and `resolveDataset()` but resolves scalar value
+- NEW: support `resolveValue()` for `AbstractData#active` property
+- NEW: support `resolveValue()` for `AbstractData#state` property
+- **NEW**: support proxy mode for `AbstractData#active` (via setting `basis.PROXY` value to property) – object become active when has any active subscriber
+- **CHANGE**: set `basis.PROXY` as default value `active` property for all source-based dataset classes. Complete list of classes:
+  - `basis.data.DatasetWrapper`
+  - `basis.data.dataset.Merge`
+  - `basis.data.dataset.Subtract`
+  - `basis.data.dataset.SourceDataset`
+  - `basis.data.dataset.MapFilter`
+  - `basis.data.dataset.Filter`
+  - `basis.data.dataset.Split`
+  - `basis.data.dataset.Slice`
+  - `basis.data.dataset.Cloud`
+  - `basis.data.dataset.Extract`
+  - `basis.data.index.IndexMap`
+  - `basis.data.vector.Vector`
+  - `basis.entity.Collection` (deprecated but still)
+  - `basis.entity.Grouping` (deprecated but still)
+- NEW: `DatasetWrapper#getValues()` proxy method to `dataset.getValues()`
+- CHANGE: `DatasetWrapper#setDataset()` method is now set new value to `dataset` property before `itemsChanged` event emit
+- CHANGE: rename `Dataset#sync()` (deprecated) → `Dataset#setAndDestroyRemoved()`
+- IMPROVE: wrap any value for `KeyObjectMap#keyGetter` by `basis.getter()`
+
+#### State
+
+- NEW: `Value.state()` helper function that returns `Value` instance storing correct state value from source object (return `STATE.UNDEFINED` if no source or source is not `AbstractData` instance)
+- NEW: `Value.stateFactory()` helper function
+- FIX: don't set wrong value on init (output error in console and set `STATE.UNDEFINED`)
+- FIX: `AbstractData#setState()` doesn't throw an exception on wrong value now (output error in console and ignore value)
+
+#### Value
+
+- NEW: `ReadOnlyValue` class
+- NEW: `DeferredValue` class
+- NEW: `PipeValue` class
+- NEW: `Value#link()` and `attach` method of `bb-interface` are now support for `onDestroy` callback
+- **NEW**: `Value#pipe()` method
+- IMPROVE: `Value#compute()` method is now returns function marked as factory 
+- **NEW**: functions (factories) returned by `Value#compute()` or `Value.factory()` are have chaining methods now. All methods returns new function that also has those methods:
+  - `pipe()` (uses `Value#pipe()`)
+  - `as()` (uses `Value#as()`)
+  - `deferred()` (uses `Value#deferred()`)
+  - `compute()` (uses `Value#compute()`)
+- **CHANGE**: `Value`'s methods and `Value.from()` are now returns some sort of `Value` instance instead `basis.Token` (more suitable, less confusion):
+  - `Value#compute()` returns instance of `ReadOnlyValue` (instead of `basis.Token`)
+  - `Value#as()` returns instance of `ReadOnlyValue` (instead of `basis.Token`)
+  - `Value#deferred()` returns instance of `DeferredValue` (instead of `basis.DeferredToken`)
+  - `Value.from()` returns instance of `ReadOnlyValue` (instead of `Value`)
+- CHANGE: `Value#as()` and `Value#deferred()` methods are now work as `basis.Token` methods.
+  - `Value#as()` doesn't accept `deferred` flag anymore (old code should be changed this way `value.as(fn, true)` → `value.as(fn).deferred()`)
+  - `Value#deferred()` doesn't accept any arguments now (old code should be changed this `value.deferred(fn)` → `value.as(fn).deferred()`)
+  - old signatures don't work anymore (output warnings in console)
+- FIX: `Value.from()` instances from `bb-values` (a.e. `basis.Token` instance) destroying on `bb-value` destroy
+
+### basis.data.object
+
+- NEW: support `resolveObject()` for `Merge#sources`
+- NEW: support subscription for `Merge#sources`
+- IMPROVE: more effecient and correct processing of `data` on `Merge` instance create
+- FIX: reset properties on `source` change when new `source` has no some properties
+
+### basis.data.index
+
+- **NEW**: support for `bb-value` as index source (a.e. `basis.data.index.sum(new basis.Token(..), ..)`)
+- IMPROVE: rework `IndexMap`
+  - items are not require subscribers to be computed anymore (probably `calcSubscribedOnly` option will be added in future)
+  - make item's calculations immediately on item create (no more `update` event emit on create)
+  - reduce calculations on changes
+  - use `basis.asap.schedule()` for suspended calculations
+  - copy data from source object to map member by default, but ignore fields with names that defined in `IndexMap#calcs`
+  - new `IndexMap#copyDataFromSource` boolean property to disable copy data from source object to map member (`true` by default)
+  - stop use `keyMap` as internal item storage
+  - new `IndexMap#itemClass` property to specify class for map members (`basis.data.Object` by default, using instead of old `IndexMap#keyMap.itemClass`)
+  - remove `IndexMap#addCalc()` and `IndexMap#removeCalc` methods
+
+### basis.data.dataset
+
+- NEW: `Slice#left(offset)` and `Slice#right(offset)` methods
+- CHANGE: change operation order for `SourceDataset`
+  - on init (more safe init)
+    - store current `source` value to local variable and set `source` to `null`
+    - invoke super constructor `init` method 
+    - set `source` value
+  - on source change, new order:
+    - add and remove `listen` handler
+    - emit `sourceChanged` event
+    - emit `itemsChanged` event
+
+### basis.data.value
+
+- INPROVE: `ObjectSet#add()` warn about wrong value but doesn't throw an exception
+- IMPROVE: use `basis.asap.schedule()` to re-calculate all changed `ObjectSet` and `Expression` instances
+- IMPROVE: rework `Expression`
+  - inherit from `basis.data.ReadOnlyValue` instead of `basis.data.value.ObjectSet` (as result instances are readonly now)
+  - new `Expression#update()` method for immediately value recalc
+  - support for any `bb-values` as arguments
+  - automatically destroy instance when any argument is destroying
+  - less memory consumption
+
+### basis.entity
+
+- NEW: `EntityType.readList(value, [mapFn])`
+- NEW: `EntityType#read(value)`
+- NEW: `is(value, type)` helper function to check is `value` instance of some entity `type`
+- NEW: new signatures to create entity set type (i.e. `createSetType(name, wrapper, options)`, `createSetType(wrapper, options)` and `createSetType(config)`)
+- **NEW**: `EntitySet#localId` optional method to compare new items with set members; useful when members has no natural index; might be set on entity set type create (a.e. `createSetType(Type, { localId: 'id' })`)
+- **CHANGE**: wrap `defValue` by field wrapper
+- CHANGE: `Entity` instance invoke `syncAction()` only if has `id` value or type has no index
+- FIX: field wrappers shouldn't be invoked for calc fields on init
+- FIX: `reader` functions should ignore calc fields
+- FIX: prevent alias definition for calc fields
+- FIX: broken `EntitySet#sync()` method
+- REMOVE: remove ability to define default `state` for type instance via type config
+- DEPRECATE: `Collection` class
+- DEPRECATE: `Grouping` class
+
+
+## Template
+
+- CHANGE: theme stuff was moved to new module `basis.template.theme`
+- CHANGE: `buildDom()` function (a.k.a `buildHtml()`) was refactored and moved to new module `basis.template.buildDom`
+- CHANGE: `isolateCss()` function was rewrited (parsing fixes, at-rules support) and moved to separate module `basis.template.isolateCss`
+- IMPROVE: `isolateCss()` could return original offsets of prefexed css classes in original source (if third arguments is `true`)
+- **IMPROVE**: rework of `l10n` (markup tokens) in templates, now it's fully suported and well tested
+
+### Tokenizer
+
+- CHANGE: move `tokenize()` to new module `basis.template.tokenize`
+- IMPROVE: move all parsing stuff to tokenizer
+- IMPROVE: tokenizer storing token positions now
+- IMPROVE: tokenizer implements warning on duplicate attributes
+- FIX: wrong parsing of html token with digits at the ending (i.e `&sup2;`)
+
+### Declaration
+
+- CHANGE: move `makeDeclaration()` and `getDeclFromSource()` to new module `basis.template.declaration`
+- **NEW**: `from` attribute in `<b:define>` (i.e. `<b:define name="newName" from="binding"/>`)
+- NEW: `b:hidden` and `b:visible` attributes on elements (as `b:show` and `b:hide` but changes `visibility` instead of `display`)
+- NEW: `show`, `hide`, `visible` and `hidden` as `<b:include>` attributes and instructions (i.e. `<b:include show="..."/>` and `<b:include><b:show ref="..." expr="..."/></b:include>`)
+- NEW: `options` attribute on `<b:include>` and `<b:style>` (experimental feature)
+- NEW: provide `includes` in declaration – all `<b:include>` tokens as tree
+- NEW: provide `l10n` in declaration - all used `l10n` tokens identifiers
+- NEW: provide `styles` in declaration – all `<b:styles>` tokens
+- NEW: provide `removals` in declration – all tokens that was removed from subtrees
+- **IMPROVE**: a lot of new useful warnings and old warnings improvements on declaration building
+- IMPROVE: add source location info to all warnings
+- IMPROVE: re-use virtual resources for namespaced stylesheets (performance and memory consumption)
+- CHANGE: rework binding format in declaration, change declaration version to `3`
+- CHANGE: `<b:define>` doesn't apply for nested templates bindings anymore
+- **CHANGE**: stop inherit `isolate` from nested templates
+- CHANGE: don't isolate classes adding via `<b:include>`'s instructions with include isolate context (i.e. for case `<b:isolate prefix="foo-"/><b:include isolate="bar-" class="baz"/>` class `baz` will be isolated by `foo-` prefix only, but no by `foo-bar-` as before)
+- **CHANGE**: style namespacing
+  - namespaces are scoped now by template source it's declared in
+  - correct cross-template isolation
+  - non-resolved namespace class warning refers to original name
+  - remove non-resolved namespace classes from markup (as invalid class names)
+  - warning when style namespace is not used
+  - fix `<b:remove>` to able remove namespaced classes
+- CHANGE: ignore `l10n` binding when dictionary couldn't be resolved
+- IMPROVE: declaration always include `loc` and `range` information in dev-mode
+- FIX: broken bindings with `anim:` prefix when defines applyed
+- FIX: `<b:remove-attr>` instruction (never works before)
+- FIX: override duplicate values in `event-*` and `class` attributes on value append (remove old occurrence and add new one)
+- REMOVE: `defines` from declaration
+- REMOVE: `dictURI` from declaration
+
+
+### Runtime
+
+- NEW: `log-event` special action to log event in console (a.e. `<span event-click="log-event"/>` would log event when any click on span)
+- IMPROVE: special case for `tabindex` attribute
+- IMPROVE: don't extend `Node` prototype with `contains` polyfill
+- IMPROVE: prohibit node binding on `{element}`
+- IMPROVE: start use proto cloning on second template instace creation only (reduce number of `DOM` nodes when template uses only once)
+- IMPROVE: don't wrap `l10n` token content by `<span>`
+- FIX: issue with `l10n` tokens attribute expression (template function compilation bug)
+- FIX: safe markup token value check (no more exception on token value change in dictionary)
+- FIX: broken check for instance of `Node` in `Safari` and fallback for `IE`
+- FIX: exception when attribute value has `\r` or `\n`
+- FIX: exceptions when binding has name like one of `Object`'s build-in property
+- FIX: destroy compute tokens on template instance destroy
+
+
+## l10n
+
+- **NEW**: support for `{#}` placeholder in plural variants, it's replacing for value which was used to choose plural form
+- NEW: `plural-markup` token type - plural token, but each variant has `markup` type
+- NEW: `enum-markup` token type - enum token, but each variant has `markup` type
+- NEW: `isToken(value)` helper function to check `value` is `basis.l10n.Token` instance
+- NEW: `isMarkupToken(value)` helper function to check `value` is `basis.l10n.Token` instance with `markup` type
+- IMPROVE: better `Token` destroy clean up
+- IMPROVE: ignore token names in dictionary that contain dot (prevents possible resolve issues)
+- REMOVE: `enableMarkup` flag (`markup` enabled by default) 
+
+
+## UI
+
+### basis.dom.wrapper
+
+- **NEW**: `parentChanged` event
+- NEW: `SUBSCRIPTION.SATELLITE` subscription type (added to `AbstractNode#subscribeTo`)
+- NEW: `SUBSCRIPTION.CHILD` subscription type
+- NEW: support `resolveValue()` for `Node#disabled`
+- CHANGE: `Node#disable()` and `Node#enable()` methods aren't change `disabled` if it is under `bb-value`
+- FIX: `Node#setDisabled()` is always returns `boolean` now
+- FIX: mixed value type sorting issue
+- FIX: take in account `alive` flag in `Node#setGrouping()` method
+- FIX: group sorting issue
+- FIX: issue when `dataSource` is `null` inside `childNodesModified` event handler on all dataset items removal
+- FIX: child nodes with `destroyDataSourceMember: true` should not be destroyed on `dataSource` change
+
+#### Selection
+
+- NEW: support `resolveValue()` for `Node#selected`
+- CHANGE: `Node#select()` and `Node#unselect()` methods aren't change `selected` property if it is under `bb-value`
+- CHANGE: `unselect` nodes goes before `select` on selection delta processing
+- IMPROVE: no more `select` and `unselect` events on init and destroy
+- IMPROVE: `Selection#add()` and `Selection#set()` are now can accept single node but not only array (like `Dataset`'s methods do, i.e. `selection.add(node)`)
+- IMPROVE: `Node#setSelection()` now treat any non-`Selection` instance value as config for new `Selection` instance
+- IMPROVE: auto unlink `Selection` instance from nodes on instance destroy
+- REMOVE: drop `Node#selectable`
+- FIX: only instance of `Selection` could be set as `Node#selection`
+- FIX: filter non-`Node` instances when add to selection 
+
+#### Satellites
+
+- NEW: support `resolveValue()` for `existsIf`
+- NEW: support `resolveValue()` for `instance`
+- **IMPROVE**: `instance` property in satellite config is now universal property that could accept classes, bb-values, functions (which could return instance or class), factories etc.
+- **IMPROVE**: support any values for `config`, `existsIf`, `delegate`, `dataSource` in satellite config:
+  - if value is `function`, use as is
+  - if value is `string`, wrap it by `basis.getter()`
+  - otherwise convert value to function that returns specified value
+- DEPRECATE: `instanceOf` (use `instance` instead)
+- IMPROVE: warnings on unknown properties in satellite config
+
+### basis.ui
+
+- NEW: `active` binding – refers to `Node#active` state
+- NEW: `tabindex` binding – returns correct value for `tabindex` attribute depends on `Node#disabled` state
+- CHANGE: `Node#action.select` doesn't call `select` method if `selected` property is under `bb-value`
+- FIX: `templateChanged` event emit on init come back
+- FIX: `DocumentFragment` re-use issue (`basis.ui.window.Window` override element by comment node)
+
+
+## Components
+
+### basis.ui.field
+
+- NEW: `Field#revalidateRule` and `Field#revalidateEvents` properties
+- NEW: `ComplexFieldItem#action.selectByKey` action
+- IMPROVE: rework `ComplexField`, make it more passive to value changes
+- IMPROVE: export `VALIDITY` constants
+- CHANGE: remove field validity reset on `keyup`
+- CHANGE: change `titleText` binding for `title`
+  - replace `titleText` binding by `title` (`titleText` is deprecated now)
+  - `title` reference in templates replaced for `titleEl`
+  - `MatchProperty` looks for `title` reference first, than for `titleText`
+- FIX: `Combobox#setValue()` logic doesn't depend on `disabled` state anymore (check for `disabled` should be in actions)
+- FIX: `Combobox` popup template synchronization issue
+
+### basis.ui.window
+
+- NEW: support `resolveValue()` support for `Window#title`
+- NEW: `Window#visible` property (inversion of `Window#closed`) with `resolveValue()` support
+- NEW: `Window#setVisible()` method to set value for `Window#visible` property
+- DEPRECATE: `Window#closed` property (use `Window#visible` instead)
+- REMOVE: parameters support for `Window#open()` method
+- REMOVE: `emit_beforeShow` event
+- REMOVE: `emit_active` event (doesn't work for long time anyway)
+- CHANGE: `Window#open()` and `Window#close()` methods aren't change `visible` property if it is under `bb-value`
+- CHANGE: `Window#action.close` doesn't call `close` method if `visible` property is under `bb-value`
+- CHANGE: `Window#action.keydown` and title buttons call window's `close` *action* instead of direct `close` method call
+- IMPROVE: `Window` instances take in account `ddelement` reference to decide what element to drag
+
+### basis.ui.popup
+
+- **IMPROVE**: rework popup manager, popups could has `owner` or `parentNode` now
+- NEW: `'owner:ref'` value for `relElement` property (experimental)
+- FIX: wrong viewport resolving for scrolling pages
+
+### basis.ui.paginator
+
+- NEW: support `resolveValue()` for `Paginator#pageCount`
+- NEW: support `resolveValue()` for `Paginator#pageSpan`
+- NEW: support `resolveValue()` for `Paginator#activePage`
+- NEW: `spanStartPageChanged` event
+- IMPROVE: child nodes calls `selectPage()` method of parent node on `click` by default (not required define subclass for child to override click behaviour anymore)
+- CHANGE: rename `Paginator#spanStartPage_` → `Paginator#spanStartPage`
+- CHANGE: auto-spotlight page when active page is changing and page is not in viewport, on page count or span changes
+- IMPROVE: make consistent event emit place
+
+### basis.ui.pageslider
+
+- IMPROVE: make `PageSlider` more robust
+- FIX: wrong `PaseSlider` init offset
+- FIX: exception when no children on create
+- FIX: exception on `PageSlider#selectNext()` and `PageSlider#selectPrev()` when no children or single child
+
+### Other
+
+- NEW: support `resolveValue()` for `basis.ui.button.Button#caption`
+- IMPROVE: make `header` and `footer` cells in `basis.ui.table` configurable as common `basis.ui.Node` instance
+- FIX: fix warning in `basis.ui.calendar` about non-exists action by using `Calendar#selectNodeAction()` method instead of `Node#templateAction()` hack
+- FIX: `invertAxis: true` chart drawing in `basis.ui.chart`
+- FIX: broken selection issue in `basis.ui.chart`
+- FIX: `basis.ui.chart.ChartViewer` exception on recall (because of `ownerChanged` event on init)
+
+
+## Net
+
+- REMOVE: remove `influence` functionality from `basis.net`
+- FIX: double event dispatch by `basis.net.transportDispatcher`
+- IMPROVE: `basis.net.update.FileUploader#uploadFiles` can accept form as url now
+
+### basis.net.ajax
+
+- **CHANGE**: rename `postBody` → `body` (`postBody` is deprecated)
+- IMPROVE: auto-stringify `body` if `contentType` is `application/json`
+- IMPROVE: `body` in request data could be a function, that invokes with `bodyContext` and result uses as request payload
+- IMPROVE: method could be set in `url`, overrides `method` setting (i.e. `transport.request({ url: 'POST /some/url' })`)
+- IMPROVE: store `response` in error state data
+
+### basis.net.action
+
+- **NEW**: actions are now return `Promise`
+- IMPROVE: take in account that `body` could be a function and invoke it with proper context and arguments (as `prepare()` and `request()`)
+- FIX: `prepare` handler works as in transport config now (when returns `true` request is not perform)
+
+### basis.net.service
+
+- CHANGE: use `sessionKey` as session data if no data specified 
+- CHANGE: rename `Service#isSecure` (deprecated) → `Service#secure`
+- CHANGE: rename `Service#transportClass#needSignature` (deprecated) → `Service#transportClass#secure`
+- FIX: resume requests when transport destroy during freeze phase cause to exception
+
+## Other
+
+- NEW: `basis.promise` module – ES6 Promise polyfill
+- CHANGE: move cookie API to new module `basis.ua.cookie`
+- IMPROVE: `basis.utils.info.fn()` function for better getter to string transformation
+- FIX: escape `&` in source code before highlight in `basis.utils.highlight`
+- FIX: `IE11` detection in `basis.ua`
+- FIX: setting dasherized style properties in `basis.cssom`
+- FIX: timezone designator converting to minutes in `basis.date`
+- FIX: try to use `cancelAnimationFrame` first, instead of deprecated `cancelRequestAnimationFrame` in `basis.animation`
+
+### basis.router
+
+- **NEW**: `Route` class (inherits `basis.Token`) that describes route and it's state
+- NEW: `route(path)` function that returns `Route` instance by given path
+- CHANGE: `add(path, ...)` function is now returns `Route` instance (like `route(path)`)
+- CHANGE: router starts watch for location changes by default (on module init)
+- FIX: debug info output
+
+### basis.app
+
+- NEW: if argument of `create()` isn't a plain object convert it to `{ element: value }`
+- NEW: use `resolveValue()` to resolve value for `element` or `init()` result (nested values support)
+- IMPROVE: safe element insert to document (if exception nothing changes)
+
+### basis.dom.event
+
+- FIX: don't store global event handlers in `global`, generate unique property name (per sandbox) to hold event handlers on dom elements
+- FIX: fix `mousewheel` for Firefox 17+ and other modern browsers
+- FIX: fix warnings for deprecated properties of `progress` event
+- FIX: don't kill captured (by `captureEvent()`) events by default
+
+### basis.dom.resize
+
+- IMPROVE: stop using `overflow` and `underflow` events as proposed to be removed from browsers
+- FIX: make sensor non-focusable via tab key
+- FIX: check element `position` property value not on sensor create but init, as host element may be not in document
+
+### basis.layout
+
+- NEW: export `getOffset()` function
+- IMPROVE: make functions more robust and universal (works for `window` viewport now)
+- FIX: `getViewportRect()` wrong calculations
+
+### basis.dragdrop
+
+- IMPROVE: add support for touch events
+- FIX: work correctly for `position: fixed` elements
+
+## Devpanel
+
+- **NEW**: awesome template viewer
+  - opened by click in template inspect mode
+  - show live template dom fragment (excluding nesting template fragments)
+  - show used bindings and actual their values
+  - show final template markup and source template tree
+- IMPROVE: using dev-server's `openFile()` everywhere for quick navigation to file
+- IMPROVE: fix `l10n` token overlay regions order
+- FIX: prevent focus lose issue on inspection start
+
+## Common
+
+- clean up and refactoring demo, docs and tour
+- clean up tons of warnings in source code, styles and templates (thanks to new `basisjs-tools`)
+- clean up all code style warnings (reported by `jscs`)
+- add script to generate `basis.all` module
+- add simple index page
+- add `.editorconfig`
+
+## Testing
+
+- new 389 tests
+- clean up and restruct most of old tests
+- use sandbox mode for most test suites (performance)
+- use `Yatra` test runner via `npm` (as dev dependency)
+- integrate with `karma` and `TravisCI`
+- add `jscs` as dev dependancy and use it before unit-test run
+- add build status badge (`TravisCI`) in readme
+
+
+## 1.3.4 (November 18, 2014)
+
+- FIX: `Date` field type in `basis.entity` 
+- FIX: `basis.template.isolateCss` to work with complex selectors (i.e. `:not()`, `:matches()` etc) and nested stylesheets (i.e. `@media`, `@supports` etc)
+
+## 1.3.3 (October 12, 2014)
+
+- FIX: exception on config processing when `Array#reduce` is not supported by browser
+- FIX: exception in `basis.entity` on using `Object.defineProperty()` in IE8 (dev-mode only)
+- FIX: `basis.ui.calendar` infinite loop in some cases by mistake in local binary search function
+- FIX: RegExp for url validator in `basis.ui.field`
+
 ## 1.3.2 (August 5, 2014)
 
 - FIX: remove index handler from items on dataset destroy in `basis.data.index`

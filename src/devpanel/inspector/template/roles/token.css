@@ -1,0 +1,76 @@
+.token
+{
+  position: absolute;
+  z-index: 65000;
+  box-sizing: border-box;
+  overflow: hidden;
+  line-height: 12px;
+  font-size: 9px;
+  font-family: Tahoma, Verdana, sans-serif;
+  text-shadow: 0 0 1px rgba(0, 0, 0, .5);
+  color: #BBB;
+  opacity: .4;
+}
+.token:hover
+{
+  opacity: 1;
+  overflow: visible;
+  cursor: pointer;
+}
+.hasActions
+{
+  opacity: .85;
+  color: rgba(150, 150, 150, .4);
+  background-color: rgba(200, 200, 200, .25);
+}
+.track
+{
+  opacity: .85;
+  color: rgba(50, 150, 50, .4);
+  background-color: rgba(100, 200, 100, .25);
+}
+.problem
+{
+  opacity: .85;
+  color: rgba(200, 100, 100, .4);
+  background-color: rgba(255, 100, 100, .25);
+}
+
+.border
+{
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px dotted currentColor;
+}
+.border_track,
+.border_problem,
+.border_hasActions
+{
+  border: 1px solid currentColor;
+}
+
+.caption
+{
+  pointer-events: none;
+  display: inline-block;
+  white-space: nowrap;
+  padding: 1px 3px 1px 4px;
+  background-color: #BBB;
+  color: white;
+}
+.caption_hasActions
+{
+  background-color: rgba(100, 100, 100, .4);
+}
+.caption_track
+{
+  background-color: rgba(50, 150, 50, .6);
+}
+.caption_problem
+{
+  background: rgba(200, 100, 100, .5);
+}

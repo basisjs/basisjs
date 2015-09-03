@@ -4,13 +4,15 @@ require('basis.layout');
 require('basis.ui');
 require('basis.ui.popup');
 
+var fileAPI = require('../api/file.js');
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
 var transport = require('../api/transport.js');
+var templateInfo = resource('./template-info/index.js');
 
 var inspectDepth = 0;
 var inspectMode = new basis.data.Value({ value: false });
@@ -28,39 +30,67 @@ var overlay = basis.dom.createElement({
     background: 'rgba(110,163,217,0.7)'
   }
 });
+var boxElement = basis.dom.createElement({
+  css: {
+    visibility: 'hidden',
+    position: 'absolute'
+  }
+});
 
 function pickHandler(event){
   event.die();
 
   if (event.mouseRight)
   {
-    endInspect();
+    stopInspect();
     return;
   }
 
-  var template = pickupTarget.value ? inspectBasisTemplate.resolveTemplateById(pickupTarget.value) : null;
+  var templateId = pickupTarget.value;
+  var template = templateId ? inspectBasisTemplate.resolveTemplateById(templateId) : null;
 
   if (template)
   {
     var source = template.source;
 
-    if (source.url && template.source instanceof inspectBasisTemplate.L10nProxyToken == false)
-    {
-      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+    stopInspect();
 
-      if (basisjsTools && typeof basisjsTools.openFile == 'function' && (event.ctrlKey || event.metaKey))
-        basisjsTools.openFile(source.url);
+    if (source.url)
+    {
+      if (event.ctrlKey || event.metaKey)
+      {
+        fileAPI.openFile(source.url);
+      }
       else
-        transport.sendData('pickTemplate', {
-          filename: source.url
-        });
+      {
+        var object = inspectBasisTemplate.resolveObjectById(templateId);
+
+        if (event.altKey)
+        {
+          var info = inspectBasis.dev.getInfo(object);
+
+          if (info && info.loc)
+            fileAPI.openFile(info.loc);
+          else
+            console.info('Object create location doesn\'t resolved:', object, info);
+        }
+        else
+        {
+          templateInfo().set(object.element);
+          transport.sendData('pickTemplate', {
+            filename: source.url
+          });
+        }
+      }
     }
     else
+    {
+      templateInfo().set(inspectBasisTemplate.resolveObjectById(templateId).element);
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
       });
+    }
 
-    endInspect();
   }
 }
 
@@ -71,21 +101,35 @@ var pickupTarget = new basis.data.Value({
 
       if (tmpl)
       {
-        var rect = basis.layout.getBoundingRect(tmpl.element);
+        var rectNode = tmpl.element;
+        var rect;
+
+        if (rectNode.nodeType == 3)
+        {
+          rectNode = document.createRange();
+          rectNode.selectNodeContents(tmpl.element);
+        }
+
+        rect = basis.layout.getBoundingRect(rectNode);
+
         if (rect)
         {
-          basis.cssom.setStyle(overlay, {
+          var style = {
             left: rect.left + 'px',
             top: rect.top + 'px',
             width: rect.width + 'px',
             height: rect.height + 'px'
-          });
+          };
+          basis.cssom.setStyle(overlay, style);
+          basis.cssom.setStyle(boxElement, style);
           document.body.appendChild(overlay);
+          document.body.appendChild(boxElement);
         }
       }
       else
       {
         basis.dom.remove(overlay);
+        basis.dom.remove(boxElement);
         inspectDepth = 0;
       }
 
@@ -104,33 +148,80 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     template: resource('./template/template_hintPopup.tmpl'),
     autorotate: [
       'left top left bottom',
-      'left bottom left bottom',
+      'center center center center',
       'left top left top',
+      'left bottom left bottom',
       'right bottom right top',
       'right top right bottom',
       'right bottom right bottom',
       'right top right top'
     ],
     binding: {
+      openFileSupported: {
+        events: 'delegateChanged update',
+        getter: function(){
+          var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+          return basisjsTools && typeof basisjsTools.openFile == 'function';
+        }
+      },
+      instanceNamespace: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.constructor.className.replace(/\.[^\.]+$/, '');
+        }
+      },
       instanceName: {
         events: 'delegateChanged update',
         getter: function(node){
           var object = node.data.object;
           if (object)
+            return object.constructor.className.split('.').pop();
+        }
+      },
+      instanceId: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.basisObjectId;
+        }
+      },
+      satelliteName: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.ownerSatelliteName;
+        }
+      },
+      equalNames: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
           {
-            return object.constructor.className + '#' + object.basisObjectId;
+            var roleGetter = object.binding && object.binding.$role && object.binding.$role.getter;
+            return typeof roleGetter == 'function' ? roleGetter(object) == object.ownerSatelliteName : undefined;
           }
         }
       },
-      rootNodeSelector: {
+      role: {
         events: 'delegateChanged update',
         getter: function(node){
-          if (node.data.tmpl)
+          var object = node.data.object;
+          if (object)
           {
-            var el = node.data.tmpl.element;
-            var cls = (typeof el.className == 'string' ? el.className : el.className.baseVal);
-            return el.tagName + (el.id ? '#' + el.id : '') + (cls ? '.' + cls.split(' ').join('.') : '');
+            var roleGetter = object.binding && object.binding.$role && object.binding.$role.getter;
+            return typeof roleGetter == 'function' ? roleGetter(object) : undefined;
           }
+        }
+      },
+      instanceLocation: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          return inspectBasis.dev.getInfo(node.data.object, 'loc');
         }
       },
       source: {
@@ -144,13 +235,27 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           }
         }
       },
+      namespace: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          if (node.data.template)
+          {
+            var source = node.data.template.source;
+            return source instanceof inspectBasisTemplate.SourceWrapper
+              ? source.path.replace(/\.[^\.]+$/, '')
+              : '';
+          }
+        }
+      },
       name: {
         events: 'delegateChanged update',
         getter: function(node){
           if (node.data.template)
           {
             var source = node.data.template.source;
-            return source instanceof inspectBasisTemplate.SourceWrapper ? source.path : '';
+            return source instanceof inspectBasisTemplate.SourceWrapper
+              ? source.path.split('.').pop()
+              : '';
           }
         }
       }
@@ -158,7 +263,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     handler: {
       update: function(){
         if (this.data.tmpl)
-          this.show(this.data.tmpl.element);
+          this.show(boxElement);
         else
           this.hide();
       },
@@ -174,11 +279,16 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 function startInspect(){
   if (!inspectMode.value)
   {
+    if (templateInfo.isResolved())
+      templateInfo().set();
+
     basis.dom.event.addGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.addGlobalHandler('mousewheel', mouseWheelHandler);
+    basis.dom.event.addGlobalHandler('wheel', mouseWheelHandler);
+    basis.dom.event.addGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);
     inspectBasisEvent.captureEvent('mouseup', basis.dom.event.kill);
-    inspectBasisEvent.captureEvent('contextmenu', endInspect);
+    inspectBasisEvent.captureEvent('contextmenu', stopInspect);
     inspectBasisEvent.captureEvent('click', pickHandler);
 
     inspectMode.set(true);
@@ -186,11 +296,13 @@ function startInspect(){
   }
 }
 
-function endInspect(){
+function stopInspect(){
   if (inspectMode.value)
   {
     basis.dom.event.removeGlobalHandler('mousemove', mousemoveHandler);
     basis.dom.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
+    basis.dom.event.removeGlobalHandler('wheel', mouseWheelHandler);
+    basis.dom.event.removeGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.releaseEvent('mousedown');
     inspectBasisEvent.releaseEvent('mouseup');
     inspectBasisEvent.releaseEvent('contextmenu');
@@ -265,8 +377,9 @@ function mouseWheelHandler(event){
 //  exports
 //
 module.exports = {
+  name: 'Template',
   startInspect: startInspect,
-  endInspect: endInspect,
+  stopInspect: stopInspect,
   inspectMode: inspectMode,
   isActive: function(){
     return inspectMode.value;

@@ -1,0 +1,10 @@
+<b:style src="./attribute-value.css"/>
+<b:isolate/>
+<b:define name="type" type="enum" values="binding action l10n"/>
+<b:define name="matchBinding" type="bool"/>
+<b:define name="hasLocation" from="loc" type="bool"/>
+
+<span class="{type} {matchBinding} {hasLocation}" title="{l10n}"
+  event-click="openLoc" event-mouseenter="enter" event-mouseleave="leave">
+  {value}
+</span>

@@ -33,3 +33,7 @@
     font-style: normal;
     font-weight: normal; 
   }
+  .Basis-PaginatorNode A.disabled
+  {
+    color: #888;
+  }

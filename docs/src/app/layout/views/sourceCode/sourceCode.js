@@ -10,7 +10,7 @@ module.exports = new View({
     sourceCode: new SourceCode({
       autoDelegate: true,
       lang: 'js',
-      codeGetter: basis.getter('data.obj || ""', String)
+      codeGetter: basis.getter('data.obj || ""').as(String)
     })
   }
 });

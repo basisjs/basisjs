@@ -14,6 +14,7 @@ function sendFile(file){
     data.resources = data.declaration.resources;
     // delete deps as it can has resource and ResourceWrapper which can't be serialized
     data.declaration.deps = [];
+    data.declaration.includes = [];
   }
 
   sendData('updateFile', data);
@@ -123,6 +124,14 @@ module.exports = {
       var file = basisjsTools.getFile(filename);
       if (file)
         file.save(content);
+    }
+  },
+  openFile: function(filename){
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+
+    if (basisjsTools && typeof basisjsTools.openFile == 'function')
+    {
+      basisjsTools.openFile(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
     }
   }
 };

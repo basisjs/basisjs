@@ -4,12 +4,6 @@
     margin: 0;
     position: relative;
   }
-  .Basis-TreeNode-Content
-  {
-    margin: 0;
-    padding-left: 16px;
-    list-style: none;
-  }
   .Basis-TreeNode-Caption
   {
     background: url(res/page.gif) no-repeat 414px .1em;
@@ -24,10 +18,7 @@
     font-size: 85%;
     line-height: 1em;
 
-    cursor: pointer;/*
-      -moz-user-select: none;
-      -webkit-user-select: none;
-    user-select: none;*/
+    cursor: pointer;
   }
 
   .Basis-TreeNode-Caption__disabled

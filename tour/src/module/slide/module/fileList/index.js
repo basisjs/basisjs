@@ -1,14 +1,9 @@
-basis.require('basis.ui.tabs');
+var Value = require('basis.data').Value;
+var TabControl = require('basis.ui.tabs').TabControl;
 
-module.exports = new basis.ui.tabs.TabControl({
+module.exports = new TabControl({
   autoDelegate: true,
-  handler: {
-    update: function(sender, delta){
-      this.setDataSource(this.data.files);
-      // if ('files' in delta)
-      //   this.setChildNodes(this.data.files ? this.data.files.getItems() : []);
-    }
-  },
+  dataSource: Value.factory('update', 'data.files'),
 
   template: resource('./template/list.tmpl'),
 
@@ -18,17 +13,11 @@ module.exports = new basis.ui.tabs.TabControl({
     template: resource('./template/item.tmpl'),
     binding: {
       title: 'data:name',
-      modified: function(node){
-        return !!node.target.modified;
-      }
-    },
-
-    listen: {
-      target: {
-        rollbackUpdate: function(){
-          this.updateBind('modified');
-        }
-      }
+      modified: Value
+        .factory('targetChanged', 'target')
+        .pipe('rollbackUpdate', function(target){
+          return Boolean(target && target.modified);
+        })
     }
   }
 });

@@ -1,0 +1,26 @@
+.Century .node,
+.Year .node,
+.YearDecade .node
+{
+  width: 25%;
+  padding: 1.25em 0;
+}
+.Century .node
+{
+  padding: .75em 0;      
+}
+.YearQuarter .node
+{
+  width: 50%;
+  padding: 2.125em 0;
+}
+.Quarter .node
+{
+  width: 100%;
+  padding: 1.25em 0;
+}
+.Month .node
+{
+  width: 4ex;
+  padding: .25em 0;
+}

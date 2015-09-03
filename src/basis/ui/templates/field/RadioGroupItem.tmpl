@@ -1,8 +1,8 @@
+<b:style src="./RadioGroupItem.css"/>
+<b:define name="selected" type="bool"/>
+<b:define name="disabled" type="bool"/>
 
-  <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
-
-  <label class="Basis-RadioGroup-Item {selected} {disabled}" event-click="select"> 
-    <b:include src="basis.ui.field.native.radio"/>
-    <span{content}>{title}</span>
-  </label>
+<label class="Basis-RadioGroup-Item {selected} {disabled}" event-click="select"> 
+  <b:include src="basis.ui.field.native.radio"/>
+  <span{content} class="Basis-RadioGroup-Item__text">{title}</span>
+</label>

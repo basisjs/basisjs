@@ -1,9 +1,9 @@
-basis.require('basis.ui');
-basis.require('basis.template.html');
+var Node = require('basis.ui').Node;
+var HtmlTemplate = require('basis.template.html').Template;
 
 // create an UI node
-var node = new basis.ui.Node({
-  template: new basis.template.html.Template(
+var node = new Node({
+  template: new HtmlTemplate(
     'Hello world'
   )
 });

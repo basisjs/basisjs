@@ -1,10 +1,8 @@
 
   <b:style src="./Table.css"/>
-  <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
 
-  <table{groupsElement} class="Basis-Table {selected} {disabled}" cellspacing="0">
+  <table{groupsElement} class="Basis-Table" cellspacing="0">
     <!--{header}-->
-    <tbody{content|childNodesElement} class="Basis-Table-Body"/>
+    <tbody{content|childNodesElement}/>
     <!--{footer}-->
   </table>

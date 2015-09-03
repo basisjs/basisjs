@@ -25,8 +25,6 @@
   //
 
   var Class = basis.Class;
-  var oneFunctionProperty = Class.oneFunctionProperty;
-
   var extend = basis.object.extend;
   var values = basis.object.values;
   var objectSlice = basis.object.slice;
@@ -216,10 +214,11 @@
   */
   var Merge = Class(ReadOnlyDataset, {
     className: namespace + '.Merge',
+    propertyDescriptors: {
+      rule: 'ruleChanged'
+    },
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
@@ -243,7 +242,7 @@
    /**
     * @type {function(count:number, sourceCount:number):boolean}
     */
-    rule: function(count, sourceCount){
+    rule: function(count){
       return count > 0;
     },
 
@@ -403,14 +402,14 @@
 
    /**
     * Update dataset value by source.
-    * @param {basis.data.ReadOnlyDataset=} source
+    * @param {*} source
     * @private
     */
     updateDataset_: function(source){
       // this -> sourceInfo
       var merge = this.owner;
       var sourcesMap_ = merge.sourcesMap_;
-      var dataset = resolveDataset(this, merge.updateDataset_, source, 'adapter');
+      var dataset = resolveDataset(this, merge.updateDataset_, source, 'adapter', merge);
       var inserted;
       var deleted;
       var delta;
@@ -452,15 +451,15 @@
         if (setSourcesTransaction)
         {
           if (delta.inserted)
-            delta.inserted.forEach(function(source){
-              if (!arrayRemove(this.deleted, source))
-                arrayAdd(this.inserted, source);
+            delta.inserted.forEach(function(item){
+              if (!arrayRemove(this.deleted, item))
+                arrayAdd(this.inserted, item);
             }, setSourcesTransaction);
 
           if (delta.deleted)
-            delta.deleted.forEach(function(source){
-              if (!arrayRemove(this.inserted, source))
-                arrayAdd(this.deleted, source);
+            delta.deleted.forEach(function(item){
+              if (!arrayRemove(this.inserted, item))
+                arrayAdd(this.deleted, item);
             }, setSourcesTransaction);
         }
         else
@@ -615,7 +614,7 @@
  /**
   * ONLY ONE source INCLUDE item
   */
-  Merge.DIFFERENCE = function(count, sourceCount){
+  Merge.DIFFERENCE = function(count){
     return count == 1;
   };
 
@@ -662,7 +661,7 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      if (!this.minuendAdapter_)
+      if (!this.minuendRA_)
         this.setMinuend(null);
     }
   };
@@ -681,7 +680,7 @@
         this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
-      if (!this.subtrahendAdapter_)
+      if (!this.subtrahendRA_)
         this.setSubtrahend(null);
     }
   };
@@ -692,10 +691,12 @@
   */
   var Subtract = Class(ReadOnlyDataset, {
     className: namespace + '.Subtract',
+    propertyDescriptors: {
+      minuend: 'minuendChanged',
+      subtrahend: 'subtrahendChanged'
+    },
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.MINUEND + SUBSCRIPTION.SUBTRAHEND,
 
    /**
@@ -707,7 +708,7 @@
     * Minuend wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    minuendAdapter_: null,
+    minuendRA_: null,
 
    /**
     * Fires when minuend changed.
@@ -725,7 +726,7 @@
     * Subtrahend wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    subtrahendAdapter_: null,
+    subtrahendRA_: null,
 
    /**
     * Fires when subtrahend changed.
@@ -770,8 +771,8 @@
       var delta;
       var operandsChanged = false;
 
-      minuend = resolveDataset(this, this.setMinuend, minuend, 'minuendAdapter_');
-      subtrahend = resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendAdapter_');
+      minuend = resolveDataset(this, this.setMinuend, minuend, 'minuendRA_');
+      subtrahend = resolveDataset(this, this.setSubtrahend, subtrahend, 'subtrahendRA_');
 
       var oldMinuend = this.minuend;
       var oldSubtrahend = this.subtrahend;
@@ -852,7 +853,7 @@
     setMinuend: function(minuend){
       return this.setOperands(
         minuend,
-        this.subtrahendAdapter_ ? this.subtrahendAdapter_.source : this.subtrahend
+        this.subtrahendRA_ ? this.subtrahendRA_.source : this.subtrahend
       );
     },
 
@@ -862,7 +863,7 @@
     */
     setSubtrahend: function(subtrahend){
       return this.setOperands(
-        this.minuendAdapter_ ? this.minuendAdapter_.source : this.minuend,
+        this.minuendRA_ ? this.minuendRA_.source : this.minuend,
         subtrahend
       );
     },
@@ -887,10 +888,12 @@
   */
   var SourceDataset = Class(ReadOnlyDataset, {
     className: namespace + '.SourceDataset',
+    propertyDescriptors: {
+      source: 'sourceChanged',
+      subtrahend: 'subtrahendChanged'
+    },
 
-   /**
-    * @inheritDoc
-    */
+    active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
@@ -910,7 +913,7 @@
     * Source wrapper
     * @type {basis.data.ResolveAdapter}
     */
-    sourceAdapter_: null,
+    sourceRA_: null,
 
    /**
     * Map of source objects.
@@ -925,7 +928,7 @@
     listen: {
       source: {
         destroy: function(){
-          if (!this.sourceAdapter_)
+          if (!this.sourceRA_)
             this.setSource();
         }
       }
@@ -935,16 +938,15 @@
     * @constructor
     */
     init: function(){
+      var source = this.source;
+
+      this.source = null;
       this.sourceMap_ = {};
 
       ReadOnlyDataset.prototype.init.call(this);
 
-      var source = this.source;
       if (source)
-      {
-        this.source = null;
         this.setSource(source);
-      }
     },
 
    /**
@@ -952,44 +954,48 @@
     * @param {basis.data.ReadOnlyDataset} source
     */
     setSource: function(source){
-      source = resolveDataset(this, this.setSource, source, 'sourceAdapter_');
+      source = resolveDataset(this, this.setSource, source, 'sourceRA_');
 
       // sync with source
       if (this.source !== source)
       {
         var oldSource = this.source;
         var listenHandler = this.listen.source;
+        var itemsChangedHandler;
 
-        this.source = source;
-
+        // add/remove listen
         if (listenHandler)
         {
-          var itemsChangedHandler = listenHandler.itemsChanged;
-          setAccumulateState(true);
+          itemsChangedHandler = listenHandler.itemsChanged;
 
           if (oldSource)
-          {
             oldSource.removeHandler(listenHandler, this);
 
-            if (itemsChangedHandler)
-              itemsChangedHandler.call(this, oldSource, {
-                deleted: oldSource.getItems()
-              });
-          }
-
           if (source)
-          {
             source.addHandler(listenHandler, this);
-
-            if (itemsChangedHandler)
-              itemsChangedHandler.call(this, source, {
-                inserted: source.getItems()
-              });
-          }
-          setAccumulateState(false);
         }
 
+        // change the source
+        this.source = source;
         this.emit_sourceChanged(oldSource);
+
+        // sync items
+        if (itemsChangedHandler)
+        {
+          Dataset.setAccumulateState(true);
+
+          if (oldSource)
+            itemsChangedHandler.call(this, oldSource, {
+              deleted: oldSource.getItems()
+            });
+
+          if (source)
+            itemsChangedHandler.call(this, source, {
+              inserted: source.getItems()
+            });
+
+          Dataset.setAccumulateState(false);
+        }
       }
     },
 
@@ -1012,7 +1018,7 @@
   //
 
   var MAPFILTER_SOURCEOBJECT_UPDATE = function(sourceObject){
-    var newMember = this.map ? this.map(sourceObject) : object; // fetch new member ref
+    var newMember = this.map ? this.map(sourceObject) : sourceObject; // fetch new member ref
 
     if (newMember instanceof DataObject == false || this.filter(newMember))
       newMember = null;
@@ -1171,6 +1177,12 @@
   */
   var MapFilter = Class(SourceDataset, {
     className: namespace + '.MapFilter',
+    propertyDescriptors: {
+      rule: 'ruleChanged',
+      addMemberRef: false,
+      removeMemberRef: false,
+      ruleEvents: false
+    },
 
    /**
     * Map function for source object, to get member object.
@@ -1651,6 +1663,12 @@
   */
   var Slice = Class(SourceDataset, {
     className: namespace + '.Slice',
+    propertyDescriptors: {
+      limit: 'rangeChanged',
+      offset: 'rangeChanged',
+      orderDesc: 'ruleChanged',
+      rule: 'ruleChanged'
+    },
 
    /**
     * Ordering items function.
@@ -1862,7 +1880,6 @@
         for (var offset in this.right_)
         {
           var item = this.index_[this.orderDesc ? start - Number(offset) : end + Number(offset) - 1];
-          console.log([this.offset, this.limit], [start, end, offset], this.orderDesc ? start - Number(offset) : end + Number(offset) - 1, item);          
           this.right_[offset].set(item ? item.object : null);
         }
 
@@ -1874,6 +1891,7 @@
     },
 
    /**
+    * Returns a Value that refer to [start + offset] item in slice (ordered vector).
     * @param {number} offset
     * @return {basis.data.Value}
     */
@@ -1905,6 +1923,7 @@
     },
 
    /**
+    * Returns a Value that refer to [start + offset] item in slice (ordered vector).
     * @param {number} offset
     * @return {basis.data.Value}
     */
@@ -2426,6 +2445,9 @@
   */
   var Extract = SourceDataset.subclass({
     className: namespace + '.Extract',
+    propertyDescriptors: {
+      rule: 'ruleChanged'
+    },
 
    /**
     * Nothing return by default. Behave like proxy.
@@ -2480,7 +2502,6 @@
     applyRule: function(){
       var insertedMap = {};
       var deletedMap = {};
-      var array;
       var delta;
 
       for (var key in this.sourceMap_)

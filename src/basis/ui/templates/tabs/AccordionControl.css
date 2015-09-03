@@ -3,17 +3,15 @@
   {
     border: 1px solid #808080;
   }
-  .Basis-AccordionControl .Basis-TabSheet
-  {
-    margin: -1px;
-  }
   .Basis-AccordionControl .Basis-Tab
   {
+    margin: -1px -1px 0px;
     float: none;
   }
   .Basis-AccordionControl .Basis-Tab__selected
   {
     border-bottom-color: #BBB;
+    margin: -1px;
   }
   .Basis-AccordionControl .Basis-Page
   {
@@ -28,8 +26,4 @@
   .Basis-AccordionControl .Basis-TabControl-TabGroup:last-child
   {
     margin: 0 0 -1px;
-  }
-  .Basis-AccordionControl-Content
-  {
-    
   }

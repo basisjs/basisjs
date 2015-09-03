@@ -3,6 +3,7 @@
   * @namespace basis.app
   */
 
+  var resolveValue = require('basis.data').resolveValue;
   var document = global.document || {
     title: 'unknown'
   };
@@ -26,7 +27,20 @@
   }
 
   function replaceNode(oldChild, newChild){
-    oldChild.parentNode.replaceChild(newChild, oldChild);
+    try {
+      oldChild.parentNode.replaceChild(newChild, oldChild);
+      return newChild;
+    } catch(e) {
+      return oldChild;
+    }
+  }
+
+  function appendNode(container, newChild){
+    try {
+      return container.appendChild(newChild);
+    } catch(e) {
+      return container.appendChild(document.createComment(''));
+    }
   }
 
   var createApp = basis.fn.lazyInit(function(config){
@@ -52,18 +66,21 @@
         }
       },
       setElement: function(el){
+        el = resolveValue(app, app.setElement, el, 'elementRA_');
+
+        if (el && el.element)
+          el = el.element;
+
         var newAppEl = resolveNode(el);
 
-        if (appEl == newAppEl)
+        if (appEl === newAppEl)
           return;
 
         if (appEl)
         {
-          replaceNode(appEl, newAppEl);
+          appEl = replaceNode(appEl, newAppEl);
           return;
         }
-        else
-          appEl = newAppEl;
 
         if (!appInjectPoint)
           appInjectPoint = {
@@ -72,14 +89,15 @@
           };
 
         var node = resolveNode(appInjectPoint.node);
+        appEl = newAppEl;
 
         if (!node)
           return;
 
         if (appInjectPoint.type == 'append')
-          node.appendChild(appEl);
+          appEl = appendNode(node, appEl);
         else
-          replaceNode(node, appEl);
+          appEl = replaceNode(node, appEl);
       },
       ready: function(fn, context){
         if (inited)
@@ -91,6 +109,11 @@
           });
       }
     };
+
+    if (config.constructor !== Object)
+      config = {
+        element: config
+      };
 
     for (var key in config)
     {
@@ -128,17 +151,12 @@
       }
     }
 
-    basis.ready(function(){
+    basis.doc.body.ready(function(){
       var insertEl = appEl;
       var initResult = appInit.call(app);
 
       if (initResult)
-      {
-        if (initResult.element)
-          insertEl = initResult.element;
-        else
-          insertEl = initResult;
-      }
+        insertEl = initResult;
 
       appEl = null;
       app.setElement(insertEl);

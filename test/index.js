@@ -1,7 +1,7 @@
 // test suite
 module.exports = {
   name: 'basis.js test suite',
-  html: __dirname + 'env.html', // base env
+  html: __dirname + '/env.html', // base env
   test: [
     //require('./spec/common/classes.js'),
     require('./spec/core.js'),
@@ -20,15 +20,22 @@ module.exports = {
     require('./spec/dom.wrapper.js'),
     require('./spec/template.js'),
     require('./spec/ui.js'),
+    require('./spec/net.js'),
     require('./spec/dom.js'),
     require('./spec/cssom.js'),
     require('./spec/layout.js'),
-    require('./spec/utils.info.js')
+    require('./spec/utils.info.js'),
+    require('./spec/tracker.js')
   ]
 };
 
 // it's a hack to mark basis.js to be updatable
-var xhr = new XMLHttpRequest();
-xhr.open('HEAD', '../src/basis.js', true);
-xhr.setRequestHeader('X-Basis-Resource', 1);
-xhr.send('');
+// do it only when global __resources__ available, which using as a implicit
+// indicator that we run on basisjs-tools dev-server
+if (typeof __resources__ != 'undefined')
+{
+  var xhr = new XMLHttpRequest();
+  xhr.open('HEAD', '../src/basis.js', true);
+  xhr.setRequestHeader('X-Basis-Resource', 1);
+  xhr.send('');
+}

@@ -1,18 +1,18 @@
-require('basis.entity');
-require('basis.data.index');
-require('basis.data.dataset');
-require('basis.dom.event');
+var entity = require('basis.entity');
+var max = require('basis.data.index').max;
+var Value = require('basis.data').Value;
+var Split = require('basis.data.dataset').Split;
 
 
 //
 // Define todo type
 //
 
-var Todo = basis.entity.createType('Todo', {
+var Todo = entity.createType('Todo', {
   id: {
-    type: basis.entity.IntId,
+    type: entity.IntId,
     defValue: function(){
-      return basis.data.index.max(Todo.all, 'data.id').value + 1 || 1;
+      return max(Todo.all, 'data.id').value + 1 || 1;
     }
   },
   title: String,
@@ -24,7 +24,7 @@ var Todo = basis.entity.createType('Todo', {
 // Datasets
 //
 
-var splitByCompleted = new basis.data.dataset.Split({
+var splitByCompleted = new Split({
   source: Todo.all,
   rule: 'data.completed'
 });
@@ -40,7 +40,7 @@ Todo.active = splitByCompleted.getSubset(IS_NOT_COMPLETED, true);
 // Dataset used for list
 //
 
-Todo.selected = new basis.data.Value({ value: Todo.all });
+Todo.selected = new Value({ value: Todo.all });
 
 
 //
@@ -52,13 +52,11 @@ if (typeof localStorage != 'undefined')
   // read todo list from local storage
   var storedData = localStorage.getItem('todos-basisjs');
   if (storedData)
-    JSON.parse(storedData).forEach(Todo);
+    Todo.readList(JSON.parse(storedData));
 
   // add handler to save todos on page unload
-  basis.dom.event.onUnload(function(){
-    localStorage.setItem('todos-basisjs', JSON.stringify(Todo.all.getItems().map(function(item){
-      return item.data;
-    })));
+  basis.teardown(function(){
+    localStorage.setItem('todos-basisjs', JSON.stringify(Todo.all.getValues('data')));
   });
 }
 

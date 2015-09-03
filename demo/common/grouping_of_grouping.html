@@ -136,17 +136,18 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.ui');
+    var Node = basis.require('basis.ui').Node;
+    var GroupingNode = basis.require('basis.ui').GroupingNode;
 
 
     //
     // NUMBER GROUP DEMO
     //
 
-    var list = new basis.ui.Node({
+    var list = new Node({
       container: document.getElementById('NumberDemo-Container'),
 
-      groupingClass: basis.ui.GroupingNode.subclass({
+      groupingClass: GroupingNode.subclass({
         rule: function(node){
           return node.data.id >> 1;
         },
@@ -405,7 +406,7 @@
       'Venezuela': 'South America'
     };
 
-    var metroList = new basis.ui.Node({
+    var metroList = new Node({
       container: document.getElementById('MetroDemo-Container'),
       template:
         '<div id="MetroDemo"/>',

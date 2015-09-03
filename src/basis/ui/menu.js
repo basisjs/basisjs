@@ -51,7 +51,7 @@
       caption: 'caption'
     },
     action: {
-      click: function(event){
+      click: function(){
         if (!this.isDisabled())
         {
           if (this.click)
@@ -118,7 +118,7 @@
     groupingClass: MenuGroupingNode,
     grouping: getter('groupId'),
 
-    defaultHandler: function(node){
+    defaultHandler: function(){
       this.hide();
     }
   });

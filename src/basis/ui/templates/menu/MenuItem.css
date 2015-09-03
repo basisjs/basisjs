@@ -12,7 +12,6 @@
   text-decoration: none;
   color: black;
 
-    -moz-outline: none;
   outline: none;
 }
 
@@ -46,8 +45,6 @@
   padding: .22em 20px .26em 32px;
   
   border: 1px solid transparent;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 2px;
   border-radius: 2px;
 }
 
@@ -62,7 +59,5 @@
 {
   border-color: #AECFF7;
   border-color: rgba(136, 186, 247, .6);
-    -moz-box-shadow: 0 0 1px 1px rgba(255, 255, 255, .4) inset;
-    -webkit-box-shadow: 0 0 1px 1px rgba(255, 255, 255, .4) inset;
   box-shadow: 0 0 1px 1px rgba(255, 255, 255, .4) inset;
 }

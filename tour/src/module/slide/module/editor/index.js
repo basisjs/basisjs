@@ -1,4 +1,4 @@
-basis.require('basis.ui');
+var Node = require('basis.ui').Node;
 
 var editorEl;
 var lockEditor = false;
@@ -32,11 +32,7 @@ function getFileDocument(filename, content, type){
   return doc;
 }
 
-function sdf(){
-  return;
-}
-
-var editorView = new basis.ui.Node({
+var editorView = new Node({
   template: resource('./template/editor.tmpl'),
   binding: {
     content: 'data:',
@@ -52,7 +48,7 @@ var editorView = new basis.ui.Node({
     }
   },
   templateSync: function(){
-    basis.ui.Node.prototype.templateSync.call(this);
+    Node.prototype.templateSync.call(this);
     basis.setImmediate(function(){
       editor.refresh();
     });

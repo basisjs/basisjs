@@ -124,22 +124,22 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.data');
-    basis.require('basis.entity');
-    basis.require('basis.ui.menu');
-    basis.require('basis.ui.field');
-        
+    var Dataset = basis.require('basis.data').Dataset;
+    var Subtract = basis.require('basis.data.dataset').Subtract;
+    var entity = basis.require('basis.entity');
+    var Node = basis.require('basis.ui').Node;
+    var Menu = basis.require('basis.ui.menu').Menu;
+    var TextField = basis.require('basis.ui.field').Text;
+
     // define types
-    var UserGroup = new basis.entity.EntityType({
-      fields: {
-        groupId: basis.entity.IntId,
-        title: String
-      }
+    var UserGroup = entity.createType('UserGroup', {
+      groupId: entity.IntId,
+      title: String
     });
 
-    var User = new basis.entity.EntityType({
+    var User = entity.createType({
       fields: {
-        userId: basis.entity.IntId,
+        userId: entity.IntId,
         group: UserGroup,
         title: String
       },
@@ -149,7 +149,7 @@
     });
 
     // data
-    UserGroup.all.sync([
+    UserGroup.all.setAndDestroyRemoved([
       { groupId: 1, title: 'Red' },
       { groupId: 2, title: 'Green' },
       { groupId: 3, title: 'Blue' },
@@ -158,31 +158,31 @@
       { groupId: 6, title: 'Yellow' }
     ]);
 
-    User.all.sync([
-      { userId: 1,  groupId: 1, title: "Norman Yuen" },
-      { userId: 2,  groupId: 2, title: "Casto" },
-      { userId: 4,  groupId: 6, title: "Jose Crutcher" },
-      { userId: 5,  groupId: 3, title: "Ralph Peres" },
-      { userId: 6,  groupId: 5, title: "Christopher Klaus" },
-      { userId: 7,  groupId: 5, title: "Tanya Edison" },
-      { userId: 8,  groupId: 5, title: "Paul Seger" },
-      { userId: 9,  groupId: 4, title: "Norma Perri" },
-      { userId: 10, groupId: 4, title: "Juan Ewing" },
-      { userId: 11, groupId: 4, title: "Mark Luevano" },
-      { userId: 12, groupId: 4, title: "Curtis Knoll" },
-      { userId: 13, groupId: 1, title: "Terry Patterson" },
-      { userId: 14, groupId: 2, title: "Monique Castellanos" },
-      { userId: 15, groupId: 2, title: "Bryan Waldo" }
+    User.all.setAndDestroyRemoved([
+      { userId: 1,  groupId: 1, title: 'Norman Yuen' },
+      { userId: 2,  groupId: 2, title: 'Casto' },
+      { userId: 4,  groupId: 6, title: 'Jose Crutcher' },
+      { userId: 5,  groupId: 3, title: 'Ralph Peres' },
+      { userId: 6,  groupId: 5, title: 'Christopher Klaus' },
+      { userId: 7,  groupId: 5, title: 'Tanya Edison' },
+      { userId: 8,  groupId: 5, title: 'Paul Seger' },
+      { userId: 9,  groupId: 4, title: 'Norma Perri' },
+      { userId: 10, groupId: 4, title: 'Juan Ewing' },
+      { userId: 11, groupId: 4, title: 'Mark Luevano' },
+      { userId: 12, groupId: 4, title: 'Curtis Knoll' },
+      { userId: 13, groupId: 1, title: 'Terry Patterson' },
+      { userId: 14, groupId: 2, title: 'Monique Castellanos' },
+      { userId: 15, groupId: 2, title: 'Bryan Waldo' }
     ].map(User.reader));
 
 
-    var selectedGroup = new basis.data.Dataset();
-    var nonSelectedGroup = new basis.data.dataset.Subtract({
+    var selectedGroup = new Dataset();
+    var nonSelectedGroup = new Subtract({
       minuend: UserGroup.all,
       subtrahend: selectedGroup
     });
 
-    var groupPopup = new basis.ui.menu.Menu({
+    var groupPopup = new Menu({
       dataSource: nonSelectedGroup,
       sorting: basis.getter('data.title'),
       childClass: {
@@ -209,7 +209,7 @@
       }
     });
 
-    var userList = new basis.ui.Node({
+    var userList = new Node({
       container: document.getElementById('demo-container'),
       template: '<div id="UserList"/>',
 
@@ -223,7 +223,7 @@
               '<span{group} class="noGroup">no group selected</span>' +
               '<button event-click="chooseGroup">..</button>' +
             '</div>' +
-            '<span class="user__title">{title}</span>' + 
+            '<span class="user__title">{title}</span>' +
           '</div>',
         binding: {
           group: 'satellite:',
@@ -241,9 +241,9 @@
 
         satellite: {
           group: {
-            existsIf: basis.getter('data.group'),
-            delegate: basis.getter('data.group'),
-            instanceOf: basis.ui.Node.subclass({
+            existsIf: 'data.group',
+            delegate: 'data.group',
+            instance: Node.subclass({
               template: '{title}',
               binding: {
                 title: 'data:'
@@ -254,16 +254,16 @@
       }
     });
 
-    var groupList = new basis.ui.Node({
+    var groupList = new Node({
       container: document.getElementById('demo-container'),
       template: '<div id="GroupList"/>',
-      
+
       dataSource: UserGroup.all,
       sorting: 'data.groupId',
       childClass: {
         template:
           '<div class="group">' +
-            '<button event-click="destroy">delete</button>' +
+            '<button event-click="destroy" tabindex="-1">delete</button>' +
             '<!--{titleEditor}-->' +
           '</div>',
         action: {
@@ -276,22 +276,20 @@
         },
 
         satellite: {
-          titleEditor: {
-            instanceOf: basis.ui.field.Text.subclass({
-              autoDelegate: true,
-              maxLength: 32,
-              handler: {
-                update: function(){
-                  this.setValue(this.data.title);
-                },
-                change: function(){
-                  this.update({
-                    title: this.getValue()
-                  });
-                }
+          titleEditor: TextField.subclass({
+            autoDelegate: true,
+            maxLength: 32,
+            handler: {
+              update: function(){
+                this.setValue(this.data.title);
+              },
+              change: function(){
+                this.update({
+                  title: this.getValue()
+                });
               }
-            })
-          }
+            }
+          })
         }
       }
     });

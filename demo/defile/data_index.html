@@ -81,22 +81,18 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
-
-    basis.require('basis.data');
-    basis.require('basis.data.index');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.table');
-    basis.require('basis.ui.slider');
-
     // import names
-    var nsData = basis.data;
-    var nsDataIndex = basis.data.index;
+    var nsData = basis.require('basis.data');
+    var nsDataIndex = basis.require('basis.data.index');
 
     var getter = basis.getter;
-    var ButtonPanel = basis.ui.button.ButtonPanel;
-    var Table = basis.ui.table.Table;
-    var Slider = basis.ui.slider.Slider;
-    var UINode = basis.ui.Node;
+    var Dataset = nsData.Dataset;
+    var Expression = basis.require('basis.data.value').Expression;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var Table = basis.require('basis.ui.table').Table;
+    var Slider = basis.require('basis.ui.slider').Slider;
+    var UINode = basis.require('basis.ui').Node;
+    var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
 
     Math.seedrandom('basis');
 
@@ -104,7 +100,7 @@
       var seed = 0;
 
       return function(){
-        return basis.data.wrapObject({
+        return nsData.wrapObject({
           id: ++seed,
           title: 'item' + seed,
           value: parseInt(50 * Math.random(), 10),
@@ -113,7 +109,7 @@
       };
     })();
 
-    var dataset = new basis.data.Dataset({
+    var dataset = new Dataset({
       items: basis.array.create(15, createDataItem)
     });
 
@@ -145,7 +141,7 @@
           caption: 'remove',
           click: function(){
             if (table.firstChild)
-              dataset.remove(table.firstChild.root);
+              dataset.remove(table.firstChild.root.source);
           }
         },
         {
@@ -172,18 +168,27 @@
       ]
     });
 
+    function indexPercent(name){
+      return {
+        events: 'update',
+        getter: function(node){
+          return (100 * node.data[name]).toFixed(2);
+        }
+      };
+    }
+
     var count = 0;
     var table = new Table({
       container: document.getElementById('demo-container'),
-      dataSource: dataset,
+      dataSource: indexMap,
       structure: [
         {
           header: '#',
           body: '{id}',
           footer: {
-            value: new basis.data.value.Expression(
-              basis.data.index.min(dataset, 'data.value'),
-              basis.data.index.max(dataset, 'data.value'),
+            value: new Expression(
+              nsDataIndex.min(dataset, 'data.value'),
+              nsDataIndex.max(dataset, 'data.value'),
               function(min, max){
                 return 'min/max: ' + min + '/' + max;
               }
@@ -196,21 +201,21 @@
           body: '{title}'
         },
         {
-          sorting: basis.getter('data.value', Number),
+          sorting: 'data.value',
           header: 'Value',
           body: '<div class="barWrapper"><div class="bar" style="width: {percentOfValueMax}%"/><span class="label">{value}</span></div>',
           footer: {
             template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
-            value: basis.data.index.count(dataset)
+            value: nsDataIndex.count(dataset)
           }
         },
         {
-          sorting: basis.getter('data.total', Number),
+          sorting: 'data.total',
           header: 'Total',
           body: '<div class="barWrapper"><div class="bar" style="width: {percentOfTotalRange}%"/><span class="label">{total}</span></div>',
           footer: {
             template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
-            value: basis.data.index.sum(dataset, 'data.total')
+            value: nsDataIndex.sum(dataset, 'data.total')
           }
         },
         {
@@ -220,7 +225,7 @@
           },
           footer: {
             template: '<b:include src="basis.ui.table.FooterCell" class="right"/>',
-            value: basis.data.index.avg(indexMap, 'data.percentOfTotalSum').as(function(avg){
+            value: nsDataIndex.avg(indexMap, 'data.percentOfTotalSum').as(function(avg){
               return (avg * 100).toFixed(2) + '%';
             })
           }
@@ -228,39 +233,14 @@
       ],
 
       childClass: {
-        percentOfTotalSum: 0,
-        percentOfTotalRange: 0,
-        percentOfValueMax: 0,
-
         binding: {
           id: 'data:',
           title: 'data:',
           value: 'data:',
           total: 'data:',
-          percentOfTotalSum: 'percentOfTotalSum',
-          percentOfTotalRange: 'percentOfTotalRange',
-          percentOfValueMax: 'percentOfValueMax'
-        },
-        satellite: {
-          indexes: {
-            events: 'rootChanged',
-            delegate: function(owner){
-              return indexMap.getMember(owner.root);
-            },
-            instanceOf: basis.dom.wrapper.AbstractNode.subclass({
-              active: true,
-              emit_update: function(delta){
-                nsData.Object.prototype.emit_update.call(this, delta);
-
-                this.owner.percentOfTotalSum = (100 * this.data.percentOfTotalSum).toFixed(2);
-                this.owner.updateBind('percentOfTotalSum');
-                this.owner.percentOfTotalRange = (100 * this.data.percentOfTotalRange).toFixed(2);
-                this.owner.updateBind('percentOfTotalRange');
-                this.owner.percentOfValueMax = (100 * this.data.percentOfValueMax).toFixed(2);
-                this.owner.updateBind('percentOfValueMax');
-              }
-            })
-          }
+          percentOfTotalSum: indexPercent('percentOfTotalSum'),
+          percentOfTotalRange: indexPercent('percentOfTotalRange'),
+          percentOfValueMax: indexPercent('percentOfValueMax')
         }
       },
       selection: {

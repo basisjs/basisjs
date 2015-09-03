@@ -1,3 +1,13 @@
+.Basis-Field.focused,
+.Basis-Field.disabled,
+.Basis-Field__valid,
+.Basis-Field__invalid,
+.Basis-Field__indeterminate,
+.Basis-Field-Title
+{
+  /* to avoid warnings */
+}
+
 .Basis-Field-Container
 {
   _position: relative;
@@ -8,60 +18,4 @@
 .Basis-Field LABEL
 {
   display: block;
-}
-
-.Basis-Field.focused,
-.Basis-Field.indeterminate,
-.Basis-Field.valid,
-.Basis-Field.invalid,
-.Basis-Field__indeterminate,
-.Basis-Field__valid,
-.Basis-Field-Title,
-.Basis-Field-Description,
-.Basis-Field-Label
-{
-  /* to avoid warnings */
-}
-
-.Basis-Field TEXTAREA,
-.Basis-Field .native-type-text,
-.Basis-Field .native-type-password
-{
-  border: 1px solid #808080;
-  background-color: white;
-  padding: 2px;
-}
-.Basis-Field__invalid TEXTAREA,
-.Basis-Field__invalid .native-type-text,
-.Basis-Field__invalid .native-type-password
-{
-  border-color: #DD0000;
-}
-
-/* Checkbox, Radio */
-
-.native-type-checkbox,
-.native-type-radio
-{
-  margin: 0 0.5ex 0 0;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.Basis-CheckGroup LABEL SPAN,
-.Basis-RadioGroup LABEL SPAN,
-.Basis-Field-Checkbox LABEL SPAN
-{
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.Basis-CheckGroup-Item,
-.Basis-RadioGroup-Item,
-.Basis-Select,
-.Basis-Select-Item,
-.Basis-MatchInput,
-.native-type-file
-{
-
 }

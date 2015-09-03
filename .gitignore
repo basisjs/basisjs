@@ -19,3 +19,5 @@ test/lib/
 
 # dev
 .idea
+bower_components
+node_modules

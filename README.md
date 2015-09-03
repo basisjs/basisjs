@@ -1,3 +1,7 @@
+[![npm](https://img.shields.io/npm/v/basisjs.svg)](https://www.npmjs.com/package/basisjs) [![bower](https://img.shields.io/bower/v/basisjs.svg)](https://github.com/basisjs/basisjs) [![Build Status](https://travis-ci.org/basisjs/basisjs.svg?branch=master)](https://travis-ci.org/basisjs/basisjs)
+
+# basis.js
+
 [Версия на русском](README.ru.md) (более полная и подробная)
 
 ## What is it?

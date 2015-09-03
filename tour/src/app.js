@@ -1,32 +1,36 @@
-basis.require('basis.l10n');
-basis.require('basis.app');
-basis.require('basis.ui');
-basis.require('basis.router');
-basis.require('app.type');
+var l10n = require('basis.l10n');
+var router = require('basis.router');
+var Node = require('basis.ui').Node;
+var types = require('app.type');
 
-
-basis.l10n.setCultureList('en-US/ru-RU ru-RU');
-basis.l10n.setCulture('ru-RU'); // temporary here
-basis.require('basis.l10n').enableMarkup = true; // temporary here
+// temporary here
+l10n.setCultureList('en-US/ru-RU ru-RU');
+l10n.setCulture('ru-RU');
 
 var view;
-module.exports = basis.app.create({
+module.exports = require('basis.app').create({
   init: function(){
-    view = new basis.ui.Node({
+    view = new Node({
       template: resource('./app/template/layout.tmpl'),
 
-      selection: true,
-      childClass: {
-        template: resource('./app/template/page.tmpl'),
-        emit_select: function(){
-          basis.ui.Node.prototype.emit_select.call(this);
+      delegate: router.route('*slide').param(0).as(function(slide){
+        return slide && app.type.Slide.getSlot(slide);
+      }),
 
-          if (this.lazyChildNodes)
-          {
-            this.setChildNodes(this.lazyChildNodes());
-            this.lazyChildNodes = null;
+      selection: {
+        handler: {
+          itemsChanged: function(){
+            var selected = this.pick();
+            if (selected && selected.lazyChildNodes)
+            {
+              selected.setChildNodes(selected.lazyChildNodes());
+              selected.lazyChildNodes = null;
+            }
           }
         }
+      },
+      childClass: {
+        template: resource('./app/template/page.tmpl')
       },
 
       handler: {
@@ -49,10 +53,7 @@ module.exports = basis.app.create({
       ]
     });
 
-    basis.router.add('*slide', function(slide){
-      view.setDelegate(slide ? app.type.Slide.getSlot(slide) : null);
-    });
-    basis.router.start();
+    router.start();
 
     return view;
   }

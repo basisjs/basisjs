@@ -16,6 +16,11 @@
     background-repeat: repeat-x;
   }
 
+  .Basis-Table-Row.disabled TD
+  {
+    color: #888;
+  }
+
   .Basis-Table-Row:hover TD
   {              
     background-color: #E8F5FD !important;
