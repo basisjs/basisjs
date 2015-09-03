@@ -355,7 +355,7 @@
     hideOnKey: false,
     hideOnScroll: true,
     ignoreClickFor: null,
-    trackRelElement: true,
+    trackRelElement: false,
     trackRelElementTimer_: null,
 
     init: function(){
