@@ -337,8 +337,8 @@
       if (this.localId)
         return this.set(data);
 
-      var isAll = this.wrapper.all === this;
       var destroyItems = basis.object.slice(this.items_);
+      var itemsChangedFired = false;
       var listenHandler = this.listen.item;
       var inserted = [];
       var deleted = [];
@@ -357,14 +357,21 @@
             destroyItems[entity.basisObjectId] = false;
           }
         }
+        var checkHandler = {
+          itemsChanged: function(){
+            itemsChangedFired = true;
+          }
+        };
+        this.addHandler(checkHandler);
         Dataset.setAccumulateState(false);
+        this.removeHandler(checkHandler);
       }
 
       for (var key in destroyItems)
         if (destroyItems[key])
           deleted.push(destroyItems[key]);
 
-      if (!isAll && (delta = getDelta(inserted, deleted)))
+      if (!itemsChangedFired && (delta = getDelta(inserted, deleted)))
       {
         if (listenHandler)
         {
