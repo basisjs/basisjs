@@ -781,76 +781,92 @@
   var UNDEFINED_VALUE = new ReadOnlyValue({
     value: undefined
   });
-  Value.query = function(target, path){
-    function getPathFragment(target, path, index){
-      var pathFragment = path[index];
-      var isStatic = false;
-      var descriptor;
-      var events;
+  var queryAsFunctionCache = {};
 
-      if (/^<static>/.test(pathFragment))
+  function getQueryPathFragment(target, path, index){
+    var pathFragment = path[index];
+    var isStatic = false;
+    var descriptor;
+    var events;
+
+    if (/^<static>/.test(pathFragment))
+    {
+      isStatic = true;
+      pathFragment = pathFragment.substr(8);
+    }
+
+    var descriptor = target.propertyDescriptors[pathFragment];
+    var events = descriptor ? descriptor.events : null;
+
+    if (descriptor && descriptor.isPrivate)
+    {
+      isStatic = true;
+      events = null;
+
+      /** @cut */ var warnMessage = 'Property can\'t be accessed via query: ';
+      /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+      /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
+      /** @cut */   basis.string.repeat('^', pathFragment.length)
+      /** @cut */ );
+    }
+
+    if (descriptor && descriptor.isStatic)
+      isStatic = true;
+
+    if (events)
+    {
+      if (isStatic)
       {
-        isStatic = true;
-        pathFragment = pathFragment.substr(8);
-      }
-
-      var descriptor = target.propertyDescriptors[pathFragment];
-      var events = descriptor ? descriptor.events : null;
-
-      if (descriptor && descriptor.isPrivate)
-      {
-        isStatic = true;
         events = null;
-
-        /** @cut */ var warnMessage = 'Property can\'t be accessed via query: ';
+        /** @cut */ var warnMessage = '<static> was applied for property that has events: ';
         /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
         /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
-        /** @cut */   basis.string.repeat('^', pathFragment.length)
+        /** @cut */   basis.string.repeat('^', '<static>'.length) + '\n' +
+        /** @cut */   'Propably is\'t a bug and <static> should be removed from path'
         /** @cut */ );
-      }
-
-      if (descriptor && descriptor.isStatic)
-        isStatic = true;
-
-      if (events)
-      {
-        if (isStatic)
-        {
-          events = null;
-          /** @cut */ var warnMessage = '<static> was applied for property that has events: ';
-          /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
-          /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
-          /** @cut */   basis.string.repeat('^', '<static>'.length) + '\n' +
-          /** @cut */   'Propably is\'t a bug and <static> should be removed from path'
-          /** @cut */ );
-        }
-        else
-        {
-          if (descriptor && descriptor.nested && index < path.length - 1)
-            pathFragment += '.' + path[++index];
-        }
       }
       else
       {
-        if (!isStatic)
-        {
-          /** @cut */ var warnMessage = 'No events found for property: ';
-          /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
-          /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
-          /** @cut */   basis.string.repeat('^', pathFragment.length) + '\n' +
-          /** @cut */   'If a property never changes use `<static>` before property name, i.e. ' + path.slice(0, index).join('.') + (index ? '.' : '') + '<static>' + path.slice(index).join('.')
-          /** @cut */ );
-          return;
-        }
+        if (descriptor && descriptor.nested && index < path.length - 1)
+          pathFragment += '.' + path[++index];
       }
-
-      return {
-        path: pathFragment,
-        rest: path.slice(index + 1).join('.'),
-        events: events || null
-      };
+    }
+    else
+    {
+      if (!isStatic)
+      {
+        /** @cut */ var warnMessage = 'No events found for property: ';
+        /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+        /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
+        /** @cut */   basis.string.repeat('^', pathFragment.length) + '\n' +
+        /** @cut */   'If a property never changes use `<static>` before property name, i.e. ' + path.slice(0, index).join('.') + (index ? '.' : '') + '<static>' + path.slice(index).join('.')
+        /** @cut */ );
+        return;
+      }
     }
 
+    return {
+      path: pathFragment,
+      rest: path.slice(index + 1).join('.'),
+      events: events || null
+    };
+  }
+
+  function getQueryPathFunction(path){
+    var result = queryAsFunctionCache[path];
+
+    if (!result)
+      // use basis.getter here because `as()` uses cache using
+      // function source, but all those closures will have the same source
+      result = queryAsFunctionCache[path] = basis.getter(function(target){
+        if (target instanceof Emitter)
+          return Value.query(target, path);
+      });
+
+    return result;
+  }
+
+  Value.query = function(target, path){
     if (arguments.length == 1)
     {
       path = target;
@@ -865,7 +881,7 @@
     if (typeof path != 'string')
       throw new Error('Path should be a string');
 
-    var pathFragment = getPathFragment(target, path.split('.'), 0);
+    var pathFragment = getQueryPathFragment(target, path.split('.'), 0);
     var result;
 
     if (!pathFragment)
@@ -875,10 +891,8 @@
 
     if (pathFragment.rest)
       result = result
-        .as(function(target){
-          if (target instanceof Emitter)
-            return Value.query(target, pathFragment.rest);
-        })
+        // use cached function as we need return the same value for equal paths
+        .as(getQueryPathFunction(pathFragment.rest))
         .pipe('change', 'value');
 
     return result;

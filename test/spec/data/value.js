@@ -1175,6 +1175,23 @@ module.exports = {
           }
         },
         {
+          name: 'should not produce the same value for one target but defferent paths',
+          test: function(){
+            var target = new DataObject({
+              data: {
+                foo: 1,
+                bar: 2
+              }
+            });
+            var foo = Value.query(target, 'root.data.foo');
+            var bar = Value.query(target, 'root.data.bar');
+
+            assert(foo !== bar);
+            assert(foo.value === 1);
+            assert(bar.value === 2);
+          }
+        },
+        {
           name: 'using <static> in path',
           test: [
             {
