@@ -1,3 +1,9 @@
+## 1.4.1 (September 4, 2015)
+
+- FIX: `basis.template` don't pass `onAction` handler to nested templates (primary for l10n markup tokens)
+- FIX: double event emit on `basis.entity.Grouping#setAndDestroyRemoved()`
+- FIX: `basis.net.action` don't use `stateOnAbort` value when set new state on abort
+
 ## 1.4.0 (June 17, 2015)
 
 ## Core
@@ -223,7 +229,6 @@
 - FIX: override duplicate values in `event-*` and `class` attributes on value append (remove old occurrence and add new one)
 - REMOVE: `defines` from declaration
 - REMOVE: `dictURI` from declaration
-
 
 ### Runtime
 
