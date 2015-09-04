@@ -662,6 +662,38 @@ module.exports = {
       }
     },
     {
+      name: 'should not emit childNodesModified when new datasset has the same items as previous',
+      test: function(){
+        var foo = new Dataset({
+          items: basis.data.wrap(basis.array.create(3), true)
+        });
+        var bar = new Dataset({
+          items: foo.getItems()
+        });
+
+        var node = new Node({
+          dataSource: foo,
+          childFactory: nodeFactory
+        });
+
+        var eventCount = 0;
+        node.addHandler({
+          childNodesModified: function(){
+            eventCount++;
+          }
+        });
+
+        assert(node.childNodes.length === 3);
+        assert(node.dataSource === foo);
+        assert(foo !== bar);
+
+        node.setDataSource(bar);
+        assert(node.childNodes.length === 3);
+        assert(node.dataSource === bar);
+        assert(eventCount === 0);
+      }
+    },
+    {
       name: 'destroyDataSourceMember',
       test: [
         {

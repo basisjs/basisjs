@@ -2279,27 +2279,62 @@
       if (this.dataSource !== dataSource)
       {
         var oldDataSource = this.dataSource;
+        var dataSourceMap = this.dataSourceMap_ || {};
         var listenHandler = this.listen.dataSource;
+        var inserted;
+        var deleted;
 
         // detach
         if (oldDataSource)
         {
           this.dataSourceMap_ = null;
-          this.dataSource = null;
 
           if (listenHandler)
             oldDataSource.removeHandler(listenHandler, this);
+
+          if (dataSource)
+          {
+            inserted = dataSource.getItems().filter(function(item){
+              var id = item.basisObjectId;
+
+              if (id in dataSourceMap == false)
+                return true;
+
+              delete dataSourceMap[id];
+            });
+
+            deleted = basis.object.values(dataSourceMap);
+          }
+          else
+          {
+            deleted = oldDataSource.getItems();
+          }
+        }
+        else
+        {
+          if (dataSource)
+            inserted = dataSource.getItems();
         }
 
         // remove old children
-        if (this.firstChild)
+        if (!oldDataSource || !dataSource)
         {
-          // return posibility to change delegate
-          if (oldDataSource)
-            for (var i = 0, child; child = this.childNodes[i]; i++)
-              unlockDataSourceItemNode(child);
+          if (this.firstChild)
+          {
+            // return posibility to change delegate
+            if (oldDataSource)
+              for (var i = 0, child; child = this.childNodes[i]; i++)
+                unlockDataSourceItemNode(child);
 
-          this.clear(!this.destroyDataSourceMember);
+            this.clear(oldDataSource && !this.destroyDataSourceMember);
+          }
+        }
+        else
+        {
+          if (oldDataSource && deleted.length && listenHandler)
+            listenHandler.itemsChanged.call(this, oldDataSource, {
+              deleted: deleted
+            });
         }
 
         this.dataSource = dataSource;
@@ -2309,19 +2344,17 @@
         // attach
         if (dataSource)
         {
-          this.dataSourceMap_ = {};
+          this.dataSourceMap_ = dataSourceMap;
           this.setChildNodesState(dataSource.state, dataSource.state.data);
 
           if (listenHandler)
           {
             dataSource.addHandler(listenHandler, this);
 
-            if (dataSource.itemCount && listenHandler.itemsChanged)
-            {
+            if (inserted.length)
               listenHandler.itemsChanged.call(this, dataSource, {
-                inserted: dataSource.getItems()
+                inserted: inserted
               });
-            }
           }
         }
         else
