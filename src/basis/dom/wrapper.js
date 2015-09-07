@@ -2295,15 +2295,12 @@
           if (dataSource)
           {
             inserted = dataSource.getItems().filter(function(item){
-              var id = item.basisObjectId;
-
-              if (id in dataSourceMap == false)
-                return true;
-
-              delete dataSourceMap[id];
+              return !oldDataSource.has(item);
             });
 
-            deleted = basis.object.values(dataSourceMap);
+            deleted = oldDataSource.getItems().filter(function(item){
+              return !dataSource.has(item);
+            });
           }
           else
           {
