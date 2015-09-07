@@ -94,6 +94,52 @@
     return result;
   })();
 
+  var FACTOR = {
+    LEFT: {
+      LEFT: [0, 1, 1],
+      CENTER: [
+        [1, 0, 0],
+        [0, 1, 1]
+      ],
+      RIGHT: [1, 0, 0]
+    },
+    CENTER: {
+      TOP: [0, .5, 1],
+      LEFT: [0, .5, 1],
+      RIGHT: [1, .5, 0],
+      BOTTOM: [1, .5, 0],
+      CENTER: [
+        [1, .5, 0],
+        [0, .5, 1]
+      ]
+    },
+    RIGHT: {
+      LEFT: [0, 0, 1],
+      CENTER: [
+        [1, 1, 0],
+        [0, 0, 1]
+      ],
+      RIGHT: [1, 1, 0]
+    },
+    TOP: {
+      TOP: [0, 1, 1],
+      CENTER: [
+        [1, 0, 0],
+        [0, 1, 1]
+      ],
+      BOTTOM: [1, 0, 0]
+    },
+    BOTTOM: {
+      TOP: [0, 0, 1],
+      CENTER: [
+        [1, 1, 0],
+        [0, 0, 1]
+      ],
+      BOTTOM: [1, 1, 0]
+    }
+  };
+
+
   function normalizeDir(value, valueOnFailure){
     return DIR_MAP[typeof value == 'string' && value.toUpperCase()] || valueOnFailure;
   }
@@ -317,6 +363,12 @@
         getter: function(node){
           return (node.orientation + '-' + node.dir.split(' ').slice(2, 4).join('-')).toLowerCase();
         }
+      },
+      maxHeight: function(node){
+        return node.maxHeight == 'none' ? 'none' : node.maxHeight + 'px';
+      },
+      maxWidth: function(node){
+        return node.maxWidth == 'none' ? 'none' : node.maxWidth + 'px';
       }
     },
     action: {
@@ -344,6 +396,8 @@
     autorotate: false,
     autoRealign: true,
     zIndex: 0,
+    maxHeight: 'none',
+    maxWidth: 'none',
 
     dir: '',
     defaultDir: DEFAULT_DIR,
@@ -482,29 +536,116 @@
       });
     },
     realign: function(){
+      function getAvailSizes(dir){
+        function calc(sizes, factor){
+          return Math.floor(sizes[0] * factor[0] + sizes[1] * factor[1] + sizes[2] * factor[2]);
+        }
+
+        var pointX = dir[0];
+        var pointY = dir[1];
+        var popupX = dir[2];
+        var popupY = dir[3];
+
+        var availWidth = popupX == CENTER
+          ? 2 * Math.min(calc(widths, FACTOR[pointX][popupX][0]), calc(widths, FACTOR[pointX][popupX][1]))
+          : calc(widths, FACTOR[pointX][popupX]);
+        var availHeight = popupY == CENTER
+          ? 2 * Math.min(calc(heights, FACTOR[pointY][popupY][0]), calc(heights, FACTOR[pointY][popupY][1]))
+          : calc(heights, FACTOR[pointY][popupY]);
+
+        return {
+          dir: dir,
+          width: availWidth,
+          height: availHeight
+        };
+      }
+
+      function getPoint(dir){
+        var pointX = dir[0] == CENTER
+          ? relElementBox.left + (relElementBox.width >> 1)
+          : relElementBox[dir[0].toLowerCase()];
+        var pointY = dir[1] == CENTER
+          ? relElementBox.top + (relElementBox.height >> 1)
+          : relElementBox[dir[1].toLowerCase()];
+
+        return {
+          x: pointX,
+          y: pointY
+        };
+      }
+
       this.setZIndex(this.zIndex);
+      this.maxWidth = 'none';
+      this.updateBind('maxWidth');
+      this.maxHeight = 'none';
+      this.updateBind('maxHeight');
 
       var relElement = this.visible && this.relElement_;
       if (relElement)
       {
         var dir = this.dir.split(' ');
-        var point;
         var rotateOffset = 0;
         var curDir = dir;
         var dirH = dir[2];
         var dirV = dir[3];
         var maxRotate = typeof this.autorotate == 'number' || !this.autorotate.length ? 3 : this.autorotate.length;
+        var fitVariants = [];
         var offsetParent = getOffsetParent(this.element);
+        var relElementBox = resolveRelBox(relElement, offsetParent);
+        var width = this.element.offsetWidth;
+        var height = this.element.offsetHeight;
+        var maxHeight = 'none';
+        var maxWidth = 'none';
+        var point;
+
+        // NOTE: temporary solution addresses to app where document or body
+        // could be scrolled; for now it works, because popups lay into
+        // popupManager layer and documentElement or body could be a offset parent;
+        // but it would be broken when we allow popups to place in any layer in future;
+        // don't forget to implement univesal solution in this case
+        var viewportBox = getViewportRect(global, offsetParent);
+
+        // Build grid of sizes. relElement box is center of this grid (taking in account edge cases,
+        // when relElement could be partially in viewport or outside viewport at all)
+        //
+        //   +----------------------+<<<<<
+        //   | viewport             |  0
+        //   |   +------------+<<<<<<<<<<<
+        //   |   | relElement |     |  1
+        //   |   +------------+<<<<<<<<<<<
+        //   |   ^            ^     |  2
+        //   +---^------------^-----+<<<<<
+        //   ^   ^            ^     ^
+        //   ^ 0 ^     1      ^  2  ^
+        //
+        // This values uses in isFit() to calculate available width and height
+        // according to current layout.
+        //
+        var heights = [
+          basis.number.fit(relElementBox.top - viewportBox.top, 0, viewportBox.height),
+          Math.min(relElementBox.bottom, viewportBox.bottom) - Math.max(relElementBox.top, viewportBox.top),
+          basis.number.fit(viewportBox.bottom - relElementBox.bottom, 0, viewportBox.height)
+        ];
+        var widths = [
+          basis.number.fit(relElementBox.left - viewportBox.left, 0, viewportBox.width),
+          Math.min(relElementBox.right, viewportBox.right) - Math.max(relElementBox.left, viewportBox.left),
+          basis.number.fit(viewportBox.right - relElementBox.right, 0, viewportBox.width)
+        ];
 
         while (this.autorotate && rotateOffset <= maxRotate)
         {
-          if (point = this.isFitToViewport(curDir.join(' '), relElement))
+          var fitVariant = getAvailSizes(curDir);
+
+          // fit to sizes
+          if (width <= fitVariant.width && height <= fitVariant.height)
           {
-            dirH = curDir[2];
-            dirV = curDir[3];
-            this.setLayout(curDir.join(' '), null, true);
+            maxHeight = fitVariant.height;
+            maxWidth = fitVariant.width;
+            point = getPoint(curDir);
             break;
           }
+
+          fitVariants.push(fitVariant);
 
           if (rotateOffset == maxRotate)
             break;
@@ -524,13 +665,29 @@
 
         if (!point)
         {
-          var box = resolveRelBox(relElement, offsetParent);
+          if (!fitVariants.length)
+            fitVariants.push(getAvailSizes(curDir));
 
-          point = {
-            x: dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()],
-            y: dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()]
-          };
+          // find better variant, with highest square
+          fitVariant = fitVariants.reduce(function(choice, variant){
+            return !choice || choice.width * choice.height < variant.width * variant.height
+              ? variant
+              : choice;
+          }, null);
+
+          curDir = fitVariant.dir;
+          maxHeight = fitVariant.height;
+          maxWidth = fitVariant.width;
+          point = getPoint(curDir);
         }
+
+        dirH = curDir[2];
+        dirV = curDir[3];
+        this.setLayout(curDir.join(' '), null, true);
+        this.maxHeight = maxHeight;
+        this.updateBind('maxHeight');
+        this.maxWidth = maxWidth;
+        this.updateBind('maxWidth');
 
         var style = {
           left: 'auto',
@@ -595,7 +752,7 @@
       this.relElement_ = this.resolveRelElement(relElement || this.relElement);
 
       // set up direction and orientation
-      this.setLayout(normalizeDir(dir, this.defaultDir), orientation);
+      this.setLayout(dir || !this.visible ? normalizeDir(dir, this.defaultDir) : this.dir, orientation);
 
       // if not visible yet, make popup visible
       if (!this.visible)
