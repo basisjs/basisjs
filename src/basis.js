@@ -2487,7 +2487,9 @@
         '"use strict";\n' +
         /** @cut */ (NODE_ENV ? 'var __nodejsRequire = require;\n' : '') +
         body
-        /** @cut */ + '\n\n//# sourceURL=' + pathUtils.origin + sourceURL
+        /** @cut */ + (/\/\/#\s+source/.test(body.substr(body.lastIndexOf('\n'))
+        /** @cut */ ? ''
+        /** @cut */ : '\n\n//# sourceURL=' + pathUtils.origin + sourceURL))
       );
     } catch(e) {
       /** @cut */ if (document && 'line' in e == false && 'addEventListener' in global)
