@@ -2095,7 +2095,7 @@
 
       if (this.dataSource)
       {
-        if (this.dataSource.has(oldChild.delegate))
+        if (!oldChild.delegate || this.dataSourceMap_[oldChild.delegate.basisObjectId])
           throw EXCEPTION_DATASOURCE_CONFLICT;
       }
       else
@@ -2311,9 +2311,6 @@
             inserted = dataSource.getItems();
         }
 
-        // otherwise some operations on childNodes will no allowed
-        this.dataSource = null;
-
         // remove old children
         if (!oldDataSource || !dataSource)
         {
@@ -2324,6 +2321,8 @@
               for (var i = 0, child; child = this.childNodes[i]; i++)
                 unlockDataSourceItemNode(child);
 
+            // otherwise clear operation is not allowed
+            this.dataSource = null;
             this.clear(oldDataSource && !this.destroyDataSourceMember);
           }
         }
