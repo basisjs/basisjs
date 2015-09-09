@@ -2287,8 +2287,6 @@
         // detach
         if (oldDataSource)
         {
-          this.dataSourceMap_ = null;
-
           if (listenHandler)
             oldDataSource.removeHandler(listenHandler, this);
 
@@ -2312,6 +2310,9 @@
           if (dataSource)
             inserted = dataSource.getItems();
         }
+
+        // otherwise some operations on childNodes will no allowed
+        this.dataSource = null;
 
         // remove old children
         if (!oldDataSource || !dataSource)
@@ -2356,6 +2357,7 @@
         }
         else
         {
+          this.dataSourceMap_ = null;
           this.setChildNodesState(STATE.UNDEFINED);
         }
 

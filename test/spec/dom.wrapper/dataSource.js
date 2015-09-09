@@ -729,6 +729,41 @@ module.exports = {
       }
     },
     {
+      name: 'dataSource change issue: when new dataSource items intersects with old dataSource and some items from old dataSource should be removed',
+      test: function(){
+        var foo = new Dataset({
+          items: basis.data.wrap(basis.array.create(3), true)
+        });
+        var bar = new Dataset({
+          items: foo.getItems().slice(1).concat(basis.data.wrap(basis.array.create(2), true))
+        });
+        var baz = new Dataset({});
+
+        var node = new Node({
+          dataSource: foo,
+          childFactory: nodeFactory
+        });
+
+        var eventCount = 0;
+        node.addHandler({
+          childNodesModified: function(){
+            eventCount++;
+          }
+        });
+
+        assert(node.childNodes.length === 3);
+        assert(node.dataSource === foo);
+
+        node.setDataSource(bar);
+        assert(node.childNodes.length === 4);
+        assert(node.dataSource === bar);
+
+        node.setDataSource(baz); // should be no exception
+        assert(node.childNodes.length === 0);
+        assert(node.dataSource === baz);
+      }
+    },
+    {
       name: 'destroyDataSourceMember',
       test: [
         {
