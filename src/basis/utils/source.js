@@ -46,7 +46,7 @@ function sliceString(str, start, end){
     .split('\n')
     .slice(start.line - 1, end.line);
   return lines
-    .concat(lines.pop().substr(0, end.column))
+    .concat(lines.pop().substr(0, end.column - 1))
     .join('\n')
     .substr(start.column - 1);
 }
@@ -69,7 +69,7 @@ function getSourceFragment(loc, start, end){
   if (!end)
     end = {
       line: ifNaN(numbers[2], 10e6),
-      column: ifNaN(numbers[2], 10e6)
+      column: ifNaN(numbers[3], 10e6)
     };
 
   return sliceString(source, start, end);
@@ -100,7 +100,7 @@ function getColoredSource(loc, linesBefore, linesAfter, maxLines){
         lastLine = startLine + maxLines;
     }
     if (numbers[2])
-      lastLine = Math.min(numbers[2] + linesAfter, startLine + (maxLines || Infinity) - 1);
+      lastLine = Math.min(numbers[2] + (linesAfter || 0), startLine + (maxLines || Infinity) - 1);
 
     range = convertToRange(
         source,
