@@ -1,8 +1,9 @@
-require('basis.dom');
-require('basis.dom.event');
-require('basis.layout');
-require('basis.ui');
-require('basis.ui.popup');
+var domUtils = require('basis.dom');
+var domEventUtils = require('basis.dom.event');
+var setStyle = require('basis.cssom').setStyle;
+var getBoundingRect = require('basis.layout').getBoundingRect;
+var Value = require('basis.data').Value;
+var Balloon = require('basis.ui.popup').Balloon;
 
 var fileAPI = require('../api/file.js');
 var inspectBasis = require('devpanel').inspectBasis;
@@ -15,9 +16,9 @@ var transport = require('../api/transport.js');
 var templateInfo = resource('./template-info/index.js');
 
 var inspectDepth = 0;
-var inspectMode = new basis.data.Value({ value: false });
+var inspectMode = new Value({ value: false });
 
-var overlay = basis.dom.createElement({
+var overlay = domUtils.createElement({
   css: {
     pointerEvents: 'none',
     transition: 'all .05s',
@@ -30,7 +31,7 @@ var overlay = basis.dom.createElement({
     background: 'rgba(110,163,217,0.7)'
   }
 });
-var boxElement = basis.dom.createElement({
+var boxElement = domUtils.createElement({
   css: {
     visibility: 'hidden',
     position: 'absolute'
@@ -94,7 +95,7 @@ function pickHandler(event){
   }
 }
 
-var pickupTarget = new basis.data.Value({
+var pickupTarget = new Value({
   handler: {
     change: function(){
       var tmpl = this.value ? inspectBasisTemplate.resolveTmplById(this.value) : null;
@@ -110,7 +111,7 @@ var pickupTarget = new basis.data.Value({
           rectNode.selectNodeContents(tmpl.element);
         }
 
-        rect = basis.layout.getBoundingRect(rectNode);
+        rect = getBoundingRect(rectNode);
 
         if (rect)
         {
@@ -120,16 +121,16 @@ var pickupTarget = new basis.data.Value({
             width: rect.width + 'px',
             height: rect.height + 'px'
           };
-          basis.cssom.setStyle(overlay, style);
-          basis.cssom.setStyle(boxElement, style);
+          setStyle(overlay, style);
+          setStyle(boxElement, style);
           document.body.appendChild(overlay);
           document.body.appendChild(boxElement);
         }
       }
       else
       {
-        basis.dom.remove(overlay);
-        basis.dom.remove(boxElement);
+        domUtils.remove(overlay);
+        domUtils.remove(boxElement);
         inspectDepth = 0;
       }
 
@@ -143,18 +144,18 @@ var pickupTarget = new basis.data.Value({
 });
 
 var nodeInfoPopup = basis.fn.lazyInit(function(){
-  return new basis.ui.popup.Balloon({
+  return new Balloon({
     dir: 'left bottom left top',
     template: resource('./template/template_hintPopup.tmpl'),
     autorotate: [
       'left top left bottom',
-      'center center center center',
-      'left top left top',
-      'left bottom left bottom',
+      //'center center center center',
+      // 'left top left top',
+      // 'left bottom left bottom',
       'right bottom right top',
-      'right top right bottom',
-      'right bottom right bottom',
-      'right top right top'
+      'right top right bottom'
+      // 'right bottom right bottom',
+      // 'right top right top'
     ],
     binding: {
       openFileSupported: {
@@ -282,12 +283,12 @@ function startInspect(){
     if (templateInfo.isResolved())
       templateInfo().set();
 
-    basis.dom.event.addGlobalHandler('mousemove', mousemoveHandler);
-    basis.dom.event.addGlobalHandler('mousewheel', mouseWheelHandler);
-    basis.dom.event.addGlobalHandler('wheel', mouseWheelHandler);
-    basis.dom.event.addGlobalHandler('DOMMouseScroll', mouseWheelHandler);
-    inspectBasisEvent.captureEvent('mousedown', basis.dom.event.kill);
-    inspectBasisEvent.captureEvent('mouseup', basis.dom.event.kill);
+    domEventUtils.addGlobalHandler('mousemove', mousemoveHandler);
+    domEventUtils.addGlobalHandler('mousewheel', mouseWheelHandler);
+    domEventUtils.addGlobalHandler('wheel', mouseWheelHandler);
+    domEventUtils.addGlobalHandler('DOMMouseScroll', mouseWheelHandler);
+    inspectBasisEvent.captureEvent('mousedown', domEventUtils.kill);
+    inspectBasisEvent.captureEvent('mouseup', domEventUtils.kill);
     inspectBasisEvent.captureEvent('contextmenu', stopInspect);
     inspectBasisEvent.captureEvent('click', pickHandler);
 
@@ -299,10 +300,10 @@ function startInspect(){
 function stopInspect(){
   if (inspectMode.value)
   {
-    basis.dom.event.removeGlobalHandler('mousemove', mousemoveHandler);
-    basis.dom.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
-    basis.dom.event.removeGlobalHandler('wheel', mouseWheelHandler);
-    basis.dom.event.removeGlobalHandler('DOMMouseScroll', mouseWheelHandler);
+    domEventUtils.removeGlobalHandler('mousemove', mousemoveHandler);
+    domEventUtils.removeGlobalHandler('mousewheel', mouseWheelHandler);
+    domEventUtils.removeGlobalHandler('wheel', mouseWheelHandler);
+    domEventUtils.removeGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.releaseEvent('mousedown');
     inspectBasisEvent.releaseEvent('mouseup');
     inspectBasisEvent.releaseEvent('contextmenu');

@@ -1,6 +1,4 @@
-require('basis.data');
-
-var STATE = basis.data.STATE;
+var STATE = require('basis.data').STATE;
 var sendData = require('./transport.js').sendData;
 
 var inspectBasis = require('devpanel').inspectBasis;

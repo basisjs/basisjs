@@ -1,16 +1,15 @@
-require('basis.data');
-require('basis.data.value');
-require('basis.data.index');
-require('basis.ui');
-require('basis.dragdrop');
-
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
 var Value = require('basis.data').Value;
+var Dataset = require('basis.data').Dataset;
+var DataObject = require('basis.data').Object;
 var Expression = require('basis.data.value').Expression;
+var count = require('basis.data.index').count;
+var Node = require('basis.ui').Node;
+var MoveableElement = require('basis.dragdrop').MoveableElement;
 var l10nInspector = resource('./inspector/l10n.js');
 var templateInspector = resource('./inspector/template.js');
 var heatInspector = resource('./inspector/heatmap.js');
@@ -21,8 +20,8 @@ var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
 //var fileInspector = resource('./module/fileInspector/fileInspector.js');
 
-var inspectors = new basis.data.Dataset();
-var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
+var inspectors = new Dataset();
+var inspectMode = count(inspectors, 'update', 'data.mode').as(Boolean);
 var currentInspector = new Value({
   handler: {
     change: function(sender, oldValue){
@@ -45,7 +44,7 @@ var currentInspectorName = currentInspector.as(function(inspector){
   rolesInspector
 ].forEach(function(inspectorRes){
   inspectorRes.ready(function(inspector){
-    inspectors.add(inspector.inspectMode.link(new basis.data.Object, function(value){
+    inspectors.add(inspector.inspectMode.link(new DataObject, function(value){
       if (value)
         currentInspector.set(inspector);
       else
@@ -64,7 +63,7 @@ var currentInspectorName = currentInspector.as(function(inspector){
 
 var isOnline;
 var permamentFiles = [];
-var permamentFilesCount = new basis.data.Value(0);
+var permamentFilesCount = new Value({ value: 0 });
 
 if (typeof basisjsToolsFileSync != 'undefined')
 {
@@ -97,7 +96,7 @@ if (typeof basisjsToolsFileSync != 'undefined')
 else
 {
   // old basisjs-tools
-  isOnline = inspectBasis.devtools && basis.data.Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
+  isOnline = inspectBasis.devtools && Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
 }
 
 function activateInspector(inspector, e){
@@ -110,7 +109,7 @@ function activateInspector(inspector, e){
   });
 }
 
-var panel = new basis.ui.Node({
+var panel = new Node({
   container: document.body,
 
   activated: false,
@@ -185,12 +184,12 @@ var panel = new basis.ui.Node({
   },
 
   init: function(){
-    basis.ui.Node.prototype.init.call(this);
+    Node.prototype.init.call(this);
 
-    this.dde = new basis.dragdrop.MoveableElement();
+    this.dde = new MoveableElement();
   },
   templateSync: function(){
-    basis.ui.Node.prototype.templateSync.call(this);
+    Node.prototype.templateSync.call(this);
 
     this.dde.setElement(this.element, this.tmpl.dragElement);
   },
@@ -198,7 +197,7 @@ var panel = new basis.ui.Node({
     this.dde.destroy();
     this.dde = null;
 
-    basis.ui.Node.prototype.destroy.call(this);
+    Node.prototype.destroy.call(this);
   }
 });
 

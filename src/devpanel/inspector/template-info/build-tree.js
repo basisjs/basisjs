@@ -4,6 +4,7 @@ var Node = require('basis.ui').Node;
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var hoveredBinding = require('./binding.js').hover;
 var jsSourcePopup = require('./js-source-popup.js');
+var templateSwitcher = require('basis.template').switcher;
 
 var DOMNode = Node.subclass({
   binding: {
@@ -46,7 +47,7 @@ var DOMNode = Node.subclass({
 
 var ValuePart = DOMNode.subclass({
   type: 'static',
-  template: basis.template.switcher(function(node){
+  template: templateSwitcher(function(node){
     return node.type == 'static'
       ? resource('./template/tree/attribute-value-static.tmpl')
       : resource('./template/tree/attribute-value.tmpl');
