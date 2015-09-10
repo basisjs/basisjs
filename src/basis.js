@@ -2073,12 +2073,6 @@
   var virtualResourceSeed = 1;
   /** @cut */ var resourceResolvingStack = [];
   /** @cut */ var requires;
-  // var resourceUpdateNotifier = extend(new Token(), {
-  //   set: function(value){
-  //     this.value = value;
-  //     this.apply();
-  //   }
-  // });
 
   // apply prefetched resources to cache
   (function(){
@@ -2215,9 +2209,6 @@
       applyResourcePatches(resource);
       resource.apply();
 
-      // resourceUpdateNotifier.value = resourceUrl;
-      // resourceUpdateNotifier.apply();
-
       /** @cut    recursion warning */
       /** @cut */ resourceResolvingStack.pop();
 
@@ -2267,9 +2258,6 @@
             applyResourcePatches(resource);
             resource.apply();
           }
-
-          // resourceUpdateNotifier.value = resourceUrl;
-          // resourceUpdateNotifier.apply();
         }
       },
       reload: function(){
@@ -2335,9 +2323,6 @@
 
   extend(getResource, {
     resolveURI: resolveResourceFilename,
-    // onUpdate: function(fn, context){
-    //   resourceUpdateNotifier.attach(fn, context);
-    // },
     isResource: function(value){
       return value ? resources[value.url] === value : false;
     },
