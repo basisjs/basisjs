@@ -3792,7 +3792,7 @@
       return createBasisInstance(
         global,
         basisFilename,
-        complete({ noConflict: true }, config)
+        complete({ noConflict: true, devpanel: false }, config)
       );
     },
     dev: consoleMethods = (new Namespace('basis.dev'))
@@ -3903,10 +3903,16 @@
   // auto load section
   //
 
-  if (config.autoload && !NODE_ENV)
-    config.autoload.forEach(function(name){
-      requireNamespace(name);
-    });
+  if (!NODE_ENV)
+  {
+    if (config.autoload)
+      config.autoload.forEach(function(name){
+        requireNamespace(name);
+      });
+
+    /** @cut */ if ('devpanel' in config == false || config.devpanel)
+    /** @cut */   requireNamespace('basis.devpanel');
+  }
 
 
   //
