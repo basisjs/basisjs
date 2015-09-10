@@ -596,6 +596,7 @@
         var height = this.element.offsetHeight;
         var maxHeight = 'none';
         var maxWidth = 'none';
+        var fit = false;
         var point;
 
         // NOTE: temporary solution addresses to app where document or body
@@ -635,10 +636,18 @@
         while (this.autorotate && rotateOffset <= maxRotate)
         {
           var fitVariant = getAvailSizes(curDir);
+          var point = getPoint(curDir);
+          var isFitToSizes = width <= fitVariant.width && height <= fitVariant.height;
+          var isFitToViewport =
+            (dir[2] == LEFT || point.x > (width >> (dir[2] == CENTER))) &&
+            (dir[2] == RIGHT || (viewportBox.width - point.x + viewportBox.left) > (width >> (dir[2] == CENTER))) &&
+            (dir[3] == TOP || point.y > (height >> (dir[3] == CENTER))) &&
+            (dir[3] == BOTTOM || (viewportBox.height - point.y + viewportBox.top) > (height >> (dir[3] == CENTER)));
 
           // fit to sizes
-          if (width <= fitVariant.width && height <= fitVariant.height)
+          if (isFitToSizes && isFitToViewport)
           {
+            fit = true;
             maxHeight = fitVariant.height;
             maxWidth = fitVariant.width;
             point = getPoint(curDir);
@@ -663,7 +672,7 @@
             curDir = this.rotate(++rotateOffset * this.autorotate);
         }
 
-        if (!point)
+        if (!fit)
         {
           if (!fitVariants.length)
             fitVariants.push(getAvailSizes(curDir));
@@ -752,7 +761,7 @@
       this.relElement_ = this.resolveRelElement(relElement || this.relElement);
 
       // set up direction and orientation
-      this.setLayout(dir || !this.visible ? normalizeDir(dir, this.defaultDir) : this.dir, orientation);
+      this.setLayout(normalizeDir(dir, this.defaultDir), orientation);
 
       // if not visible yet, make popup visible
       if (!this.visible)
