@@ -1326,7 +1326,7 @@ var makeDeclaration = (function(){
       var parts = value.split(':');
       var key = parts[1];
 
-      if (parts[0] == 'l10n')
+      if (key && parts[0] == 'l10n')
       {
         if (parts.length == 2 && key.indexOf('@') == -1)
         {
