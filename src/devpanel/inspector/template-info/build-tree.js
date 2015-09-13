@@ -122,10 +122,10 @@ var Comment = DOMNode.subclass({
 });
 
 function buildAttribute(attr, attrBindings, actions){
-  var value = {
+  var value = [{
     type: 'static',
     value: attr.value
-  };
+  }];
 
   switch (attr.name)
   {
@@ -174,11 +174,11 @@ function buildAttribute(attr, attrBindings, actions){
                 bindingValues[bind.binding] = bind.raw;
 
             if (baseBinding.type == 'bool')
-              value = {
+              value = [{
                 type: 'binding',
                 value: baseBinding.val,
                 bindingName: attrBindings.length > 1 ? 'multiple' : baseBinding.binding
-              };
+              }];
             else
               // convert expression to value parts
               if (baseBinding.expr)
@@ -221,6 +221,9 @@ function buildAttribute(attr, attrBindings, actions){
           }
         }
   }
+
+  if (value.length == 1 && value[0].type == 'static' && !value[0].value)
+    value = [];
 
   return {
     name: attr.name,
