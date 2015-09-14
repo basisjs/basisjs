@@ -13,7 +13,11 @@ function findSourceInMap(map, filename){
 
   if (Array.isArray(map.sections))
     for (var i = 0; i < map.sections.length; i++)
-      return findSourceInMap(map.sections[i].map, filename);
+    {
+      var result = findSourceInMap(map.sections[i].map, filename);
+      if (result !== false)
+        return result;
+    }
 
   return false;
 }
