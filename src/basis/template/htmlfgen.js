@@ -780,6 +780,7 @@
 
         setFunction.push(
           'return;',
+          /** @cut */ 'rawValues[bindName]=value;',
           'value=resolve.call(instance,bindName,value,Attaches);',
           'switch(bindName){'
         );
@@ -894,6 +895,7 @@
         'var _=createDOM(),' +
         (bindings.l10n ? 'l10n=initL10n?{}:l10nMap,' : '') +
         paths.path.concat(bindings.vars) +
+        /** @cut */ ',rawValues={}' +
         /** @cut */// ';instance.history=[]' +
         /** @cut */ (debug ? ';instance.debug=function debug(){' +
         /** @cut */   'return {' +
@@ -902,6 +904,7 @@
         /** @cut */     'values:{' + bindings.keys.map(function(key){
         /** @cut */       return '"' + key + '":__' + key;
         /** @cut */     }) + '},' +
+        /** @cut */     'rawValues:rawValues,' +
         /** @cut */     (bindings.l10nCompute.length ? 'compute:Array.prototype.slice.call(instance.compute)' : 'compute:[]') +
         /** @cut */   '}' +
         /** @cut */ '}' : '') +
