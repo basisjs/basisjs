@@ -30,7 +30,7 @@
   padding: 3px .5ch;
   margin-left: -3px;
   margin-left: -.5ch;
-  margin-right: 1ex;
+  margin-right: 6px;
   border-radius: 2px;
   color: #333;  
   background: transparent;  
@@ -56,6 +56,21 @@
 .caption:not(.caption_used):hover .link_loc
 {
   color: #A00;
+}
+.reactive
+{
+  margin-right: 1ch;
+  margin-left: -5px;
+  padding: 3px 5px;
+  border-radius: 2px;
+  background: #F0F0F0;
+  color: #888;
+  transition: color .15s, background-color .15s;
+}
+.reactive_highlight
+{
+  background: #99AAEE;
+  color: white;
 }
 .value
 {

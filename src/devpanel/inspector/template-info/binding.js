@@ -26,16 +26,19 @@ function getBindingsFromNode(node){
     var objectBinding = object.binding;
     var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
     var usedValues = debugInfo.values;
+    var rawValues = debugInfo.rawValues;
 
     for (var key in objectBinding)
       if (key != '__extend__' && key != 'bindingId')
       {
         var used = Object.prototype.hasOwnProperty.call(usedValues, key);
         var value = used ? usedValues[key] : undefined;
+        var isReactive = rawValues ? value !== rawValues[key] : false;
 
         items.push({
           name: key,
           value: valueToString(value),
+          isReactive: isReactive,
           used: used,
           nestedView: Boolean(value && value[inspectBasisTemplateMarker]),
           loc: objectBinding[key] ? objectBinding[key].loc : null

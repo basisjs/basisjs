@@ -25,6 +25,7 @@ module.exports = new Node({
       name: 'data:',
       value: 'data:',
       used: 'data:',
+      isReactive: 'data:',
       nestedView: 'data:',
       loc: 'data:',
       highlight: hoveredBinding.compute('update', function(node, value){
