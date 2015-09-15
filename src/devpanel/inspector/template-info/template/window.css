@@ -168,3 +168,14 @@
 {
   color: #A00;
 }
+
+@supports (display:flex) {
+  .window__inner-wrapper
+  {
+    display: flex;
+  }
+  .sidebar
+  {
+    height: auto;
+  }
+}
