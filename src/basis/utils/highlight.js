@@ -30,7 +30,8 @@
       'default delete do else false ' +
       'for function if in instanceof ' +
       'new null return super switch ' +
-      'this throw true try typeof var while with';
+      'this throw true try typeof var while with ' +
+      'let const of class extends yield async await';
 
     var keywordRegExp = new RegExp('\\b(' + keywords.split(' ').join('|') + ')\\b', 'g');
 
