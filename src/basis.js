@@ -40,18 +40,12 @@
   var VERSION = '1.5.0-dev';
 
   var global = Function('return this')();
-  var NODE_ENV = global !== context ? global : false;
+  var process = global.process;
   var document = global.document;
   var location = global.location;
-  var process = global.process;
+  var NODE_ENV = global !== context && process && process.argv ? global : false;
   var toString = Object.prototype.toString;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-  // It's old behaviour that looks odd. For now we leave everything as is.
-  // But we should use context as something to store into, and global as source
-  // of global things.
-  // TODO: to do this stuff right
-  global = context;
 
   // const
   var FACTORY = {};
@@ -1012,7 +1006,7 @@
     if (NODE_ENV)
     {
       // try to use baseURI from process, it may be provided by parent module
-      var path = (process.basisjsBaseURI || require('path').resolve('.')).replace(/\\/g, '/'); // on Windows path contains backslashes
+      var path = (process.basisjsBaseURI || '/').replace(/\\/g, '/'); // on Windows path contains backslashes
       baseURI = path.replace(/^[^\/]*/, '');
       origin = path.replace(/\/.*/, '');
     }
@@ -2150,9 +2144,12 @@
       {
         try {
           // try to use special read file function, it may be provided by parent module
+          /** @cut */ if (!process.basisjsReadFile)
+          /** @cut */   consoleMethods.warn('basis.resource: basisjsReadFile not found, file content couldn\'t to be read');
+
           resourceContent = process.basisjsReadFile
             ? process.basisjsReadFile(url)
-            : require('fs').readFileSync(url, 'utf-8');
+            : '';
         } catch(e){
           /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
@@ -3748,7 +3745,7 @@
     /** @cut */     info[key] = value;
     /** @cut */   };
 
-    /** @cut */ var resolver = config.devInfoResolver || {};
+    /** @cut */ var resolver = config.devInfoResolver || global.$devinfo || {};
     /** @cut */ var test = {};
     /** @cut */ if (typeof resolver.fixSourceOffset == 'function')
     /** @cut */   fixSourceOffset = resolver.fixSourceOffset;
