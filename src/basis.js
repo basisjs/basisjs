@@ -1563,14 +1563,19 @@
         // class methods
         isSubclassOf: isSubclassOf,
         subclass: function(){
-          return createClass.apply(null, [newClass].concat(arrayFrom(arguments)));
+          return createClass.apply(null, [NewClass].concat(arrayFrom(arguments)));
         },
         extend: extendClass,
+        factory: function(config){
+          return factory(function(extra){
+            return new NewClass(merge(config, extra));
+          });
+        },
 
         // auto extend creates a subclass
         __extend__: function(value){
           if (value && value !== SELF && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
-            return BaseClass.create.call(null, newClass, value);
+            return BaseClass.create.call(null, NewClass, value);
           else
             return value;
         },
@@ -1579,14 +1584,14 @@
         prototype: newProto
       };
 
-      // extend newClass prototype
+      // extend NewClass prototype
       for (var i = 1, extension; extension = arguments[i]; i++)
         newClassProps.extend(extension);
 
       /** @cut */if (newProto.init !== BaseClass.prototype.init && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
 
       // new class constructor
-      var newClass = newClassProps.extendConstructor_
+      var NewClass = newClassProps.extendConstructor_
         // constructor with instance extension
         ? function(extend){
             // mark object
@@ -1623,25 +1628,25 @@
 
       // verbose name in dev
       // NOTE: this code makes Chrome and Firefox show class name in console
-      /** @cut */ newClass = devVerboseName(className, { instanceSeed: instanceSeed }, newClass);
+      /** @cut */ NewClass = devVerboseName(className, { instanceSeed: instanceSeed }, NewClass);
 
       // add constructor property to prototype
-      newProto.constructor = newClass;
+      newProto.constructor = NewClass;
 
       for (var key in newProto)
         if (newProto[key] === SELF)
-          newProto[key] = newClass;
+          newProto[key] = NewClass;
         //else
         //  newProto[key] = newProto[key];
 
       // extend constructor with properties
-      extend(newClass, newClassProps);
+      extend(NewClass, newClassProps);
 
       // for class introspection
-      /** @cut */ classes.push(newClass);
+      /** @cut */ classes.push(NewClass);
 
       // return new class
-      return newClass;
+      return NewClass;
     }
 
    /**
