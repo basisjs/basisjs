@@ -28,16 +28,21 @@ function getSource(uri){
 
   var resource = basis.resource(uri);
   var source = resource.get(true);
-  var sourceMap = source.match(/\/\/# sourceMappingURL=([^\r\n]+)[\s\r\n]*$/);
+  var sourceMap = source.split('//# sourceMappingURL=');
 
-  if (sourceMap)
+  if (sourceMap.length > 1)
   {
-    sourceMap = sourceMap[1].split(';').pop();
-    if (/^base64,/.test(sourceMap))
-      sourceMap = base64.decode(sourceMap.substr(7), true);
-    sourceMap = JSON.parse(sourceMap);
+    sourceMap = sourceMap.pop().trim();
 
-    source = findSourceInMap(sourceMap, resource.url) || source;
+    if (!/[\r\n]/.test(sourceMap))
+    {
+      sourceMap = sourceMap.split(';').pop();
+      if (/^base64,/.test(sourceMap))
+        sourceMap = base64.decode(sourceMap.substr(7), true);
+      sourceMap = JSON.parse(sourceMap);
+
+      source = findSourceInMap(sourceMap, resource.url) || source;
+    }
   }
 
   sourceCache[uri] = source;
