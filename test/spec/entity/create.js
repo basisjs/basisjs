@@ -299,7 +299,7 @@ module.exports = {
                 }
               });
 
-              assert('baz' in Type.entityType.aliases == false);
+              assert('baz' in Type.type.aliases == false);
             }) !== false);
           }
         }
