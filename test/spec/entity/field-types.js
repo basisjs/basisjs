@@ -382,7 +382,7 @@ module.exports = {
         {
           name: 'set correct values on init',
           test: function(){
-            var T = basis.entity.createType({
+            var T = nsEntity.createType({
               fields: {
                 date: Date
               }
@@ -398,7 +398,7 @@ module.exports = {
         {
           name: 'set correct values on update',
           test: function(){
-            var T = basis.entity.createType({
+            var T = nsEntity.createType({
               fields: {
                 date: Date
               }
@@ -475,7 +475,7 @@ module.exports = {
         {
           name: 'set wrong values on init',
           test: function(){
-            var T = basis.entity.createType({
+            var T = nsEntity.createType({
               fields: {
                 date: Date
               }
@@ -493,7 +493,7 @@ module.exports = {
         {
           name: 'set wrong values',
           test: function(){
-            var T = basis.entity.createType({
+            var T = nsEntity.createType({
               fields: {
                 date: Date
               }
