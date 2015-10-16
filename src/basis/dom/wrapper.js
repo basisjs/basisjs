@@ -411,7 +411,7 @@
 
           if (Class.isClass(value))
           {
-            /** @cut */ basis.dev.warn(namespace + ': `satelliteClass` in satellite config is deprecated, use `instance` instead');
+            /** @cut */ basis.dev.warn(namespace + ': `' + key + '` in satellite config is deprecated, use `instance` instead');
             config.instanceClass = processInstanceClass(value);
           }
           /** @cut */ else
