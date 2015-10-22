@@ -124,6 +124,30 @@ module.exports = {
             assert(Array.isArray(inserted));
             assert(inserted && inserted.length === 1);
           }
+        },
+        {
+          name: 'ReadOnlyEntitySet#emit_itemsChanged issue',
+          test: function(){
+            var fireCount = 0;
+
+            var entityType = nsEntity.createType(null, { id: nsEntity.NumberId, type: String });
+            var entityGrouping = new nsEntity.Grouping({
+              wrapper: entityType,
+              source: entityType.all,
+              rule: 'data.type',
+              subsetWrapperClass: function(super_){
+                return {
+                  emit_itemsChanged: function(delta){
+                    fireCount++;
+                    super_.emit_itemsChanged.call(this, delta);
+                  }
+                };
+              }
+            });
+
+            entityGrouping.getSubset('foo', true).dataset.setAndDestroyRemoved([{ id: 1, type: 'foo' }]);
+            assert(fireCount === 1);
+          }
         }
       ]
     },

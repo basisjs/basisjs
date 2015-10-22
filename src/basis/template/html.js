@@ -377,9 +377,10 @@
             {
               var context = this.context;
               var bindings = this.bindings;
+              var onAction = this.action;
               var bindingInterface = this.bindingInterface;
-              tmpl = template.createInstance(context, null, function onRebuild(){
-                tmpl = newAttach.tmpl = template.createInstance(context, null, onRebuild, bindings, bindingInterface);
+              tmpl = template.createInstance(context, onAction, function onRebuild(){
+                tmpl = newAttach.tmpl = template.createInstance(context, onAction, onRebuild, bindings, bindingInterface);
                 tmpl.parent = tmpl.element.parentNode || tmpl.element;
                 updateAttach.call(newAttach);
               }, bindings, bindingInterface);

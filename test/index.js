@@ -20,6 +20,7 @@ module.exports = {
     require('./spec/dom.wrapper.js'),
     require('./spec/template.js'),
     require('./spec/ui.js'),
+    require('./spec/net.js'),
     require('./spec/dom.js'),
     require('./spec/cssom.js'),
     require('./spec/layout.js'),
