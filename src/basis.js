@@ -2694,7 +2694,9 @@
   * @name require
   */
   var requireNamespace = function(path, baseURI){
-    if (!/[^a-z0-9_\.]/i.test(path) && pathUtils.extname(path) != '.js')
+    var extname = pathUtils.extname(path);
+
+    if (!/[^a-z0-9_\.]/i.test(path) && extname != '.js')
     {
       // namespace, like 'foo.bar.baz'
       path = resolveNSFilename(path);
@@ -2703,7 +2705,12 @@
     {
       // resolve filename, but not for path with # or ? (used by virtual resources)
       if (!/[\?#]/.test(path))
+      {
+        if (!extname)
+          path += '.js';
+
         path = resolveResourceFilename(path, baseURI, 'basis.require(\'{url}\')');
+      }
     }
 
     return getResource(path).fetch();
