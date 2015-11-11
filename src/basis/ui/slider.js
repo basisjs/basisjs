@@ -158,6 +158,13 @@
   var Slider = Node.subclass({
     className: namespace + '.Slider',
 
+    propertyDescriptors: {
+      value: 'change',
+      min: 'rangeChanged',
+      max: 'rangeChanged',
+      step: 'rangeChanged'
+    },
+
     emit_change: createEvent('change', 'oldValue'),
     emit_rangeChanged: createEvent('rangeChanged'),
 
@@ -349,6 +356,8 @@
             return layerConfig;
           }, this));
         }
+
+        this.emit_rangeChanged();
       }
     },
 

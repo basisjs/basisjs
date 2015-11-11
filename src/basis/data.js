@@ -1654,7 +1654,10 @@
   var DatasetWrapper = Class(DataObject, {
     className: namespace + '.DatasetWrapper',
     propertyDescriptors: {
-      dataset: 'datasetChanged'
+      dataset: 'datasetChanged',
+      itemCount: 'itemsChanged',
+      'pick()': 'itemsChanged',
+      'getItems()': 'itemsChanged'
     },
 
     active: PROXY,

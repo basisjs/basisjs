@@ -168,14 +168,12 @@
     className: namespace + '.Merge',
 
     subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.OBJECTSOURCE,
-
-   /**
-    * Emit when one of source reference changes.
-    * @param {string} name Name of source.
-    * @param {DataObject} oldSource Value of source reference before changes.
-    * @event
-    */
-    emit_sourceChanged: createEvent('sourceChanged', 'name', 'oldSource'),
+    propertyDescriptors: {
+      sources: {
+        nested: true,
+        events: 'sourceChanged'
+      }
+    },
 
    /**
     * Field source association map. Key is field name, and value is source name.
@@ -205,6 +203,14 @@
     * @type {object}
     */
     sourcesContext_: null,
+
+   /**
+    * Emit when one of source reference changes.
+    * @param {string} name Name of source.
+    * @param {DataObject} oldSource Value of source reference before changes.
+    * @event
+    */
+    emit_sourceChanged: createEvent('sourceChanged', 'name', 'oldSource'),
 
    /**
     * Temporary delta storage, that using during update transaction.

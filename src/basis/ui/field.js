@@ -100,6 +100,22 @@
   var Field = UINode.subclass({
     className: namespace + '.Field',
 
+    propertyDescriptors: {
+      name: true,
+      title: true,
+      defaultValue: true,
+      value: 'change',
+      'getValue()': 'change',
+      validity: 'validityChanged',
+      error: 'errorChanged',
+      example: 'exampleChanged',
+      description: 'descriptionChanged',
+      focused: 'fieldFocus fieldBlur',
+      serializable: true,
+      focusable: true,
+      nextFieldOnEnter: true
+    },
+
     //
     // properties
     //
@@ -397,6 +413,14 @@
   var TextField = Field.subclass({
     className: namespace + '.TextField',
 
+    propertyDescriptors: {
+      minLength: 'minLengthChanged',
+      maxLength: 'maxLengthChanged',
+      readOnly: true,
+      autocomplete: true,
+      placeholder: true
+    },
+
     emit_minLengthChanged: createEvent('minLengthChanged'),
     emit_maxLengthChanged: createEvent('maxLengthChanged'),
 
@@ -525,6 +549,10 @@
   */
   var Textarea = TextField.subclass({
     className: namespace + '.Textarea',
+
+    propertyDescriptors: {
+      symbolsLeft: 'symbolsLeftChanged'
+    },
 
     nextFieldOnEnter: false,
     symbolsLeft: 0,

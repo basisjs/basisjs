@@ -92,6 +92,10 @@
   var Window = Class(Node, {
     className: namespace + '.Window',
 
+    propertyDescriptors: {
+      visible: 'open close'
+    },
+
     emit_open: createEvent('open'),
     emit_close: createEvent('close'),
 

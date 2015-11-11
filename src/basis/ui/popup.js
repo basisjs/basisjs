@@ -350,6 +350,14 @@
   var Popup = Node.subclass({
     className: namespace + '.Popup',
 
+    propertyDescriptors: {
+      visible: 'show hide',
+      orientation: 'layoutChanged',
+      dir: 'layoutChanged',
+      maxWidth: 'realign',
+      maxHeight: 'realign'
+    },
+
     template: templates.Popup,
     binding: {
       visible: {
