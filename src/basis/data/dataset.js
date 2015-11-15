@@ -51,6 +51,8 @@
   var Dataset = basisData.Dataset;
   var DatasetWrapper = basisData.DatasetWrapper;
   var resolveDataset = basisData.resolveDataset;
+  var resolveObject = basisData.resolveObject;
+  var resolveValue = basisData.resolveValue;
   var setAccumulateState = Dataset.setAccumulateState;
 
 
@@ -1017,14 +1019,26 @@
   // MapFilter
   //
 
+  var MAPFILTER_BBUPDATE_HANDLER = function(){
+    MAPFILTER_SOURCEOBJECT_UPDATE.call(this.host, this.sourceObject);
+  };
+
   var MAPFILTER_SOURCEOBJECT_UPDATE = function(sourceObject){
-    var newMember = this.map ? this.map(sourceObject) : sourceObject; // fetch new member ref
+    var sourceObjectInfo = this.sourceMap_[sourceObject.basisObjectId];
+    var curMember = sourceObjectInfo.member;
+    var newMember = sourceObject;
 
-    if (newMember instanceof DataObject == false || this.filter(newMember))
+    if (this.map)
+      newMember = resolveObject(
+        sourceObjectInfo,
+        MAPFILTER_BBUPDATE_HANDLER,
+        this.map(sourceObject),
+        'memberRA_',
+        this
+      );
+
+    if (newMember && !resolveValue(sourceObjectInfo, MAPFILTER_BBUPDATE_HANDLER, this.filter(newMember), 'filterRA_', this))
       newMember = null;
-
-    var sourceMap = this.sourceMap_[sourceObject.basisObjectId];
-    var curMember = sourceMap.member;
 
     // if member ref is changed
     if (curMember !== newMember)
@@ -1035,7 +1049,7 @@
       var deleted;
 
       // update member
-      sourceMap.member = newMember;
+      sourceObjectInfo.member = newMember;
 
       // if here is ref for member already
       if (curMember)
@@ -1097,6 +1111,7 @@
       var deleted = [];
       var sourceObject;
       var sourceObjectId;
+      var sourceObjectInfo;
       var member;
       var updateHandler = this.ruleEvents;
 
@@ -1106,18 +1121,32 @@
       {
         for (var i = 0; sourceObject = delta.inserted[i]; i++)
         {
-          member = this.map ? this.map(sourceObject) : sourceObject;
+          member = sourceObject;
+          sourceObjectInfo = {
+            host: this,
+            sourceObject: sourceObject,
+            filterRA_: null,
+            member: null,
+            memberRA_: null
+          };
 
-          if (member instanceof DataObject == false || this.filter(member))
+          if (this.map)
+            member = resolveObject(
+              sourceObjectInfo,
+              MAPFILTER_BBUPDATE_HANDLER,
+              this.map(sourceObject),
+              'memberRA_',
+              this
+            );
+
+          if (member && !resolveValue(sourceObjectInfo, MAPFILTER_BBUPDATE_HANDLER, this.filter(member), 'filterRA_', this))
             member = null;
 
           if (updateHandler)
             sourceObject.addHandler(updateHandler, this);
 
-          sourceMap[sourceObject.basisObjectId] = {
-            sourceObject: sourceObject,
-            member: member
-          };
+          sourceObjectInfo.member = member;
+          sourceMap[sourceObject.basisObjectId] = sourceObjectInfo;
 
           if (member)
           {
@@ -1142,11 +1171,20 @@
       {
         for (var i = 0; sourceObject = delta.deleted[i]; i++)
         {
+          var sourceObjectInfo;
+
           sourceObjectId = sourceObject.basisObjectId;
-          member = sourceMap[sourceObjectId].member;
+          sourceObjectInfo = sourceMap[sourceObjectId];
+          member = sourceObjectInfo.member;
 
           if (updateHandler)
             sourceObject.removeHandler(updateHandler, this);
+
+          if (sourceObjectInfo.memberRA_)
+            resolveObject(sourceObjectInfo, null, null, 'memberRA_');
+
+          if (sourceObjectInfo.filterRA_)
+            resolveValue(sourceObjectInfo, null, null, 'filterRA_');
 
           delete sourceMap[sourceObjectId];
 
@@ -1276,7 +1314,8 @@
     * @return {Object} Delta of member changes.
     */
     setRule: function(rule){
-      rule = getter(rule || $true);
+      if (typeof rule != 'function')
+        rule = getter(rule || $true);
 
       if (this.rule !== rule)
       {
@@ -1312,9 +1351,18 @@
         sourceObject = sourceObjectInfo.sourceObject;
 
         curMember = sourceObjectInfo.member;
-        newMember = this.map ? this.map(sourceObject) : sourceObject;
+        newMember = sourceObject;
 
-        if (newMember instanceof DataObject == false || this.filter(newMember))
+        if (this.map)
+          newMember = resolveObject(
+            sourceObjectInfo,
+            MAPFILTER_BBUPDATE_HANDLER,
+            this.map(sourceObject),
+            'memberRA_',
+            this
+          );
+
+        if (newMember && !resolveValue(sourceObjectInfo, MAPFILTER_BBUPDATE_HANDLER, this.filter(newMember), 'filterRA_', this))
           newMember = null;
 
         if (curMember != newMember)
@@ -1391,7 +1439,7 @@
     * @inheritDoc
     */
     filter: function(object){
-      return !this.rule(object);
+      return this.rule(object);
     }
   });
 
