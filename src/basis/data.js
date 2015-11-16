@@ -828,7 +828,14 @@
       else
       {
         if (descriptor && descriptor.nested && index < path.length - 1)
-          pathFragment += '.' + path[++index];
+        {
+          var path0 = pathFragment;
+          var path1 = path[++index];
+          pathFragment = basis.getter(function(object){
+            object = object && object[path0];
+            return object ? object[path1] : undefined;
+          });
+        }
       }
     }
     else
@@ -846,7 +853,7 @@
     }
 
     return {
-      path: pathFragment,
+      getter: pathFragment,
       rest: path.slice(index + 1).join('.'),
       events: events || null
     };
@@ -887,7 +894,7 @@
     if (!pathFragment)
       return UNDEFINED_VALUE;
 
-    result = Value.from(target, pathFragment.events, pathFragment.path);
+    result = Value.from(target, pathFragment.events, pathFragment.getter);
 
     if (pathFragment.rest)
       result = result

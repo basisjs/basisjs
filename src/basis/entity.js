@@ -1424,14 +1424,12 @@
     extendConstructor_: false,
     fieldHandlers_: null,
 
-    // `modified` should nullable nested
-    // TODO: add support for
-    // propertyDescriptors: {
-    //   modified: {
-    //     nested: true,
-    //     events: 'rollbackUpdate'
-    //   }
-    // },
+    propertyDescriptors: {
+      modified: {
+        nested: true,
+        events: 'rollbackUpdate'
+      }
+    },
 
     modified: null,
     emit_rollbackUpdate: createEvent('rollbackUpdate')
