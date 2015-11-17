@@ -13,11 +13,18 @@
   var Class = basis.Class;
   var Emitter = require('basis.event').Emitter;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
+  var autoFetchDictionaryResource = true;
 
 
   // process .l10n files as .json
   basis.resource.extensions['.l10n'] = function(content, url){
-    return resolveDictionary(url).update(basis.resource.extensions['.json'](content, url));
+    var dictionary;
+
+    autoFetchDictionaryResource = false; // prevents recursion
+    dictionary = resolveDictionary(url);
+    autoFetchDictionaryResource = true;
+
+    return dictionary.update(basis.resource.extensions['.json'](content, url));
   };
 
 
@@ -447,7 +454,8 @@
         }
 
         // fetch resource content and attach listener on content update
-        resource.fetch();
+        if (autoFetchDictionaryResource)
+          resource.fetch();
       }
       else
       {

@@ -1,3 +1,15 @@
+## 1.4.0 → 1.5.0
+
+Remove
+
+  - `STATE.from()` (use `basis.data.Value.state()` instead)
+  - `STATE.factory()` (use `basis.data.Value.stateFactory()` instead)
+  - `basis.data.generator` module
+
+Might break
+
+  - `basis.require()` appends `.js` to filename, if there is no extension
+
 ## 1.3.0 → 1.4.0
 
 Rename

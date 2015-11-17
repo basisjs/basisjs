@@ -1,13 +1,22 @@
 .title
 {
-  padding: 3px 2px 4px 18px;
+  padding: 0 0 0 18px;
   position: relative;
   font-size: 12px;
 }
 .title:hover
 {
-  background: rgba(0,0,0,.1);
+  background: rgba(0, 0, 0, .1);
   cursor: pointer;
+}
+
+.caption
+{
+  display: block;
+  padding: 3px 2px 4px 2px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .expander
@@ -22,11 +31,38 @@
   border-radius: 2px;
 }
 
+.loc
+{
+  padding: 0 5px;
+  margin: 3px;
+  background: red;
+  float: right;
+  border-radius: 3px;
+  background: #ACD;
+}
+.loc:hover
+{
+  background: #9BC;
+}
+
 .satelliteName
 {
   padding: 1px 5px 2px;
   margin: 0 1ex 0 -2px;
   background: #AD0;
+  border-radius: 3px;
+  font-size: 11px;
+}
+.satelliteName_equalNames
+{
+  background-image: linear-gradient(to bottom, transparent 55%, #EE9 55%);
+}
+
+.role
+{
+  padding: 1px 5px 2px;
+  margin: 0 1ex 0 -2px;
+  background: #EE9;
   border-radius: 3px;
   font-size: 11px;
 }

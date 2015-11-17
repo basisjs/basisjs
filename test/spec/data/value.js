@@ -1051,6 +1051,260 @@ module.exports = {
       ]
     },
     {
+      name: 'Value.query',
+      test: [
+        {
+          name: 'should return factory when single argument',
+          test: function(){
+            var factory = Value.query('foo');
+
+            assert(basis.fn.isFactory(factory));
+            assert(typeof factory.deferred === 'function');
+            assert(typeof factory.compute === 'function');
+            assert(typeof factory.pipe === 'function');
+            assert(typeof factory.as === 'function');
+          }
+        },
+        {
+          name: 'should return value when two argument',
+          test: function(){
+            var target = new DataObject();
+            var targetState = Value.query(target, 'state');
+
+            assert(targetState instanceof Value);
+          }
+        },
+        {
+          name: 'should return the same value',
+          test: function(){
+            var target = new DataObject();
+
+            assert(Value.query(target, 'state') === Value.query(target, 'state'));
+            assert(Value.query(target, 'data.foo') === Value.query(target, 'data.foo'));
+            assert(Value.query(target, 'root.data.foo') === Value.query(target, 'root.data.foo'));
+          }
+        },
+        {
+          name: 'should update value on target changes for simple path',
+          test: function(){
+            var target = new DataObject();
+            var targetState = Value.query(target, 'state');
+
+            assert(targetState.value === target.state);
+
+            target.setState(STATE.ERROR);
+            assert(targetState.value === target.state);
+          }
+        },
+        {
+          name: 'should update value on target changes for long path',
+          test: function(){
+            var delegate = new DataObject();
+            var target = new DataObject({
+              delegate: delegate
+            });
+            var targetState = Value.query(target, 'delegate.state');
+
+            assert(targetState.value === delegate.state);
+
+            delegate.setState(STATE.ERROR);
+            assert(targetState.value === delegate.state);
+
+            target.setDelegate(null);
+            assert(targetState.value === null);
+
+            delegate.setState(STATE.READY);
+            assert(targetState.value === null);
+
+            target.setDelegate(delegate);
+            assert(targetState.value === delegate.state);
+          }
+        },
+        {
+          name: 'should update value with nested',
+          test: function(){
+            var target = new DataObject({
+              data: {
+                foo: 1
+              }
+            });
+            var targetState = Value.query(target, 'data.foo');
+
+            assert(targetState.value === 1);
+
+            target.update({
+              foo: 2
+            });
+            assert(targetState.value === 2);
+          }
+        },
+        {
+          name: 'should update value for long paths',
+          test: function(){
+            var foo = new DataObject();
+            var bar = new DataObject({ delegate: foo });
+            var target = new DataObject({ delegate: bar });
+            var targetState = Value.query(target, 'delegate.delegate.state');
+
+            assert(targetState.value === foo.state);
+
+            foo.setState(STATE.ERROR);
+            assert(targetState.value === foo.state);
+
+            bar.setDelegate();
+            assert(targetState.value === null);
+
+            bar.setDelegate(foo);
+            assert(targetState.value === foo.state);
+          }
+        },
+        {
+          name: 'should not update value if some parts of path has no events',
+          test: function(){
+            var target = new DataObject({
+              foo: 123
+            });
+            var foo;
+
+            // should warn when no events for property
+            assert(catchWarnings(function(){
+              foo = Value.query(target, 'foo');
+            }));
+
+            assert(foo.value === undefined);
+          }
+        },
+        {
+          name: 'should not produce the same value for one target but defferent paths',
+          test: function(){
+            var target = new DataObject({
+              data: {
+                foo: 1,
+                bar: 2
+              }
+            });
+            var foo = Value.query(target, 'root.data.foo');
+            var bar = Value.query(target, 'root.data.bar');
+
+            assert(foo !== bar);
+            assert(foo.value === 1);
+            assert(bar.value === 2);
+          }
+        },
+        {
+          name: 'using <static> in path',
+          test: [
+            {
+              name: 'simple path',
+              test: function(){
+                var target = new DataObject({
+                  foo: 123
+                });
+                var foo;
+
+                // should not warn when no events for property
+                assert(catchWarnings(function(){
+                  foo = Value.query(target, '<static>foo');
+                }) === false);
+
+                assert(foo.value === 123);
+              }
+            },
+            {
+              name: 'should warn when static applies to property with events',
+              test: function(){
+                var target = new DataObject();
+                var state = target.state;
+
+                // should not warn when no events for property
+                assert(catchWarnings(function(){
+                  targetState = Value.query(target, '<static>state');
+                }));
+
+                assert(targetState.value === state);
+
+                target.setState(STATE.ERROR, {});
+                assert(targetState.value === state);
+                assert(targetState.value !== target.state);
+              }
+            },
+            {
+              name: 'static property for nested object',
+              test: function(){
+                var foo = new DataObject();
+                var bar = new DataObject();
+                var target = new DataObject({
+                  delegate: foo
+                });
+                var fooState;
+                var barState;
+                var targetState;
+
+                foo.setState(STATE.READY, {});
+                fooState = foo.state;
+                bar.setState(STATE.ERROR, {});
+                barState = bar.state;
+
+                // should not warn when no events for property
+                assert(catchWarnings(function(){
+                  targetState = Value.query(target, 'delegate.<static>state');
+                }));
+
+                assert(targetState.value === fooState);
+
+                foo.setState(STATE.ERROR);
+                assert(targetState.value === fooState);
+
+                target.setDelegate();
+                assert(targetState.value === null);
+
+                target.setDelegate(foo);
+                assert(targetState.value === fooState);
+
+                target.setDelegate(bar);
+                assert(targetState.value === barState);
+
+                bar.setState(STATE.READY);
+                assert(targetState.value === barState);
+
+                foo.setState(STATE.UNDEFINED);
+                target.setDelegate(foo);
+                assert(targetState.value === fooState);
+              }
+            },
+            {
+              name: 'all properties are static',
+              test: function(){
+                var delegate = new DataObject();
+                var target = new DataObject({
+                  delegate: delegate
+                });
+                var state;
+                var targetState;
+
+                delegate.setState(STATE.READY, {});
+                state = delegate.state;
+
+                // should not warn when no events for property
+                assert(catchWarnings(function(){
+                  targetState = Value.query(target, '<static>delegate.<static>state');
+                }));
+
+                assert(targetState.value === state);
+
+                delegate.setState(STATE.ERROR);
+                assert(delegate.state !== state);
+                assert(targetState.value === state);
+
+                target.setDelegate();
+                assert(targetState.value === state);
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       name: 'Value.stateFactory',
       test: [
         {

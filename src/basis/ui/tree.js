@@ -119,6 +119,10 @@
   var Node = Class(UINode, ExpandCollapseMixin, {
     className: namespace + '.Node',
 
+    propertyDescriptors: {
+      collapsed: 'expand collapse'
+    },
+
    /**
     * @inheritDoc
     */
@@ -131,6 +135,7 @@
 
     emit_collapse: createEvent('collapse'),
     emit_expand: createEvent('expand'),
+    collapsed: false,
 
    /**
     * @inheritDoc

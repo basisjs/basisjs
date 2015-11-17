@@ -44,10 +44,13 @@
   var PaginatorNode = Node.subclass({
     className: namespace + '.PaginatorNode',
 
+    propertyDescriptors: {
+      pageNumber: 'pageNumberChanged'
+    },
+
     emit_pageNumberChanged: createEvent('pageNumberChanged', 'oldPageNumber'),
 
     template: templates.PaginatorNode,
-
     binding: {
       pageNumber: {
         events: 'pageNumberChanged',
@@ -56,7 +59,6 @@
         }
       }
     },
-
     action: {
       click: function(event){
         event.die();
@@ -107,6 +109,13 @@
   */
   var Paginator = Node.subclass({
     className: namespace + '.Paginator',
+
+    propertyDescriptors: {
+      pageSpan: 'pageSpanChanged',
+      pageCount: 'pageCountChanged',
+      activePage: 'activePageChanged',
+      spanStartPage: 'spanStartPageChanged'
+    },
 
     template: templates.Paginator,
     binding: {

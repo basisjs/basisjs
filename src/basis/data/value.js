@@ -68,7 +68,7 @@
     }
   };
 
-  var objectSetUpdater = basis.asap.schedule(function(object){
+  var updateQueue = basis.asap.schedule(function(object){
     object.update();
   });
 
@@ -193,7 +193,7 @@
         this.stateChanged_ = this.stateChanged_ || !!stateChanged;
 
         if (this.valueChanged_ || this.stateChanged_)
-          objectSetUpdater.add(this);
+          updateQueue.add(this);
       }
     },
 
@@ -221,7 +221,7 @@
       this.valueChanged_ = false;
       this.stateChanged_ = false;
 
-      objectSetUpdater.remove(this);
+      updateQueue.remove(this);
 
       if (!cleaner.globalDestroy)
       {
@@ -263,7 +263,7 @@
       this.lock();
       this.clear();
 
-      objectSetUpdater.remove(this);
+      updateQueue.remove(this);
 
       Value.prototype.destroy.call(this);
     }
@@ -274,8 +274,9 @@
   // Expression
   //
 
+  var EXPRESSION_SKIP_INIT = {};
   var EXPRESSION_BBVALUE_HANDLER = function(){
-    objectSetUpdater.add(this);
+    updateQueue.add(this);
   };
   var EXPRESSION_BBVALUE_DESTROY_HANDLER = function(){
     this.destroy();
@@ -283,6 +284,40 @@
   var BBVALUE_GETTER = function(value){
     return value.bindingBridge.get(value);
   };
+
+  function initExpression(){
+    var count = arguments.length - 1;
+    var calc = arguments[count];
+
+    if (typeof calc != 'function')
+      throw new Error(namespace + '.Expression: Last argument of constructor must be a function');
+
+    for (var values = new Array(count), i = 0; i < count; i++)
+    {
+      var value = values[i] = arguments[i];
+
+      if (!value.bindingBridge)
+        throw new Error(expression + '.Expression: bb-value required');
+
+      value.bindingBridge.attach(value, EXPRESSION_BBVALUE_HANDLER, this, EXPRESSION_BBVALUE_DESTROY_HANDLER);
+    }
+
+    this.calc_ = calc;
+    this.values_ = values;
+    this.update();
+
+    /** @cut */ basis.dev.setInfo(this, 'sourceInfo', {
+    /** @cut */   type: 'Expression',
+    /** @cut */   source: values,
+    /** @cut */   transform: calc
+    /** @cut */ });
+
+    return this;
+  }
+
+  function expression(){
+    return initExpression.apply(new Expression(EXPRESSION_SKIP_INIT), arguments);
+  }
 
  /**
   * @class
@@ -298,35 +333,18 @@
     init: function(/* [[value,] value, ..] calc */){
       ReadOnlyValue.prototype.init.call(this);
 
-      var count = arguments.length - 1;
-      var calc = arguments[count];
-
-      if (typeof calc != 'function')
-        throw new Error(this.constructor.className + ': Last argument of constructor must be a function');
-
-      for (var values = new Array(count), i = 0; i < count; i++)
-      {
-        var value = values[i] = arguments[i];
-
-        if (!value.bindingBridge)
-          throw new Error(this.constructor.className + ': bb-value required');
-
-        value.bindingBridge.attach(value, EXPRESSION_BBVALUE_HANDLER, this, EXPRESSION_BBVALUE_DESTROY_HANDLER);
-      }
-
-      this.calc_ = calc;
-      this.values_ = values;
-      this.update();
+      if (arguments[0] !== EXPRESSION_SKIP_INIT)
+        initExpression.apply(this, arguments);
     },
 
     // override in init
     update: function(){
-      objectSetUpdater.remove(this);
+      updateQueue.remove(this);
       Value.prototype.set.call(this, this.calc_.apply(null, this.values_.map(BBVALUE_GETTER)));
     },
 
     destroy: function(){
-      objectSetUpdater.remove(this);
+      updateQueue.remove(this);
 
       for (var i = 0, value; value = this.values_[i]; i++)
         value.bindingBridge.detach(value, EXPRESSION_BBVALUE_HANDLER, this);
@@ -343,5 +361,6 @@
   module.exports = {
     Property: Property,
     ObjectSet: ObjectSet,
-    Expression: Expression
+    Expression: Expression,
+    expression: expression
   };

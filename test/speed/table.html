@@ -70,11 +70,11 @@
       basis.require('basis.dom');
       basis.require('basis.dom.event');
       basis.require('basis.data.index');
-      basis.require('basis.data.generator');
       basis.require('basis.ui.field');
       basis.require('basis.ui.table');
       basis.require('basis.utils.benchmark');
 
+      var generator = basis.require('./generator.js');
       var DOM = basis.dom;
       var Event = basis.dom.event;
       var getTime = basis.utils.benchmark.time;
@@ -240,10 +240,10 @@
         for (var i = 0; i < count; i++)
           data.push({
             data: {
-              id:     basis.data.generator.number(0, 0, 10000),
-              title:  stringcache[i] || (stringcache[i] = basis.data.generator.string(2, 50)),
-              amount: basis.data.generator.number(2, -1000, 1000),
-              count:  basis.data.generator.number(0, -10, 10)
+              id:     generator.number(0, 0, 10000),
+              title:  stringcache[i] || (stringcache[i] = generator.string(2, 50)),
+              amount: generator.number(2, -1000, 1000),
+              count:  generator.number(0, -10, 10)
             }
           });
 

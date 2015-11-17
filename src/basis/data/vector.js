@@ -47,7 +47,7 @@
   }
 
   var VectorFn = Class(null, {
-    className: namespace + '.Count',
+    className: namespace + '.VectorFn',
     extendConstructor_: true
   });
 

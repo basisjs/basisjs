@@ -62,6 +62,7 @@
 
     template: templates.PageSlider,
     childClass: {
+      className: namespace + '.Page',
       template: templates.Page
     },
 

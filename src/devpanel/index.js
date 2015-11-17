@@ -54,7 +54,7 @@ function init(){
   );
 
   // init interface
-  require('./ui.js');
+  require('./panel.js');
   // temporary here
   //require('./module/ui/index.js');
 

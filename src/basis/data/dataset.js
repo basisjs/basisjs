@@ -214,6 +214,9 @@
   */
   var Merge = Class(ReadOnlyDataset, {
     className: namespace + '.Merge',
+    propertyDescriptors: {
+      rule: 'ruleChanged'
+    },
 
     active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.SOURCE,
@@ -688,6 +691,10 @@
   */
   var Subtract = Class(ReadOnlyDataset, {
     className: namespace + '.Subtract',
+    propertyDescriptors: {
+      minuend: 'minuendChanged',
+      subtrahend: 'subtrahendChanged'
+    },
 
     active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.MINUEND + SUBSCRIPTION.SUBTRAHEND,
@@ -881,6 +888,10 @@
   */
   var SourceDataset = Class(ReadOnlyDataset, {
     className: namespace + '.SourceDataset',
+    propertyDescriptors: {
+      source: 'sourceChanged',
+      subtrahend: 'subtrahendChanged'
+    },
 
     active: basis.PROXY,
     subscribeTo: SUBSCRIPTION.SOURCE,
@@ -1166,6 +1177,12 @@
   */
   var MapFilter = Class(SourceDataset, {
     className: namespace + '.MapFilter',
+    propertyDescriptors: {
+      rule: 'ruleChanged',
+      addMemberRef: false,
+      removeMemberRef: false,
+      ruleEvents: false
+    },
 
    /**
     * Map function for source object, to get member object.
@@ -1646,6 +1663,12 @@
   */
   var Slice = Class(SourceDataset, {
     className: namespace + '.Slice',
+    propertyDescriptors: {
+      limit: 'rangeChanged',
+      offset: 'rangeChanged',
+      orderDesc: 'ruleChanged',
+      rule: 'ruleChanged'
+    },
 
    /**
     * Ordering items function.
@@ -2422,6 +2445,9 @@
   */
   var Extract = SourceDataset.subclass({
     className: namespace + '.Extract',
+    propertyDescriptors: {
+      rule: 'ruleChanged'
+    },
 
    /**
     * Nothing return by default. Behave like proxy.

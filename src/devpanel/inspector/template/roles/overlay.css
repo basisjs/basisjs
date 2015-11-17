@@ -7,10 +7,15 @@
   left: 0;
   right: 0;
   z-index: 10000;
-  background: rgba(110, 163, 217, 0.2);
 }
+.pickMode
+{
+  pointer-events: auto;
+}
+
 .content
 {
+  transform: translateZ(0);  
   position: absolute;
   top: 0;
   left: 0;
@@ -21,23 +26,4 @@
 {
   opacity: 0;
   transition: opacity .15s;
-}
-.token
-{
-  position: absolute;
-  z-index: 65000;
-  cursor: pointer;
-  font-size: 10px;
-  font-weight: bold;
-  font-family: verdana;
-  line-height: 13px;
-  text-indent: 1px;
-  color: black;
-  text-shadow:
-    0 -1px 0 white,
-    0 1px 0 white,
-   -1px 0 0 white,
-    1px 0 0 white,
-    1px 1px 1px black,
-   -1px -1px 1px black;
 }

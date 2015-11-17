@@ -92,6 +92,10 @@
   var Window = Class(Node, {
     className: namespace + '.Window',
 
+    propertyDescriptors: {
+      visible: 'open close'
+    },
+
     emit_open: createEvent('open'),
     emit_close: createEvent('close'),
 
@@ -382,9 +386,13 @@
   //
 
   var windowManager = new Node({
+    role: 'basis-window-manager',
+
     template: templates.windowManager,
     blocker: basis.fn.lazyInit(function(){
-      return new Blocker();
+      return new Blocker({
+        role: 'basis-modal-window-mate'
+      });
     }),
 
     selection: true,

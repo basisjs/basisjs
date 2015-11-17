@@ -1,0 +1,32 @@
+.leaf
+{
+  font-size: 11px;
+}
+.caption
+{
+  padding: 2px 10px 3px 504px;
+  margin-left: -500px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  color: #AAA;
+}
+.caption:hover
+{
+  background: #E0E0E0;
+}
+.caption_matched
+{
+  color: #272;
+}
+.caption_selected,
+.caption_selected:hover
+{
+  background: #EEDDAA;
+  cursor: default;
+}
+.children
+{
+  margin-left: 15px;
+}

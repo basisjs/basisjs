@@ -15,7 +15,8 @@
   color: #353;
   background: #B6CFB6;
 }
-.action
+.action,
+.l10n
 {
   padding: 3px;
   padding: 3px .5ch;
@@ -25,4 +26,14 @@
   color: #458;
   text-shadow: 0px 0px 1px white;
   cursor: default;
+}
+.l10n
+{
+  background: #EAC4F7;
+  color: #661188;
+}
+.hasLocation
+{
+  text-decoration: underline;
+  cursor: pointer;
 }

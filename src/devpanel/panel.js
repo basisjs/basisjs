@@ -1,14 +1,15 @@
-require('basis.data');
-require('basis.data.value');
-require('basis.data.index');
-require('basis.ui');
-require('basis.dragdrop');
-
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
+var Value = require('basis.data').Value;
+var Dataset = require('basis.data').Dataset;
+var DataObject = require('basis.data').Object;
+var Expression = require('basis.data.value').Expression;
+var count = require('basis.data.index').count;
+var Node = require('basis.ui').Node;
+var MoveableElement = require('basis.dragdrop').MoveableElement;
 var l10nInspector = resource('./inspector/l10n.js');
 var templateInspector = resource('./inspector/template.js');
 var heatInspector = resource('./inspector/heatmap.js');
@@ -19,8 +20,21 @@ var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
 //var fileInspector = resource('./module/fileInspector/fileInspector.js');
 
-var inspectors = new basis.data.Dataset();
-var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(Boolean);
+var inspectors = new Dataset();
+var inspectMode = count(inspectors, 'update', 'data.mode').as(Boolean);
+var currentInspector = new Value({
+  handler: {
+    change: function(sender, oldValue){
+      if (oldValue)
+        oldValue.stopInspect();
+      if (this.value)
+        this.value.startInspect();
+    }
+  }
+});
+var currentInspectorName = currentInspector.as(function(inspector){
+  return inspector ? inspector.name : '';
+});
 
 [
   l10nInspector,
@@ -30,7 +44,13 @@ var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(B
   rolesInspector
 ].forEach(function(inspectorRes){
   inspectorRes.ready(function(inspector){
-    inspectors.add(inspector.inspectMode.link(new basis.data.Object, function(value){
+    inspectors.add(inspector.inspectMode.link(new DataObject, function(value){
+      if (value)
+        currentInspector.set(inspector);
+      else
+        if (currentInspector.value === inspector)
+          currentInspector.set();
+
       this.update({ mode: value });
     }));
   });
@@ -43,7 +63,7 @@ var inspectMode = basis.data.index.count(inspectors, 'update', 'data.mode').as(B
 
 var isOnline;
 var permamentFiles = [];
-var permamentFilesCount = new basis.data.Value(0);
+var permamentFilesCount = new Value({ value: 0 });
 
 if (typeof basisjsToolsFileSync != 'undefined')
 {
@@ -76,10 +96,20 @@ if (typeof basisjsToolsFileSync != 'undefined')
 else
 {
   // old basisjs-tools
-  isOnline = inspectBasis.devtools && basis.data.Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
+  isOnline = inspectBasis.devtools && Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
 }
 
-var panel = new basis.ui.Node({
+function activateInspector(inspector, e){
+  cultureList.setDelegate();
+  themeList.setDelegate();
+  e.die();
+  inspectBasisDomEvent.captureEvent('click', function(){
+    inspectBasisDomEvent.releaseEvent('click');
+    currentInspector.set(inspector());
+  });
+}
+
+var panel = new Node({
   container: document.body,
 
   activated: false,
@@ -94,8 +124,17 @@ var panel = new basis.ui.Node({
     cultureName: inspectBasisL10n.culture,
     cultureList: cultureList,
     isOnline: isOnline,
+    permanentFilesChangedCount: permamentFilesCount,
     inspectMode: inspectMode,
-    reloadRequired: 'satellite:',
+    inspector: currentInspectorName,
+    inspectorId: new Expression(currentInspectorName, rolesInspector().pickMode, function(inspectorName, pickMode){
+      inspectorName = inspectorName ? inspectorName.replace(/\s/g, '').toLowerCase() : '';
+
+      if (inspectorName == 'roles')
+        return pickMode ? 'pickRoles' : 'roles';
+
+      return inspectorName;
+    }),
     grid: function(){
       var config = inspectBasis.config.devpanel;
       return Number(config && config.grid) || 0;
@@ -103,56 +142,31 @@ var panel = new basis.ui.Node({
   },
 
   action: {
-    inspectTemplate: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        templateInspector().startInspect();
-      });
-    },
     showThemes: function(){
       themeList.setDelegate(this);
-    },
-    inspectl10n: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        l10nInspector().startInspect();
-      });
     },
     showCultures: function(){
       cultureList.setDelegate(this);
     },
+    inspectTemplate: function(e){
+      activateInspector(templateInspector, e);
+    },
+    inspectl10n: function(e){
+      activateInspector(l10nInspector, e);
+    },
     inspectHeat: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        heatInspector().startInspect();
-      });
+      activateInspector(heatInspector, e);
     },
     inspectGrid: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        gridInspector().startInspect();
-      });
+      activateInspector(gridInspector, e);
+    },
+    inspectPickRoles: function(e){
+      activateInspector(rolesInspector, e);
+      rolesInspector().pickMode.set(true);
     },
     inspectRoles: function(e){
-      cultureList.setDelegate();
-      themeList.setDelegate();
-      e.die();
-      inspectBasisDomEvent.captureEvent('click', function(){
-        inspectBasisDomEvent.releaseEvent('click');
-        rolesInspector().startInspect();
-      });
+      activateInspector(rolesInspector, e);
+      rolesInspector().pickMode.set(false);
     },
     // inspectFile: function(){
     //   fileInspector().toggle();
@@ -160,33 +174,22 @@ var panel = new basis.ui.Node({
     storePosition: function(){
       if (localStorage)
         localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
-    }
-  },
-
-  satellite: {
-    reloadRequired: {
-      instance: new basis.ui.Node({
-        template: resource('./template/reloadRequired.tmpl'),
-        binding: {
-          visible: permamentFilesCount.as(Boolean),
-          count: permamentFilesCount
-        },
-        action: {
-          reload: function(){
-            global.location.reload();
-          }
-        }
-      })
+    },
+    cancelInspect: function(){
+      currentInspector.set();
+    },
+    reload: function(){
+      global.location.reload();
     }
   },
 
   init: function(){
-    basis.ui.Node.prototype.init.call(this);
+    Node.prototype.init.call(this);
 
-    this.dde = new basis.dragdrop.MoveableElement();
+    this.dde = new MoveableElement();
   },
   templateSync: function(){
-    basis.ui.Node.prototype.templateSync.call(this);
+    Node.prototype.templateSync.call(this);
 
     this.dde.setElement(this.element, this.tmpl.dragElement);
   },
@@ -194,7 +197,7 @@ var panel = new basis.ui.Node({
     this.dde.destroy();
     this.dde = null;
 
-    basis.ui.Node.prototype.destroy.call(this);
+    Node.prototype.destroy.call(this);
   }
 });
 

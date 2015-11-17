@@ -32,6 +32,23 @@ module.exports = {
       }
     },
     {
+      name: 'l10n',
+      test: [
+        {
+          name: 'should not wrong match to l10n tokens',
+          test: function(){
+            var decl = nsTemplate.makeDeclaration(
+              '<span title="{l10n}"/>' +
+              '<span title="{l10n:}"/>'
+            );
+
+            assert(Array.isArray(decl.l10n));
+            assert(decl.l10n.length == 0);
+          }
+        }
+      ]
+    },
+    {
       name: 'style order',
       test: [
         {

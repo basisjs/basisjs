@@ -41,7 +41,14 @@ module.exports = {
             var template = createTemplate('<b:l10n src="./test.l10n"/><span title="{l10n:foo}"/>');
 
             assert(text(template) === text('<span title="foo text"/>'));
+          }
+        },
+        {
+          name: 'unresolved tokens should be static strings',
+          test: function(){
+            var template = createTemplate('<span title="{l10n:foo}"/>');
 
+            assert(text(template) === text('<span title="{l10n:foo}"/>'));
           }
         },
         {
@@ -50,7 +57,6 @@ module.exports = {
             var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:foo}"/>');
 
             assert(text(template, { foo: 'value' }) === text('<span title="test value/foo text"/>'));
-
           }
         },
         {
@@ -133,6 +139,18 @@ module.exports = {
               }
             },
             {
+              name: 'should be used normal in attribute expressions with regular l10n tokens',
+              test: function(){
+                var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {l10n:foo}/{foo}/{l10n:enum.{foo}}"/>');
+
+                assert(text(template) === text('<span/>')); // single instance
+                assert(text(template) === text('<span/>')); // turn to factory
+                assert(text(template, { foo: 'foo' }) === text('<span title="test foo text/foo/foo text"/>'));
+                assert(text(template, { foo: 'bar' }) === text('<span title="test foo text/bar/bar text"/>'));
+                assert(text(template, { foo: 'baz' }) === text('<span title="test foo text/baz/undefined"/>'));
+              }
+            },
+            {
               name: 'should change on token change',
               test: function(){
                 var template = createTemplate('<b:l10n src="./test.l10n"/>{l10n:enum.{foo}}<span title="test {foo}/{l10n:enum.{foo}}"/>');
@@ -190,7 +208,7 @@ module.exports = {
               test: function(){
                 var template = createTemplate('<b:l10n src="./test.l10n"/><span title="test {foo}/{l10n:plural.{foo}}"/>');
 
-                assert(text(template) === text('<span title="test undefined/plural texts"/>'));
+                assert(text(template) === text('<span/>')); // foo is undefined
                 assert(text(template, { foo: 'foo' }) === text('<span title="test foo/plural texts"/>'));
                 assert(text(template, { foo: 1 }) === text('<span title="test 1/plural text"/>'));
                 assert(text(template, { foo: 2 }) === text('<span title="test 2/plural texts"/>'));
@@ -941,7 +959,7 @@ module.exports = {
           }
         },
         {
-          name: 'xx',
+          name: 'nested tokens',
           test: function(){
             var dictionary = l10n.dictionary(basis.resource('./complex.l10n')); // use resource to resolve nested tokens
             dictionary.update({

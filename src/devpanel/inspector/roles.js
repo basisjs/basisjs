@@ -1,10 +1,15 @@
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisUI = inspectBasis.require('basis.ui');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
+var inspectBasisTracker = inspectBasis.require('basis.tracker');
+var getTrackInfo = inspectBasisTracker.getInfo;
+var trackingInfo = resource('./tracking-info/index.js');
 
-var Node = global.Node;
-var Value = require('basis.data').Value;
 var Overlay = require('./utils/overlay.js');
+var Value = require('basis.data').Value;
+var Node = require('basis.ui').Node;
 var events = [
   'click',
   'mousedown',
@@ -23,6 +28,12 @@ var events = [
   'pointerout',
   'pointermove',
   'pointercancel',
+
+  'touchstart',
+  'touchend',
+  'touchcancel',
+  'touchleave',
+  'touchmove',
 
   'keyup',
   'keydown',
@@ -44,7 +55,13 @@ function findObject(domNode){
     return inspectBasisTemplate.resolveObjectById(cursor[inspectBasisTemplateMarker]);
 }
 
-function getActions(domNode){
+function getEvents(domNode){
+  return events.filter(function(eventName){
+    return domNode.hasAttribute('event-' + eventName);
+  });
+}
+
+function getActions(domNode, events){
   var result = events
     .map(function(eventName){
       return domNode.getAttribute('event-' + eventName);
@@ -59,38 +76,158 @@ function getActions(domNode){
   return false;
 }
 
+var eventLog = new Node({
+  template: resource('./template/roles/event-log.tmpl'),
+  childClass: {
+    template: resource('./template/roles/event-log-entry.tmpl'),
+    binding: {
+      event: 'data:',
+      selector: 'data:',
+      data: function(node){
+        return JSON.stringify(node.data.data, null, 2);
+      },
+      destroing: 'data:'
+    },
+    init: function(){
+      Node.prototype.init.call(this);
+      setTimeout(this.destroy.bind(this), 8000);
+      setTimeout(function(){
+        this.update({ destroing: true });
+      }.bind(this), 7500);
+    }
+  }
+});
+
+inspectBasisTracker.attach(function(event){
+  eventLog.appendChild({
+    data: event
+  });
+});
+
 var overlay = new Overlay({
+  pickMode: new basis.Token(false),
+
   template: resource('./template/roles/overlay.tmpl'),
+  binding: {
+    pickMode: 'pickMode',
+    eventLog: eventLog
+  },
 
   childClass: {
     template: resource('./template/roles/token.tmpl'),
     binding: {
-      bug: 'data:bug'
+      hasActions: 'data:',
+      missedActions: 'data:',
+      conflict: 'data:',
+      track: 'data:',
+      role: {
+        events: 'update',
+        getter: function(node){
+          return node.data.role || '(no role)';
+        }
+      },
+      problem: {
+        events: 'update',
+        getter: function(node){
+          return !node.data.role || node.data.missedActions || node.data.conflict;
+        }
+      }
+    },
+    action: {
+      showPath: function(){
+        trackingInfo().set(this.domNode);
+        overlay.deactivate();
+      }
     }
+  },
+
+  activate: function(){
+    if (trackingInfo.isResolved())
+      trackingInfo().set();
+
+    Overlay.prototype.activate.apply(this, arguments);
+  },
+
+  apply: function(){
+    this.pathMap = {};
+    Overlay.prototype.apply.call(this);
   },
 
   processNode: function(domNode){
     if (domNode.nodeType == 1)
     {
-      var actions = getActions(domNode);
-      if (actions)
+      var events = getEvents(domNode);
+      var actions = getActions(domNode, events);
+      var roleMarker = domNode.getAttribute('role-marker') || '';
+
+      if (actions || roleMarker)
       {
-        var object = findObject(domNode);
+        var object = actions ? findObject(domNode) : false;
         var brokenActions = false;
+        var path = [];
+        var knownPath = false;
+
+        if (roleMarker)
+        {
+          var cursor = domNode;
+
+          while (cursor && cursor !== document)
+          {
+            var role = cursor.getAttribute('role-marker');
+            if (role)
+              path.unshift(role);
+            cursor = cursor.parentNode;
+          }
+
+          knownPath = hasOwnProperty.call(this.pathMap, path);
+          if (knownPath)
+          {
+            if (this.pathMap[path] !== true)
+            {
+              this.pathMap[path].update({
+                conflict: true
+              });
+              this.pathMap[path] = true;
+            }
+          }
+        }
 
         if (object && object.action)
           brokenActions = actions.filter(function(actionName){
-            return typeof object.action[actionName] != 'function';
+            return typeof object.action[actionName] != 'function' &&
+              actionName != 'prevent-default' &&
+              actionName != 'stop-propagation' &&
+              actionName != 'log-event';
           });
 
-        this.highlight(domNode, {
-          bug: brokenActions && brokenActions.length
-            ? brokenActions
-            : ''
+        var node = this.highlight(domNode, {
+          role: roleMarker,
+          hasActions: !!actions,
+          missedActions: brokenActions && brokenActions.length ? brokenActions.join(' ') : '',
+          conflict: knownPath,
+          track: !!getTrackInfo(path),
+          path: path.join(' ')
         });
+
+
+        if (roleMarker && !knownPath && node)
+          this.pathMap[path] = node;
       }
     }
   }
+});
+
+overlay.pickMode.attach(function(pickMode){
+  var events = {};
+
+  if (pickMode)
+    events = {
+      click: true,
+      mousedown: true,
+      mouseup: true
+    };
+
+  overlay.setMuteEvents(events);
 });
 
 //
@@ -98,13 +235,15 @@ var overlay = new Overlay({
 //
 
 module.exports = {
+  name: 'Roles',
   startInspect: function(){
     overlay.activate();
   },
-  endInspect: function(){
+  stopInspect: function(){
     overlay.deactivate();
   },
   inspectMode: Value.from(overlay, 'activeChanged', 'active'),
+  pickMode: overlay.pickMode,
   isActive: function(){
     return overlay.active;
   }

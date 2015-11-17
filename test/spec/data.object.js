@@ -1302,6 +1302,29 @@ module.exports = {
               }
             }
           ]
+        },
+        {
+          name: 'Value.query',
+          test: function(){
+            var a = new DataObject();
+            var instance = new Merge({
+              fields: {
+                foo: 'a'
+              },
+              sources: {
+                a: null
+              }
+            });
+
+            var queryValue = Value.query(instance, 'sources.a');
+            assert(queryValue.value === null);
+
+            instance.setSource('a', a);
+            assert(queryValue.value === a);
+
+            instance.setSource('a', null);
+            assert(queryValue.value === null);
+          }
         }
       ]
     }

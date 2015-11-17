@@ -104,10 +104,11 @@ var overlay = new Overlay({
 //
 
 module.exports = {
+  name: 'Localization',
   startInspect: function(){
     overlay.activate();
   },
-  endInspect: function(){
+  stopInspect: function(){
     overlay.deactivate();
   },
   inspectMode: Value.from(overlay, 'activeChanged', 'active'),

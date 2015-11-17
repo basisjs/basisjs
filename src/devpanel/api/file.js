@@ -131,7 +131,7 @@ module.exports = {
 
     if (basisjsTools && typeof basisjsTools.openFile == 'function')
     {
-      basisjsTools.openFile(basis.path.resolve(filename));
+      basisjsTools.openFile(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
     }
   }
 };

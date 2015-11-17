@@ -1,0 +1,14 @@
+/build
+/demo
+/docs
+/node_modules
+/scripts
+/temp
+/test
+/tmp
+/tour
+.*
+basis.config
+bower.json
+index.html
+karma.conf.js

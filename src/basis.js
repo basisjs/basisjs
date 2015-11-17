@@ -37,21 +37,15 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.4.1';
+  var VERSION = '1.5.0';
 
   var global = Function('return this')();
-  var NODE_ENV = global !== context ? global : false;
+  var process = global.process;
   var document = global.document;
   var location = global.location;
-  var process = global.process;
+  var NODE_ENV = global !== context && process && process.argv ? global : false;
   var toString = Object.prototype.toString;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-  // It's old behaviour that looks odd. For now we leave everything as is.
-  // But we should use context as something to store into, and global as source
-  // of global things.
-  // TODO: to do this stuff right
-  global = context;
 
   // const
   var FACTORY = {};
@@ -952,7 +946,7 @@
         add: function(object){
           queue[object.basisObjectId] = object;
           if (!scheduled)
-            scheduled = basis.asap(process);
+            scheduled = asap(process);
         },
         remove: function(object){
           delete queue[object.basisObjectId];
@@ -1012,7 +1006,7 @@
     if (NODE_ENV)
     {
       // try to use baseURI from process, it may be provided by parent module
-      var path = (process.basisjsBaseURI || require('path').resolve('.')).replace(/\\/g, '/'); // on Windows path contains backslashes
+      var path = (process.basisjsBaseURI || '/').replace(/\\/g, '/'); // on Windows path contains backslashes
       baseURI = path.replace(/^[^\/]*/, '');
       origin = path.replace(/\/.*/, '');
     }
@@ -1549,7 +1543,6 @@
 
       /** @cut */ if (!className)
       /** @cut */   className = SuperClass.className + '._Class' + classId;
-      /** @cut */ // consoleMethods.warn('Class has no name');
 
       // temp class constructor with no init call
       var NewClassProto = function(){};
@@ -1570,14 +1563,19 @@
         // class methods
         isSubclassOf: isSubclassOf,
         subclass: function(){
-          return createClass.apply(null, [newClass].concat(arrayFrom(arguments)));
+          return createClass.apply(null, [NewClass].concat(arrayFrom(arguments)));
         },
         extend: extendClass,
+        factory: function(config){
+          return factory(function(extra){
+            return new NewClass(merge(config, extra));
+          });
+        },
 
         // auto extend creates a subclass
         __extend__: function(value){
           if (value && value !== SELF && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
-            return BaseClass.create.call(null, newClass, value);
+            return BaseClass.create.call(null, NewClass, value);
           else
             return value;
         },
@@ -1586,14 +1584,14 @@
         prototype: newProto
       };
 
-      // extend newClass prototype
+      // extend NewClass prototype
       for (var i = 1, extension; extension = arguments[i]; i++)
         newClassProps.extend(extension);
 
       /** @cut */if (newProto.init !== BaseClass.prototype.init && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
 
       // new class constructor
-      var newClass = newClassProps.extendConstructor_
+      var NewClass = newClassProps.extendConstructor_
         // constructor with instance extension
         ? function(extend){
             // mark object
@@ -1630,25 +1628,25 @@
 
       // verbose name in dev
       // NOTE: this code makes Chrome and Firefox show class name in console
-      /** @cut */ newClass = devVerboseName(className, { instanceSeed: instanceSeed }, newClass);
+      /** @cut */ NewClass = devVerboseName(className, { instanceSeed: instanceSeed }, NewClass);
 
       // add constructor property to prototype
-      newProto.constructor = newClass;
+      newProto.constructor = NewClass;
 
       for (var key in newProto)
         if (newProto[key] === SELF)
-          newProto[key] = newClass;
+          newProto[key] = NewClass;
         //else
         //  newProto[key] = newProto[key];
 
       // extend constructor with properties
-      extend(newClass, newClassProps);
+      extend(NewClass, newClassProps);
 
       // for class introspection
-      /** @cut */ classes.push(newClass);
+      /** @cut */ classes.push(NewClass);
 
       // return new class
-      return newClass;
+      return NewClass;
     }
 
    /**
@@ -2074,12 +2072,6 @@
   var virtualResourceSeed = 1;
   /** @cut */ var resourceResolvingStack = [];
   /** @cut */ var requires;
-  // var resourceUpdateNotifier = extend(new Token(), {
-  //   set: function(value){
-  //     this.value = value;
-  //     this.apply();
-  //   }
-  // });
 
   // apply prefetched resources to cache
   (function(){
@@ -2157,9 +2149,12 @@
       {
         try {
           // try to use special read file function, it may be provided by parent module
+          /** @cut */ if (!process.basisjsReadFile)
+          /** @cut */   consoleMethods.warn('basis.resource: basisjsReadFile not found, file content couldn\'t to be read');
+
           resourceContent = process.basisjsReadFile
             ? process.basisjsReadFile(url)
-            : require('fs').readFileSync(url, 'utf-8');
+            : '';
         } catch(e){
           /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
@@ -2193,7 +2188,7 @@
       /** @cut    recursion warning */
       /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
       /** @cut */ if (idx != -1)
-      /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+      /** @cut */   consoleMethods.warn('basis.resource recursion: ' + resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
       /** @cut */ resourceResolvingStack.push(resourceUrl);
 
       // if resource type has wrapper - wrap it, or use url content as result
@@ -2215,9 +2210,6 @@
       resolved = true;
       applyResourcePatches(resource);
       resource.apply();
-
-      // resourceUpdateNotifier.value = resourceUrl;
-      // resourceUpdateNotifier.apply();
 
       /** @cut    recursion warning */
       /** @cut */ resourceResolvingStack.pop();
@@ -2268,9 +2260,6 @@
             applyResourcePatches(resource);
             resource.apply();
           }
-
-          // resourceUpdateNotifier.value = resourceUrl;
-          // resourceUpdateNotifier.apply();
         }
       },
       reload: function(){
@@ -2336,9 +2325,6 @@
 
   extend(getResource, {
     resolveURI: resolveResourceFilename,
-    // onUpdate: function(fn, context){
-    //   resourceUpdateNotifier.attach(fn, context);
-    // },
     isResource: function(value){
       return value ? resources[value.url] === value : false;
     },
@@ -2481,13 +2467,23 @@
   // script compilation and execution
   //
 
+  /** @cut */ var SOURCE_OFFSET;
+
   function compileFunction(sourceURL, args, body){
+    /** @cut */ if (isNaN(SOURCE_OFFSET))
+    /** @cut */ {
+    /** @cut */   var marker = basis.genUID();
+    /** @cut */   SOURCE_OFFSET = new Function(args, marker).toString().split(marker)[0].split(/\n/).length - 1;
+    /** @cut */ }
+    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1); // function wrapper prefix lines + 'use strict' line
+    /** @cut */ if (!/\/\/# sourceMappingURL=[^\r\n]+[\s]*$/.test(body))
+    /** @cut */   body += '\n\n//# sourceURL=' + pathUtils.origin + sourceURL;
+
     try {
       return new Function(args,
         '"use strict";\n' +
         /** @cut */ (NODE_ENV ? 'var __nodejsRequire = require;\n' : '') +
         body
-        /** @cut */ + '\n\n//# sourceURL=' + pathUtils.origin + sourceURL
       );
     } catch(e) {
       /** @cut */ if (document && 'line' in e == false && 'addEventListener' in global)
@@ -2698,7 +2694,9 @@
   * @name require
   */
   var requireNamespace = function(path, baseURI){
-    if (!/[^a-z0-9_\.]/i.test(path) && pathUtils.extname(path) != '.js')
+    var extname = pathUtils.extname(path);
+
+    if (!/[^a-z0-9_\.]/i.test(path) && extname != '.js')
     {
       // namespace, like 'foo.bar.baz'
       path = resolveNSFilename(path);
@@ -2707,7 +2705,12 @@
     {
       // resolve filename, but not for path with # or ? (used by virtual resources)
       if (!/[\?#]/.test(path))
+      {
+        if (!extname)
+          path += '.js';
+
         path = resolveResourceFilename(path, baseURI, 'basis.require(\'{url}\')');
+      }
     }
 
     return getResource(path).fetch();
@@ -3719,6 +3722,55 @@
   // export names
   //
 
+  var devInfoResolver = (function(){
+    /** @cut */ var getExternalInfo = $undef;
+    var fixSourceOffset = $self;
+    var set = function(target, key, info){};
+    var get = function(target, key){
+      /** @cut */ var externalInfo = getExternalInfo(target);
+      /** @cut */ var ownInfo = map.get(target);
+      /** @cut */
+      /** @cut */ if (externalInfo || ownInfo)
+      /** @cut */ {
+      /** @cut */   var info = merge(externalInfo, ownInfo);
+      /** @cut */   return key ? info[key] : info;
+      /** @cut */ }
+    };
+
+    /** @cut */ // old Firefox has bugs in WeakMap implementation, don't use dev info for them
+    /** @cut */ // https://bugzilla.mozilla.org/show_bug.cgi?id=1127827
+    /** @cut */ try { new WeakMap().get(1); } catch(e) { get = function(){}; }
+
+    /** @cut */ var map = typeof WeakMap == 'function' ? new WeakMap() : false;
+    /** @cut */
+    /** @cut */ if (map)
+    /** @cut */   set = function(target, key, value){
+    /** @cut */     if (!target || (typeof target != 'object' && typeof target != 'function'))
+    /** @cut */     {
+    /** @cut */       consoleMethods.warn('Set dev info for non-object or non-function was ignored');
+    /** @cut */       return;
+    /** @cut */     }
+    /** @cut */
+    /** @cut */     var info = map.get(target);
+    /** @cut */     if (!info)
+    /** @cut */       map.set(target, info = {});
+    /** @cut */     info[key] = value;
+    /** @cut */   };
+
+    /** @cut */ var resolver = config.devInfoResolver || global.$devinfo || {};
+    /** @cut */ var test = {};
+    /** @cut */ if (typeof resolver.fixSourceOffset == 'function')
+    /** @cut */   fixSourceOffset = resolver.fixSourceOffset;
+    /** @cut */ if (typeof resolver.get == 'function')
+    /** @cut */   getExternalInfo = resolver.get;
+
+    return {
+      fixSourceOffset: fixSourceOffset,
+      setInfo: set,
+      getInfo: get
+    };
+  })();
+
   // create and extend basis namespace
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
@@ -3734,11 +3786,12 @@
       return createBasisInstance(
         global,
         basisFilename,
-        complete({ noConflict: true }, config)
+        complete({ noConflict: true, devpanel: false }, config)
       );
     },
-    dev: (new Namespace('basis.dev'))
+    dev: consoleMethods = (new Namespace('basis.dev'))
       .extend(consoleMethods)
+      .extend(devInfoResolver)
       .extend({
         warnPropertyAccess: warnPropertyAccess
       }),
@@ -3844,10 +3897,16 @@
   // auto load section
   //
 
-  if (config.autoload && !NODE_ENV)
-    config.autoload.forEach(function(name){
-      requireNamespace(name);
-    });
+  if (!NODE_ENV)
+  {
+    if (config.autoload)
+      config.autoload.forEach(function(name){
+        requireNamespace(name);
+      });
+
+    /** @cut */ if ('devpanel' in config == false || config.devpanel)
+    /** @cut */   requireNamespace('basis.devpanel');
+  }
 
 
   //

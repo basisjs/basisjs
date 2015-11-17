@@ -8,6 +8,7 @@ module.exports = {
 
     var HtmlTemplate = basis.require('basis.template.html').Template;
     var nsTemplate = basis.require('basis.template');
+    var nsTheme = basis.require('basis.template.theme');
 
     var api = basis.require('../helpers/template.js').createSandboxAPI(basis);
     var createTemplate = api.createTemplate;
@@ -80,6 +81,27 @@ module.exports = {
     require('./template/b-include.js'),
     require('./template/b-define.js'),
     require('./template/isolate.js'),
-    require('./template/l10n.js')
+    require('./template/l10n.js'),
+    {
+      name: 'Themes',
+      test: [
+        {
+          name: 'should not exception if fallback theme doesn\'t exist yet',
+          test: function(){
+            var theme = basis.genUID();
+            var fallbackTheme = basis.genUID();
+
+            assert(nsTheme.getThemeList().indexOf(theme) === -1);
+            assert(nsTheme.getThemeList().indexOf(fallbackTheme) === -1);
+
+            nsTemplate.theme(theme).fallback(fallbackTheme);
+
+            assert(nsTheme.getThemeList().indexOf(theme) !== -1);
+            assert(nsTheme.getThemeList().indexOf(fallbackTheme) !== -1);
+            assert.deep([fallbackTheme, 'base'], nsTemplate.theme(theme).fallback());
+          }
+        }
+      ]
+    }
   ]
 };

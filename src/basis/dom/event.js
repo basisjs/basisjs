@@ -70,12 +70,28 @@
     mousewheel: ['wheel', 'mousewheel', 'DOMMouseScroll']
   };
 
+  var DEPRECATED = /^(returnValue|keyLocation|layerX|layerY|webkitMovementX|webkitMovementY)$/;
+
  /**
   * @param {string} eventName
   * @return {Array.<string>}
   */
   function browserEvents(eventName){
     return BROWSER_EVENTS[eventName] || [eventName];
+  }
+
+  function getPath(node){
+    var path = [];
+
+    do
+    {
+      path.push(node);
+    }
+    while (node = node.parentNode);
+
+    path.push(global);
+
+    return path;
   }
 
 
@@ -92,9 +108,9 @@
 
       for (var name in event)
         /** prevent warnings on deprecated properties */
-        /** @cut*/ if (name != 'returnValue' && name != 'keyLocation' && name != 'layerX' && name != 'layerY' && (event.type != 'progress' || (name != 'totalSize' && name != 'position')))
-        if (typeof event[name] != 'function' && name in this == false)
-          this[name] = event[name];
+        if (!DEPRECATED.test(name) && (event.type != 'progress' || (name != 'totalSize' && name != 'position')))
+          if (typeof event[name] != 'function' && name in this == false)
+            this[name] = event[name];
 
       var target = sender(event);
       basis.object.extend(this, {
@@ -102,6 +118,7 @@
 
         sender: target,
         target: target,
+        path: event.path ? basis.array(event.path) : getPath(target),
 
         key: key(event),
         charCode: charCode(event),

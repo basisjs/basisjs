@@ -20,6 +20,7 @@
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var DatasetWrapper = basisData.DatasetWrapper;
   var resolveDataset = basisData.resolveDataset;
+  var chainValueFactory = basisData.chainValueFactory;
 
   var basisDataset = require('basis.data.dataset');
   var MapFilter = basisDataset.MapFilter;
@@ -68,6 +69,12 @@
   */
   var Index = Class(Value, {
     className: namespace + '.Index',
+
+    propertyDescriptors: {
+      explicit: false,
+      wrapperCount: false,
+      updateEvents: false
+    },
 
    /**
     * Explicit declared
@@ -581,7 +588,16 @@
   }
 
   var createIndexConstructor = function(IndexClass, defGetter){
-    return function(source, events, getter){
+    return function create(source, events, getter){
+      // should return factory if source is factory
+      if (basis.fn.isFactory(source))
+      {
+        var factory = source;
+        return chainValueFactory(function(target){
+          return create(factory(target), events, getter, true);
+        });
+      }
+
       if (typeof source == 'function' || typeof source == 'string')
       {
         getter = events;

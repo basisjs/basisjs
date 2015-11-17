@@ -41,6 +41,7 @@ module.exports = {
           ':nth-last-child(2n + 1 of .prefix:not(.prefix)) { }',
           '/*/ .error */',
           '/* .error {}',
+          '@import "foo.css";',
           '@import url(foo.html)',
           '@media(min-width:100px){ .prefix {} .prefix.prefix {} }',
           '@media (min-width:100px){ .prefix {} .prefix.prefix {} }',

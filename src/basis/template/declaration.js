@@ -302,6 +302,27 @@ var makeDeclaration = (function(){
         setStylePropertyBinding(host, attr, 'visibility', 'visible', 'visibility: hidden;');
     }
 
+    function addRoleAttribute(host, role/*, sourceToken*/){
+      /** @cut */ var sourceToken = arguments[2];
+
+      if (!/[\/\(\)]/.test(role))
+      {
+        var item = [
+          TYPE_ATTRIBUTE,
+          [['$role'], [0, role ? '/' + role : '']],
+          0,
+          'role-marker'
+        ];
+
+        /** @cut */ item.sourceToken = sourceToken;
+        /** @cut */ addTokenLocation(item, sourceToken);
+
+        host.push(item);
+      }
+      /** @cut */ else
+      /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, sourceToken.loc);
+    }
+
     function processAttrs(token, declToken){
       var result = [];
       var styleAttr;
@@ -332,6 +353,10 @@ var makeDeclaration = (function(){
             case 'hidden':
               visibilityAttr = attr;
               break;
+
+            case 'role':
+              addRoleAttribute(result, attr.value || '', attr);
+              break;
           }
 
           continue;
@@ -352,11 +377,11 @@ var makeDeclaration = (function(){
           ];
 
           // ATTR_NAME = 3
-          if (attr.type == 2)
+          if (attr.type == TYPE_ATTRIBUTE)
             item.push(getTokenName(attr));
 
           // ATTR_VALUE = 4
-          if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != 2))
+          if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != TYPE_ATTRIBUTE))
             item.push(attr.value);
 
           if (attr.type == TYPE_ATTRIBUTE_STYLE)
@@ -955,6 +980,23 @@ var makeDeclaration = (function(){
                           if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
                             applyShowHideAttribute(token, elAttrs_[includeAttrName]);
                           break;
+
+                        case 'role':
+                          var role = elAttrs_.role.value;
+
+                          if (role)
+                          {
+                            if (!/[\/\(\)]/.test(role))
+                            {
+                              var loc;
+                              /** @cut */ loc = getLocation(template, elAttrs_.role.loc);
+                              applyRole(decl.tokens, role, elAttrs_.role, loc);
+                            }
+                            /** @cut */ else
+                            /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
+                          }
+
+                          break;
                       }
 
                     for (var j = 0, child; child = instructions[j]; j++)
@@ -1153,6 +1195,30 @@ var makeDeclaration = (function(){
                               removeTokenRef(token, childAttrs.name || childAttrs.ref);
                             break;
 
+                          case 'role':
+                          case 'set-role':
+                            var childAttrs = tokenAttrs(child);
+                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                            var tokenRef = ref && tokenRefMap[ref];
+                            var token = tokenRef && tokenRef.token;
+
+                            if (token)
+                            {
+                              arrayRemove(token, getAttrByName(token, 'role-marker'));
+                              addRoleAttribute(token, childAttrs.value || '', child);
+                            }
+                            break;
+
+                          case 'remove-role':
+                            var childAttrs = tokenAttrs(child);
+                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                            var tokenRef = ref && tokenRefMap[ref];
+                            var token = tokenRef && tokenRef.token;
+
+                            if (token)
+                              arrayRemove(token, getAttrByName(token, 'role-marker'));
+                            break;
+
                           default:
                             /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + child.name + '>', child.loc);
                         }
@@ -1260,12 +1326,12 @@ var makeDeclaration = (function(){
       var parts = value.split(':');
       var key = parts[1];
 
-      if (parts[0] == 'l10n')
+      if (key && parts[0] == 'l10n')
       {
         if (parts.length == 2 && key.indexOf('@') == -1)
         {
           if (!dictURI)
-            return false;  // TODO: add warning that dictionary is not found
+            return false; // warning will be added at place where absl10n() was called
 
           key = key + '@' + dictURI;
           value = 'l10n:' + key;
@@ -1275,6 +1341,33 @@ var makeDeclaration = (function(){
     }
 
     return value;
+  }
+
+  function applyRole(tokens, role, sourceToken, location, stIdx){
+    for (var i = stIdx || 0, token; token = tokens[i]; i++)
+    {
+      var tokenType = token[TOKEN_TYPE];
+
+      switch (tokenType)
+      {
+        case TYPE_ELEMENT:
+          applyRole(token, role, sourceToken, location, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+          break;
+
+        case TYPE_ATTRIBUTE:
+          if (token[ATTR_NAME] == 'role-marker')
+          {
+            var roleExpression = token[TOKEN_BINDINGS][1];
+            var currentRole = roleExpression[1];
+
+            roleExpression[1] = '/' + role + (currentRole ? '/' + currentRole : '');
+
+            /** @cut */ token.sourceToken = sourceToken;
+            /** @cut */ token.loc = location;
+          }
+          break;
+      }
+    }
   }
 
   function normalizeRefs(tokens, isolate, map, stIdx){
@@ -1357,7 +1450,7 @@ var makeDeclaration = (function(){
       var tokenType = token[TOKEN_TYPE];
       var bindings = token[TOKEN_BINDINGS];
 
-      switch (token[TOKEN_TYPE])
+      switch (tokenType)
       {
         case TYPE_ELEMENT:
           applyDefines(token, template, options, ELEMENT_ATTRIBUTES_AND_CHILDREN);
@@ -1380,12 +1473,34 @@ var makeDeclaration = (function(){
           if (bindings)
           {
             var array = bindings[0];
-            for (var j = 0; j < array.length; j++)
+            for (var j = array.length - 1; j >= 0; j--)
             {
               var binding = absl10n(array[j], options.dictURI, template.l10n);   // TODO: move l10n binding process in separate function
-              array[j] = binding === false ? '{' + array[j] + '}' : binding;
-              /** @cut */ if (binding === false)
-              /** @cut */   addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
+              if (binding === false)
+              {
+                /** @cut */ addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
+
+                // make l10n binding static, i.e.
+                //   [['l10n:unresolved', 'x'], [0, '-', 1]]
+                // ->
+                //   [['x'], ['{l10n:unresolved}', '-', 0]]
+                var expr = bindings[1];
+                for (var k = 0; k < expr.length; k++)
+                  if (typeof expr[k] == 'number')
+                  {
+                    if (expr[k] == j)
+                      expr[k] = '{' + array[j] + '}';
+                    else if (expr[k] > j)
+                      expr[k] = expr[k] - 1;
+                  }
+
+                array.splice(j, 1);
+
+                if (!array.length)
+                  token[TOKEN_BINDINGS] = 0;
+              }
+              else
+                array[j] = binding;
             }
           }
           break;
@@ -1806,5 +1921,8 @@ resource('../template.js').ready(function(exports){
 module.exports = {
   VERSION: 3,
   makeDeclaration: makeDeclaration,
-  getDeclFromSource: getDeclFromSource
+  getDeclFromSource: getDeclFromSource,
+  setIsolatePrefixGenerator: function(fn){
+    genIsolateMarker = fn;
+  }
 };

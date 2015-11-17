@@ -175,8 +175,15 @@
   var CalendarNode = Class(Node, {
     className: namespace + '.Calendar.Node',
 
+    propertyDescriptors: {
+      nodePeriodName: true,
+      periodStart: 'periodChanged',
+      periodEnd: 'periodChanged'
+    },
+
     childClass: null,
 
+    nodePeriodName: '',
     periodStart: null,
     periodEnd: null,
 
@@ -276,6 +283,14 @@
   */
   var CalendarSection = Class(Node, {
     className: namespace + '.CalendarSection',
+
+    propertyDescriptors: {
+      minDate: 'periodChanged',
+      maxDate: 'periodChanged',
+      periodStart: 'periodChanged',
+      periodEnd: 'periodChanged',
+      selectedDate: 'selectedDateChanged'
+    },
 
     emit_periodChanged: createEvent('periodChanged'),
     emit_selectedDateChanged: createEvent('selectedDateChanged'),

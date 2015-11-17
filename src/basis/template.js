@@ -18,6 +18,7 @@
   var DECLARATION_VERSION = require('basis.template.declaration').VERSION;
   var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
   var makeDeclaration = require('basis.template.declaration').makeDeclaration;
+  var setIsolatePrefixGenerator = require('basis.template.declaration').setIsolatePrefixGenerator;
   var store = require('basis.template.store');
   var theme = require('basis.template.theme');
   var getSourceByPath = theme.get;
@@ -143,12 +144,12 @@
     // detach old deps
     if (oldDeps)
       for (var i = 0, dep; dep = oldDeps[i]; i++)
-        dep.bindingBridge.detach(dep, buildTemplate, this);
+        dep.bindingBridge.detach(dep, templateSourceUpdate, this);
 
     // attach new deps
     if (newDeps)
       for (var i = 0, dep; dep = newDeps[i]; i++)
-        dep.bindingBridge.attach(dep, buildTemplate, this);
+        dep.bindingBridge.attach(dep, templateSourceUpdate, this);
 
 
     // apply resources
@@ -563,6 +564,7 @@
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
     resolveResource: resolveResource, // TODO: remove
+    setIsolatePrefixGenerator: setIsolatePrefixGenerator,
     // for backward capability
     // TODO: remove
     /** @cut dev mode only */ getDebugInfoById: store.getDebugInfoById,
