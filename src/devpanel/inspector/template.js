@@ -158,6 +158,9 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
       // 'right top right top'
     ],
     binding: {
+      templateOpenSpecialKey: function(){
+        return /^mac/i.test(navigator.platform) ? 'cmd' : 'ctrl';
+      },
       openFileSupported: {
         events: 'delegateChanged update',
         getter: function(){
