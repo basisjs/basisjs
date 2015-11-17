@@ -782,6 +782,7 @@
     value: undefined
   });
   var queryAsFunctionCache = {};
+  var queryNestedFunctionCache = {};
 
   function getQueryPathFragment(target, path, index){
     var pathFragment = path[index];
@@ -831,10 +832,15 @@
         {
           var path0 = pathFragment;
           var path1 = path[++index];
-          pathFragment = basis.getter(function(object){
-            object = object && object[path0];
-            return object ? object[path1] : undefined;
-          });
+          var fullPath = path0 + '.' + path1;
+
+          pathFragment = queryNestedFunctionCache[fullPath];
+
+          if (!pathFragment)
+            pathFragment = queryNestedFunctionCache[fullPath] = basis.getter(function(object){
+              object = object && object[path0];
+              return object ? object[path1] : undefined;
+            });
         }
       }
     }
