@@ -18,12 +18,13 @@ You could compare performance of `basis.js` with others by some synthetic tests:
 * [Google Chrome plugin](https://chrome.google.com/webstore/detail/basisjs-tools/paeokpmlopbdaancddhdhmfepfhcbmek) ([repo](http://github.com/basisjs/app-control-panel)) - helps to manage templates and localization with live updates and change saving to files, it also provide project file structure graph and other information.
 
 ## Run tests
+
 ```
-/path/to/project $ npm install
-/path/to/project $ basis server
-Server run at http://localhost:8123
+> npm install
+> npm test
 ```
-Go to http://localhost:8123/test/. Click `pick up` link on the right to select a specific test suite.
+
+You also can start http server and open `/test/index.html` to run test suite in your browser.
 
 ## Where can I get more information
 
@@ -47,6 +48,4 @@ Media channels:
 
 ## If you have a question
 
-Use [Google groups](https://groups.google.com/forum/#!forum/basisjs) or [Google+](https://plus.google.com/communities/102581433209953312275) for ask your questions. You also could use GitHub [Issues](https://github.com/basisjs/basisjs/issues) as an option.
-
-If those channels are not suitable for you, please feel free to contact us at `contact@basisjs.com`.
+Use GitHub [Issues](https://github.com/basisjs/basisjs/issues) for ask your questions. [Google groups](https://groups.google.com/forum/#!forum/basisjs) or [Google+](https://plus.google.com/communities/102581433209953312275) is also an option. 
