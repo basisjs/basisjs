@@ -1,3 +1,11 @@
+## 1.5.1 (November 18, 2015)
+
+- fix `basis.data.Dataset.setAccumulateState()` issue with `itemsChanged` event concurrency on cache flush (new event emited before cached event)
+- make `parentNode` consistent for first and consequent template instances
+- fix `basis.data.Value.query()` for nested properties to produce the same value for the same parameters
+- show correct special key in devpanel hint to open template source in editor on Mac
+- add licence field to `package.json`
+
 ## 1.5.0 (November 17, 2015)
 
 ### Core

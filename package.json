@@ -2,7 +2,7 @@
   "name": "basisjs",
   "title": "basis.js",
   "description": "JavaScript framework to build single-page applications",
-  "version": "1.5.0-next",
+  "version": "1.5.1",
   "license": "MIT",
   "main": "src/basis.js",
   "homepage": "http://basisjs.com",

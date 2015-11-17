@@ -37,7 +37,7 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.5.0-next';
+  var VERSION = '1.5.1';
 
   var global = Function('return this')();
   var process = global.process;
