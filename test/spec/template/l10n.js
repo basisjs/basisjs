@@ -1061,6 +1061,71 @@ module.exports = {
             template.clearInstance(instance);
             assert(Object.keys(token.computeTokens).length === computeCount);
           }
+        },
+        {
+          name: 'should show DocumentFragment -- to be fixed',
+          test: function(){
+            var template = createTemplate('<b:l10n src="./test.l10n"/>{l10n:fooWithVar.myVarValue}');
+            // assert order is important
+            assert(text(template) === '[object Text]');
+            assert(text(template) === '[object DocumentFragment]');
+
+            var template = createTemplate('<b:l10n src="./test.l10n"/>!{l10n:fooWithVar.myVarValue}');
+            assert(text(template) === '!my value');
+            var template = createTemplate('<b:l10n src="./test.l10n"/>{l10n:fooWithL10n}');
+            assert(text(template, { myVar: 'myVarValue' }) === '[object HTMLSpanElement]');
+            assert(text(template, { myVar: 'myVarValue' }) === '[object DocumentFragment]');
+
+            var template = createTemplate('<b:l10n src="./test.l10n"/>!{l10n:fooWithL10n} {myVar2}');
+            assert(text(template, { myVar: 'myVarValue', myVar2: 'var 2' }) === '!<span>my value</span> myVarValue var 2');
+            assert(text(template, { myVar: 'otherValue', myVar2: 'var 2' }) === '!<span>other value</span> otherValue var 2');
+
+          }
+        },
+        {
+          name: 'with instance should show DocumentFragment -- to be fixed',
+          test: function(){
+            var dictionary = l10n.dictionary('./test.l10n');
+            var template = createTemplate('<b>{foo}</b>');
+            var instance = template.createInstance();
+            assert(text(instance) === '<b>{foo}</b>');
+            assert(text(instance, { foo: dictionary.token('fooWithL10n2'), myVar: 'ttt' }) === '<b><span>my value</span> ttt</b>');
+            assert(text(instance, { foo: dictionary.token('fooWithL10n'), myVar: 'myVarValue' }) === '<b><span>my value</span> ttt</b>');
+
+          }
+        },
+        {
+          name: 'no test.l10n should show DocumentFragment -- to be fixed',
+          test: function(){
+            l10n.setCulture('en-US');
+            var dictionary = l10n.dictionary({
+              _meta: { type: { test: 'markup', 'tests.a': 'markup', 'simpleEnum.var1': 'markup' } },
+              'en-US': {
+                test: '<b>{l10n:simpleEnum.var1}</b>',
+                tests: { a: 'a', b: 'b' },
+                simpleEnum: { var1: 'var 1', var2: 'var 2' }
+              }
+            });
+            var template = createTemplate('{simpleEnum}');
+            assert(text(template, { simpleEnum: dictionary.token('simpleEnum.var1') }) === '[object Text]');
+            assert(text(template, { simpleEnum: dictionary.token('simpleEnum.var1') }) === '[object DocumentFragment]');
+
+            var template = createTemplate('!{simpleEnum}');
+            assert(text(template, { simpleEnum: dictionary.token('simpleEnum.var1') }) === '!var 1');
+
+            // tests.a IS 'markup'
+            var template = createTemplate('{test}');
+            assert(text(template, { test: dictionary.token('tests.a') }) === 'a');
+            assert(text(template, { test: dictionary.token('tests.a') }) === '[object DocumentFragment]');
+            assert(text(template, { test: dictionary.token('tests.a') }) === '[object Text]');
+
+            var template = createTemplate('!{test}');
+            assert(text(template, { test: dictionary.token('tests.a') }) === '!a');
+
+            // tests.b is NOT 'markup'
+            var template = createTemplate('{test}');
+            assert(text(template, { test: dictionary.token('tests.b') }) === 'b');
+          }
         }
       ]
     }
