@@ -2319,19 +2319,34 @@
     var realEvent;
 
     function flushCache(cache){
-      var dataset = cache.dataset;
-      realEvent.call(dataset, cache);
+      realEvent.call(cache.dataset, cache);
     }
 
     function flushAllDataset(){
+      function processEntry(datasetId){
+        var entry = eventCacheCopy[datasetId];
+
+        if (entry)
+        {
+          eventCacheCopy[datasetId] = null;
+          flushCache(entry);
+        }
+      }
+
       var eventCacheCopy = eventCache;
+      var realEvent = proto.emit_itemsChanged;
+
+      proto.emit_itemsChanged = function(delta){
+        // we can't emit new itemsChanged until cache is flushed
+        processEntry(this.basisObjectId);
+        realEvent.call(this, delta);
+      };
+
       eventCache = {};
       for (var datasetId in eventCacheCopy)
-      {
-        var entry = eventCacheCopy[datasetId];
-        if (entry)
-          flushCache(entry);
-      }
+        processEntry(datasetId);
+
+      proto.emit_itemsChanged = realEvent;
     }
 
     function storeDatasetDelta(delta){
