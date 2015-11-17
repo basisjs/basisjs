@@ -2,14 +2,14 @@
 
 ### Core
 
-- add support for dev info from instrumented source code (see [basisjs-tools-instrumenter](https://github.com/basisjs/basisjs-tools-instrumenter) as usage example)
-- don't add `sourceURL` for sources with source map
+- **NEW**: add support for dev info from instrumented source code (see [basisjs-tools-instrumenter](https://github.com/basisjs/basisjs-tools-instrumenter) as usage example)
+- NEW: `Class.factory()` implemented
+- NEW: `basis.require()` appends `.js` to filename, if there is no extension
 - allow override console methods in `basis.dev`
+- don't add `sourceURL` for sources with source map
 - make framework more bundle tools aware (like `webpack`)
     - fix check for `NODE_ENV` and use context as `global`
     - don't use `require` anymore
-- `Class.factory()` implemented
-- `basis.require()` appends `.js` to filename, if there is no extension
 
 ### Data
 
@@ -18,52 +18,52 @@
     - move subscription to `basis.data.subscription` module
     - move common `resolve` function to `basis.data.resolve` module
     - move `AbstractData` to `basis/data/AbstractData.js`
-- remove deprecated `STATE.from()` and `STATE.factory()`
-- New function `Value.query()` implemented. This simplifies building values and factories for paths since no events set are required. For example, `Value.from(node, 'ownerChanged', 'owner').pipe('update', 'data.foo')` can be replaced for `Value.query(node, 'owner.data.foo')`. If first argument (target) is omited it produces a factory.
-- New function `basis.data.value.expression()` implemented. `expression(foo, bar, fn)` is equivalent to `new Expression(foo, bar, fn)`. This function is useful when needs to build expression from an arbitrary number of arguments, i.e. `expression.apply(null, args.concat(fn))`
-- `basis.data.index` functions are produce value's factory when source is factory
+- REMOVE: deprecated `STATE.from()` and `STATE.factory()`
+- **NEW**: `Value.query()` implemented. This simplifies building values and factories for paths since no events set are required. For example, `Value.from(node, 'ownerChanged', 'owner').pipe('update', 'data.foo')` can be replaced for `Value.query(node, 'owner.data.foo')`. If first argument (target) is omited it produces a factory.
+- NEW: `basis.data.value.expression()` implemented. `expression(foo, bar, fn)` is equivalent to `new Expression(foo, bar, fn)`. This function is useful when needs to build expression from an arbitrary number of arguments, i.e. `expression.apply(null, args.concat(fn))`
+- CHANGE: `basis.data.index` functions are produce value's factory when source is factory
 - basis.entity:
     - export `arrayField` and `dateField` wrappers
     - various bugs of `EntitySet#setAndDestroyRemoved()` was fixed (thanks to @BobbyZee)
 
 ### Template
 
+- NEW: provide `setIsolatePrefixGenerator` function to set isolate prefix generator
+- NEW: add raw values in debug info
+- CHANGE: does not set any value to attribute if one of expression value is equal to `undefined`
+- FIX: notify template source changed when subresource changes
+- FIX: css isolate issue when prefix insert into `@import "url"`
+- FIX: class change on `SVG` nodes in `IE11` and lower
+- FIX: template theme fallback issue
 - l10n
-    - less memory consumption for markup token templates with no bindings
-    - fix issue with broken template source when l10n token isn't resolved
-    - fix issue when l10n token used with computed l10n token
-    - fix edge cases with l10n bindings in attributes
-    - fix wrong l10n binding matches
-- does not set any value to attribute if one of expression value is equal to `undefined`
-- fix notify template source changed when subresource changes
-- fix css isolate issue when prefix insert into `@import "url"`
-- fix class change on `SVG` nodes in `IE11` and lower
-- provide `setIsolatePrefixGenerator` function to set isolate prefix generator
-- fix template theme fallback issue
-- add raw values in debug info
+    - IMPROVE: less memory consumption for markup token templates with no bindings
+    - FIX: issue with broken template source when l10n token isn't resolved
+    - FIX: issue when l10n token used with computed l10n token
+    - FIX: edge cases with l10n bindings in attributes
+    - FIX: wrong l10n binding matches
 
 ### UI
 
 - basis.dom.wrapper:
-    - `ownerSatelliteNameChanged` event implemented
-    - reduce `childNodes` modification on `dataSource` changes (optimization)
-- basis.ui.field: fix `Combobox` destroy issue
+    - NEW: `ownerSatelliteNameChanged` event implemented
+    - IMPROVE: reduce `childNodes` modification on `dataSource` changes (optimization)
+- FIX: `basis.ui.field.ComplexField` destroy issue
 - basis.ui.popup:
-    - `Popup#trackRelElement` implemented (`false` by default)
-    - better `realign` method with less DOM read operations
-    - don't realign on `show` method call if `dir` is not specified and popup already visible
-    - new `maxWidth` and `maxHeight` bindings
+    - NEW: `Popup#trackRelElement` implemented (`false` by default)
+    - NEW: `maxWidth` and `maxHeight` bindings
+    - IMPROVE: better `realign` method with less DOM read operations
+    - IMPROVE: don't realign on `show` method call if `dir` is not specified and popup already visible
 
 ### Router
 
-- `basis.router.add(route, ...)` works as expected now
-- `basis.router.route(route)` returns `Route` instance
-- `Route#add()` and `Route#remove()` helpers (equals to `basis.router.add(route, ...)` and `basis.router.remove(route)`)
-- `add()` apply matches async (asap)
-- `remove()` invoke `leave` callback on handler remove if route matched
-- preventing router recursion freeze
-- call `enter` and `match` callbacks asap or by `checkUrl()`
-- calc router match independent of callback init
+- NEW: `basis.router.route(route)` returns `Route` instance
+- NEW: `Route#add()` and `Route#remove()` helpers (equals to `basis.router.add(route, ...)` and `basis.router.remove(route)`)
+- CHANGE: `basis.router.add(route, ...)` works as expected now
+- CHANGE: `add()` apply matches async (asap)
+- CHANGE: call `enter` and `match` callbacks asap or by `checkUrl()`
+- CHANGE: calc router match independent of callback init
+- IMPROVE: preventing router recursion freeze
+- FIX: `remove()` invoke `leave` callback on handler remove if route matched
 
 ### Roles
 
