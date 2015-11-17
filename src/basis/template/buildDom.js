@@ -332,7 +332,9 @@ var buildDOM = function(tokens, parent){
 
   // if there is only one root node, document fragment isn't required
   if (!parent && tokens.length == 1)
-    result = result.firstChild;
+    // remove single child otherwise reference dom fragment will has parent
+    // but not its clones
+    result = result.removeChild(result.firstChild);
 
   return result;
 };
