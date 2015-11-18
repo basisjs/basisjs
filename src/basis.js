@@ -33,11 +33,11 @@
  * - basis.cleaner
  */
 
-// context is `window` in browser and module on node.js
+// context is `window` in browser and `module` on node.js
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.5.1';
+  var VERSION = '1.5-next';
 
   var global = Function('return this')();
   var process = global.process;
