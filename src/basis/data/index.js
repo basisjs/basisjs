@@ -23,7 +23,7 @@
   var chainValueFactory = basisData.chainValueFactory;
 
   var basisDataset = require('basis.data.dataset');
-  var MapFilter = basisDataset.MapFilter;
+  var SourceDataset = basisDataset.SourceDataset;
   var createRuleEvents = basisDataset.createRuleEvents;
 
 
@@ -889,11 +889,68 @@
     });
   }
 
+  var INDEXMAP_SOURCE_HANDLER = {
+    itemsChanged: function(sender, delta){
+      var deleted = [];
+      var array;
+
+      if (array = delta.inserted)
+        for (var i = 0; i < array.length; i++)
+        {
+          var sourceObject = array[i];
+          var sourceObjectId = sourceObject.basisObjectId;
+
+          this.awaitToAdd_[sourceObjectId] = sourceObject;
+          this.scheduleRecalc();
+        }
+
+      if (array = delta.deleted)
+        for (var i = 0; i < array.length; i++)
+        {
+          var sourceObject = array[i];
+          var sourceObjectId = sourceObject.basisObjectId;
+          var memberInfo = this.sourceMap_[sourceObjectId];
+
+          if (memberInfo)
+          {
+            var member = memberInfo.member;
+
+            deleted.push(member);
+
+            if (this.listen.member)
+              member.removeHandler(this.listen.member, this);
+
+            if (this.recalcEvents)
+              sourceObject.removeHandler(this.recalcEvents, this);
+
+            delete this.sourceMap_[sourceObjectId];
+          }
+          else
+          {
+            delete this.awaitToAdd_[sourceObjectId];
+          }
+        }
+
+      if (deleted.length)
+      {
+        this.emit_itemsChanged({
+          deleted: deleted
+        });
+
+        for (var i = 0; i < deleted.length; i++)
+        {
+          var member = deleted[i];
+          member.source = null;
+          member.destroy();
+        }
+      }
+    }
+  };
 
  /**
   * @class
   */
-  var IndexMap = Class(MapFilter, {
+  var IndexMap = Class(SourceDataset, {
     className: namespace + '.IndexMap',
 
     calcs: null,
@@ -903,50 +960,15 @@
     indexValues: null,
     indexUpdated: false,
 
+    awaitToAdd_: null,
     itemClass: DataObject,
 
-    map: function(sourceObject){
-      var member = this.getMember(sourceObject);
-
-      if (!member)
-      {
-        var data = {};
-
-        for (var calcName in this.calcs)
-          data[calcName] = this.calcs[calcName](sourceObject.data, this.indexValues, sourceObject);
-
-        if (this.copyDataFromSource)
-          for (var key in sourceObject.data)
-            if (!this.calcs.hasOwnProperty(key))
-              data[key] = sourceObject.data[key];
-
-        member = new this.itemClass({
-          source: sourceObject,
-          data: data
-        });
-      }
-
-      return member;
+    listen: {
+      source: INDEXMAP_SOURCE_HANDLER
     },
 
-    addMemberRef: function(member){
-      if (this.listen.member)
-        member.addHandler(this.listen.member, this);
-    },
-
-    removeMemberRef: function(member){
-      if (this.listen.member)
-        member.removeHandler(this.listen.member, this);
-
-      member.source = null;
-      member.destroy();
-    },
-
-    /** looks like a hack */
-    ruleEvents: createRuleEvents(
+    recalcEvents: createRuleEvents(
       function(sender){
-        MapFilter.prototype.ruleEvents.update.call(this, sender);
-
         this.sourceMap_[sender.basisObjectId].updated = true;
         this.scheduleRecalc();
       },
@@ -958,11 +980,12 @@
       var indexes = this.indexes;
       this.indexes = {};
       this.indexValues = {};
+      this.awaitToAdd_ = {};
 
       var calcs = this.calcs;
       this.calcs = {};
 
-      MapFilter.prototype.init.call(this);
+      SourceDataset.prototype.init.call(this);
 
       iterate(indexes, this.addIndex, this);
       for (var name in calcs)
@@ -977,7 +1000,17 @@
         this.calcs[name] = calcCfg;
       }
 
-      if (this.itemCount)
+      // TODO: Probably we should make recalc async
+      this.recalc();
+    },
+
+    // TODO: Probably we should left adding members on source change async
+    setSource: function(source){
+      var curSource = this.source;
+
+      SourceDataset.prototype.setSource.call(this, source);
+
+      if (curSource !== this.source)
         this.recalc();
     },
 
@@ -1029,8 +1062,53 @@
       indexMapRecalcShedule.add(this);
     },
     recalc: function(){
+      // recalc existed members
       for (var id in this.sourceMap_)
         this.calcMember(this.sourceMap_[id]);
+
+      // add new members
+      var inserted = [];
+      var items = this.awaitToAdd_;
+
+      this.awaitToAdd_ = {};
+
+      for (var id in items)
+      {
+        var sourceObject = items[id];
+        var data = {};
+        var member;
+
+        for (var calcName in this.calcs)
+          data[calcName] = this.calcs[calcName](sourceObject.data, this.indexValues, sourceObject);
+
+        if (this.copyDataFromSource)
+          for (var key in sourceObject.data)
+            if (!this.calcs.hasOwnProperty(key))
+              data[key] = sourceObject.data[key];
+
+        member = new this.itemClass({
+          data: data
+        });
+
+        if (this.listen.member)
+          member.addHandler(this.listen.member, this);
+
+        if (this.recalcEvents)
+          sourceObject.addHandler(this.recalcEvents, this);
+
+        this.sourceMap_[id] = {
+          sourceObject: sourceObject,
+          member: member,
+          updated: false
+        };
+
+        inserted.push(member);
+      }
+
+      if (inserted.length)
+        this.emit_itemsChanged({
+          inserted: inserted
+        });
 
       this.indexUpdated = false;
       indexMapRecalcShedule.remove(this);
@@ -1095,10 +1173,11 @@
     destroy: function(){
       iterate(this.indexes, this.removeIndex, this);
 
-      MapFilter.prototype.destroy.call(this);
+      SourceDataset.prototype.destroy.call(this);
 
       indexMapRecalcShedule.remove(this);
 
+      this.awaitToAdd_ = null;
       this.calcs = null;
       this.indexes = null;
       this.indexValues = null;

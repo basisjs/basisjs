@@ -134,8 +134,8 @@ module.exports = {
 
             map.setSource(foo);
             assert.deep(
-              ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-              map.getValues('data.value.toFixed(1)')
+              ['0.00', '0.20', '0.40', '0.60', '0.80', '1.00'],
+              map.getValues('data.value.toFixed(2)')
             );
 
             map.setSource(bar);
@@ -159,14 +159,14 @@ module.exports = {
 
             foo.add(range(6, 8));
             assert.deep(
-              ['0.00', '0.25', '0.50', '0.75', '1.00', '0.25', '0.50', '0.75'],
-              map.getValues('data.value.toFixed(2)')
+              ['0.000', '0.250', '0.500', '0.750', '1.000'],
+              map.getValues('data.value.toFixed(3)')
             );
 
             this.async(function(){
               assert.deep(
-                ['0.00', '0.25', '0.50', '0.75', '1.00', '0.25', '0.50', '0.75'],
-                map.getValues('data.value.toFixed(2)')
+                ['0.000', '0.250', '0.500', '0.750', '1.000', '0.250', '0.500', '0.750'],
+                map.getValues('data.value.toFixed(3)')
               );
             });
           }
@@ -190,7 +190,7 @@ module.exports = {
 
             foo.add(range(10, 13));
             assert.deep(
-              ['0.000', '0.250', '0.500', '0.750', '1.000', '0.625', '0.750', '0.875', '1.000'],
+              ['0.000', '0.250', '0.500', '0.750', '1.000'],
               map.getValues('data.value.toFixed(3)')
             );
 
@@ -222,14 +222,14 @@ module.exports = {
 
             foo.add(range(6, 8));
             assert.deep(
-              ['0.00', '0.25', '0.50', '0.75', '1.00', '0.25', '0.50', '0.75'],
-              map.getValues('data.value.toFixed(2)')
+              ['0.000', '0.250', '0.500', '0.750', '1.000'],
+              map.getValues('data.value.toFixed(3)')
             );
 
             this.async(function(){
               assert.deep(
-                ['0.00', '0.25', '0.50', '0.75', '1.00', '0.25', '0.50', '0.75'],
-                map.getValues('data.value.toFixed(2)')
+                ['0.000', '0.250', '0.500', '0.750', '1.000', '0.250', '0.500', '0.750'],
+                map.getValues('data.value.toFixed(3)')
               );
             });
           }
@@ -253,13 +253,50 @@ module.exports = {
 
             foo.add(range(10, 13));
             assert.deep(
-              ['0.000', '0.250', '0.500', '0.750', '1.000', '0.625', '0.750', '0.875', '1.000'],
+              ['0.000', '0.250', '0.500', '0.750', '1.000'],
               map.getValues('data.value.toFixed(3)')
             );
 
             setTimeout(function(){
               assert.deep(
                 ['0.000', '0.125', '0.250', '0.375', '0.500', '0.625', '0.750', '0.875', '1.000'],
+                map.getValues('data.value.toFixed(3)')
+              );
+              done();
+            }, 10);
+          }
+        },
+        {
+          name: 'should recalc on source object changes',
+          test: function(done){
+            var foo = Dataset.from(range(5, 9));
+
+            var map = new IndexMap({
+              source: foo,
+              calcs: {
+                value: percentOfRange('update', 'data.value')
+              }
+            });
+
+            assert.deep(
+              ['0.000', '0.250', '0.500', '0.750', '1.000'],
+              map.getValues('data.value.toFixed(3)')
+            );
+
+            foo.forEach(function(item){
+              if (item.data.value > 5) {
+                item.update({ value: 9 });
+              };
+            });
+
+            assert.deep(
+              ['0.000', '0.250', '0.500', '0.750', '1.000'],
+              map.getValues('data.value.toFixed(3)')
+            );
+
+            setTimeout(function(){
+              assert.deep(
+                ['0.000', '1.000', '1.000', '1.000', '1.000'],
                 map.getValues('data.value.toFixed(3)')
               );
               done();
@@ -361,6 +398,47 @@ module.exports = {
             assert(indexDestroyed === indexCount);
             assert(map.indexes === null);
             assert(map.calcs === null);
+          }
+        },
+        {
+          name: 'should reset source on source destroy',
+          test: function(){
+            var dataset = Dataset.from(range(0, 2));
+            var destroyCount = 0;
+            var indexDestroyed = false;
+            var map = new IndexMap({
+              source: dataset,
+              indexes: {
+                sum: sumIndex('data.value')
+              },
+              calcs: {
+                test: function(){
+                  return 1;
+                }
+              }
+            });
+
+            map.forEach(function(item){
+              item.addHandler({
+                destroy: function(){
+                  destroyCount++;
+                }
+              });
+            });
+
+            map.indexes.sum.addHandler({
+              destroy: function(){
+                indexDestroyed = true;
+              }
+            });
+
+            // clear and destroy dataset items
+            dataset.destroy();
+
+            assert(map.source === null);
+            assert.deep({}, map.sourceMap_);
+            assert(destroyCount === 3);
+            assert(indexDestroyed === false);
           }
         },
         {
