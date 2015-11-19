@@ -4,7 +4,7 @@ var Value = require('basis.data').Value;
 * Base class for indexes.
 * @class
 */
-module.exports = Value.subclass({
+var Index = Value.subclass({
   className: 'basis.data.index.Index',
 
   propertyDescriptors: {
@@ -93,3 +93,183 @@ module.exports = Value.subclass({
     this.indexCache_ = null;
   }
 });
+
+
+//
+// Dataset integration
+//
+
+var datasetIndexes = {};
+
+function applyIndexDelta(index, inserted, deleted){
+  var indexCache = index.indexCache_;
+  var objectId;
+
+  // lock index to prevent multiple events
+  index.lock();
+
+  if (inserted)
+    for (var i = 0, object; object = inserted[i++];)
+    {
+      var newValue = index.normalize(index.valueGetter(object));
+
+      indexCache[object.basisObjectId] = newValue;
+      index.add_(newValue);
+    }
+
+  if (deleted)
+    for (var i = 0, object; object = deleted[i++];)
+    {
+      objectId = object.basisObjectId;
+      index.remove_(indexCache[objectId]);
+      delete indexCache[objectId];
+    }
+
+  // unlock index - fire event if value was changed
+  index.unlock();
+}
+
+var DATASET_INDEX_HANDLER = {
+  destroy: function(object){
+    removeDatasetIndex(this, object);
+  }
+};
+
+var DATASET_WITH_INDEX_HANDLER = {
+  itemsChanged: function(object, delta){
+    var array;
+
+    // add handler to new source object
+    if (array = delta.inserted)
+      for (var i = 0; i < array.length; i++)
+        array[i].addHandler(ITEM_INDEX_HANDLER, this);
+
+    // remove handler from old source object
+    if (array = delta.deleted)
+      for (var i = 0; i < array.length; i++)
+        array[i].removeHandler(ITEM_INDEX_HANDLER, this);
+
+    // apply changes for indexes
+    var indexes = datasetIndexes[this.basisObjectId];
+    for (var indexId in indexes)
+      applyIndexDelta(indexes[indexId], delta.inserted, delta.deleted);
+  },
+
+  destroy: function(){
+    var indexes = datasetIndexes[this.basisObjectId];
+
+    for (var indexId in indexes)
+    {
+      var index = indexes[indexId];
+      removeDatasetIndex(this, index);
+      index.destroy();
+    }
+  }
+};
+
+if (!window.datasetIndexes)
+window.datasetIndexes = datasetIndexes;
+
+var ITEM_INDEX_HANDLER = {
+  '*': function(event){
+    var eventType = event.type;
+    var object = event.sender;
+    var objectId = object.basisObjectId;
+    var indexes = datasetIndexes[this.basisObjectId];
+    var oldValue;
+    var newValue;
+    var index;
+
+    for (var indexId in indexes)
+    {
+      index = indexes[indexId];
+
+      if (index.updateEvents[eventType])
+      {
+        // fetch oldValue
+        oldValue = index.indexCache_[objectId];
+
+        // calc new value
+        newValue = index.normalize(index.valueGetter(object));
+
+        // update if value has changed
+        if (newValue !== oldValue)
+        {
+          index.update_(newValue, oldValue);
+          index.indexCache_[objectId] = newValue;
+        }
+      }
+    }
+  }
+};
+
+/**
+* @param {basis.data.ReadOnlyDataset} dataset
+* @param {class} IndexClass Subclass of basis.data.index.Index
+* @return {basis.data.index.Index} IndexClass instance
+*/
+function getDatasetIndex(dataset, IndexClass){
+  if (!IndexClass || IndexClass.prototype instanceof Index === false)
+    throw 'IndexClass must be an instance of IndexClass';
+
+  var datasetId = dataset.basisObjectId;
+  var indexes = datasetIndexes[datasetId];
+
+  if (!indexes)
+  {
+    indexes = datasetIndexes[datasetId] = {};
+
+    dataset.addHandler(DATASET_WITH_INDEX_HANDLER);
+    DATASET_WITH_INDEX_HANDLER.itemsChanged.call(dataset, dataset, {
+      inserted: dataset.getItems()
+    });
+  }
+
+  var indexId = IndexClass.indexId;
+  var index = indexes[indexId];
+
+  if (!index)
+  {
+    index = new IndexClass();
+    index.addHandler(DATASET_INDEX_HANDLER, dataset);
+
+    indexes[indexId] = index;
+    applyIndexDelta(index, dataset.getItems());
+  }
+
+  return index;
+}
+
+/**
+* @param {basis.data.ReadOnlyDataset} dataset
+* @param {basis.data.index.Index} index
+*/
+function removeDatasetIndex(dataset, index){
+  var indexes = datasetIndexes[dataset.basisObjectId];
+  if (indexes && indexes[index.indexId])
+  {
+    delete indexes[index.indexId];
+    index.removeHandler(DATASET_INDEX_HANDLER, dataset);
+
+    // if any index in dataset nothing to do
+    for (var key in indexes)
+      return;
+
+    // if no indexes - delete indexes storage and remove handlers
+    dataset.removeHandler(DATASET_WITH_INDEX_HANDLER);
+    DATASET_WITH_INDEX_HANDLER.itemsChanged.call(dataset, dataset, {
+      deleted: dataset.getItems()
+    });
+    delete datasetIndexes[dataset.basisObjectId];
+  }
+};
+
+
+//
+// export
+//
+
+Index.getDatasetIndex = getDatasetIndex;
+Index.removeDatasetIndex = removeDatasetIndex;
+
+module.exports = Index;
