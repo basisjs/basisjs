@@ -26,423 +26,19 @@
   var SourceDataset = basisDataset.SourceDataset;
   var createRuleEvents = basisDataset.createRuleEvents;
 
-
-  //
-  // Main part
-  //
-
-  function binarySearchPos(array, value){
-    if (!array.length)  // empty array check
-      return 0;
-
-    var pos;
-    var cmpValue;
-    var l = 0;
-    var r = array.length - 1;
-
-    do
-    {
-      pos = (l + r) >> 1;
-      cmpValue = array[pos] || 0;
-
-      if (value < cmpValue)
-        r = pos - 1;
-      else
-        if (value > cmpValue)
-          l = pos + 1;
-        else
-          return value == cmpValue ? pos : 0;
-    }
-    while (l <= r);
-
-    return pos + (cmpValue < value);
-  }
+  var Index = require('./index/Index.js');
+  var Count = require('./index/Count.js');
+  var Sum = require('./index/Sum.js');
+  var Avg = require('./index/Avg.js');
+  var VectorIndex = require('./index/VectorIndex.js');
+  var Min = require('./index/Min.js');
+  var Max = require('./index/Max.js');
+  var Distinct = require('./index/Distinct.js');
 
 
   //
   // Index
   //
-
- /**
-  * Base class for indexes.
-  * @class
-  */
-  var Index = Class(Value, {
-    className: namespace + '.Index',
-
-    propertyDescriptors: {
-      explicit: false,
-      wrapperCount: false,
-      updateEvents: false
-    },
-
-   /**
-    * Explicit declared
-    * @type {boolean}
-    */
-    explicit: false,
-
-   /**
-    * Count of wrapper indexes
-    * @type {number}
-    */
-    wrapperCount: 0,
-
-   /**
-    * Map of current values
-    * @type {Object}
-    * @private
-    */
-    indexCache_: null,
-
-   /**
-    * @type {function(object)}
-    */
-    valueGetter: basis.fn.$null,
-
-   /**
-    * Event names map when index must check for updates.
-    * @type {Object}
-    */
-    updateEvents: {},
-
-   /**
-    * @inheritDocs
-    */
-    value: 0,
-
-   /**
-    * @inheritDocs
-    */
-    setNullOnEmitterDestroy: false,
-
-   /**
-    * @constructor
-    */
-    init: function(){
-      this.indexCache_ = {};
-
-      Value.prototype.init.call(this);
-    },
-
-   /**
-    * Add value to index
-    */
-    add_: function(value){
-    },
-
-   /**
-    * Remove value to index
-    */
-    remove_: function(value){
-    },
-
-   /**
-    * Change value
-    */
-    update_: function(newValue, oldValue){
-    },
-
-   /**
-    * Normalize value to be computable.
-    */
-    normalize: function(value){
-      return Number(value) || 0;
-    },
-
-    destroy: function(){
-      Value.prototype.destroy.call(this);
-
-      this.indexCache_ = null;
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Sum = Class(Index, {
-    className: namespace + '.Sum',
-
-   /**
-    * @inheritDoc
-    */
-    add_: function(value){
-      this.value += value;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    remove_: function(value){
-      this.value -= value;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    update_: function(newValue, oldValue){
-      this.set(this.value - oldValue + newValue);
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Count = Class(Index, {
-    className: namespace + '.Count',
-
-   /**
-    * @inheritDoc
-    */
-    valueGetter: basis.fn.$true,
-
-   /**
-    * @inheritDoc
-    */
-    add_: function(value){
-      this.value += value;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    remove_: function(value){
-      this.value -= value;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    normalize: function(value){
-      return !!value;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    update_: function(newValue, oldValue){
-      this.set(this.value - !!oldValue + !!newValue);
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Avg = Class(Index, {
-    className: namespace + '.Avg',
-    sum_: 0,
-    count_: 0,
-
-   /**
-    * @inheritDoc
-    */
-    add_: function(value){
-      this.sum_ += value;
-      this.count_ += 1;
-      this.value = this.sum_ / this.count_;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    remove_: function(value){
-      this.sum_ -= value;
-      this.count_ -= 1;
-      this.value = this.count_ ? this.sum_ / this.count_ : 0;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    update_: function(newValue, oldValue){
-      this.sum_ += newValue - oldValue;
-      this.set(this.sum_ / this.count_);
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var VectorIndex = Class(Index, {
-    className: namespace + '.VectorIndex',
-
-   /**
-    * function to fetch item from vector
-    * @type {function(object)}
-    */
-    vectorGetter: basis.fn.$null,
-
-   /**
-    * Values vector
-    * @type {Array}
-    */
-    vector_: null,
-
-   /**
-    * @inheritDocs
-    */
-    value: undefined,
-
-   /**
-    * @inheritDoc
-    */
-    init: function(){
-      this.vector_ = [];
-      Index.prototype.init.call(this);
-    },
-
-   /**
-    * @inheritDoc
-    */
-    add_: function(value){
-      if (value !== null)
-      {
-        this.vector_.splice(binarySearchPos(this.vector_, value), 0, value);
-        this.value = this.vectorGetter(this.vector_);
-      }
-    },
-
-   /**
-    * @inheritDoc
-    */
-    remove_: function(value){
-      if (value !== null)
-      {
-        this.vector_.splice(binarySearchPos(this.vector_, value), 1);
-        this.value = this.vectorGetter(this.vector_);
-      }
-    },
-
-   /**
-    * @inheritDoc
-    */
-    update_: function(newValue, oldValue){
-      if (oldValue !== null)
-        this.vector_.splice(binarySearchPos(this.vector_, oldValue), 1);
-
-      if (newValue !== null)
-        this.vector_.splice(binarySearchPos(this.vector_, newValue), 0, newValue);
-
-      this.set(this.vectorGetter(this.vector_));
-    },
-
-   /**
-    * @inheritDoc
-    */
-    normalize: function(value){
-      return typeof value == 'string' || typeof value == 'number' ? value : null;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    destroy: function(){
-      Index.prototype.destroy.call(this);
-      this.vector_ = null;
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Min = Class(VectorIndex, {
-    className: namespace + '.Min',
-    vectorGetter: function(vector){
-      return vector[0];
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Max = Class(VectorIndex, {
-    className: namespace + '.Max',
-    vectorGetter: function(vector){
-      return vector[vector.length - 1];
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Distinct = Class(Index, {
-    className: namespace + '.Distinct',
-
-   /**
-    * Values map
-    * @type {object}
-    */
-    map_: null,
-
-   /**
-    * @inheritDoc
-    */
-    init: function(){
-      this.map_ = {};
-      Index.prototype.init.call(this);
-    },
-
-   /**
-    * @inheritDoc
-    */
-    add_: function(value){
-      if (!this.map_.hasOwnProperty(value)) // new key
-        this.map_[value] = 0;
-
-      if (++this.map_[value] == 1)
-        this.value += 1;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    remove_: function(value){
-      if (--this.map_[value] == 0)
-        this.value -= 1;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    update_: function(newValue, oldValue){
-      var delta = 0;
-
-      // add
-      if (!this.map_.hasOwnProperty(newValue))  // new key
-        this.map_[newValue] = 0;
-
-      if (++this.map_[newValue] == 1)
-        delta += 1;
-
-      // remove
-      if (--this.map_[oldValue] == 0)
-        delta -= 1;
-
-      // apply delta
-      if (delta)
-        this.set(this.value + delta);
-    },
-
-   /**
-    * @inheritDoc
-    */
-    normalize: String,
-
-   /**
-    * @inheritDoc
-    */
-    destroy: function(){
-      Index.prototype.destroy.call(this);
-      this.map_ = null;
-    }
-  });
 
 
   var INDEXWRAPPER_HANDLER = {
@@ -1001,6 +597,7 @@
       }
 
       // TODO: Probably we should make recalc async
+      console.log('create');
       this.recalc();
     },
 
@@ -1017,13 +614,13 @@
     addIndex: function(key, indexConstructor){
       if (indexConstructor instanceof IndexConstructor == false)
       {
-        /** @cut */ basis.dev.warn('MapIndex.addIndex(): `index` should be instance of `basis.data.index.IndexConstructor`');
+        /** @cut */ basis.dev.warn('basis.data.IndexMap#addIndex(): `index` should be instance of `basis.data.index.IndexConstructor`');
         return;
       }
 
       if (this.indexes[key])
       {
-        /** @cut */ basis.dev.warn('MapIndex.addIndex(): Index `' + key + '` already exists');
+        /** @cut */ basis.dev.warn('basis.data.IndexMap#addIndex(): Index `' + key + '` already exists');
         return;
       }
 
@@ -1197,10 +794,10 @@
     removeDatasetIndex: removeDatasetIndex,
 
     Index: Index,
+    VectorIndex: VectorIndex,
     Count: Count,
     Sum: Sum,
     Avg: Avg,
-    VectorIndex: VectorIndex,
     Min: Min,
     Max: Max,
     Distinct: Distinct,
