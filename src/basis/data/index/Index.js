@@ -167,9 +167,6 @@ var DATASET_WITH_INDEX_HANDLER = {
   }
 };
 
-if (!window.datasetIndexes)
-window.datasetIndexes = datasetIndexes;
-
 var ITEM_INDEX_HANDLER = {
   '*': function(event){
     var eventType = event.type;
