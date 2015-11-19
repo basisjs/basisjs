@@ -125,6 +125,7 @@
           this.scheduleRecalc();
         }
 
+      // TODO: make member deleting async
       if (array = delta.deleted)
         for (var i = 0; i < array.length; i++)
         {
@@ -225,16 +226,6 @@
       this.recalc();
     },
 
-    // TODO: Probably we should left adding members on source change async
-    setSource: function(source){
-      var curSource = this.source;
-
-      SourceDataset.prototype.setSource.call(this, source);
-
-      if (curSource !== this.source)
-        this.recalc();
-    },
-
     addIndex: function(key, IndexClass){
       if (!IndexClass || IndexClass.prototype instanceof Index === false)
       {
@@ -308,7 +299,9 @@
               data[key] = sourceObject.data[key];
 
         member = new this.itemClass({
-          data: data
+          data: data,
+          // proxy update to sourceObject
+          update: sourceObject.update.bind(sourceObject)
         });
 
         if (this.listen.member)
@@ -380,7 +373,9 @@
         }
 
         if (update)
-          member.update(delta);
+          // call update from itemClass prototype, as instance update
+          // method is proxy to source object update
+          this.itemClass.prototype.update.call(member, delta);
 
         memberInfo.updated = false;
       }
