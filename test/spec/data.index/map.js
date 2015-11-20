@@ -114,7 +114,7 @@ module.exports = {
       test: [
         {
           name: 'create w/o set/reset source',
-          test: function(){
+          test: function(done){
             var calcCount = 0;
             var map = new IndexMap({
               indexes: {
@@ -136,7 +136,7 @@ module.exports = {
 
             // set source
             map.setSource(Dataset.from(range(0, 2)));
-            this.async(function(){
+            setTimeout(function(){
               assert(basis.object.keys(map.indexes).length === 1);
               assert(map.indexes.sum === index);
               assert(map.indexes.sum.value === 3);
@@ -159,7 +159,9 @@ module.exports = {
               assert(calcCount === 3 * 2);
               assert(map.itemCount === 0);
               assert.deep([], map.getValues('data'));
-            });
+
+              done();
+            }, 20);
           }
         },
         {
