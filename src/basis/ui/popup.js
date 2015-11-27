@@ -471,6 +471,10 @@
     rotate: function(offset){
       var dir = this.dir.split(' ');
       var result = [];
+      var index;
+      var idx;
+      var a;
+      var b;
 
       offset = ((offset % 4) + 4) % 4;
 
@@ -478,24 +482,23 @@
         return dir;
 
       // point
-      var a = dir[0].charAt(0);
-      var b = dir[1].charAt(0);
-      var idx = ROTATE_MATRIX.indexOf(a + b) >> 1;
+      a = dir[0].charAt(0);
+      b = dir[1].charAt(0);
+      idx = ROTATE_MATRIX.indexOf(a + b) >> 1;
 
-      var index = ((idx & 0xFC) + (((idx & 0x03) + offset) & 0x03)) << 1;
+      index = ((idx & 0xFC) + (((idx & 0x03) + offset) & 0x03)) << 1;
       result.push(
         LETTER_TO_SIDE[ROTATE_MATRIX.charAt(index)],
         LETTER_TO_SIDE[ROTATE_MATRIX.charAt(index + 1)]
       );
 
       // direction
-      var a = dir[2].charAt(0);
-      var b = dir[3].charAt(0);
-      var idx = ROTATE_MATRIX.indexOf(a + b) >> 1;
-
+      a = dir[2].charAt(0);
+      b = dir[3].charAt(0);
+      idx = ROTATE_MATRIX.indexOf(a + b) >> 1;
       offset = a != 'C' && b != 'C' && (dir[0] == dir[2]) != (dir[1] == dir[3]) ? -offset + 4 : offset;
 
-      var index = ((idx & 0xFC) + (((idx & 0x03) + offset) & 0x03)) << 1;
+      index = ((idx & 0xFC) + (((idx & 0x03) + offset) & 0x03)) << 1;
       result.push(
         LETTER_TO_SIDE[ROTATE_MATRIX.charAt(index)],
         LETTER_TO_SIDE[ROTATE_MATRIX.charAt(index + 1)]

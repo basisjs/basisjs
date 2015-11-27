@@ -787,8 +787,6 @@
   function getQueryPathFragment(target, path, index){
     var pathFragment = path[index];
     var isStatic = false;
-    var descriptor;
-    var events;
 
     if (/^<static>/.test(pathFragment))
     {
