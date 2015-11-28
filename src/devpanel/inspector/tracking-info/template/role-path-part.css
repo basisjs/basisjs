@@ -1,0 +1,7 @@
+.item
+{
+}
+.item:last-child .split
+{
+  display: none;
+}

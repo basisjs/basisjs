@@ -6,7 +6,11 @@
   <div{ddelement|ddtrigger} class="window">
     <div class="window__inner" event-click="stop-propagation">
       <div class="window__inner-wrapper">
-        <div class="bindings">
+        <div class="sidebar">
+          <div class="info-links">
+            <span class="log__link" event-click="logInfo" title="Output various runtime information about instance and template in console save it as $basisjsInfo">console.log(info)</span>
+          </div>
+          <b:include src="./object-info.tmpl" isolate/>
           <!--{bindings}-->
         </div>
         <div class="content">

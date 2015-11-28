@@ -144,7 +144,7 @@ module.exports = {
               ]
             },
             {
-              name: 'dynamic',
+              name: 'bb-value as source',
               test: [
                 {
                   name: 'create',
@@ -201,33 +201,58 @@ module.exports = {
                   ]
                 },
                 {
-                  name: 'should resolve dataset from bb-value',
-                  test: function(){
-                    var foo = Dataset.from(range(3));
-                    var bar = Dataset.from(range(4, 6));
-                    var value = new Value({ value: foo });
-                    var sum = sumIndex(value, 'update', 'data.value');
+                  name: 'changes',
+                  test: [
+                    {
+                      name: 'should resolve dataset from bb-value',
+                      test: function(){
+                        var foo = Dataset.from(range(3));
+                        var bar = Dataset.from(range(4, 6));
+                        var value = new Value({ value: foo });
+                        var sum = sumIndex(value, 'update', 'data.value');
 
-                    assert(sum.value === 6);
-                    assert(sum.index !== null);
-                    assert(sum.dataset === foo);
+                        assert(sum.value === 6);
+                        assert(sum.index !== null);
+                        assert(sum.dataset === foo);
 
-                    value.set(bar);
-                    assert(sum.value === 15);
-                    assert(sum.index !== null);
-                    assert(sum.dataset === bar);
+                        value.set(bar);
+                        assert(sum.value === 15);
+                        assert(sum.index !== null);
+                        assert(sum.dataset === bar);
 
-                    bar.destroy();
-                    assert(sum.value === 0);
-                    assert(sum.index === null);
-                    assert(sum.source.value === null);
-                    assert(sum.dataset === null);
+                        bar.destroy();
+                        assert(sum.value === 0);
+                        assert(sum.index === null);
+                        assert(sum.source.value === null);
+                        assert(sum.dataset === null);
 
-                    value.set(foo);
-                    assert(sum.value === 6);
-                    assert(sum.index !== null);
-                    assert(sum.dataset === foo);
-                  }
+                        value.set(foo);
+                        assert(sum.value === 6);
+                        assert(sum.index !== null);
+                        assert(sum.dataset === foo);
+                      }
+                    },
+                    {
+                      name: 'should propertly unlink from old dataset',
+                      test: function(){
+                        var foo = Dataset.from(range(3));
+                        var value = new Value({ value: foo });
+                        var sum = sumIndex(value, 'update', 'data.value');
+                        var explicitSum = sumIndex(foo, 'update', 'data.value');
+
+                        assert(sum.value === 6);
+                        assert(explicitSum.value === 6);
+
+                        value.set(null);
+                        assert(sum.value === 0);
+                        assert(explicitSum.value === 6);
+
+                        foo.add(range(3));
+                        assert(sum.value === 0);
+                        assert(explicitSum.value === 12);
+                      }
+                    }
+                  ]
                 },
                 {
                   name: 'destroy',

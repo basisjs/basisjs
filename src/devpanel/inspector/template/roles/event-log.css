@@ -1,0 +1,8 @@
+.list
+{
+  position: fixed;
+  right: 2px;
+  bottom: 2px;
+  width: 350px;
+  transform: translateZ(0);
+}

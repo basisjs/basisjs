@@ -57,6 +57,7 @@
 
     template: module.template('PageSlider'),
     childClass: {
+      className: namespace + '.Page',
       template: module.template('Page')
     },
 

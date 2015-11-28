@@ -24,7 +24,8 @@ module.exports = {
     require('./spec/dom.js'),
     require('./spec/cssom.js'),
     require('./spec/layout.js'),
-    require('./spec/utils.info.js')
+    require('./spec/utils.info.js'),
+    require('./spec/tracker.js')
   ]
 };
 

@@ -5,6 +5,7 @@ module.exports = {
   init: function(){
     var basis = window.basis.createSandbox();
 
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
     var Dictionary = basis.require('basis.l10n').Dictionary;
     var Culture = basis.require('basis.l10n').Culture;
     var getDictionary = basis.require('basis.l10n').dictionary;
@@ -274,8 +275,23 @@ module.exports = {
       ]
     },
     {
+      name: 'get dictionary via require',
+      test: function(){
+        var dict;
+
+        // using require for dictionary should not produce warnings
+        assert(catchWarnings(function(){
+          dict = basis.require('./fixture/dict.l10n');
+        }) === false);
+
+        assert(dict instanceof Dictionary);
+        assert(dict === getDictionary('./fixture/dict.l10n'));
+      }
+    },
+    {
       name: 'dictionary',
       test: function(){
+        assert(getDictionary('./fixture/dict.l10n') instanceof Dictionary);
         assert(getDictionary('./fixture/dict.l10n') === getDictionary('./fixture/dict.l10n'));
         assert(getDictionary(basis.resource('./fixture/dict.l10n')) === getDictionary('./fixture/dict.l10n'));
 

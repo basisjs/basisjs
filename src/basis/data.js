@@ -29,19 +29,28 @@
   var Class = basis.Class;
 
   var sliceArray = Array.prototype.slice;
-  var hasOwnProperty = Object.prototype.hasOwnProperty;
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
+  var STATE = require('basis.data.state');
+  var SUBSCRIPTION = require('basis.data.subscription');
+  var resolvers = require('basis.data.resolve');
+  var createResolveFunction = resolvers.createResolveFunction;
+  var resolveValue = resolvers.resolveValue;
+  var ResolveAdapter = resolvers.ResolveAdapter;
+  var BBResolveAdapter = resolvers.BBResolveAdapter;
+  var DEFAULT_CHANGE_ADAPTER_HANDLER = resolvers.DEFAULT_CHANGE_ADAPTER_HANDLER;
+  var DEFAULT_DESTROY_ADAPTER_HANDLER = resolvers.DEFAULT_DESTROY_ADAPTER_HANDLER;
   var basisEvent = require('basis.event');
   var Emitter = basisEvent.Emitter;
   var createEvent = basisEvent.create;
   var createEventHandler = basisEvent.createHandler;
   var events = basisEvent.events;
+  var AbstractData = require('./data/AbstractData.js');
 
 
   //
-  // Main part
+  // Constants
   //
 
   var NULL_OBJECT = {};
@@ -49,565 +58,11 @@
   var FACTORY = basis.FACTORY;
   var PROXY = basis.PROXY;
 
-
-  //
-  // State scheme
-  //
-
-  var STATE_EXISTS = {};
-
- /**
-  * @enum {string}
-  */
-  var STATE = {
-    priority: [],
-    values: {},
-
-   /**
-    * Register new state
-    * @param {string} state
-    * @param {string=} order
-    */
-    add: function(state, order){
-      var name = state;
-      var value = state.toLowerCase();
-
-      STATE[name] = value;
-      STATE_EXISTS[value] = name;
-      this.values[value] = name;
-
-      if (order)
-        order = this.priority.indexOf(order);
-      else
-        order = -1;
-
-      if (order == -1)
-        this.priority.push(value);
-      else
-        this.priority.splice(order, 0, value);
-    },
-
-   /**
-    * Returns all registred states
-    * @return {Array.<basis.data.STATE>}
-    */
-    getList: function(){
-      return values(STATE_EXISTS);
-    },
-
-   /**
-    * NOTE: was implemented and deprecated during 1.4 developing.
-    * @deprecated
-    */
-    factory: function(events, getter){
-      /** @cut */ basis.dev.warn('basis.data.STATE.factory() is deprecated, use basis.data.Value.stateFactory() instead.');
-      return Value.stateFactory(events, getter);
-    },
-
-   /**
-    * NOTE: was implemented and deprecated during 1.4 developing.
-    * @deprecated
-    */
-    from: function(source){
-      /** @cut */ basis.dev.warn('basis.data.STATE.state() is deprecated, use basis.data.Value.state() instead.');
-      return Value.state(source);
-    }
-  };
-
-  // Register base states
-
-  STATE.add('READY');
-  STATE.add('DEPRECATED');
-  STATE.add('UNDEFINED');
-  STATE.add('ERROR');
-  STATE.add('PROCESSING');
-
-
-  //
-  // Subscription schema
-  //
-
-  var subscriptionConfig = {};
-  var subscriptionSeed = 1;
-
-
- /**
-  * @enum {number}
-  */
-  var SUBSCRIPTION = {
-    NONE: 0,
-    ALL: 0,
-
-    link: function(type, from, to){
-      var subscriberId = type + from.basisObjectId;
-      var subscribers = to.subscribers_;
-
-      if (!subscribers)
-        subscribers = to.subscribers_ = {};
-
-      if (!subscribers[subscriberId])
-      {
-        subscribers[subscriberId] = from;
-
-        var count = to.subscriberCount += 1;
-        if (count == 1)
-          to.emit_subscribersChanged(+1);
-      }
-      else
-      {
-        /** @cut */ basis.dev.warn('Attempt to add duplicate subscription');
-      }
-    },
-    unlink: function(type, from, to){
-      var subscriberId = type + from.basisObjectId;
-      var subscribers = to.subscribers_;
-
-      if (subscribers && subscribers[subscriberId])
-      {
-        delete subscribers[subscriberId];
-
-        var count = to.subscriberCount -= 1;
-        if (count == 0)
-        {
-          to.emit_subscribersChanged(-1);
-          to.subscribers_ = null;
-        }
-      }
-      else
-      {
-        /** @cut */ basis.dev.warn('Trying remove non-exists subscription');
-      }
-    },
-
-   /**
-    * Register new type of subscription
-    * @param {string} name
-    * @param {Object} handler
-    * @param {function()} action
-    */
-    add: function(name, handler, action){
-      subscriptionConfig[subscriptionSeed] = {
-        handler: handler,
-        action: action
-      };
-
-      SUBSCRIPTION[name] = subscriptionSeed;
-      SUBSCRIPTION.ALL |= subscriptionSeed;
-
-      subscriptionSeed <<= 1;
-    },
-   /**
-    * @param {string} propertyName Name of property for subscription. Property
-    *   should be instance of {basis.data.AbstractData} class.
-    * @param {string=} eventName Name of event which fire when property changed.
-    *   If omitted it will be equal to property name with 'Changed' suffix.
-    */
-    addProperty: function(propertyName, eventName){
-      var handler = {};
-      handler[eventName || propertyName + 'Changed'] = function(object, oldValue){
-        if (oldValue instanceof AbstractData)
-          SUBSCRIPTION.unlink(propertyName, object, oldValue);
-
-        if (object[propertyName] instanceof AbstractData)
-          SUBSCRIPTION.link(propertyName, object, object[propertyName]);
-      };
-
-      this.add(propertyName.toUpperCase(), handler, function(fn, object){
-        if (object[propertyName])
-          fn(propertyName, object, object[propertyName]);
-      });
-    }
-  };
-
-
-  var maskConfig = {};
-
-  function mixFunctions(fnA, fnB){
-    return function(){
-      fnA.apply(this, arguments);
-      fnB.apply(this, arguments);
-    };
-  }
-
-  function getMaskConfig(mask){
-    var config = maskConfig[mask];
-
-    if (!config)
-    {
-      var actions = [];
-      var handler = {};
-      var idx = 1;
-
-      config = maskConfig[mask] = {
-        actions: actions,
-        handler: handler
-      };
-
-      while (mask)
-      {
-        if (mask & 1)
-        {
-          var cfg = subscriptionConfig[idx];
-
-          actions.push(cfg.action);
-
-          for (var key in cfg.handler)
-            handler[key] = handler[key]
-              ? mixFunctions(handler[key], cfg.handler[key])  // suppose it never be used, but do it for double sure
-              : cfg.handler[key];
-        }
-        idx <<= 1;
-        mask >>= 1;
-      }
-    }
-
-    return config;
-  }
-
-  function addSub(object, mask){
-    var config = getMaskConfig(mask);
-
-    for (var i = 0, action; action = config.actions[i]; i++)
-      action(SUBSCRIPTION.link, object);
-
-    object.addHandler(config.handler);
-  }
-
-  function remSub(object, mask){
-    var config = getMaskConfig(mask);
-
-    for (var i = 0, action; action = config.actions[i++];)
-      action(SUBSCRIPTION.unlink, object);
-
-    object.removeHandler(config.handler);
-  }
-
-
   // Register base subscription types
-
   SUBSCRIPTION.addProperty('delegate');
   SUBSCRIPTION.addProperty('target');
   SUBSCRIPTION.addProperty('dataset');
   SUBSCRIPTION.addProperty('value', 'change');
-
-
-  //
-  // Abstract data
-  //
-
- /**
-  * Base class for any data type class.
-  * @class
-  */
-  var AbstractData = Class(Emitter, {
-    className: namespace + '.AbstractData',
-
-   /**
-    * State of object. Might be managed by delegate object (if used).
-    * @type {basis.data.STATE|string}
-    */
-    state: STATE.UNDEFINED,
-
-   /**
-    * @type {basis.data.ResolveAdapter}
-    */
-    stateRA_: null,
-
-   /**
-    * Fires when state or state.data was changed.
-    * @param {object} oldState Object state before changes.
-    * @event
-    */
-    emit_stateChanged: createEvent('stateChanged', 'oldState'),
-
-   /**
-    * Indicates if object influences to related objects or not (is
-    * subscription on).
-    * @type {boolean}
-    */
-    active: false,
-
-   /**
-    * @type {basis.data.ResolveAdapter}
-    */
-    activeRA_: null,
-
-   /**
-    * Fires when state of subscription was changed.
-    * @event
-    */
-    emit_activeChanged: createEvent('activeChanged'),
-
-   /**
-    * Subscriber type indicates what sort of influence has current object on
-    * related objects (delegate, source, dataSource etc).
-    * @type {basis.data.SUBSCRIPTION|number}
-    */
-    subscribeTo: SUBSCRIPTION.NONE,
-
-   /**
-    * Count of subscribed objects. This property can use to determinate
-    * is data update necessary or not. Usualy if object is in UNDEFINED
-    * or DEPRECATED state and subscriberCount more than zero - update needed.
-    * @type {number}
-    * @readonly
-    */
-    subscriberCount: 0,
-
-   /**
-    * Subscribers list. Using to prevent subscriber dublicate count.
-    * @type {Object}
-    * @private
-    */
-    subscribers_: null,
-
-   /**
-    * Fires when count of subscribers (subscriberCount property) was changed.
-    * @param {Number} delta 1 or -1 depends on subscribers was add or removed.
-    * @event
-    */
-    emit_subscribersChanged: createEvent('subscribersChanged', 'delta'),
-
-   /**
-    * @readonly
-    */
-    syncEvents: Class.oneFunctionProperty(
-      function(){
-        if (this.isSyncRequired())
-          this.syncAction();
-      },
-      {
-        stateChanged: true,
-        subscribersChanged: true
-      }
-    ),
-
-   /**
-    * @readonly
-    */
-    syncAction: null,
-
-   /**
-    * @constructor
-    */
-    init: function(){
-      // inherit
-      Emitter.prototype.init.call(this);
-
-      // activate subscription if active
-      if (this.active)
-      {
-        if (this.active === PROXY)
-          this.active = Value.from(this, 'subscribersChanged', 'subscriberCount');
-
-        this.active = !!resolveValue(this, this.setActive, this.active, 'activeRA_');
-
-        if (this.active)
-          this.addHandler(getMaskConfig(this.subscribeTo).handler);
-      }
-
-      // resolve state
-      // Q: should we check for `instanceof String` here?
-      if (this.state != STATE.UNDEFINED)
-      {
-        var state = this.state;
-
-        if (typeof this.state != 'string')
-          state = resolveValue(this, this.setState, state, 'stateRA_');
-
-        if (state && !hasOwnProperty.call(STATE_EXISTS, state))
-        {
-          /** @cut */ basis.dev.error('Wrong value for state (value has been ignored and state set to STATE.UNDEFINED)', state);
-          state = false;
-        }
-
-        this.state = state || STATE.UNDEFINED;
-      }
-
-      // apply sync action
-      var syncAction = this.syncAction;
-      if (syncAction)
-      {
-        this.syncAction = null;
-        this.setSyncAction(syncAction);
-      }
-    },
-
-   /**
-    * Set new state for object. Fire stateChanged event only if state (or state data) was changed.
-    * @param {basis.data.STATE|string} state New state for object
-    * @param {*=} data
-    * @return {boolean} Current object state.
-    */
-    setState: function(state, data){
-      state = resolveValue(this, this.setState, state, 'stateRA_') || STATE.UNDEFINED;
-
-      var stateCode = String(state);
-
-      if (!hasOwnProperty.call(STATE_EXISTS, stateCode))
-      {
-        /** @cut */ basis.dev.error('Wrong value for state (value has been ignored)', stateCode);
-        return false;
-      }
-
-      // try fetch data from state
-      if (this.stateRA_ && data === undefined)
-        data = state.data;
-
-      // set new state for object
-      if (this.state != stateCode || this.state.data != data)
-      {
-        var oldState = this.state;
-
-        this.state = Object(stateCode);
-        this.state.data = data;
-
-        this.emit_stateChanged(oldState);
-
-        return true; // state was changed
-      }
-
-      return false; // state wasn't changed
-    },
-
-   /**
-    * Default action on deprecate, set object state to {basis.data.STATE.DEPRECATED},
-    * but only if object isn't in {basis.data.STATE.PROCESSING} state.
-    */
-    deprecate: function(){
-      if (this.state != STATE.PROCESSING)
-        this.setState(STATE.DEPRECATED);
-    },
-
-   /**
-    * Set new value for isActiveSubscriber property.
-    * @param {boolean} isActive New value for {basis.data.Object#active} property.
-    * @return {boolean} Returns true if {basis.data.Object#active} was changed.
-    */
-    setActive: function(isActive){
-      if (isActive === PROXY)
-        isActive = Value.from(this, 'subscribersChanged', 'subscriberCount');
-
-      isActive = !!resolveValue(this, this.setActive, isActive, 'activeRA_');
-
-      if (this.active != isActive)
-      {
-        this.active = isActive;
-        this.emit_activeChanged();
-
-        if (isActive)
-          addSub(this, this.subscribeTo);
-        else
-          remSub(this, this.subscribeTo);
-
-        return true;
-      }
-
-      return false;
-    },
-
-   /**
-    * Set new value for subscriptionType property.
-    * @param {number} subscriptionType New value for {basis.data.Object#subscribeTo} property.
-    * @return {boolean} Returns true if {basis.data.Object#subscribeTo} was changed.
-    */
-    setSubscription: function(subscriptionType){
-      var curSubscriptionType = this.subscribeTo;
-      var newSubscriptionType = subscriptionType & SUBSCRIPTION.ALL;
-      var delta = curSubscriptionType ^ newSubscriptionType;
-
-      if (delta)
-      {
-        this.subscribeTo = newSubscriptionType;
-
-        if (this.active)
-        {
-          var curConfig = getMaskConfig(curSubscriptionType);
-          var newConfig = getMaskConfig(newSubscriptionType);
-
-          this.removeHandler(curConfig.handler);
-          this.addHandler(newConfig.handler);
-
-          var idx = 1;
-          while (delta)
-          {
-            if (delta & 1)
-            {
-              var cfg = subscriptionConfig[idx];
-              if (curSubscriptionType & idx)
-                cfg.action(SUBSCRIPTION.unlink, this);
-              else
-                cfg.action(SUBSCRIPTION.link, this);
-            }
-            idx <<= 1;
-            delta >>= 1;
-          }
-        }
-
-        return true;
-      }
-
-      return false;
-    },
-
-   /**
-    * Rule to determine is sync required.
-    */
-    isSyncRequired: function(){
-      return this.subscriberCount > 0 &&
-             (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED);
-    },
-
-   /**
-    * Change sync actions function.
-    * @param {function|null} syncAction
-    */
-    setSyncAction: function(syncAction){
-      var oldAction = this.syncAction;
-
-      if (typeof syncAction != 'function')
-        syncAction = null;
-
-      this.syncAction = syncAction;
-
-      if (syncAction)
-      {
-        if (!oldAction)
-          this.addHandler(this.syncEvents);
-        if (this.isSyncRequired())
-          this.syncAction();
-      }
-      else
-      {
-        if (oldAction)
-          this.removeHandler(this.syncEvents);
-      }
-    },
-
-   /**
-    * @destructor
-    */
-    destroy: function(){
-      // inherit
-      Emitter.prototype.destroy.call(this);
-
-      // remove subscriptions if necessary
-      if (this.active)
-      {
-        var config = getMaskConfig(this.subscribeTo);
-        for (var i = 0, action; action = config.actions[i]; i++)
-          action(SUBSCRIPTION.unlink, this);
-      }
-
-      // clean up adapters
-      if (this.activeRA_)
-        resolveValue(this, false, false, 'activeRA_');
-      if (this.stateRA_)
-        resolveValue(this, false, false, 'stateRA_');
-
-      this.state = STATE.UNDEFINED;
-    }
-  });
 
 
   //
@@ -651,6 +106,14 @@
   */
   var Value = Class(AbstractData, {
     className: namespace + '.Value',
+    propertyDescriptors: {
+      value: 'change',
+      bindingBridge: false,
+      initValue: false,
+      locked: false,
+      proxy: false,
+      setNullOnEmitterDestroy: false
+    },
 
    /**
     * @inheritDoc
@@ -895,6 +358,13 @@
               value: value
             });
 
+            /** @cut */ basis.dev.setInfo(computeValue, 'sourceInfo', {
+            /** @cut */   type: 'Value#compute',
+            /** @cut */   source: [object, hostValue],
+            /** @cut */   events: events,
+            /** @cut */   transform: fn
+            /** @cut */ });
+
             // attach handler re-evaluate handler to object
             object.addHandler(handler, computeValue);
 
@@ -954,6 +424,13 @@
         // add to cache and link
         pipes[id] = pipeValue;
         this.link(pipeValue, valueSyncPipe, true, pipeValue.destroy);
+
+        /** @cut */ basis.dev.setInfo(pipeValue, 'sourceInfo', {
+        /** @cut */   type: 'Value#pipe',
+        /** @cut */   source: this,
+        /** @cut */   events: events,
+        /** @cut */   transform: pipeValue.proxy
+        /** @cut */ });
       }
 
       return pipeValue;
@@ -994,6 +471,12 @@
         value: this.value
       });
 
+      /** @cut */ basis.dev.setInfo(result, 'sourceInfo', {
+      /** @cut */   type: 'Value#as',
+      /** @cut */   source: this,
+      /** @cut */   transform: fn
+      /** @cut */ });
+
       this.link(result, valueSyncAs, true, result.destroy);
 
       return result;
@@ -1008,10 +491,17 @@
       /** @cut */   basis.dev.warn('basis.data.Value#deferred() doesn\'t accept parameters anymore. Use value.as(fn).deferred() instead.');
 
       if (!this.deferred_)
+      {
         this.deferred_ = new DeferredValue({
           source: this,
           value: this.value
         });
+
+        /** @cut */ basis.dev.setInfo(this.deferred_, 'sourceInfo', {
+        /** @cut */   type: 'Value#deferred',
+        /** @cut */   source: this
+        /** @cut */ });
+      }
 
       return this.deferred_;
     },
@@ -1130,6 +620,9 @@
   // Deferred value
   //
 
+  var deferredSchedule = basis.asap.schedule(function(value){
+    value.unlock();
+  });
   var DEFERRED_HANDLER = {
     change: function(source){
       if (!this.isLocked())
@@ -1144,9 +637,6 @@
       this.destroy();
     }
   };
-  var deferredSchedule = basis.asap.schedule(function(value){
-    value.unlock();
-  });
 
  /**
   * @class
@@ -1157,7 +647,7 @@
     source: null,
 
     init: function(){
-      Value.prototype.init.call(this);
+      ReadOnlyValue.prototype.init.call(this);
       this.source.addHandler(DEFERRED_HANDLER, this);
     },
 
@@ -1168,7 +658,7 @@
     destroy: function(){
       deferredSchedule.remove(this);
       this.source = null;
-      Value.prototype.destroy.call(this);
+      ReadOnlyValue.prototype.destroy.call(this);
     }
   });
 
@@ -1192,7 +682,7 @@
       this.source = null;
       this.pipeHandler = null;
 
-      Value.prototype.destroy.call(this);
+      ReadOnlyValue.prototype.destroy.call(this);
     }
   });
 
@@ -1203,7 +693,8 @@
 
   var valueFromMap = {};
   var valueFromSetProxy = function(sender){
-    Value.prototype.set.call(this, sender); // `this` is a token
+    // `this` -> value instance
+    Value.prototype.set.call(this, sender);
   };
 
   Value.from = function(obj, events, getter){
@@ -1241,6 +732,13 @@
           }
         });
 
+        /** @cut */ basis.dev.setInfo(result, 'sourceInfo', {
+        /** @cut */   type: 'Value.from',
+        /** @cut */   source: obj,
+        /** @cut */   events: events,
+        /** @cut */   transform: result.proxy
+        /** @cut */ });
+
         handler.destroy = function(){
           valueFromMap[id] = null;
           this.destroy();
@@ -1275,7 +773,138 @@
     }
 
     if (!result)
-      throw 'Bad object type';
+      throw new Error('Bad object type');
+
+    return result;
+  };
+
+  var UNDEFINED_VALUE = new ReadOnlyValue({
+    value: undefined
+  });
+  var queryAsFunctionCache = {};
+  var queryNestedFunctionCache = {};
+
+  function getQueryPathFragment(target, path, index){
+    var pathFragment = path[index];
+    var isStatic = false;
+
+    if (/^<static>/.test(pathFragment))
+    {
+      isStatic = true;
+      pathFragment = pathFragment.substr(8);
+    }
+
+    var descriptor = target.propertyDescriptors[pathFragment];
+    var events = descriptor ? descriptor.events : null;
+
+    if (descriptor && descriptor.isPrivate)
+    {
+      isStatic = true;
+      events = null;
+
+      /** @cut */ var warnMessage = 'Property can\'t be accessed via query: ';
+      /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+      /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
+      /** @cut */   basis.string.repeat('^', pathFragment.length)
+      /** @cut */ );
+    }
+
+    if (descriptor && descriptor.isStatic)
+      isStatic = true;
+
+    if (events)
+    {
+      if (isStatic)
+      {
+        events = null;
+        /** @cut */ var warnMessage = '<static> was applied for property that has events: ';
+        /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+        /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
+        /** @cut */   basis.string.repeat('^', '<static>'.length) + '\n' +
+        /** @cut */   'Propably is\'t a bug and <static> should be removed from path'
+        /** @cut */ );
+      }
+      else
+      {
+        if (descriptor && descriptor.nested && index < path.length - 1)
+        {
+          var path0 = pathFragment;
+          var path1 = path[++index];
+          var fullPath = path0 + '.' + path1;
+
+          pathFragment = queryNestedFunctionCache[fullPath];
+
+          if (!pathFragment)
+            pathFragment = queryNestedFunctionCache[fullPath] = basis.getter(function(object){
+              object = object && object[path0];
+              return object ? object[path1] : undefined;
+            });
+        }
+      }
+    }
+    else
+    {
+      if (!isStatic)
+      {
+        /** @cut */ var warnMessage = 'No events found for property: ';
+        /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+        /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length) +
+        /** @cut */   basis.string.repeat('^', pathFragment.length) + '\n' +
+        /** @cut */   'If a property never changes use `<static>` before property name, i.e. ' + path.slice(0, index).join('.') + (index ? '.' : '') + '<static>' + path.slice(index).join('.')
+        /** @cut */ );
+        return;
+      }
+    }
+
+    return {
+      getter: pathFragment,
+      rest: path.slice(index + 1).join('.'),
+      events: events || null
+    };
+  }
+
+  function getQueryPathFunction(path){
+    var result = queryAsFunctionCache[path];
+
+    if (!result)
+      // use basis.getter here because `as()` uses cache using
+      // function source, but all those closures will have the same source
+      result = queryAsFunctionCache[path] = basis.getter(function(target){
+        if (target instanceof Emitter)
+          return Value.query(target, path);
+      });
+
+    return result;
+  }
+
+  Value.query = function(target, path){
+    if (arguments.length == 1)
+    {
+      path = target;
+      return chainValueFactory(function(target){
+        return Value.query(target, path);
+      });
+    }
+
+    if (target instanceof Emitter == false)
+      throw new Error('Bad target type');
+
+    if (typeof path != 'string')
+      throw new Error('Path should be a string');
+
+    var pathFragment = getQueryPathFragment(target, path.split('.'), 0);
+    var result;
+
+    if (!pathFragment)
+      return UNDEFINED_VALUE;
+
+    result = Value.from(target, pathFragment.events, pathFragment.getter);
+
+    if (pathFragment.rest)
+      result = result
+        // use cached function as we need return the same value for equal paths
+        .as(getQueryPathFunction(pathFragment.rest))
+        .pipe('change', 'value');
 
     return result;
   };
@@ -1458,6 +1087,15 @@
   */
   var DataObject = Class(AbstractData, {
     className: namespace + '.Object',
+    propertyDescriptors: {
+      delegate: 'delegateChanged',
+      target: 'targetChanged',
+      root: 'rootChanged',
+      data: {
+        nested: true,
+        events: 'update'
+      }
+    },
 
    /**
     * @inheritDoc
@@ -1857,6 +1495,8 @@
     }
   });
 
+  var resolveObject = createResolveFunction(DataObject);
+
 
   //
   // Slot
@@ -2024,8 +1664,14 @@
   */
   var DatasetWrapper = Class(DataObject, {
     className: namespace + '.DatasetWrapper',
+    propertyDescriptors: {
+      dataset: 'datasetChanged',
+      itemCount: 'itemsChanged',
+      'pick()': 'itemsChanged',
+      'getItems()': 'itemsChanged'
+    },
 
-    active: basis.PROXY,
+    active: PROXY,
     subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASET,
 
     listen: {
@@ -2168,6 +1814,11 @@
   */
   var ReadOnlyDataset = Class(AbstractData, {
     className: namespace + '.ReadOnlyDataset',
+    propertyDescriptors: {
+      'itemCount': 'itemsChanged',
+      'pick()': 'itemsChanged',
+      'getItems()': 'itemsChanged'
+    },
 
    /**
     * Cardinality of set.
@@ -2599,67 +2250,13 @@
   // resolvers
   //
 
-  function resolveAdapterProxy(){
-    this.fn.call(this.context, this.source);
-  }
-
- /**
-  * @class
-  */
-  var ResolveAdapter = function(context, fn, source, handler){
-    this.context = context;
-    this.fn = fn;
-    this.source = source;
-    this.handler = handler;
-  };
-
-  ResolveAdapter.prototype = {
-    context: null,
-    fn: null,
-    source: null,
-    handler: null,
-    next: null,
-    attach: function(){
-      this.source.addHandler(this.handler, this);
-    },
-    detach: function(){
-      this.source.removeHandler(this.handler, this);
-    }
-  };
-
- /**
-  * Binding bridge dataset adapter
-  * @class
-  */
-  var BBResolveAdapter = function(){
-    ResolveAdapter.apply(this, arguments);
-  };
-  BBResolveAdapter.prototype = new ResolveAdapter();
-  BBResolveAdapter.prototype.attach = function(destroyCallback){
-    this.source.bindingBridge.attach(this.source, this.handler, this, destroyCallback);
-  };
-  BBResolveAdapter.prototype.detach = function(){
-    this.source.bindingBridge.detach(this.source, this.handler, this);
-  };
-
-  //
-  // adapter handlers
-  //
-
-  var DEFAULT_CHANGE_ADAPTER_HANDLER = function(){
-    this.fn.call(this.context, this.source);
-  };
-  var DEFAULT_DESTROY_ADAPTER_HANDLER = function(){
-    this.fn.call(this.context, null);
-  };
-  var RESOLVEVALUE_DESTROY_ADAPTER_HANDLER = function(){
-    this.fn.call(this.context, resolveValue(NULL_OBJECT, null, this.source.bindingBridge.get(this.source)));
-  };
-
   var DATASETWRAPPER_ADAPTER_HANDLER = {
     datasetChanged: DEFAULT_CHANGE_ADAPTER_HANDLER,
     destroy: DEFAULT_DESTROY_ADAPTER_HANDLER
   };
+  function resolveAdapterProxy(){
+    this.fn.call(this.context, this.source);
+  }
 
  /**
   * Resolve dataset from source value.
@@ -2713,103 +2310,6 @@
     return source;
   }
 
- /**
-  * Produce function to resove value of some class.
-  */
-  function createResolveFunction(Class){
-    return function resolveObject(context, fn, source, property, factoryContext){
-      var oldAdapter = context[property] || null;
-      var newAdapter = null;
-
-      if (fn !== resolveAdapterProxy && typeof source == 'function')
-        source = source.call(factoryContext || context, factoryContext || context);
-
-      if (source && source.bindingBridge)
-      {
-        if (!oldAdapter || oldAdapter.source !== source)
-          newAdapter = new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
-        else
-          newAdapter = oldAdapter;
-
-        source = resolveObject(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
-      }
-
-      if (source instanceof Class == false)
-        source = null;
-
-      if (property && oldAdapter !== newAdapter)
-      {
-        var cursor = oldAdapter;
-
-        // drop old adapter chain
-        while (cursor)
-        {
-          var adapter = cursor;
-          adapter.detach();
-          cursor = adapter.next;
-          adapter.next = null;
-        }
-
-        if (newAdapter)
-          newAdapter.attach(DEFAULT_DESTROY_ADAPTER_HANDLER);
-
-        context[property] = newAdapter;
-      }
-
-      return source;
-    };
-  }
-
- /**
-  * Resolve object from source value.
-  */
-  var resolveObject = createResolveFunction(DataObject);
-
- /**
-  * Resolve value from source value.
-  */
-  function resolveValue(context, fn, source, property, factoryContext){
-    var oldAdapter = context[property] || null;
-    var newAdapter = null;
-
-    // as functions could be a value, invoke only functions with factory property
-    // i.e. source -> function(){ /* factory code */ }).factory === FACTORY
-    // apply only for top-level resolveValue() invocation
-    if (source && fn !== resolveAdapterProxy && basis.fn.isFactory(source))
-      source = source.call(factoryContext || context, factoryContext || context);
-
-    if (source && source.bindingBridge)
-    {
-      if (!oldAdapter || oldAdapter.source !== source)
-        newAdapter = new BBResolveAdapter(context, fn, source, DEFAULT_CHANGE_ADAPTER_HANDLER);
-      else
-        newAdapter = oldAdapter;
-
-      source = resolveValue(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
-    }
-
-    if (property && oldAdapter !== newAdapter)
-    {
-      var cursor = oldAdapter;
-
-      // drop old adapter chain
-      while (cursor)
-      {
-        var adapter = cursor;
-        adapter.detach();
-        cursor = adapter.next;
-        adapter.next = null;
-      }
-
-      if (newAdapter)
-        newAdapter.attach(RESOLVEVALUE_DESTROY_ADAPTER_HANDLER);
-
-      context[property] = newAdapter;
-    }
-
-    return source;
-  }
-
 
   //
   // Accumulate dataset changes
@@ -2823,19 +2323,34 @@
     var realEvent;
 
     function flushCache(cache){
-      var dataset = cache.dataset;
-      realEvent.call(dataset, cache);
+      realEvent.call(cache.dataset, cache);
     }
 
     function flushAllDataset(){
+      function processEntry(datasetId){
+        var entry = eventCacheCopy[datasetId];
+
+        if (entry)
+        {
+          eventCacheCopy[datasetId] = null;
+          flushCache(entry);
+        }
+      }
+
       var eventCacheCopy = eventCache;
+      var realEvent = proto.emit_itemsChanged;
+
+      proto.emit_itemsChanged = function(delta){
+        // we can't emit new itemsChanged until cache is flushed
+        processEntry(this.basisObjectId);
+        realEvent.call(this, delta);
+      };
+
       eventCache = {};
       for (var datasetId in eventCacheCopy)
-      {
-        var entry = eventCacheCopy[datasetId];
-        if (entry)
-          flushCache(entry);
-      }
+        processEntry(datasetId);
+
+      proto.emit_itemsChanged = realEvent;
     }
 
     function storeDatasetDelta(delta){
@@ -3029,6 +2544,7 @@
     ReadOnlyValue: ReadOnlyValue,
     DeferredValue: DeferredValue,
     PipeValue: PipeValue,
+    chainValueFactory: chainValueFactory,
 
     Object: DataObject,
     Slot: Slot,
@@ -3044,9 +2560,9 @@
 
     ResolveAdapter: ResolveAdapter,
     createResolveFunction: createResolveFunction,
-    resolveDataset: resolveDataset,
-    resolveObject: resolveObject,
     resolveValue: resolveValue,
+    resolveObject: resolveObject,
+    resolveDataset: resolveDataset,
 
     wrapData: wrapData,
     wrapObject: wrapObject,

@@ -1,16 +1,25 @@
 .view
 {
   position: fixed;
-  z-index: 1000;
+  z-index: 10000;
   top: 10px;
   right: 10px;
-  width: 300px;
+  width: 320px;
   bottom: 10px;
-  background: rgba(255,255,255,.9);
+  background: rgba(255, 255, 255, .9);
+  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, .3);
   overflow: auto;
   overflow-x: hidden;
-  padding: 4px;
+  padding: 0px;
   font-family: Arial, Tahoma, Verdana, sans-serif !important;
   font-size: 12px;
   line-height: 14px;
+}
+
+.header
+{
+  background: rgba(0, 0, 0, .35);
+  margin: 0;
+  padding: 4px;
 }

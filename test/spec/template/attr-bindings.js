@@ -10,7 +10,7 @@ module.exports = {
         assert(instance.element.title == '');
 
         instance.set('foo', 'x');
-        assert(instance.element.title == 'xundefined'); // bar is undefined
+        assert(instance.element.title == ''); // bar is undefined
 
         instance.set('bar', 'x');
         assert(instance.element.title == 'xx');
@@ -759,6 +759,22 @@ module.exports = {
 
             instance.set('foo', 0);  // 0 + 0 -> false
             assert(instance.element.style.visibility == '');
+          }
+        }
+      ]
+    },
+    {
+      name: 'special cases',
+      test: [
+        {
+          name: 'should no show errors in console when use expression in svg attributes (issue #25)',
+          test: function(){
+            var template = createTemplate('<svg:svg viewBox="0 0 {width} {height}"/>');
+
+            assert(text(template) === text('<svg:svg>'));
+            assert(text(template, { width: 100 }) === text('<svg:svg>'));
+            assert(text(template, { height: 100 }) === text('<svg:svg>'));
+            assert(text(template, { width: 100, height: 100 }) === text('<svg:svg viewBox="0 0 100 100">'));
           }
         }
       ]

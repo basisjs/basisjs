@@ -226,78 +226,87 @@
    /**
     * @func
     */
-    var bind_attrClass = CLASSLIST_SUPPORTED
-      // classList supported
-      ? function(domRef, oldClass, newValue, anim){
-          var newClass = newValue ? newValue : '';
+    var bind_attrClass = CLASSLIST_SUPPORTED ? normalAttrClass : legacyAttrClass;
 
-          if (newClass != oldClass)
+    // classList supported
+    function normalAttrClass(domRef, oldClass, newValue, anim){
+      var classList = domRef.classList;
+
+      // IE11 and lower doesn't support classList for SVG
+      if (!classList)
+        return legacyAttrClass(domRef, oldClass, newValue, anim);
+
+      var newClass = newValue || '';
+
+      if (newClass != oldClass)
+      {
+        if (oldClass)
+          domRef.classList.remove(oldClass);
+
+        if (newClass)
+        {
+          domRef.classList.add(newClass);
+
+          if (anim)
           {
-            if (oldClass)
-              domRef.classList.remove(oldClass);
-
-            if (newClass)
-            {
-              domRef.classList.add(newClass);
-
-              if (anim)
-              {
-                domRef.classList.add(newClass + '-anim');
-                basis.nextTick(function(){
-                  domRef.classList.remove(newClass + '-anim');
-                });
-              }
-            }
+            domRef.classList.add(newClass + '-anim');
+            basis.nextTick(function(){
+              domRef.classList.remove(newClass + '-anim');
+            });
           }
-
-          return newClass;
         }
-      // old browsers are not support for classList
-      : function(domRef, oldClass, newValue, anim){
-          var newClass = newValue ? newValue : '';
+      }
 
-          if (newClass != oldClass)
+      return newClass;
+    }
+
+    // old browsers have no support for classList at all
+    // IE11 and lower doesn't support classList for SVG
+    function legacyAttrClass(domRef, oldClass, newValue, anim){
+      var newClass = newValue || '';
+
+      if (newClass != oldClass)
+      {
+        var className = domRef.className;
+        var classNameIsObject = typeof className != 'string';
+        var classList;
+
+        if (classNameIsObject)
+          className = className.baseVal;
+
+        classList = className.split(WHITESPACE);
+
+        if (oldClass)
+          basis.array.remove(classList, oldClass);
+
+        if (newClass)
+        {
+          classList.push(newClass);
+
+          if (anim)
           {
-            var className = domRef.className;
-            var classNameIsObject = typeof className != 'string';
-            var classList;
+            basis.array.add(classList, newClass + '-anim');
+            basis.nextTick(function(){
+              var classList = (classNameIsObject ? domRef.className.baseVal : domRef.className).split(WHITESPACE);
 
-            if (classNameIsObject)
-              className = className.baseVal;
+              basis.array.remove(classList, newClass + '-anim');
 
-            classList = className.split(WHITESPACE);
-
-            if (oldClass)
-              basis.array.remove(classList, oldClass);
-
-            if (newClass)
-            {
-              classList.push(newClass);
-
-              if (anim)
-              {
-                basis.array.add(classList, newClass + '-anim');
-                basis.nextTick(function(){
-                  var classList = (classNameIsObject ? domRef.className.baseVal : domRef.className).split(WHITESPACE);
-
-                  basis.array.remove(classList, newClass + '-anim');
-
-                  if (classNameIsObject)
-                    domRef.className.baseVal = classList.join(' ');
-                  else
-                    domRef.className = classList.join(' ');
-                });
-              }
-            }
-
-            if (classNameIsObject)
-              domRef.className.baseVal = classList.join(' ');
-            else
-              domRef.className = classList.join(' ');
+              if (classNameIsObject)
+                domRef.className.baseVal = classList.join(' ');
+              else
+                domRef.className = classList.join(' ');
+            });
           }
+        }
 
-          return newClass;
-        };
+        if (classNameIsObject)
+          domRef.className.baseVal = classList.join(' ');
+        else
+          domRef.className = classList.join(' ');
+      }
+
+      return newClass;
+    }
 
    /**
     * @func

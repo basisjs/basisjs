@@ -1,4 +1,4 @@
-<b:style src="./template-info-binding.css"/>
+<b:style src="./binding.css"/>
 <b:isolate/>
 <b:define name="used" type="bool"/>
 <b:define name="loc" type="bool"/>
@@ -6,6 +6,9 @@
 <div class="binding binding_{used}">
   <span class="caption caption_{used} caption_{nestedView} caption_{highlight} caption_{loc}" event-click="pickValue" event-mouseenter="enter" event-mouseleave="leave">
     <span class="link_{loc}">{name}</span>
+  </span>
+  <span b:show="{isReactive}" class="reactive reactive_{highlight}" title="Value was resolved from another value">
+    R
   </span>
   <span b:show="{used}" class="value">
     {value}

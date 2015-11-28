@@ -78,7 +78,8 @@ function createEventHandler(attrName){
       return;
 
     var bubble = insideElementEvent[event.type] || (event.type != 'mouseenter' && event.type != 'mouseleave');
-    var attrCursor = event.sender;
+    var nodePath = event.path.slice(0, event.path.length - 1);
+    var attrCursor = nodePath.shift();
     var attr;
 
     // search for nearest node with event-{eventName} attribute
@@ -90,7 +91,7 @@ function createEventHandler(attrName){
       if (!bubble || typeof attr == 'string')
         break;
 
-      attrCursor = attrCursor.parentNode;
+      attrCursor = nodePath.shift();
     }
 
     // attribute found
@@ -118,7 +119,7 @@ function createEventHandler(attrName){
           if (tmplRef = resolveActionById(refId))
             break;
         }
-        cursor = cursor.parentNode;
+        cursor = nodePath.shift();
       }
 
       var actions = attr.trim().split(/\s+/);
@@ -331,7 +332,9 @@ var buildDOM = function(tokens, parent){
 
   // if there is only one root node, document fragment isn't required
   if (!parent && tokens.length == 1)
-    result = result.firstChild;
+    // remove single child otherwise reference dom fragment will has parent
+    // but not its clones
+    result = result.removeChild(result.firstChild);
 
   return result;
 };

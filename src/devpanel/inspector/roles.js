@@ -4,10 +4,12 @@ var inspectBasisUI = inspectBasis.require('basis.ui');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisTracker = inspectBasis.require('basis.tracker');
+var getTrackInfo = inspectBasisTracker.getInfo;
+var trackingInfo = resource('./tracking-info/index.js');
 
-var Node = global.Node;
-var Value = require('basis.data').Value;
 var Overlay = require('./utils/overlay.js');
+var Value = require('basis.data').Value;
+var Node = require('basis.ui').Node;
 var events = [
   'click',
   'mousedown',
@@ -74,46 +76,41 @@ function getActions(domNode, events){
   return false;
 }
 
-function getTrackInfo(domNode, path, events, actions){
-  var result = [];
-  var role;
-
-  if (events.length || actions.length)
-  {
-    for (var i = 0; i < events.length; i++)
-    {
-      var data = inspectBasisTracker.getData({
-        type: 'ui',
-        path: path,
-        event: events[i]
-      });
-
-      if (data)
-        result.push(data);
-    }
-
-    for (var i = 0; i < actions.length; i++)
-    {
-      var data = inspectBasisTracker.getData({
-        type: 'ui',
-        path: path,
-        action: actions[i]
-      });
-
-      if (data)
-        result.push(data);
+var eventLog = new Node({
+  template: resource('./template/roles/event-log.tmpl'),
+  childClass: {
+    template: resource('./template/roles/event-log-entry.tmpl'),
+    binding: {
+      event: 'data:',
+      selector: 'data:',
+      data: function(node){
+        return JSON.stringify(node.data.data, null, 2);
+      },
+      destroing: 'data:'
+    },
+    init: function(){
+      Node.prototype.init.call(this);
+      setTimeout(this.destroy.bind(this), 8000);
+      setTimeout(function(){
+        this.update({ destroing: true });
+      }.bind(this), 7500);
     }
   }
+});
 
-  return result.length ? result : false;
-}
+inspectBasisTracker.attach(function(event){
+  eventLog.appendChild({
+    data: event
+  });
+});
 
 var overlay = new Overlay({
   pickMode: new basis.Token(false),
 
   template: resource('./template/roles/overlay.tmpl'),
   binding: {
-    pickMode: 'pickMode'
+    pickMode: 'pickMode',
+    eventLog: eventLog
   },
 
   childClass: {
@@ -138,9 +135,17 @@ var overlay = new Overlay({
     },
     action: {
       showPath: function(){
-        global.prompt('Path:', this.data.path);
+        trackingInfo().set(this.domNode);
+        overlay.deactivate();
       }
     }
+  },
+
+  activate: function(){
+    if (trackingInfo.isResolved())
+      trackingInfo().set();
+
+    Overlay.prototype.activate.apply(this, arguments);
   },
 
   apply: function(){
@@ -200,7 +205,7 @@ var overlay = new Overlay({
           hasActions: !!actions,
           missedActions: brokenActions && brokenActions.length ? brokenActions.join(' ') : '',
           conflict: knownPath,
-          track: !!getTrackInfo(domNode, path, events, actions),
+          track: !!getTrackInfo(path),
           path: path.join(' ')
         });
 
@@ -210,6 +215,19 @@ var overlay = new Overlay({
       }
     }
   }
+});
+
+overlay.pickMode.attach(function(pickMode){
+  var events = {};
+
+  if (pickMode)
+    events = {
+      click: true,
+      mousedown: true,
+      mouseup: true
+    };
+
+  overlay.setMuteEvents(events);
 });
 
 //

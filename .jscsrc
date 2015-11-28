@@ -51,12 +51,6 @@
 
     "requireDotNotation": true,
 
-    "validateJSDoc": {
-        //"checkRedundantParams": true,
-        "checkParamNames": true,
-        "requireParamTypes": true
-    },
-
     "additionalRules": [
         "scripts/jscs/*.js"
     ],

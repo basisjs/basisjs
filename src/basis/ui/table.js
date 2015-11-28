@@ -111,6 +111,7 @@
           return owner.getChildNodesDataset();
         },
         instance: UINode.subclass({
+          className: namespace + '.HeaderPartitionRow',
           template: module.template('HeaderPartitionRow'),
           childClass: HeaderPartitionNode
         })

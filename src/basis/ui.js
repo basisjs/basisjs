@@ -34,6 +34,15 @@
 
   /** @cut */ var instances = {};
   /** @cut */ var notifier = new basis.Token();
+  /** @cut */ var notifyCreateSchedule = basis.asap.schedule(function(instance){
+  /** @cut */   instances[instance.basisObjectId] = instance;
+  /** @cut */   notifier.set({ action: 'create', instance: instance });
+  /** @cut */ });
+  /** @cut */ var notifyDestroySchedule = basis.asap.schedule(function(instance){
+  /** @cut */   delete instances[instance.basisObjectId];
+  /** @cut */   notifier.set({ action: 'destroy', instance: instance });
+  /** @cut */ });
+
 
 
   //
@@ -51,6 +60,8 @@
   * @param {object} extension
   */
   function extendBinding(binding, extension){
+    /** @cut */ var info = basis.dev.getInfo(extension, 'map');
+
     binding.bindingId = bindingSeed++;
 
     for (var key in extension)
@@ -125,6 +136,9 @@
         }
       }
 
+      /** @cut */ if (def && info && info.hasOwnProperty(key))
+      /** @cut */   def.loc = info[key];
+
       binding[key] = def;
     }
   }
@@ -196,8 +210,15 @@
         if (node.role)
         {
           var roleId = node.roleId && node.binding[node.roleId];
-          var id = roleId && typeof roleId.getter == 'function' ? roleId.getter(node) : undefined;
-          return node.role + (id !== undefined ? '(' + id + ')' : '');
+
+          if (roleId && typeof roleId.getter == 'function')
+          {
+            roleId = roleId.getter(node);
+            if (roleId === undefined)
+              return '';
+          }
+
+          return node.role + (roleId !== undefined ? '(' + roleId + ')' : '');
         }
 
         return node.ownerSatelliteName || '';
@@ -320,6 +341,15 @@
   */
   var TemplateMixin = function(super_){
     return {
+      propertyDescriptors: {
+        action: false,
+        binding: false,
+        template: 'templateChanged',
+        tmpl: 'templateChanged',
+        element: false,
+        childNodesElement: false
+      },
+
      /**
       * Template for object.
       * @type {basis.template.html.Template}
@@ -420,8 +450,7 @@
           }
         }
 
-        /** @cut */ instances[this.basisObjectId] = this;
-        /** @cut */ notifier.set({ action: 'create', instance: this });
+        /** @cut */ notifyCreateSchedule.add(this);
       },
 
       templateSync: function(){
@@ -626,8 +655,10 @@
       * @inheritDoc
       */
       destroy: function(){
-        /** @cut */ delete instances[this.basisObjectId];
-        /** @cut */ notifier.set({ action: 'destroy', instance: this });
+        /** @cut */ if (instances[this.basisObjectId])
+        /** @cut */   notifyDestroySchedule.add(this);
+        /** @cut */ else
+        /** @cut */   notifyCreateSchedule.remove(this);
 
         var template = this.template;
         var element = this.element;

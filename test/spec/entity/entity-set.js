@@ -86,6 +86,23 @@ module.exports = {
           }
         },
         {
+          name: 'EntityTyle.all setAndDestroyRemoved issue',
+          test: function(){
+            var entityType = nsEntity.createType(null, { id: nsEntity.NumberId });
+
+            [{ id: 1 }, { id: 2 }].map(entityType);
+            entityType(0);
+
+            assert(entityType.all.itemCount === 3);
+
+            var inserted = entityType.all.setAndDestroyRemoved([{ id: 1 }, { id: 2 }]);
+            assert(entityType.get(0) === undefined);
+            assert(entityType.all.itemCount === 2);
+            assert([1, 2], entityType.all.getValues('data.id').sort());
+            assert(inserted === null);
+          }
+        },
+        {
           name: 'EntitySet#sync issue',
           test: function(){
             var entityType = nsEntity.createType(null, { id: nsEntity.NumberId });

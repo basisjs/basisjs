@@ -17,7 +17,7 @@
   // default parser
   //
 
-  PARSER.add('text', basis.array);
+  PARSER.add('text', String);
 
 
   //
@@ -30,29 +30,56 @@
       'default delete do else false ' +
       'for function if in instanceof ' +
       'new null return super switch ' +
-      'this throw true try typeof var while with';
+      'this throw true try typeof var while with ' +
+      'let const of class extends yield async await';
 
     var keywordRegExp = new RegExp('\\b(' + keywords.split(' ').join('|') + ')\\b', 'g');
 
-    return function(text){
+    return function(text, rangeStart, rangeEnd, rangeName){
       function addMatch(kind, start, end, rn){
         if (lastMatchPos != start)
           result.push(text.substring(lastMatchPos, start).replace(keywordRegExp, '<span class="token-keyword">$1</span>'));
 
-        lastMatchPos = end + 1;
+        lastMatchPos = end ? end + 1 : start;
 
         if (kind)
-          result.push('<span class="token-' + kind + '">' + text.substring(start, end + 1) + '</span>' + (rn || ''));
+          result.push('<span class="token-' + kind + '">' + text.substring(start, lastMatchPos) + '</span>' + (rn || ''));
       }
 
       var result = [];
       var sym = text.split('');
-      var start;
       var lastMatchPos = 0;
+      var rangeWrapper = '<span class="' + rangeName + '">';
+      var inRange = false;
+      var resultRangeStart = -1;
+      var resultRangeEnd;
+      var start;
       var strSym;
 
       for (var i = 0; i < sym.length; i++)
       {
+        if (i >= rangeStart)
+          if (i < rangeEnd)
+          {
+            if (!inRange)
+            {
+              inRange = true;
+              addMatch(null, rangeStart);
+              result.push(rangeWrapper);
+              resultRangeStart = result.join('').length;
+            }
+          }
+          else
+          {
+            if (inRange)
+            {
+              inRange = false;
+              addMatch(null, rangeEnd);
+              result.push('</span>');
+              resultRangeEnd = result.join('').length;
+            }
+          }
+
         if (sym[i] == '\'' || sym[i] == '\"')
         {
           strSym = sym[i];
@@ -115,6 +142,22 @@
       }
 
       addMatch(null, text.length);
+      result = result.join('');
+
+      if (resultRangeStart != -1)
+      {
+        if (!resultRangeEnd)
+        {
+          resultRangeEnd = result.length;
+          result += '</span>';
+        }
+
+        result =
+          result.substr(0, resultRangeStart) +
+          result.substring(resultRangeStart, resultRangeEnd)
+            .replace(/\n/g, '</span>\n' + rangeWrapper) +
+          result.substr(resultRangeEnd);
+      }
 
       return result;
     };
@@ -312,7 +355,7 @@
 
       addMatch(null, text.length);
 
-      return result;
+      return result.join('');
     };
   })());
 
@@ -326,45 +369,55 @@
   */
   function highlight(text, lang, options){
 
+    function makeSafe(str){
+      return str
+        .replace(/\r\n|\n\r|\r/g, '\n')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;');
+    }
+
     function normalize(text){
       text = text
-        .trimRight()
-        .replace(/\r\n|\n\r|\r/g, '\n');
-
-      if (!options.keepFormat)
-        text = text.replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
+        // cut first empty lines
+        .replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1')
+        .trimRight();
 
       // fix empty strings
-      text = text
-        .replace(/\n[ \t]+/g, function(m){
-          return m.replace(/\t/g, '  ');
-        })
-        .replace(/\n[ \t]+\n/g, '\n\n');
+      text = text.replace(/\n[ \t]+\n/g, '\n\n');
 
-      if (!options.keepFormat)
+      // normalize text offset
+      var minOffset = 1000;
+      var lines = text.split(/\n+/);
+      var startLine = Number(text.match(/^function/) != null); // fix for function.toString()
+
+      for (var i = startLine; i < lines.length; i++)
       {
-        // normalize text offset
-        var minOffset = 1000;
-        var lines = text.split(/\n+/);
-        var startLine = Number(text.match(/^function/) != null); // fix for function.toString()
-        for (var i = startLine; i < lines.length; i++)
-        {
-          var m = lines[i].match(/^\s*/);
-          if (m[0].length < minOffset)
-            minOffset = m[0].length;
-          if (minOffset == 0)
-            break;
-        }
-
-        if (minOffset > 0)
-          text = text.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
+        var m = lines[i].match(/^\s*/);
+        if (m[0].length < minOffset)
+          minOffset = m[0].length;
+        if (minOffset == 0)
+          break;
       }
 
-      text = text.replace(new RegExp('(^|\\n)( +)', 'g'), function(m, a, b){
-        return a + repeat('\xA0', b.length);
-      });
+      if (minOffset > 0)
+        text = text.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
 
       return text;
+    }
+
+    function defaultWrapper(line, idx){
+      return (
+        '<div class="line ' + (idx % 2 ? 'odd' : 'even') + lineClass + '">' +
+          '<span class="lineContent">' +
+            (!options.noLineNumber
+              ? '<input class="lineNumber" value="' + lead(idx + 1, numberWidth) + '" type="none" unselectable="on" readonly="readonly" tabindex="-1" />' +
+                '<span class="over"></span>'
+              : ''
+            ) +
+            line + '\r\n' +
+          '</span>' +
+        '</div>'
+      );
     }
 
     //  MAIN PART
@@ -372,34 +425,48 @@
     if (!options)
       options = {};
 
-    var parser = LANG_PARSER[lang] || LANG_PARSER.text;
-    var html = parser(
-      normalize(text || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-    );
+    // prepare text
+    var rangeStart = -1;
+    var rangeEnd = -1;
+    var rangeName = '';
 
-    var lines = html.join('').split('\n');
-    var numberWidth = String(lines.length).length;
-    var res = [];
-    var lineClass = (options.noLineNumber ? '' : ' hasLineNumber');
-    for (var i = 0; i < lines.length; i++)
+    if (options.range)
     {
-      res.push(
-        '<div class="line ' + (i % 2 ? 'odd' : 'even') + lineClass + '">' +
-          '<span class="lineContent">' +
-            (!options.noLineNumber
-              ? '<input class="lineNumber" value="' + lead(i + 1, numberWidth) + '" type="none" unselectable="on" readonly="readonly" tabindex="-1" />' +
-                '<span class="over"></span>'
-              : ''
-            ) +
-            (lines[i] + '\r\n') +
-          '</span>' +
-        '</div>'
-      );
+      var left = makeSafe(text.substr(0, options.range[0]));
+      var range = makeSafe(text.substring(options.range[0], options.range[1]));
+      var right = makeSafe(text.substr(options.range[1]));
+
+      rangeStart = left.length;
+      rangeEnd = rangeStart + range.length;
+      rangeName = options.range[2] || 'range';
+
+      text = left + range + right;
+    }
+    else
+    {
+      text = makeSafe(text);
     }
 
-    return res.join('');
+    if (!options.keepFormat)
+      text = normalize(text || '');
+
+    var parser = LANG_PARSER[lang] || LANG_PARSER.text;
+    var html = parser(text, rangeStart, rangeEnd, rangeName);
+
+    var lines = html.split('\n');
+    var numberWidth = String(lines.length).length;
+    var lineClass = (options.noLineNumber ? '' : ' hasLineNumber');
+    var offsetRx = new RegExp('^(<span class="' + rangeName + '">)?([ \\t]+)');
+
+    lines = lines
+      .map(function(line){
+        return line.replace(offsetRx, function(m, rangeSpan, spaces){
+          return (rangeSpan || '') + repeat('\xA0', spaces.replace(/\t/g, '  ').length);
+        });
+      })
+      .map(options.wrapper || defaultWrapper);
+
+    return options.lines ? lines : lines.join('');
   }
 
 

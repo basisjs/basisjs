@@ -41,6 +41,11 @@
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
   var eventUtils = require('basis.dom.event');
+  var cssom;
+
+  basis.resource('basis:cssom.js').ready(function(exports){
+    cssom = exports;
+  });
 
   // element for DOM support tests
   var testElement = document.createElement('div');
@@ -668,8 +673,12 @@
     // attach event handlers
     if (isConfig)
     {
-      if (config.css && basis.cssom)
-        basis.cssom.setStyle(element, config.css);
+      if (config.css)
+      {
+        if (!cssom)
+          cssom = require('basis.cssom');
+        cssom.setStyle(element, config.css);
+      }
 
       for (var event in config)
         if (typeof config[event] == 'function')

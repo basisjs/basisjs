@@ -20,6 +20,7 @@
   // import names
   //
 
+  /** @cut */ var hasOwnProperty = Object.prototype.hasOwnProperty;
   var Class = basis.Class;
   var complete = basis.object.complete;
   var arrayFrom = basis.array;
@@ -341,6 +342,8 @@
   }
 
   function processSatelliteConfig(satelliteConfig){
+    /** @cut */ var loc;
+
     if (!satelliteConfig)
       return null;
 
@@ -354,6 +357,8 @@
       satelliteConfig = {
         instance: satelliteConfig
       };
+    /** @cut */ else
+    /** @cut */   loc = basis.dev.getInfo(satelliteConfig, 'loc');
 
     var handlerRequired = false;
     var events = 'update';
@@ -406,7 +411,7 @@
 
           if (Class.isClass(value))
           {
-            /** @cut */ basis.dev.warn(namespace + ': `satelliteClass` in satellite config is deprecated, use `instance` instead');
+            /** @cut */ basis.dev.warn(namespace + ': `' + key + '` in satellite config is deprecated, use `instance` instead');
             config.instanceClass = processInstanceClass(value);
           }
           /** @cut */ else
@@ -467,6 +472,9 @@
       }
     }
 
+    /** @cut */ if (loc)
+    /** @cut */   basis.dev.setInfo(config, 'loc', loc);
+
     return config;
   }
 
@@ -478,8 +486,15 @@
 
   // default satellite map
   var NULL_SATELLITE = Class.customExtendProperty({}, function(result, extend){
+    /** @cut */ var map = basis.dev.getInfo(extend, 'map');
+
     for (var name in extend)
+    {
       result[name] = processSatelliteConfig(extend[name]);
+
+      /** @cut */ if (map && !basis.dev.getInfo(result[name]) && hasOwnProperty.call(map, name))
+      /** @cut */   basis.dev.setInfo(result[name], 'loc', map[name]);
+    }
   });
 
   // satellite update handler
@@ -546,6 +561,10 @@
           this.instance = new this.factory(satelliteConfig);
           owner.setSatellite(name, this.instance, true);
 
+          /** @cut */ var loc = basis.dev.getInfo(config, 'loc');
+          /** @cut */ if (loc)
+          /** @cut */   basis.dev.setInfo(this.instance, 'loc', loc);
+
           return;
         }
 
@@ -601,6 +620,31 @@
   */
   var AbstractNode = Class(DataObject, {
     className: namespace + '.AbstractNode',
+    propertyDescriptors: {
+      owner: 'ownerChanged',
+      parentNode: 'parentChanged',
+      childNodes: 'childNodesModified',
+      childNodesState: 'childNodesStateChanged',
+      dataSource: 'dataSourceChanged',
+      'getChildNodesDataset()': true,
+      satellite: {
+        nested: true,
+        events: 'satelliteChanged'
+      },
+      sorting: 'sortingChanged',
+      sortingDesc: 'sortingChanged',
+      grouping: 'groupingChanged',
+      ownerSatelliteName: 'ownerSatelliteNameChanged',
+      firstChild: false,
+      lastChild: false,
+      previousSibling: false,
+      nextSibling: false,
+      groupNode: false,
+      groupId: true,
+      autoDelegate: false,
+      destroyDataSourceMember: false,
+      name: true
+    },
 
    /**
     * @inheritDoc
@@ -711,7 +755,7 @@
     * All child nodes must be instances of childClass.
     * @type {Class}
     */
-    childClass: AbstractNode,
+    childClass: Class.SELF,
 
    /**
     * Object that's manage childNodes updates.
@@ -1615,7 +1659,14 @@
       child = node.childFactory(config);
 
       if (child instanceof node.childClass)
+      {
+        /** @cut */ var info = basis.dev.getInfo(config);
+        /** @cut */ if (info)
+        /** @cut */   for (var key in info)
+        /** @cut */     basis.dev.setInfo(child, key, info[key]);
+
         return child;
+      }
     }
 
     if (!child)
@@ -2044,7 +2095,7 @@
 
       if (this.dataSource)
       {
-        if (this.dataSource.has(oldChild.delegate))
+        if (!oldChild.delegate || this.dataSourceMap_[oldChild.delegate.basisObjectId])
           throw EXCEPTION_DATASOURCE_CONFLICT;
       }
       else
@@ -2228,27 +2279,59 @@
       if (this.dataSource !== dataSource)
       {
         var oldDataSource = this.dataSource;
+        var dataSourceMap = this.dataSourceMap_ || {};
         var listenHandler = this.listen.dataSource;
+        var inserted;
+        var deleted;
 
         // detach
         if (oldDataSource)
         {
-          this.dataSourceMap_ = null;
-          this.dataSource = null;
-
           if (listenHandler)
             oldDataSource.removeHandler(listenHandler, this);
+
+          if (dataSource)
+          {
+            inserted = dataSource.getItems().filter(function(item){
+              return !oldDataSource.has(item);
+            });
+
+            deleted = oldDataSource.getItems().filter(function(item){
+              return !dataSource.has(item);
+            });
+          }
+          else
+          {
+            deleted = oldDataSource.getItems();
+          }
+        }
+        else
+        {
+          if (dataSource)
+            inserted = dataSource.getItems();
         }
 
         // remove old children
-        if (this.firstChild)
+        if (!oldDataSource || !dataSource)
         {
-          // return posibility to change delegate
-          if (oldDataSource)
-            for (var i = 0, child; child = this.childNodes[i]; i++)
-              unlockDataSourceItemNode(child);
+          if (this.firstChild)
+          {
+            // return posibility to change delegate
+            if (oldDataSource)
+              for (var i = 0, child; child = this.childNodes[i]; i++)
+                unlockDataSourceItemNode(child);
 
-          this.clear(!this.destroyDataSourceMember);
+            // otherwise clear operation is not allowed
+            this.dataSource = null;
+            this.clear(oldDataSource && !this.destroyDataSourceMember);
+          }
+        }
+        else
+        {
+          if (oldDataSource && deleted.length && listenHandler)
+            listenHandler.itemsChanged.call(this, oldDataSource, {
+              deleted: deleted
+            });
         }
 
         this.dataSource = dataSource;
@@ -2258,23 +2341,22 @@
         // attach
         if (dataSource)
         {
-          this.dataSourceMap_ = {};
+          this.dataSourceMap_ = dataSourceMap;
           this.setChildNodesState(dataSource.state, dataSource.state.data);
 
           if (listenHandler)
           {
             dataSource.addHandler(listenHandler, this);
 
-            if (dataSource.itemCount && listenHandler.itemsChanged)
-            {
+            if (inserted.length)
               listenHandler.itemsChanged.call(this, dataSource, {
-                inserted: dataSource.getItems()
+                inserted: inserted
               });
-            }
           }
         }
         else
         {
+          this.dataSourceMap_ = null;
           this.setChildNodesState(STATE.UNDEFINED);
         }
 
@@ -2460,6 +2542,47 @@
   */
   var Node = Class(AbstractNode, DomMixin, {
     className: namespace + '.Node',
+    propertyDescriptors: {
+      disabled: 'disable enable',
+      contextDisabled: false,
+      selected: 'select unselect',
+      contextSelection: false,
+      selection: 'selectionChanged',
+      matched: 'match unmatch',
+      matchFunction: 'matchFunctionChanged'
+    },
+
+   /**
+    * @param {string} name
+    * @param {basis.data.Object} oldSatellite Old satellite for key
+    */
+    emit_satelliteChanged: function(name, oldSatellite){
+      AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
+
+      if (this.satellite[name] instanceof Node)
+        updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
+    },
+
+   /**
+    * @type {boolean}
+    * @readonly
+    */
+    contextDisabled: false,
+
+   /**
+    * Indicate node is disabled. Use isDisabled method to determine disabled
+    * node state instead of check for this property value (ancestor nodes may
+    * be disabled and current node will be disabled too, but node disabled property
+    * could has false value).
+    * @type {boolean}
+    * @readonly
+    */
+    disabled: false,
+
+   /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    disabledRA_: null,
 
    /**
     * Occurs after disabled property has been set to false.
@@ -2484,45 +2607,22 @@
     },
 
    /**
-    * @param {string} name
-    * @param {basis.data.Object} oldSatellite Old satellite for key
+    * Set of selected child nodes.
+    * @type {basis.dom.wrapper.Selection}
     */
-    emit_satelliteChanged: function(name, oldSatellite){
-      AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
-
-      if (this.satellite[name] instanceof Node)
-        updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
-    },
+    selection: null,
 
    /**
-    * Occurs after selected property has been set to true.
+    * Occurs after selecttion property has been changed.
     * @event
     */
-    emit_select: createEvent('select'),
+    emit_selectionChanged: createEvent('selectionChanged', 'oldSelection'),
 
    /**
-    * Occurs after selected property has been set to false.
-    * @event
+    * @type {basis.dom.wrapper.Selection}
+    * @private
     */
-    emit_unselect: createEvent('unselect'),
-
-   /**
-    * Occurs after matched property has been set to true.
-    * @event
-    */
-    emit_match: createEvent('match'),
-
-   /**
-    * Occurs after matched property has been set to false.
-    * @event
-    */
-    emit_unmatch: createEvent('unmatch'),
-
-   /**
-    * Occurs after matchFunction property has been changed.
-    * @event
-    */
-    emit_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
+    contextSelection: null,
 
    /**
     * Indicate node is selected.
@@ -2537,22 +2637,16 @@
     selectedRA_: null,
 
    /**
-    * Set of selected child nodes.
-    * @type {basis.dom.wrapper.Selection}
+    * Occurs after selected property has been set to true.
+    * @event
     */
-    selection: null,
+    emit_select: createEvent('select'),
 
    /**
-    * @type {basis.dom.wrapper.Selection}
-    * @private
+    * Occurs after selected property has been set to false.
+    * @event
     */
-    contextSelection: null,
-
-   /**
-    * @type {function()|null}
-    * @readonly
-    */
-    matchFunction: null,
+    emit_unselect: createEvent('unselect'),
 
    /**
     * @type {boolean}
@@ -2561,25 +2655,28 @@
     matched: true,
 
    /**
-    * Indicate node is disabled. Use isDisabled method to determine disabled
-    * node state instead of check for this property value (ancestor nodes may
-    * be disabled and current node will be disabled too, but node disabled property
-    * could has false value).
-    * @type {boolean}
-    * @readonly
+    * Occurs after matched property has been set to true.
+    * @event
     */
-    disabled: false,
+    emit_match: createEvent('match'),
 
    /**
-    * @type {basis.data.ResolveAdapter}
+    * Occurs after matched property has been set to false.
+    * @event
     */
-    disabledRA_: null,
+    emit_unmatch: createEvent('unmatch'),
 
    /**
-    * @type {boolean}
+    * @type {function()|null}
     * @readonly
     */
-    contextDisabled: false,
+    matchFunction: null,
+
+   /**
+    * Occurs after matchFunction property has been changed.
+    * @event
+    */
+    emit_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
 
    /**
     * Extend owner listener
@@ -2612,7 +2709,7 @@
       if (selection)
       {
         this.selection = null;
-        this.setSelection(selection);
+        this.setSelection(selection, true);
       }
 
       // inherit
@@ -2640,23 +2737,29 @@
     * @param {basis.dom.wrapper.Selection=} selection New selection value for node.
     * @return {boolean} Returns true if selection was changed.
     */
-    setSelection: function(selection){
+    setSelection: function(selection, silent){
+      var oldSelection = this.selection;
+
       if (selection instanceof Selection === false)
         selection = selection ? new Selection(selection) : null;
 
-      if (this.selection !== selection)
+      if (oldSelection !== selection)
       {
         // change context selection for child nodes
-        updateNodeContextSelection(this, this.selection || this.contextSelection, selection || this.contextSelection, false, true);
+        updateNodeContextSelection(this, oldSelection || this.contextSelection, selection || this.contextSelection, false, true);
 
-        if (this.selection && this.listen.selection)
-          this.selection.removeHandler(this.listen.selection, this);
+        if (this.listen.selection)
+        {
+          if (oldSelection)
+            oldSelection.removeHandler(this.listen.selection, this);
+          if (selection)
+            selection.addHandler(this.listen.selection, this);
+        }
 
         // update selection
         this.selection = selection;
-
-        if (selection && this.listen.selection)
-          selection.addHandler(this.listen.selection, this);
+        if (!silent)
+          this.emit_selectionChanged(oldSelection);
 
         return true;
       }

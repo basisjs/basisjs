@@ -1,6 +1,6 @@
 {
   "name": "basisjs",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "main": "src/basis.js",
   "ignore": [
     ".*",
@@ -9,6 +9,10 @@
     "demo",
     "test",
     "tour",
-    "scripts"
+    "scripts",
+    "basis.config",
+    "bower.json",
+    "index.html",
+    "karma.conf.js"
   ]
 }

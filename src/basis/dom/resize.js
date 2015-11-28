@@ -8,19 +8,20 @@
     sensorProto.setAttribute('data-dev-role', 'basis.dom.resize.sensor');
     sensorProto.setAttribute('tabindex', '-1');
     sensorProto.setAttribute('style', [
-      'display: block',
-      'pointer-events: none',
-      'position: absolute',
+      'display:block',
+      'pointer-events:none',
+      'position:absolute',
       //'visibility: hidden',  // visibility: hidden prevent onresize events in Firefox
-      'opacity: 0',
-      'top: -100000px',
-      'left: 0',
-      'width: 100%',
-      'height: 100%',
-      'overflow: hidden',
-      'z-index: -1',
+      'opacity:0',
+      'top:-100000px',
+      'left:0',
+      'width:100%',
+      'height:100%',
+      'border:none',
+      'overflow:hidden',
+      'z-index:-1',
       ''
-    ].join(' !important;'));
+    ].join('!important;'));
     return sensorProto;
   }
 

@@ -302,6 +302,27 @@ var makeDeclaration = (function(){
         setStylePropertyBinding(host, attr, 'visibility', 'visible', 'visibility: hidden;');
     }
 
+    function addRoleAttribute(host, role/*, sourceToken*/){
+      /** @cut */ var sourceToken = arguments[2];
+
+      if (!/[\/\(\)]/.test(role))
+      {
+        var item = [
+          TYPE_ATTRIBUTE,
+          [['$role'], [0, role ? '/' + role : '']],
+          0,
+          'role-marker'
+        ];
+
+        /** @cut */ item.sourceToken = sourceToken;
+        /** @cut */ addTokenLocation(item, sourceToken);
+
+        host.push(item);
+      }
+      /** @cut */ else
+      /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, sourceToken.loc);
+    }
+
     function processAttrs(token, declToken){
       var result = [];
       var styleAttr;
@@ -334,12 +355,7 @@ var makeDeclaration = (function(){
               break;
 
             case 'role':
-              result.push([
-                attr.type,
-                [['$role'], [0, attr.value || '']],
-                0,
-                'role-marker'
-              ]);
+              addRoleAttribute(result, attr.value || '', attr);
               break;
           }
 
@@ -969,7 +985,16 @@ var makeDeclaration = (function(){
                           var role = elAttrs_.role.value;
 
                           if (role)
-                            applyRole(decl.tokens, role);
+                          {
+                            if (!/[\/\(\)]/.test(role))
+                            {
+                              var loc;
+                              /** @cut */ loc = getLocation(template, elAttrs_.role.loc);
+                              applyRole(decl.tokens, role, elAttrs_.role, loc);
+                            }
+                            /** @cut */ else
+                            /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
+                          }
 
                           break;
                       }
@@ -1170,6 +1195,30 @@ var makeDeclaration = (function(){
                               removeTokenRef(token, childAttrs.name || childAttrs.ref);
                             break;
 
+                          case 'role':
+                          case 'set-role':
+                            var childAttrs = tokenAttrs(child);
+                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                            var tokenRef = ref && tokenRefMap[ref];
+                            var token = tokenRef && tokenRef.token;
+
+                            if (token)
+                            {
+                              arrayRemove(token, getAttrByName(token, 'role-marker'));
+                              addRoleAttribute(token, childAttrs.value || '', child);
+                            }
+                            break;
+
+                          case 'remove-role':
+                            var childAttrs = tokenAttrs(child);
+                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                            var tokenRef = ref && tokenRefMap[ref];
+                            var token = tokenRef && tokenRef.token;
+
+                            if (token)
+                              arrayRemove(token, getAttrByName(token, 'role-marker'));
+                            break;
+
                           default:
                             /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + child.name + '>', child.loc);
                         }
@@ -1277,7 +1326,7 @@ var makeDeclaration = (function(){
       var parts = value.split(':');
       var key = parts[1];
 
-      if (parts[0] == 'l10n')
+      if (key && parts[0] == 'l10n')
       {
         if (parts.length == 2 && key.indexOf('@') == -1)
         {
@@ -1294,7 +1343,7 @@ var makeDeclaration = (function(){
     return value;
   }
 
-  function applyRole(tokens, role, stIdx){
+  function applyRole(tokens, role, sourceToken, location, stIdx){
     for (var i = stIdx || 0, token; token = tokens[i]; i++)
     {
       var tokenType = token[TOKEN_TYPE];
@@ -1302,7 +1351,7 @@ var makeDeclaration = (function(){
       switch (tokenType)
       {
         case TYPE_ELEMENT:
-          applyRole(token, role, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+          applyRole(token, role, sourceToken, location, ELEMENT_ATTRIBUTES_AND_CHILDREN);
           break;
 
         case TYPE_ATTRIBUTE:
@@ -1311,7 +1360,10 @@ var makeDeclaration = (function(){
             var roleExpression = token[TOKEN_BINDINGS][1];
             var currentRole = roleExpression[1];
 
-            roleExpression[1] = role + (currentRole ? '/' + currentRole : '');
+            roleExpression[1] = '/' + role + (currentRole ? '/' + currentRole : '');
+
+            /** @cut */ token.sourceToken = sourceToken;
+            /** @cut */ token.loc = location;
           }
           break;
       }
@@ -1421,12 +1473,34 @@ var makeDeclaration = (function(){
           if (bindings)
           {
             var array = bindings[0];
-            for (var j = 0; j < array.length; j++)
+            for (var j = array.length - 1; j >= 0; j--)
             {
               var binding = absl10n(array[j], options.dictURI, template.l10n);   // TODO: move l10n binding process in separate function
-              array[j] = binding === false ? '{' + array[j] + '}' : binding;
-              /** @cut */ if (binding === false)
-              /** @cut */   addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
+              if (binding === false)
+              {
+                /** @cut */ addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
+
+                // make l10n binding static, i.e.
+                //   [['l10n:unresolved', 'x'], [0, '-', 1]]
+                // ->
+                //   [['x'], ['{l10n:unresolved}', '-', 0]]
+                var expr = bindings[1];
+                for (var k = 0; k < expr.length; k++)
+                  if (typeof expr[k] == 'number')
+                  {
+                    if (expr[k] == j)
+                      expr[k] = '{' + array[j] + '}';
+                    else if (expr[k] > j)
+                      expr[k] = expr[k] - 1;
+                  }
+
+                array.splice(j, 1);
+
+                if (!array.length)
+                  token[TOKEN_BINDINGS] = 0;
+              }
+              else
+                array[j] = binding;
             }
           }
           break;
@@ -1847,5 +1921,8 @@ resource('../template.js').ready(function(exports){
 module.exports = {
   VERSION: 3,
   makeDeclaration: makeDeclaration,
-  getDeclFromSource: getDeclFromSource
+  getDeclFromSource: getDeclFromSource,
+  setIsolatePrefixGenerator: function(fn){
+    genIsolateMarker = fn;
+  }
 };

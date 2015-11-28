@@ -75,6 +75,7 @@
 {
   font-size: 12px;
   padding: 3px 3ex;
+  margin-right: 60px;
   text-align: center;
   overflow: hidden;
   white-space: nowrap;
@@ -138,7 +139,7 @@
   padding: 3px;
 }
 
-.bindings
+.sidebar
 {
   display: inline-block;
   vertical-align: top;
@@ -148,4 +149,33 @@
   margin-right: 10px;
   padding-right: 10px;
   white-space: normal;
+}
+
+.info-links
+{
+}
+.log__link
+{
+  float: right;
+  color: red;
+  margin-left: 1ex;
+  padding-top: 0px;
+  text-decoration: underline;
+  color: #666;
+  cursor: pointer;
+}
+.log__link:hover
+{
+  color: #A00;
+}
+
+@supports (display:flex) {
+  .window__inner-wrapper
+  {
+    display: flex;
+  }
+  .sidebar
+  {
+    height: auto;
+  }
 }

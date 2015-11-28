@@ -9,9 +9,9 @@ var buildTree = require('./build-tree.js');
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
-var hoveredBinding = require('./binding.js').hover;
 var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
 var sourceView = require('./source.js');
+var jsSourcePopup = require('./js-source-popup.js');
 var showSource = new basis.Token(false);
 var selectedDomNode = new basis.Token();
 var selectedObject = selectedDomNode.as(function(node){
@@ -26,7 +26,6 @@ var selectedTemplate = selectedDomNode.as(function(node){
   return template;
 });
 var bindingDataset = new Dataset();
-var isolatePrefix;
 
 selectedDomNode
   .as(getBindingsFromNode)
@@ -86,10 +85,13 @@ selectedDomNode.attach(function(node){
     return view.clear();
 
   var nodes = parseDom(node);
-  var debugInfo = inspectBasisTemplate.getDebugInfoById(nodes[0][inspectBasisTemplateMarker]);
+  var templateId = nodes[0][inspectBasisTemplateMarker];
+  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId);
+  var object = inspectBasisTemplate.resolveObjectById(templateId);
+  var actions = object ? object.action || {} : {};
   var bindings = debugInfo.bindings || [];
 
-  view.setChildNodes(buildTree(nodes, bindings, function(node){
+  view.setChildNodes(buildTree(nodes, bindings, actions, function(node){
     selectedDomNode.set(node);
   }));
 });
@@ -122,90 +124,26 @@ var view = new Window({
       if (template)
         return !!template.source.url;
     }),
+    objectClassName: selectedObject.as(function(object){
+      if (object)
+        return object.constructor.className || '';
+    }),
+    objectId: selectedObject.as(function(object){
+      if (object)
+        return object.basisObjectId;
+    }),
+    objectLocation: selectedObject.as(function(object){
+      return inspectBasis.dev.getInfo(object, 'loc');
+    }),
     source: sourceView,
     showSource: showSource,
-    bindings: new Node({
-      dataSource: bindingDataset,
-      sorting: 'data.name',
-      grouping: {
-        rule: 'data.used',
-        childClass: {
-          template: resource('./template/template-info-binding-group.tmpl'),
-          binding: {
-            name: function(node){
-              return node.data.id ? 'used' : 'notUsed';
-            }
-          },
-          action: {
-            logObject: function(){
-              var result = selectedObject.value;
-
-              global.$lastInspectObject = result || null;
-              console.log(result || 'No object attached to template');
-            },
-            logValues: function(){
-              if (selectedDomNode.value)
-              {
-                var id = selectedDomNode.value[inspectBasisTemplateMarker];
-                var object = selectedObject.value;
-                var objectBinding = object.binding;
-                var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
-                var result = (debugInfo || {}).values || null;
-
-                if (result)
-                  result = basis.object.slice(result, basis.object.keys(objectBinding));
-
-                global.$lastInspectValues = result;
-                console.log(result);
-              }
-            },
-            logDeclaration: function(){
-              if (sourceView.decl.value)
-              {
-                var result = sourceView.decl.value;
-
-                global.$lastInspectDeclaration = result;
-                console.log(result);
-              }
-            }
-          }
-        },
-        sorting: function(node){
-          return Number(!node.data.id);
-        }
-      },
-      childClass: {
-        template: resource('./template/template-info-binding.tmpl'),
-        binding: {
-          name: 'data:',
-          value: 'data:',
-          used: 'data:',
-          nestedView: 'data:',
-          loc: 'data:',
-          highlight: hoveredBinding.compute('update', function(node, value){
-            return node.data.used && (!value || node.data.name === value);
-          })
-        },
-        action: {
-          enter: function(){
-            if (this.data.used)
-              hoveredBinding.set(this.data.name);
-          },
-          leave: function(){
-            hoveredBinding.set();
-          },
-          pickValue: function(){
-            if (this.data.loc)
-              fileAPI.openFile(this.data.loc);
-          }
-        }
-      }
-    })
+    bindings: 'satellite:'
   },
   action: {
     up: function(){
       var object = selectedObject.value;
-      selectedDomNode.set((object.parentNode || object.owner).element);
+      if (object)
+        selectedDomNode.set((object.parentNode || object.owner).element);
     },
     down: function(e){
       //if (e.sender.title)
@@ -218,8 +156,60 @@ var view = new Window({
       if (template && template.source.url)
         fileAPI.openFile(template.source.url);
     },
+    openObjectLocation: function(){
+      var loc = inspectBasis.dev.getInfo(selectedObject.value, 'loc');
+      if (loc)
+        fileAPI.openFile(loc);
+    },
+    enterObjectLocation: function(e){
+      var loc = inspectBasis.dev.getInfo(selectedObject.value, 'loc');
+      if (loc)
+      {
+        jsSourcePopup.loc.set(loc);
+        jsSourcePopup.show(e.actionTarget);
+      }
+    },
+    leaveObjectLocation: function(){
+      jsSourcePopup.hide();
+    },
     toggleSource: function(){
+      var object = selectedObject.value;
       showSource.set(!showSource.value);
+    },
+    logInfo: function(){
+      var object = selectedObject.value;
+      var result = {};
+      var debugInfo = '<no info>';
+      var values = '<no info>';
+
+      if (selectedDomNode.value)
+      {
+        var id = selectedDomNode.value[inspectBasisTemplateMarker];
+        var objectBinding = object ? object.binding : {};
+
+        debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+        values = (debugInfo || {}).values || null;
+
+        if (values)
+          values = basis.object.slice(values, basis.object.keys(objectBinding));
+      }
+
+      global.$basisjsInfo = {
+        object: object,
+        template: {
+          debugInfo: debugInfo,
+          declaration: sourceView.decl.value || '<no info>',
+          values: values
+        }
+      };
+      console.log($basisjsInfo);
+    }
+  },
+
+  satellite: {
+    bindings: {
+      dataSource: bindingDataset,
+      instance: resource('./binding-list.js')
     }
   },
 
@@ -234,8 +224,7 @@ var view = new Window({
   handler: {
     open: function(){
       captureEvents.forEach(function(eventName){
-        inspectBasisDomEvent.captureEvent(eventName, function(e){
-        });
+        inspectBasisDomEvent.captureEvent(eventName, function(){});
       });
     },
     close: function(){
@@ -245,7 +234,5 @@ var view = new Window({
     }
   }
 });
-
-isolatePrefix = view.template.getIsolatePrefix();
 
 module.exports = selectedDomNode;

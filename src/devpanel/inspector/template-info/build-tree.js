@@ -1,6 +1,10 @@
+var inspectBasis = require('devpanel').inspectBasis;
+var fileAPI = require('../../api/file.js');
 var Node = require('basis.ui').Node;
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var hoveredBinding = require('./binding.js').hover;
+var jsSourcePopup = require('./js-source-popup.js');
+var templateSwitcher = require('basis.template').switcher;
 
 var DOMNode = Node.subclass({
   binding: {
@@ -12,9 +16,15 @@ var DOMNode = Node.subclass({
     enter: function(){
       if (this.bindingName)
         hoveredBinding.set(this.bindingName);
+      if (this.loc)
+      {
+        jsSourcePopup.loc.set(this.loc);
+        jsSourcePopup.show(this.element);
+      }
     },
     leave: function(){
       hoveredBinding.set();
+      jsSourcePopup.hide();
     },
     inspect: function(){
       if (this.selectDomNode && this.domNode)
@@ -37,14 +47,22 @@ var DOMNode = Node.subclass({
 
 var ValuePart = DOMNode.subclass({
   type: 'static',
-  template: basis.template.switcher(function(node){
+  template: templateSwitcher(function(node){
     return node.type == 'static'
       ? resource('./template/tree/attribute-value-static.tmpl')
       : resource('./template/tree/attribute-value.tmpl');
   }),
   binding: {
     type: 'type',
-    value: 'value'
+    value: 'value',
+    l10n: 'l10n || ""',
+    loc: 'loc || ""'
+  },
+  action: {
+    openLoc: function(){
+      if (this.loc)
+        fileAPI.openFile(this.loc);
+    }
   }
 });
 
@@ -103,11 +121,11 @@ var Comment = DOMNode.subclass({
   }
 });
 
-function buildAttribute(attr, attrBindings){
-  var value = {
+function buildAttribute(attr, attrBindings, actions){
+  var value = [{
     type: 'static',
     value: attr.value
-  };
+  }];
 
   switch (attr.name)
   {
@@ -136,7 +154,13 @@ function buildAttribute(attr, attrBindings){
     default:
       if (attr.value)
         if (/^event-/.test(attr.name))
-          value.type = 'action';
+          value = attr.value.split(/(\s+)/).map(function(value){
+            return {
+              type: /\S/.test(value) ? 'action' : 'static',
+              value: value,
+              loc: inspectBasis.dev.getInfo(actions[value], 'loc') || ''
+            };
+          });
         else
         {
           if (attrBindings.length)
@@ -150,30 +174,56 @@ function buildAttribute(attr, attrBindings){
                 bindingValues[bind.binding] = bind.raw;
 
             if (baseBinding.type == 'bool')
-              value = {
+              value = [{
                 type: 'binding',
                 value: baseBinding.val,
                 bindingName: attrBindings.length > 1 ? 'multiple' : baseBinding.binding
-              };
+              }];
             else
               // convert expression to value parts
               if (baseBinding.expr)
-                value = baseBinding.expr[0].map(function(item){
+              {
+                var expr = baseBinding.expr[0];
+                var bindingNames = baseBinding.expr[1];
+                var bindingKeys = baseBinding.expr[2];
+                var newValue = expr.map(function(item){
                   if (typeof item == 'number')
-                    return {
-                      type: 'binding',
-                      value: String(bindingValues[this[item]]),
-                      bindingName: this[item]
-                    };
+                  {
+                    var name = bindingNames[item];
+                    var value = String(bindingValues[bindingKeys[item]]);
+                    if (/^l10n:/.test(name))
+                      return {
+                        type: 'l10n',
+                        value: value,
+                        l10n: name
+                      };
+                    else
+                      return {
+                        type: 'binding',
+                        value: value,
+                        bindingName: name
+                      };
+                  }
 
                   return {
                     type: 'static',
                     value: item
                   };
-                }, attrBindings[0].expr[1]);
+                });
+
+                var newValueStr = newValue.map(function(item){
+                  return item.value;
+                }).join('');
+
+                if (newValueStr == attr.value)
+                  value = newValue;
+              }
           }
         }
   }
+
+  if (value.length == 1 && value[0].type == 'static' && !value[0].value)
+    value = [];
 
   return {
     name: attr.name,
@@ -181,7 +231,7 @@ function buildAttribute(attr, attrBindings){
   };
 }
 
-module.exports = function buildNode(item, bindings, selectDomNode){
+module.exports = function buildNode(item, bindings, actions, selectDomNode){
   function findBinding(node){
     return basis.array.search(bindings, node, 'dom');
   }
@@ -223,11 +273,11 @@ module.exports = function buildNode(item, bindings, selectDomNode){
         : basis.array(node.attributes).map(function(attr){
             return buildAttribute(attr, bindings.filter(function(bind){
               return bind.dom === node && bind.attr === attr.name;
-            }));
+            }), actions);
           });
 
       children = children.map(function(child){
-        return buildNode(child, bindings, selectDomNode);
+        return buildNode(child, bindings, actions, selectDomNode);
       });
 
       inline =

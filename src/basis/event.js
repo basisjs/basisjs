@@ -147,6 +147,33 @@
     // use extend constructor
     extendConstructor_: true,
 
+    propertyDescriptors: Class.customExtendProperty({
+      basisObjectId: true,
+      propertyDescriptors: false,
+      handler: false,
+      listen: false
+    }, function(result, extension){
+      for (var property in extension)
+      {
+        var value = extension[property];
+
+        if (value === true || value == '<static>')
+          value = {
+            isStatic: true
+          };
+        else if (value === false)
+          value = {
+            isPrivate: true
+          };
+        else if (typeof value == 'string')
+          value = {
+            events: value
+          };
+
+        result[property] = value;
+      }
+    }),
+
    /**
     * Head of event handler set list.
     * @type {object}

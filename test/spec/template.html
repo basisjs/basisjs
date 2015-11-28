@@ -31,11 +31,15 @@
               'pluralMarkup': 'plural-markup',
               'pluralMarkupWithPlaceholder': 'plural-markup',
               'pluralWithMarkup': 'plural',
-              'pluralWithMarkup.0': 'markup'
+              'pluralWithMarkup.0': 'markup',
+              'fooWithL10n': 'markup',
+              'fooWithVar.myVarValue': 'markup'
             }
           },
           'en-US': {
             'foo': 'foo text',
+            'fooWithVar': { 'myVarValue': 'my value', 'otherValue': 'other value' },
+            'fooWithL10n': '<span>{l10n:fooWithVar.{myVar}}</span>',
             'enum': { 'foo': 'foo text', 'bar': 'bar text' },
             'enumMarkup': { 'foo': '<b>foo markup</b>', 'bar': '<b>bar markup</b>', 'baz': '<b>baz markup</b>' },
             'enumWithMarkup': { 'foo': '<b>foo markup</b>', 'bar': '<b>bar markup</b>', 'baz': '<b>baz markup</b>' },

@@ -27,9 +27,11 @@
   var DataObject = basisData.Object;
   var Slot = basisData.Slot;
   var Dataset = basisData.Dataset;
+  var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var basisDataset = require('basis.data.dataset');
   var Filter = basisDataset.Filter;
   var Split = basisDataset.Split;
+  var setAccumulateState = Dataset.setAccumulateState;
 
   var NULL_INFO = {};
 
@@ -64,7 +66,6 @@
   var namedTypes = {};
   var namedIndexes = {};
   var deferredTypeDef = {};
-  var TYPE_DEFINITION_PLACEHOLDER = function TYPE_DEFINITION_PLACEHOLDER(){};
 
   function resolveType(typeName, type){
     var list = deferredTypeDef[typeName];
@@ -250,7 +251,7 @@
 
 
   //
-  // EntitySet
+  // EntitySets
   //
 
  /**
@@ -271,6 +272,95 @@
       return delta;
   }
 
+
+  function setAndDestroyRemoved(data){
+    var itemsToDelete = basis.object.slice(this.items_);
+    var itemsToInsert = {};
+    var autoInserted = [];
+    var inserted = [];
+    var deleted = [];
+    var delta;
+    var entity;
+
+    data = arrayFrom(data);
+
+    setAccumulateState(true);
+    for (var i = 0, item; item = data[i]; i++)
+    {
+      entity = this.wrapper(item);
+      if (entity)
+      {
+        if (itemsToDelete[entity.basisObjectId])
+          itemsToDelete[entity.basisObjectId] = null;
+        else
+          itemsToInsert[entity.basisObjectId] = entity;
+      }
+    }
+    setAccumulateState(false);
+
+    for (var basisObjectId in itemsToInsert)
+      if (this.items_[basisObjectId])
+        autoInserted.push(itemsToInsert[basisObjectId]);
+      else
+        inserted.push(itemsToInsert[basisObjectId]);
+
+    for (var basisObjectId in itemsToDelete)
+      if (itemsToDelete[basisObjectId])
+        deleted.push(itemsToDelete[basisObjectId]);
+
+    if (delta = getDelta(inserted, deleted))
+    {
+      if (this instanceof EntitySet)
+      {
+        var listenHandler = this.listen.item;
+        if (listenHandler)
+        {
+          if (delta.inserted)
+            for (var i = 0, item; item = delta.inserted[i]; i++)
+              item.addHandler(listenHandler, this);
+
+          if (delta.deleted)
+            for (var i = 0, item; item = delta.deleted[i]; i++)
+              item.removeHandler(listenHandler, this);
+        }
+      }
+
+      this.emit_itemsChanged(delta);
+    }
+
+    if (deleted.length)
+    {
+      setAccumulateState(true);
+      for (var i = 0, item; item = deleted[i]; i++)
+        item.destroy();
+      setAccumulateState(false);
+    }
+
+    inserted = inserted.concat(autoInserted);
+    return inserted.length ? inserted : null;
+  };
+
+
+ /**
+  * @mixin
+  */
+  var EntitySetMixin = function(super_){
+    return {
+      name: null,
+      wrapper: $self,
+
+      setAndDestroyRemoved: setAndDestroyRemoved,
+
+      destroy: function(){
+        super_.destroy.call(this);
+
+        this.name = null;
+        this.wrapper = null;
+      }
+    };
+  };
+
+
   var WRAPPED_MARKER = 'wrapped' + basis.genUID();
   var ENTITYSET_WRAP_METHOD = function(superClass, method){
     return function(data){
@@ -278,13 +368,11 @@
         data = [data];
 
       var needToWrap = data && !data[WRAPPED_MARKER];
-
       if (needToWrap)
       {
         if (this.localId)
         {
-          var items = arrayFrom(this.getItems());
-
+          var items = this.getItems().slice();
           data = data.map(function(newItem){
             for (var i = 0; i < items.length; i++)
               if (this.localId(newItem, items[i]))
@@ -292,6 +380,7 @@
 
             newItem = this.wrapper(newItem);
             items.push(newItem);
+
             return newItem;
           }, this);
         }
@@ -299,6 +388,7 @@
         {
           data = data.map(this.wrapper);
         }
+
         data[WRAPPED_MARKER] = true;
       }
 
@@ -307,14 +397,15 @@
       if (needToWrap)
       {
         data[WRAPPED_MARKER] = false;
+
         if (this.localId && delta && delta.deleted)
         {
           // TODO: make it deferred
-          Dataset.setAccumulateState(true);
-          for (var i = 0; i < delta.deleted.length; i++)
-            if (delta.deleted[i].root) // it's a hack to prevent double object destroy
-              delta.deleted[i].destroy();
-          Dataset.setAccumulateState(false);
+          setAccumulateState(true);
+          for (var i = 0, item; item = delta.deleted[i]; i++)
+            if (item.root) // it's a hack to prevent double object destroy
+              item.destroy();
+          setAccumulateState(false);
         }
       }
 
@@ -332,110 +423,6 @@
     };
   };
 
-  var ENTITYSET_SYNC_METHOD = function(){
-    return function(data){
-      if (this.localId)
-        return this.set(data);
-
-      var destroyItems = basis.object.slice(this.items_);
-      var itemsChangedFired = false;
-      var listenHandler = this.listen.item;
-      var inserted = [];
-      var deleted = [];
-      var delta;
-
-      if (data)
-      {
-        Dataset.setAccumulateState(true);
-        for (var i = 0; i < data.length; i++)
-        {
-          var entity = this.wrapper(data[i]);
-          if (entity)
-          {
-            if (entity.basisObjectId in destroyItems == false)
-              inserted.push(entity);
-            destroyItems[entity.basisObjectId] = false;
-          }
-        }
-        var checkHandler = {
-          itemsChanged: function(){
-            itemsChangedFired = true;
-          }
-        };
-        this.addHandler(checkHandler);
-        Dataset.setAccumulateState(false);
-        this.removeHandler(checkHandler);
-      }
-
-      for (var key in destroyItems)
-        if (destroyItems[key])
-          deleted.push(destroyItems[key]);
-
-      if (!itemsChangedFired && (delta = getDelta(inserted, deleted)))
-      {
-        if (listenHandler)
-        {
-          if (delta.deleted)
-            for (var i = 0; i < delta.deleted.length; i++)
-              delta.deleted[i].removeHandler(listenHandler, this);
-          if (delta.inserted)
-            for (var i = 0; i < delta.inserted.length; i++)
-              delta.inserted[i].addHandler(listenHandler, this);
-        }
-
-        this.emit_itemsChanged(delta);
-      }
-
-      // try to optimize deletion by batch changes
-      if (deleted.length && this.wrapper.all)
-        this.wrapper.all.emit_itemsChanged({
-          deleted: deleted
-        });
-
-      Dataset.setAccumulateState(true);
-      for (var i = 0; i < deleted.length; i++)
-        deleted[i].destroy();
-      Dataset.setAccumulateState(false);
-
-      return inserted.length ? inserted : null;
-    };
-  };
-
- /**
-  * @class
-  */
-  var EntitySet = Class(Dataset, {
-    className: namespace + '.EntitySet',
-
-    name: null,
-    wrapper: $self,
-
-    init: ENTITYSET_INIT_METHOD(Dataset, 'EntitySet'),
-
-    setAndDestroyRemoved: ENTITYSET_SYNC_METHOD(Dataset),
-    set: ENTITYSET_WRAP_METHOD(Dataset, 'set'),
-    add: ENTITYSET_WRAP_METHOD(Dataset, 'add'),
-    remove: ENTITYSET_WRAP_METHOD(Dataset, 'remove'),
-    clear: function(){
-      var delta = Dataset.prototype.clear.call(this);
-
-      if (this.localId && delta && delta.deleted)
-      {
-        // TODO: make it deferred
-        Dataset.setAccumulateState(true);
-        for (var i = 0; i < delta.deleted.length; i++)
-          delta.deleted[i].destroy();
-        Dataset.setAccumulateState(false);
-      }
-
-      return delta;
-    },
-
-    destroy: function(){
-      Dataset.prototype.destroy.call(this);
-      this.wrapper = null;
-    }
-  });
 
   //
   // Read only EntitySet
@@ -444,14 +431,55 @@
  /**
   * @class
   */
-  var ReadOnlyEntitySet = Class(EntitySet, {
+  var ReadOnlyEntitySet = Class(ReadOnlyDataset, EntitySetMixin, {
     className: namespace + '.ReadOnlyEntitySet',
 
-    set: basis.fn.$false,
-    add: basis.fn.$false,
-    remove: basis.fn.$false,
-    clear: basis.fn.$false
+    init: ENTITYSET_INIT_METHOD(ReadOnlyDataset, 'ReadOnlyEntitySet')
   });
+
+
+  //
+  // EntitySet
+  //
+
+ /**
+  * @class
+  */
+  var EntitySet = Class(Dataset, EntitySetMixin, {
+    className: namespace + '.EntitySet',
+
+    init: ENTITYSET_INIT_METHOD(Dataset, 'EntitySet'),
+    add: ENTITYSET_WRAP_METHOD(Dataset, 'add'),
+    remove: ENTITYSET_WRAP_METHOD(Dataset, 'remove'),
+    set: ENTITYSET_WRAP_METHOD(Dataset, 'set'),
+    setAndDestroyRemoved: function(data){
+      if (this.localId)
+        return this.set(data);
+
+      if (!this.itemCount)
+        return this.add(data);
+
+      if (!data || !data.length)
+        return this.clear();
+
+      return setAndDestroyRemoved.call(this, data);
+    },
+    clear: function(){
+      var delta = Dataset.prototype.clear.call(this);
+
+      if (this.localId && delta && delta.deleted)
+      {
+        // TODO: make it deferred
+        setAccumulateState(true);
+        for (var i = 0, item; item = delta.deleted[i]; i++)
+          item.destroy();
+        setAccumulateState(false);
+      }
+
+      return delta;
+    }
+  });
+
 
   //
   // Entity collection
@@ -460,13 +488,12 @@
  /**
   * @class
   */
-  var EntityCollection = Class(Filter, {
+  var EntityCollection = Class(Filter, EntitySetMixin, {
     className: namespace + '.EntityCollection',
-
-    name: null,
 
     init: ENTITYSET_INIT_METHOD(Filter, 'EntityCollection')
   });
+
 
   //
   // Entity grouping
@@ -493,6 +520,7 @@
       return group;
     }
   });
+
 
   //
   // EntitySetWrapper
@@ -1396,6 +1424,13 @@
     extendConstructor_: false,
     fieldHandlers_: null,
 
+    propertyDescriptors: {
+      modified: {
+        nested: true,
+        events: 'rollbackUpdate'
+      }
+    },
+
     modified: null,
     emit_rollbackUpdate: createEvent('rollbackUpdate')
   });
@@ -1964,6 +1999,8 @@
     CalculateField: CalculateField,
     ConcatStringField: ConcatStringField,
     calc: CalculateField,
+    arrayField: arrayField,
+    dateField: dateField,
 
     EntityType: EntityTypeWrapper,
     Entity: createEntityClass,

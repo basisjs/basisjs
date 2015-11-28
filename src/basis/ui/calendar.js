@@ -168,8 +168,15 @@
   var CalendarNode = Node.subclass({
     className: namespace + '.Calendar.Node',
 
+    propertyDescriptors: {
+      nodePeriodName: true,
+      periodStart: 'periodChanged',
+      periodEnd: 'periodChanged'
+    },
+
     childClass: null,
 
+    nodePeriodName: '',
     periodStart: null,
     periodEnd: null,
 
@@ -271,6 +278,14 @@
 
   var CalendarSection = Node.subclass({
     className: namespace + '.CalendarSection',
+
+    propertyDescriptors: {
+      minDate: 'periodChanged',
+      maxDate: 'periodChanged',
+      periodStart: 'periodChanged',
+      periodEnd: 'periodChanged',
+      selectedDate: 'selectedDateChanged'
+    },
 
     emit_periodChanged: createEvent('periodChanged'),
     emit_selectedDateChanged: createEvent('selectedDateChanged'),

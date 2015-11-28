@@ -1,0 +1,50 @@
+.wrapper
+{
+  position: relative;
+  left: 0;
+  max-height: 150px;
+  opacity: 1;
+  transition: max-height .8s ease-in-out, opacity 1s;
+}
+.wrapper_shown-anim
+{
+  max-height: 0;
+  opacity: 0;
+}
+.wrapper_destroing
+{
+  left: 120%;
+  opacity: 0;
+  transition: left .4s .1s ease-in, opacity .5s;
+}
+
+.entry
+{
+  padding: 4px;
+  margin: 3px;
+  opacity: .9;
+  background: #FFEECC;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, .5);
+  box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, .2);
+  font-family: Tahoma, Verdana, sans-serif;
+  font-size: 11px;
+}
+
+.title
+{
+  margin-bottom: 4px;
+}
+.event
+{
+  line-height: 1;
+  font-size: 11px;
+  padding: 1px 4px;
+  margin-right: 4px;
+  border-radius: 3px;
+  background: #CCBB88;
+}
+.data
+{
+  color: #888;
+}

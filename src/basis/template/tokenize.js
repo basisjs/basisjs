@@ -412,7 +412,7 @@ function tokenize(source, options){
       if (token = lastTag.children.pop())
       {
         if (token.type == TYPE_TEXT && !token.refs)
-          textStateEndPos -= 'len' in token ? token.len : token.value.length;
+          textStateEndPos -= token.value.length;
         else
           lastTag.children.push(token);
       }
@@ -442,7 +442,6 @@ function tokenize(source, options){
           if (sourceText)
             lastTag.children.push({
               type: TYPE_TEXT,
-              len: sourceText.length,
               value: sourceText,
               range: {
                 start_: textStateEndPos,

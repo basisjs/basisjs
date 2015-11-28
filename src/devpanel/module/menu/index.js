@@ -1,8 +1,7 @@
-require('basis.event');
-require('basis.dom.event');
-require('basis.ui');
+var Node = require('basis.ui').Node;
+var domEventUtils = require('basis.dom.event');
 
-module.exports = basis.ui.Node.subclass({
+module.exports = Node.subclass({
   visible: false,
   emit_visibleChanged: basis.event.create('visibleChanged'),
 

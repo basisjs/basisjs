@@ -228,6 +228,12 @@ var Overlay = Node.subclass({
     }
   },
 
+  setMuteEvents: function(events){
+    this.muteEvents = events || {};
+    if (this.active)
+      muteEvents(this.muteEvents);
+  },
+
   apply: function(){
     this.contextStack = [];
     this.order = 0;
