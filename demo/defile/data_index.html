@@ -87,6 +87,7 @@
 
     var getter = basis.getter;
     var Dataset = nsData.Dataset;
+    var Value = basis.require('basis.data').Value;
     var Expression = basis.require('basis.data.value').Expression;
     var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
     var Table = basis.require('basis.ui.table').Table;
@@ -151,7 +152,6 @@
             var t = new Date();
             var i;
 
-            indexMap.lock();
             for (i = 0; i < 1000; i++)
             {
               var item = items[parseInt(8461 * i) % items.length];
@@ -160,7 +160,6 @@
                 total: parseInt(item.data.total + Math.random() * i) % 150
               });
             }
-            indexMap.unlock();
 
             basis.dev.log('stress test time', new Date - t);
           }
@@ -177,7 +176,6 @@
       };
     }
 
-    var count = 0;
     var table = new Table({
       container: document.getElementById('demo-container'),
       dataSource: indexMap,
@@ -243,17 +241,12 @@
           percentOfValueMax: indexPercent('percentOfValueMax')
         }
       },
-      selection: {
-        handler: {
-          itemsChanged: function(){
-            recordPanel.setDelegate(this.pick());
-          }
-        }
-      }
+      selection: true
     });
 
     var recordPanel = new UINode({
       container: document.getElementById('demo-container'),
+      delegate: Value.query(table, 'selection.pick()'),
       template: '<div id="RecordPanel" class="{hasDelegate}"/>',
       binding: {
         hasDelegate: {
