@@ -755,7 +755,7 @@
     * All child nodes must be instances of childClass.
     * @type {Class}
     */
-    childClass: AbstractNode,
+    childClass: Class.SELF,
 
    /**
     * Object that's manage childNodes updates.
