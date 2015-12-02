@@ -631,7 +631,7 @@
                   // [2, localPath, 'binding', attrName, 'prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
                   // [2, localPath, 'binding', attrName, ['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
                   // [2, localPath, 'binding', attrName, 'prefix_','binding',CLASS_BINDING_INVERT,'name',defaultValue]
-                  // [2, localPath, 'binding', attrName, ['prefix_name'],'binding',CLASS_BINDING_INVERT,'name',defaultValue]                  
+                  // [2, localPath, 'binding', attrName, ['prefix_name'],'binding',CLASS_BINDING_INVERT,'name',defaultValue]
 
                   var values = [binding[6]];
                   var prefix = binding[4];
