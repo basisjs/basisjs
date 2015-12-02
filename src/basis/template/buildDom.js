@@ -25,6 +25,7 @@ var TEXT_VALUE = consts.TEXT_VALUE;
 var COMMENT_VALUE = consts.COMMENT_VALUE;
 var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
 var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
+var CLASS_BINDING_INVERT = consts.CLASS_BINDING_INVERT;
 
 
 //
@@ -279,6 +280,7 @@ var buildDOM = function(tokens, parent){
               {
                 // precomputed classes
                 // bool: [['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                // bool: [['prefix_name'],'binding',CLASS_BINDING_INVERT,'name',defaultValue]
                 // enum: [['prefix_foo','prefix_bar'],'binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
                 attrValue.push(prefix[defaultValue - 1]);
               }
@@ -287,7 +289,9 @@ var buildDOM = function(tokens, parent){
                 switch (binding[2])
                 {
                   case CLASS_BINDING_BOOL:
+                  case CLASS_BINDING_INVERT:
                     // ['prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                    // ['prefix_','binding',CLASS_BINDING_INVERT,'name',defaultValue]
                     attrValue.push(prefix + binding[3]);
                     break;
                   case CLASS_BINDING_ENUM:

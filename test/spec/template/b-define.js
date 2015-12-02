@@ -180,7 +180,21 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when from is used, should use name as value for class',
+                  name: 'when from is used, should use name as value for class (w/o default)',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" from="bar" type="bool"/>' +
+                      '<span class="{foo} prefix_{foo}"/>',
+                      true
+                    );
+
+                    assert(template.decl_.warns === false);
+                    assert(text(template) === text('<span></span>'));
+                    assert(text(template, { bar: true }) === text('<span class="foo prefix_foo"></span>'));
+                  }
+                },
+                {
+                  name: 'when from is used, should use name as value for class (with default)',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" from="bar" type="bool" default="true"/>' +
@@ -191,29 +205,135 @@ module.exports = {
                     assert(template.decl_.warns === false);
                     assert(text(template) === text('<span class="static foo prefix_foo"></span>'));
                     assert(text(template, { bar: false }) === text('<span class="static"></span>'));
+                  }
+                },
+                {
+                  name: 'should warn when default has no value',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" type="bool" default/>' +
+                      '<span class="{foo}"/>'
+                    );
+
+                    assert(text(template) === text('<span></span>'));
+                    assert(template.decl_.warns.length === 1);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'invert',
+              test: [
+                {
+                  name: 'should add class only if value falsy',
+                  test: function(){
+                    function cleanText(){
+                      return text.apply(this, arguments).replace(' class=""', '');
+                    }
+
+                    var template = createTemplate(
+                      '<b:define name="foo" type="invert"/>' +
+                      '<span class="{foo} prefix_{foo}"/>',
+                      true
+                    );
+
+                    assert(template.decl_.warns === false);
+
+                    assert(cleanText(template) === text('<span class="foo prefix_foo"></span>'));
+                    assert(cleanText(template, { foo: true }) === text('<span></span>'));
+                    assert(cleanText(template, { foo: false }) === text('<span class="foo prefix_foo"></span>'));
+                    assert(cleanText(template, { foo: 123 }) === text('<span></span>'));
+                    assert(cleanText(template, { foo: 0 }) === text('<span class="foo prefix_foo"></span>'));
+                    assert(cleanText(template, { foo: {} }) === text('<span></span>'));
+                    assert(cleanText(template, { foo: NaN }) === text('<span class="foo prefix_foo"></span>'));
+                    assert(cleanText(template, { foo: [] }) === text('<span></span>'));
+                    assert(cleanText(template, { foo: '' }) === text('<span class="foo prefix_foo"></span>'));
+                    assert(cleanText(template, { foo: 'string' }) === text('<span></span>'));
+                    assert(cleanText(template, { foo: undefined }) === text('<span class="foo prefix_foo"></span>'));
+                    assert(cleanText(template, { foo: null }) === text('<span class="foo prefix_foo"></span>'));
+                  }
+                },
+                {
+                  name: 'when default attribute present and set to true should add classes by default',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" type="invert" default="true"/>' +
+                      '<span class="{foo} prefix_{foo}"/>',
+                      true
+                    );
+
+                    assert(template.decl_.warns === false);
+
+                    assert(text(template) === text('<span class="foo prefix_foo"></span>'));
                     assert(text(
-                      '<b:define name="foo" from="bar" type="bool"/>' +
+                      '<b:define name="foo" type="invert" default="foo"/>' +
                       '<span class="{foo} prefix_{foo}"/>'
                       ) === text('<span></span>'));
                     assert(text(
-                      '<b:define name="foo" from="bar" type="bool"/>' +
+                      '<b:define name="foo" type="invert" default="yes"/>' +
+                      '<span class="{foo} prefix_{foo}"/>'
+                      ) === text('<span></span>'));
+                    assert(text(
+                      '<b:define name="foo" type="invert" default="false"/>' +
+                      '<span class="{foo} prefix_{foo}"/>'
+                      ) === text('<span></span>'));
+                    assert(text(
+                      '<b:define name="foo" type="invert" default="false"/>' +
                       '<span class="{foo} prefix_{foo}"/>',
-                      { bar: true }
+                      { foo: undefined }
                       ) === text('<span class="foo prefix_foo"></span>'));
+                    assert(text(
+                      '<b:define name="foo" type="invert" default="true"/>' +
+                      '<span class="bar {foo} prefix_{foo}"/>',
+                      { foo: true }
+                      ) === text('<span class="bar"></span>'));
+                    assert(text(
+                      '<b:define name="foo" type="invert" default="true"/>' +
+                      '<span class="bar {foo} prefix_{foo}"/>',
+                      { foo: undefined }
+                      ) === text('<span class="bar foo prefix_foo"></span>'));
+                  }
+                },
+                {
+                  name: 'when from is used, should use name as value for class (w/o default)',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" from="bar" type="invert"/>' +
+                      '<span class="{foo} prefix_{foo}"/>',
+                      true
+                    );
+
+                    assert(template.decl_.warns === false);
+                    assert(text(template) === text('<span class="foo prefix_foo"></span>'));
+                    assert(text(template, { bar: true }).replace(' class=""', '') === text('<span></span>'));
+                  }
+                },
+                {
+                  name: 'when from is used, should use name as value for class (with default)',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" from="bar" type="invert"/>' +
+                      '<span class="static {foo} prefix_{foo}"/>',
+                      true
+                    );
+
+                    assert(template.decl_.warns === false);
+                    assert(text(template) === text('<span class="static foo prefix_foo"></span>'));
+                    assert(text(template, { bar: true }) === text('<span class="static"></span>'));
+                  }
+                },
+                {
+                  name: 'should warn when default has no value',
+                  test: function(){
+                    var template = createTemplate(
+                      '<b:define name="foo" type="invert" default/>' +
+                      '<span class="{foo}"/>'
+                    );
+
+                    assert(text(template) === text('<span class="foo"></span>'));
+                    assert(template.decl_.warns.length === 1);
                   }
                 }
-                // {
-                //   name: 'should warn when default has no value',
-                //   test: function(){
-                //     var template = createTemplate(
-                //       '<b:define name="foo" type="bool" default/>' +
-                //       '<span class="{foo}"/>'
-                //     );
-
-                //     assert(text(template) === text('<span></span>'));
-                //     assert(template.decl_.warns.length === 1);
-                //   }
-                // }
               ]
             },
             {
@@ -250,7 +370,8 @@ module.exports = {
                     assert(template.decl_.warns === false);
                     assert(text(template) === text('<span class="baz prefix_baz"></span>'));
                     assert(text(template, { foo: 'bar' }) === text('<span class="bar prefix_bar"></span>'));
-                    assert(text(template, { foo: undefined }) === text('<span class="baz prefix_baz"></span>'));
+                    // undefined is also value, should override default
+                    assert(text(template, { foo: undefined }).replace(' class=""', '') === text('<span></span>'));
 
                     var template = createTemplate(
                       '<b:define name="foo" type="enum" values="bar baz" default="baz"/>' +
@@ -259,7 +380,7 @@ module.exports = {
                     assert(text(template) === text('<span class="xxx baz prefix_baz"></span>'));
                     assert(text(template, { foo: 'baz' }) === text('<span class="xxx baz prefix_baz"></span>'));
                     assert(text(template, { foo: 'zzz' }) === text('<span class="xxx"></span>'));
-                    assert(text(template, { foo: undefined }) === text('<span class="xxx baz prefix_baz"></span>'));
+                    assert(text(template, { foo: undefined }) === text('<span class="xxx"></span>'));
                     assert(text(template, { foo: false }) === text('<span class="xxx"></span>'));
                   }
                 },

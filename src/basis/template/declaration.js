@@ -27,6 +27,7 @@ var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var TEXT_VALUE = consts.TEXT_VALUE;
 var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
 var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
+var CLASS_BINDING_INVERT = consts.CLASS_BINDING_INVERT;
 
 var IDENT = /^[a-z_][a-z0-9_\-]*$/i;
 var ATTR_EVENT_RX = /^event-(.+)$/;
@@ -806,6 +807,24 @@ var makeDeclaration = (function(){
                       ];
 
                       /** @cut */ addStateInfo(bindingName, 'bool', true);
+
+                      /** @cut */ if ('default' in elAttrs && !elAttrs['default'])
+                      /** @cut */   addTemplateWarn(template, options, 'Bool <b:define> has no value as default (value ignored)', elAttrs_['default'] && elAttrs_['default'].loc);
+
+                      break;
+
+                    case 'invert':
+                      define = [
+                        bindingName,
+                        CLASS_BINDING_INVERT,
+                        defineName,
+                        !elAttrs['default'] || elAttrs['default'] == 'true' ? 1 : 0
+                      ];
+
+                      /** @cut */ addStateInfo(bindingName, 'invert', false);
+
+                      /** @cut */ if ('default' in elAttrs && !elAttrs['default'])
+                      /** @cut */   addTemplateWarn(template, options, 'Invert <b:define> has no value as default (value ignored)', elAttrs_['default'] && elAttrs_['default'].loc);
 
                       break;
 
