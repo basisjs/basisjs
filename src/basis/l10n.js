@@ -10,11 +10,68 @@
   // import names
   //
 
+  var extend = basis.object.extend;
+  var merge = basis.object.merge;
   var Class = basis.Class;
   var Emitter = require('basis.event').Emitter;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var autoFetchDictionaryResource = true;
 
+  var patches = (function(config){
+    var result = {};
+
+    if (config && config.patch)
+    {
+      var base;
+      var content;
+      var source = config.patch;
+
+      if (typeof source == 'string')
+      {
+        source = basis.resource(source);
+        base = basis.path.dirname(source.url);
+        try { content = source(); } catch(e) {};
+      }
+      else
+        content = source;
+
+      var syncDictMixin = {
+        syncDict_: function(){
+          basis.resource.extensions['.l10n'](dictionaryByUrl[this.dictUrl].resource.get(true), this.dictUrl);
+        },
+        activate: function(){
+          this.attach(this.syncDict_, this);
+        },
+        deactivate: function(){
+          this.detach(this.syncDict_, this);
+        }
+      };
+
+      /** @cut */ config.patch = {};
+
+      if (content)
+        for (var path in content)
+        {
+          var dictUrl = basis.resource.resolveURI(path);
+          result[dictUrl] = extend(basis.resource(content[path], base), merge(syncDictMixin, { dictUrl: dictUrl }));
+          /** @cut */ config.patch[dictUrl] = result[dictUrl].url;
+        }
+    }
+
+    return result;
+  })(basis.config.l10n);
+
+
+  function deepExtend(dest, source){
+    for (var key in source)
+      dest[key] = (key in dest &&
+                  typeof dest[key] == 'object' &&
+                  typeof source[key] == 'object')
+        ? deepExtend(dest[key], source[key])
+        : source[key];
+
+    return dest;
+  }
 
   // process .l10n files as .json
   basis.resource.extensions['.l10n'] = function(content, url){
@@ -24,7 +81,11 @@
     dictionary = resolveDictionary(url);
     autoFetchDictionaryResource = true;
 
-    return dictionary.update(basis.resource.extensions['.json'](content, url));
+    var wrapper = basis.resource.extensions['.json'];
+    var dictContent = wrapper(content, url);
+    var patchContent = wrapper(patches[url] ? patches[url].get(true) : {}, url);
+
+    return dictionary.update(deepExtend(dictContent, patchContent));
   };
 
 
@@ -451,6 +512,9 @@
         {
           dictionaryByUrl[resource.url] = this;
           createDictionaryNotifier.set(resource.url);
+
+          if (patches[resource.url])
+            patches[resource.url].activate();
         }
 
         // fetch resource content and attach listener on content update
@@ -567,6 +631,9 @@
 
       if (this.resource)
       {
+        if (patches[this.resource.url])
+          patches[this.resource.url].deactivate();
+
         delete dictionaryByUrl[this.resource.url];
         this.resource = null;
       }
@@ -757,7 +824,7 @@
     return cultures[name || currentCulture];
   }
 
-  basis.object.extend(resolveCulture, new basis.Token());
+  extend(resolveCulture, new basis.Token());
   resolveCulture.set = setCulture;
 
 
