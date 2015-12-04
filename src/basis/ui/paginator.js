@@ -3,7 +3,7 @@
   * @see ./demo/defile/paginator.html
   * @namespace basis.ui.paginator
   */
-  var namespace = this.path;
+  var namespace = 'basis.ui.paginator';
 
 
   //

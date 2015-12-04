@@ -2587,12 +2587,10 @@
     className: 'basis.Namespace',
     init: function(name){
       this.name = name;
-      this.exports = {
-        path: this.name
-      };
+      this.exports = {};
     },
     toString: function(){
-      return '[basis.namespace ' + this.path + ']';
+      return '[basis.namespace ' + this.name + ']';
     },
     extend: function(names){
       extend(this.exports, names);

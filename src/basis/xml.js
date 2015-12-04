@@ -3,7 +3,7 @@
   * @namespace basis.xml
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.xml';
 
 
   //

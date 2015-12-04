@@ -19,7 +19,7 @@
   * @namespace basis.data
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.data';
 
 
   //

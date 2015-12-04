@@ -3,7 +3,7 @@
   * @namespace basis.entity
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.entity';
 
 
   //

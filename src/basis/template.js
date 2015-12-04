@@ -3,7 +3,7 @@
   * @namespace basis.template
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.template';
 
 
   //

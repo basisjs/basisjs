@@ -4,7 +4,7 @@
   * @namespace basis.ui.button
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.button';
 
 
   //

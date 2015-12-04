@@ -10,7 +10,7 @@
   * @namespace basis.data.value
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.data.value';
 
 
   // import names

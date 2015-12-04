@@ -3,7 +3,7 @@
   * @namespace basis.net.ajax
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net.ajax';
 
 
   //

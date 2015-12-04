@@ -3,7 +3,7 @@
   * @namespace basis.router
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.router';
 
 
   //
