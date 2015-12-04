@@ -3,7 +3,7 @@
   * @namespace basis.ui.code
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.code';
   var highlight = require('basis.utils.highlight').highlight;
   var Node = require('basis.ui').Node;
 

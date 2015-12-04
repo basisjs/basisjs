@@ -22,7 +22,7 @@
   * @namespace basis.ui.tree
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.tree';
 
 
   //

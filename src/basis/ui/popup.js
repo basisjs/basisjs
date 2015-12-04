@@ -4,7 +4,7 @@
   * @namespace basis.ui.popup
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.popup';
 
 
   //

@@ -3,7 +3,7 @@
   * @namespace basis.dragdrop
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.dragdrop';
 
 
   //

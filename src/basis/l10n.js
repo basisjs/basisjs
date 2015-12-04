@@ -3,7 +3,7 @@
   * @namespace basis.l10n
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.l10n';
 
 
   //

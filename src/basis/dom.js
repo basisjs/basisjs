@@ -31,7 +31,7 @@
   * @namespace basis.dom
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.dom';
 
 
   // import names

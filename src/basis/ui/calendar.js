@@ -4,7 +4,7 @@
   * @namespace basis.ui.calendar
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.calendar';
 
 
   //

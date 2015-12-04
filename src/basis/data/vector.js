@@ -1,9 +1,9 @@
 
  /**
-  * @namespace basis.data.dataset
+  * @namespace basis.data.vector
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.data.vector';
 
 
   //
