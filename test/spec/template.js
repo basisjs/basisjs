@@ -76,6 +76,7 @@ module.exports = {
       ]
     },
     require('./template/declaration.js'),
+    require('./template/namespaces.js'),
     require('./template/attr-bindings.js'),
     require('./template/text-bindings.js'),
     require('./template/b-include.js'),
