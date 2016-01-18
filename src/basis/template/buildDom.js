@@ -199,6 +199,7 @@ function regEventHandler(eventName){
 //
 
 var namespaceURI = {
+  xlink: 'http://www.w3.org/1999/xlink',
   svg: 'http://www.w3.org/2000/svg'
 };
 
@@ -232,6 +233,19 @@ function setAttribute(node, name, value){
 
   if (SET_STYLE_ATTRIBUTE_BUG && name == 'style')
     return node.style.cssText = value;
+
+  // set attribute with some
+  var colonIndex = name.indexOf(':');
+  if (colonIndex != -1)
+  {
+    var prefix = name.substr(0, colonIndex);
+    var namespace = namespaceURI[prefix] || node.lookupNamespaceURI(prefix);
+    if (namespace)
+    {
+      node.setAttributeNS(namespace, name, value);
+      return;
+    }
+  }
 
   node.setAttribute(name, value);
 }
