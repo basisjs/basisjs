@@ -231,7 +231,7 @@ function setAttribute(node, name, value){
   if (SET_STYLE_ATTRIBUTE_BUG && name == 'style')
     return node.style.cssText = value;
 
-  var namespace = namespaces.getAttributeNamespace(name, node);
+  var namespace = namespaces.getNamespace(name, node);
   if (namespace)
     node.setAttributeNS(namespace, name, value);
   else
@@ -249,7 +249,7 @@ var buildDOM = function(tokens, parent){
     {
       case TYPE_ELEMENT:
         var tagName = token[ELEMENT_NAME];
-        var namespace = namespaces.getTagNamespace(tagName);
+        var namespace = namespaces.getNamespace(tagName);
         var element = namespace
           ? document.createElementNS(namespace, tagName)
           : document.createElement(tagName);

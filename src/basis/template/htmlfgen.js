@@ -743,9 +743,9 @@
                   expr + '==-1?' + (['input', 'button', 'textarea'].indexOf(tagName) == -1 ? '""' : '-1') + ':' + expr);
               else
               {
-                var namespace = namespaces.getAttributeNamespace(attrName);
+                var namespace = namespaces.getNamespace(attrName);
                 if (namespace)
-                  putBindCode('bind_attrNS', domRef, '"' + attrName + '"', '"' + namespace + '"', bindVar, expr);
+                  putBindCode('bind_attrNS', domRef, '"' + namespace + '"', '"' + attrName + '"', bindVar, expr);
                 else
                   putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
               }

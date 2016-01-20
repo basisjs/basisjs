@@ -348,7 +348,7 @@
    /**
     * @func
     */
-    var bind_attrNS = function(domRef, attrName, namespace, oldValue, newValue){
+    var bind_attrNS = function(domRef, namespace, attrName, oldValue, newValue){
       if (oldValue !== newValue)
       {
         if (newValue)

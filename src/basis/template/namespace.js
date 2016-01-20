@@ -3,16 +3,7 @@ var namespaceURI = {
   svg: 'http://www.w3.org/2000/svg'
 };
 
-function getTagNamespace(name){
-  var colonIndex = name && name.indexOf(':');
-  if (colonIndex != -1)
-  {
-    var prefix = name.substr(0, colonIndex);
-    return namespaceURI[prefix];
-  }
-}
-
-function getAttributeNamespace(name, node){
+function getNamespace(name, node){
   if (!name)
     return;
 
@@ -26,6 +17,5 @@ function getAttributeNamespace(name, node){
 
 module.exports = {
   namespaceURI: namespaceURI,
-  getTagNamespace: getTagNamespace,
-  getAttributeNamespace: getAttributeNamespace
+  getNamespace: getNamespace
 };
