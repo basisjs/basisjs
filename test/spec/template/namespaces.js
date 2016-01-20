@@ -47,6 +47,17 @@ module.exports = {
         assert(instance.element.namespaceURI == namespaceURI.html);
         assert(instance.element.attributes[0].namespaceURI == namespaceURI.xlink);
       }
+    },
+    {
+      name: 'xlink attribute with binding namespace',
+      test: function(){
+        var t = createTemplate('<foo xlink:href="#bar-{qux}"/>');
+        var instance = t.createInstance();
+        instance.set('qux', 'baz');
+        assert(instance.element.attributes[0].value == '#bar-baz');
+        assert(instance.element.namespaceURI == namespaceURI.html);
+        assert(instance.element.attributes[0].namespaceURI == namespaceURI.xlink);
+      }
     }
   ]
 };

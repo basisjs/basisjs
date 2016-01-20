@@ -3,7 +3,9 @@ var hasOwnProperty = Object.prototype.hasOwnProperty;
 var eventUtils = require('basis.dom.event');
 var resolveActionById = require('basis.template.store').resolveActionById;
 
-var consts = require('./const.js');
+var consts = require('basis.template.const');
+var namespaces = require('basis.template.namespace');
+
 var MARKER = consts.MARKER;
 var CLONE_NORMALIZATION_TEXT_BUG = consts.CLONE_NORMALIZATION_TEXT_BUG;
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
@@ -198,11 +200,6 @@ function regEventHandler(eventName){
 // Construct dom structure by declaration.
 //
 
-var namespaceURI = {
-  xlink: 'http://www.w3.org/1999/xlink',
-  svg: 'http://www.w3.org/2000/svg'
-};
-
 // test for class attribute set via setAttribute bug (IE7 and lower)
 var SET_CLASS_ATTRIBUTE_BUG = (function(){
   var element = document.createElement('div');
@@ -234,20 +231,11 @@ function setAttribute(node, name, value){
   if (SET_STYLE_ATTRIBUTE_BUG && name == 'style')
     return node.style.cssText = value;
 
-  // set attribute with some
-  var colonIndex = name.indexOf(':');
-  if (colonIndex != -1)
-  {
-    var prefix = name.substr(0, colonIndex);
-    var namespace = namespaceURI[prefix] || node.lookupNamespaceURI(prefix);
-    if (namespace)
-    {
-      node.setAttributeNS(namespace, name, value);
-      return;
-    }
-  }
-
-  node.setAttribute(name, value);
+  var namespace = namespaces.getNamespace(name, node);
+  if (namespace)
+    node.setAttributeNS(namespace, name, value);
+  else
+    node.setAttribute(name, value);
 }
 
 var buildDOM = function(tokens, parent){
@@ -261,9 +249,9 @@ var buildDOM = function(tokens, parent){
     {
       case TYPE_ELEMENT:
         var tagName = token[ELEMENT_NAME];
-        var colonIndex = tagName.indexOf(':');
-        var element = colonIndex != -1
-          ? document.createElementNS(namespaceURI[tagName.substr(0, colonIndex)], tagName)
+        var namespace = namespaces.getNamespace(tagName);
+        var element = namespace
+          ? document.createElementNS(namespace, tagName)
           : document.createElement(tagName);
 
         // precess for children and attributes

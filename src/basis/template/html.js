@@ -348,6 +348,21 @@
    /**
     * @func
     */
+    var bind_attrNS = function(domRef, namespace, attrName, oldValue, newValue){
+      if (oldValue !== newValue)
+      {
+        if (newValue)
+          domRef.setAttributeNS(namespace, attrName, newValue);
+        else
+          domRef.removeAttributeNS(namespace, attrName);
+      }
+
+      return newValue;
+    };
+
+   /**
+    * @func
+    */
     function updateAttach(){
       this.set(this.name, this.value);
     }
@@ -558,6 +573,7 @@
       bind_element: bind_element,
       bind_comment: bind_comment,
       bind_attr: bind_attr,
+      bind_attrNS: bind_attrNS,
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
