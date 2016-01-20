@@ -745,7 +745,7 @@
               {
                 var namespace = namespaces.getAttributeNamespace(attrName);
                 if (namespace)
-                  putBindCode('bind_attr_ns', domRef, '"' + attrName + '"', '"' + namespace + '"', bindVar, expr);
+                  putBindCode('bind_attrNS', domRef, '"' + attrName + '"', '"' + namespace + '"', bindVar, expr);
                 else
                   putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
               }

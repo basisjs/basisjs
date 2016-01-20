@@ -348,7 +348,7 @@
    /**
     * @func
     */
-    var bind_attr_ns = function(domRef, attrName, namespace, oldValue, newValue){
+    var bind_attrNS = function(domRef, attrName, namespace, oldValue, newValue){
       if (oldValue !== newValue)
       {
         if (newValue)
@@ -573,7 +573,7 @@
       bind_element: bind_element,
       bind_comment: bind_comment,
       bind_attr: bind_attr,
-      bind_attr_ns: bind_attr_ns,
+      bind_attrNS: bind_attrNS,
       // debugger;
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
