@@ -4,7 +4,7 @@ var namespaceURI = {
 };
 
 function getTagNamespace(name){
-  var colonIndex = name.indexOf(':');
+  var colonIndex = name && name.indexOf(':');
   if (colonIndex != -1)
   {
     var prefix = name.substr(0, colonIndex);
@@ -12,17 +12,20 @@ function getTagNamespace(name){
   }
 }
 
-function getAttrNamespace(node, name){
+function getAttributeNamespace(name, node){
+  if (!name)
+    return;
+
   var colonIndex = name.indexOf(':');
   if (colonIndex != -1)
   {
     var prefix = name.substr(0, colonIndex);
-    return namespaceURI[prefix] || node.lookupNamespaceURI(prefix);
+    return namespaceURI[prefix] || node && node.lookupNamespaceURI(prefix);
   }
 }
 
 module.exports = {
   namespaceURI: namespaceURI,
   getTagNamespace: getTagNamespace,
-  getAttrNamespace: getAttrNamespace
+  getAttributeNamespace: getAttributeNamespace
 };

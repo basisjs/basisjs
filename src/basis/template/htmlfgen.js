@@ -5,6 +5,7 @@
 
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var consts = require('basis.template.const');
+  var namespaces = require('basis.template.namespace');
 
   var MARKER = consts.MARKER;
 
@@ -741,7 +742,14 @@
                   // to disable tab stop on element, tabindex attribute should be -1 for inputs and no attribute for other elements
                   expr + '==-1?' + (['input', 'button', 'textarea'].indexOf(tagName) == -1 ? '""' : '-1') + ':' + expr);
               else
-                putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
+              {
+                var namespace = namespaces.getAttributeNamespace(attrName);
+                if (namespace)
+                  putBindCode('bind_attr_ns', domRef, '"' + attrName + '"', '"' + namespace + '"', bindVar, expr);
+                else
+                  putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
+              }
+
 
               if (specialAttr && (specialAttr == '*' || specialAttr.indexOf(tagName) != -1))
                 bindCode.push(

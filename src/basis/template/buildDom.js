@@ -3,8 +3,9 @@ var hasOwnProperty = Object.prototype.hasOwnProperty;
 var eventUtils = require('basis.dom.event');
 var resolveActionById = require('basis.template.store').resolveActionById;
 
-var consts = require('./const.js');
-var namespaces = require('./namespaces.js');
+var consts = require('basis.template.const');
+var namespaces = require('basis.template.namespace');
+
 var MARKER = consts.MARKER;
 var CLONE_NORMALIZATION_TEXT_BUG = consts.CLONE_NORMALIZATION_TEXT_BUG;
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
@@ -230,7 +231,7 @@ function setAttribute(node, name, value){
   if (SET_STYLE_ATTRIBUTE_BUG && name == 'style')
     return node.style.cssText = value;
 
-  var namespace = namespaces.getAttrNamespace(node, name);
+  var namespace = namespaces.getAttributeNamespace(name, node);
   if (namespace)
     node.setAttributeNS(namespace, name, value);
   else
