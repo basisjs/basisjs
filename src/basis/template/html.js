@@ -574,7 +574,6 @@
       bind_comment: bind_comment,
       bind_attr: bind_attr,
       bind_attrNS: bind_attrNS,
-      // debugger;
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
