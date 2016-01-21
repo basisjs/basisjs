@@ -2,7 +2,8 @@
   "name": "basisjs",
   "title": "basis.js",
   "description": "JavaScript framework to build single-page applications",
-  "version": "1.5.0-next",
+  "version": "1.6.0",
+  "author": "Roman Dvornov <rdvornov@gmail.com>",
   "license": "MIT",
   "main": "src/basis.js",
   "homepage": "http://basisjs.com",
@@ -29,7 +30,7 @@
     "karma": "^0.12.31",
     "karma-firefox-launcher": "^0.1.4",
     "karma-yatra": "0.0.1",
-    "yatra": "~1.0.0"
+    "yatra": "^1.0.3"
   },
   "scripts": {
     "lint": "node ./node_modules/jscs/bin/jscs .",
