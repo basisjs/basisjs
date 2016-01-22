@@ -885,7 +885,20 @@ var makeDeclaration = (function(){
                 var templateSrc = elAttrs.src;
                 if (templateSrc)
                 {
-                  var resource = resolveResource(templateSrc, template.baseURI);
+                  var resource;
+
+                  // Add resolve warnings to template warnings list
+                  // TODO: improve solution with no basis.dev.warn overloading
+                  /** @cut */ var basisWarn = basis.dev.warn;
+                  /** @cut */ basis.dev.warn = function(){
+                  /** @cut */   addTemplateWarn(template, options, basis.array(arguments).join(' '), token.loc);
+                  /** @cut */   if (!basis.NODE_ENV)
+                  /** @cut */     basisWarn.apply(this, arguments);
+                  /** @cut */ };
+
+                  resource = resolveResource(templateSrc, template.baseURI);
+
+                  /** @cut */ basis.dev.warn = basisWarn;
 
                   if (!resource)
                   {
