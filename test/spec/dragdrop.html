@@ -1,0 +1,61 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>basis.dragdrop</title>
+
+  <style type="text/css">
+    BODY,
+    HTML
+    {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+    }
+
+    #viewport
+    {
+      position: absolute;
+      left: 200px;
+      top: 200px;
+      width: 500px;
+      height: 300px;
+      background: black;
+    }
+    #dragged1,
+    #dragged2
+    {
+      position: absolute;
+      left: 100px;
+      top: 50px;
+      width: 50px;
+      height: 50px;
+      background: red;
+      cursor: pointer;
+    }
+  </style>
+  <script src="../../src/basis.js" data-basis-config></script>
+</head>
+
+<body>
+  <div id="dragged1"></div>
+  
+  <div id="viewport">
+    <div id="dragged2"></div>
+  </div>
+  
+  <script>
+    var MoveableElement = basis.require('basis.dragdrop').MoveableElement;
+
+    new MoveableElement({
+      element: 'dragged1'
+    });
+    new MoveableElement({
+      element: 'dragged2',
+      baseElement: 'viewport'
+    });
+  </script>
+</body>
+</html>
