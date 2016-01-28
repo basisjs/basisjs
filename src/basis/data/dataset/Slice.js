@@ -7,6 +7,11 @@ var createRuleEvents = require('./createRuleEvents.js');
 var getDelta = require('./getDelta.js');
 var SourceDataset = require('./SourceDataset.js');
 
+// converts value to the undefined if value is a NaN
+// makes index stable for NaN values
+function nanToUndefined(value){
+  return value !== value ? undefined : value;
+}
 
 function binarySearchPos(array, map){
   if (!array.length)  // empty array check
@@ -53,7 +58,7 @@ function binarySearchPos(array, map){
 
 var SLICE_SOURCEOBJECT_UPDATE = function(sourceObject){
   var sourceObjectInfo = this.sourceMap_[sourceObject.basisObjectId];
-  var newValue = this.rule(sourceObject);
+  var newValue = nanToUndefined(this.rule(sourceObject));
   var index = this.index_;
 
   if (newValue !== sourceObjectInfo.value)
@@ -134,7 +139,7 @@ var SLICE_SOURCE_HANDLER = {
       {
         sourceObjectInfo = {
           object: sourceObject,
-          value: this.rule(sourceObject)
+          value: nanToUndefined(this.rule(sourceObject))
         };
         sourceMap[sourceObject.basisObjectId] = sourceObjectInfo;
 
@@ -315,7 +320,7 @@ module.exports = SourceDataset.subclass({
         var index = this.index_;
 
         for (var i = 0; i < index.length; i++)
-          index[i].value = rule(index[i].object);
+          index[i].value = nanToUndefined(rule(index[i].object));
 
         index.sort(sliceIndexSort);
 
