@@ -2445,6 +2445,15 @@
         return cssResource;
       },
 
+      '.svg': function processCssResourceContent(content, url, svgResource){
+        if (!svgResource)
+          svgResource = new SvgResource(url);
+
+        svgResource.updateSvgText(content);
+
+        return svgResource;
+      },
+
       '.json': function processJsonResourceContent(content){
         if (typeof content == 'object')
           return content;
@@ -3711,6 +3720,130 @@
 
         this.element = null;
         this.cssText = null;
+      }
+    });
+  })();
+
+
+  //
+  // SVG resource
+  //
+
+  var SvgResource = (function(){
+   /**
+    * Helper functions for path resolving
+    */
+    var baseEl = document && document.createElement('base');
+
+    function setBase(baseURI){
+      // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
+      // convert path to absolute value
+      baseEl.setAttribute('href', baseURI);
+
+      // if more than one <base> elements in document, only first has effect
+      // put our <base> resolver at the begining of <head>
+      documentInterface.head.add(baseEl, true);
+    }
+
+    function restoreBase(){
+      // Opera left document base as <base> element specified,
+      // even if this element is removed from document
+      // so we set current location for base
+      baseEl.setAttribute('href', location.href);
+
+      documentInterface.remove(baseEl);
+    }
+
+    // inject style into document
+    function injectSvg(){
+      // set base before <style> element creating, because IE9+ set baseURI
+      // for <style> element on element creation
+      setBase(this.baseURI);
+
+      // create <style> element for first time
+      if (!this.element)
+      {
+        this.element = document.createElement('span');
+        this.element.style = 'display:none';
+
+        /** @cut */ this.element.setAttribute('src', this.url);
+      }
+
+      // add element to document
+      documentInterface.body.add(this.element);
+
+      this.syncSvgText();
+
+      restoreBase();
+    }
+
+
+   /**
+    * @class
+    */
+    return Class(null, {
+      className: 'basis.SvgResource',
+
+      inUse: 0,
+
+      url: '',
+      baseURI: '',
+      svgText: undefined,
+
+      element: null,
+
+      init: function(url){
+        this.url = url;
+        this.baseURI = pathUtils.dirname(url) + '/';
+      },
+
+      toString: function(){
+        return this.svgText;
+      },
+
+      updateSvgText: function(svgText){
+        if (this.svgText != svgText)
+        {
+          this.svgText = svgText;
+
+          if (this.inUse && this.element)
+          {
+            setBase(this.baseURI);
+            this.syncSvgText();
+            restoreBase();
+          }
+        }
+      },
+
+      syncSvgText: function(){
+        this.element.innerHTML = this.svgText;
+      },
+
+      startUse: function(){
+        if (!this.inUse)
+          documentInterface.body.ready(injectSvg, this);
+
+        this.inUse += 1;
+      },
+
+      stopUse: function(){
+        if (this.inUse)
+        {
+          // decrease usage count
+          this.inUse -= 1;
+
+          // remove element if nobody use it
+          if (!this.inUse && this.element)
+            documentInterface.remove(this.element);
+        }
+      },
+
+      destroy: function(){
+        if (this.element)
+          documentInterface.remove(this.element);
+
+        this.element = null;
+        this.svgText = null;
       }
     });
   })();

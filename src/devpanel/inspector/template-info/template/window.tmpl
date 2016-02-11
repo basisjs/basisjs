@@ -2,7 +2,7 @@
 <b:isolate/>
 <b:define name="upName" type="bool"/>
 
-<div class="window__wrapper" event-click="close" event-mousedown="stop-propagation" event-touchstart="stop-propagation" event-touchend="stop-propagation" basis-devpanel-ignore>
+<div class="window__wrapper" event-click="close" event-mousedown="stop-propagation prevent-default" basis-devpanel-ignore>
   <div{ddelement|ddtrigger} class="window">
     <div class="window__inner" event-click="stop-propagation">
       <div class="window__inner-wrapper">

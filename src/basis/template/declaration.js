@@ -29,7 +29,7 @@ var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
 var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 var CLASS_BINDING_INVERT = consts.CLASS_BINDING_INVERT;
 
-var IDENT = /^[a-z_][a-z0-9_\-]*$/i;
+var ATTR_NAME_RX = /^[a-z_][a-z0-9_\-:]*$/i;
 var ATTR_EVENT_RX = /^event-(.+)$/;
 
 
@@ -417,12 +417,13 @@ var makeDeclaration = (function(){
         return;
       }
 
-      if (!IDENT.test(attrs.name))
+      if (!ATTR_NAME_RX.test(attrs.name))
       {
         /** @cut */ addTemplateWarn(template, options, 'Bad attribute name `' + attrs.name + '`', token.loc);
         return;
       }
 
+      // FIXME: tokenRefMap defined for <b:include/> only
       var includedToken = tokenRefMap[attrs.ref || 'element'];
       if (includedToken)
       {
@@ -453,7 +454,7 @@ var makeDeclaration = (function(){
           // if set/append operation and no attribute exists than create new one
           if (!itAttrToken && (action == 'set' || action == 'append'))
           {
-            // if attribute isn't exist, it's always `set` operation
+            // if attribute doesn't exist, it's always a `set` operation
             action = 'set';
 
             if (isEvent)
@@ -767,6 +768,38 @@ var makeDeclaration = (function(){
                 /** @cut */ }
               break;
 
+              case 'svg':
+                // Example: <b:svg src="..." use="#symbol-{id}" class="..."/>
+                // process `use` attribute ---> xlink:href="#symbol-myId"
+                var useAttr = elAttrs_.use;
+                var child = [
+                  TYPE_ELEMENT,
+                  0,
+                  0,
+                  'svg:use',
+                  [TYPE_ATTRIBUTE, useAttr.binding, 0, 'xlink:href', useAttr.value]
+                ];
+
+                var classAttr = elAttrs_['class'];
+                var fragment = [
+                  TYPE_ELEMENT,
+                  bindings,
+                  0,
+                  'svg:svg',
+                  child,
+                  [classAttr.type, classAttr.binding, 0, classAttr.value]
+                ];
+
+                result.push(fragment);
+
+                if (elAttrs.src)
+                {
+                  var svgUrl = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
+                  addUnique(template.svg, [svgUrl]);
+                  arrayAdd(template.deps, basis.resource(svgUrl));
+                }
+              break;
+
               case 'isolate':
                 if (!template.isolate)
                   template.isolate = elAttrs.prefix || options.isolate || genIsolateMarker();
@@ -934,6 +967,8 @@ var makeDeclaration = (function(){
 
                     if (decl.resources && 'no-style' in elAttrs == false)
                       importStyles(template.resources, decl.resources, isolatePrefix, token);
+
+                    addUnique(template.svg, decl.svg);
 
                     var instructions = basis.array(token.children);
                     var styleNSIsolate = {
@@ -1294,6 +1329,7 @@ var makeDeclaration = (function(){
             refs,                    // TOKEN_REFS = 2
             getTokenName(token)      // ELEMENT_NAME = 3
           ];
+          // FIXME: `processAttrs` never uses 3rd argument and `options.optimizeSize` is always undefined
           item.push.apply(item, processAttrs(token, item, options.optimizeSize) || []);
           item.push.apply(item, process(token.children, template, options) || []);
 
@@ -1709,6 +1745,7 @@ var makeDeclaration = (function(){
       isolate: false,
       styleNSPrefix: {},  // TODO: investigate, could we remove this from declaration?
       resources: [],      // probably we should use `styles` instead of `resources`
+      svg: [],            // TODO: treat resources as abstract resources
 
       l10n: [],
 
@@ -1871,6 +1908,8 @@ var makeDeclaration = (function(){
       /** @cut */     includeToken: item[3]
       /** @cut */   };
       /** @cut */ });
+
+      addUnique(result.resources, result.svg);
     }
 
     /** @cut */ for (var key in options.defines)
