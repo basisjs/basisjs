@@ -19,7 +19,6 @@
   var basisData = require('basis.data');
   var AbstractData = basisData.AbstractData;
   var Value = basisData.Value;
-  var ReadOnlyValue = basisData.ReadOnlyValue;
   var Expression = require('./Expression.js');
   var STATE = basisData.STATE;
 
