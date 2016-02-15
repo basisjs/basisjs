@@ -37,6 +37,7 @@ function getBindingsFromNode(node){
 
         items.push({
           name: key,
+          realValue: rawValues[key],
           value: valueToString(value),
           isReactive: isReactive,
           used: used,
