@@ -786,9 +786,11 @@ var makeDeclaration = (function(){
                   bindings,
                   0,
                   'svg:svg',
-                  child,
-                  [classAttr.type, classAttr.binding, 0, classAttr.value]
+                  child
                 ];
+
+                if (classAttr)
+                  fragment.push([classAttr.type, classAttr.binding, 0, classAttr.value]);
 
                 result.push(fragment);
 
