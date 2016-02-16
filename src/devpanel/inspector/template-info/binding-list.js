@@ -2,6 +2,7 @@ var Node = require('basis.ui').Node;
 var fileAPI = require('../../api/file.js');
 var hoveredBinding = require('./binding.js').hover;
 var jsSourcePopup = require('./js-source-popup.js');
+var dataFlowPopup = require('./data-flow-popup.js');
 
 module.exports = new Node({
   sorting: 'data.name',
@@ -46,6 +47,10 @@ module.exports = new Node({
       leave: function(){
         hoveredBinding.set();
         jsSourcePopup.hide();
+      },
+      showResolve: function(e){
+        dataFlowPopup.value.set(this.data.realValue);
+        dataFlowPopup.show(e.actionTarget);
       },
       pickValue: function(){
         if (this.data.loc)
