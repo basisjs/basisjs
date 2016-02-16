@@ -1447,7 +1447,8 @@ var makeDeclaration = (function(){
         return name;
 
       var prefix = name.split(':')[0];
-      isolate.map[isolate.prefix + prefix] = prefix;
+
+      /** @cut */ isolate.map[isolate.prefix + prefix] = prefix;
 
       return isolate.prefix + name;
     }
