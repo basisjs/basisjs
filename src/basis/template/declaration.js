@@ -125,16 +125,15 @@ var makeDeclaration = (function(){
       arrayAdd(array, items[i]);
   }
 
-  function importStyles(array, items, prefix, includeToken){
-    for (var i = 0, item; item = items[i]; i++)
-    {
-      if (item[1] !== styleNamespaceIsolate)
-        item[1] = prefix + item[1];
-      if (!item[3])
-        item[3] = includeToken;
-    }
-
-    array.unshift.apply(array, items);
+  function adoptStyles(resources, prefix, includeToken){
+    for (var i = 0, item; item = resources[i]; i++)
+      if (item.type == 'style')
+      {
+        if (item.isolate !== styleNamespaceIsolate)
+          item.isolate = prefix + item.isolate;
+        if (!item.includeToken)
+          item.includeToken = includeToken;
+      }
   }
 
   function addStyle(template, token, src, isolatePrefix, namespace){
@@ -145,7 +144,15 @@ var makeDeclaration = (function(){
 
     /** @cut */ token.sourceUrl = template.sourceUrl;
 
-    template.resources.push([url, isolatePrefix, token, null, src ? false : text || true, namespace]);
+    template.resources.push({
+      type: 'style',
+      url: url,
+      isolate: isolatePrefix,
+      token: token,
+      includeToken: null,
+      inline: src ? false : text || true,
+      namespace: namespace
+    });
 
     return url;
   }
@@ -764,42 +771,64 @@ var makeDeclaration = (function(){
                 /** @cut */ else
                 /** @cut */ {
                 /** @cut */   token.sourceUrl = template.sourceUrl;
-                /** @cut */   template.resources.push([null, styleIsolate, token, null, elAttrs.src ? false : token.children[0] || true, styleNamespace]);
+                /** @cut */   template.resources.push({
+                /** @cut */     type: 'style',
+                /** @cut */     url: null,
+                /** @cut */     isolate: styleIsolate,
+                /** @cut */     token: token,
+                /** @cut */     includeToken: null,
+                /** @cut */     inline: elAttrs.src ? false : token.children[0] || true,
+                /** @cut */     namespace: styleNamespace
+                /** @cut */   });
                 /** @cut */ }
               break;
 
               case 'svg':
-                // Example: <b:svg src="..." use="#symbol-{id}" class="..."/>
-                // process `use` attribute ---> xlink:href="#symbol-myId"
-                var useAttr = elAttrs_.use;
-                var child = [
-                  TYPE_ELEMENT,
-                  0,
-                  0,
-                  'svg:use',
-                  [TYPE_ATTRIBUTE, useAttr.binding, 0, 'xlink:href', useAttr.value]
-                ];
+                // Example: <b:svg src="..." use="#symbol-{id}" .../>
+                // process `use` attribute ---> xlink:href="#symbol-{id}"
 
-                var classAttr = elAttrs_['class'];
-                var fragment = [
+                var svgElement = [
                   TYPE_ELEMENT,
                   bindings,
-                  0,
-                  'svg:svg',
-                  child
+                  refs,
+                  'svg:svg'
                 ];
 
-                if (classAttr)
-                  fragment.push([classAttr.type, classAttr.binding, 0, classAttr.value]);
+                var svgUse = [
+                  TYPE_ELEMENT,
+                  0,
+                  0,
+                  'svg:use'
+                ];
 
-                result.push(fragment);
-
-                if (elAttrs.src)
+                for (var attrName in elAttrs_)
                 {
-                  var svgUrl = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
-                  addUnique(template.svg, [svgUrl]);
-                  arrayAdd(template.deps, basis.resource(svgUrl));
+                  var attrToken = elAttrs_[attrName];
+                  var attrNode = [TYPE_ATTRIBUTE, attrToken.binding, 0, attrToken.name, attrToken.value];
+
+                  switch (attrName)
+                  {
+                    case 'src':
+                      var svgUrl = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
+                      arrayAdd(template.deps, basis.resource(svgUrl));
+                      template.resources.push({
+                        type: 'svg',
+                        url: svgUrl
+                      });
+                      break;
+
+                    case 'use':
+                      attrNode[3] = 'xlink:href';
+                      svgUse.push(attrNode);
+                      break;
+
+                    default:
+                      svgElement.push(attrNode);
+                  }
                 }
+
+                svgElement.push(svgUse);
+                result.push(svgElement);
               break;
 
               case 'isolate':
@@ -967,10 +996,20 @@ var makeDeclaration = (function(){
                     /** @cut */ if (decl.removals)
                     /** @cut */   template.removals.push.apply(template.removals, decl.removals);
 
-                    if (decl.resources && 'no-style' in elAttrs == false)
-                      importStyles(template.resources, decl.resources, isolatePrefix, token);
+                    if (decl.resources)
+                    {
+                      var resources = decl.resources;
 
-                    addUnique(template.svg, decl.svg);
+                      if ('no-style' in elAttrs)
+                        // ignore style resource when <b:include no-style/>
+                        resources = resources.filter(function(item){
+                          return item.type != 'style';
+                        });
+                      else
+                        adoptStyles(resources, isolatePrefix, token);
+
+                      template.resources.unshift.apply(template.resources, resources);
+                    }
 
                     var instructions = basis.array(token.children);
                     var styleNSIsolate = {
@@ -1716,8 +1755,12 @@ var makeDeclaration = (function(){
     }
   }
 
-  function styleHash(style){
-    return style[0] + '|' + style[1];
+  function resourceHash(resource){
+    return [
+      resource.type,
+      resource.url,
+      resource.isolate
+    ].join(';');
   }
 
   return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
@@ -1748,7 +1791,6 @@ var makeDeclaration = (function(){
       isolate: false,
       styleNSPrefix: {},  // TODO: investigate, could we remove this from declaration?
       resources: [],      // probably we should use `styles` instead of `resources`
-      svg: [],            // TODO: treat resources as abstract resources
 
       l10n: [],
 
@@ -1815,6 +1857,7 @@ var makeDeclaration = (function(){
       // isolate tokens
       isolateTokens(result.tokens, result.isolate || '', result, options);
 
+      // isolate removed tokens, since devtools may process them
       /** @cut */ result.warns = [];
       /** @cut */ if (result.removals)
       /** @cut */   result.removals.forEach(function(item){
@@ -1834,21 +1877,28 @@ var makeDeclaration = (function(){
       // resolve style prefix
       if (result.isolate)
         for (var i = 0, item; item = result.resources[i]; i++)
-          if (item[1] !== styleNamespaceIsolate)  // ignore namespaced styles
-            item[1] = result.isolate + item[1];
+          if (item.type == 'style' && item.isolate !== styleNamespaceIsolate)  // ignore namespaced styles
+            item.isolate = result.isolate + item.isolate;
 
-      // save all styles for debug purposes as it will be filtered
-      /** @cut */ var styles = result.resources;
+      // save all resources for debug purposes as it will be filtered
+      /** @cut */ var originalResources = result.resources;
 
-      // map and isolate styles
       result.resources = result.resources
         // remove duplicates
         .filter(function(item, idx, array){
-          return item[0] && !basis.array.search(array, styleHash(item), styleHash, idx + 1);
+          return item.url && !basis.array.search(array, resourceHash(item), resourceHash, idx + 1);
         })
         .map(function(item){
-          var url = item[0];
-          var isolate = item[1];
+          if (item.type != 'style') {
+            return {
+              type: item.type,
+              url: item.url
+            };
+          }
+
+          // map and isolate styles
+          var url = item.url;
+          var isolate = item.isolate;
           var namespaceIsolate = isolate === styleNamespaceIsolate;
           var cssMap;
 
@@ -1859,7 +1909,10 @@ var makeDeclaration = (function(){
             if (url in styleNamespaceResource)
             {
               /** @cut */ item.url = styleNamespaceResource[url].url;
-              return styleNamespaceResource[url].url;
+              return {
+                type: 'style',
+                url: styleNamespaceResource[url].url
+              };
             }
           }
 
@@ -1867,7 +1920,10 @@ var makeDeclaration = (function(){
           if (!isolate)
           {
             /** @cut */ item.url = url;
-            return url;
+            return {
+              type: 'style',
+              url: url
+            };
           }
 
           // otherwise create virtual resource with prefixed classes in selectors
@@ -1895,24 +1951,26 @@ var makeDeclaration = (function(){
             styleNamespaceResource[url] = resource;
 
           /** @cut */ item.url = resource.url;
-          return resource.url;
+
+          return {
+            type: 'style',
+            url: resource.url
+          };
         });
 
       // process styles list
-      /** @cut */ result.styles = styles.map(function(item, idx){
-      /** @cut */   var sourceUrl = item[0] || tokenAttrs(item[2]).src;
+      /** @cut */ result.styles = originalResources.map(function(item, idx){
+      /** @cut */   var sourceUrl = item.url || tokenAttrs(item.token).src;
       /** @cut */   return {
       /** @cut */     resource: item.url || false,
       /** @cut */     sourceUrl: basis.resource.resolveURI(sourceUrl),
-      /** @cut */     isolate: item[1] === styleNamespaceIsolate ? styleNamespaceIsolate[item[0]] : item[1] || false,
-      /** @cut */     namespace: item[5] || false,
-      /** @cut */     inline: item[4],
-      /** @cut */     styleToken: item[2],
-      /** @cut */     includeToken: item[3]
+      /** @cut */     isolate: item.isolate === styleNamespaceIsolate ? styleNamespaceIsolate[item.url] : item.isolate || false,
+      /** @cut */     namespace: item.namespace || false,
+      /** @cut */     inline: item.inline,
+      /** @cut */     styleToken: item.token,
+      /** @cut */     includeToken: item.includeToken
       /** @cut */   };
       /** @cut */ });
-
-      addUnique(result.resources, result.svg);
     }
 
     /** @cut */ for (var key in options.defines)

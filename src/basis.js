@@ -2308,6 +2308,9 @@
   * @name resource
   */
   var getResource = function(url, baseURI){
+    if (url && typeof url != 'string')
+      url = url.url;
+
     var reference = baseURI ? baseURI + '\x00' + url : url;
     var resource = resourceRequestCache[reference];
 

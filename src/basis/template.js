@@ -160,17 +160,17 @@
     this.resources = newResources;
 
     if (newResources)
-      for (var i = 0, url; url = newResources[i]; i++)
+      for (var i = 0, item; item = newResources[i]; i++)
       {
-        var resource = basis.resource(url).fetch();
+        var resource = basis.resource(item.url).fetch();
         if (typeof resource.startUse == 'function')
           resource.startUse();
       }
 
     if (oldResources)
-      for (var i = 0, url; url = oldResources[i]; i++)
+      for (var i = 0, item; item = oldResources[i]; i++)
       {
-        var resource = basis.resource(url).fetch();
+        var resource = basis.resource(item.url).fetch();
         if (typeof resource.stopUse == 'function')
           resource.stopUse();
       }
