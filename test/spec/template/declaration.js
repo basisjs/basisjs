@@ -70,9 +70,9 @@ module.exports = {
 
             assert(decl.styles.length === 3);
             assert(decl.resources.length === 2);
-            assert([
-              basis.path.resolve('../fixture/foo.css'),
-              basis.path.resolve('../fixture/bar.css')
+            assert.deep([
+              { type: 'style', url: basis.path.resolve('../fixture/foo.css') },
+              { type: 'style', url: basis.path.resolve('../fixture/bar.css') }
             ], decl.resources);
           }
         },
@@ -96,9 +96,9 @@ module.exports = {
 
             assert(decl.styles.length === 4);
             assert(decl.resources.length === 2);
-            assert([
-              basis.path.resolve('../fixture/bar.css'),
-              basis.path.resolve('../fixture/foo.css')
+            assert.deep([
+              { type: 'style', url: basis.path.resolve('../fixture/bar.css') },
+              { type: 'style', url: basis.path.resolve('../fixture/foo.css') }
             ], decl.resources);
           }
         }

@@ -944,7 +944,7 @@ module.exports = {
                 var tmplB = templateB.createInstance();
 
                 assert(templateA.resources.length == 1);
-                assert(templateA.resources, templateB.resources);
+                assert.deep(templateA.resources, templateB.resources);
               }
             }
           ]
