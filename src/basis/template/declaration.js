@@ -331,15 +331,14 @@ var makeDeclaration = (function(){
       /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, sourceToken.loc);
     }
 
-    function processAttrs(token, declToken){
-      var result = [];
+    function applyAttrs(host, attrs){
       var styleAttr;
       var displayAttr;
       var visibilityAttr;
       var item;
       var m;
 
-      for (var i = 0, attr; attr = token.attrs[i]; i++)
+      for (var i = 0, attr; attr = attrs[i]; i++)
       {
         // process special attributes (basis namespace)
         if (attr.prefix == 'b')
@@ -363,7 +362,7 @@ var makeDeclaration = (function(){
               break;
 
             case 'role':
-              addRoleAttribute(result, attr.value || '', attr);
+              addRoleAttribute(host, attr.value || '', attr);
               break;
           }
 
@@ -400,15 +399,15 @@ var makeDeclaration = (function(){
         /** @cut */ item.sourceToken = attr;
         /** @cut */ addTokenLocation(item, attr);
 
-        result.push(item);
+        host.push(item);
       }
 
       if (displayAttr)
-        applyShowHideAttribute(result, displayAttr);
+        applyShowHideAttribute(host, displayAttr);
       if (visibilityAttr)
-        applyShowHideAttribute(result, visibilityAttr);
+        applyShowHideAttribute(host, visibilityAttr);
 
-      return result.length ? result : 0;
+      return host;
     }
 
     function modifyAttr(include, token, name, action){
@@ -787,26 +786,27 @@ var makeDeclaration = (function(){
                 // Example: <b:svg src="..." use="#symbol-{id}" .../>
                 // process `use` attribute ---> xlink:href="#symbol-{id}"
 
-                var svgElement = [
-                  TYPE_ELEMENT,
-                  bindings,
-                  refs,
-                  'svg:svg'
-                ];
-
+                var svgAttributes = [];
                 var svgUse = [
                   TYPE_ELEMENT,
                   0,
                   0,
                   'svg:use'
                 ];
+                var svgElement = [
+                  TYPE_ELEMENT,
+                  bindings,
+                  refs,
+                  'svg:svg',
+                  svgUse
+                ];
 
-                for (var attrName in elAttrs_)
+
+                for (var key in elAttrs_)
                 {
-                  var attrToken = elAttrs_[attrName];
-                  var attrNode = [TYPE_ATTRIBUTE, attrToken.binding, 0, attrToken.name, attrToken.value];
+                  var attrToken = elAttrs_[key];
 
-                  switch (attrName)
+                  switch (getTokenName(attrToken))
                   {
                     case 'src':
                       var svgUrl = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
@@ -818,17 +818,20 @@ var makeDeclaration = (function(){
                       break;
 
                     case 'use':
-                      attrNode[3] = 'xlink:href';
-                      svgUse.push(attrNode);
+                      applyAttrs(svgUse, [
+                        basis.object.merge(attrToken, {
+                          prefix: 'xlink',
+                          name: 'href'
+                        })
+                      ]);
                       break;
 
                     default:
-                      svgElement.push(attrNode);
+                      svgAttributes.push(attrToken);
                   }
                 }
 
-                svgElement.push(svgUse);
-                result.push(svgElement);
+                result.push(applyAttrs(svgElement, svgAttributes));
               break;
 
               case 'isolate':
@@ -1370,8 +1373,8 @@ var makeDeclaration = (function(){
             refs,                    // TOKEN_REFS = 2
             getTokenName(token)      // ELEMENT_NAME = 3
           ];
-          // FIXME: `processAttrs` never uses 3rd argument and `options.optimizeSize` is always undefined
-          item.push.apply(item, processAttrs(token, item, options.optimizeSize) || []);
+
+          applyAttrs(item, token.attrs);
           item.push.apply(item, process(token.children, template, options) || []);
 
           /** @cut */ addTokenLocation(item, token);
