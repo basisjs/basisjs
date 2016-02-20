@@ -348,7 +348,7 @@ var makeDeclaration = (function(){
             case 'ref':
               var refs = (attr.value || '').trim().split(/\s+/);
               for (var j = 0; j < refs.length; j++)
-                addTokenRef(declToken, refs[j]);
+                addTokenRef(host, refs[j]);
               break;
 
             case 'show':
@@ -1488,8 +1488,7 @@ var makeDeclaration = (function(){
       if (name.indexOf(':') <= 0)
         return name;
 
-      var prefix = name.split(':')[0];
-
+      /** @cut */ var prefix = name.split(':')[0];
       /** @cut */ isolate.map[isolate.prefix + prefix] = prefix;
 
       return isolate.prefix + name;
