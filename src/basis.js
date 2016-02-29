@@ -3767,7 +3767,7 @@
       if (!this.element)
       {
         this.element = document.createElement('span');
-        this.element.style = 'display:none';
+        this.element.style.cssText = 'display:none';
 
         /** @cut */ this.element.setAttribute('src', this.url);
       }
