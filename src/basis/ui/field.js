@@ -4,7 +4,7 @@
   * @namespace basis.ui.field
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.field';
 
 
   //

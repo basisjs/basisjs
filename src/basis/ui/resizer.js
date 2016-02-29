@@ -4,7 +4,7 @@
   * @namespace basis.ui.resizer
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.resizer';
 
 
   //

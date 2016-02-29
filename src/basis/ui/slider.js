@@ -4,7 +4,7 @@
   * @namespace basis.ui.slider
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.slider';
 
 
   //

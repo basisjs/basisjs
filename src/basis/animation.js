@@ -3,7 +3,7 @@
   * @namespace basis.animation
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.animation';
 
 
   //

@@ -11,7 +11,9 @@ function sendFile(file){
   if (basis.path.extname(file.data.filename) == '.tmpl' && file.data.content)
   {
     data.declaration = inspectBasisTemplate.makeDeclaration(file.data.content, basis.path.dirname(basis.path.resolve(file.data.filename)) + '/', {}, file.data.filename);
-    data.resources = data.declaration.resources;
+    data.resources = data.declaration.resources.map(function(resource){
+      return resource.url;
+    });
     // delete deps as it can has resource and ResourceWrapper which can't be serialized
     data.declaration.deps = [];
     data.declaration.includes = [];

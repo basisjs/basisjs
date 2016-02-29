@@ -3,7 +3,7 @@
   * @namespace basis.cssom
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.cssom';
 
 
   //

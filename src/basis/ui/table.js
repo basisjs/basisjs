@@ -10,7 +10,7 @@
   * @namespace basis.ui.table
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.table';
 
 
   //

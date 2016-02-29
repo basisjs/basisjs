@@ -3,7 +3,7 @@
   * @namespace basis.dom.event
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.dom.event';
 
   var document = global.document;
   var $null = basis.fn.$null;

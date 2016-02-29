@@ -23,14 +23,14 @@ repo_root = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')
 )
 
-bower_json_path = os.path.join(repo_root, 'bower.json')
+bower_json_path = os.path.join(repo_root, 'package.json')
 
 with open(bower_json_path) as f:
     bower_conf = json.loads(f.read())
     version = bower_conf['version']
 
 assert version, u'Cannot determine current release version. ' \
-                u'Check your bower.json'
+                u'Check your package.json'
 
 configs_dir = os.path.join(repo_root, CONFIG_DIR)
 config_file_names = os.listdir(configs_dir)
@@ -116,7 +116,7 @@ for config_file_name in config_file_names:
             "git", "clone", "--depth", "1", repository, repository_location
         ])
 
-        update_conf('bower.json')
+        # update_conf('bower.json')
         npm_publish_required = update_conf('package.json')
 
         call([

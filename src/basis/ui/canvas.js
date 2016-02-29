@@ -3,7 +3,7 @@
   * @namespace basis.ui.canvas
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.canvas';
 
 
   //

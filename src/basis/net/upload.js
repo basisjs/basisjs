@@ -3,7 +3,7 @@
   * @namespace basis.net.upload
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net.upload';
 
 
   //

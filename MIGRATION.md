@@ -1,3 +1,15 @@
+## 1.5.0 → 1.6.0
+
+Remove
+
+  - `this.path` is no longer available in modules
+  - `basis.data.index.IndexConstructor`
+
+Might break
+
+  - `IndexMap` was reworked to be more async and simpler (see details in HISTORY.md)
+  - never set binding and binding with `undefined` value behaviours are differ now
+
 ## 1.4.0 → 1.5.0
 
 Remove

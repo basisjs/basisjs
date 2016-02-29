@@ -19,7 +19,7 @@
   * @namespace basis.data
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.data';
 
 
   //
@@ -482,6 +482,10 @@
       return result;
     },
 
+    query: function(path){
+      return Value.query(this, 'value.' + path);
+    },
+
    /**
     * @return {basis.data.DeferredValue}
     */
@@ -917,6 +921,7 @@
     fn.factory = FACTORY;
     fn.deferred = valueDeferredFactory;
     fn.compute = valueComputeFactory;
+    fn.query = valueQueryFactory;
     fn.pipe = valuePipeFactory;
     fn.as = valueAsFactory;
 
@@ -963,6 +968,17 @@
       value = factory(value);
       return value
         ? value.pipe(events, getter)
+        : value;
+    });
+  }
+
+  function valueQueryFactory(path){
+    var factory = this;
+
+    return chainValueFactory(function(value){
+      value = factory(value);
+      return value
+        ? value.query(path)
         : value;
     });
   }

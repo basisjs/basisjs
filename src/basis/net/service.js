@@ -3,7 +3,7 @@
   * @namespace basis.net.service
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net.service';
 
 
   //

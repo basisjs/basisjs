@@ -1,3 +1,29 @@
+## 1.6.0 (January 21, 2016)
+
+- fix duplicate var declarations (thanks to new linter's check in `basisjs-tools`)
+- specify explicit names for namespaces instead of `this.path`, which is no longer available in modules (thanks to @BobbyZee)
+- basis.data.dataset: split into modules
+- basis.data.index: refactoring
+    - split into modules
+    - don't export `IndexConstructor` (doesn't exist anymore)
+    - simplify calc presets and `CalcIndexPreset` class
+    - rework `IndexMap`, make it more async
+        - inherit `IndexMap` from `SourceDataset` (instead of `MapFilter`)
+        - make `IndexMap#setSource` async
+        - `IndexMap#ruleEvents` → `IndexMap#recalcEvents`
+        - add new members on `recalc` only
+        - proxy member update to source object
+        - fix issue when source index doesn't destroy on `source` change
+- basis.dom.wrapper: fix value for `childClass` of `AbstractNode` (`undefined` → `Class.SELF`)
+- basis.template: explicit set `UNSET` value as default binding value to separate two cases when value is never set and equal to `undefined`
+- basis.template: new define type `invert` (i.e. `<b:define type="invert"/>`), that works like `bool` but inverts binding value
+- basis.template: warn when `default` attribute on `<b:define>` with type `bool` or `invert` has no value
+- basis.template: namespaced attributes (thanks to @tyanas)
+    - support for namespaced attributes in templates
+    - support `xlink` namespace by default
+    - new module `basis.template.namespace` to resolve namespace by tag/attribute name
+- basis.ui.paginator: add roles
+
 ## 1.5.1 (November 18, 2015)
 
 - fix `basis.data.Dataset.setAccumulateState()` issue with `itemsChanged` event concurrency on cache flush (new event emited before cached event)

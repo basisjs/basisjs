@@ -158,7 +158,7 @@ module.exports = {
                 b.set(2);
                 assert(expr.value === 0);
 
-                this.async(function(){
+                assert.async(function(){
                   assert(expr.value === 3);
                   assert(changeCount === 1);
                 });
@@ -189,7 +189,7 @@ module.exports = {
                 assert(updateCount === 1);
                 assert(expr.value === 3);
 
-                this.async(function(){
+                assert.async(function(){
                   assert(updateCount === 1);
                 });
               }
@@ -209,7 +209,7 @@ module.exports = {
                 a.set(2);
                 assert(a.handler === null);
 
-                this.async(function(){
+                assert.async(function(){
                   assert(expr.value === null);
                 });
               }
@@ -241,7 +241,7 @@ module.exports = {
                 a.destroy();
                 b.set(3);
 
-                this.async(function(){
+                assert.async(function(){
                   assert(expr.value === null);
                 });
               }
@@ -257,7 +257,7 @@ module.exports = {
                 a.set(2);
                 expr.destroy();
 
-                this.async(function(){
+                assert.async(function(){
                   assert(expr.value === null);
                 });
               }

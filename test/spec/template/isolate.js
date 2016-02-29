@@ -41,6 +41,10 @@ module.exports = {
           ':nth-last-child(2n + 1 of .prefix:not(.prefix)) { }',
           '/*/ .error */',
           '/* .error {}',
+          '.prefix { font-size: 10px; /* \' */} .prefix {}',
+          '.prefix { font-size: 10px; /* \' */ } .prefix {}',
+          '.prefix { font-size: 10px; /* " */} .prefix {}',
+          '.prefix { font-size: 10px; /* " */ } .prefix {}',
           '@import "foo.css";',
           '@import url(foo.html)',
           '@media(min-width:100px){ .prefix {} .prefix.prefix {} }',
@@ -944,7 +948,7 @@ module.exports = {
                 var tmplB = templateB.createInstance();
 
                 assert(templateA.resources.length == 1);
-                assert(templateA.resources, templateB.resources);
+                assert.deep(templateA.resources, templateB.resources);
               }
             }
           ]

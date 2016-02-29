@@ -3,7 +3,7 @@
   * @namespace basis.event
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.event';
 
   //
   // import names

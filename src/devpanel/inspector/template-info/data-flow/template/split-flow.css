@@ -1,0 +1,34 @@
+.split .flow
+{
+  padding-right: 20px;
+  position: relative;
+}
+.split .flow:after
+{
+  display: block;
+  position: relative;
+  top: -4px;
+  margin-bottom: -4px;
+  left: 12px;
+  content: '';
+  width: 2px;
+  height: 20px;
+  background: gray;
+  opacity: .5;
+}
+
+.flow:not(:last-child):before
+{
+  display: block;
+  content: '';
+  position: absolute;
+  height: 2px;
+  box-sizing: border-box;
+  left: 14px;
+  right: -12px;
+  bottom: 0;
+  background-clip: padding-box;
+
+  background: gray;
+  opacity: .5;
+}

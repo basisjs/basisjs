@@ -3,7 +3,7 @@
   * @namespace basis.ui.pageslider
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.pageslider';
 
 
   //

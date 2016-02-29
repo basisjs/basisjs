@@ -177,14 +177,14 @@ module.exports = {
             });
 
             map.setSource(foo);
-            this.async(function(){
+            assert.async(function(){
               assert.deep(
                 ['0.00', '0.20', '0.40', '0.60', '0.80', '1.00'],
                 map.getValues('data.value.toFixed(2)')
               );
 
               map.setSource(bar);
-              this.async(function(){
+              assert.async(function(){
                 assert.deep(
                   ['0.00', '0.25', '0.50', '0.75', '1.00'],
                   map.getValues('data.value.toFixed(2)')
@@ -211,7 +211,7 @@ module.exports = {
               map.getValues('data.value.toFixed(3)')
             );
 
-            this.async(function(){
+            assert.async(function(){
               assert.deep(
                 ['0.000', '0.250', '0.500', '0.750', '1.000', '0.250', '0.500', '0.750'],
                 map.getValues('data.value.toFixed(3)')
@@ -242,7 +242,7 @@ module.exports = {
               map.getValues('data.value.toFixed(3)')
             );
 
-            this.async(function(){
+            assert.async(function(){
               assert.deep(
                 ['0.000', '0.125', '0.250', '0.375', '0.500', '0.625', '0.750', '0.875', '1.000'],
                 map.getValues('data.value.toFixed(3)')
@@ -262,7 +262,7 @@ module.exports = {
             });
 
             map.setSource(foo);
-            this.async(function(){
+            assert.async(function(){
               assert.deep(
                 ['0.000', '0.250', '0.500', '0.750', '1.000'],
                 map.getValues('data.value.toFixed(3)')
@@ -274,7 +274,7 @@ module.exports = {
                 map.getValues('data.value.toFixed(3)')
               );
 
-              this.async(function(){
+              assert.async(function(){
                 assert.deep(
                   ['0.000', '0.250', '0.500', '0.750', '1.000', '0.250', '0.500', '0.750'],
                   map.getValues('data.value.toFixed(3)')
@@ -295,7 +295,7 @@ module.exports = {
             });
 
             map.setSource(foo);
-            this.async(function(){
+            assert.async(function(){
               assert.deep(
                 ['0.000', '0.250', '0.500', '0.750', '1.000'],
                 map.getValues('data.value.toFixed(3)')
@@ -307,7 +307,7 @@ module.exports = {
                 map.getValues('data.value.toFixed(3)')
               );
 
-              this.async(function(){
+              assert.async(function(){
                 assert.deep(
                   ['0.000', '0.125', '0.250', '0.375', '0.500', '0.625', '0.750', '0.875', '1.000'],
                   map.getValues('data.value.toFixed(3)')
@@ -344,7 +344,7 @@ module.exports = {
               map.getValues('data.value.toFixed(3)')
             );
 
-            this.async(function(){
+            assert.async(function(){
               assert.deep(
                 ['0.000', '0.500', '0.500', '0.500', '1.000'],
                 map.getValues('data.value.toFixed(3)')
@@ -376,7 +376,7 @@ module.exports = {
             assert(map.pick().data.value === 2);
             assert(map.pick().data.foo === 4);
 
-            this.async(function(){
+            assert.async(function(){
               assert(map.pick().data.foo === 6);
             });
           }
