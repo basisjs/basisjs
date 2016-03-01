@@ -14,79 +14,99 @@
   var merge = basis.object.merge;
   var Class = basis.Class;
   var Emitter = require('basis.event').Emitter;
+  var processJSON = basis.resource.extensions['.json'];
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var autoFetchDictionaryResource = true;
 
-  var patches = (function(config){
+  // set .l10n files handler
+  basis.resource.extensions['.l10n'] = processDictionaryContent;
+
+  var patches = (function(){
+    var config = basis.config.l10n || {};
+    var patches = config && config.patch;
     var result = {};
+    var baseURI;
 
-    if (config && config.patch)
+    config.patch = {};
+
+    if (patches)
     {
-      var base;
-      var content;
-      var source = config.patch;
-
-      if (typeof source == 'string')
+      if (typeof patches == 'string')
       {
-        source = basis.resource(source);
-        base = basis.path.dirname(source.url);
-        try { content = source(); } catch(e) {};
+        try {
+          baseURI = basis.path.dirname(basis.resource.resolveURI(patches));
+          patches = basis.resource(patches).fetch();
+        } catch(e) {
+          /** @cut */ basis.dev.error('basis.l10n: dictionary patch file load failed:', patches);
+        }
       }
-      else
-        content = source;
 
-      var syncDictMixin = {
-        syncDict_: function(){
-          basis.resource.extensions['.l10n'](dictionaryByUrl[this.dictUrl].resource.get(true), this.dictUrl);
-        },
-        activate: function(){
-          this.attach(this.syncDict_, this);
-        },
-        deactivate: function(){
-          this.detach(this.syncDict_, this);
-        }
-      };
+      for (var path in patches)
+      {
+        var dictUrl = basis.resource.resolveURI(path, baseURI);
+        var patchUrl = basis.resource.resolveURI(patches[path], baseURI);
 
-      /** @cut */ config.patch = {};
+        result[dictUrl] = createDictionaryMerge(dictUrl, patchUrl);
 
-      if (content)
-        for (var path in content)
-        {
-          var dictUrl = basis.resource.resolveURI(path);
-          result[dictUrl] = extend(basis.resource(content[path], base), merge(syncDictMixin, { dictUrl: dictUrl }));
-          /** @cut */ config.patch[dictUrl] = result[dictUrl].url;
-        }
+        /** @cut */ config.patch[dictUrl] = patchUrl;
+      }
     }
 
     return result;
-  })(basis.config.l10n);
+  })();
 
+  function getJSON(url){
+    return processJSON(resource(url).get(true), url);
+  }
 
-  function deepExtend(dest, source){
+  function createDictionaryMerge(dictUrl, patchUrl){
+    function sync(){
+      dictionaryByUrl[dictUrl].update(
+        deepMerge(
+          getJSON(dictUrl),
+          getJSON(patchUrl)
+        )
+      );
+    }
+
+    return {
+      get: function(){
+        return getJSON(patchUrl);
+      },
+      activate: function(){
+        resource(patchUrl).attach(sync);
+      },
+      deactivate: function(){
+        resource(patchUrl).detach(sync);
+      }
+    };
+  }
+
+  function deepMerge(dest, source){
     for (var key in source)
-      dest[key] = (key in dest &&
+      dest[key] = hasOwnProperty.call(dest, key) &&
                   typeof dest[key] == 'object' &&
-                  typeof source[key] == 'object')
-        ? deepExtend(dest[key], source[key])
+                  typeof source[key] == 'object'
+        ? deepMerge(dest[key], source[key])
         : source[key];
 
     return dest;
   }
 
-  // process .l10n files as .json
-  basis.resource.extensions['.l10n'] = function(content, url){
+  function processDictionaryContent(content, url){
     var dictionary;
+
+    content = processJSON(content, url);
+
+    if (patches[url])
+      deepMerge(content, patches[url].get());
 
     autoFetchDictionaryResource = false; // prevents recursion
     dictionary = resolveDictionary(url);
     autoFetchDictionaryResource = true;
 
-    var wrapper = basis.resource.extensions['.json'];
-    var dictContent = wrapper(content, url);
-    var patchContent = wrapper(patches[url] ? patches[url].get(true) : {}, url);
-
-    return dictionary.update(deepExtend(dictContent, patchContent));
-  };
+    return dictionary.update(content);
+  }
 
 
   //
@@ -504,17 +524,18 @@
       if (basis.resource.isResource(content))
       {
         var resource = content;
+        var resourceUrl = resource.url;
 
         this.resource = resource;
 
         // notify dictionary created
-        if (!dictionaryByUrl[resource.url])
+        if (!dictionaryByUrl[resourceUrl])
         {
-          dictionaryByUrl[resource.url] = this;
-          createDictionaryNotifier.set(resource.url);
+          dictionaryByUrl[resourceUrl] = this;
+          createDictionaryNotifier.set(resourceUrl);
 
-          if (patches[resource.url])
-            patches[resource.url].activate();
+          if (patches[resourceUrl])
+            patches[resourceUrl].activate();
         }
 
         // fetch resource content and attach listener on content update
@@ -631,10 +652,12 @@
 
       if (this.resource)
       {
-        if (patches[this.resource.url])
-          patches[this.resource.url].deactivate();
+        var resourceUrl = this.resource.url;
 
-        delete dictionaryByUrl[this.resource.url];
+        if (patches[resourceUrl])
+          patches[resourceUrl].deactivate();
+
+        delete dictionaryByUrl[resourceUrl];
         this.resource = null;
       }
     }

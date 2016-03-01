@@ -6,6 +6,7 @@ module.exports = {
     var basis = window.basis.createSandbox();
 
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
+    var getTokenValues = basis.require('./helpers/l10n.js').getTokenValues;
     var Dictionary = basis.require('basis.l10n').Dictionary;
     var Culture = basis.require('basis.l10n').Culture;
     var getDictionary = basis.require('basis.l10n').dictionary;
@@ -587,6 +588,138 @@ module.exports = {
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      name: 'dictionary patching',
+      test: [
+        {
+          name: 'patch in config',
+          beforeEach: function(){
+            var basis = window.basis.createSandbox({
+              l10n: {
+                patch: {
+                  './fixture/l10n/dest.l10n': './fixture/l10n/patch.l10n'
+                }
+              }
+            });
+
+            var getDictionary = basis.require('basis.l10n').dictionary;
+            var originalResource = basis.resource('./fixture/l10n/dest.l10n');
+            var patchResource = basis.resource('./fixture/l10n/patch.l10n');
+
+            var originalValues = getDictionary(JSON.parse(originalResource.get(true)));
+            var patchValues = getDictionary(JSON.parse(patchResource.get(true)));
+
+            var actual = getDictionary(originalResource);
+            var patch = getDictionary(patchResource);
+            var merged = getDictionary('./fixture/l10n/merge.l10n');
+          },
+          test: [
+            {
+              name: 'should merge original with patch',
+              test: function(){
+                assert.deep(getTokenValues(merged), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on patch update',
+              test: function(){
+                // reset patch - actual should be equal to original
+                patchResource.update({});
+
+                assert.deep(getTokenValues(originalValues), getTokenValues(actual));
+                assert.deep({}, getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on original source update',
+              test: function(){
+                // reset original - actual should be equal to patch
+                originalResource.update({});
+
+                assert.deep(getTokenValues(actual), getTokenValues(patchValues));
+                assert.deep(getTokenValues(patch), getTokenValues(patchValues));
+              }
+            }
+          ]
+        },
+        {
+          name: 'reference to patch file in config',
+          beforeEach: function(){
+            var basis = window.basis.createSandbox({
+              l10n: {
+                patch: './fixture/l10n/patch-in-file.json'
+              }
+            });
+
+            var getDictionary = basis.require('basis.l10n').dictionary;
+            var originalResource = basis.resource('./fixture/l10n/dest.l10n');
+            var patchResource = basis.resource('./fixture/l10n/patch.l10n');
+
+            var originalValues = getDictionary(JSON.parse(originalResource.get(true)));
+            var patchValues = getDictionary(JSON.parse(patchResource.get(true)));
+
+            var actual = getDictionary(originalResource);
+            var patch = getDictionary(patchResource);
+            var merged = getDictionary('./fixture/l10n/merge.l10n');
+          },
+          test: [
+            {
+              name: 'should merge original with patch',
+              test: function(){
+                assert.deep(getTokenValues(merged), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on patch update',
+              test: function(){
+                // reset patch - actual should be equal to original
+                patchResource.update({});
+
+                assert.deep(getTokenValues(originalValues), getTokenValues(actual));
+                assert.deep({}, getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on original source update',
+              test: function(){
+                // reset original - actual should be equal to patch
+                originalResource.update({});
+
+                assert.deep(getTokenValues(actual), getTokenValues(patchValues));
+                assert.deep(getTokenValues(patch), getTokenValues(patchValues));
+              }
+            }
+          ]
+        },
+        {
+          name: 'empty patch',
+          test: function(){
+            var basis = window.basis.createSandbox({
+              l10n: {
+                patch: {
+                  './fixture/l10n/dest.l10n': './fixture/l10n/empty-patch.l10n'
+                }
+              }
+            });
+
+            var getDictionary = basis.require('basis.l10n').dictionary;
+            var originalResource = basis.resource('./fixture/l10n/dest.l10n');
+            var patchResource = basis.resource('./fixture/l10n/empty-patch.l10n');
+
+            var originalValues = getDictionary(JSON.parse(originalResource.get(true)));
+            var patchValues = getDictionary({});
+
+            var actual = getDictionary(originalResource);
+            var patch = getDictionary(patchResource);
+
+            assert.deep(getTokenValues(originalValues), getTokenValues(actual));
+            assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+          }
         }
       ]
     }
