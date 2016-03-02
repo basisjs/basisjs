@@ -60,6 +60,8 @@
         "demo/apps/todomvc/assets/**",
         "scripts/jscs/**",
         "tour/lib/**",
-        "node_modules/**"
+        "node_modules/**",
+        "build/**",
+        "**/build/**"
     ]
 }
