@@ -482,7 +482,7 @@ module.exports = {
                 assert(dict.token('enum.foo').getType() === 'markup');
                 assert(dict.token('enum.bar').getType() === 'default');
                 assert(dict.token('enum.baz').getType() === 'plural');
-                assert(dict.token('enum.qux').getType() === 'default');
+                assert(dict.token('enum.qux').getType() === 'markup');
               }
             }
           ]

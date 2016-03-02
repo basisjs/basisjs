@@ -575,7 +575,8 @@
 
       this.types = {};
       for (var path in newTypes)
-        this.types[path] = tokenType[newTypes[path]] == true ? newTypes[path] : 'default';
+        if (tokenType[newTypes[path]])
+          this.types[path] = newTypes[path];
 
       for (var path in this.tokens)
       {
