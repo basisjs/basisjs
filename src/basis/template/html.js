@@ -15,6 +15,7 @@
   var camelize = basis.string.camelize;
 
   var isMarkupToken = require('basis.l10n').isMarkupToken;
+  var isTokenHasPlaceholder = require('basis.l10n').isTokenHasPlaceholder;
   var getL10nToken = require('basis.l10n').token;
   var getFunctions = require('basis.template.htmlfgen').getFunctions;
 
@@ -47,7 +48,7 @@
   var l10nTemplateSource = {};
 
   function getSourceFromL10nToken(token){
-    var dict = token.dictionary;
+    var dict = token.getDictionary();
     var url = dict.resource ? dict.resource.url : 'dictionary' + dict.basisObjectId;
     var name = token.getName();
     var id = name + '@' + url;
@@ -60,8 +61,7 @@
       result = l10nTemplateSource[id] = sourceToken.as(function(value){
         if (sourceToken.getType() == 'markup')
         {
-          var parentType = sourceToken.getParentType();
-          if (typeof value == 'string' && (parentType == 'plural' || parentType == 'plural-markup'))
+          if (typeof value == 'string' && isTokenHasPlaceholder(sourceToken))
             // TODO: add this replacement to builder
             value = value.replace(/\{#\}/g, '{__templateContext}');
 

@@ -11,11 +11,12 @@
   //
 
   var extend = basis.object.extend;
+  var complete = basis.object.complete;
   var Class = basis.Class;
   var Emitter = require('basis.event').Emitter;
   var processJSON = basis.resource.extensions['.json'];
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var basisTokenPrototypeSet = basis.Token.prototype.set;  
+  var basisTokenPrototypeSet = basis.Token.prototype.set;
 
   // set .l10n files handler
   basis.resource.extensions['.l10n'] = processDictionaryContent;
@@ -109,23 +110,29 @@
 
   var tokenIndex = [];
   var tokenComputeFn = {};
-  var tokenType = {
+  var NULL_DESCRIPTOR = {
+    placeholder: false,
+    processName: basis.fn.$self,
+    value: undefined,
+    types: {}
+  };
+  var TOKEN_TYPES = {
     'default': true,
     'plural': true,
     'markup': true,
     'plural-markup': true,
     'enum-markup': true
   };
-  var nestedType = {
+  var PLURAL_TYPES = {
+    'plural': true,
+    'plural-markup': true
+  };
+  var NESTED_TYPE = {
     'default': 'default',
     'plural': 'default',
     'markup': 'default',
     'plural-markup': 'markup',
     'enum-markup': 'markup'
-  };
-  var isPluralType = {
-    'plural': true,
-    'plural-markup': true
   };
 
 
@@ -134,11 +141,6 @@
   */
   var ComputeToken = Class(basis.Token, {
     className: namespace + '.ComputeToken',
-
-   /**
-    * @type {basis.l10n.Dictionary}
-    */
-    dictionary: null,
 
    /**
     * @type {basis.l10n.Token}
@@ -154,36 +156,29 @@
       basis.Token.prototype.init.call(this, value);
     },
 
-    get: function(){
-      var value = this.dictionary.getValue(this.getName());
+    toString: function(){
+      return this.get();
+    },
 
-      if (isPluralType[this.token.getType()])
+    get: function(){
+      var value = this.token.dictionary.getValue(this.getName());
+
+      if (this.token.descriptor.placeholder)
         value = String(value).replace(/\{#\}/g, this.value);
 
       return value;
     },
 
     getName: function(){
-      var key = this.value;
-
-      if (isPluralType[this.token.getType()])
-        key = cultures[currentCulture].plural(key);
-
-      return this.token.name + '.' + key;
+      return this.token.name + '.' + this.token.descriptor.processName(this.value);
     },
 
     getType: function(){
-      return this.token.types[this.getName()] ||
-             nestedType[this.token.getType()] ||
-             'default';
+      return this.token.descriptor.types[this.getName()] || 'default';
     },
 
-    getParentType: function(){
-      return this.token.getType();
-    },
-
-    toString: function(){
-      return this.get();
+    getDictionary: function(){
+      return this.token.getDictionary();
     },
 
     destroy: function(){
@@ -233,14 +228,13 @@
    /**
     * @constructor
     */
-    init: function(dictionary, tokenName, value, types){
-      basis.Token.prototype.init.call(this, value);
+    init: function(dictionary, tokenName, descriptor){
+      basis.Token.prototype.init.call(this, descriptor.value);
 
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
-      this.parent = tokenName.replace(/(^|\.)[^.]+$/, '');
       this.dictionary = dictionary;
-      this.types = types;
+      this.descriptor = descriptor;
       this.computeTokens = {};
     },
 
@@ -264,15 +258,7 @@
     },
 
     getType: function(){
-      return this.types[this.name] ||
-             nestedType[this.types[this.parent]] ||
-             'default';
-    },
-
-    getParentType: function(){
-      return this.parent
-        ? this.dictionary.token(this.parent).getType()
-        : 'default';
+      return this.descriptor.types[this.name] || 'default';
     },
 
     setType: function(){
@@ -334,20 +320,23 @@
 
       if (!ComputeTokenClass)
         ComputeTokenClass = this.computeTokenClass = ComputeToken.subclass({
-          dictionary: this.dictionary,
-          token: this,
-          parent: this.name
+          token: this
         });
 
       return new ComputeTokenClass(value);
     },
 
     token: function(name){
-      if (isPluralType[this.getType()])
-        return this.computeToken(name, this);
+      // FIXME looks like new tokens are always create here
+      if (this.getType() in PLURAL_TYPES)
+        return this.computeToken(name);
 
       if (this.dictionary)
         return this.dictionary.token(this.name + '.' + name);
+    },
+
+    getDictionary: function(){
+      return this.dictionary;
     },
 
    /**
@@ -357,6 +346,7 @@
       for (var key in this.computeTokens)
         this.computeTokens[key].destroy();
 
+      this.descriptor = null;
       this.computeTokenClass = null;
       this.computeTokens = null;
       this.value = null;
@@ -398,7 +388,7 @@
 
  /**
   * Check value is a l10n token.
-  * @param {*} value Value to check.
+  * @param {*} value Value to be check.
   * @return {boolean}
   */
   function isToken(value){
@@ -407,21 +397,31 @@
 
  /**
   * Check value is a l10n plural token.
-  * @param {*} value Value that should be check.
+  * @param {*} value Value to be check.
   * @return {boolean}
   */
   function isPluralToken(value){
-    return isToken(value) && isPluralType[value.getType()];
+    return isToken(value) && value.getType() in PLURAL_TYPES;
+  }
+
+ /**
+  * Check value is a l10n token that may has a placeholder.
+  * @param {*} value Value to be check.
+  * @return {boolean}
+  */
+  function isTokenHasPlaceholder(value){
+    return isToken(value) && value.descriptor.placeholder;
   }
 
 /**
   * Check value is a l10n markup token.
-  * @param {*} value Value that should be check.
+  * @param {*} value Value to be check.
   * @return {boolean}
   */
   function isMarkupToken(value){
     return isToken(value) && value.getType() == 'markup';
   }
+
 
 
   //
@@ -435,30 +435,59 @@
   var createDictionaryNotifier = new basis.Token();
 
 
-  function walkTokens(dictionary, culture, tokens, path){
-    var cultureValues = dictionary.cultureValues[culture];
-
-    path = path ? path + '.' : '';
+  function walkTokens(tokens, context, parentName){
+    var path = parentName ? parentName + '.' : '';
+    var parentType = context.types[parentName] || 'default';
 
     for (var name in tokens)
     {
+      // ignore meta on first level
+      if (parentName == '' && name == '_meta')
+        continue;
+
       if (name.indexOf('.') != -1)
       {
-        /** @cut */ basis.dev.warn((dictionary.resource ? dictionary.resource.url : '[anonymous dictionary]') + ': wrong token name `' + name + '`, token ignored.');
+        /** @cut */ basis.dev.warn(context.name + ': wrong token name `' + name + '`, token ignored.');
         continue;
       }
 
       if (hasOwnProperty.call(tokens, name))
       {
         var tokenName = path + name;
+        var tokenType = context.types[tokenName] || NESTED_TYPE[parentType] || 'default';
         var tokenValue = tokens[name];
+        var isPlural = tokenType in PLURAL_TYPES || parentType in PLURAL_TYPES;
 
-        cultureValues[tokenName] = tokenValue;
+        context.values[tokenName] = {
+          culture: context.culture,
+          name: tokenName,
+          placeholder: isPlural,
+          processName: isPlural ? cultures[context.culture].plural : basis.fn.$self,
+          types: context.types,
+          value: tokenValue
+        };
+
+        if (tokenName in context.types == false)
+          context.types[tokenName] = tokenType;
 
         if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
-          walkTokens(dictionary, culture, tokenValue, tokenName);
+          walkTokens(tokenValue, context, tokenName);
       }
     }
+
+    return context.values;
+  }
+
+  function fetchTypes(data) {
+    var dirtyTypes = (data._meta && data._meta.type) || {};
+    var types = {};
+
+    // filter wrong types
+    for (var path in dirtyTypes)
+      if (dirtyTypes[path] in TOKEN_TYPES)
+        types[path] = dirtyTypes[path];
+
+    return types;
   }
 
 
@@ -544,23 +573,18 @@
 
       // reset old data
       this.cultureValues = {};
-      this.types = {};
+      this.types = fetchTypes(data);
 
       // apply token values
       for (var culture in data)
         if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
-        {
-          this.cultureValues[culture] = {};
-          walkTokens(this, culture, data[culture]);
-        }
-
-      // apply types
-      var newTypes = (data._meta && data._meta.type) || {};
-
-      for (var path in newTypes)
-        // ignore wrong types
-        if (newTypes[path] in tokenType)
-          this.types[path] = newTypes[path];
+          this.cultureValues[culture] = walkTokens(data[culture], {
+            /** @cut */ name: this.resource ? this.resource.url : '[anonymous dictionary]',
+            culture: culture,
+            // mix culture types with dictionary types
+            types: complete(fetchTypes(data[culture]), this.types),
+            values: {}
+          });
 
       // update values
       this.syncValues();
@@ -575,15 +599,15 @@
       for (var tokenName in this.tokens)
       {
         var token = this.tokens[tokenName];
+        var descriptor = this.getDescriptor(tokenName) || NULL_DESCRIPTOR;
         var savedType = token.getType();
-        var newValue = this.getValue(tokenName);
 
-        token.types = this.types;
+        token.descriptor = descriptor;
 
-        if (token.value !== newValue)
+        if (token.value !== descriptor.value)
         {
           // on value change apply will be ivoked and new type applied
-          basisTokenPrototypeSet.call(token, newValue);
+          basisTokenPrototypeSet.call(token, descriptor.value);
         }
         else
         {
@@ -595,18 +619,39 @@
     },
 
    /**
-    * Get current value for tokenName according to current culture and it's fallback.
+    * @param {string} culture
     * @param {string} tokenName
+    * @return {Object|undefined}
     */
-    getValue: function(tokenName){
+    getCultureDescriptor: function(culture, tokenName){
+      return this.cultureValues[culture] && this.cultureValues[culture][tokenName];
+    },
+
+   /**
+    * @param {string} tokenName
+    * @return {Object|undefined}
+    */
+    getDescriptor: function(tokenName){
       var fallback = cultureFallback[currentCulture] || [];
 
       for (var i = 0, cultureName; cultureName = fallback[i]; i++)
       {
-        var cultureValues = this.cultureValues[cultureName];
-        if (cultureValues && tokenName in cultureValues)
-          return cultureValues[tokenName];
+        var descriptor = this.getCultureDescriptor(cultureName, tokenName);
+
+        if (descriptor)
+          return descriptor;
       }
+    },
+
+   /**
+    * Get current value for tokenName according to current culture and it's fallback.
+    * @param {string} tokenName
+    */
+    getValue: function(tokenName){
+      var descriptor = this.getDescriptor(tokenName);
+
+      if (descriptor)
+        return descriptor.value;
     },
 
    /**
@@ -615,7 +660,10 @@
     * @return {*}
     */
     getCultureValue: function(culture, tokenName){
-      return this.cultureValues[culture] && this.cultureValues[culture][tokenName];
+      var descriptor = this.getCultureDescriptor(culture, tokenName);
+
+      if (descriptor)
+        return descriptor.value;
     },
 
    /**
@@ -627,11 +675,12 @@
 
       if (!token)
       {
+        var descriptor = this.getDescriptor(tokenName) || NULL_DESCRIPTOR;
+
         token = this.tokens[tokenName] = new Token(
           this,
           tokenName,
-          this.getValue(tokenName),
-          this.types
+          descriptor
         );
       }
 
@@ -642,6 +691,7 @@
     * @destructor
     */
     destroy: function(){
+      this.types = null;
       this.tokens = null;
       this.cultureValues = null;
 
@@ -831,6 +881,8 @@
         pluralFormsMap[name] ||
         pluralFormsMap[name.split('-')[0]] ||
         pluralForms[0];
+
+      this.plural = this.plural.bind(this);
     },
 
     plural: function(value){
@@ -1002,6 +1054,7 @@
     isToken: isToken,
     isPluralToken: isPluralToken,
     isMarkupToken: isMarkupToken,
+    isTokenHasPlaceholder: isTokenHasPlaceholder,
 
     Dictionary: Dictionary,
     dictionary: resolveDictionary,

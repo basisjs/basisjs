@@ -460,7 +460,7 @@ module.exports = {
                 }));
 
                 assert(dict.token('bar').token(1).getType() === 'markup');
-                assert(dict.token('baz.quz').getType() === 'markup');
+                assert(dict.token('baz.qux').getType() === 'markup');
               }
             },
             {
