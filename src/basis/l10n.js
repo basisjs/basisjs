@@ -15,6 +15,7 @@
   var Emitter = require('basis.event').Emitter;
   var processJSON = basis.resource.extensions['.json'];
   var hasOwnProperty = Object.prototype.hasOwnProperty;
+  var basisTokenPrototypeSet = basis.Token.prototype.set;  
 
   // set .l10n files handler
   basis.resource.extensions['.l10n'] = processDictionaryContent;
@@ -108,7 +109,6 @@
 
   var tokenIndex = [];
   var tokenComputeFn = {};
-  var basisTokenPrototypeSet = basis.Token.prototype.set;
   var tokenType = {
     'default': true,
     'plural': true,
@@ -146,11 +146,6 @@
     token: null,
 
    /**
-    * @type {string}
-    */
-    parent: '',
-
-   /**
     * @constructor
     */
     init: function(value){
@@ -174,14 +169,12 @@
       if (isPluralType[this.token.getType()])
         key = cultures[currentCulture].plural(key);
 
-      return this.parent + '.' + key;
+      return this.token.name + '.' + key;
     },
 
     getType: function(){
-      var type = this.token.getType();
-
-      return this.dictionary.types[this.getName()] ||
-             nestedType[type] ||
+      return this.token.types[this.getName()] ||
+             nestedType[this.token.getType()] ||
              'default';
     },
 
@@ -240,13 +233,14 @@
    /**
     * @constructor
     */
-    init: function(dictionary, tokenName, value){
+    init: function(dictionary, tokenName, value, types){
       basis.Token.prototype.init.call(this, value);
 
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
       this.parent = tokenName.replace(/(^|\.)[^.]+$/, '');
       this.dictionary = dictionary;
+      this.types = types;
       this.computeTokens = {};
     },
 
@@ -270,8 +264,8 @@
     },
 
     getType: function(){
-      return this.dictionary.types[this.name] ||
-             nestedType[this.dictionary.types[this.parent]] ||
+      return this.types[this.name] ||
+             nestedType[this.types[this.parent]] ||
              'default';
     },
 
@@ -550,6 +544,7 @@
 
       // reset old data
       this.cultureValues = {};
+      this.types = {};
 
       // apply token values
       for (var culture in data)
@@ -561,22 +556,11 @@
 
       // apply types
       var newTypes = (data._meta && data._meta.type) || {};
-      var currentTypes = {};
 
-      for (var path in this.tokens)
-        currentTypes[path] = this.tokens[path].getType();
-
-      this.types = {};
       for (var path in newTypes)
-        if (tokenType[newTypes[path]])
+        // ignore wrong types
+        if (newTypes[path] in tokenType)
           this.types[path] = newTypes[path];
-
-      for (var path in this.tokens)
-      {
-        var token = this.tokens[path];
-        if (token.getType() != currentTypes[path])
-          this.tokens[path].apply();
-      }
 
       // update values
       this.syncValues();
@@ -589,7 +573,25 @@
     */
     syncValues: function(){
       for (var tokenName in this.tokens)
-        basisTokenPrototypeSet.call(this.tokens[tokenName], this.getValue(tokenName));
+      {
+        var token = this.tokens[tokenName];
+        var savedType = token.getType();
+        var newValue = this.getValue(tokenName);
+
+        token.types = this.types;
+
+        if (token.value !== newValue)
+        {
+          // on value change apply will be ivoked and new type applied
+          basisTokenPrototypeSet.call(token, newValue);
+        }
+        else
+        {
+          // apply changes if type has been changed
+          if (token.getType() != savedType)
+            token.apply();
+        }
+      }
     },
 
    /**
@@ -628,7 +630,8 @@
         token = this.tokens[tokenName] = new Token(
           this,
           tokenName,
-          this.getValue(tokenName)
+          this.getValue(tokenName),
+          this.types
         );
       }
 
@@ -883,7 +886,7 @@
       for (var i = 0, dictionary; dictionary = dictionaries[i]; i++)
         dictionary.syncValues();
 
-      basis.Token.prototype.set.call(resolveCulture, culture);
+      basisTokenPrototypeSet.call(resolveCulture, culture);
     }
   }
 

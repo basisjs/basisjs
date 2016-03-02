@@ -385,20 +385,26 @@ module.exports = {
               }
             },
             {
-              name: 'should be default if wrong type',
+              name: 'should ignore wrong types',
               test: function(){
                 var dict = getDictionary(basis.resource.virtual('l10n', {
                   _meta: {
                     type: {
-                      foo: 'foo'
+                      'foo': 'foo',
+                      'bar': 'enum-markup',
+                      'bar.foo': 'foo'
                     }
                   },
                   'en-US': {
-                    foo: 'test'
+                    foo: 'test',
+                    bar: {
+                      foo: 'test'
+                    }
                   }
                 }));
 
                 assert(dict.token('foo').getType() === 'default');
+                assert(dict.token('bar.foo').getType() === 'markup');
               }
             },
             {
@@ -483,6 +489,40 @@ module.exports = {
                 assert(dict.token('enum.bar').getType() === 'default');
                 assert(dict.token('enum.baz').getType() === 'plural');
                 assert(dict.token('enum.qux').getType() === 'markup');
+              }
+            },
+            {
+              name: 'dinamic type change',
+              test: function(){
+                var data = {
+                  _meta: {
+                    type: {
+                      markup: 'markup',
+                      plural: 'plural'
+                    }
+                  },
+                  'en-US': {
+                    markup: 'markup',
+                    plural: ['plural', 'plurals']
+                  }
+                };
+                var resource = basis.resource.virtual('l10n', data);
+                var dict = getDictionary(resource);
+
+                assert(dict.token('markup').getType() === 'markup');
+                assert(dict.token('plural').getType() === 'plural');
+
+                resource.update({
+                  'en-US': data['en-US']
+                });
+
+                assert(dict.token('markup').getType() === 'default');
+                assert(dict.token('plural').getType() === 'default');
+
+                resource.update(data);
+
+                assert(dict.token('markup').getType() === 'markup');
+                assert(dict.token('plural').getType() === 'plural');
               }
             }
           ]
