@@ -68,6 +68,27 @@ module.exports = {
             setCulture('c');
             assert(dict.token('value').value === 'c');
           }
+        },
+        {
+          name: 'should not implicit create fallback culture',
+          test: function(){
+            var basis = window.basis.createSandbox();
+            var l10n = basis.require('basis.l10n');
+
+            l10n.setCultureList('en/ru ua');
+
+            assert.deep(['en', 'ua'], l10n.getCultureList().sort());
+            assert(l10n.getCulture() === 'en');
+
+            l10n.setCulture('ru');
+            assert(l10n.getCulture() !== 'ru');
+
+            l10n.setCulture('ua');
+            assert(l10n.getCulture() === 'ua');
+
+            l10n.setCulture('en');
+            assert(l10n.getCulture() === 'en');
+          }
         }
       ]
     },
@@ -492,7 +513,7 @@ module.exports = {
               }
             },
             {
-              name: 'dinamic type change',
+              name: 'dynamic type change',
               test: function(){
                 var data = {
                   _meta: {
@@ -524,6 +545,135 @@ module.exports = {
                 assert(dict.token('markup').getType() === 'markup');
                 assert(dict.token('plural').getType() === 'plural');
               }
+            },
+            {
+              name: 'per culture setup',
+              beforeEach: function(){
+                var basis = window.basis.createSandbox();
+                var l10n = basis.require('basis.l10n');
+                var dictionary = l10n.dictionary;
+
+                l10n.setCultureList('en-US/ru-RU ru-RU');
+              },
+              test: [
+                {
+                  name: 'culture types should override common types',
+                  test: function(){
+                    var dict = dictionary({
+                      '_meta': { 'type': { 'foo': 'enum-markup' } },
+                      'en-US': {
+                        'foo': {
+                          'baz': 'smth'
+                        }
+                      },
+                      'ru-RU': {
+                        '_meta': { 'type': { 'foo': 'default' } },
+                        'foo': {
+                          'bar': 'smth'
+                        }
+                      }
+                    });
+
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'markup');
+                    assert(dict.token('foo.bar').getType() === 'default'); // fallback to ru-RU with overriden type
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+
+                    l10n.setCulture('ru-RU');
+                    assert(l10n.getCulture() === 'ru-RU');
+                    assert(dict.token('foo.baz').getType() === 'markup');  // doesn't exists in ru-RU, so type uses from dictionary
+                                                                           // not sure it's correct, but some logic here
+                    assert(dict.token('foo.bar').getType() === 'default');
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+
+                    l10n.setCulture('en-US');
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'markup');
+                    assert(dict.token('foo.bar').getType() === 'default'); // fallback to ru-RU with overriden type
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+                  }
+                },
+                {
+                  name: 'case#1',
+                  test: function(){
+                    var dict = dictionary({
+                      'en-US': {
+                        'foo': {
+                          'baz': 'smth'
+                        }
+                      },
+                      'ru-RU': {
+                        '_meta': { 'type': { 'foo': 'enum-markup' } },
+                        'foo': {
+                          'bar': 'smth'
+                        }
+                      }
+                    });
+
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'default'); // since no special type for path
+                    assert(dict.token('foo.bar').getType() === 'markup');  // fallback to ru-RU
+
+                    l10n.setCulture('ru-RU');
+                    assert(l10n.getCulture() === 'ru-RU');
+                    assert(dict.token('foo.baz').getType() === 'default'); // since no value for token
+                    assert(dict.token('foo.bar').getType() === 'markup');  // match to path
+
+                    l10n.setCulture('en-US');
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'default'); // since no special type for path
+                    assert(dict.token('foo.bar').getType() === 'markup');  // fallback to ru-RU
+                  }
+                },
+                {
+                  name: 'case#2',
+                  test: function(){
+                    var dict = dictionary({
+                      'en-US': {
+                        '_meta': { 'type': { 'foo': 'enum-markup' } },
+                        'foo': {
+                          'baz': 'smth'
+                        }
+                      },
+                      'ru-RU': {
+                        '_meta': { 'type': { 'foo': 'enum-markup', 'foo.qux': 'plural' } },
+                        'foo': {
+                          'bar': 'smth',
+                          'qux': ['one', 'two']
+                        }
+                      }
+                    });
+
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'markup');
+                    assert(dict.token('foo.bar').getType() === 'markup');
+                    assert(dict.token('foo.qux').getType() === 'plural');  // fallback to ru-RU
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+
+                    l10n.setCulture('ru-RU');
+                    assert(l10n.getCulture() === 'ru-RU');
+                    assert(dict.token('foo.baz').getType() === 'markup');  // doesn't exists in ru-RU, but default type for foo.* is markup
+                    assert(dict.token('foo.bar').getType() === 'markup');
+                    assert(dict.token('foo.qux').getType() === 'plural');
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+                  }
+                },
+                {
+                  name: 'should not crash when define types for not declared culture',
+                  test: function(){
+                    var dict = dictionary({
+                      'xxx': {
+                        '_meta': { 'type': { 'foo.qux': 'plural' } },
+                        'foo': {
+                          'qux': 'xxx'
+                        }
+                      }
+                    });
+
+                    assert(dict.token('foo.qux').getType() === 'default');
+                  }
+                }
+              ]
             }
           ]
         },

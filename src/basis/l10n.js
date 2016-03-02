@@ -134,6 +134,9 @@
     'plural-markup': 'markup',
     'enum-markup': 'markup'
   };
+  var pluralName = function(value){
+    return this.culture.plural(value);
+  };
 
 
  /**
@@ -435,7 +438,7 @@
   var createDictionaryNotifier = new basis.Token();
 
 
-  function walkTokens(tokens, context, parentName){
+  function walkTokens(tokens, parentName, context){
     var path = parentName ? parentName + '.' : '';
     var parentType = context.types[parentName] || 'default';
 
@@ -459,10 +462,10 @@
         var isPlural = tokenType in PLURAL_TYPES || parentType in PLURAL_TYPES;
 
         context.values[tokenName] = {
+          placeholder: isPlural,
+          processName: isPlural ? pluralName : basis.fn.$self,
           culture: context.culture,
           name: tokenName,
-          placeholder: isPlural,
-          processName: isPlural ? cultures[context.culture].plural : basis.fn.$self,
           types: context.types,
           value: tokenValue
         };
@@ -471,7 +474,7 @@
           context.types[tokenName] = tokenType;
 
         if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
-          walkTokens(tokenValue, context, tokenName);
+          walkTokens(tokenValue, tokenName, context);
       }
     }
 
@@ -504,11 +507,6 @@
     tokens: null,
 
    /**
-    * @type {object}
-    */
-    types: null,
-
-   /**
     * Values by cultures
     * @type {object}
     */
@@ -531,7 +529,6 @@
     */
     init: function(content, noResourceFetch){
       this.tokens = {};
-      this.types = {};
       this.cultureValues = {};
 
       // add to dictionary list
@@ -573,16 +570,16 @@
 
       // reset old data
       this.cultureValues = {};
-      this.types = fetchTypes(data);
 
       // apply token values
+      var types = fetchTypes(data);
       for (var culture in data)
         if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
-          this.cultureValues[culture] = walkTokens(data[culture], {
+          this.cultureValues[culture] = walkTokens(data[culture], '', {
             /** @cut */ name: this.resource ? this.resource.url : '[anonymous dictionary]',
-            culture: culture,
+            culture: resolveCulture(culture),
             // mix culture types with dictionary types
-            types: complete(fetchTypes(data[culture]), this.types),
+            types: complete(fetchTypes(data[culture]), types),
             values: {}
           });
 
@@ -691,7 +688,6 @@
     * @destructor
     */
     destroy: function(){
-      this.types = null;
       this.tokens = null;
       this.cultureValues = null;
 
@@ -881,8 +877,6 @@
         pluralFormsMap[name] ||
         pluralFormsMap[name.split('-')[0]] ||
         pluralForms[0];
-
-      this.plural = this.plural.bind(this);
     },
 
     plural: function(value){
@@ -929,7 +923,7 @@
     {
       if (cultureList.indexOf(culture) == -1)
       {
-        /** @cut */ basis.dev.warn('basis.l10n.setCulture: culture `' + culture + '` not in the list, the culture isn\'t changed');
+        /** @cut */ basis.dev.warn('basis.l10n.setCulture: culture `' + culture + '` not in the list, the culture doesn\'t changed');
         return;
       }
 
@@ -986,7 +980,7 @@
       if (cultureRow.length > 2)
       {
         /** @cut */ basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture + '`; other cultures except first one was ignored');
-        cultureRow = cultureRow.slice(0, 2);
+        cultureRow = [cultureRow[0], cultureRow[1]];
       }
 
       cultureName = cultureRow[0];
@@ -1000,16 +994,16 @@
 
     // normalize fallback
     for (var cultureName in cultureFallback)
-    {
-      cultureFallback[cultureName] = basis.array.flatten(cultureFallback[cultureName]
-        .map(function(name){
-          return cultureFallback[name];
-        }))
-        .concat(baseCulture)
-        .filter(function(item, idx, array){
-          return !idx || array.lastIndexOf(item, idx - 1) == -1;
-        });
-    }
+      cultureFallback[cultureName] = basis.array.flatten(
+        cultureFallback[cultureName]
+          .map(function(name){
+            return cultureFallback[name];
+          }))
+          .concat(baseCulture)
+          .filter(function(item, idx, array){
+            return !idx || array.lastIndexOf(item, idx - 1) == -1;
+          }
+      );
 
     // update current culture list
     cultureList = basis.object.keys(cultures);
