@@ -11,12 +11,10 @@
   //
 
   var extend = basis.object.extend;
-  var merge = basis.object.merge;
   var Class = basis.Class;
   var Emitter = require('basis.event').Emitter;
   var processJSON = basis.resource.extensions['.json'];
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var autoFetchDictionaryResource = true;
 
   // set .l10n files handler
   basis.resource.extensions['.l10n'] = processDictionaryContent;
@@ -94,18 +92,13 @@
   }
 
   function processDictionaryContent(content, url){
-    var dictionary;
-
     content = processJSON(content, url);
 
     if (patches[url])
       deepMerge(content, patches[url].get());
 
-    autoFetchDictionaryResource = false; // prevents recursion
-    dictionary = resolveDictionary(url);
-    autoFetchDictionaryResource = true;
-
-    return dictionary.update(content);
+    // create new dictionary with no fetch
+    return internalResolveDictionary(url, true).update(content);
   }
 
 
@@ -513,7 +506,7 @@
     * @constructor
     * @param {basis.Resource} content Dictionary content (tokens source)
     */
-    init: function(content){
+    init: function(content, noResourceFetch){
       this.tokens = {};
       this.types = {};
       this.cultureValues = {};
@@ -539,7 +532,7 @@
         }
 
         // fetch resource content and attach listener on content update
-        if (autoFetchDictionaryResource)
+        if (!noResourceFetch)
           resource.fetch();
       }
       else
@@ -666,10 +659,9 @@
 
 
  /**
-  * @param {basis.Resource|string} source
-  * @return {basis.l10n.Dictionary}
+  * Currently for internal use only, with additional argument
   */
-  function resolveDictionary(source){
+  function internalResolveDictionary(source, noFetch) {
     var dictionary;
 
     if (typeof source == 'string')
@@ -686,7 +678,16 @@
     if (basis.resource.isResource(source))
       dictionary = dictionaryByUrl[source.url];
 
-    return dictionary || new Dictionary(source);
+    return dictionary || new Dictionary(source, noFetch);
+  }
+
+
+ /**
+  * @param {basis.Resource|string} source
+  * @return {basis.l10n.Dictionary}
+  */
+  function resolveDictionary(source){
+    return internalResolveDictionary(source);
   }
 
 
