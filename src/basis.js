@@ -3892,7 +3892,6 @@
     /** @cut */   };
 
     /** @cut */ var resolver = config.devInfoResolver || global.$devinfo || {};
-    /** @cut */ var test = {};
     /** @cut */ if (typeof resolver.fixSourceOffset == 'function')
     /** @cut */   fixSourceOffset = resolver.fixSourceOffset;
     /** @cut */ if (typeof resolver.get == 'function')

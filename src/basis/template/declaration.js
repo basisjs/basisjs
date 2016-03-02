@@ -1961,7 +1961,7 @@ var makeDeclaration = (function(){
         });
 
       // process styles list
-      /** @cut */ result.styles = originalResources.map(function(item, idx){
+      /** @cut */ result.styles = originalResources.map(function(item){
       /** @cut */   var sourceUrl = item.url || tokenAttrs(item.token).src;
       /** @cut */   return {
       /** @cut */     resource: item.url || false,
