@@ -56,23 +56,21 @@
   })();
 
   function getJSON(url){
-    return processJSON(resource(url).get(true), url);
+    return processJSON(resource(url).get(true), url) || {};
   }
 
   function createDictionaryMerge(dictUrl, patchUrl){
     function sync(){
       dictionaryByUrl[dictUrl].update(
-        deepMerge(
+        mergeDictionaries(
           getJSON(dictUrl),
-          getJSON(patchUrl)
+          patchUrl
         )
       );
     }
 
     return {
-      get: function(){
-        return getJSON(patchUrl);
-      },
+      url: patchUrl,
       activate: function(){
         resource(patchUrl).attach(sync);
       },
@@ -82,13 +80,61 @@
     };
   }
 
-  function deepMerge(dest, source){
-    for (var key in source)
-      dest[key] = hasOwnProperty.call(dest, key) &&
-                  typeof dest[key] == 'object' &&
-                  typeof source[key] == 'object'
-        ? deepMerge(dest[key], source[key])
-        : source[key];
+  function mergeDictionaries(dest, patchSource){
+    function isObject(value){
+      return value && Object.prototype.toString.call(value) == '[object Object]';
+    }
+
+    function deepMerge(dest, patch, path, sourceMap){
+      if (path)
+        path += '.';
+
+      for (var key in patch)
+        if (!isObject(patch[key]))
+        {
+          sourceMap[path + key] = patchSource;
+          dest[key] = patch[key];
+        }
+        else
+        {
+          dest[key] = deepMerge(
+            isObject(dest[key]) ? dest[key] : {},
+            patch[key],
+            path + key,
+            sourceMap
+          );
+        }
+
+      return dest;
+    }
+
+    var patch = getJSON(patchSource);
+    for (var key in patch)
+    {
+      if (key == '_meta')
+      {
+        // merge _meta
+        continue;
+      }
+
+      // init _meta
+      if (!hasOwnProperty.call(dest, key))
+      {
+        dest[key] = {
+          _meta: { source: {} }
+        };
+      }
+      else
+      {
+        if (!dest[key]._meta)
+          dest[key]._meta = {};
+
+        dest[key]._meta.source = {};
+      }
+
+      // merge
+      deepMerge(dest[key], patch[key], '', dest[key]._meta.source);
+    }
 
     return dest;
   }
@@ -97,7 +143,7 @@
     content = processJSON(content, url);
 
     if (patches[url])
-      deepMerge(content, patches[url].get());
+      mergeDictionaries(content, patches[url].url);
 
     // create new dictionary with no fetch
     return internalResolveDictionary(url, true).update(content);
@@ -464,6 +510,7 @@
         context.values[tokenName] = {
           placeholder: isPlural,
           processName: isPlural ? pluralName : basis.fn.$self,
+          source: context.source[tokenName] || context.dictionary.id,
           culture: context.culture,
           name: tokenName,
           types: context.types,
@@ -481,7 +528,7 @@
     return context.values;
   }
 
-  function fetchTypes(data) {
+  function fetchTypes(data){
     var dirtyTypes = (data._meta && data._meta.type) || {};
     var types = {};
 
@@ -493,6 +540,10 @@
     return types;
   }
 
+  function fetchSource(data){
+    return (data._meta && data._meta.source) || {};
+  }
+
 
  /**
   * @class
@@ -501,16 +552,16 @@
     className: namespace + '.Dictionary',
 
    /**
-    * Token map.
-    * @type {object}
-    */
-    tokens: null,
-
-   /**
-    * Values by cultures
+    * Token descriptors by cultures
     * @type {object}
     */
     cultureValues: null,
+
+   /**
+    * Inited token map.
+    * @type {object}
+    */
+    tokens: null,
 
    /**
     * @type {number}
@@ -522,6 +573,12 @@
     * @type {basis.resource}
     */
     resource: null,
+
+   /**
+    * Unique reference to dictinary location
+    * @type {string}
+    */
+    id: null,
 
    /**
     * @constructor
@@ -539,6 +596,7 @@
         var resource = content;
         var resourceUrl = resource.url;
 
+        this.id = resourceUrl;
         this.resource = resource;
 
         // notify dictionary created
@@ -557,6 +615,7 @@
       }
       else
       {
+        this.id = 'dictionary' + this.index;
         this.update(content || {});
       }
     },
@@ -577,9 +636,10 @@
         if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
           this.cultureValues[culture] = walkTokens(data[culture], '', {
             /** @cut */ name: this.resource ? this.resource.url : '[anonymous dictionary]',
+            dictionary: this,
             culture: resolveCulture(culture),
-            // mix culture types with dictionary types
-            types: complete(fetchTypes(data[culture]), types),
+            source: fetchSource(data[culture]),
+            types: complete(fetchTypes(data[culture]), types), // dictionary types + culture types
             values: {}
           });
 

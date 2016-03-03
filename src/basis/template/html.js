@@ -49,9 +49,8 @@
 
   function getSourceFromL10nToken(token){
     var dict = token.getDictionary();
-    var url = dict.resource ? dict.resource.url : 'dictionary' + dict.basisObjectId;
     var name = token.getName();
-    var id = name + '@' + url;
+    var id = name + '@' + dict.id;
     var result = l10nTemplateSource[id];
     var sourceWrapper;
 
@@ -85,7 +84,7 @@
       });
 
       result.id = '{l10n:' + id + '}';
-      result.url = url + ':' + name;
+      result.url = dict.id + ':' + name;
     }
 
     return result;

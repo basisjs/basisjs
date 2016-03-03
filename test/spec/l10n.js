@@ -806,55 +806,18 @@ module.exports = {
             var patch = getDictionary(patchResource);
             var merged = getDictionary('./fixture/l10n/merge.l10n');
           },
-          test: [
-            {
-              name: 'should merge original with patch',
-              test: function(){
-                assert.deep(getTokenValues(merged), getTokenValues(actual));
-                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
-              }
-            },
-            {
-              name: 'should update original on patch update',
-              test: function(){
-                // reset patch - actual should be equal to original
-                patchResource.update({});
+          afterEach: function(){
+            for (var path in getTokenValues(actual)) {
+              var descriptor = actual.getDescriptor(path);
+              var dict = descriptor.value === 'dest'
+                ? actual
+                : descriptor.value === 'patch'
+                  ? patch
+                  : false;
 
-                assert.deep(getTokenValues(originalValues), getTokenValues(actual));
-                assert.deep({}, getTokenValues(patch));
-              }
-            },
-            {
-              name: 'should update original on original source update',
-              test: function(){
-                // reset original - actual should be equal to patch
-                originalResource.update({});
-
-                assert.deep(getTokenValues(actual), getTokenValues(patchValues));
-                assert.deep(getTokenValues(patch), getTokenValues(patchValues));
-              }
+              if (dict)
+                assert(descriptor.source === dict.id);
             }
-          ]
-        },
-        {
-          name: 'reference to patch file in config',
-          beforeEach: function(){
-            var basis = window.basis.createSandbox({
-              l10n: {
-                patch: './fixture/l10n/patch-in-file.json'
-              }
-            });
-
-            var getDictionary = basis.require('basis.l10n').dictionary;
-            var originalResource = basis.resource('./fixture/l10n/dest.l10n');
-            var patchResource = basis.resource('./fixture/l10n/patch.l10n');
-
-            var originalValues = getDictionary(JSON.parse(originalResource.get(true)));
-            var patchValues = getDictionary(JSON.parse(patchResource.get(true)));
-
-            var actual = getDictionary(originalResource);
-            var patch = getDictionary(patchResource);
-            var merged = getDictionary('./fixture/l10n/merge.l10n');
           },
           test: [
             {
@@ -880,8 +843,71 @@ module.exports = {
                 // reset original - actual should be equal to patch
                 originalResource.update({});
 
-                assert.deep(getTokenValues(actual), getTokenValues(patchValues));
-                assert.deep(getTokenValues(patch), getTokenValues(patchValues));
+                assert.deep(getTokenValues(patchValues), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+              }
+            }
+          ]
+        },
+        {
+          name: 'reference to patch file in config',
+          beforeEach: function(){
+            var basis = window.basis.createSandbox({
+              l10n: {
+                patch: './fixture/l10n/patch-in-file.json'
+              }
+            });
+
+            var getDictionary = basis.require('basis.l10n').dictionary;
+            var originalResource = basis.resource('./fixture/l10n/dest.l10n');
+            var patchResource = basis.resource('./fixture/l10n/patch.l10n');
+
+            var originalValues = getDictionary(JSON.parse(originalResource.get(true)));
+            var patchValues = getDictionary(JSON.parse(patchResource.get(true)));
+
+            var actual = getDictionary(originalResource);
+            var patch = getDictionary(patchResource);
+            var merged = getDictionary('./fixture/l10n/merge.l10n');
+          },
+          afterEach: function(){
+            for (var path in getTokenValues(actual)) {
+              var descriptor = actual.getDescriptor(path);
+              var dict = descriptor.value === 'dest'
+                ? actual
+                : descriptor.value === 'patch'
+                  ? patch
+                  : false;
+
+              if (dict)
+                assert(descriptor.source === dict.id);
+            }
+          },
+          test: [
+            {
+              name: 'should merge original with patch',
+              test: function(){
+                assert.deep(getTokenValues(merged), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on patch update',
+              test: function(){
+                // reset patch - actual should be equal to original
+                patchResource.update({});
+
+                assert.deep(getTokenValues(originalValues), getTokenValues(actual));
+                assert.deep({}, getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on original source update',
+              test: function(){
+                // reset original - actual should be equal to patch
+                originalResource.update({});
+
+                assert.deep(getTokenValues(patchValues), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
               }
             }
           ]
