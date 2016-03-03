@@ -84,7 +84,7 @@
       });
 
       result.id = '{l10n:' + id + '}';
-      result.url = dict.id + ':' + name;
+      result.url = dict.getValueSource(name) + ':' + name;
     }
 
     return result;

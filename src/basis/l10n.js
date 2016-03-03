@@ -109,6 +109,7 @@
     }
 
     var patch = getJSON(patchSource);
+    var sources;
     for (var key in patch)
     {
       if (key == '_meta')
@@ -128,12 +129,17 @@
       {
         if (!dest[key]._meta)
           dest[key]._meta = {};
-
-        dest[key]._meta.source = {};
       }
 
+      // always init sources
+      sources = {};
+      dest[key]._meta.source = {};
+
       // merge
-      deepMerge(dest[key], patch[key], '', dest[key]._meta.source);
+      deepMerge(dest[key], patch[key], '', sources);
+
+      // always rewrite source in meta
+      dest[key]._meta.source = sources;
     }
 
     return dest;
@@ -701,6 +707,18 @@
     },
 
    /**
+    * @param {string} culture Culture name
+    * @param {string} tokenName Token name
+    * @return {*}
+    */
+    getCultureValue: function(culture, tokenName){
+      var descriptor = this.getCultureDescriptor(culture, tokenName);
+
+      if (descriptor)
+        return descriptor.value;
+    },
+
+   /**
     * Get current value for tokenName according to current culture and it's fallback.
     * @param {string} tokenName
     */
@@ -712,15 +730,16 @@
     },
 
    /**
-    * @param {string} culture Culture name
-    * @param {string} tokenName Token name
-    * @return {*}
+    * Return token value source url.
+    * @param {string} tokenName
     */
-    getCultureValue: function(culture, tokenName){
-      var descriptor = this.getCultureDescriptor(culture, tokenName);
+    getValueSource: function(tokenName){
+      var descriptor = this.getDescriptor(tokenName);
 
       if (descriptor)
-        return descriptor.value;
+        return descriptor.source;
+
+      return this.id;
     },
 
    /**

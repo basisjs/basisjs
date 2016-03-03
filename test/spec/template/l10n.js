@@ -955,7 +955,6 @@ module.exports = {
           test: function(){
             assert(text('<b:l10n src="./test.l10n"/><span>{l10n:foo} {l10n:enum.{foo}} {l10n:simpleMarkup}</span>', { foo: 'foo' }) ===
                    text('<span>foo text foo text simple <b>markup</b> text</span>'));
-
           }
         },
         {
@@ -1014,6 +1013,27 @@ module.exports = {
             updateBinding('nested', nested = 'one');
             instance.set('test', dictionary.token('label.two'));
             assert(text(instance) === '<span>text</span>');
+          }
+        },
+        {
+          name: 'should correctly resolve paths in markup',
+          test: function(){
+            var sandbox = window.basis.createSandbox({
+              l10n: {
+                patch: {
+                  '../fixture/l10n/resolve-dest.l10n': '../fixture/l10n/resolve/patch.l10n'
+                }
+              }
+            });
+            var api = basis.require('../helpers/template.js').createSandboxAPI(sandbox);
+            var text = api.text;
+
+            assert(
+              text(
+                '<b:l10n src="../fixture/l10n/resolve-dest.l10n"/>' +
+                '<span>{l10n:dest}{l10n:patch}</span>'
+              ) === text('<span>[dest-OK][patch-OK]</span>')
+            );
           }
         }
       ]
