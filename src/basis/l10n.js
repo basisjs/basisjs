@@ -14,9 +14,10 @@
   var complete = basis.object.complete;
   var Class = basis.Class;
   var Emitter = require('basis.event').Emitter;
-  var processJSON = basis.resource.extensions['.json'];
+  var extensionJSON = basis.resource.extensions['.json'];
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var basisTokenPrototypeSet = basis.Token.prototype.set;
+  /** @cut */ var buildJsonMap = require('./utils/json-parser.js').buildMap;
 
   // set .l10n files handler
   basis.resource.extensions['.l10n'] = processDictionaryContent;
@@ -54,6 +55,18 @@
 
     return result;
   })();
+
+  function processJSON(content, url){
+    /** @cut */ var locationMap;
+    /** @cut */ if (typeof content == 'string')
+    /** @cut */   locationMap = buildJsonMap(content, url);
+
+    content = extensionJSON(content, url);
+
+    /** @cut */ content._locationMap = locationMap;
+
+    return content;
+  }
 
   function getJSON(url){
     return processJSON(resource(url).get(true), url) || {};
@@ -112,9 +125,9 @@
     var sources;
     for (var key in patch)
     {
-      if (key == '_meta')
+      if (key == '_meta' || key == '_locationMap')
       {
-        // merge _meta
+        deepMerge(dest[key], patch[key], '', {});
         continue;
       }
 
@@ -516,6 +529,7 @@
         context.values[tokenName] = {
           /** @cut */ _sourceBranch: tokens,
           /** @cut */ _sourceKey: name,
+          /** @cut */ loc: context.locationMap ? context.locationMap[context.culture.name + '.' + tokenName] || null : null,
 
           placeholder: isPlural,
           processName: isPlural ? pluralName : basis.fn.$self,
@@ -636,8 +650,6 @@
       if (!data)
         data = {};
 
-      /** @cut */ this._data = data;
-
       // reset old data
       this.cultureValues = {};
 
@@ -647,12 +659,17 @@
         if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
           this.cultureValues[culture] = walkTokens(data[culture], '', {
             /** @cut */ name: this.resource ? this.resource.url : '[anonymous dictionary]',
+            /** @cut */ locationMap: data._locationMap,
+
             dictionary: this,
             culture: resolveCulture(culture),
             source: fetchSource(data[culture]),
             types: complete(fetchTypes(data[culture]), types), // dictionary types + culture types
             values: {}
           });
+
+      /** @cut */ delete data._locationMap;
+      /** @cut */ this._data = data;
 
       // update values
       this.syncValues();
