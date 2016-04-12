@@ -1,4 +1,5 @@
 // https://github.com/vtrushin/json-parser
+// jscs:disable
 
 'use strict';
 
