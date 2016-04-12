@@ -6,6 +6,7 @@ module.exports = {
     var basis = window.basis.createSandbox();
 
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
+    var getTokenValues = basis.require('./helpers/l10n.js').getTokenValues;
     var Dictionary = basis.require('basis.l10n').Dictionary;
     var Culture = basis.require('basis.l10n').Culture;
     var getDictionary = basis.require('basis.l10n').dictionary;
@@ -66,6 +67,27 @@ module.exports = {
             assert(dict.token('value').value === 'b');
             setCulture('c');
             assert(dict.token('value').value === 'c');
+          }
+        },
+        {
+          name: 'should not implicit create fallback culture',
+          test: function(){
+            var basis = window.basis.createSandbox();
+            var l10n = basis.require('basis.l10n');
+
+            l10n.setCultureList('en/ru ua');
+
+            assert.deep(['en', 'ua'], l10n.getCultureList().sort());
+            assert(l10n.getCulture() === 'en');
+
+            l10n.setCulture('ru');
+            assert(l10n.getCulture() !== 'ru');
+
+            l10n.setCulture('ua');
+            assert(l10n.getCulture() === 'ua');
+
+            l10n.setCulture('en');
+            assert(l10n.getCulture() === 'en');
           }
         }
       ]
@@ -384,20 +406,26 @@ module.exports = {
               }
             },
             {
-              name: 'should be default if wrong type',
+              name: 'should ignore wrong types',
               test: function(){
                 var dict = getDictionary(basis.resource.virtual('l10n', {
                   _meta: {
                     type: {
-                      foo: 'foo'
+                      'foo': 'foo',
+                      'bar': 'enum-markup',
+                      'bar.foo': 'foo'
                     }
                   },
                   'en-US': {
-                    foo: 'test'
+                    foo: 'test',
+                    bar: {
+                      foo: 'test'
+                    }
                   }
                 }));
 
                 assert(dict.token('foo').getType() === 'default');
+                assert(dict.token('bar.foo').getType() === 'markup');
               }
             },
             {
@@ -453,7 +481,7 @@ module.exports = {
                 }));
 
                 assert(dict.token('bar').token(1).getType() === 'markup');
-                assert(dict.token('baz.quz').getType() === 'markup');
+                assert(dict.token('baz.qux').getType() === 'markup');
               }
             },
             {
@@ -481,8 +509,171 @@ module.exports = {
                 assert(dict.token('enum.foo').getType() === 'markup');
                 assert(dict.token('enum.bar').getType() === 'default');
                 assert(dict.token('enum.baz').getType() === 'plural');
-                assert(dict.token('enum.qux').getType() === 'default');
+                assert(dict.token('enum.qux').getType() === 'markup');
               }
+            },
+            {
+              name: 'dynamic type change',
+              test: function(){
+                var data = {
+                  _meta: {
+                    type: {
+                      markup: 'markup',
+                      plural: 'plural'
+                    }
+                  },
+                  'en-US': {
+                    markup: 'markup',
+                    plural: ['plural', 'plurals']
+                  }
+                };
+                var resource = basis.resource.virtual('l10n', data);
+                var dict = getDictionary(resource);
+
+                assert(dict.token('markup').getType() === 'markup');
+                assert(dict.token('plural').getType() === 'plural');
+
+                resource.update({
+                  'en-US': data['en-US']
+                });
+
+                assert(dict.token('markup').getType() === 'default');
+                assert(dict.token('plural').getType() === 'default');
+
+                resource.update(data);
+
+                assert(dict.token('markup').getType() === 'markup');
+                assert(dict.token('plural').getType() === 'plural');
+              }
+            },
+            {
+              name: 'per culture setup',
+              beforeEach: function(){
+                var basis = window.basis.createSandbox();
+                var l10n = basis.require('basis.l10n');
+                var dictionary = l10n.dictionary;
+
+                l10n.setCultureList('en-US/ru-RU ru-RU');
+              },
+              test: [
+                {
+                  name: 'culture types should override common types',
+                  test: function(){
+                    var dict = dictionary({
+                      '_meta': { 'type': { 'foo': 'enum-markup' } },
+                      'en-US': {
+                        'foo': {
+                          'baz': 'smth'
+                        }
+                      },
+                      'ru-RU': {
+                        '_meta': { 'type': { 'foo': 'default' } },
+                        'foo': {
+                          'bar': 'smth'
+                        }
+                      }
+                    });
+
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'markup');
+                    assert(dict.token('foo.bar').getType() === 'default'); // fallback to ru-RU with overriden type
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+
+                    l10n.setCulture('ru-RU');
+                    assert(l10n.getCulture() === 'ru-RU');
+                    assert(dict.token('foo.baz').getType() === 'markup');  // doesn't exists in ru-RU, so type uses from dictionary
+                                                                           // not sure it's correct, but some logic here
+                    assert(dict.token('foo.bar').getType() === 'default');
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+
+                    l10n.setCulture('en-US');
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'markup');
+                    assert(dict.token('foo.bar').getType() === 'default'); // fallback to ru-RU with overriden type
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+                  }
+                },
+                {
+                  name: 'case#1',
+                  test: function(){
+                    var dict = dictionary({
+                      'en-US': {
+                        'foo': {
+                          'baz': 'smth'
+                        }
+                      },
+                      'ru-RU': {
+                        '_meta': { 'type': { 'foo': 'enum-markup' } },
+                        'foo': {
+                          'bar': 'smth'
+                        }
+                      }
+                    });
+
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'default'); // since no special type for path
+                    assert(dict.token('foo.bar').getType() === 'markup');  // fallback to ru-RU
+
+                    l10n.setCulture('ru-RU');
+                    assert(l10n.getCulture() === 'ru-RU');
+                    assert(dict.token('foo.baz').getType() === 'default'); // since no value for token
+                    assert(dict.token('foo.bar').getType() === 'markup');  // match to path
+
+                    l10n.setCulture('en-US');
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'default'); // since no special type for path
+                    assert(dict.token('foo.bar').getType() === 'markup');  // fallback to ru-RU
+                  }
+                },
+                {
+                  name: 'case#2',
+                  test: function(){
+                    var dict = dictionary({
+                      'en-US': {
+                        '_meta': { 'type': { 'foo': 'enum-markup' } },
+                        'foo': {
+                          'baz': 'smth'
+                        }
+                      },
+                      'ru-RU': {
+                        '_meta': { 'type': { 'foo': 'enum-markup', 'foo.qux': 'plural' } },
+                        'foo': {
+                          'bar': 'smth',
+                          'qux': ['one', 'two']
+                        }
+                      }
+                    });
+
+                    assert(l10n.getCulture() === 'en-US');
+                    assert(dict.token('foo.baz').getType() === 'markup');
+                    assert(dict.token('foo.bar').getType() === 'markup');
+                    assert(dict.token('foo.qux').getType() === 'plural');  // fallback to ru-RU
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+
+                    l10n.setCulture('ru-RU');
+                    assert(l10n.getCulture() === 'ru-RU');
+                    assert(dict.token('foo.baz').getType() === 'markup');  // doesn't exists in ru-RU, but default type for foo.* is markup
+                    assert(dict.token('foo.bar').getType() === 'markup');
+                    assert(dict.token('foo.qux').getType() === 'plural');
+                    assert(dict.token('foo.non-exists').getType() === 'default');
+                  }
+                },
+                {
+                  name: 'should not crash when define types for not declared culture',
+                  test: function(){
+                    var dict = dictionary({
+                      'xxx': {
+                        '_meta': { 'type': { 'foo.qux': 'plural' } },
+                        'foo': {
+                          'qux': 'xxx'
+                        }
+                      }
+                    });
+
+                    assert(dict.token('foo.qux').getType() === 'default');
+                  }
+                }
+              ]
             }
           ]
         },
@@ -587,6 +778,164 @@ module.exports = {
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      name: 'dictionary patching',
+      test: [
+        {
+          name: 'patch in config',
+          beforeEach: function(){
+            var basis = window.basis.createSandbox({
+              l10n: {
+                patch: {
+                  './fixture/l10n/dest.l10n': './fixture/l10n/patch.l10n'
+                }
+              }
+            });
+
+            var getDictionary = basis.require('basis.l10n').dictionary;
+            var originalResource = basis.resource('./fixture/l10n/dest.l10n');
+            var patchResource = basis.resource('./fixture/l10n/patch.l10n');
+
+            var originalValues = getDictionary(JSON.parse(originalResource.get(true)));
+            var patchValues = getDictionary(JSON.parse(patchResource.get(true)));
+
+            var actual = getDictionary(originalResource);
+            var patch = getDictionary(patchResource);
+            var merged = getDictionary('./fixture/l10n/merge.l10n');
+          },
+          afterEach: function(){
+            for (var path in getTokenValues(actual)) {
+              var descriptor = actual.getDescriptor(path);
+              var dict = descriptor.value === 'dest'
+                ? actual
+                : descriptor.value === 'patch'
+                  ? patch
+                  : false;
+
+              if (dict)
+                assert(descriptor.source === dict.id);
+            }
+          },
+          test: [
+            {
+              name: 'should merge original with patch',
+              test: function(){
+                assert.deep(getTokenValues(merged), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on patch update',
+              test: function(){
+                // reset patch - actual should be equal to original
+                patchResource.update({});
+
+                assert.deep(getTokenValues(originalValues), getTokenValues(actual));
+                assert.deep({}, getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on original source update',
+              test: function(){
+                // reset original - actual should be equal to patch
+                originalResource.update({});
+
+                assert.deep(getTokenValues(patchValues), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+              }
+            }
+          ]
+        },
+        {
+          name: 'reference to patch file in config',
+          beforeEach: function(){
+            var basis = window.basis.createSandbox({
+              l10n: {
+                patch: './fixture/l10n/patch-in-file.json'
+              }
+            });
+
+            var getDictionary = basis.require('basis.l10n').dictionary;
+            var originalResource = basis.resource('./fixture/l10n/dest.l10n');
+            var patchResource = basis.resource('./fixture/l10n/patch.l10n');
+
+            var originalValues = getDictionary(JSON.parse(originalResource.get(true)));
+            var patchValues = getDictionary(JSON.parse(patchResource.get(true)));
+
+            var actual = getDictionary(originalResource);
+            var patch = getDictionary(patchResource);
+            var merged = getDictionary('./fixture/l10n/merge.l10n');
+          },
+          afterEach: function(){
+            for (var path in getTokenValues(actual)) {
+              var descriptor = actual.getDescriptor(path);
+              var dict = descriptor.value === 'dest'
+                ? actual
+                : descriptor.value === 'patch'
+                  ? patch
+                  : false;
+
+              if (dict)
+                assert(descriptor.source === dict.id);
+            }
+          },
+          test: [
+            {
+              name: 'should merge original with patch',
+              test: function(){
+                assert.deep(getTokenValues(merged), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on patch update',
+              test: function(){
+                // reset patch - actual should be equal to original
+                patchResource.update({});
+
+                assert.deep(getTokenValues(originalValues), getTokenValues(actual));
+                assert.deep({}, getTokenValues(patch));
+              }
+            },
+            {
+              name: 'should update original on original source update',
+              test: function(){
+                // reset original - actual should be equal to patch
+                originalResource.update({});
+
+                assert.deep(getTokenValues(patchValues), getTokenValues(actual));
+                assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+              }
+            }
+          ]
+        },
+        {
+          name: 'empty patch',
+          test: function(){
+            var basis = window.basis.createSandbox({
+              l10n: {
+                patch: {
+                  './fixture/l10n/dest.l10n': './fixture/l10n/empty-patch.l10n'
+                }
+              }
+            });
+
+            var getDictionary = basis.require('basis.l10n').dictionary;
+            var originalResource = basis.resource('./fixture/l10n/dest.l10n');
+            var patchResource = basis.resource('./fixture/l10n/empty-patch.l10n');
+
+            var originalValues = getDictionary(JSON.parse(originalResource.get(true)));
+            var patchValues = getDictionary({});
+
+            var actual = getDictionary(originalResource);
+            var patch = getDictionary(patchResource);
+
+            assert.deep(getTokenValues(originalValues), getTokenValues(actual));
+            assert.deep(getTokenValues(patchValues), getTokenValues(patch));
+          }
         }
       ]
     }
