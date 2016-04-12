@@ -514,6 +514,9 @@
         var isPlural = tokenType in PLURAL_TYPES || parentType in PLURAL_TYPES;
 
         context.values[tokenName] = {
+          /** @cut */ _sourceBranch: tokens,
+          /** @cut */ _sourceKey: name,
+
           placeholder: isPlural,
           processName: isPlural ? pluralName : basis.fn.$self,
           source: context.source[tokenName] || context.dictionary.id,
@@ -632,6 +635,8 @@
     update: function(data){
       if (!data)
         data = {};
+
+      /** @cut */ this._data = data;
 
       // reset old data
       this.cultureValues = {};
