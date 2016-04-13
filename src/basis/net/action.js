@@ -146,7 +146,7 @@
       {
         if (fn.prepare.apply(this, arguments))
         {
-          /** @cut */ basis.dev.warn('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
+          /** @cut */ basis.dev.info('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
           return Promise.reject('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
         }
 
