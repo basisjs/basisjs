@@ -329,11 +329,15 @@
 
   // async document.body ready
   basis.doc.body.ready(function(body){
-    popupManager.body = body;
+    var popupContainer = document.createElement('div');
+    popupContainer.classList.add('popup-container');
+    body.appendChild(popupContainer);
+
+    popupManager.body = popupContainer;
     popupManager.forEach(function(popup){
       if (!domUtils.parentOf(document, popup.element))
       {
-        body.appendChild(popup.element);
+        popupManager.body.appendChild(popup.element);
         popup.realign();
       }
     });
