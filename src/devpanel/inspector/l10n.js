@@ -37,7 +37,7 @@ function tokenBinding(fn){
   return {
     events: 'update',
     getter: function(node){
-      return node.data.token ? fn(node.data.token) : '';
+      return node.data.token ? fn(node.data) : '';
     }
   };
 }
@@ -52,14 +52,31 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
       'right top right bottom'
     ],
     binding: {
-      dictionary: tokenBinding('dictionary.id'),
-      culture: tokenBinding('descriptor.culture.name'),
-      path: tokenBinding('descriptor.name'),
-      tokenLocation: tokenBinding(function(token){
-        return token.descriptor.loc || token.descriptor.source;
+      dictionary: tokenBinding('token.dictionary.id'),
+      culture: tokenBinding('token.descriptor.culture.name'),
+      path: tokenBinding('token.descriptor.name'),
+      tokenLocation: tokenBinding(function(data){
+        return data.descriptor.loc || data.descriptor.source;
       }),
-      type: tokenBinding(function(token){
-        var type = token.getType();
+      type: tokenBinding(function(data){
+        var type = data.token.getType();
+        return type != 'default' ? type : '';
+      }),
+      computed: tokenBinding(function(data){
+        return data.token.descriptor !== data.descriptor;
+      }),
+      computedValue: tokenBinding(function(data){
+        return data.value;
+      }),
+      computedKey: tokenBinding('key'),
+      computedKeyValueEqual: tokenBinding(function(data){
+        return data.key === data.value;
+      }),
+      computedType: tokenBinding(function(data){
+        if (!data.computed)
+          return;
+
+        var type = data.computed.getType();
         return type != 'default' ? type : '';
       }),
       openFileSupported: {
@@ -73,10 +90,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     handler: {
       delegateChanged: function(){
         if (this.delegate)
-        {
-          console.log(this.data.token);
           this.show(this.delegate.element);
-        }
         else
           this.hide();
       },
@@ -117,12 +131,12 @@ var overlay = new Overlay({
       }
     },
     click: function(){
-      var token = this.data.token;
-      if (token)
+      var descriptor = this.data.descriptor;
+      if (descriptor)
       {
         this.parentNode.deactivate();
 
-        var loc = token.descriptor.loc || token.descriptor.source;
+        var loc = descriptor.loc || descriptor.source;
         if (loc)
           fileAPI.openFile(loc);
       }
@@ -131,10 +145,28 @@ var overlay = new Overlay({
 
   processNode: function(domNode){
     function highlight(token, domNode){
+      var key = null;
+      var value = null;
+      var computed = null;
+      var descriptor;
+
+      if (token instanceof inspectBasisL10n.ComputeToken)
+      {
+        descriptor = token.token.dictionary.getDescriptor(token.getName());
+        computed = token;
+        value = token.value;
+        key = token.getName().split('.').pop();
+        token = token.token;
+      }
+
       if (token instanceof inspectBasisL10n.Token && token.dictionary)
         this.highlight(domNode, {
           color: getColorForDictionary(token.dictionary.resource.url),
-          token: token
+          token: token,
+          computed: computed,
+          descriptor: descriptor || token.descriptor,
+          value: value,
+          key: key
         });
     }
 
@@ -151,16 +183,9 @@ var overlay = new Overlay({
       if (debugInfo)
       {
         var bindings = debugInfo.bindings;
+
         for (var j = 0, binding; binding = bindings[j]; j++)
-        {
-          var token = binding.attachment;
-
-          if (token instanceof inspectBasisL10n.ComputeToken)
-            token = token.token;
-
-          if (token instanceof inspectBasisL10n.Token && token.dictionary)
-            highlight.call(this, token, binding.val instanceof NativeDomNode ? binding.val : binding.dom);
-        }
+          highlight.call(this, binding.attachment, binding.val instanceof NativeDomNode ? binding.val : binding.dom);
       }
     }
   }
