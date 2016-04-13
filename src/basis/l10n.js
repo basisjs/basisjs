@@ -124,6 +124,7 @@
 
     var patch = getJSON(patchSource);
     var sources;
+
     for (var key in patch)
     {
       if (key == '_meta' || key == '_locationMap')
@@ -158,6 +159,10 @@
       // always rewrite source in meta
       dest[key]._meta.source = sources;
     }
+
+    /** @cut */ if (!Array.isArray(dest._patches))
+    /** @cut */   dest._patches = [];
+    /** @cut */ basis.array.add(dest._patches, patchSource);
 
     return dest;
   }

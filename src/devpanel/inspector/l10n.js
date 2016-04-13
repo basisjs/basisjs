@@ -53,6 +53,9 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     ],
     binding: {
       dictionary: tokenBinding('token.dictionary.id'),
+      patches: tokenBinding(function(data){
+        return data.token.dictionary._data._patches;
+      }),
       culture: tokenBinding('token.descriptor.culture.name'),
       path: tokenBinding('token.descriptor.name'),
       tokenLocation: tokenBinding(function(data){
