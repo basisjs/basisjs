@@ -770,5 +770,12 @@ module.exports.buildMap = function(str, filename){
         return map;
     };
 
-    return walk(new JsonParser(str), {});
+    var result = {};
+
+    try {
+        result = walk(new JsonParser(str), {});
+    } catch(e) {
+    }
+
+    return result;
 };

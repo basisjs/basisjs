@@ -63,7 +63,8 @@
 
     content = extensionJSON(content, url);
 
-    /** @cut */ content._locationMap = locationMap;
+    /** @cut */ if (content)
+    /** @cut */   content._locationMap = locationMap;
 
     return content;
   }
@@ -127,6 +128,9 @@
     {
       if (key == '_meta' || key == '_locationMap')
       {
+        if (!isObject(dest[key]))
+          dest[key] = {};
+
         deepMerge(dest[key], patch[key], '', {});
         continue;
       }
