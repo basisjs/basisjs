@@ -330,7 +330,7 @@
   // async document.body ready
   basis.doc.body.ready(function(body){
     var popupContainer = document.createElement('div');
-    popupContainer.classList.add('popup-container');
+    popupContainer.setAttribute('data-dev-role', 'popup-container');
     body.appendChild(popupContainer);
 
     popupManager.body = popupContainer;
