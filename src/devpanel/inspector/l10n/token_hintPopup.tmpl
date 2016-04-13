@@ -1,0 +1,36 @@
+<b:style src="./token_hintPopup.css"/>
+<b:isolate/>
+
+<div class="popup">
+  <div class="section">
+    <div class="section__title">
+      <span class="section__title-text">Dictionary</span>
+    </div>
+    <div class="section__content">
+      <span class="name">
+        {dictionary}
+      </span>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section__title">
+      <span class="section__title-text">Token</span>
+      <span class="culture">
+        {culture}
+      </span>
+    </div>
+    <div class="section__content">
+      <span class="name">
+        {path} <span class="type" b:show="{type}">{type}</span>
+      </span>
+      <span b:show="{tokenLocation}">
+        <span class="source">
+          Defined at <span class="location">{tokenLocation}</span>
+        </span>
+        <span b:show="{openFileSupported}" class="ui-hint">
+          Click to open place in editor
+        </span>
+      </span>
+    </div>
+  </div>
+</div>
