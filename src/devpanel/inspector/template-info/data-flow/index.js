@@ -9,6 +9,7 @@ function escapeString(value){
 }
 
 var FlowNode = Node.subclass({
+  className: 'FlowNode',
   template: resource('./template/node.tmpl'),
   binding: {
     type: 'type',
@@ -46,12 +47,21 @@ var FlowNode = Node.subclass({
   action: {
     open: function(){
       if (this.loc)
-        this.parentNode.fileAPI.openFile(this.loc);
+      {
+        var cursor = this;
+
+        while (cursor && !cursor.fileAPI)
+          cursor = cursor.parentNode;
+
+        if (cursor && cursor.fileAPI)
+          cursor.fileAPI.openFile(this.loc);
+      }
     }
   }
 });
 
 var Flow = Node.subclass({
+  className: 'Flow',
   template: resource('./template/flow.tmpl'),
   childFactory: function(config){
     var ChildClass = config.split ? FlowSplit : FlowNode;
@@ -60,6 +70,7 @@ var Flow = Node.subclass({
 });
 
 var FlowSplit = Node.subclass({
+  className: 'FlowSplit',
   template: resource('./template/split.tmpl'),
   childClass: Flow
 });

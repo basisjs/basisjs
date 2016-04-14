@@ -1,9 +1,10 @@
 var inspectBasis = require('devpanel').inspectBasis;
-var resolver = require('devpanel').inspectBasis.dev.getInfo;
+var getDevInfo = inspectBasis.dev.getInfo;
+var getColoredSource = inspectBasis.require('basis.utils.source').getColoredSource;
+var getFnInfo = inspectBasis.require('basis.utils.info').fn;
 var Value = require('basis.data').Value;
 var Node = require('basis.ui').Node;
 var Popup = require('basis.ui.popup').Popup;
-var getColoredSource = require('basis.utils.source').getColoredSource;
 var Flow = require('./data-flow/index.js');
 var fileAPI = require('../../api/file.js');
 
@@ -26,9 +27,14 @@ module.exports = new Popup({
     this.value
       .as(function(value){
         return Flow.buildTree(value, {
-          getInfo: inspectBasis.dev.getInfo,
-          fnInfo: inspectBasis.require('basis.utils.info').fn,
-          getColoredSource: inspectBasis.require('basis.utils.source').getColoredSource
+          getInfo: getDevInfo,
+          fnInfo: function(fn){
+            if (typeof fn.getDevSource === 'function')
+              fn = fn.getDevSource();
+
+            return getFnInfo(fn);
+          },
+          getColoredSource: getColoredSource
         });
       })
       .link(this.satellite.flow, this.satellite.flow.setChildNodes);

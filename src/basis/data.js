@@ -839,10 +839,16 @@
           pathFragment = queryNestedFunctionCache[fullPath];
 
           if (!pathFragment)
+          {
             pathFragment = queryNestedFunctionCache[fullPath] = basis.getter(function(object){
               object = object && object[path0];
               return object ? object[path1] : undefined;
             });
+
+            /** @cut */ pathFragment.getDevSource = function(object){
+            /** @cut */   return basis.getter(fullPath);
+            /** @cut */ };
+          }
         }
       }
     }
