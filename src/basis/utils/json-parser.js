@@ -130,8 +130,14 @@ var JsonParser = (function () {
     var isDigit = function isDigit(char) {
         return char >= '0' && char <= '9';
     };
+    var isHex = function isHex(char) {
+        return (char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F');
+    };
     var isExp = function isExp(char) {
         return char === 'e' || char === 'E';
+    };
+    var isUnicode = function isUnicode(char) {
+        return char === 'u' || char === 'U';
     };
 
     var Tokenizer = (function () {
@@ -271,10 +277,10 @@ var JsonParser = (function () {
                             if (char in escapes) {
                                 buffer += char;
                                 this.index++;
-                                if (char === 'u') {
+                                if (isUnicode(char)) {
                                     for (var i = 0; i < 4; i++) {
                                         var curChar = this.source.charAt(this.index);
-                                        if (curChar && isDigit(curChar)) {
+                                        if (curChar && isHex(curChar)) {
                                             buffer += curChar;
                                             this.index++;
                                         } else {
@@ -775,6 +781,7 @@ module.exports.buildMap = function(str, filename){
     try {
         result = walk(new JsonParser(str), {});
     } catch(e) {
+        console.error('JSON parse error:', e);
     }
 
     return result;
