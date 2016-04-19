@@ -18,16 +18,23 @@ var FlowNode = Node.subclass({
     events: 'events',
     marker: 'marker',
     loc: 'loc',
+    fn: 'transform',
     className: function(node){
-      var value = node.value;
+      var host = node.host || node.value;
 
-      if (value && typeof value == 'object' && value.constructor)
-        return value.constructor.className || '';
+      if (host && typeof host == 'object' && host.constructor)
+        return host.constructor.className || '';
 
       return '';
     },
+    id: function(node){
+      var host = node.host || node.value;
+
+      return (host && host.basisObjectId) || '';
+    },
     value: function(node){
       var value = node.value;
+
       switch (typeof value) {
         case 'string':
           return '\"' + escapeString(value) + '\"';
@@ -41,8 +48,7 @@ var FlowNode = Node.subclass({
         default:
           return String(value);
       }
-    },
-    fn: 'transform'
+    }
   },
   action: {
     open: function(){
@@ -60,11 +66,19 @@ var FlowNode = Node.subclass({
   }
 });
 
+var DatasetFlowNode = FlowNode.subclass({
+  binding: {
+    value: function(node){
+      return '{ ' + node.value.itemCount + (node.value.itemCount > 1 ? ' items' : ' item') + ' }';
+    }
+  }
+});
+
 var Flow = Node.subclass({
   className: 'Flow',
   template: resource('./template/flow.tmpl'),
   childFactory: function(config){
-    var ChildClass = config.split ? FlowSplit : FlowNode;
+    var ChildClass = childClassByType[config.nodeType] || FlowNode;
     return new ChildClass(config);
   }
 });
@@ -74,6 +88,11 @@ var FlowSplit = Node.subclass({
   template: resource('./template/split.tmpl'),
   childClass: Flow
 });
+
+var childClassByType = {
+  split: FlowSplit,
+  dataset: DatasetFlowNode
+};
 
 Flow.buildTree = require('./build-tree.js');
 

@@ -14,8 +14,11 @@
   </div>
   <span class="dot dot_{isSource} dot_{initial}"/>
   <span class="value">
-    {value} <span class="loc-wrapper">(<span class="{loc}" event-click="open">{loc}</span>)</span>
-    <span class="marker" b:show="{marker}">({marker})</span>
-    <span class="className className_{isSource}">{className}</span>
+    {value}<span class="loc-wrapper" b:show="{loc}"> (<span class="{loc}" event-click="open">{loc}</span>)</span>
+    <!-- <span class="marker" b:show="{marker}">({marker})</span> -->
+    <span class="className className_{isSource} className_{initial}">
+      {className}
+      <span class="id" b:show="{id}"> #{id}</span>
+    </span>
   </span>
 </div>

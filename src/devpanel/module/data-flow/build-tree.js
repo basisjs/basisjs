@@ -1,6 +1,10 @@
 var fnInfo = require('basis.utils.info').fn;
 var highlight = require('basis.utils.highlight').highlight;
 
+function getNodeType(value, resolvers){
+  return resolvers.isDataset(value) ? 'dataset' : null;
+}
+
 function inspectValue(value, resolvers, map){
   var sourceInfo = resolvers.getInfo(value, 'sourceInfo');
 
@@ -15,6 +19,7 @@ function inspectValue(value, resolvers, map){
       marker = map.push(value);
 
     return [{
+      nodeType: getNodeType(value, resolvers),
       source: true,
       marker: marker,
       value: value,
@@ -26,7 +31,7 @@ function inspectValue(value, resolvers, map){
 
   if (Array.isArray(sourceInfo.source))
     nodes = [{
-      split: true,
+      nodeType: 'split',
       childNodes: sourceInfo.source.map(function(value){
         return {
           childNodes: inspectValue(value, resolvers, map)
@@ -41,6 +46,7 @@ function inspectValue(value, resolvers, map){
   var info = fn ? resolvers.fnInfo(fn) : { source: null };
 
   nodes.push({
+    nodeType: getNodeType(value, resolvers),
     type: sourceInfo.type,
     events: sourceInfo.events,
     transform: info.getter || (fnLoc
@@ -50,6 +56,7 @@ function inspectValue(value, resolvers, map){
             return '<div>' + line + '</div>';
           }
         })),
+    // host: value,
     value: value.value,
     loc: resolvers.getInfo(value, 'loc')
   });
@@ -58,11 +65,12 @@ function inspectValue(value, resolvers, map){
 }
 
 module.exports = function buildTree(value, resolvers){
-  var result = inspectValue(value, resolvers || {
+  var result = inspectValue(value, basis.object.extend({
+    isDataset: basis.fn.$false,
     getInfo: basis.dev.getInfo,
     fnInfo: fnInfo,
     getColoredSource: require('basis.utils.source').getColoredSource
-  });
+  }, resolvers));
 
   if (result.length)
     result[result.length - 1].initial = true;

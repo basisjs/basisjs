@@ -1997,6 +1997,12 @@
         this.detach(setter, token);
       });
 
+      /** @cut */ devInfoResolver.setInfo(token, 'sourceInfo', {
+      /** @cut */   type: 'Token#as',
+      /** @cut */   source: this,
+      /** @cut */   transform: fn
+      /** @cut */ });
+
       return token;
     },
 

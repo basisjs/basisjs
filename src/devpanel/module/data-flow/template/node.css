@@ -14,11 +14,10 @@
 }
 .node:not(:first-child):after
 {
-  bottom: 10px;
   left: 12px;
   top: 0;
+  bottom: 10px;
   width: 2px;
-  height: 100%;
   box-sizing: border-box;
   display: block;
   position: absolute;
@@ -102,6 +101,7 @@
   display: block;
   margin-left: 30px;
   margin-top: 1px;
+  color: #AAA;
 }
 .className_isSource
 {
@@ -118,7 +118,14 @@
   top: -4px;
   opacity: .5;
 }
-
+.className_initial:before
+{
+  display: none;
+}
+.id
+{
+  color: black;
+}
 
 .transition
 {

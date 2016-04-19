@@ -1,0 +1,82 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis.js demos: Data flow</title>
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #demo-container
+    {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+  </style>
+
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <div id="demo-container">
+  </div>
+
+  <script type="text/javascript" id="demo-javascript">
+    var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
+    var Flow = basis.require('../../src/devpanel/module/data-flow/index.js');
+    var UINode = basis.require('basis.ui').Node;
+    var container = document.getElementById('demo-container');
+
+    var View = UINode.subclass({
+      template: basis.resource('./data-flow/view.tmpl'),
+      binding: {
+        name: 'name',
+        source: 'source',
+        flow: 'satellite:'
+      },
+      satellite: {
+        flow: 'flow'
+      }
+    });
+
+    [
+      'token',
+      'value',
+      'object',
+      'dataset',
+      'token-as',
+      'value-as',
+      'index',
+      'expression'
+    ].forEach(function(name){
+      var filename = './data-flow/' + name + '.js';
+      var value = basis.require(filename);
+      
+      new View({
+        container: container,
+        name: name,
+        source: basis.resource(filename).get(true),
+        flow: new Flow({
+          // fileAPI: fileAPI,
+          childNodes: Flow.buildTree(value, {
+            isDataset: function(value){
+              return value instanceof ReadOnlyDataset;
+            }
+          })
+        })
+      });
+    });
+  </script>
+</body>
+
+</html>
