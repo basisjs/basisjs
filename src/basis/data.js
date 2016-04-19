@@ -65,6 +65,37 @@
   SUBSCRIPTION.addProperty('value', 'change');
 
 
+  var isEqual = function(a, b){
+    return a === b;
+  };
+
+  //
+  // Dev
+  //
+
+  var devWrapperMap = null;
+  var devWrapper = function(){};
+  var devGetOriginal = function(value){
+    return value;
+  };
+
+  /** @cut */ if (typeof Proxy == 'function' && typeof WeakMap == 'function')
+  /** @cut */ {
+  /** @cut */   devWrapperMap = new WeakMap();
+  /** @cut */   devWrapper = function(value){
+  /** @cut */     var result = new Proxy(value, {});
+  /** @cut */     devWrapperMap.set(result, value);
+  /** @cut */     return result;
+  /** @cut */   };
+  /** @cut */   devGetOriginal = function(value){
+  /** @cut */     return devWrapperMap.has(value) ? devWrapperMap.get(value) : value;
+  /** @cut */   };
+  /** @cut */   isEqual = function(a, b){
+  /** @cut */     return devGetOriginal(a) === devGetOriginal(b);
+  /** @cut */   };
+  /** @cut */ }
+
+
   //
   // Value
   //
@@ -432,6 +463,8 @@
         /** @cut */   transform: pipeValue.proxy
         /** @cut */ });
       }
+      /** @cut */ else
+      /** @cut */   pipeValue = devWrapper(pipeValue);
 
       return pipeValue;
     },
@@ -461,7 +494,11 @@
           if (context instanceof ReadOnlyValue &&
               context.proxy &&
               (context.proxy[GETTER_ID] || String(context.proxy)) == fnId) // compare functions by id
+          {
+            /** @cut */ context = devWrapper(context);
+
             return context;
+          }
         }
       }
 
@@ -750,6 +787,8 @@
 
         obj.addHandler(handler, result);
       }
+      /** @cut */ else
+      /** @cut */   result = devWrapper(result);
     }
 
     if (!result)
@@ -773,6 +812,8 @@
 
           bindingBridge.attach(obj, Value.prototype.set, result, result.destroy);
         }
+        /** @cut */ else
+        /** @cut */   result = devWrapper(result);
       }
     }
 
@@ -2566,7 +2607,6 @@
     ReadOnlyValue: ReadOnlyValue,
     DeferredValue: DeferredValue,
     PipeValue: PipeValue,
-    chainValueFactory: chainValueFactory,
 
     Object: DataObject,
     Slot: Slot,
@@ -2577,6 +2617,8 @@
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
 
+    isEqual: isEqual,
+    chainValueFactory: chainValueFactory,
     isConnected: isConnected,
     getDatasetDelta: getDatasetDelta,
 
