@@ -73,16 +73,17 @@
   // Dev
   //
 
-  var devWrapperMap = null;
-  var devWrapper = function(){};
-  var devGetOriginal = function(value){
-    return value;
-  };
+  /** @cut */ var devWrapper = function(value){
+  /** @cut */   return value;
+  /** @cut */ };
+  /** @cut */ var devGetOriginal = function(value){
+  /** @cut */   return value;
+  /** @cut */ };
 
   /** @cut */ if (typeof Proxy == 'function' && typeof WeakMap == 'function')
   /** @cut */ {
-  /** @cut */   devWrapperMap = new WeakMap();
-  /** @cut */   devWrapper = function(value){
+  /** @cut */   var devWrapperMap = new WeakMap();
+  /** @cut */   var devWrapper = function(value){
   /** @cut */     var result = new Proxy(value, {});
   /** @cut */     devWrapperMap.set(result, value);
   /** @cut */     return result;

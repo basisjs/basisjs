@@ -51,13 +51,14 @@ function inspectValue(value, resolvers, map){
     events: sourceInfo.events,
     transform: info.getter || (fnLoc
       ? resolvers.getColoredSource(fnLoc, 0, 0, 20)
-      : highlight(String(info.source), 'js', {
-          wrapper: function(line){
-            return '<div>' + line + '</div>';
-          }
-        })),
-    // host: value,
-    value: value.value,
+      : info.source
+        ? highlight(String(info.source), 'js', {
+            wrapper: function(line){
+              return '<div>' + line + '</div>';
+            }
+          })
+        : ''),
+    value: value,
     loc: resolvers.getInfo(value, 'loc')
   });
 

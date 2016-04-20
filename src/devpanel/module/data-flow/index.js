@@ -20,17 +20,17 @@ var FlowNode = Node.subclass({
     loc: 'loc',
     fn: 'transform',
     className: function(node){
-      var host = node.host || node.value;
+      var value = node.value;
 
-      if (host && typeof host == 'object' && host.constructor)
-        return host.constructor.className || '';
+      if (value && typeof value == 'object' && value.constructor)
+        return value.constructor.className || '';
 
       return '';
     },
     id: function(node){
-      var host = node.host || node.value;
+      var value = node.value;
 
-      return (host && host.basisObjectId) || '';
+      return (value && value.basisObjectId) || '';
     },
     value: function(node){
       var value = node.value;
@@ -73,29 +73,30 @@ var SetFlowNode = FlowNode.subclass({
       return '{ ' + node.value.itemCount + (node.value.itemCount > 1 ? ' items' : ' item') + ' }';
     },
     hasMoreItems: function(node){
-      return Math.max(0, node.value.itemCount - 2);
+      return Math.max(0, node.value ? node.value.itemCount - 2 : 0);
     }
   },
   childClass: {
     template: resource('./template/set-item.tmpl'),
     binding: {
       className: function(node){
-        var host = node.data.object;
+        var object = node.data.object;
 
-        if (host && typeof host == 'object' && host.constructor)
-          return host.constructor.className || '';
+        if (object && typeof object == 'object' && object.constructor)
+          return object.constructor.className || '';
 
         return '';
       },
       id: function(node){
-        var host = node.data.object;
+        var object = node.data.object;
 
-        return (host && host.basisObjectId) || '';
+        return (object && object.basisObjectId) || '';
       }
     }
   },
   init: function(){
     FlowNode.prototype.init.call(this);
+
     this.setChildNodes(this.value.top(2).map(function(object){
       return {
         data: {

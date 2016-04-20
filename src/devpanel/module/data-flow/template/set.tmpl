@@ -5,6 +5,9 @@
   <b:replace ref="value">
     <span class="items">
       <!--{childNodesHere}-->
+      <div class="empty" b:show="{empty}">
+        empty set
+      </div>
       <div class="more" b:show="{hasMoreItems}">
         {hasMoreItems} more...
       </div>
