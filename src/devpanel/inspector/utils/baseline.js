@@ -17,6 +17,12 @@ function getTop(font, baseline){
   ctx.fillText('x', 0, HEIGHT);
 
   var width = ctx.measureText('x').width;
+
+  // getImageData with source width == 0 returns an error.
+  // covering that case
+  if (!width)
+    return 0;
+
   var image = ctx.getImageData(0, 0, width, HEIGHT);
   var count = image.width * image.height * 4;
   var data = image.data;
@@ -36,8 +42,6 @@ module.exports = function getBaseline(text){
   var baseline = getTop(font, 'alphabetic') - getTop(font, 'bottom');
 
   baselineCache[font] = baseline;
-
-  //console.log(font, baseline);
 
   return baselineCache[font];
 };
