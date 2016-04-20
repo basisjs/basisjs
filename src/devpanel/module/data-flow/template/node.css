@@ -183,6 +183,11 @@
   color: #AA8844;
   font-weight: bold;
 }
+.source [class~="range"]
+{
+  background: #F8F0D0;
+  padding: 2px 2px 2px 2px;
+}
 
 .loc-wrapper
 {

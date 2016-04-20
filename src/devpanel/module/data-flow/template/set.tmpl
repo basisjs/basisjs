@@ -1,0 +1,13 @@
+<b:style src="./set.css"/>
+<b:isolate/>
+
+<b:include src="./node.tmpl">
+  <b:replace ref="value">
+    <span class="items">
+      <!--{childNodesHere}-->
+      <div class="more" b:show="{hasMoreItems}">
+        {hasMoreItems} more...
+      </div>
+    </span>
+  </b:replace>
+</b:include>

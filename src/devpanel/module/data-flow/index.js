@@ -66,11 +66,43 @@ var FlowNode = Node.subclass({
   }
 });
 
-var DatasetFlowNode = FlowNode.subclass({
+var SetFlowNode = FlowNode.subclass({
+  template: resource('./template/set.tmpl'),
   binding: {
     value: function(node){
       return '{ ' + node.value.itemCount + (node.value.itemCount > 1 ? ' items' : ' item') + ' }';
+    },
+    hasMoreItems: function(node){
+      return Math.max(0, node.value.itemCount - 2);
     }
+  },
+  childClass: {
+    template: resource('./template/set-item.tmpl'),
+    binding: {
+      className: function(node){
+        var host = node.data.object;
+
+        if (host && typeof host == 'object' && host.constructor)
+          return host.constructor.className || '';
+
+        return '';
+      },
+      id: function(node){
+        var host = node.data.object;
+
+        return (host && host.basisObjectId) || '';
+      }
+    }
+  },
+  init: function(){
+    FlowNode.prototype.init.call(this);
+    this.setChildNodes(this.value.top(2).map(function(object){
+      return {
+        data: {
+          object: object
+        }
+      };
+    }));
   }
 });
 
@@ -91,7 +123,7 @@ var FlowSplit = Node.subclass({
 
 var childClassByType = {
   split: FlowSplit,
-  dataset: DatasetFlowNode
+  set: SetFlowNode
 };
 
 Flow.buildTree = require('./build-tree.js');

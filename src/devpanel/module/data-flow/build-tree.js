@@ -2,7 +2,7 @@ var fnInfo = require('basis.utils.info').fn;
 var highlight = require('basis.utils.highlight').highlight;
 
 function getNodeType(value, resolvers){
-  return resolvers.isDataset(value) ? 'dataset' : null;
+  return resolvers.isDataset(value) ? 'set' : null;
 }
 
 function inspectValue(value, resolvers, map){

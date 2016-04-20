@@ -1,0 +1,17 @@
+.items
+{
+  display: inline-flex;
+  vertical-align: middle;
+  padding: 3px;
+  margin-bottom: 2px;
+  border: 1px solid #D0E0FF;
+  border-radius: 3px;
+}
+
+.more
+{
+  align-self: center;
+  padding: 0 4px 0 8px;
+  font-size: 10px;
+  text-align: bottom;
+}

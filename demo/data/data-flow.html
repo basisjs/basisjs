@@ -35,7 +35,16 @@
     var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
     var Flow = basis.require('../../src/devpanel/module/data-flow/index.js');
     var UINode = basis.require('basis.ui').Node;
+    var getSource = basis.require('basis.utils.source').getSource;
     var container = document.getElementById('demo-container');
+
+    function openFile(filename){
+      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+
+      if (basisjsTools && typeof basisjsTools.openFile == 'function')
+        basisjsTools.openFile(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
+    }
+
 
     var View = UINode.subclass({
       template: basis.resource('./data-flow/view.tmpl'),
@@ -65,9 +74,11 @@
       new View({
         container: container,
         name: name,
-        source: basis.resource(filename).get(true),
+        source: getSource(filename),
         flow: new Flow({
-          // fileAPI: fileAPI,
+          fileAPI: {
+            openFile: openFile
+          },
           childNodes: Flow.buildTree(value, {
             isDataset: function(value){
               return value instanceof ReadOnlyDataset;
