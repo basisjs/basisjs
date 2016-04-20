@@ -18,6 +18,8 @@ function getTop(font, baseline){
 
   var width = ctx.measureText('x').width;
 
+  // getImageData with source width == 0 returns an error.
+  // covering that case
   if (!width)
     return 0;
 
