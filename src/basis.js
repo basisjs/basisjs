@@ -3866,6 +3866,17 @@
     /** @cut */ var getExternalInfo = $undef;
     var fixSourceOffset = $self;
     var set = function(target, key, info){};
+    var patch = function(target, key, patch){
+      /** @cut */ var oldInfo = get(target, key);
+      /** @cut */
+      /** @cut */ if (!oldInfo || typeof oldInfo != 'object')
+      /** @cut */ {
+      /** @cut */   set(target, key, patch);
+      /** @cut */   return;
+      /** @cut */ }
+      /** @cut */
+      /** @cut */ extend(oldInfo, patch);
+    };
     var get = function(target, key){
       /** @cut */ var externalInfo = getExternalInfo(target);
       /** @cut */ var ownInfo = map.get(target);
@@ -3906,6 +3917,7 @@
     return {
       fixSourceOffset: fixSourceOffset,
       setInfo: set,
+      patchInfo: patch,
       getInfo: get
     };
   })();
