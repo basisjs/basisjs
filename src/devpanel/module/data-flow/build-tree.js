@@ -1,4 +1,3 @@
-var fnInfo = require('basis.utils.info').fn;
 var highlight = require('basis.utils.highlight').highlight;
 
 function getNodeType(value, resolvers){
@@ -41,7 +40,7 @@ function inspectValue(value, resolvers, map){
   else
     nodes = inspectValue(sourceInfo.source, resolvers, map);
 
-  var fn = sourceInfo.transform;
+  var fn = resolvers.resolveFunction(sourceInfo.transform);
   var fnLoc = resolvers.getInfo(fn, 'loc');
   var info = fn ? resolvers.fnInfo(fn) : { source: null };
 
@@ -58,6 +57,7 @@ function inspectValue(value, resolvers, map){
             }
           })
         : ''),
+    transformLoc: fnLoc,
     value: value,
     loc: resolvers.getInfo(value, 'loc')
   });
@@ -67,9 +67,32 @@ function inspectValue(value, resolvers, map){
 
 module.exports = function buildTree(value, resolvers){
   var result = inspectValue(value, basis.object.extend({
+    sandbox: basis,
+    resolveFunction: function(fn){
+      var sandbox = this.sandbox;
+
+      if (typeof fn === 'function' && fn[sandbox.getter.ID])
+        if (typeof fn[sandbox.getter.SOURCE] === 'function' && !fn[sandbox.getter.SOURCE][sandbox.getter.ID])
+          return fn[sandbox.getter.SOURCE];
+
+      return fn;
+    },
     isDataset: basis.fn.$false,
-    getInfo: basis.dev.getInfo,
-    fnInfo: fnInfo,
+    getInfo: function(){
+      return this.sandbox.dev.getInfo.apply(this, arguments);
+    },
+    fnInfo: function(fn){
+      var getFnInfo = this.sandbox.require('basis.utils.info').fn;
+
+      this.fnInfo = function(fn){
+        if (typeof fn.getDevSource === 'function')
+          fn = fn.getDevSource();
+
+        return getFnInfo(fn);
+      };
+
+      return this.fnInfo(fn);
+    },
     getColoredSource: require('basis.utils.source').getColoredSource
   }, resolvers));
 

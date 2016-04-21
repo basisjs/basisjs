@@ -27,13 +27,14 @@ module.exports = new Popup({
     this.value
       .as(function(value){
         return Flow.buildTree(value, {
-          getInfo: getDevInfo,
-          fnInfo: function(fn){
-            if (typeof fn.getDevSource === 'function')
-              fn = fn.getDevSource();
+          sandbox: inspectBasis,
+          // getInfo: getDevInfo,
+          // fnInfo: function(fn){
+          //   if (typeof fn.getDevSource === 'function')
+          //     fn = fn.getDevSource();
 
-            return getFnInfo(fn);
-          },
+          //   return getFnInfo(fn);
+          // },
           getColoredSource: getColoredSource
         });
       })

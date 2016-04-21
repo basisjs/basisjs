@@ -160,6 +160,10 @@
   font-size: 12px;
   line-height: 16px;
 }
+.source_functionHasLocation
+{
+  cursor: pointer;
+}
 
 .source [class~="token-string"]
 {
@@ -187,6 +191,10 @@
 {
   background: #F8F0D0;
   padding: 2px 2px 2px 2px;
+}
+.source_functionHasLocation:hover [class~="range"]
+{
+  background: #F0E8C8;
 }
 
 .loc-wrapper

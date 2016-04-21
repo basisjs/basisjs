@@ -65,11 +65,13 @@
       'dataset',
       'token-as',
       'value-as',
+      'value-query',
       'index',
       'expression',
       'subtract',
       'subtract-empty',
-      'split'
+      'split',
+      'case-1'
     ].forEach(function(name){
       var filename = './data-flow/' + name + '.js';
       var value = basis.require(filename);
@@ -83,6 +85,7 @@
             openFile: openFile
           },
           childNodes: Flow.buildTree(value, {
+            sandbox: basis,
             isDataset: function(value){
               return value instanceof ReadOnlyDataset;
             }

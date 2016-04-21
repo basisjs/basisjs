@@ -1,6 +1,7 @@
 <b:style src="./node.css"/>
 <b:isolate/>
 <b:define name="isSource" type="bool"/>
+<b:define name="functionHasLocation" from="fnLoc" type="bool"/>
 <b:define name="initial" type="bool"/>
 <b:define name="loc" type="bool"/>
 
@@ -10,7 +11,7 @@
       {type}
       <span class="events" b:show="{events}">{events}</span>
     </div>
-    <div{fn} class="source" b:show="{fn}"/>
+    <div{fn} class="source source_{functionHasLocation}" b:show="{fn}" event-click="openFunctionLocation"/>
   </div>
   <span class="dot dot_{isSource} dot_{initial}"/>
   <span class="value">

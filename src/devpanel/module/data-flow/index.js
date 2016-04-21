@@ -19,6 +19,7 @@ var FlowNode = Node.subclass({
     marker: 'marker',
     loc: 'loc',
     fn: 'transform',
+    fnLoc: 'transformLoc',
     className: function(node){
       var value = node.value;
 
@@ -52,16 +53,22 @@ var FlowNode = Node.subclass({
   },
   action: {
     open: function(){
-      if (this.loc)
-      {
-        var cursor = this;
+      this.open(this.loc);
+    },
+    openFunctionLocation: function(){
+      this.open(this.transformLoc);
+    }
+  },
+  open: function(loc){
+    if (loc)
+    {
+      var cursor = this;
 
-        while (cursor && !cursor.fileAPI)
-          cursor = cursor.parentNode;
+      while (cursor && !cursor.fileAPI)
+        cursor = cursor.parentNode;
 
-        if (cursor && cursor.fileAPI)
-          cursor.fileAPI.openFile(this.loc);
-      }
+      if (cursor && cursor.fileAPI)
+        cursor.fileAPI.openFile(loc);
     }
   }
 });
