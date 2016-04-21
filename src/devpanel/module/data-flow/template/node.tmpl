@@ -3,7 +3,7 @@
 <b:define name="isSource" type="bool"/>
 <b:define name="functionHasLocation" from="fnLoc" type="bool"/>
 <b:define name="initial" type="bool"/>
-<b:define name="loc" type="bool"/>
+<b:define name="hasLocation" from="loc" type="bool"/>
 
 <div class="node node_{isSource}">
   <div class="transition" b:hide="{isSource}">
@@ -15,11 +15,12 @@
   </div>
   <span class="dot dot_{isSource} dot_{initial}"/>
   <span class="value">
-    {value}<span class="loc-wrapper" b:show="{loc}"> (<span class="{loc}" event-click="open">{loc}</span>)</span>
+    {value}
     <!-- <span class="marker" b:show="{marker}">({marker})</span> -->
     <span class="className className_{isSource} className_{initial}">
-      {className}
+      <span class="{hasLocation}" title="{loc}" event-click="open" event-mouseenter="enterLoc" event-mouseleave="leaveLoc">{className}</span>
       <span class="id" b:show="{id}"> #{id}</span>
+      <!-- <span class="loc-wrapper" b:show="{loc}"> <span class="{hasLocation}" event-click="open">{loc}</span></span> -->
     </span>
   </span>
 </div>

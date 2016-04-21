@@ -122,6 +122,15 @@
 {
   display: none;
 }
+.hasLocation
+{
+  text-decoration: underline;
+  cursor: pointer;
+}
+.hasLocation:hover
+{
+  color: #A00;
+}
 .id
 {
   color: black;
@@ -163,6 +172,10 @@
 .source_functionHasLocation
 {
   cursor: pointer;
+}
+.source_functionHasLocation:hover
+{
+  background: #F8F8F8;
 }
 
 .source [class~="token-string"]

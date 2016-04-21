@@ -5,6 +5,7 @@
   border-radius: 3px;
   margin-right: 3px;
   line-height: 1;
+  text-align: center;
 }
 .item:nth-last-of-type(1)
 {
@@ -16,7 +17,6 @@
   display: block;
   padding-bottom: 4px;
   font-size: 11px;
-  text-align: center;
 }
 .class-name
 {

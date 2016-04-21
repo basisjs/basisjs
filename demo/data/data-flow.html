@@ -45,7 +45,6 @@
         basisjsTools.openFile(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
     }
 
-
     var View = UINode.subclass({
       template: basis.resource('./data-flow/view.tmpl'),
       binding: {
@@ -71,6 +70,7 @@
       'subtract',
       'subtract-empty',
       'split',
+      'entity',
       'case-1'
     ].forEach(function(name){
       var filename = './data-flow/' + name + '.js';

@@ -231,7 +231,7 @@ function getDatasetIndex(dataset, IndexClass){
     index.addHandler(DATASET_INDEX_HANDLER, dataset);
 
     /** @cut */ basis.dev.setInfo(index, 'sourceInfo', {
-    /** @cut */   type: '<index>',
+    /** @cut */   type: index.indexName,
     /** @cut */   source: dataset,
     /** @cut */   events: Object.keys(index.updateEvents),
     /** @cut */   transform: index.valueGetter

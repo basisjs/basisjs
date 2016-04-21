@@ -1,4 +1,5 @@
 var Node = require('basis.ui').Node;
+var jsSourcePopup = require('../js-source-popup/index.js');
 
 function escapeString(value){
   return value
@@ -57,7 +58,17 @@ var FlowNode = Node.subclass({
     },
     openFunctionLocation: function(){
       this.open(this.transformLoc);
-    }
+    },
+    enterLoc: function(e){
+      if (this.loc)
+      {
+        jsSourcePopup.loc.set(this.loc);
+        jsSourcePopup.show(e.actionTarget);
+      }
+    },
+    leaveLoc: function(){
+      jsSourcePopup.hide();
+    },
   },
   open: function(loc){
     if (loc)
