@@ -1,5 +1,8 @@
 var Node = require('basis.ui').Node;
 var jsSourcePopup = require('../js-source-popup/index.js');
+var createEvent = require('basis.event').create;
+var getBoundingRect = require('basis.layout').getBoundingRect;
+var resize = require('basis.dom.resize');
 
 function escapeString(value){
   return value
@@ -85,6 +88,7 @@ var FlowNode = Node.subclass({
 });
 
 var SetFlowNode = FlowNode.subclass({
+  className: 'SetFlowNode',
   template: resource('./template/set.tmpl'),
   binding: {
     value: function(node){
@@ -145,6 +149,139 @@ var childClassByType = {
   set: SetFlowNode
 };
 
-Flow.buildTree = require('./build-tree.js');
+function addConnection(buffer, fromBox, toBox, breakPoint){
+  if (fromBox && toBox)
+    buffer.push({
+      data: {
+        fromX: fromBox.left + fromBox.width / 2,
+        fromY: fromBox.bottom,
+        breakPoint: breakPoint ? breakPoint.top : false,
+        toX: toBox.left + toBox.width / 2,
+        toY: toBox.top
+      }
+    });
+}
 
-module.exports = Flow;
+function getNodeBox(type, node, relElement){
+  return getBoundingRect(node.tmpl[type] || node.element, relElement);
+}
+
+function collectConnections(node, toBox, breakPoint, relElement, result){
+  if (node instanceof Flow)
+  {
+    var breakPoint;
+    for (var fromBox, cursor = node.lastChild; cursor; cursor = cursor.previousSibling)
+    {
+      if (cursor instanceof FlowSplit)
+      {
+        breakPoint = getBoundingRect(cursor.nextSibling.element, relElement);
+        collectConnections(cursor, toBox, breakPoint, relElement, result);
+      }
+      else
+      {
+        fromBox = getNodeBox('outPoint', cursor, relElement);
+        addConnection(result, fromBox, toBox, breakPoint);
+        toBox = getNodeBox('inPoint', cursor, relElement);
+        breakPoint = null;
+      }
+    }
+  }
+  else
+  {
+    for (var cursor = node.firstChild; cursor; cursor = cursor.nextSibling)
+      collectConnections(cursor, toBox, breakPoint, relElement, result);
+  }
+
+  return result;
+}
+
+var FlowView = Flow.subclass({
+  className: 'FlowView',
+
+  template: resource('./template/view.tmpl'),
+  binding: {
+    connectors: 'satellite:'
+  },
+
+  inDocument: false,
+  emit_inDocumentChanged: createEvent('inDocumentChanged'),
+  updateInDocument: function(){
+    var inDocument = document.documentElement.contains(this.element);
+    if (inDocument != this.inDocument)
+    {
+      this.inDocument = inDocument;
+      this.emit_inDocumentChanged();
+    }
+    else
+    {
+      if (inDocument && this.satellite.connectors)
+        this.satellite.connectors.updateConnectors();
+    }
+  },
+  templateSync: function(){
+    if (this.tmpl)
+      resize.remove(this.element, this.updateInDocument, this);
+
+    Flow.prototype.templateSync.call(this);
+
+    if (this.tmpl)
+    {
+      resize.add(this.element, this.updateInDocument, this);
+    }
+  },
+
+  satellite: {
+    connectors: Node.subclass({
+      template: resource('./template/connectors.tmpl'),
+      childClass: {
+        template: resource('./template/connector.tmpl'),
+        binding: {
+          fromX: 'data:',
+          fromY: 'data:',
+          break: {
+            events: 'update',
+            getter: function(node){
+              if (node.data.breakPoint === false || node.data.fromX === node.data.toX)
+                return '';
+
+              var offset = Math.min((node.data.fromX - node.data.toX) / 2, 20);
+              return (
+                ' Q ' +
+                  [node.data.fromX, node.data.breakPoint] + ' ' +
+                  [node.data.fromX - offset, node.data.breakPoint] + ' ' +
+                ' H ' + (node.data.toX + offset) + ' ' +
+                ' Q ' +
+                  [node.data.toX, node.data.breakPoint] + ' ' +
+                  [node.data.toX, node.data.breakPoint + offset] + ' '
+              );
+            }
+          },
+          toX: 'data:',
+          toY: 'data:'
+        }
+      },
+      handler: {
+        ownerChanged: function(){
+          this.updateConnectors();
+        }
+      },
+      listen: {
+        owner: {
+          inDocumentChanged: function(){
+            this.updateConnectors();
+          },
+          childNodesModified: function(){
+            this.updateConnectors();
+          }
+        }
+      },
+      updateConnectors: function(){
+        this.setChildNodes(this.owner && this.owner.inDocument ? collectConnections(this.owner, null, null, this.element, []) : []);
+      }
+    })
+  }
+});
+
+FlowView.buildTree = require('./build-tree.js');
+
+module.exports = FlowView;

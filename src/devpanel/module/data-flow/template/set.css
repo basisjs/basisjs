@@ -3,7 +3,8 @@
   display: inline-flex;
   vertical-align: middle;
   padding: 3px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  margin-left: -4px;
   border: 1px solid #D0E0FF;
   border-radius: 3px;
 }

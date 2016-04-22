@@ -3,27 +3,10 @@
   font-family: Tahoma, Verdana, Arial, sans-serif;
   font-size: 14px;
   line-height: 16px;
-  padding-top: 10px;
+  padding-top: 12px;
   position: relative;
   overflow: hidden;
   white-space: nowrap;
-}
-.node_isSource
-{
-  margin-bottom: -4px;
-}
-.node:not(:first-child):after
-{
-  left: 12px;
-  top: 0;
-  bottom: 10px;
-  width: 2px;
-  box-sizing: border-box;
-  display: block;
-  position: absolute;
-  background: gray;
-  content: '';
-  opacity: .5;
 }
 
 .dot
@@ -32,24 +15,13 @@
   z-index: 1;
   display: inline-block;
   vertical-align: middle;
-  margin-top: -2px;
   margin-left: 6px;
   margin-right: 10px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: blue;
+  background: #80A8DA;
   border: 2px solid white;
-}
-.dot:before
-{
-  border: solid transparent;
-  border-width: 7px 5px 0 5px;
-  border-top-color: #888;
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 0px;
 }
 .dot_isSource,
 .dot_initial
@@ -61,8 +33,9 @@
   width: 20px;
   height: 10px;
   position: relative;
-  left: -5px;
-  margin-right: 0px;
+  top: 0;
+  margin-left: 1px;
+  margin-right: 5px;
   color: white;
   font-family: arial;
 }
@@ -91,36 +64,27 @@
   left: 5px;
 }
 
+.label
+{
+  padding: 5px 0;
+}
+.label_isSource,
+.label_initial
+{
+  padding: 0;
+}
+
 .value
 {
-  position: relative;
+  display: inline-block;
 }
 .className
 {
   font-size: 10px;
   display: block;
-  margin-left: 30px;
-  margin-top: 1px;
   color: #AAA;
-}
-.className_isSource
-{
-  margin-top: -3px;
-}
-.className_isSource:before
-{
-  width: 2px;
-  height: 100%;
-  background: #888;
-  content: '';
-  position: absolute;
-  left: 12px;
-  top: -4px;
-  opacity: .5;
-}
-.className_initial:before
-{
-  display: none;
+  margin-left: 30px;
+  margin-top: -4px;
 }
 .hasLocation
 {
@@ -138,8 +102,18 @@
 
 .transition
 {
-  padding: 10px 0 18px;
-  padding-left: 20px;
+  margin: 0 0 12px 0;
+}
+.transition_initial
+{
+  margin-bottom: 20px;
+}
+.transition__content
+{
+  display: inline-block;
+  background: rgba(248, 240, 208, 0.8);
+  padding: 6px 20px;
+  border-radius: 5px;
 }
 .marker
 {
@@ -148,13 +122,11 @@
 }
 .description
 {
-  margin-left: 30px;
   font-size: 11px;
-  padding-bottom: 4px;
 }
 .events
 {
-  background: #E8F0D0;
+  background: #E2D9B5;
   margin-left: 1ex;
   padding: 1px 4px 2px;
   border-radius: 3px;
@@ -163,21 +135,23 @@
 
 .source
 {
-  margin-left: 30px;
   white-space: pre;
   font-family: Consolas, Monaco, monospace;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 16px;
+  padding-top: 6px;
 }
 .source_functionHasLocation
 {
   cursor: pointer;
 }
-.source_functionHasLocation:hover
-{
-  background: #F8F8F8;
-}
 
+.source [class~="skip-before"],
+.source [class~="num"],
+.source [class~="skip-after"]
+{
+  color: #AAA;
+}
 .source [class~="token-string"]
 {
   color: blue;
@@ -202,12 +176,8 @@
 }
 .source [class~="range"]
 {
-  background: #F8F0D0;
-  padding: 2px 2px 2px 2px;
-}
-.source_functionHasLocation:hover [class~="range"]
-{
   background: #F0E8C8;
+  padding: 2px 2px 2px 2px;
 }
 
 .loc-wrapper
