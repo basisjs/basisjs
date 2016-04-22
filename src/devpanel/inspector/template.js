@@ -173,7 +173,9 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
         getter: function(node){
           var object = node.data.object;
           if (object)
-            return object.constructor.className.replace(/\.[^\.]+$/, '');
+            return object.constructor.className.indexOf('.') != -1
+              ? object.constructor.className.replace(/\.[^\.]+$/, '')
+              : '';
         }
       },
       instanceName: {
@@ -245,7 +247,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           if (node.data.template)
           {
             var source = node.data.template.source;
-            return source instanceof inspectBasisTemplate.SourceWrapper
+            return source instanceof inspectBasisTemplate.SourceWrapper && source.path.indexOf('.') != -1
               ? source.path.replace(/\.[^\.]+$/, '')
               : '';
           }
