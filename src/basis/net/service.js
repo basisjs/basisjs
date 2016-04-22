@@ -45,7 +45,8 @@
   var SERVICE_HANDLER = {
     start: function(service, request){
       this.inprogressRequests.push(request);
-      if (basis.array.add(this.inprogressTransports, request.transport))
+      if (basis.array.add(this.inprogressTransports, request.transport) &&
+          (!service.stoppedTransports || service.stoppedTransports.indexOf(request.transport) == -1))
         request.transport.addHandler(TRANSPORT_HANDLER, this);
     },
     complete: function(service, request){
