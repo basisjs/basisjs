@@ -3,6 +3,7 @@ var jsSourcePopup = require('../js-source-popup/index.js');
 var createEvent = require('basis.event').create;
 var getBoundingRect = require('basis.layout').getBoundingRect;
 var resize = require('basis.dom.resize');
+var jsSourceTimer;
 
 function escapeString(value){
   return value
@@ -66,10 +67,13 @@ var FlowNode = Node.subclass({
       if (this.loc)
       {
         jsSourcePopup.loc.set(this.loc);
-        jsSourcePopup.show(e.actionTarget);
+        jsSourceTimer = setTimeout(function(){
+          jsSourcePopup.show(e.actionTarget);
+        }, 150);
       }
     },
     leaveLoc: function(){
+      clearTimeout(jsSourceTimer);
       jsSourcePopup.hide();
     },
   },
