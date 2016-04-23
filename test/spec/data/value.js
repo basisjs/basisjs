@@ -528,7 +528,7 @@ module.exports = {
                 var compute = value.compute('update', Boolean);
                 var object = new DataObject();
 
-                assert(compute(object) === compute(object));
+                assert(isEqual(compute(object), compute(object)));
               }
             },
             {
@@ -931,7 +931,7 @@ module.exports = {
                     var factory = Value.factory('foo', 'bar')
                       .compute('baz', Boolean);
 
-                    assert(factory(obj) === value);
+                    assert(isEqual(factory(obj), value));
                   }
                 }
               ]

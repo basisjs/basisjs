@@ -5,7 +5,11 @@ function getNodeType(value, resolvers){
 }
 
 function inspectValue(value, resolvers, map){
-  var sourceInfo = resolvers.getInfo(value, 'sourceInfo');
+  var valueLoc = resolvers.getInfo(value, 'loc');
+  var sourceInfo;
+
+  value = resolvers.unwrap(value);
+  sourceInfo = resolvers.getInfo(value, 'sourceInfo');
 
   if (!map)
     map = [];
@@ -22,7 +26,7 @@ function inspectValue(value, resolvers, map){
       source: true,
       marker: marker,
       value: value,
-      loc: resolvers.getInfo(value, 'loc')
+      loc: valueLoc
     }];
   }
 
@@ -59,7 +63,7 @@ function inspectValue(value, resolvers, map){
         : ''),
     transformLoc: fnLoc,
     value: value,
-    loc: resolvers.getInfo(value, 'loc')
+    loc: valueLoc
   });
 
   return nodes;
@@ -68,6 +72,11 @@ function inspectValue(value, resolvers, map){
 module.exports = function buildTree(value, resolvers){
   var result = inspectValue(value, basis.object.extend({
     sandbox: basis,
+    unwrap: function(value){
+      this.unwrap = this.sandbox.require('basis.data').devUnwrap;
+
+      return this.unwrap(value);
+    },
     resolveFunction: function(fn){
       var sandbox = this.sandbox;
 

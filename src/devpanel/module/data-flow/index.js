@@ -41,16 +41,20 @@ var FlowNode = Node.subclass({
     value: function(node){
       var value = node.value;
 
-      switch (typeof value) {
+      if (value && value.bindingBridge)
+      {
+        value = value.bindingBridge.get(value);
+
+        if (value && value.constructor.className)
+          return '[object ' + value.constructor.className + ']';
+      }
+
+      switch (value && value.constructor === String ? 'string' : typeof value) {
         case 'string':
           return '\"' + escapeString(value) + '\"';
         case 'object':
           if (value)
-          {
-            if (value.bindingBridge)
-              return value.bindingBridge.get(value);
             return '{ .. }';
-          }
         default:
           return String(value);
       }
@@ -199,6 +203,13 @@ function collectConnections(node, toBox, breakPoint, relElement, result){
   return result;
 }
 
+var flows = [];
+setInterval(function(){
+  flows.forEach(function(flow){
+    flow.updateInDocument();
+  });
+}, 150);
+
 var FlowView = Flow.subclass({
   className: 'FlowView',
 
@@ -216,22 +227,19 @@ var FlowView = Flow.subclass({
       this.inDocument = inDocument;
       this.emit_inDocumentChanged();
     }
-    else
-    {
-      if (inDocument && this.satellite.connectors)
-        this.satellite.connectors.updateConnectors();
-    }
   },
-  templateSync: function(){
-    if (this.tmpl)
-      resize.remove(this.element, this.updateInDocument, this);
 
-    Flow.prototype.templateSync.call(this);
-
-    if (this.tmpl)
-    {
-      resize.add(this.element, this.updateInDocument, this);
-    }
+  init: function(){
+    Flow.prototype.init.call(this);
+    flows.push(this);
+  },
+  postInit: function(){
+    Flow.prototype.postInit.call(this);
+    this.updateInDocument();
+  },
+  destroy: function(){
+    Flow.prototype.destroy.call(this);
+    basis.array.remove(flows, this);
   },
 
   satellite: {
