@@ -813,7 +813,7 @@
     emit_childNodesModified: function(delta){
       ScrollPanel.prototype.emit_childNodesModified.call(this, delta);
 
-      if (this.scroller && this.childNodes.length == delta.inserted.length)
+      if (this.scroller && delta.inserted && this.childNodes.length == delta.inserted.length)
       {
         this.scrollToChild(this.firstChild, true);
         this.firstChild.select();
