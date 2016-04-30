@@ -128,7 +128,7 @@
           if (!this.service.prepare(this, requestData))
             return;
 
-          if (this.secure && !this.service.sign(this))
+          if (this.secure && !this.service.sign(this, requestData))
             return;
 
           return TransportClass.prototype.request.call(this, requestData);
@@ -138,10 +138,10 @@
       this.addHandler(SERVICE_HANDLER);
     },
 
-    sign: function(transport){
+    sign: function(transport, requestData){
       if (this.sessionKey)
       {
-        this.signature(transport, this.sessionData);
+        this.signature(transport, this.sessionData, requestData);
         return true;
       }
       else
