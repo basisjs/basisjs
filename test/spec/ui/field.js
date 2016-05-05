@@ -4,334 +4,191 @@ module.exports = {
     {
       sandbox: true,
       name: 'changing validators',
+      init: function(){
+        var ValidatorError = basis.require('basis.ui.field').ValidatorError;
+        var TextField = basis.require('basis.ui.field').Text;
+      },
       test: [
         {
-          name: 'prependValidator',
-          init: function(){
-            var ValidatorError = basis.require('basis.ui.field').ValidatorError;
-            var TextField = basis.require('basis.ui.field').Text;
-          },
-          test: [
-            {
-              name: 'simple attaching/detaching',
-              test: function(){
-                function emptyValidator() {}
+          name: 'simple attaching/detaching',
+          test: function(){
+            function emptyValidator() {}
 
-                function failingValidator() {
-                  return error;
-                }
-
-                var field = new TextField({
-                  validators: [
-                    emptyValidator
-                  ]
-                });
-
-                var error = new ValidatorError(field, failingValidator);
-
-                assert(undefined, field.validate());
-
-                field.attachValidator(failingValidator);
-
-                assert(error, field.validate());
-
-                field.detachValidator(failingValidator);
-
-                assert(undefined, field.validate());
-              }
-            },
-            {
-              name: 'calls sequence',
-              test: function(){
-                var callsLog = '';
-
-                function firstValidator() {
-                  callsLog += 'first ';
-                }
-
-                function secondValidator() {
-                  callsLog += 'second ';
-                }
-
-                var field = new TextField({
-                  validators: [
-                    firstValidator
-                  ]
-                });
-
-                field.attachValidator(secondValidator);
-
-                field.validate();
-
-                assert('first second ', callsLog);
-              }
-            },
-            {
-              name: 'multiple attaching',
-              test: function(){
-                function emptyValidator() {}
-
-                var callCount = 0;
-                function loggingValidator() {
-                  callCount++;
-                }
-
-                var field = new TextField({
-                  validators: [
-                    emptyValidator
-                  ]
-                });
-
-                for (var idx = 0; idx < 3; idx++) {
-                  field.attachValidator(loggingValidator);
-                }
-
-                field.validate();
-
-                assert(1, callCount);
-
-                callCount = 0;
-
-                field.detachValidator(loggingValidator);
-
-                field.validate();
-
-                assert(0, callCount);
-              }
-            },
-            {
-              name: 'validatorsModified event',
-              test: function(){
-                function firstValidator() {}
-                function secondValidator() {}
-
-                var eventsCount = 0;
-                var lastDelta;
-
-                var field = new TextField({
-                  validators: [
-                    firstValidator
-                  ],
-                  handler: {
-                    validatorsChanged: function(sender, delta){
-                      eventsCount++;
-                      lastDelta = delta;
-                    }
-                  }
-                });
-
-                assert(0, eventsCount);
-
-                field.attachValidator(secondValidator);
-
-                assert(1, eventsCount);
-
-                field.attachValidator(secondValidator);
-
-                assert(1, eventsCount);
-                assert({ inserted: secondValidator }, lastDelta);
-
-                field.detachValidator(secondValidator);
-
-                assert(2, eventsCount);
-                assert({ deleted: secondValidator }, lastDelta);
-
-                field.detachValidator(secondValidator);
-
-                assert(2, eventsCount);
-              }
-            },
-            {
-              name: 'attach/detach and validate',
-              test: function(){
-                function unoValidator() {}
-
-                var validatesCount = 0;
-
-                var field = new TextField({
-                  validate: function(){
-                    validatesCount++;
-                  }
-                });
-
-                field.attachValidator(unoValidator, true);
-
-                assert(1, validatesCount);
-
-                field.attachValidator(unoValidator, true);
-
-                assert(1, validatesCount);
-
-                field.detachValidator(unoValidator, true);
-
-                assert(2, validatesCount);
-
-                field.detachValidator(unoValidator, true);
-
-                assert(2, validatesCount);
-              }
+            function failingValidator() {
+              return error;
             }
-          ]
+
+            var field = new TextField({
+              validators: [
+                emptyValidator
+              ]
+            });
+
+            var error = new ValidatorError(field, failingValidator);
+
+            assert(field.validate() === undefined);
+
+            field.attachValidator(failingValidator);
+
+            assert(field.validate() === error);
+
+            field.detachValidator(failingValidator);
+
+            assert(field.validate() === undefined);
+          }
         },
         {
-          name: 'prependValidator',
-          init: function(){
-            var ValidatorError = basis.require('basis.ui.field').ValidatorError;
-            var TextField = basis.require('basis.ui.field').Text;
-          },
-          test: [
-            {
-              name: 'simple prepending/detaching',
-              test: function(){
-                function emptyValidator() {}
+          name: 'calls sequence - adding to the end',
+          test: function(){
+            var callsLog = [];
 
-                function failingValidator() {
-                  return error;
-                }
-
-                var field = new TextField({
-                  validators: [
-                    emptyValidator
-                  ]
-                });
-
-                var error = new ValidatorError(field, failingValidator);
-
-                assert(undefined, field.validate());
-
-                field.prependValidator(failingValidator);
-
-                assert(error, field.validate());
-
-                field.detachValidator(failingValidator);
-
-                assert(undefined, field.validate());
-              }
-            },
-            {
-              name: 'calls sequence',
-              test: function(){
-                var callsLog = '';
-
-                function firstValidator() {
-                  callsLog += 'first ';
-                }
-
-                function secondValidator() {
-                  callsLog += 'second ';
-                }
-
-                var field = new TextField({
-                  validators: [
-                    secondValidator
-                  ]
-                });
-
-                field.prependValidator(firstValidator);
-
-                field.validate();
-
-                assert('first second ', callsLog);
-              }
-            },
-            {
-              name: 'multiple prepending',
-              test: function(){
-                function emptyValidator() {}
-
-                var callCount = 0;
-                function loggingValidator() {
-                  callCount++;
-                }
-
-                var field = new TextField({
-                  validators: [
-                    emptyValidator
-                  ]
-                });
-
-                for (var idx = 0; idx < 3; idx++) {
-                  field.prependValidator(loggingValidator);
-                }
-
-                field.validate();
-
-                assert(1, callCount);
-
-                callCount = 0;
-
-                field.detachValidator(loggingValidator);
-
-                field.validate();
-
-                assert(0, callCount);
-              }
-            },
-            {
-              name: 'validatorsModified event',
-              test: function(){
-                function firstValidator() {}
-                function secondValidator() {}
-
-                var eventsCount = 0;
-                var lastDelta;
-
-                var field = new TextField({
-                  validators: [
-                    firstValidator
-                  ],
-                  handler: {
-                    validatorsChanged: function(sender, delta){
-                      eventsCount++;
-                      lastDelta = delta;
-                    }
-                  }
-                });
-
-                assert(0, eventsCount);
-
-                field.prependValidator(secondValidator);
-
-                assert(1, eventsCount);
-
-                field.prependValidator(secondValidator);
-
-                assert(1, eventsCount);
-                assert({ inserted: secondValidator }, lastDelta);
-
-                field.detachValidator(secondValidator);
-
-                assert(2, eventsCount);
-                assert({ deleted: secondValidator }, lastDelta);
-
-                field.detachValidator(secondValidator);
-
-                assert(2, eventsCount);
-              }
-            },
-            {
-              name: 'prepend and validate',
-              test: function(){
-                function unoValidator() {}
-
-                var validatesCount = 0;
-
-                var field = new TextField({
-                  validate: function(){
-                    validatesCount++;
-                  }
-                });
-
-                field.prependValidator(unoValidator, true);
-
-                assert(1, validatesCount);
-
-                field.prependValidator(unoValidator, true);
-
-                assert(1, validatesCount);
-              }
+            function firstValidator() {
+              callsLog.push('first');
             }
-          ]
+
+            function secondValidator() {
+              callsLog.push('second');
+            }
+
+            var field = new TextField({
+              validators: [
+                firstValidator
+              ]
+            });
+
+            field.attachValidator(secondValidator);
+            field.validate();
+
+            assert.deep(['first', 'second'], callsLog);
+          }
+        },
+        {
+          name: 'calls sequence - adding to the beginning',
+          test: function(){
+            var callsLog = [];
+
+            function firstValidator() {
+              callsLog.push('first');
+            }
+
+            function secondValidator() {
+              callsLog.push('second');
+            }
+
+            var field = new TextField({
+              validators: [
+                secondValidator
+              ]
+            });
+
+            field.attachValidator(firstValidator, false, true);
+            field.validate();
+
+            assert.deep(['first', 'second'], callsLog);
+          }
+        },
+        {
+          name: 'multiple attaching',
+          test: function(){
+            function emptyValidator() {}
+
+            var callCount = 0;
+            function loggingValidator() {
+              callCount++;
+            }
+
+            var field = new TextField({
+              validators: [
+                emptyValidator
+              ]
+            });
+
+            for (var idx = 0; idx < 3; idx++) {
+              field.attachValidator(loggingValidator);
+            }
+
+            field.validate();
+
+            assert(callCount === 1);
+
+            callCount = 0;
+            field.detachValidator(loggingValidator);
+            field.validate();
+
+            assert(callCount === 0);
+          }
+        },
+        {
+          name: 'validatorsModified event',
+          test: function(){
+            function firstValidator() {}
+            function secondValidator() {}
+
+            var eventsCount = 0;
+            var lastDelta;
+
+            var field = new TextField({
+              validators: [
+                firstValidator
+              ],
+              handler: {
+                validatorsChanged: function(sender, delta){
+                  eventsCount++;
+                  lastDelta = delta;
+                }
+              }
+            });
+
+            assert(eventsCount === 0);
+
+            field.attachValidator(secondValidator);
+
+            assert(eventsCount === 1);
+
+            field.attachValidator(secondValidator);
+
+            assert(eventsCount === 1);
+            assert({ inserted: secondValidator }, lastDelta);
+
+            field.detachValidator(secondValidator);
+
+            assert(eventsCount === 2);
+            assert({ deleted: secondValidator }, lastDelta);
+
+            field.detachValidator(secondValidator);
+
+            assert(eventsCount === 2);
+          }
+        },
+        {
+          name: 'attach/detach and validate',
+          test: function(){
+            function unoValidator() {}
+
+            var validatesCount = 0;
+
+            var field = new TextField({
+              validate: function(){
+                validatesCount++;
+              }
+            });
+
+            field.attachValidator(unoValidator, true);
+
+            assert(1, validatesCount);
+
+            field.attachValidator(unoValidator, true);
+
+            assert(1, validatesCount);
+
+            field.detachValidator(unoValidator, true);
+
+            assert(2, validatesCount);
+
+            field.detachValidator(unoValidator, true);
+
+            assert(2, validatesCount);
+          }
         }
       ]
     },
@@ -366,7 +223,7 @@ module.exports = {
               required: true
             });
 
-            assert(false, validationPasses());
+            assert(!validationPasses());
 
             field.setValue('val');
 
@@ -380,16 +237,16 @@ module.exports = {
               minLength: 4,
               required: true,
               validators: [
-              validator.MinLength
+                validator.MinLength
               ]
             });
 
 
-            assert(false, validationPasses());
+            assert(!validationPasses());
 
             field.setValue('val');
 
-            assert(false, validationPasses());
+            assert(!validationPasses());
 
             field.setValue('value');
 
@@ -409,18 +266,14 @@ module.exports = {
 
             value.set(true);
 
-            basis.asap.process();
-
-            assert(false, validationPasses());
+            assert(!validationPasses());
 
             field.setValue('val');
 
             assert(validationPasses());
 
             value.set(false);
-
           }
-
         },
         {
           name: 'required: value and failing validator',
@@ -432,9 +285,9 @@ module.exports = {
             field = new TextField({
               required: true,
               validators: [
-              function(){
-                return customError;
-              }
+                function(){
+                  return customError;
+                }
               ]
             });
 
@@ -454,7 +307,7 @@ module.exports = {
               minLength: 4,
               required: value,
               validators: [
-              validator.MinLength
+                validator.MinLength
               ]
             });
 
@@ -462,20 +315,17 @@ module.exports = {
 
             value.set(true);
 
-            basis.asap.process();
-
-            assert(false, validationPasses());
+            assert(!validationPasses());
 
             field.setValue('val');
 
-            assert(false, validationPasses());
+            assert(!validationPasses());
 
             field.setValue('value');
 
             assert(validationPasses());
 
             value.set(false);
-
           }
         },
         {
@@ -489,16 +339,13 @@ module.exports = {
 
             field.update({ needed: true });
 
-            basis.asap.process();
-
-            assert(false, validationPasses());
+            assert(!validationPasses());
 
             field.setValue('val');
 
             assert(validationPasses());
 
             field.update({ needed: false });
-
           }
         }
       ]

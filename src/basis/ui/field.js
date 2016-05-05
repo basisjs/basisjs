@@ -345,23 +345,19 @@
         this.required = value;
 
         if (value)
-          this.prependValidator(Validator.Required);
+          this.attachValidator(Validator.Required, false, true);
         else
           this.detachValidator(Validator.Required);
       }
     },
-    prependValidator: function(validator, validate){
-      if (this.validators.indexOf(validator) === -1) {
-        this.validators.unshift(validator);
+    attachValidator: function(validator, validate, addToBeginning){
+      if (this.validators.indexOf(validator) === -1)
+      {
+        if (addToBeginning)
+          this.validators.unshift(validator);
+        else
+          this.validators.push(validator);
 
-        this.emit_validatorsChanged({ inserted: validator });
-
-        if (validate)
-          this.validate();
-      }
-    },
-    attachValidator: function(validator, validate){
-      if (basis.array.add(this.validators, validator)) {
         this.emit_validatorsChanged({ inserted: validator });
 
         if (validate)
@@ -369,12 +365,12 @@
       }
     },
     detachValidator: function(validator, validate){
-      if (basis.array.remove(this.validators, validator)) {
+      if (basis.array.remove(this.validators, validator))
+      {
         this.emit_validatorsChanged({ deleted: validator });
 
-        if (validate) {
+        if (validate)
           this.validate();
-        }
       }
     },
     setValidity: function(validity, message){
