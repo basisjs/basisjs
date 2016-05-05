@@ -337,17 +337,17 @@
       this.setValidity();
     },
 
-    setRequired: function(value) {
+    setRequired: function(value){
       value = Boolean(resolveValue(this, this.setRequired, value, 'requiredRA_'));
 
-      if (this.init !== true || this.required !== value) {
+      if (this.init !== true || this.required !== value)
+      {
         this.required = value;
 
-        if (value) {
+        if (value)
           this.prependValidator(Validator.Required);
-        } else {
+        else
           this.detachValidator(Validator.Required);
-        }
       }
     },
     prependValidator: function(validator, validate){
@@ -356,18 +356,16 @@
 
         this.emit_validatorsChanged({ inserted: validator });
 
-        if (validate) {
+        if (validate)
           this.validate();
-        }
       }
     },
     attachValidator: function(validator, validate){
       if (basis.array.add(this.validators, validator)) {
         this.emit_validatorsChanged({ inserted: validator });
 
-        if (validate) {
+        if (validate)
           this.validate();
-        }
       }
     },
     detachValidator: function(validator, validate){

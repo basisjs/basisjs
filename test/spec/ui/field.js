@@ -7,14 +7,14 @@ module.exports = {
       test: [
         {
           name: 'prependValidator',
-          init: function() {
+          init: function(){
             var ValidatorError = basis.require('basis.ui.field').ValidatorError;
             var TextField = basis.require('basis.ui.field').Text;
           },
           test: [
             {
               name: 'simple attaching/detaching',
-              test: function() {
+              test: function(){
                 function emptyValidator() {}
 
                 function failingValidator() {
@@ -27,7 +27,7 @@ module.exports = {
                   ]
                 });
 
-                var error = new ValidatorError(field, failingValidator)
+                var error = new ValidatorError(field, failingValidator);
 
                 assert(undefined, field.validate());
 
@@ -42,7 +42,7 @@ module.exports = {
             },
             {
               name: 'calls sequence',
-              test: function() {
+              test: function(){
                 var callsLog = '';
 
                 function firstValidator() {
@@ -68,7 +68,7 @@ module.exports = {
             },
             {
               name: 'multiple attaching',
-              test: function() {
+              test: function(){
                 function emptyValidator() {}
 
                 var callCount = 0;
@@ -82,7 +82,7 @@ module.exports = {
                   ]
                 });
 
-                for(var idx = 0; idx < 3; idx++) {
+                for (var idx = 0; idx < 3; idx++) {
                   field.attachValidator(loggingValidator);
                 }
 
@@ -101,7 +101,7 @@ module.exports = {
             },
             {
               name: 'validatorsModified event',
-              test: function() {
+              test: function(){
                 function firstValidator() {}
                 function secondValidator() {}
 
@@ -113,7 +113,7 @@ module.exports = {
                     firstValidator
                   ],
                   handler: {
-                    validatorsChanged: function(sender, delta) {
+                    validatorsChanged: function(sender, delta){
                       eventsCount++;
                       lastDelta = delta;
                     }
@@ -143,13 +143,13 @@ module.exports = {
             },
             {
               name: 'attach/detach and validate',
-              test: function() {
+              test: function(){
                 function unoValidator() {}
 
                 var validatesCount = 0;
 
                 var field = new TextField({
-                  validate: function() {
+                  validate: function(){
                     validatesCount++;
                   }
                 });
@@ -175,14 +175,14 @@ module.exports = {
         },
         {
           name: 'prependValidator',
-          init: function() {
+          init: function(){
             var ValidatorError = basis.require('basis.ui.field').ValidatorError;
             var TextField = basis.require('basis.ui.field').Text;
           },
           test: [
             {
               name: 'simple prepending/detaching',
-              test: function() {
+              test: function(){
                 function emptyValidator() {}
 
                 function failingValidator() {
@@ -195,7 +195,7 @@ module.exports = {
                   ]
                 });
 
-                var error = new ValidatorError(field, failingValidator)
+                var error = new ValidatorError(field, failingValidator);
 
                 assert(undefined, field.validate());
 
@@ -210,7 +210,7 @@ module.exports = {
             },
             {
               name: 'calls sequence',
-              test: function() {
+              test: function(){
                 var callsLog = '';
 
                 function firstValidator() {
@@ -236,7 +236,7 @@ module.exports = {
             },
             {
               name: 'multiple prepending',
-              test: function() {
+              test: function(){
                 function emptyValidator() {}
 
                 var callCount = 0;
@@ -250,7 +250,7 @@ module.exports = {
                   ]
                 });
 
-                for(var idx = 0; idx < 3; idx++) {
+                for (var idx = 0; idx < 3; idx++) {
                   field.prependValidator(loggingValidator);
                 }
 
@@ -269,7 +269,7 @@ module.exports = {
             },
             {
               name: 'validatorsModified event',
-              test: function() {
+              test: function(){
                 function firstValidator() {}
                 function secondValidator() {}
 
@@ -281,7 +281,7 @@ module.exports = {
                     firstValidator
                   ],
                   handler: {
-                    validatorsChanged: function(sender, delta) {
+                    validatorsChanged: function(sender, delta){
                       eventsCount++;
                       lastDelta = delta;
                     }
@@ -311,13 +311,13 @@ module.exports = {
             },
             {
               name: 'prepend and validate',
-              test: function() {
+              test: function(){
                 function unoValidator() {}
 
                 var validatesCount = 0;
 
                 var field = new TextField({
-                  validate: function() {
+                  validate: function(){
                     validatesCount++;
                   }
                 });
@@ -338,7 +338,7 @@ module.exports = {
     {
       sandbox: true,
       name: 'required property',
-      init: function() {
+      init: function(){
         var Value = basis.require('basis.data').Value;
         var validator = basis.require('basis.ui.field').validator;
         var ValidatorError = basis.require('basis.ui.field').ValidatorError;
@@ -353,7 +353,7 @@ module.exports = {
       test: [
         {
           name: 'by default',
-          test: function() {
+          test: function(){
             field = new TextField({});
 
             assert(validationPasses());
@@ -361,7 +361,7 @@ module.exports = {
         },
         {
           name: 'required: true',
-          test: function() {
+          test: function(){
             field = new TextField({
               required: true
             });
@@ -375,7 +375,7 @@ module.exports = {
         },
         {
           name: 'required: true and other validator',
-          test: function() {
+          test: function(){
             field = new TextField({
               minLength: 4,
               required: true,
@@ -398,7 +398,7 @@ module.exports = {
         },
         {
           name: 'required: reactive value',
-          test: function() {
+          test: function(){
             var value = new Value({ value: false });
 
             field = new TextField({
@@ -424,7 +424,7 @@ module.exports = {
         },
         {
           name: 'required: value and failing validator',
-          test: function() {
+          test: function(){
             var value = new Value({ value: true });
 
             var customError = new ValidatorError(field, 'Custom error message');
@@ -432,7 +432,7 @@ module.exports = {
             field = new TextField({
               required: true,
               validators: [
-              function() {
+              function(){
                 return customError;
               }
               ]
@@ -447,7 +447,7 @@ module.exports = {
         },
         {
           name: 'required: value and other validator',
-          test: function() {
+          test: function(){
             var value = new Value({ value: false });
 
             field = new TextField({
@@ -480,7 +480,7 @@ module.exports = {
         },
         {
           name: 'required: valueQuery',
-          test: function() {
+          test: function(){
             field = new TextField({
               required: Value.query('data.needed')
             });
