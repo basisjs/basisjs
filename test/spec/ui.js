@@ -311,6 +311,7 @@ module.exports = {
         }
       ]
     },
+    require('./ui/field.js'),
     require('./ui/calendar.js')
   ]
 };

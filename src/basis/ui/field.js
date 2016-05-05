@@ -23,6 +23,7 @@
   var Value = require('basis.data').Value;
   var UINode = require('basis.ui').Node;
   var Popup = require('basis.ui.popup').Popup;
+  var resolveValue = require('basis.data').resolveValue;
 
 
   //
@@ -157,6 +158,7 @@
     emit_errorChanged: createEvent('errorChanged'),
     emit_exampleChanged: createEvent('exampleChanged'),
     emit_descriptionChanged: createEvent('descriptionChanged'),
+    emit_validatorsChanged: createEvent('validatorsChanged', 'delta'),
 
     emit_fieldInput: createRevalidateEvent('fieldInput', 'event'),
     emit_fieldChange: createRevalidateEvent('fieldChange', 'event'),
@@ -295,6 +297,7 @@
         this.setValue(value);
       }
 
+      this.setRequired(this.required);
       this.init = true;
     },
 
@@ -334,13 +337,47 @@
       this.setValidity();
     },
 
+    setRequired: function(value) {
+      value = Boolean(resolveValue(this, this.setRequired, value, 'requiredRA_'));
+
+      if (this.init !== true || this.required !== value) {
+        this.required = value;
+
+        if (value) {
+          this.prependValidator(Validator.Required);
+        } else {
+          this.detachValidator(Validator.Required);
+        }
+      }
+    },
+    prependValidator: function(validator, validate){
+      if (this.validators.indexOf(validator) === -1) {
+        this.validators.unshift(validator);
+
+        this.emit_validatorsChanged({ inserted: validator });
+
+        if (validate) {
+          this.validate();
+        }
+      }
+    },
     attachValidator: function(validator, validate){
-      if (basis.array.add(this.validators, validator) && validate)
-        this.validate();
+      if (basis.array.add(this.validators, validator)) {
+        this.emit_validatorsChanged({ inserted: validator });
+
+        if (validate) {
+          this.validate();
+        }
+      }
     },
     detachValidator: function(validator, validate){
-      if (basis.array.remove(this.validators, validator) && validate)
-        this.validate();
+      if (basis.array.remove(this.validators, validator)) {
+        this.emit_validatorsChanged({ deleted: validator });
+
+        if (validate) {
+          this.validate();
+        }
+      }
     },
     setValidity: function(validity, message){
       if (!validity)
