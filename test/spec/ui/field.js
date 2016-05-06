@@ -200,9 +200,7 @@ module.exports = {
         var ValidatorError = basis.require('basis.ui.field').ValidatorError;
         var TextField = basis.require('basis.ui.field').Text;
 
-        var field;
-
-        function validationPasses(){
+        function validationPasses(field){
           return !field.validate();
         }
       },
@@ -210,29 +208,29 @@ module.exports = {
         {
           name: 'by default',
           test: function(){
-            field = new TextField({});
+            var field = new TextField({});
 
-            assert(validationPasses());
+            assert(validationPasses(field));
           }
         },
         {
           name: 'required: true',
           test: function(){
-            field = new TextField({
+            var field = new TextField({
               required: true
             });
 
-            assert(validationPasses() === false);
+            assert(validationPasses(field) === false);
 
             field.setValue('val');
 
-            assert(validationPasses());
+            assert(validationPasses(field));
           }
         },
         {
           name: 'required: true and other validator',
           test: function(){
-            field = new TextField({
+            var field = new TextField({
               minLength: 4,
               required: true,
               validators: [
@@ -241,15 +239,15 @@ module.exports = {
             });
 
 
-            assert(validationPasses() === false);
+            assert(validationPasses(field) === false);
 
             field.setValue('val');
 
-            assert(validationPasses() === false);
+            assert(validationPasses(field) === false);
 
             field.setValue('value');
 
-            assert(validationPasses());
+            assert(validationPasses(field));
           }
         },
         {
@@ -257,19 +255,19 @@ module.exports = {
           test: function(){
             var value = new Value({ value: false });
 
-            field = new TextField({
+            var field = new TextField({
               required: value
             });
 
-            assert(validationPasses());
+            assert(validationPasses(field));
 
             value.set(true);
 
-            assert(validationPasses() === false);
+            assert(validationPasses(field) === false);
 
             field.setValue('val');
 
-            assert(validationPasses());
+            assert(validationPasses(field));
 
             value.set(false);
           }
@@ -281,7 +279,7 @@ module.exports = {
 
             var customError = new ValidatorError(field, 'Custom error message');
 
-            field = new TextField({
+            var field = new TextField({
               required: true,
               validators: [
                 function(){
@@ -302,7 +300,7 @@ module.exports = {
           test: function(){
             var value = new Value({ value: false });
 
-            field = new TextField({
+            var field = new TextField({
               minLength: 4,
               required: value,
               validators: [
@@ -310,19 +308,19 @@ module.exports = {
               ]
             });
 
-            assert(validationPasses());
+            assert(validationPasses(field));
 
             value.set(true);
 
-            assert(validationPasses() === false);
+            assert(validationPasses(field) === false);
 
             field.setValue('val');
 
-            assert(validationPasses() === false);
+            assert(validationPasses(field) === false);
 
             field.setValue('value');
 
-            assert(validationPasses());
+            assert(validationPasses(field));
 
             value.set(false);
           }
@@ -330,19 +328,19 @@ module.exports = {
         {
           name: 'required: valueQuery',
           test: function(){
-            field = new TextField({
+            var field = new TextField({
               required: Value.query('data.needed')
             });
 
-            assert(validationPasses());
+            assert(validationPasses(field));
 
             field.update({ needed: true });
 
-            assert(validationPasses() === false);
+            assert(validationPasses(field) === false);
 
             field.setValue('val');
 
-            assert(validationPasses());
+            assert(validationPasses(field));
 
             field.update({ needed: false });
           }
