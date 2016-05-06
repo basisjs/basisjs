@@ -214,6 +214,18 @@ module.exports = {
           }
         },
         {
+          name: 'no required property but with required validator',
+          test: function(){
+            var field = new TextField({
+              validators: [
+                validator.Required
+              ]
+            });
+
+            assert(validationPasses(field) === false);
+          }
+        },
+        {
           name: 'required: true',
           test: function(){
             var field = new TextField({
@@ -225,6 +237,27 @@ module.exports = {
             field.setValue('val');
 
             assert(validationPasses(field));
+          }
+        },
+        {
+          name: 'events',
+          test: function(){
+            var eventsCount = 0;
+
+            var field = new TextField({
+              required: true,
+              handler: {
+                validatorsChanged: function(){
+                  eventsCount++;
+                }
+              }
+            });
+
+            assert(eventsCount === 0);
+
+            field.setRequired(false);
+
+            assert(eventsCount === 1);
           }
         },
         {
