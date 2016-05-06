@@ -350,10 +350,10 @@
           this.detachValidator(Validator.Required);
       }
     },
-    attachValidator: function(validator, validate, addToBeginning){
+    attachValidator: function(validator, validate, prepend){
       if (this.validators.indexOf(validator) === -1)
       {
-        if (addToBeginning)
+        if (prepend)
           this.validators.unshift(validator);
         else
           this.validators.push(validator);

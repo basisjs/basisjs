@@ -12,9 +12,9 @@ module.exports = {
         {
           name: 'simple attaching/detaching',
           test: function(){
-            function emptyValidator() {}
+            function emptyValidator(){}
 
-            function failingValidator() {
+            function failingValidator(){
               return error;
             }
 
@@ -42,11 +42,11 @@ module.exports = {
           test: function(){
             var callsLog = [];
 
-            function firstValidator() {
+            function firstValidator(){
               callsLog.push('first');
             }
 
-            function secondValidator() {
+            function secondValidator(){
               callsLog.push('second');
             }
 
@@ -67,11 +67,11 @@ module.exports = {
           test: function(){
             var callsLog = [];
 
-            function firstValidator() {
+            function firstValidator(){
               callsLog.push('first');
             }
 
-            function secondValidator() {
+            function secondValidator(){
               callsLog.push('second');
             }
 
@@ -90,10 +90,10 @@ module.exports = {
         {
           name: 'multiple attaching',
           test: function(){
-            function emptyValidator() {}
+            function emptyValidator(){}
 
             var callCount = 0;
-            function loggingValidator() {
+            function loggingValidator(){
               callCount++;
             }
 
@@ -103,9 +103,8 @@ module.exports = {
               ]
             });
 
-            for (var idx = 0; idx < 3; idx++) {
+            for (var idx = 0; idx < 3; idx++)
               field.attachValidator(loggingValidator);
-            }
 
             field.validate();
 
@@ -121,8 +120,8 @@ module.exports = {
         {
           name: 'validatorsModified event',
           test: function(){
-            function firstValidator() {}
-            function secondValidator() {}
+            function firstValidator(){}
+            function secondValidator(){}
 
             var eventsCount = 0;
             var lastDelta;
@@ -163,7 +162,7 @@ module.exports = {
         {
           name: 'attach/detach and validate',
           test: function(){
-            function unoValidator() {}
+            function unoValidator(){}
 
             var validatesCount = 0;
 
@@ -175,19 +174,19 @@ module.exports = {
 
             field.attachValidator(unoValidator, true);
 
-            assert(1, validatesCount);
+            assert(validatesCount === 1);
 
             field.attachValidator(unoValidator, true);
 
-            assert(1, validatesCount);
+            assert(validatesCount === 1);
 
             field.detachValidator(unoValidator, true);
 
-            assert(2, validatesCount);
+            assert(validatesCount === 2);
 
             field.detachValidator(unoValidator, true);
 
-            assert(2, validatesCount);
+            assert(validatesCount === 2);
           }
         }
       ]
@@ -203,7 +202,7 @@ module.exports = {
 
         var field;
 
-        function validationPasses() {
+        function validationPasses(){
           return !field.validate();
         }
       },
@@ -223,7 +222,7 @@ module.exports = {
               required: true
             });
 
-            assert(!validationPasses());
+            assert(validationPasses() === false);
 
             field.setValue('val');
 
@@ -242,11 +241,11 @@ module.exports = {
             });
 
 
-            assert(!validationPasses());
+            assert(validationPasses() === false);
 
             field.setValue('val');
 
-            assert(!validationPasses());
+            assert(validationPasses() === false);
 
             field.setValue('value');
 
@@ -266,7 +265,7 @@ module.exports = {
 
             value.set(true);
 
-            assert(!validationPasses());
+            assert(validationPasses() === false);
 
             field.setValue('val');
 
@@ -315,11 +314,11 @@ module.exports = {
 
             value.set(true);
 
-            assert(!validationPasses());
+            assert(validationPasses() === false);
 
             field.setValue('val');
 
-            assert(!validationPasses());
+            assert(validationPasses() === false);
 
             field.setValue('value');
 
@@ -339,7 +338,7 @@ module.exports = {
 
             field.update({ needed: true });
 
-            assert(!validationPasses());
+            assert(validationPasses() === false);
 
             field.setValue('val');
 
