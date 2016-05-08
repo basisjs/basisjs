@@ -297,7 +297,8 @@
         this.setValue(value);
       }
 
-      this.setRequired(this.required);
+      if (this.required)
+        this.setRequired(this.required);
       this.init = true;
     },
 
@@ -358,7 +359,8 @@
         else
           this.validators.push(validator);
 
-        this.emit_validatorsChanged({ inserted: validator });
+        if (this.init === true)
+          this.emit_validatorsChanged({ inserted: validator });
 
         if (validate)
           this.validate();
