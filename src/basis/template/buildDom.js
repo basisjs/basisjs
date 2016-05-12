@@ -40,6 +40,9 @@ var tmplEventListeners = {};
 var afterEventAction = {};
 var insideElementEvent = {};
 var contains;
+// emulation cursor: pointer in order to fire mouse events on iOS devices
+var IS_TOUCH_DEVICE = 'ontouchstart' in document.documentElement;
+var MOUSE_EVENTS = ['mouseover', 'mouseup', 'mousedown', 'mousemove', 'click'];
 
 // cross-browser Node#contains
 if (Node && !Node.prototype.contains)
@@ -216,6 +219,10 @@ var SET_STYLE_ATTRIBUTE_BUG = (function(){
 
 function setEventAttribute(node, eventName, actions){
   regEventHandler(eventName);
+
+  if (IS_TOUCH_DEVICE && MOUSE_EVENTS.indexOf(eventName) != -1) {
+    node.style.cursor = 'pointer';
+  }
 
   // hack for non-bubble events in IE<=8
   if (USE_CAPTURE_FALLBACK)
