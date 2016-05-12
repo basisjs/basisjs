@@ -42,7 +42,7 @@ var insideElementEvent = {};
 var contains;
 // emulation cursor: pointer in order to fire mouse events on iOS devices
 var IS_TOUCH_DEVICE = 'ontouchstart' in document.documentElement;
-var MOUSE_EVENTS = ['mouseover', 'mouseup', 'mousedown', 'mousemove', 'click'];
+var MOUSE_EVENTS = ['mouseover', 'mouseup', 'mousedown', 'mousemove', 'click', 'dblclick'];
 
 // cross-browser Node#contains
 if (Node && !Node.prototype.contains)

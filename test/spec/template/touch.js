@@ -41,6 +41,7 @@ module.exports = {
             var templateText =
               '<div>' +
               '  <div{divClick}     event-click="eventAction"></div>' +
+              '  <div{divDblclick}  event-dblclick="eventAction"></div>' +
               '  <div{divMouseover} event-mouseover="eventAction"></div>' +
               '  <div{divMousemove} event-mousemove="eventAction"></div>' +
               '  <div{divMousedown} event-mousedown="eventAction"></div>' +
@@ -50,6 +51,7 @@ module.exports = {
             var node = new Node({ template: tmpl });
 
             assert(node.tmpl.divClick.style.cursor     === 'pointer');
+            assert(node.tmpl.divDblclick.style.cursor  === 'pointer');
             assert(node.tmpl.divMouseover.style.cursor === 'pointer');
             assert(node.tmpl.divMousemove.style.cursor === 'pointer');
             assert(node.tmpl.divMousedown.style.cursor === 'pointer');
