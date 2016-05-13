@@ -83,6 +83,7 @@ module.exports = {
     require('./template/b-define.js'),
     require('./template/isolate.js'),
     require('./template/l10n.js'),
+    require('./template/touch.js'),
     {
       name: 'Themes',
       test: [
