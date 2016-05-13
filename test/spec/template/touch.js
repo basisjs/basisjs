@@ -55,6 +55,15 @@ module.exports = {
           }
         },
         {
+          name: 'should provide correct style property',
+          test: function(){
+            var template = createTemplate('<div event-click="eventAction"/>');
+            var instance = template.createInstance();
+
+            assert(instance.element.getAttribute('style') === 'cursor:pointer;');
+          }
+        },
+        {
           name: 'does not add cursor pointer for event-change',
           test: function(){
             var template = createTemplate('<div event-change="eventAction"/>');
