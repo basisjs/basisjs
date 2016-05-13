@@ -6,7 +6,6 @@ module.exports = {
       sandbox: true,
       init: function(){
         var basis = window.basis.createSandbox(window.basis.config);
-        var Node = basis.require('basis.ui').Node;
         var api = basis.require('../helpers/template.js').createSandboxAPI(basis);
         var createTemplate = api.createTemplate;
       },
@@ -14,23 +13,20 @@ module.exports = {
         {
           name: 'does not add "cursor: pointer" for event-click for non-touch devices',
           test: function(){
-            var tmpl = createTemplate('<div{testElement} event-click="eventAction"></div>', true);
-            var node = new Node({
-              template: tmpl
-            });
+            var template = createTemplate('<div event-click="eventAction"/>');
+            var instance = template.createInstance();
 
-            assert(node.tmpl.testElement.style.cursor === '');
+            assert(instance.element.style.cursor === '');
           }
         }
       ]
     },
     {
-      name: 'touch devices behavior',
+      name: 'touch devices',
       html: __dirname + '/touch.html',
       sandbox: true,
       init: function(){
         var basis = window.basis.createSandbox(window.basis.config);
-        var Node = basis.require('basis.ui').Node;
         var api = basis.require('../../helpers/template.js').createSandboxAPI(basis);
         var createTemplate = api.createTemplate;
       },
@@ -40,111 +36,96 @@ module.exports = {
           test: function(){
             var templateText =
               '<div>' +
-              '  <div{testClick}     event-click="eventAction"></div>' +
-              '  <div{testDblclick}  event-dblclick="eventAction"></div>' +
-              '  <div{testMouseover} event-mouseover="eventAction"></div>' +
-              '  <div{testMousemove} event-mousemove="eventAction"></div>' +
-              '  <div{testMousedown} event-mousedown="eventAction"></div>' +
-              '  <div{testMouseup}   event-mouseup="eventAction"></div>' +
+              '  <div{testClick}     event-click="eventAction"/>' +
+              '  <div{testDblclick}  event-dblclick="eventAction"/>' +
+              '  <div{testMouseover} event-mouseover="eventAction"/>' +
+              '  <div{testMousemove} event-mousemove="eventAction"/>' +
+              '  <div{testMousedown} event-mousedown="eventAction"/>' +
+              '  <div{testMouseup}   event-mouseup="eventAction"/>' +
               '</div>';
-            var tmpl = createTemplate(templateText, true);
-            var node = new Node({ template: tmpl });
+            var template = createTemplate(templateText);
+            var instance = template.createInstance();
 
-            assert(node.tmpl.testClick.style.cursor     === 'pointer');
-            assert(node.tmpl.testDblclick.style.cursor  === 'pointer');
-            assert(node.tmpl.testMouseover.style.cursor === 'pointer');
-            assert(node.tmpl.testMousemove.style.cursor === 'pointer');
-            assert(node.tmpl.testMousedown.style.cursor === 'pointer');
-            assert(node.tmpl.testMouseup.style.cursor   === 'pointer');
+            assert(instance.testClick.style.cursor     === 'pointer');
+            assert(instance.testDblclick.style.cursor  === 'pointer');
+            assert(instance.testMouseover.style.cursor === 'pointer');
+            assert(instance.testMousemove.style.cursor === 'pointer');
+            assert(instance.testMousedown.style.cursor === 'pointer');
+            assert(instance.testMouseup.style.cursor   === 'pointer');
           }
         },
         {
           name: 'does not add cursor pointer for event-change',
           test: function(){
-            var tmpl = createTemplate('<div{testElement} event-change="eventAction"></div>', true);
-            var node = new Node({ template: tmpl });
+            var template = createTemplate('<div event-change="eventAction"/>');
+            var instance = template.createInstance();
 
-            assert(node.tmpl.testElement.style.cursor === '');
+            assert(instance.element.style.cursor === '');
           }
         },
         {
-          name: 'does not overwrite existing value',
+          name: 'shouldn\'t override explicit cursor value',
           test: function(){
-            var tmpl = createTemplate('<div{testElement} event-click="eventAction" style="cursor: text"></div>', true);
-            var node = new Node({ template: tmpl });
+            var template = createTemplate('<div event-click="eventAction" style="cursor: text"/>');
+            var instance = template.createInstance();
 
-            assert(node.tmpl.testElement.style.cursor === 'text');
+            assert(instance.element.style.cursor === 'text');
           }
         },
         {
-          name: 'does not overwrite existing value',
+          name: 'shouldn\'t override explicit cursor value (changed attribute order)',
           test: function(){
-            var tmpl = createTemplate('<div{testElement} style="cursor: text" event-click="eventAction"></div>', true);
-            var node = new Node({ template: tmpl });
+            var template = createTemplate('<div style="cursor: text" event-click="eventAction"/>');
+            var instance = template.createInstance();
 
-            assert(node.tmpl.testElement.style.cursor === 'text');
+            assert(instance.element.style.cursor === 'text');
           }
         },
         {
-          name: 'reactive style - keeps cursor',
+          name: 'non-cursor style bindings shouldn\'t affect cursor value',
           test: function(){
-            var tmpl = createTemplate('<div{testElement} style="color: {textColor}" event-click="eventAction"></div>', true);
-            var node = new Node({
-              template: tmpl,
-              binding: {
-                textColor: 'data:'
-              }
-            });
+            var template = createTemplate('<div style="color: {textColor}" event-click="eventAction"/>');
+            var instance = template.createInstance();
 
-            assert(node.tmpl.testElement.style.cursor === 'pointer');
+            assert(instance.element.style.cursor === 'pointer');
 
-            node.update({ textColor: 'red' });
+            instance.set('textColor', 'red');
 
-            assert(node.tmpl.testElement.style.cursor === 'pointer');
+            assert(instance.element.style.cursor === 'pointer');
           }
         },
         {
-          name: 'reactive cursor - keeps specified',
+          name: 'style binding for cursor property should work as expected',
           test: function(){
-            var tmpl = createTemplate('<div{testElement} style="cursor: {cursor}" event-click="eventAction"></div>', true);
-            var node = new Node({
-              template: tmpl,
-              binding: {
-                cursor: 'data:'
-              }
-            });
+            var template = createTemplate('<div style="cursor: {cursor}" event-click="eventAction"/>');
+            var instance = template.createInstance();
 
-            assert(node.tmpl.testElement.style.cursor === 'pointer');
+            assert(instance.element.style.cursor === 'pointer');
 
-            node.update({ cursor: 'text' });
+            instance.set('cursor', 'text');
 
-            assert(node.tmpl.testElement.style.cursor === 'text');
+            assert(instance.element.style.cursor === 'text');
 
-            node.update({ cursor: 'pointer' });
+            instance.set('cursor', 'pointer');
 
-            assert(node.tmpl.testElement.style.cursor === 'pointer');
+            assert(instance.element.style.cursor === 'pointer');
           }
         },
         {
-          name: 'reactive cursor - keeps specified',
+          name: 'style binding for cursor property should work as expected (changed attribute order)',
           test: function(){
-            var tmpl = createTemplate('<div{testElement} event-click="eventAction" style="cursor: {cursor}"></div>', true);
-            var node = new Node({
-              template: tmpl,
-              binding: {
-                cursor: 'data:'
-              }
-            });
+            var template = createTemplate('<div event-click="eventAction" style="cursor: {cursor}"/>');
+            var instance = template.createInstance();
 
-            assert(node.tmpl.testElement.style.cursor === 'pointer');
+            assert(instance.element.style.cursor === 'pointer');
 
-            node.update({ cursor: 'text' });
+            instance.set('cursor', 'text');
 
-            assert(node.tmpl.testElement.style.cursor === 'text');
+            assert(instance.element.style.cursor === 'text');
 
-            node.update({ cursor: 'pointer' });
+            instance.set('cursor', 'pointer');
 
-            assert(node.tmpl.testElement.style.cursor === 'pointer');
+            assert(instance.element.style.cursor === 'pointer');
           }
         }
       ]
