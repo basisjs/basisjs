@@ -1,0 +1,30 @@
+<b:style src="./node.css"/>
+<b:isolate/>
+<b:define name="isSource" type="bool"/>
+<b:define name="sourceHasLocation" from="fnLoc" type="bool"/>
+<b:define name="initial" type="bool"/>
+<b:define name="hasLocation" from="loc" type="bool"/>
+
+<div class="node">
+  <div class="transition transition_{initial}" b:hide="{isSource}">
+    <div class="transition__content transition__content_{sourceHasLocation}" event-click="openFunctionLocation">
+      <div class="description">
+        {type}
+        <span class="events" b:show="{events}">{events}</span>
+      </div>
+      <div{fn} class="source source_{sourceHasLocation}" b:show="{fn}"/>
+    </div>
+  </div>
+  <div class="label label_{isSource} label_{initial}">
+    <span{inPoint|outPoint} class="dot dot_{isSource} dot_{initial}"/>
+    <span class="value">
+      {value}
+    </span>
+  </div>
+  <span class="className">
+    <span class="{hasLocation}" event-click="open" event-mouseenter="enterLoc" event-mouseleave="leaveLoc">{className}</span>
+    &nbsp;
+    <span class="id" b:show="{id}">#{id}</span>
+    <!-- <span class="loc-wrapper" b:show="{loc}"> <span class="{hasLocation}" event-click="open">{loc}</span></span> -->
+  </span>
+</div>

@@ -98,6 +98,10 @@
       {
         "title": "Tag cloud",
         "url": "data/tag_cloud.html"
+      },
+      {
+        "title": "Data flow",
+        "url": "data/data-flow.html"
       }
     ]
   },

@@ -103,6 +103,10 @@ module.exports = ReadOnlyDataset.subclass({
       this.source = source;
       this.emit_sourceChanged(oldSource);
 
+      /** @cut */ basis.dev.patchInfo(this, 'sourceInfo', {
+      /** @cut */   source: source
+      /** @cut */ });
+
       // sync items
       if (itemsChangedHandler)
       {

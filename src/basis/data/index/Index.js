@@ -230,6 +230,13 @@ function getDatasetIndex(dataset, IndexClass){
     index = new IndexClass();
     index.addHandler(DATASET_INDEX_HANDLER, dataset);
 
+    /** @cut */ basis.dev.setInfo(index, 'sourceInfo', {
+    /** @cut */   type: index.indexName,
+    /** @cut */   source: dataset,
+    /** @cut */   events: Object.keys(index.updateEvents),
+    /** @cut */   transform: index.valueGetter
+    /** @cut */ });
+
     indexes[indexId] = index;
     applyIndexDelta(index, dataset.getItems());
   }

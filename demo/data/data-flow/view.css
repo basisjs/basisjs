@@ -1,0 +1,21 @@
+.view
+{
+  padding: 10px;
+  margin: 0 20px 20px 0;
+  background: white;
+  border-radius: 3px;
+  flex: 1;
+}
+.header
+{
+  font-weight: bold;
+  padding-bottom: 10px;
+}
+.source
+{
+  font-family: Consolas, monospace;
+  font-size: 85%;
+  color: #666;
+  white-space: pre;
+  padding-bottom: 10px;
+}

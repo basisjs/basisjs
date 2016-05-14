@@ -8,7 +8,7 @@ module.exports = new Popup({
 
   dir: 'top left bottom left',
   autorotate: true,
-  template: resource('./template/js-source-popup.tmpl'),
+  template: resource('./template/popup.tmpl'),
   binding: {
     loc: function(node){
       return node.loc.as(function(loc){

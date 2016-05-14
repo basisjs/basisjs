@@ -40,6 +40,7 @@ function getIndexConstructor(BaseClass, getter, events){
       events_[events[i]] = true;
 
     indexConstructor = constructors[indexId] = BaseClass.subclass({
+      /** @cut */ indexName: BaseClass.className.split('.').pop(),
       indexId: indexId,
       updateEvents: events_,
       valueGetter: getter

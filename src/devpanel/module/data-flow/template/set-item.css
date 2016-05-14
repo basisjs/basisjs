@@ -1,0 +1,26 @@
+.item
+{
+  padding: 5px;
+  background: #E8F0F8;
+  border-radius: 3px;
+  margin-right: 3px;
+  line-height: 1;
+  text-align: center;
+}
+.item:nth-last-of-type(1)
+{
+  margin-right: 0;
+}
+
+.id
+{
+  display: block;
+  padding-bottom: 4px;
+  font-size: 11px;
+}
+.class-name
+{
+  display: block;
+  font-size: 10px;
+  color: #888;
+}

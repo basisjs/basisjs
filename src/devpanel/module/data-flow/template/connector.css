@@ -1,0 +1,7 @@
+.connector
+{
+  stroke: #CCC;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  marker-end: url(#basisjs-devpanel-connector-marker);
+}
