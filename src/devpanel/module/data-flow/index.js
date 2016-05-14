@@ -294,6 +294,6 @@ var FlowView = Flow.subclass({
   }
 });
 
-FlowView.buildTree = require('./build-tree.js');
+FlowView.createTreeBuilder = require('./build-tree.js');
 
 module.exports = FlowView;

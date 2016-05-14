@@ -69,11 +69,25 @@ function inspectValue(value, resolvers, map){
   return nodes;
 }
 
-module.exports = function buildTree(value, resolvers){
-  var result = inspectValue(value, basis.object.extend({
+function buildTree(value, api){
+  var result = inspectValue(value, api);
+
+  if (result.length)
+    result[result.length - 1].initial = true;
+
+  return result;
+};
+
+module.exports = function createTreeBuilder(api){
+  api = basis.object.extend({
     sandbox: basis,
     unwrap: function(value){
-      this.unwrap = this.sandbox.require('basis.data').devUnwrap;
+      this.unwrap = basis.fn.$self;
+
+      this.sandbox.resource(this.sandbox.resolveNSFilename('basis.data')).ready(function(exports){
+        if (exports.devUnwrap)
+          this.unwrap = exports.devUnwrap;
+      }.bind(this));
 
       return this.unwrap(value);
     },
@@ -86,7 +100,18 @@ module.exports = function buildTree(value, resolvers){
 
       return fn;
     },
-    isDataset: basis.fn.$false,
+    isDataset: function(value){
+      this.isDataset = basis.fn.$false;
+
+      this.sandbox.resource(this.sandbox.resolveNSFilename('basis.data')).ready(function(exports){
+        if (exports.ReadOnlyDataset)
+          this.isDataset = function(value){
+            return value instanceof exports.ReadOnlyDataset;
+          };
+      }.bind(this));
+
+      return this.isDataset(value);
+    },
     getInfo: function(){
       return this.sandbox.dev.getInfo.apply(this, arguments);
     },
@@ -103,10 +128,9 @@ module.exports = function buildTree(value, resolvers){
       return this.fnInfo(fn);
     },
     getColoredSource: require('basis.utils.source').getColoredSource
-  }, resolvers));
+  }, api);
 
-  if (result.length)
-    result[result.length - 1].initial = true;
-
-  return result;
+  return function(value){
+    return buildTree(value, api);
+  };
 };

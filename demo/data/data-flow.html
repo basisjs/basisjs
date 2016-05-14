@@ -45,6 +45,10 @@
         basisjsTools.openFile(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
     }
 
+    var buildTree = Flow.createTreeBuilder({
+      sandbox: basis
+    });
+
     var View = UINode.subclass({
       template: basis.resource('./data-flow/view.tmpl'),
       binding: {
@@ -81,7 +85,7 @@
     ].forEach(function(name){
       var filename = './data-flow/' + name + '.js';
       var value = basis.require(filename);
-      
+
       new View({
         container: container,
         name: name,
@@ -90,12 +94,7 @@
           fileAPI: {
             openFile: openFile
           },
-          childNodes: Flow.buildTree(value, {
-            sandbox: basis,
-            isDataset: function(value){
-              return value instanceof ReadOnlyDataset;
-            }
-          })
+          childNodes: buildTree(value)
         })
       });
     });
