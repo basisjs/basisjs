@@ -45,7 +45,8 @@
   var SERVICE_HANDLER = {
     start: function(service, request){
       this.inprogressRequests.push(request);
-      if (basis.array.add(this.inprogressTransports, request.transport))
+      if (basis.array.add(this.inprogressTransports, request.transport) &&
+          (!service.stoppedTransports || service.stoppedTransports.indexOf(request.transport) == -1))
         request.transport.addHandler(TRANSPORT_HANDLER, this);
     },
     complete: function(service, request){
@@ -127,7 +128,7 @@
           if (!this.service.prepare(this, requestData))
             return;
 
-          if (this.secure && !this.service.sign(this))
+          if (this.secure && !this.service.sign(this, requestData))
             return;
 
           return TransportClass.prototype.request.call(this, requestData);
@@ -137,10 +138,10 @@
       this.addHandler(SERVICE_HANDLER);
     },
 
-    sign: function(transport){
+    sign: function(transport, requestData){
       if (this.sessionKey)
       {
-        this.signature(transport, this.sessionData);
+        this.signature(transport, this.sessionData, requestData);
         return true;
       }
       else
