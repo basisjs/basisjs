@@ -50,7 +50,7 @@ function inspectValue(value, resolvers, map){
 
   nodes.push({
     nodeType: getNodeType(value, resolvers),
-    type: sourceInfo.type,
+    type: sourceInfo.type || 'Unknown transformation',
     events: sourceInfo.events,
     transform: info.getter || (fnLoc
       ? resolvers.getColoredSource(fnLoc, 0, 0, 20)
