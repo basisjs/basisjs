@@ -104,6 +104,31 @@ module.exports = {
           }
         },
         {
+          name: 'should keep cursor pointer after showing and hiding with b:hide',
+          test: function(){
+            var template = createTemplate('<div b:hide="{hide}" event-click="eventAction"/>');
+            var instance = template.createInstance();
+
+            assert(instance.element.style.cursor === 'pointer');
+
+            instance.set('hide', true);
+            instance.set('hide', false);
+
+            assert(instance.element.style.cursor === 'pointer');
+          }
+        },
+        {
+          name: 'should keep cursor pointer after showing and hiding with b:show',
+          test: function(){
+            var template = createTemplate('<div b:show="{show}" event-click="eventAction"/>');
+            var instance = template.createInstance();
+
+            instance.set('show', true);
+
+            assert(instance.element.style.cursor === 'pointer');
+          }
+        },
+        {
           name: 'style binding for cursor property should work as expected',
           test: function(){
             var template = createTemplate('<div style="cursor: {cursor}" event-click="eventAction"/>');

@@ -321,7 +321,7 @@ var buildDOM = function(tokens, parent){
         var attrValue = token[ATTR_VALUE_INDEX[tokenType]];
 
         if (attrValue)
-          setAttribute(result, 'style', attrValue);
+          setAttribute(result, 'style', (result.getAttribute('style') || '') + attrValue);
 
         break;
 
