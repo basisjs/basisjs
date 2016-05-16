@@ -222,7 +222,7 @@ function setEventAttribute(node, eventName, actions){
 
   // add 'cursor: pointer' for touch devices in order to enable mouse events (iOS bug)
   if (IS_TOUCH_DEVICE && MOUSE_EVENTS.indexOf(eventName) != -1)
-    node.setAttribute('style', 'cursor:pointer;' + node.getAttribute('style'));
+    node.setAttribute('style', 'cursor:pointer;' + (node.getAttribute('style') || ''));
 
   // hack for non-bubble events in IE<=8
   if (USE_CAPTURE_FALLBACK)
@@ -321,7 +321,7 @@ var buildDOM = function(tokens, parent){
         var attrValue = token[ATTR_VALUE_INDEX[tokenType]];
 
         if (attrValue)
-          setAttribute(result, 'style', attrValue);
+          setAttribute(result, 'style', (result.getAttribute('style') || '') + attrValue);
 
         break;
 
