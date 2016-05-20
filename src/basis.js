@@ -1805,8 +1805,8 @@
           /** @cut */ result.__extend__ = create;
 
           for (var key in keys)
-            if (hasOwnProperty.call(keys, key) && keys[key])
-              result[key] = fn;
+            if (hasOwnProperty.call(keys, key))
+              result[key] = keys[key] ? fn : null; //todo: or maybe empty function?
         }
 
         return result;
