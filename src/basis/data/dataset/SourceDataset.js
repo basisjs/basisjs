@@ -85,21 +85,27 @@ module.exports = ReadOnlyDataset.subclass({
     {
       var oldSource = this.source;
       var listenHandler = this.listen.source;
-      var itemsChangedHandler;
+      var itemsChangedHandler = listenHandler && listenHandler.itemsChanged;
 
-      // add/remove listen
-      if (listenHandler)
+      // reset the source before items changes because some dataset subclasses
+      // can check current source on items removing (e.g. Extract)
+      this.source = null;
+
+      setAccumulateState(true);
+
+      // detach old source
+      if (oldSource)
       {
-        itemsChangedHandler = listenHandler.itemsChanged;
-
-        if (oldSource)
+        if (listenHandler)
           oldSource.removeHandler(listenHandler, this);
 
-        if (source)
-          source.addHandler(listenHandler, this);
+        if (itemsChangedHandler)
+          itemsChangedHandler.call(this, oldSource, {
+            deleted: oldSource.getItems()
+          });
       }
 
-      // change the source
+      // set new source
       this.source = source;
       this.emit_sourceChanged(oldSource);
 
@@ -107,23 +113,19 @@ module.exports = ReadOnlyDataset.subclass({
       /** @cut */   source: source
       /** @cut */ });
 
-      // sync items
-      if (itemsChangedHandler)
+      // attach new source
+      if (source)
       {
-        setAccumulateState(true);
+        if (listenHandler)
+          source.addHandler(listenHandler, this);
 
-        if (oldSource)
-          itemsChangedHandler.call(this, oldSource, {
-            deleted: oldSource.getItems()
-          });
-
-        if (source)
+        if (itemsChangedHandler)
           itemsChangedHandler.call(this, source, {
             inserted: source.getItems()
           });
-
-        setAccumulateState(false);
       }
+
+      setAccumulateState(false);
     }
   },
 
