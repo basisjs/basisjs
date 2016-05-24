@@ -4,6 +4,7 @@ module.exports = {
     require('./data/state.js'),
     require('./data/value.js'),
     require('./data/object.js'),
-    require('./data/dataset.js')
+    require('./data/dataset.js'),
+    require('./data/keyobjectmap.js')
   ]
 };
