@@ -1623,6 +1623,13 @@
   var KEYOBJECTMAP_MEMBER_HANDLER = {
     destroy: function(){
       delete this.map[this.id];
+      if (this.item.delegate)
+        this.item.delegate.removeHandler(KEYOBJECTMAP_KEY_HANDLER, this);
+    }
+  };
+  var KEYOBJECTMAP_KEY_HANDLER = {
+    destroy: function(){
+      this.item.destroy();
     }
   };
 
@@ -1675,6 +1682,8 @@
           item: this.create(key, autocreate)
         };
         itemInfo.item.addHandler(KEYOBJECTMAP_MEMBER_HANDLER, itemInfo);
+        if (itemInfo.item.delegate)
+          itemInfo.item.delegate.addHandler(KEYOBJECTMAP_KEY_HANDLER, itemInfo);
       }
 
       if (itemInfo)
@@ -1688,6 +1697,8 @@
       for (var itemId in map)
       {
         var itemInfo = map[itemId];
+        if (itemInfo.item.delegate)
+          itemInfo.item.delegate.removeHandler(KEYOBJECTMAP_KEY_HANDLER, itemInfo);
         if (this.autoDestroyMembers)
           itemInfo.item.destroy();
         else
