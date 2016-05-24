@@ -720,7 +720,10 @@
             }
 
             if (entity && entity.entityType === entityType)
+            {
               entity.update(data);
+              /** @cut */   entity = basisData.devWrap(entity);
+            }
             else
               entity = new EntityClass(data);
 
