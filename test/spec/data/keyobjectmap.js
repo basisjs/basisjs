@@ -18,53 +18,62 @@ module.exports = {
           name: 'create and resolve',
           test: function(){
             var map = new KeyObjectMap();
-            var object1 = new DataObject({ data: { prop1: 'some value' } });
-			var value1 = new DataValue({ value: 'some value' });
+            var keyObject = new DataObject({ data: { prop1: 'some value' } });
+            var keyObject2 = new DataValue({ value: 'some value' });
+            var keyValue = 100;
 
-            assert(map.resolve(object1) === map.get(object1));
-            assert(map.resolve(object1).delegate === object1);
+            //DataObject
+            assert(map.resolve(keyObject) === map.get(keyObject));
+            assert(map.resolve(keyObject).delegate === keyObject);
 
-			assert(map.resolve(value1) === map.get(value1));
-			assert(map.resolve(value1).data.title === value1);
+            //DataValue
+            assert(map.resolve(keyObject2) === map.get(keyObject2));
+            assert(map.resolve(keyObject2).data.value === keyObject2);
+
+            //scalar
+            assert(map.resolve(keyValue) === map.get(keyValue));
+            assert(map.resolve(keyValue).data.value === keyValue);
           }
         },
         {
           name: 'destroy key object',
           test: function(){
             var map = new KeyObjectMap();
-            var object1 = new DataObject({ data: { prop1: 'some value' } });
-			var resolved = map.resolve(object1);
+            var keyObject = new DataObject({ data: { prop1: 'some value' } });
+            var resolved = map.resolve(keyObject);
 
-            assert(typeof object1.handler.callbacks.destroy === 'function');
+            assert(typeof keyObject.handler.callbacks.destroy === 'function');
             assert(typeof resolved.handler.callbacks.destroy === 'function');
-            object1.destroy();
-            assert(object1.handler === null);
+            keyObject.destroy();
+            assert(keyObject.handler === null);
             assert(resolved.handler === null);
-            assert(!map.get(object1));
+            assert(!map.get(keyObject));
           }
         },
         {
           name: 'destroy member object',
           test: function(){
             var map = new KeyObjectMap();
-            var object1 = new DataObject({ data: { prop1: 'some value' } });
-			var resolved = map.resolve(object1);
+            var keyValue = new DataValue({ value: 'some value' });
+            var resolved = map.resolve(keyValue);
 
             resolved.destroy();
-            assert(object1.handler === null);
+            assert(keyValue.handler === null);
             assert(resolved.handler === null);
+            assert(!map.get(keyValue));
           }
         },
         {
           name: 'destroy map',
           test: function(){
             var map = new KeyObjectMap();
-            var object1 = new DataObject({ data: { prop1: 'some value' } });
-			var resolved = map.resolve(object1);
+            var keyObject = new DataObject({ data: { prop1: 'some value' } });
+            var resolved = map.resolve(keyObject);
 
             map.destroy();
-            assert(object1.handler === null);
+            assert(keyObject.handler === null);
             assert(resolved.handler === null);
+            assert(!map.get(keyObject));
           }
         }
       ]
