@@ -1,6 +1,6 @@
 .Basis-Blocker
 {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -17,8 +17,6 @@
   height: 100%;
   background: white;
 
-    -moz-opacity: .5;
-    -khtml-opacity: .5;
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=50)";
     filter: progid:DXImageTransform.Microsoft.Alpha(opacity=50);
   opacity: .5;

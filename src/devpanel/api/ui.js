@@ -1,16 +1,22 @@
-var basisData = require('basis.data');
-var DataObject = basisData.Object;
-var Dataset = basisData.Dataset;
-
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisUI = inspectBasis.require('basis.ui');
+
+var DataObject = require('basis.data').Object;
+var Dataset = require('basis.data').Dataset;
 
 var instances = {};
 var updateInfoQueue = {};
 var updateInfoTimer_ = null;
 
 var config = { data: null };
-var updateObj = { parent: null, satelliteName: null, groupNode: null, grouping: null };
+var updateObj = {
+  parent: null,
+  childIndex: -1,
+  satelliteName: null,
+  groupNode: null,
+  grouping: null,
+  role: null
+};
 
 var allInstances = new Dataset();
 
@@ -39,11 +45,17 @@ function updateInfo(){
     var model = instances[id];
     var instance = model.data.instance;
     var parent = instance.parentNode || instance.owner;
+    var roleGetter = instance.binding && instance.binding.$role;
 
     updateObj.parent = parent && parent.basisObjectId;  // reuse updateObj to less GC
     updateObj.groupNode = instance.groupNode && instance.groupNode.basisObjectId;  // reuse updateObj to less GC
     updateObj.grouping = instance.grouping && instance.grouping.basisObjectId;
     updateObj.satelliteName = instance.ownerSatelliteName;
+    updateObj.role = roleGetter && typeof roleGetter.getter == 'function' ? roleGetter.getter(instance) : null;
+
+    updateObj.childIndex = !updateObj.satelliteName && parent
+      ? parent.childNodes.indexOf(instance)
+      : -1;
 
     instances[id].update(updateObj);
     models.push(model);
@@ -59,12 +71,19 @@ function processEvent(event){
   {
     case 'create':
       //console.log('create', id);
+      var devInfo = inspectBasis.dev.getInfo(instance);
 
       // reuse config for less garbage
       config.data = {
         id: id,
         instance: instance,
-        parent: null
+        loc: devInfo ? devInfo.loc || null : null,
+        parent: null,
+        childIndex: -1,
+        satelliteName: null,
+        groupNode: null,
+        grouping: null,
+        role: null
       };
 
       instances[id] = new DataObject(config);

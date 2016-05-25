@@ -1,3 +1,114 @@
+## 1.5.0 → 1.6.0
+
+Remove
+
+  - `this.path` is no longer available in modules
+  - `basis.data.index.IndexConstructor`
+
+Might break
+
+  - `IndexMap` was reworked to be more async and simpler (see details in HISTORY.md)
+  - never set binding and binding with `undefined` value behaviours are differ now
+
+## 1.4.0 → 1.5.0
+
+Remove
+
+  - `STATE.from()` (use `basis.data.Value.state()` instead)
+  - `STATE.factory()` (use `basis.data.Value.stateFactory()` instead)
+  - `basis.data.generator` module
+
+Might break
+
+  - `basis.require()` appends `.js` to filename, if there is no extension
+
+## 1.3.0 → 1.4.0
+
+Rename
+
+  - `basis.data.Dataset#sync()` → `basis.data.Dataset#setAndDestroyRemoved()`
+  - `basis.ui.field.Field#binding.titleText` → `basis.ui.field.Field#binding.title`
+  - `title` → `titleEl` reference in `basis.ui.field` templates
+  - `basis.ui.paginator.Paginator#spanStartPage_` → `basis.ui.paginator.Paginator#spanStartPage`
+  - `basis.net.Service#isSecure` → `basis.net.Service#secure`
+  - `basis.net.Service#transportClass#needSignature` → `basis.net.Service#transportClass#secure`
+  - `basis.net.ajax.Transport#postBody` → `basis.net.ajax.Transport#body`
+  - `basis.require('basis.ua').cookies` → `basis.require('basis.ua.cookie')` (`basis.ua.cookies` moved to separate namespace `basis.ua.cookie`)
+  
+Remove
+
+  - `deferred` argument in `basis.data.Value#as()` (`value.as(fn, true)` → `value.as(fn).deferred()`)
+  - `fn` argument in `basis.data.Value#deferred()` (`value.deferred(fn)` → `value.as(fn).deferred()`)
+  - `basis.data.index.IndexMap#addCalc()`
+  - `basis.data.index.IndexMap#removeCalc`
+  - ability to define default `state` for `basis.entity` types via type config
+  - `defines` from template declaration
+  - `dictURI` from template declaration
+  - `select` and `unselect` events emit on init and destroy (`basis.dom.wrapper.Node`)
+  - `basis.dom.wrapper.Node#selectable`
+  - arguments in `Window#open()`
+  - `basis.ui.window.Window#emit_beforeShow()`
+  - `basis.ui.window.Window#emit_active()` (doesn't work anyway)
+  - `basis.net.action` isn't add `request` property to context object (on action invocation)
+  - `basis.net` remove `influence` functionality
+
+Deprecated
+
+  - `modificator` argument in `basis.getter()` (`basis.getter(fn1, fn2)` → `basis.getter(f1).as(fn2)`)
+  - `basis.data.Dataset#sync()`
+  - `basis.entity.Collection`
+  - `basis.entity.Grouping`
+  - `instanceOf` in satellite config of `basis.dom.wrapper.Node` (use `instance` instead)
+  - `basis.ui.field.Field#binding.titleText` (use `Field#binding.title` instead)
+  - `basis.ui.window.Window#closed` (use `Window#visible` instead)
+  - `basis.net.Service#isSecure` (use `Service#secure` instead)
+  - `basis.net.Service#transportClass#needSignature` (use `Service#transportClass#secure` instead)
+  - `basis.net.ajax.Transport#postBody` (use `Transport#body`)
+
+Might break
+
+  - `basis.asset()` is now resolves paths as `basis.resource()` (left value as is before)
+  - `require()` doesn't accept `baseURI` as second argument anymore
+  - `__dirname` has no trailing slash now
+  - all private property naming for reactive adapters are now ends with `RA_` (i.e. `activeRA_`, `datasetRA_`)
+  - `basis.PROXY` is default value for `active` property for all source-based dataset classes; this means that any instance of those classes become active when has any active subscriber
+  - `basis.data.DatasetWrapper#setDataset()` method is now set new value to `dataset` property before `itemsChanged` event emit
+  - `basis.data.Value`'s methods and `basis.data.Value.from()` are now returns some sort of `basis.data.Value` instance instead `basis.Token`:
+    - `Value#compute()` returns instance of `basis.data.ReadOnlyValue` (instead of `basis.Token`)
+    - `Value#as()` returns instance of `basis.data.ReadOnlyValue` (instead of `basis.Token`)
+    - `Value#deferred()` returns instance of `basis.data.DeferredValue` (instead of `basis.DeferredToken`)
+    - `Value.from()` returns instance of `basis.data.ReadOnlyValue` (instead of `Value`)
+  - `basis.data.index.IndexMap` was reworked
+    - items are not require subscribers to be computed anymore
+    - make item's calculations immediately on item create (no more `update` event emit on create)
+    - copy data from source object to map member by default (set `IndexMap#copyDataFromSource` to `false` to disable it), but ignore fields with names that defined in `IndexMap#calcs`
+    - stop use `keyMap` as internal item storage
+    - `IndexMap#itemClass` property is using instead of old `IndexMap#keyMap.itemClass`
+  - operation order for `basis.data.dataset.SourceDataset` was changed
+    - on init (more safe init)
+      - store current `source` value to local variable and set `source` to `null`
+      - invoke super constructor `init` method 
+      - set `source` value
+    - on source change, new order:
+      - add and remove `listen` handler
+      - emit `sourceChanged` event
+      - emit `itemsChanged` event
+  - `basis.data.value.Expression` inherited from `basis.data.ReadOnlyValue` (instead of `basis.data.value.ObjectSet`) and instances become "readonly"
+  - `basis.entity.Entity` instances invoke `syncAction()` only if have `id` value or type has no index
+  - `basis.entity.Entity` instances is now wrap `defValue` by field wrapper
+  - binding format in template AST was changed (declaration version changed to `3`)
+  - `<b:define>` doesn't apply for nested templates bindings anymore (scoped by template source it's declared in)
+  - `isolate` is not inherit from nested templates 
+  - don't isolate classes adding via `<b:include>`'s instructions with include isolate context (i.e. for case `<b:isolate prefix="foo-"/><b:include isolate="bar-" class="baz"/>` class `baz` will be isolated by `foo-` prefix only, but no by `foo-bar-` as before)
+  - template style namespaces are scoped by template source it's declared in
+  - markup `l10n` token's content is not wrapped by `<span>`
+  - `basis.dom.wrapper`: `unselect` nodes goes before `select` on selection delta processing
+  - `basis.ui.field` isn't reset field validity on `keyup`
+  - `basis.ui.field.Combobox#setValue()` logic doesn't depend on `disabled` state now
+  - no more `__basisEvents` in `global` (`basis.dom.event` don't store global event handlers in `global`)
+  - `basis.ui.popup.Popup` instances are not children of `popupManager` anymore and could have `parentNode` or `owner`
+  - `basis.net.action` actions return ES6 `Promise` (native or polyfill provided by `basis.promise`)
+
 ## 1.2.5 → 1.3.0
 
 Rename
@@ -24,7 +135,7 @@ Remove
   - `basis.ui.table` drop support for `content` in footer config
   - `basis.template` remove support for `<b:resource>` (use `<b:style>` instead)
 
-Stop use (deprecated)
+Deprecated
 
   - `path` section in `basis-config` (use `modules` instead)
   - `basis.entity.EntityType().entityType` (use `type` instead)
@@ -57,8 +168,8 @@ Might break
 
 Remove
  
-  - `basis.xml.createAttributeNS` (as candidate to remove in DOM level 4)
-  - `basis.xml.setAttributeNodeNS` (as candidate to remove in DOM level 4)
+  - `basis.xml.createAttributeNS` (as candidate to remove in `DOM level 4`)
+  - `basis.xml.setAttributeNodeNS` (as candidate to remove in `DOM level 4`)
 
 ## 1.1.0 → 1.2.0
 

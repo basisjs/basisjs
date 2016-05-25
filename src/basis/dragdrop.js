@@ -3,7 +3,7 @@
   * @namespace basis.dragdrop
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.dragdrop';
 
 
   //
@@ -23,7 +23,6 @@
 
   var getComputedStyle = require('basis.dom.computedStyle').get;
   var basisLayout = require('basis.layout');
-  var getOffsetParent = basisLayout.getOffsetParent;
   var getBoundingRect = basisLayout.getBoundingRect;
   var getViewportRect = basisLayout.getViewportRect;
 
@@ -68,12 +67,16 @@
       maxDeltaY: Infinity
     };
 
+    // recovery mode: if mouseup/touchend event is missed for some reason,
+    // new mousedown/touchstart event stops dragging
+    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('touchstart', stopDrag);
+
     // add global handlers
     addGlobalHandler('mousemove', onDrag);
+    addGlobalHandler('touchmove', onDrag);
     addGlobalHandler('mouseup', stopDrag);
-
-    // recover mode: if mouseup missed for some reason, new mousedown stops dragging
-    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('touchend', stopDrag);
 
     // avoid text selection in IE
     if (SELECTSTART_SUPPORTED)
@@ -114,9 +117,12 @@
 
   function stopDrag(event){
     // remove global handlers
-    removeGlobalHandler('mousemove', onDrag);
-    removeGlobalHandler('mouseup', stopDrag);
     removeGlobalHandler('mousedown', stopDrag);
+    removeGlobalHandler('touchstart', stopDrag);
+    removeGlobalHandler('mousemove', onDrag);
+    removeGlobalHandler('touchmove', onDrag);
+    removeGlobalHandler('mouseup', stopDrag);
+    removeGlobalHandler('touchend', stopDrag);
 
     if (SELECTSTART_SUPPORTED)
       removeGlobalHandler('selectstart', eventUtils.kill);
@@ -157,7 +163,7 @@
 
     prepareDrag: basis.fn.$undef,
     startRule: basis.fn.$true,
-    ignoreTarget: function(target, event){
+    ignoreTarget: function(target/*, event*/){
       return /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName);
     },
 
@@ -190,19 +196,33 @@
       if (this.trigger !== trigger)
       {
         if (this.trigger)
+        {
           eventUtils.removeHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.removeHandler(this.trigger, 'touchstart', startDrag, this);
+        }
 
         this.trigger = trigger;
 
         if (this.trigger)
+        {
           eventUtils.addHandler(this.trigger, 'mousedown', startDrag, this);
+          eventUtils.addHandler(this.trigger, 'touchstart', startDrag, this);
+        }
       }
     },
     setBase: function(baseElement){
       this.baseElement = resolveElement(baseElement);
     },
     getBase: function(){
-      return this.baseElement || (document.compatMode == 'CSS1Compat' ? document.documentElement : document.body);
+      if (getComputedStyle(this.element, 'position') == 'fixed')
+        return global; // window
+
+      if (this.baseElement)
+        return this.baseElement;
+
+      return document.compatMode == 'CSS1Compat'
+        ? document.documentElement
+        : document.body;
     },
 
     isDragging: function(){
@@ -245,7 +265,7 @@
 
       this.value = this.read(element);
     },
-    read: function(){
+    read: function(element){
       return element[this.property];
     },
     write: function(element, formattedValue){
@@ -264,11 +284,11 @@
   */
   var StyleDeltaWriter = DeltaWriter.subclass({
     className: namespace + '.StyleDeltaWriter',
-    format: function(value, delta){
+    format: function(value/*, delta*/){
       return value + 'px';
     },
     read: function(element){
-      return parseFloat(getComputedStyle(element, this.property));
+      return parseFloat(getComputedStyle(element, this.property)) || 0;
     },
     write: function(element, formattedValue){
       element.style[this.property] = formattedValue;
@@ -279,11 +299,14 @@
   * @class
   */
   var StylePositionX = StyleDeltaWriter.subclass({
+    className: namespace + '.StylePositionX',
     property: function(element){
-      return getComputedStyle(element, 'left') == 'auto' ? 'right' : 'left';
+      return getComputedStyle(element, 'left') == 'auto' && getComputedStyle(element, 'right') != 'auto'
+        ? 'right'
+        : 'left';
     },
     invert: function(property){
-      return property != 'left';
+      return property == 'right';
     }
   });
 
@@ -291,11 +314,14 @@
   * @class
   */
   var StylePositionY = StyleDeltaWriter.subclass({
+    className: namespace + '.StylePositionY',
     property: function(element){
-      return getComputedStyle(element, 'top') == 'auto' ? 'bottom' : 'top';
+      return getComputedStyle(element, 'top') == 'auto' && getComputedStyle(element, 'bottom') != 'auto'
+        ? 'bottom'
+        : 'top';
     },
     invert: function(property){
-      return property != 'top';
+      return property == 'bottom';
     }
   });
 

@@ -3,21 +3,20 @@
   * @namespace basis.dom.event
   */
 
-  var namespace = this.path;
-
-  // for better pack
+  var namespace = 'basis.dom.event';
 
   var document = global.document;
   var $null = basis.fn.$null;
   var arrayFrom = basis.array.from;
+  var globalEvents = {};
 
-  var W3CSUPPORT = !!document.addEventListener;
 
   //
   // Const
   //
 
-  var EVENT_HOLDER = '__basisEvents';
+  var EVENT_HOLDER = 'basisEvents_' + basis.genUID();
+  var W3CSUPPORT = !!document.addEventListener;
 
   var KEY = {
     BACKSPACE: 8,
@@ -68,8 +67,10 @@
   };
 
   var BROWSER_EVENTS = {
-    mousewheel: ['mousewheel', 'DOMMouseScroll']
+    mousewheel: ['wheel', 'mousewheel', 'DOMMouseScroll']
   };
+
+  var DEPRECATED = /^(returnValue|keyLocation|layerX|layerY|webkitMovementX|webkitMovementY)$/;
 
  /**
   * @param {string} eventName
@@ -77,6 +78,20 @@
   */
   function browserEvents(eventName){
     return BROWSER_EVENTS[eventName] || [eventName];
+  }
+
+  function getPath(node){
+    var path = [];
+
+    do
+    {
+      path.push(node);
+    }
+    while (node = node.parentNode);
+
+    path.push(global);
+
+    return path;
   }
 
 
@@ -93,9 +108,9 @@
 
       for (var name in event)
         /** prevent warnings on deprecated properties */
-        /** @cut*/ if (name != 'returnValue' && name != 'keyLocation' && name != 'layerX' && name != 'layerY')
-        if (typeof event[name] != 'function' && name in this == false)
-          this[name] = event[name];
+        if (!DEPRECATED.test(name) && (event.type != 'progress' || (name != 'totalSize' && name != 'position')))
+          if (typeof event[name] != 'function' && name in this == false)
+            this[name] = event[name];
 
       var target = sender(event);
       basis.object.extend(this, {
@@ -103,6 +118,7 @@
 
         sender: target,
         target: target,
+        path: event.path ? basis.array(event.path) : getPath(target),
 
         key: key(event),
         charCode: charCode(event),
@@ -258,8 +274,8 @@
   function mouseY(event){
     if (event.changedTouches)             // touch device
       return event.changedTouches[0].pageY;
-    else                                  // all others
-      if ('pageY' in event)
+    else
+      if ('pageY' in event)               // all others
         return event.pageY;
       else
         return 'clientY' in event
@@ -276,11 +292,14 @@
   function wheelDelta(event){
     var delta = 0;
 
-    if ('wheelDelta' in event)
-      delta = event.wheelDelta; // IE, webkit, opera
+    if ('deltaY' in event)
+      delta = -event.deltaY;      // safari & gecko
     else
-      if (event.type == 'DOMMouseScroll')
-        delta = -event.detail;    // gecko
+      if ('wheelDelta' in event)
+        delta = event.wheelDelta; // IE, webkit, opera
+      else
+        if (event.type == 'DOMMouseScroll')
+          delta = -event.detail;  // old gecko
 
     return delta && (delta / Math.abs(delta));
   }
@@ -304,6 +323,30 @@
   var noCaptureScheme = !W3CSUPPORT;
 
  /**
+  * Flush asap handlers
+  */
+  var flushAsap = true;
+  var lastFrameStartEvent;
+  var lastFrameFinishEvent;
+
+
+  function startFrame(event){
+    if (flushAsap && event !== lastFrameStartEvent)
+    {
+      lastFrameStartEvent = event;
+      basis.codeFrame.start();
+    }
+  }
+  function finishFrame(event){
+    if (flushAsap && event !== lastFrameFinishEvent)
+    {
+      lastFrameFinishEvent = event;
+      basis.codeFrame.finish();
+    }
+  }
+
+
+ /**
   * Observe handlers for event
   * @private
   * @param {Event} event
@@ -313,21 +356,25 @@
     var captureHandler = captureHandlers[event.type];
     var wrappedEvent = new Event(event);
 
+    startFrame(event);
+
     if (captureHandler)
     {
       captureHandler.handler.call(captureHandler.thisObject, wrappedEvent);
-      kill(event);
-      return;
     }
-
-    if (handlers)
+    else
     {
-      for (var i = handlers.length; i-- > 0;)
+      if (handlers)
       {
-        var handlerObject = handlers[i];
-        handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
+        for (var i = handlers.length; i-- > 0;)
+        {
+          var handlerObject = handlers[i];
+          handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
+        }
       }
     }
+
+    finishFrame(event);
   }
 
  /**
@@ -338,6 +385,9 @@
   function captureEvent(eventType, handler, thisObject){
     if (captureHandlers[eventType])
       releaseEvent(eventType);
+
+    if (!handler)
+      handler = basis.fn.$undef;
 
     addGlobalHandler(eventType, handler, thisObject);
     captureHandlers[eventType] = {
@@ -442,17 +492,17 @@
     if (typeof handler != 'function')
       throw 'basis.event.addHandler: handler is not a function';
 
-    if (!node[EVENT_HOLDER])
-      node[EVENT_HOLDER] = {};
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
 
-    // event handler
+    if (!handlers)
+      handlers = node[EVENT_HOLDER] = {};
+
+    var eventTypeHandlers = handlers[eventType];
     var handlerObject = {
       handler: handler,
       thisObject: thisObject
     };
 
-    var handlers = node[EVENT_HOLDER];
-    var eventTypeHandlers = handlers[eventType];
     if (!eventTypeHandlers)
     {
       eventTypeHandlers = handlers[eventType] = [handlerObject];
@@ -471,9 +521,13 @@
           }
         }
 
+        startFrame(event);
+
         // call eventType handlers
         for (var i = 0, wrappedEvent = new Event(event), item; item = eventTypeHandlers[i++];)
           item.handler.call(item.thisObject, wrappedEvent);
+
+        finishFrame(event);
       };
 
       if (W3CSUPPORT)
@@ -518,7 +572,7 @@
   function removeHandler(node, eventType, handler, thisObject){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers)
     {
       var eventTypeHandlers = handlers[eventType];
@@ -550,7 +604,7 @@
   function clearHandlers(node, eventType){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers)
     {
       if (typeof eventType != 'string')
@@ -582,9 +636,16 @@
   function fireEvent(node, eventType, event){
     node = getNode(node);
 
-    var handlers = node[EVENT_HOLDER];
+    var handlers = node === global ? globalEvents : node[EVENT_HOLDER];
     if (handlers && handlers[eventType])
+    {
+      try {
+        flushAsap = false;
         handlers[eventType].fireEvent(event);
+      } finally {
+        flushAsap = true;
+      }
+    }
   }
 
   //
@@ -597,7 +658,9 @@
   * @param {object=} thisObject Context for handler
   */
   function onUnload(handler, thisObject){
-    addHandler(global, 'unload', handler, thisObject);
+    // deprecated in 1.4
+    /** @cut */ basis.dev.warn('basis.dom.event.onUnload() is deprecated, use basis.teardown() instead');
+    basis.teardown(handler, thisObject);
   }
 
 

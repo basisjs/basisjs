@@ -1,0 +1,16 @@
+<b:style src="./event-log-entry.css"/>
+<b:isolate/>
+<b:define name="shown" from="event" type="bool"/>
+<b:define name="destroing" type="bool"/>
+
+<div class="wrapper wrapper_{anim:shown} wrapper_{destroing}">
+  <div class="entry">
+    <div class="title">
+      <span class="event">{event}</span>
+      {selector}
+    </div>
+    <span class="data">
+      {data}
+    </span>
+  </div>
+</div>

@@ -3,25 +3,22 @@
   * @namespace basis.net
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net';
 
 
   //
   // import names
   //
 
-  var extend = basis.object.extend;
   var arrayFrom = basis.array.from;
   var objectSlice = basis.object.slice;
-  var objectMerge = basis.object.merge;
 
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;
   var Emitter = basisEvent.Emitter;
 
-  var basisData = require('basis.data');
-  var STATE = basisData.STATE;
-  var DataObject = basisData.Object;
+  var DataObject = require('basis.data').Object;
+  var STATE = require('basis.data').STATE;
 
 
  /**
@@ -47,10 +44,10 @@
     return function requestEvent(){
       var args = [this].concat(arrayFrom(arguments));
 
-      event.apply(transportDispatcher, args);
-
       if (this.transport)
         this.transport['emit_' + eventName].apply(this.transport, args);
+      else
+        event.apply(transportDispatcher, args);
 
       event.apply(this, arguments);
     };
@@ -92,8 +89,6 @@
   var AbstractRequest = DataObject.subclass({
     className: namespace + '.AbstractRequest',
 
-    influence: null,
-    initData: null,
     requestData: null,
 
     transport: null,
@@ -106,35 +101,13 @@
     emit_failure: createRequestEvent('failure'),
     emit_complete: createRequestEvent('complete'),
 
-    emit_stateChanged: function(oldState){
-      DataObject.prototype.emit_stateChanged.call(this, oldState);
-
-      if (this.influence)
-        for (var i = 0; i < this.influence.length; i++)
-          this.influence[i].setState(this.state, this.state.data);
-    },
-
-    init: function(){
-      DataObject.prototype.init.call(this);
-      this.influence = [];
-    },
-
-    setInfluence: function(influence){
-      this.influence = arrayFrom(influence);
-    },
-    clearInfluence: function(){
-      this.influence = null;
-    },
-
+    abort: basis.fn.$undef,
     doRequest: basis.fn.$undef,
-    getResponseData: basis.fn.$undef,
 
     destroy: function(){
       DataObject.prototype.destroy.call(this);
 
-      this.initData = null;
       this.requestData = null;
-      this.clearInfluence();
     }
   });
 
@@ -173,9 +146,14 @@
 
     requestClass: AbstractRequest,
 
-    requests: null,
+    stopped: false,
     poolLimit: null,
-    poolHashGetter: basis.fn.$true,
+    poolHashGetter: null,
+
+    requests: null,
+    requestQueue: null,
+    inprogressRequests: null,
+    stoppedRequests: null,
 
     emit_start: createTransportEvent('start'),
     emit_timeout: createTransportEvent('timeout'),
@@ -198,24 +176,32 @@
         this.addHandler(TRANSPORT_POOL_LIMIT_HANDLER, this);
     },
 
-    getRequestByHash: function(requestHashId){
+    getRequestByHash: function(requestData){
+      function findIdleRequest(transport){
+        for (var id in transport.requests)
+        {
+          var request = transport.requests[id];
+          if (request.isIdle() && transport.requestQueue.indexOf(request) == -1)
+          {
+            delete transport.requests[id];
+            return request;
+          }
+        }
+      }
+
+      var requestHashId = this.poolHashGetter
+                            ? this.poolHashGetter(requestData)
+                            : requestData.origin
+                              ? requestData.origin.basisObjectId
+                              : 'default';
       var request = this.requests[requestHashId];
 
       if (!request)
       {
-        //find idle transport
-        for (var id in this.requests)
-          if (this.requests[id].isIdle() && this.requestQueue.indexOf(this.requests[id]) == -1)
-          {
-            request = this.requests[id];
-            delete this.requests[id];
-            break;
-          }
-
-        if (!request)
-          request = new this.requestClass({
-            transport: this
-          });
+        // find idle request or create new one
+        request = findIdleRequest(this) || new this.requestClass({
+          transport: this
+        });
 
         this.requests[requestHashId] = request;
       }
@@ -230,38 +216,33 @@
       if (!this.prepare())
         return;
 
-      var requestData = objectSlice(config);
-      var requestHashId = this.poolHashGetter(this.prepareRequestData(requestData));
+      var requestData = this.prepareRequestData(objectSlice(config));
+      var request = this.getRequestByHash(requestData);
 
-      var request = this.getRequestByHash(requestHashId, true);
-
-      if (request.initData)
+      if (request.requestData)
         request.abort();
 
-      request.initData = requestData;
       request.requestData = requestData;
-      request.setInfluence(requestData.influence || this.influence);
 
-      if (this.poolLimit && this.inprogressRequests.length >= this.poolLimit)
+      if (!this.poolLimit || this.inprogressRequests.length < this.poolLimit)
+      {
+        request.doRequest();
+      }
+      else
       {
         this.requestQueue.push(request);
         request.setState(STATE.PROCESSING);
       }
-      else
-        request.doRequest();
 
       return request;
     },
 
     abort: function(){
-      for (var i = 0, request; request = this.inprogressRequests[i]; i++)
-        request.abort();
-
-      for (var i = 0, request; request = this.requestQueue[i]; i++)
+      for (var request; request = this.requestQueue.pop();)
         request.setState(STATE.ERROR);
 
-      this.inprogressRequests = [];
-      this.requestQueue = [];
+      for (var request; request = this.inprogressRequests.pop();)
+        request.abort();
     },
 
     stop: function(){
@@ -274,21 +255,20 @@
     },
 
     resume: function(){
-      if (this.stoppedRequests)
+      if (this.stopped)
       {
-        for (var i = 0, request; request = this.stoppedRequests[i]; i++)
-          request.transport.request(request.initData);
+        for (var request; request = this.stoppedRequests.pop();)
+          this.request(request.requestData);
 
-        this.stoppedRequests = null;
+        this.stopped = false;
       }
-      this.stopped = false;
     },
 
     destroy: function(){
-      for (var i in this.requests)
-        this.requests[i].destroy();
+      for (var id in this.requests)
+        this.requests[id].destroy();
 
-      this.requests = {};
+      this.requests = null;
       this.inprogressRequests = null;
       this.requestQueue = null;
       this.stoppedRequests = null;

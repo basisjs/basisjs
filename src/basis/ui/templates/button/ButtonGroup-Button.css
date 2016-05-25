@@ -1,0 +1,21 @@
+.group .button .button-back
+{
+  /* remove border radius, only first and last buttons has border-radius */
+  border-radius: 0;
+}
+.group .button + .button .button-back
+{
+  /* overlay for 1px on right */
+  margin-left: -1px;
+}
+
+.group .button:first-child .button-back
+{
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+.group .button:last-child .button-back
+{
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+}

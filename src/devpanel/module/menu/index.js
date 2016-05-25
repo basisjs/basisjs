@@ -1,5 +1,10 @@
 var Node = require('basis.ui').Node;
-var eventUtils = require('basis.dom.event');
+var domEventUtils = require('basis.dom.event');
+
+var templates = require('basis.template').define('app.menu', {
+  View: resource('./template/view.tmpl'),
+  Item: resource('./template/item.tmpl')
+});
 
 module.exports = Node.subclass({
   opened: false,
@@ -35,12 +40,12 @@ module.exports = Node.subclass({
   show: function(){
     this.opened = true;
     this.updateBind('opened');
-    eventUtils.addGlobalHandler('click', this.hide, this);
+    domEventUtils.addGlobalHandler('click', this.hide, this);
   },
   hide: function(){
     this.opened = false;
     this.updateBind('opened');
-    eventUtils.removeGlobalHandler('click', this.hide, this);
+    domEventUtils.removeGlobalHandler('click', this.hide, this);
     this.setDelegate();
   }
 });

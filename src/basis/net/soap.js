@@ -8,7 +8,7 @@
   * @namespace basis.net.soap
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net.soap';
 
 
   //
@@ -35,7 +35,6 @@
   // Main part
   //
 
-  var SOAP_VERSION   = '1.1';
   var SOAP_PREFIX    = 'soap';
   var SOAP_NAMESPACE = String('http://schemas.xmlsoap.org/soap/envelope/');
   var SOAP_ENCODING  = String('http://schemas.xmlsoap.org/soap/encoding/');
@@ -43,7 +42,6 @@
   var SOAP_ENVELOPE = 'Envelope';
   var SOAP_HEADER   = 'Header';
   var SOAP_BODY     = 'Body';
-  var SOAP_FAULT    = 'Fault';
 
 
  /**
@@ -111,8 +109,8 @@
         else
         {
           // convert to native document for IE
-          if (xml.xml && window.DOMParser)
-            xml = new DOMParser().parseFromString(xml.xml, 'text/xml');
+          if (xml.xml && global.DOMParser)
+            xml = new global.DOMParser().parseFromString(xml.xml, 'text/xml');
 
           this.responseEnvelope = new Envelope(xml.documentElement);
         }
@@ -162,7 +160,7 @@
 
       this.requestEnvelope.getBody(true).setValue(new QName(requestData.methodName, requestData.namespace), requestData.soapBody);
 
-      requestData.postBody = this.requestEnvelope.document;
+      requestData.body = this.requestEnvelope.document;
 
       return requestData;
     },

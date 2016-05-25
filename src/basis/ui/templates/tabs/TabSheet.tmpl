@@ -1,19 +1,5 @@
 
-  <b:style src="./Tab.css"/>
-  <b:style src="./Page.css"/>
-  <b:define name="selected" type="bool"/>
-  <b:define name="unselected" type="bool" default="true"/>
-  <b:define name="disabled" type="bool"/>
-
-  <div class="Basis-TabSheet {selected} {disabled}" event-click="select">
-    <div{tabElement} class="Basis-Tab Basis-Tab__{selected} Basis-Tab__{disabled}">
-      <span class="Basis-Tab-Content">
-        <span class="Basis-Tab-Caption">
-          {title}
-        </span>
-      </span> 
-    </div>
-    <div{pageElement} class="Basis-Page Basis-Page__{unselected}">
-      <div{content|pageContent|childNodesElement} class="Basis-Page-Content"/>
-    </div>
-  </div>
+  <span>
+    <b:include src="./Tab.tmpl" ref="tabElement"/>
+    <b:include src="./Page.tmpl" ref="pageElement"/>
+  </span>

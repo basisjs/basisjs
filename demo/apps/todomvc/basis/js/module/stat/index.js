@@ -1,18 +1,13 @@
-require('basis.ui');
-require('basis.data.index');
-
-//
-// import names
-//
-
 var Todo = require('app.type').Todo;
+var Node = require('basis.ui').Node;
+var count = require('basis.data.index').count;
 
 
 //
 // filters
 //
 
-var filters = new basis.ui.Node({
+var filters = new Node({
   template: resource('./template/filters.tmpl'),
   childClass: {
     template: resource('./template/filter-button.tmpl'),
@@ -48,13 +43,13 @@ var filters = new basis.ui.Node({
 // panel
 //
 
-module.exports = new basis.ui.Node({
+module.exports = new Node({
   template: resource('./template/footer.tmpl'),
   binding: {
     filters: filters,
-    hidden: basis.data.index.count(Todo.all).as(basis.bool.invert),
-    completed: basis.data.index.count(Todo.completed),
-    active: basis.data.index.count(Todo.active)
+    hidden: count(Todo.all).as(basis.bool.invert),
+    completed: count(Todo.completed),
+    active: count(Todo.active)
   },
   action: {
     clearCompleted: function(){

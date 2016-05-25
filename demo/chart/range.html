@@ -114,16 +114,14 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.entity');
-    basis.require('basis.data.value');
-    basis.require('basis.ui.chart');
-    basis.require('basis.dragdrop');
-    basis.require('basis.ui.calendar');
-
-    var DOM = basis.dom;
-    var nsEntity = basis.entity;
-    var LinearChart = basis.ui.chart.LinearChart;
+    var monthNumToAbbr = basis.require('basis.date').monthNumToAbbr;
+    var Slice = basis.require('basis.data.dataset').Slice;
+    var Dataset = basis.require('basis.data').Dataset;
+    var wrapData = basis.require('basis.data').wrap;
+    var Value = basis.require('basis.data').Value;
+    var UINode = basis.require('basis.ui').Node;
+    var LinearChart = basis.require('basis.ui.chart').LinearChart;
+    var DragDropElement = basis.require('basis.dragdrop').DragDropElement;
 
 
     //
@@ -138,20 +136,18 @@
 
     var max = Math.max.apply(null, amounts.map(Number));
 
-    for (var i = dates.length; i-- > 0;)
-      data.push(new basis.data.Object({
-        data: {
-          Date: new Date(dates[i] * 1000),
-          Amount: Number(amounts[i])
-        }
-      }));
+    for (var i = dates.length; i > 0; i--)
+      data.push({
+        date: new Date(dates[i] * 1000),
+        amount: Number(amounts[i])
+      });
 
-    var chartValues = new basis.data.Dataset({
-      items: data
+    var chartValues = new Dataset({
+      items: wrapData(data, true)
     });
 
-    var reportSlice = new basis.data.dataset.Slice({
-      rule: basis.getter('data.Date', Number),
+    var reportSlice = new Slice({
+      rule: basis.getter('data.date').as(Number),
       source: chartValues,
       orderDesc: true,
       offset: 450,
@@ -160,7 +156,7 @@
 
     var chart = new LinearChart({
       autoRotateScale: true,
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       width: 800,
       height: 450,
       showLegend: false,
@@ -171,29 +167,29 @@
         lineWidth: 1.5
       },
       dataSource: reportSlice,
-      keyGetter: basis.getter('data.Date'),
+      keyGetter: basis.getter('data.date'),
       keyTitleGetter: function(object){
-        var date = object.data.Date;
-        return date.getDate() + ' ' + basis.date.monthNumToAbbr[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+        var date = object.data.date;
+        return date.getDate() + ' ' + monthNumToAbbr[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
-      sorting: basis.getter('data.Date'),
+      sorting: basis.getter('data.date').as(Number),
       series: [
         {
           color: 'red',
-          valueGetter: basis.getter('data.Amount')
+          valueGetter: basis.getter('data.amount')
         }
       ]
     });
 
     new LinearChart({
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
       template:
         '<b:include src="basis.ui.chart.Chart" id="RangeChart">' +
           '<b:append><!--{period}--></b:append>' +
         '</b:include>',
 
       binding: {
-        period: new basis.ui.Node({
+        period: new UINode({
           template:
             '<div class="rangeOver">' +
               '<div{before} class="rangeOver__before" style="width: {beforeWidth}%"><div class="trigger"/></div>' +
@@ -205,8 +201,8 @@
             afterWidth: 'afterWidth'
           },
 
-          beforeWidth: 0,
-          afterWidth: 0,
+          beforeWidth: new basis.Token(0),
+          afterWidth: new basis.Token(0),
           sync: function(){
             var itemCount = reportSlice.index_.length;
             var start = reportSlice.offset;
@@ -221,14 +217,11 @@
             start = Math.max(0, start);
             end = Math.max(0, end);
 
-            this.beforeWidth = 100 * (start / itemCount);
-            this.afterWidth = 100 * (1 - end / itemCount);
-
-            this.updateBind('beforeWidth');
-            this.updateBind('afterWidth');
+            this.beforeWidth.set(100 * (start / itemCount));
+            this.afterWidth.set(100 * (1 - end / itemCount));
           },
           templateSync: function(){
-            basis.ui.Node.prototype.templateSync.call(this);
+            UINode.prototype.templateSync.call(this);
             this.dd1.setElement(this.tmpl.win);
             this.dd2.setElement(this.tmpl.before.firstChild);
             this.dd3.setElement(this.tmpl.after.firstChild);
@@ -237,59 +230,59 @@
           },
 
           init: function(){
-            basis.ui.Node.prototype.init.call(this);
+            UINode.prototype.init.call(this);
 
             reportSlice.addHandler({
               rangeChanged: this.sync
             }, this);
 
             // add drag posibility for slider
-            this.dd1 = new basis.dragdrop.DragDropElement({
+            this.dd1 = new DragDropElement({
               axisY: false,
               handler: {
                 context: this,
                 callbacks: {
                   start: function(){
-                    this.offset__ = reportSlice.offset;
+                    this.offset_ = reportSlice.offset;
                   },
                   drag: function(sender, config){
                     var itemCount = reportSlice.index_.length;
-                    var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                    var offset = this.offset_ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
                     reportSlice.setOffset(basis.number.fit(offset, 0, itemCount - reportSlice.limit));
                   }
                 }
               }
             });
 
-            this.dd2 = new basis.dragdrop.DragDropElement({
+            this.dd2 = new DragDropElement({
               axisY: false,
               handler: {
                 context: this,
                 callbacks: {
                   start: function(){
-                    this.limit__ = reportSlice.limit;
+                    this.limit_ = reportSlice.limit;
                   },
                   drag: function(sender, config){
                     var itemCount = reportSlice.index_.length;
-                    var limit = this.limit__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                    var limit = this.limit_ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
                     reportSlice.setLimit(Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
                   }
                 }
               }
             });
 
-            this.dd3 = new basis.dragdrop.DragDropElement({
+            this.dd3 = new DragDropElement({
               axisY: false,
               handler: {
                 context: this,
                 callbacks: {
                   start: function(){
-                    this.offset__ = reportSlice.offset;
-                    this.limit__ = reportSlice.limit;
+                    this.offset_ = reportSlice.offset;
+                    this.limit_ = reportSlice.limit;
                   },
                   drag: function(sender, config){
                     var itemCount = reportSlice.index_.length;
-                    var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
+                    var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset_ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
                     var limit = reportSlice.limit - (offset - reportSlice.offset);
                     reportSlice.setRange(offset, limit);
                   }
@@ -299,7 +292,7 @@
           }
         })
       },
-      
+
       width: 800,
       height: 50,
       showLegend: false,
@@ -308,11 +301,11 @@
       showBoundLines: false,
       showGrid: false,
       fillArea: true,
-      keyGetter: basis.getter('data.Date'),
+      keyGetter: basis.getter('data.date'),
       dataSource: chartValues,
-      sorting: basis.getter('data.Date'),
+      sorting: basis.getter('data.date').as(Number),
       series: [
-        basis.getter('data.Amount')
+        basis.getter('data.amount')
       ],
       style: {
         lineWidth: .5
@@ -322,22 +315,10 @@
       }
     });
 
-    var totalCount = new basis.data.value.Property(chartValues.itemCount);
-    var rangeCount = new basis.data.value.Property(reportSlice.itemCount);
+    var totalCount = Value.from(chartValues, 'itemsChanged', 'itemCount');
+    var rangeCount = Value.from(reportSlice, 'itemsChanged', 'itemCount');
 
-    reportSlice.addHandler({
-      itemsChanged: function(dataset){
-        this.set(dataset.itemCount);
-      }
-    }, rangeCount);
-
-    chartValues.addHandler({
-      itemsChanged: function(dataset){
-        this.set(dataset.itemCount);
-      }
-    }, totalCount);
-
-    new basis.ui.Node({
+    new UINode({
       container: document.getElementById('demo-container'),
 
       template:
@@ -347,8 +328,8 @@
         '</div>',
 
       binding: {
-        totalCount: basis.fn.$const(totalCount),
-        rangeCount: basis.fn.$const(rangeCount)
+        totalCount: totalCount,
+        rangeCount: rangeCount
       }
     });
 

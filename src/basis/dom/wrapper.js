@@ -13,13 +13,14 @@
   * @namespace basis.dom.wrapper
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.dom.wrapper';
 
 
   //
   // import names
   //
 
+  /** @cut */ var hasOwnProperty = Object.prototype.hasOwnProperty;
   var Class = basis.Class;
   var complete = basis.object.complete;
   var arrayFrom = basis.array;
@@ -27,21 +28,20 @@
   var $undef = basis.fn.$undef;
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
-  var oneFunctionProperty = Class.oneFunctionProperty;
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;
   var events = basisEvent.events;
   var basisData = require('basis.data');
+  var resolveValue = basisData.resolveValue;
   var resolveDataset = basisData.resolveDataset;
+  var createResolveFunction = basisData.createResolveFunction;
 
   var SUBSCRIPTION = basisData.SUBSCRIPTION;
   var STATE = basisData.STATE;
 
-  var AbstractData = basisData.AbstractData;
   var DataObject = basisData.Object;
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
   var Dataset = basisData.Dataset;
-  var DatasetWrapper = basisData.DatasetWrapper;
 
 
   //
@@ -57,6 +57,7 @@
   /** @const */ var EXCEPTION_PARENTNODE_OWNER_CONFLICT = namespace + ': Node can\'t has owner and parentNode';
   /** @const */ var EXCEPTION_NO_CHILDCLASS = namespace + ': Node can\'t has children and dataSource as childClass isn\'t specified';
 
+  /** @const */ var AUTO = '__auto__';
   /** @const */ var DELEGATE = {
     ANY: true,
     NONE: false,
@@ -94,10 +95,8 @@
   // sorting
   //
 
-  function sortingSearch(node){
-    return node.sortingValue || 0; // it's important return a zero when sortingValue is undefined,
-                                   // because in this case sorting may be broken; it's also not a problem
-                                   // when zero equivalent values (null, false or empty string) converts to zero
+  function getSortingValue(node){
+    return node.sortingValue;
   }
 
   function sortAsc(a, b){
@@ -120,34 +119,59 @@
     );
   }
 
-  function binarySearchPos(array, value, getter_, desc){
+  function binarySearchPos(array, value, valueGetter, desc){
     if (!array.length)  // empty array check
       return 0;
 
     desc = !!desc;
 
-    var pos;
-    var compareValue;
     var l = 0;
     var r = array.length - 1;
+    var valueType = typeof value;
+    var compareValue;
+    var compareValueType;
+    var pos;
 
     do
     {
       pos = (l + r) >> 1;
-      compareValue = getter_(array[pos]);
-      if (desc ? value > compareValue : value < compareValue)
-        r = pos - 1;
-      else
-        if (desc ? value < compareValue : value > compareValue)
+      compareValue = valueGetter(array[pos]);
+      compareValueType = typeof compareValue;
+
+      if (desc)
+      {
+        if (valueType > compareValueType || value > compareValue)
+        {
+          r = pos - 1;
+          continue;
+        }
+        if (valueType < compareValueType || value < compareValue)
+        {
           l = pos + 1;
-        else
-          return value == compareValue ? pos : 0;  // founded element
-                                                    // -1 returns when it seems as founded element,
-                                                    // but not equal (array item or value looked for have wrong data type for compare)
+          continue;
+        }
+      }
+      else
+      {
+        if (valueType < compareValueType || value < compareValue)
+        {
+          r = pos - 1;
+          continue;
+        }
+        if (valueType > compareValueType || value > compareValue)
+        {
+          l = pos + 1;
+          continue;
+        }
+      }
+
+      return value == compareValue ? pos : 0;   // founded element
+                                                // -1 returns when it seems as founded element,
+                                                // but not equal (array item or value looked for have wrong data type for compare)
     }
     while (l <= r);
 
-    return pos + ((compareValue < value) ^ desc);
+    return pos + ((compareValueType < valueType || compareValue < value) ^ desc);
   }
 
   //
@@ -168,7 +192,7 @@
     if (rootUpdate)
     {
       root.contextSelection = newSelection;
-      if (root.selected)
+      if (root.selected && !root.selectedRA_)
         selected.push(root);
     }
 
@@ -195,7 +219,20 @@
               oldSelection.remove(selected);
 
             if (newSelection)
+            {
               newSelection.add(selected);
+
+              // remove selected from nodes that was not added to new selection set
+              for (var i = 0; i < selected.length; i++)
+              {
+                var node = selected[i];
+                if (node.selected && !newSelection.has(node))
+                {
+                  node.selected = false;
+                  node.emit_unselect();
+                }
+              }
+            }
           }
 
           return;
@@ -213,7 +250,7 @@
       cursor = nextNode;
 
       // store selected nodes
-      if (cursor.selected)
+      if (cursor.selected && !cursor.selectedRA_)
         selected.push(cursor);
 
       // change context selection
@@ -248,101 +285,197 @@
 
   SUBSCRIPTION.addProperty('owner');
   SUBSCRIPTION.addProperty('dataSource');
+  SUBSCRIPTION.add(
+    'CHILD',
+    {
+      childNodesModified: function(object, delta){
+        var array;
+
+        if (array = delta.inserted)
+          for (var i = 0, item; item = array[i]; i++)
+            SUBSCRIPTION.link('child', object, array[i]);
+
+        if (array = delta.deleted)
+          for (var i = 0, item; item = array[i]; i++)
+            SUBSCRIPTION.unlink('child', object, array[i]);
+      }
+    },
+    function(action, object){
+      var childNodes = object.childNodes || [];
+
+      for (var i = 0, child; child = childNodes[i]; i++)
+        action('child', object, child);
+    }
+  );
+  SUBSCRIPTION.add(
+    'SATELLITE',
+    {
+      satelliteChanged: function(object, name, oldSatellite){
+        if (oldSatellite)
+          SUBSCRIPTION.unlink('satellite', object, oldSatellite);
+        if (object.satellite[name])
+          SUBSCRIPTION.link('satellite', object, object.satellite[name]);
+      }
+    },
+    function(action, object){
+      var satellites = object.satellite;
+      if (satellites !== NULL_SATELLITE)
+        for (var name in satellites)
+          if (name !== AUTO)
+            action('satellite', object, satellites[name]);
+    }
+  );
+
 
   //
   // AbstractNode
   //
 
-  function processSatelliteConfig(value){
-    if (!value)
-      return null;
-
-    if (value.isSatelliteConfig)
-      return value;
-
-    if (value instanceof AbstractNode)
-      return value;
-
-    if (Class.isClass(value))
-      value = {
-        instanceOf: value
-      };
-
-    if (value && value.constructor === Object)
+  function processInstanceClass(InstanceClass){
+    if (!InstanceClass.isSubclassOf(AbstractNode))
     {
-      var handlerRequired = false;
-      var config = {
-        isSatelliteConfig: true
-      };
-
-      var instanceClass;
-
-      for (var key in value)
-        switch (key)
-        {
-          case 'instance':
-            if (value[key] instanceof AbstractNode)
-              config[key] = value[key];
-            else
-            {
-              /** @cut */ basis.dev.warn(namespace + ': `instance` value in satellite config must be an instance of basis.dom.wrapper.AbstractNode');
-            }
-
-            break;
-
-          case 'instanceOf':
-            if (Class.isClass(value[key]) && value[key].isSubclassOf(AbstractNode))
-              instanceClass = value[key];
-            else
-            {
-              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` value in satellite config must be a subclass of basis.dom.wrapper.AbstractNode');
-            }
-            break;
-
-          case 'existsIf':
-          case 'delegate':
-          case 'dataSource':
-            handlerRequired = true;
-            config[key] = getter(value[key]);
-            break;
-
-          case 'config':
-            config[key] = value[key];
-            break;
-        }
-
-      if (!config.instance)
-        config.instanceOf = instanceClass || AbstractNode;
-      else
-      {
-        /** @cut */ if (instanceClass)
-        /** @cut */   basis.dev.warn(namespace + ': `instanceOf` can\'t be set with `instance` value in satellite config, value ignored');
-      }
-
-      if (handlerRequired)
-      {
-        var events = 'events' in value ? value.events : 'update';
-
-        if (Array.isArray(events))
-          events = events.join(' ');
-
-        if (typeof events == 'string')
-        {
-          var handler = {};
-          events = events.split(/\s+/);
-
-          for (var i = 0, eventName; eventName = events[i]; i++)
-          {
-            handler[eventName] = SATELLITE_UPDATE;
-            config.handler = handler;
-          }
-        }
-      }
-
-      return config;
+      /** @cut */ basis.dev.warn(namespace + ': Bad class for instance, should be subclass of basis.dom.wrapper.AbstractNode');
+      return AbstractNode;
     }
 
-    return null;
+    return InstanceClass;
+  }
+
+  function processSatelliteConfig(satelliteConfig){
+    /** @cut */ var loc;
+
+    if (!satelliteConfig)
+      return null;
+
+    if (satelliteConfig.isSatelliteConfig)
+      return satelliteConfig;
+
+    if (satelliteConfig instanceof AbstractNode)
+      return satelliteConfig;
+
+    if (satelliteConfig.constructor !== Object)
+      satelliteConfig = {
+        instance: satelliteConfig
+      };
+    /** @cut */ else
+    /** @cut */   loc = basis.dev.getInfo(satelliteConfig, 'loc');
+
+    var handlerRequired = false;
+    var events = 'update';
+    var config = {
+      isSatelliteConfig: true
+    };
+
+    for (var key in satelliteConfig)
+    {
+      var value = satelliteConfig[key];
+      switch (key)
+      {
+        case 'instance':
+          if (value instanceof AbstractNode)
+          {
+            config.instance = value;
+          }
+          else
+          {
+            if (Class.isClass(value))
+              config.instanceClass = processInstanceClass(value);
+            else
+            {
+              if (typeof value == 'string')
+                value = basis.getter(value);
+
+              config.getInstance = value;
+            }
+          }
+
+          break;
+
+        case 'instanceOf': // deprecated
+        case 'satelliteClass':
+          if (key == 'instanceOf')
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config is deprecated, use `instance` instead');
+            if ('satelliteClass' in satelliteConfig)
+            {
+              /** @cut */ basis.dev.warn(namespace + ': `instanceOf` in satellite config has been ignored, as `satelliteClass` is specified');
+              break;
+            }
+          }
+
+          if ('instance' in satelliteConfig)
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `' + key + '` in satellite config has been ignored, as `instance` is specified');
+            break;
+          }
+
+          if (Class.isClass(value))
+          {
+            /** @cut */ basis.dev.warn(namespace + ': `' + key + '` in satellite config is deprecated, use `instance` instead');
+            config.instanceClass = processInstanceClass(value);
+          }
+          /** @cut */ else
+          /** @cut */   basis.dev.warn(namespace + ': bad value for `' + key + '` in satellite config, value should be a subclass of basis.dom.wrapper.AbstractNode');
+          break;
+
+        case 'existsIf':
+        case 'delegate':
+        case 'dataSource':
+          if (value)
+          {
+            if (typeof value == 'string')
+              value = getter(value);
+
+            if (typeof value != 'function')
+              value = basis.fn.$const(value);
+            else
+              handlerRequired = true;
+          }
+
+          config[key] = value;
+          break;
+
+        case 'config':
+          if (typeof value == 'string')
+            value = getter(value);
+
+          config.config = value;
+          break;
+
+        case 'events':
+          events = satelliteConfig.events;
+          break;
+
+        default:
+          /** @cut */ basis.dev.warn('Unknown satellite config option – ' + key);
+      }
+    }
+
+    if (!config.instance && !config.getInstance && !config.instanceClass)
+      config.instanceClass = processInstanceClass(AbstractNode);
+
+    if (handlerRequired)
+    {
+      if (Array.isArray(events))
+        events = events.join(' ');
+
+      if (typeof events == 'string')
+      {
+        var handler = {};
+        events = events.split(/\s+/);
+
+        for (var i = 0, eventName; eventName = events[i]; i++)
+        {
+          handler[eventName] = SATELLITE_UPDATE;
+          config.handler = handler;
+        }
+      }
+    }
+
+    /** @cut */ if (loc)
+    /** @cut */   basis.dev.setInfo(config, 'loc', loc);
+
+    return config;
   }
 
   function applySatellites(node, satellites){
@@ -353,47 +486,62 @@
 
   // default satellite map
   var NULL_SATELLITE = Class.customExtendProperty({}, function(result, extend){
+    /** @cut */ var map = basis.dev.getInfo(extend, 'map');
+
     for (var name in extend)
+    {
       result[name] = processSatelliteConfig(extend[name]);
+
+      /** @cut */ if (map && !basis.dev.getInfo(result[name]) && hasOwnProperty.call(map, name))
+      /** @cut */   basis.dev.setInfo(result[name], 'loc', map[name]);
+    }
   });
 
   // satellite update handler
-  var SATELLITE_UPDATE = function(owner){
+  var SATELLITE_UPDATE = function(){
     // this -> {
+    //   owner: owner,
     //   name: satelliteName,
-    //   config: satelliteConfig
+    //   config: satelliteConfig,
+    //   instance: satelliteInstance or null,
+    //   instanceRA_: ResolveAdapter or null,
+    //   existsRA_: ResolveAdapter or null
+    //   factoryType: 'value' or 'class'
+    //   factory: class or any
     // }
     var name = this.name;
     var config = this.config;
+    var owner = this.owner;
 
-    var exists = !config.existsIf || config.existsIf(owner);
-    var satellite = owner.satellite[name];
+    var exists = ('existsIf' in config == false) || config.existsIf(owner);
 
-    if (exists)
+    if (resolveValue(this, SATELLITE_UPDATE, exists, 'existsRA_'))
     {
-      if (satellite)
-      {
-        if (config.delegate)
-          satellite.setDelegate(config.delegate(owner));
+      var satellite = this.instance || config.instance;
 
-        if (config.dataSource)
-          satellite.setDataSource(config.dataSource(owner));
-      }
-      else
+      if (!satellite || this.factoryType == 'value')
       {
-        satellite = config.instance;
-
-        if (!satellite)
+        if (!this.factoryType)
         {
-          // create new satellite instance
-          var listenHandler;
-          var satelliteConfig = (
-            typeof config.config == 'function'
-              ? config.config(owner)
-              : config.config
-          ) || {};
+          var instanceValue = config.getInstance;
+          var instanceClass = config.instanceClass;
 
-          satelliteConfig.owner = owner;
+          if (typeof instanceValue == 'function')
+          {
+            instanceValue = instanceValue.call(owner, owner);
+            if (Class.isClass(instanceValue))
+              instanceClass = processInstanceClass(instanceValue);
+          }
+
+          this.factoryType = instanceClass ? 'class' : 'value';
+          this.factory = instanceClass || instanceValue;
+        }
+
+        if (this.factoryType == 'class')
+        {
+          var satelliteConfig = {
+            destroy: warnOnAutoSatelliteDestoy // auto-create satellite marker, lock destroy method invocation
+          };
 
           if (config.delegate)
           {
@@ -404,31 +552,44 @@
           if (config.dataSource)
             satelliteConfig.dataSource = config.dataSource(owner);
 
-          satellite = new config.instanceOf(satelliteConfig);
-          satellite.destroy = warnOnAutoSatelliteDestoy; // auto-create satellite marker, lock destroy method invocation
+          if (config.config)
+            basis.object.complete(satelliteConfig, typeof config.config == 'function'
+              ? config.config(owner)
+              : config.config
+            );
 
-          // this statement here, because owner set in config and no listen add in this case
-          // TODO: looks like a hack, fix it
-          if (listenHandler = owner.listen.satellite)
-            satellite.addHandler(listenHandler, owner);
-          if (listenHandler = owner.listen['satellite:' + name])
-            satellite.addHandler(listenHandler, owner);
-        }
-        else
-        {
-          if (config.delegate)
-            satellite.setDelegate(config.delegate(owner));
+          this.instance = new this.factory(satelliteConfig);
+          owner.setSatellite(name, this.instance, true);
 
-          if (config.dataSource)
-            satellite.setDataSource(config.dataSource(owner));
+          /** @cut */ var loc = basis.dev.getInfo(config, 'loc');
+          /** @cut */ if (loc)
+          /** @cut */   basis.dev.setInfo(this.instance, 'loc', loc);
+
+          return;
         }
 
-        owner.satellite.__auto__[name].instance = satellite;
-        owner.setSatellite(name, satellite, true);
+        // factoryType == 'value'
+        satellite = resolveAbstractNode(this, SATELLITE_UPDATE, this.factory, 'instanceRA_');
+      }
+
+      if (this.instance !== satellite)
+      {
+        this.instance = satellite || null;
+        owner.setSatellite(name, this.instance, true);
+      }
+
+      if (satellite && satellite.owner === owner)
+      {
+        if (config.delegate)
+          satellite.setDelegate(config.delegate(owner));
+
+        if (config.dataSource)
+          satellite.setDataSource(config.dataSource(owner));
       }
     }
     else
     {
+      var satellite = this.instance;
       if (satellite)
       {
         if (config.instance)
@@ -440,7 +601,7 @@
             satellite.setDataSource();
         }
 
-        owner.satellite.__auto__[name].instance = null;
+        this.instance = null;
         owner.setSatellite(name, null, true);
       }
     }
@@ -448,7 +609,8 @@
 
   var AUTO_SATELLITE_INSTANCE_HANDLER = {
     destroy: function(){
-      this.owner.setSatellite(this.name, null);
+      if (!this.instanceRA_)
+        this.owner.setSatellite(this.name, null);
     }
   };
 
@@ -458,11 +620,36 @@
   */
   var AbstractNode = Class(DataObject, {
     className: namespace + '.AbstractNode',
+    propertyDescriptors: {
+      owner: 'ownerChanged',
+      parentNode: 'parentChanged',
+      childNodes: 'childNodesModified',
+      childNodesState: 'childNodesStateChanged',
+      dataSource: 'dataSourceChanged',
+      'getChildNodesDataset()': true,
+      satellite: {
+        nested: true,
+        events: 'satelliteChanged'
+      },
+      sorting: 'sortingChanged',
+      sortingDesc: 'sortingChanged',
+      grouping: 'groupingChanged',
+      ownerSatelliteName: 'ownerSatelliteNameChanged',
+      firstChild: false,
+      lastChild: false,
+      previousSibling: false,
+      nextSibling: false,
+      groupNode: false,
+      groupId: true,
+      autoDelegate: false,
+      destroyDataSourceMember: false,
+      name: true
+    },
 
    /**
     * @inheritDoc
     */
-    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASOURCE,
+    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASOURCE + SUBSCRIPTION.SATELLITE,
 
    /**
     * @inheritDoc
@@ -568,7 +755,7 @@
     * All child nodes must be instances of childClass.
     * @type {Class}
     */
-    childClass: AbstractNode,
+    childClass: Class.SELF,
 
    /**
     * Object that's manage childNodes updates.
@@ -584,7 +771,7 @@
    /**
     * @type {basis.data.ResolveAdapter}
     */
-    dataSourceAdapter_: null,
+    dataSourceRA_: null,
 
    /**
     * Map dataSource members to child nodes.
@@ -606,6 +793,11 @@
     * @readonly
     */
     parentNode: null,
+
+   /**
+    * @param {basis.dom.wrapper.AbstractNode} oldParentNode
+    */
+    emit_parentChanged: createEvent('parentChanged', 'oldParentNode'),
 
    /**
     * The node immediately following this node. If there is no such node,
@@ -694,6 +886,12 @@
     satellite: NULL_SATELLITE,
 
    /**
+    * @param {string} name Name of satellite
+    * @param {basis.data.AbstractData} oldSattelite Old satellite for name
+    */
+    emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
+
+   /**
     * Key in owner.satellite map.
     * @type {string}
     * @readonly
@@ -702,9 +900,9 @@
 
    /**
     * @param {string} name Name of satellite
-    * @param {basis.data.AbstractData} oldSattelite Old satellite for name
+    * @param {string|null} oldName Old satellite name
     */
-    emit_satelliteChanged: createEvent('satelliteChanged', 'name', 'oldSatellite'),
+    emit_ownerSatelliteNameChanged: createEvent('ownerSatelliteNameChanged', 'name', 'oldName'),
 
    /**
     * Node owner. Generaly using by satellites and GroupingNode.
@@ -895,15 +1093,9 @@
       {
         var listenHandler = this.listen.owner;
 
-        // if (this.destroy === warnOnAutoSatelliteDestoy)
-        // {
-        //   /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change it\'s owner');
-        //   return;
-        // }
-
         if (oldOwner)
         {
-          if (this.ownerSatelliteName && oldOwner.satellite.__auto__ && this.ownerSatelliteName in oldOwner.satellite.__auto__)
+          if (this.ownerSatelliteName && oldOwner.satellite[AUTO] && this.ownerSatelliteName in oldOwner.satellite[AUTO])
           {
             /** @cut */ basis.dev.warn(namespace + ': auto-satellite can\'t change it\'s owner');
             return;
@@ -939,24 +1131,21 @@
     */
     setSatellite: function(name, satellite, autoSet){
       var oldSatellite = this.satellite[name] || null;
-      var auto = this.satellite.__auto__;
+      var auto = this.satellite[AUTO];
       var autoConfig = auto && auto[name];
       var preserveAuto = autoSet && autoConfig;
 
       if (preserveAuto)
       {
         satellite = autoConfig.instance;
-        if (autoConfig.config.instance)
-        {
-          if (satellite)
-            delete autoConfig.config.instance.setOwner;
-        }
+        if (satellite && autoConfig.config.instance)
+          delete autoConfig.config.instance.setOwner;
       }
       else
       {
         satellite = processSatelliteConfig(satellite);
 
-        if (satellite && satellite.owner && auto && satellite.ownerSatelliteName && auto[satellite.ownerSatelliteName])
+        if (satellite && satellite.owner === this && auto && satellite.ownerSatelliteName && auto[satellite.ownerSatelliteName])
         {
           /** @cut */ basis.dev.warn(namespace + ': auto-create satellite can\'t change name inside owner');
           return;
@@ -986,7 +1175,12 @@
         {
           // unlink old satellite
           delete this.satellite[name];
-          oldSatellite.ownerSatelliteName = null;
+          var oldSatelliteName = oldSatellite.ownerSatelliteName;
+          if (oldSatelliteName != null)
+          {
+            oldSatellite.ownerSatelliteName = null;
+            oldSatellite.emit_ownerSatelliteNameChanged(oldSatelliteName);
+          }
 
           if (autoConfig && oldSatellite.destroy === warnOnAutoSatelliteDestoy)
           {
@@ -1017,7 +1211,11 @@
               owner: this,
               name: name,
               config: satellite,
-              instance: null
+              factoryType: null,
+              factory: null,
+              instance: null,
+              instanceRA_: null,
+              existsRA_: null
             };
 
             // auto-create satellite
@@ -1035,7 +1233,7 @@
             {
               if (this.satellite === NULL_SATELLITE)
                 this.satellite = {};
-              auto = this.satellite.__auto__ = {};
+              auto = this.satellite[AUTO] = {};
             }
 
             auto[name] = autoConfig;
@@ -1068,9 +1266,12 @@
             else
               satellite.setOwner(this);
 
-            // if owner doesn't changed nothing to do
+            // reset satellite if owner was not set
             if (satellite.owner !== this)
+            {
+              this.setSatellite(name, null);
               return;
+            }
 
             if (satelliteListen)
               satellite.addHandler(satelliteListen, this);
@@ -1091,7 +1292,12 @@
             this.satellite = {};
 
           this.satellite[name] = satellite;
-          satellite.ownerSatelliteName = name;
+          var oldSatelliteName = satellite.ownerSatelliteName;
+          if (oldSatelliteName != name)
+          {
+            satellite.ownerSatelliteName = name;
+            satellite.emit_ownerSatelliteNameChanged(oldSatelliteName);
+          }
         }
 
         this.emit_satelliteChanged(name, oldSatellite);
@@ -1127,7 +1333,7 @@
       DataObject.prototype.destroy.call(this);
 
       // delete children
-      if (this.dataSource || this.dataSourceAdapter_)
+      if (this.dataSource || this.dataSourceRA_)
       {
         // drop dataSource
         this.setDataSource();
@@ -1158,12 +1364,18 @@
       var satellites = this.satellite;
       if (satellites !== NULL_SATELLITE)
       {
-        var auto = satellites.__auto__;
-        delete satellites.__auto__;
+        var auto = satellites[AUTO];
+        delete satellites[AUTO];
 
         for (var name in auto)
+        {
           if (auto[name].config.instance && !auto[name].instance)
             auto[name].config.instance.destroy();
+          if (auto[name].existsRA_)
+            resolveValue(auto[name], null, null, 'existsRA_');
+          if (auto[name].instanceRA_)
+            resolveValue(auto[name], null, null, 'instanceRA_');
+        }
 
         for (var name in satellites)
         {
@@ -1182,15 +1394,13 @@
         this.satellite = null;
       }
 
-      // remove pointers
+      // reset childNodes pointer
       this.childNodes = null;
-      this.parentNode = null;
-      this.previousSibling = null;
-      this.nextSibling = null;
-      this.firstChild = null;
-      this.lastChild = null;
     }
   });
+
+  var resolveAbstractNode = createResolveFunction(AbstractNode);
+
 
  /**
   * @class
@@ -1339,10 +1549,8 @@
             unlockDataSourceItemNode(child);
 
           // optimization: if all old nodes deleted -> clear childNodes
-          var tmp = this.dataSource;
-          this.dataSource = null;
+          this.dataSourceMap_ = null; // prevents exception on clear
           this.clear(true);   // keep alive, event fires
-          this.dataSource = tmp;
           this.dataSourceMap_ = {};
         }
         else
@@ -1403,18 +1611,9 @@
     stateChanged: function(dataSource){
       this.setChildNodesState(dataSource.state, dataSource.state.data);
     },
-    destroy: function(dataSource){
-      if (!this.dataSourceAdapter_)
-        this.setDataSource();
-    }
-  };
-
-  var MIXIN_DATASOURCE_WRAPPER_HANDLER = {
-    datasetChanged: function(wrapper){
-      this.setDataSource(wrapper);
-    },
     destroy: function(){
-      this.setDataSource();
+      if (!this.dataSourceRA_)
+        this.setDataSource();
     }
   };
 
@@ -1438,17 +1637,18 @@
     for (var i = 0, child; child = order[i]; i++)
       child.groupNode.nodes.push(child);
 
-    order.length = 0;
-    for (var group = node.grouping.nullGroup; group; group = group.nextSibling)
+    var groups = [node.grouping.nullGroup].concat(node.grouping.childNodes);
+    var result = []; // new order
+    for (var i = 0, group; group = groups[i]; i++)
     {
       var nodes = group.nodes;
       group.first = nodes[0] || null;
       group.last = nodes[nodes.length - 1] || null;
-      order.push.apply(order, nodes);
+      result.push.apply(result, nodes);
       group.emit_childNodesModified({ inserted: nodes });
     }
 
-    return order;
+    return result;
   }
 
   function createChildByFactory(node, config){
@@ -1459,7 +1659,14 @@
       child = node.childFactory(config);
 
       if (child instanceof node.childClass)
+      {
+        /** @cut */ var info = basis.dev.getInfo(config);
+        /** @cut */ if (info)
+        /** @cut */   for (var key in info)
+        /** @cut */     basis.dev.setInfo(child, key, info[key]);
+
         return child;
+      }
     }
 
     if (!child)
@@ -1558,7 +1765,7 @@
       }
       else
       {
-        if (this.dataSourceAdapter_)
+        if (this.dataSourceRA_)
           throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
       }
 
@@ -1595,7 +1802,12 @@
         // if sorting is using - refChild is ignore
         refChild = null; // ignore
         sortingDesc = this.sortingDesc;
-        newChildValue = sorting(newChild) || 0;
+        newChildValue = sorting(newChild);
+
+        if (newChildValue == null)
+          newChildValue = -Infinity;
+        else if (typeof newChildValue != 'number' || newChildValue !== newChildValue)
+          newChildValue = String(newChildValue);
 
         // some optimizations if node had already inside current node
         if (isInside)
@@ -1606,14 +1818,21 @@
           }
           else
           {
-            if (
-                (!nextSibling || (sortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue)) &&
-                (!prevSibling || (sortingDesc ? prevSibling.sortingValue >= newChildValue : prevSibling.sortingValue <= newChildValue))
-               )
+            if (sortingDesc)
             {
-              newChild.sortingValue = newChildValue;
-              correctSortPos = true;
+              correctSortPos =
+                (!nextSibling || (typeof nextSibling.sortingValue <= typeof newChildValue && nextSibling.sortingValue <= newChildValue)) &&
+                (!prevSibling || (typeof prevSibling.sortingValue >= typeof newChildValue && prevSibling.sortingValue >= newChildValue));
             }
+            else
+            {
+              correctSortPos =
+                (!nextSibling || (typeof nextSibling.sortingValue >= typeof newChildValue && nextSibling.sortingValue >= newChildValue)) &&
+                (!prevSibling || (typeof prevSibling.sortingValue <= typeof newChildValue && prevSibling.sortingValue <= newChildValue));
+            }
+
+            if (correctSortPos)
+              newChild.sortingValue = newChildValue;
           }
         }
       }
@@ -1642,7 +1861,7 @@
           else
           {
             // when sorting use binary search
-            pos = binarySearchPos(groupNodes, newChildValue, sortingSearch, sortingDesc);
+            pos = binarySearchPos(groupNodes, newChildValue, getSortingValue, sortingDesc);
             newChild.sortingValue = newChildValue;
           }
         }
@@ -1704,7 +1923,7 @@
             return newChild;
 
           // search for refChild
-          pos = binarySearchPos(childNodes, newChildValue, sortingSearch, sortingDesc);
+          pos = binarySearchPos(childNodes, newChildValue, getSortingValue, sortingDesc, this.lll);
           refChild = childNodes[pos];
           newChild.sortingValue = newChildValue; // change sortingValue AFTER search
 
@@ -1733,7 +1952,7 @@
       }
 
       //
-      // ======= after this point newChild will be inserted or moved into new position =======
+      // ======= after this point newChild will be inserted or moved on new position =======
       //
 
       // unlink from old parent
@@ -1850,10 +2069,12 @@
         if (newChild.autoDelegate == DELEGATE.PARENT || newChild.autoDelegate === DELEGATE.ANY)
           newChild.setDelegate(this);
 
-        // dispatch event
+        // dispatch events
+        newChild.emit_parentChanged(null);
         if (!this.dataSource)
           this.emit_childNodesModified({ inserted: [newChild] });
 
+        // add listener
         if (newChild.listen.parentNode)
           this.addHandler(newChild.listen.parentNode, newChild);
       }
@@ -1866,7 +2087,7 @@
     * @inheritDoc
     */
     removeChild: function(oldChild){
-      if (!oldChild || oldChild.parentNode !== this) // this.childNodes.absent(oldChild) truly but speedless
+      if (!oldChild || oldChild.parentNode !== this)
         throw EXCEPTION_NODE_NOT_FOUND;
 
       if (oldChild instanceof this.childClass == false)
@@ -1874,12 +2095,12 @@
 
       if (this.dataSource)
       {
-        if (this.dataSource.has(oldChild.delegate))
+        if (!oldChild.delegate || this.dataSourceMap_[oldChild.delegate.basisObjectId])
           throw EXCEPTION_DATASOURCE_CONFLICT;
       }
       else
       {
-        if (this.dataSourceAdapter_)
+        if (this.dataSourceRA_)
           throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
       }
 
@@ -1920,10 +2141,12 @@
       if (oldChild.groupNode)
         oldChild.groupNode.remove(oldChild);
 
-      // dispatch event
+      // dispatch events
+      oldChild.emit_parentChanged(this);
       if (!this.dataSource)
         this.emit_childNodesModified({ deleted: [oldChild] });
 
+      // remove delegate if autoDelegate
       if (oldChild.autoDelegate == DELEGATE.PARENT || oldChild.autoDelegate === DELEGATE.ANY)
         oldChild.setDelegate();
 
@@ -1938,7 +2161,7 @@
       if (this.dataSource)
         throw EXCEPTION_DATASOURCE_CONFLICT;
 
-      if (this.dataSourceAdapter_)
+      if (this.dataSourceRA_)
         throw EXCEPTION_DATASOURCEADAPTER_CONFLICT;
 
       if (oldChild == null || oldChild.parentNode !== this)
@@ -1956,7 +2179,8 @@
     */
     clear: function(alive){
       // clear possible only if dataSource is empty
-      if (this.dataSource && this.dataSource.itemCount)
+      // NOTE: when this.dataSourceMap_ is falsy than fast child nodes replacement case
+      if (this.dataSource && this.dataSourceMap_ && this.dataSource.itemCount)
         throw EXCEPTION_DATASOURCE_CONFLICT;
 
       // if node haven't childs nothing to do (event don't fire)
@@ -1994,6 +2218,8 @@
           child.nextSibling = null;
           child.previousSibling = null;
 
+          child.emit_parentChanged(this);
+
           if (child.autoDelegate == DELEGATE.PARENT || child.autoDelegate === DELEGATE.ANY)
             child.setDelegate();
         }
@@ -2015,7 +2241,7 @@
     * @param {boolean} keepAlive
     */
     setChildNodes: function(newChildNodes, keepAlive){
-      if (!this.dataSource && !this.dataSourceAdapter_)
+      if (!this.dataSource && !this.dataSourceRA_)
         this.clear(keepAlive);
 
       if (newChildNodes)
@@ -2048,32 +2274,64 @@
         throw EXCEPTION_NO_CHILDCLASS;
 
       // dataset
-      dataSource = resolveDataset(this, this.setDataSource, dataSource, 'dataSourceAdapter_');
+      dataSource = resolveDataset(this, this.setDataSource, dataSource, 'dataSourceRA_');
 
       if (this.dataSource !== dataSource)
       {
         var oldDataSource = this.dataSource;
+        var dataSourceMap = this.dataSourceMap_ || {};
         var listenHandler = this.listen.dataSource;
+        var inserted;
+        var deleted;
 
         // detach
         if (oldDataSource)
         {
-          this.dataSourceMap_ = null;
-          this.dataSource = null;
-
           if (listenHandler)
             oldDataSource.removeHandler(listenHandler, this);
+
+          if (dataSource)
+          {
+            inserted = dataSource.getItems().filter(function(item){
+              return !oldDataSource.has(item);
+            });
+
+            deleted = oldDataSource.getItems().filter(function(item){
+              return !dataSource.has(item);
+            });
+          }
+          else
+          {
+            deleted = oldDataSource.getItems();
+          }
+        }
+        else
+        {
+          if (dataSource)
+            inserted = dataSource.getItems();
         }
 
         // remove old children
-        if (this.firstChild)
+        if (!oldDataSource || !dataSource)
         {
-          // return posibility to change delegate
-          if (oldDataSource)
-            for (var i = 0, child; child = this.childNodes[i]; i++)
-              unlockDataSourceItemNode(child);
+          if (this.firstChild)
+          {
+            // return posibility to change delegate
+            if (oldDataSource)
+              for (var i = 0, child; child = this.childNodes[i]; i++)
+                unlockDataSourceItemNode(child);
 
-          this.clear();
+            // otherwise clear operation is not allowed
+            this.dataSource = null;
+            this.clear(oldDataSource && !this.destroyDataSourceMember);
+          }
+        }
+        else
+        {
+          if (oldDataSource && deleted.length && listenHandler)
+            listenHandler.itemsChanged.call(this, oldDataSource, {
+              deleted: deleted
+            });
         }
 
         this.dataSource = dataSource;
@@ -2083,23 +2341,22 @@
         // attach
         if (dataSource)
         {
-          this.dataSourceMap_ = {};
+          this.dataSourceMap_ = dataSourceMap;
           this.setChildNodesState(dataSource.state, dataSource.state.data);
 
           if (listenHandler)
           {
             dataSource.addHandler(listenHandler, this);
 
-            if (dataSource.itemCount && listenHandler.itemsChanged)
-            {
+            if (inserted.length)
               listenHandler.itemsChanged.call(this, dataSource, {
-                inserted: dataSource.getItems()
+                inserted: inserted
               });
-            }
           }
         }
         else
         {
+          this.dataSourceMap_ = null;
           this.setChildNodesState(STATE.UNDEFINED);
         }
 
@@ -2192,6 +2449,9 @@
         }
 
         this.emit_groupingChanged(oldGrouping);
+
+        if (oldGrouping && !alive)
+          oldGrouping.destroy();
       }
     },
 
@@ -2218,7 +2478,14 @@
           var nodes;
 
           for (var node = this.firstChild; node; node = node.nextSibling)
-            node.sortingValue = sorting(node) || 0;
+          {
+            var newChildValue = sorting(node);
+            if (newChildValue == null)
+              newChildValue = -Infinity;
+            else if (typeof newChildValue != 'number' || newChildValue !== newChildValue)
+              newChildValue = String(newChildValue);
+            node.sortingValue = newChildValue;
+          }
 
           // Probably strange and dirty solution, but faster (up to 2-5 times).
           // Low dependence of node shuffling. Total permutation count equals to permutation
@@ -2227,7 +2494,8 @@
           // NOTE: Nodes selected state will remain (sometimes it can be important)
           if (this.grouping)
           {
-            for (var group = this.grouping.nullGroup; group; group = group.nextSibling)
+            var groups = [this.grouping.nullGroup].concat(this.grouping.childNodes);
+            for (var i = 0, group; group = groups[i]; i++)
             {
               // sort, clear and set new order, no override childNodes
               nodes = group.nodes = sortChildNodes({ childNodes: group.nodes, sortingDesc: this.sortingDesc });
@@ -2274,6 +2542,47 @@
   */
   var Node = Class(AbstractNode, DomMixin, {
     className: namespace + '.Node',
+    propertyDescriptors: {
+      disabled: 'disable enable',
+      contextDisabled: false,
+      selected: 'select unselect',
+      contextSelection: false,
+      selection: 'selectionChanged',
+      matched: 'match unmatch',
+      matchFunction: 'matchFunctionChanged'
+    },
+
+   /**
+    * @param {string} name
+    * @param {basis.data.Object} oldSatellite Old satellite for key
+    */
+    emit_satelliteChanged: function(name, oldSatellite){
+      AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
+
+      if (this.satellite[name] instanceof Node)
+        updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
+    },
+
+   /**
+    * @type {boolean}
+    * @readonly
+    */
+    contextDisabled: false,
+
+   /**
+    * Indicate node is disabled. Use isDisabled method to determine disabled
+    * node state instead of check for this property value (ancestor nodes may
+    * be disabled and current node will be disabled too, but node disabled property
+    * could has false value).
+    * @type {boolean}
+    * @readonly
+    */
+    disabled: false,
+
+   /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    disabledRA_: null,
 
    /**
     * Occurs after disabled property has been set to false.
@@ -2298,15 +2607,34 @@
     },
 
    /**
-    * @param {string} name
-    * @param {basis.data.Object} oldSatellite Old satellite for key
+    * Set of selected child nodes.
+    * @type {basis.dom.wrapper.Selection}
     */
-    emit_satelliteChanged: function(name, oldSatellite){
-      AbstractNode.prototype.emit_satelliteChanged.call(this, name, oldSatellite);
+    selection: null,
 
-      if (this.satellite[name] instanceof Node)
-        updateNodeDisableContext(this.satellite[name], this.disabled || this.contextDisabled);
-    },
+   /**
+    * Occurs after selecttion property has been changed.
+    * @event
+    */
+    emit_selectionChanged: createEvent('selectionChanged', 'oldSelection'),
+
+   /**
+    * @type {basis.dom.wrapper.Selection}
+    * @private
+    */
+    contextSelection: null,
+
+   /**
+    * Indicate node is selected.
+    * @type {boolean}
+    * @readonly
+    */
+    selected: false,
+
+   /**
+    * @type {basis.data.ResolveAdapter}
+    */
+    selectedRA_: null,
 
    /**
     * Occurs after selected property has been set to true.
@@ -2321,6 +2649,12 @@
     emit_unselect: createEvent('unselect'),
 
    /**
+    * @type {boolean}
+    * @readonly
+    */
+    matched: true,
+
+   /**
     * Occurs after matched property has been set to true.
     * @event
     */
@@ -2333,64 +2667,16 @@
     emit_unmatch: createEvent('unmatch'),
 
    /**
-    * Occurs after matchFunction property has been changed.
-    * @event
-    */
-    emit_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
-
-   /**
-    * Indicate could be able node to be selected or not.
-    * @type {boolean}
-    * @readonly
-    */
-    selectable: true,
-
-   /**
-    * Indicate node is selected.
-    * @type {boolean}
-    * @readonly
-    */
-    selected: false,
-
-   /**
-    * Set of selected child nodes.
-    * @type {basis.dom.wrapper.Selection}
-    */
-    selection: null,
-
-   /**
-    * @type {basis.dom.wrapper.Selection}
-    * @private
-    */
-    contextSelection: null,
-
-   /**
     * @type {function()|null}
     * @readonly
     */
     matchFunction: null,
 
    /**
-    * @type {boolean}
-    * @readonly
+    * Occurs after matchFunction property has been changed.
+    * @event
     */
-    matched: true,
-
-   /**
-    * Indicate node is disabled. Use isDisabled method to determine disabled
-    * node state instead of check for this property value (ancestor nodes may
-    * be disabled and current node will be disabled too, but node disabled property
-    * could has false value).
-    * @type {boolean}
-    * @readonly
-    */
-    disabled: false,
-
-   /**
-    * @type {boolean}
-    * @readonly
-    */
-    contextDisabled: false,
+    emit_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
 
    /**
     * Extend owner listener
@@ -2403,6 +2689,11 @@
         disable: function(){
           updateNodeDisableContext(this, true);
         }
+      },
+      selection: {
+        destroy: function(){
+          this.setSelection();
+        }
       }
     },
 
@@ -2410,27 +2701,35 @@
     * @constructor
     */
     init: function(){
+      var disabled = this.disabled;
+      this.disabled = false;
+
       // add selection object, if selection is not null
-      if (this.selection)
+      var selection = this.selection;
+      if (selection)
       {
-        if (this.selection instanceof ReadOnlyDataset == false)
-          this.selection = new Selection(this.selection);
-        if (this.listen.selection)
-          this.selection.addHandler(this.listen.selection, this);
+        this.selection = null;
+        this.setSelection(selection, true);
       }
 
       // inherit
       AbstractNode.prototype.init.call(this);
 
-      // synchronize node state according to config
-      if (this.disabled)
-        this.emit_disable();
-
-      if (this.selected)
+      // synchronize disabled
+      if (disabled)
       {
-        this.selected = false;
-        this.select(true);
+        disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabledRA_');
+        if (disabled)
+        {
+          this.disabled = disabled;
+          for (var child = this.firstChild; child; child = child.nextSibling)
+            updateNodeDisableContext(child, true);
+        }
       }
+
+      // selected
+      if (this.selected)
+        this.selected = !!resolveValue(this, this.setSelected, this.selected, 'selectedRA_');
     },
 
    /**
@@ -2438,83 +2737,32 @@
     * @param {basis.dom.wrapper.Selection=} selection New selection value for node.
     * @return {boolean} Returns true if selection was changed.
     */
-    setSelection: function(selection){
-      if (this.selection !== selection)
+    setSelection: function(selection, silent){
+      var oldSelection = this.selection;
+
+      if (selection instanceof Selection === false)
+        selection = selection ? new Selection(selection) : null;
+
+      if (oldSelection !== selection)
       {
         // change context selection for child nodes
-        updateNodeContextSelection(this, this.selection || this.contextSelection, selection || this.contextSelection, false, true);
+        updateNodeContextSelection(this, oldSelection || this.contextSelection, selection || this.contextSelection, false, true);
 
-        if (this.selection && this.listen.selection)
-          this.selection.removeHandler(this.listen.selection, this);
+        if (this.listen.selection)
+        {
+          if (oldSelection)
+            oldSelection.removeHandler(this.listen.selection, this);
+          if (selection)
+            selection.addHandler(this.listen.selection, this);
+        }
 
         // update selection
         this.selection = selection;
-
-        if (selection && this.listen.selection)
-          selection.addHandler(this.listen.selection, this);
+        if (!silent)
+          this.emit_selectionChanged(oldSelection);
 
         return true;
       }
-    },
-
-   /**
-    * Makes node selected if possible.
-    * @param {boolean} multiple
-    * @return {boolean} Returns true if selected state has been changed.
-    */
-    select: function(multiple){
-      var selected = this.selected;
-      var selection = this.contextSelection;
-
-      // here is no check for selected state, because parentNode.selection depends on it's
-      // mode may do some actions even with selected node
-      if (selection)
-      {
-        if (!multiple)
-        {
-          // check for selectable in non-multiple mode, because if node is non-selectable
-          // selection will be cleared and this is not desired behaviour
-          if (this.selectable)
-            selection.set([this]);
-        }
-        else
-        {
-          if (selected)
-            selection.remove([this]);
-          else
-            selection.add([this]);
-        }
-      }
-      else
-        if (!selected && this.selectable)
-        {
-          this.selected = true;
-          this.emit_select();
-        }
-
-      return this.selected != selected;
-    },
-
-   /**
-    * Makes node unselected.
-    * @return {boolean} Returns true if selected state has been changed.
-    */
-    unselect: function(){
-      var selected = this.selected;
-
-      if (selected)
-      {
-        var selection = this.contextSelection;
-        if (selection)
-          selection.remove([this]);
-        else
-        {
-          this.selected = false;
-          this.emit_unselect();
-        }
-      }
-
-      return this.selected != selected;
     },
 
    /**
@@ -2524,45 +2772,115 @@
     * @return {boolean} Returns true if selected property was changed.
     */
     setSelected: function(selected, multiple){
-      return selected
-        ? this.select(multiple)
-        : this.unselect();
+      var selection = this.contextSelection;
+
+      selected = !!resolveValue(this, this.setSelected, selected, 'selectedRA_');
+
+      // special case, when node selected and has selection context check only
+      // resolve adapter influence on selected if exists, and restore selection
+      // influence when no resolve adapter
+      if (this.selected && selection)
+      {
+        if (this.selectedRA_)
+        {
+          if (selection.has(this))
+          {
+            this.selected = false;
+            selection.remove(this);
+            this.selected = true;
+          }
+        }
+        else
+        {
+          if (!selection.has(this))
+            selection.add(this);
+        }
+      }
+
+      if (selected !== this.selected)
+      {
+        if (this.selectedRA_) // when resolveValue using ignore selection
+        {
+          this.selected = selected;
+          if (selected)
+            this.emit_select();
+          else
+            this.emit_unselect();
+        }
+        else
+        {
+          if (selected) // this.selected = false -> true
+          {
+            if (selection)
+            {
+              if (multiple)
+                selection.add(this);
+              else
+                selection.set(this);
+            }
+            else
+            {
+              this.selected = true;
+              this.emit_select();
+            }
+          }
+          else // this.selected = true -> false
+          {
+            if (selection)
+            {
+              selection.remove(this);
+            }
+            else
+            {
+              this.selected = false;
+              this.emit_unselect();
+            }
+          }
+        }
+
+        return true;
+      }
+      else
+      {
+        if (!this.selectedRA_ && selected && selection)  // this.selected = true -> true
+        {
+          if (multiple)
+            selection.remove(this);
+          else
+            selection.set(this);
+        }
+      }
+
+      return false;
     },
 
    /**
-    * Makes node enabled.
-    * @return {boolean} Returns true if disabled property was changed.
+    * Makes node selected if possible.
+    * @param {boolean} multiple
+    * @return {boolean} Returns true if selected state has been changed.
     */
-    enable: function(){
-      var disabled = this.disabled;
-
-      if (disabled)
+    select: function(multiple){
+      if (this.selectedRA_)
       {
-        this.disabled = false;
-
-        if (!this.contextDisabled)
-          this.emit_enable();
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by `select()` method. Use `setSelected()` instead.');
+        return false;
       }
 
-      return this.disabled != disabled;
+      return this.setSelected(true, multiple);
     },
 
    /**
-    * Makes node disabled.
-    * @return {boolean} Returns true if disabled property was changed.
+    * Makes node unselected.
+    * @return {boolean} Returns true if selected state has been changed.
     */
-    disable: function(){
-      var disabled = this.disabled;
-
-      if (!disabled)
+    unselect: function(){
+      if (this.selectedRA_)
       {
-        this.disabled = true;
-
-        if (!this.contextDisabled)
-          this.emit_disable();
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by `unselect()` method. Use `setSelected()` instead.');
+        return false;
       }
 
-      return this.disabled != disabled;
+      return this.setSelected(false);
     },
 
    /**
@@ -2571,9 +2889,50 @@
     * @return {boolean} Returns true if disabled property was changed.
     */
     setDisabled: function(disabled){
-      return disabled
-        ? this.disable()
-        : this.enable();
+      disabled = !!resolveValue(this, this.setDisabled, disabled, 'disabledRA_');
+
+      if (this.disabled !== disabled)
+      {
+        this.disabled = disabled;
+
+        if (!this.contextDisabled)
+          if (disabled)
+            this.emit_disable();
+          else
+            this.emit_enable();
+
+        return true;
+      }
+
+      return false;
+    },
+
+   /**
+    * Makes node disabled.
+    * @return {boolean} Returns true if disabled property was changed.
+    */
+    disable: function(){
+      if (this.disabledRA_)
+      {
+        /** @cut */ basis.dev.warn('`disabled` property is under bb-value and can\'t be changed by `disable()` method. Use `setDisabled()` instead.');
+        return false;
+      }
+
+      return this.setDisabled(true);
+    },
+
+   /**
+    * Makes node enabled.
+    * @return {boolean} Returns true if disabled property was changed.
+    */
+    enable: function(){
+      if (this.disabledRA_)
+      {
+        /** @cut */ basis.dev.warn('`disabled` property is under bb-value and can\'t be changed by `enable()` method. Use `setDisabled()` instead.');
+        return false;
+      }
+
+      return this.setDisabled(false);
     },
 
    /**
@@ -2613,10 +2972,14 @@
     * @destructor
     */
     destroy: function(){
-      this.unselect();
+      // unlink disabled bb-value
+      if (this.disabledRA_)
+        resolveValue(this, null, null, 'disabledRA_');
+
+      if (this.selectedRA_)
+        resolveValue(this, null, null, 'selectedRA_');
 
       this.contextSelection = null;
-
       if (this.selection)
         this.setSelection();
 
@@ -2640,8 +3003,6 @@
     */
     emit_childNodesModified: function(delta){
       events.childNodesModified.call(this, delta);
-
-      this.nullGroup.nextSibling = this.firstChild;
 
       var array;
       if (array = delta.inserted)
@@ -3011,70 +3372,85 @@
     * @inheritDoc
     */
     emit_itemsChanged: function(delta){
+      var array;
+
       Dataset.prototype.emit_itemsChanged.call(this, delta);
 
-      if (delta.inserted)
-      {
-        for (var i = 0, node; node = delta.inserted[i]; i++)
+      if (array = delta.deleted)
+        for (var i = 0, node; node = array[i]; i++)
         {
-          if (!node.selected)
-          {
-            node.selected = true;
-            node.emit_select();
-          }
-        }
-      }
-
-      if (delta.deleted)
-      {
-        for (var i = 0, node; node = delta.deleted[i]; i++)
-        {
-          if (node.selected)
+          if (node.selected && node.contextSelection === this)
           {
             node.selected = false;
             node.emit_unselect();
           }
         }
-      }
+
+      if (array = delta.inserted)
+        for (var i = 0, node; node = array[i]; i++)
+        {
+          if (!node.selected && node.contextSelection === this)
+          {
+            node.selected = true;
+            node.emit_select();
+          }
+        }
     },
 
    /**
     * @inheritDoc
     */
     add: function(nodes){
-      if (!this.multiple)
+      if (!nodes)
+        return;
+
+      if (!this.multiple && this.itemCount)
+        return this.set(nodes);
+
+      if (!Array.isArray(nodes))
+        nodes = [nodes];
+
+      nodes = nodes.filter(this.filter, this);
+
+      if (!this.multiple && nodes.length > 1)
       {
-        if (this.itemCount)
-          return this.set(nodes);
-        else
-          nodes = [nodes[0]];
+        /** @cut */ basis.dev.warn(namespace + '.Selection#add() can\'t accept more than one node as not in multiple mode');
+        nodes = [nodes[0]];
       }
 
-      var items = [];
-      for (var i = 0, node; node = nodes[i]; i++)
-      {
-        if (node.contextSelection == this && node.selectable)
-          items.push(node);
-      }
-
-      return Dataset.prototype.add.call(this, items);
+      if (nodes.length)
+        return Dataset.prototype.add.call(this, nodes);
     },
 
    /**
     * @inheritDoc
     */
     set: function(nodes){
-      var items = [];
-      for (var i = 0, node; node = nodes[i]; i++)
+      if (!nodes)
+        return this.clear();
+
+      if (!Array.isArray(nodes))
+        nodes = [nodes];
+
+      nodes = nodes.filter(this.filter, this);
+
+      if (!this.multiple && nodes.length > 1)
       {
-        if (node.contextSelection == this && node.selectable)
-          items.push(node);
+        /** @cut */ basis.dev.warn(namespace + '.Selection#set() can\'t accept more than one node as not in multiple mode');
+        nodes = [nodes[0]];
       }
 
-      if (!this.multiple)
-        items.splice(1);
+      if (nodes.length)
+        return Dataset.prototype.set.call(this, nodes);
+      else
+        return this.clear();
+    },
 
-      return Dataset.prototype.set.call(this, items);
+   /**
+    * Rule that defines which node can't be added to selection
+    */
+    filter: function(node){
+      return node instanceof Node && !node.selectedRA_ && node.contextSelection === this;
     }
   });
 

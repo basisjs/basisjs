@@ -150,7 +150,6 @@
   //  md5
 
   var md5 = (function(){
-
     var C_2_POW_32 = Math.pow(2, 32);
     var S;
     var K = [];
@@ -165,9 +164,11 @@
       function(x, y, z){
         return x ^ y ^ z;
       },
+      // jscs:disable
       function(x, y, z){
         return y ^ (x | ~z);
       }
+      // jscs:enable
     ];
 
     function initConst(){
@@ -318,11 +319,6 @@
   function wrap(target){
     cryptTarget = target || '';
     return context_;
-  };
-
-  var a = {
-    a: 1,
-    b: 2,
   };
 
 

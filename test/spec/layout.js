@@ -1,10 +1,10 @@
 module.exports = {
   name: 'basis.layout',
 
-  html: __dirname + 'layout.html',
+  html: __dirname + '/layout.html',
   init: function(){
-    basis.require('basis.layout');
-
+    var getBoundingRect = basis.require('basis.layout').getBoundingRect;
+    var getViewportRect = basis.require('basis.layout').getViewportRect;
     var computedStyle = basis.require('basis.dom.computedStyle').get;
 
     function $(id){
@@ -28,52 +28,52 @@ module.exports = {
             container.scrollTop = 0;
             container.scrollLeft = 0;
 
-            this.is(0, document.documentElement.scrollTop);
-            this.is(0, document.documentElement.scrollLeft);
-            this.is(0, document.body.scrollTop);
-            this.is(0, document.body.scrollLeft);
-            this.is(0, container.scrollLeft);
-            this.is(0, container.scrollLeft);
+            assert(document.documentElement.scrollTop === 0);
+            assert(document.documentElement.scrollLeft === 0);
+            assert(document.body.scrollTop === 0);
+            assert(document.body.scrollLeft === 0);
+            assert(container.scrollLeft === 0);
+            assert(container.scrollLeft === 0);
           }
         },
         {
           name: 'Test #1',
           test: function(){
             var el = $('test1');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15, box.top);
-            this.is(15, box.left);
+            assert(box.top === 15);
+            assert(box.left === 15);
           }
         },
         {
           name: 'Test #2',
           test: function(){
             var el = $('test2');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(50 + 15 + 3 + 5, box.top);
-            this.is(215 + 15 + 3 + 5, box.left);
+            assert(box.top === 50 + 15 + 3 + 5);
+            assert(box.left === 215 + 15 + 3 + 5);
           }
         },
         {
           name: 'Test #3',
           test: function(){
             var el = $('test3');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15, box.top);
-            this.is(15, box.left);
+            assert(box.top === 15);
+            assert(box.left === 15);
           }
         },
         {
           name: 'Rel box',
           test: function(){
             var el = $('test2');
-            var box = basis.layout.getBoundingRect(el, $('test1'));
+            var box = getBoundingRect(el, $('test1'));
 
-            this.is((50 + 15 + 3 + 5) - 15, box.top);
-            this.is((215 + 15 + 3 + 5) - 15, box.left);
+            assert(box.top === (50 + 15 + 3 + 5) - 15);
+            assert(box.left === (215 + 15 + 3 + 5) - 15);
           }
         }
       ]
@@ -85,44 +85,44 @@ module.exports = {
           name: 'Set documentElement position relative',
           test: function(){
             document.documentElement.style.position = 'relative';
-            this.is('relative', computedStyle(document.documentElement, 'position'));
+            assert(computedStyle(document.documentElement, 'position') === 'relative');
           }
         },
         {
           name: 'Test #1',
           test: function(){
             var el = $('test1');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15 + 7 + 3, box.top);
-            this.is(15 + 7 + 5, box.left);
+            assert(box.top === 15 + 7 + 3);
+            assert(box.left === 15 + 7 + 5);
           }
         },
         {
           name: 'Test #2',
           test: function(){
             var el = $('test2');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(50 + 15 + 3 + 5 + 7 + 3, box.top);
-            this.is(215 + 15 + 3 + 5 + 7 + 5, box.left);
+            assert(box.top === 50 + 15 + 3 + 5 + 7 + 3);
+            assert(box.left === 215 + 15 + 3 + 5 + 7 + 5);
           }
         },
         {
           name: 'Test #3',
           test: function(){
             var el = $('test3');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15, box.top);
-            this.is(15, box.left);
+            assert(box.top === 15);
+            assert(box.left === 15);
           }
         },
         {
           name: 'Set documentElement position static',
           test: function(){
             document.documentElement.style.position = 'static';
-            this.is('static', computedStyle(document.documentElement, 'position'));
+            assert(computedStyle(document.documentElement, 'position') === 'static');
           }
         }
       ]
@@ -134,44 +134,44 @@ module.exports = {
           name: 'Set body position relative',
           test: function(){
             document.body.style.position = 'relative';
-            this.is('relative', computedStyle(document.body, 'position'));
+            assert(computedStyle(document.body, 'position') === 'relative');
           }
         },
         {
           name: 'Test #1',
           test: function(){
             var el = $('test1');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15 + 11 + 9 + 7, box.top);
-            this.is(15 + /*html*/15 + /*body*/11 + 9, box.left);
+            assert(box.top === 15 + 11 + 9 + 7);
+            assert(box.left === 15 + /*html*/15 + /*body*/11 + 9);
           }
         },
         {
           name: 'Test #2',
           test: function(){
             var el = $('test2');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(50 + 15 + 3 + 5 + (11 + 9 + 7), box.top);
-            this.is(215 + 15 + 3 + 5 + (15 + 11 + 9), box.left);
+            assert(box.top === 50 + 15 + 3 + 5 + (11 + 9 + 7));
+            assert(box.left === 215 + 15 + 3 + 5 + (15 + 11 + 9));
           }
         },
         {
           name: 'Test #3',
           test: function(){
             var el = $('test3');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15, box.top);
-            this.is(15, box.left);
+            assert(box.top === 15);
+            assert(box.left === 15);
           }
         },
         {
           name: 'Set body position static',
           test: function(){
             document.body.style.position = 'static';
-            this.is('static', computedStyle(document.body, 'position'));
+            assert(computedStyle(document.body, 'position') === 'static');
           }
         }
       ]
@@ -187,52 +187,52 @@ module.exports = {
             document.body.scrollTop = 23;
             document.body.scrollLeft = 23;
 
-            this.is(23, document.documentElement.scrollTop || document.body.scrollTop);
-            this.is(23, document.documentElement.scrollLeft || document.body.scrollLeft);
+            assert((document.documentElement.scrollTop || document.body.scrollTop) === 23);
+            assert((document.documentElement.scrollLeft || document.body.scrollLeft) === 23);
           }
         },
         {
           name: 'Test #1',
           test: function(){
             var el = $('test1');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15, box.top);
-            this.is(15, box.left);
+            assert(box.top === 15);
+            assert(box.left === 15);
           }
         },
         {
           name: 'Test #2',
           test: function(){
             var el = $('test2');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(50 + 15 + 3 + 5, box.top);
-            this.is(215 + 15 + 3 + 5, box.left);
+            assert(box.top === 50 + 15 + 3 + 5);
+            assert(box.left === 215 + 15 + 3 + 5);
           }
         },
         {
           name: 'Test #3',
           test: function(){
             var el = $('test3');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15 + 23, box.top);
-            this.is(15 + 23, box.left);
+            assert(box.top === 15 + 23);
+            assert(box.left === 15 + 23);
           }
         },
         {
           name: 'Test #4',
           test: function(){
             var el = $('test3');
-            var viewport = basis.layout.getViewportRect(el);
+            var viewport = getViewportRect(el);
 
-            this.is(23 + 15, viewport.top);
-            this.is(23 + 15 + 10, viewport.bottom);
-            this.is(23 + 15, viewport.left);
-            this.is(23 + 15 + 10, viewport.right);
-            this.is(10, viewport.width);
-            this.is(10, viewport.height);
+            assert(viewport.top === 23 + 15);
+            assert(viewport.bottom === 23 + 15 + 10);
+            assert(viewport.left === 23 + 15);
+            assert(viewport.right === 23 + 15 + 10);
+            assert(viewport.width === 10);
+            assert(viewport.height === 10);
           }
         }
       ]
@@ -244,44 +244,44 @@ module.exports = {
           name: 'Set documentElement position relative',
           test: function(){
             document.documentElement.style.position = 'relative';
-            this.is('relative', computedStyle(document.documentElement, 'position'));
+            assert(computedStyle(document.documentElement, 'position') === 'relative');
           }
         },
         {
           name: 'Test #1',
           test: function(){
             var el = $('test1');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15 + 7 + 3, box.top);
-            this.is(15 + 7 + 5, box.left);
+            assert(box.top === 15 + 7 + 3);
+            assert(box.left === 15 + 7 + 5);
           }
         },
         {
           name: 'Test #2',
           test: function(){
             var el = $('test2');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(50 + 15 + 3 + 5 + 7 + 3, box.top);
-            this.is(215 + 15 + 3 + 5 + 7 + 5, box.left);
+            assert(box.top === 50 + 15 + 3 + 5 + 7 + 3);
+            assert(box.left === 215 + 15 + 3 + 5 + 7 + 5);
           }
         },
         {
           name: 'Test #3',
           test: function(){
             var el = $('test3');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15 + 23, box.top);
-            this.is(15 + 23, box.left);
+            assert(box.top === 15 + 23);
+            assert(box.left === 15 + 23);
           }
         },
         {
           name: 'Set documentElement position static',
           test: function(){
             document.documentElement.style.position = 'static';
-            this.is('static', computedStyle(document.documentElement, 'position'));
+            assert(computedStyle(document.documentElement, 'position') === 'static');
           }
         }
       ]
@@ -293,44 +293,44 @@ module.exports = {
           name: 'Set body position relative',
           test: function(){
             document.body.style.position = 'relative';
-            this.is('relative', computedStyle(document.body, 'position'));
+            assert(computedStyle(document.body, 'position') === 'relative');
           }
         },
         {
           name: 'Test #1',
           test: function(){
             var el = $('test1');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15 + 11 + 9 + 7, box.top);
-            this.is(15 + /*html*/15 + /*body*/11 + 9, box.left);
+            assert(box.top === 15 + 11 + 9 + 7);
+            assert(box.left === 15 + /*html*/15 + /*body*/11 + 9);
           }
         },
         {
           name: 'Test #2',
           test: function(){
             var el = $('test2');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(50 + 15 + 3 + 5 + (11 + 9 + 7), box.top);
-            this.is(215 + 15 + 3 + 5 + (15 + 11 + 9), box.left);
+            assert(box.top === 50 + 15 + 3 + 5 + (11 + 9 + 7));
+            assert(box.left === 215 + 15 + 3 + 5 + (15 + 11 + 9));
           }
         },
         {
           name: 'Test #3',
           test: function(){
             var el = $('test3');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(15 + 23, box.top);
-            this.is(15 + 23, box.left);
+            assert(box.top === 15 + 23);
+            assert(box.left === 15 + 23);
           }
         },
         {
           name: 'Set body position static',
           test: function(){
             document.body.style.position = 'static';
-            this.is('static', computedStyle(document.body, 'position'));
+            assert(computedStyle(document.body, 'position') === 'static');
           }
         }
       ]
@@ -345,18 +345,18 @@ module.exports = {
             container.scrollTop = 11;
             container.scrollLeft = 11;
 
-            this.is(11, container.scrollTop);
-            this.is(11, container.scrollLeft);
+            assert(container.scrollTop === 11);
+            assert(container.scrollLeft === 11);
           }
         },
         {
           name: 'Test #2',
           test: function(){
             var el = $('test2');
-            var box = basis.layout.getBoundingRect(el);
+            var box = getBoundingRect(el);
 
-            this.is(50 + 15 + 3 + 5 - 11, box.top);
-            this.is(215 + 15 + 3 + 5 - 11, box.left);
+            assert(box.top === 50 + 15 + 3 + 5 - 11);
+            assert(box.left === 215 + 15 + 3 + 5 - 11);
           }
         }
       ]

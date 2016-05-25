@@ -1,0 +1,6 @@
+<b:style src="./reloadRequired.css"/>
+<b:isolate/>
+
+<div b:show="{permanentFilesChangedCount}" class="label" event-click="reload">
+  {permanentFilesChangedCount} {l10n:file.{permanentFilesChangedCount}} updated, changes can't be applied until page reload
+</div>

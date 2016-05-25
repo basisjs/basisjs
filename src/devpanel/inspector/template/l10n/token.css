@@ -1,0 +1,9 @@
+.token
+{
+  position: absolute;
+  z-index: 65000;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background .35s .1s, outline-color .35s .1s;
+  outline: 1px solid;
+}

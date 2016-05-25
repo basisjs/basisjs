@@ -155,15 +155,15 @@
     }
 
 
-    .Page-Slider
+    .Basis-PageSlider
     {
       height: 400px !important;
     }
-    .Page-Slider .Basis-Page
+    .Basis-PageSlider-Page
     {
       background: #DDD;
     }
-    .Page-Slider .PageContent
+    .Basis-PageSlider-Page .PageContent
     {
       margin-top: 125px;
 
@@ -171,6 +171,42 @@
       font-size: 430%;
       color: white;
       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    /* carousel */
+    .carousel
+    {
+      white-space: nowrap;
+    }
+    .carousel-item
+    {
+      display: inline-block;
+      width: 100%;
+      padding: 50px 0;
+      border-bottom: 1px solid #F0F0F0;
+      text-align: center;
+    }
+    .carousel-dots
+    {
+      text-align: center;
+      padding: 8px;
+    }
+    .carousel-dot
+    {
+      display: inline-block;
+      vertical-align: middle;
+      width: 10px;
+      height: 10px;
+      background: #4488AA;
+      border-radius: 50%;
+      margin: 0 5px;
+      cursor: pointer;
+    }
+    .carousel-dot__selected
+    {
+      border: 1px solid #4488AA;
+      background: white;
+      margin: 0 4px;
     }
           
   </style>
@@ -192,22 +228,22 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.ui');
-    basis.require('basis.ui.scroller');
-    basis.require('basis.ui.pageslider');
-
     // import names
-    var DOM = basis.dom;
-
-    var Scroller = basis.ui.scroller.Scroller;
-    var ScrollPanel = basis.ui.scroller.ScrollPanel;
-    var ScrollGallery = basis.ui.scroller.ScrollGallery;
-    var PageSlider = basis.ui.pageslider.PageSlider;
+    var domUtils = basis.require('basis.dom');
+    var setStyle = basis.require('basis.cssom').setStyle;
+    var UINode = basis.require('basis.ui').Node;
+    var Scroller = basis.require('basis.ui.scroller').Scroller;
+    var ScrollPanel = basis.require('basis.ui.scroller').ScrollPanel;
+    var ScrollGallery = basis.require('basis.ui.scroller').ScrollGallery;
+    var PageSlider = basis.require('basis.ui.pageslider').PageSlider;
+    var DIRECTIONS = basis.require('basis.ui.pageslider').DIRECTIONS;
+    var Value = basis.require('basis.data').Value;
 
     function createBlock(header, cssClassName){
-      var demoBlock = DOM.createElement('.DemoBlock', DOM.createElement('H2', header));
-      DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock-Wrapper' + (cssClassName ? '.' + cssClassName : ''), demoBlock));
+      var demoBlock = domUtils.createElement('.DemoBlock', domUtils.createElement('H2', header));
+      domUtils.insert(domUtils.get('demo-container'),
+        domUtils.createElement('.DemoBlock-Wrapper' + (cssClassName ? '.' + cssClassName : ''), demoBlock)
+      );
       return demoBlock;
     }
 
@@ -217,7 +253,7 @@
     //
     var worldMapBlock = createBlock('World Map on ScrollPanel');
 
-    new basis.ui.Node({
+    new UINode({
       container: worldMapBlock,
 
       template:
@@ -270,8 +306,8 @@
     //
 
     /*var block = createBlock('Crazy Ball');
-    var ballContainer = DOM.insert(block, DOM.createElement('#BallContainer'));
-    var ball = DOM.insert(ballContainer, DOM.createElement('#Ball'));
+    var ballContainer = domUtils.insert(block, domUtils.createElement('#BallContainer'));
+    var ball = domUtils.insert(ballContainer, domUtils.createElement('#Ball'));
 
     new Scroller({
       targetElement: ball,
@@ -343,12 +379,12 @@
 
     var childClassSettings = {
         template:
-            '<b:include src="basis.ui.tabs.Page">' +
-                    '<b:append ref="content">' +
-                        '<div class="PageContent">' +
-                            '{text}' +
-                        '</div>' +
-                    '</b:append>' +
+            '<b:include src="basis.ui.pageslider.Page">' +
+              '<b:append ref="content">' +
+                '<div class="PageContent">' +
+                  '{text}' +
+                '</div>' +
+              '</b:append>' +
             '</b:include>',
         binding: {
             text: 'text'
@@ -359,18 +395,14 @@
         { text: 'Page 2' },
         { text: 'Page 3' }
     ];
-    var pageSliderTemplate = '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>';
 
-    var DIRECTIONS = basis.ui.pageslider.DIRECTIONS;
     new PageSlider({
-        template: pageSliderTemplate,
         container: createBlock('Horizontal Page Slider', 'short'),
         childClass: childClassSettings,
         childNodes: childNodesData
     });
 
     new PageSlider({
-        template: pageSliderTemplate,
         container: createBlock('Vertical Page Slider', 'short'),
         direction: DIRECTIONS.VERTICAL,
         childClass: childClassSettings,
@@ -395,7 +427,7 @@
       },
 
       childTransform: function(child, closeness){
-        basis.cssom.setStyle(child.tmpl.image, {
+        setStyle(child.tmpl.image, {
           width: (60 + 70 * closeness) + 'px',
           opacity: (.5 + .5 * closeness),
           margin: -10 * closeness + 'px ' + -40 * closeness + 'px',
@@ -435,6 +467,52 @@
         { src: 'paginator.png' },
         { src: 'popup.png' },
         { src: 'resizer.png' }
+      ]
+    });
+
+    new PageSlider({
+      container: createBlock('Carousel', 'short'),
+
+      template:
+        '<b:include src="basis.ui.pageslider.PageSlider" class="carousel">' +
+          '<b:append><!--{dots}--></b:append>' +
+        '</b:include>',
+      binding: {
+        dots: new UINode({
+          template: '<div class="carousel-dots"/>',
+          dataSource: Value.factory('ownerChanged', function(node){
+            if (node.owner)
+              return node.owner.getChildNodesDataset();
+          }),
+          childClass: {
+            template: '<div class="carousel-dot carousel-dot__{selected}" event-click="click"/>',
+            selected: Value.factory('delegateChanged', function(node){
+              return Value.from(node.delegate, 'select unselect', 'selected');
+            }),
+            action: {
+              click: function(){
+                this.delegate.select();
+              }
+            }
+          }
+        })
+      },
+      rotate: true,
+
+      childClass: {
+        template:
+          '<div class="carousel-item" event-click="select">' +
+            '<img{image} src="{src}"/>' +
+          '</div>',
+        binding: {
+          src: 'src'
+        }
+      },
+      childNodes: [
+        { src: 'button.png' },
+        { src: 'calendar.png' },
+        { src: 'data_index.png' },
+        { src: 'dataset.png' },
       ]
     });
 

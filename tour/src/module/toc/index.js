@@ -1,9 +1,10 @@
-basis.require('basis.ui');
-basis.require('app.type');
+var router = require('basis.router');
+var Node = require('basis.ui').Node;
+var Slide = require('app.type').Slide;
 
-module.exports = new basis.ui.Node({
+module.exports = new Node({
   active: true,
-  dataSource: app.type.Slide.all,
+  dataSource: Slide.all,
 
   template: resource('./template/list.tmpl'),
 
@@ -16,7 +17,7 @@ module.exports = new basis.ui.Node({
     },
     action: {
       openSlide: function(){
-        basis.router.navigate(this.data.id);
+        router.navigate(this.data.id);
       }
     }
   }

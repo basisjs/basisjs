@@ -1,0 +1,9 @@
+<b:style src="./roles-tree-leaf.css"/>
+<b:isolate/>
+<b:define name="selected" type="bool"/>
+<b:define name="matched" type="bool" default="false"/>
+
+<div class="leaf">
+  <div class="caption caption_{selected} caption_{matched}" event-click="select">{role}</div>
+  <div{childNodesElement} b:hide="{empty}" class="children"/>
+</div>

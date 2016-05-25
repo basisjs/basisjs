@@ -1,11 +1,9 @@
 
   <b:style src="../table/Table.css"/>
   <b:style src="./ScrollTable.css"/>
-  <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
   <b:define name="fitToContainer" type="bool"/>
 
-  <div class="Basis-Table Basis-ScrollTable Basis-ScrollTable_{fitToContainer} {selected} {disabled}">
+  <div class="Basis-Table Basis-ScrollTable Basis-ScrollTable_{fitToContainer}">
     <div class="Basis-ScrollTable-Header-Container">
       <table{headerOffset} class="Basis-ScrollTable-Header" cellspacing="0">
         <!--{header}-->
@@ -22,7 +20,7 @@
         <table{tableElement|groupsElement} class="Basis-ScrollTable-ContentTable" cellspacing="0">
           <!--{shadowHeader}-->
           <!--{measureRow}-->
-          <tbody{content|childNodesElement} class="Basis-Table-Body"/>
+          <tbody{content|childNodesElement}/>
           <!--{shadowFooter}-->
         </table>
       </div>

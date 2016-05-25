@@ -5,6 +5,7 @@
     padding: 0 5px; /* horizontal padding = border-width + content padding */
     font-size: 82%;
 
+      -ms-user-select: none;
       -moz-user-select: none;
       -webkit-user-select: none;
     user-select: none;
@@ -51,34 +52,6 @@
     text-align: center;
     padding-top: 4px;
   }
-  .Basis-Calendar-SectionTab
-  {
-    display: inline-block;
-    padding: 2px 4px 3px;
-    cursor: pointer;
-    background: #F4F4F4;
-  }
-  .Basis-Calendar-SectionTab:first-child
-  {
-      -moz-border-radius-topleft: 3px;
-      -webkit-border-top-left-radius: 3px;
-    border-top-left-radius: 3px;
-  }
-  .Basis-Calendar-SectionTab:last-child
-  {
-      -moz-border-radius-topright: 3px;
-      -webkit-border-top-right-radius: 3px;
-    border-top-right-radius: 3px;
-  }
-  .Basis-Calendar-SectionTab:hover
-  {
-    background: #F8F8F8;
-  }
-  .Basis-Calendar-SectionTab.selected
-  {
-    background: #D9E8FB;
-    cursor: default;
-  }
 
   /*
    * BODY
@@ -112,8 +85,6 @@
     background: white;
     border: 3px solid #D9E8FB;
     border-top-width: 1px;
-      -moz-border-radius: 0 0 3px 3px;
-      -webkit-border-radius: 0 0 3px 3px;
     border-radius: 0 0 3px 3px;
   }
 

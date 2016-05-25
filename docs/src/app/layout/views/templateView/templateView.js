@@ -1,20 +1,19 @@
 
-  basis.require('app.ext.view');
-  //basis.require('app.views.templateView.templatePanel');
-
-  var TemplatePanel = resource('./templatePanel.js')();
-
-  var classList = basis.cssom.classList;
-  var Template = basis.template.html.Template;
+  var View = require('app.ext.view').View;
+  var ViewOptions = require('app.ext.view').ViewOptions;
+  var TemplatePanel = require('./templatePanel.js');
+  var Template = require('basis.template.html').Template;
 
   function hasTemplate(node){
-    return node.data.obj && node.data.obj.prototype && node.data.obj.prototype.template instanceof Template;
+    return node.data.obj &&
+           node.data.obj.prototype &&
+           node.data.obj.prototype.template instanceof Template;
   }
 
   //
   // exports
   //
-  module.exports = new app.ext.view.View({
+  module.exports = new View({
     title: 'Template',
     viewHeader: 'Template',
     isAcceptableObject: function(data){
@@ -22,15 +21,14 @@
     },
 
     template: resource('./template/templateView.tmpl'),
-
     binding: {
       template: 'satellite:'
     },
 
     satellite: {
       viewOptions: {
-        instanceOf: app.ext.view.ViewOptions,
-        config: function(owner){
+        instance: ViewOptions,
+        config: function(){
           return {
             title: 'References',
             showMode: '',
@@ -74,7 +72,7 @@
       template: {
         existsIf: hasTemplate,
         delegate: basis.fn.$self,
-        instanceOf: TemplatePanel
+        instance: TemplatePanel
       }
     }
   });

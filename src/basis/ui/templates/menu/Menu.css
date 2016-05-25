@@ -1,4 +1,3 @@
-
 .Basis-Menu
 {
   position: absolute;
@@ -9,9 +8,15 @@
   font-size: 90%;
 
   border: 1px solid #979797;
-    -moz-box-shadow: 4px 4px 2px -2px rgba(0, 0, 0, .5);
-    -webkit-box-shadow: 4px 4px 2px -2px rgba(0, 0, 0, .5);
   box-shadow: 4px 4px 2px -2px rgba(0, 0, 0, .5);
+}
+
+.Basis-Menu.visible-anim,
+.Basis-Menu.visible,
+.Basis-Menu.hidden-anim,
+.Basis-Menu.hidden
+{
+
 }
 
 .Basis-Menu-CloseButton

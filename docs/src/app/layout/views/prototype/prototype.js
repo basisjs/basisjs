@@ -1,17 +1,16 @@
 
-  basis.require('app.core');
-  basis.require('app.ext.view');
-  basis.require('app.ext.jsdoc');
-
   var namespace = module.path;
 
-  var DOM = basis.dom;
   var getter = basis.getter;
-  var classList = basis.cssom.classList;
-
-  var mapDO = app.core.mapDO;
-  var View = app.ext.view.View;
-  var PrototypeJsDocPanel = app.ext.jsdoc.PrototypeJsDocPanel;
+  var getFunctionDescription = require('app.core').getFunctionDescription;
+  var getInheritance = require('app.core').getInheritance;
+  var Dataset = require('basis.data').Dataset;
+  var Node = require('basis.ui').Node;
+  var mapDO = require('app.core').mapDO;
+  var JsDocEntity = require('app.core').JsDocEntity;
+  var ViewOptions = require('app.ext.view').ViewOptions;
+  var View = require('app.ext.view').View;
+  var PrototypeJsDocPanel = require('app.ext.jsdoc').PrototypeJsDocPanel;
 
   var PROTOTYPE_ITEM_WEIGHT = {
     'event': 1,
@@ -29,7 +28,7 @@
  /**
   * @class
   */
-  var PrototypeItem = basis.ui.Node.subclass({
+  var PrototypeItem = Node.subclass({
     className: 'PrototypeProperty',
     nodeType: 'property',
 
@@ -49,29 +48,10 @@
 
     satellite: {
       jsdocs: {
+        instance: PrototypeJsDocPanel,
         delegate: function(owner){
-          return app.core.JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
-        },
-        instanceOf: PrototypeJsDocPanel/*JsDocPanel.subclass({
-          emit_update: function(delta){
-            JsDocPanel.prototype.emit_update.call(this, delta);
-
-            var owner = this.owner;
-            var tags = this.data.tags;
-            if (tags)
-            {
-              classList(owner.element).add('hasJsDoc');
-              var type = tags.type || (tags.returns && tags.returns.type);
-              if (type)
-              {
-                DOM.insert(owner.tmpl.types, [
-                  DOM.createElement('SPAN.splitter', ':'),
-                  app.view.parseTypes(type.replace(/^\s*\{|\}\s*$/g, ''))
-                ]);
-              }
-            }
-          }
-        }) */
+          return JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
+        }
       }
     }
   });
@@ -91,7 +71,7 @@
 
     binding: {
       args: function(node){
-        return app.core.getFunctionDescription(mapDO[node.data.path].data.obj).args;
+        return getFunctionDescription(mapDO[node.data.path].data.obj).args;
       },
       mark: function(node){
         return specialMethod[node.data.key];
@@ -119,9 +99,9 @@
   var PROTOTYPE_GROUPING_TYPE = {
     type: 'type',
     rule: 'data.kind',
-    sorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT),
+    sorting: getter('data.id').as(PROTOTYPE_ITEM_WEIGHT),
     childClass: {
-      titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE)
+      titleGetter: getter('data.id').as(PROTOTYPE_ITEM_TITLE)
     }
   };
 
@@ -142,7 +122,7 @@
           {
             var cfg = cursor.docsProto_ && cursor.docsProto_[key];
             if (cfg && cfg.tag == 'implement')
-            { 
+            {
               cls = mapDO[cfg.cls.className];
               node.data.implementCls = cls;
               break;
@@ -186,9 +166,9 @@
         var d = new Date();
 
         //console.profile();
-        var clsVector = app.core.getInheritance(this.data.obj);
+        var clsVector = getInheritance(this.data.obj);
         if (!this.clsVector)
-          this.clsVector = new basis.data.Dataset();
+          this.clsVector = new Dataset();
 
         this.clsVector.set(clsVector.map(function(item){
           return mapDO[item.cls.className];
@@ -212,16 +192,19 @@
 
     childClass: PrototypeItem,
     childFactory: function(config){
-      var childClass;
+      var ChildClass = PrototypeItem;
 
-      switch (config.data.kind){
-        case 'event': childClass = PrototypeEvent; break;
-        case 'method': childClass = specialMethod[config.data.key] ? PrototypeSpecialMethod : PrototypeMethod; break;
-        default:
-          childClass = PrototypeItem;
+      switch (config.data.kind)
+      {
+        case 'event':
+          ChildClass = PrototypeEvent;
+          break;
+        case 'method':
+          ChildClass = specialMethod[config.data.key] ? PrototypeSpecialMethod : PrototypeMethod;
+          break;
       }
 
-      return new childClass(config);
+      return new ChildClass(config);
     },
 
     groupingClass: {
@@ -244,7 +227,7 @@
 
     satellite: {
       viewOptions: {
-        instanceOf: app.ext.view.ViewOptions,
+        instance: ViewOptions,
         config: function(owner){
           return {
             title: 'Group by',

@@ -1,10 +1,9 @@
-  basis.require('basis.template');
-  basis.require('basis.ui');
 
   var namespace = module.path;
-  var uiNode = basis.ui.Node;
+  var Node = require('basis.ui').Node;
+  var basisTemplate = require('basis.template');
 
-  var TemplateTreeNode = uiNode.subclass({
+  var TemplateTreeNode = Node.subclass({
     className: namespace + '.TemplateTreeNode',
 
     binding: {
@@ -20,7 +19,7 @@
       refList: {
         existsIf: basis.getter('data.refs'),
         delegate: basis.fn.$self,
-        instanceOf: uiNode.subclass({
+        instance: Node.subclass({
           template: resource('./template/tree/refList.tmpl'),
           binding: {
             refs: 'data:'
@@ -30,7 +29,7 @@
     }
   });
 
-  TemplateTreeNode.AttributeValueText = uiNode.subclass({
+  TemplateTreeNode.AttributeValueText = Node.subclass({
     template: resource('./template/tree/attributeText.tmpl'),
 
     binding: {
@@ -38,7 +37,7 @@
     }
   });
 
-  TemplateTreeNode.AttributeValueBinding = uiNode.subclass({
+  TemplateTreeNode.AttributeValueBinding = Node.subclass({
     template: resource('./template/tree/attributeBinding.tmpl'),
 
     binding: {
@@ -46,7 +45,7 @@
     }
   });
 
-  TemplateTreeNode.AttributeClassBinding = uiNode.subclass({
+  TemplateTreeNode.AttributeClassBinding = Node.subclass({
     template: resource('./template/tree/attributeClass.tmpl'),
 
     binding: {
@@ -85,7 +84,7 @@
     satellite: {
       attributes: {
         existsIf: basis.getter('data.attrs'),
-        instanceOf: basis.ui.Node.subclass({
+        instance: Node.subclass({
           template: '<span/>',
           childClass: TemplateTreeNode.Attribute
         }),
@@ -123,28 +122,26 @@
   });
 
   // token types
-  /** @const */ var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
-  /** @const */ var TYPE_ATTRIBUTE = basis.template.TYPE_ATTRIBUTE;
-  /** @const */ var TYPE_TEXT = basis.template.TYPE_TEXT;
-  /** @const */ var TYPE_COMMENT = basis.template.TYPE_COMMENT;
-  /** @const */ var TYPE_ATTRIBUTE_CLASS = basis.template.TYPE_ATTRIBUTE_CLASS;
-  /** @const */ var TYPE_ATTRIBUTE_STYLE = basis.template.TYPE_ATTRIBUTE_STYLE;
-  /** @const */ var TYPE_ATTRIBUTE_EVENT = basis.template.TYPE_ATTRIBUTE_EVENT;
+  /** @const */ var TYPE_ELEMENT = basisTemplate.TYPE_ELEMENT;
+  /** @const */ var TYPE_TEXT = basisTemplate.TYPE_TEXT;
+  /** @const */ var TYPE_COMMENT = basisTemplate.TYPE_COMMENT;
+  /** @const */ var TYPE_ATTRIBUTE_CLASS = basisTemplate.TYPE_ATTRIBUTE_CLASS;
+  /** @const */ var TYPE_ATTRIBUTE_STYLE = basisTemplate.TYPE_ATTRIBUTE_STYLE;
+  /** @const */ var TYPE_ATTRIBUTE_EVENT = basisTemplate.TYPE_ATTRIBUTE_EVENT;
 
   // references on fields in declaration
-  /** @const */ var TOKEN_TYPE = basis.template.TOKEN_TYPE;
-  /** @const */ var TOKEN_BINDINGS = basis.template.TOKEN_BINDINGS;
-  /** @const */ var TOKEN_REFS = basis.template.TOKEN_REFS;
+  /** @const */ var TOKEN_TYPE = basisTemplate.TOKEN_TYPE;
+  /** @const */ var TOKEN_BINDINGS = basisTemplate.TOKEN_BINDINGS;
+  /** @const */ var TOKEN_REFS = basisTemplate.TOKEN_REFS;
 
-  /** @const */ var ATTR_NAME = basis.template.ATTR_NAME;
-  /** @const */ var ATTR_VALUE = basis.template.ATTR_VALUE;
+  /** @const */ var ATTR_NAME = basisTemplate.ATTR_NAME;
+  /** @const */ var ATTR_VALUE = basisTemplate.ATTR_VALUE;
 
-  /** @const */ var ELEMENT_NAME = basis.template.ELEMENT_NAME;
-  /** @const */ var ELEMENT_ATTRS = basis.template.ELEMENT_ATTRS;
-  /** @const */ var ELEMENT_CHILDS = basis.template.ELEMENT_CHILDS;
+  /** @const */ var ELEMENT_NAME = basisTemplate.ELEMENT_NAME;
+  /** @const */ var ELEMENT_ATTRIBUTES_AND_CHILDREN = basisTemplate.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 
-  /** @const */ var TEXT_VALUE = basis.template.TEXT_VALUE;
-  /** @const */ var COMMENT_VALUE = basis.template.COMMENT_VALUE;
+  /** @const */ var TEXT_VALUE = basisTemplate.TEXT_VALUE;
+  /** @const */ var COMMENT_VALUE = basisTemplate.COMMENT_VALUE;
 
   function buildTemplate(tokens){
     var result = [];
@@ -162,12 +159,13 @@
     var NodeClass;
     for (var i = 0, token; token = tokens[i]; i++)
     {
-      switch(token[TOKEN_TYPE]){
+      switch (token[TOKEN_TYPE])
+      {
         case TYPE_ELEMENT:
           var attrs = [];
           var attrNodes = [];
           var children = [];
-          for (var j = ELEMENT_ATTRS, t; t = token[j]; j++)
+          for (var j = ELEMENT_ATTRIBUTES_AND_CHILDREN, t; t = token[j]; j++)
             if (t[TOKEN_TYPE] == TYPE_ELEMENT || t[TOKEN_TYPE] == TYPE_TEXT || t[TOKEN_TYPE] == TYPE_COMMENT)
               children.push(t);
             else
@@ -263,7 +261,7 @@
           if (childs.length)
           {
             NodeClass = TemplateTreeNode.Element;
-            nodeConfig.childNodes = childs; 
+            nodeConfig.childNodes = childs;
           }
 
           break;

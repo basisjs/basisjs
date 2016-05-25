@@ -1,0 +1,12 @@
+{
+  "en-US": {
+    "foo": "dest",
+    "bar": "patch",
+    "baz": {
+      "one": "patch",
+      "two": "dest",
+      "three": "patch"
+    },
+    "qux": "patch"
+  }
+}

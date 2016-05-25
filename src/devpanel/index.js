@@ -4,10 +4,7 @@ exports.inspectBasis = inspectBasis;
 
 // check basis.js instance found
 if (!inspectBasis)
-{
-  basis.dev.warn('inspect basis.js instance doesn\'t found');
-  return;
-}
+  throw new Error('inspect basis.js instance doesn\'t found');
 
 // much strict template isolation, to prevent style mix with inspecting basis app styles,
 // as isolation prefixes based on template id in dev mode
@@ -22,7 +19,7 @@ require('basis.template').Template.extend({
 
 // main part
 basis.nextTick(function(){
-  basis.ready(function(){
+  inspectBasis.ready(function(){
     // init transport
     require('./transport.js');
 
@@ -36,7 +33,7 @@ basis.nextTick(function(){
     );
 
     // init interface
-    require('./module/panel/index.js');
+    require('./panel.js');
 
     // temporary here
     //require('./module/ui/index.js');

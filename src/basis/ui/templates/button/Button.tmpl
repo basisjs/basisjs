@@ -1,11 +1,11 @@
 
   <b:style src="./Button.css"/>
+  <b:style src="./ButtonGroup-Button.css" ns="gb"/>
 
-  <b:define name="selected" type="bool"/>
   <b:define name="disabled" type="bool"/>
 
-  <button class="Basis-Button {selected} {disabled}" disabled="{disabled}" event-click="click">
-    <span class="Basis-Button-Back"/>
+  <button class="Basis-Button gb:button {disabled}" disabled="{disabled}" event-click="click">
+    <span class="Basis-Button-Back gb:button-back"/>
     <span class="Basis-Button-Caption">
       {caption}
     </span>

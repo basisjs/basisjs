@@ -1,0 +1,10 @@
+{
+  "_meta": {
+    "type": {
+      "dest": "markup"
+    }
+  },
+  "en-US": {
+    "dest": "[<b:include src=\"./resolve-dest.tmpl\"/>]"
+  }
+}

@@ -1,0 +1,31 @@
+.comment
+{
+  color: rgb(35, 110, 37);
+}
+.binding,
+.nestedView
+{
+  padding: 3px;
+  padding: 3px .5ch;
+  margin-left: -3px;
+  margin-left: -.5ch;
+  border-radius: 2px;
+  color: #666;
+  background: #EEE;
+  text-shadow: 0px 0px 1px white;
+  transition: color .15s, background-color .15s;
+}
+.nestedView:not(.binding),
+.matchBinding.nestedView
+{
+  background: #E0E4B0;
+}
+.matchBinding
+{
+  color: #353;
+  background: #B6CFB6;
+}
+.nestedView
+{
+  cursor: pointer;
+}

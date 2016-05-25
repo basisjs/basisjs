@@ -15,6 +15,7 @@
   var STATE_ERROR = STATE.ERROR;
 
   var AjaxTransport = require('basis.net.ajax').Transport;
+  var Promise = require('basis.promise');
 
 
   //
@@ -55,7 +56,7 @@
       this.abort.call(origin);
 
       if (origin.state == STATE_PROCESSING)
-        origin.setState(STATE_UNDEFINED);
+        origin.setState(transport.stateOnAbort || request.stateOnAbort || STATE_UNDEFINED);
     },
     complete: function(transport, request){
       this.complete.call(request.requestData.origin);
@@ -69,6 +70,21 @@
     failure: nothingToDo,
     abort: nothingToDo,
     complete: nothingToDo
+  };
+
+  var PROMISE_REQUEST_HANDLER = {
+    success: function(request, data){
+      this.fulfill(data);
+    },
+    abort: function(){
+      this.reject('Request aborted');
+    },
+    failure: function(request, error){
+      this.reject(error);
+    },
+    complete: function(){
+      this.request.removeHandler(PROMISE_REQUEST_HANDLER, this);
+    }
   };
 
  /**
@@ -99,6 +115,15 @@
       request: nothingToDo
     }, config);
 
+    // if body is function take in account special action context
+    if (typeof config.body == 'function')
+    {
+      var bodyFn = config.body;
+      config.body = function(){
+        return bodyFn.apply(this.context, this.args);
+      };
+    }
+
     // splice properties
     var fn = basis.object.splice(config, ['prepare', 'request']);
     var callback = basis.object.merge(
@@ -116,18 +141,49 @@
     });
 
     return function action(){
-      // this - instance of DataObject
+      // this - instance of AbstractData
       if (this.state != STATE_PROCESSING)
       {
-        fn.prepare.apply(this, arguments);
+        if (fn.prepare.apply(this, arguments))
+        {
+          /** @cut */ basis.dev.info('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
+          return Promise.reject('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
+        }
 
-        this.request = getTransport().request(basis.object.complete({
-          origin: this
-        }, fn.request.apply(this, arguments)));
+        var request;
+        var requestData = basis.object.complete({
+          origin: this,
+          bodyContext: {
+            context: this,
+            args: basis.array(arguments)
+          }
+        }, fn.request.apply(this, arguments));
+
+        // if body is function take in account special action context
+        if (typeof requestData.body == 'function')
+        {
+          var bodyFn = requestData.body;
+          requestData.body = function(){
+            return bodyFn.apply(this.context, this.args);
+          };
+        }
+
+        // do a request
+        if (request = getTransport().request(requestData))
+          return new Promise(function(fulfill, reject){
+            request.addHandler(PROMISE_REQUEST_HANDLER, {
+              request: request,
+              fulfill: fulfill,
+              reject: reject
+            });
+          });
+
+        return Promise.reject('Request is not performed');
       }
       else
       {
-        /** @cut */ basis.dev.warn(this + ' has not ready state. Operation aborted');
+        /** @cut */ basis.dev.warn('Context in processing state. Operation aborted. Context: ', this);
+        return Promise.reject('Context in processing state, request is not performed');
       }
     };
   }

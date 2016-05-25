@@ -2,12 +2,9 @@
   .Basis-Page
   {
     padding: 4px;
+    height: 100%;
   }
   .Basis-Page__unselected
   {
     display: none;
-  }
-  .Basis-Page-Content
-  {
-
   }

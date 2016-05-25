@@ -121,28 +121,23 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.data');
-    basis.require('basis.data.dataset');
-    basis.require('basis.ui.popup');
-    basis.require('basis.ui.menu');
-
     // import names
-    var DOM = basis.dom;
-    var nsData = basis.data;
-    var Menu = basis.ui.menu.Menu;
-    var UINode = basis.ui.Node;
-    var nsDataset = basis.data.dataset;
-
     var getter = basis.getter;
+    var domUtils = basis.require('basis.dom');
+    var Value = basis.require('basis.data').Value;
+    var DataObject = basis.require('basis.data').Object;
+    var Dataset = basis.require('basis.data').Dataset;
+    var UINode = basis.require('basis.ui').Node;
+    var Menu = basis.require('basis.ui.menu').Menu;
+    var nsDataset = basis.require('basis.data.dataset');
 
     function createHeader(header){
-      return DOM.insert(DOM.get('demo-container'), DOM.createElement('H2', header));
+      return domUtils.insert(domUtils.get('demo-container'), domUtils.createElement('H2', header));
     }
 
     function createImage(type){
-      return DOM.createElement('.img',
-        DOM.createElement('IMG[src="dataset_' + type + '.png"][width=120][height=80]')
+      return domUtils.createElement('.img',
+        domUtils.createElement('IMG[src="dataset_' + type + '.png"][width=120][height=80]')
       );
     }
 
@@ -150,34 +145,34 @@
     // Init data
     //
     var data = basis.array.create(10, function(i){
-      return new nsData.Object({
+      return new DataObject({
         data: {
           value: i + 1
         }
       });
     });
     var data2 = 'one two three four five six seven eight nine ten'.split(' ').map(function(value){
-      return new nsData.Object({
+      return new DataObject({
         data: {
           value: value
         }
       });
     });
 
-    var NUMBERS = new nsData.Dataset({
+    var NUMBERS = new Dataset({
       items: data
     });
-    var WORDS = new nsData.Dataset({
+    var WORDS = new Dataset({
       items: data2
     });
 
-    var A = new nsData.Dataset({
+    var A = new Dataset({
       items: [data[0], data[1], data[2], data[3]]
     });
-    var B = new nsData.Dataset({
+    var B = new Dataset({
       items: [data[2], data[3], data[4], data[5]]
     });
-    var C = new nsData.Dataset({
+    var C = new Dataset({
       items: [data[1], data[2], data[5], data[6]]
     });
 
@@ -301,8 +296,8 @@
       title: 'Union (A ∪ B ∪ C)',
       image: createImage('union'),
       dataSource: new nsDataset.Merge({
-        rule: nsDataset.Merge.UNION,  // by default
-        sources: [A, B, C]
+        sources: [A, B, C],
+        rule: nsDataset.Merge.UNION  // by default
       })
     });
 
@@ -310,8 +305,8 @@
       title: 'Intersection (A ∩ B ∩ C)',
       image: createImage('intersection'),
       dataSource: I = new nsDataset.Merge({
-        rule: nsDataset.Merge.INTERSECTION,
-        sources: [A, B, C]
+        sources: [A, B, C],
+        rule: nsDataset.Merge.INTERSECTION
       })
     });
 
@@ -319,8 +314,8 @@
       title: 'AtLeastOneExclude (A ∪ B ∪ C) / (A ∩ B ∩ C) [union subtract intersection]',
       image: createImage('atleastoneexclude'),
       dataSource: new nsDataset.Merge({
-        rule: nsDataset.Merge.AT_LEAST_ONE_EXCLUDE,
-        sources: [A, B, C]
+        sources: [A, B, C],
+        rule: nsDataset.Merge.AT_LEAST_ONE_EXCLUDE
       })
     });
 
@@ -328,8 +323,8 @@
       title: 'Difference (A ∆ B ∆ C)',
       image: createImage('difference'),
       dataSource: new nsDataset.Merge({
-        rule: nsDataset.Merge.DIFFERENCE,
-        sources: [A, B, C]
+        sources: [A, B, C],
+        rule: nsDataset.Merge.DIFFERENCE
       })
     });
 
@@ -337,8 +332,8 @@
       title: 'MoreThanOneInclude (A ∪ B ∪ C) / (A ∆ B ∆ C) [union subtract difference]',
       image: createImage('morethanoneinclude'),
       dataSource: new nsDataset.Merge({
-        rule: nsDataset.Merge.MORE_THAN_ONE_INCLUDE,
-        sources: [A, B, C]
+        sources: [A, B, C],
+        rule: nsDataset.Merge.MORE_THAN_ONE_INCLUDE
       })
     });
 
@@ -356,24 +351,24 @@
     new DatasetViewer({
       title: 'MapFilter for dataset A: NUMBERS -> WORDS',
       dataSource: new nsDataset.MapFilter({
-        map: basis.getter('data.value - 1', data2),
-        source: A
+        source: A,
+        map: basis.getter('data.value - 1').as(data2)
       })
     });
 
     new DatasetViewer({
       title: 'Filter of dataset A: ONLY ODD',
       dataSource: new nsDataset.Filter({
-        rule: basis.getter('data.value % 2'),
-        source: A
+        source: A,
+        rule: basis.getter('data.value % 2')
       })
     });
 
     new DatasetViewer({
       title: 'Split data A: ODD and EVEN',
       dataSource: new nsDataset.Split({
-        rule: basis.getter('data.value % 2 ? "odd" : "even"'),
-        source: A
+        source: A,
+        rule: basis.getter('data.value % 2').as(['even', 'odd'])
       }),
       childClass: UINode.subclass({
         template:
@@ -385,11 +380,8 @@
           title: 'data:'
         },
 
-        childClass: DatasetViewer.prototype.childClass,
-        init: function(){
-          this.dataSource = this.delegate;
-          UINode.prototype.init.call(this);
-        }
+        dataSource: Value.factory('delegateChanged', 'delegate'),
+        childClass: DatasetViewer.prototype.childClass
       })
     });
 
@@ -397,8 +389,8 @@
       title: 'First 3 item of A',
       sorting: basis.getter('data.value'),
       dataSource: new nsDataset.Slice({
-        rule: basis.getter('data.value'),
         source: A,
+        rule: basis.getter('data.value'),
         limit: 3
       })
     });
@@ -407,15 +399,17 @@
       title: 'Cloud of A: deviders',
       sorting: basis.getter('data.title'),
       dataSource: new nsDataset.Cloud({
+        source: A,
         rule: function(item){
           var res = [];
           var val = item.data.value;
-          for (var i = val; i > 1; i--)
+
+          for (var i = 2; i <= val; i++)
             if ((val % i) == 0)
               res.push(i);
+
           return res;
-        },
-        source: A
+        }
       }),
       childClass: UINode.subclass({
         template:
@@ -427,11 +421,8 @@
           title: 'data:'
         },
 
-        childClass: DatasetViewer.prototype.childClass,
-        init: function(){
-          this.dataSource = this.delegate;
-          UINode.prototype.init.call(this);
-        }
+        dataSource: Value.factory('delegateChanged', 'delegate'),
+        childClass: DatasetViewer.prototype.childClass
       })
     });
 

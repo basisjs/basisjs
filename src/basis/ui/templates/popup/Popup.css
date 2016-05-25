@@ -7,7 +7,9 @@
     box-shadow: 1px 1px 5px rgba(0,0,0,.2);
   }
   .Basis-Popup.visible,
-  .Basis-Popup.hidden
+  .Basis-Popup.visible-anim,
+  .Basis-Popup.hidden,
+  .Basis-Popup.hidden-anim
   {
 
   }

@@ -1,9 +1,6 @@
 /*
   Basis javascript library
   http://github.com/basisjs/basisjs
-
-  @license
-  Dual licensed under the MIT or GPL Version 2 licenses.
 */
 
 /**
@@ -32,21 +29,32 @@
  *   - String
  *   - Number
  * - basis.ready
- * - async document imterface (basis.doc)
+ * - async document interface (basis.doc)
  * - basis.cleaner
  */
 
-// global is current context (`window` in browser and `global` on node.js)
-;(function createBasisInstance(global, __basisFilename, __config){
+// context is `window` in browser and `module` on node.js
+;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.4.0-dev';
+  var VERSION = '1.7.0-dev';
   var isCoreBasis = !__config;
 
+  var global = Function('return this')();
+  var process = global.process;
   var document = global.document;
+  var location = global.location;
+  var NODE_ENV = global !== context && process && process.argv ? global : false;
   var toString = Object.prototype.toString;
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var NODE_ENV = typeof process == 'object' && toString.call(process) == '[object process]';
+
+  // const
+  var FACTORY = {};
+  var PROXY = {};
+
+  // dev verbose names for object const
+  /** @cut */ FACTORY = new (devVerboseName('basis.FACTORY', {}, function(){}));
+  /** @cut */ PROXY = new (devVerboseName('basis.PROXY', {}, function(){}));
 
 
  /**
@@ -78,20 +86,40 @@
   * @param {*} value
   * @param {string} warning Warning messsage
   */
-  function defineReadWarningProperty(object, name, value, warning){
-    object[name] = value;
-
-    /** @cut */ if (Object.defineProperty)
-    /** @cut */   Object.defineProperty(object, name, {
-    /** @cut */     get: function(){
-    /** @cut */       consoleMethods.warn(warning);
-    /** @cut */       return value;
-    /** @cut */     },
-    /** @cut */     set: function(newValue){
-    /** @cut */       value = newValue;
+  var warnPropertyAccess = (function(){
+    /** @cut */ // show warnings only in dev mode
+    /** @cut */ try {
+    /** @cut */   if (Object.defineProperty)
+    /** @cut */   {
+    /** @cut */     // IE8 has Object.defineProperty(), but it works for DOM nodes only
+    /** @cut */     var obj = {};
+    /** @cut */     Object.defineProperty(obj, 'foo', {
+    /** @cut */       get: function(){
+    /** @cut */         return true;
+    /** @cut */       }
+    /** @cut */     });
+    /** @cut */
+    /** @cut */     // if no exception and property returns true
+    /** @cut */     // looks like we could use Object.defineProperty()
+    /** @cut */     if (obj.foo === true)
+    /** @cut */     {
+    /** @cut */       return function(object, name, value, warning){
+    /** @cut */         Object.defineProperty(object, name, {
+    /** @cut */           get: function(){
+    /** @cut */             consoleMethods.warn(warning);
+    /** @cut */             return value;
+    /** @cut */           },
+    /** @cut */           set: function(newValue){
+    /** @cut */             value = newValue;
+    /** @cut */           }
+    /** @cut */         });
+    /** @cut */       };
     /** @cut */     }
-    /** @cut */   });
-  }
+    /** @cut */   }
+    /** @cut */ } catch(e){ }
+
+    return function(){};
+  })();
 
  /**
   * Copy all properties from source (object) to destination object.
@@ -197,7 +225,12 @@
   * @return {object}
   */
   function merge(/* obj1 .. objN */){
-    return arrayFrom(arguments).reduce(extend, {});
+    var result = {};
+
+    for (var i = 0; i < arguments.length; i++)
+      extend(result, arguments[i]);
+
+    return result;
   }
 
  /**
@@ -319,228 +352,142 @@
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
-    var ID = 'basisGetterId' + genUID() + '_';
-    var modificatorSeed = 1;
-    var simplePath = /^[a-z$_][a-z$_0-9]*(\.[a-z$_][a-z$_0-9]*)*$/i;
-
-    var getterMap = [];
+    var GETTER_ID_PREFIX = 'basisGetterId' + genUID() + '_';
+    var GETTER_ID = GETTER_ID_PREFIX + 'root';
+    var ID = GETTER_ID_PREFIX;
+    var SOURCE = GETTER_ID_PREFIX + 'base';
+    var PARENT = GETTER_ID_PREFIX + 'parent';
+    var getterSeed = 1;
     var pathCache = {};
-    var modCache = {};
 
-    function buildFunction(path){
-      if (simplePath.test(path))
+    function as(path){
+      var self = this;
+      var wrapper;
+      var result;
+      var id;
+
+      if (typeof path == 'function' || typeof path == 'string')
       {
-        var parts = path.split('.');
-        var foo = parts[0];
-        var bar = parts[1];
-        var baz = parts[2];
-        var fn;
+        wrapper = resolveFunction(path, self[ID]);
+        id = GETTER_ID_PREFIX + wrapper[ID];
 
-        // This approach helps produce function that could be
-        // optimized (inlined) by js engine. In most cases path contains
-        // from 1 to 3 parts and we don't use a loop in those cases.
-        switch (parts.length)
-        {
-          case 1:
-            fn = function(object){
-              return object != null ? object[foo] : object;
-            };
-            break;
-          case 2:
-            fn = function(object){
-              return object != null ? object[foo][bar] : object;
-            };
-            break;
-          case 3:
-            fn = function(object){
-              return object != null ? object[foo][bar][baz] : object;
-            };
-            break;
-          default:
-            fn = function(object){
-              if (object != null)
-              {
-                object = object[foo][bar][baz];
-                for (var i = 3, key; key = parts[i]; i++)
-                  object = object[key];
-              }
+        if (hasOwnProperty.call(self, id))
+          return self[id];
 
-              return object;
-            };
-        }
+        // recover original function, reduce functions call stack
+        if (typeof wrapper[SOURCE] == 'function')
+          wrapper = wrapper[SOURCE];
 
-        // verbose function code in dev mode
-        /** @cut */ fn = Function('parts', 'return ' + fn.toString()
-        /** @cut */   .replace(/(foo|bar|baz)/g, function(m, w){
-        /** @cut */      return '"' + parts[w == 'foo' ? 0 : (w == 'bar' ? 1 : 2)] + '"';
-        /** @cut */    })
-        /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))(parts);
+        result = function(value){
+          return wrapper(self(value));
+        };
+      }
+      else
+      {
+        // theat non-function/non-string values as maps
+        var map = path;
 
-        return fn;
+        if (!map)
+          return nullGetter;
+
+        result = function(value){
+          return map[self(value)];
+        };
       }
 
-      // for cases when path isn't a property name chain
+      /** @cut */ result[PARENT] = self;
+      result[ID] = getterSeed++;
+      result[SOURCE] = path;
+      result.__extend__ = getter;
+      result.as = as;
+
+      // cache function/string getters only
+      if (id)
+        self[id] = result;
+
+      return result;
+    }
+
+    function buildFunction(path){
       return new Function('object', 'return object != null ? object.' + path + ' : object');
     }
 
-    var getterFn = function(path, modificator){
-      var func;
+    function resolveFunction(value, id){
+      var fn = value;
       var result;
-      var getterId;
 
-      // return nullGetter if no path or nullGetter passed
-      if (!path || path === nullGetter)
+      if (value && typeof value == 'string')
+      {
+        if (hasOwnProperty.call(pathCache, value))
+          return pathCache[value];
+
+        fn = pathCache[value] = buildFunction(value);
+      }
+
+      if (typeof fn != 'function')
+      {
+        /** @cut */ basis.dev.warn('path for root getter should be function or non-empty string');
         return nullGetter;
-
-      // resolve getter by path
-      if (typeof path == 'function')
-      {
-        getterId = path[ID];
-
-        // path is function
-        if (getterId)
-        {
-          // this function used for getter before
-          func = getterMap[Math.abs(getterId) - 1];
-        }
-        else
-        {
-          // this function never used for getter before, wrap and cache it
-
-          // wrap function to prevent function properties rewrite
-          func = function(object){
-            return path(object);
-          };
-          func.base = path;
-          func.__extend__ = getter;
-
-          // add to cache
-          getterId = getterMap.push(func);
-          path[ID] = -getterId;
-          func[ID] = getterId;
-        }
-      }
-      else
-      {
-        // thread path as string, search in cache
-        func = pathCache[path];
-
-        if (func)
-        {
-          // resolve getter id
-          getterId = func[ID];
-        }
-        else
-        {
-          // create getter function
-          func = buildFunction(path);
-          func.base = path;
-          func.__extend__ = getter;
-
-          // add to cache
-          getterId = getterMap.push(func);
-          func[ID] = getterId;
-          pathCache[path] = func;
-        }
       }
 
-      // resolve getter with modificator
-      var modType = modificator != null && typeof modificator;
+      // if function is getter return it
+      if (fn.__extend__ === getter)
+        return fn;
 
-      // if no modificator, return func
-      if (!modType)
-        return func;
+      // check function cache for getter
+      if (hasOwnProperty.call(fn, id))
+        return fn[id];
 
-      var modList = modCache[getterId];
-      var modId;
-
-      // resolve modificator id if possible
-      if (modType == 'string')
-        modId = modType + modificator;
-      else
-        if (modType == 'function')
-          modId = modificator.basisModId_;
-        else
-          if (modType != 'object')
-          {
-            // only string, function and objects are support as modificator
-            /** @cut */ consoleMethods.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
-
-            return func;
-          }
-
-      // try fetch getter from cache
-      if (modId && modList && modList[modId])
-        return modList[modId];
-
-      // recover original function, reduce functions call deep
-      if (typeof func.base == 'function')
-        func = func.base;
-
-      switch (modType)
-      {
-        case 'string':
-          result = function(object){
-            return stringFunctions.format(modificator, func(object));
+      // if no function, create new getter (function wrapper)
+      result = fn[id] = fn !== value
+        ? fn  // don't wrap getter from string
+        : function(value){
+            return fn(value);
           };
-          break;
 
-        case 'function':
-          if (!modId)
-          {
-            // mark function with modificator id
-            modId = modType + modificatorSeed++;
-            modificator.basisModId_ = modId;
-          }
-
-          result = function(object){
-            return modificator(func(object));
-          };
-          break;
-
-        default: //case 'object':
-          result = function(object){
-            return modificator[func(object)];
-          };
-      }
-
-      result.base = func.base || func;
+      result[ID] = getterSeed++;
+      result[SOURCE] = value;
       result.__extend__ = getter;
+      result.as = as;
 
-      if (modId)
+      return result;
+    }
+
+    function getter(path, value){
+      var result = path && path !== nullGetter
+        ? resolveFunction(path, GETTER_ID)
+        : nullGetter;
+
+      // backward capability
+      if (value || value === '')
       {
-        if (!modList)
-        {
-          // create new modificator list if it not exists yet
-          modList = {};
-          modCache[getterId] = modList;
-        }
+        /** @cut basis.js 1.4 */ basis.dev.warn('second argument for getter is deprecated, use `as` method of getter instead');
 
-        // cache getter with modificator
-        modList[modId] = result;
-        result.mod = modificator;
+        if (typeof value == 'string')
+          value = stringFunctions.formatter(value);
 
-        // cache new getter
-        result[ID] = getterMap.push(result);
-      }
-      else
-      {
-        // only object modificators has no modId
-        // getters with object modificator are not caching
-        // this prevents of storing (in closure) object that can't be released by gabage collectors
+        return result.as(value);
       }
 
       return result;
-    };
+    }
 
-    getterFn.ID = ID;
+    getter.ID = ID;
+    getter.SOURCE = SOURCE;
+    getter.PARENT = PARENT;
 
-    return getterFn;
+    return getter;
   })();
 
-  var nullGetter = extend(function(){}, {
-    __extend__: getter
-  });
+  var nullGetter = (function(){
+    var nullGetter = function(){};
+    nullGetter[getter.ID] = getter.ID + 'nullGetter';
+    nullGetter.__extend__ = getter,
+    nullGetter.as = function(){
+      return nullGetter;
+    };
+    return nullGetter;
+  })();
 
 
  /**
@@ -612,12 +559,69 @@
     };
   }
 
+ /**
+  * Make factory function from getter.
+  * @param {function(value)|string} fn Base for getter.
+  * @return {function(value)} Factory function.
+  */
+  function factory(fn){
+    if (typeof fn != 'function')
+      fn = getter(fn);
+
+    var result = function(value){
+      return fn(value);
+    };
+    result.factory = FACTORY;
+
+    return result;
+  }
+
+ /**
+  * Check value is factory.
+  * @param {*} value Value to check
+  * @return {boolean} Returns true if value is factory.
+  */
+  function isFactory(value){
+    return typeof value === 'function' && value.factory === FACTORY;
+  }
+
+ /**
+  * Generates name for function and registrates it in global scope.
+  * @param {function()} fn Function that should available in global scope.
+  * @param {boolean} permanent If false callback will be removed after fiest invoke.
+  * @return {string} Function name in global scope.
+  */
+  function publicCallback(fn, permanent){
+    var name = 'basisjsCallback' + genUID();
+
+    global[name] = permanent ? fn : function(){
+      try {
+        // IE8 and lower can't delete from global
+        delete global[name];
+      } catch(e) {
+        global[name] = undefined;
+      }
+
+      fn.apply(this, arguments);
+    };
+
+    return name;
+  }
+
+ /**
+  * dev mode only
+  */
+  /** @cut */ function devVerboseName(name, args, fn){
+  /** @cut */   return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
+  /** @cut */ }
+
 
   // ============================================
   // safe console method wrappers
   //
 
   var consoleMethods = (function(){
+    var console = global.console;
     var methods = {
       log: $undef,
       info: $undef,
@@ -625,12 +629,12 @@
       error: $undef
     };
 
-    if (typeof console != 'undefined')
+    if (console)
       iterate(methods, function(methodName){
         methods[methodName] = 'bind' in Function.prototype && typeof console[methodName] == 'function'
           ? Function.prototype.bind.call(console[methodName], console)
-            // ie8 and lower, it's also more safe when Function.prototype.bind defined
-            // by other libraries (like es5-shim)
+            // IE8 and lower solution. It's also more safe when Function.prototype.bind
+            // defines by other libraries (like es5-shim).
           : function(){
               Function.prototype.apply.call(console[methodName], console, arguments);
             };
@@ -641,13 +645,13 @@
 
 
   //
-  // Support for setImmediate/clearImmediate
+  // Timers
   //
 
   var setImmediate = global.setImmediate || global.msSetImmediate;
   var clearImmediate = global.clearImmediate || global.msSetImmediate;
 
-  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't global
+  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't a global
   if (setImmediate)
     setImmediate = setImmediate.bind(global);
 
@@ -659,11 +663,11 @@
   // Inspired on Domenic Denicola's solution https://github.com/NobleJS/setImmediate
   //
   if (!setImmediate)
+  {
     (function(){
-      var MESSAGE_NAME = 'basisjs.setImmediate';
       var runTask = (function(){
         var taskById = {};
-        var taskId = 1;
+        var taskId = 0;
 
         // emulate setImmediate
         setImmediate = function(fn/*, ..args */){
@@ -684,21 +688,23 @@
         };
 
         // emulate clearImmediate
-        clearImmediate = function(id){
-          delete taskById[id];
+        clearImmediate = function(taskId){
+          delete taskById[taskId];
         };
 
         //
         // return result function for task run
         //
-        return function(id){
-          var task = taskById[id];
+        return function(taskId){
+          var task = taskById[taskId];
 
           if (task)
           {
-            delete taskById[id];
-            return task.fn.apply(undefined, task.args);
+            delete taskById[taskId];
+            task.fn.apply(undefined, task.args);
           }
+
+          asap.process();
         };
       })();
 
@@ -712,7 +718,7 @@
       //
       // implement platform specific solution
       //
-      if (global.process && typeof process.nextTick == 'function')
+      if (NODE_ENV && NODE_ENV.process && typeof process.nextTick == 'function')
       {
         // use next tick on node.js
         addToQueue = function(taskId){
@@ -723,58 +729,64 @@
       }
       else
       {
-        if (global.MessageChannel)
-        {
-          var channel = new global.MessageChannel();
+        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+        // where `global.postMessage` means something completely different and can't be used for this purpose.
+        var postMessageSupported = global.postMessage && !global.importScripts;
 
-          channel.port1.onmessage = function(event){
-            var taskId = event.data;
-            runTask(taskId);
+        // IE8 has postMessage implementation, but it is synchronous and can't be used.
+        if (postMessageSupported)
+        {
+          var oldOnMessage = global.onmessage;
+          global.onmessage = function(){
+            postMessageSupported = false;
+          };
+          global.postMessage('', '*');
+          global.onmessage = oldOnMessage;
+        }
+
+        if (postMessageSupported)
+        {
+          // postMessage scheme
+          var taskIdByMessage = {};
+          var setImmediateHandler = function(event){
+            if (event && event.source == global)
+            {
+              var data = event.data;
+              if (hasOwnProperty.call(taskIdByMessage, data))
+              {
+                var taskId = taskIdByMessage[data];
+                delete taskIdByMessage[data];
+                runTask(taskId);
+              }
+            }
           };
 
+          if (global.addEventListener)
+            global.addEventListener('message', setImmediateHandler, true);
+          else
+            global.attachEvent('onmessage', setImmediateHandler);
+
+          // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
+          // invoking our onGlobalMessage listener above.
           addToQueue = function(taskId){
-            channel.port2.postMessage(taskId);
+            var message = genUID(32);
+            taskIdByMessage[message] = taskId;
+            global.postMessage(message, '*');
           };
         }
         else
         {
-          // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-          // where `global.postMessage` means something completely different and can't be used for this purpose.
-          var postMessageSupported = global.postMessage && !global.importScripts;
-
-          // IE8 has postMessage implementation, but it is synchronous and can't be used.
-          if (postMessageSupported)
+          //
+          if (global.MessageChannel)
           {
-            var oldOnMessage = global.onmessage;
-            global.onmessage = function(){
-              postMessageSupported = false;
-            };
-            global.postMessage('', '*');
-            global.onmessage = oldOnMessage;
-          }
+            var channel = new global.MessageChannel();
 
-          if (postMessageSupported)
-          {
-            // postMessage scheme
-            var setImmediateHandler = function(event){
-              if (event && event.source == global)
-              {
-                var taskId = String(event.data).split(MESSAGE_NAME)[1];
-
-                if (taskId)
-                  runTask(taskId);
-              }
+            channel.port1.onmessage = function(event){
+              runTask(event.data);
             };
 
-            if (global.addEventListener)
-              global.addEventListener('message', setImmediateHandler, true);
-            else
-              global.attachEvent('onmessage', setImmediateHandler);
-
-            // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
-            // invoking our onGlobalMessage listener above.
             addToQueue = function(taskId){
-              global.postMessage(MESSAGE_NAME + taskId, '*');
+              channel.port2.postMessage(taskId);
             };
           }
           else
@@ -821,6 +833,150 @@
         }
       }
     })();
+  }
+
+  //
+  // asap
+  //
+  var asap = (function(){
+    var queue = [];
+    var processing = false;
+    var timer;
+
+    // run process queue function only if any task
+    // as try/finally doesn't optimize
+    function processQueue(){
+      try {
+        // mark queue as processing to avoid concurrency
+        processing = true;
+
+        // process queue
+        var item;
+        while (item = queue.shift())
+          item.fn.call(item.context);
+      } finally {
+        // queue is not processing anymore
+        processing = false;
+
+        // if any function in queue than exception was occured,
+        // run rest functions in next code frame
+        if (queue.length)
+          timer = setImmediate(process);
+      }
+    }
+
+    function process(){
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
+
+      // process queue only if any task
+      if (queue.length)
+        processQueue();
+    }
+
+   /**
+    * Invoke function as soon as possible. The ideal case is invocation in the end
+    * of current code frame (after all changes done). It's possible when code frame
+    * inited by browser events or timers (setImmediate/clearImmediate/nextTick), so
+    * we can process asap functions right after handler function was invoked.
+    * Asap function invocation can't be aborted.
+    *
+    * Single timer is using for asap functions invocation. Exceptions aren't catching.
+    * If any exception rest functions will be invoked in next code frame.
+    *
+    * @param {function} fn Function that should be invoked ASAP.
+    * @param {*=} context Context for function invocation.
+    */
+    var asap = function(fn, context){
+      // add function to queue
+      queue.push({
+        fn: fn,
+        context: context
+      });
+
+      // set timer to process queue, if timer is not set yet
+      if (!timer)
+        timer = setImmediate(process);
+
+      return true;
+    };
+
+   /**
+    * Run asap functions processing.
+    */
+    asap.process = function(){
+      // run queue process only if queue isn't processing
+      if (!processing)
+        process();
+    };
+
+   /**
+    * Returns schedule instance. Object queue for which scheduleFn should be apply asap.
+    * @return
+    */
+    asap.schedule = (function(scheduleFn){
+      var queue = {};
+      var scheduled = false;
+
+      function process(){
+        // set timer to make sure all objects be processed
+        // it helps avoid try/catch and process all objects even if any exception
+        var etimer = setImmediate(process);
+
+        // reset scheduled flag, make possible set new asap for objects added during queue processing
+        scheduled = false;
+
+        // process objects
+        for (var id in queue)
+        {
+          var object = queue[id];
+          delete queue[id];
+          scheduleFn(object);
+        }
+
+        // if no exceptions we will be here, reset emergency timer
+        clearImmediate(etimer);
+
+        // reset queue to keep it fast, but if no new task scheduled during queue processing
+        if (!scheduled)
+          queue = {};
+      }
+
+      return {
+        add: function(object){
+          queue[object.basisObjectId] = object;
+          if (!scheduled)
+            scheduled = asap(process);
+        },
+        remove: function(object){
+          delete queue[object.basisObjectId];
+        }
+      };
+    });
+
+    return asap;
+  })();
+
+
+  //
+  // Code frame
+  //
+  var codeFrame = (function(){
+    var count = 0;
+    var info = {
+      id: count,
+      start: function(){
+        info.id = count++;
+      },
+      finish: function(){
+        asap.process();
+        info.id = 'unknown';
+      }
+    };
+
+    return info;
+  })();
 
 
   // ============================================
@@ -851,7 +1007,7 @@
     if (NODE_ENV)
     {
       // try to use baseURI from process, it may be provided by parent module
-      var path = (process.basisjsBaseURI || require('path').resolve('.')).replace(/\\/g, '/'); // on Windows path contains backslashes
+      var path = (process.basisjsBaseURI || '/').replace(/\\/g, '/'); // on Windows path contains backslashes
       baseURI = path.replace(/^[^\/]*/, '');
       origin = path.replace(/\/.*/, '');
     }
@@ -991,11 +1147,10 @@
       *   basis.path.resolve('foo', 'bar/baz/', '../gif/image.gif');
       *   // if current location is /demo, it returns '/demo/foo/bar/gif/image.gif'
       *
-      * @param {..string=} from
-      * @param {string} to
+      * @param {...string=} paths
       * @return {string}
       */
-      resolve: function(from, to){
+      resolve: function(){
         var args = arrayFrom(arguments).reverse();
         var path = [];
         var absoluteFound = false;
@@ -1097,7 +1252,20 @@
       if (NODE_ENV)
       {
         // node.js env
-        basisFilename = __filename.replace(/\\/g, '/');  // on Windows path contains backslashes
+        basisFilename = process.basisjsFilename;
+
+        /** @cut */ if (process.basisjsConfig)
+        /** @cut */ {
+        /** @cut */   config = process.basisjsConfig;
+        /** @cut */   if (typeof config == 'string')
+        /** @cut */   {
+        /** @cut */     try {
+        /** @cut */       config = Function('return{' + config + '}')();
+        /** @cut */     } catch(e) {
+        /** @cut */       /** @cut */ consoleMethods.error('basis-config: basis.js config parse fault: ' + e);
+        /** @cut */     }
+        /** @cut */   }
+        /** @cut */ }
       }
       else
       {
@@ -1141,7 +1309,7 @@
   *
   * Other options copy into basis.config as is.
   */
-  function processConfig(config, verbose){
+  function processConfig(config){
     // make a copy of config
     config = slice(config);
 
@@ -1348,14 +1516,6 @@
       return cursor === superClass;
     }
 
-   /**
-    * dev mode only
-    */
-    function devVerboseName(name, args, fn){
-      return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
-    }
-
-
     // test is toString property enumerable
     var TOSTRING_BUG = (function(){
       for (var key in { toString: 1 })
@@ -1367,10 +1527,10 @@
    /**
     * Class constructor.
     * @param {function()} SuperClass Class that new one inherits of.
-    * @param {...object} extensions Objects that extends new class prototype.
+    * @param {...(object|function())} extensions Objects that extends new class prototype.
     * @return {function()} A new class.
     */
-    function createClass(SuperClass, extensions){
+    function createClass(SuperClass){
       var classId = classSeed++;
 
       if (typeof SuperClass != 'function')
@@ -1384,7 +1544,6 @@
 
       /** @cut */ if (!className)
       /** @cut */   className = SuperClass.className + '._Class' + classId;
-      /** @cut */ // consoleMethods.warn('Class has no name');
 
       // temp class constructor with no init call
       var NewClassProto = function(){};
@@ -1405,14 +1564,19 @@
         // class methods
         isSubclassOf: isSubclassOf,
         subclass: function(){
-          return createClass.apply(null, [newClass].concat(arrayFrom(arguments)));
+          return createClass.apply(null, [NewClass].concat(arrayFrom(arguments)));
         },
         extend: extendClass,
+        factory: function(config){
+          return factory(function(extra){
+            return new NewClass(merge(config, extra));
+          });
+        },
 
         // auto extend creates a subclass
         __extend__: function(value){
           if (value && value !== SELF && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
-            return BaseClass.create.call(null, newClass, value);
+            return BaseClass.create.call(null, NewClass, value);
           else
             return value;
         },
@@ -1421,14 +1585,14 @@
         prototype: newProto
       };
 
-      // extend newClass prototype
+      // extend NewClass prototype
       for (var i = 1, extension; extension = arguments[i]; i++)
         newClassProps.extend(extension);
 
       /** @cut */if (newProto.init !== BaseClass.prototype.init && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
 
       // new class constructor
-      var newClass = newClassProps.extendConstructor_
+      var NewClass = newClassProps.extendConstructor_
         // constructor with instance extension
         ? function(extend){
             // mark object
@@ -1465,25 +1629,25 @@
 
       // verbose name in dev
       // NOTE: this code makes Chrome and Firefox show class name in console
-      /** @cut */ newClass = devVerboseName(className, { instanceSeed: instanceSeed }, newClass);
+      /** @cut */ NewClass = devVerboseName(className, { instanceSeed: instanceSeed }, NewClass);
 
       // add constructor property to prototype
-      newProto.constructor = newClass;
+      newProto.constructor = NewClass;
 
       for (var key in newProto)
         if (newProto[key] === SELF)
-          newProto[key] = newClass;
+          newProto[key] = NewClass;
         //else
         //  newProto[key] = newProto[key];
 
       // extend constructor with properties
-      extend(newClass, newClassProps);
+      extend(NewClass, newClassProps);
 
       // for class introspection
-      /** @cut */ classes.push(newClass);
+      /** @cut */ classes.push(NewClass);
 
       // return new class
-      return newClass;
+      return NewClass;
     }
 
    /**
@@ -1565,10 +1729,9 @@
    /**
     * @param {object} extension
     * @param {function()=} fn
-    * @param {string} devName Dev only
     * @return {object}
     */
-    var customExtendProperty = function(extension, fn, devName){
+    var customExtendProperty = function(extension, fn){
       return {
         __extend__: function(extension){
           if (!extension)
@@ -1578,7 +1741,7 @@
             return extension;
 
           var Base = function(){};
-          /** @cut verbose name in dev */ Base = devVerboseName(devName || 'customExtendProperty', {}, Base);
+          /** @cut verbose name in dev */ Base = devVerboseName(arguments[2] || 'customExtendProperty', {}, Base);
           Base.prototype = this;
 
           var result = new Base;
@@ -1607,12 +1770,17 @@
     var nestedExtendProperty = function(extension){
       return customExtendProperty(extension, function(result, extension){
         for (var key in extension)
-        {
-          var value = result[key];
-          result[key] = value && value.__extend__
-            ? value.__extend__(extension[key])
-            : extensibleProperty(extension[key]);
-        }
+          if (hasOwnProperty.call(extension, key))
+          {
+            var value = result[key];
+            var newValue = extension[key];
+            if (newValue)
+              result[key] = value && value.__extend__
+                ? value.__extend__(newValue)
+                : extensibleProperty(newValue);
+            else
+              result[key] = null;
+          }
       }, 'nestedExtendProperty');
     };
 
@@ -1638,7 +1806,7 @@
           /** @cut */ result.__extend__ = create;
 
           for (var key in keys)
-            if (keys[key])
+            if (hasOwnProperty.call(keys, key) && keys[key])
               result[key] = fn;
         }
 
@@ -1699,8 +1867,8 @@
     * @type {object}
     */
     bindingBridge: {
-      attach: function(host, fn, context){
-        host.attach(fn, context);
+      attach: function(host, fn, context, onDestroy){
+        host.attach(fn, context, onDestroy);
       },
       detach: function(host, fn, context){
         host.detach(fn, context);
@@ -1742,7 +1910,7 @@
     * @param {function(value)} fn
     * @param {object=} context
     */
-    attach: function(fn, context){
+    attach: function(fn, context, onDestroy){
       /** @cut */ var cursor = this;
       /** @cut */ while (cursor = cursor.handler)
       /** @cut */   if (cursor.fn === fn && cursor.context === context)
@@ -1751,6 +1919,7 @@
       this.handler = {
         fn: fn,
         context: context,
+        destroy: onDestroy || null,
         handler: this.handler
       };
     },
@@ -1769,6 +1938,7 @@
         {
           // make it non-callable
           cursor.fn = $undef;
+          cursor.destroy = cursor.destroy && $undef;
 
           // remove from list
           prev.handler = cursor.handler;
@@ -1808,6 +1978,36 @@
     },
 
    /**
+    * Creates new token from token that contains modified through fn value.
+    * @param {function(value):value} fn
+    * @return {*}
+    */
+    as: function(fn){
+      var token = new Token();
+      var setter = function(value){
+        this.set(fn.call(this, value));
+      };
+
+      if (typeof fn != 'function')
+        fn = getter(fn);
+
+      setter.call(token, this.get());
+
+      this.attach(setter, token, token.destroy);
+      token.attach($undef, this, function(){
+        this.detach(setter, token);
+      });
+
+      /** @cut */ devInfoResolver.setInfo(token, 'sourceInfo', {
+      /** @cut */   type: 'Token#as',
+      /** @cut */   source: this,
+      /** @cut */   transform: fn
+      /** @cut */ });
+
+      return token;
+    },
+
+   /**
     * Actually it's not require invoke destroy method for token, garbage
     * collector have no problems to free token's memory when all references
     * to token are removed.
@@ -1820,10 +2020,16 @@
         this.deferredToken = null;
       }
 
-      this.handler = null;
-      this.value = null;
       this.attach = $undef;
       this.detach = $undef;
+
+      var cursor = this;
+      while (cursor = cursor.handler)
+        if (cursor.destroy)
+          cursor.destroy.call(cursor.context);
+
+      this.handler = null;
+      this.value = null;
     }
   });
 
@@ -1831,32 +2037,9 @@
   // Deferred token
   //
 
-  var awaitToApply = (function(){
-    var tokens = {};
-    var timer;
-
-    function applyTokens(){
-      var list = tokens;
-
-      // reset list & timer
-      tokens = {};
-      timer = null;
-
-      // call apply method for all tokens in the list
-      for (var key in list)
-        list[key].apply();
-    }
-
-    return function(token){
-      if (token.basisObjectId in tokens)
-        return;
-
-      tokens[token.basisObjectId] = token;
-
-      if (!timer)
-        setImmediate(applyTokens);
-    };
-  })();
+  var deferredTokenApplyQueue = asap.schedule(function(token){
+    token.apply();
+  });
 
  /**
   * @class
@@ -1872,7 +2055,7 @@
       if (this.value !== value)
       {
         this.value = value;
-        awaitToApply(this);
+        deferredTokenApplyQueue.add(this);
       }
     },
 
@@ -1890,17 +2073,12 @@
   //
 
   var resources = {};
+  var resourceRequestCache = {};
   var resourceContentCache = {};
   var resourcePatch = {};
   var virtualResourceSeed = 1;
   /** @cut */ var resourceResolvingStack = [];
   /** @cut */ var requires;
-  // var resourceUpdateNotifier = extend(new Token(), {
-  //   set: function(value){
-  //     this.value = value;
-  //     this.apply();
-  //   }
-  // });
 
   // apply prefetched resources to cache
   (function(){
@@ -1925,6 +2103,32 @@
       }
   }
 
+  var resolveResourceFilename = function(url, baseURI){
+    var rootNS = url.match(/^([a-zA-Z0-9\_\-]+):/);
+
+    if (rootNS)
+    {
+      var namespaceRoot = rootNS[1];
+
+      if (namespaceRoot in nsRootPath == false)
+        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
+
+      url = nsRootPath[namespaceRoot] + pathUtils.normalize('./' + url.substr(rootNS[0].length));
+    }
+    else
+    {
+      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(url))
+      /** @cut */ {
+      /** @cut */   var clr = arguments[2];
+      /** @cut */   consoleMethods.warn('Bad usage: ' + (clr ? clr.replace('{url}', url) : url) + '\nFilenames should starts with `./`, `..` or `/`. Otherwise it may treats as special reference in next releases.');
+      /** @cut */ }
+
+      url = pathUtils.resolve(baseURI, url);
+    }
+
+    return url;
+  };
+
   var getResourceContent = function(url, ignoreCache){
     if (ignoreCache || !hasOwnProperty.call(resourceContentCache, url))
     {
@@ -1932,7 +2136,7 @@
 
       if (!NODE_ENV)
       {
-        var req = new XMLHttpRequest();
+        var req = new global.XMLHttpRequest();
         req.open('GET', url, false);
         // set if-modified-since header since begining prevents cache using;
         // otherwise browser could never ask server for new file content
@@ -1952,9 +2156,12 @@
       {
         try {
           // try to use special read file function, it may be provided by parent module
+          /** @cut */ if (!process.basisjsReadFile)
+          /** @cut */   consoleMethods.warn('basis.resource: basisjsReadFile not found, file content couldn\'t to be read');
+
           resourceContent = process.basisjsReadFile
             ? process.basisjsReadFile(url)
-            : require('fs').readFileSync(url, 'utf-8');
+            : '';
         } catch(e){
           /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
@@ -1972,7 +2179,7 @@
     var virtual = arguments.length > 1;
     var resolved = false;
     var wrapped = false;
-    /** @cut */ var wrappedContent;
+    var wrappedContent;
 
     if (virtual)
       resourceUrl += '#virtual';
@@ -1988,7 +2195,7 @@
       /** @cut    recursion warning */
       /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
       /** @cut */ if (idx != -1)
-      /** @cut */   consoleMethods.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+      /** @cut */   consoleMethods.warn('basis.resource recursion: ' + resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
       /** @cut */ resourceResolvingStack.push(resourceUrl);
 
       // if resource type has wrapper - wrap it, or use url content as result
@@ -2010,9 +2217,6 @@
       resolved = true;
       applyResourcePatches(resource);
       resource.apply();
-
-      // resourceUpdateNotifier.value = resourceUrl;
-      // resourceUpdateNotifier.apply();
 
       /** @cut    recursion warning */
       /** @cut */ resourceResolvingStack.pop();
@@ -2063,9 +2267,6 @@
             applyResourcePatches(resource);
             resource.apply();
           }
-
-          // resourceUpdateNotifier.value = resourceUrl;
-          // resourceUpdateNotifier.apply();
         }
       },
       reload: function(){
@@ -2104,6 +2305,7 @@
 
     // cache it
     resources[resourceUrl] = resource;
+    resourceRequestCache[resourceUrl] = resource;
 
     return resource;
   };
@@ -2111,27 +2313,27 @@
  /**
   * @name resource
   */
-  var getResource = function(resourceUrl){
-    var resource = resources[resourceUrl];
+  var getResource = function(url, baseURI){
+    if (url && typeof url != 'string')
+      url = url.url;
 
-    if (resource)
-      return resource;
+    var reference = baseURI ? baseURI + '\x00' + url : url;
+    var resource = resourceRequestCache[reference];
 
-    /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-    /** @cut */   consoleMethods.warn('Bad usage: basis.resource(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+    if (!resource)
+    {
+      var resolvedUrl = resolveResourceFilename(url, baseURI, 'basis.resource(\'{url}\')');
 
-    // try resolve resource path
-    resourceUrl = pathUtils.resolve(resourceUrl);
-    resource = resources[resourceUrl];
+      resource = resources[resolvedUrl] || createResource(resolvedUrl);
+      resourceRequestCache[reference] = resource;
+    }
 
     // return resource or create it
-    return resource || createResource(resourceUrl);
+    return resource;
   };
 
   extend(getResource, {
-    // onUpdate: function(fn, context){
-    //   resourceUpdateNotifier.attach(fn, context);
-    // },
+    resolveURI: resolveResourceFilename,
     isResource: function(value){
       return value ? resources[value.url] === value : false;
     },
@@ -2140,20 +2342,16 @@
 
       return resource ? resource.isResolved() : false;
     },
-    exists: function(resourceUrl, inCache){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.exists(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-      return hasOwnProperty.call(
-        inCache ? resourceContentCache : resources,
-        pathUtils.resolve(resourceUrl)
-      );
+    exists: function(resourceUrl){
+      return hasOwnProperty.call(resources, resolveResourceFilename(resourceUrl, null, 'basis.resource.exists(\'{url}\')'));
     },
     get: function(resourceUrl){
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(resourceUrl))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.resource.get(\'' + resourceUrl + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+      resourceUrl = resolveResourceFilename(resourceUrl, null, 'basis.resource.get(\'{url}\')');
 
-      return resources[pathUtils.resolve(resourceUrl)] || null;
+      if (!getResource.exists(resourceUrl))
+        return null;
+
+      return getResource(resourceUrl);
     },
     getFiles: function(cache){
       return cache
@@ -2171,13 +2369,13 @@
     },
 
     extensions: {
-      '.js': extend(function(content, filename){
+      '.js': extend(function processJsResourceContent(content, filename){
         var namespace = filename2namespace[filename];
 
         if (!namespace)
         {
           var implicitNamespace = true;
-          var resolvedFilename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename)));
+          var resolvedFilename = (pathUtils.dirname(filename) + '/' + pathUtils.basename(filename, pathUtils.extname(filename))).replace(/^\/\//, '/');
 
           for (var ns in nsRootPath)
           {
@@ -2202,13 +2400,13 @@
         /** @cut */ if (requires)
         /** @cut */   arrayFunctions.add(requires, namespace);
 
-        if (!namespaces[namespace])
+        var ns = getNamespace(namespace);
+        if (!ns.inited)
         {
-          var ns = getNamespace(namespace);
-
           /** @cut */ var savedRequires = requires;
           /** @cut */ requires = [];
 
+          ns.inited = true;
           ns.exports = runScriptInContext({
             path: ns.path,
             exports: ns.exports
@@ -2221,10 +2419,13 @@
               /** @cut */ if (config.implicitExt == 'warn')
               /** @cut */ {
               /** @cut */   for (var key in ns.exports)
-              /** @cut */     if (key in ns == false)
-              /** @cut */       defineReadWarningProperty(ns, key, ns.exports[key],
+              /** @cut */     if (key in ns == false && key != 'path')
+              /** @cut */     {
+              /** @cut */       ns[key] = ns.exports[key];
+              /** @cut */       warnPropertyAccess(ns, key, ns.exports[key],
               /** @cut */         'basis.js: Access to implicit namespace property `' + namespace + '.' + key + '`'
               /** @cut */       );
+              /** @cut */     }
               /** @cut */ }
               /** @cut */ else
               complete(ns, ns.exports);
@@ -2238,12 +2439,12 @@
           /** @cut */ requires = savedRequires;
         }
 
-        return namespaces[namespace].exports;
+        return ns.exports;
       }, {
         permanent: true
       }),
 
-      '.css': function(content, url, cssResource){
+      '.css': function processCssResourceContent(content, url, cssResource){
         if (!cssResource)
           cssResource = new CssResource(url);
 
@@ -2252,7 +2453,16 @@
         return cssResource;
       },
 
-      '.json': function(content, url){
+      '.svg': function processCssResourceContent(content, url, svgResource){
+        if (!svgResource)
+          svgResource = new SvgResource(url);
+
+        svgResource.updateSvgText(content);
+
+        return svgResource;
+      },
+
+      '.json': function processJsonResourceContent(content){
         if (typeof content == 'object')
           return content;
 
@@ -2261,6 +2471,7 @@
           content = String(content);
           result = basis.json.parse(content);
         } catch(e) {
+          /** @cut */ var url = arguments[1];
           /** @cut */ consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, content: content });
         }
         return result || null;
@@ -2273,10 +2484,23 @@
   // script compilation and execution
   //
 
+  /** @cut */ var SOURCE_OFFSET;
+
   function compileFunction(sourceURL, args, body){
+    /** @cut */ if (isNaN(SOURCE_OFFSET))
+    /** @cut */ {
+    /** @cut */   var marker = basis.genUID();
+    /** @cut */   SOURCE_OFFSET = new Function(args, marker).toString().split(marker)[0].split(/\n/).length - 1;
+    /** @cut */ }
+    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1); // function wrapper prefix lines + 'use strict' line
+    /** @cut */ if (!/\/\/# sourceURL=[^\r\n]+[\s]*$/.test(body))
+    /** @cut */   body += '\n\n//# sourceURL=' + pathUtils.origin + sourceURL;
+
     try {
-      return new Function(args, body
-        /** @cut */ + '\n\n//# sourceURL=' + pathUtils.origin + sourceURL
+      return new Function(args,
+        '"use strict";\n' +
+        /** @cut */ (NODE_ENV ? 'var __nodejsRequire = require;\n' : '') +
+        body
       );
     } catch(e) {
       /** @cut */ if (document && 'line' in e == false && 'addEventListener' in global)
@@ -2306,7 +2530,7 @@
   }
 
   var runScriptInContext = function(context, sourceURL, sourceCode){
-    var baseURL = pathUtils.dirname(sourceURL) + '/';
+    var baseURL = pathUtils.dirname(sourceURL);
     var compiledSourceCode = sourceCode;
 
     if (!context.exports)
@@ -2314,13 +2538,14 @@
 
     // compile function if required
     if (typeof compiledSourceCode != 'function')
-      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require'],
-        '"use strict";\n' +
+      compiledSourceCode = compileFunction(sourceURL, ['exports', 'module', 'basis', 'global', '__filename', '__dirname', 'resource', 'require', 'asset'],
         sourceCode
       );
 
     // run
     if (typeof compiledSourceCode == 'function')
+    {
+      /** @cut */ compiledSourceCode.displayName = '[module] ' + (filename2namespace[sourceURL] || sourceURL);
       compiledSourceCode.call(
         context.exports,
         context.exports,
@@ -2329,16 +2554,17 @@
         global,
         sourceURL,
         baseURL,
-        function(relativePath){
-          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(relativePath))
-          /** @cut */   consoleMethods.warn('Bad usage: resource(\'' + relativePath + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
-          return getResource(pathUtils.resolve(baseURL, relativePath));
+        function(path){
+          return getResource(path, baseURL);
         },
-        function(relativePath, base){
-          return requireNamespace(relativePath, base || baseURL);
+        function(path){
+          return requireNamespace(path, baseURL);
+        },
+        function(path){
+          return resolveResourceFilename(path, baseURL, 'asset(\'{url}\')');
         }
       );
+    }
 
     return context;
   };
@@ -2378,12 +2604,10 @@
     className: 'basis.Namespace',
     init: function(name){
       this.name = name;
-      this.exports = {
-        path: this.name
-      };
+      this.exports = {};
     },
     toString: function(){
-      return '[basis.namespace ' + this.path + ']';
+      return '[basis.namespace ' + this.name + ']';
     },
     extend: function(names){
       extend(this.exports, names);
@@ -2396,15 +2620,7 @@
     {
       var parts = namespace.split('.');
       var namespaceRoot = parts.shift();
-      var filename = parts.join('/') + '.js';
-
-      if (namespaceRoot in nsRootPath == false)
-        nsRootPath[namespaceRoot] = pathUtils.baseURI + namespaceRoot + '/';
-
-      if (namespaceRoot == namespace)
-        filename = nsRootPath[namespaceRoot].replace(/\/$/, '') + '.js';
-      else
-        filename = nsRootPath[namespaceRoot] + filename;
+      var filename = resolveResourceFilename(namespaceRoot + ':' + parts.join('/') + '.js').replace(/\/\.js$/, '.js');
 
       namespace2filename[namespace] = filename;
       filename2namespace[filename] = namespace;
@@ -2443,13 +2659,17 @@
   * @return {basis.Namespace}
   */
   function getNamespace(path){
+    if (hasOwnProperty.call(namespaces, path))
+      return namespaces[path];
+
     path = path.split('.');
 
     var rootNs = getRootNamespace(path[0]);
     var cursor = rootNs;
 
-    for (var i = 1, name; name = path[i]; i++)
+    for (var i = 1; i < path.length; i++)
     {
+      var name = path[i];
       var nspath = path.slice(0, i + 1).join('.');
 
       if (!hasOwnProperty.call(rootNs.namespaces_, nspath))
@@ -2463,9 +2683,12 @@
           cursor[name] = namespace;
 
           /** @cut */ if (config.implicitExt == 'warn')
-          /** @cut */   defineReadWarningProperty(cursor, name, namespace,
+          /** @cut */ {
+          /** @cut */   cursor[name] = namespace;
+          /** @cut */   warnPropertyAccess(cursor, name, namespace,
           /** @cut */     'basis.js: Access to implicit namespace `' + nspath + '`'
           /** @cut */   );
+          /** @cut */ }
         }
 
         rootNs.namespaces_[nspath] = namespace;
@@ -2481,73 +2704,38 @@
 
 
  /**
-  * @param {string} filename
-  * @param {string} dirname
+  * @param {string} path
+  * @param {string} baseURI
   * @name require
   */
-  var requireNamespace = (function(){
-    if (NODE_ENV)
+  var requireNamespace = function(path, baseURI){
+    var extname = pathUtils.extname(path);
+
+    if (!/[^a-z0-9_\.]/i.test(path) && extname != '.js')
     {
-      var moduleProto = module.constructor.prototype;
-      return function(filename, dirname){
-        if (!/[^a-z0-9_\.]/i.test(filename) || pathUtils.extname(filename) == '.js')
-        {
-          var _compile = moduleProto._compile;
-          var namespace = getNamespace(filename);
-
-          // patch node.js module._compile
-          moduleProto._compile = function(content, filename){
-            this.basis = basis;
-            content =
-              'var __nodejsRequire = require;\n' +
-              'var basis = module.basis;\n' +
-              'var resource = function(filename){ return basis.resource(__dirname + "/" + filename) };\n' +
-              'var require = function(filename, baseURI){ return basis.require(filename, baseURI || __dirname) };\n' +
-              content;
-            _compile.call(extend(this, namespace), content, filename);
-          };
-
-          var exports = require(__dirname + '/' + filename.replace(/\./g, '/'));
-
-          namespace.exports = exports;
-          if (exports && exports.constructor === Object)
-            complete(namespace, exports);
-
-          // restore node.js module._compile
-          moduleProto._compile = _compile;
-
-          return exports;
-        }
-        else
-        {
-          filename = pathUtils.resolve(dirname, filename);
-          return require(filename);
-        }
-      };
+      // namespace, like 'foo.bar.baz'
+      path = resolveNSFilename(path);
     }
     else
     {
-      return function(filename, dirname){
-        if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
-        {
-          // namespace, like 'foo.bar.baz'
-          filename = resolveNSFilename(filename);
-        }
-        else
-        {
-          /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
-          /** @cut */   consoleMethods.warn('Bad usage: require(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
+      // resolve filename, but not for path with # or ? (used by virtual resources)
+      if (!/[\?#]/.test(path))
+      {
+        if (!extname)
+          path += '.js';
 
-          // regular filename
-          filename = pathUtils.resolve(dirname, filename);
-        }
-
-        return getResource(filename).fetch();
-      };
+        path = resolveResourceFilename(path, baseURI, 'basis.require(\'{url}\')');
+      }
     }
-  })();
 
+    return getResource(path).fetch();
+  };
+  /** @cut */ requireNamespace.displayName = 'basis.require';
 
+ /**
+  * @param {string} filename
+  * @param {function} patchFn
+  */
   function patch(filename, patchFn){
     if (!/[^a-z0-9_\.]/i.test(filename) && pathUtils.extname(filename) != '.js')
     {
@@ -2556,11 +2744,8 @@
     }
     else
     {
-      /** @cut */ if (!/^(\.\/|\.\.|\/)/.test(filename))
-      /** @cut */   consoleMethods.warn('Bad usage: basis.patch(\'' + filename + '\').\nFilenames should starts with `./`, `..` or `/`. Otherwise it will treats as special reference in next minor release.');
-
       // regular filename
-      filename = pathUtils.resolve(filename);
+      filename = resolveResourceFilename(filename, null, 'basis.patch(\'{url}\')');
     }
 
     if (!resourcePatch[filename])
@@ -2877,6 +3062,7 @@
 
   var ESCAPE_FOR_REGEXP = /([\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$])/g;
   var FORMAT_REGEXP = /\{([a-z\d_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
+  var stringFormatCache = {};
 
   complete(String, {
     toLowerCase: function(value){
@@ -2957,6 +3143,27 @@
         }
       );
     },
+    formatter: function(formatString){
+      formatString = String(formatString);
+
+      if (hasOwnProperty.call(stringFormatCache, formatString))
+        return stringFormatCache[formatString];
+
+      var formatter = function(value){
+        return stringFunctions.format(formatString, value);
+      };
+
+      // verbose dev
+      /** @cut */ var escapsedFormatString = '"' + formatString.replace(/"/g, '\\"') + '"';
+      /** @cut */ formatter = new Function('stringFunctions', 'return ' + formatter.toString().replace('formatString', escapsedFormatString))(stringFunctions);
+      /** @cut */ formatter.toString = function(){
+      /** @cut */   return 'basis.string.formatter(' + escapsedFormatString + ')';
+      /** @cut */ };
+
+      stringFormatCache[formatString] = formatter;
+
+      return formatter;
+    },
     capitalize: function(this_){
       return this_.charAt(0).toUpperCase() + this_.substr(1).toLowerCase();
     },
@@ -2990,7 +3197,7 @@
     var nativeStringSplit = String.prototype.split;
     String.prototype.split = function(pattern, count){
       if (!pattern || pattern instanceof RegExp == false || pattern.source == '')
-        return nativeStringSplit.apply(this, arguments);
+        return nativeStringSplit.call(this, pattern, count);
 
       var result = [];
       var pos = 0;
@@ -3102,33 +3309,43 @@
   * @param {*} context Context for handler
   */
   var ready = (function(){
-    // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig/Roman Dvornov
+    var eventFired = !document || document.readyState == 'complete';
+    var readyHandlers = [];
+    var timer;
 
-    function isReady(){
-      return document.readyState == 'complete' && !!document.body;
-    }
+    function processReadyHandler(){
+      var handler;
 
-    var fired = !document || isReady();
-    var deferredHandler;
+      // if any timer - reset it
+      if (timer)
+        timer = clearImmediate(timer);
 
-    function runReadyHandler(handler){
-      handler.callback.call(handler.context);
+      // if handlers queue has more than one handler, set emergency timer
+      // make sure we continue to process the queue on exception
+      // helps to avoid try/catch
+      if (readyHandlers.length > 1)
+        timer = setImmediate(processReadyHandler);
+
+      // process handler queue
+      while (handler = readyHandlers.shift())
+        handler[0].call(handler[1]);
+
+      // remove emergency timer as all handlers are process
+      timer = clearImmediate(timer);
+
+      // process asap queue
+      asap.process();
     }
 
     function fireHandlers(){
-      if (isReady())
-        if (!fired++)
-          while (deferredHandler)
-          {
-            runReadyHandler(deferredHandler);
-            deferredHandler = deferredHandler.next;
-          }
+      if (!eventFired++)
+        processReadyHandler();
     }
 
-    // The DOM ready check for Internet Explorer
+    // the DOM ready check for Internet Explorer
     function doScrollCheck(){
       try {
-        // If IE is used, use the trick by Diego Perini
+        // use the trick by Diego Perini
         // http://javascript.nwbox.com/IEContentLoaded/
         document.documentElement.doScroll('left');
         fireHandlers();
@@ -3137,14 +3354,14 @@
       }
     }
 
-    if (!fired)
+    if (!eventFired)
     {
       if (document.addEventListener)
       {
         // use the real event for browsers that support it (all modern browsers support it)
         document.addEventListener('DOMContentLoaded', fireHandlers, false);
 
-        // A fallback to window.onload, that will always work
+        // a fallback to window.onload, that will always work
         global.addEventListener('load', fireHandlers, false);
       }
       else
@@ -3153,35 +3370,50 @@
         // maybe late but safe also for iframes
         document.attachEvent('onreadystatechange', fireHandlers);
 
-        // A fallback to window.onload, that will always work
+        // a fallback to window.onload, that will always work
         global.attachEvent('onload', fireHandlers);
 
-        // If IE and not a frame
-        // continually check to see if the document is ready
+        // if not a frame continually check to see if the document is ready
         try {
           if (!global.frameElement && document.documentElement.doScroll)
             doScrollCheck();
-        } catch(e) {
-        }
+        } catch(e) {}
       }
     }
 
     // return attach function
     return function(callback, context){
-      if (!fired)
-      {
-        deferredHandler = {
-          callback: callback,
-          context: context,
-          next: deferredHandler
-        };
-      }
-      else
-        runReadyHandler({
-          callback: callback,
-          context: context
-        });
+      // if no ready handlers yet and no event fired,
+      // set timer to run handlers async
+      if (!readyHandlers.length && eventFired && !timer)
+        timer = setImmediate(processReadyHandler);
+
+      // add handler to queue
+      readyHandlers.push([callback, context]);
     };
+  })();
+
+ /**
+  * Add handler on sandbox teardown.
+  * @param {function()} callback
+  * @param {*=} context
+  */
+  var teardown = (function(){
+    if ('addEventListener' in global)
+      return function(callback, context){
+        global.addEventListener('unload', function(event){
+          callback.call(context || null, event || global.event);
+        }, false);
+      };
+
+    if ('attachEvent' in global)
+      return function(callback, context){
+        global.attachEvent('onunload', function(event){
+          callback.call(context || null, event || global.event);
+        });
+      };
+
+    return $undef;
   })();
 
 
@@ -3300,8 +3532,8 @@
   var cleaner = (function(){
     var objects = [];
 
-    function destroy(log){
-      /** @cut */ var logDestroy = log && typeof log == 'boolean';
+    function destroy(){
+      /** @cut */ var logDestroy = arguments[0] === true;
       result.globalDestroy = true;
       result.add = $undef;
       result.remove = $undef;
@@ -3324,19 +3556,17 @@
             object[prop] = null;
         }
       }
-      objects.length = 0;
+      objects = [];
     }
 
-    if ('attachEvent' in global)
-      global.attachEvent('onunload', destroy);
-    else
-      if ('addEventListener' in global)
-        global.addEventListener('unload', destroy, false);
-      else
-        return {
-          add: $undef,
-          remove: $undef
-        };
+    // returns interfaces that does nothing if unload is not supported
+    if (teardown === $undef)
+      return {
+        add: $undef,
+        remove: $undef
+      };
+
+    teardown(destroy);
 
     var result = {
       add: function(object){
@@ -3504,6 +3734,134 @@
 
 
   //
+  // SVG resource
+  //
+
+  var SvgResource = (function(){
+   /**
+    * Helper functions for path resolving
+    */
+    var baseEl = document && document.createElement('base');
+
+    function setBase(baseURI){
+      // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
+      // convert path to absolute value
+      baseEl.setAttribute('href', baseURI);
+
+      // if more than one <base> elements in document, only first has effect
+      // put our <base> resolver at the begining of <head>
+      documentInterface.head.add(baseEl, true);
+    }
+
+    function restoreBase(){
+      // Opera left document base as <base> element specified,
+      // even if this element is removed from document
+      // so we set current location for base
+      baseEl.setAttribute('href', location.href);
+
+      documentInterface.remove(baseEl);
+    }
+
+    // inject style into document
+    function injectSvg(){
+      // set base before <style> element creating, because IE9+ set baseURI
+      // for <style> element on element creation
+      setBase(this.baseURI);
+
+      // create <style> element for first time
+      if (!this.element)
+      {
+        this.element = document.createElement('span');
+        this.element.style.cssText = 'display:none';
+
+        /** @cut */ this.element.setAttribute('src', this.url);
+      }
+
+      // add element to document
+      documentInterface.body.add(this.element);
+
+      this.syncSvgText();
+
+      restoreBase();
+    }
+
+
+   /**
+    * @class
+    */
+    return Class(null, {
+      className: 'basis.SvgResource',
+
+      inUse: 0,
+
+      url: '',
+      baseURI: '',
+      svgText: undefined,
+
+      element: null,
+
+      init: function(url){
+        this.url = url;
+        this.baseURI = pathUtils.dirname(url) + '/';
+      },
+
+      toString: function(){
+        return this.svgText;
+      },
+
+      updateSvgText: function(svgText){
+        if (this.svgText != svgText)
+        {
+          this.svgText = svgText;
+
+          if (this.inUse && this.element)
+          {
+            setBase(this.baseURI);
+            this.syncSvgText();
+            restoreBase();
+          }
+        }
+      },
+
+      syncSvgText: function(){
+        this.element.innerHTML = this.svgText;
+      },
+
+      startUse: function(){
+        if (!this.inUse)
+          documentInterface.body.ready(injectSvg, this);
+
+        this.inUse += 1;
+      },
+
+      stopUse: function(){
+        if (this.inUse)
+        {
+          // decrease usage count
+          this.inUse -= 1;
+
+          // remove element if nobody use it
+          if (!this.inUse && this.element)
+            documentInterface.remove(this.element);
+        }
+      },
+
+      destroy: function(){
+        if (this.element)
+          documentInterface.remove(this.element);
+
+        this.element = null;
+        this.svgText = null;
+      }
+    });
+  })();
+
+
+  //
+  // export names
+  //
+
+  //
   // Sandbox
   //
 
@@ -3529,8 +3887,7 @@
       global,
       basisFilename,
       complete({
-        name: name,
-        noConflict: true
+        name: name
       }, config)
     );
 
@@ -3549,16 +3906,77 @@
 
 
   //
-  // Development stuff (dev mode only)
+  // Development stuff
   //
+
+  var devInfoResolver = (function(){
+    /** @cut */ var getExternalInfo = $undef;
+    var fixSourceOffset = $self;
+    var set = function(target, key, info){};
+    var patch = function(target, key, patch){
+      /** @cut */ var oldInfo = get(target, key);
+      /** @cut */
+      /** @cut */ if (!oldInfo || typeof oldInfo != 'object')
+      /** @cut */ {
+      /** @cut */   set(target, key, patch);
+      /** @cut */   return;
+      /** @cut */ }
+      /** @cut */
+      /** @cut */ extend(oldInfo, patch);
+    };
+    var get = function(target, key){
+      /** @cut */ var externalInfo = getExternalInfo(target);
+      /** @cut */ var ownInfo = map.get(target);
+      /** @cut */
+      /** @cut */ if (externalInfo || ownInfo)
+      /** @cut */ {
+      /** @cut */   var info = merge(externalInfo, ownInfo);
+      /** @cut */   return key ? info[key] : info;
+      /** @cut */ }
+    };
+
+    /** @cut */ // old Firefox has bugs in WeakMap implementation, don't use dev info for them
+    /** @cut */ // https://bugzilla.mozilla.org/show_bug.cgi?id=1127827
+    /** @cut */ try { new WeakMap().get(1); } catch(e) { get = function(){}; }
+
+    /** @cut */ var map = typeof WeakMap == 'function' ? new WeakMap() : false;
+    /** @cut */
+    /** @cut */ if (map)
+    /** @cut */   set = function(target, key, value){
+    /** @cut */     if (!target || (typeof target != 'object' && typeof target != 'function'))
+    /** @cut */     {
+    /** @cut */       consoleMethods.warn('Set dev info for non-object or non-function was ignored');
+    /** @cut */       return;
+    /** @cut */     }
+    /** @cut */
+    /** @cut */     var info = map.get(target);
+    /** @cut */     if (!info)
+    /** @cut */       map.set(target, info = {});
+    /** @cut */     info[key] = value;
+    /** @cut */   };
+
+    /** @cut */ var resolver = config.devInfoResolver || global.$devinfo || {};
+    /** @cut */ if (typeof resolver.fixSourceOffset == 'function')
+    /** @cut */   fixSourceOffset = resolver.fixSourceOffset;
+    /** @cut */ if (typeof resolver.get == 'function')
+    /** @cut */   getExternalInfo = resolver.get;
+
+    return {
+      fixSourceOffset: fixSourceOffset,
+      setInfo: set,
+      patchInfo: patch,
+      getInfo: get
+    };
+  })();
 
   /** @cut */ var initDevpanel = runOnce(function(){
   /** @cut */   if (basisFilename)
   /** @cut */     createBasisInstance(global, basisFilename, {
   /** @cut */       name: 'basis.devpanel',
-  /** @cut */       noConflict: true,
   /** @cut */       inspect: basis,
   /** @cut */       sandboxes: sandboxes,
+  /** @cut */       devpanel: false,
+  /** @cut */       devInfoResolver: basis.config.devInfoResolver,
   /** @cut */       modules: {
   /** @cut */         devpanel: {
   /** @cut */           autoload: true,
@@ -3575,27 +3993,34 @@
   /** @cut */   document.addEventListener('basisjs:init-devpanel', initDevpanel);
 
   // set up file sync if available (dev mode only)
-  /** @cut */ ready(function(){
+  /** @cut */ var attachFileSyncRetry = 50;
+  /** @cut */ ready(function attachFileSync(){
   /** @cut */   var basisjsTools = global.basisjsToolsFileSync;
   /** @cut */
-  /** @cut */   if (basisjsTools)
-  /** @cut */     basisjsTools.notifications.attach(function(action, filename, content){
-  /** @cut */       if (action == 'update')
-  /** @cut */       {
-  /** @cut */         if (filename in resources)
-  /** @cut */           resources[filename].update(content);
-  /** @cut */         if (filename in resourceContentCache)
-  /** @cut */           resourceContentCache[filename] = content;
-  /** @cut */       }
-  /** @cut */     });
+  /** @cut */   if (!basisjsTools)
+  /** @cut */   {
+  /** @cut */     if (attachFileSyncRetry < 500)
+  /** @cut */       setTimeout(attachFileSync, attachFileSyncRetry);
+  /** @cut */     attachFileSyncRetry += 100;
+  /** @cut */     return;
+  /** @cut */   }
+  /** @cut */
+  /** @cut */   basisjsTools.notifications.attach(function(action, filename, content){
+  /** @cut */     if (action == 'update')
+  /** @cut */     {
+  /** @cut */       if (filename in resources)
+  /** @cut */         resources[filename].update(content);
+  /** @cut */       if (filename in resourceContentCache)
+  /** @cut */         resourceContentCache[filename] = content;
+  /** @cut */     }
+  /** @cut */   });
   /** @cut */ });
 
 
   //
-  // export names
+  // create and extend basis namespace
   //
 
-  // create and extend basis namespace
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
     /** @cut */ processConfig: processConfig,
@@ -3608,7 +4033,12 @@
     NODE_ENV: NODE_ENV,
     config: config,
     createSandbox: createSandbox,
-    dev: (new Namespace('basis.dev')).extend(consoleMethods),
+    dev: consoleMethods = (new Namespace('basis.dev'))
+      .extend(consoleMethods)
+      .extend(devInfoResolver)
+      .extend({
+        warnPropertyAccess: warnPropertyAccess
+      }),
 
     // modularity
     resolveNSFilename: resolveNSFilename,
@@ -3616,8 +4046,8 @@
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
-    asset: function(url){   // NOTE: don't replace for $self, builder attach
-      return url;           // special handler for this function
+    asset: function(path){
+      return resolveResourceFilename(path, null, 'basis.asset(\'{url}\')');
     },
 
     // timers
@@ -3626,22 +4056,29 @@
     nextTick: function(){
       setImmediate.apply(null, arguments);
     },
+    asap: asap,
 
     // classes
+    FACTORY: FACTORY,
+    PROXY: PROXY,
     Class: Class,
     Token: Token,
     DeferredToken: DeferredToken,
 
+    // life cycle
+    codeFrame: codeFrame,
+    ready: ready,
+    teardown: teardown,
+    cleaner: cleaner,
+
     // util functions
     genUID: genUID,
     getter: getter,
-    ready: ready,
-
-    cleaner: cleaner,
     console: consoleMethods,
     path: pathUtils,
     doc: documentInterface,
 
+    // types utils
     object: {
       extend: extend,
       complete: complete,
@@ -3673,11 +4110,14 @@
       getter: getter,
       nullGetter: nullGetter,
       wrapper: wrapper,
+      factory: factory,
+      isFactory: isFactory,
 
-      // lazy
+      // callbacks
       lazyInit: lazyInit,
       lazyInitAndRun: lazyInitAndRun,
-      runOnce: runOnce
+      runOnce: runOnce,
+      publicCallback: publicCallback
     },
     array: extend(arrayFrom, arrayFunctions),
     string: stringFunctions,
@@ -3701,10 +4141,24 @@
   // auto load section
   //
 
-  if (config.autoload)
-    config.autoload.forEach(function(name){
-      requireNamespace(name);
-    });
+  if (!NODE_ENV)
+  {
+    if (config.autoload)
+      config.autoload.forEach(function(name){
+        requireNamespace(name);
+      });
+
+    /** @cut */ if ('devpanel' in config == false || config.devpanel)
+    /** @cut */   basis.nextTick(initDevpanel);
+  }
+
+
+  //
+  // extend exports when node.js environment
+  //
+
+  if (NODE_ENV && exports)
+    exports.basis = basis;
 
 
   //

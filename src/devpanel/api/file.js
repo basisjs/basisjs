@@ -13,13 +13,16 @@ function sendFile(file){
   {
     data.declaration = inspectBasisTemplate.makeDeclaration(
       data.content || '',
-      basis.path.dirname(data.filename) + '/',
-      null,
+      basis.path.dirname(basis.path.resolve(data.filename)) + '/',
+      {},
       data.filename
     );
-    data.resources = data.declaration.resources;
+    data.resources = data.declaration.resources.map(function(resource){
+      return resource.url;
+    });
     // delete deps as it can has resource and ResourceWrapper which can't be serialized
     data.declaration.deps = [];
+    data.declaration.includes = [];
   }
 
   sendData('updateFile', data);
@@ -101,5 +104,11 @@ module.exports = {
 
     if (file)
       file.save(content);
+  },
+  openFile: function(filename){
+    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+
+    if (basisjsTools && typeof basisjsTools.openFile == 'function')
+      basisjsTools.openFile(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
   }
 };

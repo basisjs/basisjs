@@ -1,29 +1,47 @@
 
-  basis.require('basis.cssom');
-  basis.require('basis.ui');
-  basis.require('basis.ui.field');
-  basis.require('basis.ui.popup');
-
-  var classList = basis.cssom.classList;
-
-  var viewPrototype = resource('./views/prototype/prototype.js');
+  var classList = require('basis.cssom').classList;
+  var Node = require('basis.ui').Node;
+  var MatchInput = require('basis.ui.field').MatchInput;
+  var Balloon = require('basis.ui.popup').Balloon;
   var targetContent = resource('./targetContent.js');
-  
-  var prototypeDataset = viewPrototype().getChildNodesDataset();
+  var viewPrototype = require('./views/prototype/prototype.js');
+  var prototypeDataset = viewPrototype.getChildNodesDataset();
 
 
-  var prototypeMapPopupPanel = new basis.ui.Node({
-    template: resource('./template/prototypeMapPopupPanel.tmpl'),
+  var prototypeMapPopupMatchInput = new MatchInput({
+    emit_fieldKeyup: function(event){
+      this.constructor.prototype.emit_fieldKeyup.call(this, event);
 
-    binding: {
-      matchInput: 'satellite:'
+      var selected = prototypeMapPopup.selection.pick();
+      switch (event.key)
+      {
+        case event.KEY.UP:
+          prototypeMapPopup.selection.set([selected && selected.previousSibling || prototypeMapPopup.lastChild]);
+          break;
+        case event.KEY.DOWN:
+          prototypeMapPopup.selection.set([selected && selected.nextSibling || prototypeMapPopup.firstChild]);
+          break;
+        case event.KEY.ENTER:
+          if (selected)
+            selected.templateAction('scrollTo');
+          break;
+      }
     },
-    
-    /*satellite: {
-      matchInput: prototypeMapPopupMatchInput
-    },*/
+    matchFilter: {
+      node: prototypeMapPopupPanel,
+      textNodeGetter: basis.getter('tmpl.key')
+    }
+  });
 
-    childClass: basis.ui.Node.subclass({
+  var prototypeMapPopupPanel = new Node({
+    template: resource('./template/prototypeMapPopupPanel.tmpl'),
+    binding: {
+      matchInput: prototypeMapPopupMatchInput
+    },
+
+    sorting: basis.getter('data.title'),
+    grouping: basis.object.slice(viewPrototype.grouping, ['rule', 'sorting', 'childClass']),
+    childClass: Node.subclass({
       template: resource('./template/prototypeMapPopupPanelItem.tmpl'),
 
       binding: {
@@ -37,50 +55,24 @@
         scrollTo: function(){
           var element = this.delegate.element;
           targetContent().scrollTo(element);
-          
+
           classList(element).add('highlight');
-          basis.nextTick(function(){ classList(element).remove('highlight'); });
+          basis.nextTick(function(){
+            classList(element).remove('highlight');
+          });
 
           prototypeMapPopup.hide();
         }
       }
-    }),
-    sorting: basis.getter('data.title'),
-    grouping: basis.object.slice(viewPrototype().grouping, ['rule', 'sorting', 'childClass'])
+    })
   });
 
-  var prototypeMapPopupMatchInput = new basis.ui.field.MatchInput({
-    emit_fieldKeyup: function(event){
-      this.constructor.prototype.emit_fieldKeyup.call(this, event);
-
-      var selected = prototypeMapPopup.selection.pick();
-      switch (event.key){
-        case event.KEY.UP: 
-          prototypeMapPopup.selection.set([selected && selected.previousSibling || prototypeMapPopup.lastChild]);
-        break;
-        case event.KEY.DOWN: 
-          prototypeMapPopup.selection.set([selected && selected.nextSibling || prototypeMapPopup.firstChild]);
-        break;
-        case event.KEY.ENTER: 
-          if (selected)
-            selected.templateAction('scrollTo');
-        break;
-      }
-    },
-    matchFilter: {
-      node: prototypeMapPopupPanel,
-      textNodeGetter: basis.getter('tmpl.key')
-    }
-  });
-
-  prototypeMapPopupPanel.setSatellite('matchInput', prototypeMapPopupMatchInput);
-
-  var prototypeMapPopup = new basis.ui.popup.Balloon({
+  var prototypeMapPopup = new Balloon({
     template: '<b:include src="basis.ui.popup.Balloon" id="PrototypeMapPopup"/>',
 
     dir: 'center bottom center top',
-    selection: true,
 
+    selection: true,
     childNodes: prototypeMapPopupPanel,
 
     handler: {

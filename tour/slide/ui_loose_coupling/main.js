@@ -1,20 +1,20 @@
-basis.require('basis.ui');
+var Node = require('basis.ui').Node;
 
 // load our components as modules
-var editor = resource('./editor.js').fetch();
-var list = resource('./list.js').fetch();
+var editor = require('./editor.js');
+var list = require('./list.js');
 
 // link editor & list together
 // all we need to know, that both are basis.ui.Node, and list has selection
 list.selection.addHandler({
   itemsChanged: function(sender){
-    this.setDelegate(sender.pick());
-    this.focus();
+    editor.setDelegate(sender.pick());
+    editor.focus();
   }
-}, editor);
+});
 
 // create view that host nested components
-var view = new basis.ui.Node({
+var view = new Node({
   container: document.body,
   template:
     '<div>' +

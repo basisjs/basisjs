@@ -47,7 +47,7 @@ var File = entity.createType('File', {
       current_.emit_update.call(this, delta);
 
       if (this.file && 'content' in delta)
-        this.file.update(this.data.content);
+        this.file.set(this.data.content);
     }
   };
 });
@@ -121,7 +121,7 @@ basis.ready(function(){
   File.all.forEach(function(file){
     file.file = basisjsTools.getFile(file.data.filename, true);
   });
-  File.all.sync(basisjsTools.getFiles().map(function(file){
+  File.all.setAndDestroyRemoved(basisjsTools.getFiles().map(function(file){
     return {
       filename: file.filename,
       content: file.value

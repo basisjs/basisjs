@@ -1,0 +1,9 @@
+.content:hover .token
+{
+  transition: background .1s, outline-color .1s;
+}
+.content:hover .token:not(:hover)
+{
+  background: rgba(210, 210, 210, .3) !important;
+  outline-color: rgba(210, 210, 210, .6) !important;
+}

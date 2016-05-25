@@ -1,12 +1,18 @@
 module.exports = {
   name: 'basis.data.vector',
 
+  sandbox: true,
   init: function(){
-    basis.require('basis.data');
-    basis.require('basis.data.vector');
+    var basis = window.basis.createSandbox();
+
+    var DataObject = basis.require('basis.data').Object;
+    var Dataset = basis.require('basis.data').Dataset;
+    var Vector = basis.require('basis.data.vector').Vector;
+    var vectorSum = basis.require('basis.data.vector').sum;
+    var vectorCount = basis.require('basis.data.vector').count;
 
     (function(){
-      var proto = basis.data.Object.prototype;
+      var proto = DataObject.prototype;
       var eventsMap = {};
       var seed = 1;
       var eventTypeFilter = function(event){
@@ -46,13 +52,13 @@ module.exports = {
     })();
 
     function createDS(count){
-      return new basis.data.Dataset({
+      return new Dataset({
         items: basis.array.create(count || 10, function(idx){
-          return new basis.data.Object({
+          return new DataObject({
             data: {
               value: idx
             }
-          })
+          });
         })
       });
     }
@@ -149,42 +155,42 @@ module.exports = {
         {
           name: 'no config',
           test: function(){
-            var vector = new basis.data.vector.Vector;
+            var vector = new Vector();
 
-            this.is(false, checkVector(vector));
-            this.is(0, vector.itemCount);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 0);
           }
         },
         {
           name: 'source and calcs (no rule)',
           test: function(){
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: createDS(),
               calcs: {
-                sum: basis.data.vector.sum('data.value'),
-                count: basis.data.vector.count()
+                sum: vectorSum('data.value'),
+                count: vectorCount()
               }
             });
 
-            this.is(false, checkVector(vector));
-            this.is(1, vector.itemCount);
-            this.is(10, vector.pick().data.count);
-            this.is(45, vector.pick().data.sum);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 1);
+            assert(vector.pick().data.count === 10);
+            assert(vector.pick().data.sum === 45);
           }
         },
         {
           name: 'source, rule and calcs',
           test: function(){
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: createDS(),
               rule: 'data.value>>1',
               calcs: {
-                sum: basis.data.vector.sum('data.value'),
-                count: basis.data.vector.count()
+                sum: vectorSum('data.value'),
+                count: vectorCount()
               }
             });
 
-            this.is(5, vector.itemCount);
+            assert(vector.itemCount === 5);
 
             var items = vector.getItems();
             var count2count = 0;
@@ -195,11 +201,11 @@ module.exports = {
               count2count += item.data.count == 2;
               sumcheck += item.data.sum == 4 * item.key + 1;
             }
-            this.is(5, count2count);
-            this.is(5, sumcheck);
+            assert(count2count === 5);
+            assert(sumcheck === 5);
 
             // check vector
-            this.is(false, checkVector(vector));
+            assert(checkVector(vector) === false);
           }
         }
       ]
@@ -211,32 +217,32 @@ module.exports = {
           name: 'create with no source, and set new source after creation',
           test: function(){
             var dataset = createDS();
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               calcs: {
-                sum: basis.data.vector.sum('data.value'),
-                count: basis.data.vector.count()
+                sum: vectorSum('data.value'),
+                count: vectorCount()
               }
             });
 
-            this.is(0, vector.itemCount);
+            assert(vector.itemCount === 0);
 
             vector.setSource(dataset);
-            this.is(1, vector.itemCount);
-            this.is(10, vector.pick().data.count);
-            this.is(45, vector.pick().data.sum);
+            assert(vector.itemCount === 1);
+            assert(vector.pick().data.count === 10);
+            assert(vector.pick().data.sum === 45);
 
-            this.is(false, checkVector(vector));
+            assert(checkVector(vector) === false);
           }
         },
         {
           name: 'create with source, drop source, and set new source',
           test: function(){
             var dataset = createDS();
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: dataset,
               calcs: {
-                sum: basis.data.vector.sum('data.value'),
-                count: basis.data.vector.count()
+                sum: vectorSum('data.value'),
+                count: vectorCount()
               }
             });
 
@@ -248,15 +254,15 @@ module.exports = {
             });
 
             vector.setSource();
-            this.is(false, checkVector(vector));
-            this.is(0, vector.itemCount);
-            this.is(true, isDestroyed);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 0);
+            assert(isDestroyed === true);
 
             vector.setSource(dataset);
-            this.is(false, checkVector(vector));
-            this.is(1, vector.itemCount);
-            this.is(10, vector.pick().data.count);
-            this.is(45, vector.pick().data.sum);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 1);
+            assert(vector.pick().data.count === 10);
+            assert(vector.pick().data.sum === 45);
           }
         },
         {
@@ -264,11 +270,11 @@ module.exports = {
           test: function(){
             var deleted;
             var inserted;
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: createDS(),
               calcs: {
-                sum: basis.data.vector.sum('data.value'),
-                count: basis.data.vector.count()
+                sum: vectorSum('data.value'),
+                count: vectorCount()
               },
               handler: {
                 itemsChanged: function(sender, delta){
@@ -277,19 +283,20 @@ module.exports = {
                 }
               }
             });
-            this.is(1, vector.itemCount);
-            this.is(10, vector.pick().data.count);
-            this.is(45, vector.pick().data.sum);
+            assert(vector.itemCount === 1);
+            assert(vector.pick().data.count === 10);
+            assert(vector.pick().data.sum === 45);
 
             //////////////////////////////
 
             var items = vector.getItems();
 
             vector.setRule(basis.getter('data.value >> 1'));
-            this.is(items, deleted);
-            this.is(vector.getItems(), inserted);
-            this.is(5, inserted && inserted.length);
-            this.is(false, checkVector(vector));
+            assert(items, deleted);
+            assert(vector.getItems(), inserted);
+            assert((inserted && inserted.length) === 5);
+            assert(checkVector(vector) === false);
+
             var items = vector.getItems();
             var count2count = 0;
             var sumcheck = 0;
@@ -299,22 +306,22 @@ module.exports = {
               count2count += item.data.count == 2;
               sumcheck += item.data.sum == 4 * item.key + 1;
             }
-            this.is(5, vector.itemCount);
-            this.is(5, count2count);
-            this.is(5, sumcheck);
+            assert(vector.itemCount === 5);
+            assert(count2count === 5);
+            assert(sumcheck === 5);
 
             //////////////////////////////
 
             var items = vector.getItems();
 
             vector.setRule();
-            this.is(items, deleted);
-            this.is(5, deleted && deleted.length);
-            this.is(vector.getItems(), inserted);
-            this.is(false, checkVector(vector));
-            this.is(1, vector.itemCount);
-            this.is(10, vector.pick().data.count);
-            this.is(45, vector.pick().data.sum);
+            assert(items, deleted);
+            assert(deleted && deleted.length === 5);
+            assert(vector.getItems(), inserted);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 1);
+            assert(vector.pick().data.count === 10);
+            assert(vector.pick().data.sum === 45);
           }
         },
         {
@@ -322,25 +329,25 @@ module.exports = {
           test: function(){
             var dataset = createDS();
             var items = dataset.getItems();
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: dataset,
               calcs: {
-                sum: basis.data.vector.sum('data.value'),
-                count: basis.data.vector.count()
+                sum: vectorSum('data.value'),
+                count: vectorCount()
               }
             });
 
             items.forEach(function(object){
-              object.update({ value: 0 })
+              object.update({ value: 0 });
             });
-            this.is(false, checkVector(vector));
-            this.is(0, vector.pick().data.sum);
+            assert(checkVector(vector) === false);
+            assert(vector.pick().data.sum === 0);
 
             items.forEach(function(object, idx){
-              object.update({ value: idx })
+              object.update({ value: idx });
             });
-            this.is(false, checkVector(vector));
-            this.is(45, vector.pick().data.sum);
+            assert(checkVector(vector) === false);
+            assert(vector.pick().data.sum === 45);
           }
         },
         {
@@ -348,25 +355,25 @@ module.exports = {
           test: function(){
             var dataset = createDS();
             var items = dataset.getItems();
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: dataset,
               rule: 'data.value'
             });
 
-            this.is(false, checkVector(vector));
-            this.is(10, vector.itemCount);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 10);
 
             items.forEach(function(object){
               object.update({ value: 0 });
             });
-            this.is(false, checkVector(vector));
-            this.is(1, vector.itemCount);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 1);
 
             items.forEach(function(object, idx){
               object.update({ value: idx });
             });
-            this.is(false, checkVector(vector));
-            this.is(10, vector.itemCount);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 10);
           }
         },
         {
@@ -374,24 +381,24 @@ module.exports = {
           test: function(){
             var dataset = createDS();
             var items = dataset.getItems();
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: dataset,
               rule: 'data.value & 1',
               calcs: {
-                sum: basis.data.vector.sum('data.value')
+                sum: vectorSum('data.value')
               }
             });
 
-            this.is(false, checkVector(vector));
-            this.is(2, vector.itemCount);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 2);
 
             for (var i = 0; i < items.length / 2; i++)
-              items[i].update({ value: 0 })
+              items[i].update({ value: 0 });
 
-            this.is(false, checkVector(vector));
-            this.is(2, vector.itemCount);
-            this.is(false, isNaN(vector.getItems()[0].data.sum));
-            this.is(false, isNaN(vector.getItems()[1].data.sum));
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 2);
+            assert(isNaN(vector.getItems()[0].data.sum) === false);
+            assert(isNaN(vector.getItems()[1].data.sum) === false);
           }
         },
         {
@@ -399,58 +406,60 @@ module.exports = {
           test: function(){
             var dataset = createDS();
             var items = dataset.getItems().slice();
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: dataset,
               rule: 'data.value & 1',
               calcs: {
-                sum: basis.data.vector.sum('data.value')
+                sum: vectorSum('data.value')
               }
             });
 
-            this.is(false, checkVector(vector));
-            this.is(2, vector.itemCount);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 2);
 
             // delete half
             for (var i = 0; i < items.length / 2; i++)
-              items[i].destroy()
+              items[i].destroy();
 
-            this.is(false, checkVector(vector));
-            this.is(2, vector.itemCount);
-            this.is(false, isNaN(vector.getItems()[0].data.sum));
-            this.is(false, isNaN(vector.getItems()[1].data.sum));
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 2);
+            assert(isNaN(vector.getItems()[0].data.sum) === false);
+            assert(isNaN(vector.getItems()[1].data.sum) === false);
 
             // delete all
-            dataset.clear()
+            dataset.clear();
 
-            this.is(false, checkVector(vector));
-            this.is(0, vector.itemCount);
+            assert(checkVector(vector) === false);
+            assert(vector.itemCount === 0);
           }
         },
         {
           name: 'setCalc',
           test: function(){
             var dataset = createDS();
-            var vector = new basis.data.vector.Vector({
+            var vector = new Vector({
               source: dataset,
               calcs: {
-                value: basis.data.vector.sum('data.value')
+                value: vectorSum('data.value')
               }
             });
 
-            var sum = dataset.getItems().reduce(function(res, item){ return res + item.data.value }, 0);
-            this.is(sum, vector.pick().data.value)
+            var valueSum = dataset.getItems().reduce(function(res, item){
+              return res + item.data.value;
+            }, 0);
+            assert(vector.pick().data.value === valueSum);
 
-            vector.setCalc('value', basis.data.vector.count());
-            this.is(dataset.itemCount, vector.pick().data.value)
+            vector.setCalc('value', vectorCount());
+            assert(vector.pick().data.value === dataset.itemCount);
 
             vector.setCalc('value');
-            this.is(undefined, vector.pick().data.value)
+            assert(vector.pick().data.value === undefined);
 
-            vector.setCalc('value', basis.data.vector.count());
-            this.is(dataset.itemCount, vector.pick().data.value)
+            vector.setCalc('value', vectorCount());
+            assert(vector.pick().data.value === dataset.itemCount);
 
-            vector.setCalc('value', basis.data.vector.sum('data.value'));
-            this.is(sum, vector.pick().data.value);
+            vector.setCalc('value', vectorSum('data.value'));
+            assert(vector.pick().data.value === valueSum);
           }
         }
       ]

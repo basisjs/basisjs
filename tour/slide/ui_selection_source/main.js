@@ -1,6 +1,6 @@
-basis.require('basis.ui');
+var Node = require('basis.ui').Node;
 
-var List = basis.ui.Node.subclass({
+var List = Node.subclass({
   container: document.body,
   template: resource('./list.tmpl'),
   binding: {

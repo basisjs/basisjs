@@ -1,0 +1,39 @@
+.binding
+{
+  padding: 3px;
+  padding: 3px .5ch;
+  margin: 0 1px;
+  border-radius: 2px;
+  color: #666;
+  background: #EEE;
+  text-shadow: 0px 0px 1px white;
+  transition: color .15s, background-color .15s;
+  cursor: default;
+}
+.matchBinding
+{
+  color: #353;
+  background: #B6CFB6;
+}
+.action,
+.l10n
+{
+  padding: 3px;
+  padding: 3px .5ch;
+  margin: 0 1px;
+  border-radius: 2px;
+  background: #ADCCEB;
+  color: #458;
+  text-shadow: 0px 0px 1px white;
+  cursor: default;
+}
+.l10n
+{
+  background: #EAC4F7;
+  color: #661188;
+}
+.hasLocation
+{
+  text-decoration: underline;
+  cursor: pointer;
+}

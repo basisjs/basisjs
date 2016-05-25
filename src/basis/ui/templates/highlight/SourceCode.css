@@ -1,3 +1,4 @@
+/* basisjs-tools:disable-warnings */
 
   .Basis-SyntaxHighlight
   {
@@ -49,9 +50,9 @@
     text-align: right;
     color: #666;
 
-      -moz-user-select: none;    /* prevent block including to selection */
+      -ms-user-select: none;    /* prevent block including to selection */
+      -moz-user-select: none;
       -webkit-user-select: none;
-      -ms-user-select: none;
     user-select: none;
     pointer-events: none;        /* actually this rule makes unnecessary .over block,
                                     but it lacks of browsers support */

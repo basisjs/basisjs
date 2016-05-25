@@ -1,0 +1,24 @@
+<b:style src="./token.css"/>
+<b:isolate/>
+<b:define name="problem" type="bool"/>
+<b:define name="hasActions" type="bool"/>
+<b:define name="track" type="bool"/>
+
+<div
+  class="token {problem} {hasActions} {track}"
+  event-click="showPath"
+  style="
+    top: {top}px;
+    left: {left}px;
+    width: {width}px;
+    height: {height}px;
+  ">
+  <span class="border border_{problem} border_{hasActions} border_{track}"/>
+  <span class="caption caption_{problem} caption_{hasActions} caption_{track}">
+    <span b:hide="{missedActions}">
+      <span b:show="{conflict}">path conflict: </span>
+      {role}
+    </span>
+    <span b:show="{missedActions}">missed: {missedActions}</span>
+  </span>
+</div>

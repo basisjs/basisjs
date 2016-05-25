@@ -3,7 +3,7 @@
   * @namespace basis.net.service
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net.service';
 
 
   //
@@ -22,12 +22,42 @@
   * @class Service
   */
 
+  function removeTransportFromService(service, transport){
+    service.inprogressRequests = service.inprogressRequests.filter(function(request){
+      return request.transport !== transport;
+    });
+    basis.array.remove(service.inprogressTransports, transport);
+
+    if (service.inprogressTransports.indexOf(transport) == -1 &&
+        (!service.stoppedTransports || service.stoppedTransports.indexOf(transport) == -1))
+      transport.removeHandler(TRANSPORT_HANDLER, service);
+  }
+
+  var TRANSPORT_HANDLER = {
+    destroy: function(transport){
+      if (this.stoppedTransports)
+        basis.array.remove(this.stoppedTransports, transport);
+
+      removeTransportFromService(this, transport);
+    }
+  };
+
   var SERVICE_HANDLER = {
     start: function(service, request){
-      basis.array.add(this.inprogressTransports, request.transport);
+      this.inprogressRequests.push(request);
+      if (basis.array.add(this.inprogressTransports, request.transport) &&
+          (!service.stoppedTransports || service.stoppedTransports.indexOf(request.transport) == -1))
+        request.transport.addHandler(TRANSPORT_HANDLER, this);
     },
     complete: function(service, request){
-      basis.array.remove(this.inprogressTransports, request.transport);
+      basis.array.remove(this.inprogressRequests, request);
+
+      var hasOtherTransportRequests = this.inprogressRequests.some(function(request){
+        return request.transport === this.transport;
+      }, request);
+
+      if (!hasOtherTransportRequests)
+        removeTransportFromService(this, request.transport);
     }
   };
 
@@ -35,7 +65,9 @@
   var Service = Emitter.subclass({
     className: namespace + '.Service',
 
+    inprogressRequests: null,
     inprogressTransports: null,
+    stoppedTransports: null,
 
     transportClass: AjaxTransport,
 
@@ -44,7 +76,7 @@
     emit_sessionFreeze: createEvent('sessionFreeze'),
     emit_sessionUnfreeze: createEvent('sessionUnfreeze'),
 
-    isSecure: false,
+    secure: false,
 
     prepare: basis.fn.$true,
     signature: basis.fn.$undef,
@@ -56,22 +88,39 @@
 
       Emitter.prototype.init.call(this);
 
+      if ('isSecure' in this)
+      {
+        /** @cut */ basis.dev.warn(namespace + '.Service#isSecure is deprecated and will be remove in next version. Please, use Service.secure property instead');
+        this.secure = this.isSecure;
+      }
+
+      this.inprogressRequests = [];
       this.inprogressTransports = [];
 
       var TransportClass = this.transportClass;
       this.transportClass = TransportClass.subclass({
         service: this,
-
-        needSignature: this.isSecure,
+        secure: this.secure,
 
         emit_failure: function(request, error){
           TransportClass.prototype.emit_failure.call(this, request, error);
 
-          if (this.needSignature && this.service.isSessionExpiredError(request))
+          if (this.secure && this.service.isSessionExpiredError(request))
           {
             this.service.freeze();
-            this.service.stoppedTransports.push(this);
+            if (this.service.stoppedTransports)
+              if (basis.array.add(this.service.stoppedTransports, this))
+                this.addHandler(TRANSPORT_HANDLER, this.service);
             this.stop();
+          }
+        },
+
+        init: function(){
+          TransportClass.prototype.init.call(this);
+          if ('needSignature' in this)
+          {
+            /** @cut */ basis.dev.warn('`needSignature` property is deprecated and will be remove in next version. Please, use `secure` property instead');
+            this.secure = this.needSignature;
           }
         },
 
@@ -79,7 +128,7 @@
           if (!this.service.prepare(this, requestData))
             return;
 
-          if (this.needSignature && !this.service.sign(this))
+          if (this.secure && !this.service.sign(this, requestData))
             return;
 
           return TransportClass.prototype.request.call(this, requestData);
@@ -89,10 +138,10 @@
       this.addHandler(SERVICE_HANDLER);
     },
 
-    sign: function(transport){
+    sign: function(transport, requestData){
       if (this.sessionKey)
       {
-        this.signature(transport, this.sessionData);
+        this.signature(transport, this.sessionData, requestData);
         return true;
       }
       else
@@ -103,7 +152,7 @@
 
     openSession: function(sessionKey, sessionData){
       this.sessionKey = sessionKey;
-      this.sessionData = sessionData;
+      this.sessionData = sessionData || sessionKey;
 
       this.unfreeze();
 
@@ -124,7 +173,7 @@
       this.sessionData = null;
 
       this.stoppedTransports = this.inprogressTransports.filter(function(transport){
-        return transport.needSignature;
+        return transport.secure;
       });
 
       for (var i = 0, transport; transport = this.inprogressTransports[i]; i++)
@@ -135,8 +184,11 @@
 
     unfreeze: function(){
       if (this.stoppedTransports)
+      {
         for (var i = 0, transport; transport = this.stoppedTransports[i]; i++)
           transport.resume();
+        this.stoppedTransports = null;
+      }
 
       this.emit_sessionUnfreeze();
     },
@@ -152,6 +204,7 @@
     },
 
     destroy: function(){
+      this.inprogressRequests = null;
       this.inprogressTransports = null;
       this.stoppedTransports = null;
       this.sessionKey = null;

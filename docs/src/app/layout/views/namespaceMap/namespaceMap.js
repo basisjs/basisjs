@@ -1,9 +1,13 @@
 
-  basis.require('app.core');
-  basis.require('app.ext.view');
+  var View = require('app.ext.view').View;
+  var DataObject = require('basis.data').Object;
+  var Dataset = require('basis.data').Dataset;
+  var Value = require('basis.data').Value;
+  var Split = require('basis.data.dataset').Split;
+  var Node = require('basis.ui').Node;
 
-  var clsById = app.core.clsList.map(function(cls){
-    return new basis.data.Object({
+  var clsById = require('app.core').clsList.map(function(cls){
+    return new DataObject({
       data: {
         className: cls.className,
         clsId: cls.docsUid_,
@@ -12,18 +16,19 @@
     });
   });
 
-  var namespaceClassDS = new basis.data.Dataset();
-  var namespaceClsSplitBySuper = new basis.data.dataset.Split({
+  var namespaceClassDS = new Dataset();
+  var namespaceClsSplitBySuper = new Split({
     source: namespaceClassDS,
     rule: function(object){
       return object.part != 'parent' ? object.data.superClsId : 0;
     }
   });
 
-  var ViewNSNode = basis.ui.Node.subclass({
+  var ViewNSNode = Node.subclass({
     template: resource('./template/namespaceNode.tmpl'),
     binding: {
       path: 'data:className',
+      part: 'delegate.part', // static property
       namespace: {
         events: 'update',
         getter: function(node){
@@ -37,56 +42,52 @@
         getter: function(node){
           return node.data.className.split('.').pop();
         }
-      },
-      part: {
-        events: 'delegateChanged',
-        getter: function(object){
-          return object.delegate && object.delegate.part;
-        }
       }
     },
 
-    dataSource: basis.data.Value.factory('update', function(node){
+    dataSource: Value.factory('update', function(node){
       return namespaceClsSplitBySuper.getSubset(node.data.clsId);
     }),
-    sorting: basis.getter('data.className.split(".").pop()'),
-    childClass: basis.Class.SELF
+    childClass: basis.Class.SELF,
+    sorting: function(child){
+      return child.data.className.split('.').pop();
+    }
   });
 
-  var viewNamespaceMap = new app.ext.view.View({
+  var viewNamespaceMap = new View({
     viewHeader: 'Namespace class map',
     title: 'Namespace class map',
 
     template: resource('./template/namespaceMap.tmpl'),
     binding: {
-      classMap: new basis.ui.Node({
+      classMap: new Node({
         template: '<ul class="firstLevel"/>',
         dataSource: namespaceClsSplitBySuper.getSubset(0, true),
         childClass: ViewNSNode
       })
     },
-    
+
     handler: {
       delegateChanged: function(){
         var namespace = this.data.obj;
         if (namespace)
         {
           var clsList = namespace.exports;
-          var dsClsList = {};
+          var result = {};
 
           for (var cls in clsList)
           {
             cls = clsList[cls];
             if (basis.Class.isClass(cls))
             {
-              dsClsList[cls.docsUid_] = new basis.data.Object({
+              result[cls.docsUid_] = new DataObject({
                 part: 'self',
                 delegate: clsById[cls.docsUid_]
               });
 
-              if (!dsClsList[cls.docsSuperUid_])
+              if (!result[cls.docsSuperUid_])
               {
-                dsClsList[cls.docsSuperUid_] = new basis.data.Object({
+                result[cls.docsSuperUid_] = new DataObject({
                   part: 'parent',
                   delegate: clsById[cls.docsSuperUid_]
                 });
@@ -94,14 +95,14 @@
 
               for (var i = 0; i < clsById.length; i++)
                 if (clsById[i].data.superClsId === cls.docsUid_)
-                  dsClsList[i] = new basis.data.Object({
+                  result[i] = new DataObject({
                     part: 'subclass',
                     delegate: clsById[i]
                   });
             }
           }
 
-          namespaceClassDS.set(basis.object.values(dsClsList));
+          namespaceClassDS.setAndDestroyRemoved(basis.object.values(result));
         }
       }
     }

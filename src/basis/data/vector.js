@@ -1,9 +1,9 @@
 
  /**
-  * @namespace basis.data.dataset
+  * @namespace basis.data.vector
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.data.vector';
 
 
   //
@@ -47,7 +47,7 @@
   }
 
   var VectorFn = Class(null, {
-    className: namespace + '.Count',
+    className: namespace + '.VectorFn',
     extendConstructor_: true
   });
 

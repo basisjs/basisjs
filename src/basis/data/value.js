@@ -10,17 +10,16 @@
   * @namespace basis.data.value
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.data.value';
 
 
   // import names
 
-  var getter = basis.getter;
   var cleaner = basis.cleaner;
-
   var basisData = require('basis.data');
   var AbstractData = basisData.AbstractData;
   var Value = basisData.Value;
+  var Expression = require('./Expression.js');
   var STATE = basisData.STATE;
 
 
@@ -69,6 +68,10 @@
     }
   };
 
+  var updateQueue = basis.asap.schedule(function(object){
+    object.update();
+  });
+
  /**
   * @class
   */
@@ -115,12 +118,6 @@
     stateChanged_: true,
 
    /**
-    * @type {number}
-    * @private
-    */
-    timer_: false,
-
-   /**
     * @constructor
     */
     init: function(){
@@ -154,7 +151,9 @@
             object.addHandler(OBJECTSET_HANDLER, this);
         }
         else
-          throw this.constructor.className + '#add: Instance of AbstractData required';
+        {
+          /** @cut */ basis.dev.warn(this.constructor.className + '#add: Instance of AbstractData required');
+        }
       }
 
       this.fire(true, true);
@@ -193,8 +192,8 @@
         this.valueChanged_ = this.valueChanged_ || !!valueChanged;
         this.stateChanged_ = this.stateChanged_ || !!stateChanged;
 
-        if (!this.timer_ && (this.valueChanged_ || this.stateChanged_))
-          this.timer_ = basis.setImmediate(this.update.bind(this));
+        if (this.valueChanged_ || this.stateChanged_)
+          updateQueue.add(this);
       }
     },
 
@@ -222,7 +221,7 @@
       this.valueChanged_ = false;
       this.stateChanged_ = false;
 
-      this.timer_ = basis.clearImmediate(this.timer_);
+      updateQueue.remove(this);
 
       if (!cleaner.globalDestroy)
       {
@@ -264,64 +263,9 @@
       this.lock();
       this.clear();
 
-      if (this.timer_)
-        basis.clearImmediate(this.timer_);
+      updateQueue.remove(this);
 
       Value.prototype.destroy.call(this);
-    }
-  });
-
-
-  //
-  // Expression
-  //
-
- /**
-  * @class
-  */
-  var Expression = Property.subclass({
-    className: namespace + '.Expression',
-
-    init: function(args, calc){
-      Value.prototype.init.call(this);
-
-      var args = basis.array(arguments);
-      var calc = args.pop();
-
-      if (typeof calc != 'function')
-      {
-        /** @cut */ basis.dev.warn(this.constructor.className + ': last argument of constructor must be a function');
-        calc = basis.fn.$undef;
-      }
-
-      if (args.length == 1)
-      {
-        args[0].link(this, function(value){
-          this.set(calc.call(this, value));
-        });
-      }
-
-      if (args.length > 1)
-      {
-        var changeWatcher = new ObjectSet({
-          objects: args,
-          calculateOnInit: true,
-          calculateValue: function(){
-            return calc.apply(this, args.map(function(item){
-              return item.value;
-            }));
-          }
-        });
-
-        changeWatcher.link(this, this.set);
-
-        this.addHandler({
-          destroy: function(){
-            if (!cleaner.globalDestroy)
-              changeWatcher.destroy();
-          }
-        });
-      }
     }
   });
 
@@ -333,5 +277,6 @@
   module.exports = {
     Property: Property,
     ObjectSet: ObjectSet,
-    Expression: Expression
+    Expression: Expression,
+    expression: Expression.create
   };

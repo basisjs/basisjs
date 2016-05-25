@@ -10,7 +10,7 @@
   * @namespace basis.ui.table
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.table';
 
 
   //
@@ -24,7 +24,6 @@
   var extend = basis.object.extend;
 
   var basisEvent = require('basis.event');
-  var Emitter = basisEvent.Emitter;
   var createEvent = basisEvent.create;
   var basisDomWrapper = require('basis.dom.wrapper');
   var GroupingNode = basisDomWrapper.GroupingNode;
@@ -131,7 +130,8 @@
         dataSource: function(owner){
           return owner.getChildNodesDataset();
         },
-        instanceOf: UINode.subclass({
+        instance: UINode.subclass({
+          className: namespace + '.HeaderPartitionRow',
           template: templates.HeaderPartitionRow,
           childClass: HeaderPartitionNode
         })
@@ -198,6 +198,9 @@
 
     action: {
       setColumnSorting: function(){
+        if (!this.colSorting)
+          return;
+
         if (this.selected)
         {
           var owner = this.parentNode && this.parentNode.owner;
@@ -213,8 +216,6 @@
     * @inheritDoc
     */
     init: function(){
-      this.selectable = !!this.colSorting;
-
       UINode.prototype.init.call(this);
 
       if (this.colSorting)
@@ -289,42 +290,37 @@
         for (var i = 0, colConfig; colConfig = this.structure[i]; i++)
         {
           var headerConfig = colConfig.header;
-          var config = {};
 
-          if (headerConfig == null ||
-              typeof headerConfig != 'object' ||
-              headerConfig instanceof basis.Token ||
-              headerConfig instanceof Emitter)
+          if (headerConfig && headerConfig.constructor === Object)
+            // if header value is plain object, make it as base for config
+            // make copy to avoid side-effects
+            headerConfig = basis.object.slice(headerConfig);
+          else
+            // otherwise theat value as instance title
             headerConfig = {
               title: headerConfig
             };
 
           if ('groupId' in colConfig)
-            config.groupId = colConfig.groupId;
+            headerConfig.groupId = colConfig.groupId;
 
-          if ('template' in headerConfig)
-            config.template = headerConfig.template;
-
-          if ('title' in headerConfig)
-            config.title = headerConfig.title;
-
-          if (typeof config.title == 'function')
-            config.title = config.title.call(this);
+          if (typeof headerConfig.title == 'function')
+            headerConfig.title = headerConfig.title.call(this);
 
           // sorting
           var sorting = getter(colConfig.colSorting || colConfig.sorting);
 
           if (sorting !== nullGetter)
           {
-            config.colSorting = sorting;
-            config.defaultOrder = colConfig.defaultOrder;
+            headerConfig.colSorting = sorting;
+            headerConfig.defaultOrder = colConfig.defaultOrder;
 
             if (colConfig.autosorting || sorting === ownerSorting)
-              autoSorting.push(config);
+              autoSorting.push(headerConfig);
           }
 
           // store cell
-          cells.push(config);
+          cells.push(headerConfig);
         }
 
         if (autoSorting.length)
@@ -347,6 +343,7 @@
     className: namespace + '.FooterCell',
 
     value: '',
+    colSpan: 1,
 
     template: templates.FooterCell,
     binding: {
@@ -356,7 +353,6 @@
       }
     },
 
-    colSpan: 1,
     setColSpan: function(colSpan){
       this.colSpan = colSpan || 1;
       this.updateBind('colSpan');
@@ -378,49 +374,46 @@
 
       if (this.structure)
       {
-        var prevCell = null;
+        var cells = [];
+        var footerConfig;
+
         for (var i = 0, colConfig; colConfig = this.structure[i]; i++)
         {
           if ('footer' in colConfig)
           {
-            var footerConfig = colConfig.footer != null ? colConfig.footer : {};
+            footerConfig = colConfig.footer;
 
-            if (typeof footerConfig != 'object' ||
-                footerConfig instanceof basis.Token ||
-                footerConfig instanceof Emitter)
+            if (footerConfig && footerConfig.constructor === Object)
+              // if footer value is plain object, make it as base for config
+              // make copy to avoid side-effects
+              footerConfig = basis.object.slice(footerConfig);
+            else
+              // otherwise theat value as instance value
               footerConfig = {
                 value: footerConfig
               };
 
-            // fulfill config
-            var config = {};
+            if (typeof footerConfig.value == 'function')
+              footerConfig.value = footerConfig.value.call(this);
 
-            if ('template' in footerConfig)
-              config.value = footerConfig.template;
-
-            if ('value' in footerConfig)
-              config.value = footerConfig.value;
-
-            if (typeof config.value == 'function')
-              config.value = config.value.call(this);
-
-            if (footerConfig.template)
-              config.template = footerConfig.template;
-
-            if (footerConfig.binding)
-              config.binding = footerConfig.binding;
-
-            // create instace of cell
-            prevCell = this.appendChild(config);
+            footerConfig.colSpan = 1;
+            cells.push(footerConfig);
           }
           else
           {
-            if (prevCell)
-              prevCell.setColSpan(prevCell.colSpan + 1);
+            if (!footerConfig)
+            {
+              footerConfig = {
+                colSpan: 1
+              };
+              cells.push(footerConfig);
+            }
             else
-              prevCell = this.appendChild({});
+              footerConfig.colSpan += 1;
           }
         }
+
+        this.setChildNodes(cells);
       }
     }
   });

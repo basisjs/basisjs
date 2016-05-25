@@ -1,17 +1,16 @@
-basis.require('basis.l10n');
-basis.require('basis.data');
-basis.require('basis.data.dataset');
-basis.require('basis.data.index');
-basis.require('basis.ui');
-basis.require('basis.ui.panel');
-basis.require('basis.ui.tabs');
-basis.require('basis.ui.resizer');
-basis.require('basis.ui.menu');
-basis.require('basis.router');
-basis.require('app.type');
+var l10n = require('basis.l10n');
+var router = require('basis.router');
+var Dataset = require('basis.data').Dataset;
+var Filter = require('basis.data.dataset').Filter;
+var count = require('basis.data.index').count;
+var Node = require('basis.ui').Node;
+var VerticalPanelStack = require('basis.ui.panel').VerticalPanelStack;
+var Resizer = require('basis.ui.resizer').Resizer;
+var Menu = require('basis.ui.menu').Menu;
+var Slide = require('app.type').Slide;
 
-var fileList = resource('./module/fileList/index.js').fetch();
-var editor = resource('./module/editor/index.js').fetch();
+var fileList = require('./module/fileList/index.js');
+var editor = require('./module/editor/index.js');
 var timer;
 
 fileList.selection.addHandler({
@@ -20,7 +19,7 @@ fileList.selection.addHandler({
   }
 });
 
-var updateSet = new basis.data.Dataset({
+var updateSet = new Dataset({
   listen: {
     item: {
       update: function(sender){
@@ -30,7 +29,7 @@ var updateSet = new basis.data.Dataset({
     }
   }
 });
-var changedFiles = new basis.data.dataset.Filter({
+var changedFiles = new Filter({
   source: updateSet,
   ruleEvents: 'rollbackUpdate',
   rule: function(item){
@@ -38,14 +37,14 @@ var changedFiles = new basis.data.dataset.Filter({
   }
 });
 
-var langPopup = new basis.ui.menu.Menu({
+var langPopup = new Menu({
   childClass: {
     click: function(){
-      basis.l10n.setCulture(this.lang);
+      l10n.setCulture(this.lang);
       langPopup.hide();
     }
   },
-  childNodes: basis.l10n.getCultureList().map(function(lang){
+  childNodes: l10n.getCultureList().map(function(lang){
     return {
       caption: lang,
       lang: lang
@@ -53,7 +52,7 @@ var langPopup = new basis.ui.menu.Menu({
   })
 });
 
-var panels = new basis.ui.panel.VerticalPanelStack({
+var panels = new VerticalPanelStack({
   template: resource('./template/main-part.tmpl'),
   autoDelegate: true,
   childClass: {
@@ -63,8 +62,8 @@ var panels = new basis.ui.panel.VerticalPanelStack({
     {
       template: resource('./template/header.tmpl'),
       binding: {
-        hasChanges: basis.data.index.count(changedFiles),
-        lang: basis.l10n.culture
+        hasChanges: count(changedFiles),
+        lang: l10n.culture
       },
       action: {
         resetSlide: function(){
@@ -115,25 +114,25 @@ var panels = new basis.ui.panel.VerticalPanelStack({
       },
 
       init: function(){
-        basis.ui.Node.prototype.init.call(this);
-        this.resizer = new basis.ui.resizer.Resizer({
+        Node.prototype.init.call(this);
+        this.resizer = new Resizer({
           property: 'height',
           factor: -1
         });
       },
       templateSync: function(){
-        basis.ui.Node.prototype.templateSync.call(this);
+        Node.prototype.templateSync.call(this);
         this.resizer.setElement(this.element);
       },
       destroy: function(){
-        basis.ui.Node.prototype.destroy.call(this);
+        Node.prototype.destroy.call(this);
         this.resizer = this.resizer.destroy();
       }
     }
   ]
 });
 
-var view = new basis.ui.Node({
+var view = new Node({
   autoDelegate: true,
 
   template: resource('./template/view.tmpl'),
@@ -143,40 +142,40 @@ var view = new basis.ui.Node({
       events: 'update',
       getter: function(node){
         return node.data.id
-          ? basis.l10n.dictionary('./slide/' + node.data.id + '/description.l10n').token('text')
+          ? l10n.dictionary('./slide/' + node.data.id + '/description.l10n').token('text')
           : null;
       }
     },
 
     num: 'data:',
-    slideCount: basis.data.index.count(app.type.Slide.all),
+    slideCount: count(Slide.all),
 
     panels: panels
   },
   action: {
     toc: function(){
-      basis.router.navigate('');
+      router.navigate('');
     },
     prev: function(){
       var prev = this.data.prev;
-      basis.router.navigate(prev ? prev.data.id : '');
+      router.navigate(prev ? prev.data.id : '');
     },
     next: function(){
       var next = this.data.next;
-      basis.router.navigate(next ? next.data.id : '');
+      router.navigate(next ? next.data.id : '');
     }
   },
 
   init: function(){
-    basis.ui.Node.prototype.init.call(this);
-    this.resizer = new basis.ui.resizer.Resizer();
+    Node.prototype.init.call(this);
+    this.resizer = new Resizer();
   },
   templateSync: function(){
-    basis.ui.Node.prototype.templateSync.call(this);
+    Node.prototype.templateSync.call(this);
     this.resizer.setElement(this.tmpl.sidebar);
   },
   destroy: function(){
-    basis.ui.Node.prototype.destroy.call(this);
+    Node.prototype.destroy.call(this);
     this.resizer = this.resizer.destroy();
   }
 });

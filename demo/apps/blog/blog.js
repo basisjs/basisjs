@@ -61,27 +61,31 @@ basis.ready(function(){
     source: allPostDataset,
     orderDesc: true,
     limit: POST_PER_PAGE,
-    rule: 'data.pubDate'
+    rule: 'data.pubDate',
+    handler: {
+      sourceChanged: function(){
+        this.setOffset(0);
+      }
+    }
   });
 
   times.push([getTime(), 'thread slice']);
 
   var paginator = new Paginator({
-    pageCount: Math.ceil(allPostDataset.itemCount / POST_PER_PAGE),
     pageSpan: 12,
-    handler: {
-      activePageChanged: function(){
-        blogThreadPage.setRange(this.activePage * POST_PER_PAGE, POST_PER_PAGE);
-      }
+    pageCount: Value
+      .from(blogThreadPage, 'sourceChanged', 'source')
+      .pipe('itemsChanged', function(source){
+        return source ? Math.ceil(source.itemCount / POST_PER_PAGE) : 0;
+      }),
+    activePage: Value
+      .from(blogThreadPage, 'rangeChanged', function(slice){
+        return 1 + Math.floor(slice.offset / slice.limit);
+      }),
+    selectPage: function(pageNumber){
+      blogThreadPage.setOffset((pageNumber - 1) * blogThreadPage.limit);
     }
   });
-
-  blogThreadPage.addHandler({
-    sourceChanged: function(ds){
-      this.setPageCount(ds.source ? Math.ceil(ds.source.itemCount / POST_PER_PAGE) : 0);
-      this.setActivePage(1, true);
-    }
-  }, paginator);
 
   var postList = new Node({
     template: resource('./template/blog-thread.tmpl'),
@@ -119,7 +123,7 @@ basis.ready(function(){
             return owner.data.tags && owner.data.tags.length;
           },
           delegate: basis.fn.$self,
-          instanceOf: Node.subclass({
+          instance: Node.subclass({
             template: resource('./template/tagList.tmpl'),
 
             init: function(){

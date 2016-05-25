@@ -1,9 +1,12 @@
 module.exports = {
   name: 'basis.router',
 
-  init: function(){
-    basis.require('basis.router');
-    var router = basis.router;
+  beforeEach: function(){
+    var router = basis.createSandbox().require('basis.router');
+  },
+  afterEach: function(){
+    router.stop();
+    location.hash = '';
   },
 
   test: [
@@ -12,17 +15,21 @@ module.exports = {
       test: function(){
         var checker = 0;
 
-        router.start();
         router.add('test', function(){
           checker++;
         });
         location.hash = 'test';
         router.checkUrl();
 
-        this.is(1, checker);
+        assert(checker === 1);
 
-        router.stop();
-        location.hash = '';
+        router.add('test', function(){
+          checker++;
+        });
+        assert(checker === 1);
+
+        router.checkUrl();
+        assert(checker === 2);
       }
     },
     {
@@ -30,50 +37,46 @@ module.exports = {
       test: function(){
         var checker = 0;
 
-        router.start();
         router.add('test', function(){
           checker++;
         });
         router.navigate('test');
 
-        this.is('test', location.hash.substr(1));
-        this.is(1, checker);
-
-        router.stop();
-        location.hash = '';
+        assert(location.hash.substr(1) === 'test');
+        assert(checker === 1);
       }
     },
     {
       name: 'callbacks',
       test: function(){
+        router.stop();  // router starts by default
         var checker = 0;
+        var log = [];
 
-        location.hash = '';
-        router.add('callback', function(){
-          checker++;
+        router.add('foo', function(){
+          log.push('foo');
         });
-        router.add('callback2', function(){
-          checker++;
+        router.add('bar', function(){
+          log.push('bar');
         });
-        this.is(0, checker);
+        assert([], log);
 
-        router.navigate('callback');
-        this.is(0, checker);
+        router.navigate('foo');
+        assert([], log);
 
         router.start();
-        this.is(1, checker);
+        assert(['foo'], log);
 
-        router.add('callback', function(){
-          checker++;
+        router.add('foo', function(){
+          log.push('foo2');
         });
-        this.is(2, checker);
+        assert(['foo'], log);
 
-        checker = 0;
-        router.navigate('callback2');
-        this.is(1, checker);
+        router.checkUrl();
+        assert(['foo', 'foo2'], log);
 
-        router.stop();
-        location.hash = '';
+        router.navigate('bar');
+        assert(['foo', 'foo2', 'bar'], log);
       }
     },
     {
@@ -81,23 +84,215 @@ module.exports = {
       test: function(){
         var checker;
 
-        router.start();
-
         router.add('param/:id', function(id){
           checker = Number(id);
         });
         router.navigate('param/5');
-        this.is(5, checker);
+        assert(checker === 5);
 
         router.add('path/*path', function(path){
           checker = path;
         });
         router.navigate('path/some/stuff');
-        this.is('some/stuff', checker);
-
-        router.stop();
-        location.hash = '';
+        assert(checker === 'some/stuff');
       }
+    },
+    {
+      name: 'route',
+      test: [
+        {
+          name: 'should be the same token for one path',
+          test: function(){
+            assert(router.route('foo') === router.route('foo'));
+            assert(router.route(/foo/) === router.route(/foo/));
+          }
+        },
+        {
+          name: 'router.route(route) should route itself',
+          test: function(){
+            var route = router.route('foo');
+            assert(router.route(route) === route);
+          }
+        },
+        {
+          name: 'should match the same values when router.add() invoke for route and route.path',
+          test: function(){
+            var matches = 0;
+            var paramName = basis.genUID();
+            var paramValue = basis.genUID();
+            var route = router.route(':' + paramName);
+            router.navigate(paramValue);
+
+            router.add(route, function(param){
+              matches++;
+              assert(param === paramValue);
+            });
+
+            router.add(route.path, function(param){
+              matches++;
+              assert(param === paramValue);
+            });
+
+            assert(matches === 0);
+
+            router.checkUrl();
+            assert(matches === 2);
+          }
+        },
+        {
+          name: 'callback added via router.add() should invoke async or asap',
+          test: function(done){
+            function checkDone(){
+              if (matches === 2)
+                done();
+
+              assert(matches === 1 || matches === 2);
+            }
+
+            var matches = 0;
+            var paramName = basis.genUID();
+            var paramValue = basis.genUID();
+
+            router.navigate(paramValue);
+
+            var route = router.route(':' + paramName).add(function(){
+              assert(route.matched.value);
+              matches++;
+              checkDone();
+            });
+
+            router.add(route, function(){
+              assert(route.matched.value);
+              matches++;
+              checkDone();
+            });
+
+            assert(matches === 0);
+            assert(route.matched.value === true);
+          }
+        },
+        {
+          name: 'when handler removes leave callback should be invoked if route matched',
+          test: function(){
+            var matches = 0;
+
+            router.navigate('123');
+
+            var matchHandler = {
+              leave: function(){
+                matches++;
+              }
+            };
+
+            var nonmatchHandler = {
+              leave: function(){
+                matches++;
+              }
+            };
+
+            router.add('1:foo', matchHandler);
+            router.add('2:foo', nonmatchHandler);
+
+            assert(matches === 0);
+
+            router.checkUrl();
+            assert(matches === 0);
+
+            router.navigate('222');
+            assert(matches === 1);
+
+            router.remove('1:foo', matchHandler);
+            router.remove('2:foo', nonmatchHandler);
+
+            assert(matches === 2);
+          }
+        }
+      ]
+    },
+    {
+      name: 'recursion aware',
+      test: [
+        {
+          name: 'should delay url check if cycle in same frame',
+          test: function(done){
+            function finish(){
+              assert(counter < 10);
+              stopped = true;
+              done();
+            }
+
+            var counter = 0;
+            var stopped = false;
+
+            router.add('foo', function(){
+              if (stopped)
+                return;
+
+              if (++counter < 10)
+                router.navigate('bar');
+              else
+                finish();
+            });
+
+            router.add('bar', function(){
+              if (stopped)
+                return;
+
+              if (++counter < 10)
+                router.navigate('foo');
+              else
+                finish();
+            });
+
+            router.navigate('foo');
+            setTimeout(finish, 20);
+          }
+        },
+        {
+          name: 'should delay url check if cycle in short period',
+          test: function(done){
+            function finish(){
+              assert(counter < 10);
+              stopped = true;
+              done();
+            }
+
+            var counter = 0;
+            var stopped = false;
+
+            router.add('foo', function(){
+              if (stopped)
+                return;
+
+              if (++counter < 10)
+                setTimeout(function(){
+                  router.start(); // due to bug in yatra, afterEach invokes before done
+                  router.navigate('bar');
+                }, 10);
+              else
+                finish();
+            });
+
+            router.add('bar', function(){
+              if (stopped)
+                return;
+
+              if (++counter < 10)
+                setTimeout(function(){
+                  router.start(); // due to bug in yatra, afterEach invokes before done
+                  router.navigate('foo');
+                }, 10);
+              else
+                finish();
+            });
+
+            router.navigate('foo');
+            setTimeout(function(){
+              finish();
+            }, 200);
+          }
+        }
+      ]
     }
   ]
 };

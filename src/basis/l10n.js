@@ -3,34 +3,180 @@
   * @namespace basis.l10n
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.l10n';
 
 
   //
   // import names
   //
 
+  var extend = basis.object.extend;
+  var complete = basis.object.complete;
   var Class = basis.Class;
   var Emitter = require('basis.event').Emitter;
+  var extensionJSON = basis.resource.extensions['.json'];
   var hasOwnProperty = Object.prototype.hasOwnProperty;
+  var basisTokenPrototypeSet = basis.Token.prototype.set;
+  /** @cut */ var buildJsonMap = require('./utils/json-parser.js').buildMap;
 
+  // set .l10n files handler
+  basis.resource.extensions['.l10n'] = processDictionaryContent;
 
-  // process .l10n files as .json
-  basis.resource.extensions['.l10n'] = function(content, url){
-    return resolveDictionary(url).update(basis.resource.extensions['.json'](content, url));
-  };
+  var patches = (function(){
+    var config = basis.config.l10n || {};
+    var patches = config && config.patch;
+    var result = {};
+    var baseURI;
 
+    config.patch = {};
 
-  // get own object keys
-  function ownKeys(object){
-    var result = [];
+    if (patches)
+    {
+      if (typeof patches == 'string')
+      {
+        try {
+          baseURI = basis.path.dirname(basis.resource.resolveURI(patches));
+          patches = basis.resource(patches).fetch();
+        } catch(e) {
+          /** @cut */ basis.dev.error('basis.l10n: dictionary patch file load failed:', patches);
+        }
+      }
 
-    for (var key in object)
-      if (hasOwnProperty.call(object, key))
-        result.push(key);
+      for (var path in patches)
+      {
+        var dictUrl = basis.resource.resolveURI(path, baseURI);
+        var patchUrl = basis.resource.resolveURI(patches[path], baseURI);
+
+        result[dictUrl] = createDictionaryMerge(dictUrl, patchUrl);
+
+        /** @cut */ config.patch[dictUrl] = patchUrl;
+      }
+    }
 
     return result;
+  })();
+
+  function processJSON(content, url){
+    /** @cut */ var locationMap;
+    /** @cut */ if (typeof content == 'string')
+    /** @cut */   locationMap = buildJsonMap(content, url);
+
+    content = extensionJSON(content, url);
+
+    /** @cut */ if (content)
+    /** @cut */   content._locationMap = locationMap;
+
+    return content;
   }
+
+  function getJSON(url){
+    return processJSON(resource(url).get(true), url) || {};
+  }
+
+  function createDictionaryMerge(dictUrl, patchUrl){
+    function sync(){
+      dictionaryByUrl[dictUrl].update(
+        mergeDictionaries(
+          getJSON(dictUrl),
+          patchUrl
+        )
+      );
+    }
+
+    return {
+      url: patchUrl,
+      activate: function(){
+        resource(patchUrl).attach(sync);
+      },
+      deactivate: function(){
+        resource(patchUrl).detach(sync);
+      }
+    };
+  }
+
+  function mergeDictionaries(dest, patchSource){
+    function isObject(value){
+      return value && Object.prototype.toString.call(value) == '[object Object]';
+    }
+
+    function deepMerge(dest, patch, path, sourceMap){
+      if (path)
+        path += '.';
+
+      for (var key in patch)
+        if (!isObject(patch[key]))
+        {
+          sourceMap[path + key] = patchSource;
+          dest[key] = patch[key];
+        }
+        else
+        {
+          dest[key] = deepMerge(
+            isObject(dest[key]) ? dest[key] : {},
+            patch[key],
+            path + key,
+            sourceMap
+          );
+        }
+
+      return dest;
+    }
+
+    var patch = getJSON(patchSource);
+    var sources;
+
+    for (var key in patch)
+    {
+      if (key == '_meta' || key == '_locationMap')
+      {
+        if (!isObject(dest[key]))
+          dest[key] = {};
+
+        deepMerge(dest[key], patch[key], '', {});
+        continue;
+      }
+
+      // init _meta
+      if (!hasOwnProperty.call(dest, key))
+      {
+        dest[key] = {
+          _meta: { source: {} }
+        };
+      }
+      else
+      {
+        if (!dest[key]._meta)
+          dest[key]._meta = {};
+      }
+
+      // always init sources
+      sources = {};
+      dest[key]._meta.source = {};
+
+      // merge
+      deepMerge(dest[key], patch[key], '', sources);
+
+      // always rewrite source in meta
+      dest[key]._meta.source = sources;
+    }
+
+    /** @cut */ if (!Array.isArray(dest._patches))
+    /** @cut */   dest._patches = [];
+    /** @cut */ basis.array.add(dest._patches, patchSource);
+
+    return dest;
+  }
+
+  function processDictionaryContent(content, url){
+    content = processJSON(content, url);
+
+    if (patches[url])
+      mergeDictionaries(content, patches[url].url);
+
+    // create new dictionary with no fetch
+    return internalResolveDictionary(url, true).update(content);
+  }
+
 
   //
   // Token
@@ -38,8 +184,33 @@
 
   var tokenIndex = [];
   var tokenComputeFn = {};
-  var tokenComputes = {};
-  var updateToken = basis.Token.prototype.set;
+  var NULL_DESCRIPTOR = {
+    placeholder: false,
+    processName: basis.fn.$self,
+    value: undefined,
+    types: {}
+  };
+  var TOKEN_TYPES = {
+    'default': true,
+    'plural': true,
+    'markup': true,
+    'plural-markup': true,
+    'enum-markup': true
+  };
+  var PLURAL_TYPES = {
+    'plural': true,
+    'plural-markup': true
+  };
+  var NESTED_TYPE = {
+    'default': 'default',
+    'plural': 'default',
+    'markup': 'default',
+    'plural-markup': 'markup',
+    'enum-markup': 'markup'
+  };
+  var pluralName = function(value){
+    return this.culture.plural(value);
+  };
 
 
  /**
@@ -49,29 +220,46 @@
     className: namespace + '.ComputeToken',
 
    /**
+    * @type {basis.l10n.Token}
+    */
+    token: null,
+
+   /**
     * @constructor
     */
-    init: function(value, token){
-      token.computeTokens[this.basisObjectId] = this;
-      this.token = token;
+    init: function(value){
+      this.token.computeTokens[this.basisObjectId] = this;
 
       basis.Token.prototype.init.call(this, value);
-    },
-
-    get: function(){
-      var key = this.token.type == 'plural'
-        ? cultures[currentCulture].plural(this.value)
-        : this.value;
-      return this.token.dictionary.getValue(this.token.name + '.' + key);
     },
 
     toString: function(){
       return this.get();
     },
 
+    get: function(){
+      var value = this.token.dictionary.getValue(this.getName());
+
+      if (this.token.descriptor.placeholder)
+        value = String(value).replace(/\{#\}/g, this.value);
+
+      return value;
+    },
+
+    getName: function(){
+      return this.token.name + '.' + this.token.descriptor.processName(this.value);
+    },
+
+    getType: function(){
+      return this.token.descriptor.types[this.getName()] || 'default';
+    },
+
+    getDictionary: function(){
+      return this.token.getDictionary();
+    },
+
     destroy: function(){
       delete this.token.computeTokens[this.basisObjectId];
-      this.token = null;
 
       basis.Token.prototype.destroy.call(this);
     }
@@ -99,30 +287,32 @@
     name: '',
 
    /**
-    * enum default, plural, markup
+    * One of 'default', 'plural', 'markup', 'plural-markup', 'enum-markup'
+    * @type {string}
     */
     type: 'default',
 
    /**
-    *
+    * @type {object}
     */
     computeTokens: null,
 
    /**
+    * @type {function}
+    */
+    computeTokenClass: null,
+
+   /**
     * @constructor
     */
-    init: function(dictionary, tokenName, type, value){
-      basis.Token.prototype.init.call(this, value);
+    init: function(dictionary, tokenName, descriptor){
+      basis.Token.prototype.init.call(this, descriptor.value);
 
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
       this.dictionary = dictionary;
+      this.descriptor = descriptor;
       this.computeTokens = {};
-
-      if (type)
-        this.setType(type);
-      else
-        this.apply();
     },
 
     toString: function(){
@@ -140,15 +330,17 @@
       /** @cut */ basis.dev.warn('basis.l10n: Value for l10n token can\'t be set directly, but through dictionary update only');
     },
 
-    setType: function(type){
-      if (type != 'plural' && (!module.exports.enableMarkup || type != 'markup'))
-        type = 'default';
+    getName: function(){
+      return this.name;
+    },
 
-      if (this.type != type)
-      {
-        this.type = type;
-        this.apply();
-      }
+    getType: function(){
+      return this.descriptor.types[this.name] || 'default';
+    },
+
+    setType: function(){
+      // basis.js 1.4
+      /** @cut */ basis.dev.warn('basis.l10n: Token#setType() is deprecated');
     },
 
     compute: function(events, getter){
@@ -170,7 +362,7 @@
       var token = this;
       var objectTokenMap = {};
       var updateValue = function(object){
-        updateToken.call(this, getter(object));
+        basisTokenPrototypeSet.call(this, getter(object));
       };
       var handler = {
         destroy: function(object){
@@ -192,7 +384,7 @@
 
         if (!computeToken)
         {
-          computeToken = objectTokenMap[objectId] = new ComputeToken(getter(object), token);
+          computeToken = objectTokenMap[objectId] = token.computeToken(getter(object));
           object.addHandler(handler, computeToken);
         }
 
@@ -201,15 +393,27 @@
     },
 
     computeToken: function(value){
-      return new ComputeToken(value, this);
+      var ComputeTokenClass = this.computeTokenClass;
+
+      if (!ComputeTokenClass)
+        ComputeTokenClass = this.computeTokenClass = ComputeToken.subclass({
+          token: this
+        });
+
+      return new ComputeTokenClass(value);
     },
 
     token: function(name){
-      if (this.type == 'plural')
-        name = cultures[currentCulture].plural(name);
+      // FIXME looks like new tokens are always create here
+      if (this.getType() in PLURAL_TYPES)
+        return this.computeToken(name);
 
       if (this.dictionary)
         return this.dictionary.token(this.name + '.' + name);
+    },
+
+    getDictionary: function(){
+      return this.dictionary;
     },
 
    /**
@@ -219,8 +423,14 @@
       for (var key in this.computeTokens)
         this.computeTokens[key].destroy();
 
+      this.descriptor = null;
+      this.computeTokenClass = null;
       this.computeTokens = null;
       this.value = null;
+      this.dictionary = null;
+
+      // remove from index
+      tokenIndex[this.index] = null;
 
       basis.Token.prototype.destroy.call(this);
     }
@@ -253,6 +463,43 @@
     }
   }
 
+ /**
+  * Check value is a l10n token.
+  * @param {*} value Value to be check.
+  * @return {boolean}
+  */
+  function isToken(value){
+    return value ? value instanceof Token || value instanceof ComputeToken : false;
+  }
+
+ /**
+  * Check value is a l10n plural token.
+  * @param {*} value Value to be check.
+  * @return {boolean}
+  */
+  function isPluralToken(value){
+    return isToken(value) && value.getType() in PLURAL_TYPES;
+  }
+
+ /**
+  * Check value is a l10n token that may has a placeholder.
+  * @param {*} value Value to be check.
+  * @return {boolean}
+  */
+  function isTokenHasPlaceholder(value){
+    return isToken(value) && value.descriptor.placeholder;
+  }
+
+/**
+  * Check value is a l10n markup token.
+  * @param {*} value Value to be check.
+  * @return {boolean}
+  */
+  function isMarkupToken(value){
+    return isToken(value) && value.getType() == 'markup';
+  }
+
+
 
   //
   // Dictionary
@@ -265,22 +512,68 @@
   var createDictionaryNotifier = new basis.Token();
 
 
-  function walkTokens(dictionary, culture, tokens, path){
-    var cultureValues = dictionary.cultureValues[culture];
-
-    path = path ? path + '.' : '';
+  function walkTokens(tokens, parentName, context){
+    var path = parentName ? parentName + '.' : '';
+    var parentType = context.types[parentName] || 'default';
 
     for (var name in tokens)
+    {
+      // ignore meta on first level
+      if (parentName == '' && name == '_meta')
+        continue;
+
+      if (name.indexOf('.') != -1)
+      {
+        /** @cut */ basis.dev.warn(context.name + ': wrong token name `' + name + '`, token ignored.');
+        continue;
+      }
+
       if (hasOwnProperty.call(tokens, name))
       {
         var tokenName = path + name;
+        var tokenType = context.types[tokenName] || NESTED_TYPE[parentType] || 'default';
         var tokenValue = tokens[name];
+        var isPlural = tokenType in PLURAL_TYPES || parentType in PLURAL_TYPES;
 
-        cultureValues[tokenName] = tokenValue;
+        context.values[tokenName] = {
+          /** @cut */ _sourceBranch: tokens,
+          /** @cut */ _sourceKey: name,
+          /** @cut */ loc: context.locationMap ? context.locationMap[context.culture.name + '.' + tokenName] || null : null,
+
+          placeholder: isPlural,
+          processName: isPlural ? pluralName : basis.fn.$self,
+          source: context.source[tokenName] || context.dictionary.id,
+          culture: context.culture,
+          name: tokenName,
+          types: context.types,
+          value: tokenValue
+        };
+
+        if (tokenName in context.types == false)
+          context.types[tokenName] = tokenType;
 
         if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
-          walkTokens(dictionary, culture, tokenValue, tokenName);
+          walkTokens(tokenValue, tokenName, context);
       }
+    }
+
+    return context.values;
+  }
+
+  function fetchTypes(data){
+    var dirtyTypes = (data._meta && data._meta.type) || {};
+    var types = {};
+
+    // filter wrong types
+    for (var path in dirtyTypes)
+      if (dirtyTypes[path] in TOKEN_TYPES)
+        types[path] = dirtyTypes[path];
+
+    return types;
+  }
+
+  function fetchSource(data){
+    return (data._meta && data._meta.source) || {};
   }
 
 
@@ -291,21 +584,16 @@
     className: namespace + '.Dictionary',
 
    /**
-    * Token map.
-    * @type {object}
-    */
-    tokens: null,
-
-   /**
-    * @type {object}
-    */
-    types: null,
-
-   /**
-    * Values by cultures
+    * Token descriptors by cultures
     * @type {object}
     */
     cultureValues: null,
+
+   /**
+    * Inited token map.
+    * @type {object}
+    */
+    tokens: null,
 
    /**
     * @type {number}
@@ -319,12 +607,17 @@
     resource: null,
 
    /**
+    * Unique reference to dictinary location
+    * @type {string}
+    */
+    id: null,
+
+   /**
     * @constructor
     * @param {basis.Resource} content Dictionary content (tokens source)
     */
-    init: function(content){
+    init: function(content, noResourceFetch){
       this.tokens = {};
-      this.types = {};
       this.cultureValues = {};
 
       // add to dictionary list
@@ -333,22 +626,28 @@
       if (basis.resource.isResource(content))
       {
         var resource = content;
+        var resourceUrl = resource.url;
 
+        this.id = resourceUrl;
         this.resource = resource;
 
         // notify dictionary created
-        if (!dictionaryByUrl[resource.url])
+        if (!dictionaryByUrl[resourceUrl])
         {
-          dictionaryByUrl[resource.url] = this;
-          createDictionaryNotifier.set(resource.url);
+          dictionaryByUrl[resourceUrl] = this;
+          createDictionaryNotifier.set(resourceUrl);
+
+          if (patches[resourceUrl])
+            patches[resourceUrl].activate();
         }
 
         // fetch resource content and attach listener on content update
-        resource.fetch();
+        if (!noResourceFetch)
+          resource.fetch();
       }
       else
       {
-        /** @cut */ basis.dev.warn('Use object as content of dictionary is experimental and not production-ready');
+        this.id = 'dictionary' + this.index;
         this.update(content || {});
       }
     },
@@ -364,17 +663,22 @@
       this.cultureValues = {};
 
       // apply token values
+      var types = fetchTypes(data);
       for (var culture in data)
         if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
-        {
-          this.cultureValues[culture] = {};
-          walkTokens(this, culture, data[culture]);
-        }
+          this.cultureValues[culture] = walkTokens(data[culture], '', {
+            /** @cut */ name: this.resource ? this.resource.url : '[anonymous dictionary]',
+            /** @cut */ locationMap: data._locationMap,
 
-      // apply types
-      this.types = (data._meta && data._meta.type) || {};
-      for (var key in this.tokens)
-        this.tokens[key].setType(this.types[key]);
+            dictionary: this,
+            culture: resolveCulture(culture),
+            source: fetchSource(data[culture]),
+            types: complete(fetchTypes(data[culture]), types), // dictionary types + culture types
+            values: {}
+          });
+
+      /** @cut */ delete data._locationMap;
+      /** @cut */ this._data = data;
 
       // update values
       this.syncValues();
@@ -387,21 +691,49 @@
     */
     syncValues: function(){
       for (var tokenName in this.tokens)
-        updateToken.call(this.tokens[tokenName], this.getValue(tokenName));
+      {
+        var token = this.tokens[tokenName];
+        var descriptor = this.getDescriptor(tokenName) || NULL_DESCRIPTOR;
+        var savedType = token.getType();
+
+        token.descriptor = descriptor;
+
+        if (token.value !== descriptor.value)
+        {
+          // on value change apply will be ivoked and new type applied
+          basisTokenPrototypeSet.call(token, descriptor.value);
+        }
+        else
+        {
+          // apply changes if type has been changed
+          if (token.getType() != savedType)
+            token.apply();
+        }
+      }
     },
 
    /**
-    * Get current value for tokenName according to current culture and it's fallback.
+    * @param {string} culture
     * @param {string} tokenName
+    * @return {Object|undefined}
     */
-    getValue: function(tokenName){
+    getCultureDescriptor: function(culture, tokenName){
+      return this.cultureValues[culture] && this.cultureValues[culture][tokenName];
+    },
+
+   /**
+    * @param {string} tokenName
+    * @return {Object|undefined}
+    */
+    getDescriptor: function(tokenName){
       var fallback = cultureFallback[currentCulture] || [];
 
       for (var i = 0, cultureName; cultureName = fallback[i]; i++)
       {
-        var cultureValues = this.cultureValues[cultureName];
-        if (cultureValues && tokenName in cultureValues)
-          return cultureValues[tokenName];
+        var descriptor = this.getCultureDescriptor(cultureName, tokenName);
+
+        if (descriptor)
+          return descriptor;
       }
     },
 
@@ -411,7 +743,34 @@
     * @return {*}
     */
     getCultureValue: function(culture, tokenName){
-      return this.cultureValues[culture] && this.cultureValues[culture][tokenName];
+      var descriptor = this.getCultureDescriptor(culture, tokenName);
+
+      if (descriptor)
+        return descriptor.value;
+    },
+
+   /**
+    * Get current value for tokenName according to current culture and it's fallback.
+    * @param {string} tokenName
+    */
+    getValue: function(tokenName){
+      var descriptor = this.getDescriptor(tokenName);
+
+      if (descriptor)
+        return descriptor.value;
+    },
+
+   /**
+    * Return token value source url.
+    * @param {string} tokenName
+    */
+    getValueSource: function(tokenName){
+      var descriptor = this.getDescriptor(tokenName);
+
+      if (descriptor)
+        return descriptor.source;
+
+      return this.id;
     },
 
    /**
@@ -423,11 +782,12 @@
 
       if (!token)
       {
+        var descriptor = this.getDescriptor(tokenName) || NULL_DESCRIPTOR;
+
         token = this.tokens[tokenName] = new Token(
           this,
           tokenName,
-          this.types[tokenName],
-          this.getValue(tokenName)
+          descriptor
         );
       }
 
@@ -445,7 +805,12 @@
 
       if (this.resource)
       {
-        delete dictionaryByUrl[this.resource.url];
+        var resourceUrl = this.resource.url;
+
+        if (patches[resourceUrl])
+          patches[resourceUrl].deactivate();
+
+        delete dictionaryByUrl[resourceUrl];
         this.resource = null;
       }
     }
@@ -453,10 +818,9 @@
 
 
  /**
-  * @param {basis.Resource|string} source
-  * @return {basis.l10n.Dictionary}
+  * Currently for internal use only, with additional argument
   */
-  function resolveDictionary(source){
+  function internalResolveDictionary(source, noFetch) {
     var dictionary;
 
     if (typeof source == 'string')
@@ -465,7 +829,7 @@
       var extname = basis.path.extname(location);
 
       if (extname != '.l10n')
-        location = basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n';
+        location = location.replace(new RegExp(extname + '([#?]|$)'), '.l10n$1');
 
       source = basis.resource(location);
     }
@@ -473,7 +837,16 @@
     if (basis.resource.isResource(source))
       dictionary = dictionaryByUrl[source.url];
 
-    return dictionary || new Dictionary(source);
+    return dictionary || new Dictionary(source, noFetch);
+  }
+
+
+ /**
+  * @param {basis.Resource|string} source
+  * @return {basis.l10n.Dictionary}
+  */
+  function resolveDictionary(source){
+    return internalResolveDictionary(source);
   }
 
 
@@ -499,7 +872,7 @@
   // source: http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html?id=l10n/pluralforms
   var pluralFormsMap = {};
   var pluralForms = [
-    /*  0 */ [1, function(n){
+    /*  0 */ [1, function(){
       return 0;
     }],
     /*  1 */ [2, function(n){
@@ -635,7 +1008,7 @@
     return cultures[name || currentCulture];
   }
 
-  basis.object.extend(resolveCulture, new basis.Token());
+  extend(resolveCulture, new basis.Token());
   resolveCulture.set = setCulture;
 
 
@@ -660,7 +1033,7 @@
     {
       if (cultureList.indexOf(culture) == -1)
       {
-        /** @cut */ basis.dev.warn('basis.l10n.setCulture: culture `' + culture + '` not in the list, the culture isn\'t changed');
+        /** @cut */ basis.dev.warn('basis.l10n.setCulture: culture `' + culture + '` not in the list, the culture doesn\'t changed');
         return;
       }
 
@@ -669,7 +1042,7 @@
       for (var i = 0, dictionary; dictionary = dictionaries[i]; i++)
         dictionary.syncValues();
 
-      basis.Token.prototype.set.call(resolveCulture, culture);
+      basisTokenPrototypeSet.call(resolveCulture, culture);
     }
   }
 
@@ -717,7 +1090,7 @@
       if (cultureRow.length > 2)
       {
         /** @cut */ basis.dev.warn('basis.l10n.setCultureList: only one fallback culture can be set for certain culture, try to set `' + culture + '`; other cultures except first one was ignored');
-        cultureRow = cultureRow.slice(0, 2);
+        cultureRow = [cultureRow[0], cultureRow[1]];
       }
 
       cultureName = cultureRow[0];
@@ -731,16 +1104,16 @@
 
     // normalize fallback
     for (var cultureName in cultureFallback)
-    {
-      cultureFallback[cultureName] = basis.array.flatten(cultureFallback[cultureName]
-        .map(function(name){
-          return cultureFallback[name];
-        }))
-        .concat(baseCulture)
-        .filter(function(item, idx, array){
-          return !idx || array.lastIndexOf(item, idx - 1) == -1;
-        });
-    }
+      cultureFallback[cultureName] = basis.array.flatten(
+        cultureFallback[cultureName]
+          .map(function(name){
+            return cultureFallback[name];
+          }))
+          .concat(baseCulture)
+          .filter(function(item, idx, array){
+            return !idx || array.lastIndexOf(item, idx - 1) == -1;
+          }
+      );
 
     // update current culture list
     cultureList = basis.object.keys(cultures);
@@ -785,6 +1158,10 @@
     ComputeToken: ComputeToken,
     Token: Token,
     token: resolveToken,
+    isToken: isToken,
+    isPluralToken: isPluralToken,
+    isMarkupToken: isMarkupToken,
+    isTokenHasPlaceholder: isTokenHasPlaceholder,
 
     Dictionary: Dictionary,
     dictionary: resolveDictionary,
@@ -802,3 +1179,20 @@
     pluralForms: pluralForms,
     onCultureChange: onCultureChange
   };
+
+  // show warning on set `enableMarkup` as deprecated
+  // basis.js 1.4
+  /** @cut */ (function(){
+  /** @cut */   var value = false;
+  /** @cut */   try { // use try to avoid IE8 problems and unsupported browsers
+  /** @cut */     Object.defineProperty(module.exports, 'enableMarkup', {
+  /** @cut */       get: function(){
+  /** @cut */         return value;
+  /** @cut */       },
+  /** @cut */       set: function(newValue){
+  /** @cut */         basis.dev.warn('basis.l10n: enableMarkup option is deprecated, just remove it from your source code as markup l10n tokens enabled by default now');
+  /** @cut */         value = newValue;
+  /** @cut */       }
+  /** @cut */     });
+  /** @cut */   } catch(e){ }
+  /** @cut */ })();

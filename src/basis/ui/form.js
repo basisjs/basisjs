@@ -4,7 +4,7 @@
   * @namespace basis.ui.form
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.form';
 
 
   //
@@ -14,7 +14,6 @@
   var field = require('basis.ui.field');
   var basisEvent = require('basis.event');
   var createEvent = basisEvent.create;
-  var events = basisEvent.events;
   var Node = require('basis.ui').Node;
 
 

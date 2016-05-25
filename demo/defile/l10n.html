@@ -38,7 +38,6 @@
     /** @cut */ basis.require('basis.devpanel');
 
     basis.l10n.setCultureList('en-US ru-RU uk-UA');
-    basis.l10n.enableMarkup = true;
 
     new basis.ui.button.ButtonPanel({
       container: document.getElementById('demo-container'),
@@ -52,27 +51,43 @@
       })
     });
 
-    var dict = basis.l10n.dictionary('l10n.l10n');
+    var dict = basis.l10n.dictionary('./l10n.l10n');
 
-    var testNode = new basis.ui.Node({
+    // var testNode = new basis.ui.Node({
+    //   container: document.getElementById('demo-container'),
+    //   data: { count: 5 },
+    //   template: basis.resource('./l10n.tmpl'),
+    //   action: {
+    //     dec: function(){
+    //       this.update({ count: this.data.count - 1 });
+    //     },
+    //     inc: function(){
+    //       this.update({ count: this.data.count + 1 });
+    //     }
+    //   },
+    //   binding: {
+    //     count: 'data:',
+    //     plural: dict.token('plural').compute('update', function(node){
+    //       return node.data.count;
+    //     }),
+    //     markupToken: dict.token('markupToken'),
+    //     markupToken2: dict.token('markupToken')
+    //   }
+    // });
+
+    var node = new basis.ui.Node({
       container: document.getElementById('demo-container'),
-      data: { count: 5 },
-      template: basis.resource('./l10n.tmpl'),
-      action: {
-        dec: function(){
-          this.update({ count: this.data.count - 1 });
-        },
-        inc: function(){
-          this.update({ count: this.data.count + 1 });
-        }
-      },
+      template: basis.resource('./l10n_simple.tmpl'),
       binding: {
-        count: 'data:',
-        plural: dict.token('plural').compute('update', function(node){
-          return node.data.count;
-        }),
-        markupToken: dict.token('markupToken'),
-        markupToken2: dict.token('markupToken')
+        count: function(){
+          return 'OK';
+        },
+        l10n: function(){
+          return 'b';
+        },
+        xxx: function(){
+          return dict.token('simpleMarkup');
+        }
       }
     });
 

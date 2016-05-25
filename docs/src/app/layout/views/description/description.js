@@ -1,27 +1,26 @@
+var View = require('app.ext.view').View;
+var JsDocPanel = require('app.ext.jsdoc').JsDocPanel;
+var JsDocEntity = require('app.core').JsDocEntity;
 
-  basis.require('app.ext.view');
-  basis.require('app.ext.jsdoc');
+//
+// exports
+//
+module.exports = new View({
+  title: 'Description',
+  viewHeader: 'Description',
 
-  //
-  // exports
-  //
-  module.exports = new app.ext.view.View({
-    title: 'Description',
-    viewHeader: 'Description',
-    template: resource('./template/jsdocView.tmpl'),
+  template: resource('./template/jsdocView.tmpl'),
+  binding: {
+    docsView: 'satellite:content'
+  },
 
-    binding: {
-      docsView: 'satellite:content'
-    },
-
-    satellite: {
-      content: {
-        existsIf: basis.getter('data.fullPath'),
-        delegate: function(owner){
-          return app.core.JsDocEntity.getSlot(owner.data.fullPath);
-        },
-        instanceOf: app.ext.jsdoc.JsDocPanel
+  satellite: {
+    content: {
+      instance: JsDocPanel,
+      existsIf: 'data.fullPath',
+      delegate: function(owner){
+        return JsDocEntity.getSlot(owner.data.fullPath);
       }
     }
-  });
-
+  }
+});

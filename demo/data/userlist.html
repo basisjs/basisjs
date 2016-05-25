@@ -86,17 +86,17 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.ui');
-    basis.require('basis.entity');
-    basis.require('basis.net.service');
+    var entity = basis.require('basis.entity');
+    var UINode = basis.require('basis.ui').Node;
+    var Service = basis.require('basis.net.service').Service;
 
     // create service to load data
-    var service = new basis.net.service.Service();
+    var service = new Service();
 
     // define data types
 
-    var UserGroup = basis.entity.createType('UserGroup', {
-      groupId: basis.entity.IntId,
+    var UserGroup = entity.createType('UserGroup', {
+      groupId: entity.IntId,
       title: String
     });
 
@@ -104,14 +104,14 @@
     UserGroup.all.setSyncAction(service.createAction({
       url: '../res/data/groups.json',
       success: function(data){
-        this.sync(data && data.map(this.wrapper.reader));
+        this.setAndDestroyRemoved(UserGroup.readList(data));
       }
     }));
 
-    var User = basis.entity.createType({
+    var User = entity.createType({
       name: 'User',
       fields: {
-        userId: basis.entity.IntId,
+        userId: entity.IntId,
         group: 'UserGroup',
         title: String
       },
@@ -122,7 +122,7 @@
         syncAction: service.createAction({
           url: '../res/data/users.json',
           success: function(data){
-            this.sync(data && data.map(this.wrapper.reader));
+            this.setAndDestroyRemoved(User.readList(data));
           }
         })
       }
@@ -130,7 +130,7 @@
 
     // create controls
 
-    new basis.ui.Node({
+    new UINode({
       container: document.getElementById('demo-container'),
       template: '<button event-click="update">Update</button>',
       action: {
@@ -145,7 +145,7 @@
     // User list
     //
 
-    var tree = new basis.ui.Node({
+    var tree = new UINode({
       container: document.getElementById('demo-container'),
       template: '<div id="UserList"/>',
 

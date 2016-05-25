@@ -1,0 +1,34 @@
+.item
+{
+  width: 280px;
+}
+.header
+{
+  width: 50%;
+  float: left;
+  margin-right: -8px;
+}
+.link
+{
+  background: rgba(255, 225, 0, .25);
+  overflow: hidden;
+  display: block;
+}
+.image
+{
+  opacity: 1;
+}
+.wowtext
+{
+  font-size: 90%;
+  padding: 5px 12px 8px 0;
+  text-align: left;
+  overflow: hidden;
+  color: #886600;
+}
+.wowtext::before
+{
+  content: 'WOW!';
+  margin-right: 1ex;
+  font-weight: bold;
+}

@@ -1,14 +1,14 @@
-basis.require('basis.entity');
+var entity = require('basis.entity');
 
 //
 // main part
 //
 
-var Slide = basis.entity.createType('Slide', {
-  id: basis.entity.StringId,
+var Slide = entity.createType('Slide', {
+  id: entity.StringId,
   num: Number,
   title: String,
-  files: new basis.entity.EntitySetType('File'),
+  files: entity.createSetType('File'),
   prev: 'Slide',
   next: 'Slide'
 });
@@ -41,7 +41,7 @@ slideIndex.ready(function(data){
 }, Slide.all);
 
 Slide.all.setSyncAction(function(){
-  slideIndex.fetch();  
+  slideIndex.fetch();
 });
 
 

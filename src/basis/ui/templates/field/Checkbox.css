@@ -1,0 +1,14 @@
+.Basis-Field-Checkbox.disabled,
+.Basis-Field-Checkbox.valid,
+.Basis-Field-Checkbox.invalid,
+.Basis-Field-Checkbox.indeterminate
+.Basis-Field-Checkbox.Basis-Field,
+.Basis-Field-Checkbox.Basis-Field-Container
+{
+
+}
+.Basis-Field-Checkbox__text
+{
+  display: inline-block;
+  vertical-align: middle;
+}

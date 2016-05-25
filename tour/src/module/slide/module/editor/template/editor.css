@@ -1,4 +1,4 @@
-#code-editor
+.slide-code-editor
 {
   position: absolute;
   top: 0;
@@ -7,14 +7,14 @@
   bottom: 0;
 }
 
-#code-editor .CodeMirror
+.slide-code-editor .CodeMirror
 {
   height: 100%;
   font-family: Monaco, Consolas, monospace;
   line-height: 1.35;
 }
 
-#code-editor .CodeMirror-lines
+.slide-code-editor .CodeMirror-lines
 {
   padding: 4px 2px;
 }

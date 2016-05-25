@@ -1,10 +1,8 @@
 
-  basis.require('basis.dom.wrapper');
-  basis.require('app.core');
-
   var namespace = module.path;
 
-  var templates = basis.template.define('app', {
+  var Node = require('basis.ui').Node;
+  var templates = require('basis.template').define('app', {
     ViewOption: resource('./view/template/viewOption.tmpl'),
     ViewOptionList: resource('./view/template/viewOptionList.tmpl'),
   });
@@ -13,10 +11,10 @@
   // classes
   //
 
-  var View = basis.ui.Node.subclass({
+  var View = Node.subclass({
     className: namespace + '.View',
 
-    autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
+    autoDelegate: true,
     isAcceptableObject: basis.fn.$true,
 
     binding: {
@@ -31,26 +29,16 @@
     }
   });
 
-  var ViewOption = basis.ui.Node.subclass({
+  var ViewOption = Node.subclass({
     className: namespace + '.ViewOption',
 
     template: templates.ViewOption,
-
     binding: {
       title: 'title'
-    },
-
-    action: {
-      select: function(){
-        this.select();
-      }
-    },
-    init: function(){
-      basis.ui.Node.prototype.init.call(this);
     }
   });
 
-  var ViewOptions = basis.ui.Node.subclass({
+  var ViewOptions = Node.subclass({
     className: namespace + '.ViewOptions',
 
     template: templates.ViewOptionList,

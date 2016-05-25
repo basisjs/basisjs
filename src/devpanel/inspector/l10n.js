@@ -1,55 +1,22 @@
-var domEventUtils = require('basis.dom.event');
-var setStyle = require('basis.cssom').setStyle;
-var getBoundingRect = require('basis.layout').getBoundingRect;
-var Value = require('basis.data').Value;
-var Node = require('basis.ui').Node;
-
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
-var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
-var document = global.document;
+var NativeDomNode = global.Node;
+var fileAPI = require('../api/file.js');
+var Value = require('basis.data').Value;
 var getColor = require('../module/color.js');
 var transport = require('devpanel.transport');
+var Overlay = require('./utils/overlay.js');
+var Popup = require('basis.ui.popup').Popup;
 
-var elements = [];
-var inspectMode = new Value({ value: false });
+var dictionaryColor = {};
+function getColorForDictionary(dictionaryName){
+  if (!dictionaryColor[dictionaryName])
+    dictionaryColor[dictionaryName] = getColor().join(', ');
 
-var overlayNode = new Node({
-  template: resource('./template/l10n_overlay.tmpl'),
-  hover: new basis.Token(false),
-  hide: new basis.Token(false),
-  top: new basis.Token(0),
-  left: new basis.Token(0),
-  binding: {
-    hover: 'hover',
-    hide: 'hide',
-    top: 'top',
-    left: 'left'
-  },
-  action: {
-    mouseover: function(e){
-      this.hover.set(true);
-    },
-    mouseout: function(e){
-      this.hover.set(false);
-    }
-  }
-});
-
-var overlay = overlayNode.tmpl.element;
-var overlayContent = overlayNode.tmpl.content;
-var tokenDomProto = overlayNode.tmpl.token;
-
-function pickHandler(event){
-  var token = event.sender.token;
-  if (token)
-  {
-    endInspect();
-    loadToken(token);
-  }
+  return dictionaryColor[dictionaryName];
 }
 
 function loadToken(token){
@@ -65,201 +32,183 @@ function loadToken(token){
   transport.sendData('token', data);
 }
 
-// dom mutation observer
-
-var observer = (function(){
-  var names = ['MutationObserver', 'WebKitMutationObserver'];
-
-  for (var i = 0, name; name = names[i]; i++)
-  {
-    var ObserverClass = global[name];
-    if (typeof ObserverClass == 'function')
-      return new ObserverClass(updateHighlight);
-  }
-})();
-
-function startInspect(){
-  if (!inspectMode.value)
-  {
-    updateOnScroll();
-    inspectMode.set(true);
-    highlight();
-
-    domEventUtils.addGlobalHandler('scroll', updateOnScroll);
-    domEventUtils.addHandler(window, 'resize', updateOnResize);
-    inspectBasisEvent.captureEvent('mousedown', domEventUtils.kill);
-    inspectBasisEvent.captureEvent('mouseup', domEventUtils.kill);
-    inspectBasisEvent.captureEvent('click', pickHandler);
-    inspectBasisEvent.captureEvent('contextmenu', endInspect);
-
-    transport.sendData('startInspect', 'l10n');
-
-    if (observer)
-      observer.observe(document.body, {
-        subtree: true,
-        attributes: true,
-        characterData: true,
-        childList: true
-      });
-  }
-}
-function endInspect(){
-  if (inspectMode.value)
-  {
-    if (observer)
-      observer.disconnect();
-
-    domEventUtils.removeGlobalHandler('scroll', updateOnScroll);
-    domEventUtils.removeHandler(window, 'resize', updateOnResize);
-    inspectBasisEvent.releaseEvent('mousedown');
-    inspectBasisEvent.releaseEvent('mouseup');
-    inspectBasisEvent.releaseEvent('click');
-    inspectBasisEvent.releaseEvent('contextmenu');
-
-    unhighlight();
-    inspectMode.set(false);
-    transport.sendData('endInspect', 'l10n');
-  }
-}
-
-function updateOnScroll(event){
-  var scrollElement = document.compatMode == 'CSS1Compat' ? document.documentElement : document.body;
-
-  overlayNode.top.set(global.pageYOffset || scrollElement.scrollTop);
-  overlayNode.left.set(global.pageXOffset || scrollElement.scrollLeft);
-
-  //if (event && event.target !== document)
-    highlight(true);
-}
-
-var resizeTimer;
-function updateOnResize(){
-  clearTimeout(resizeTimer);
-  overlayNode.hide.set(true);
-  resizeTimer = setTimeout(function(){
-    overlayNode.hide.set(false);
-    highlight(true);
-  }, 100);
-}
-
-function highlight(keepOverlay){
-  unhighlight(keepOverlay);
-  domTreeHighlight(document.body);
-
-  if (!keepOverlay)
-    basis.doc.body.add(overlay);
-}
-
-function unhighlight(keepOverlay){
-  var node;
-
-  while (node = elements.pop())
-  {
-    node.token = null;
-    basis.doc.remove(node);
-  }
-
-  if (!keepOverlay)
-  {
-    overlayNode.hover.set(false);
-    basis.doc.remove(overlay);
-  }
-}
-
-function updateHighlight(records){
-  for (var i = 0; i < records.length; i++)
-    if (records[i].target != overlayContent &&
-        records[i].target.parentNode != overlayContent &&
-        records[i].target.id != 'devpanelSharedDom')
-    {
-      highlight(true);
-      break;
+function tokenBinding(fn){
+  fn = basis.getter(fn);
+  return {
+    events: 'update',
+    getter: function(node){
+      return node.data.token ? fn(node.data) : '';
     }
+  };
 }
 
-function addTokenToHighlight(token, ref, domNode){
-  if (token instanceof inspectBasisL10n.Token && token.dictionary)
-  {
-    var rect;
+var nodeInfoPopup = basis.fn.lazyInit(function(){
+  return new Popup({
+    dir: 'left bottom left top',
+    template: resource('./l10n/token_hintPopup.tmpl'),
+    autorotate: [
+      'left top left bottom',
+      'right bottom right top',
+      'right top right bottom'
+    ],
+    binding: {
+      dictionary: tokenBinding('token.dictionary.id'),
+      patches: tokenBinding(function(data){
+        return data.token.dictionary._data._patches;
+      }),
+      culture: tokenBinding('token.descriptor.culture.name'),
+      path: tokenBinding('token.descriptor.name'),
+      tokenLocation: tokenBinding(function(data){
+        return data.descriptor.loc || data.descriptor.source;
+      }),
+      type: tokenBinding(function(data){
+        var type = data.token.getType();
+        return type != 'default' ? type : '';
+      }),
+      computed: tokenBinding(function(data){
+        return data.token.descriptor !== data.descriptor;
+      }),
+      computedValue: tokenBinding(function(data){
+        return data.value;
+      }),
+      computedKey: tokenBinding('key'),
+      computedKeyValueEqual: tokenBinding(function(data){
+        return data.key === data.value;
+      }),
+      computedType: tokenBinding(function(data){
+        if (!data.computed)
+          return;
 
-    if (ref && ref.nodeType == 1)
-    {
-      rect = getBoundingRect(ref);
-    }
-    else
-    {
-      var range = document.createRange();
-      range.selectNodeContents(domNode);
-      rect = getBoundingRect(range);
-    }
-
-    if (rect)
-    {
-      var color = getColorForDictionary(token.dictionary.resource.url);
-      var bgColor = 'rgba(' + color.join(',') + ', .3)';
-      var borderColor = 'rgba(' + color.join(',') + ', .6)';
-      var element = overlayContent.appendChild(setStyle(tokenDomProto.cloneNode(false), {
-        backgroundColor: bgColor,
-        outline: '1px solid ' + borderColor,
-        top: rect.top + 'px',
-        left: rect.left + 'px',
-        width: rect.width + 'px',
-        height: rect.height + 'px'
-      }));
-
-      element.token = token;
-      elements.push(element);
-    }
-  }
-}
-
-function domTreeHighlight(root){
-  for (var i = 0, child, l10nRef; child = root.childNodes[i]; i++)
-  {
-    if (child[inspectBasisTemplateMarker])
-    {
-      var debugInfo = inspectBasisTemplate.getDebugInfoById(child[inspectBasisTemplateMarker]);
-      if (debugInfo)
-      {
-        for (var j = 0, binding; binding = debugInfo[j]; j++)
-        {
-          var token = binding.attachment;
-
-          if (token instanceof inspectBasisL10n.ComputeToken)
-            token = token.token;
-
-          addTokenToHighlight(token, binding.val, binding.dom);
+        var type = data.computed.getType();
+        return type != 'default' ? type : '';
+      }),
+      openFileSupported: {
+        events: 'delegateChanged update',
+        getter: function(){
+          var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+          return basisjsTools && typeof basisjsTools.openFile == 'function';
         }
       }
+    },
+    handler: {
+      delegateChanged: function(){
+        if (this.delegate)
+          this.show(this.delegate.element);
+        else
+          this.hide();
+      },
+      hide: function(){
+        this.setDelegate();
+      }
+    }
+  });
+});
+
+var overlay = new Overlay({
+  template: resource('./template/l10n/overlay.tmpl'),
+  muteEvents: {
+    click: true,
+    mousedown: true,
+    mouseup: true
+  },
+  handler: {
+    activeChanged: function(){
+      if (this.active)
+        transport.sendData('startInspect', 'l10n');
+      else
+        transport.sendData('endInspect', 'l10n');
+    }
+  },
+
+  childClass: {
+    template: resource('./template/l10n/token.tmpl'),
+    binding: {
+      color: 'data:'
+    },
+    action: {
+      showInfo: function(){
+        nodeInfoPopup().setDelegate(this);
+      },
+      hideInfo: function(){
+        nodeInfoPopup().setDelegate();
+      }
+    },
+    click: function(){
+      var descriptor = this.data.descriptor;
+      if (descriptor)
+      {
+        this.parentNode.deactivate();
+
+        var loc = descriptor.loc || descriptor.source;
+        if (loc)
+          fileAPI.openFile(loc);
+      }
+    }
+  },
+
+  processNode: function(domNode){
+    function highlight(token, domNode){
+      var key = null;
+      var value = null;
+      var computed = null;
+      var descriptor;
+
+      if (token instanceof inspectBasisL10n.ComputeToken)
+      {
+        descriptor = token.token.dictionary.getDescriptor(token.getName());
+        computed = token;
+        value = token.value;
+        key = token.getName().split('.').pop();
+        token = token.token;
+      }
+
+      if (token instanceof inspectBasisL10n.Token && token.dictionary)
+        this.highlight(domNode, {
+          color: getColorForDictionary(token.dictionary.resource.url),
+          token: token,
+          computed: computed,
+          descriptor: descriptor || token.descriptor,
+          value: value,
+          key: key
+        });
     }
 
-    if (child.nodeType == 1)  // ELEMENT_NODE
+    if (domNode.nodeType == 1)
     {
-      if (l10nRef = child.getAttribute('data-basisjs-l10n'))
-        addTokenToHighlight(inspectBasisL10n.token(l10nRef), child, child);
+      var l10nRef = domNode.getAttribute('data-basisjs-l10n');
+      if (l10nRef)
+        highlight.call(this, inspectBasisL10n.token(l10nRef), domNode);
+    }
 
-      domTreeHighlight(child);
+    if (domNode[inspectBasisTemplateMarker])
+    {
+      var debugInfo = inspectBasisTemplate.getDebugInfoById(domNode[inspectBasisTemplateMarker]);
+      if (debugInfo)
+      {
+        var bindings = debugInfo.bindings;
+
+        for (var j = 0, binding; binding = bindings[j]; j++)
+          highlight.call(this, binding.attachment, binding.val instanceof NativeDomNode ? binding.val : binding.dom);
+      }
     }
   }
-}
+});
 
-var dictionaryColor = {};
-function getColorForDictionary(dictionaryName){
-  if (!dictionaryColor[dictionaryName])
-    dictionaryColor[dictionaryName] = getColor();
-
-  return dictionaryColor[dictionaryName];
-}
 
 //
 // exports
 //
 
 module.exports = {
-  startInspect: startInspect,
-  endInspect: endInspect,
-  inspectMode: inspectMode,
+  name: 'Localization',
+  startInspect: function(){
+    overlay.activate();
+  },
+  stopInspect: function(){
+    overlay.deactivate();
+  },
+  inspectMode: Value.from(overlay, 'activeChanged', 'active'),
   isActive: function(){
-    return inspectMode.value;
+    return overlay.active;
   }
 };

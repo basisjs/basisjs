@@ -3,7 +3,7 @@
   * @namespace basis.cssom
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.cssom';
 
 
   //
@@ -11,8 +11,6 @@
   //
 
   var document = global.document;
-  var location = global.location;
-  var path = basis.path;
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
   var Class = basis.Class;
@@ -178,23 +176,6 @@
   });
   createStyleMapping('float', 'cssFloat styleFloat');
 
- /**
-  * Apply new style property values for node.
-  * @param {string} key Node which style to be changed.
-  * @param {*} value Object contains new values for node style properties.
-  * @return {object}
-  */
-  function getStylePropertyMapping(key, value){
-    var mapping = styleMapping[key];
-
-    if (key = mapping ? mapping.key : camelize(key.replace(/^-ms-/, 'ms-')))
-      return {
-        key: key,
-        value: mapping && mapping.getter ? mapping.getter(value) : value
-      };
-
-    return null;
-  }
 
  /**
   * Apply new style property value for node.
@@ -204,18 +185,21 @@
   * @return {*} Returns style property value after assignment.
   */
   function setStyleProperty(node, property, value){
-    var mapping = getStylePropertyMapping(property, value);
+    var mapping = styleMapping[property];
+    var key = mapping ? mapping.key : camelize(property.replace(/^-ms-/, 'ms-'));
 
-    if (!mapping)
+    if (!key)
       return;
 
-    var key = mapping.key;
+    if (mapping && mapping.getter)
+      value = mapping.getter(value);
+
     var imp = !!IMPORTANT_REGEXP.test(value);
     var style = node.style;
 
     if (imp || isPropertyImportant(style, property))
     {
-      mapping.value = mapping.value.replace(IMPORTANT_REGEXP, '');
+      value = value.replace(IMPORTANT_REGEXP, '');
 
       if (style.setProperty)
       {
@@ -223,21 +207,22 @@
 
         // if property exists and important, remove it
         if (!imp)
-          style.removeProperty(key);
+          // Can't use removeProperty() because it wont remove !important rules in Chrome.
+          style.setProperty(property, '');
 
         // set new value for property
-        style.setProperty(key, mapping.value, (imp ? IMPORTANT : ''));
+        style.setProperty(property, value, (imp ? IMPORTANT : ''));
       }
       else
       {
         // IE8- scheme
-        var newValue = key + ': ' + mapping.value + (imp ? ' !' + IMPORTANT : '') + ';';
-        var rxText = style[key] ? key + '\\s*:\\s*' + style[key] + '(\\s*!' + IMPORTANT + ')?\\s*;?' : '^';
+        var newValue = key + ': ' + value + (imp ? ' !' + IMPORTANT : '') + ';';
+        var rxText = style[key] ? property + '\\s*:\\s*' + style[key] + '(\\s*!' + IMPORTANT + ')?\\s*;?' : '^';
 
         try {
           style.cssText = style.cssText.replace(new RegExp(rxText, 'i'), newValue);
         } catch(e) {
-          /** @cut */ basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
+          /** @cut */ basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + value + '` for ' + key + ' property');
         }
       }
     }
@@ -250,15 +235,15 @@
         // try/catch is speedless, therefore wrap this statement only for ie
         // it makes code safe and more compatible
         try {
-          node.style[mapping.key] = mapping.value;
+          node.style[key] = value;
         } catch(e) {
-          /** @cut */ basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
+          /** @cut */ basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + value + '` for ' + key + ' property');
         }
       }
       else
-        node.style[mapping.key] = mapping.value;
+        node.style[key] = value;
 
-      return node.style[mapping.key];
+      return node.style[key];
     }
   }
 

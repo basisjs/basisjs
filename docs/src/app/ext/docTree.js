@@ -1,7 +1,9 @@
 
-  basis.require('app.core');
-
+  var appCore = require('app.core');
   var capitalize = basis.string.capitalize;
+  var domUtils = require('basis.dom');
+  var Tree = require('basis.ui.tree').Tree;
+  var Folder = require('basis.ui.tree').Folder;
 
   //
   // Maps
@@ -35,12 +37,12 @@
   };
 
   var nodeTypeGrouping = {
-    sorting: basis.getter('data.id', groupWeight),
+    sorting: basis.getter('data.id').as(groupWeight),
     rule: function(node){
       return node.data.isClassMember ? 'ClassMember' : capitalize(node.data.kind);
     },
     childClass: {
-      titleGetter: basis.getter('data.id', groupTitle),
+      titleGetter: basis.getter('data.id').as(groupTitle),
       template: resource('./docTree/template/docTreePartitionNode.tmpl')
     }
   };
@@ -48,7 +50,7 @@
  /**
   * @class
   */
-  var DocTreeNode = basis.ui.tree.Folder.subclass({
+  var DocTreeNode = Folder.subclass({
     template: resource('./docTree/template/docTreeNode.tmpl'),
 
     binding: {
@@ -57,9 +59,9 @@
       },
       args: function(node){
         if (/^(function|method|class|classMember)$/i.test(node.data.kind))
-          return basis.dom.createElement('SPAN.args', '(' + app.core.getFunctionDescription(node.data.obj).args + ')');
+          return domUtils.createElement('SPAN.args', '(' + appCore.getFunctionDescription(node.data.obj).args + ')');
         if (node.data.kind == 'property')
-          return basis.dom.createElement('SPAN.value', (typeof node.data.obj == 'function' ? '<function>' : String(node.data.obj)));
+          return domUtils.createElement('SPAN.value', (typeof node.data.obj == 'function' ? '<function>' : String(node.data.obj)));
       }
     }
   });
@@ -111,13 +113,13 @@
     grouping: nodeTypeGrouping,
 
     getMembers: function(){
-      return app.core.getMembers(this.data.fullPath);
+      return appCore.getMembers(this.data.fullPath);
     },
     expand: function(){
-      if (basis.ui.tree.Folder.prototype.expand.call(this))
+      if (Folder.prototype.expand.call(this))
       {
         this.setChildNodes(this.getMembers());
-        this.expand = basis.ui.tree.Folder.prototype.expand;
+        this.expand = Folder.prototype.expand;
       }
     }
   });
@@ -128,8 +130,11 @@
   var DocTreeClassNode = DocTreeFolder.subclass({
     getMembers: function(){
       return basis.array.flatten([
-        app.core.getMembers(this.data.fullPath + '.prototype'),
-        app.core.getMembers(this.data.fullPath).map(function(item){ item.data.isClassMember = true; return item; })
+        appCore.getMembers(this.data.fullPath + '.prototype'),
+        appCore.getMembers(this.data.fullPath).map(function(item){
+          item.data.isClassMember = true;
+          return item;
+        })
       ]);
     }
   });
@@ -137,14 +142,14 @@
  /**
   * @class
   */
-  var DocTree = basis.ui.tree.Tree.subclass({
+  var DocTree = Tree.subclass({
     childClass: DocBaseTreeFolder
   });
 
  /**
   * @class
   */
-  var DocSearchTree = basis.ui.tree.Tree.subclass({
+  var DocSearchTree = Tree.subclass({
     childClass: DocSearchTreeNode,
     grouping: nodeTypeGrouping
   });

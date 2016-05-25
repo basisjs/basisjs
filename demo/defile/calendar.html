@@ -39,33 +39,32 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.l10n');
-    basis.require('basis.dom');
-    basis.require('basis.ui.button');
-    basis.require('basis.ui.calendar');
+    var Calendar = basis.require('basis.ui.calendar').Calendar;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var l10n = basis.require('basis.l10n');
 
-    basis.l10n.setCultureList('en-US ru-RU uk-UA');
+    l10n.setCultureList('en-US ru-RU uk-UA');
 
-    new basis.ui.button.ButtonPanel({
-      container: basis.dom.get('demo-container'),
-      childNodes: [null].concat(basis.l10n.getCultureList()).map(function(culture){
+    new ButtonPanel({
+      container: document.getElementById('demo-container'),
+      childNodes: l10n.getCultureList().map(function(culture){
         return {
-          caption: culture || 'Default (English)',
+          caption: culture,
           click: function(){
-            basis.l10n.setCulture(culture);
+            l10n.setCulture(culture);
           }
         };
       })
     });
 
-    var calendar = new basis.ui.calendar.Calendar({
-      container: basis.dom.get('demo-container'),
+    var calendar = new Calendar({
+      container: document.getElementById('demo-container'),
       childNodes: ['Month', 'Year', 'YearDecade'],
       minDate: new Date
     });
 
-    var calendar2 = new basis.ui.calendar.Calendar({
-      container: basis.dom.get('demo-container'),
+    var calendar2 = new Calendar({
+      container: document.getElementById('demo-container'),
       childNodes: ['Year', 'YearDecade']
     });
 

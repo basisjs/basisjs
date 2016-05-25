@@ -1,6 +1,6 @@
-basis.require('basis.ui');
+var Node = require('basis.ui').Node;
 
-module.exports = new basis.ui.Node({
+module.exports = new Node({
   template: resource('./editor.tmpl'),
   binding: {
     title: 'data:'

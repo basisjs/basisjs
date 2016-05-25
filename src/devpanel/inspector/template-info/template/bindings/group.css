@@ -1,0 +1,15 @@
+.group
+{
+  padding: 3px 0 4px;
+}
+.caption
+{
+  display: block;
+  font-size: 10px;
+  color: #888;
+}
+.content
+{
+  padding: 4px 0 4px 8px;
+  line-height: 1.4;
+}

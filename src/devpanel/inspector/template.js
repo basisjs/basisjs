@@ -1,30 +1,41 @@
+var domUtils = require('basis.dom');
 var domEventUtils = require('basis.dom.event');
 var setStyle = require('basis.cssom').setStyle;
 var getBoundingRect = require('basis.layout').getBoundingRect;
 var Value = require('basis.data').Value;
 var Popup = require('basis.ui.popup').Popup;
 
+var fileAPI = require('../api/file.js');
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-var inspectBasisTemplateMarker = inspectBasis.require('basis.template.html').marker;
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
 var transport = require('devpanel.transport');
+var templateInfo = resource('./template-info/index.js');
 
 var inspectDepth = 0;
 var inspectMode = new Value({ value: false });
 
-var overlay = setStyle(document.createElement('div'), {
-  pointerEvents: 'none',
-  transition: 'all .05s',
-  position: 'absolute',
-  top: 0,
-  bottom: 0,
-  left: 0,
-  right: 0,
-  zIndex: 10000,
-  background: 'rgba(110,163,217,0.7)'
+var overlay = domUtils.createElement({
+  css: {
+    pointerEvents: 'none',
+    transition: 'all .05s',
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10000,
+    background: 'rgba(110,163,217,0.7)'
+  }
+});
+var boxElement = domUtils.createElement({
+  css: {
+    visibility: 'hidden',
+    position: 'absolute'
+  }
 });
 
 function pickHandler(event){
@@ -32,33 +43,55 @@ function pickHandler(event){
 
   if (event.mouseRight)
   {
-    endInspect();
+    stopInspect();
     return;
   }
 
-  var template = pickupTarget.value ? inspectBasisTemplate.resolveTemplateById(pickupTarget.value) : null;
+  var templateId = pickupTarget.value;
+  var template = templateId ? inspectBasisTemplate.resolveTemplateById(templateId) : null;
 
   if (template)
   {
     var source = template.source;
 
-    if (source.url && template.source instanceof inspectBasisTemplate.L10nProxyToken == false)
-    {
-      var basisjsTools = global.basisjsToolsFileSync;
+    stopInspect();
 
-      if (basisjsTools && typeof basisjsTools.openFile == 'function' && (event.ctrlKey || event.metaKey))
-        basisjsTools.openFile(source.url);
+    if (source.url)
+    {
+      if (event.ctrlKey || event.metaKey)
+      {
+        fileAPI.openFile(source.url);
+      }
       else
-        transport.sendData('pickTemplate', {
-          filename: source.url
-        });
+      {
+        var object = inspectBasisTemplate.resolveObjectById(templateId);
+
+        if (event.altKey)
+        {
+          var info = inspectBasis.dev.getInfo(object);
+
+          if (info && info.loc)
+            fileAPI.openFile(info.loc);
+          else
+            console.info('Object create location doesn\'t resolved:', object, info);
+        }
+        else
+        {
+          templateInfo().set(object.element);
+          transport.sendData('pickTemplate', {
+            filename: source.url
+          });
+        }
+      }
     }
     else
+    {
+      templateInfo().set(inspectBasisTemplate.resolveObjectById(templateId).element);
       transport.sendData('pickTemplate', {
         content: typeof source == 'string' ? source : ''
       });
+    }
 
-    endInspect();
   }
 }
 
@@ -69,21 +102,35 @@ var pickupTarget = new Value({
 
       if (tmpl)
       {
-        var rect = getBoundingRect(tmpl.element);
+        var rectNode = tmpl.element;
+        var rect;
+
+        if (rectNode.nodeType == 3)
+        {
+          rectNode = document.createRange();
+          rectNode.selectNodeContents(tmpl.element);
+        }
+
+        rect = getBoundingRect(rectNode);
+
         if (rect)
         {
-          setStyle(overlay, {
+          var style = {
             left: rect.left + 'px',
             top: rect.top + 'px',
             width: rect.width + 'px',
             height: rect.height + 'px'
-          });
+          };
+          setStyle(overlay, style);
+          setStyle(boxElement, style);
           document.body.appendChild(overlay);
+          document.body.appendChild(boxElement);
         }
       }
       else
       {
-        basis.doc.remove(overlay);
+        domUtils.remove(overlay);
+        domUtils.remove(boxElement);
         inspectDepth = 0;
       }
 
@@ -102,33 +149,85 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     template: resource('./template/template_hintPopup.tmpl'),
     autorotate: [
       'left top left bottom',
-      'left bottom left bottom',
-      'left top left top',
+      //'center center center center',
+      // 'left top left top',
+      // 'left bottom left bottom',
       'right bottom right top',
-      'right top right bottom',
-      'right bottom right bottom',
-      'right top right top'
+      'right top right bottom'
+      // 'right bottom right bottom',
+      // 'right top right top'
     ],
     binding: {
+      templateOpenSpecialKey: function(){
+        return /^mac/i.test(navigator.platform) ? 'cmd' : 'ctrl';
+      },
+      openFileSupported: {
+        events: 'delegateChanged update',
+        getter: function(){
+          var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+          return basisjsTools && typeof basisjsTools.openFile == 'function';
+        }
+      },
+      instanceNamespace: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.constructor.className.indexOf('.') != -1
+              ? object.constructor.className.replace(/\.[^\.]+$/, '')
+              : '';
+        }
+      },
       instanceName: {
         events: 'delegateChanged update',
         getter: function(node){
           var object = node.data.object;
           if (object)
+            return object.constructor.className.split('.').pop();
+        }
+      },
+      instanceId: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.basisObjectId;
+        }
+      },
+      satelliteName: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
+            return object.ownerSatelliteName;
+        }
+      },
+      equalNames: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          var object = node.data.object;
+          if (object)
           {
-            return object.constructor.className + '#' + object.basisObjectId;
+            var roleGetter = object.binding && object.binding.$role && object.binding.$role.getter;
+            return typeof roleGetter == 'function' ? roleGetter(object) == object.ownerSatelliteName : undefined;
           }
         }
       },
-      rootNodeSelector: {
+      role: {
         events: 'delegateChanged update',
         getter: function(node){
-          if (node.data.tmpl)
+          var object = node.data.object;
+          if (object)
           {
-            var el = node.data.tmpl.element;
-            var cls = (typeof el.className == 'string' ? el.className : el.className.baseVal);
-            return el.tagName + (el.id ? '#' + el.id : '') + (cls ? '.' + cls.split(' ').join('.') : '');
+            var roleGetter = object.binding && object.binding.$role && object.binding.$role.getter;
+            return typeof roleGetter == 'function' ? roleGetter(object) : undefined;
           }
+        }
+      },
+      instanceLocation: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          return inspectBasis.dev.getInfo(node.data.object, 'loc');
         }
       },
       source: {
@@ -142,13 +241,27 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
           }
         }
       },
+      namespace: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          if (node.data.template)
+          {
+            var source = node.data.template.source;
+            return source instanceof inspectBasisTemplate.SourceWrapper && source.path.indexOf('.') != -1
+              ? source.path.replace(/\.[^\.]+$/, '')
+              : '';
+          }
+        }
+      },
       name: {
         events: 'delegateChanged update',
         getter: function(node){
           if (node.data.template)
           {
             var source = node.data.template.source;
-            return source instanceof inspectBasisTemplate.SourceWrapper ? source.path : '';
+            return source instanceof inspectBasisTemplate.SourceWrapper
+              ? source.path.split('.').pop()
+              : '';
           }
         }
       }
@@ -156,7 +269,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     handler: {
       update: function(){
         if (this.data.tmpl)
-          this.show(this.data.tmpl.element);
+          this.show(boxElement);
         else
           this.hide();
       },
@@ -172,11 +285,16 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 function startInspect(){
   if (!inspectMode.value)
   {
+    if (templateInfo.isResolved())
+      templateInfo().set();
+
     domEventUtils.addGlobalHandler('mousemove', mousemoveHandler);
     domEventUtils.addGlobalHandler('mousewheel', mouseWheelHandler);
+    domEventUtils.addGlobalHandler('wheel', mouseWheelHandler);
+    domEventUtils.addGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.captureEvent('mousedown', domEventUtils.kill);
     inspectBasisEvent.captureEvent('mouseup', domEventUtils.kill);
-    inspectBasisEvent.captureEvent('contextmenu', endInspect);
+    inspectBasisEvent.captureEvent('contextmenu', stopInspect);
     inspectBasisEvent.captureEvent('click', pickHandler);
 
     inspectMode.set(true);
@@ -184,11 +302,13 @@ function startInspect(){
   }
 }
 
-function endInspect(){
+function stopInspect(){
   if (inspectMode.value)
   {
     domEventUtils.removeGlobalHandler('mousemove', mousemoveHandler);
     domEventUtils.removeGlobalHandler('mousewheel', mouseWheelHandler);
+    domEventUtils.removeGlobalHandler('wheel', mouseWheelHandler);
+    domEventUtils.removeGlobalHandler('DOMMouseScroll', mouseWheelHandler);
     inspectBasisEvent.releaseEvent('mousedown');
     inspectBasisEvent.releaseEvent('mouseup');
     inspectBasisEvent.releaseEvent('contextmenu');
@@ -263,8 +383,9 @@ function mouseWheelHandler(event){
 //  exports
 //
 module.exports = {
+  name: 'Template',
   startInspect: startInspect,
-  endInspect: endInspect,
+  stopInspect: stopInspect,
   inspectMode: inspectMode,
   isActive: function(){
     return inspectMode.value;

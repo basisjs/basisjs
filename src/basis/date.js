@@ -3,16 +3,7 @@
   * @namespace basis.date
   */
 
-  var namespace = this.path;
-
-
-  //
-  // main part
-  //
-
   var ISO_FORMAT = '%Y-%M-%D' + 'T' + '%H:%I:%S.%Z' + 'Z';
-  var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d+))?)?$/;
-  var reFormat = /%([yYdDmMhHipPIsSzZ])/g;
   var reIsoStringSplit = /\D/;
   var reIsoTimezoneDesignator = /(.{10,})([\-\+]\d{1,2}):?(\d{1,2})?$/;
 
@@ -26,8 +17,6 @@
     minute: 60 * 1000,
     second: 1000
   };
-
-  var DATE_PART = 'year month day hour minute second millisecond'.split(' ');
 
   var GETTER = {};
   var SETTER = {};
@@ -86,7 +75,7 @@
   function dateFormat(date, format, useUTC){
     var result = '';
 
-    for (var i = 0, chr, val; i < format.length; i++)
+    for (var i = 0, chr; i < format.length; i++)
     {
       chr = format.charAt(i);
       if (chr == '%')
@@ -185,7 +174,13 @@
         null,
         String(isoDateString || '')
           .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
-            tz = i ? h * 60 + i * 1 : h * 1;
+            // designator formats:
+            //   <datetime>Z
+            //   <datetime>±hh:mm
+            //   <datetime>±hhmm
+            //   <datetime>±hh
+            // http://en.wikipedia.org/wiki/ISO_8601#Time_zone_designators
+            tz = Number(h || 0) * 60 + Number(i || 0);
             return pre;
           })
           .split(reIsoStringSplit)

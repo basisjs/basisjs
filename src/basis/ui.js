@@ -3,7 +3,7 @@
   * @namespace basis.ui
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui';
 
 
   //
@@ -15,9 +15,8 @@
   var Class = basis.Class;
   var createEvent = require('basis.event').create;
 
-  var basisTemplateHtml = require('basis.template.html');
-  var HtmlTemplate = basisTemplateHtml.Template;
-  var htmlTemplateIdMarker = basisTemplateHtml.marker;
+  var HtmlTemplate = require('basis.template.html').Template;
+  var htmlTemplateIdMarker = require('basis.template.const').MARKER;
   var TemplateSwitcher = require('basis.template').TemplateSwitcher;
   var basisDomWrapper = require('basis.dom.wrapper');
   var DWNode = basisDomWrapper.Node;
@@ -29,13 +28,21 @@
   // main part
   //
 
-
   //
   // debug
   //
 
   /** @cut */ var instances = {};
   /** @cut */ var notifier = new basis.Token();
+  /** @cut */ var notifyCreateSchedule = basis.asap.schedule(function(instance){
+  /** @cut */   instances[instance.basisObjectId] = instance;
+  /** @cut */   notifier.set({ action: 'create', instance: instance });
+  /** @cut */ });
+  /** @cut */ var notifyDestroySchedule = basis.asap.schedule(function(instance){
+  /** @cut */   delete instances[instance.basisObjectId];
+  /** @cut */   notifier.set({ action: 'destroy', instance: instance });
+  /** @cut */ });
+
 
 
   //
@@ -53,6 +60,8 @@
   * @param {object} extension
   */
   function extendBinding(binding, extension){
+    /** @cut */ var info = basis.dev.getInfo(extension, 'map');
+
     binding.bindingId = bindingSeed++;
 
     for (var key in extension)
@@ -127,6 +136,9 @@
         }
       }
 
+      /** @cut */ if (def && info && info.hasOwnProperty(key))
+      /** @cut */   def.loc = info[key];
+
       binding[key] = def;
     }
   }
@@ -192,6 +204,32 @@
   * Base binding
   */
   var TEMPLATE_BINDING = Class.customExtendProperty({
+    '$role': {
+      events: 'ownerSatelliteNameChanged',
+      getter: function(node){
+        if (node.role)
+        {
+          var roleId = node.roleId && node.binding[node.roleId];
+
+          if (roleId && typeof roleId.getter == 'function')
+          {
+            roleId = roleId.getter(node);
+            if (roleId === undefined)
+              return '';
+          }
+
+          return node.role + (roleId !== undefined ? '(' + roleId + ')' : '');
+        }
+
+        return node.ownerSatelliteName || '';
+      }
+    },
+    active: {
+      events: 'activeChanged',
+      getter: function(node){
+        return node.active;
+      }
+    },
     state: {
       events: 'stateChanged',
       getter: function(node){
@@ -242,6 +280,12 @@
     select: function(event){
       if (this.isDisabled())
         return;
+
+      if (this.selectedRA_)
+      {
+        /** @cut */ basis.dev.warn('`selected` property is under bb-value and can\'t be changed by user action. Override `select` action to make your logic working.');
+        return;
+      }
 
       if (this.contextSelection && this.contextSelection.multiple)
         this.select(event.ctrlKey || event.metaKey);
@@ -297,6 +341,15 @@
   */
   var TemplateMixin = function(super_){
     return {
+      propertyDescriptors: {
+        action: false,
+        binding: false,
+        template: 'templateChanged',
+        tmpl: 'templateChanged',
+        element: false,
+        childNodesElement: false
+      },
+
      /**
       * Template for object.
       * @type {basis.template.html.Template}
@@ -363,7 +416,7 @@
         var template = this.template;
         if (template)
         {
-          var nodeDocumentFragment = this.element;
+          var nodeDocumentFragment = this.childNodesElement;
 
           // check for wrong event name in binding
           /** @cut */ var bindingId = this.constructor.basisClassId_ + '_' + this.binding.bindingId;
@@ -397,13 +450,12 @@
           }
         }
 
-        /** @cut */ instances[this.basisObjectId] = this;
-        /** @cut */ notifier.set({ action: 'create', instance: this });
+        /** @cut */ notifyCreateSchedule.add(this);
       },
 
       templateSync: function(){
         var oldElement = this.element;
-        var oldTmpl = this.tmpl;
+        //var oldTmpl = this.tmpl;
         var tmpl = this.template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
         var noChildNodesElement;
 
@@ -476,9 +528,13 @@
           }
         }
 
-        // emit event
-        if (oldTmpl)
-          this.emit_templateChanged();
+        // NOTE: we couldn't omit templateChanged on init for now, as it's a single way
+        // to know when tmpl become available; ShadowNode(List) doesn't work otherwise
+        //
+        // if (oldTmpl)
+        //   this.emit_templateChanged();
+
+        this.emit_templateChanged();
       },
 
      /**
@@ -542,6 +598,8 @@
 
         if (getter && this.tmpl)
           this.tmpl.set(bindName, getter(this));
+        if (this.roleId == bindName)
+          this.updateBind('$roleId');
       },
 
      /**
@@ -597,8 +655,10 @@
       * @inheritDoc
       */
       destroy: function(){
-        /** @cut */ delete instances[this.basisObjectId];
-        /** @cut */ notifier.set({ action: 'destroy', instance: this });
+        /** @cut */ if (instances[this.basisObjectId])
+        /** @cut */   notifyDestroySchedule.add(this);
+        /** @cut */ else
+        /** @cut */   notifyCreateSchedule.remove(this);
 
         var template = this.template;
         var element = this.element;
@@ -831,6 +891,15 @@
         events: 'disable enable',
         getter: function(node){
           return !node.isDisabled();
+        }
+      },
+      tabindex: {
+        events: 'enable disable',
+        getter: function(node){
+          // return -1 when node is not focusable
+          // basis.template convert this value for tabindex in proper way rely on tag name
+          // http://nemisj.com/focusable/
+          return node.isDisabled() ? -1 : node.tabindex || 0;
         }
       }
     },

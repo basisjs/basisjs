@@ -3,7 +3,7 @@
   * @namespace basis.net.ajax
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net.ajax';
 
 
   //
@@ -12,9 +12,11 @@
 
   var escapeValue = global.encodeURIComponent;
   var FormData = global.FormData;
+  var XMLHttpRequest = global.XMLHttpRequest;
   var extend = basis.object.extend;
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
+  var objectIterate = basis.object.iterate;
   var ua = require('basis.ua');
 
   var basisNet = require('basis.net');
@@ -30,14 +32,15 @@
 
   /** @const */ var STATE_UNSENT = 0;
   /** @const */ var STATE_OPENED = 1;
-  /** @const */ var STATE_HEADERS_RECEIVED = 2;
-  /** @const */ var STATE_LOADING = 3;
+  // var STATE_HEADERS_RECEIVED = 2;
+  // var STATE_LOADING = 3;
   /** @const */ var STATE_DONE = 4;
 
   var STATE = require('basis.data').STATE;
   var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.split(' ');
-  var IS_POST_REGEXP = /POST/i;
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
+  var URL_METHOD_PREFIX = new RegExp('^(' + METHODS.join('|') + ')\\s+', 'i');
+  var JSON_CONTENT_TYPE = /^application\/json/i;
 
 
  /**
@@ -87,7 +90,7 @@
     {
       // when send a FormData instance, browsers serialize it and
       // set correct content-type header with boundary
-      if (!FormData || requestData.postBody instanceof FormData == false)
+      if (!FormData || requestData.body instanceof FormData == false)
         headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
     }
     else
@@ -101,10 +104,26 @@
       }
     }
 
-    basis.object.iterate(extend(headers, requestData.headers), function(key, value){
+    headers = basis.object.merge(headers, requestData.headers);
+
+    objectIterate(requestData.headers, function(name, value){
+      if (name.trim().toLowerCase() == 'content-type')
+      {
+        /** @cut */ basis.dev.warn('basis.net.ajax: `Content-Type` header found in request data, use contentType and encoding properties instead');
+        headers['Content-Type'] = value;
+      }
+      else
+        headers[name] = value;
+    });
+
+    objectIterate(headers, function(key, value){
       if (value != null && typeof value != 'function')
-        this.setRequestHeader(key, value);
-    }, xhr);
+        xhr.setRequestHeader(key, value);
+      else
+        delete headers[key];
+    });
+
+    return headers;
   }
 
 
@@ -124,10 +143,11 @@
  /**
   * safe parse json
   */
-  function safeJsonParse(content, url){
+  function safeJsonParse(content){
     try {
       return basis.json.parse(content);
     } catch(e) {
+      /** @cut */ var url = arguments[1];
       /** @cut */ basis.dev.warn('basis.net.ajax: Can\'t parse JSON from ' + url, { url: url, content: content });
     }
   }
@@ -262,7 +282,7 @@
       var xhr = this.xhr;
 
       if (!xhr.responseType)
-        if (this.responseType == 'json' || /^application\/json/i.test(this.data.contentType))
+        if (this.responseType == 'json' || JSON_CONTENT_TYPE.test(this.data.contentType))
           return safeJsonParse(xhr.responseText, this.lastRequestUrl_);
 
       if ('response' in xhr)
@@ -280,11 +300,15 @@
       return this.getResponseError();
     },
     getResponseError: function(){
+      var xhr = this.xhr;
+      var msg = !this.responseType
+                  ? xhr.responseText
+                  : xhr.response || xhr.statusText || 'Error';
+
       return {
         code: 'SERVER_ERROR',
-        msg: !this.responseType
-          ? this.xhr.responseText
-          : this.xhr.response || this.xhr.statusText || 'Error'
+        msg: msg,
+        response: this.getResponseData()
       };
     },
 
@@ -309,10 +333,10 @@
 
       params = params.join('&');
 
-      // prepare location & postBody
-      if (!requestData.postBody && IS_METHOD_WITH_BODY.test(requestData.method))
+      // prepare location & body
+      if (!requestData.body && IS_METHOD_WITH_BODY.test(requestData.method))
       {
-        requestData.postBody = params || '';
+        requestData.body = params || '';
         params = '';
       }
 
@@ -343,7 +367,7 @@
         status: ''
       });
 
-      // create new XMLHTTPRequest instance for gecko browsers in asynchronous mode
+      // create new XMLHttpRequest instance for gecko browsers in asynchronous mode
       // object crash otherwise
       if (ua.test('gecko1.8.1-') && requestData.asynchronous)
         this.xhr = createXmlHttpRequest();
@@ -370,28 +394,45 @@
       this.responseType = requestData.responseType || '';
 
       // set headers
-      setRequestHeaders(xhr, requestData);
+      var requestHeaders = setRequestHeaders(xhr, requestData);
 
       // save transfer start point time & set timeout
       this.setTimeout(this.timeout);
 
       // prepare post body
-      var postBody = requestData.postBody;
+      var payload = null;
 
-      // BUGFIX: IE fixes for post body
-      if (IS_METHOD_WITH_BODY.test(requestData.method) && ua.test('ie9-'))
+      if (IS_METHOD_WITH_BODY.test(requestData.method))
       {
-        if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
-          // sending xmldocument content as string, otherwise IE override content-type header
-          postBody = postBody.xml;
-        else
-          if (typeof postBody == 'string')
-            // ie stop send postBody when found \r
-            postBody = postBody.replace(/\r/g, '');
+        payload = requestData.body;
+
+        // if payload is function use it's result
+        if (typeof payload == 'function')
+          payload = payload.call(requestData.bodyContext);
+
+        // auto stringify non-string payload if content-type is application/json
+        // NOTE: don't stringify strings to avoid double stringify, as old user code
+        //       stringify object on their side
+        // TODO: remove this restriction, in future versions (introduced in 1.4)
+        if (JSON_CONTENT_TYPE.test(requestHeaders['Content-Type']))
+          if (typeof payload != 'string')
+            payload = JSON.stringify(payload);
+
+        // bug fixes for old IE
+        if (ua.test('ie9-'))
+        {
+          if (typeof payload == 'object' && typeof payload.documentElement != 'undefined' && typeof payload.xml == 'string')
+            // sending xmldocument content as string, otherwise IE override content-type header
+            payload = payload.xml;
           else
-            if (postBody == null || postBody == '')
-              // IE doesn't accept null, undefined or '' post body
-              postBody = '[No data]';
+            if (typeof payload == 'string')
+              // ie stop send payload when found \r
+              payload = payload.replace(/\r/g, '');
+            else
+              if (payload == null || payload == '')
+                // IE doesn't accept null, undefined or '' post payload
+                payload = '[No data]';
+        }
       }
 
       // send data
@@ -403,11 +444,11 @@
         this.sendDelayTimer_ = setTimeout(function(){
           this.sendDelayTimer_ = null;
           if (this.xhr === xhr && xhr.readyState == STATE_OPENED)
-            xhr.send(postBody);
+            xhr.send(payload);
         }.bind(this), this.sendDelay);
       }
       else
-        xhr.send(postBody);
+        xhr.send(payload);
 
       /** @cut */ if (this.debug)
       /** @cut */   basis.dev.log('Request over, waiting for response');
@@ -498,10 +539,20 @@
     params: null,
     routerParams: null,
     url: '',
-    postBody: null,
+    body: null,
+    bodyContext: null,
 
     init: function(){
       AbstractTransport.prototype.init.call(this);
+
+      /** @deprecated basis.js 1.4 */
+      if ('postBody' in this)
+      {
+        /** @cut */ basis.dev.warn('basis.net.ajax.Transport: `postBody` paramenter is deprecated, use `body` instead');
+        if (this.body == null)
+          this.body = this.postBody;
+        this.postBody = null;
+      }
 
       this.params = objectSlice(this.params);
       this.routerParams = objectSlice(this.routerParams);
@@ -534,15 +585,36 @@
         routerParams: objectMerge(this.routerParams, requestData.routerParams)
       });
 
+      /** @deprecated basis.js 1.4 */
+      if ('postBody' in requestData)
+      {
+        /** @cut */ basis.dev.warn('basis.net.ajax.Transport: `postBody` paramenter is deprecated, use `body` instead');
+        if (this.body == null)
+          requestData.body = requestData.postBody;
+        requestData.postBody = null;
+      }
+
       basis.object.complete(requestData, {
         asynchronous: this.asynchronous,
         url: this.url,
         method: this.method,
         contentType: this.contentType,
         encoding: this.encoding,
-        postBody: this.postBody,
+        body: this.body,
+        bodyContext: this.bodyContext,
         responseType: this.responseType
       });
+
+      // process url with method prefix
+      // i.e. 'POST /end/point' makes changes in requestData:
+      //   requestData.method = 'POST'
+      //   requestData.url = '/end/point'
+      var urlMethodPrefix = requestData.url.match(URL_METHOD_PREFIX);
+      if (urlMethodPrefix)
+      {
+        requestData.method = urlMethodPrefix[1];
+        requestData.url = requestData.url.substr(urlMethodPrefix[0].length);
+      }
 
       return requestData;
     }

@@ -1,22 +1,21 @@
 
-  basis.require('app.core');
-  basis.require('basis.utils.highlight');
-
-  var classList = basis.cssom.classList;
-  var DOM = basis.dom;
-  var mapDO = app.core.mapDO;
+  var classList = require('basis.cssom').classList;
+  var highlight = require('basis.utils.highlight').highlight;
+  var DOM = require('basis.dom');
+  var appCore = require('app.core');
+  var mapDO = appCore.mapDO;
+  var Node = require('basis.ui').Node;
 
   var tagLabels = ['readonly', 'private'];
 
   //
   // Classes
   //
-  var JsDocLinksPanel = basis.ui.Node.subclass({
+  var JsDocLinksPanel = Node.subclass({
     template: resource('./jsdoc/template/jsdocLinksPanel.tmpl'),
 
     childClass: {
       template: resource('./jsdoc/template/jsdocLinksPanelItem.tmpl'),
-
       binding: {
         title: {
           events: 'update',
@@ -29,7 +28,7 @@
     }
   });
 
-  var JsDocPanel = basis.ui.Node.subclass({
+  var JsDocPanel = Node.subclass({
     className: module.path + '.JsDocPanel',
     active: true,
     codeElement: null,
@@ -40,11 +39,11 @@
     },
 
     emit_update: function(delta){
-      basis.ui.Node.prototype.emit_update.call(this, delta);
+      Node.prototype.emit_update.call(this, delta);
       this.parse();
     },
     emit_targetChanged: function(oldTarget){
-      basis.ui.Node.prototype.emit_targetChanged.call(this, oldTarget);
+      Node.prototype.emit_targetChanged.call(this, oldTarget);
       this.parse();
     },
 
@@ -67,12 +66,12 @@
         var tags = DOM.wrap(basis.object.keys(basis.object.slice(newData.tags, tagLabels)), { 'SPAN.tag': basis.fn.$true });
         if (tags.length)
           result.appendChild(DOM.createElement('.tags', tags));
-        
+
         if (newData.tags.description)
         {
           if (!newData.tags.description_)
             newData.tags.description_ = parseDescription(newData.tags.description);
-          
+
           result.appendChild(DOM.createElement('.description', newData.tags.description_));
         }
 
@@ -81,10 +80,10 @@
           if (!this.linksPanel)
             this.linksPanel = new JsDocLinksPanel();
 
-          this.linksPanel.setChildNodes(newData.tags.see.map(app.core.resolveUrl).map(app.core.JsDocLinkEntity));
+          this.linksPanel.setChildNodes(newData.tags.see.map(appCore.resolveUrl).map(appCore.JsDocLinkEntity));
           result.appendChild(this.linksPanel.element);
         }
-        
+
         if (newData.tags.param)
         {
           DOM.insert(result, [
@@ -128,7 +127,7 @@
             DOM.createElement('DIV.label', 'Example:'),
             code = DOM.createElement('PRE.Basis-SyntaxHighlight')
           ]);
-          code.innerHTML = basis.utils.highlight.highlight(newData.tags.example, 'js');
+          code.innerHTML = highlight(newData.tags.example, 'js');
         }
       }
 
@@ -155,7 +154,7 @@
         this.linksPanel = null;
       }
 
-      basis.ui.Node.prototype.destroy.call(this);
+      Node.prototype.destroy.call(this);
     }
   });
 
@@ -236,7 +235,7 @@
     return result;
   }
 
-  var typeSplitter = basis.dom.createElement('SPAN.splitter', '|');
+  var typeSplitter = DOM.createElement('SPAN.splitter', '|');
   function parseTypes(text){
     var parts = (text || '').split(/\s*\|\s*/);
     var result = DOM.createFragment();

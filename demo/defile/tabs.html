@@ -67,13 +67,9 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-
-    basis.require('basis.dom');
-    basis.require('basis.ui.tabs');
-
     // import names
-    var DOM = basis.dom;
-    var tabs = basis.ui.tabs;
+    var DOM = basis.require('basis.dom');
+    var tabs = basis.require('basis.ui.tabs');
 
     //
     // Main part
@@ -92,8 +88,8 @@
       { data: { title: 'tab1' }, groupId: 1, childNodes: [{ template: 'content 1' }] },
       { data: { title: 'tab6' }, groupId: 3, childNodes: [{ template: 'content 6' }] },
       { data: { title: 'tab5' }, groupId: 3, childNodes: [{ template: basis.string.repeat('content 5 ', 100) }] },
-      { data: { title: 'tab3' }, groupId: 2, childNodes: [{ template: 'content 3' }], selected: true  },
-      { data: { title: 'tab2' }, groupId: 2, childNodes: [{ template: 'content 2' }], disabled: true  },
+      { data: { title: 'tab3' }, groupId: 2, childNodes: [{ template: 'content 3' }], selected: true },
+      { data: { title: 'tab2' }, groupId: 2, childNodes: [{ template: 'content 2' }], disabled: true },
       { data: { title: 'tab7' }, groupId: 3, childNodes: [{ template: 'content 7' }] }
     ];
 

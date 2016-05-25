@@ -4,7 +4,7 @@
   * @namespace basis.ui.slider
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.slider';
 
 
   //
@@ -12,7 +12,6 @@
   //
 
   var basisEvent = require('basis.event');
-  var events = basisEvent.events;
   var createEvent = basisEvent.create;
   var getBoundingRect = require('basis.layout').getBoundingRect;
   var AbstractNode = require('basis.dom.wrapper').AbstractNode;
@@ -158,6 +157,13 @@
   */
   var Slider = Node.subclass({
     className: namespace + '.Slider',
+
+    propertyDescriptors: {
+      value: 'change',
+      min: 'rangeChanged',
+      max: 'rangeChanged',
+      step: 'rangeChanged'
+    },
 
     emit_change: createEvent('change', 'oldValue'),
     emit_rangeChanged: createEvent('rangeChanged'),
@@ -350,6 +356,8 @@
             return layerConfig;
           }, this));
         }
+
+        this.emit_rangeChanged();
       }
     },
 

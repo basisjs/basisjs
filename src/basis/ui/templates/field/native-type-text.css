@@ -1,0 +1,10 @@
+.native-type-text
+{
+  border: 1px solid #808080;
+  background-color: white;
+  padding: 2px;
+}
+.native-type-text_invalid
+{
+  border-color: #DD0000;
+}

@@ -1,6 +1,11 @@
 {
   "en-US": {
-    "quarter": "Quarter",
+    "quarter": [
+      "1 Quarter",
+      "2 Quarter",
+      "3 Quarter",
+      "4 Quarter"
+    ],
     "today": "Today",
     "selected": "Selected",
     "month": {
@@ -60,7 +65,12 @@
     }
   },
   "ru-RU": {
-    "quarter": "Квартал",
+    "quarter": [
+      "1 квартал",
+      "2 квартал",
+      "3 квартал",
+      "4 квартал"
+    ],
     "today": "Сегодня",
     "selected": "Выбрано",
     "month": {
