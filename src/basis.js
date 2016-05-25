@@ -38,7 +38,6 @@
   'use strict';
 
   var VERSION = '1.7.0-dev';
-  var isCoreBasis = !__config;
 
   var global = Function('return this')();
   var process = global.process;
@@ -3989,6 +3988,7 @@
   // core basis.js instance listen to `basisjs:init-devpanel` event
   // to init basis.devpanel in dev mode
   // there is should be just one instance of devpanel per core
+  /** @cut */ var isCoreBasis = !__config;
   /** @cut */ if (isCoreBasis && document && document.addEventListener)
   /** @cut */   document.addEventListener('basisjs:init-devpanel', initDevpanel);
 
