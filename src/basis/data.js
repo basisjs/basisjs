@@ -1143,16 +1143,16 @@
     }
 
     // fire event if root changed
-    if (object.root !== oldRoot)
+    if (!isEqual(object.root, oldRoot))
     {
       var rootListenHandler = object.listen.root;
 
       if (rootListenHandler)
       {
-        if (oldRoot && oldRoot !== object)
+        if (oldRoot && !isEqual(oldRoot, object))
           oldRoot.removeHandler(rootListenHandler, object);
 
-        if (object.root && object.root !== object)
+        if (object.root && !isEqual(object.root, object))
           object.root.addHandler(rootListenHandler, object);
       }
 
@@ -1160,16 +1160,16 @@
     }
 
     // fire event if target changed
-    if (object.target !== oldTarget)
+    if (!isEqual(object.target, oldTarget))
     {
       var targetListenHandler = object.listen.target;
 
       if (targetListenHandler)
       {
-        if (oldTarget && oldTarget !== object)
+        if (oldTarget && !isEqual(oldTarget, object))
           oldTarget.removeHandler(targetListenHandler, object);
 
-        if (object.target && object.target !== object)
+        if (object.target && !isEqual(object.target, object))
           object.target.addHandler(targetListenHandler, object);
       }
 
@@ -1422,7 +1422,7 @@
       }
 
       // only if newDelegate differ with current value
-      if (this.delegate !== newDelegate)
+      if (!isEqual(this.delegate, newDelegate))
       {
         var oldState = this.state;
         var oldData = this.data;
@@ -1443,10 +1443,10 @@
           var prev = oldDelegate;
           while (cursor)
           {
-            if (cursor.delegate === this)
+            if (isEqual(cursor.delegate, this))
             {
               cursor.delegate = null;
-              if (prev === oldDelegate)
+              if (isEqual(prev, oldDelegate))
                 oldDelegate.delegates_ = cursor.next;
               else
                 prev.next = cursor.next;
