@@ -668,7 +668,7 @@
             if (data)
               entity.update(data);
 
-            /** @cut *entity = basisData.devWrap(entity);
+            /** @cut */ entity = basisData.devWrap(entity);
           }
           else
             entity = new EntityClass(data || {});

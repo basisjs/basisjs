@@ -106,7 +106,7 @@ module.exports = {
         assert({ id: null, value: '' }, entityB.data);
 
         var entityC = EntityType({});
-        assert(entityC !== entityB);
+        assert(!nsData.isEqual(entityC, entityB));
         assert(EntityType.all.itemCount === 2);
         assert({ id: null, value: '' }, entityC.data);
 
@@ -115,32 +115,32 @@ module.exports = {
         assert({ id: 1, value: 'test' }, entityD.data);
 
         var entityE = EntityType({ id: 1, value: 'test2' });
-        assert(entityE === entityD);
+        assert(nsData.isEqual(entityE, entityD));
         assert(EntityType.all.itemCount === 3);
         assert({ id: 1, value: 'test2' }, entityE.data);
 
         var entityF = EntityType({ id: 1 });
-        assert(entityF === entityD);
+        assert(nsData.isEqual(entityF, entityD));
         assert(EntityType.all.itemCount === 3);
         assert({ id: 1, value: 'test2' }, entityF.data);
 
         var entityG = EntityType(1);
-        assert(entityG === entityD);
+        assert(nsData.isEqual(entityG, entityD));
         assert(EntityType.all.itemCount === 3);
         assert({ id: 1, value: 'test2' }, entityG.data);
 
         var entityI = EntityType('1');
-        assert(entityI === entityD);
+        assert(nsData.isEqual(entityI, entityD));
         assert(EntityType.all.itemCount === 3);
         assert({ id: 1, value: 'test2' }, entityI.data);
 
         var entityH = EntityType(entityD);
-        assert(entityH === entityD);
+        assert(nsData.isEqual(entityH, entityD));
         assert(EntityType.all.itemCount === 3);
         assert({ id: 1, value: 'test2' }, entityH.data);
 
         var entityK = EntityType(entityC);
-        assert(entityK === entityC);
+        assert(nsData.isEqual(entityK, entityC));
         assert(EntityType.all.itemCount === 3);
         assert({ id: null, value: '' }, entityK.data);
       }
