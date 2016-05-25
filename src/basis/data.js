@@ -90,7 +90,7 @@
   /** @cut */     return result;
   /** @cut */   };
   /** @cut */   devUnwrap = function(value){
-  /** @cut */     return devWrapMap.has(value) ? devWrapMap.get(value) : value;
+  /** @cut */     return value && devWrapMap.has(value) ? devWrapMap.get(value) : value;
   /** @cut */   };
   /** @cut */   isEqual = function(a, b){
   /** @cut */     return devUnwrap(a) === devUnwrap(b);
