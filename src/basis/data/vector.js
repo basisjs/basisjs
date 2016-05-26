@@ -545,6 +545,8 @@
 
   module.exports = {
     Vector: Vector,
+    VectorFn: VectorFn,
+    fnConstructor: fnConstructor,
 
     count: count,
     sum: sum,
