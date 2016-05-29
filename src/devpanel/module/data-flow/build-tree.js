@@ -25,7 +25,7 @@ function inspectValue(value, resolvers, map){
       nodeType: getNodeType(value, resolvers),
       source: true,
       marker: marker,
-      value: value,
+      value: resolvers.resolveValue(value),
       loc: valueLoc
     }];
   }
@@ -62,7 +62,7 @@ function inspectValue(value, resolvers, map){
           })
         : ''),
     transformLoc: fnLoc,
-    value: value,
+    value: resolvers.resolveValue(value),
     loc: valueLoc
   });
 
@@ -90,6 +90,9 @@ module.exports = function createTreeBuilder(api){
       }.bind(this));
 
       return this.unwrap(value);
+    },
+    resolveValue: function(value){
+      return value;
     },
     resolveFunction: function(fn){
       var sandbox = this.sandbox;

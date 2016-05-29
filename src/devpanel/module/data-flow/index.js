@@ -67,19 +67,29 @@ var FlowNode = Node.subclass({
     openFunctionLocation: function(){
       this.open(this.transformLoc);
     },
+    enterLocNoClassName: function(e){
+      var value = this.value;
+
+      if (value && typeof value == 'object' && value.constructor)
+        return;
+
+      if (this.loc)
+        this.enterLoc(this.loc, e.actionTarget);
+    },
     enterLoc: function(e){
       if (this.loc)
-      {
-        jsSourcePopup.loc.set(this.loc);
-        jsSourceTimer = setTimeout(function(){
-          jsSourcePopup.show(e.actionTarget);
-        }, 150);
-      }
+        this.enterLoc(this.loc, e.actionTarget);
     },
     leaveLoc: function(){
       clearTimeout(jsSourceTimer);
       jsSourcePopup.hide();
     },
+  },
+  enterLoc: function(loc, element){
+    jsSourcePopup.loc.set(loc);
+    jsSourceTimer = setTimeout(function(){
+      jsSourcePopup.show(element);
+    }, 150);
   },
   open: function(loc){
     if (loc)
