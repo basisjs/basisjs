@@ -4,6 +4,7 @@
 <b:define name="sourceHasLocation" from="fnLoc" type="bool"/>
 <b:define name="initial" type="bool"/>
 <b:define name="hasLocation" from="loc" type="bool"/>
+<b:define name="noClassName" from="className" type="invert"/>
 
 <div class="node">
   <div class="transition transition_{initial}" b:hide="{isSource}">
@@ -17,7 +18,7 @@
   </div>
   <div class="label label_{isSource} label_{initial}">
     <span{inPoint|outPoint} class="dot dot_{isSource} dot_{initial}"/>
-    <span class="value">
+    <span class="value value_{hasLocation} value_{noClassName}" event-click="open" event-mouseenter="enterLocNoClassName" event-mouseleave="leaveLoc">
       {value}
     </span>
   </div>
