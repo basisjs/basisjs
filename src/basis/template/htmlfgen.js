@@ -16,6 +16,7 @@
   var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
   var TYPE_TEXT = consts.TYPE_TEXT;
   var TYPE_COMMENT = consts.TYPE_COMMENT;
+  var TYPE_CONTENT = consts.TYPE_CONTENT;
 
   var TOKEN_TYPE = consts.TOKEN_TYPE;
   var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
@@ -26,6 +27,7 @@
 
   var ELEMENT_NAME = consts.ELEMENT_NAME;
   var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
+  var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
   var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
   var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
@@ -202,6 +204,35 @@
       }
     }
 
+    function cleanContent(tokens, offset){
+      var result = [];
+
+      for (var i = 0; i < tokens.length; i++)
+      {
+        if (i < offset) {
+          result.push(tokens[i]);
+          continue;
+        }
+
+        var token = tokens[i];
+        switch (token[TOKEN_TYPE])
+        {
+          case TYPE_ELEMENT:
+            result.push(cleanContent(token, ELEMENT_ATTRIBUTES_AND_CHILDREN));
+            break;
+
+          case TYPE_CONTENT:
+            result.push.apply(result, cleanContent(token, CONTENT_CHILDREN));
+            break;
+
+          default:
+            result.push(token);
+        }
+      }
+
+      return result;
+    }
+
     return function(tokens, path, noTextBug){
       pathList = [];
       refList = [];
@@ -210,7 +241,7 @@
       rootPath = path || '_';
       attrExprId = 0;
 
-      processTokens(tokens, rootPath, noTextBug);
+      processTokens(cleanContent(tokens, 0), rootPath, noTextBug);
 
       return {
         path: pathList,

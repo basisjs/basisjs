@@ -81,6 +81,8 @@ module.exports = {
     require('./template/text-bindings.js'),
     require('./template/b-include.js'),
     require('./template/b-define.js'),
+    require('./template/b-content.js'),
+    require('./template/b-svg.js'),
     require('./template/isolate.js'),
     require('./template/l10n.js'),
     require('./template/touch.js'),

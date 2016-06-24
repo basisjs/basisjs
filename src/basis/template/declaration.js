@@ -7,11 +7,43 @@ var arrayRemove = basis.array.remove;
 var tokenize = require('./tokenize.js');
 var isolateCss = require('./isolateCss.js');
 var consts = require('./const.js');
+var utils = require('./declaration/utils.js');
+var styleUtils = require('./declaration/style.js');
+var attrUtils = require('./declaration/attr.js');
+var elementHandlers = {
+  style: require('./declaration/b-style.js'),
+  isolate: require('./declaration/b-isolate.js'),
+  svg: require('./declaration/b-svg.js'),
+  l10n: require('./declaration/b-l10n.js')
+};
+
+var resourceHash = utils.resourceHash;
+var addUnique = utils.addUnique;
+var getTokenName = utils.getTokenName;
+var refList = utils.refList;
+var bindingList = utils.bindingList;
+var addTokenRef = utils.addTokenRef;
+var removeTokenRef = utils.removeTokenRef;
+var getTokenAttrValues = utils.getTokenAttrValues;
+var getTokenAttrs = utils.getTokenAttrs;
+var getLocation = utils.getLocation;
+var parseOptionsValue = utils.parseOptionsValue;
+var addTemplateWarn = utils.addTemplateWarn;
+var addTokenLocation = utils.addTokenLocation;
+
+var applyShowHideAttribute = attrUtils.applyShowHideAttribute;
+var modifyAttr = attrUtils.modifyAttr;
+var getAttrByName = attrUtils.getAttrByName;
+var addRoleAttribute = attrUtils.addRoleAttribute;
+var applyAttrs = attrUtils.applyAttrs;
+
+var styleNamespaceIsolate = styleUtils.styleNamespaceIsolate;
+var adoptStyles = styleUtils.adoptStyles;
+var addStyle = styleUtils.addStyle;
 
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
 var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
-var TYPE_ATTRIBUTE_STYLE = consts.TYPE_ATTRIBUTE_STYLE;
 var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
 var TYPE_TEXT = consts.TYPE_TEXT;
 var TYPE_COMMENT = consts.TYPE_COMMENT;
@@ -19,9 +51,6 @@ var TOKEN_TYPE = consts.TOKEN_TYPE;
 var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
 var TOKEN_REFS = consts.TOKEN_REFS;
 var ATTR_NAME = consts.ATTR_NAME;
-var ATTR_VALUE = consts.ATTR_VALUE;
-var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
-var ATTR_TYPE_BY_NAME = consts.ATTR_TYPE_BY_NAME;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var TEXT_VALUE = consts.TEXT_VALUE;
@@ -29,18 +58,12 @@ var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
 var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 var CLASS_BINDING_INVERT = consts.CLASS_BINDING_INVERT;
 
-var ATTR_NAME_RX = /^[a-z_][a-z0-9_\-:]*$/i;
-var ATTR_EVENT_RX = /^event-(.+)$/;
-
-
 // TODO: remove
 var Template = function(){};
 var resolveResource = function(){};
-
-
-function genIsolateMarker(){
+var genIsolateMarker = function(){
   return basis.genUID() + '__';
-}
+};
 
 
 /**
@@ -48,154 +71,12 @@ function genIsolateMarker(){
 */
 var makeDeclaration = (function(){
   var includeStack = [];
-  var styleNamespaceIsolate = {};
   var styleNamespaceResource = {};
-
-  function getTokenName(token){
-    return (token.prefix ? token.prefix + ':' : '') + token.name;
-  }
-
-  function refList(token){
-    var array = token.refs;
-
-    if (!array || !array.length)
-      return 0;
-
-    return array;
-  }
-
-  function addTokenRef(token, refName){
-    if (!token[TOKEN_REFS])
-      token[TOKEN_REFS] = [];
-
-    arrayAdd(token[TOKEN_REFS], refName);
-
-    if (refName != 'element')
-      token[TOKEN_BINDINGS] = token[TOKEN_REFS].length == 1 ? refName : 0;
-  }
-
-  function removeTokenRef(token, refName){
-    var idx = token[TOKEN_REFS].indexOf(refName);
-    if (idx != -1)
-    {
-      var indexBinding = token[TOKEN_BINDINGS] && typeof token[TOKEN_BINDINGS] == 'number';
-      token[TOKEN_REFS].splice(idx, 1);
-
-      if (indexBinding)
-        // if binding is index in ref list and ref binding index points to is removing
-        if (idx == token[TOKEN_BINDINGS] - 1)
-        {
-          // convert index to explicit binding value
-          token[TOKEN_BINDINGS] = refName;
-          indexBinding = false;
-        }
-
-      if (!token[TOKEN_REFS].length)
-        token[TOKEN_REFS] = 0;
-      else
-      {
-        if (indexBinding)
-          token[TOKEN_BINDINGS] -= idx < (token[TOKEN_BINDINGS] - 1);
-      }
-    }
-  }
-
-  function tokenAttrs(token){
-    var result = {};
-
-    if (token.attrs)
-      for (var i = 0, attr; attr = token.attrs[i]; i++)
-        result[getTokenName(attr)] = attr.value;
-
-    return result;
-  }
-
-  function tokenAttrs_(token){
-    var result = {};
-
-    if (token.attrs)
-      for (var i = 0, attr; attr = token.attrs[i]; i++)
-        result[getTokenName(attr)] = attr;
-
-    return result;
-  }
-
-  function addUnique(array, items){
-    for (var i = 0; i < items.length; i++)
-      arrayAdd(array, items[i]);
-  }
-
-  function adoptStyles(resources, prefix, includeToken){
-    for (var i = 0, item; item = resources[i]; i++)
-      if (item.type == 'style')
-      {
-        if (item.isolate !== styleNamespaceIsolate)
-          item.isolate = prefix + item.isolate;
-        if (!item.includeToken)
-          item.includeToken = includeToken;
-      }
-  }
-
-  function addStyle(template, token, src, isolatePrefix, namespace){
-    var text = token.children[0];
-    var url = src
-      ? basis.resource.resolveURI(src, template.baseURI, '<b:style src=\"{url}\"/>')
-      : basis.resource.virtual('css', text ? text.value : '', template.sourceUrl).url;
-
-    /** @cut */ token.sourceUrl = template.sourceUrl;
-
-    template.resources.push({
-      type: 'style',
-      url: url,
-      isolate: isolatePrefix,
-      token: token,
-      includeToken: null,
-      inline: src ? false : text || true,
-      namespace: namespace
-    });
-
-    return url;
-  }
-
-  /** @cut */ function getLocation(template, loc){
-  /** @cut */   if (loc)
-  /** @cut */     return (template.sourceUrl || '') + ':' + loc.start.line + ':' + (loc.start.column + 1);
-  /** @cut */ }
-
-  /** @cut */ function addTemplateWarn(template, options, message, loc){
-  /** @cut */   if (loc && options.loc)
-  /** @cut */   {
-  /** @cut */     message = Object(message);
-  /** @cut */     message.loc = typeof loc == 'string' ? loc : getLocation(template, loc);
-  /** @cut */   }
-  /** @cut */
-  /** @cut */   template.warns.push(message);
-  /** @cut */ }
-
-  /** @cut */ function applyTokenLocation(template, options, dest, source){
-  /** @cut */   if (options.loc && source && source.loc && !dest.loc)
-  /** @cut */     dest.loc = getLocation(template, source.loc);
-  /** @cut */ }
 
   //
   // main function
   //
   function process(tokens, template, options){
-
-    /** @cut */ function addTokenLocation(item, token){
-    /** @cut */   applyTokenLocation(template, options, item, token);
-    /** @cut */ }
-
-    /** @cut */ function getAttributeValueLocationMap(token){
-    /** @cut */   if (!token || !token.map_)
-    /** @cut */     return null;
-    /** @cut */
-    /** @cut */   return token.map_.reduce(function(res, part){
-    /** @cut */     if (!part.binding)
-    /** @cut */       res[part.value] = getLocation(template, part.loc);
-    /** @cut */     return res;
-    /** @cut */   }, {});
-    /** @cut */ }
 
     /** @cut */ function addStateInfo(name, type, value){
     /** @cut */   if (!hasOwnProperty.call(template.states, name))
@@ -210,521 +91,13 @@ var makeDeclaration = (function(){
     /** @cut */     addUnique(info[type], value);
     /** @cut */ }
 
-    function parseIncludeOptions(str){
-      var result = {};
-      var pairs = (str || '').trim().split(/\s*,\s*/);
-
-      for (var i = 0; i < pairs.length; i++)
-      {
-        var pair = pairs[i].split(/\s*:\s*/);
-
-        if (pair.length != 2)
-        {
-          // error
-          return {};
-        }
-
-        result[pair[0]] = pair[1];
-      }
-
-      return result;
-    }
-
-    function getAttrByName(token, name){
-      var offset = typeof token[0] == 'number' ? ELEMENT_ATTRIBUTES_AND_CHILDREN : 0;
-      for (var i = offset, attr, attrName; attr = token[i]; i++)
-      {
-        if (attr[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
-          attrName = 'event-' + attr[1];
-        else
-          attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
-
-        if (attrName == name)
-          return attr;
-      }
-    }
-
-    function getStyleBindingProperty(attr, name){
-      var bindings = attr[TOKEN_BINDINGS];
-
-      if (bindings)
-        for (var i = 0, binding; binding = bindings[i]; i++)
-          if (binding[2] == name)
-            return binding;
-    }
-
-    function setStylePropertyBinding(host, attr, property, showByDefault, defaultValue){
-      var styleAttr = getAttrByName(host, 'style');
-
-      if (!styleAttr)
-      {
-        styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
-        /** @cut */ addTokenLocation(styleAttr, attr);
-        host.push(styleAttr);
-      }
-
-      var binding = attr.binding;
-      var addDefault = false;
-      var show = attr.name == showByDefault;
-      var value = styleAttr[3];
-
-      if (!binding || binding[0].length != binding[1].length)
-      {
-        // expression has non-binding parts, treat as constant
-        // visible when:
-        //   show & value is not empty
-        //   or
-        //   hide & value is empty
-        addDefault = !(show ^ attr.value === '');
-      }
-      else
-      {
-        var bindings = styleAttr[TOKEN_BINDINGS];
-        binding = binding.concat(property, attr.name);
-
-        addDefault = show;
-
-        if (bindings)
-        {
-          arrayRemove(bindings, getStyleBindingProperty(styleAttr, property));
-          bindings.push(binding);
-        }
-        else
-          styleAttr[TOKEN_BINDINGS] = [binding];
-      }
-
-      if (value)
-        value = value.replace(new RegExp(property + '\\s*:\\s*[^;]+(;|$)'), '');
-
-      if (addDefault)
-        value = (value ? value + ' ' : '') + defaultValue;
-
-      styleAttr[3] = value;
-    }
-
-    function applyShowHideAttribute(host, attr){
-      if (attr.name == 'show' || attr.name == 'hide')
-        setStylePropertyBinding(host, attr, 'display', 'show', 'display: none;');
-
-      if (attr.name == 'visible' || attr.name == 'hidden')
-        setStylePropertyBinding(host, attr, 'visibility', 'visible', 'visibility: hidden;');
-    }
-
-    function addRoleAttribute(host, role/*, sourceToken*/){
-      /** @cut */ var sourceToken = arguments[2];
-
-      if (!/[\/\(\)]/.test(role))
-      {
-        var item = [
-          TYPE_ATTRIBUTE,
-          [['$role'], [0, role ? '/' + role : '']],
-          0,
-          'role-marker'
-        ];
-
-        /** @cut */ item.sourceToken = sourceToken;
-        /** @cut */ addTokenLocation(item, sourceToken);
-
-        host.push(item);
-      }
-      /** @cut */ else
-      /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, sourceToken.loc);
-    }
-
-    function applyAttrs(host, attrs){
-      var styleAttr;
-      var displayAttr;
-      var visibilityAttr;
-      var item;
-      var m;
-
-      for (var i = 0, attr; attr = attrs[i]; i++)
-      {
-        // process special attributes (basis namespace)
-        if (attr.prefix == 'b')
-        {
-          switch (attr.name)
-          {
-            case 'ref':
-              var refs = (attr.value || '').trim().split(/\s+/);
-              for (var j = 0; j < refs.length; j++)
-                addTokenRef(host, refs[j]);
-              break;
-
-            case 'show':
-            case 'hide':
-              displayAttr = attr;
-              break;
-
-            case 'visible':
-            case 'hidden':
-              visibilityAttr = attr;
-              break;
-
-            case 'role':
-              addRoleAttribute(host, attr.value || '', attr);
-              break;
-          }
-
-          continue;
-        }
-
-        if (m = attr.name.match(ATTR_EVENT_RX))
-        {
-          item = m[1] == attr.value
-            ? [TYPE_ATTRIBUTE_EVENT, m[1]]
-            : [TYPE_ATTRIBUTE_EVENT, m[1], attr.value];
-        }
-        else
-        {
-          item = [
-            attr.type,              // TOKEN_TYPE = 0
-            attr.binding,           // TOKEN_BINDINGS = 1
-            0                       // TOKEN_REFS = 2
-          ];
-
-          // ATTR_NAME = 3
-          if (attr.type == TYPE_ATTRIBUTE)
-            item.push(getTokenName(attr));
-
-          // ATTR_VALUE = 4
-          if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != TYPE_ATTRIBUTE))
-            item.push(attr.value);
-
-          if (attr.type == TYPE_ATTRIBUTE_STYLE)
-            styleAttr = item;
-        }
-
-        /** @cut */ item.valueLocMap = getAttributeValueLocationMap(attr);
-        /** @cut */ item.sourceToken = attr;
-        /** @cut */ addTokenLocation(item, attr);
-
-        host.push(item);
-      }
-
-      if (displayAttr)
-        applyShowHideAttribute(host, displayAttr);
-      if (visibilityAttr)
-        applyShowHideAttribute(host, visibilityAttr);
-
-      return host;
-    }
-
-    function modifyAttr(include, token, name, action){
-      var attrs = tokenAttrs(token);
-      var attrs_ = tokenAttrs_(token);
-
-      if (name)
-        attrs.name = name;
-
-      if (!attrs.name)
-      {
-        /** @cut */ addTemplateWarn(template, options, 'Instruction <b:' + token.name + '> has no `name` attribute', token.loc);
-        return;
-      }
-
-      if (!ATTR_NAME_RX.test(attrs.name))
-      {
-        /** @cut */ addTemplateWarn(template, options, 'Bad attribute name `' + attrs.name + '`', token.loc);
-        return;
-      }
-
-      // FIXME: tokenRefMap defined for <b:include/> only
-      var includedToken = tokenRefMap[attrs.ref || 'element'];
-      if (includedToken)
-      {
-        if (includedToken.token[TOKEN_TYPE] == TYPE_ELEMENT)
-        {
-          var itAttrs = includedToken.token;
-          var isEvent = attrs.name.match(ATTR_EVENT_RX);
-          var isClassOrStyle = attrs.name == 'class' || attrs.name == 'style';
-          var itType = isEvent ? TYPE_ATTRIBUTE_EVENT : ATTR_TYPE_BY_NAME[attrs.name] || TYPE_ATTRIBUTE;
-          var valueIdx = ATTR_VALUE_INDEX[itType] || ATTR_VALUE;
-          /** @cut */ var valueLocMap = getAttributeValueLocationMap(attrs_.value);
-          var itAttrToken = itAttrs && getAttrByName(itAttrs, attrs.name);
-
-          // if set operation and attribute exists than remove it first
-          if (itAttrToken && action == 'set')
-          {
-            /** @cut */ template.removals.push({
-            /** @cut */   reason: '<b:' + token.name + '>',
-            /** @cut */   removeToken: token,
-            /** @cut */   includeToken: include,
-            /** @cut */   token: itAttrToken
-            /** @cut */ });
-
-            arrayRemove(itAttrs, itAttrToken);
-            itAttrToken = null;
-          }
-
-          // if set/append operation and no attribute exists than create new one
-          if (!itAttrToken && (action == 'set' || action == 'append'))
-          {
-            // if attribute doesn't exist, it's always a `set` operation
-            action = 'set';
-
-            if (isEvent)
-            {
-              itAttrToken = [
-                itType,
-                isEvent[1]
-              ];
-            }
-            else
-            {
-              itAttrToken = [
-                itType,
-                0,
-                0,
-                itType == TYPE_ATTRIBUTE ? attrs.name : ''
-              ];
-
-              if (itType == TYPE_ATTRIBUTE)
-                itAttrToken.push('');
-            }
-
-            if (!itAttrs)
-            {
-              itAttrs = [];
-              includedToken.token.push(itAttrs);
-            }
-
-            itAttrs.push(itAttrToken);
-            /** @cut */ itAttrToken.valueLocMap = valueLocMap;
-            /** @cut */ addTokenLocation(itAttrToken, token);
-          }
-
-          switch (action){
-            case 'set':
-              // event-* attribute special case
-              if (itAttrToken[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
-              {
-                if (attrs.value == isEvent[1])
-                  itAttrToken.length = 2;
-                else
-                  itAttrToken[valueIdx] = attrs.value;
-
-                return;
-              }
-
-              // other attributes
-              var valueAttr = attrs_.value || {};
-
-              itAttrToken[TOKEN_BINDINGS] = valueAttr.binding || 0;
-              /** @cut */ itAttrToken.valueLocMap = valueLocMap;
-
-              if (!options.optimizeSize || !itAttrToken[TOKEN_BINDINGS] || isClassOrStyle)
-                itAttrToken[valueIdx] = valueAttr.value || '';
-              else
-                itAttrToken.length = valueIdx;
-
-              // if no bindgings and no value -> remove attribute from element
-              if (isClassOrStyle)
-                if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
-                {
-                  arrayRemove(itAttrs, itAttrToken);
-                  return;
-                }
-
-              break;
-
-            case 'append':
-              var valueAttr = attrs_.value || {};
-              var appendValue = valueAttr.value || '';
-              var appendBinding = valueAttr.binding;
-
-              if (!isEvent)
-              {
-                if (appendBinding)
-                {
-                  var attrBindings = itAttrToken[TOKEN_BINDINGS];
-                  if (attrBindings)
-                  {
-                    switch (attrs.name)
-                    {
-                      case 'style':
-                        for (var i = 0, newBinding; newBinding = appendBinding[i]; i++)
-                        {
-                          arrayRemove(attrBindings, getStyleBindingProperty(itAttrToken, newBinding[2]));
-                          attrBindings.push(newBinding);
-                        }
-
-                        break;
-
-                      case 'class':
-                        attrBindings.push.apply(attrBindings, appendBinding);
-                        break;
-
-                      default:
-                        appendBinding[0].forEach(function(name){
-                          arrayAdd(this, name);
-                        }, attrBindings[0]);
-
-                        for (var i = 0; i < appendBinding[1].length; i++)
-                        {
-                          var value = appendBinding[1][i];
-
-                          if (typeof value == 'number')
-                            value = attrBindings[0].indexOf(appendBinding[0][value]);
-
-                          attrBindings[1].push(value);
-                        }
-                    }
-                  }
-                  else
-                  {
-                    itAttrToken[TOKEN_BINDINGS] = appendBinding;
-                    if (!isClassOrStyle)
-                      itAttrToken[TOKEN_BINDINGS][1].unshift(itAttrToken[valueIdx]);
-                  }
-                }
-                else
-                {
-                  if (!isClassOrStyle && itAttrToken[TOKEN_BINDINGS])
-                    itAttrToken[TOKEN_BINDINGS][1].push(attrs.value);
-                }
-              }
-
-              if (appendValue)
-              {
-                if (isEvent || attrs.name == 'class')
-                {
-                  var parts = (itAttrToken[valueIdx] || '').trim();
-                  var appendParts = appendValue.trim();
-
-                  parts = parts ? parts.split(/\s+/) : [];
-                  appendParts = appendParts ? appendParts.split(/\s+/) : [];
-
-                  for (var i = 0; i < appendParts.length; i++)
-                  {
-                    var part = appendParts[i];
-                    basis.array.remove(parts, part); // TODO: add to removals?
-                    parts.push(part);
-                  }
-
-                  itAttrToken[valueIdx] = parts.join(' ');
-                }
-                else
-                {
-                  itAttrToken[valueIdx] =
-                    (itAttrToken[valueIdx] || '') +
-                    (itAttrToken[valueIdx] && isClassOrStyle ? ' ' : '') +
-                    appendValue;
-                }
-
-                /** @cut */ if (valueLocMap)
-                /** @cut */ {
-                /** @cut */   if (itAttrToken.valueLocMap)
-                /** @cut */     for (var name in valueLocMap)
-                /** @cut */       itAttrToken.valueLocMap[name] = valueLocMap[name];
-                /** @cut */   else
-                /** @cut */     itAttrToken.valueLocMap = valueLocMap;
-                /** @cut */ }
-              }
-
-              if (isClassOrStyle && !itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
-                arrayRemove(itAttrs, itAttrToken);
-
-              break;
-
-            case 'remove-class':
-              if (itAttrToken)
-              {
-                var valueAttr = attrs_.value || {};
-                var values = (itAttrToken[valueIdx] || '').split(' ');
-                var removeValues = (valueAttr.value || '').split(' ');
-                var bindings = itAttrToken[TOKEN_BINDINGS];
-                /** @cut */ var removedValues = [];
-                /** @cut */ var removedBindings = 0;
-
-                if (valueAttr.binding && bindings)
-                {
-                  for (var i = 0, removeBinding; removeBinding = valueAttr.binding[i]; i++)
-                    for (var j = bindings.length - 1, classBinding; classBinding = bindings[j]; j--)
-                    {
-                      // removeBinding
-                      //      -> [prefix, name]
-                      // classBinding
-                      //      -> [prefix, bindingName, type, name, defaultValue, values]
-                      //   or -> [prefix, name, -1]
-                      var prefix = classBinding[0];
-                      var bindingName = classBinding[3] || classBinding[1];
-
-                      if (prefix === removeBinding[0] && bindingName === removeBinding[1])
-                      {
-                        bindings.splice(j, 1);
-
-                        /** @cut */ if (!removedBindings)
-                        /** @cut */   removedBindings = [classBinding];
-                        /** @cut */ else
-                        /** @cut */   removedBindings.push(classBinding);
-                      }
-                    }
-
-                  if (!bindings.length)
-                    itAttrToken[TOKEN_BINDINGS] = 0;
-                }
-
-                for (var i = 0; i < removeValues.length; i++)
-                {
-                  /** @cut */ if (values.indexOf(removeValues[i]) != -1)
-                  /** @cut */   removedValues.push(removeValues[i]);
-
-                  arrayRemove(values, removeValues[i]);
-
-                  /** @cut */ if (itAttrToken.valueLocMap)
-                  /** @cut */   delete itAttrToken.valueLocMap[removeValues[i]];
-                }
-
-                itAttrToken[valueIdx] = values.join(' ');
-
-                if (!bindings.length && !values.length)
-                  arrayRemove(itAttrs, itAttrToken);
-
-                /** @cut */ if (removedValues.length || removedBindings.length)
-                /** @cut */   template.removals.push({
-                /** @cut */     reason: '<b:' + token.name + '>',
-                /** @cut */     removeToken: token,
-                /** @cut */     includeToken: include,
-                /** @cut */     token: [
-                /** @cut */       TYPE_ATTRIBUTE_CLASS,
-                /** @cut */       removedBindings,
-                /** @cut */       0,
-                /** @cut */       removedValues.join(' ')
-                /** @cut */     ]
-                /** @cut */   });
-              }
-              break;
-
-            case 'remove':
-              if (itAttrToken)
-              {
-                arrayRemove(itAttrs, itAttrToken);
-
-                /** @cut */ template.removals.push({
-                /** @cut */   reason: '<b:' + token.name + '>',
-                /** @cut */   removeToken: token,
-                /** @cut */   includeToken: include,
-                /** @cut */   token: itAttrToken
-                /** @cut */ });
-              }
-
-              break;
-          }
-        }
-        else
-        {
-          /** @cut */ addTemplateWarn(template, options, 'Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')', token.loc);
-        }
-      }
-    }
 
     var result = [];
 
     for (var i = 0, token, item; token = tokens[i]; i++)
     {
       var refs = refList(token);
-      var bindings = refs && refs.length == 1 ? refs[0] : 0;
+      var bindings = bindingList(token);
 
       switch (token.type)
       {
@@ -732,120 +105,22 @@ var makeDeclaration = (function(){
           // special elements (basis namespace)
           if (token.prefix == 'b')
           {
-            var elAttrs = tokenAttrs(token);
-            var elAttrs_ = tokenAttrs_(token);
+            if (elementHandlers.hasOwnProperty(token.name))
+            {
+              elementHandlers[token.name](template, options, token, result);
+              continue;
+            }
+
+            var elAttrs = getTokenAttrValues(token);
+            var elAttrs_ = getTokenAttrs(token);
 
             switch (token.name)
             {
-              case 'style':
-                var useStyle = true;
-
-                if (elAttrs.options)
-                {
-                  var filterOptions = parseIncludeOptions(elAttrs.options);
-                  for (var name in filterOptions)
-                    useStyle = useStyle && filterOptions[name] == options.includeOptions[name];
-                }
-
-                if (useStyle)
-                {
-                  var namespaceAttrName = elAttrs.namespace ? 'namespace' : 'ns';
-                  var styleNamespace = elAttrs[namespaceAttrName];
-                  var styleIsolate = styleNamespace ? styleNamespaceIsolate : '';
-                  var src = addStyle(template, token, elAttrs.src, styleIsolate, styleNamespace);
-
-                  if (styleNamespace)
-                  {
-                    if (src in styleNamespaceIsolate == false)
-                      styleNamespaceIsolate[src] = genIsolateMarker();
-
-                    template.styleNSPrefix[styleNamespace] = {
-                      /** @cut */ loc: getLocation(template, elAttrs_[namespaceAttrName].loc),
-                      /** @cut */ used: false,
-                      name: styleNamespace,
-                      prefix: styleNamespaceIsolate[src]
-                    };
-                  }
-                }
-                /** @cut */ else
-                /** @cut */ {
-                /** @cut */   token.sourceUrl = template.sourceUrl;
-                /** @cut */   template.resources.push({
-                /** @cut */     type: 'style',
-                /** @cut */     url: null,
-                /** @cut */     isolate: styleIsolate,
-                /** @cut */     token: token,
-                /** @cut */     includeToken: null,
-                /** @cut */     inline: elAttrs.src ? false : token.children[0] || true,
-                /** @cut */     namespace: styleNamespace
-                /** @cut */   });
-                /** @cut */ }
-              break;
-
-              case 'svg':
-                // Example: <b:svg src="..." use="#symbol-{id}" .../>
-                // process `use` attribute ---> xlink:href="#symbol-{id}"
-
-                var svgAttributes = [];
-                var svgUse = [
-                  TYPE_ELEMENT,
-                  0,
-                  0,
-                  'svg:use'
-                ];
-                var svgElement = [
-                  TYPE_ELEMENT,
-                  bindings,
-                  refs,
-                  'svg:svg',
-                  svgUse
-                ];
-
-
-                for (var key in elAttrs_)
-                {
-                  var attrToken = elAttrs_[key];
-
-                  switch (getTokenName(attrToken))
-                  {
-                    case 'src':
-                      var svgUrl = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
-                      arrayAdd(template.deps, basis.resource(svgUrl));
-                      template.resources.push({
-                        type: 'svg',
-                        url: svgUrl
-                      });
-                      break;
-
-                    case 'use':
-                      applyAttrs(svgUse, [
-                        basis.object.merge(attrToken, {
-                          prefix: 'xlink',
-                          name: 'href'
-                        })
-                      ]);
-                      break;
-
-                    default:
-                      svgAttributes.push(attrToken);
-                  }
-                }
-
-                result.push(applyAttrs(svgElement, svgAttributes));
-              break;
-
-              case 'isolate':
-                if (!template.isolate)
-                  template.isolate = elAttrs.prefix || options.isolate || genIsolateMarker();
-
-                /** @cut */ else
-                /** @cut */   addTemplateWarn(template, options, '<b:isolate> is already set to `' + template.isolate + '`', token.loc);
-              break;
-
-              case 'l10n':
-                if (elAttrs.src)
-                  options.dictURI = basis.resource.resolveURI(elAttrs.src, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
-              break;
+              // processing by separate handlers
+              // case 'style':
+              // case 'svg':
+              // case 'isolate':
+              // case 'l10n':
 
               case 'define':
                 /** @cut */ if ('name' in elAttrs == false)
@@ -934,7 +209,7 @@ var makeDeclaration = (function(){
 
                   if (define)
                   {
-                    /** @cut */ addTokenLocation(define, token);
+                    /** @cut */ addTokenLocation(template, options, define, token);
                     options.defines[defineName] = define;
                   }
                 }
@@ -976,8 +251,8 @@ var makeDeclaration = (function(){
                   // prevent recursion
                   if (includeStack.indexOf(resource) == -1)
                   {
-                    var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
-                    var includeOptions = elAttrs.options ? parseIncludeOptions(elAttrs.options) : null;
+                    var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || options.genIsolateMarker() : '';
+                    var includeOptions = elAttrs.options ? parseOptionsValue(elAttrs.options) : null;
                     var declarationOptions = basis.object.merge(options, {
                       includeOptions: includeOptions
                     });
@@ -1017,7 +292,7 @@ var makeDeclaration = (function(){
                     var instructions = basis.array(token.children);
                     var styleNSIsolate = {
                       /** @cut */ map: options.styleNSIsolateMap,
-                      prefix: genIsolateMarker()
+                      prefix: options.genIsolateMarker()
                     };
                     var tokenRefMap = normalizeRefs(decl.tokens, styleNSIsolate);
 
@@ -1089,7 +364,7 @@ var makeDeclaration = (function(){
                           var token = tokenRef && tokenRef.token;
 
                           if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
-                            applyShowHideAttribute(token, elAttrs_[includeAttrName]);
+                            applyShowHideAttribute(template, options, token, elAttrs_[includeAttrName]);
                           break;
 
                         case 'role':
@@ -1118,13 +393,13 @@ var makeDeclaration = (function(){
                         switch (child.name)
                         {
                           case 'style':
-                            var childAttrs = tokenAttrs(child);
-                            var childAttrs_ = tokenAttrs_(child);
+                            var childAttrs = getTokenAttrValues(child);
+                            var childAttrs_ = getTokenAttrs(child);
                             var useStyle = true;
 
                             if (childAttrs.options)
                             {
-                              var filterOptions = parseIncludeOptions(childAttrs.options);
+                              var filterOptions = parseOptionsValue(childAttrs.options);
                               for (var name in filterOptions)
                                 useStyle = useStyle && filterOptions[name] == includeOptions[name];
                             }
@@ -1139,7 +414,7 @@ var makeDeclaration = (function(){
                               if (styleNamespace)
                               {
                                 if (src in styleNamespaceIsolate == false)
-                                  styleNamespaceIsolate[src] = genIsolateMarker();
+                                  styleNamespaceIsolate[src] = options.genIsolateMarker();
 
                                 template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
                                   /** @cut */ loc: getLocation(template, childAttrs_[namespaceAttrName].loc),
@@ -1161,7 +436,7 @@ var makeDeclaration = (function(){
                           case 'before':
                           case 'after':
                             var replaceOrRemove = child.name == 'replace' || child.name == 'remove';
-                            var childAttrs = tokenAttrs(child);
+                            var childAttrs = getTokenAttrValues(child);
                             var ref = 'ref' in childAttrs || !replaceOrRemove ? childAttrs.ref : 'element';
                             var tokenRef = ref && tokenRefMap[ref];
 
@@ -1191,7 +466,7 @@ var makeDeclaration = (function(){
 
                           case 'prepend':
                           case 'append':
-                            var childAttrs = tokenAttrs(child);
+                            var childAttrs = getTokenAttrValues(child);
                             var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
                             var tokenRef = ref && tokenRefMap[ref];
                             var token = tokenRef && tokenRef.token;
@@ -1211,14 +486,14 @@ var makeDeclaration = (function(){
                           case 'hide':
                           case 'visible':
                           case 'hidden':
-                            var childAttrs = tokenAttrs(child);
+                            var childAttrs = getTokenAttrValues(child);
                             var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
                             var tokenRef = ref && tokenRefMap[ref];
                             var token = tokenRef && tokenRef.token;
 
                             if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
                             {
-                              var expr = tokenAttrs_(child).expr;
+                              var expr = getTokenAttrs(child).expr;
 
                               if (!expr)
                               {
@@ -1226,37 +501,37 @@ var makeDeclaration = (function(){
                                 break;
                               }
 
-                              applyShowHideAttribute(token, basis.object.complete({
+                              applyShowHideAttribute(template, options, token, basis.object.complete({
                                 name: child.name,
-                              }, tokenAttrs_(child).expr));
+                              }, getTokenAttrs(child).expr));
                             }
 
                             break;
 
                           case 'attr':
                           case 'set-attr':
-                            modifyAttr(token, child, false, 'set');
+                            modifyAttr(template, options, token, tokenRefMap, child, false, 'set');
                             break;
 
                           case 'append-attr':
-                            modifyAttr(token, child, false, 'append');
+                            modifyAttr(template, options, token, tokenRefMap, child, false, 'append');
                             break;
 
                           case 'remove-attr':
-                            modifyAttr(token, child, false, 'remove');
+                            modifyAttr(template, options, token, tokenRefMap, child, false, 'remove');
                             break;
 
                           case 'class':
                           case 'append-class':
-                            modifyAttr(token, child, 'class', 'append');
+                            modifyAttr(template, options, token, tokenRefMap, child, 'class', 'append');
                             break;
 
                           case 'set-class':
-                            modifyAttr(token, child, 'class', 'set');
+                            modifyAttr(template, options, token, tokenRefMap, child, 'class', 'set');
                             break;
 
                           case 'remove-class':
-                            var childAttrs_ = tokenAttrs_(child);
+                            var childAttrs_ = getTokenAttrs(child);
                             var valueAttr = childAttrs_.value;
 
                             // apply namespace prefix for values
@@ -1283,11 +558,11 @@ var makeDeclaration = (function(){
                                 });
                             }
 
-                            modifyAttr(token, child, 'class', 'remove-class');
+                            modifyAttr(template, options, token, tokenRefMap, child, 'class', 'remove-class');
                             break;
 
                           case 'add-ref':
-                            var childAttrs = tokenAttrs(child);
+                            var childAttrs = getTokenAttrValues(child);
                             var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
                             var tokenRef = ref && tokenRefMap[ref];
                             var token = tokenRef && tokenRef.token;
@@ -1297,7 +572,7 @@ var makeDeclaration = (function(){
                             break;
 
                           case 'remove-ref':
-                            var childAttrs = tokenAttrs(child);
+                            var childAttrs = getTokenAttrValues(child);
                             var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
                             var tokenRef = ref && tokenRefMap[ref];
                             var token = tokenRef && tokenRef.token;
@@ -1308,7 +583,7 @@ var makeDeclaration = (function(){
 
                           case 'role':
                           case 'set-role':
-                            var childAttrs = tokenAttrs(child);
+                            var childAttrs = getTokenAttrValues(child);
                             var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
                             var tokenRef = ref && tokenRefMap[ref];
                             var token = tokenRef && tokenRef.token;
@@ -1316,12 +591,12 @@ var makeDeclaration = (function(){
                             if (token)
                             {
                               arrayRemove(token, getAttrByName(token, 'role-marker'));
-                              addRoleAttribute(token, childAttrs.value || '', child);
+                              addRoleAttribute(template, options, token, childAttrs.value || '', child);
                             }
                             break;
 
                           case 'remove-role':
-                            var childAttrs = tokenAttrs(child);
+                            var childAttrs = getTokenAttrValues(child);
                             var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
                             var tokenRef = ref && tokenRefMap[ref];
                             var token = tokenRef && tokenRef.token;
@@ -1374,10 +649,10 @@ var makeDeclaration = (function(){
             getTokenName(token)      // ELEMENT_NAME = 3
           ];
 
-          applyAttrs(item, token.attrs);
+          applyAttrs(template, options, item, token.attrs);
           item.push.apply(item, process(token.children, template, options) || []);
 
-          /** @cut */ addTokenLocation(item, token);
+          /** @cut */ addTokenLocation(template, options, item, token);
           /** @cut */ item.sourceToken = token;
 
           break;
@@ -1396,7 +671,7 @@ var makeDeclaration = (function(){
           if (!refs || token.value != '{' + refs.join('|') + '}')
             item.push(token.value);
 
-          /** @cut */ addTokenLocation(item, token);
+          /** @cut */ addTokenLocation(template, options, item, token);
           /** @cut */ item.sourceToken = token;
 
           break;
@@ -1416,7 +691,7 @@ var makeDeclaration = (function(){
             if (!refs || token.value != '{' + refs.join('|') + '}')
               item.push(token.value);
 
-          /** @cut */ addTokenLocation(item, token);
+          /** @cut */ addTokenLocation(template, options, item, token);
           /** @cut */ item.sourceToken = token;
 
           break;
@@ -1625,7 +900,7 @@ var makeDeclaration = (function(){
               if (bind.length > 2)  // bind already processed
                 continue;
 
-              /** @cut */ applyTokenLocation(template, options, bind, bind.info_);
+              /** @cut */ addTokenLocation(template, options, bind, bind.info_);
 
               var bindNameParts = bind[1].split(':');
               var bindName = bindNameParts.pop();
@@ -1757,20 +1032,13 @@ var makeDeclaration = (function(){
     }
   }
 
-  function resourceHash(resource){
-    return [
-      resource.type,
-      resource.url,
-      resource.isolate
-    ].join(';');
-  }
-
   return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
     var warns = [];
     /** @cut */ var source_;
 
     // make copy of options (as modify it) and normalize
     options = basis.object.slice(options);
+    options.genIsolateMarker = genIsolateMarker;
     options.includeOptions = options.includeOptions || {};
     options.defines = {};
     options.dictURI = sourceUrl  // resolve l10n dictionary url
@@ -1962,7 +1230,7 @@ var makeDeclaration = (function(){
 
       // process styles list
       /** @cut */ result.styles = originalResources.map(function(item){
-      /** @cut */   var sourceUrl = item.url || tokenAttrs(item.token).src;
+      /** @cut */   var sourceUrl = item.url || getTokenAttrValues(item.token).src;
       /** @cut */   return {
       /** @cut */     resource: item.url || false,
       /** @cut */     sourceUrl: basis.resource.resolveURI(sourceUrl),
