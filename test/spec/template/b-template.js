@@ -131,7 +131,7 @@ module.exports = {
           }
         },
         {
-          name: 'should style',
+          name: 'should add style',
           test: function(){
             var template = createTemplate(
               '<b:template name="test">' +
@@ -161,7 +161,7 @@ module.exports = {
           }
         },
         {
-          name: '<b:isolate> outsire template should effect to template content',
+          name: '<b:isolate> outside template should effect to template content',
           test: function(){
             var template = createTemplate(
               '<b:isolate prefix="xxx__"/>' +
@@ -173,6 +173,23 @@ module.exports = {
             );
 
             assert(text(template) === text('<div class="xxx__outside"></div>[<span class="xxx__inside"></span>]'));
+          }
+        },
+        {
+          name: 'includes should not has a side effect',
+          test: function(){
+            var template = createTemplate(
+              '<b:template name="test">' +
+                '<span class="foo"/>' +
+              '</b:template>' +
+              '[<b:include src="#test" class="bar"><b:append>test</b:append></b:include>]' +
+              '[<b:include src="#test" class="baz"/>]'
+            );
+
+            assert(text(template) === text(
+              '[<span class="foo bar">test</span>]' +
+              '[<span class="foo baz"></span>]'
+            ));
           }
         }
       ]

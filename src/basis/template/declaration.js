@@ -729,6 +729,48 @@ var makeDeclaration = (function(){
       switch (token.type)
       {
         case TYPE_ELEMENT:
+          var name = getTokenName(token);
+
+          if (hasOwnProperty.call(options.templates, name))
+          {
+            var decl = options.templates[name].decl;
+            var declTokens = cloneDecl(decl.tokens);
+            var styleNSIsolate = {
+              /** @cut */ map: options.styleNSIsolateMap,
+              prefix: genIsolateMarker()
+            };
+            var tokenRefMap = normalizeRefs(declTokens, styleNSIsolate);
+
+            template.includes.push({
+              token: token,
+              resource: null, // TODO
+              nested: decl.includes
+            });
+
+            if (decl.deps)
+              addUnique(template.deps, decl.deps);
+
+            if (decl.resources)
+              addUnique(template.resources, decl.resources);
+
+            if (decl.warns)
+              template.warns.push.apply(template.warns, decl.warns);
+
+            /** @cut */ if (decl.removals)
+            /** @cut */   template.removals.push.apply(template.removals, decl.removals);
+
+            for (var key in decl.styleNSPrefix)
+              template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
+                /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+              });
+
+            if (tokenRefMap.element)
+              removeTokenRef(tokenRefMap.element.token, 'element');
+
+            result.push.apply(result, declTokens);
+            continue;
+          }
+
           // special elements (basis namespace)
           if (token.prefix == 'b')
           {
@@ -792,10 +834,55 @@ var makeDeclaration = (function(){
 
                 if ('name' in elAttrs && !hasOwnProperty.call(template.templates, elAttrs.name))
                 {
-                  token.children.templateTokens = true;
-                  template.templates[elAttrs.name] = new basis.Token(
-                    makeDeclaration(token.children, template.baseURI, options, template.sourceUrl)
+                  var isolatePrefix = genIsolateMarker();
+                  var decl = makeDeclaration(
+                    token.children,
+                    template.baseURI,
+                    options,
+                    template.sourceUrl
                   );
+
+                  // isolate
+                  isolateTokens(decl.tokens, isolatePrefix);
+
+                  if (decl.resources)
+                    adoptStyles(decl.resources, isolatePrefix, token);
+
+                  /** @cut */ if (decl.removals)
+                  /** @cut */   decl.removals.forEach(function(item){
+                  /** @cut */     isolateTokens([item.token], isolatePrefix);
+                  /** @cut */   });
+
+                  // store to map
+                  template.templates[elAttrs.name] = {
+                    tokens: token.children,
+                    baseURI: template.baseURI,
+                    options: options,
+                    sourceUrl: template.sourceUrl,
+                    decl: decl
+                  };
+                }
+              break;
+
+              case 'import':
+                /** @cut */ if ('src' in elAttrs == false)
+                /** @cut */   addTemplateWarn(template, options, '<b:template> has no `src` attribute', token.loc);
+
+                if (elAttrs.src)
+                {
+                  var importTemplate = resolveResource(elAttrs.src, template.baseURI);
+                  var decl = importTemplate.decl;
+
+                  if (!importTemplate.decl || (importTemplate.bindingBridge && importTemplate.declSource !== importTemplate.bindingBridge.get(importTemplate)))
+                  {
+                    importTemplate.declSource = importTemplate.bindingBridge.get(importTemplate);
+                    decl = importTemplate.decl = getDeclFromSource(importTemplate, '', true);
+                  }
+
+                  arrayAdd(template.deps, importTemplate);
+
+                  for (var name in decl.templates)
+                    options.templates[name] = decl.templates[name];
                 }
               break;
 
@@ -983,9 +1070,19 @@ var makeDeclaration = (function(){
                   /** @cut */     basisWarn.apply(this, arguments);
                   /** @cut */ };
 
-                  resource = /^#[^\d]/.test(templateSrc)
-                    ? template.templates[templateSrc.substr(1)]
-                    : resolveResource(templateSrc, template.baseURI);
+                  if (/^#[^\d]/.test(templateSrc))
+                  {
+                    resource = template.templates[templateSrc.substr(1)];
+                    if (resource)
+                      resource = makeDeclaration(
+                        clone(resource.tokens),
+                        resource.baseURI,
+                        resource.options,
+                        resource.sourceUrl
+                      );
+                  }
+                  else
+                    resource = resolveResource(templateSrc, template.baseURI);
 
                   /** @cut */ basis.dev.warn = basisWarn;
 
@@ -1000,17 +1097,18 @@ var makeDeclaration = (function(){
                   {
                     var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
                     var includeOptions = elAttrs.options ? parseIncludeOptions(elAttrs.options) : null;
-                    var declarationOptions = basis.object.merge(options, {
+                    var decl = getDeclFromSource(resource, '', true, basis.object.merge(options, {
                       includeOptions: includeOptions
-                    });
-                    var decl = getDeclFromSource(resource, '', true, declarationOptions);
+                    }));
 
-                    arrayAdd(template.deps, resource);
                     template.includes.push({
                       token: token,
                       resource: resource,
                       nested: decl.includes
                     });
+
+                    if (resource.bindingBridge)
+                      arrayAdd(template.deps, resource);
 
                     if (decl.deps)
                       addUnique(template.deps, decl.deps);
@@ -1791,6 +1889,7 @@ var makeDeclaration = (function(){
     // make copy of options (as modify it) and normalize
     options = basis.object.slice(options);
     options.includeOptions = options.includeOptions || {};
+    options.templates = {};
     options.defines = {};
     options.dictURI = sourceUrl  // resolve l10n dictionary url
       ? basis.path.resolve(sourceUrl)
@@ -1831,7 +1930,7 @@ var makeDeclaration = (function(){
     }
 
     // tokenize source if needed
-    if (!source.templateTokens)
+    if (!Array.isArray(source))
     {
       /** @cut */ source_ = source;
       source = tokenize(String(source), {
@@ -2008,6 +2107,21 @@ var makeDeclaration = (function(){
     return result;
   };
 })();
+
+function clone(value){
+  if (Array.isArray(value))
+    return value.map(clone);
+
+  if (value && value.constructor === Object)
+  {
+    var result = {};
+    for (var key in value)
+      result[key] = clone(value[key]);
+    return result;
+  }
+
+  return value;
+}
 
 /**
 *
