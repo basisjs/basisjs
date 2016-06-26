@@ -782,6 +782,23 @@ var makeDeclaration = (function(){
                 /** @cut */ }
               break;
 
+              case 'template':
+                /** @cut */ if ('name' in elAttrs == false)
+                /** @cut */   addTemplateWarn(template, options, '<b:template> has no `name` attribute', token.loc);
+                /** @cut */ else if (/^\d/.test(elAttrs.name))
+                /** @cut */   addTemplateWarn(template, options, '<b:template> name can\'t starts with number', token.loc);
+                /** @cut */ if (hasOwnProperty.call(template.templates, elAttrs.name))
+                /** @cut */   addTemplateWarn(template, options, '<b:template> with name `' + elAttrs.name + '` is already defined', token.loc);
+
+                if ('name' in elAttrs && !hasOwnProperty.call(template.templates, elAttrs.name))
+                {
+                  token.children.templateTokens = true;
+                  template.templates[elAttrs.name] = new basis.Token(
+                    makeDeclaration(token.children, template.baseURI, options, template.sourceUrl)
+                  );
+                }
+              break;
+
               case 'svg':
                 // Example: <b:svg src="..." use="#symbol-{id}" .../>
                 // process `use` attribute ---> xlink:href="#symbol-{id}"
@@ -853,7 +870,7 @@ var makeDeclaration = (function(){
                 /** @cut */ if ('type' in elAttrs == false)
                 /** @cut */   addTemplateWarn(template, options, '<b:define> has no `type` attribute', token.loc);
                 /** @cut */ if (hasOwnProperty.call(options.defines, elAttrs.name))
-                /** @cut */   addTemplateWarn(template, options, '<b:define> for `' + elAttrs.name + '` has already defined', token.loc);
+                /** @cut */   addTemplateWarn(template, options, '<b:define> with name `' + elAttrs.name + '` is already defined', token.loc);
 
                 if ('name' in elAttrs && 'type' in elAttrs && !hasOwnProperty.call(options.defines, elAttrs.name))
                 {
@@ -949,6 +966,9 @@ var makeDeclaration = (function(){
               break;
 
               case 'include':
+                /** @cut */ if ('src' in elAttrs == false)
+                /** @cut */   addTemplateWarn(template, options, '<b:include> has no `src` attribute', token.loc);
+
                 var templateSrc = elAttrs.src;
                 if (templateSrc)
                 {
@@ -963,7 +983,9 @@ var makeDeclaration = (function(){
                   /** @cut */     basisWarn.apply(this, arguments);
                   /** @cut */ };
 
-                  resource = resolveResource(templateSrc, template.baseURI);
+                  resource = /^#[^\d]/.test(templateSrc)
+                    ? template.templates[templateSrc.substr(1)]
+                    : resolveResource(templateSrc, template.baseURI);
 
                   /** @cut */ basis.dev.warn = basisWarn;
 
@@ -1508,10 +1530,7 @@ var makeDeclaration = (function(){
         var valueIndex = ATTR_VALUE_INDEX[tokenType];
 
         if (token[valueIndex])
-          token[valueIndex] = token[valueIndex]
-            .split(/\s+/)
-            .map(processName)
-            .join(' ');
+          token[valueIndex] = token[valueIndex].replace(/\S+/g, processName);
 
         /** @cut */ if (token.valueLocMap)
         /** @cut */ {
@@ -1789,6 +1808,7 @@ var makeDeclaration = (function(){
       tokens: null,
       includes: [],
       deps: [],
+      templates: {},
 
       isolate: false,
       styleNSPrefix: {},  // TODO: investigate, could we remove this from declaration?
@@ -1850,8 +1870,8 @@ var makeDeclaration = (function(){
     // deal with defines
     applyDefines(result.tokens, result, options);
 
-    /** @cut */ if (/^[^a-z]/i.test(result.isolate))
-    /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, otherwise it leads to incorrect css class names and broken styles');
+    /** @cut */ if (/^[^a-z_-]/i.test(result.isolate))
+    /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, underscore or dash, otherwise it leads to incorrect css class names and broken styles');
 
     // top-level declaration
     if (includeStack.length == 0)
