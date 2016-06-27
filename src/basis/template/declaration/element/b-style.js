@@ -1,5 +1,5 @@
-var utils = require('./utils.js');
-var styleUtils = require('./style.js');
+var utils = require('../utils.js');
+var styleUtils = require('../style.js');
 var styleNamespaceIsolate = styleUtils.styleNamespaceIsolate;
 var addStyle = styleUtils.addStyle;
 var parseOptionsValue = utils.parseOptionsValue;

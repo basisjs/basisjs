@@ -20,7 +20,7 @@ module.exports = {
       name: 'styles and isolate',
       test: [
         {
-          name: '',
+          name: 'markup should be isolated by default',
           test: function(){
             function deobfuscate(html){
               return html.replace(/([a-z0-9]+)__pill/g, function(m, prefix){

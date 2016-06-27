@@ -11,10 +11,13 @@ var utils = require('./declaration/utils.js');
 var styleUtils = require('./declaration/style.js');
 var attrUtils = require('./declaration/attr.js');
 var elementHandlers = {
-  style: require('./declaration/b-style.js'),
-  isolate: require('./declaration/b-isolate.js'),
-  svg: require('./declaration/b-svg.js'),
-  l10n: require('./declaration/b-l10n.js')
+  style: require('./declaration/element/b-style.js'),
+  isolate: require('./declaration/element/b-isolate.js'),
+  svg: require('./declaration/element/b-svg.js'),
+  l10n: require('./declaration/element/b-l10n.js'),
+  define: require('./declaration/element/b-define.js'),
+  template: require('./declaration/element/b-template.js'),
+  import: require('./declaration/element/b-import.js')
 };
 
 var resourceHash = utils.resourceHash;
@@ -40,6 +43,7 @@ var applyAttrs = attrUtils.applyAttrs;
 var styleNamespaceIsolate = styleUtils.styleNamespaceIsolate;
 var adoptStyles = styleUtils.adoptStyles;
 var addStyle = styleUtils.addStyle;
+var isolateTokens = styleUtils.isolateTokens;
 
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
@@ -54,9 +58,6 @@ var ATTR_NAME = consts.ATTR_NAME;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var TEXT_VALUE = consts.TEXT_VALUE;
-var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
-var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
-var CLASS_BINDING_INVERT = consts.CLASS_BINDING_INVERT;
 
 // TODO: remove
 var Template = function(){};
@@ -78,20 +79,6 @@ var makeDeclaration = (function(){
   //
   function process(tokens, template, options){
 
-    /** @cut */ function addStateInfo(name, type, value){
-    /** @cut */   if (!hasOwnProperty.call(template.states, name))
-    /** @cut */     template.states[name] = {};
-    /** @cut */
-    /** @cut */   var info = template.states[name];
-    /** @cut */   var isArray = Array.isArray(value);
-    /** @cut */
-    /** @cut */   if (!hasOwnProperty.call(info, type) || !isArray)
-    /** @cut */     info[type] = isArray ? basis.array(value) : value;
-    /** @cut */   else
-    /** @cut */     addUnique(info[type], value);
-    /** @cut */ }
-
-
     var result = [];
 
     for (var i = 0, token, item; token = tokens[i]; i++)
@@ -103,46 +90,6 @@ var makeDeclaration = (function(){
       {
         case TYPE_ELEMENT:
           var name = getTokenName(token);
-
-          if (hasOwnProperty.call(options.templates, name))
-          {
-            var decl = options.templates[name].decl;
-            var declTokens = cloneDecl(decl.tokens);
-            var styleNSIsolate = {
-              /** @cut */ map: options.styleNSIsolateMap,
-              prefix: genIsolateMarker()
-            };
-            var tokenRefMap = normalizeRefs(declTokens, styleNSIsolate);
-
-            template.includes.push({
-              token: token,
-              resource: null, // TODO
-              nested: decl.includes
-            });
-
-            if (decl.deps)
-              addUnique(template.deps, decl.deps);
-
-            if (decl.resources)
-              addUnique(template.resources, decl.resources);
-
-            if (decl.warns)
-              template.warns.push.apply(template.warns, decl.warns);
-
-            /** @cut */ if (decl.removals)
-            /** @cut */   template.removals.push.apply(template.removals, decl.removals);
-
-            for (var key in decl.styleNSPrefix)
-              template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
-                /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
-              });
-
-            if (tokenRefMap.element)
-              removeTokenRef(tokenRefMap.element.token, 'element');
-
-            result.push.apply(result, declTokens);
-            continue;
-          }
 
           // special elements (basis namespace)
           if (token.prefix == 'b')
@@ -163,167 +110,17 @@ var makeDeclaration = (function(){
               // case 'svg':
               // case 'isolate':
               // case 'l10n':
-
-              case 'define':
-                /** @cut */ if ('name' in elAttrs == false)
-                /** @cut */   addTemplateWarn(template, options, '<b:define> has no `name` attribute', token.loc);
-                /** @cut */ if ('type' in elAttrs == false)
-                /** @cut */   addTemplateWarn(template, options, '<b:define> has no `type` attribute', token.loc);
-                /** @cut */ if (hasOwnProperty.call(options.defines, elAttrs.name))
-                /** @cut */   addTemplateWarn(template, options, '<b:define> with name `' + elAttrs.name + '` is already defined', token.loc);
-
-                if ('name' in elAttrs && 'type' in elAttrs && !hasOwnProperty.call(options.defines, elAttrs.name))
-                {
-                  var bindingName = elAttrs.from || elAttrs.name;
-                  var defineName = elAttrs.name;
-                  var define = false;
-                  var defaultIndex;
-                  var values;
-
-                  switch (elAttrs.type)
-                  {
-                    case 'bool':
-                      define = [
-                        bindingName,
-                        CLASS_BINDING_BOOL,
-                        defineName,
-                        elAttrs['default'] == 'true' ? 1 : 0
-                      ];
-
-                      /** @cut */ addStateInfo(bindingName, 'bool', true);
-
-                      /** @cut */ if ('default' in elAttrs && !elAttrs['default'])
-                      /** @cut */   addTemplateWarn(template, options, 'Bool <b:define> has no value as default (value ignored)', elAttrs_['default'] && elAttrs_['default'].loc);
-
-                      break;
-
-                    case 'invert':
-                      define = [
-                        bindingName,
-                        CLASS_BINDING_INVERT,
-                        defineName,
-                        !elAttrs['default'] || elAttrs['default'] == 'true' ? 1 : 0
-                      ];
-
-                      /** @cut */ addStateInfo(bindingName, 'invert', false);
-
-                      /** @cut */ if ('default' in elAttrs && !elAttrs['default'])
-                      /** @cut */   addTemplateWarn(template, options, 'Invert <b:define> has no value as default (value ignored)', elAttrs_['default'] && elAttrs_['default'].loc);
-
-                      break;
-
-                    case 'enum':
-                      if ('values' in elAttrs == false)
-                      {
-                        /** @cut */ addTemplateWarn(template, options, 'Enum <b:define> has no `values` attribute', token.loc);
-                        break;
-                      }
-
-                      values = (elAttrs.values || '').trim();
-
-                      if (!values)
-                      {
-                        /** @cut */ addTemplateWarn(template, options, 'Enum <b:define> has no variants (`values` attribute is empty)', elAttrs_.values && elAttrs_.values.loc);
-                        break;
-                      }
-
-                      values = values.split(/\s+/);
-                      defaultIndex = values.indexOf(elAttrs['default']);
-
-                      /** @cut */ if ('default' in elAttrs && defaultIndex == -1)
-                      /** @cut */   addTemplateWarn(template, options, 'Enum <b:define> has bad value as default (value ignored)', elAttrs_['default'] && elAttrs_['default'].loc);
-
-                      define = [
-                        bindingName,
-                        CLASS_BINDING_ENUM,
-                        defineName,
-                        defaultIndex + 1,
-                        values
-                      ];
-
-                      /** @cut */ addStateInfo(bindingName, 'enum', values);
-
-                      break;
-
-                    /** @cut */ default:
-                    /** @cut */   addTemplateWarn(template, options, 'Bad type in <b:define> for `' + defineName + '`: ' + elAttrs.type, elAttrs_.type && elAttrs_.type.valueLoc);
-                  }
-
-                  if (define)
-                  {
-                    /** @cut */ addTokenLocation(template, options, define, token);
-                    options.defines[defineName] = define;
-                  }
-                }
-              break;
-
-              case 'template':
-                /** @cut */ if ('name' in elAttrs == false)
-                /** @cut */   addTemplateWarn(template, options, '<b:template> has no `name` attribute', token.loc);
-                /** @cut */ else if (/^\d/.test(elAttrs.name))
-                /** @cut */   addTemplateWarn(template, options, '<b:template> name can\'t starts with number', token.loc);
-                /** @cut */ if (hasOwnProperty.call(template.templates, elAttrs.name))
-                /** @cut */   addTemplateWarn(template, options, '<b:template> with name `' + elAttrs.name + '` is already defined', token.loc);
-
-                if ('name' in elAttrs && !hasOwnProperty.call(template.templates, elAttrs.name))
-                {
-                  var isolatePrefix = genIsolateMarker();
-                  var decl = makeDeclaration(
-                    token.children,
-                    template.baseURI,
-                    options,
-                    template.sourceUrl
-                  );
-
-                  // isolate
-                  isolateTokens(decl.tokens, isolatePrefix);
-
-                  if (decl.resources)
-                    adoptStyles(decl.resources, isolatePrefix, token);
-
-                  /** @cut */ if (decl.removals)
-                  /** @cut */   decl.removals.forEach(function(item){
-                  /** @cut */     isolateTokens([item.token], isolatePrefix);
-                  /** @cut */   });
-
-                  // store to map
-                  template.templates[elAttrs.name] = {
-                    tokens: token.children,
-                    baseURI: template.baseURI,
-                    options: options,
-                    sourceUrl: template.sourceUrl,
-                    decl: decl
-                  };
-                }
-              break;
-
-              case 'import':
-                /** @cut */ if ('src' in elAttrs == false)
-                /** @cut */   addTemplateWarn(template, options, '<b:template> has no `src` attribute', token.loc);
-
-                if (elAttrs.src)
-                {
-                  var importTemplate = resolveResource(elAttrs.src, template.baseURI);
-                  var decl = importTemplate.decl;
-
-                  if (!importTemplate.decl || (importTemplate.bindingBridge && importTemplate.declSource !== importTemplate.bindingBridge.get(importTemplate)))
-                  {
-                    importTemplate.declSource = importTemplate.bindingBridge.get(importTemplate);
-                    decl = importTemplate.decl = getDeclFromSource(importTemplate, '', true);
-                  }
-
-                  arrayAdd(template.deps, importTemplate);
-
-                  for (var name in decl.templates)
-                    options.templates[name] = decl.templates[name];
-                }
-              break;
+              // case 'define':
+              // case 'template':
+              // case 'import':
 
               case 'text':
-                var text = token.children[0];
+                var text = token.children[0] || { type: 3, value: '' };
+                var refs = (elAttrs.ref || '').trim();
+
                 tokens[i--] = basis.object.extend(text, {
-                  refs: (elAttrs.ref || '').trim().split(/\s+/),
-                  value: 'notrim' in elAttrs ? text.value : text.value.replace(/^\s*[\r\n]+|[\r\n]+\s*$/g, '')
+                  refs: refs ? refs.split(/\s+/) : [],
+                  value: 'notrim' in elAttrs ? text.value : (text.value || '').replace(/^\s*[\r\n]+|[\r\n]+\s*$/g, '')
                 });
               break;
 
@@ -357,7 +154,7 @@ var makeDeclaration = (function(){
                       );
                   }
                   else
-                    resource = resolveResource(templateSrc, template.baseURI);
+                    resource = options.resolveResource(templateSrc, template.baseURI);
 
                   /** @cut */ basis.dev.warn = basisWarn;
 
@@ -371,7 +168,7 @@ var makeDeclaration = (function(){
                   if (includeStack.indexOf(resource) == -1)
                   {
                     var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
-                    var includeOptions = elAttrs.options ? parseIncludeOptions(elAttrs.options) : null;
+                    var includeOptions = elAttrs.options ? parseOptionsValue(elAttrs.options) : null;
                     var decl = getDeclFromSource(resource, '', true, basis.object.merge(options, {
                       includeOptions: includeOptions
                     }));
@@ -762,6 +559,46 @@ var makeDeclaration = (function(){
             continue;
           }
 
+          if (hasOwnProperty.call(options.templates, name))
+          {
+            var decl = options.templates[name];
+            var declTokens = cloneDecl(decl.tokens);
+            var styleNSIsolate = {
+              /** @cut */ map: options.styleNSIsolateMap,
+              prefix: genIsolateMarker()
+            };
+            var tokenRefMap = normalizeRefs(declTokens, styleNSIsolate);
+
+            template.includes.push({
+              token: token,
+              resource: null, // TODO
+              nested: decl.includes
+            });
+
+            if (decl.deps)
+              addUnique(template.deps, decl.deps);
+
+            if (decl.resources)
+              addUnique(template.resources, decl.resources);
+
+            if (decl.warns)
+              template.warns.push.apply(template.warns, decl.warns);
+
+            /** @cut */ if (decl.removals)
+            /** @cut */   template.removals.push.apply(template.removals, decl.removals);
+
+            for (var key in decl.styleNSPrefix)
+              template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
+                /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+              });
+
+            if (tokenRefMap.element)
+              removeTokenRef(tokenRefMap.element.token, 'element');
+
+            result.push.apply(result, declTokens);
+            continue;
+          }
+
           item = [
             1,                       // TOKEN_TYPE = 0
             bindings,                // TOKEN_BINDINGS = 1
@@ -1051,110 +888,15 @@ var makeDeclaration = (function(){
     }
   }
 
-  function isolateTokens(tokens, isolate, template, options, stIdx){
-    function processName(name){
-      if (name.indexOf(':') == -1)
-        return isolate + name;
-
-      // don't resolve namespaced names if not template isolate mode
-      if (!template)
-        return name;
-
-      var parts = name.split(':');
-
-      // global namespace
-      if (!parts[0])
-        return parts[1];
-
-      var namespace = hasOwnProperty.call(template.styleNSPrefix, parts[0]) ? template.styleNSPrefix[parts[0]] : false;
-
-      // if namespace not found, no prefix and show warning
-      if (!namespace)
-      {
-        /** @cut */ var isolatedPrefix = options.styleNSIsolateMap[parts[0]];
-        /** @cut */ var oldPrefix = parts[0];
-        /** @cut */ var fullName = arguments[1];
-        /** @cut */ var loc = arguments[2];
-        /** @cut */ if (fullName)
-        /** @cut */ {
-        /** @cut */   if (isolatedPrefix)
-        /** @cut */     fullName = fullName.replace(oldPrefix, isolatedPrefix);
-        /** @cut */   addTemplateWarn(template, options, 'Namespace `' + (isolatedPrefix || oldPrefix) + '` is not defined: ' + fullName, loc);
-        /** @cut */ }
-        return false;
-      }
-      else
-      {
-        /** @cut */ namespace.used = true;
-        return namespace.prefix + parts[1];
-      }
-    }
-
-    for (var i = stIdx || 0, token; token = tokens[i]; i++)
-    {
-      var tokenType = token[TOKEN_TYPE];
-
-      if (tokenType == TYPE_ELEMENT)
-        isolateTokens(token, isolate, template, options, ELEMENT_ATTRIBUTES_AND_CHILDREN);
-
-      if (tokenType == TYPE_ATTRIBUTE_CLASS)
-      {
-        var bindings = token[TOKEN_BINDINGS];
-        var valueIndex = ATTR_VALUE_INDEX[tokenType];
-
-        if (token[valueIndex])
-          token[valueIndex] = token[valueIndex]
-            .split(/\s+/)
-            .map(function(name){
-              return processName(name, name, token.valueLocMap ? token.valueLocMap[name] : null);
-            })
-            .filter(Boolean)
-            .join(' ');
-
-        if (bindings)
-        {
-          for (var j = 0, bind, prefix, removed; bind = bindings[j]; j++)
-          {
-            prefix = processName(bind[0], bind[0] + '{' + bind[1] + '}', bind.loc);
-
-            if (prefix === false)
-            {
-              // prefix is false for non-resolved namespaced prefixes -> remove binding
-              removed = true;
-              bindings[j] = null;
-            }
-            else
-              bind[0] = prefix;
-          }
-
-          if (removed)
-          {
-            bindings = bindings.filter(Boolean);
-            token[TOKEN_BINDINGS] = bindings.length ? bindings : 0;
-          }
-        }
-
-        /** @cut */ if (token.valueLocMap)
-        /** @cut */ {
-        /** @cut */   var oldValueLocMap = token.valueLocMap;
-        /** @cut */   token.valueLocMap = {};
-        /** @cut */   for (var name in oldValueLocMap)
-        /** @cut */   {
-        /** @cut */     var newKey = processName(name);
-        /** @cut */     if (newKey)
-        /** @cut */       token.valueLocMap[newKey] = oldValueLocMap[name];
-        /** @cut */   }
-        /** @cut */ }
-      }
-    }
-  }
-
   return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
     var warns = [];
     /** @cut */ var source_;
 
     // make copy of options (as modify it) and normalize
     options = basis.object.slice(options);
+    options.makeDeclaration = makeDeclaration;
+    options.getDeclFromSource = getDeclFromSource;
+    options.resolveResource = resolveResource;
     options.genIsolateMarker = genIsolateMarker;
     options.includeOptions = options.includeOptions || {};
     options.templates = {};
@@ -1166,6 +908,14 @@ var makeDeclaration = (function(){
     // force fetch locations and ranges in dev mode for debug and build purposes
     /** @cut */ options.loc = true;
     /** @cut */ options.range = true;
+
+    // normalize dictionary ext name
+    if (options.dictURI)
+    {
+      var extname = basis.path.extname(options.dictURI);
+      if (extname && extname != '.l10n')
+        options.dictURI = options.dictURI.substr(0, options.dictURI.length - extname.length) + '.l10n';
+    }
 
     // result object
     var result = {
@@ -1188,14 +938,6 @@ var makeDeclaration = (function(){
 
     /** @cut */ result.removals = [];
     /** @cut */ result.states = {};
-
-    // normalize dictionary ext name
-    if (options.dictURI)
-    {
-      var extname = basis.path.extname(options.dictURI);
-      if (extname && extname != '.l10n')
-        options.dictURI = options.dictURI.substr(0, options.dictURI.length - extname.length) + '.l10n';
-    }
 
     // tokenize source if needed
     if (!Array.isArray(source))

@@ -1,12 +1,12 @@
 var arrayAdd = basis.array.add;
-var utils = require('./utils.js');
+var utils = require('../utils.js');
 var getTokenName = utils.getTokenName;
 var getTokenAttrs = utils.getTokenAttrs;
 var refList = utils.refList;
 var bindingList = utils.bindingList;
-var attrUtils = require('./attr.js');
+var attrUtils = require('../attr.js');
 var applyAttrs = attrUtils.applyAttrs;
-var TYPE_ELEMENT = require('../const.js').TYPE_ELEMENT;
+var TYPE_ELEMENT = require('../../const.js').TYPE_ELEMENT;
 
 
 // Example: <b:svg src="..." use="#symbol-{id}" .../>

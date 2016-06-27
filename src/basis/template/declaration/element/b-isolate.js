@@ -1,4 +1,4 @@
-var utils = require('./utils.js');
+var utils = require('../utils.js');
 var getTokenAttrValues = utils.getTokenAttrValues;
 
 module.exports = function(template, options, token){

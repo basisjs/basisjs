@@ -1,4 +1,4 @@
-var getTokenAttrValues = require('./utils.js').getTokenAttrValues;
+var getTokenAttrValues = require('../utils.js').getTokenAttrValues;
 
 module.exports = function(template, options, token){
   var elAttrs = getTokenAttrValues(token);

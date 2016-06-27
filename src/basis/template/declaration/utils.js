@@ -137,7 +137,7 @@ function addTemplateWarn(template, options, message, loc){
     message = Object(message);
     message.loc = typeof loc == 'string' ? loc : getLocation(template, loc);
   }
-/** @cut */
+
   template.warns.push(message);
 }
 
