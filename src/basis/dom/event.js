@@ -73,23 +73,31 @@
   var DEPRECATED = /^(returnValue|keyLocation|layerX|layerY|webkitMovementX|webkitMovementY)$/;
 
   var KEYBOARD_EVENTS = {
-    'keyup': true,
-    'keydown': true,
-    'keypress': true
+    keyup: true,
+    keydown: true,
+    keypress: true
   };
 
   var MOUSE_EVENTS = {
-    'click': true,
-    'dblclick': true,
-    'mousedown': true,
-    'mouseup': true,
-    'mouseover': true,
-    'mousemove': true,
-    'mouseout': true,
-    'mouseenter': true,
-    'mouseleave': true,
-    'wheel': true
+    click: true,
+    dblclick: true,
+    mousedown: true,
+    mouseup: true,
+    mouseover: true,
+    mousemove: true,
+    mouseout: true,
+    mouseenter: true,
+    mouseleave: true,
+    wheel: true
   };
+
+  function isKeyboardEvent(event) {
+    return KEYBOARD_EVENTS[event.type];
+  }
+
+  function isMouseEvent(event) {
+    return MOUSE_EVENTS[event.type] || BROWSER_EVENTS.mousewheel.indexOf(event.type) > -1;
+  }
 
  /**
   * @param {string} eventName
@@ -132,21 +140,23 @@
             this[name] = event[name];
 
       var target = sender(event);
-      var eventExtension = {
-          event_: event,
+      basis.object.extend(this, {
+        event_: event,
 
-          sender: target,
-          target: target,
-          path: event.path ? basis.array(event.path) : getPath(target)
-      };
-      if (KEYBOARD_EVENTS[event.type]) {
-        basis.object.extend(eventExtension, {
+        sender: target,
+        target: target,
+        path: event.path ? basis.array(event.path) : getPath(target)
+      });
+      if (isKeyboardEvent(event))
+      {
+        basis.object.extend(this, {
           key: key(event),
           charCode: charCode(event)
         });
       }
-      else if (MOUSE_EVENTS[event.type]) {
-        basis.object.extend(eventExtension, {
+      else if (isMouseEvent(event))
+      {
+        basis.object.extend(this, {
           mouseLeft: mouseButton(event, MOUSE_LEFT),
           mouseMiddle: mouseButton(event, MOUSE_MIDDLE),
           mouseRight: mouseButton(event, MOUSE_RIGHT),
@@ -155,7 +165,6 @@
           wheelDelta: wheelDelta(event)
         });
       }
-      basis.object.extend(this, eventExtension);
     },
     stopBubble: function(){
       cancelBubble(this.event_);
