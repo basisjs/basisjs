@@ -120,7 +120,7 @@ var makeDeclaration = (function(){
 
                 tokens[i--] = basis.object.extend(text, {
                   refs: refs ? refs.split(/\s+/) : [],
-                  value: 'notrim' in elAttrs ? text.value : (text.value || '').replace(/^\s*[\r\n]+|[\r\n]+\s*$/g, '')
+                  value: 'notrim' in elAttrs ? text.value : (text.value || '').replace(/^ *(\r\n?|\n)( *$)?|(\r\n?|\n) *$/g, '')
                 });
               break;
 

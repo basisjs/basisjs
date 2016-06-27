@@ -8,7 +8,7 @@ module.exports = {
           '<b:text>hello world</b:text>'
         );
 
-        assert(text(template) === text('hello world'));
+        assert(text(template) === 'hello world');
       }
     },
     {
@@ -55,35 +55,36 @@ module.exports = {
           '</b:include>]'
         );
 
-        assert(text(template, { foo: 'foo', bar: 'bar' }) === text('[foo12bar]'));
+        assert(text(template, { foo: 'foo', bar: 'bar' }) === '[foo12bar]');
       }
     },
     {
       name: 'should add `element` reference',
       test: function(){
         var includeTemplate = createTemplate(
-          '<b:text>hello </b:text>'
+          '<b:text> </b:text>'
         );
         var template = createTemplate(
           '[<b:include src="#' + includeTemplate.templateId + '">' +
-            '<b:after>world</b:after>' +
+            '<b:before ref="element">hello</b:before>' +
+            '<b:after ref="element">world</b:after>' +
           '</b:include>]'
         );
 
-        assert(text(template) === text('[hello world]'));
+        assert(text(template) === '[hello world]');
       }
     },
     {
       name: 'edge cases',
       test: [
         {
-          name: 'single element',
+          name: 'empty element',
           test: function(){
             var template = createTemplate(
               '[<b:text/>]'
             );
 
-            assert(text(template) === text('[]'));
+            assert(text(template) === '[]');
           }
         },
         {
@@ -93,7 +94,47 @@ module.exports = {
               '[<b:text></b:text>]'
             );
 
-            assert(text(template) === text('[]'));
+            assert(text(template) === '[]');
+          }
+        },
+        {
+          name: 'space as content',
+          test: function(){
+            var template = createTemplate(
+              '[<b:text> </b:text>]'
+            );
+
+            assert(text(template) === '[ ]');
+          }
+        },
+        {
+          name: 'newline as content',
+          test: function(){
+            var template = createTemplate(
+              '[<b:text>\n</b:text>]'
+            );
+
+            assert(text(template) === '[]');
+          }
+        },
+        {
+          name: 'newline with surrounding spaces as content',
+          test: function(){
+            var template = createTemplate(
+              '[<b:text>  \n  </b:text>]'
+            );
+
+            assert(text(template) === '[]');
+          }
+        },
+        {
+          name: 'double newline with surrounding spaces as content',
+          test: function(){
+            var template = createTemplate(
+              '[<b:text>  \n\n  </b:text>]'
+            );
+
+            assert(text(template) === '[]');
           }
         },
         {
@@ -103,7 +144,7 @@ module.exports = {
               '[<b:text ref="">test</b:text>]'
             );
 
-            assert(text(template) === text('[test]'));
+            assert(text(template) === '[test]');
           }
         }
       ]
