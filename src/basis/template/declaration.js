@@ -28,9 +28,6 @@ var refList = utils.refList;
 var bindingList = utils.bindingList;
 var addTokenRef = utils.addTokenRef;
 var removeTokenRef = utils.removeTokenRef;
-var getTokenAttrValues = utils.getTokenAttrValues;
-var addTemplateWarn = utils.addTemplateWarn;
-var addTokenLocation = utils.addTokenLocation;
 var normalizeRefs = utils.normalizeRefs;
 
 var applyAttrs = attrUtils.applyAttrs;
@@ -87,7 +84,7 @@ var makeDeclaration = (function(){
             if (elementHandlers.hasOwnProperty(token.name))
               elementHandlers[token.name](template, options, token, result);
             /** @cut */ else
-            /** @cut */   addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + token.name + '>', token.loc);
+            /** @cut */   utils.addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + token.name + '>', token.loc);
 
             // don't add to declaration
             continue;
@@ -179,11 +176,11 @@ var makeDeclaration = (function(){
           break;
 
         default:
-          /** @cut */ addTemplateWarn(template, options, 'Unknown token type: ' + token.type, token);
+          /** @cut */ utils.addTemplateWarn(template, options, 'Unknown token type: ' + token.type, token);
           continue;
       }
 
-      /** @cut */ addTokenLocation(template, options, item, token);
+      /** @cut */ utils.addTokenLocation(template, options, item, token);
       /** @cut */ item.sourceToken = token;
 
       result.push(item);
@@ -235,7 +232,7 @@ var makeDeclaration = (function(){
             token[TOKEN_BINDINGS] = binding || 0;
             if (binding === false)
             {
-              /** @cut */ addTemplateWarn(template, options, 'Dictionary for l10n binding on text node can\'t be resolved: {' + bindings + '}', token.loc);
+              /** @cut */ utils.addTemplateWarn(template, options, 'Dictionary for l10n binding on text node can\'t be resolved: {' + bindings + '}', token.loc);
               token[TEXT_VALUE] = '{' + bindings + '}';
             }
           }
@@ -250,7 +247,7 @@ var makeDeclaration = (function(){
               var binding = absl10n(array[j], options.dictURI, template.l10n);   // TODO: move l10n binding process in separate function
               if (binding === false)
               {
-                /** @cut */ addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
+                /** @cut */ utils.addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
 
                 // make l10n binding static, i.e.
                 //   [['l10n:unresolved', 'x'], [0, '-', 1]]
@@ -285,7 +282,7 @@ var makeDeclaration = (function(){
               if (bind.length > 2)  // bind already processed
                 continue;
 
-              /** @cut */ addTokenLocation(template, options, bind, bind.info_);
+              /** @cut */ utils.addTokenLocation(template, options, bind, bind.info_);
 
               var bindNameParts = bind[1].split(':');
               var bindName = bindNameParts.pop();
@@ -303,7 +300,7 @@ var makeDeclaration = (function(){
               {
                 bind.push(0); // mark binding to not processing it anymore
 
-                /** @cut */ addTemplateWarn(template, options, 'Unpredictable class binding: ' + bind[0] + '{' + bind[1] + '}', bind.loc);
+                /** @cut */ utils.addTemplateWarn(template, options, 'Unpredictable class binding: ' + bind[0] + '{' + bind[1] + '}', bind.loc);
               }
             }
 
@@ -388,7 +385,7 @@ var makeDeclaration = (function(){
     // copy tokenizer warnings to template if any
     /** @cut */ if (source.warns)
     /** @cut */   source.warns.forEach(function(warn){
-    /** @cut */     addTemplateWarn(result, options, warn[0], warn[1].loc);
+    /** @cut */     utils.addTemplateWarn(result, options, warn[0], warn[1].loc);
     /** @cut */   });
 
     // start prevent recursion
@@ -438,7 +435,7 @@ var makeDeclaration = (function(){
       /** @cut */ {
       /** @cut */   var styleNSPrefix = result.styleNSPrefix[key];
       /** @cut */   if (!styleNSPrefix.used)
-      /** @cut */     addTemplateWarn(result, options, 'Unused namespace: ' + styleNSPrefix.name, styleNSPrefix.loc);
+      /** @cut */     utils.addTemplateWarn(result, options, 'Unused namespace: ' + styleNSPrefix.name, styleNSPrefix.loc);
       /** @cut */ }
 
       // resolve style prefix
@@ -527,7 +524,7 @@ var makeDeclaration = (function(){
 
       // process styles list
       /** @cut */ result.styles = originalResources.map(function(item){
-      /** @cut */   var sourceUrl = item.url || getTokenAttrValues(item.token).src;
+      /** @cut */   var sourceUrl = item.url || utils.getTokenAttrValues(item.token).src;
       /** @cut */   return {
       /** @cut */     resource: item.url || false,
       /** @cut */     sourceUrl: basis.resource.resolveURI(sourceUrl),
@@ -544,7 +541,7 @@ var makeDeclaration = (function(){
     /** @cut */ {
     /** @cut */   var define = options.defines[key];
     /** @cut */   if (!define.used)
-    /** @cut */     addTemplateWarn(result, options, 'Unused define: ' + key, define.loc);
+    /** @cut */     utils.addTemplateWarn(result, options, 'Unused define: ' + key, define.loc);
     /** @cut */ }
 
     if (!warns.length)

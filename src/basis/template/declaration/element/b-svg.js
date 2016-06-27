@@ -43,7 +43,7 @@ module.exports = function(template, options, token, result){
         }
 
         var svgUrl = basis.resource.resolveURI(attrToken.value, template.baseURI, '<b:' + token.name + ' src=\"{url}\"/>');
-        arrayAdd(template.deps, basis.resource(svgUrl));
+        arrayAdd(template.deps, basis.resource.buildCloak(svgUrl));
         template.resources.push({
           type: 'svg',
           url: svgUrl

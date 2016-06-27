@@ -1,5 +1,4 @@
 var hasOwnProperty = Object.prototype.hasOwnProperty;
-var arrayAdd = basis.array.add;
 var consts = require('../../const.js');
 var utils = require('../utils.js');
 var getTokenAttrValues = utils.getTokenAttrValues;
@@ -7,20 +6,20 @@ var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
 var CLASS_BINDING_INVERT = consts.CLASS_BINDING_INVERT;
 var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
 
-function addStateInfo(template, name, type, value){
-  if (!hasOwnProperty.call(template.states, name))
-    template.states[name] = {};
-
-  var info = template.states[name];
-  var isArray = Array.isArray(value);
-
-  if (!hasOwnProperty.call(info, type) || !isArray)
-    info[type] = isArray ? basis.array(value) : value;
-  else
-    value.forEach(function(item){
-      arrayAdd(info[type], item);
-    });
-}
+/** @cut */ function addStateInfo(template, name, type, value){
+/** @cut */   if (!hasOwnProperty.call(template.states, name))
+/** @cut */     template.states[name] = {};
+/** @cut */
+/** @cut */   var info = template.states[name];
+/** @cut */   var isArray = Array.isArray(value);
+/** @cut */
+/** @cut */   if (!hasOwnProperty.call(info, type) || !isArray)
+/** @cut */     info[type] = isArray ? basis.array(value) : value;
+/** @cut */   else
+/** @cut */     value.forEach(function(item){
+/** @cut */       basis.array.add(info[type], item);
+/** @cut */     });
+/** @cut */ }
 
 module.exports = function(template, options, token){
   var elAttrs = getTokenAttrValues(token);

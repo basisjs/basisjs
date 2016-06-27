@@ -1,3 +1,4 @@
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 var arrayAdd = basis.array.add;
 var utils = require('../utils.js');
 var getTokenAttrValues = utils.getTokenAttrValues;

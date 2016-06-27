@@ -476,7 +476,7 @@ module.exports = function(template, options, token, result){
         }
         else
         {
-          decl.tokens.push.apply(decl.tokens, process([child], template, options));
+          decl.tokens.push.apply(decl.tokens, options.process([child], template, options));
         }
       }
 

@@ -4,7 +4,6 @@ var styleNamespaceIsolate = styleUtils.styleNamespaceIsolate;
 var addStyle = styleUtils.addStyle;
 var parseOptionsValue = utils.parseOptionsValue;
 var getTokenAttrValues = utils.getTokenAttrValues;
-var getLocation = utils.getLocation;
 
 module.exports = function(template, options, token){
   var useStyle = true;
@@ -30,7 +29,7 @@ module.exports = function(template, options, token){
         styleNamespaceIsolate[src] = options.genIsolateMarker();
 
       template.styleNSPrefix[styleNamespace] = {
-        /** @cut */ loc: getLocation(template, utils.getTokenAttrs(token)[namespaceAttrName].loc),
+        /** @cut */ loc: utils.getLocation(template, utils.getTokenAttrs(token)[namespaceAttrName].loc),
         /** @cut */ used: false,
         name: styleNamespace,
         prefix: styleNamespaceIsolate[src]

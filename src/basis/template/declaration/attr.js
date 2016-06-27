@@ -6,14 +6,10 @@ var addTokenRef = utils.addTokenRef;
 var getTokenName = utils.getTokenName;
 var getTokenAttrValues = utils.getTokenAttrValues;
 var getTokenAttrs = utils.getTokenAttrs;
-var addTokenLocation = utils.addTokenLocation;
-var getLocation = utils.getLocation;
-var addTemplateWarn = utils.addTemplateWarn;
 
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
 var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
-var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
 var TYPE_ATTRIBUTE_STYLE = consts.TYPE_ATTRIBUTE_STYLE;
 var ATTR_NAME = consts.ATTR_NAME;
 var ATTR_NAME_BY_TYPE = consts.ATTR_NAME_BY_TYPE;
@@ -50,16 +46,16 @@ function getStyleBindingProperty(attr, name){
         return binding;
 }
 
-function getAttributeValueLocationMap(template, token){
-  if (!token || !token.map_)
-    return null;
-
-  return token.map_.reduce(function(res, part){
-    if (!part.binding)
-      res[part.value] = getLocation(template, part.loc);
-    return res;
-  }, {});
-}
+/** @cut */ function getAttributeValueLocationMap(template, token){
+/** @cut */   if (!token || !token.map_)
+/** @cut */     return null;
+/** @cut */
+/** @cut */   return token.map_.reduce(function(res, part){
+/** @cut */     if (!part.binding)
+/** @cut */       res[part.value] = utils.getLocation(template, part.loc);
+/** @cut */     return res;
+/** @cut */   }, {});
+/** @cut */ }
 
 function setStylePropertyBinding(template, options, host, attr, property, showByDefault, defaultValue){
   var styleAttr = getAttrByName(host, 'style');
@@ -67,7 +63,7 @@ function setStylePropertyBinding(template, options, host, attr, property, showBy
   if (!styleAttr)
   {
     styleAttr = [TYPE_ATTRIBUTE_STYLE, 0, 0];
-    /** @cut */ addTokenLocation(template, options, styleAttr, attr);
+    /** @cut */ utils.addTokenLocation(template, options, styleAttr, attr);
     host.push(styleAttr);
   }
 
@@ -130,12 +126,12 @@ function addRoleAttribute(template, options, host, role/*, sourceToken*/){
 
     /** @cut */ var sourceToken = arguments[4];
     /** @cut */ item.sourceToken = sourceToken;
-    /** @cut */ addTokenLocation(template, options, item, sourceToken);
+    /** @cut */ utils.addTokenLocation(template, options, item, sourceToken);
 
     host.push(item);
   }
   /** @cut */ else
-  /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, sourceToken.loc);
+  /** @cut */   utils.addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, sourceToken.loc);
 }
 
 function applyAttrs(template, options, host, attrs){
@@ -200,7 +196,7 @@ function applyAttrs(template, options, host, attrs){
 
     /** @cut */ item.valueLocMap = getAttributeValueLocationMap(template, attr);
     /** @cut */ item.sourceToken = attr;
-    /** @cut */ addTokenLocation(template, options, item, attr);
+    /** @cut */ utils.addTokenLocation(template, options, item, attr);
 
     host.push(item);
   }
@@ -221,13 +217,13 @@ function modifyAttr(template, options, include, tokenRefMap, token, name, action
 
   if (!attrs.name)
   {
-    /** @cut */ addTemplateWarn(template, options, 'Instruction <b:' + token.name + '> has no `name` attribute', token.loc);
+    /** @cut */ utils.addTemplateWarn(template, options, 'Instruction <b:' + token.name + '> has no `name` attribute', token.loc);
     return;
   }
 
   if (!ATTR_NAME_RX.test(attrs.name))
   {
-    /** @cut */ addTemplateWarn(template, options, 'Bad attribute name `' + attrs.name + '`', token.loc);
+    /** @cut */ utils.addTemplateWarn(template, options, 'Bad attribute name `' + attrs.name + '`', token.loc);
     return;
   }
 
@@ -294,7 +290,7 @@ function modifyAttr(template, options, include, tokenRefMap, token, name, action
 
         itAttrs.push(itAttrToken);
         /** @cut */ itAttrToken.valueLocMap = valueLocMap;
-        /** @cut */ addTokenLocation(template, options, itAttrToken, token);
+        /** @cut */ utils.addTokenLocation(template, options, itAttrToken, token);
       }
 
       switch (action){
@@ -490,7 +486,7 @@ function modifyAttr(template, options, include, tokenRefMap, token, name, action
             /** @cut */     removeToken: token,
             /** @cut */     includeToken: include,
             /** @cut */     token: [
-            /** @cut */       TYPE_ATTRIBUTE_CLASS,
+            /** @cut */       consts.TYPE_ATTRIBUTE_CLASS,
             /** @cut */       removedBindings,
             /** @cut */       0,
             /** @cut */       removedValues.join(' ')
@@ -517,7 +513,7 @@ function modifyAttr(template, options, include, tokenRefMap, token, name, action
     }
     else
     {
-      /** @cut */ addTemplateWarn(template, options, 'Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')', token.loc);
+      /** @cut */ utils.addTemplateWarn(template, options, 'Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')', token.loc);
     }
   }
 }
