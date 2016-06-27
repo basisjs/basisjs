@@ -2,7 +2,6 @@
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var arraySearch = basis.array.search;
 var arrayAdd = basis.array.add;
-var arrayRemove = basis.array.remove;
 
 var tokenize = require('./tokenize.js');
 var isolateCss = require('./isolateCss.js');
@@ -17,7 +16,9 @@ var elementHandlers = {
   l10n: require('./declaration/element/b-l10n.js'),
   define: require('./declaration/element/b-define.js'),
   template: require('./declaration/element/b-template.js'),
-  import: require('./declaration/element/b-import.js')
+  import: require('./declaration/element/b-import.js'),
+  text: require('./declaration/element/b-text.js'),
+  include: require('./declaration/element/b-include.js')
 };
 
 var resourceHash = utils.resourceHash;
@@ -28,33 +29,22 @@ var bindingList = utils.bindingList;
 var addTokenRef = utils.addTokenRef;
 var removeTokenRef = utils.removeTokenRef;
 var getTokenAttrValues = utils.getTokenAttrValues;
-var getTokenAttrs = utils.getTokenAttrs;
-var getLocation = utils.getLocation;
-var parseOptionsValue = utils.parseOptionsValue;
 var addTemplateWarn = utils.addTemplateWarn;
 var addTokenLocation = utils.addTokenLocation;
+var normalizeRefs = utils.normalizeRefs;
 
-var applyShowHideAttribute = attrUtils.applyShowHideAttribute;
-var modifyAttr = attrUtils.modifyAttr;
-var getAttrByName = attrUtils.getAttrByName;
-var addRoleAttribute = attrUtils.addRoleAttribute;
 var applyAttrs = attrUtils.applyAttrs;
 
 var styleNamespaceIsolate = styleUtils.styleNamespaceIsolate;
-var adoptStyles = styleUtils.adoptStyles;
-var addStyle = styleUtils.addStyle;
 var isolateTokens = styleUtils.isolateTokens;
 
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
 var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
-var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
 var TYPE_TEXT = consts.TYPE_TEXT;
 var TYPE_COMMENT = consts.TYPE_COMMENT;
 var TOKEN_TYPE = consts.TOKEN_TYPE;
 var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
-var TOKEN_REFS = consts.TOKEN_REFS;
-var ATTR_NAME = consts.ATTR_NAME;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var TEXT_VALUE = consts.TEXT_VALUE;
@@ -95,465 +85,9 @@ var makeDeclaration = (function(){
           if (token.prefix == 'b')
           {
             if (elementHandlers.hasOwnProperty(token.name))
-            {
               elementHandlers[token.name](template, options, token, result);
-              continue;
-            }
-
-            var elAttrs = getTokenAttrValues(token);
-            var elAttrs_ = getTokenAttrs(token);
-
-            switch (token.name)
-            {
-              // processing by separate handlers
-              // case 'style':
-              // case 'svg':
-              // case 'isolate':
-              // case 'l10n':
-              // case 'define':
-              // case 'template':
-              // case 'import':
-
-              case 'text':
-                var text = token.children[0] || { type: 3, value: '' };
-                var refs = (elAttrs.ref || '').trim();
-
-                tokens[i--] = basis.object.extend(text, {
-                  refs: refs ? refs.split(/\s+/) : [],
-                  value: 'notrim' in elAttrs ? text.value : (text.value || '').replace(/^ *(\r\n?|\n)( *$)?|(\r\n?|\n) *$/g, '')
-                });
-              break;
-
-              case 'include':
-                /** @cut */ if ('src' in elAttrs == false)
-                /** @cut */   addTemplateWarn(template, options, '<b:include> has no `src` attribute', token.loc);
-
-                var templateSrc = elAttrs.src;
-                if (templateSrc)
-                {
-                  var resource;
-
-                  // Add resolve warnings to template warnings list
-                  // TODO: improve solution with no basis.dev.warn overloading
-                  /** @cut */ var basisWarn = basis.dev.warn;
-                  /** @cut */ basis.dev.warn = function(){
-                  /** @cut */   addTemplateWarn(template, options, basis.array(arguments).join(' '), token.loc);
-                  /** @cut */   if (!basis.NODE_ENV)
-                  /** @cut */     basisWarn.apply(this, arguments);
-                  /** @cut */ };
-
-                  if (/^#[^\d]/.test(templateSrc))
-                  {
-                    resource = template.templates[templateSrc.substr(1)];
-                    if (resource)
-                      resource = makeDeclaration(
-                        clone(resource.tokens),
-                        resource.baseURI,
-                        resource.options,
-                        resource.sourceUrl
-                      );
-                  }
-                  else
-                    resource = options.resolveResource(templateSrc, template.baseURI);
-
-                  /** @cut */ basis.dev.warn = basisWarn;
-
-                  if (!resource)
-                  {
-                    /** @cut */ addTemplateWarn(template, options, '<b:include src="' + templateSrc + '"> is not resolved, instruction ignored', token.loc);
-                    continue;
-                  }
-
-                  // prevent recursion
-                  if (includeStack.indexOf(resource) == -1)
-                  {
-                    var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
-                    var includeOptions = elAttrs.options ? parseOptionsValue(elAttrs.options) : null;
-                    var decl = getDeclFromSource(resource, '', true, basis.object.merge(options, {
-                      includeOptions: includeOptions
-                    }));
-
-                    template.includes.push({
-                      token: token,
-                      resource: resource,
-                      nested: decl.includes
-                    });
-
-                    if (resource.bindingBridge)
-                      arrayAdd(template.deps, resource);
-
-                    if (decl.deps)
-                      addUnique(template.deps, decl.deps);
-
-                    if (decl.warns)
-                      template.warns.push.apply(template.warns, decl.warns);
-
-                    /** @cut */ if (decl.removals)
-                    /** @cut */   template.removals.push.apply(template.removals, decl.removals);
-
-                    if (decl.resources)
-                    {
-                      var resources = decl.resources;
-
-                      if ('no-style' in elAttrs)
-                        // ignore style resource when <b:include no-style/>
-                        resources = resources.filter(function(item){
-                          return item.type != 'style';
-                        });
-                      else
-                        adoptStyles(resources, isolatePrefix, token);
-
-                      template.resources.unshift.apply(template.resources, resources);
-                    }
-
-                    var instructions = basis.array(token.children);
-                    var styleNSIsolate = {
-                      /** @cut */ map: options.styleNSIsolateMap,
-                      prefix: options.genIsolateMarker()
-                    };
-                    var tokenRefMap = normalizeRefs(decl.tokens, styleNSIsolate);
-
-                    for (var key in decl.styleNSPrefix)
-                      template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
-                        /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
-                      });
-
-                    // isolate
-                    if (isolatePrefix)
-                    {
-                      isolateTokens(decl.tokens, isolatePrefix);
-
-                      /** @cut */ if (decl.removals)
-                      /** @cut */   decl.removals.forEach(function(item){
-                      /** @cut */     isolateTokens([item.token], isolatePrefix);
-                      /** @cut */   });
-                    }
-
-                    for (var includeAttrName in elAttrs_)
-                      switch (includeAttrName)
-                      {
-                        case 'class':
-                          // <b:include class=".."> -> <b:append-class value="..">
-                          instructions.unshift({
-                            type: TYPE_ELEMENT,
-                            prefix: 'b',
-                            name: 'append-class',
-                            attrs: [
-                              basis.object.complete({
-                                name: 'value'
-                              }, elAttrs_['class'])
-                            ]
-                          });
-                          break;
-
-                        case 'id':
-                          // <b:include id=".."> -> <b:set-attr name="id" value="..">
-                          instructions.unshift({
-                            type: TYPE_ELEMENT,
-                            prefix: 'b',
-                            name: 'set-attr',
-                            attrs: [
-                              {
-                                type: TYPE_ATTRIBUTE,
-                                name: 'name',
-                                value: 'id'
-                              },
-                              basis.object.complete({
-                                name: 'value'
-                              }, elAttrs_.id)
-                            ]
-                          });
-                          break;
-
-                        case 'ref':
-                          // <b:include ref="..">
-                          if (tokenRefMap.element)
-                            elAttrs.ref.trim().split(/\s+/).map(function(refName){
-                              addTokenRef(tokenRefMap.element.token, refName);
-                            });
-                          break;
-
-                        case 'show':
-                        case 'hide':
-                        case 'visible':
-                        case 'hidden':
-                          var tokenRef = tokenRefMap.element;
-                          var token = tokenRef && tokenRef.token;
-
-                          if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
-                            applyShowHideAttribute(template, options, token, elAttrs_[includeAttrName]);
-                          break;
-
-                        case 'role':
-                          var role = elAttrs_.role.value;
-
-                          if (role)
-                          {
-                            if (!/[\/\(\)]/.test(role))
-                            {
-                              var loc;
-                              /** @cut */ loc = getLocation(template, elAttrs_.role.loc);
-                              applyRole(decl.tokens, role, elAttrs_.role, loc);
-                            }
-                            /** @cut */ else
-                            /** @cut */   addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
-                          }
-
-                          break;
-                      }
-
-                    for (var j = 0, child; child = instructions[j]; j++)
-                    {
-                      // process special elements (basis namespace)
-                      if (child.type == TYPE_ELEMENT && child.prefix == 'b')
-                      {
-                        switch (child.name)
-                        {
-                          case 'style':
-                            var childAttrs = getTokenAttrValues(child);
-                            var childAttrs_ = getTokenAttrs(child);
-                            var useStyle = true;
-
-                            if (childAttrs.options)
-                            {
-                              var filterOptions = parseOptionsValue(childAttrs.options);
-                              for (var name in filterOptions)
-                                useStyle = useStyle && filterOptions[name] == includeOptions[name];
-                            }
-
-                            if (useStyle)
-                            {
-                              var namespaceAttrName = childAttrs.namespace ? 'namespace' : 'ns';
-                              var styleNamespace = childAttrs[namespaceAttrName];
-                              var styleIsolate = styleNamespace ? styleNamespaceIsolate : isolatePrefix;
-                              var src = addStyle(template, child, childAttrs.src, styleIsolate, styleNamespace);
-
-                              if (styleNamespace)
-                              {
-                                if (src in styleNamespaceIsolate == false)
-                                  styleNamespaceIsolate[src] = options.genIsolateMarker();
-
-                                template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
-                                  /** @cut */ loc: getLocation(template, childAttrs_[namespaceAttrName].loc),
-                                  /** @cut */ used: false,
-                                  name: styleNamespace,
-                                  prefix: styleNamespaceIsolate[src]
-                                };
-                              }
-                            }
-                            /** @cut */ else
-                            /** @cut */ {
-                            /** @cut */   child.sourceUrl = template.sourceUrl;
-                            /** @cut */   template.resources.push([null, styleIsolate, child, token, childAttrs.src ? false : child.children[0] || true, styleNamespace]);
-                            /** @cut */ }
-                            break;
-
-                          case 'replace':
-                          case 'remove':
-                          case 'before':
-                          case 'after':
-                            var replaceOrRemove = child.name == 'replace' || child.name == 'remove';
-                            var childAttrs = getTokenAttrValues(child);
-                            var ref = 'ref' in childAttrs || !replaceOrRemove ? childAttrs.ref : 'element';
-                            var tokenRef = ref && tokenRefMap[ref];
-
-                            if (tokenRef)
-                            {
-                              var parent = tokenRef.owner;
-                              var pos = parent.indexOf(tokenRef.token);
-                              if (pos != -1)
-                              {
-                                var args = [pos + (child.name == 'after'), replaceOrRemove];
-
-                                if (child.name != 'remove')
-                                  args = args.concat(process(child.children, template, options) || []);
-
-                                parent.splice.apply(parent, args);
-
-                                /** @cut */ if (replaceOrRemove)
-                                /** @cut */   template.removals.push({
-                                /** @cut */     reason: '<b:' + child.name + '>',
-                                /** @cut */     removeToken: child,
-                                /** @cut */     includeToken: token,
-                                /** @cut */     token: tokenRef.token
-                                /** @cut */   });
-                              }
-                            }
-                            break;
-
-                          case 'prepend':
-                          case 'append':
-                            var childAttrs = getTokenAttrValues(child);
-                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-                            var tokenRef = ref && tokenRefMap[ref];
-                            var token = tokenRef && tokenRef.token;
-
-                            if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
-                            {
-                              var children = process(child.children, template, options) || [];
-
-                              if (child.name == 'prepend')
-                                token.splice.apply(token, [ELEMENT_ATTRIBUTES_AND_CHILDREN, 0].concat(children));
-                              else
-                                token.push.apply(token, children);
-                            }
-                            break;
-
-                          case 'show':
-                          case 'hide':
-                          case 'visible':
-                          case 'hidden':
-                            var childAttrs = getTokenAttrValues(child);
-                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-                            var tokenRef = ref && tokenRefMap[ref];
-                            var token = tokenRef && tokenRef.token;
-
-                            if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
-                            {
-                              var expr = getTokenAttrs(child).expr;
-
-                              if (!expr)
-                              {
-                                /** @cut */ addTemplateWarn(template, options, 'Instruction <b:' + child.name + '> has no `expr` attribute', child.loc);
-                                break;
-                              }
-
-                              applyShowHideAttribute(template, options, token, basis.object.complete({
-                                name: child.name,
-                              }, getTokenAttrs(child).expr));
-                            }
-
-                            break;
-
-                          case 'attr':
-                          case 'set-attr':
-                            modifyAttr(template, options, token, tokenRefMap, child, false, 'set');
-                            break;
-
-                          case 'append-attr':
-                            modifyAttr(template, options, token, tokenRefMap, child, false, 'append');
-                            break;
-
-                          case 'remove-attr':
-                            modifyAttr(template, options, token, tokenRefMap, child, false, 'remove');
-                            break;
-
-                          case 'class':
-                          case 'append-class':
-                            modifyAttr(template, options, token, tokenRefMap, child, 'class', 'append');
-                            break;
-
-                          case 'set-class':
-                            modifyAttr(template, options, token, tokenRefMap, child, 'class', 'set');
-                            break;
-
-                          case 'remove-class':
-                            var childAttrs_ = getTokenAttrs(child);
-                            var valueAttr = childAttrs_.value;
-
-                            // apply namespace prefix for values
-                            if (valueAttr)
-                            {
-                              valueAttr.value = valueAttr.value
-                                .split(/\s+/)
-                                .map(function(name){
-                                  return name.indexOf(':') > 0 ? styleNSIsolate.prefix + name : name;
-                                })
-                                .join(' ');
-
-                              if (valueAttr.binding)
-                                valueAttr.binding.forEach(function(bind){
-                                  if (bind[0].indexOf(':') > 0)
-                                    bind[0] = styleNSIsolate.prefix + bind[0];
-                                });
-
-                              // probably should be removed, as map_ is not used
-                              if (valueAttr.map_)
-                                valueAttr.map_.forEach(function(item){
-                                  if (item.value.indexOf(':') > 0)
-                                    item.value = styleNSIsolate.prefix + item.value;
-                                });
-                            }
-
-                            modifyAttr(template, options, token, tokenRefMap, child, 'class', 'remove-class');
-                            break;
-
-                          case 'add-ref':
-                            var childAttrs = getTokenAttrValues(child);
-                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-                            var tokenRef = ref && tokenRefMap[ref];
-                            var token = tokenRef && tokenRef.token;
-
-                            if (token && childAttrs.name)
-                              addTokenRef(token, childAttrs.name);
-                            break;
-
-                          case 'remove-ref':
-                            var childAttrs = getTokenAttrValues(child);
-                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-                            var tokenRef = ref && tokenRefMap[ref];
-                            var token = tokenRef && tokenRef.token;
-
-                            if (token)
-                              removeTokenRef(token, childAttrs.name || childAttrs.ref);
-                            break;
-
-                          case 'role':
-                          case 'set-role':
-                            var childAttrs = getTokenAttrValues(child);
-                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-                            var tokenRef = ref && tokenRefMap[ref];
-                            var token = tokenRef && tokenRef.token;
-
-                            if (token)
-                            {
-                              arrayRemove(token, getAttrByName(token, 'role-marker'));
-                              addRoleAttribute(template, options, token, childAttrs.value || '', child);
-                            }
-                            break;
-
-                          case 'remove-role':
-                            var childAttrs = getTokenAttrValues(child);
-                            var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-                            var tokenRef = ref && tokenRefMap[ref];
-                            var token = tokenRef && tokenRef.token;
-
-                            if (token)
-                              arrayRemove(token, getAttrByName(token, 'role-marker'));
-                            break;
-
-                          default:
-                            /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + child.name + '>', child.loc);
-                        }
-                      }
-                      else
-                      {
-                        decl.tokens.push.apply(decl.tokens, process([child], template, options) || []);
-                      }
-                    }
-
-                    if (tokenRefMap.element)
-                      removeTokenRef(tokenRefMap.element.token, 'element');
-
-                    result.push.apply(result, decl.tokens);
-                  }
-                  else
-                  {
-                    /** @cut */ var stack = includeStack.slice(includeStack.indexOf(resource) || 0).concat(resource).map(function(res){
-                    /** @cut */   if (res instanceof Template)
-                    /** @cut */     res = res.source;
-                    /** @cut */   return res.id || res.url || '[inline template]';
-                    /** @cut */ });
-                    /** @cut */ template.warns.push('Recursion: ', stack.join(' -> '));
-                    /** @cut */ basis.dev.warn('Recursion in template: ', stack.join(' -> '));
-                  }
-                }
-
-              break;
-
-              default:
-                /** @cut */ addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + token.name + '>', token.loc);
-            }
+            /** @cut */ else
+            /** @cut */   addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + token.name + '>', token.loc);
 
             // don't add to declaration
             continue;
@@ -607,10 +141,7 @@ var makeDeclaration = (function(){
           ];
 
           applyAttrs(template, options, item, token.attrs);
-          item.push.apply(item, process(token.children, template, options) || []);
-
-          /** @cut */ addTokenLocation(template, options, item, token);
-          /** @cut */ item.sourceToken = token;
+          item.push.apply(item, process(token.children, template, options));
 
           break;
 
@@ -627,9 +158,6 @@ var makeDeclaration = (function(){
           // TEXT_VALUE = 3
           if (!refs || token.value != '{' + refs.join('|') + '}')
             item.push(token.value);
-
-          /** @cut */ addTokenLocation(template, options, item, token);
-          /** @cut */ item.sourceToken = token;
 
           break;
 
@@ -648,20 +176,21 @@ var makeDeclaration = (function(){
             if (!refs || token.value != '{' + refs.join('|') + '}')
               item.push(token.value);
 
-          /** @cut */ addTokenLocation(template, options, item, token);
-          /** @cut */ item.sourceToken = token;
-
           break;
+
+        default:
+          /** @cut */ addTemplateWarn(template, options, 'Unknown token type: ' + token.type, token);
+          continue;
       }
 
-      while (item[item.length - 1] === 0)
-        item.pop();
+      /** @cut */ addTokenLocation(template, options, item, token);
+      /** @cut */ item.sourceToken = token;
 
       result.push(item);
     }
 
 
-    return result.length ? result : 0;
+    return result;
   }
 
   function absl10n(value, dictURI, l10nMap){
@@ -685,104 +214,6 @@ var makeDeclaration = (function(){
     }
 
     return value;
-  }
-
-  function applyRole(tokens, role, sourceToken, location, stIdx){
-    for (var i = stIdx || 0, token; token = tokens[i]; i++)
-    {
-      var tokenType = token[TOKEN_TYPE];
-
-      switch (tokenType)
-      {
-        case TYPE_ELEMENT:
-          applyRole(token, role, sourceToken, location, ELEMENT_ATTRIBUTES_AND_CHILDREN);
-          break;
-
-        case TYPE_ATTRIBUTE:
-          if (token[ATTR_NAME] == 'role-marker')
-          {
-            var roleExpression = token[TOKEN_BINDINGS][1];
-            var currentRole = roleExpression[1];
-
-            roleExpression[1] = '/' + role + (currentRole ? '/' + currentRole : '');
-
-            /** @cut */ token.sourceToken = sourceToken;
-            /** @cut */ token.loc = location;
-          }
-          break;
-      }
-    }
-  }
-
-  function normalizeRefs(tokens, isolate, map, stIdx){
-    function processName(name){
-      // add prefix only for `ns:name` and ignore global namespace `:name`
-      if (name.indexOf(':') <= 0)
-        return name;
-
-      /** @cut */ var prefix = name.split(':')[0];
-      /** @cut */ isolate.map[isolate.prefix + prefix] = prefix;
-
-      return isolate.prefix + name;
-    }
-
-    if (!map)
-      map = {};
-
-    for (var i = stIdx || 0, token; token = tokens[i]; i++)
-    {
-      var tokenType = token[TOKEN_TYPE];
-      var refs = token[TOKEN_REFS];
-
-      if (isolate && tokenType == TYPE_ATTRIBUTE_CLASS)
-      {
-        var bindings = token[TOKEN_BINDINGS];
-        var valueIndex = ATTR_VALUE_INDEX[tokenType];
-
-        if (token[valueIndex])
-          token[valueIndex] = token[valueIndex].replace(/\S+/g, processName);
-
-        /** @cut */ if (token.valueLocMap)
-        /** @cut */ {
-        /** @cut */   var oldValueLocMap = token.valueLocMap;
-        /** @cut */   token.valueLocMap = {};
-        /** @cut */   for (var name in oldValueLocMap)
-        /** @cut */     token.valueLocMap[processName(name)] = oldValueLocMap[name];
-        /** @cut */ }
-
-        if (bindings)
-          for (var k = 0, bind; bind = bindings[k]; k++)
-            bind[0] = processName(bind[0]);
-      }
-
-      if (tokenType != TYPE_ATTRIBUTE_EVENT && refs)
-      {
-        for (var j = refs.length - 1, refName; refName = refs[j]; j--)
-        {
-          if (refName.indexOf(':') != -1)
-          {
-            removeTokenRef(token, refName);
-            continue;
-          }
-
-          if (map[refName])
-            removeTokenRef(map[refName].token, refName);
-
-          if (token[TOKEN_BINDINGS] == refName)
-            token[TOKEN_BINDINGS] = j + 1;
-
-          map[refName] = {
-            owner: tokens,
-            token: token
-          };
-        }
-      }
-
-      if (tokenType === TYPE_ELEMENT)
-        normalizeRefs(token, isolate, map, ELEMENT_ATTRIBUTES_AND_CHILDREN);
-    }
-
-    return map;
   }
 
   function applyDefines(tokens, template, options, stIdx){
@@ -894,10 +325,15 @@ var makeDeclaration = (function(){
 
     // make copy of options (as modify it) and normalize
     options = basis.object.slice(options);
-    options.makeDeclaration = makeDeclaration;
-    options.getDeclFromSource = getDeclFromSource;
-    options.resolveResource = resolveResource;
+
+    options.Template = Template;
     options.genIsolateMarker = genIsolateMarker;
+    options.resolveResource = resolveResource;
+    options.getDeclFromSource = getDeclFromSource;
+    options.makeDeclaration = makeDeclaration;
+    options.process = process;
+
+    options.includeStack = includeStack;
     options.includeOptions = options.includeOptions || {};
     options.templates = {};
     options.defines = {};
@@ -965,7 +401,7 @@ var makeDeclaration = (function(){
     includeStack.pop();
 
     // there must be at least one token in result
-    if (!result.tokens)
+    if (!result.tokens.length)
       result.tokens = [[TYPE_TEXT, 0, 0, '']];
 
     // store source for debug
@@ -1117,21 +553,6 @@ var makeDeclaration = (function(){
     return result;
   };
 })();
-
-function clone(value){
-  if (Array.isArray(value))
-    return value.map(clone);
-
-  if (value && value.constructor === Object)
-  {
-    var result = {};
-    for (var key in value)
-      result[key] = clone(value[key]);
-    return result;
-  }
-
-  return value;
-}
 
 /**
 *

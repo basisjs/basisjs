@@ -139,7 +139,6 @@ function addRoleAttribute(template, options, host, role/*, sourceToken*/){
 }
 
 function applyAttrs(template, options, host, attrs){
-  var styleAttr;
   var displayAttr;
   var visibilityAttr;
   var item;
@@ -197,9 +196,6 @@ function applyAttrs(template, options, host, attrs){
       // ATTR_VALUE = 4
       if (attr.value && (!options.optimizeSize || !attr.binding || attr.type != TYPE_ATTRIBUTE))
         item.push(attr.value);
-
-      if (attr.type == TYPE_ATTRIBUTE_STYLE)
-        styleAttr = item;
     }
 
     /** @cut */ item.valueLocMap = getAttributeValueLocationMap(template, attr);
