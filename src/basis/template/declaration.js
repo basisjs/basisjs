@@ -102,6 +102,48 @@ var makeDeclaration = (function(){
       switch (token.type)
       {
         case TYPE_ELEMENT:
+          var name = getTokenName(token);
+
+          if (hasOwnProperty.call(options.templates, name))
+          {
+            var decl = options.templates[name].decl;
+            var declTokens = cloneDecl(decl.tokens);
+            var styleNSIsolate = {
+              /** @cut */ map: options.styleNSIsolateMap,
+              prefix: genIsolateMarker()
+            };
+            var tokenRefMap = normalizeRefs(declTokens, styleNSIsolate);
+
+            template.includes.push({
+              token: token,
+              resource: null, // TODO
+              nested: decl.includes
+            });
+
+            if (decl.deps)
+              addUnique(template.deps, decl.deps);
+
+            if (decl.resources)
+              addUnique(template.resources, decl.resources);
+
+            if (decl.warns)
+              template.warns.push.apply(template.warns, decl.warns);
+
+            /** @cut */ if (decl.removals)
+            /** @cut */   template.removals.push.apply(template.removals, decl.removals);
+
+            for (var key in decl.styleNSPrefix)
+              template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
+                /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+              });
+
+            if (tokenRefMap.element)
+              removeTokenRef(tokenRefMap.element.token, 'element');
+
+            result.push.apply(result, declTokens);
+            continue;
+          }
+
           // special elements (basis namespace)
           if (token.prefix == 'b')
           {
@@ -128,7 +170,7 @@ var makeDeclaration = (function(){
                 /** @cut */ if ('type' in elAttrs == false)
                 /** @cut */   addTemplateWarn(template, options, '<b:define> has no `type` attribute', token.loc);
                 /** @cut */ if (hasOwnProperty.call(options.defines, elAttrs.name))
-                /** @cut */   addTemplateWarn(template, options, '<b:define> for `' + elAttrs.name + '` has already defined', token.loc);
+                /** @cut */   addTemplateWarn(template, options, '<b:define> with name `' + elAttrs.name + '` is already defined', token.loc);
 
                 if ('name' in elAttrs && 'type' in elAttrs && !hasOwnProperty.call(options.defines, elAttrs.name))
                 {
@@ -215,6 +257,68 @@ var makeDeclaration = (function(){
                 }
               break;
 
+              case 'template':
+                /** @cut */ if ('name' in elAttrs == false)
+                /** @cut */   addTemplateWarn(template, options, '<b:template> has no `name` attribute', token.loc);
+                /** @cut */ else if (/^\d/.test(elAttrs.name))
+                /** @cut */   addTemplateWarn(template, options, '<b:template> name can\'t starts with number', token.loc);
+                /** @cut */ if (hasOwnProperty.call(template.templates, elAttrs.name))
+                /** @cut */   addTemplateWarn(template, options, '<b:template> with name `' + elAttrs.name + '` is already defined', token.loc);
+
+                if ('name' in elAttrs && !hasOwnProperty.call(template.templates, elAttrs.name))
+                {
+                  var isolatePrefix = genIsolateMarker();
+                  var decl = makeDeclaration(
+                    token.children,
+                    template.baseURI,
+                    options,
+                    template.sourceUrl
+                  );
+
+                  // isolate
+                  isolateTokens(decl.tokens, isolatePrefix);
+
+                  if (decl.resources)
+                    adoptStyles(decl.resources, isolatePrefix, token);
+
+                  /** @cut */ if (decl.removals)
+                  /** @cut */   decl.removals.forEach(function(item){
+                  /** @cut */     isolateTokens([item.token], isolatePrefix);
+                  /** @cut */   });
+
+                  // store to map
+                  template.templates[elAttrs.name] = {
+                    tokens: token.children,
+                    baseURI: template.baseURI,
+                    options: options,
+                    sourceUrl: template.sourceUrl,
+                    decl: decl
+                  };
+                }
+              break;
+
+              case 'import':
+                /** @cut */ if ('src' in elAttrs == false)
+                /** @cut */   addTemplateWarn(template, options, '<b:template> has no `src` attribute', token.loc);
+
+                if (elAttrs.src)
+                {
+                  var importTemplate = resolveResource(elAttrs.src, template.baseURI);
+                  var decl = importTemplate.decl;
+
+                  if (!importTemplate.decl || (importTemplate.bindingBridge && importTemplate.declSource !== importTemplate.bindingBridge.get(importTemplate)))
+                  {
+                    importTemplate.declSource = importTemplate.bindingBridge.get(importTemplate);
+                    decl = importTemplate.decl = getDeclFromSource(importTemplate, '', true);
+                  }
+
+                  arrayAdd(template.deps, importTemplate);
+
+                  for (var name in decl.templates)
+                    options.templates[name] = decl.templates[name];
+                }
+              break;
+
               case 'text':
                 var text = token.children[0];
                 tokens[i--] = basis.object.extend(text, {
@@ -224,6 +328,9 @@ var makeDeclaration = (function(){
               break;
 
               case 'include':
+                /** @cut */ if ('src' in elAttrs == false)
+                /** @cut */   addTemplateWarn(template, options, '<b:include> has no `src` attribute', token.loc);
+
                 var templateSrc = elAttrs.src;
                 if (templateSrc)
                 {
@@ -238,7 +345,19 @@ var makeDeclaration = (function(){
                   /** @cut */     basisWarn.apply(this, arguments);
                   /** @cut */ };
 
-                  resource = resolveResource(templateSrc, template.baseURI);
+                  if (/^#[^\d]/.test(templateSrc))
+                  {
+                    resource = template.templates[templateSrc.substr(1)];
+                    if (resource)
+                      resource = makeDeclaration(
+                        clone(resource.tokens),
+                        resource.baseURI,
+                        resource.options,
+                        resource.sourceUrl
+                      );
+                  }
+                  else
+                    resource = resolveResource(templateSrc, template.baseURI);
 
                   /** @cut */ basis.dev.warn = basisWarn;
 
@@ -251,19 +370,20 @@ var makeDeclaration = (function(){
                   // prevent recursion
                   if (includeStack.indexOf(resource) == -1)
                   {
-                    var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || options.genIsolateMarker() : '';
-                    var includeOptions = elAttrs.options ? parseOptionsValue(elAttrs.options) : null;
-                    var declarationOptions = basis.object.merge(options, {
+                    var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || genIsolateMarker() : '';
+                    var includeOptions = elAttrs.options ? parseIncludeOptions(elAttrs.options) : null;
+                    var decl = getDeclFromSource(resource, '', true, basis.object.merge(options, {
                       includeOptions: includeOptions
-                    });
-                    var decl = getDeclFromSource(resource, '', true, declarationOptions);
+                    }));
 
-                    arrayAdd(template.deps, resource);
                     template.includes.push({
                       token: token,
                       resource: resource,
                       nested: decl.includes
                     });
+
+                    if (resource.bindingBridge)
+                      arrayAdd(template.deps, resource);
 
                     if (decl.deps)
                       addUnique(template.deps, decl.deps);
@@ -783,10 +903,7 @@ var makeDeclaration = (function(){
         var valueIndex = ATTR_VALUE_INDEX[tokenType];
 
         if (token[valueIndex])
-          token[valueIndex] = token[valueIndex]
-            .split(/\s+/)
-            .map(processName)
-            .join(' ');
+          token[valueIndex] = token[valueIndex].replace(/\S+/g, processName);
 
         /** @cut */ if (token.valueLocMap)
         /** @cut */ {
@@ -1040,6 +1157,7 @@ var makeDeclaration = (function(){
     options = basis.object.slice(options);
     options.genIsolateMarker = genIsolateMarker;
     options.includeOptions = options.includeOptions || {};
+    options.templates = {};
     options.defines = {};
     options.dictURI = sourceUrl  // resolve l10n dictionary url
       ? basis.path.resolve(sourceUrl)
@@ -1057,6 +1175,7 @@ var makeDeclaration = (function(){
       tokens: null,
       includes: [],
       deps: [],
+      templates: {},
 
       isolate: false,
       styleNSPrefix: {},  // TODO: investigate, could we remove this from declaration?
@@ -1079,7 +1198,7 @@ var makeDeclaration = (function(){
     }
 
     // tokenize source if needed
-    if (!source.templateTokens)
+    if (!Array.isArray(source))
     {
       /** @cut */ source_ = source;
       source = tokenize(String(source), {
@@ -1118,8 +1237,8 @@ var makeDeclaration = (function(){
     // deal with defines
     applyDefines(result.tokens, result, options);
 
-    /** @cut */ if (/^[^a-z]/i.test(result.isolate))
-    /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, otherwise it leads to incorrect css class names and broken styles');
+    /** @cut */ if (/^[^a-z_-]/i.test(result.isolate))
+    /** @cut */   basis.dev.error('basis.template: isolation prefix `' + result.isolate + '` should not starts with symbol other than letter, underscore or dash, otherwise it leads to incorrect css class names and broken styles');
 
     // top-level declaration
     if (includeStack.length == 0)
@@ -1256,6 +1375,21 @@ var makeDeclaration = (function(){
     return result;
   };
 })();
+
+function clone(value){
+  if (Array.isArray(value))
+    return value.map(clone);
+
+  if (value && value.constructor === Object)
+  {
+    var result = {};
+    for (var key in value)
+      result[key] = clone(value[key]);
+    return result;
+  }
+
+  return value;
+}
 
 /**
 *
