@@ -23,7 +23,7 @@ module.exports = {
 
             assert(text(template) === text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href=""></svg:use></svg:svg>'));
           }
-        },      
+        },
         {
           name: 'static value',
           test: function(){
