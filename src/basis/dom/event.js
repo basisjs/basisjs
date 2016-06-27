@@ -72,31 +72,30 @@
 
   var DEPRECATED = /^(returnValue|keyLocation|layerX|layerY|webkitMovementX|webkitMovementY)$/;
 
-  var KEYBOARD_EVENTS = {
-    keyup: true,
-    keydown: true,
-    keypress: true
-  };
+  var KEYBOARD_EVENTS = [
+    'keyup',
+    'keydown',
+    'keypress'
+  ];
 
-  var MOUSE_EVENTS = {
-    click: true,
-    dblclick: true,
-    mousedown: true,
-    mouseup: true,
-    mouseover: true,
-    mousemove: true,
-    mouseout: true,
-    mouseenter: true,
-    mouseleave: true,
-    wheel: true
-  };
+  var MOUSE_EVENTS = [
+    'click',
+    'dblclick',
+    'mousedown',
+    'mouseup',
+    'mouseover',
+    'mousemove',
+    'mouseout',
+    'mouseenter',
+    'mouseleave'
+  ].concat(BROWSER_EVENTS.mousewheel);
 
   function isKeyboardEvent(event) {
-    return KEYBOARD_EVENTS[event.type];
+    return KEYBOARD_EVENTS.indexOf(event.type) != -1;
   }
 
   function isMouseEvent(event) {
-    return MOUSE_EVENTS[event.type] || BROWSER_EVENTS.mousewheel.indexOf(event.type) > -1;
+    return MOUSE_EVENTS.indexOf(event.type) != -1;
   }
 
  /**
@@ -147,6 +146,7 @@
         target: target,
         path: event.path ? basis.array(event.path) : getPath(target)
       });
+
       if (isKeyboardEvent(event))
       {
         basis.object.extend(this, {
