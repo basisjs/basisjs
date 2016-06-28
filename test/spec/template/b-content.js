@@ -63,6 +63,60 @@ module.exports = {
           ]
         }
       ]
+    },
+    {
+      name: 'with <b:include>',
+      test: [
+        {
+          name: 'should insert to <b:content> point',
+          test: function(){
+            var includeTemplate = createTemplate(
+              '<span>' +
+                '<b:content/>' +
+              '</span>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '">' +
+                'test<br/>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<span>test<br/></span>'));
+          }
+        },
+        {
+          name: 'should left untouched <b:content> content when no free nodes inside include',
+          test: function(){
+            var includeTemplate = createTemplate(
+              '<span>' +
+                '<b:content>content</b:content>' +
+              '</span>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '"/>'
+            );
+
+            assert(text(template) === text('<span>content</span>'));
+          }
+        },
+        {
+          name: 'should replace <b:content> content when free nodes inside include',
+          test: function(){
+            var includeTemplate = createTemplate(
+              '<span>' +
+                '<b:content>content</b:content>' +
+              '</span>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '">' +
+                'test<br/>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<span>test<br/></span>'));
+          }
+        }
+      ]
     }
   ]
 };

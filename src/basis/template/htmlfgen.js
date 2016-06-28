@@ -49,6 +49,35 @@
     }
   })();
 
+  function cleanSpecial(tokens, offset){
+    var result = [];
+
+    for (var i = 0; i < tokens.length; i++)
+    {
+      if (i < offset) {
+        result.push(tokens[i]);
+        continue;
+      }
+
+      var token = tokens[i];
+      switch (token[TOKEN_TYPE])
+      {
+        case TYPE_ELEMENT:
+          result.push(cleanSpecial(token, ELEMENT_ATTRIBUTES_AND_CHILDREN));
+          break;
+
+        case TYPE_CONTENT:
+          result.push.apply(result, cleanSpecial(token, CONTENT_CHILDREN).slice(CONTENT_CHILDREN));
+          break;
+
+        default:
+          result.push(token);
+      }
+    }
+
+    return result;
+  }
+
 
  /**
   * build path references to dom nodes in template
@@ -204,35 +233,6 @@
       }
     }
 
-    function cleanContent(tokens, offset){
-      var result = [];
-
-      for (var i = 0; i < tokens.length; i++)
-      {
-        if (i < offset) {
-          result.push(tokens[i]);
-          continue;
-        }
-
-        var token = tokens[i];
-        switch (token[TOKEN_TYPE])
-        {
-          case TYPE_ELEMENT:
-            result.push(cleanContent(token, ELEMENT_ATTRIBUTES_AND_CHILDREN));
-            break;
-
-          case TYPE_CONTENT:
-            result.push.apply(result, cleanContent(token, CONTENT_CHILDREN));
-            break;
-
-          default:
-            result.push(token);
-        }
-      }
-
-      return result;
-    }
-
     return function(tokens, path, noTextBug){
       pathList = [];
       refList = [];
@@ -241,7 +241,7 @@
       rootPath = path || '_';
       attrExprId = 0;
 
-      processTokens(cleanContent(tokens, 0), rootPath, noTextBug);
+      processTokens(tokens, rootPath, noTextBug);
 
       return {
         path: pathList,
@@ -885,6 +885,9 @@
 
     if (fn)
       return fn;
+
+    // clean special instructions from AST
+    tokens = cleanSpecial(tokens, 0);
 
     // build functions
     var paths = buildPathes(tokens, '_', noTextBug);

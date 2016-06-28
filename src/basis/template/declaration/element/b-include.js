@@ -13,6 +13,7 @@ var styleNamespaceIsolate = styleUtils.styleNamespaceIsolate;
 var adoptStyles = styleUtils.adoptStyles;
 var addStyle = styleUtils.addStyle;
 var isolateTokens = styleUtils.isolateTokens;
+var applyStyleNamespaces = styleUtils.applyStyleNamespaces;
 var attrUtils = require('../attr.js');
 var getAttrByName = attrUtils.getAttrByName;
 var addRoleAttribute = attrUtils.addRoleAttribute;
@@ -25,6 +26,7 @@ var ATTR_NAME = consts.ATTR_NAME;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
+var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
 function applyRole(tokens, role, sourceToken, location, stIdx){
   for (var i = stIdx || 0, token; token = tokens[i]; i++)
@@ -155,11 +157,15 @@ module.exports = function(template, options, token, result){
       }
 
       var instructions = basis.array(token.children);
+      var tokenRefMap = normalizeRefs(decl.tokens);
+
+      // TODO: something strange here
       var styleNSIsolate = {
         /** @cut */ map: options.styleNSIsolateMap,
         prefix: options.genIsolateMarker()
       };
-      var tokenRefMap = normalizeRefs(decl.tokens, styleNSIsolate);
+
+      applyStyleNamespaces(decl.tokens, styleNSIsolate);
 
       for (var key in decl.styleNSPrefix)
         template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
@@ -476,7 +482,21 @@ module.exports = function(template, options, token, result){
         }
         else
         {
-          decl.tokens.push.apply(decl.tokens, options.process([child], template, options));
+          var tokenRef = tokenRefMap[':content'];
+          var processedChild = options.process([child], template, options);
+
+          if (tokenRef)
+          {
+            var parent = tokenRef.owner;
+            var pos = parent.indexOf(tokenRef.token);
+
+            tokenRef.token.splice(CONTENT_CHILDREN);
+            parent.splice.apply(parent, [pos, 0].concat(processedChild));
+          }
+          else
+          {
+            decl.tokens.push.apply(decl.tokens, processedChild);
+          }
         }
       }
 

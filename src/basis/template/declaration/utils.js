@@ -1,12 +1,13 @@
 var arrayAdd = basis.array.add;
 var consts = require('../const.js');
+var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
+var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
+var TYPE_CONTENT = consts.TYPE_CONTENT;
 var TOKEN_TYPE = consts.TOKEN_TYPE;
 var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
 var TOKEN_REFS = consts.TOKEN_REFS;
-var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
-var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
-var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 
 
@@ -157,75 +158,49 @@ function addTokenLocation(template, options, dest, source){
 //
 //
 
-function normalizeRefs(tokens, isolate, map, stIdx){
-  function processName(name){
-    // add prefix only for `ns:name` and ignore global namespace `:name`
-    if (name.indexOf(':') <= 0)
-      return name;
-
-    /** @cut */ var prefix = name.split(':')[0];
-    /** @cut */ isolate.map[isolate.prefix + prefix] = prefix;
-
-    return isolate.prefix + name;
-  }
-
-  if (!map)
-    map = {};
-
-  for (var i = stIdx || 0, token; token = tokens[i]; i++)
-  {
-    var tokenType = token[TOKEN_TYPE];
-    var refs = token[TOKEN_REFS];
-
-    if (isolate && tokenType == TYPE_ATTRIBUTE_CLASS)
+function normalizeRefs(tokens){
+  function walk(tokens, map, offset){
+    for (var i = offset, token; token = tokens[i]; i++)
     {
-      var bindings = token[TOKEN_BINDINGS];
-      var valueIndex = ATTR_VALUE_INDEX[tokenType];
+      var tokenType = token[TOKEN_TYPE];
+      var refs = token[TOKEN_REFS];
 
-      if (token[valueIndex])
-        token[valueIndex] = token[valueIndex].replace(/\S+/g, processName);
-
-      /** @cut */ if (token.valueLocMap)
-      /** @cut */ {
-      /** @cut */   var oldValueLocMap = token.valueLocMap;
-      /** @cut */   token.valueLocMap = {};
-      /** @cut */   for (var name in oldValueLocMap)
-      /** @cut */     token.valueLocMap[processName(name)] = oldValueLocMap[name];
-      /** @cut */ }
-
-      if (bindings)
-        for (var k = 0, bind; bind = bindings[k]; k++)
-          bind[0] = processName(bind[0]);
-    }
-
-    if (tokenType != TYPE_ATTRIBUTE_EVENT && refs)
-    {
-      for (var j = refs.length - 1, refName; refName = refs[j]; j--)
+      if (tokenType != TYPE_ATTRIBUTE_EVENT && refs)
       {
-        if (refName.indexOf(':') != -1)
+        for (var j = refs.length - 1, refName; refName = refs[j]; j--)
         {
-          removeTokenRef(token, refName);
-          continue;
+          if (refName.indexOf(':') != -1)
+          {
+            removeTokenRef(token, refName);
+            continue;
+          }
+
+          if (map[refName])
+            removeTokenRef(map[refName].token, refName);
+
+          if (token[TOKEN_BINDINGS] == refName)
+            token[TOKEN_BINDINGS] = j + 1;
+
+          map[refName] = {
+            owner: tokens,
+            token: token
+          };
         }
+      }
 
-        if (map[refName])
-          removeTokenRef(map[refName].token, refName);
-
-        if (token[TOKEN_BINDINGS] == refName)
-          token[TOKEN_BINDINGS] = j + 1;
-
-        map[refName] = {
+      if (tokenType === TYPE_ELEMENT)
+        walk(token, map, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+      else if (tokenType === TYPE_CONTENT)
+        map[':content'] = {
           owner: tokens,
           token: token
         };
-      }
     }
 
-    if (tokenType === TYPE_ELEMENT)
-      normalizeRefs(token, isolate, map, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+    return map;
   }
 
-  return map;
+  return walk(tokens, {}, 0);
 }
 
 module.exports = {

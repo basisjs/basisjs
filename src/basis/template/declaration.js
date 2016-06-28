@@ -10,15 +10,16 @@ var utils = require('./declaration/utils.js');
 var styleUtils = require('./declaration/style.js');
 var attrUtils = require('./declaration/attr.js');
 var elementHandlers = {
-  style: require('./declaration/element/b-style.js'),
-  isolate: require('./declaration/element/b-isolate.js'),
-  svg: require('./declaration/element/b-svg.js'),
-  l10n: require('./declaration/element/b-l10n.js'),
+  content: require('./declaration/element/b-content.js'),
   define: require('./declaration/element/b-define.js'),
-  template: require('./declaration/element/b-template.js'),
   import: require('./declaration/element/b-import.js'),
-  text: require('./declaration/element/b-text.js'),
-  include: require('./declaration/element/b-include.js')
+  include: require('./declaration/element/b-include.js'),
+  isolate: require('./declaration/element/b-isolate.js'),
+  l10n: require('./declaration/element/b-l10n.js'),
+  style: require('./declaration/element/b-style.js'),
+  svg: require('./declaration/element/b-svg.js'),
+  template: require('./declaration/element/b-template.js'),
+  text: require('./declaration/element/b-text.js')
 };
 
 var resourceHash = utils.resourceHash;
@@ -40,11 +41,13 @@ var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
 var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
 var TYPE_TEXT = consts.TYPE_TEXT;
 var TYPE_COMMENT = consts.TYPE_COMMENT;
+var TYPE_CONTENT = consts.TYPE_CONTENT;
 var TOKEN_TYPE = consts.TOKEN_TYPE;
 var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var TEXT_VALUE = consts.TEXT_VALUE;
+var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
 // TODO: remove
 var Template = function(){};
@@ -94,11 +97,7 @@ var makeDeclaration = (function(){
           {
             var decl = options.templates[name];
             var declTokens = cloneDecl(decl.tokens);
-            var styleNSIsolate = {
-              /** @cut */ map: options.styleNSIsolateMap,
-              prefix: genIsolateMarker()
-            };
-            var tokenRefMap = normalizeRefs(declTokens, styleNSIsolate);
+            var tokenRefMap = normalizeRefs(declTokens);
 
             template.includes.push({
               token: token,
@@ -118,10 +117,16 @@ var makeDeclaration = (function(){
             /** @cut */ if (decl.removals)
             /** @cut */   template.removals.push.apply(template.removals, decl.removals);
 
-            for (var key in decl.styleNSPrefix)
-              template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
-                /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
-              });
+            // FIXME
+            // var styleNSIsolate = {
+            //   /** @cut */ map: options.styleNSIsolateMap,
+            //   prefix: genIsolateMarker()
+            // };
+
+            // for (var key in decl.styleNSPrefix)
+            //   template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
+            //     /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+            //   });
 
             if (tokenRefMap.element)
               removeTokenRef(tokenRefMap.element.token, 'element');
@@ -316,6 +321,33 @@ var makeDeclaration = (function(){
     }
   }
 
+  function findNonSpecialToken(tokens){
+    function find(tokens, offset){
+      for (var i = offset; i < tokens.length; i++)
+      {
+        var token = tokens[i];
+        var type = token[TOKEN_TYPE];
+        var result;
+
+        if (type == TYPE_ELEMENT ||
+            type == TYPE_TEXT ||
+            type == TYPE_COMMENT)
+          return token;
+
+        if (type == TYPE_CONTENT)
+        {
+          result = find(token, CONTENT_CHILDREN);
+          if (result)
+            return result;
+        }
+      }
+
+      return null;
+    }
+
+    return find(tokens, 0);
+  }
+
   return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
     var warns = [];
     /** @cut */ var source_;
@@ -397,16 +429,20 @@ var makeDeclaration = (function(){
     // stop prevent recursion
     includeStack.pop();
 
-    // there must be at least one token in result
-    if (!result.tokens.length)
-      result.tokens = [[TYPE_TEXT, 0, 0, '']];
-
     // store source for debug
     /** @cut */ if (source_)
     /** @cut */   result.tokens.source_ = source_;
 
+    // there must be at least one token in result
+    var elementToken = findNonSpecialToken(result.tokens);
+    if (!elementToken)
+    {
+      elementToken = [TYPE_TEXT, 0, 0, ''];
+      result.tokens.unshift(elementToken);
+    }
+
     // normalize refs
-    addTokenRef(result.tokens[0], 'element');
+    addTokenRef(elementToken, 'element');
     normalizeRefs(result.tokens);
 
     // deal with defines

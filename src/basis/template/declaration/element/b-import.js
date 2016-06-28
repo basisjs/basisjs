@@ -56,7 +56,7 @@ module.exports = function(template, options, token){
         options.templates[name] = importDecl;
       }
       /** @cut */ else
-      /** @cut */   addTemplateWarn(template, options, 'Template with name `' + name + '` is already added by other <b:import>', token.loc);
+      /** @cut */   utils.addTemplateWarn(template, options, 'Template with name `' + name + '` is already added by other <b:import>', token.loc);
     }
   }
 };
