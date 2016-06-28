@@ -63,6 +63,31 @@
     }
   };
 
+ // default promise handler
+ var PROMISE_CALLBACK_HANDLER = {
+   start: function(dataInstance){
+     this.start.call(dataInstance);
+
+     if (dataInstance.state != STATE_PROCESSING)
+       dataInstance.setState(STATE_PROCESSING);
+   },
+   success: function(dataInstance, data){
+     this.success.call(dataInstance, data);
+
+     if (dataInstance.state == STATE_PROCESSING)
+       dataInstance.setState(STATE_READY);
+   },
+   failure: function(dataInstance, error){
+     this.failure.call(dataInstance, error);
+
+     if (dataInstance.state == STATE_PROCESSING)
+       dataInstance.setState(STATE_ERROR, error);
+   },
+   complete: function(dataInstance){
+     this.complete.call(dataInstance);
+   }
+ };
+
   // default callbacks
   var DEFAULT_CALLBACK = {
     start: nothingToDo,
@@ -188,11 +213,69 @@
     };
   }
 
+  /**
+   * Creates a function that changing a state of data by promise result.
+   * @function
+   */
+  function fromPromise(config){
+    if (typeof config == 'function') {
+      config = {
+        fn: config
+      };
+    }
+
+    config = basis.object.extend({
+      fn: nothingToDo
+    }, config);
+
+    var callback = basis.object.merge(
+      DEFAULT_CALLBACK,
+      basis.object.splice(config, ['start', 'success', 'failure', 'complete'])
+    );
+
+    return function action(){
+      // this - instance of AbstractData
+      if (this.state != STATE_PROCESSING) {
+        var dataInstance = this;
+
+        PROMISE_CALLBACK_HANDLER.start.call(callback, this);
+
+        return Promise.resolve().then(function(){
+          return config.fn.call(dataInstance);
+        }).then(function(data){
+          // possible errors in success or complete callbacks must not change the main promise result
+          return new Promise(function(resolve){
+            PROMISE_CALLBACK_HANDLER.success.call(callback, dataInstance, data);
+            PROMISE_CALLBACK_HANDLER.complete.call(callback, dataInstance);
+
+            resolve(data);
+          }).catch(function(){
+            return data;
+          });
+        }, function(error){
+          // possible errors in failure or complete callbacks must not change the main promise result
+          return new Promise(function(resolve, reject){
+            PROMISE_CALLBACK_HANDLER.failure.call(callback, dataInstance, error);
+            PROMISE_CALLBACK_HANDLER.complete.call(callback, dataInstance);
+
+            reject();
+          }).catch(function(){
+            return Promise.reject(error);
+          });
+        });
+      }
+      else {
+        /** @cut */ basis.dev.warn('Context in processing state. Operation aborted. Context: ', this);
+        return Promise.reject('Context in processing state, request is not performed');
+      }
+    };
+  }
 
   //
   // export names
   //
 
   module.exports = {
-    create: createAction
+    create: createAction,
+    fromPromise: fromPromise
   };
