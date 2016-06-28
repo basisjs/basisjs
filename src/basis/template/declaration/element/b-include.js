@@ -437,9 +437,15 @@ module.exports = function(template, options, token, result){
               var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
               var tokenRef = ref && tokenRefMap[ref];
               var token = tokenRef && tokenRef.token;
+              var refName = (childAttrs.name || '').trim();
 
-              if (token && childAttrs.name)
-                addTokenRef(token, childAttrs.name);
+              if (token)
+              {
+                if (/^[a-z_][a-z0-9_]*$/i.test(refName))
+                  addTokenRef(token, childAttrs.name);
+                /** @cut */ else
+                /** @cut */   utils.addTemplateWarn(template, options, 'Bad reference name for <b:add-ref>:' + refName, child.loc);
+              }
               break;
 
             case 'remove-ref':
@@ -447,9 +453,15 @@ module.exports = function(template, options, token, result){
               var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
               var tokenRef = ref && tokenRefMap[ref];
               var token = tokenRef && tokenRef.token;
+              var refName = (childAttrs.name || '').trim();
 
               if (token)
-                removeTokenRef(token, childAttrs.name || childAttrs.ref);
+              {
+                if (/^[a-z_][a-z0-9_]*$/i.test(refName))
+                  removeTokenRef(token, childAttrs.name || childAttrs.ref);
+                /** @cut */ else
+                /** @cut */   utils.addTemplateWarn(template, options, 'Bad reference name for <b:remove-ref>:' + refName, child.loc);
+              }
               break;
 
             case 'role':

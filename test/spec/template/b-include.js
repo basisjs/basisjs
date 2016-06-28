@@ -174,7 +174,9 @@ module.exports = {
         require('./b-include/b-set-class.js'),
         require('./b-include/b-remove-class.js'),
         require('./b-include/b-set-role.js'),
-        require('./b-include/b-remove-role.js')
+        require('./b-include/b-remove-role.js'),
+        require('./b-include/b-add-ref.js'),
+        require('./b-include/b-remove-ref.js')
       ]
     }
   ]
