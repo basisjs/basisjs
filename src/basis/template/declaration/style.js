@@ -87,7 +87,7 @@ function applyStyleNamespaces(tokens, isolate){
   walk(tokens, 0);
 }
 
-function isolateTokens(tokens, isolate, template, options){
+function isolateTokens(tokens, isolate, template/*, options*/){
   function processName(name){
     if (name.indexOf(':') == -1)
       return isolate + name;
@@ -186,6 +186,7 @@ function isolateTokens(tokens, isolate, template, options){
     }
   }
 
+  /** @cut */ var options = arguments[3];
   walk(tokens, 0);
 }
 

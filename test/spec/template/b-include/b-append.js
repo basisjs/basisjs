@@ -7,7 +7,7 @@ module.exports = {
         var a = createTemplate('<span/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="foo">x</b:append></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
       }
     },
     {
@@ -16,7 +16,7 @@ module.exports = {
         var a = createTemplate('<span/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append>x</b:append></b:include>');
 
-        this.is(text('<span>x</span>'), text(b));
+        assert(text(b) === text('<span>x</span>'));
       }
     },
     {
@@ -25,12 +25,12 @@ module.exports = {
         var a = createTemplate('<span>{foo}</span>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="foo">x</b:append></b:include>');
 
-        this.is(text('<span>{foo}</span>'), text(b));
+        assert(text(b) === text('<span>{foo}</span>'));
 
         var a = createTemplate('text');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append>x</b:append></b:include>');
 
-        this.is(text('text'), text(b));
+        assert(text(b) === text('text'));
       }
     },
     {
@@ -39,7 +39,7 @@ module.exports = {
         var a = createTemplate('<span/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="element">x</b:append></b:include>');
 
-        this.is(text('<span>x</span>'), text(b));
+        assert(text(b) === text('<span>x</span>'));
       }
     },
     {
@@ -48,7 +48,7 @@ module.exports = {
         var a = createTemplate('<span><span/></span>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="element">x</b:append></b:include>');
 
-        this.is(text('<span><span/>x</span>'), text(b));
+        assert(text(b) === text('<span><span/>x</span>'));
       }
     },
     {
@@ -57,7 +57,7 @@ module.exports = {
         var a = createTemplate('<span/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="element"><br/>x<br/></b:append></b:include>');
 
-        this.is(text('<span><br/>x<br/></span>'), text(b));
+        assert(text(b) === text('<span><br/>x<br/></span>'));
       }
     },
     {
@@ -66,7 +66,7 @@ module.exports = {
         var a = createTemplate('<span><span/></span>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="element"><br/>x<br/></b:append></b:include>');
 
-        this.is(text('<span><span/><br/>x<br/></span>'), text(b));
+        assert(text(b) === text('<span><span/><br/>x<br/></span>'));
       }
     }
   ]

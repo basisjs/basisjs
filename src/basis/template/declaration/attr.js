@@ -115,6 +115,14 @@ function applyShowHideAttribute(template, options, host, attr){
 }
 
 function addRoleAttribute(template, options, host, role/*, sourceToken*/){
+  /** @cut */ var sourceToken = arguments[4];
+
+  if (host[TOKEN_TYPE] !== TYPE_ELEMENT)
+  {
+    /** @cut */ utils.addTemplateWarn(template, options, 'Role can\'t be added to non-element node', sourceToken.loc);
+    return;
+  }
+
   if (!/[\/\(\)]/.test(role))
   {
     var item = [
@@ -124,7 +132,6 @@ function addRoleAttribute(template, options, host, role/*, sourceToken*/){
       'role-marker'
     ];
 
-    /** @cut */ var sourceToken = arguments[4];
     /** @cut */ item.sourceToken = sourceToken;
     /** @cut */ utils.addTokenLocation(template, options, item, sourceToken);
 
