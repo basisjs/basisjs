@@ -13,6 +13,15 @@ module.exports = {
     var api = basis.require('../helpers/template.js').createSandboxAPI(basis);
     var createTemplate = api.createTemplate;
     var text = api.text;
+
+    function normalizeNS(actual, expected){
+      // Firefox don't xmlns: attribute when it was set with element.setAttributeNS()
+      // remove those attributes from expected in this case
+      if (/xmlns:/.test(expected) && !/xmlns:/.test(actual))
+        expected = expected.replace(/\s+xmlns:[a-z]+="[^"]+"/g, '');
+
+      return expected;
+    }
   },
 
   test: [

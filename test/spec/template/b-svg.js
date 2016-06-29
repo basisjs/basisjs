@@ -21,7 +21,10 @@ module.exports = {
               '<b:svg use/>'
             );
 
-            assert(text(template) === text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href=""></svg:use></svg:svg>'));
+            var actual = text(template);
+            var expected = normalizeNS(actual, text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href=""></svg:use></svg:svg>'));
+
+            assert(actual === expected);
           }
         },
         {
@@ -31,7 +34,10 @@ module.exports = {
               '<b:svg use="test"/>'
             );
 
-            assert(text(template) === text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="test"></svg:use></svg:svg>'));
+            var actual = text(template);
+            var expected = normalizeNS(actual, text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="test"></svg:use></svg:svg>'))
+
+            assert(actual === expected);
           }
         },
         {
@@ -41,8 +47,15 @@ module.exports = {
               '<b:svg use="test{binding}"/>'
             );
 
-            assert(text(template) === text('<svg:svg><svg:use></svg:use></svg:svg>'));
-            assert(text(template, { binding: 123 }) === text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="test123"></svg:use></svg:svg>'));
+            var actual = text(template);
+            var expected = normalizeNS(actual, text('<svg:svg><svg:use></svg:use></svg:svg>'));
+
+            assert(actual === expected);
+
+            var actual = text(text(template, { binding: 123 }));
+            var expected = normalizeNS(actual, text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="test123"></svg:use></svg:svg>'));
+
+            assert(actual === expected);
           }
         },
       ]
