@@ -35,7 +35,7 @@ module.exports = {
             );
 
             var actual = text(template);
-            var expected = normalizeNS(actual, text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="test"></svg:use></svg:svg>'))
+            var expected = normalizeNS(actual, text('<svg:svg><svg:use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="test"></svg:use></svg:svg>'));
 
             assert(actual === expected);
           }
