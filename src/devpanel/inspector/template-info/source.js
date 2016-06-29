@@ -1,4 +1,5 @@
 var consts = require('basis.template.const');
+var convertToRange = require('basis.utils.source').convertToRange;
 var Node = require('basis.ui').Node;
 var fileAPI = require('../../api/file.js');
 var declToken = new basis.Token();
@@ -54,17 +55,17 @@ function getTokenAttrs(token){
   return result;
 }
 
+function escapeHtml(str){
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;');
+}
+
 var buildHtml = function(tokens, parent, colorMap){
   function expression(binding){
     return binding[1].map(function(sb){
       return typeof sb == 'number' ? '<span class="refs">{' + this[sb] + '}</span>' : sb;
     }, binding[0]).join('');
-  }
-
-  function escapeHtml(str){
-    return String(str || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;');
   }
 
   function markSource(loc, str){
@@ -246,16 +247,21 @@ var view = new Node({
 
         for (var i = 0, range; range = ranges[i]; i++)
         {
-          res +=
-            wrap(color, content.substring(offset, range[0])) +
-            wrap(range[2], content.substring(range[0], range[1]));
+          if (range[0] !== offset)
+            res += wrap(color, content.substring(offset, range[0]));
+
+          if (range[0] !== range[1])
+            res += wrap(range[2], content.substring(range[0], range[1]));
+          else
+            res += '<span style="background: ' + color + '" class="warning" title="' + escapeHtml(range[2]) + '"></span>';
 
           offset = range[1];
         }
 
         return res + wrap(color, content.substring(offset));
       },
-      color: 'data:'
+      color: 'data:',
+      warningCount: 'data:warnings.length'
     },
     action: {
       openFile: function(){
@@ -288,11 +294,28 @@ declToken.attach(function(decl){
     code = bb.children.join('\n');
     children = [root].map(function processInclude(inc){
       var resource = inc.resource;
+      var source = resource.bindingBridge ? resource.bindingBridge.get(resource) : resource;
+      var warnFilter = inc === root ? undefined : inc.token;
+      var warnings = (decl.warns || [])
+        .filter(function(warn){
+          return warn.source === warnFilter;
+        })
+        .map(function(warn){
+          var parts = (warn.loc || '').split(':');
+          var point = { line: Number(parts[1]), column: Number(parts[2]) };
+          return {
+            range: convertToRange(String(source), point, point).concat(String(warn)),
+            loc: warn.loc,
+            message: String(warn)
+          };
+        });
+
       return {
         data: {
           url: resource.url,
           content: resource.bindingBridge ? resource.bindingBridge.get(resource) : resource,
           color: this.colorMap.get(resource.url || '', 'red'),
+          warnings: warnings,
           ranges: []
             .concat(
               decl.styles.filter(function(style){
@@ -315,8 +338,13 @@ declToken.attach(function(decl){
                 );
               }, this)
             )
+            .concat(
+              warnings.map(function(warn){
+                return warn.range;
+              })
+            )
             .sort(function(a, b){
-              return a[0] - b[0];
+              return a[0] - b[0] || (a[1] - a[0]) - (b[1] - b[0]);
             })
         },
         childNodes: inc.nested.map(processInclude, this)

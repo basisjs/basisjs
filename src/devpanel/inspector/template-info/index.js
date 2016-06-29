@@ -122,7 +122,10 @@ var view = new Window({
     }),
     isFile: selectedTemplate.as(function(template){
       if (template)
-        return !!template.source.url;
+        return Boolean(template.source.url);
+    }),
+    warningCount: sourceView.decl.as(function(decl){
+      return decl && decl.warns ? decl.warns.length : 0;
     }),
     objectClassName: selectedObject.as(function(object){
       if (object)

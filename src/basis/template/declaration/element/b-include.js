@@ -136,7 +136,12 @@ module.exports = function(template, options, token, result){
         addUnique(template.deps, decl.deps);
 
       if (decl.warns)
+      {
+        /** @cut */ decl.warns.forEach(function(warn){
+        /** @cut */   warn.source = token;
+        /** @cut */ });
         template.warns.push.apply(template.warns, decl.warns);
+      }
 
       /** @cut */ if (decl.removals)
       /** @cut */   template.removals.push.apply(template.removals, decl.removals);

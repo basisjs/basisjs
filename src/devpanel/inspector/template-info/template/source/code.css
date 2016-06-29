@@ -1,5 +1,6 @@
 .code
 {
+  position: relative;
   padding: 6px;
   background: white;
   background: rgba(255, 255, 255, .95);
@@ -28,4 +29,14 @@
 .code SPAN
 {
   padding: 3px 0;
+}
+.code [class="warning"]
+{
+  padding-right: 1px;
+}
+.code [class="warning"]:after
+{
+  content: url(../warning.png);
+  position: relative;
+  top: 3px;
 }
