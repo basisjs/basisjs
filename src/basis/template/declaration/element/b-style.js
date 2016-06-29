@@ -28,6 +28,12 @@ module.exports = function(template, options, token){
       if (src in styleNamespaceIsolate == false)
         styleNamespaceIsolate[src] = options.genIsolateMarker();
 
+      if (styleNamespace in template.styleNSPrefix)
+      {
+        /** @cut */ utils.addTemplateWarn(template, options, 'Duplicate value for `' + styleNamespace + '` attribute, style ignored', utils.getTokenAttrs(token)[namespaceAttrName].loc);
+        return;
+      }
+
       template.styleNSPrefix[styleNamespace] = {
         /** @cut */ loc: utils.getLocation(template, utils.getTokenAttrs(token)[namespaceAttrName].loc),
         /** @cut */ used: false,

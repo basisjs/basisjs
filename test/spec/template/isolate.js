@@ -8,6 +8,10 @@ module.exports = {
     var isolateCss = basis.require('basis.template.isolateCss');
     var Template = basis.require('basis.template.html').Template;
     var DOM = basis.require('basis.dom');
+
+    var api = basis.require('../helpers/template.js').createSandboxAPI(basis);
+    var createTemplate = api.createTemplate;
+    var text = api.text;
   },
 
   test: [
@@ -564,11 +568,25 @@ module.exports = {
             {
               name: 'should warn when namespace is not used',
               test: function(){
-                var template = new Template(
+                var template = createTemplate(
                   '<b:style ns="foo"/>' +
-                  '<div/>'
+                  '<div/>',
+                  true
                 );
-                var tmpl = template.createInstance();
+
+                assert(template.decl_.warns && template.decl_.warns.length == 1);
+              }
+            },
+            {
+              name: 'should ignore duplicate namespaces and warn about it',
+              test: function(){
+                var template = createTemplate(
+                  '<b:style ns="foo">.class{}</b:style>' +
+                  '<b:style ns="foo">.class{}</b:style>' +
+                  '<div class="foo:class"/>',
+                  true
+                );
+                // var a = template.resources.map(x => basis.resource(x.url).fetch());
 
                 assert(template.decl_.warns && template.decl_.warns.length == 1);
               }
