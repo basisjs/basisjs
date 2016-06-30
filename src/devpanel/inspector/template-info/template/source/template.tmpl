@@ -6,7 +6,7 @@
 <div class="template">
   <div class="code" event-click="stop-propagation">
     <div class="warnings" b:show="{warningCount}">{warningCount}</div>
-    <div class="code-title code-title__{hasUrl}" event-click="openFile">{caption}</div>
+    <div class="code-title code-title__{hasUrl}" event-click="openFile" data-loc="{url}">{caption}</div>
     <span{content}/>
   </div>
   <div{childNodesElement} class="nested"/>

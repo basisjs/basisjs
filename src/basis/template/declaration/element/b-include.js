@@ -138,7 +138,7 @@ module.exports = function(template, options, token, result){
       if (decl.warns)
       {
         /** @cut */ decl.warns.forEach(function(warn){
-        /** @cut */   warn.source = token;
+        /** @cut */   warn.source = warn.source || token;
         /** @cut */ });
         template.warns.push.apply(template.warns, decl.warns);
       }

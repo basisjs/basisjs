@@ -253,7 +253,7 @@ var view = new Node({
           if (range[0] !== range[1])
             res += wrap(range[2], content.substring(range[0], range[1]));
           else
-            res += '<span style="background: ' + color + '" class="warning" title="' + escapeHtml(range[2]) + '"></span>';
+            res += '<span style="background-color: ' + color + '" class="warning" title="' + escapeHtml(range[2]) + '" event-click="openFile" data-loc="' + escapeHtml(range[3]) + '"></span>';
 
           offset = range[1];
         }
@@ -264,9 +264,10 @@ var view = new Node({
       warningCount: 'data:warnings.length'
     },
     action: {
-      openFile: function(){
-        if (this.data.url)
-          fileAPI.openFile(this.data.url);
+      openFile: function(e){
+        var loc = e.sender.getAttribute('data-loc');
+        if (loc)
+          fileAPI.openFile(loc);
       }
     }
   }
@@ -304,7 +305,10 @@ declToken.attach(function(decl){
           var parts = (warn.loc || '').split(':');
           var point = { line: Number(parts[1]), column: Number(parts[2]) };
           return {
-            range: convertToRange(String(source), point, point).concat(String(warn)),
+            range: convertToRange(String(source), point, point).concat(
+              String(warn),
+              warn.loc.charAt(0) === ':' ? '' : warn.loc
+            ),
             loc: warn.loc,
             message: String(warn)
           };

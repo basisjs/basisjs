@@ -33,10 +33,20 @@
 .code [class="warning"]
 {
   padding-right: 1px;
+  padding-left: 1px;
+  cursor: pointer;
 }
 .code [class="warning"]:after
 {
-  content: url(../warning.png);
-  position: relative;
-  top: 3px;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin: -3px 0;
+  border-radius: 5px;
+  content: '';
+  background: url(../warning.png) no-repeat;
+}
+.code [class="warning"]:hover:after
+{
+  background-color: rgba(0, 0, 0, .2);
 }
