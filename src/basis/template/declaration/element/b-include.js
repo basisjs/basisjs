@@ -487,11 +487,18 @@ module.exports = function(template, options, token, result){
               var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
               var tokenRef = ref && tokenRefMap[ref];
               var token = tokenRef && tokenRef.token;
+              var name = childAttrs.name;
+
+              if (!name && 'value' in childAttrs)
+              {
+                /** @cut */ utils.addTemplateWarn(template, options, '`value` attribute for <b:' + child.name + '> is deprecated, use `name` instead', getTokenAttrs(child).value.loc);
+                name = childAttrs.value;
+              }
 
               if (token)
               {
                 arrayRemove(token, getAttrByName(token, 'role-marker'));
-                addRoleAttribute(template, options, token, childAttrs.value || '', child);
+                addRoleAttribute(template, options, token, name || '', child);
               }
               break;
 
