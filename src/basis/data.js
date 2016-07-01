@@ -65,6 +65,39 @@
   SUBSCRIPTION.addProperty('value', 'change');
 
 
+  var isEqual = function(a, b){
+    return a === b;
+  };
+
+  //
+  // Dev
+  //
+
+  /** @cut */ var PROXY_SUPPORT = typeof Proxy == 'function' && typeof WeakMap == 'function';
+  /** @cut */ var devWrap = function(value){
+  /** @cut */   return value;
+  /** @cut */ };
+  /** @cut */ var devUnwrap = function(value){
+  /** @cut */   return value;
+  /** @cut */ };
+
+  /** @cut */ if (PROXY_SUPPORT)
+  /** @cut */ {
+  /** @cut */   var devWrapMap = new WeakMap();
+  /** @cut */   var devWrap = function(value){
+  /** @cut */     var result = new Proxy(value, {});
+  /** @cut */     devWrapMap.set(result, value);
+  /** @cut */     return result;
+  /** @cut */   };
+  /** @cut */   devUnwrap = function(value){
+  /** @cut */     return value && devWrapMap.has(value) ? devWrapMap.get(value) : value;
+  /** @cut */   };
+  /** @cut */   isEqual = function(a, b){
+  /** @cut */     return devUnwrap(a) === devUnwrap(b);
+  /** @cut */   };
+  /** @cut */ }
+
+
   //
   // Value
   //
@@ -343,7 +376,7 @@
           }
         });
 
-        getComputeValue = computeFunctions[getComputeValueId] = chainValueFactory(function(object){
+        getComputeValue = computeFunctions[getComputeValueId] = function(object){
           /** @cut */ if (object instanceof Emitter == false)
           /** @cut */   basis.dev.warn('basis.data.Value#compute: object should be an instanceof basis.event.Emitter');
 
@@ -381,10 +414,18 @@
           }
 
           return pair.value;
-        });
+        };
       }
 
-      return getComputeValue;
+      // return getComputeValue;
+      return chainValueFactory(function factory(object){
+        var value = getComputeValue(object);
+
+        /** @cut */ if (PROXY_SUPPORT)
+        /** @cut */   basis.dev.setInfo(value = devWrap(value), 'loc', basis.dev.getInfo(factory, 'loc'));
+
+        return value;
+      });
     },
 
    /**
@@ -432,6 +473,8 @@
         /** @cut */   transform: pipeValue.proxy
         /** @cut */ });
       }
+      /** @cut */ else
+      /** @cut */   pipeValue = devWrap(pipeValue);
 
       return pipeValue;
     },
@@ -461,7 +504,11 @@
           if (context instanceof ReadOnlyValue &&
               context.proxy &&
               (context.proxy[GETTER_ID] || String(context.proxy)) == fnId) // compare functions by id
+          {
+            /** @cut */ context = devWrap(context);
+
             return context;
+          }
         }
       }
 
@@ -750,6 +797,8 @@
 
         obj.addHandler(handler, result);
       }
+      /** @cut */ else
+      /** @cut */   result = devWrap(result);
     }
 
     if (!result)
@@ -773,6 +822,8 @@
 
           bindingBridge.attach(obj, Value.prototype.set, result, result.destroy);
         }
+        /** @cut */ else
+        /** @cut */   result = devWrap(result);
       }
     }
 
@@ -840,14 +891,17 @@
 
           if (!pathFragment)
           {
-            pathFragment = queryNestedFunctionCache[fullPath] = basis.getter(function(object){
+            pathFragment = function(object){
               object = object && object[path0];
               return object ? object[path1] : undefined;
-            });
+            };
 
             /** @cut */ pathFragment.getDevSource = function(object){
             /** @cut */   return basis.getter(fullPath);
             /** @cut */ };
+
+            // avoid missmatch on id build
+            pathFragment = queryNestedFunctionCache[fullPath] = basis.getter(pathFragment);
           }
         }
       }
@@ -877,12 +931,22 @@
     var result = queryAsFunctionCache[path];
 
     if (!result)
-      // use basis.getter here because `as()` uses cache using
-      // function source, but all those closures will have the same source
-      result = queryAsFunctionCache[path] = basis.getter(function(target){
+    {
+      var fn = function(target){
         if (target instanceof Emitter)
           return Value.query(target, path);
-      });
+      };
+
+      /** @cut */ fn.getDevSource = Function('return function(target){\n' +
+      /** @cut */ '  if (target instanceof Emitter)\n' +
+      /** @cut */ '    return Value.query(target, "' + path + '");\n' +
+      /** @cut */ '};');
+      /** @cut */ basis.dev.setInfo(fn, 'loc', null);
+
+      // use basis.getter here because `as()` uses cache using
+      // function source, but all those closures will have the same source
+      result = queryAsFunctionCache[path] = basis.getter(fn);
+    }
 
     return result;
   }
@@ -959,39 +1023,59 @@
   function valueAsFactory(getter){
     var factory = this;
 
-    return chainValueFactory(function(value){
+    return chainValueFactory(function asFactory(value){
       value = factory(value);
-      return value
-        ? value.as(getter)
-        : value;
+
+      if (value)
+        value = value.as(getter);
+
+      /** @cut */ if (PROXY_SUPPORT && value)
+      /** @cut */   basis.dev.setInfo(value, 'loc', basis.dev.getInfo(asFactory, 'loc'));
+
+      return value;
     });
   }
 
   function valuePipeFactory(events, getter){
     var factory = this;
 
-    return chainValueFactory(function(value){
+    return chainValueFactory(function pipeFactory(value){
       value = factory(value);
-      return value
-        ? value.pipe(events, getter)
-        : value;
+
+      if (value)
+        value = value.pipe(events, getter);
+
+      /** @cut */ if (PROXY_SUPPORT && value)
+      /** @cut */   basis.dev.setInfo(value, 'loc', basis.dev.getInfo(pipeFactory, 'loc'));
+
+      return value;
     });
   }
 
   function valueQueryFactory(path){
     var factory = this;
 
-    return chainValueFactory(function(value){
+    return chainValueFactory(function queryFactory(value){
       value = factory(value);
-      return value
-        ? value.query(path)
-        : value;
+
+      if (value)
+        value = value.query(path);
+
+      /** @cut */ if (PROXY_SUPPORT && value)
+      /** @cut */   basis.dev.setInfo(value, 'loc', basis.dev.getInfo(queryFactory, 'loc'));
+
+      return value;
     });
   }
 
   Value.factory = function(events, getter){
-    return chainValueFactory(function(object){
-      return Value.from(object, events, getter);
+    return chainValueFactory(function factory(object){
+      var value = Value.from(object, events, getter);
+
+      /** @cut */ if (PROXY_SUPPORT && value)
+      /** @cut */   basis.dev.setInfo(value, 'loc', basis.dev.getInfo(factory, 'loc'));
+
+      return value;
     });
   };
 
@@ -1059,16 +1143,16 @@
     }
 
     // fire event if root changed
-    if (object.root !== oldRoot)
+    if (!isEqual(object.root, oldRoot))
     {
       var rootListenHandler = object.listen.root;
 
       if (rootListenHandler)
       {
-        if (oldRoot && oldRoot !== object)
+        if (oldRoot && !isEqual(oldRoot, object))
           oldRoot.removeHandler(rootListenHandler, object);
 
-        if (object.root && object.root !== object)
+        if (object.root && !isEqual(object.root, object))
           object.root.addHandler(rootListenHandler, object);
       }
 
@@ -1076,16 +1160,16 @@
     }
 
     // fire event if target changed
-    if (object.target !== oldTarget)
+    if (!isEqual(object.target, oldTarget))
     {
       var targetListenHandler = object.listen.target;
 
       if (targetListenHandler)
       {
-        if (oldTarget && oldTarget !== object)
+        if (oldTarget && !isEqual(oldTarget, object))
           oldTarget.removeHandler(targetListenHandler, object);
 
-        if (object.target && object.target !== object)
+        if (object.target && !isEqual(object.target, object))
           object.target.addHandler(targetListenHandler, object);
       }
 
@@ -1338,7 +1422,7 @@
       }
 
       // only if newDelegate differ with current value
-      if (this.delegate !== newDelegate)
+      if (!isEqual(this.delegate, newDelegate))
       {
         var oldState = this.state;
         var oldData = this.data;
@@ -1359,10 +1443,10 @@
           var prev = oldDelegate;
           while (cursor)
           {
-            if (cursor.delegate === this)
+            if (isEqual(cursor.delegate, this))
             {
               cursor.delegate = null;
-              if (prev === oldDelegate)
+              if (isEqual(prev, oldDelegate))
                 oldDelegate.delegates_ = cursor.next;
               else
                 prev.next = cursor.next;
@@ -2566,7 +2650,6 @@
     ReadOnlyValue: ReadOnlyValue,
     DeferredValue: DeferredValue,
     PipeValue: PipeValue,
-    chainValueFactory: chainValueFactory,
 
     Object: DataObject,
     Slot: Slot,
@@ -2577,6 +2660,10 @@
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
 
+    /** @cut */ devWrap: devWrap,
+    /** @cut */ devUnwrap: devUnwrap,
+    isEqual: isEqual,
+    chainValueFactory: chainValueFactory,
     isConnected: isConnected,
     getDatasetDelta: getDatasetDelta,
 

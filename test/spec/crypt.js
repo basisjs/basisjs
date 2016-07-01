@@ -258,6 +258,11 @@ module.exports = {
         assert(bytesToHexString(md5('The quick brown fox jumps over the lazy dog', true)) === '9e107d9d372bb6826bd81d3542a419d6');
         assert(bytesToHexString(md5('Привет мирHello world')) === '1a279ee072886994b2cbd88559e3cdfa');
         assert(bytesToHexString(md5('Привет мирHello world', true)) === '42c488cb0b5fa1819d0f1e7d57ac1821');
+
+        assert(bytesToHexString(md5('0123456789', true)) === '781e5e245d69b566979b86e28d23f2c7');
+        assert(bytesToHexString(md5('0123456789012345678901234567890123456789012345678901234567890123', true)) === '7f7bfd348709deeaace19e3f535f8c54');
+        assert(bytesToHexString(md5('01234567890123456789012345678901234567890123456789012345678901234', true)) === 'beb9f48bc802ca5ca043bcc15e219a5a');
+        assert(bytesToHexString(md5('01234567890123456789012345678901234567890123456789012345678901230123456789012345678901234567890123456789012345678901234567890123', true)) === 'bd3ba0e6b5b821bb5f9a92452c1446af');
       }
     }
   ]

@@ -37,7 +37,7 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.7.0-dev';
+  var VERSION = '1.7.0';
 
   var global = Function('return this')();
   var process = global.process;
@@ -1997,6 +1997,12 @@
         this.detach(setter, token);
       });
 
+      /** @cut */ devInfoResolver.setInfo(token, 'sourceInfo', {
+      /** @cut */   type: 'Token#as',
+      /** @cut */   source: this,
+      /** @cut */   transform: fn
+      /** @cut */ });
+
       return token;
     },
 
@@ -2487,9 +2493,8 @@
     /** @cut */   var marker = basis.genUID();
     /** @cut */   SOURCE_OFFSET = new Function(args, marker).toString().split(marker)[0].split(/\n/).length - 1;
     /** @cut */ }
-    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1); // function wrapper prefix lines + 'use strict' line
-    /** @cut */ if (!/\/\/# sourceMappingURL=[^\r\n]+[\s]*$/.test(body))
-    /** @cut */   body += '\n\n//# sourceURL=' + pathUtils.origin + sourceURL;
+    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1) + // function wrapper prefix lines + 'use strict' line
+    /** @cut */        '\n//# sourceURL=' + pathUtils.origin + sourceURL;
 
     try {
       return new Function(args,
@@ -3860,6 +3865,17 @@
     /** @cut */ var getExternalInfo = $undef;
     var fixSourceOffset = $self;
     var set = function(target, key, info){};
+    var patch = function(target, key, patch){
+      /** @cut */ var oldInfo = get(target, key);
+      /** @cut */
+      /** @cut */ if (!oldInfo || typeof oldInfo != 'object')
+      /** @cut */ {
+      /** @cut */   set(target, key, patch);
+      /** @cut */   return;
+      /** @cut */ }
+      /** @cut */
+      /** @cut */ extend(oldInfo, patch);
+    };
     var get = function(target, key){
       /** @cut */ var externalInfo = getExternalInfo(target);
       /** @cut */ var ownInfo = map.get(target);
@@ -3900,6 +3916,7 @@
     return {
       fixSourceOffset: fixSourceOffset,
       setInfo: set,
+      patchInfo: patch,
       getInfo: get
     };
   })();

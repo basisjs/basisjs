@@ -14,6 +14,7 @@ module.exports = {
     var ResolveAdapter = basis.require('basis.data').ResolveAdapter;
     var ReadOnlyValue = basis.require('basis.data').ReadOnlyValue;
     var DeferredValue = basis.require('basis.data').DeferredValue;
+    var isEqual = basis.require('basis.data').isEqual;
 
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
   },
@@ -165,7 +166,7 @@ module.exports = {
                 var b = testValue.as(fn);
 
                 assert(a instanceof ReadOnlyValue);
-                assert(a === b);
+                assert(isEqual(a, b));
               }
             },
             {
@@ -176,7 +177,7 @@ module.exports = {
                 var b = testValue.as(function(){});
 
                 assert(a instanceof ReadOnlyValue);
-                assert(a === b);
+                assert(isEqual(a, b));
               }
             },
             {
@@ -190,8 +191,8 @@ module.exports = {
                 assert(a instanceof ReadOnlyValue);
                 assert(b instanceof ReadOnlyValue);
                 assert(c instanceof ReadOnlyValue);
-                assert(a !== b);
-                assert(a === c);
+                assert(!isEqual(a, b));
+                assert(isEqual(a, c));
               }
             },
             {
@@ -361,9 +362,10 @@ module.exports = {
               name: 'should return the same instance for the same params',
               test: function(){
                 var parent = new Value();
-                var pipe = parent.pipe('activeChanged', 'active');
+                var a = parent.pipe('activeChanged', 'active');
+                var b = parent.pipe('activeChanged', 'active');
 
-                assert(pipe === parent.pipe('activeChanged', 'active'));
+                assert(isEqual(a, b));
               }
             },
             {
@@ -526,7 +528,7 @@ module.exports = {
                 var compute = value.compute('update', Boolean);
                 var object = new DataObject();
 
-                assert(compute(object) === compute(object));
+                assert(isEqual(compute(object), compute(object)));
               }
             },
             {
@@ -867,7 +869,10 @@ module.exports = {
             var factory = Value.factory('foo', 'bar');
             var obj = new DataObject();
 
-            assert(factory(obj) === Value.from(obj, 'foo', 'bar'));
+            var a = factory(obj);
+            var b = Value.from(obj, 'foo', 'bar');
+
+            assert(isEqual(a, b));
           }
         },
         {
@@ -926,7 +931,7 @@ module.exports = {
                     var factory = Value.factory('foo', 'bar')
                       .compute('baz', Boolean);
 
-                    assert(factory(obj) === value);
+                    assert(isEqual(factory(obj), value));
                   }
                 }
               ]
@@ -955,8 +960,8 @@ module.exports = {
                     var factory = Value.factory('foo', 'bar')
                       .pipe('baz', 'qux');
 
-                    assert(factory(obj) === value);
-                    assert(factory(obj).pipe('a', 'b') === value.pipe('a', 'b'));
+                    assert(isEqual(factory(obj), value));
+                    assert(isEqual(factory(obj).pipe('a', 'b'), value.pipe('a', 'b')));
                   }
                 }
               ]
@@ -982,10 +987,12 @@ module.exports = {
                   test: function(){
                     var obj = new DataObject({ data: { foo: 1 } });
                     var value = Value.from(obj, 'update', 'data.foo').as(Boolean);
-                    var factory = Value.factory('update', 'data.foo')
-                      .as(Boolean);
+                    var factory = Value.factory('update', 'data.foo').as(Boolean);
 
-                    assert(factory(obj) === value);
+                    var a = factory(obj);
+                    var b = value;
+
+                    assert(isEqual(a, b));
                   }
                 },
                 {
@@ -1002,7 +1009,10 @@ module.exports = {
                       .as(Object)
                       .pipe('update', 'data.bar');
 
-                    assert(factory(obj) === value);
+                    var a = factory(obj);
+                    var b = value;
+
+                    assert(isEqual(a, b));
                     assert(factory(obj).value === 1);
 
                     foo.update({ bar: 2 });
@@ -1078,10 +1088,19 @@ module.exports = {
           name: 'should return the same value',
           test: function(){
             var target = new DataObject();
+            var paths = [
+              'state',
+              'data.foo',
+              'root.data.foo'
+            ];
 
-            assert(Value.query(target, 'state') === Value.query(target, 'state'));
-            assert(Value.query(target, 'data.foo') === Value.query(target, 'data.foo'));
-            assert(Value.query(target, 'root.data.foo') === Value.query(target, 'root.data.foo'));
+            for (var i = 0; i < paths.length; i++)
+            {
+              var a = Value.query(target, paths[i]);
+              var b = Value.query(target, paths[i]);
+
+              assert(isEqual(a, b));
+            }
           }
         },
         {

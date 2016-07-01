@@ -2,7 +2,7 @@
   "name": "basisjs",
   "title": "basis.js",
   "description": "JavaScript framework to build single-page applications",
-  "version": "1.7.0-next",
+  "version": "1.7.0",
   "author": "Roman Dvornov <rdvornov@gmail.com>",
   "license": "MIT",
   "main": "src/basis.js",
@@ -27,6 +27,7 @@
   "dependencies": {},
   "devDependencies": {
     "basisjs-tools-build": "basisjs/basisjs-tools-build",
+    "basisjs-tools-instrumenter": "~1.0.3",
     "jscs": "1.11.0",
     "karma": "^0.12.31",
     "karma-firefox-launcher": "^0.1.4",

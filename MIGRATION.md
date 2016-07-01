@@ -1,3 +1,12 @@
+## 1.6.0 → 1.7.0
+
+Might break
+
+  - `SVG` is new resource type, which automatically inject to document when call `startUse()`
+  - Relative path in markup tokens are resolving to source file now
+  - Ignore wrong types in `_meta` as more predictable behaviour (`default` type was set before)
+  - Common container for root element of popups (`basis.ui.popup`) instead of document's body
+
 ## 1.5.0 → 1.6.0
 
 Remove

@@ -1,0 +1,104 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis.js demos: Data flow</title>
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #demo-container
+    {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+  </style>
+
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <div id="demo-container">
+  </div>
+
+  <script type="text/javascript" id="demo-javascript">
+    var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
+    var Flow = basis.require('../../src/devpanel/module/data-flow/index.js');
+    var UINode = basis.require('basis.ui').Node;
+    var getSource = basis.require('basis.utils.source').getSource;
+    var container = document.getElementById('demo-container');
+
+    function openFile(filename){
+      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : basis.devtools;
+
+      if (basisjsTools && typeof basisjsTools.openFile == 'function')
+        basisjsTools.openFile(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
+    }
+
+    var buildTree = Flow.createTreeBuilder({
+      sandbox: basis
+    });
+
+    var View = UINode.subclass({
+      template: basis.resource('./data-flow/view.tmpl'),
+      binding: {
+        name: 'name',
+        source: 'source',
+        flow: 'satellite:'
+      },
+      satellite: {
+        flow: 'flow'
+      }
+    });
+
+    [
+      'token',
+      'value',
+      'object',
+      'dataset',
+      'token-as',
+      'value-as',
+      'value-compute',
+      'value-query',
+      'value-query-deep',
+      'value-state',
+      'value-state-factory',
+      'value-factory',
+      'index',
+      'expression',
+      'subtract',
+      'subtract-empty',
+      'split',
+      'entity',
+      'case-1',
+      'case-2'
+    ].forEach(function(name){
+      var filename = './data-flow/' + name + '.js';
+      var value = basis.require(filename);
+
+      new View({
+        container: container,
+        name: name,
+        source: getSource(filename),
+        flow: new Flow({
+          fileAPI: {
+            openFile: openFile
+          },
+          childNodes: buildTree(value)
+        })
+      });
+    });
+  </script>
+</body>
+
+</html>
