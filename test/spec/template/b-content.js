@@ -224,35 +224,47 @@ module.exports = {
         {
           name: 'serial',
           test: function(){
-            var template = createTemplate(
+            var includeTemplate = createTemplate(
               '<div>' +
                 '<b:content>' +
                   'i like' +
-                '</b:content>' +
+                '</b:content>' + ' ' +
                 '<b:content>' +
-                  'big butts' +
+                  'trains' +
                 '</b:content>' +
               '</div>'
             );
 
-            assert(text(template) === text('<div>i like<b:content>big butts</b:content></div>'));
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '">' +
+                'brains' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<div>i like brains</div>'));
           }
         },
         {
           name: 'parallel',
           test: function(){
-            var template = createTemplate(
+            var includeTemplate = createTemplate(
               '<div>' +
                 '<b:content>' +
-                  'i like' +
+                  'i like ' +
                   '<b:content>' +
-                    'big butts' +
+                    'trains' +
                   '</b:content>' +
                 '</b:content>' +
               '</div>'
             );
 
-            assert(text(template) === text('<div>i like<b:content>big butts</b:content></div>'));
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '">' +
+                'brains' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<div>i like brains</div>'));
           }
         }
       ]
