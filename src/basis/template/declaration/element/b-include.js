@@ -171,11 +171,6 @@ module.exports = function(template, options, token, result){
         nested: decl.includes
       });
 
-      // template -> s4, s5, s6, s3 {s1}, {s2}
-      //   -> include(template1) s4, s5, s6, {s3}
-      //     -> include(template2) {s4}, {s5}
-      //     -> include(template3) {s6}
-
       if (resource.bindingBridge)
         arrayAdd(template.deps, resource);
 

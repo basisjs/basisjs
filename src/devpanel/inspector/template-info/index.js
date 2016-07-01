@@ -7,7 +7,6 @@ var fileAPI = require('../../api/file.js');
 var parseDom = require('./parse-dom.js');
 var buildTree = require('./build-tree.js');
 var Dataset = require('basis.data').Dataset;
-var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
 var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
 var sourceView = require('./source.js');
@@ -148,9 +147,6 @@ var view = new Window({
       if (object)
         selectedDomNode.set((object.parentNode || object.owner).element);
     },
-    down: function(e){
-      //if (e.sender.title)
-    },
     close: function(){
       selectedDomNode.set();
     },
@@ -176,14 +172,12 @@ var view = new Window({
       jsSourcePopup.hide();
     },
     toggleSource: function(){
-      var object = selectedObject.value;
       showSource.set(!showSource.value);
     },
     logInfo: function(){
       var object = selectedObject.value;
-      var result = {};
-      var debugInfo = '<no info>';
-      var values = '<no info>';
+      var debugInfo = null;
+      var values = null;
 
       if (selectedDomNode.value)
       {
@@ -191,7 +185,9 @@ var view = new Window({
         var objectBinding = object ? object.binding : {};
 
         debugInfo = inspectBasisTemplate.getDebugInfoById(id);
-        values = (debugInfo || {}).values || null;
+
+        if (debugInfo)
+          values = debugInfo.values || null;
 
         if (values)
           values = basis.object.slice(values, basis.object.keys(objectBinding));
@@ -205,7 +201,7 @@ var view = new Window({
           values: values
         }
       };
-      console.log($basisjsInfo);
+      console.log(global.$basisjsInfo);
     }
   },
 
