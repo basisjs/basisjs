@@ -117,6 +117,145 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'implicit <b:content> usage',
+      test: function(){
+        var includeTemplate = createTemplate(
+          '<div>' +
+            'includeTemplateContent' +
+          '</div>'
+        );
+        var template = createTemplate(
+          '<b:include src="#' + includeTemplate.templateId + '">' +
+            'test' +
+          '</b:include>'
+        );
+
+        assert(text(template) === text('<div>includeTemplateContent</div>test'));
+      }
+    },
+    {
+      name: 'transformation compatibility',
+      test: [
+        {
+          name: 'b:replace inside b:content',
+          test: function(){
+            var includeTemplate = createTemplate(
+              '<div>' +
+                '<b:content>' +
+                  '<span{marker}>Content to replace</span>' +
+                '</b:content>' +
+              '</div>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '">' +
+                '<b:replace ref="marker">New content</b:replace>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<div>New content</div>'));
+          }
+        },
+        {
+          name: 'b:remove inside b:content',
+          test: function(){
+            var includeTemplate = createTemplate(
+              '<div>' +
+                '<b:content>' +
+                  '<span{marker}>Content to remove</span>' +
+                '</b:content>' +
+              '</div>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '">' +
+                '<b:remove ref="marker"/>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<div></div>'));
+          }
+        },
+        {
+          name: 'b:before, b:after',
+          test: function(){
+            var includeTemplate = createTemplate(
+              '<div>' +
+                '<b:content>' +
+                  '{marker}' +
+                '</b:content>' +
+              '</div>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '">' +
+                '<b:before ref="marker">before</b:before>' +
+                '<b:after ref="marker">after</b:after>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<div><b:content>before{marker}after</b:content></div>'));
+          }
+        },
+        {
+          name: 'b:append, b:prepend',
+          test: function(){
+            var includeTemplate = createTemplate(
+              '<div>' +
+                '<b:content>' +
+                  '<span{marker}>brown fox</span>' +
+                '</b:content>' +
+              '</div>'
+            );
+            var template = createTemplate(
+              '<b:include src="#' + includeTemplate.templateId + '">' +
+                '<b:prepend ref="marker">the quick </b:prepend>' +
+                '<b:append ref="marker"> jumps over</b:append>' +
+              '</b:include>'
+            );
+
+            assert(text(template) === text('<div><b:content><span{marker}>the quick brown fox jumps over</span></b:content></div>'));
+          }
+        }
+      ]
+    },
+    {
+      name: 'multiple b:content declarations',
+      test: [
+        {
+          name: 'serial',
+          test: function(){
+            var template = createTemplate(
+              '<div>' +
+                '<b:content>' +
+                  'i like' +
+                '</b:content>' +
+                '<b:content>' +
+                  'big butts' +
+                '</b:content>' +
+              '</div>'
+            );
+
+            assert(text(template) === text('<div>i like<b:content>big butts</b:content></div>'));
+          }
+        },
+        {
+          name: 'parallel',
+          test: function(){
+            var template = createTemplate(
+              '<div>' +
+                '<b:content>' +
+                  'i like' +
+                  '<b:content>' +
+                    'big butts' +
+                  '</b:content>' +
+                '</b:content>' +
+              '</div>'
+            );
+
+            assert(text(template) === text('<div>i like<b:content>big butts</b:content></div>'));
+          }
+        }
+      ]
     }
   ]
 };

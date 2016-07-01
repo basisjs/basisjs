@@ -160,7 +160,7 @@ function normalizeRefs(nodes){
   walk(nodes, function(type, node, parent){
     var refs = node[TOKEN_REFS];
 
-    if (type !== TYPE_ATTRIBUTE_EVENT && refs)
+    if (type !== TYPE_ATTRIBUTE_EVENT && type !== TYPE_CONTENT && refs)
     {
       for (var j = refs.length - 1, refName; refName = refs[j]; j--)
       {
