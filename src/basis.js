@@ -2334,6 +2334,7 @@
 
   extend(getResource, {
     resolveURI: resolveResourceFilename,
+    buildCloak: getResource,  // hide resource declaration from builder
     isResource: function(value){
       return value ? resources[value.url] === value : false;
     },

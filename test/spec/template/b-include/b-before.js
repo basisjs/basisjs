@@ -7,7 +7,7 @@ module.exports = {
         var a = createTemplate('<span/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before ref="foo">x</b:before></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
       }
     },
     {
@@ -16,7 +16,7 @@ module.exports = {
         var a = createTemplate('<span/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before>x</b:before></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
       }
     },
     {
@@ -25,7 +25,7 @@ module.exports = {
         var a = createTemplate('<span><span{foo}/></span>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before ref="foo">x</b:before></b:include>');
 
-        this.is(text('<span>x<span/></span>'), text(b));
+        assert(text(b) === text('<span>x<span/></span>'));
       }
     },
     {
@@ -34,7 +34,7 @@ module.exports = {
         var a = createTemplate('<span/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before ref="element">x</b:before></b:include>');
 
-        this.is(text('x<span/>'), text(b));
+        assert(text(b) === text('x<span/>'));
       }
     },
     {
@@ -43,7 +43,7 @@ module.exports = {
         var a = createTemplate('<span><span{foo}/></span>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before ref="foo"><br/>x<br/></b:before></b:include>');
 
-        this.is(text('<span><br/>x<br/><span/></span>'), text(b));
+        assert(text(b) === text('<span><br/>x<br/><span/></span>'));
       }
     }
   ]
