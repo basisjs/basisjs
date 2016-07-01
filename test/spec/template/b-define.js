@@ -13,7 +13,7 @@ module.exports = {
           }
         },
         {
-          name: 'should contains warnings from included templates',
+          name: 'should contain warnings from included templates',
           test: function(){
             var include = createTemplate('<span class="{foo} prefix_{bar} prefix_{anim:baz}"/>');
             var template = createTemplate('<b:include src="#' + include.templateId + '"/>', true);
@@ -22,7 +22,7 @@ module.exports = {
           }
         },
         {
-          name: 'should work well with buildin names',
+          name: 'should work well with building names',
           test: function(){
             var template = createTemplate('<span class="{toString}"/>', true);
             assert(template.decl_.warns.length === 1);
@@ -43,7 +43,7 @@ module.exports = {
           name: 'errors',
           test: [
             {
-              name: 'should warn with no attributes',
+              name: 'should warn when no attribute is specified',
               test: function(){
                 var template = createTemplate(
                   '<b:define/>' +
@@ -55,7 +55,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn with no `type` attribute',
+              name: 'should warn when no `type` attribute is specified',
               test: function(){
                 var template = createTemplate(
                   '<b:define name="foo"/>' +
@@ -67,7 +67,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn with no `name` attribute',
+              name: 'should warn when no `name` attribute is specified',
               test: function(){
                 var template = createTemplate(
                   '<b:define type="bool"/>' +
@@ -79,7 +79,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn with wrong type',
+              name: 'should warn when wrong `type` value is specified',
               test: function(){
                 var template = createTemplate(
                   '<b:define name="foo" type="baz"/>' +
@@ -91,7 +91,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn when unused',
+              name: 'should warn when defined binding was not unused',
               test: function(){
                 var template = createTemplate(
                   '<b:define name="foo" type="bool"/>' +
@@ -103,7 +103,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn if already declared',
+              name: 'should warn when defined binding has already been declared',
               test: function(){
                 var template = createTemplate(
                   '<b:define name="foo" type="enum" values="bar"/>' +
@@ -124,7 +124,7 @@ module.exports = {
               name: 'bool',
               test: [
                 {
-                  name: 'should add class only if value truthly',
+                  name: 'should add class only if value is truthy',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="bool"/>' +
@@ -149,7 +149,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when default attribute present and set to true should add classes by default',
+                  name: 'should add classes when `default` attribute presents and is set to true',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="bool" default="true"/>' +
@@ -180,7 +180,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when from is used, should use name as value for class (w/o default)',
+                  name: 'should use `name` as value for class when `from` is specified',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" from="bar" type="bool"/>' +
@@ -194,7 +194,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when from is used, should use name as value for class (with default)',
+                  name: 'should use `name` as value for class when `from` is used and `default` is specified',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" from="bar" type="bool" default="true"/>' +
@@ -208,7 +208,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'should warn when default has no value',
+                  name: 'should warn when `default` attribute has no value',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="bool" default/>' +
@@ -225,7 +225,7 @@ module.exports = {
               name: 'invert',
               test: [
                 {
-                  name: 'should add class only if value falsy',
+                  name: 'should add class only if value is falsy',
                   test: function(){
                     function cleanText(){
                       return text.apply(this, arguments).replace(' class=""', '');
@@ -254,7 +254,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when default attribute present and set to true should add classes by default',
+                  name: 'should add classes when `default` attribute presents and is set to true',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="invert" default="true"/>' +
@@ -295,7 +295,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when from is used, should use name as value for class (w/o default)',
+                  name: 'when `from` is used, should use `name` as value for class (w/o `default`)',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" from="bar" type="invert"/>' +
@@ -309,7 +309,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when from is used, should use name as value for class (with default)',
+                  name: 'when `from` is used, should use `name` as value for class (with `default`)',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" from="bar" type="invert"/>' +
@@ -323,7 +323,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'should warn when default has no value',
+                  name: 'should warn when `default` has no value',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="invert" default/>' +
@@ -359,7 +359,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'should set value from default',
+                  name: 'should set value `from` default',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="enum" values="bar baz" default="baz"/>' +
@@ -385,7 +385,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'should warn when no `values` attribute',
+                  name: 'should warn when no `values` attribute is specified',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="enum"/>',
@@ -421,7 +421,7 @@ module.exports = {
                   }
                 },
                 // {
-                //   name: 'should warn on dublicate values in `values`',
+                //   name: 'should warn on duplicate values in `values`',
                 //   test: function(){
                 //     var template = createTemplate(
                 //       '<b:define name="foo" type="enum" values="bar bar"/>' +
@@ -441,7 +441,7 @@ module.exports = {
                 //   }
                 // },
                 {
-                  name: 'should warn when default has value not in values list',
+                  name: 'should warn when `default` has value not in values list',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="enum" values="bar baz" default="zzz"/>' +
@@ -559,7 +559,7 @@ module.exports = {
           }
         },
         {
-          name: '<b:define> in including source should not apply to inserting content',
+          name: '<b:define> in including source should not apply to inserted content',
           test: function(){
             var include = createTemplate(
               '<b:define name="foo" type="bool" default="true"/>' +
@@ -578,7 +578,7 @@ module.exports = {
           }
         },
         {
-          name: '<b:define> should apply to inserting content but not to subtree',
+          name: '<b:define> should apply to inserted content but not to subtree',
           test: function(){
             var include = createTemplate(
               '<span class="{foo}"/>'
@@ -597,7 +597,7 @@ module.exports = {
           }
         },
         {
-          name: '<b:define type="bool"> should no left values when binding removing',
+          name: '<b:define type="bool"> should not left values when binding is removed',
           test: function(){
             var include = createTemplate(
               '<b:define name="foo" type="bool" default="true"/>' +
@@ -614,7 +614,7 @@ module.exports = {
           }
         },
         {
-          name: '<b:define type="bool"> should no left values when binding removing',
+          name: '<b:define type="bool"> should not left values when binding is removed',
           test: function(){
             var include = createTemplate(
               '<b:define name="foo" type="enum" values="foo bar" default="bar"/>' +
@@ -636,7 +636,7 @@ module.exports = {
     //   name: 'values intersection',
     //   test: [
     //     {
-    //       name: 'should warn when intersect with static classes',
+    //       name: 'should warn when intersects with static classes',
     //       test: function(){
     //         var template = createTemplate(
     //           '<b:define name="foo" type="bool"/>' +
