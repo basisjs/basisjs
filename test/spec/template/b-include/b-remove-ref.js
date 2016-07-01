@@ -30,19 +30,37 @@ module.exports = {
       }
     },
     {
-      name: 'should add reference by reference',
+      name: 'should remove reference by reference',
       test: function(){
-        var a = createTemplate('<span{a}/><span{b} title="b"/><span{c}/>');
+        var a = createTemplate('<span{a}/><span{b|c} title="b"/><span{d}/>');
         var b = createTemplate(
           '<b:include src="#' + a.templateId + '">' +
-            '<b:remove-ref ref="b" name="b"/>' +
+            '<b:remove-ref ref="b" name="c"/>' +
           '</b:include>'
         );
 
         var instance = b.createInstance();
         assert('a' in instance === true);
-        assert('b' in instance === false);
-        assert('c' in instance === true);
+        assert('b' in instance === true);
+        assert('c' in instance === false);
+        assert('d' in instance === true);
+      }
+    },
+    {
+      name: 'ref attribute is not required',
+      test: function(){
+        var a = createTemplate('<span{a}/><span{b|c} title="b"/><span{d}/>');
+        var b = createTemplate(
+          '<b:include src="#' + a.templateId + '">' +
+            '<b:remove-ref name="c"/>' +
+          '</b:include>'
+        );
+
+        var instance = b.createInstance();
+        assert('a' in instance === true);
+        assert('b' in instance === true);
+        assert('c' in instance === false);
+        assert('d' in instance === true);
       }
     },
     {

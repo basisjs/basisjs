@@ -467,10 +467,10 @@ module.exports = function(template, options, token, result){
 
             case 'remove-ref':
               var childAttrs = getTokenAttrValues(child);
-              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+              var refName = (childAttrs.name || '').trim();
+              var ref = 'ref' in childAttrs ? childAttrs.ref : refName || 'element';
               var tokenRef = ref && tokenRefMap[ref];
               var token = tokenRef && tokenRef.token;
-              var refName = (childAttrs.name || '').trim();
 
               if (token)
               {
