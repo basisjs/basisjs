@@ -563,7 +563,7 @@ var makeDeclaration = (function(){
       /** @cut */   var sourceUrl = item.url || utils.getTokenAttrValues(item.token).src;
       /** @cut */   return {
       /** @cut */     resource: item.url || false,
-      /** @cut */     sourceUrl: basis.resource.resolveURI(sourceUrl),
+      /** @cut */     sourceUrl: sourceUrl ? basis.resource.resolveURI(sourceUrl) : null,
       /** @cut */     isolate: item.isolate === styleNamespaceIsolate ? styleNamespaceIsolate[item.url] : item.isolate || false,
       /** @cut */     namespace: item.namespace || false,
       /** @cut */     inline: item.inline,
