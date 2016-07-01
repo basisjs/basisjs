@@ -22,7 +22,7 @@ module.exports = {
           }
         },
         {
-          name: 'should work well with buildin names',
+          name: 'should work well with building names',
           test: function(){
             var template = createTemplate('<span class="{toString}"/>', true);
             assert(template.decl_.warns.length === 1);
@@ -43,7 +43,7 @@ module.exports = {
           name: 'errors',
           test: [
             {
-              name: 'should warn with no attributes',
+              name: 'should warn when no attribute is specified',
               test: function(){
                 var template = createTemplate(
                   '<b:define/>' +
@@ -55,7 +55,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn with no `type` attribute',
+              name: 'should warn when no `type` attribute is specified',
               test: function(){
                 var template = createTemplate(
                   '<b:define name="foo"/>' +
@@ -67,7 +67,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn with no `name` attribute',
+              name: 'should warn when no `name` attribute is specified',
               test: function(){
                 var template = createTemplate(
                   '<b:define type="bool"/>' +
@@ -79,7 +79,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn with wrong type',
+              name: 'should warn when wrong type is specified',
               test: function(){
                 var template = createTemplate(
                   '<b:define name="foo" type="baz"/>' +
@@ -91,7 +91,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn when unused',
+              name: 'should warn when was not unused',
               test: function(){
                 var template = createTemplate(
                   '<b:define name="foo" type="bool"/>' +
@@ -103,7 +103,7 @@ module.exports = {
               }
             },
             {
-              name: 'should warn if already declared',
+              name: 'should warn when has already been declared',
               test: function(){
                 var template = createTemplate(
                   '<b:define name="foo" type="enum" values="bar"/>' +
@@ -124,7 +124,7 @@ module.exports = {
               name: 'bool',
               test: [
                 {
-                  name: 'should add class only if value truthly',
+                  name: 'should add class only if value is truthy',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="bool"/>' +
@@ -149,7 +149,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when default attribute present and set to true should add classes by default',
+                  name: 'should add classes by default when default attribute presents and is set to true',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="bool" default="true"/>' +
@@ -180,7 +180,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when from is used, should use name as value for class (w/o default)',
+                  name: 'should use name as value for class  when from is used and no default attribute is specified',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" from="bar" type="bool"/>' +
@@ -194,7 +194,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when from is used, should use name as value for class (with default)',
+                  name: 'should use name as value for class when from is used and default is specified',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" from="bar" type="bool" default="true"/>' +
@@ -208,7 +208,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'should warn when default has no value',
+                  name: 'should warn when default attribute has no value',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="bool" default/>' +
@@ -225,7 +225,7 @@ module.exports = {
               name: 'invert',
               test: [
                 {
-                  name: 'should add class only if value falsy',
+                  name: 'should add class only if value is falsy',
                   test: function(){
                     function cleanText(){
                       return text.apply(this, arguments).replace(' class=""', '');
@@ -254,7 +254,7 @@ module.exports = {
                   }
                 },
                 {
-                  name: 'when default attribute present and set to true should add classes by default',
+                  name: 'should add classes when default attribute presents and is set to true',
                   test: function(){
                     var template = createTemplate(
                       '<b:define name="foo" type="invert" default="true"/>' +

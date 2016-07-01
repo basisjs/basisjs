@@ -849,11 +849,11 @@ var makeDeclaration = (function(){
 
               case 'define':
                 /** @cut */ if ('name' in elAttrs == false)
-                /** @cut */   addTemplateWarn(template, options, '<b:define> has no `name` attribute', token.loc);
+                /** @cut */   addTemplateWarn(template, options, '<b:define> should have `name` attribute', token.loc);
                 /** @cut */ if ('type' in elAttrs == false)
-                /** @cut */   addTemplateWarn(template, options, '<b:define> has no `type` attribute', token.loc);
+                /** @cut */   addTemplateWarn(template, options, '<b:define> should have `type` attribute', token.loc);
                 /** @cut */ if (hasOwnProperty.call(options.defines, elAttrs.name))
-                /** @cut */   addTemplateWarn(template, options, '<b:define> for `' + elAttrs.name + '` has already defined', token.loc);
+                /** @cut */   addTemplateWarn(template, options, '<b:define> for `' + elAttrs.name + '` has already been defined', token.loc);
 
                 if ('name' in elAttrs && 'type' in elAttrs && !hasOwnProperty.call(options.defines, elAttrs.name))
                 {
