@@ -58,6 +58,7 @@ function getStyleBindingProperty(attr, name){
 /** @cut */ }
 
 function setStylePropertyBinding(template, options, host, attr, property, showByDefault, defaultValue){
+  debugger;
   var styleAttr = getAttrByName(host, 'style');
 
   if (!styleAttr)
@@ -68,9 +69,13 @@ function setStylePropertyBinding(template, options, host, attr, property, showBy
   }
 
   var binding = attr.binding;
+  var styleBindings = styleAttr[TOKEN_BINDINGS];
   var addDefault = false;
   var show = attr.name == showByDefault;
   var value = styleAttr[3];
+
+  if (styleBindings)
+    arrayRemove(styleBindings, getStyleBindingProperty(styleAttr, property));
 
   if (!binding || binding[0].length != binding[1].length)
   {
@@ -83,16 +88,12 @@ function setStylePropertyBinding(template, options, host, attr, property, showBy
   }
   else
   {
-    var bindings = styleAttr[TOKEN_BINDINGS];
     binding = binding.concat(property, attr.name);
 
     addDefault = show;
 
-    if (bindings)
-    {
-      arrayRemove(bindings, getStyleBindingProperty(styleAttr, property));
-      bindings.push(binding);
-    }
+    if (styleBindings)
+      styleBindings.push(binding);
     else
       styleAttr[TOKEN_BINDINGS] = [binding];
   }
