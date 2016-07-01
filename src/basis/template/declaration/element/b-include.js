@@ -63,7 +63,7 @@ var attributeToInstructionMap = {
   }
 };
 
-function applyRole(ast, role, sourceToken, location){
+function applyRole(ast, role/*, sourceToken, location*/){
   walk(ast, function(type, node){
     if (type !== TYPE_ATTRIBUTE || node[ATTR_NAME] != 'role-marker')
       return;
@@ -73,8 +73,8 @@ function applyRole(ast, role, sourceToken, location){
 
     roleExpression[1] = '/' + role + currentRole;
 
-    /** @cut */ node.sourceToken = sourceToken;
-    /** @cut */ node.loc = location;
+    /** @cut */ node.sourceToken = arguments[2];
+    /** @cut */ node.loc = arguments[3];
   });
 }
 
