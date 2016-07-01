@@ -23,9 +23,21 @@ module.exports = {
       name: 'should set sub-role',
       test: function(){
         var a = createTemplate('<span title="a"/>');
-        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-role value="sub"/></b:include>');
+        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-role name="sub"/></b:include>');
 
         assert(text(b, { $role: 'role' }) === text('<span title="a" role-marker="role/sub"/>'));
+      }
+    },
+    {
+      name: 'should set sub-role via deprecated `value` attribute with warning',
+      test: function(){
+        var a = createTemplate('<span title="a"/>');
+        var b = createTemplate('<b:include src="#' + a.templateId + '">\n<b:set-role value="sub"/></b:include>');
+
+        assert(text(b, { $role: 'role' }) === text('<span title="a" role-marker="role/sub"/>'));
+        assert(b.decl_.warns.length === 1);
+        assert(String(b.decl_.warns[0]) === '`value` attribute for <b:set-role> is deprecated, use `name` instead');
+        assert(b.decl_.warns[0].loc === ':2:13');
       }
     },
     {

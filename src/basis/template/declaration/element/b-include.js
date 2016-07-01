@@ -29,6 +29,40 @@ var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
+var attributeToInstructionMap = {
+  'class': {     // <b:include class=".."> -> <b:append-class value="..">
+    instruction: 'append-class',
+    valueTo: 'value'
+  },
+  'id': {        // <b:include id=".."> -> <b:set-attr name="id" value="..">
+    instruction: 'set-attr',
+    valueTo: 'value',
+    attrs: {
+      name: 'id'
+    }
+  },
+  'ref': {       // <b:include ref=".."> -> <b:add-ref name="..">
+    instruction: 'add-ref',
+    valueTo: 'name'
+  },
+  'show': {      // <b:include show=".."> -> <b:show expr="..">
+    instruction: 'show',
+    valueTo: 'expr'
+  },
+  'hide': {      // <b:include hide=".."> -> <b:hide expr="..">
+    instruction: 'hide',
+    valueTo: 'expr'
+  },
+  'visible': {   // <b:include visible=".."> -> <b:visible expr="..">
+    instruction: 'visible',
+    valueTo: 'expr'
+  },
+  'hidden': {    // <b:include hidden=".."> -> <b:hidden expr="..">
+    instruction: 'hidden',
+    valueTo: 'expr'
+  }
+};
+
 function applyRole(ast, role, sourceToken, location){
   walk(ast, function(type, node){
     if (type !== TYPE_ATTRIBUTE || node[ATTR_NAME] != 'role-marker')
@@ -37,7 +71,7 @@ function applyRole(ast, role, sourceToken, location){
     var roleExpression = node[TOKEN_BINDINGS][1];
     var currentRole = roleExpression[1];
 
-    roleExpression[1] = '/' + role + (currentRole ? '/' + currentRole : '');
+    roleExpression[1] = '/' + role + currentRole;
 
     /** @cut */ node.sourceToken = sourceToken;
     /** @cut */ node.loc = location;
@@ -57,6 +91,25 @@ function clone(value){
   }
 
   return value;
+}
+
+function convertAttributeToInstruction(config, attribute){
+  return {
+    type: TYPE_ELEMENT,
+    prefix: 'b',
+    name: config.instruction,
+    attrs: basis.object.iterate(config.attrs || {}, function(attrName, value){
+      return {
+        type: TYPE_ATTRIBUTE,
+        name: attrName,
+        value: value
+      };
+    }).concat(
+      basis.object.complete({
+        name: config.valueTo
+      }, attribute)
+    )
+  };
 }
 
 module.exports = function(template, options, token, result){
@@ -158,9 +211,6 @@ module.exports = function(template, options, token, result){
         template.resources.unshift.apply(template.resources, resources);
       }
 
-      var instructions = basis.array(token.children);
-      var tokenRefMap = normalizeRefs(decl.tokens); // ast
-
       // TODO: something strange here
       var styleNSIsolate = {
         /** @cut */ map: options.styleNSIsolateMap,
@@ -185,85 +235,42 @@ module.exports = function(template, options, token, result){
         /** @cut */   });
       }
 
-      // TODO: add instructions in right order
+      var instructions = [];
+      var tokenRefMap = normalizeRefs(decl.tokens); // ast
+
+      // convert attributes to instructions
       for (var includeAttrName in elAttrs_)
-        switch (includeAttrName)
+      {
+        if (attributeToInstructionMap.hasOwnProperty(includeAttrName))
         {
-          case 'class':
-            // <b:include class=".."> -> <b:append-class value="..">
-            instructions.unshift({
-              type: TYPE_ELEMENT,
-              prefix: 'b',
-              name: 'append-class',
-              attrs: [
-                basis.object.complete({
-                  name: 'value'
-                }, elAttrs_['class'])
-              ]
-            });
-            break;
-
-          case 'id':
-            // <b:include id=".."> -> <b:set-attr name="id" value="..">
-            instructions.unshift({
-              type: TYPE_ELEMENT,
-              prefix: 'b',
-              name: 'set-attr',
-              attrs: [
-                {
-                  type: TYPE_ATTRIBUTE,
-                  name: 'name',
-                  value: 'id'
-                },
-                basis.object.complete({
-                  name: 'value'
-                }, elAttrs_.id)
-              ]
-            });
-            break;
-
-          case 'ref':
-            // TODO: convert to instruction
-            // <b:include ref="..">
-            if (tokenRefMap.element)
-              elAttrs.ref.trim().split(/\s+/).map(function(refName){
-                addTokenRef(tokenRefMap.element.token, refName);
-              });
-            break;
-
-          case 'show':
-          case 'hide':
-          case 'visible':
-          case 'hidden':
-            // TODO: convert to instruction
-            var tokenRef = tokenRefMap.element;
-            var token = tokenRef && tokenRef.token;
-
-            if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
-              applyShowHideAttribute(template, options, token, elAttrs_[includeAttrName]);
-            break;
-
-          case 'role':
-            // TODO: convert to instruction
-            var role = elAttrs_.role.value;
-
-            if (role)
-            {
-              if (!/[\/\(\)]/.test(role))
-              {
-                var loc;
-                /** @cut */ loc = utils.getLocation(template, elAttrs_.role.loc);
-                applyRole(decl.tokens, role, elAttrs_.role, loc);
-              }
-              /** @cut */ else
-              /** @cut */   utils.addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
-            }
-
-            break;
-          default:
-            // TODO: warn on unknown attr
+          instructions.push(
+            convertAttributeToInstruction(attributeToInstructionMap[includeAttrName], elAttrs_[includeAttrName])
+          );
         }
+        else if (includeAttrName === 'role')
+        {
+          var role = elAttrs_.role.value;
 
+          if (role)
+          {
+            if (!/[\/\(\)]/.test(role))
+            {
+              var loc;
+              /** @cut */ loc = utils.getLocation(template, elAttrs_.role.loc);
+              applyRole(decl.tokens, role, elAttrs_.role, loc);
+            }
+            /** @cut */ else
+            /** @cut */   utils.addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
+          }
+        }
+        /** @cut */ else if (includeAttrName !== 'src' && includeAttrName !== 'no-style' && includeAttrName !== 'isolate')
+        /** @cut */   utils.addTemplateWarn(template, options, 'Unknown attribute for <b:include>: ' + includeAttrName, elAttrs_[includeAttrName].loc);
+      }
+
+      // append instructions
+      instructions = instructions.concat(token.children);
+
+      // process instructions
       for (var j = 0, child; child = instructions[j]; j++)
       {
         // process special elements (basis namespace)
@@ -452,18 +459,18 @@ module.exports = function(template, options, token, result){
               if (token)
               {
                 if (/^[a-z_][a-z0-9_]*$/i.test(refName))
-                  addTokenRef(token, childAttrs.name);
+                  addTokenRef(token, refName);
                 /** @cut */ else
-                /** @cut */   utils.addTemplateWarn(template, options, 'Bad reference name for <b:add-ref>:' + refName, child.loc);
+                /** @cut */   utils.addTemplateWarn(template, options, 'Bad references list for <b:add-ref>:' + refName, child.loc);
               }
               break;
 
             case 'remove-ref':
               var childAttrs = getTokenAttrValues(child);
-              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+              var refName = (childAttrs.name || '').trim();
+              var ref = 'ref' in childAttrs ? childAttrs.ref : refName || 'element';
               var tokenRef = ref && tokenRefMap[ref];
               var token = tokenRef && tokenRef.token;
-              var refName = (childAttrs.name || '').trim();
 
               if (token)
               {
@@ -480,11 +487,18 @@ module.exports = function(template, options, token, result){
               var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
               var tokenRef = ref && tokenRefMap[ref];
               var token = tokenRef && tokenRef.token;
+              var name = childAttrs.name;
+
+              if (!name && 'value' in childAttrs)
+              {
+                /** @cut */ utils.addTemplateWarn(template, options, '`value` attribute for <b:' + child.name + '> is deprecated, use `name` instead', getTokenAttrs(child).value.loc);
+                name = childAttrs.value;
+              }
 
               if (token)
               {
                 arrayRemove(token, getAttrByName(token, 'role-marker'));
-                addRoleAttribute(template, options, token, childAttrs.value || '', child);
+                addRoleAttribute(template, options, token, name || '', child);
               }
               break;
 
