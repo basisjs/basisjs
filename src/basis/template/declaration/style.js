@@ -1,10 +1,8 @@
 var hasOwnProperty = Object.prototype.hasOwnProperty;
-var consts = require('../const.js');
 /** @cut */ var utils = require('./utils.js');
-var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+var walk = require('./ast.js').walk;
+var consts = require('../const.js');
 var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
-var TOKEN_TYPE = consts.TOKEN_TYPE;
-var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 var styleNamespaceIsolate = {};
@@ -53,38 +51,28 @@ function applyStyleNamespaces(tokens, isolate){
     return isolate.prefix + name;
   }
 
-  function walk(tokens, offset){
-    for (var i = offset, token; token = tokens[i]; i++)
-    {
-      var tokenType = token[TOKEN_TYPE];
+  walk(tokens, function(type, node){
+    if (type !== TYPE_ATTRIBUTE_CLASS)
+      return;
 
-      if (tokenType == TYPE_ELEMENT)
-        walk(token, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+    var bindings = node[TOKEN_BINDINGS];
+    var valueIndex = ATTR_VALUE_INDEX[type];
 
-      if (tokenType === TYPE_ATTRIBUTE_CLASS)
-      {
-        var bindings = token[TOKEN_BINDINGS];
-        var valueIndex = ATTR_VALUE_INDEX[tokenType];
+    if (node[valueIndex])
+      node[valueIndex] = node[valueIndex].replace(/\S+/g, processName);
 
-        if (token[valueIndex])
-          token[valueIndex] = token[valueIndex].replace(/\S+/g, processName);
+    /** @cut */ if (node.valueLocMap)
+    /** @cut */ {
+    /** @cut */   var oldValueLocMap = node.valueLocMap;
+    /** @cut */   node.valueLocMap = {};
+    /** @cut */   for (var name in oldValueLocMap)
+    /** @cut */     node.valueLocMap[processName(name)] = oldValueLocMap[name];
+    /** @cut */ }
 
-        /** @cut */ if (token.valueLocMap)
-        /** @cut */ {
-        /** @cut */   var oldValueLocMap = token.valueLocMap;
-        /** @cut */   token.valueLocMap = {};
-        /** @cut */   for (var name in oldValueLocMap)
-        /** @cut */     token.valueLocMap[processName(name)] = oldValueLocMap[name];
-        /** @cut */ }
-
-        if (bindings)
-          for (var k = 0, bind; bind = bindings[k]; k++)
-            bind[0] = processName(bind[0]);
-      }
-    }
-  }
-
-  walk(tokens, 0);
+    if (bindings)
+      for (var k = 0, bind; bind = bindings[k]; k++)
+        bind[0] = processName(bind[0]);
+  });
 }
 
 function isolateTokens(tokens, isolate, template/*, options*/){
@@ -126,68 +114,59 @@ function isolateTokens(tokens, isolate, template/*, options*/){
     }
   }
 
-  function walk(tokens, offset){
-    for (var i = offset, token; token = tokens[i]; i++)
+  /** @cut */ var options = arguments[3];
+
+  walk(tokens, function(type, node){
+    if (type !== TYPE_ATTRIBUTE_CLASS)
+      return;
+
+    var bindings = node[TOKEN_BINDINGS];
+    var valueIndex = ATTR_VALUE_INDEX[type];
+
+    if (node[valueIndex])
+      node[valueIndex] = node[valueIndex]
+        .split(/\s+/)
+        .map(function(name){
+          return processName(name, name, node.valueLocMap ? node.valueLocMap[name] : null);
+        })
+        .filter(Boolean)
+        .join(' ');
+
+    if (bindings)
     {
-      var tokenType = token[TOKEN_TYPE];
-
-      if (tokenType == TYPE_ELEMENT)
-        walk(token, ELEMENT_ATTRIBUTES_AND_CHILDREN);
-
-      if (tokenType == TYPE_ATTRIBUTE_CLASS)
+      for (var j = 0, bind, prefix, removed; bind = bindings[j]; j++)
       {
-        var bindings = token[TOKEN_BINDINGS];
-        var valueIndex = ATTR_VALUE_INDEX[tokenType];
+        prefix = processName(bind[0], bind[0] + '{' + bind[1] + '}', bind.loc);
 
-        if (token[valueIndex])
-          token[valueIndex] = token[valueIndex]
-            .split(/\s+/)
-            .map(function(name){
-              return processName(name, name, token.valueLocMap ? token.valueLocMap[name] : null);
-            })
-            .filter(Boolean)
-            .join(' ');
-
-        if (bindings)
+        if (prefix === false)
         {
-          for (var j = 0, bind, prefix, removed; bind = bindings[j]; j++)
-          {
-            prefix = processName(bind[0], bind[0] + '{' + bind[1] + '}', bind.loc);
-
-            if (prefix === false)
-            {
-              // prefix is false for non-resolved namespaced prefixes -> remove binding
-              removed = true;
-              bindings[j] = null;
-            }
-            else
-              bind[0] = prefix;
-          }
-
-          if (removed)
-          {
-            bindings = bindings.filter(Boolean);
-            token[TOKEN_BINDINGS] = bindings.length ? bindings : 0;
-          }
+          // prefix is false for non-resolved namespaced prefixes -> remove binding
+          removed = true;
+          bindings[j] = null;
         }
+        else
+          bind[0] = prefix;
+      }
 
-        /** @cut */ if (token.valueLocMap)
-        /** @cut */ {
-        /** @cut */   var oldValueLocMap = token.valueLocMap;
-        /** @cut */   token.valueLocMap = {};
-        /** @cut */   for (var name in oldValueLocMap)
-        /** @cut */   {
-        /** @cut */     var newKey = processName(name);
-        /** @cut */     if (newKey)
-        /** @cut */       token.valueLocMap[newKey] = oldValueLocMap[name];
-        /** @cut */   }
-        /** @cut */ }
+      if (removed)
+      {
+        bindings = bindings.filter(Boolean);
+        node[TOKEN_BINDINGS] = bindings.length ? bindings : 0;
       }
     }
-  }
 
-  /** @cut */ var options = arguments[3];
-  walk(tokens, 0);
+    /** @cut */ if (node.valueLocMap)
+    /** @cut */ {
+    /** @cut */   var oldValueLocMap = node.valueLocMap;
+    /** @cut */   node.valueLocMap = {};
+    /** @cut */   for (var name in oldValueLocMap)
+    /** @cut */   {
+    /** @cut */     var newKey = processName(name);
+    /** @cut */     if (newKey)
+    /** @cut */       node.valueLocMap[newKey] = oldValueLocMap[name];
+    /** @cut */   }
+    /** @cut */ }
+  });
 }
 
 module.exports = {
