@@ -37,7 +37,7 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.7.0-dev';
+  var VERSION = '1.7.0';
 
   var global = Function('return this')();
   var process = global.process;
@@ -2493,9 +2493,8 @@
     /** @cut */   var marker = basis.genUID();
     /** @cut */   SOURCE_OFFSET = new Function(args, marker).toString().split(marker)[0].split(/\n/).length - 1;
     /** @cut */ }
-    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1); // function wrapper prefix lines + 'use strict' line
-    /** @cut */ if (!/\/\/# sourceMappingURL=[^\r\n]+[\s]*$/.test(body))
-    /** @cut */   body += '\n\n//# sourceURL=' + pathUtils.origin + sourceURL;
+    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1) + // function wrapper prefix lines + 'use strict' line
+    /** @cut */        '\n//# sourceURL=' + pathUtils.origin + sourceURL;
 
     try {
       return new Function(args,
