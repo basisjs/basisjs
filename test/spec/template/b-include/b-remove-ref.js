@@ -7,7 +7,7 @@ module.exports = {
         var a = createTemplate('<span{test}/>');
         var b = createTemplate(
           '<b:include src="#' + a.templateId + '">' +
-            '<b:add-ref name="test"/>' +
+            '<b:remove-ref name="test"/>' +
           '</b:include>'
         );
 
