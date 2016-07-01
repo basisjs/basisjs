@@ -1,5 +1,6 @@
 var arrayRemove = basis.array.remove;
 var arrayAdd = basis.array.add;
+var walk = require('../ast.js').walk;
 var utils = require('../utils.js');
 var addUnique = utils.addUnique;
 var getTokenAttrValues = utils.getTokenAttrValues;
@@ -28,31 +29,19 @@ var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
-function applyRole(tokens, role, sourceToken, location, stIdx){
-  for (var i = stIdx || 0, token; token = tokens[i]; i++)
-  {
-    var tokenType = token[TOKEN_TYPE];
+function applyRole(ast, role, sourceToken, location){
+  walk(ast, function(type, node){
+    if (type !== TYPE_ATTRIBUTE || node[ATTR_NAME] != 'role-marker')
+      return;
 
-    switch (tokenType)
-    {
-      case TYPE_ELEMENT:
-        applyRole(token, role, sourceToken, location, ELEMENT_ATTRIBUTES_AND_CHILDREN);
-        break;
+    var roleExpression = node[TOKEN_BINDINGS][1];
+    var currentRole = roleExpression[1];
 
-      case TYPE_ATTRIBUTE:
-        if (token[ATTR_NAME] == 'role-marker')
-        {
-          var roleExpression = token[TOKEN_BINDINGS][1];
-          var currentRole = roleExpression[1];
+    roleExpression[1] = '/' + role + (currentRole ? '/' + currentRole : '');
 
-          roleExpression[1] = '/' + role + (currentRole ? '/' + currentRole : '');
-
-          /** @cut */ token.sourceToken = sourceToken;
-          /** @cut */ token.loc = location;
-        }
-        break;
-    }
-  }
+    /** @cut */ node.sourceToken = sourceToken;
+    /** @cut */ node.loc = location;
+  });
 }
 
 function clone(value){
@@ -129,6 +118,11 @@ module.exports = function(template, options, token, result){
         nested: decl.includes
       });
 
+      // template -> s4, s5, s6, s3 {s1}, {s2}
+      //   -> include(template1) s4, s5, s6, {s3}
+      //     -> include(template2) {s4}, {s5}
+      //     -> include(template3) {s6}
+
       if (resource.bindingBridge)
         arrayAdd(template.deps, resource);
 
@@ -156,13 +150,16 @@ module.exports = function(template, options, token, result){
             return item.type != 'style';
           });
         else
-          adoptStyles(resources, isolatePrefix, token);
+          adoptStyles(resources, isolatePrefix, token); // TODO: move filter by type here
 
+        // TODO: fix order
+        // now {include2-style} {include1-style} {own-style}
+        // should be {include1-style} {include2-style} {own-style}
         template.resources.unshift.apply(template.resources, resources);
       }
 
       var instructions = basis.array(token.children);
-      var tokenRefMap = normalizeRefs(decl.tokens);
+      var tokenRefMap = normalizeRefs(decl.tokens); // ast
 
       // TODO: something strange here
       var styleNSIsolate = {
@@ -188,6 +185,7 @@ module.exports = function(template, options, token, result){
         /** @cut */   });
       }
 
+      // TODO: add instructions in right order
       for (var includeAttrName in elAttrs_)
         switch (includeAttrName)
         {
@@ -225,6 +223,7 @@ module.exports = function(template, options, token, result){
             break;
 
           case 'ref':
+            // TODO: convert to instruction
             // <b:include ref="..">
             if (tokenRefMap.element)
               elAttrs.ref.trim().split(/\s+/).map(function(refName){
@@ -236,6 +235,7 @@ module.exports = function(template, options, token, result){
           case 'hide':
           case 'visible':
           case 'hidden':
+            // TODO: convert to instruction
             var tokenRef = tokenRefMap.element;
             var token = tokenRef && tokenRef.token;
 
@@ -244,6 +244,7 @@ module.exports = function(template, options, token, result){
             break;
 
           case 'role':
+            // TODO: convert to instruction
             var role = elAttrs_.role.value;
 
             if (role)
@@ -259,6 +260,8 @@ module.exports = function(template, options, token, result){
             }
 
             break;
+          default:
+            // TODO: warn on unknown attr
         }
 
       for (var j = 0, child; child = instructions[j]; j++)
@@ -266,6 +269,8 @@ module.exports = function(template, options, token, result){
         // process special elements (basis namespace)
         if (child.type == TYPE_ELEMENT && child.prefix == 'b')
         {
+          // TODO: split into modules
+          // TODO: move common parts up (ref)
           switch (child.name)
           {
             case 'style':
