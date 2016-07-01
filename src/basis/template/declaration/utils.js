@@ -158,10 +158,20 @@ function normalizeRefs(nodes){
   var map = {};
 
   walk(nodes, function(type, node, parent){
-    var refs = node[TOKEN_REFS];
-
-    if (type !== TYPE_ATTRIBUTE_EVENT && refs)
+    if (type === TYPE_CONTENT)
     {
+      map[':content'] = {
+        owner: parent,
+        token: node
+      };
+    }
+    else if (type !== TYPE_ATTRIBUTE_EVENT)
+    {
+      var refs = node[TOKEN_REFS];
+
+      if (!refs)
+        return;
+
       for (var j = refs.length - 1, refName; refName = refs[j]; j--)
       {
         if (refName.indexOf(':') != -1)
@@ -182,12 +192,6 @@ function normalizeRefs(nodes){
         };
       }
     }
-
-    if (type === TYPE_CONTENT)
-      map[':content'] = {
-        owner: parent,
-        token: node
-      };
   });
 
   return map;
