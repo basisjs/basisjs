@@ -217,8 +217,9 @@ function applyAttrs(template, options, host, attrs){
   return host;
 }
 
-function modifyAttr(template, options, include, tokenRefMap, token, name, action){
+function modifyAttr(template, options, include, target, token, name, action){
   var attrs = getTokenAttrValues(token);
+  var attrs_ = getTokenAttrs(token);
 
   if (name)
     attrs.name = name;
@@ -235,14 +236,11 @@ function modifyAttr(template, options, include, tokenRefMap, token, name, action
     return;
   }
 
-  // FIXME: tokenRefMap defined for <b:include/> only
-  var includedToken = tokenRefMap[attrs.ref || 'element'];
-  if (includedToken)
+  if (target)
   {
-    if (includedToken.token[TOKEN_TYPE] == TYPE_ELEMENT)
+    if (target[TOKEN_TYPE] == TYPE_ELEMENT)
     {
-      var attrs_ = getTokenAttrs(token);
-      var itAttrs = includedToken.token;
+      var itAttrs = target;
       var isEvent = attrs.name.match(ATTR_EVENT_RX);
       var isClassOrStyle = attrs.name == 'class' || attrs.name == 'style';
       var itType = isEvent ? TYPE_ATTRIBUTE_EVENT : ATTR_TYPE_BY_NAME[attrs.name] || TYPE_ATTRIBUTE;
@@ -293,7 +291,7 @@ function modifyAttr(template, options, include, tokenRefMap, token, name, action
         if (!itAttrs)
         {
           itAttrs = [];
-          includedToken.token.push(itAttrs);
+          target.push(itAttrs);
         }
 
         itAttrs.push(itAttrToken);
