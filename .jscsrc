@@ -37,7 +37,7 @@
 
     "disallowMultipleLineStrings": true,
     "validateQuoteMarks": "'",
-    "requireSemicolon": true,
+    "requireSemicolons": true,
 
     "disallowMixedSpacesAndTabs": true,
     "disallowTrailingWhitespace": true,
