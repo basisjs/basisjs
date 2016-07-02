@@ -19,19 +19,6 @@ function getColorForDictionary(dictionaryName){
   return dictionaryColor[dictionaryName];
 }
 
-function loadToken(token){
-  var dictionary = token.dictionary;
-  var cultureList = inspectBasisL10n.getCultureList();
-
-  var data = {
-    cultureList: cultureList,
-    selectedToken: token.name,
-    dictionaryName: basis.path.relative('/', dictionary.resource.url)
-  };
-
-  transport.sendData('token', data);
-}
-
 function tokenBinding(fn){
   fn = basis.getter(fn);
   return {
@@ -85,7 +72,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
       openFileSupported: {
         events: 'delegateChanged update',
         getter: function(){
-          var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+          var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
           return basisjsTools && typeof basisjsTools.openFile == 'function';
         }
       }
