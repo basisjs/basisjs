@@ -282,7 +282,6 @@ module.exports = function(template, options, token, result){
           {
             case 'style':
               var childAttrs = getTokenAttrValues(child);
-              var childAttrs_ = getTokenAttrs(child);
               var useStyle = true;
 
               if (childAttrs.options)
@@ -305,7 +304,7 @@ module.exports = function(template, options, token, result){
                     styleNamespaceIsolate[src] = options.genIsolateMarker();
 
                   template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
-                    /** @cut */ loc: utils.getLocation(template, childAttrs_[namespaceAttrName].loc),
+                    /** @cut */ loc: utils.getLocation(template, getTokenAttrs(child)[namespaceAttrName].loc),
                     /** @cut */ used: false,
                     name: styleNamespace,
                     prefix: styleNamespaceIsolate[src]
