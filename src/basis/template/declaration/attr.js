@@ -58,7 +58,6 @@ function getStyleBindingProperty(attr, name){
 /** @cut */ }
 
 function setStylePropertyBinding(template, options, host, attr, property, showByDefault, defaultValue){
-  debugger;
   var styleAttr = getAttrByName(host, 'style');
 
   if (!styleAttr)
