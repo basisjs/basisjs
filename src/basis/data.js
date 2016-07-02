@@ -851,6 +851,7 @@
 
     var descriptor = target.propertyDescriptors[pathFragment];
     var events = descriptor ? descriptor.events : null;
+    var forceApply = descriptor ? descriptor.forceApply : null;
 
     if (descriptor && descriptor.isPrivate)
     {
@@ -923,7 +924,8 @@
     return {
       getter: pathFragment,
       rest: path.slice(index + 1).join('.'),
-      events: events || null
+      events: events || null,
+      forceApply: forceApply || null
     };
   }
 
@@ -973,6 +975,26 @@
       return UNDEFINED_VALUE;
 
     result = Value.from(target, pathFragment.events, pathFragment.getter);
+
+    // if forceApply then patch settled getter (proxy for the result value)
+    if (pathFragment.forceApply)
+    {
+      // saving settled getter
+      var currentGetter = result.proxy;
+      // patching proxy
+      var forceApplyGetter = function(source){
+        // caching getter result
+        var getterResult = currentGetter(source);
+
+        if (result.value === getterResult)
+        {
+          result.emit_change(result.value);
+        }
+        // falling thru settled getter
+        return getterResult;
+      };
+      result.proxy = basis.getter(forceApplyGetter);
+    }
 
     if (pathFragment.rest)
       result = result
