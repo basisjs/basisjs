@@ -15,8 +15,8 @@
     "disallowEmptyBlocks": true,
 
     "requireSpacesInsideObjectBrackets": "all",
-    "disallowSpacesInsideArrayBrackets": true,
-    "disallowSpacesInsideParentheses": true,
+    // "disallowSpacesInsideArrayBrackets": true,
+    // "disallowSpacesInsideParentheses": true,
 
     "disallowSpaceAfterObjectKeys": true,
 
