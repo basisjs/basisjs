@@ -2,6 +2,8 @@
 
 # basis.js
 
+[![Join the chat at https://gitter.im/basisjs/basisjs](https://badges.gitter.im/basisjs/basisjs.svg)](https://gitter.im/basisjs/basisjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [Версия на русском](README.ru.md) (более полная и подробная)
 
 ## What is it?
