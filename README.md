@@ -18,8 +18,6 @@ You can compare performance of `basis.js` with other frameworks by some syntheti
 
 ## Using
 
-### Install
-
 ```
 > npm install basisjs
 ```
@@ -29,6 +27,15 @@ or
 ```
 > bower install basisjs
 ```
+
+or use build as [library](https://github.com/basisjs/basis-library)
+
+```
+> npm install basis-library
+> bower install basis-library
+```
+
+Library version can be fetched from CDN: [https://cdnjs.com/libraries/basis.js](https://cdnjs.com/libraries/basis.js)
 
 ## Run tests
 
