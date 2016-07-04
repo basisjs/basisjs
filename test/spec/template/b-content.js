@@ -268,6 +268,168 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'multi-level includes',
+      test: [
+        {
+          name: 'simple',
+          test: function(){
+            var templateOne = createTemplate(
+              '<div>' +
+                '<b:content>' +
+                  'original' +
+                '</b:content>' +
+              '</div>'
+            );
+
+            var templateTwo = createTemplate(
+              '<b:include src="#' + templateOne.templateId + '">' +
+                'go deeper' +
+              '</b:include>'
+            );
+
+            var templateThree = createTemplate(
+              '<b:include src="#' + templateTwo.templateId + '">' +
+                'success' +
+              '</b:include>'
+            );
+
+            assert(text(templateThree) === text('<div>success</div>'));
+          }
+        },
+        {
+          name: 'with merge',
+          test: function(){
+            var templateA = createTemplate(
+              '<span class="a">' +
+                '<b:content>' +
+                  'explicit' +
+                '</b:content>' +
+              '</span>'
+            );
+
+            var templateB = createTemplate(
+              '<span class="b">' +
+                'no content' +
+              '</span>'
+            );
+
+            var twoTemplates = createTemplate(
+              '<b:include src="#' + templateA.templateId + '"/>' +
+              '<b:include src="#' + templateB.templateId + '"/>'
+            );
+
+            var templateWithMerge = createTemplate(
+              '<div>' +
+                '<b:include src="#' + twoTemplates.templateId + '">' +
+                  'success' +
+                '</b:include>' +
+              '</div>'
+            );
+
+            assert(text(templateWithMerge) === text(
+              '<div>' +
+                '<span class="a">' +
+                  'success' +
+                '</span>' +
+                '<span class="b">' +
+                  'no content' +
+                '</span>' +
+              '</div>'
+            ));
+          }
+        },
+        {
+          name: 'with merge 2',
+          test: function(){
+            var templateA = createTemplate(
+              '<span class="a">' +
+                '<b:content>' +
+                  'explicit' +
+                '</b:content>' +
+              '</span>'
+            );
+
+            var templateB = createTemplate(
+              '<span class="b">' +
+                'no content' +
+              '</span>'
+            );
+
+            var twoTemplates = createTemplate(
+              '<b:content/>' +
+              '<b:include src="#' + templateA.templateId + '"/>' +
+              '<b:include src="#' + templateB.templateId + '"/>'
+            );
+
+            var templateWithMerge = createTemplate(
+              '<div>' +
+                '<b:include src="#' + twoTemplates.templateId + '">' +
+                  'success' +
+                '</b:include>' +
+              '</div>'
+            );
+
+            assert(text(templateWithMerge) === text(
+              'success' +
+              '<div>' +
+                '<span class="a">' +
+                  'explicit' +
+                '</span>' +
+                '<span class="b">' +
+                  'no content' +
+                '</span>' +
+              '</div>'
+            ));
+          }
+        },
+        {
+          name: 'merge with prepend',
+          test: function(){
+            var templateA = createTemplate(
+              '<span class="a">' +
+                'no content' +
+              '</span>'
+            );
+
+            var templateB = createTemplate(
+              '<span class="b">' +
+                '<b:content/>' +
+              '</span>'
+            );
+
+            var twoTemplates = createTemplate(
+              '<b:include src="#' + templateA.templateId + '">' +
+                '<b:prepend>' +
+                  '<b:content/>' +
+                '</b:prepend>' +
+              '</b:include>' +
+              '<b:include src="#' + templateB.templateId + '"/>'
+            );
+
+            var templateWithMerge = createTemplate(
+              '<div>' +
+                '<b:include src="#' + twoTemplates.templateId + '">' +
+                  'success' +
+                '</b:include>' +
+              '</div>'
+            );
+
+            assert(text(templateWithMerge) === text(
+              'success' +
+              '<div>' +
+                '<span class="a">' +
+                  'success' +
+                  'no content' +
+                '</span>' +
+                '<span class="b">' +
+                '</span>' +
+              '</div>'
+            ));
+          }
+        }
+      ]
     }
   ]
 };
