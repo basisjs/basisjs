@@ -11,6 +11,7 @@ var Slide = require('app.type').Slide;
 
 var fileList = require('./module/fileList/index.js');
 var editor = require('./module/editor/index.js');
+var ignoreUpdate = false;
 var timer;
 
 fileList.selection.addHandler({
@@ -23,7 +24,7 @@ var updateSet = new Dataset({
   listen: {
     item: {
       update: function(sender){
-        if (!sender.data.updatable)
+        if (!sender.data.updatable && !ignoreUpdate)
           panels.lastChild.prepareToRun();
       }
     }
@@ -32,9 +33,7 @@ var updateSet = new Dataset({
 var changedFiles = new Filter({
   source: updateSet,
   ruleEvents: 'rollbackUpdate',
-  rule: function(item){
-    return item.modified;
-  }
+  rule: 'modified'
 });
 
 var langPopup = new Menu({
@@ -89,9 +88,13 @@ var panels = new VerticalPanelStack({
       template: resource('./template/preview.tmpl'),
       handler: {
         update: function(){
+          console.log('update');
+          ignoreUpdate = true;
           updateSet.set(this.data.files ? this.data.files.getItems() : []);
+          ignoreUpdate = false;
         },
         targetChanged: function(){
+          console.log('target');
           if (this.target)
             this.run();
         }

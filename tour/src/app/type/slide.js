@@ -18,8 +18,7 @@ var Slide = entity.createType('Slide', {
 // sync data
 //
 
-var slideIndex = basis.resource('./slide/index.json');
-slideIndex.ready(function(data){
+basis.resource('./slide/index.json').ready(function(data){
   var prev = null;
   var next = null;
 
@@ -37,12 +36,8 @@ slideIndex.ready(function(data){
     prev = item;
   }
 
-  this.sync(data);
-}, Slide.all);
-
-Slide.all.setSyncAction(function(){
-  slideIndex.fetch();
-});
+  this.setAndDestroyRemoved(data.map(Slide));
+}, Slide.all).fetch();
 
 
 //
