@@ -1,4 +1,32 @@
 .list
 {
-  padding-left: 6px;
+  padding-left: 5px;
+  padding-top: 15px;
+}
+
+.button
+{
+  cursor: pointer;
+  background: #E0E0E0;
+  padding: 6px 15px;
+  float: right;
+  margin-right: 5px;
+  margin-top: -10px;
+  border-radius: 3px;
+}
+.button-reset
+{
+  visibility: hidden;
+  opacity: 0;
+    -webkit-transition: opacity .2s, visibility .2s;
+  transition: opacity .2s, visibility .2s;
+}
+.button-reset_hasChanges
+{
+  visibility: visible;
+  opacity: 1;
+}
+.button:hover
+{
+  background: gold;
 }

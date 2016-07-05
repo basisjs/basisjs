@@ -1,17 +1,34 @@
 <b:style src="./view.css"/>
+<b:isolate/>
 
 <div class="app-slide">
-  <div{sidebar} id="navAndContentSide">
-    <div id="nav">
-      <span id="slideCounter">{num}/{slideCount}</span>
-      <span class="button" event-click="toc">Table of content</span>
-      <span class="button" event-click="prev">Prev</span>
-      <span class="button" event-click="next">Next</span>
+  <div{sidebar} class="sidebar">
+    <div class="nav">
+      <!-- <span class="slideCounter">{num}/{slideCount}</span> -->
+      <span class="title">
+        Basis.js Tour
+      </span>
+      <b:include src="./button.tmpl" isolate>
+        <b:set-attr name="event-click" value="toc"/>
+        <b:replace ref="caption">Table of content</b:replace>
+      </b:include>
+      <b:include src="./button.tmpl" isolate>
+        <b:set-attr name="event-click" value="prev"/>
+        <b:replace ref="caption">Prev</b:replace>
+      </b:include>
+      <b:include src="./button.tmpl" isolate>
+        <b:set-attr name="event-click" value="next"/>
+        <b:replace ref="caption">Next</b:replace>
+      </b:include>
     </div>
-    <div id="description">
+    <div class="description">
       <h2>{title}</h2>
       <!--{description}-->
     </div>
   </div>
-  <!--{panels}-->
+  <div class="content">
+    <!--{files}-->
+    <!--{editor}-->
+    <!--{preview}-->
+  </div>
 </div>

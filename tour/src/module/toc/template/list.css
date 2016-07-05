@@ -1,11 +1,20 @@
+.wrapper
+{
+  background: #f2f4f7;
+  min-height: 100%;
+  padding: 1em 0;
+}
 .toc
 {
-  float: right;
+  margin: 0 auto;
   width: 40%;
 }
 .header
 {
   margin: 0 0 .5em;
+  font-size: 250%;
+  font-weight: normal;
+  text-indent: .37em;
 }
 .items
 {

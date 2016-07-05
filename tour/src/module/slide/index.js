@@ -11,7 +11,6 @@ var Slide = require('app.type').Slide;
 
 var fileList = require('./module/fileList/index.js');
 var editor = require('./module/editor/index.js');
-var ignoreUpdate = false;
 var timer;
 
 fileList.selection.addHandler({
@@ -23,116 +22,54 @@ fileList.selection.addHandler({
 var updateSet = new Dataset({
   listen: {
     item: {
-      update: function(sender){
-        if (!sender.data.updatable && !ignoreUpdate)
-          panels.lastChild.prepareToRun();
+      update: function(sender, delta){
+        if (!sender.data.updatable)
+          preview.prepareToRun();
       }
     }
   }
 });
-var changedFiles = new Filter({
-  source: updateSet,
-  ruleEvents: 'rollbackUpdate',
-  rule: 'modified'
-});
 
-var langPopup = new Menu({
-  childClass: {
-    click: function(){
-      l10n.setCulture(this.lang);
-      langPopup.hide();
-    }
-  },
-  childNodes: l10n.getCultureList().map(function(lang){
-    return {
-      caption: lang,
-      lang: lang
-    };
-  })
-});
-
-var panels = new VerticalPanelStack({
-  template: resource('./template/main-part.tmpl'),
+var preview = new Node({
   autoDelegate: true,
-  childClass: {
-    autoDelegate: true
-  },
-  childNodes: [
-    {
-      template: resource('./template/header.tmpl'),
-      binding: {
-        hasChanges: count(changedFiles),
-        lang: l10n.culture
-      },
-      action: {
-        resetSlide: function(){
-          this.data.files.forEach(function(file){
-            file.rollback();
-          });
-        },
-        changeLang: function(event){
-          langPopup.show(event.sender);
-        }
-      }
-    },
-    {
-      template: resource('./template/files.tmpl'),
-      childNodes: fileList
-    },
-    {
-      flex: 1,
-      template: resource('./template/code.tmpl'),
-      childNodes: editor
-    },
-    {
-      template: resource('./template/preview.tmpl'),
-      handler: {
-        update: function(){
-          console.log('update');
-          ignoreUpdate = true;
-          updateSet.set(this.data.files ? this.data.files.getItems() : []);
-          ignoreUpdate = false;
-        },
-        targetChanged: function(){
-          console.log('target');
-          if (this.target)
-            this.run();
-        }
-      },
-      prepareToRun: function(){
-        if (timer)
-          clearTimeout(timer);
-
-        timer = setTimeout(this.run.bind(this), 500);
-      },
-      run: function(){
-        timer = clearTimeout(timer);
-        this.tmpl.launcher.src = 'launcher.html';
-
-        var self = this;
-        this.tmpl.set('reloaded', true);
-        basis.nextTick(function(){
-          self.tmpl.set('reloaded', false);
-        });
-      },
-
-      init: function(){
-        Node.prototype.init.call(this);
-        this.resizer = new Resizer({
-          property: 'height',
-          factor: -1
-        });
-      },
-      templateSync: function(){
-        Node.prototype.templateSync.call(this);
-        this.resizer.setElement(this.element);
-      },
-      destroy: function(){
-        Node.prototype.destroy.call(this);
-        this.resizer = this.resizer.destroy();
-      }
+  template: resource('./template/preview.tmpl'),
+  handler: {
+    update: function(){
+      updateSet.set(this.data.files ? this.data.files.getItems() : []);
     }
-  ]
+  },
+  prepareToRun: function(){
+    if (timer)
+      clearTimeout(timer);
+
+    timer = setTimeout(this.run.bind(this), 250);
+  },
+  run: function(){
+    timer = clearTimeout(timer);
+    this.tmpl.launcher.src = 'launcher.html';
+
+    var self = this;
+    this.tmpl.set('reloaded', true);
+    basis.nextTick(function(){
+      self.tmpl.set('reloaded', false);
+    });
+  },
+
+  init: function(){
+    Node.prototype.init.call(this);
+    this.resizer = new Resizer({
+      property: 'height',
+      factor: -1
+    });
+  },
+  templateSync: function(){
+    Node.prototype.templateSync.call(this);
+    this.resizer.setElement(this.element);
+  },
+  destroy: function(){
+    Node.prototype.destroy.call(this);
+    this.resizer = this.resizer.destroy();
+  }
 });
 
 var view = new Node({
@@ -153,7 +90,9 @@ var view = new Node({
     num: 'data:',
     slideCount: count(Slide.all),
 
-    panels: panels
+    files: fileList,
+    editor: editor,
+    preview: preview
   },
   action: {
     toc: function(){

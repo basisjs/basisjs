@@ -1,11 +1,12 @@
-#preview
+.preview
 {
+  position: relative;
   background: white;
   height: 30%;
   min-height: 150px;
   max-height: 75%;
 }
-#preview .reloaded-label
+.reloaded-label
 {
   position: absolute;
   z-index: 10;
@@ -24,13 +25,13 @@
   opacity: 0;
   -webkit-transition: opacity .25s 1.5s, visibility .25s 1.5s;
 }
-#preview .reloaded-label_reloaded
+.reloaded-label_reloaded
 {
   visibility: visible;
   opacity: 1;
   -webkit-transition: none;
 }
-#preview IFRAME
+.preview-iframe
 {
   position: absolute;
   top: 0;
@@ -40,7 +41,7 @@
   border: none;
   background: white;
 }
-#preview .Basis-Resizer
+.Basis-Resizer
 {
   height: 5px;
   width: 100%;

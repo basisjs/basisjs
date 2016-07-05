@@ -1,4 +1,7 @@
 <b:style src="./list.css"/>
+<b:define name="hasChanges" type="bool"/>
 <b:isolate/>
 
-<div class="list"/>
+<div class="list">
+  <span class="button button-reset button-reset_{hasChanges}" event-click="resetSlides">Reset changes</span>
+</div>

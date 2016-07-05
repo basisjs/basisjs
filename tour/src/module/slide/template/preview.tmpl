@@ -1,9 +1,8 @@
 <b:style src="./preview.css"/>
+<b:isolate/>
 <b:define name="reloaded" type="bool"/>
 
-<b:include src="basis.ui.panel.Panel" id="preview">
-  <b:append>
-    <span class="reloaded-label reloaded-label_{reloaded}">Page reloaded</span>
-    <iframe{launcher} src="launcher.html" />
-  </b:append>
-</b:include>
+<div class="preview">
+  <span class="reloaded-label reloaded-label_{reloaded}">Page reloaded</span>
+  <iframe{launcher} class="preview-iframe" src="launcher.html" />
+</div>

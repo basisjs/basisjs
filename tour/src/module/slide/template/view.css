@@ -7,41 +7,58 @@
   bottom: 0;
 }
 
-#navAndContentSide
+.sidebar
 {
   float: right;
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 35%;
   height: 100%;
-  background: gray;
+  padding: 5px;
+  box-sizing: border-box;
+  background: #F0F0F0;
   min-width: 200px;
   max-width: 50%;
 }
-#navAndContentSide .Basis-Resizer
+.sidebar .Basis-Resizer
 {
   height: 100%;
   width: 5px;
   left: -2px;
   top: 0;
 }
-#description
+
+.nav
 {
-  background: #F0FFF0;
-  position: absolute;
-  top: 2em;
-  margin-top: 8px;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  padding-bottom: 5px;
+  overflow: hidden;
+    -webkit-user-select: none;
+  user-select: none;
+  display: flex;
+}
+.title
+{
+  flex: 1;
+  font-size: 20px;
+  padding: 3px 0 0 3px;
+  display: inline-block;
+}
+
+.description
+{
+  flex: 1;
+  background: white;
+  border-radius: 3px;
   padding: 15px;
   overflow: auto;
   line-height: 1.6;
 }
-#description H2
+.description H2
 {
   margin-top: 0;
 }
-#description I
+.description I
 {
   white-space: nowrap;
   font-style: normal;
@@ -51,29 +68,16 @@
   padding: 0px 3px 1px;
 }
 
-#nav
-{
-  background: #E0E0E0;
-  height: 2em;
-  padding: 4px;
-  overflow: hidden;
-    -webkit-user-select: none;
-  user-select: none;
-}
-#nav .button
-{
-  float: left;
-  padding: 4px 8px;
-  margin: 0 2px;
-  background: #BBB;
-  cursor: pointer;
-}
-#nav .button:hover
-{
-  background: gold;
-}
-#slideCounter
+
+.slideCounter
 {
   font-size: 150%;
   float: right;
+}
+
+.content
+{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }

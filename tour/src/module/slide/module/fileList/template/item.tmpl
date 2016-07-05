@@ -4,5 +4,5 @@
 <b:define name="modified" type="bool"/>
 
 <div class="tab tab_{selected} tab_{modified}" event-click="select">
-  {title}
+  {name}<span b:show="{modified}">*</span>
 </div>
