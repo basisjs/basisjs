@@ -1,18 +1,66 @@
 var highlight = require('basis.utils.highlight').highlight;
 
+function escapeString(value){
+  return value
+    .replace(/'/g, '\\\'')
+    .replace(/\t/, '\\\t')
+    .replace(/\r/, '\\\r')
+    .replace(/\n/, '\\\n');
+}
+
 function getNodeType(value, resolvers){
   return resolvers.isDataset(value) ? 'set' : null;
+}
+
+function rawValue(value, resolvers){
+  var type;
+  var valueStr;
+
+  if (value && value.bindingBridge)
+  {
+    value = value.bindingBridge.get(value);
+
+    if (value && value.constructor && value.constructor.className)
+    {
+      type = 'object';
+      valueStr = '[object ' + value.constructor.className + ']';
+    }
+  }
+
+  if (!type)
+  {
+    type = value && value.constructor === String ? 'string' : typeof value;
+
+    switch (type) {
+      case 'string':
+        valueStr = '\"' + escapeString(value) + '\"';
+        break;
+      case 'object':
+        if (value)
+        {
+          valueStr = '{ .. }';
+          break;
+        }
+      default:
+        valueStr = String(value);
+    }
+  }
+
+  return {
+    type: type,
+    nodeType: getNodeType(value, resolvers),
+    value: value,
+    str: valueStr
+  };
 }
 
 function inspectValue(value, resolvers, map){
   var valueLoc = resolvers.getInfo(value, 'loc');
   var sourceInfo;
+  var raw;
 
   value = resolvers.unwrap(value);
   sourceInfo = resolvers.getInfo(value, 'sourceInfo');
-
-  if (!map)
-    map = [];
 
   if (!sourceInfo)
   {
@@ -21,11 +69,15 @@ function inspectValue(value, resolvers, map){
     if (!marker)
       marker = map.push(value);
 
+    value = resolvers.resolveValue(value);
+    raw = rawValue(value, resolvers);
+
     return [{
-      nodeType: getNodeType(value, resolvers),
+      nodeType: raw.nodeType,
       source: true,
       marker: marker,
-      value: resolvers.resolveValue(value),
+      value: value,
+      raw: raw,
       loc: valueLoc
     }];
   }
@@ -48,8 +100,11 @@ function inspectValue(value, resolvers, map){
   var fnLoc = resolvers.getInfo(fn, 'loc');
   var info = fn ? resolvers.fnInfo(fn) : { source: null };
 
+  value = resolvers.resolveValue(value);
+  raw = rawValue(value, resolvers);
+
   nodes.push({
-    nodeType: getNodeType(value, resolvers),
+    nodeType: raw.nodeType,
     type: sourceInfo.type || 'Unknown transformation',
     events: sourceInfo.events,
     transform: info.getter || (fnLoc
@@ -62,7 +117,8 @@ function inspectValue(value, resolvers, map){
           })
         : ''),
     transformLoc: fnLoc,
-    value: resolvers.resolveValue(value),
+    value: value,
+    raw: raw,
     loc: valueLoc
   });
 
@@ -70,7 +126,7 @@ function inspectValue(value, resolvers, map){
 }
 
 function buildTree(value, api){
-  var result = inspectValue(value, api);
+  var result = inspectValue(value, api, []);
 
   if (result.length)
     result[result.length - 1].initial = true;
