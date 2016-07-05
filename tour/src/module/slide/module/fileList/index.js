@@ -1,13 +1,6 @@
 var Value = require('basis.data').Value;
-var Filter = require('basis.data.dataset').Filter;
+var count = require('basis.data.index').count;
 var TabControl = require('basis.ui.tabs').TabControl;
-
-var changedFiles = new Filter({
-  ruleEvents: 'rollbackUpdate',
-  rule: function(item){
-    return item.modified;
-  }
-});
 
 var view = new TabControl({
   autoDelegate: true,
@@ -15,7 +8,7 @@ var view = new TabControl({
 
   template: resource('./template/list.tmpl'),
   binding: {
-    hasChanges: Value.query(changedFiles, 'itemCount')
+    hasChanges: count(Value.query('data.files'), 'rollbackUpdate', 'modified')
   },
   action: {
     resetSlides: function(){
@@ -34,7 +27,5 @@ var view = new TabControl({
     }
   }
 });
-
-changedFiles.setSource(Value.query(view, 'data.files'));
 
 module.exports = view;
