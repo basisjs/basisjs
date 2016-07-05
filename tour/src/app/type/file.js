@@ -1,3 +1,4 @@
+var STATE = require('basis.data').STATE;
 var entity = require('basis.entity');
 
 var File = entity.createType('File', {
@@ -15,11 +16,14 @@ var File = entity.createType('File', {
 
 File.extendClass({
   syncAction: function(){
-    var res = basis.resource('./slide/' + this.data.filename);
-    res.ready(function(content){
-      this.set('content', content);
-    }, this);
+    var res = basis
+      .resource('./slide/' + this.data.filename)
+      .ready(function(content){
+        this.set('content', content);
+      }, this);
+
     this.set('content', res.get(true));
+    this.setState(STATE.READY);
 
     // prevent more than one resource attachment
     this.setSyncAction();

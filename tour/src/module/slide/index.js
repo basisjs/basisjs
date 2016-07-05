@@ -1,3 +1,4 @@
+var STATE = require('basis.data').STATE;
 var l10n = require('basis.l10n');
 var router = require('basis.router');
 var Dataset = require('basis.data').Dataset;
@@ -12,6 +13,10 @@ var Slide = require('app.type').Slide;
 var fileList = require('./module/fileList/index.js');
 var editor = require('./module/editor/index.js');
 var timer;
+
+function isReady(item){
+  return item.state == STATE.READY;
+}
 
 fileList.selection.addHandler({
   itemsChanged: function(){
@@ -36,6 +41,10 @@ var preview = new Node({
   handler: {
     update: function(){
       updateSet.set(this.data.files ? this.data.files.getItems() : []);
+    },
+    targetChanged: function(){
+      if (this.target && this.data.files.getItems().every(isReady))
+        this.run();
     }
   },
   prepareToRun: function(){
