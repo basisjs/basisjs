@@ -26,6 +26,7 @@
     -webkit-user-select: none;
   user-select: none;
   display: flex;
+  align-items: top;
 }
 .title
 {
@@ -33,6 +34,9 @@
   font-size: 20px;
   padding: 3px 0 0 3px;
   display: inline-block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .description
@@ -57,7 +61,12 @@
   background: #F8F8F8;
   padding: 0px 3px 1px;
 }
-
+.description PRE
+{
+  font-family: 'source-code-pro', Menlo, Consolas, 'Courier New', monospace;
+  line-height: 1.5;
+  font-size: 12px;
+}
 
 .slideCounter
 {
