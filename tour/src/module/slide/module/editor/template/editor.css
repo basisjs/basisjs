@@ -2,6 +2,8 @@
 {
   flex: 1;
   position: relative;
+  overflow: hidden;
+  border-radius: 3px;
 }
 .slide-code-editor
 {
@@ -15,11 +17,13 @@
 .slide-code-editor .CodeMirror
 {
   height: 100%;
-  font-family: Monaco, Consolas, monospace;
-  line-height: 1.35;
+  font-family: 'source-code-pro', Menlo, Consolas, 'Courier New', monospace;
+  line-height: 1.5;
+  font-size: 13px;
 }
 
 .slide-code-editor .CodeMirror-lines
 {
   padding: 4px 2px;
 }
+

@@ -1,14 +1,15 @@
 .list
 {
   padding-left: 5px;
-  padding-top: 15px;
+  padding-top: 10px;
 }
 
 .button
 {
   cursor: pointer;
+  border: 1px solid #CCC;
   background: #E0E0E0;
-  padding: 6px 15px;
+  padding: 5px 14px;
   float: right;
   margin-right: 5px;
   margin-top: -10px;
@@ -18,8 +19,7 @@
 {
   visibility: hidden;
   opacity: 0;
-    -webkit-transition: opacity .2s, visibility .2s;
-  transition: opacity .2s, visibility .2s;
+  transition: opacity .2s, visibility .2s, background-color .2s, border-color .2s;
 }
 .button-reset_hasChanges
 {
@@ -28,5 +28,6 @@
 }
 .button:hover
 {
-  background: gold;
+  background: #ffce54;
+  border-color: #ffce54;
 }

@@ -5,7 +5,7 @@ var lockEditor = false;
 var editor = CodeMirror(function(el){
   editorEl = el;
 }, {
-  theme: 'monokai',
+  theme: 'material',
   lineNumbers: true
 });
 editor.on('change', function(editor){

@@ -9,7 +9,7 @@ var File = entity.createType('File', {
   updatable: entity.calc('filename', function(filename){
     var ext = basis.path.extname(filename);
     var cfg = basis.resource.extensions[ext];
-    return (cfg && cfg.updatable) || ext == '.tmpl';
+    return (cfg && cfg.updatable) || ext == '.tmpl' || ext == '.css';
   })
 });
 

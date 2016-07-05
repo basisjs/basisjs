@@ -5,6 +5,9 @@
   height: 30%;
   min-height: 150px;
   max-height: 75%;
+  overflow: hidden;
+  border-radius: 3px;
+  margin-top: 5px;
 }
 .reloaded-label
 {
