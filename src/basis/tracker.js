@@ -80,8 +80,6 @@ function track(event){
 // show
 //
 
-var checkTimer;
-
 function checkShow(){
   function isVisible(element){
     if (getComputedStyle(element, 'visibility') != 'visible')
@@ -269,7 +267,7 @@ function getSelectorList(eventName){
   switch (eventName) {
     case 'show':
       selectorList.visible = {};
-      checkTimer = setInterval(checkShow, VISIBLE_CHECK_INTERVAL);
+      setInterval(checkShow, VISIBLE_CHECK_INTERVAL);
       break;
 
     default:

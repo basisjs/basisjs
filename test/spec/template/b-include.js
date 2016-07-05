@@ -295,11 +295,11 @@ module.exports = {
         {
           name: '<b:include visible>',
           test: function(){
-            var a = createTemplate('<span/>');
+            var a = createTemplate('<span style="color: red"/>'); // add color since Firefox left `style=""` otherwise and test fails
             var b = createTemplate('<b:include src="#' + a.templateId + '" visible="{foo}"/>');
 
-            assert(text(b) === text('<span style="visibility: hidden"/>'));
-            assert(text(b, { foo: true }) === text('<span/>'));
+            assert(text(b) === text('<span style="color: red; visibility: hidden"/>'));
+            assert(text(b, { foo: true }) === text('<span style="color: red"/>'));
           }
         },
         {

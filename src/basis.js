@@ -3865,7 +3865,7 @@
   var devInfoResolver = (function(){
     /** @cut */ var getExternalInfo = $undef;
     var fixSourceOffset = $self;
-    var set = function(target, key, info){};
+    var set = function(/*target, key, info*/){};
     var patch = function(target, key, patch){
       /** @cut */ var oldInfo = get(target, key);
       /** @cut */

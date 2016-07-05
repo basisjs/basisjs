@@ -95,6 +95,7 @@ module.exports = {
     require('./template/b-define.js'),
     require('./template/b-content.js'),
     require('./template/b-svg.js'),
+    require('./template/b-style.js'),
     require('./template/isolate.js'),
     require('./template/l10n.js'),
     require('./template/touch.js'),

@@ -81,7 +81,7 @@ if (inspectBasis.devtools)
 //
 module.exports = {
   getFileList: function(){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
 
     if (basisjsTools)
       sendData('filesChanged', {
@@ -101,13 +101,13 @@ module.exports = {
       });
   },
   createFile: function(filename){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
 
     if (basisjsTools)
       basisjsTools.createFile(filename);
   },
   readFile: function(filename){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
 
     if (basisjsTools)
     {
@@ -119,7 +119,7 @@ module.exports = {
     }
   },
   saveFile: function(filename, content){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
 
     if (basisjsTools)
     {
@@ -129,7 +129,7 @@ module.exports = {
     }
   },
   openFile: function(filename){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
 
     if (basisjsTools && typeof basisjsTools.openFile == 'function')
     {

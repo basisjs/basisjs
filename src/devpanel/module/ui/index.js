@@ -67,17 +67,17 @@ var ViewNode = Node.subclass({
     }
   },
   action: {
-    toggle: function(event){
+    toggle: function(){
       this.collapsed = !this.collapsed;
       this.updateBind('collapsed');
       this.setDataSource(!this.collapsed ? this.subset : null);
     },
     openLoc: function(){
-      var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : null;
+      var basisjsTools = global.basisjsToolsFileSync;
       if (basisjsTools && typeof basisjsTools.openFile == 'function')
         basisjsTools.openFile(this.data.loc);
     },
-    enter: function(event){
+    enter: function(){
       hoverView.set(this);
       clearTimeout(hoverTimer);
     },
@@ -173,7 +173,7 @@ var ViewNode = Node.subclass({
   }
 });
 
-var view = new Node({
+new Node({
   container: document.body,
 
   template: resource('./template/view.tmpl'),

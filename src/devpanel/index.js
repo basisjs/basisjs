@@ -31,9 +31,7 @@ function init(){
   inspectBasis.appCP = basis.object.merge(
     {
       getFileGraph: function(){
-        var basisjsTools = typeof basisjsToolsFileSync != 'undefined'
-          ? basisjsToolsFileSync // new
-          : basis.devtools;      // old
+        var basisjsTools = global.basisjsToolsFileSync || basis.devtools;
 
         if (basisjsTools)
           basisjsTools.getFileGraph(function(err, data){

@@ -171,11 +171,6 @@ module.exports = function(template, options, token, result){
         nested: decl.includes
       });
 
-      // template -> s4, s5, s6, s3 {s1}, {s2}
-      //   -> include(template1) s4, s5, s6, {s3}
-      //     -> include(template2) {s4}, {s5}
-      //     -> include(template3) {s6}
-
       if (resource.bindingBridge)
         arrayAdd(template.deps, resource);
 
@@ -276,13 +271,17 @@ module.exports = function(template, options, token, result){
         // process special elements (basis namespace)
         if (child.type == TYPE_ELEMENT && child.prefix == 'b')
         {
+          var childAttrs = getTokenAttrValues(child);
+          var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+          var targetRef = ref && tokenRefMap[ref];
+          var target = targetRef && targetRef.token;
+
           // TODO: split into modules
           // TODO: move common parts up (ref)
           switch (child.name)
           {
             case 'style':
               var childAttrs = getTokenAttrValues(child);
-              var childAttrs_ = getTokenAttrs(child);
               var useStyle = true;
 
               if (childAttrs.options)
@@ -305,7 +304,7 @@ module.exports = function(template, options, token, result){
                     styleNamespaceIsolate[src] = options.genIsolateMarker();
 
                   template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
-                    /** @cut */ loc: utils.getLocation(template, childAttrs_[namespaceAttrName].loc),
+                    /** @cut */ loc: utils.getLocation(template, getTokenAttrs(child)[namespaceAttrName].loc),
                     /** @cut */ used: false,
                     name: styleNamespace,
                     prefix: styleNamespaceIsolate[src]
@@ -326,12 +325,12 @@ module.exports = function(template, options, token, result){
               var replaceOrRemove = child.name == 'replace' || child.name == 'remove';
               var childAttrs = getTokenAttrValues(child);
               var ref = 'ref' in childAttrs || !replaceOrRemove ? childAttrs.ref : 'element';
-              var tokenRef = ref && tokenRefMap[ref];
+              var targetRef = ref && tokenRefMap[ref];
 
-              if (tokenRef)
+              if (targetRef)
               {
-                var parent = tokenRef.owner;
-                var pos = parent.indexOf(tokenRef.token);
+                var parent = targetRef.owner;
+                var pos = parent.indexOf(targetRef.token);
                 if (pos != -1)
                 {
                   var args = [pos + (child.name == 'after'), replaceOrRemove];
@@ -346,7 +345,7 @@ module.exports = function(template, options, token, result){
                   /** @cut */     reason: '<b:' + child.name + '>',
                   /** @cut */     removeToken: child,
                   /** @cut */     includeToken: token,
-                  /** @cut */     token: tokenRef.token
+                  /** @cut */     token: targetRef.token
                   /** @cut */   });
                 }
               }
@@ -354,19 +353,14 @@ module.exports = function(template, options, token, result){
 
             case 'prepend':
             case 'append':
-              var childAttrs = getTokenAttrValues(child);
-              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-              var tokenRef = ref && tokenRefMap[ref];
-              var token = tokenRef && tokenRef.token;
-
-              if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
+              if (target && target[TOKEN_TYPE] == TYPE_ELEMENT)
               {
                 var children = options.process(child.children, template, options);
 
                 if (child.name == 'prepend')
-                  token.splice.apply(token, [ELEMENT_ATTRIBUTES_AND_CHILDREN, 0].concat(children));
+                  target.splice.apply(target, [ELEMENT_ATTRIBUTES_AND_CHILDREN, 0].concat(children));
                 else
-                  token.push.apply(token, children);
+                  target.push.apply(target, children);
               }
               break;
 
@@ -374,12 +368,7 @@ module.exports = function(template, options, token, result){
             case 'hide':
             case 'visible':
             case 'hidden':
-              var childAttrs = getTokenAttrValues(child);
-              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-              var tokenRef = ref && tokenRefMap[ref];
-              var token = tokenRef && tokenRef.token;
-
-              if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
+              if (target && target[TOKEN_TYPE] == TYPE_ELEMENT)
               {
                 var expr = getTokenAttrs(child).expr;
 
@@ -389,38 +378,36 @@ module.exports = function(template, options, token, result){
                   break;
                 }
 
-                applyShowHideAttribute(template, options, token, basis.object.complete({
+                applyShowHideAttribute(template, options, target, basis.object.complete({
                   name: child.name,
                 }, getTokenAttrs(child).expr));
               }
-
               break;
 
             case 'attr':
             case 'set-attr':
-              modifyAttr(template, options, token, tokenRefMap, child, false, 'set');
+              modifyAttr(template, options, token, target, child, false, 'set');
               break;
 
             case 'append-attr':
-              modifyAttr(template, options, token, tokenRefMap, child, false, 'append');
+              modifyAttr(template, options, token, target, child, false, 'append');
               break;
 
             case 'remove-attr':
-              modifyAttr(template, options, token, tokenRefMap, child, false, 'remove');
+              modifyAttr(template, options, token, target, child, false, 'remove');
               break;
 
             case 'class':
             case 'append-class':
-              modifyAttr(template, options, token, tokenRefMap, child, 'class', 'append');
+              modifyAttr(template, options, token, target, child, 'class', 'append');
               break;
 
             case 'set-class':
-              modifyAttr(template, options, token, tokenRefMap, child, 'class', 'set');
+              modifyAttr(template, options, token, target, child, 'class', 'set');
               break;
 
             case 'remove-class':
-              var childAttrs_ = getTokenAttrs(child);
-              var valueAttr = childAttrs_.value;
+              var valueAttr = getTokenAttrs(child).value;
 
               // apply namespace prefix for values
               if (valueAttr)
@@ -446,36 +433,31 @@ module.exports = function(template, options, token, result){
                   });
               }
 
-              modifyAttr(template, options, token, tokenRefMap, child, 'class', 'remove-class');
+              modifyAttr(template, options, token, target, child, 'class', 'remove-class');
               break;
 
             case 'add-ref':
-              var childAttrs = getTokenAttrValues(child);
-              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-              var tokenRef = ref && tokenRefMap[ref];
-              var token = tokenRef && tokenRef.token;
               var refName = (childAttrs.name || '').trim();
 
-              if (token)
+              if (target)
               {
                 if (/^[a-z_][a-z0-9_]*$/i.test(refName))
-                  addTokenRef(token, refName);
+                  addTokenRef(target, refName);
                 /** @cut */ else
                 /** @cut */   utils.addTemplateWarn(template, options, 'Bad references list for <b:add-ref>:' + refName, child.loc);
               }
               break;
 
             case 'remove-ref':
-              var childAttrs = getTokenAttrValues(child);
               var refName = (childAttrs.name || '').trim();
               var ref = 'ref' in childAttrs ? childAttrs.ref : refName || 'element';
-              var tokenRef = ref && tokenRefMap[ref];
-              var token = tokenRef && tokenRef.token;
+              var targetRef = ref && tokenRefMap[ref];
+              var target = targetRef && targetRef.token;
 
-              if (token)
+              if (target)
               {
                 if (/^[a-z_][a-z0-9_]*$/i.test(refName))
-                  removeTokenRef(token, childAttrs.name || childAttrs.ref);
+                  removeTokenRef(target, childAttrs.name || childAttrs.ref);
                 /** @cut */ else
                 /** @cut */   utils.addTemplateWarn(template, options, 'Bad reference name for <b:remove-ref>:' + refName, child.loc);
               }
@@ -483,10 +465,6 @@ module.exports = function(template, options, token, result){
 
             case 'role':
             case 'set-role':
-              var childAttrs = getTokenAttrValues(child);
-              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-              var tokenRef = ref && tokenRefMap[ref];
-              var token = tokenRef && tokenRef.token;
               var name = childAttrs.name;
 
               if (!name && 'value' in childAttrs)
@@ -495,21 +473,18 @@ module.exports = function(template, options, token, result){
                 name = childAttrs.value;
               }
 
-              if (token)
+              if (target)
               {
-                arrayRemove(token, getAttrByName(token, 'role-marker'));
-                addRoleAttribute(template, options, token, name || '', child);
+                arrayRemove(target, getAttrByName(target, 'role-marker'));
+                addRoleAttribute(template, options, target, name || '', child);
               }
               break;
 
             case 'remove-role':
-              var childAttrs = getTokenAttrValues(child);
-              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-              var tokenRef = ref && tokenRefMap[ref];
-              var token = tokenRef && tokenRef.token;
-
-              if (token)
-                arrayRemove(token, getAttrByName(token, 'role-marker'));
+              if (target)
+              {
+                arrayRemove(target, getAttrByName(target, 'role-marker'));
+              }
               break;
 
             default:
@@ -518,15 +493,15 @@ module.exports = function(template, options, token, result){
         }
         else
         {
-          var tokenRef = tokenRefMap[':content'];
+          var targetRef = tokenRefMap[':content'];
           var processedChild = options.process([child], template, options);
 
-          if (tokenRef)
+          if (targetRef)
           {
-            var parent = tokenRef.owner;
-            var pos = parent.indexOf(tokenRef.token);
+            var parent = targetRef.owner;
+            var pos = parent.indexOf(targetRef.token);
 
-            tokenRef.token.splice(CONTENT_CHILDREN);
+            targetRef.token.splice(CONTENT_CHILDREN);
             parent.splice.apply(parent, [pos, 0].concat(processedChild));
           }
           else
