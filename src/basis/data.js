@@ -514,10 +514,12 @@
       /** @cut */ basis.dev.setInfo(result, 'sourceInfo', {
       /** @cut */   type: 'Value#as',
       /** @cut */   source: this,
+      /** @cut */   sourceTarget: this.value,
       /** @cut */   transform: fn
       /** @cut */ });
 
       /** @cut */ if (fn.retarget)
+      /** @cut */ {
       /** @cut */   result.proxy = function(value){
       /** @cut */     value = fn(value);
       /** @cut */     basis.dev.patchInfo(result, 'sourceInfo', {
@@ -525,6 +527,8 @@
       /** @cut */     });
       /** @cut */     return value;
       /** @cut */   };
+      /** @cut */   result.proxy[GETTER_ID] = fn[GETTER_ID]; // set the same GETTER_ID for correct search in links_
+      /** @cut */ }
 
       this.link(result, valueSyncAs, true, result.destroy);
 
