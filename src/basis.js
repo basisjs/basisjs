@@ -602,7 +602,7 @@
         global[name] = undefined;
       }
 
-      fn.apply(this, arguments);
+      return fn.apply(this, arguments);
     };
 
     return name;
