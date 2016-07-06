@@ -42,9 +42,6 @@ module.exports = Node.subclass({
     update: function(){
       this.files.set(this.data.files ? this.data.files.getItems() : []);
       this.run();
-    },
-    targetChanged: function(){
-      this.run();
     }
   },
   prepareToRun: function(){
@@ -54,7 +51,7 @@ module.exports = Node.subclass({
     this.timer = setTimeout(this.run.bind(this), 500);
   },
   run: function(){
-    if (!this.target || !this.data.files.getItems().every(isReady))
+    if (!this.data.files.getItems().every(isReady))
       return;
 
     this.timer = clearTimeout(this.timer);

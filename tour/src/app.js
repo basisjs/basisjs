@@ -2,7 +2,7 @@ var l10n = require('basis.l10n');
 var router = require('basis.router');
 var Node = require('basis.ui').Node;
 var Value = require('basis.data').Value;
-var Slide = require('./type/index.js').Slide;
+var Slide = require('app:type/slide');
 
 // temporary here
 l10n.setCultureList('en-US/ru-RU ru-RU');

@@ -35,8 +35,9 @@ module.exports = Node.subclass({
       lineNumbers: true
     });
     this.editor.on('change', function(editor){
-      if (self.target)
-        self.target.set('content', editor.getValue(), true); // update with rollback
+      self.root.update({
+        content: editor.getValue()
+      }, true); // update with rollback
     });
 
     Node.prototype.init.call(this);
@@ -55,12 +56,12 @@ module.exports = Node.subclass({
   },
 
   handler: {
-    targetChanged: function(){
-      if (this.target)
-        this.editor.swapDoc(this.getFileDocument(this.target));
-    },
     update: function(sender, delta){
-      if ('content' in delta)
+      if ('filename' in delta)
+      {
+        this.editor.swapDoc(this.getFileDocument(this));
+      }
+      else if ('content' in delta)
       {
         var doc = this.editor.getDoc();
         if (doc.getValue() != this.data.content)

@@ -1,6 +1,6 @@
 var router = require('basis.router');
 var Node = require('basis.ui').Node;
-var Slide = require('app.type').Slide;
+var Slide = require('app:type/slide');
 
 module.exports = new Node({
   active: true,

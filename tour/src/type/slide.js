@@ -1,4 +1,5 @@
 var entity = require('basis.entity');
+var File = require('./file.js');
 
 //
 // main part
@@ -8,7 +9,7 @@ var Slide = entity.createType('Slide', {
   id: entity.StringId,
   num: Number,
   title: String,
-  files: entity.createSetType('File'),
+  files: entity.createSetType(File),
   prev: 'Slide',
   next: 'Slide'
 });

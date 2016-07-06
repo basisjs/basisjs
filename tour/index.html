@@ -11,7 +11,13 @@
 <body>
   <script src="../src/basis.js" basis-config="
     devpanel: false,
-    autoload: 'src/app'
+    modules: {
+      app: {
+        autoload: true,
+        path: 'src',
+        filename: 'app.js'
+      }
+    }
   "></script>
 </body>
 </html>
