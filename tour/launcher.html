@@ -35,7 +35,8 @@
       padding: 2px 4px;
       border-bottom: 1px solid rgba(187, 170, 102, 0.25);
     }
-    .basis-tour-message_warn
+    .basis-tour-message_warn,
+    .basis-tour-message_error
     {
       color: #D00;
     }
@@ -46,17 +47,22 @@
   </style>
 
   <script>
-    var virtualConsole = document.createElement('div');
-    virtualConsole.id = 'basis-tour-console';
-
     window.console = (function(console){
-      var methods = ['log', 'warn', 'info'];
+      var methods = ['log', 'warn', 'info', 'error'];
+      var virtualConsole;
 
       var F = function(){};
       F.prototype = console;
       var res = new F;  // inherit all non-wrap methods of console
 
       function tourConsoleMessage(value, type){
+        if (!virtualConsole)
+        {
+          virtualConsole = document.createElement('div');
+          virtualConsole.id = 'basis-tour-console';
+          document.body.appendChild(virtualConsole);
+        }
+
         var el = document.createElement('div');
         el.className = 'basis-tour-message basis-tour-message_' + type;
         el.appendChild(document.createTextNode(String(value)));
@@ -83,37 +89,36 @@
     };
   </script>
   <script>
-    if (top.launcherCallback)
-    {
-      (function(){
-        var resources = top.launcherCallback(function(filename, content){
-          basis.resource(basis.path.resolve(filename)).update(content);
-        });
-        if (window.__resources__)
-        {
-          for (var key in resources)
-            window.__resources__[key] = resources[key];
-        }
-        else
-          window.__resources__ = resources;
-      })();
-    }
+    (function(){
+      var callbackNameMatch = location.search.match(/[\?&]cb=([^&]+)/);
+      var callbackName = callbackNameMatch ? callbackNameMatch[1] : 'launcherCallback';
+
+      if (!top[callbackName])
+        return;
+
+      var resources = top[callbackName](function(filename, content){
+        basis.resource(basis.path.resolve(filename)).update(content);
+      });
+
+      if (window.__resources__)
+      {
+        for (var key in resources)
+          window.__resources__[key] = resources[key];
+      }
+      else
+      {
+        window.__resources__ = resources;
+      }
+    })();
   </script>
   <script src="../src/basis.js" basis-config="devpanel: false"></script>
   <script>
-    window.tour = {
-      plainStr: function(obj){
-        return JSON.stringify(basis.object.slice(obj));
-      }
-    };
-
     basis.ready(function(){
       try {
         basis.resource('./main.js').fetch();
       } catch(e) {
         console.warn(e.message || e);
       }
-      document.body.appendChild(virtualConsole);
     });
   </script>
 </head>

@@ -1,5 +1,10 @@
 var STATE = require('basis.data').STATE;
 var entity = require('basis.entity');
+var getSource = require('basis.utils.source').getSource;
+
+function getOriginalJsSource(content, url){
+  return getSource(url);
+}
 
 var File = entity.createType('File', {
   filename: entity.StringId,
@@ -16,13 +21,14 @@ var File = entity.createType('File', {
 
 File.extendClass({
   syncAction: function(){
-    var res = basis
-      .resource('./slide/' + this.data.filename)
-      .ready(function(content){
-        this.set('content', content);
-      }, this);
+    var fileResource = basis.resource('./slide/' + this.data.filename);
+    var getter = fileResource.type === '.js' ? getOriginalJsSource : basis.fn.$self;
 
-    this.set('content', res.get(true));
+    fileResource.ready(function(content, url){
+      this.set('content', getter(content, url));
+    }, this);
+
+    this.set('content', getter(fileResource.get(true), fileResource.url));
     this.setState(STATE.READY);
 
     // prevent more than one resource attachment

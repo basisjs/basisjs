@@ -7,6 +7,7 @@
 {
   margin: 0 auto;
   width: 40%;
+  min-width: 420px;
 }
 .header
 {

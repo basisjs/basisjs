@@ -40,6 +40,6 @@ var pirat = new Creature({
   }
 });
 
-console.log('creature head:', tour.plainStr(creature.head.parts));
-console.log('cyclops head:', tour.plainStr(cyclops.head.parts));
-console.log('pirat head:', tour.plainStr(pirat.head.parts));
+console.log('creature head:', JSON.stringify(creature.head.parts));
+console.log('cyclops head:', JSON.stringify(cyclops.head.parts));
+console.log('pirat head:', JSON.stringify(pirat.head.parts));

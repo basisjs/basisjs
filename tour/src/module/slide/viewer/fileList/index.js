@@ -2,7 +2,7 @@ var Value = require('basis.data').Value;
 var count = require('basis.data.index').count;
 var TabControl = require('basis.ui.tabs').TabControl;
 
-var view = new TabControl({
+module.exports = TabControl.subclass({
   autoDelegate: true,
   dataSource: Value.query('data.files'),
 
@@ -27,5 +27,3 @@ var view = new TabControl({
     }
   }
 });
-
-module.exports = view;
