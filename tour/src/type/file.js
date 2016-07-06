@@ -8,9 +8,6 @@ function getOriginalJsSource(content, url){
 
 var File = entity.createType('File', {
   filename: entity.StringId,
-  name: entity.calc('filename', function(filename){
-    return basis.path.basename(filename);
-  }),
   content: String,
   updatable: entity.calc('filename', function(filename){
     var ext = basis.path.extname(filename);

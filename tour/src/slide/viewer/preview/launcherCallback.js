@@ -1,10 +1,12 @@
+var basename = basis.path.basename;
+
 module.exports = function createCallback(selectedSlide){
   var updateResourceFn;
   var updatableFiles = [];
   var updatableHandler = {
     update: function(sender, delta){
       if ('content' in delta)
-        updateResourceFn(this.data.name, this.data.content);
+        updateResourceFn(basename(this.data.filename), this.data.content);
     }
   };
 
@@ -20,7 +22,7 @@ module.exports = function createCallback(selectedSlide){
 
     if (files)
       files.getItems().forEach(function(file){
-        result[file.data.name] = file.data.content;
+        result[basename(file.data.filename)] = file.data.content;
         if (file.data.updatable)
         {
           updatableFiles.push(file);
