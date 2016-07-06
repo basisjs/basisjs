@@ -2,7 +2,7 @@ var l10n = require('basis.l10n');
 var router = require('basis.router');
 var count = require('basis.data.index').count;
 var Node = require('basis.ui').Node;
-var Slide = require('app.type').Slide;
+var Slide = require('app:type/slide');
 
 var view = new Node({
   autoDelegate: true,

@@ -27,8 +27,8 @@ module.exports = require('basis.app').create({
           delegate: selectedSlide,
           instance: selectedSlide.as(function(slide){
             return slide
-              ? resource('./module/slide/index.js')
-              : resource('./module/toc/index.js');
+              ? resource('./slide/index.js')
+              : resource('./toc/index.js');
           })
         }
       }
