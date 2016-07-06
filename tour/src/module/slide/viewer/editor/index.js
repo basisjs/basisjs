@@ -1,3 +1,4 @@
+var CodeMirror = require('./codemirror/index.js');
 var extname = basis.path.extname;
 var Node = require('basis.ui').Node;
 var MODE = {
