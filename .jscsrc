@@ -59,7 +59,7 @@
         "demo/seedrandom.js",
         "demo/apps/todomvc/assets/**",
         "scripts/jscs/**",
-        "tour/lib/**",
+        "tour/src/slide/viewer/editor/codemirror/**",
         "node_modules/**",
         "build/**",
         "**/build/**"
