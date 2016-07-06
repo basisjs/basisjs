@@ -570,6 +570,7 @@
     var result = function(value){
       return fn(value);
     };
+    /** @cut */ result = devInfoResolver.patchFactory(result);
     result.factory = FACTORY;
 
     return result;
@@ -3868,13 +3869,10 @@
     var patch = function(target, key, patch){
       /** @cut */ var oldInfo = get(target, key);
       /** @cut */
-      /** @cut */ if (!oldInfo || typeof oldInfo != 'object')
-      /** @cut */ {
+      /** @cut */ if (oldInfo)
+      /** @cut */   extend(oldInfo, patch);
+      /** @cut */ else
       /** @cut */   set(target, key, patch);
-      /** @cut */   return;
-      /** @cut */ }
-      /** @cut */
-      /** @cut */ extend(oldInfo, patch);
     };
     var get = function(target, key){
       /** @cut */ var externalInfo = getExternalInfo(target);
@@ -3885,6 +3883,16 @@
       /** @cut */   var info = merge(externalInfo, ownInfo);
       /** @cut */   return key ? info[key] : info;
       /** @cut */ }
+    };
+    var patchFactory = function(factory){
+      /** @cut */ return function locationAnchor(target){
+      /** @cut */   var value = factory(target);
+      /** @cut */
+      /** @cut */   if (value)
+      /** @cut */     set(value, 'loc', get(locationAnchor, 'loc'));
+      /** @cut */
+      /** @cut */   return value;
+      /** @cut */ };
     };
 
     /** @cut */ // old Firefox has bugs in WeakMap implementation, don't use dev info for them
@@ -3917,6 +3925,7 @@
       fixSourceOffset: fixSourceOffset,
       setInfo: set,
       patchInfo: patch,
+      patchFactory: patchFactory,
       getInfo: get
     };
   })();

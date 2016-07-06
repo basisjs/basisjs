@@ -54,8 +54,8 @@ function rawValue(value, resolvers){
   };
 }
 
-function inspectValue(value, resolvers, map){
-  var valueLoc = resolvers.getInfo(value, 'loc');
+function inspectValue(value, resolvers, map, sourceTarget, parentLoc){
+  var valueLoc = sourceTarget ? parentLoc : resolvers.getInfo(value, 'loc');
   var sourceInfo;
   var raw;
 
@@ -83,18 +83,19 @@ function inspectValue(value, resolvers, map){
   }
 
   var nodes = [];
+  var source = sourceTarget || sourceInfo.source;
 
-  if (Array.isArray(sourceInfo.source))
+  if (Array.isArray(source))
     nodes = [{
       nodeType: 'split',
-      childNodes: sourceInfo.source.map(function(value){
+      childNodes: source.map(function(value){
         return {
           childNodes: inspectValue(value, resolvers, map)
         };
       })
     }];
   else
-    nodes = inspectValue(sourceInfo.source, resolvers, map);
+    nodes = inspectValue(source, resolvers, map, sourceInfo.sourceTarget, valueLoc);
 
   var fn = resolvers.resolveFunction(sourceInfo.transform);
   var fnLoc = resolvers.getInfo(fn, 'loc');
