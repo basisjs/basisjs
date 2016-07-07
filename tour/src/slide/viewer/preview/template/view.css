@@ -1,13 +1,16 @@
 .preview
 {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
   background: white;
-  height: 30%;
-  min-height: 150px;
-  max-height: 75%;
   overflow: hidden;
   border-radius: 3px;
-  margin-top: 5px;
+  min-width: 100px;
+  min-height: 100px;
 }
 .reloaded-label
 {

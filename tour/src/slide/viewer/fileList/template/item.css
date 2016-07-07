@@ -5,7 +5,7 @@
   padding: 4px 8px 5px;
   
   background: rgba(255, 255, 255, .65);
-  font-size: 90%;
+  font-size: 12px;
   cursor: pointer;
   transition: background-color .1s, color .1s;
 }

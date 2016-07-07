@@ -9,3 +9,34 @@
   font-size: small;
   font-family: Helvetica, Tahoma, Verdana, sans-serif;
 }
+.viewer_horizontal
+{
+  flex-direction: row;
+}
+
+.editor-wrapper
+{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor
+{
+  flex: 1;
+  position: relative;
+}
+
+.preview
+{
+  position: relative;
+  height: 30%;
+  margin-top: 5px;
+}
+.preview_horizontal
+{
+  margin-top: 33px;
+  margin-left: 5px;
+  height: auto;
+  width: 40%;
+}

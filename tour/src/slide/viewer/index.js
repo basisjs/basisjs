@@ -2,8 +2,11 @@ var Value = require('basis.data').Value;
 var Node = require('basis.ui').Node;
 
 module.exports = Node.subclass({
+  mode: 'vertical',
+
   template: resource('./template/viewer.tmpl'),
   binding: {
+    mode: 'mode',
     files: 'satellite:',
     editor: 'satellite:',
     preview: 'satellite:'
