@@ -2,6 +2,35 @@ var base64 = require('basis.utils.base64');
 var highlight = require('basis.utils.highlight').highlight;
 var sourceCache = {};
 
+function normalizeOffset(text){
+  text = text
+    // cut first empty lines
+    .replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1')
+    .trimRight();
+
+  // fix empty strings
+  text = text.replace(/\n[ \t]+\n/g, '\n\n');
+
+  // normalize text offset
+  var minOffset = 1000;
+  var lines = text.split(/\n+/);
+  var startLine = Number(/^function/.test(text)); // fix for function.toString()
+
+  for (var i = startLine; i < lines.length; i++)
+  {
+    var m = lines[i].match(/^\s*/);
+    if (m[0].length < minOffset)
+      minOffset = m[0].length;
+    if (minOffset == 0)
+      break;
+  }
+
+  if (minOffset > 0)
+    text = text.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
+
+  return text;
+}
+
 function findSourceInMap(map, filename){
   if (Array.isArray(map.sources))
     for (var i = 0; i < map.sources.length; i++)
@@ -153,8 +182,9 @@ function getColoredSource(loc, linesBefore, linesAfter, maxLines){
 }
 
 module.exports = {
+  normalizeOffset: normalizeOffset,
+  convertToRange: convertToRange,
   getSource: getSource,
   getColoredSource: getColoredSource,
-  getSourceFragment: getSourceFragment,
-  convertToRange: convertToRange
+  getSourceFragment: getSourceFragment
 };

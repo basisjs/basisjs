@@ -5,6 +5,7 @@
 
   var lead = basis.number.lead;
   var repeat = basis.string.repeat;
+  var normalizeOffset = require('./source.js').normalizeOffset;
 
   var LANG_PARSER = {};
   var PARSER = {
@@ -376,35 +377,6 @@
         .replace(/</g, '&lt;');
     }
 
-    function normalize(text){
-      text = text
-        // cut first empty lines
-        .replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1')
-        .trimRight();
-
-      // fix empty strings
-      text = text.replace(/\n[ \t]+\n/g, '\n\n');
-
-      // normalize text offset
-      var minOffset = 1000;
-      var lines = text.split(/\n+/);
-      var startLine = Number(text.match(/^function/) != null); // fix for function.toString()
-
-      for (var i = startLine; i < lines.length; i++)
-      {
-        var m = lines[i].match(/^\s*/);
-        if (m[0].length < minOffset)
-          minOffset = m[0].length;
-        if (minOffset == 0)
-          break;
-      }
-
-      if (minOffset > 0)
-        text = text.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
-
-      return text;
-    }
-
     function defaultWrapper(line, idx){
       return (
         '<div class="line ' + (idx % 2 ? 'odd' : 'even') + lineClass + '">' +
@@ -448,7 +420,7 @@
     }
 
     if (!options.keepFormat)
-      text = normalize(text || '');
+      text = normalizeOffset(text || '');
 
     var parser = LANG_PARSER[lang] || LANG_PARSER.text;
     var html = parser(text, rangeStart, rangeEnd, rangeName);
