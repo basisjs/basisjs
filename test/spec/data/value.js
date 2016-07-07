@@ -5,6 +5,7 @@ module.exports = {
   init: function(){
     var basis = window.basis.createSandbox();
 
+    var events = basis.require('basis.event');
     var Emitter = basis.require('basis.event').Emitter;
     var STATE = basis.require('basis.data').STATE;
     var Value = basis.require('basis.data').Value;
@@ -1155,6 +1156,36 @@ module.exports = {
               foo: 2
             });
             assert(targetState.value === 2);
+          }
+        },
+        {
+          name: 'should update value with force apply flag',
+          test: function(){
+            var target = new DataObject({
+              propertyDescriptors: {
+                arrayProperty: {
+                  events: 'arrayChanged',
+                  forceApply: true
+                }
+              },
+              arrayProperty: [],
+              emit_arrayChanged: events.create('arrayChanged'),
+              push: function(){
+                this.arrayProperty.push.apply(this.arrayProperty, arguments);
+                this.emit_arrayChanged();
+              }
+            });
+            var totalExec = 0;
+            var targetState = Value.query(target, 'arrayProperty').as(function(array){
+              totalExec++;
+              return array.length;
+            });
+
+            target.push(1, 2, 3);
+            assert(targetState.value === 3);
+            target.push(4, 5, 6);
+            assert(targetState.value === 6);
+            assert(totalExec === 3);
           }
         },
         {
