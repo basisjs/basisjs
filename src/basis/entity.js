@@ -1197,7 +1197,8 @@
       this.wrapper = wrapper;
       if ('all' in config == false || config.all || config.singleton)
         this.all = new ReadOnlyEntitySet(complete({
-          wrapper: wrapper
+          wrapper: wrapper,
+          set: setAndDestroyRemoved
         }, config.all));
 
       // singleton
