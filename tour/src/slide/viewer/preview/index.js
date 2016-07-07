@@ -1,7 +1,7 @@
 var STATE = require('basis.data').STATE;
 var Dataset = require('basis.data').Dataset;
 var Node = require('basis.ui').Node;
-var createLauncherCallback = require('./launcherCallback.js');
+var createSandboxCallback = require('./sandboxCallback.js');
 
 function isReady(item){
   return item.state == STATE.READY;
@@ -30,7 +30,7 @@ module.exports = Node.subclass({
   },
 
   init: function(){
-    this.launcherCallbackName = basis.fn.publicCallback(createLauncherCallback(this), true);
+    this.sandboxCallback = basis.fn.publicCallback(createSandboxCallback(this), true);
     this.reloaded = new basis.Token(false);
     this.files = new UpdateSet({
       view: this
@@ -55,7 +55,7 @@ module.exports = Node.subclass({
       return;
 
     this.timer = clearTimeout(this.timer);
-    this.tmpl.launcher.src = 'launcher.html?cb=' + this.launcherCallbackName;
+    this.tmpl.sandbox.src = asset('./sandbox.html') + '?cb=' + this.sandboxCallback;
 
     var self = this;
     this.reloaded.set(true);
