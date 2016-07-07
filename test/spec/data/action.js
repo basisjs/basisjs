@@ -1,10 +1,10 @@
 module.exports = {
-  name: 'basis.net.action',
+  name: 'basis.data.action',
   init: function(){
     var basis = window.basis.createSandbox();
     var DataObject = basis.require('basis.data').Object;
     var STATE = basis.require('basis.data').STATE;
-    var createAction = basis.require('basis.data.action').fromPromise;
+    var createAction = basis.require('basis.data.action').create;
     var resolvedFn = function(){
       return Promise.resolve('success');
     };
