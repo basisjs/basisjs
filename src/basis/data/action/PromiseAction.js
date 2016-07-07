@@ -45,15 +45,6 @@ var PromiseAction = AbstractAction.subclass({
   }
 });
 
-/**
- * Create Promise action
- * @param {Object} config
- * @returns {function(this:AbstractData, ...*):Promise}
- */
-PromiseAction.create = function(config){
-  return new PromiseAction({ config: config }).create();
-};
-
 PromiseAction.CALLBACK_HANDLER = CALLBACK_HANDLER;
 PromiseAction.DEFAULT_CALLBACK = DEFAULT_CALLBACK;
 
