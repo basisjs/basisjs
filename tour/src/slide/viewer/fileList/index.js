@@ -22,7 +22,7 @@ module.exports = TabControl.subclass({
     active: true,
     template: resource('./template/item.tmpl'),
     binding: {
-      name: 'data:',
+      name: Value.query('data.filename').as(basis.path.basename),
       modified: Value.query('target.modified').as(Boolean)
     }
   }

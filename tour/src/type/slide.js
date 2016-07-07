@@ -30,7 +30,7 @@ Slide.linkWithResource = function(resource){
         num: i + 1,
         prev: prev && prev.id,
         next: next && next.id,
-        files: ['main.js'].concat(item.files || []).map(function(filename){
+        files: ['app.js'].concat(item.files || []).map(function(filename){
           return item.id + '/' + filename;
         })
       });

@@ -46,7 +46,8 @@
       color: orange;
     }
   </style>
-
+</head>
+<body>
   <script>
     window.console = (function(console){
       var methods = ['log', 'warn', 'info', 'error'];
@@ -116,13 +117,11 @@
   <script>
     basis.ready(function(){
       try {
-        basis.resource('./main.js').fetch();
+        basis.resource('./app.js').fetch();
       } catch(e) {
         console.warn(e.message || e);
       }
     });
   </script>
-</head>
-<body>
 </body>
 </html>

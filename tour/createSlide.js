@@ -20,7 +20,7 @@ if (fs.existsSync(dir))
 fs.mkdirSync(dir);
 
 // write files
-fs.writeFile(dir + '/main.js', '// slide code goes here');
+fs.writeFile(dir + '/app.js', '// slide code goes here');
 fs.writeFile(dir + '/ru.tmpl', 'Описание на русском');
 fs.writeFile(dir + '/en.tmpl', 'Description in English');
 fs.writeFile(dir + '/description.l10n', dict);

@@ -41,25 +41,30 @@ module.exports = Node.subclass({
     });
 
     Node.prototype.init.call(this);
+
+    this.assignDocument();
   },
-  getFileDocument: function(file){
-    var filename = file.data.filename;
+  assignDocument: function(){
+    if (!this.data.filename)
+      return;
+
+    var filename = this.data.filename;
     var doc = this.documents[filename];
 
     if (!doc)
       doc = this.documents[filename] = new CodeMirror.Doc(
-        file.data.content,
+        this.data.content,
         MODE[extname(filename)]
       );
 
-    return doc;
+    this.editor.swapDoc(doc);
   },
 
   handler: {
     update: function(sender, delta){
       if ('filename' in delta)
       {
-        this.editor.swapDoc(this.getFileDocument(this));
+        this.assignDocument();
       }
       else if ('content' in delta)
       {
