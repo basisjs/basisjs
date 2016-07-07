@@ -49,9 +49,19 @@
 </head>
 <body>
   <script>
+    window.onerror = function(message){
+      if (!window.console)
+        document.write(message);
+      else
+        console.error(message);
+    };
+
     window.console = (function(console){
       var methods = ['log', 'warn', 'info', 'error'];
       var virtualConsole;
+
+      if (!console)
+        return;
 
       var F = function(){};
       F.prototype = console;
@@ -85,10 +95,6 @@
 
       return res;
     })(window.console);
-
-    window.onerror = function(message){
-      document.write(message);
-    };
   </script>
   <script>
     (function(){
