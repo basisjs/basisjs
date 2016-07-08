@@ -21,7 +21,8 @@ module.exports = Node.subclass({
 
   template: resource('./template/view.tmpl'),
   binding: {
-    reloaded: 'reloaded'
+    reloaded: 'reloaded',
+    random: basis.genUID.bind(null, 16)
   },
 
   init: function(){

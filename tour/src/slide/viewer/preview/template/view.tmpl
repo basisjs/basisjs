@@ -4,5 +4,9 @@
 
 <div class="preview">
   <span class="reloaded-label reloaded-label_{reloaded}">Page reloaded</span>
-  <iframe{sandbox} class="preview-iframe"/>
+  <!--
+    Set random name as workarond since Chrome cache iframes and restores their content on back button 
+    https://bugs.chromium.org/p/chromium/issues/detail?id=395533
+  -->
+  <iframe{sandbox} name="{random}" class="preview-iframe"/>
 </div>
