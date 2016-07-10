@@ -3,7 +3,7 @@
   * @namespace basis.template.html
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.template.html';
 
 
   //
@@ -15,6 +15,7 @@
   var camelize = basis.string.camelize;
 
   var isMarkupToken = require('basis.l10n').isMarkupToken;
+  var isTokenHasPlaceholder = require('basis.l10n').isTokenHasPlaceholder;
   var getL10nToken = require('basis.l10n').token;
   var getFunctions = require('basis.template.htmlfgen').getFunctions;
 
@@ -47,10 +48,9 @@
   var l10nTemplateSource = {};
 
   function getSourceFromL10nToken(token){
-    var dict = token.dictionary;
-    var url = dict.resource ? dict.resource.url : 'dictionary' + dict.basisObjectId;
+    var dict = token.getDictionary();
     var name = token.getName();
-    var id = name + '@' + url;
+    var id = name + '@' + dict.id;
     var result = l10nTemplateSource[id];
     var sourceWrapper;
 
@@ -60,8 +60,7 @@
       result = l10nTemplateSource[id] = sourceToken.as(function(value){
         if (sourceToken.getType() == 'markup')
         {
-          var parentType = sourceToken.getParentType();
-          if (typeof value == 'string' && (parentType == 'plural' || parentType == 'plural-markup'))
+          if (typeof value == 'string' && isTokenHasPlaceholder(sourceToken))
             // TODO: add this replacement to builder
             value = value.replace(/\{#\}/g, '{__templateContext}');
 
@@ -85,7 +84,7 @@
       });
 
       result.id = '{l10n:' + id + '}';
-      result.url = url + ':' + name;
+      result.url = dict.getValueSource(name) + ':' + name;
     }
 
     return result;
@@ -348,6 +347,21 @@
    /**
     * @func
     */
+    var bind_attrNS = function(domRef, namespace, attrName, oldValue, newValue){
+      if (oldValue !== newValue)
+      {
+        if (newValue)
+          domRef.setAttributeNS(namespace, attrName, newValue);
+        else
+          domRef.removeAttributeNS(namespace, attrName);
+      }
+
+      return newValue;
+    };
+
+   /**
+    * @func
+    */
     function updateAttach(){
       this.set(this.name, this.value);
     }
@@ -558,6 +572,7 @@
       bind_element: bind_element,
       bind_comment: bind_comment,
       bind_attr: bind_attr,
+      bind_attrNS: bind_attrNS,
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,

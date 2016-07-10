@@ -6,6 +6,7 @@ module.exports = {
     var basis = window.basis.createSandbox();
 
     var wrap = basis.require('basis.data').wrap;
+    var isEqual = basis.require('basis.data').isEqual;
     var Value = basis.require('basis.data').Value;
     var Dataset = basis.require('basis.data').Dataset;
     var IndexMap = basis.require('basis.data.index').IndexMap;
@@ -356,7 +357,7 @@ module.exports = {
                             }
                           });
 
-                          assert(regularIndex === datasetIndex);
+                          assert(isEqual(regularIndex, datasetIndex));
 
                           source.set();
                           assert(!destroyed);
@@ -382,7 +383,7 @@ module.exports = {
                             }
                           });
 
-                          assert(regularIndex === datasetIndex);
+                          assert(isEqual(regularIndex, datasetIndex));
 
                           indexWrapper.destroy();
                           assert(!destroyed);

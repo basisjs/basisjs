@@ -1,9 +1,9 @@
 
  /**
-  * @namespace basis.data.dataset
+  * @namespace basis.data.vector
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.data.vector';
 
 
   //
@@ -545,6 +545,8 @@
 
   module.exports = {
     Vector: Vector,
+    VectorFn: VectorFn,
+    fnConstructor: fnConstructor,
 
     count: count,
     sum: sum,

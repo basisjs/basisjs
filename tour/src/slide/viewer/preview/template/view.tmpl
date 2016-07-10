@@ -1,0 +1,12 @@
+<b:style src="./view.css"/>
+<b:isolate/>
+<b:define name="reloaded" type="bool"/>
+
+<div class="preview">
+  <span class="reloaded-label reloaded-label_{reloaded}">Page reloaded</span>
+  <!--
+    Set random name as workarond since Chrome cache iframes and restores their content on back button 
+    https://bugs.chromium.org/p/chromium/issues/detail?id=395533
+  -->
+  <iframe{sandbox} name="{random}" class="preview-iframe"/>
+</div>

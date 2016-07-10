@@ -92,12 +92,16 @@
         "url": "data/generate_tree.html"
       },
       {
-        "title": "Property & ObjectSet",
+        "title": "Value & ObjectSet",
         "url": "data/basic.html"
       },
       {
         "title": "Tag cloud",
         "url": "data/tag_cloud.html"
+      },
+      {
+        "title": "Data flow",
+        "url": "data/data-flow.html"
       }
     ]
   },

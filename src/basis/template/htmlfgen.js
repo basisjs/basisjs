@@ -5,6 +5,7 @@
 
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var consts = require('basis.template.const');
+  var namespaces = require('basis.template.namespace');
 
   var MARKER = consts.MARKER;
 
@@ -28,6 +29,7 @@
 
   var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
   var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
+  var CLASS_BINDING_INVERT = consts.CLASS_BINDING_INVERT;
 
 
   //
@@ -313,7 +315,7 @@
             );
 
             if (!special)
-              cond.push('__' + exprVar + '!==undefined');
+              cond.push('__' + exprVar + '!==UNSET&&__' + exprVar + '!==undefined');
           }
           else
           {
@@ -408,7 +410,7 @@
               if (!bindCode)
               {
                 bindCode = bindMap[l10nBinding] = [];
-                varList.push('__' + l10nBinding);
+                varList.push('__' + l10nBinding + '=UNSET');
               }
 
               bindCode.push(varName + '.set(__' + l10nBinding + ');');
@@ -438,6 +440,8 @@
         if (!bindCode)
         {
           bindCode = bindMap[bindName] = [];
+          // don't set =UNSET here since it's change behaviour in some edge cases
+          // TODO: solve the problem
           varList.push(varName);
         }
 
@@ -570,7 +574,7 @@
         if (!bindCode)
         {
           bindCode = bindMap[bindName] = [];
-          varList.push(varName);
+          varList.push(varName + '=UNSET');
         }
 
         if (bindType != TYPE_ATTRIBUTE)
@@ -624,8 +628,11 @@
               switch (bindingType)
               {
                 case CLASS_BINDING_BOOL:
+                case CLASS_BINDING_INVERT:
                   // [2, localPath, 'binding', attrName, 'prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
                   // [2, localPath, 'binding', attrName, ['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                  // [2, localPath, 'binding', attrName, 'prefix_','binding',CLASS_BINDING_INVERT,'name',defaultValue]
+                  // [2, localPath, 'binding', attrName, ['prefix_name'],'binding',CLASS_BINDING_INVERT,'name',defaultValue]
 
                   var values = [binding[6]];
                   var prefix = binding[4];
@@ -633,7 +640,9 @@
                     return prefix + val;
                   });
 
-                  valueExpr = 'value?"' + classes[0] + '":""';
+                  valueExpr =
+                    (bindingType == CLASS_BINDING_INVERT ? '!' : '') +
+                    'value?"' + classes[0] + '":""';
 
                   if (defaultValue)
                     defaultExpr = classes[defaultValue - 1];
@@ -723,7 +732,7 @@
               attrExprId = binding[7];
               if (!attrExprMap[attrExprId])
               {
-                varList.push(bindVar);
+                varList.push(bindVar + '=UNSET');
                 attrExprMap[attrExprId] = bindVar;
               }
 
@@ -733,7 +742,14 @@
                   // to disable tab stop on element, tabindex attribute should be -1 for inputs and no attribute for other elements
                   expr + '==-1?' + (['input', 'button', 'textarea'].indexOf(tagName) == -1 ? '""' : '-1') + ':' + expr);
               else
-                putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
+              {
+                var namespace = namespaces.getNamespace(attrName);
+                if (namespace)
+                  putBindCode('bind_attrNS', domRef, '"' + namespace + '"', '"' + attrName + '"', bindVar, expr);
+                else
+                  putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar, expr);
+              }
+
 
               if (specialAttr && (specialAttr == '*' || specialAttr.indexOf(tagName) != -1))
                 bindCode.push(
@@ -882,7 +898,7 @@
     result.createInstanceFactory = compileFunction(['tid', 'createDOM', 'tools', 'l10nMap', 'l10nMarkup', 'getBindings', 'TEXT_BUG'],
       /** @cut */ (source ? '\n// ' + source.split(/\r\n?|\n\r?/).join('\n// ') + '\n\n' : '') +
 
-      'var ' +
+      'var UNSET={valueOf:function(){}},' +
       (bindings.tools.length ? bindings.tools + ',' : '') +
       (bindings.set
         ? 'Attaches=function(){};' +

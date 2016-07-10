@@ -86,8 +86,8 @@ function getSourceFragment(loc, start, end){
 
 function convertToRange(source, start, end){
   var lines = source.split('\n');
-  var rangeStart = lines.slice(0, start.line - 1).join('\n').length + start.column;
-  var rangeEnd = lines.slice(0, end.line - 1).join('\n').length + end.column;
+  var rangeStart = (lines.slice(0, start.line - 1).join('\n').length || -1) + start.column;
+  var rangeEnd = (lines.slice(0, end.line - 1).join('\n').length || -1) + end.column;
 
   return [rangeStart, rangeEnd];
 }
@@ -112,10 +112,10 @@ function getColoredSource(loc, linesBefore, linesAfter, maxLines){
       lastLine = Math.min(numbers[2] + (linesAfter || 0), startLine + (maxLines || Infinity) - 1);
 
     range = convertToRange(
-        source,
-        { line: numbers[0], column: numbers[1] },
-        { line: numbers[2], column: numbers[3] }
-      );
+      source,
+      { line: numbers[0], column: numbers[1] },
+      { line: numbers[2], column: numbers[3] }
+    );
   }
 
   var lines = highlight(source, 'js', {

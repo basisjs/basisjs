@@ -1,0 +1,10 @@
+{
+  "en-US": {
+    "_meta": {
+      "type": {
+        "patch": "markup"
+      }
+    },
+    "patch": "[<b:include src=\"./test.tmpl\"/>]"
+  }
+}

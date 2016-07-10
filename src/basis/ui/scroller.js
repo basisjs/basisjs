@@ -4,7 +4,7 @@
   * @namespace basis.ui.scroller
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.scroller';
 
 
   //
@@ -728,13 +728,21 @@
     fixPosition: function(){
       var scroller = this.scroller;
 
-      if (this.scrollX && (scroller.viewportX < this.minPositionX || scroller.viewportX > this.maxPositionX))
+      if (
+          this.maxPositionX &&
+          this.scrollX &&
+          (scroller.viewportX < this.minPositionX || scroller.viewportX > this.maxPositionX)
+        )
       {
         var positionX = Math.min(this.maxPositionX, Math.max(this.minPositionX, scroller.viewportX));
         scroller.setPositionX(positionX, this.inertia);
       }
 
-      if (this.scrollY && (scroller.viewportY < this.minPositionY || scroller.viewportY > this.maxPositionY))
+      if (
+          this.maxPositionY &&
+          this.scrollY &&
+          (scroller.viewportY < this.minPositionY || scroller.viewportY > this.maxPositionY)
+        )
       {
         var positionY = Math.min(this.maxPositionY, Math.max(this.minPositionY, scroller.viewportY));
         scroller.setPositionY(positionY, this.inertia);
@@ -802,7 +810,7 @@
     emit_childNodesModified: function(delta){
       ScrollPanel.prototype.emit_childNodesModified.call(this, delta);
 
-      if (this.scroller && this.childNodes.length == delta.inserted.length)
+      if (this.scroller && delta.inserted && this.childNodes.length == delta.inserted.length)
       {
         this.scrollToChild(this.firstChild, true);
         this.firstChild.select();

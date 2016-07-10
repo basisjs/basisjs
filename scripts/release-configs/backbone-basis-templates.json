@@ -1,8 +1,0 @@
-{
-  "build": {
-    "base": "../..",
-    "file": "./backbone-basis-templates.html",
-    "output": "build.tmp",
-    "outputScript": "bbt.js"
-  }
-}

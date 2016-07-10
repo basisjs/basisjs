@@ -3,7 +3,7 @@
   * @namespace basis.dragdrop
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.dragdrop';
 
 
   //
@@ -345,7 +345,7 @@
       if (element)
       {
         var viewport = getViewportRect(this.getBase());
-        var box = getBoundingRect(element, this.getBase());
+        var box = getBoundingRect(element);
 
         dragData.element = element;
 

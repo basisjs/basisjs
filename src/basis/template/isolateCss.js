@@ -10,9 +10,9 @@ function genIsolateMarker(){
 }
 
 function isolateCss(css, prefix, info){
-  function jumpAfter(str, offset){
+  function jumpTo(str, offset){
     var index = css.indexOf(str, offset);
-    i = index !== -1 ? index + str.length : sym.length;
+    i = index !== -1 ? index + str.length - 1 : sym.length;
   }
 
   function parseString(){
@@ -33,7 +33,7 @@ function isolateCss(css, prefix, info){
 
     if (bracket === '(')
     {
-      jumpAfter(')', i + 1);
+      jumpTo(')', i + 1);
       return true;
     }
 
@@ -49,7 +49,7 @@ function isolateCss(css, prefix, info){
     if (sym[i] !== '/' || sym[i + 1] !== '*')
       return;
 
-    jumpAfter('*/', i + 2);
+    jumpTo('*/', i + 2);
 
     return true;
   }
@@ -99,8 +99,8 @@ function isolateCss(css, prefix, info){
       return;
     }
 
-    for (i++; i < len && sym[i] !== '}'; i++)
-      parseString() || parseBraces();
+    for (i++; i < len  && sym[i] !== '}'; i++)
+      parseComment() || parseString() || parseBraces();
 
     return true;
   }

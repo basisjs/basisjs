@@ -1,0 +1,10 @@
+{
+  "en-US": {
+    "foo": "dest",
+    "bar": "dest",
+    "baz": {
+      "one": "dest",
+      "two": "dest"
+    }
+  }
+}

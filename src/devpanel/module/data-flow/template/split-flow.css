@@ -1,0 +1,10 @@
+.split .flow
+{
+  padding-right: 32px;
+  padding-bottom: 10px;
+  position: relative;
+}
+.split .flow:last-child
+{
+  padding-right: 0;
+}

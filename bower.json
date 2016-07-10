@@ -1,7 +1,10 @@
 {
   "name": "basisjs",
-  "version": "1.5.1",
   "main": "src/basis.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/basisjs/basisjs.git"
+  },
   "ignore": [
     ".*",
     "**/.*",

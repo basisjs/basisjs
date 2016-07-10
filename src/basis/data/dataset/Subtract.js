@@ -183,6 +183,11 @@ module.exports = ReadOnlyDataset.subclass({
     if (!operandsChanged)
       return false;
 
+    /** @cut */ basis.dev.setInfo(this, 'sourceInfo', {
+    /** @cut */   type: 'Subtract',
+    /** @cut */   source: [minuend, subtrahend]
+    /** @cut */ });
+
     // apply changes
     if (!minuend || !subtrahend)
     {

@@ -3,7 +3,9 @@ var hasOwnProperty = Object.prototype.hasOwnProperty;
 var eventUtils = require('basis.dom.event');
 var resolveActionById = require('basis.template.store').resolveActionById;
 
-var consts = require('./const.js');
+var consts = require('basis.template.const');
+var namespaces = require('basis.template.namespace');
+
 var MARKER = consts.MARKER;
 var CLONE_NORMALIZATION_TEXT_BUG = consts.CLONE_NORMALIZATION_TEXT_BUG;
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
@@ -25,6 +27,7 @@ var TEXT_VALUE = consts.TEXT_VALUE;
 var COMMENT_VALUE = consts.COMMENT_VALUE;
 var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
 var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
+var CLASS_BINDING_INVERT = consts.CLASS_BINDING_INVERT;
 
 
 //
@@ -37,6 +40,9 @@ var tmplEventListeners = {};
 var afterEventAction = {};
 var insideElementEvent = {};
 var contains;
+// emulation cursor: pointer in order to fire mouse events on iOS devices
+var IS_TOUCH_DEVICE = 'ontouchstart' in document.documentElement;
+var MOUSE_EVENTS = ['mouseover', 'mouseup', 'mousedown', 'mousemove', 'click', 'dblclick'];
 
 // cross-browser Node#contains
 if (Node && !Node.prototype.contains)
@@ -197,10 +203,6 @@ function regEventHandler(eventName){
 // Construct dom structure by declaration.
 //
 
-var namespaceURI = {
-  svg: 'http://www.w3.org/2000/svg'
-};
-
 // test for class attribute set via setAttribute bug (IE7 and lower)
 var SET_CLASS_ATTRIBUTE_BUG = (function(){
   var element = document.createElement('div');
@@ -218,6 +220,10 @@ var SET_STYLE_ATTRIBUTE_BUG = (function(){
 function setEventAttribute(node, eventName, actions){
   regEventHandler(eventName);
 
+  // add 'cursor: pointer' for touch devices in order to enable mouse events (iOS bug)
+  if (IS_TOUCH_DEVICE && MOUSE_EVENTS.indexOf(eventName) != -1)
+    node.setAttribute('style', 'cursor:pointer;' + (node.getAttribute('style') || ''));
+
   // hack for non-bubble events in IE<=8
   if (USE_CAPTURE_FALLBACK)
     node.setAttribute('on' + eventName, USE_CAPTURE_FALLBACK + '("' + eventName + '",event)');
@@ -232,7 +238,11 @@ function setAttribute(node, name, value){
   if (SET_STYLE_ATTRIBUTE_BUG && name == 'style')
     return node.style.cssText = value;
 
-  node.setAttribute(name, value);
+  var namespace = namespaces.getNamespace(name, node);
+  if (namespace)
+    node.setAttributeNS(namespace, name, value);
+  else
+    node.setAttribute(name, value);
 }
 
 var buildDOM = function(tokens, parent){
@@ -246,9 +256,9 @@ var buildDOM = function(tokens, parent){
     {
       case TYPE_ELEMENT:
         var tagName = token[ELEMENT_NAME];
-        var colonIndex = tagName.indexOf(':');
-        var element = colonIndex != -1
-          ? document.createElementNS(namespaceURI[tagName.substr(0, colonIndex)], tagName)
+        var namespace = namespaces.getNamespace(tagName);
+        var element = namespace
+          ? document.createElementNS(namespace, tagName)
           : document.createElement(tagName);
 
         // precess for children and attributes
@@ -279,6 +289,7 @@ var buildDOM = function(tokens, parent){
               {
                 // precomputed classes
                 // bool: [['prefix_name'],'binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                // bool: [['prefix_name'],'binding',CLASS_BINDING_INVERT,'name',defaultValue]
                 // enum: [['prefix_foo','prefix_bar'],'binding',CLASS_BINDING_ENUM,'name',defaultValue,['foo','bar']]
                 attrValue.push(prefix[defaultValue - 1]);
               }
@@ -287,7 +298,9 @@ var buildDOM = function(tokens, parent){
                 switch (binding[2])
                 {
                   case CLASS_BINDING_BOOL:
+                  case CLASS_BINDING_INVERT:
                     // ['prefix_','binding',CLASS_BINDING_BOOL,'name',defaultValue]
+                    // ['prefix_','binding',CLASS_BINDING_INVERT,'name',defaultValue]
                     attrValue.push(prefix + binding[3]);
                     break;
                   case CLASS_BINDING_ENUM:
@@ -308,7 +321,7 @@ var buildDOM = function(tokens, parent){
         var attrValue = token[ATTR_VALUE_INDEX[tokenType]];
 
         if (attrValue)
-          setAttribute(result, 'style', attrValue);
+          setAttribute(result, 'style', (result.getAttribute('style') || '') + attrValue);
 
         break;
 

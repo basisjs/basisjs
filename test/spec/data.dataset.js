@@ -1,6 +1,7 @@
 module.exports = {
   name: 'basis.data.dataset',
   test: [
+    require('./dataset/mapfilter.js'),
     require('./dataset/merge.js'),
     require('./dataset/subtract.js'),
     require('./dataset/sourcedataset.js'),

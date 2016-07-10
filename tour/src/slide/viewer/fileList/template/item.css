@@ -1,0 +1,36 @@
+.tab
+{
+  float: left;
+  margin-right: 1px;
+  padding: 4px 8px 5px;
+  
+  background: rgba(255, 255, 255, .65);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color .1s, color .1s;
+}
+.tab:first-child
+{
+  border-top-left-radius: 3px;
+}
+.tab:last-child
+{
+  border-top-right-radius: 3px;
+}
+.tab:hover
+{
+  transition: background-color .2s, color .2s;
+  background-color: rgba(38, 50, 56, 0.65);
+  color: #EEE;
+}
+.tab_selected,
+.tab_selected:hover
+{
+  cursor: default;
+  color: #EEE;
+  background: #263238;
+}
+.tab_modified
+{
+  font-weight: bold;
+}

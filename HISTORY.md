@@ -1,3 +1,86 @@
+## 1.7.0 (June 24, 2016)
+
+### Core
+
+- Added `SVG` as new resource type, which automatically inject to document when call `startUse()` method like `CSS` resources (@tyanas)
+- Implemented `basis.dev.patchInfo()` to patch dev info instead of rewriting
+- Always add `sourceURL` to wrapped modules source
+
+### Data
+
+- Implemented `Value#query()` and `Value.factory#query()`
+- Fixed `basis.data.dataset.Slice` index to be stable for `NaN` values
+- Fixed `basis.data.SourceDataset#setSource()` issue when new source mutates on linking (e.g. via `syncAction`)
+- Added `VectorFn` and `fnConstructor` to export of `basis.data.vector` (#68, @istrel)
+
+### Template
+
+- `<b:svg>` support to simplify injection of `<svg><use xlink:href=".."></svg>` to layout (@tyanas)
+- Added automatic injection of `cursor: pointer` to style for elements with mouse events on touch devices to make mouse events work on iOS (#63, @istrel)
+- Added resource resolve warnings to template warnings list with reference to AST token
+- Reworked resource processing in declaration
+- Corrected relative path resolving in markup tokens (relative to source file)
+- Fixed comment processing inside blocks in `isolateCss()`
+- Fixed exception when apply isolation in build version of basis.js
+
+### l10n
+
+- Implemented dictionary patching via `l10n: { patch: .. }` in `basis-config` (@BobbyZee)
+- Ignore wrong types in `_meta` as more predictable behaviour (`default` type was set before)
+- Added token source information and some debug info in dictionaries (make sense on dictionary merge when patching)
+- Reworked token types and dictionary content update mechanics
+
+### Other
+
+- Changed container for root element of popups (`basis.ui.popup`) to mitigate layout problems in `Firefox`. Now it's a common container again not a document's body (@naorunaoru)
+- Corrected calculations of min/max delta for `basis.dragdrop.MoveableElement` (@wuzyk)
+- Fixed duplicate callback invocation in `basis.net.service` (#57, @BobbyZee)
+- Added `requestData` as argument into `Service#signature` to simplify re-signing of requests after the session will be unfrozen (@BobbyZee)
+- Changed severity for messages about rejecting the request in `basis.net.action` (@BobbyZee)
+- Fixed edge cases in `basis.ui.scroller` (#59, @naorunaoru)
+- Fixed edge case for range calculate in `basis.utils.source.convertToRange()`
+- Fixed `basis.crypt.md5()` for messages longest than 32 chars
+- Implemented `Field#required` and related changes (@istrel)
+  - Conditional required via `Field#required` property
+  - Automatically attach/detach `Validator.Required` depending on `required` property value
+  - Added `Field#validatorsChanged` event that triggers on validators changing
+  - Added `prepend` argument for `Field#attachValidator()` method to place validator in beginning
+
+### devpanel
+
+- Implemented representation of FRP trasformations graph named as `Data flow`. Currently for reactive bindings only. For some examples see demo: `demo/data/data-flow.html` (@tyanas)
+- Added touch support in template inspector (@tyanas)
+- Added `basis.l10n` token info popup on token hover
+- Added opening token value location in editor
+- Fixed exception in grid inspector when measuring text is zero width (@naorunaoru)
+- Fixed namespace and source output in template info popup
+
+## 1.6.0 (January 21, 2016)
+
+- fix duplicate var declarations (thanks to new linter's check in `basisjs-tools`)
+- specify explicit names for namespaces instead of `this.path`, which is no longer available in modules (thanks to @BobbyZee)
+- basis.data.dataset: split into modules
+- basis.data.index: refactoring
+    - split into modules
+    - don't export `IndexConstructor` (doesn't exist anymore)
+    - simplify calc presets and `CalcIndexPreset` class
+    - rework `IndexMap`, make it more async
+        - inherit `IndexMap` from `SourceDataset` (instead of `MapFilter`)
+        - make `IndexMap#setSource` async
+        - `IndexMap#ruleEvents` → `IndexMap#recalcEvents`
+        - add new members on `recalc` only
+        - proxy member update to source object
+        - fix issue when source index doesn't destroy on `source` change
+- basis.dom.wrapper: fix value for `childClass` of `AbstractNode` (`undefined` → `Class.SELF`)
+- basis.template: explicit set `UNSET` value as default binding value to separate two cases when value is never set and equal to `undefined`
+- basis.template: new define type `invert` (i.e. `<b:define type="invert"/>`), that works like `bool` but inverts binding value
+- basis.template: warn when `default` attribute on `<b:define>` with type `bool` or `invert` has no value
+- basis.template: namespaced attributes (thanks to @tyanas)
+    - support for namespaced attributes in templates
+    - support `xlink` namespace by default
+    - new module `basis.template.namespace` to resolve namespace by tag/attribute name
+- basis.ui.paginator: add roles
+
 ## 1.5.1 (November 18, 2015)
 
 - fix `basis.data.Dataset.setAccumulateState()` issue with `itemsChanged` event concurrency on cache flush (new event emited before cached event)

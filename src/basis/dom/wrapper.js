@@ -13,7 +13,7 @@
   * @namespace basis.dom.wrapper
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.dom.wrapper';
 
 
   //

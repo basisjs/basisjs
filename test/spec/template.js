@@ -31,11 +31,11 @@ module.exports = {
 
                 var tmpl = createTemplate(nsTemplate.get('test'), true);
                 assert(tmpl.resources.length === 1);
-                assert(tmpl.resources[0] === basis.path.resolve('foo/1.css'));
+                assert(tmpl.resources[0].url === basis.path.resolve('foo/1.css'));
 
                 nsTemplate.setTheme('custom');
                 assert(tmpl.resources.length === 1);
-                assert(tmpl.resources[0] === basis.path.resolve('foo/custom/2.css'));
+                assert(tmpl.resources[0].url === basis.path.resolve('foo/custom/2.css'));
               }
             }
           ]
@@ -76,12 +76,14 @@ module.exports = {
       ]
     },
     require('./template/declaration.js'),
+    require('./template/namespaces.js'),
     require('./template/attr-bindings.js'),
     require('./template/text-bindings.js'),
     require('./template/b-include.js'),
     require('./template/b-define.js'),
     require('./template/isolate.js'),
     require('./template/l10n.js'),
+    require('./template/touch.js'),
     {
       name: 'Themes',
       test: [

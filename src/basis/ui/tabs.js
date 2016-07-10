@@ -4,7 +4,7 @@
   * @namespace basis.ui.tabs
   */
 
-  var namespace = module.namespace;
+  var namespace = 'basis.ui.tabs';
 
 
   //

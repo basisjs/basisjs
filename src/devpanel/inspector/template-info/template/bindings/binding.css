@@ -32,8 +32,8 @@
   margin-left: -.5ch;
   margin-right: 6px;
   border-radius: 2px;
-  color: #333;  
-  background: transparent;  
+  color: #333;
+  background: transparent;
   text-shadow: 0px 0px 1px white;
 
   cursor: pointer;
@@ -41,7 +41,7 @@
 }
 .caption_highlight
 {
-  color: #353;  
+  color: #353;
   background: #B6CFB6;
 }
 .caption_highlight.caption_nestedView
@@ -66,6 +66,7 @@
   background: #F0F0F0;
   color: #888;
   transition: color .15s, background-color .15s;
+  cursor: pointer;
 }
 .reactive_highlight
 {

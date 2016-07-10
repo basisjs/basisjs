@@ -3,7 +3,7 @@
   * @namespace basis.entity
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.entity';
 
 
   //
@@ -667,6 +667,8 @@
           {
             if (data)
               entity.update(data);
+
+            /** @cut */ entity = basisData.devWrap(entity);
           }
           else
             entity = new EntityClass(data || {});
@@ -720,7 +722,10 @@
             }
 
             if (entity && entity.entityType === entityType)
+            {
               entity.update(data);
+              /** @cut */ entity = basisData.devWrap(entity);
+            }
             else
               entity = new EntityClass(data);
 
@@ -1192,7 +1197,8 @@
       this.wrapper = wrapper;
       if ('all' in config == false || config.all || config.singleton)
         this.all = new ReadOnlyEntitySet(complete({
-          wrapper: wrapper
+          wrapper: wrapper,
+          set: setAndDestroyRemoved
         }, config.all));
 
       // singleton

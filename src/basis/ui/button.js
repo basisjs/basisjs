@@ -4,7 +4,7 @@
   * @namespace basis.ui.button
   */
 
-  var namespace = module.namespace;
+  var namespace = 'basis.ui.button';
 
 
   //

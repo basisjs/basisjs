@@ -1,3 +1,4 @@
+/** @cut */ var devWrap = require('basis.data').devWrap;
 var Value = require('basis.data').Value;
 
 /**
@@ -230,9 +231,18 @@ function getDatasetIndex(dataset, IndexClass){
     index = new IndexClass();
     index.addHandler(DATASET_INDEX_HANDLER, dataset);
 
+    /** @cut */ basis.dev.setInfo(index, 'sourceInfo', {
+    /** @cut */   type: index.indexName,
+    /** @cut */   source: dataset,
+    /** @cut */   events: Object.keys(index.updateEvents),
+    /** @cut */   transform: index.valueGetter
+    /** @cut */ });
+
     indexes[indexId] = index;
     applyIndexDelta(index, dataset.getItems());
   }
+  /** @cut */ else
+  /** @cut */   index = devWrap(index);
 
   return index;
 }

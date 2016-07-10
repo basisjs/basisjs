@@ -5,7 +5,7 @@
   * @namespace basis.ui.chart
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.chart';
 
 
   //

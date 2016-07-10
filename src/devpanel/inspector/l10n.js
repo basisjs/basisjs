@@ -3,11 +3,13 @@ var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
 
-var Node = global.Node;
+var NativeDomNode = global.Node;
+var fileAPI = require('../api/file.js');
 var Value = require('basis.data').Value;
 var colorPicker = require('./colorPicker.js');
 var transport = require('../api/transport.js');
 var Overlay = require('./utils/overlay.js');
+var Balloon = require('basis.ui.popup').Balloon;
 
 var dictionaryColor = {};
 function getColorForDictionary(dictionaryName){
@@ -30,6 +32,78 @@ function loadToken(token){
   transport.sendData('token', data);
 }
 
+function tokenBinding(fn){
+  fn = basis.getter(fn);
+  return {
+    events: 'update',
+    getter: function(node){
+      return node.data.token ? fn(node.data) : '';
+    }
+  };
+}
+
+var nodeInfoPopup = basis.fn.lazyInit(function(){
+  return new Balloon({
+    dir: 'left bottom left top',
+    template: resource('./l10n/token_hintPopup.tmpl'),
+    autorotate: [
+      'left top left bottom',
+      'right bottom right top',
+      'right top right bottom'
+    ],
+    binding: {
+      dictionary: tokenBinding('token.dictionary.id'),
+      patches: tokenBinding(function(data){
+        return data.token.dictionary._data._patches;
+      }),
+      culture: tokenBinding('token.descriptor.culture.name'),
+      path: tokenBinding('token.descriptor.name'),
+      tokenLocation: tokenBinding(function(data){
+        return data.descriptor.loc || data.descriptor.source;
+      }),
+      type: tokenBinding(function(data){
+        var type = data.token.getType();
+        return type != 'default' ? type : '';
+      }),
+      computed: tokenBinding(function(data){
+        return data.token.descriptor !== data.descriptor;
+      }),
+      computedValue: tokenBinding(function(data){
+        return data.value;
+      }),
+      computedKey: tokenBinding('key'),
+      computedKeyValueEqual: tokenBinding(function(data){
+        return data.key === data.value;
+      }),
+      computedType: tokenBinding(function(data){
+        if (!data.computed)
+          return;
+
+        var type = data.computed.getType();
+        return type != 'default' ? type : '';
+      }),
+      openFileSupported: {
+        events: 'delegateChanged update',
+        getter: function(){
+          var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+          return basisjsTools && typeof basisjsTools.openFile == 'function';
+        }
+      }
+    },
+    handler: {
+      delegateChanged: function(){
+        if (this.delegate)
+          this.show(this.delegate.element);
+        else
+          this.hide();
+      },
+      hide: function(){
+        this.setDelegate();
+      }
+    }
+  });
+});
+
 var overlay = new Overlay({
   template: resource('./template/l10n/overlay.tmpl'),
   muteEvents: {
@@ -51,22 +125,51 @@ var overlay = new Overlay({
     binding: {
       color: 'data:'
     },
+    action: {
+      showInfo: function(){
+        nodeInfoPopup().setDelegate(this);
+      },
+      hideInfo: function(){
+        nodeInfoPopup().setDelegate();
+      }
+    },
     click: function(){
-      var token = this.data.token;
-      if (token)
+      var descriptor = this.data.descriptor;
+      if (descriptor)
       {
         this.parentNode.deactivate();
-        loadToken(token);
+
+        var loc = descriptor.loc || descriptor.source;
+        if (loc)
+          fileAPI.openFile(loc);
       }
     }
   },
 
   processNode: function(domNode){
     function highlight(token, domNode){
+      var key = null;
+      var value = null;
+      var computed = null;
+      var descriptor;
+
+      if (token instanceof inspectBasisL10n.ComputeToken)
+      {
+        descriptor = token.token.dictionary.getDescriptor(token.getName());
+        computed = token;
+        value = token.value;
+        key = token.getName().split('.').pop();
+        token = token.token;
+      }
+
       if (token instanceof inspectBasisL10n.Token && token.dictionary)
         this.highlight(domNode, {
           color: getColorForDictionary(token.dictionary.resource.url),
-          token: token
+          token: token,
+          computed: computed,
+          descriptor: descriptor || token.descriptor,
+          value: value,
+          key: key
         });
     }
 
@@ -83,16 +186,9 @@ var overlay = new Overlay({
       if (debugInfo)
       {
         var bindings = debugInfo.bindings;
+
         for (var j = 0, binding; binding = bindings[j]; j++)
-        {
-          var token = binding.attachment;
-
-          if (token instanceof inspectBasisL10n.ComputeToken)
-            token = token.token;
-
-          if (token instanceof inspectBasisL10n.Token && token.dictionary)
-            highlight.call(this, token, binding.val instanceof Node ? binding.val : binding.dom);
-        }
+          highlight.call(this, binding.attachment, binding.val instanceof NativeDomNode ? binding.val : binding.dom);
       }
     }
   }

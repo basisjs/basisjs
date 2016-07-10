@@ -3,7 +3,7 @@
   * @namespace basis.router
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.router';
 
 
   //
@@ -314,7 +314,6 @@
       var inserted = [];
       var deleted = [];
       var matched = [];
-      /** @cut */ var log = [];
 
       // check for recursion
       if (preventRecursion(newPath))
@@ -468,7 +467,7 @@
           /** @cut */ if (module.exports.debug)
           /** @cut */   basis.dev.info(
           /** @cut */     namespace + ': add handler for route `' + path + '`\n',
-          /** @cut */     { type: 'leave', path: route.id, cb: item, route: route.token }
+          /** @cut */     { type: 'leave', path: route.id, cb: callback.leave, route: route.token }
           /** @cut */   );
         }
 

@@ -1,0 +1,24 @@
+.wrapper
+{
+  min-height: 100%;
+  padding: 1em 0;
+}
+.toc
+{
+  margin: 0 auto;
+  width: 40%;
+  min-width: 420px;
+}
+.header
+{
+  margin: 0 0 .5em;
+  font-size: 250%;
+  font-weight: normal;
+  text-indent: .37em;
+}
+.items
+{
+  list-style: none;
+  padding: 0;
+  margin: 0; 
+}

@@ -3,7 +3,7 @@
   * @namespace basis.dom.event
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.dom.event';
 
   var document = global.document;
   var $null = basis.fn.$null;
@@ -72,6 +72,32 @@
 
   var DEPRECATED = /^(returnValue|keyLocation|layerX|layerY|webkitMovementX|webkitMovementY)$/;
 
+  var KEYBOARD_EVENTS = [
+    'keyup',
+    'keydown',
+    'keypress'
+  ];
+
+  var MOUSE_EVENTS = [
+    'click',
+    'dblclick',
+    'mousedown',
+    'mouseup',
+    'mouseover',
+    'mousemove',
+    'mouseout',
+    'mouseenter',
+    'mouseleave'
+  ].concat(BROWSER_EVENTS.mousewheel);
+
+  function isKeyboardEvent(event) {
+    return KEYBOARD_EVENTS.indexOf(event.type) != -1;
+  }
+
+  function isMouseEvent(event) {
+    return MOUSE_EVENTS.indexOf(event.type) != -1;
+  }
+
  /**
   * @param {string} eventName
   * @return {Array.<string>}
@@ -118,18 +144,27 @@
 
         sender: target,
         target: target,
-        path: event.path ? basis.array(event.path) : getPath(target),
-
-        key: key(event),
-        charCode: charCode(event),
-
-        mouseLeft: mouseButton(event, MOUSE_LEFT),
-        mouseMiddle: mouseButton(event, MOUSE_MIDDLE),
-        mouseRight: mouseButton(event, MOUSE_RIGHT),
-        mouseX: mouseX(event),
-        mouseY: mouseY(event),
-        wheelDelta: wheelDelta(event)
+        path: event.path ? basis.array(event.path) : getPath(target)
       });
+
+      if (isKeyboardEvent(event))
+      {
+        basis.object.extend(this, {
+          key: key(event),
+          charCode: charCode(event)
+        });
+      }
+      else if (isMouseEvent(event))
+      {
+        basis.object.extend(this, {
+          mouseLeft: mouseButton(event, MOUSE_LEFT),
+          mouseMiddle: mouseButton(event, MOUSE_MIDDLE),
+          mouseRight: mouseButton(event, MOUSE_RIGHT),
+          mouseX: mouseX(event),
+          mouseY: mouseY(event),
+          wheelDelta: wheelDelta(event)
+        });
+      }
     },
     stopBubble: function(){
       cancelBubble(this.event_);

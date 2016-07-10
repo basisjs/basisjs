@@ -3,7 +3,7 @@
   * @namespace basis.template.theme
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.template.theme';
 
   var themes = {};
   var sourceByPath = {};

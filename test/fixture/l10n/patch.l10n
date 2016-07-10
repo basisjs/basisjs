@@ -1,0 +1,10 @@
+{
+  "en-US": {
+    "bar": "patch",
+    "baz": {
+      "one": "patch",
+      "three": "patch"
+    },
+    "qux": "patch"
+  }
+}

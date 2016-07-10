@@ -4,7 +4,7 @@
   * @namespace basis.ui.window
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.window';
 
 
   //

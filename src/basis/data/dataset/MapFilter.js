@@ -231,7 +231,13 @@ module.exports = SourceDataset.subclass({
     source: MAPFILTER_SOURCE_HANDLER
   },
 
-  // no special init
+  /** @cut */ init: function(){
+  /** @cut */   SourceDataset.prototype.init.call(this);
+  /** @cut */   basis.dev.patchInfo(this, 'sourceInfo', {
+  /** @cut */     type: this.constructor.className.split('.').pop(),
+  /** @cut */     transform: this.rule
+  /** @cut */   });
+  /** @cut */ },
 
  /**
   * Set new transform function and apply new function to source objects.
@@ -277,6 +283,10 @@ module.exports = SourceDataset.subclass({
 
       this.rule = rule;
       this.emit_ruleChanged(oldRule);
+
+      /** @cut */ basis.dev.patchInfo(this, 'sourceInfo', {
+      /** @cut */   transform: this.rule
+      /** @cut */ });
 
       return this.applyRule();
     }

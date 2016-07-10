@@ -3,7 +3,7 @@
   * @namespace basis.ui.panel
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.panel';
 
 
   //

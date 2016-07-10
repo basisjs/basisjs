@@ -3,7 +3,7 @@ var fileAPI = require('../../api/file.js');
 var Node = require('basis.ui').Node;
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var hoveredBinding = require('./binding.js').hover;
-var jsSourcePopup = require('./js-source-popup.js');
+var jsSourcePopup = require('../../module/js-source-popup/index.js');
 var templateSwitcher = require('basis.template').switcher;
 
 var DOMNode = Node.subclass({

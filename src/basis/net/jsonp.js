@@ -3,7 +3,7 @@
   * @namespace basis.net.jsonp
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net.jsonp';
 
 
   //

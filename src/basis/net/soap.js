@@ -8,7 +8,7 @@
   * @namespace basis.net.soap
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.net.soap';
 
 
   //

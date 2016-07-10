@@ -3,7 +3,7 @@
   * @see ./demo/defile/paginator.html
   * @namespace basis.ui.paginator
   */
-  var namespace = this.path;
+  var namespace = 'basis.ui.paginator';
 
 
   //
@@ -34,6 +34,8 @@
   var PaginatorNode = Node.subclass({
     className: namespace + '.PaginatorNode',
 
+    role: 'page',
+    roleId: 'pageNumber',
     propertyDescriptors: {
       pageNumber: 'pageNumberChanged'
     },
@@ -100,6 +102,7 @@
   var Paginator = Node.subclass({
     className: namespace + '.Paginator',
 
+    role: 'paginator',
     propertyDescriptors: {
       pageSpan: 'pageSpanChanged',
       pageCount: 'pageCountChanged',

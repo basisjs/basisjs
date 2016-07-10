@@ -4,7 +4,7 @@
   * @namespace basis.ui.scrolltable
   */
 
-  var namespace = this.path;
+  var namespace = 'basis.ui.scrolltable';
 
 
   //
