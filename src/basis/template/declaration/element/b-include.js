@@ -239,10 +239,11 @@ module.exports = function(template, options, token, result){
 
     /** @cut */ if (decl.removals)
     /** @cut */   decl.removals.forEach(function(item){
-    /** @cut */     isolateTokens([item.token], isolatePrefix);
+    /** @cut */     isolateTokens([item.node], isolatePrefix);
     /** @cut */   });
   }
 
+  var isContentReset = false;
   var instructions = [];
   var tokenRefMap = normalizeRefs(decl.tokens); // ast
 
@@ -287,10 +288,9 @@ module.exports = function(template, options, token, result){
       var childAttrs = getTokenAttrValues(child);
       var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
       var targetRef = ref && tokenRefMap[ref];
-      var target = targetRef && targetRef.token;
+      var target = targetRef && targetRef.node;
 
       // TODO: split into modules
-      // TODO: move common parts up (ref)
       switch (child.name)
       {
         case 'style':
@@ -342,8 +342,8 @@ module.exports = function(template, options, token, result){
 
           if (targetRef)
           {
-            var parent = targetRef.owner;
-            var pos = parent.indexOf(targetRef.token);
+            var parent = targetRef.parent;
+            var pos = parent.indexOf(targetRef.node);
             if (pos != -1)
             {
               var args = [pos + (child.name == 'after'), replaceOrRemove];
@@ -358,7 +358,8 @@ module.exports = function(template, options, token, result){
               /** @cut */     reason: '<b:' + child.name + '>',
               /** @cut */     removeToken: child,
               /** @cut */     includeToken: token,
-              /** @cut */     token: targetRef.token
+              /** @cut */     token: targetRef.node, // for backward capability
+              /** @cut */     node: targetRef.node
               /** @cut */   });
             }
           }
@@ -465,7 +466,7 @@ module.exports = function(template, options, token, result){
           var refName = (childAttrs.name || '').trim();
           var ref = 'ref' in childAttrs ? childAttrs.ref : refName || 'element';
           var targetRef = ref && tokenRefMap[ref];
-          var target = targetRef && targetRef.token;
+          var target = targetRef && targetRef.node;
 
           if (target)
           {
@@ -511,11 +512,16 @@ module.exports = function(template, options, token, result){
 
       if (targetRef)
       {
-        var parent = targetRef.owner;
-        var pos = parent.indexOf(targetRef.token);
+        var parent = targetRef.parent;
+        var pos = parent.indexOf(targetRef.node);
 
-        targetRef.token.splice(CONTENT_CHILDREN);
-        parent.splice.apply(parent, [pos, 0].concat(processedChild));
+        if (!isContentReset)
+        {
+          isContentReset = true;
+          targetRef.node.splice(CONTENT_CHILDREN);
+        }
+
+        targetRef.node.push.apply(targetRef.node, processedChild);
       }
       else
       {
@@ -525,7 +531,7 @@ module.exports = function(template, options, token, result){
   }
 
   if (tokenRefMap.element)
-    removeTokenRef(tokenRefMap.element.token, 'element');
+    removeTokenRef(tokenRefMap.element.node, 'element');
 
   result.push.apply(result, decl.tokens);
 };

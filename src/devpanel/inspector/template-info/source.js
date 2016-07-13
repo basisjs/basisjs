@@ -332,7 +332,7 @@ declToken.attach(function(decl){
               decl.removals.filter(function(removal){
                 return removal.includeToken === inc.token && removal.token.sourceToken;
               }).map(function(removal){
-                return removal.token.sourceToken.range;
+                return removal.node.sourceToken.range;
               })
             )
             .concat(

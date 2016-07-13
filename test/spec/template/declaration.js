@@ -12,7 +12,7 @@ module.exports = {
           ).tokens
         );
 
-        assert(tokens === '[[1,"ref",["element"],"div",[1,1,["ref"],"div"]]]');
+        assert(tokens === '[[1,"ref",["element"],"div",[1,1,["ref"],"div"]],[9,0]]');
       }
     },
     {

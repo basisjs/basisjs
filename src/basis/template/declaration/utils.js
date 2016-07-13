@@ -3,6 +3,8 @@ var walk = require('./ast.js').walk;
 var consts = require('../const.js');
 var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
 var TYPE_CONTENT = consts.TYPE_CONTENT;
+var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
+var CONTENT_PRIORITY = consts.CONTENT_PRIORITY;
 var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
 var TOKEN_REFS = consts.TOKEN_REFS;
 
@@ -160,10 +162,34 @@ function normalizeRefs(nodes){
   walk(nodes, function(type, node, parent){
     if (type === TYPE_CONTENT)
     {
-      map[':content'] = {
-        owner: parent,
-        token: node
+      var removeNode;
+      var contentNode = {
+        parent: parent,
+        node: node
       };
+
+      if (':content' in map)
+      {
+        // last or with greater priority wins
+        if (node[CONTENT_PRIORITY] >= map[':content'].node[CONTENT_PRIORITY])
+        {
+          // remove old node, use new
+          removeNode = map[':content'];
+        }
+        else
+        {
+          // remove new node, use old
+          removeNode = contentNode;
+          contentNode = map[':content'];
+        }
+
+        // replace <b:content> by its content
+        var nodeIndex = removeNode.parent.indexOf(removeNode.node);
+        if (nodeIndex != -1)
+          removeNode.parent.splice.apply(removeNode.parent, [nodeIndex, 1].concat(removeNode.node.slice(CONTENT_CHILDREN)));
+      }
+
+      map[':content'] = contentNode;
     }
     else if (type !== TYPE_ATTRIBUTE_EVENT)
     {
@@ -181,14 +207,14 @@ function normalizeRefs(nodes){
         }
 
         if (map[refName])
-          removeTokenRef(map[refName].token, refName);
+          removeTokenRef(map[refName].node, refName);
 
         if (node[TOKEN_BINDINGS] == refName)
           node[TOKEN_BINDINGS] = j + 1;
 
         map[refName] = {
-          owner: parent,
-          token: node
+          parent: parent,
+          node: node
         };
       }
     }

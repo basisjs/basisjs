@@ -254,7 +254,8 @@ function modifyAttr(template, options, include, target, token, name, action){
         /** @cut */   reason: '<b:' + token.name + '>',
         /** @cut */   removeToken: token,
         /** @cut */   includeToken: include,
-        /** @cut */   token: itAttrToken
+        /** @cut */   token: itAttrToken, // for backward capability
+        /** @cut */   node: itAttrToken
         /** @cut */ });
 
         arrayRemove(itAttrs, itAttrToken);
@@ -486,17 +487,21 @@ function modifyAttr(template, options, include, target, token, name, action){
               arrayRemove(itAttrs, itAttrToken);
 
             /** @cut */ if (removedValues.length || removedBindings.length)
+            /** @cut */ {
+            /** @cut */   var removedNode = [
+            /** @cut */     consts.TYPE_ATTRIBUTE_CLASS,
+            /** @cut */     removedBindings,
+            /** @cut */     0,
+            /** @cut */     removedValues.join(' ')
+            /** @cut */   ];
             /** @cut */   template.removals.push({
             /** @cut */     reason: '<b:' + token.name + '>',
             /** @cut */     removeToken: token,
             /** @cut */     includeToken: include,
-            /** @cut */     token: [
-            /** @cut */       consts.TYPE_ATTRIBUTE_CLASS,
-            /** @cut */       removedBindings,
-            /** @cut */       0,
-            /** @cut */       removedValues.join(' ')
-            /** @cut */     ]
+            /** @cut */     token: removedNode, // for backward capability
+            /** @cut */     node: removedNode
             /** @cut */   });
+            /** @cut */ }
           }
           break;
 
@@ -509,7 +514,8 @@ function modifyAttr(template, options, include, target, token, name, action){
             /** @cut */   reason: '<b:' + token.name + '>',
             /** @cut */   removeToken: token,
             /** @cut */   includeToken: include,
-            /** @cut */   token: itAttrToken
+            /** @cut */   token: itAttrToken, // for backward capability
+            /** @cut */   node: itAttrToken
             /** @cut */ });
           }
 

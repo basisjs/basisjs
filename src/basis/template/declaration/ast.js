@@ -21,6 +21,10 @@ function walker(nodes, fn){
 
         case TYPE_CONTENT:
           walk(node, CONTENT_CHILDREN);
+
+          // FIXME: hack, since b:content node can to be removed by normalizeRefs and walk breaks
+          if (nodes[i] !== node)
+            i--;
           break;
       }
     }

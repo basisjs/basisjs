@@ -222,7 +222,7 @@ module.exports = {
       name: 'multiple b:content declarations',
       test: [
         {
-          name: 'serial',
+          name: 'last wins',
           test: function(){
             var includeTemplate = createTemplate(
               '<div>' +
@@ -245,7 +245,7 @@ module.exports = {
           }
         },
         {
-          name: 'parallel',
+          name: 'nested wins',
           test: function(){
             var includeTemplate = createTemplate(
               '<div>' +
@@ -270,10 +270,10 @@ module.exports = {
       ]
     },
     {
-      name: 'multi-level includes',
+      name: 'inheritance',
       test: [
         {
-          name: 'simple',
+          name: 'should inherit explicit <b:content> through includes',
           test: function(){
             var templateOne = createTemplate(
               '<div>' +
@@ -285,7 +285,7 @@ module.exports = {
 
             var templateTwo = createTemplate(
               '<b:include src="#' + templateOne.templateId + '">' +
-                'go deeper' +
+                'failure' +
               '</b:include>'
             );
 
@@ -299,7 +299,7 @@ module.exports = {
           }
         },
         {
-          name: 'with merge',
+          name: 'explicit <b:content> should win',
           test: function(){
             var templateA = createTemplate(
               '<span class="a">' +
@@ -341,7 +341,7 @@ module.exports = {
           }
         },
         {
-          name: 'with merge 2',
+          name: 'explicit <b:content> should override explicit <b:content> from includes',
           test: function(){
             var templateA = createTemplate(
               '<span class="a">' +
@@ -372,8 +372,8 @@ module.exports = {
             );
 
             assert(text(templateWithMerge) === text(
-              'success' +
               '<div>' +
+                'success' +
                 '<span class="a">' +
                   'explicit' +
                 '</span>' +
@@ -385,7 +385,7 @@ module.exports = {
           }
         },
         {
-          name: 'merge with prepend',
+          name: 'should correctly inject explicit <b:content> to include',
           test: function(){
             var templateA = createTemplate(
               '<span class="a">' +
@@ -417,7 +417,6 @@ module.exports = {
             );
 
             assert(text(templateWithMerge) === text(
-              'success' +
               '<div>' +
                 '<span class="a">' +
                   'success' +

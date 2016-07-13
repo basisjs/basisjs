@@ -44,7 +44,8 @@ var CLASS_BINDING_NOTEQUAL = 5;
 /** @const */ var TEXT_VALUE = 3;
 /** @const */ var COMMENT_VALUE = 3;
 
-/** @const */ var CONTENT_CHILDREN = 2;  // [type, explicit, ...children]
+/** @const */ var CONTENT_CHILDREN = 2;  // [type, priority, ...children]
+/** @const */ var CONTENT_PRIORITY = 1;
 
 
 // test for browser (IE) normalize text nodes during cloning
@@ -85,6 +86,7 @@ module.exports = {
   TEXT_VALUE: TEXT_VALUE,
   COMMENT_VALUE: COMMENT_VALUE,
   CONTENT_CHILDREN: CONTENT_CHILDREN,
+  CONTENT_PRIORITY: CONTENT_PRIORITY,
 
   CLASS_BINDING_ENUM: CLASS_BINDING_ENUM,
   CLASS_BINDING_BOOL: CLASS_BINDING_BOOL,

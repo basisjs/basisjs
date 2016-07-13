@@ -1,4 +1,3 @@
-
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var arraySearch = basis.array.search;
 var arrayAdd = basis.array.add;
@@ -9,18 +8,20 @@ var consts = require('./const.js');
 var utils = require('./declaration/utils.js');
 var styleUtils = require('./declaration/style.js');
 var attrUtils = require('./declaration/attr.js');
-var elementHandlers = {
-  content: require('./declaration/element/b-content.js'),
-  define: require('./declaration/element/b-define.js'),
-  import: require('./declaration/element/b-import.js'),
-  include: require('./declaration/element/b-include.js'),
-  isolate: require('./declaration/element/b-isolate.js'),
-  l10n: require('./declaration/element/b-l10n.js'),
-  style: require('./declaration/element/b-style.js'),
-  svg: require('./declaration/element/b-svg.js'),
-  template: require('./declaration/element/b-template.js'),
-  text: require('./declaration/element/b-text.js')
-};
+
+var TYPE_ELEMENT = consts.TYPE_ELEMENT;
+var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
+var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
+var TYPE_TEXT = consts.TYPE_TEXT;
+var TYPE_COMMENT = consts.TYPE_COMMENT;
+var TYPE_CONTENT = consts.TYPE_CONTENT;
+var TOKEN_TYPE = consts.TOKEN_TYPE;
+var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
+var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
+var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
+var TEXT_VALUE = consts.TEXT_VALUE;
+var CONTENT_PRIORITY = consts.CONTENT_PRIORITY;
+var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
 var resourceHash = utils.resourceHash;
 var addUnique = utils.addUnique;
@@ -36,18 +37,18 @@ var applyAttrs = attrUtils.applyAttrs;
 var styleNamespaceIsolate = styleUtils.styleNamespaceIsolate;
 var isolateTokens = styleUtils.isolateTokens;
 
-var TYPE_ELEMENT = consts.TYPE_ELEMENT;
-var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
-var TYPE_ATTRIBUTE_CLASS = consts.TYPE_ATTRIBUTE_CLASS;
-var TYPE_TEXT = consts.TYPE_TEXT;
-var TYPE_COMMENT = consts.TYPE_COMMENT;
-var TYPE_CONTENT = consts.TYPE_CONTENT;
-var TOKEN_TYPE = consts.TOKEN_TYPE;
-var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
-var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
-var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
-var TEXT_VALUE = consts.TEXT_VALUE;
-var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
+var elementHandlers = {
+  content: require('./declaration/element/b-content.js'),
+  define: require('./declaration/element/b-define.js'),
+  import: require('./declaration/element/b-import.js'),
+  include: require('./declaration/element/b-include.js'),
+  isolate: require('./declaration/element/b-isolate.js'),
+  l10n: require('./declaration/element/b-l10n.js'),
+  style: require('./declaration/element/b-style.js'),
+  svg: require('./declaration/element/b-svg.js'),
+  template: require('./declaration/element/b-template.js'),
+  text: require('./declaration/element/b-text.js')
+};
 
 // TODO: remove
 var Template = function(){};
@@ -129,7 +130,7 @@ var makeDeclaration = (function(){
             //   });
 
             if (tokenRefMap.element)
-              removeTokenRef(tokenRefMap.element.token, 'element');
+              removeTokenRef(tokenRefMap.element.node, 'element');
 
             result.push.apply(result, declTokens);
             continue;
@@ -433,17 +434,28 @@ var makeDeclaration = (function(){
     /** @cut */ if (source_)
     /** @cut */   result.tokens.source_ = source_;
 
-    // there must be at least one token in result
+    // add implicit <b:content> to the end
+    // it will be removed during normalization if explicit exists
+    result.tokens.push([TYPE_CONTENT, 0]);
+
+    // normalize refs and find first non special node
+    var tokenRefMap = normalizeRefs(result.tokens);
     var elementToken = findNonSpecialToken(result.tokens);
+
+    // downgrade explicit high priority content to normal explicit
+    if (tokenRefMap[':content'].node[CONTENT_PRIORITY] > 1)
+      tokenRefMap[':content'].node[CONTENT_PRIORITY] = 1;
+
+    // there must be at least one normal node in result
     if (!elementToken)
     {
       elementToken = [TYPE_TEXT, 0, 0, ''];
       result.tokens.unshift(elementToken);
     }
 
-    // normalize refs
-    addTokenRef(elementToken, 'element');
-    normalizeRefs(result.tokens);
+    // add explicit element ref if it doesn't exist yet
+    if (!tokenRefMap.element)
+      addTokenRef(elementToken, 'element');
 
     // deal with defines
     applyDefines(result.tokens, result, options);

@@ -49,7 +49,7 @@ module.exports = function(template, options, token){
 
           /** @cut */ if (importDecl.removals)
           /** @cut */   importDecl.removals.forEach(function(item){
-          /** @cut */     isolateTokens([item.token], isolatePrefix);
+          /** @cut */     isolateTokens([item.node], isolatePrefix);
           /** @cut */   });
         }
 

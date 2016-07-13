@@ -4,7 +4,7 @@ var TYPE_CONTENT = consts.TYPE_CONTENT;
 module.exports = function(template, options, token, result){
   var node = [
     TYPE_CONTENT,
-    1             // implicit
+    2             // explicit with high priority
   ];
 
   if (token.children)
