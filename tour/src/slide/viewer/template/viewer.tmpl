@@ -1,0 +1,15 @@
+<b:isolate/>
+<b:style src="./viewer.css"/>
+<b:define name="mode" type="enum" values="horizontal"/>
+
+<div class="viewer viewer_{mode}">
+  <div class="editor-wrapper">
+    <!--{files}-->
+    <div class="editor">
+      <!--{editor}-->
+    </div>
+  </div>
+  <div class="preview preview_{mode}" style="width: {previewSize}; height: {previewSize}">
+    <!--{preview}-->
+  </div>
+</div>

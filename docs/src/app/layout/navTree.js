@@ -12,7 +12,7 @@ var navTree = new DocTree({
       childNodes: basis.object.iterate(basis.namespaces_, function(key){
         if (key in mapDO == false) debugger;
         return mapDO[key];
-      })
+      }).filter(Boolean)
     }
   ],
 

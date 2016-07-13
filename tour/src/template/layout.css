@@ -1,0 +1,23 @@
+HTML
+{
+  background: #EEE url(bg.jpg);
+  color: black;
+  font-size: small;
+  font-family: Helvetica, Tahoma, Verdana, sans-serif;
+}
+HTML,
+BODY
+{
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.layout
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}

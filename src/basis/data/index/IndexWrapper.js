@@ -64,6 +64,12 @@ module.exports = Value.subclass({
         Value.prototype.set.call(this, this.initValue);
       }
 
+      /** @cut */ basis.dev.patchInfo(this, 'sourceInfo', {
+      /** @cut */   type: 'IndexWrapper',
+      /** @cut */   source: index,
+      /** @cut */   sourceTarget: source
+      /** @cut */ });
+
       this.dataset = newDataset;
       this.index = index;
     }

@@ -4,14 +4,6 @@ var createEvent = require('basis.event').create;
 var getBoundingRect = require('basis.layout').getBoundingRect;
 var jsSourceTimer;
 
-function escapeString(value){
-  return value
-    .replace(/'/g, '\\\'')
-    .replace(/\t/, '\\\t')
-    .replace(/\r/, '\\\r')
-    .replace(/\n/, '\\\n');
-}
-
 var FlowNode = Node.subclass({
   className: 'FlowNode',
   template: resource('./template/node.tmpl'),
@@ -33,30 +25,12 @@ var FlowNode = Node.subclass({
       return '';
     },
     id: function(node){
-      var value = node.value;
+      var value = node.raw && node.raw.value;
 
       return (value && value.basisObjectId) || '';
     },
     value: function(node){
-      var value = node.value;
-
-      if (value && value.bindingBridge)
-      {
-        value = value.bindingBridge.get(value);
-
-        if (value && value.constructor.className)
-          return '[object ' + value.constructor.className + ']';
-      }
-
-      switch (value && value.constructor === String ? 'string' : typeof value) {
-        case 'string':
-          return '\"' + escapeString(value) + '\"';
-        case 'object':
-          if (value)
-            return '{ .. }';
-        default:
-          return String(value);
-      }
+      return node.raw && node.raw.str;
     }
   },
   action: {
@@ -109,10 +83,10 @@ var SetFlowNode = FlowNode.subclass({
   template: resource('./template/set.tmpl'),
   binding: {
     value: function(node){
-      return '{ ' + node.value.itemCount + (node.value.itemCount > 1 ? ' items' : ' item') + ' }';
+      return '{ ' + node.raw.value.itemCount + (node.raw.value.itemCount > 1 ? ' items' : ' item') + ' }';
     },
     hasMoreItems: function(node){
-      return Math.max(0, node.value ? node.value.itemCount - 2 : 0);
+      return Math.max(0, node.raw.value ? node.raw.value.itemCount - 2 : 0);
     }
   },
   childClass: {
@@ -136,7 +110,7 @@ var SetFlowNode = FlowNode.subclass({
   init: function(){
     FlowNode.prototype.init.call(this);
 
-    this.setChildNodes(this.value.top(2).map(function(object){
+    this.setChildNodes(this.raw.value.top(2).map(function(object){
       return {
         data: {
           object: object
@@ -215,7 +189,7 @@ function collectConnections(node, toBox, breakPoint, relElement, result){
 var flows = [];
 setInterval(function(){
   flows.forEach(function(flow){
-    flow.updateInDocument();
+    flow.updateInDocumentAndSizes();
   });
 }, 150);
 
@@ -228,13 +202,28 @@ var FlowView = Flow.subclass({
   },
 
   inDocument: false,
-  emit_inDocumentChanged: createEvent('inDocumentChanged'),
-  updateInDocument: function(){
-    var inDocument = document.documentElement.contains(this.element);
-    if (inDocument != this.inDocument)
+  width: 0,
+  height: 0,
+  updateInDocumentAndSizes: function(){
+    this.inDocument = document.documentElement.contains(this.element);
+
+    if (this.inDocument)
     {
-      this.inDocument = inDocument;
-      this.emit_inDocumentChanged();
+      var box = this.element.getBoundingClientRect();
+      var width = box.width;
+      var height = box.height;
+
+      if (width !== this.width || height !== this.height)
+      {
+        this.width = width;
+        this.height = height;
+        this.satellite.connectors.updateConnectors();
+      }
+    }
+    else
+    {
+      this.width = 0;
+      this.height = 0;
     }
   },
 
@@ -244,7 +233,7 @@ var FlowView = Flow.subclass({
   },
   postInit: function(){
     Flow.prototype.postInit.call(this);
-    this.updateInDocument();
+    this.updateInDocumentAndSizes();
   },
   destroy: function(){
     Flow.prototype.destroy.call(this);
@@ -281,18 +270,10 @@ var FlowView = Flow.subclass({
           toY: 'data:'
         }
       },
-      handler: {
-        ownerChanged: function(){
-          this.updateConnectors();
-        }
-      },
       listen: {
         owner: {
-          inDocumentChanged: function(){
-            this.updateConnectors();
-          },
           childNodesModified: function(){
-            this.updateConnectors();
+            basis.asap(this.updateConnectors, this);
           }
         }
       },

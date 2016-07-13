@@ -10,28 +10,26 @@ var buildTree = Flow.createTreeBuilder({
 module.exports = new Popup({
   value: new Value(),
 
-  dir: 'right center left center',
   template: resource('./template/data-flow-popup.tmpl'),
   binding: {
-    flow: 'satellite:'
-  },
-  satellite: {
     flow: new Flow({
       fileAPI: fileAPI
     })
   },
 
-  init: function(){
-    Popup.prototype.init.call(this);
+  postInit: function(){
+    Popup.prototype.postInit.call(this);
     this.value
       .as(buildTree)
       .link(this.satellite.flow, this.satellite.flow.setChildNodes);
   },
   handler: {
-    delegateChanged: function(){
-      this.value = this.delegate.data.realValue;
+    hide: function(){
+      this.value.set(null);
     }
   },
+
+  dir: 'right center left center',
   zIndex: 65000,
   setZIndex: function(){
     this.element.style.zIndex = this.zIndex;
