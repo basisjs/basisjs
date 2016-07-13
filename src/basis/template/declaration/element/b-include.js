@@ -121,409 +121,411 @@ module.exports = function(template, options, token, result){
   /** @cut */ if ('src' in elAttrs == false)
   /** @cut */   utils.addTemplateWarn(template, options, '<b:include> has no `src` attribute', token.loc);
 
-  if (templateSrc)
+  if (!templateSrc)
+    return;
+
+  var resource;
+
+  // Add resolve warnings to template warnings list
+  // TODO: improve solution with no basis.dev.warn overloading
+  /** @cut */ var basisWarn = basis.dev.warn;
+  /** @cut */ basis.dev.warn = function(){
+  /** @cut */   utils.addTemplateWarn(template, options, basis.array(arguments).join(' '), token.loc);
+  /** @cut */   if (!basis.NODE_ENV)
+  /** @cut */     basisWarn.apply(this, arguments);
+  /** @cut */ };
+
+  if (/^#[^\d]/.test(templateSrc))
   {
-    var resource;
+    resource = template.templates[templateSrc.substr(1)];
+    if (resource)
+      resource = options.makeDeclaration(
+        clone(resource.tokens),
+        resource.baseURI,
+        resource.options,
+        resource.sourceUrl
+      );
+  }
+  else
+  {
+    resource = options.resolveResource(templateSrc, template.baseURI);
+  }
 
-    // Add resolve warnings to template warnings list
-    // TODO: improve solution with no basis.dev.warn overloading
-    /** @cut */ var basisWarn = basis.dev.warn;
-    /** @cut */ basis.dev.warn = function(){
-    /** @cut */   utils.addTemplateWarn(template, options, basis.array(arguments).join(' '), token.loc);
-    /** @cut */   if (!basis.NODE_ENV)
-    /** @cut */     basisWarn.apply(this, arguments);
-    /** @cut */ };
+  // restore patched basis.dev.warn
+  /** @cut */ basis.dev.warn = basisWarn;
 
-    if (/^#[^\d]/.test(templateSrc))
-    {
-      resource = template.templates[templateSrc.substr(1)];
-      if (resource)
-        resource = options.makeDeclaration(
-          clone(resource.tokens),
-          resource.baseURI,
-          resource.options,
-          resource.sourceUrl
-        );
-    }
-    else
-      resource = options.resolveResource(templateSrc, template.baseURI);
+  if (!resource)
+  {
+    /** @cut */ utils.addTemplateWarn(template, options, '<b:include src="' + templateSrc + '"> is not resolved, instruction ignored', token.loc);
+    return;
+  }
 
-    /** @cut */ basis.dev.warn = basisWarn;
+  // prevent recursion
+  if (includeStack.indexOf(resource) !== -1)
+  {
+    /** @cut */ var stack = includeStack.slice(includeStack.indexOf(resource) || 0).concat(resource).map(function(res){
+    /** @cut */   if (res instanceof options.Template)
+    /** @cut */     res = res.source;
+    /** @cut */   return res.id || res.url || '[inline template]';
+    /** @cut */ });
+    /** @cut */ template.warns.push('Recursion: ', stack.join(' -> '));
+    return;
+  }
 
-    if (!resource)
-    {
-      /** @cut */ utils.addTemplateWarn(template, options, '<b:include src="' + templateSrc + '"> is not resolved, instruction ignored', token.loc);
-      return;
-    }
+  var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || options.genIsolateMarker() : '';
+  var includeOptions = elAttrs.options ? parseOptionsValue(elAttrs.options) : null;
+  var decl = options.getDeclFromSource(resource, '', true, basis.object.merge(options, {
+    includeOptions: includeOptions
+  }));
 
-    // prevent recursion
-    if (includeStack.indexOf(resource) == -1)
-    {
-      var isolatePrefix = elAttrs_.isolate ? elAttrs_.isolate.value || options.genIsolateMarker() : '';
-      var includeOptions = elAttrs.options ? parseOptionsValue(elAttrs.options) : null;
-      var decl = options.getDeclFromSource(resource, '', true, basis.object.merge(options, {
-        includeOptions: includeOptions
-      }));
+  template.includes.push({
+    token: token,
+    resource: resource,
+    nested: decl.includes
+  });
 
-      template.includes.push({
-        token: token,
-        resource: resource,
-        nested: decl.includes
+  if (resource.bindingBridge)
+    arrayAdd(template.deps, resource);
+
+  if (decl.deps)
+    addUnique(template.deps, decl.deps);
+
+  if (decl.warns)
+  {
+    /** @cut */ decl.warns.forEach(function(warn){
+    /** @cut */   warn.source = warn.source || token;
+    /** @cut */ });
+    template.warns.push.apply(template.warns, decl.warns);
+  }
+
+  /** @cut */ if (decl.removals)
+  /** @cut */   template.removals.push.apply(template.removals, decl.removals);
+
+  if (decl.resources)
+  {
+    var resources = decl.resources;
+
+    if ('no-style' in elAttrs)
+      // ignore style resource when <b:include no-style/>
+      resources = resources.filter(function(item){
+        return item.type != 'style';
       });
+    else
+      adoptStyles(resources, isolatePrefix, token); // TODO: move filter by type here
 
-      if (resource.bindingBridge)
-        arrayAdd(template.deps, resource);
+    // TODO: fix order
+    // now {include2-style} {include1-style} {own-style}
+    // should be {include1-style} {include2-style} {own-style}
+    template.resources.unshift.apply(template.resources, resources);
+  }
 
-      if (decl.deps)
-        addUnique(template.deps, decl.deps);
+  // TODO: something strange here
+  var styleNSIsolate = {
+    /** @cut */ map: options.styleNSIsolateMap,
+    prefix: options.genIsolateMarker()
+  };
 
-      if (decl.warns)
+  applyStyleNamespaces(decl.tokens, styleNSIsolate);
+
+  for (var key in decl.styleNSPrefix)
+    template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
+      /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+    });
+
+  // isolate
+  if (isolatePrefix)
+  {
+    isolateTokens(decl.tokens, isolatePrefix);
+
+    /** @cut */ if (decl.removals)
+    /** @cut */   decl.removals.forEach(function(item){
+    /** @cut */     isolateTokens([item.token], isolatePrefix);
+    /** @cut */   });
+  }
+
+  var instructions = [];
+  var tokenRefMap = normalizeRefs(decl.tokens); // ast
+
+  // convert attributes to instructions
+  for (var includeAttrName in elAttrs_)
+  {
+    if (attributeToInstructionMap.hasOwnProperty(includeAttrName))
+    {
+      instructions.push(
+        convertAttributeToInstruction(attributeToInstructionMap[includeAttrName], elAttrs_[includeAttrName])
+      );
+    }
+    else if (includeAttrName === 'role')
+    {
+      var role = elAttrs_.role.value;
+
+      if (role)
       {
-        /** @cut */ decl.warns.forEach(function(warn){
-        /** @cut */   warn.source = warn.source || token;
-        /** @cut */ });
-        template.warns.push.apply(template.warns, decl.warns);
-      }
-
-      /** @cut */ if (decl.removals)
-      /** @cut */   template.removals.push.apply(template.removals, decl.removals);
-
-      if (decl.resources)
-      {
-        var resources = decl.resources;
-
-        if ('no-style' in elAttrs)
-          // ignore style resource when <b:include no-style/>
-          resources = resources.filter(function(item){
-            return item.type != 'style';
-          });
-        else
-          adoptStyles(resources, isolatePrefix, token); // TODO: move filter by type here
-
-        // TODO: fix order
-        // now {include2-style} {include1-style} {own-style}
-        // should be {include1-style} {include2-style} {own-style}
-        template.resources.unshift.apply(template.resources, resources);
-      }
-
-      // TODO: something strange here
-      var styleNSIsolate = {
-        /** @cut */ map: options.styleNSIsolateMap,
-        prefix: options.genIsolateMarker()
-      };
-
-      applyStyleNamespaces(decl.tokens, styleNSIsolate);
-
-      for (var key in decl.styleNSPrefix)
-        template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
-          /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
-        });
-
-      // isolate
-      if (isolatePrefix)
-      {
-        isolateTokens(decl.tokens, isolatePrefix);
-
-        /** @cut */ if (decl.removals)
-        /** @cut */   decl.removals.forEach(function(item){
-        /** @cut */     isolateTokens([item.token], isolatePrefix);
-        /** @cut */   });
-      }
-
-      var instructions = [];
-      var tokenRefMap = normalizeRefs(decl.tokens); // ast
-
-      // convert attributes to instructions
-      for (var includeAttrName in elAttrs_)
-      {
-        if (attributeToInstructionMap.hasOwnProperty(includeAttrName))
+        if (!/[\/\(\)]/.test(role))
         {
-          instructions.push(
-            convertAttributeToInstruction(attributeToInstructionMap[includeAttrName], elAttrs_[includeAttrName])
-          );
+          var loc;
+          /** @cut */ loc = utils.getLocation(template, elAttrs_.role.loc);
+          applyRole(decl.tokens, role, elAttrs_.role, loc);
         }
-        else if (includeAttrName === 'role')
-        {
-          var role = elAttrs_.role.value;
-
-          if (role)
-          {
-            if (!/[\/\(\)]/.test(role))
-            {
-              var loc;
-              /** @cut */ loc = utils.getLocation(template, elAttrs_.role.loc);
-              applyRole(decl.tokens, role, elAttrs_.role, loc);
-            }
-            /** @cut */ else
-            /** @cut */   utils.addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
-          }
-        }
-        /** @cut */ else if (includeAttrName !== 'src' && includeAttrName !== 'no-style' && includeAttrName !== 'isolate')
-        /** @cut */   utils.addTemplateWarn(template, options, 'Unknown attribute for <b:include>: ' + includeAttrName, elAttrs_[includeAttrName].loc);
+        /** @cut */ else
+        /** @cut */   utils.addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
       }
+    }
+    /** @cut */ else if (includeAttrName !== 'src' && includeAttrName !== 'no-style' && includeAttrName !== 'isolate')
+    /** @cut */   utils.addTemplateWarn(template, options, 'Unknown attribute for <b:include>: ' + includeAttrName, elAttrs_[includeAttrName].loc);
+  }
 
-      // append instructions
-      instructions = instructions.concat(token.children);
+  // append instructions
+  instructions = instructions.concat(token.children);
 
-      // process instructions
-      for (var j = 0, child; child = instructions[j]; j++)
+  // process instructions
+  for (var j = 0, child; child = instructions[j]; j++)
+  {
+    // process special elements (basis namespace)
+    if (child.type == TYPE_ELEMENT && child.prefix == 'b')
+    {
+      var childAttrs = getTokenAttrValues(child);
+      var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+      var targetRef = ref && tokenRefMap[ref];
+      var target = targetRef && targetRef.token;
+
+      // TODO: split into modules
+      // TODO: move common parts up (ref)
+      switch (child.name)
       {
-        // process special elements (basis namespace)
-        if (child.type == TYPE_ELEMENT && child.prefix == 'b')
-        {
+        case 'style':
           var childAttrs = getTokenAttrValues(child);
-          var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
-          var targetRef = ref && tokenRefMap[ref];
-          var target = targetRef && targetRef.token;
+          var useStyle = true;
 
-          // TODO: split into modules
-          // TODO: move common parts up (ref)
-          switch (child.name)
+          if (childAttrs.options)
           {
-            case 'style':
-              var childAttrs = getTokenAttrValues(child);
-              var useStyle = true;
-
-              if (childAttrs.options)
-              {
-                var filterOptions = parseOptionsValue(childAttrs.options);
-                for (var name in filterOptions)
-                  useStyle = useStyle && filterOptions[name] == includeOptions[name];
-              }
-
-              if (useStyle)
-              {
-                var namespaceAttrName = childAttrs.namespace ? 'namespace' : 'ns';
-                var styleNamespace = childAttrs[namespaceAttrName];
-                var styleIsolate = styleNamespace ? styleNamespaceIsolate : isolatePrefix;
-                var src = addStyle(template, child, childAttrs.src, styleIsolate, styleNamespace);
-
-                if (styleNamespace)
-                {
-                  if (src in styleNamespaceIsolate == false)
-                    styleNamespaceIsolate[src] = options.genIsolateMarker();
-
-                  template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
-                    /** @cut */ loc: utils.getLocation(template, getTokenAttrs(child)[namespaceAttrName].loc),
-                    /** @cut */ used: false,
-                    name: styleNamespace,
-                    prefix: styleNamespaceIsolate[src]
-                  };
-                }
-              }
-              /** @cut */ else
-              /** @cut */ {
-              /** @cut */   child.sourceUrl = template.sourceUrl;
-              /** @cut */   template.resources.push([null, styleIsolate, child, token, childAttrs.src ? false : child.children[0] || true, styleNamespace]);
-              /** @cut */ }
-              break;
-
-            case 'replace':
-            case 'remove':
-            case 'before':
-            case 'after':
-              var replaceOrRemove = child.name == 'replace' || child.name == 'remove';
-              var childAttrs = getTokenAttrValues(child);
-              var ref = 'ref' in childAttrs || !replaceOrRemove ? childAttrs.ref : 'element';
-              var targetRef = ref && tokenRefMap[ref];
-
-              if (targetRef)
-              {
-                var parent = targetRef.owner;
-                var pos = parent.indexOf(targetRef.token);
-                if (pos != -1)
-                {
-                  var args = [pos + (child.name == 'after'), replaceOrRemove];
-
-                  if (child.name != 'remove')
-                    args = args.concat(options.process(child.children, template, options));
-
-                  parent.splice.apply(parent, args);
-
-                  /** @cut */ if (replaceOrRemove)
-                  /** @cut */   template.removals.push({
-                  /** @cut */     reason: '<b:' + child.name + '>',
-                  /** @cut */     removeToken: child,
-                  /** @cut */     includeToken: token,
-                  /** @cut */     token: targetRef.token
-                  /** @cut */   });
-                }
-              }
-              break;
-
-            case 'prepend':
-            case 'append':
-              if (target && target[TOKEN_TYPE] == TYPE_ELEMENT)
-              {
-                var children = options.process(child.children, template, options);
-
-                if (child.name == 'prepend')
-                  target.splice.apply(target, [ELEMENT_ATTRIBUTES_AND_CHILDREN, 0].concat(children));
-                else
-                  target.push.apply(target, children);
-              }
-              break;
-
-            case 'show':
-            case 'hide':
-            case 'visible':
-            case 'hidden':
-              if (target && target[TOKEN_TYPE] == TYPE_ELEMENT)
-              {
-                var expr = getTokenAttrs(child).expr;
-
-                if (!expr)
-                {
-                  /** @cut */ utils.addTemplateWarn(template, options, 'Instruction <b:' + child.name + '> has no `expr` attribute', child.loc);
-                  break;
-                }
-
-                applyShowHideAttribute(template, options, target, basis.object.complete({
-                  name: child.name,
-                }, getTokenAttrs(child).expr));
-              }
-              break;
-
-            case 'attr':
-            case 'set-attr':
-              modifyAttr(template, options, token, target, child, false, 'set');
-              break;
-
-            case 'append-attr':
-              modifyAttr(template, options, token, target, child, false, 'append');
-              break;
-
-            case 'remove-attr':
-              modifyAttr(template, options, token, target, child, false, 'remove');
-              break;
-
-            case 'class':
-            case 'append-class':
-              modifyAttr(template, options, token, target, child, 'class', 'append');
-              break;
-
-            case 'set-class':
-              modifyAttr(template, options, token, target, child, 'class', 'set');
-              break;
-
-            case 'remove-class':
-              var valueAttr = getTokenAttrs(child).value;
-
-              // apply namespace prefix for values
-              if (valueAttr)
-              {
-                valueAttr.value = valueAttr.value
-                  .split(/\s+/)
-                  .map(function(name){
-                    return name.indexOf(':') > 0 ? styleNSIsolate.prefix + name : name;
-                  })
-                  .join(' ');
-
-                if (valueAttr.binding)
-                  valueAttr.binding.forEach(function(bind){
-                    if (bind[0].indexOf(':') > 0)
-                      bind[0] = styleNSIsolate.prefix + bind[0];
-                  });
-
-                // probably should be removed, as map_ is not used
-                if (valueAttr.map_)
-                  valueAttr.map_.forEach(function(item){
-                    if (item.value.indexOf(':') > 0)
-                      item.value = styleNSIsolate.prefix + item.value;
-                  });
-              }
-
-              modifyAttr(template, options, token, target, child, 'class', 'remove-class');
-              break;
-
-            case 'add-ref':
-              var refName = (childAttrs.name || '').trim();
-
-              if (target)
-              {
-                if (/^[a-z_][a-z0-9_]*$/i.test(refName))
-                  addTokenRef(target, refName);
-                /** @cut */ else
-                /** @cut */   utils.addTemplateWarn(template, options, 'Bad references list for <b:add-ref>:' + refName, child.loc);
-              }
-              break;
-
-            case 'remove-ref':
-              var refName = (childAttrs.name || '').trim();
-              var ref = 'ref' in childAttrs ? childAttrs.ref : refName || 'element';
-              var targetRef = ref && tokenRefMap[ref];
-              var target = targetRef && targetRef.token;
-
-              if (target)
-              {
-                if (/^[a-z_][a-z0-9_]*$/i.test(refName))
-                  removeTokenRef(target, childAttrs.name || childAttrs.ref);
-                /** @cut */ else
-                /** @cut */   utils.addTemplateWarn(template, options, 'Bad reference name for <b:remove-ref>:' + refName, child.loc);
-              }
-              break;
-
-            case 'role':
-            case 'set-role':
-              var name = childAttrs.name;
-
-              if (!name && 'value' in childAttrs)
-              {
-                /** @cut */ utils.addTemplateWarn(template, options, '`value` attribute for <b:' + child.name + '> is deprecated, use `name` instead', getTokenAttrs(child).value.loc);
-                name = childAttrs.value;
-              }
-
-              if (target)
-              {
-                arrayRemove(target, getAttrByName(target, 'role-marker'));
-                addRoleAttribute(template, options, target, name || '', child);
-              }
-              break;
-
-            case 'remove-role':
-              if (target)
-              {
-                arrayRemove(target, getAttrByName(target, 'role-marker'));
-              }
-              break;
-
-            default:
-              /** @cut */ utils.addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + child.name + '>', child.loc);
+            var filterOptions = parseOptionsValue(childAttrs.options);
+            for (var name in filterOptions)
+              useStyle = useStyle && filterOptions[name] == includeOptions[name];
           }
-        }
-        else
-        {
-          var targetRef = tokenRefMap[':content'];
-          var processedChild = options.process([child], template, options);
+
+          if (useStyle)
+          {
+            var namespaceAttrName = childAttrs.namespace ? 'namespace' : 'ns';
+            var styleNamespace = childAttrs[namespaceAttrName];
+            var styleIsolate = styleNamespace ? styleNamespaceIsolate : isolatePrefix;
+            var src = addStyle(template, child, childAttrs.src, styleIsolate, styleNamespace);
+
+            if (styleNamespace)
+            {
+              if (src in styleNamespaceIsolate == false)
+                styleNamespaceIsolate[src] = options.genIsolateMarker();
+
+              template.styleNSPrefix[styleNSIsolate.prefix + styleNamespace] = {
+                /** @cut */ loc: utils.getLocation(template, getTokenAttrs(child)[namespaceAttrName].loc),
+                /** @cut */ used: false,
+                name: styleNamespace,
+                prefix: styleNamespaceIsolate[src]
+              };
+            }
+          }
+          /** @cut */ else
+          /** @cut */ {
+          /** @cut */   child.sourceUrl = template.sourceUrl;
+          /** @cut */   template.resources.push([null, styleIsolate, child, token, childAttrs.src ? false : child.children[0] || true, styleNamespace]);
+          /** @cut */ }
+          break;
+
+        case 'replace':
+        case 'remove':
+        case 'before':
+        case 'after':
+          var replaceOrRemove = child.name == 'replace' || child.name == 'remove';
+          var childAttrs = getTokenAttrValues(child);
+          var ref = 'ref' in childAttrs || !replaceOrRemove ? childAttrs.ref : 'element';
+          var targetRef = ref && tokenRefMap[ref];
 
           if (targetRef)
           {
             var parent = targetRef.owner;
             var pos = parent.indexOf(targetRef.token);
+            if (pos != -1)
+            {
+              var args = [pos + (child.name == 'after'), replaceOrRemove];
 
-            targetRef.token.splice(CONTENT_CHILDREN);
-            parent.splice.apply(parent, [pos, 0].concat(processedChild));
+              if (child.name != 'remove')
+                args = args.concat(options.process(child.children, template, options));
+
+              parent.splice.apply(parent, args);
+
+              /** @cut */ if (replaceOrRemove)
+              /** @cut */   template.removals.push({
+              /** @cut */     reason: '<b:' + child.name + '>',
+              /** @cut */     removeToken: child,
+              /** @cut */     includeToken: token,
+              /** @cut */     token: targetRef.token
+              /** @cut */   });
+            }
           }
-          else
+          break;
+
+        case 'prepend':
+        case 'append':
+          if (target && target[TOKEN_TYPE] == TYPE_ELEMENT)
           {
-            decl.tokens.push.apply(decl.tokens, processedChild);
+            var children = options.process(child.children, template, options);
+
+            if (child.name == 'prepend')
+              target.splice.apply(target, [ELEMENT_ATTRIBUTES_AND_CHILDREN, 0].concat(children));
+            else
+              target.push.apply(target, children);
           }
-        }
+          break;
+
+        case 'show':
+        case 'hide':
+        case 'visible':
+        case 'hidden':
+          if (target && target[TOKEN_TYPE] == TYPE_ELEMENT)
+          {
+            var expr = getTokenAttrs(child).expr;
+
+            if (!expr)
+            {
+              /** @cut */ utils.addTemplateWarn(template, options, 'Instruction <b:' + child.name + '> has no `expr` attribute', child.loc);
+              break;
+            }
+
+            applyShowHideAttribute(template, options, target, basis.object.complete({
+              name: child.name,
+            }, getTokenAttrs(child).expr));
+          }
+          break;
+
+        case 'attr':
+        case 'set-attr':
+          modifyAttr(template, options, token, target, child, false, 'set');
+          break;
+
+        case 'append-attr':
+          modifyAttr(template, options, token, target, child, false, 'append');
+          break;
+
+        case 'remove-attr':
+          modifyAttr(template, options, token, target, child, false, 'remove');
+          break;
+
+        case 'class':
+        case 'append-class':
+          modifyAttr(template, options, token, target, child, 'class', 'append');
+          break;
+
+        case 'set-class':
+          modifyAttr(template, options, token, target, child, 'class', 'set');
+          break;
+
+        case 'remove-class':
+          var valueAttr = getTokenAttrs(child).value;
+
+          // apply namespace prefix for values
+          if (valueAttr)
+          {
+            valueAttr.value = valueAttr.value
+              .split(/\s+/)
+              .map(function(name){
+                return name.indexOf(':') > 0 ? styleNSIsolate.prefix + name : name;
+              })
+              .join(' ');
+
+            if (valueAttr.binding)
+              valueAttr.binding.forEach(function(bind){
+                if (bind[0].indexOf(':') > 0)
+                  bind[0] = styleNSIsolate.prefix + bind[0];
+              });
+
+            // probably should be removed, as map_ is not used
+            if (valueAttr.map_)
+              valueAttr.map_.forEach(function(item){
+                if (item.value.indexOf(':') > 0)
+                  item.value = styleNSIsolate.prefix + item.value;
+              });
+          }
+
+          modifyAttr(template, options, token, target, child, 'class', 'remove-class');
+          break;
+
+        case 'add-ref':
+          var refName = (childAttrs.name || '').trim();
+
+          if (target)
+          {
+            if (/^[a-z_][a-z0-9_]*$/i.test(refName))
+              addTokenRef(target, refName);
+            /** @cut */ else
+            /** @cut */   utils.addTemplateWarn(template, options, 'Bad references list for <b:add-ref>:' + refName, child.loc);
+          }
+          break;
+
+        case 'remove-ref':
+          var refName = (childAttrs.name || '').trim();
+          var ref = 'ref' in childAttrs ? childAttrs.ref : refName || 'element';
+          var targetRef = ref && tokenRefMap[ref];
+          var target = targetRef && targetRef.token;
+
+          if (target)
+          {
+            if (/^[a-z_][a-z0-9_]*$/i.test(refName))
+              removeTokenRef(target, childAttrs.name || childAttrs.ref);
+            /** @cut */ else
+            /** @cut */   utils.addTemplateWarn(template, options, 'Bad reference name for <b:remove-ref>:' + refName, child.loc);
+          }
+          break;
+
+        case 'role':
+        case 'set-role':
+          var name = childAttrs.name;
+
+          if (!name && 'value' in childAttrs)
+          {
+            /** @cut */ utils.addTemplateWarn(template, options, '`value` attribute for <b:' + child.name + '> is deprecated, use `name` instead', getTokenAttrs(child).value.loc);
+            name = childAttrs.value;
+          }
+
+          if (target)
+          {
+            arrayRemove(target, getAttrByName(target, 'role-marker'));
+            addRoleAttribute(template, options, target, name || '', child);
+          }
+          break;
+
+        case 'remove-role':
+          if (target)
+          {
+            arrayRemove(target, getAttrByName(target, 'role-marker'));
+          }
+          break;
+
+        default:
+          /** @cut */ utils.addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + child.name + '>', child.loc);
       }
-
-      if (tokenRefMap.element)
-        removeTokenRef(tokenRefMap.element.token, 'element');
-
-      result.push.apply(result, decl.tokens);
     }
     else
     {
-      /** @cut */ var stack = includeStack.slice(includeStack.indexOf(resource) || 0).concat(resource).map(function(res){
-      /** @cut */   if (res instanceof options.Template)
-      /** @cut */     res = res.source;
-      /** @cut */   return res.id || res.url || '[inline template]';
-      /** @cut */ });
-      /** @cut */ template.warns.push('Recursion: ', stack.join(' -> '));
+      var targetRef = tokenRefMap[':content'];
+      var processedChild = options.process([child], template, options);
+
+      if (targetRef)
+      {
+        var parent = targetRef.owner;
+        var pos = parent.indexOf(targetRef.token);
+
+        targetRef.token.splice(CONTENT_CHILDREN);
+        parent.splice.apply(parent, [pos, 0].concat(processedChild));
+      }
+      else
+      {
+        decl.tokens.push.apply(decl.tokens, processedChild);
+      }
     }
   }
+
+  if (tokenRefMap.element)
+    removeTokenRef(tokenRefMap.element.token, 'element');
+
+  result.push.apply(result, decl.tokens);
 };
