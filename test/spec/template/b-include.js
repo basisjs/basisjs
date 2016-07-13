@@ -356,7 +356,6 @@ module.exports = {
                 var a = createTemplate('<span/>');
                 var b = createTemplate('<b:include src="#' + a.templateId + '" show="{foo}" hide="true"/>');
 
-                debugger;
                 assert(text(b) === text('<span style="display: none"/>'));
                 assert(text(b, { foo: true }) === text('<span style="display: none"/>'));
               }
