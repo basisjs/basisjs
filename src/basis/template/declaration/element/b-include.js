@@ -287,6 +287,7 @@ module.exports = function(template, options, token, result){
     {
       var childAttrs = getTokenAttrValues(child);
       var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+      var isSpecialRef = ref.charAt(0) === ':';
       var targetRef = ref && tokenRefMap[ref];
       var target = targetRef && targetRef.node;
 
@@ -453,13 +454,25 @@ module.exports = function(template, options, token, result){
         case 'add-ref':
           var refName = (childAttrs.name || '').trim();
 
-          if (target)
+          if (!target)
           {
-            if (/^[a-z_][a-z0-9_]*$/i.test(refName))
-              addTokenRef(target, refName);
-            /** @cut */ else
-            /** @cut */   utils.addTemplateWarn(template, options, 'Bad references list for <b:add-ref>:' + refName, child.loc);
+            /** @cut */ utils.addTemplateWarn(template, options, 'Target node for <b:' + child.name + '> is not found', child.loc);
+            break;
           }
+
+          if (isSpecialRef)
+          {
+            /** @cut */ utils.addTemplateWarn(template, options, '<b:' + child.name + '> can\'t to be applied to special reference `' + ref + '`', child.loc);
+            break;
+          }
+
+          if (!/^[a-z_][a-z0-9_]*$/i.test(refName))
+          {
+            /** @cut */ utils.addTemplateWarn(template, options, 'Bad reference name for <b:' + child.name + '>:' + refName, child.loc);
+            break;
+          }
+
+          addTokenRef(target, refName);
           break;
 
         case 'remove-ref':
@@ -468,13 +481,25 @@ module.exports = function(template, options, token, result){
           var targetRef = ref && tokenRefMap[ref];
           var target = targetRef && targetRef.node;
 
-          if (target)
+          if (!target)
           {
-            if (/^[a-z_][a-z0-9_]*$/i.test(refName))
-              removeTokenRef(target, childAttrs.name || childAttrs.ref);
-            /** @cut */ else
-            /** @cut */   utils.addTemplateWarn(template, options, 'Bad reference name for <b:remove-ref>:' + refName, child.loc);
+            /** @cut */ utils.addTemplateWarn(template, options, 'Target node for <b:' + child.name + '> is not found', child.loc);
+            break;
           }
+
+          if (isSpecialRef)
+          {
+            /** @cut */ utils.addTemplateWarn(template, options, '<b:' + child.name + '> can\'t to be applied to special reference `' + ref + '`', child.loc);
+            break;
+          }
+
+          if (!/^[a-z_][a-z0-9_]*$/i.test(refName))
+          {
+            /** @cut */ utils.addTemplateWarn(template, options, 'Bad reference name for <b:' + child.name + '>:' + refName, child.loc);
+            break;
+          }
+
+          removeTokenRef(target, refName || ref);
           break;
 
         case 'role':
@@ -487,18 +512,24 @@ module.exports = function(template, options, token, result){
             name = childAttrs.value;
           }
 
-          if (target)
+          if (!target)
           {
-            arrayRemove(target, getAttrByName(target, 'role-marker'));
-            addRoleAttribute(template, options, target, name || '', child);
+            /** @cut */ utils.addTemplateWarn(template, options, 'Target node for <b:' + child.name + '> is not found', child.loc);
+            break;
           }
+
+          arrayRemove(target, getAttrByName(target, 'role-marker'));
+          addRoleAttribute(template, options, target, name || '', child);
           break;
 
         case 'remove-role':
-          if (target)
+          if (!target)
           {
-            arrayRemove(target, getAttrByName(target, 'role-marker'));
+            /** @cut */ utils.addTemplateWarn(template, options, 'Target node for <b:' + child.name + '> is not found', child.loc);
+            break;
           }
+
+          arrayRemove(target, getAttrByName(target, 'role-marker'));
           break;
 
         default:

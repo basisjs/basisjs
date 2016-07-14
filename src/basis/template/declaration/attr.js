@@ -119,7 +119,7 @@ function addRoleAttribute(template, options, host, role/*, sourceToken*/){
 
   if (host[TOKEN_TYPE] !== TYPE_ELEMENT)
   {
-    /** @cut */ utils.addTemplateWarn(template, options, 'Role can\'t be added to non-element node', sourceToken.loc);
+    /** @cut */ utils.addTemplateWarn(template, options, 'Role can\'t to be added to non-element node', sourceToken.loc);
     return;
   }
 

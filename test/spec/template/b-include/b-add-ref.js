@@ -55,12 +55,12 @@ module.exports = {
       }
     },
     {
-      name: 'should not special reference',
+      name: 'should not apply to special reference',
       test: function(){
         var a = createTemplate('<span{foo} title="foo"/>');
         var b = createTemplate(
-          '<b:include src="#' + a.templateId + '">' +
-            '<b:add-ref name=":content"/>' +
+          '<b:include src="#' + a.templateId + '">\n' +
+          '  <b:add-ref name=":content"/>\n' +
           '</b:include>'
         );
 
@@ -69,7 +69,9 @@ module.exports = {
         assert(instance.foo === instance.element);
         assert(instance.foo.title === 'foo');
 
-        assert(b.decl_.warns && b.decl_.warns.length === 1);
+        assert(b.decl_.warns.length === 1);
+        assert(String(b.decl_.warns[0]) === '<b:add-ref> can\'t to be applied to special reference `:content`');
+        assert(b.decl_.warns[0].loc === ':2:3');
       }
     }
   ]
