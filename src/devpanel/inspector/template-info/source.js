@@ -275,7 +275,6 @@ var view = new Node({
 
         return res + wrap(color, content.substring(offset));
       },
-      color: 'data:',
       warningCount: 'data:warnings.length'
     },
     action: {
@@ -287,6 +286,71 @@ var view = new Node({
     }
   }
 });
+
+function addRange(ranges, range){
+  var start = range[0];
+  var end = range[1];
+  var existsRange = ranges[start];
+
+  if (!existsRange)
+  {
+    ranges[start] = range;
+    for (var i = start - 1; i >= 0; i--)
+      if (i in ranges)
+      {
+        var prevRange = ranges[i];
+
+        if (prevRange[1] < start)
+        {
+          // no intersection, nothing to do here since everything is ok
+          // 1: xxxxx
+          // 2:      yyyyy
+          // =
+          //    xxxxxyyyyy
+          break;
+        }
+
+        if (prevRange[1] <= end)
+        {
+          // intersection -> change previous range
+          // 1: xxxxxxx
+          // 2:      yyyyy
+          // =
+          //    xxxxxyyyyy
+          prevRange[1] = start;
+        }
+        else if (prevRange[1] > end)
+        {
+          // intersection -> split previous range
+          // 1: xxxxxxxxxxxxx
+          // 2:      yyyyy
+          // =
+          //    xxxxxyyyyyxxx
+          addRange(ranges, [end, prevRange[1], prevRange[2]]);
+          prevRange[1] = start;
+        }
+        break;
+      }
+  }
+  else
+  {
+    var length = end - start;
+    var existsLength = existsRange[1] - existsRange[0];
+    if (length > existsLength)
+    {
+      range[0] += existsLength;
+      addRange(ranges, range);
+    }
+    else if (length < existsLength)
+    {
+      ranges[start] = range;
+      existsRange[0] += length;
+      addRange(ranges, existsRange);
+    }
+  }
+
+  return ranges;
+}
 
 declToken.attach(function(decl){
   var children = [];
@@ -329,42 +393,47 @@ declToken.attach(function(decl){
           };
         });
 
+      var rangesMap = []
+        .concat(
+          decl.styles.filter(function(style){
+            return style.includeToken === inc.token && !style.resource && !style.namespace;
+          }).map(function(style){
+            return style.styleToken.range;
+          })
+        )
+        .concat(
+          decl.removals.filter(function(removal){
+            return removal.includeToken === inc.token && removal.token.sourceToken;
+          }).map(function(removal){
+            return removal.node.sourceToken.range;
+          })
+        )
+        .concat(
+          inc.nested.map(function(item){
+            return getTokenAttrs(item.token).src.valueRange.concat(
+              this.colorMap.get(item.resource.url || item.resource)
+            );
+          }, this)
+        )
+        .concat(
+          warnings.map(function(warn){
+            return warn.range;
+          })
+        )
+        .sort(function(a, b){
+          return a[0] - b[0] || (a[1] - a[0]) - (b[1] - b[0]);
+        })
+        .reduce(addRange, {});
+
       return {
         data: {
           url: resource.url,
           content: resource.bindingBridge ? resource.bindingBridge.get(resource) : resource,
           color: this.colorMap.get(resource.url || '', 'red'),
           warnings: warnings,
-          ranges: []
-            .concat(
-              decl.styles.filter(function(style){
-                return style.includeToken === inc.token && !style.resource && !style.namespace;
-              }).map(function(style){
-                return style.styleToken.range;
-              })
-            )
-            .concat(
-              decl.removals.filter(function(removal){
-                return removal.includeToken === inc.token && removal.token.sourceToken;
-              }).map(function(removal){
-                return removal.node.sourceToken.range;
-              })
-            )
-            .concat(
-              inc.nested.map(function(item){
-                return getTokenAttrs(item.token).src.valueRange.concat(
-                  this.colorMap.get(item.resource.url || item.resource)
-                );
-              }, this)
-            )
-            .concat(
-              warnings.map(function(warn){
-                return warn.range;
-              })
-            )
-            .sort(function(a, b){
-              return a[0] - b[0] || (a[1] - a[0]) - (b[1] - b[0]);
-            })
+          ranges: basis.array.sort(Object.keys(rangesMap), Number).map(function(index){
+            return rangesMap[index];
+          })
         },
         childNodes: inc.nested.map(processInclude, this)
       };
