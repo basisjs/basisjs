@@ -427,6 +427,43 @@ module.exports = {
               '</div>'
             ));
           }
+        },
+        {
+          name: 'should correctly inject explicit <b:content> inside element to include',
+          test: function(){
+            var templateA = createTemplate(
+              '<span class="a">' +
+                'no content' +
+              '</span>'
+            );
+
+            var templateB = createTemplate(
+              '<b:include src="#' + templateA.templateId + '">' +
+                '<span class="b">' +
+                  '<b:content/>' +
+                '</span>' +
+              '</b:include>'
+            );
+
+            var template = createTemplate(
+              '<div>' +
+                '<b:include src="#' + templateB.templateId + '">' +
+                  'success' +
+                '</b:include>' +
+              '</div>'
+            );
+
+            assert(text(template) === text(
+              '<div>' +
+                '<span class="a">' +
+                  'no content' +
+                '</span>' +
+                '<span class="b">' +
+                  'success' +
+                '</span>' +
+              '</div>'
+            ));
+          }
         }
       ]
     }
