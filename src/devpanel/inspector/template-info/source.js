@@ -61,7 +61,7 @@ function escapeHtml(str){
     .replace(/</g, '&lt;');
 }
 
-var buildHtml = function(tokens, parent, colorMap){
+var buildHtml = function(tokens, parent, colorMap, offset){
   function expression(binding){
     return binding[1].map(function(sb){
       return typeof sb == 'number' ? '<span class="refs">{' + this[sb] + '}</span>' : sb;
@@ -128,7 +128,7 @@ var buildHtml = function(tokens, parent, colorMap){
     colorMap: colorMap
   };
 
-  for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
+  for (var i = offset || 0, token; token = tokens[i]; i++)
   {
     switch (token[consts.TOKEN_TYPE])
     {
@@ -136,7 +136,7 @@ var buildHtml = function(tokens, parent, colorMap){
         var tagName = token[consts.ELEMENT_NAME];
 
         // precess for children and attributes
-        var res = buildHtml(token, true, colorMap);
+        var res = buildHtml(token, true, colorMap, consts.ELEMENT_ATTRIBUTES_AND_CHILDREN);
 
         // add to result
         var html = '&lt;' + tagName + refs(token);
@@ -150,6 +150,21 @@ var buildHtml = function(tokens, parent, colorMap){
           html += '>\n' +
             '  ' + res.children.join('\n').replace(/\n/g, '\n  ') + '\n' +
             '&lt;/' + tagName + '>';
+
+        addToResult(result.children, token, html);
+
+        break;
+
+      case consts.TYPE_CONTENT:
+        var res = buildHtml(token, true, colorMap, consts.CONTENT_CHILDREN);
+        var html;
+
+        if (!res.children.length)
+          html = '&lt;b:content/>';
+        else
+          html = '&lt;b:content>\n' +
+            '  ' + res.children.join('\n').replace(/\n/g, '\n  ') + '\n' +
+            '&lt;/b:content>';
 
         addToResult(result.children, token, html);
 
