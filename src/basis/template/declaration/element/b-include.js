@@ -29,6 +29,7 @@ var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
+/** @cut */ var attributesWhitelist = ['src', 'no-style', 'isolate', 'options'];
 var attributeToInstructionMap = {
   'class': {     // <b:include class=".."> -> <b:append-class value="..">
     instruction: 'append-class',
@@ -272,7 +273,7 @@ module.exports = function(template, options, token, result){
         /** @cut */   utils.addTemplateWarn(template, options, 'Value for role was ignored as value can\'t contains ["/", "(", ")"]: ' + role, elAttrs_.role.loc);
       }
     }
-    /** @cut */ else if (includeAttrName !== 'src' && includeAttrName !== 'no-style' && includeAttrName !== 'isolate')
+    /** @cut */ else if (attributesWhitelist.indexOf(includeAttrName) === -1)
     /** @cut */   utils.addTemplateWarn(template, options, 'Unknown attribute for <b:include>: ' + includeAttrName, elAttrs_[includeAttrName].loc);
   }
 
