@@ -24,6 +24,23 @@
       "url": "https://github.com/basisjs/basisjs/blob/master/LICENSE"
     }
   ],
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "node": true,
+      "mocha": true,
+      "es6": true
+    },
+    "globals": {
+      "basis": true,
+      "resource": true,
+      "assert": true
+    },
+    "rules": {
+      "no-undef": 2,
+      "no-unused-vars": [2, {"vars": "all", "args": "after-used"}]
+    }
+  },
   "dependencies": {},
   "devDependencies": {
     "basisjs-tools-build": "basisjs/basisjs-tools-build",
