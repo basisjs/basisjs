@@ -13,13 +13,6 @@ function walker(nodes, fn){
 
       fn(type, node, nodes);
 
-      // FIXME: hack, since b:content node can to be removed by normalizeRefs and walk breaks
-      if (nodes[i] !== node)
-      {
-        i--;
-        continue;
-      }
-
       switch (type)
       {
         case TYPE_ELEMENT:

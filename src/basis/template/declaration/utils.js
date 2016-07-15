@@ -162,34 +162,38 @@ function normalizeRefs(nodes){
   walk(nodes, function(type, node, parent){
     if (type === TYPE_CONTENT)
     {
-      var removeNode;
-      var contentNode = {
-        parent: parent,
-        node: node
-      };
+      var contentNodeRef = map[':content'];
 
-      if (':content' in map)
+      if (!contentNodeRef)
+      {
+        map[':content'] = {
+          parent: parent,
+          node: node,
+          overrided: []
+        };
+      }
+      else
       {
         // last or with greater priority wins
-        if (node[CONTENT_PRIORITY] >= map[':content'].node[CONTENT_PRIORITY])
+        if (node[CONTENT_PRIORITY] >= contentNodeRef.node[CONTENT_PRIORITY])
         {
           // remove old node, use new
-          removeNode = map[':content'];
+          contentNodeRef.overrided.push({
+            parent: contentNodeRef.parent,
+            node: contentNodeRef.node
+          });
+          contentNodeRef.parent = parent;
+          contentNodeRef.node = node;
         }
         else
         {
           // remove new node, use old
-          removeNode = contentNode;
-          contentNode = map[':content'];
+          contentNodeRef.overrided.push({
+            parent: parent,
+            node: node
+          });
         }
-
-        // replace <b:content> by its content
-        var nodeIndex = removeNode.parent.indexOf(removeNode.node);
-        if (nodeIndex != -1)
-          removeNode.parent.splice.apply(removeNode.parent, [nodeIndex, 1].concat(removeNode.node.slice(CONTENT_CHILDREN)));
       }
-
-      map[':content'] = contentNode;
     }
     else if (type !== TYPE_ATTRIBUTE_EVENT)
     {

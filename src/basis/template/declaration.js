@@ -441,10 +441,31 @@ var makeDeclaration = (function(){
     // normalize refs and find first non special node
     var tokenRefMap = normalizeRefs(result.tokens);
     var elementToken = findNonSpecialToken(result.tokens);
+    var contentNodeRef = tokenRefMap[':content'];
 
     // downgrade explicit high priority content to normal explicit
-    if (tokenRefMap[':content'].node[CONTENT_PRIORITY] > 1)
-      tokenRefMap[':content'].node[CONTENT_PRIORITY] = 1;
+    if (contentNodeRef.node[CONTENT_PRIORITY] > 1)
+      contentNodeRef.node[CONTENT_PRIORITY] = 1;
+
+    contentNodeRef.overrided.forEach(function(overridedContentNodeRef){
+      var nodeIndex = overridedContentNodeRef.parent.indexOf(overridedContentNodeRef.node);
+
+      if (nodeIndex != -1)
+        overridedContentNodeRef.parent.splice.apply(
+          overridedContentNodeRef.parent,
+          [nodeIndex, 1].concat(overridedContentNodeRef.node.slice(CONTENT_CHILDREN))
+        );
+
+      // add removed <b:content> to removals but explicit only
+      /** @cut */ if (overridedContentNodeRef.node[consts.CONTENT_PRIORITY] > 0)
+      /** @cut */   result.removals.push({
+      /** @cut */     reason: '<b:content/>',
+      /** @cut */     removeToken: contentNodeRef.node,
+      /** @cut */     includeToken: overridedContentNodeRef.node.includeToken,
+      /** @cut */     token: overridedContentNodeRef.node, // for backward capability
+      /** @cut */     node: overridedContentNodeRef.node
+      /** @cut */   });
+    });
 
     // there must be at least one normal node in result
     if (!elementToken)

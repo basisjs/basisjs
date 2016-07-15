@@ -64,6 +64,13 @@ var attributeToInstructionMap = {
   }
 };
 
+function adoptNodes(ast, includeToken){
+  walk(ast, function(type, node){
+    if (!node.includeToken)
+      node.includeToken = includeToken;
+  });
+}
+
 function applyRole(ast, role/*, sourceToken, location*/){
   walk(ast, function(type, node){
     if (type !== TYPE_ATTRIBUTE || node[ATTR_NAME] != 'role-marker')
@@ -179,6 +186,7 @@ module.exports = function(template, options, token, result){
     includeOptions: includeOptions
   }));
 
+  adoptNodes(decl.tokens, token);
   template.includes.push({
     token: token,
     resource: resource,
@@ -200,7 +208,13 @@ module.exports = function(template, options, token, result){
   }
 
   /** @cut */ if (decl.removals)
+  /** @cut */ {
   /** @cut */   template.removals.push.apply(template.removals, decl.removals);
+  /** @cut */   template.removals.forEach(function(item){
+  /** @cut */     if (!item.includeToken)
+  /** @cut */       item.includeToken = token;
+  /** @cut */   });
+  /** @cut */ }
 
   if (decl.resources)
   {
@@ -551,6 +565,16 @@ module.exports = function(template, options, token, result){
         if (!isContentReset)
         {
           isContentReset = true;
+
+          /** @cut */ for (var i = CONTENT_CHILDREN; i < targetRef.node.length; i++)
+          /** @cut */   template.removals.push({
+          /** @cut */     reason: 'node from including template',
+          /** @cut */     removeToken: child,
+          /** @cut */     includeToken: token,
+          /** @cut */     token: targetRef.node[i], // for backward capability
+          /** @cut */     node: targetRef.node[i]
+          /** @cut */   });
+
           targetRef.node.splice(CONTENT_CHILDREN);
         }
 
