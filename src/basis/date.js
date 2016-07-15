@@ -80,7 +80,7 @@
       format = date;
       return function(date){
         return dateFormat(date, format, useUTC);
-      }
+      };
     }
 
     var result = '';
