@@ -69,6 +69,22 @@ module.exports = {
         var a = createTemplate('<span{foo}><b:content/></span>');
         var b = createTemplate(
           '<b:include src="#' + a.templateId + '">\n' +
+          '  <b:remove-ref ref=":content" name="foo"/>\n' +
+          '</b:include>'
+        );
+
+        var instance = b.createInstance();
+        assert(b.decl_.warns.length === 1);
+        assert(String(b.decl_.warns[0]) === '<b:remove-ref> can\'t to be applied to special reference `:content`');
+        assert(b.decl_.warns[0].loc === ':2:3');
+      }
+    },
+    {
+      name: 'should not add special references',
+      test: function(){
+        var a = createTemplate('<span{foo}><b:content/></span>');
+        var b = createTemplate(
+          '<b:include src="#' + a.templateId + '">\n' +
           '  <b:remove-ref name=":content"/>\n' +
           '</b:include>'
         );

@@ -469,7 +469,7 @@ module.exports = function(template, options, token, result){
 
           if (!/^[a-z_][a-z0-9_]*$/i.test(refName))
           {
-            /** @cut */ utils.addTemplateWarn(template, options, 'Bad reference name for <b:' + child.name + '>:' + refName, child.loc);
+            /** @cut */ utils.addTemplateWarn(template, options, 'Bad reference name for <b:' + child.name + '>: ' + refName, child.loc);
             break;
           }
 
@@ -479,6 +479,7 @@ module.exports = function(template, options, token, result){
         case 'remove-ref':
           var refName = (childAttrs.name || '').trim();
           var ref = 'ref' in childAttrs ? childAttrs.ref : refName || 'element';
+          var isSpecialRef = ref.charAt(0) === ':';
           var targetRef = ref && tokenRefMap[ref];
           var target = targetRef && targetRef.node;
 
@@ -496,7 +497,7 @@ module.exports = function(template, options, token, result){
 
           if (!/^[a-z_][a-z0-9_]*$/i.test(refName))
           {
-            /** @cut */ utils.addTemplateWarn(template, options, 'Bad reference name for <b:' + child.name + '>:' + refName, child.loc);
+            /** @cut */ utils.addTemplateWarn(template, options, 'Bad reference name for <b:' + child.name + '>: ' + refName, child.loc);
             break;
           }
 
