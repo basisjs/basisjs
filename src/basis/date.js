@@ -73,6 +73,16 @@
   }
 
   function dateFormat(date, format, useUTC){
+    // when first argument is string return formatter
+    if (typeof date === 'string')
+    {
+      useUTC = format;
+      format = date;
+      return function(date){
+        return dateFormat(date, format, useUTC);
+      }
+    }
+
     var result = '';
 
     for (var i = 0, chr; i < format.length; i++)
