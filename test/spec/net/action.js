@@ -8,7 +8,7 @@ module.exports = {
   },
   test: [
     {
-      name: 'Set correct state on abort',
+      name: 'set correct state on abort',
       test: function(done){
         createAction({
           url: 'data:text/plain,',
@@ -24,6 +24,40 @@ module.exports = {
             done();
           }
         }).call(new DataObject);
+      }
+    },
+    {
+      name: 'action as syncAction',
+      test: function(done){
+        var foo = new DataObject({
+          syncAction: createAction({
+            url: 'data:application/json,{"test":"success"}',
+            success: function(data){
+              debugger;
+              this.update(data);
+            },
+            complete: function(){
+              debugger;
+              assert.async(function(){
+                assert.visited(['processing', 'ready']);
+                done();
+              });
+            }
+          }),
+          setState: function(newState){
+            visit(String(newState));
+            return DataObject.prototype.setState.apply(this, arguments);
+          }
+        });
+
+        assert.visited([]);
+
+        var bar = new DataObject({
+          active: true,
+          delegate: foo
+        });
+
+        assert.visited(['processing']);
       }
     }
   ]
