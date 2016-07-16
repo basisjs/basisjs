@@ -58,7 +58,7 @@ module.exports = {
       name: 'entity set API',
       test: [
         {
-          name: 'EntityTyle.all sync issue',
+          name: 'EntityType.all sync issue',
           test: function(){
             var entityType = nsEntity.createType(null, { id: nsEntity.NumberId });
 
@@ -86,7 +86,7 @@ module.exports = {
           }
         },
         {
-          name: 'EntityTyle.all setAndDestroyRemoved issue',
+          name: 'EntityType.all setAndDestroyRemoved issue',
           test: function(){
             var entityType = nsEntity.createType(null, { id: nsEntity.NumberId });
 
@@ -101,6 +101,53 @@ module.exports = {
             assert([1, 2], entityType.all.getValues('data.id').sort());
             assert(inserted === null);
           }
+        },
+        {
+          name: 'EntityType.all.set()',
+          test: [
+            {
+              name: 'should pass items through Type.reader and work as Type.all.setAndDestroyRemoved',
+              test: function(){
+                var Type = nsEntity.createType(null, {
+                  id: nsEntity.NumberId,
+                  foo: Number
+                })
+                .extendClass({
+                  debug_emit: function(e){
+                    if (e.type === 'destroy')
+                      visit(this.data.id);
+                  }
+                })
+                .extendReader(function(data){
+                  data.foo = data.bar;
+                });
+
+                [{ id: 1, foo: 1 }, { id: 2, foo: 2 }, { id: 3, foo: 3 }].map(Type);
+
+                var inserted = Type.all.set([
+                  1,
+                  { id: 2, bar: 22 },
+                  { id: 4, bar: 44 }
+                ]);
+                assert.deep([
+                  { id: 1, foo: 1 },
+                  { id: 2, foo: 22 },
+                  { id: 4, foo: 44 }
+                ], basis.array.sort(Type.all.getValues('data'), 'id'));
+                assert([Type(4)], inserted);
+
+                var set = Type.all.set; // method should be binded to Type.all
+                inserted = set([Type(1), 4]);
+                assert.deep([
+                  { id: 1, foo: 1 },
+                  { id: 4, foo: 44 }
+                ], basis.array.sort(Type.all.getValues('data'), 'id'));
+                assert(inserted === null);
+
+                assert.visited([3, 2]);
+              }
+            }
+          ]
         },
         {
           name: 'EntitySet#sync issue',
