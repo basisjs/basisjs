@@ -6,6 +6,7 @@ var tokenize = require('./tokenize.js');
 var isolateCss = require('./isolateCss.js');
 var consts = require('./const.js');
 var utils = require('./declaration/utils.js');
+var refUtils = require('./declaration/refs.js');
 var styleUtils = require('./declaration/style.js');
 var attrUtils = require('./declaration/attr.js');
 
@@ -25,10 +26,10 @@ var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
 var resourceHash = utils.resourceHash;
 var getTokenName = utils.getTokenName;
-var refList = utils.refList;
 var bindingList = utils.bindingList;
-var addTokenRef = utils.addTokenRef;
-var normalizeRefs = utils.normalizeRefs;
+var refList = refUtils.refList;
+var addTokenRef = refUtils.addTokenRef;
+var normalizeRefs = refUtils.normalizeRefs;
 // var addUnique = utils.addUnique;
 // var removeTokenRef = utils.removeTokenRef;
 
