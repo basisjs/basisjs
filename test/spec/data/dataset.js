@@ -16,46 +16,8 @@ module.exports = {
     var Slice = basis.require('basis.data.dataset').Slice;
     var Split = basis.require('basis.data.dataset').Split;
 
-
-    (function(){
-      var eventTypeFilter = function(event){
-        return event.type == this;
-      };
-      var proto = basis.require('basis.event').Emitter.prototype;
-      var eventsMap = {};
-      var seed = 1;
-
-      proto.debug_emit = function(event){
-        if (!this.testEventId_)
-        {
-          this.testEventId_ = seed++;
-          eventsMap[this.testEventId_] = [];
-        }
-
-        eventsMap[this.testEventId_].push(event);
-      };
-
-      window.getEvents = function(object, type){
-        var events = eventsMap[object.testEventId_];
-
-        if (events && type)
-          events = events.filter(eventTypeFilter, type);
-
-        return events;
-      };
-
-      window.eventCount = function(object, type){
-        var events = getEvents(object, type);
-
-        return events ? events.length : 0;
-      };
-
-      window.getLastEvent = function(object, type){
-        var events = getEvents(object, type);
-
-        return events && events[events.length - 1];
-      };
-    })();
+    var helpers = basis.require('./helpers/events.js').createAPI(basis.require('basis.event').Emitter);
+    var eventCount = helpers.eventCount;
   },
 
   test: [

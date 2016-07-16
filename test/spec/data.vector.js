@@ -11,46 +11,6 @@ module.exports = {
     var vectorSum = basis.require('basis.data.vector').sum;
     var vectorCount = basis.require('basis.data.vector').count;
 
-    (function(){
-      var proto = DataObject.prototype;
-      var eventsMap = {};
-      var seed = 1;
-      var eventTypeFilter = function(event){
-        return event.type == this;
-      };
-
-      proto.debug_emit = function(event){
-        if (!this.testEventId_)
-        {
-          this.testEventId_ = seed++;
-          eventsMap[this.testEventId_] = [];
-        }
-
-        eventsMap[this.testEventId_].push(event);
-      };
-
-      window.getEvents = function(object, type){
-        var events = eventsMap[object.testEventId_];
-
-        if (events && type)
-          events = events.filter(eventTypeFilter, type);
-
-        return events;
-      };
-
-      window.eventCount = function(object, type){
-        var events = getEvents(object, type);
-
-        return events ? events.length : 0;
-      };
-
-      window.getLastEvent = function(object, type){
-        var events = getEvents(object, type);
-
-        return events && events[events.length - 1];
-      };
-    })();
-
     function createDS(count){
       return new Dataset({
         items: basis.array.create(count || 10, function(idx){
