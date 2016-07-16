@@ -59,7 +59,6 @@ var overlay = new Overlay({
 
     var settings = domNode.getAttribute('basis-devpanel-grid');
     var offset = 0;
-    var size = context.size;
 
     if (settings == 'ignore')
       return;
@@ -80,7 +79,7 @@ var overlay = new Overlay({
         console.warn('Wrong grid settings: "' + settings + '"', domNode);
       }
 
-      return currentContext;
+      return context;
     }
     else
     {

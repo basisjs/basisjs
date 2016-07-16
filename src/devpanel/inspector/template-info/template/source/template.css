@@ -12,3 +12,13 @@
 {
   color: #A00;
 }
+.warnings
+{
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  padding-left: 18px;
+  background: url(../warning.png) no-repeat left center;
+  min-height: 16px;
+  color: #A82;
+}

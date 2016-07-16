@@ -902,7 +902,7 @@
               return object ? object[path1] : undefined;
             };
 
-            /** @cut */ pathFragment.getDevSource = function(object){
+            /** @cut */ pathFragment.getDevSource = function(){
             /** @cut */   return basis.getter(fullPath);
             /** @cut */ };
 

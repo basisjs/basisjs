@@ -15,7 +15,7 @@ var JsonParser = (function () {
             enumerable: false,
             configurable: true,
             writable: true,
-            value: function value(target, firstSource) {
+            value: function value(target) {
                 'use strict';
                 if (target === undefined || target === null) {
                     throw new TypeError('Cannot convert first argument to object');

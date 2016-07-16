@@ -7,7 +7,7 @@ module.exports = {
         var a = createTemplate('<span title="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="b"/></b:include>');
 
-        this.is(text('<span title="a" class="b"/>'), text(b));
+        assert(text(b) === text('<span title="a" class="b"/>'));
       }
     },
     {
@@ -16,7 +16,7 @@ module.exports = {
         var a = createTemplate('<span class="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="b"/></b:include>');
 
-        this.is(text('<span class="b"/>'), text(b));
+        assert(text(b) === text('<span class="b"/>'));
       }
     },
     {
@@ -25,7 +25,7 @@ module.exports = {
         var a = createTemplate('<span><b{reference}/></span>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class ref="reference" value="b"/></b:include>');
 
-        this.is(text('<span><b class="b"/></span>'), text(b));
+        assert(text(b) === text('<span><b class="b"/></span>'));
       }
     },
     {
@@ -34,7 +34,7 @@ module.exports = {
         var a = createTemplate('<span><b{reference} class="a"/></span>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class ref="reference" value="b"/></b:include>');
 
-        this.is(text('<span><b class="b"/></span>'), text(b));
+        assert(text(b) === text('<span><b class="b"/></span>'));
       }
     },
     {
@@ -43,17 +43,17 @@ module.exports = {
         var a = createTemplate('<span class="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value=""/></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
 
         var a = createTemplate('<span class="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class/></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
 
         var a = createTemplate('<span class="{a}"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value=""/></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
       }
     },
     {
@@ -62,14 +62,14 @@ module.exports = {
         var a = createTemplate('<span title="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="{b}"/></b:include>');
 
-        this.is(text('<span title="a"/>'), text(b));
-        this.is(text('<span title="a" class="b"/>'), text(b, { b: 'b' }));
+        assert(text(b) === text('<span title="a"/>'));
+        assert(text(b, { b: 'b' }) === text('<span title="a" class="b"/>'));
 
         // several bindings
         var c = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="{b} {c}"/></b:include>');
-        this.is(text('<span title="a"/>'), text(c));
-        this.is(text('<span title="a" class="b"/>'), text(c, { b: 'b' }));
-        this.is(text('<span title="a" class="b c"/>'), text(c, { b: 'b', c: 'c' }));
+        assert(text('<span title="a"/>'), text(c));
+        assert(text('<span title="a" class="b"/>'), text(c, { b: 'b' }));
+        assert(text('<span title="a" class="b c"/>'), text(c, { b: 'b', c: 'c' }));
       }
     },
     {
@@ -78,14 +78,14 @@ module.exports = {
         var a = createTemplate('<span title="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="a {b}"/></b:include>');
 
-        this.is(text('<span title="a" class="a"/>'), text(b));
-        this.is(text('<span title="a" class="a b"/>'), text(b, { b: 'b' }));
+        assert(text(b) === text('<span title="a" class="a"/>'));
+        assert(text(b, { b: 'b' }) === text('<span title="a" class="a b"/>'));
 
         // several bindings
         var c = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="x {b} {c} y"/></b:include>');
-        this.is(text('<span title="a" class="x y"/>'), text(c));
-        this.is(text('<span title="a" class="x y b"/>'), text(c, { b: 'b' }));
-        this.is(text('<span title="a" class="x y b c"/>'), text(c, { b: 'b', c: 'c' }));
+        assert(text('<span title="a" class="x y"/>'), text(c));
+        assert(text('<span title="a" class="x y b"/>'), text(c, { b: 'b' }));
+        assert(text('<span title="a" class="x y b c"/>'), text(c, { b: 'b', c: 'c' }));
       }
     },
     {
@@ -94,14 +94,14 @@ module.exports = {
         var a = createTemplate('<span class="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="{b}"/></b:include>');
 
-        this.is(text('<span/>'), text(b));
-        this.is(text('<span class="b"/>'), text(b, { b: 'b' }));
+        assert(text(b) === text('<span/>'));
+        assert(text(b, { b: 'b' }) === text('<span class="b"/>'));
 
         // several bindings
         var c = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="{b} {c}"/></b:include>');
-        this.is(text('<span/>'), text(c));
-        this.is(text('<span class="b"/>'), text(c, { b: 'b' }));
-        this.is(text('<span class="b c"/>'), text(c, { b: 'b', c: 'c' }));
+        assert(text('<span/>'), text(c));
+        assert(text('<span class="b"/>'), text(c, { b: 'b' }));
+        assert(text('<span class="b c"/>'), text(c, { b: 'b', c: 'c' }));
       }
     },
     {
@@ -110,16 +110,16 @@ module.exports = {
         var a = createTemplate('<span class="a {a2}"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="{b}"/></b:include>');
 
-        this.is(text('<span/>'), text(b));
-        this.is(text('<span class="b"/>'), text(b, { b: 'b' }));
-        this.is(text('<span class="b"/>'), text(b, { b: 'b', a2: 'a2' }));
+        assert(text(b) === text('<span/>'));
+        assert(text(b, { b: 'b' }) === text('<span class="b"/>'));
+        assert(text(b, { b: 'b', a2: 'a2' }) === text('<span class="b"/>'));
 
         // several bindings
         var c = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="{b} {c}"/></b:include>');
-        this.is(text('<span/>'), text(c));
-        this.is(text('<span class="b"/>'), text(c, { b: 'b' }));
-        this.is(text('<span class="b c"/>'), text(c, { b: 'b', c: 'c' }));
-        this.is(text('<span class="b c"/>'), text(c, { b: 'b', c: 'c', a2: 'a2' }));
+        assert(text('<span/>'), text(c));
+        assert(text('<span class="b"/>'), text(c, { b: 'b' }));
+        assert(text('<span class="b c"/>'), text(c, { b: 'b', c: 'c' }));
+        assert(text('<span class="b c"/>'), text(c, { b: 'b', c: 'c', a2: 'a2' }));
       }
     },
     {
@@ -128,16 +128,16 @@ module.exports = {
         var a = createTemplate('<span class="a {a2}"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="x {b} y"/></b:include>');
 
-        this.is(text('<span class="x y"/>'), text(b));
-        this.is(text('<span class="x y b"/>'), text(b, { b: 'b' }));
-        this.is(text('<span class="x y b"/>'), text(b, { b: 'b', a2: 'a2' }));
+        assert(text(b) === text('<span class="x y"/>'));
+        assert(text(b, { b: 'b' }) === text('<span class="x y b"/>'));
+        assert(text(b, { b: 'b', a2: 'a2' }) === text('<span class="x y b"/>'));
 
         // several bindings
         var c = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="x {b} {c} y"/></b:include>');
-        this.is(text('<span class="x y"/>'), text(c));
-        this.is(text('<span class="x y b"/>'), text(c, { b: 'b' }));
-        this.is(text('<span class="x y b c"/>'), text(c, { b: 'b', c: 'c' }));
-        this.is(text('<span class="x y b c"/>'), text(c, { b: 'b', c: 'c', a2: 'a2' }));
+        assert(text('<span class="x y"/>'), text(c));
+        assert(text('<span class="x y b"/>'), text(c, { b: 'b' }));
+        assert(text('<span class="x y b c"/>'), text(c, { b: 'b', c: 'c' }));
+        assert(text('<span class="x y b c"/>'), text(c, { b: 'b', c: 'c', a2: 'a2' }));
       }
     },
     {
@@ -146,7 +146,7 @@ module.exports = {
         var a = createTemplate('<span title="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class name="title" value="b"/></b:include>');
 
-        this.is(text('<span title="a" class="b"/>'), text(b));
+        assert(text(b) === text('<span title="a" class="b"/>'));
       }
     },
     {
@@ -155,7 +155,7 @@ module.exports = {
         var a = createTemplate('<span title="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class/></b:include>');
 
-        this.is(text('<span title="a"/>'), text(b));
+        assert(text(b) === text('<span title="a"/>'));
       }
     },
     {
@@ -164,7 +164,7 @@ module.exports = {
         var a = createTemplate('{a}');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value="b"/></b:include>');
 
-        this.is(text('{a}'), text(b));
+        assert(text(b) === text('{a}'));
       }
     },
     {
@@ -173,7 +173,7 @@ module.exports = {
         var a = createTemplate('<span>{reference}</span>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class ref="reference" value="b"/></b:include>');
 
-        this.is(text('<span>{reference}</span>'), text(b));
+        assert(text(b) === text('<span>{reference}</span>'));
       }
     }
   ]

@@ -60,7 +60,7 @@ module.exports = {
   },
 
   saveDictionary: function(data){
-    var basisjsTools = typeof basisjsToolsFileSync != 'undefined' ? basisjsToolsFileSync : inspectBasis.devtools;
+    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
 
     if (!basisjsTools)
       return;

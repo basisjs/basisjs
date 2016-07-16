@@ -13,6 +13,15 @@ module.exports = {
     var api = basis.require('../helpers/template.js').createSandboxAPI(basis);
     var createTemplate = api.createTemplate;
     var text = api.text;
+
+    function normalizeNS(actual, expected){
+      // Firefox don't xmlns: attribute when it was set with element.setAttributeNS()
+      // remove those attributes from expected in this case
+      if (/xmlns:/.test(expected) && !/xmlns:/.test(actual))
+        expected = expected.replace(/\s+xmlns:[a-z]+="[^"]+"/g, '');
+
+      return expected;
+    }
   },
 
   test: [
@@ -79,8 +88,14 @@ module.exports = {
     require('./template/namespaces.js'),
     require('./template/attr-bindings.js'),
     require('./template/text-bindings.js'),
+    require('./template/b-text.js'),
     require('./template/b-include.js'),
+    // require('./template/b-template.js'),
+    // require('./template/b-import.js'),
     require('./template/b-define.js'),
+    require('./template/b-content.js'),
+    require('./template/b-svg.js'),
+    require('./template/b-style.js'),
     require('./template/isolate.js'),
     require('./template/l10n.js'),
     require('./template/touch.js'),
