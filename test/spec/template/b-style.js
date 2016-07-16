@@ -155,6 +155,52 @@ module.exports = {
         assert(wideTall.element.offsetWidth === 960);
         assert(wideTall.element.offsetHeight === 480);
       }
+    },
+    {
+      name: 'should warn on wrong place',
+      test: [
+        {
+          name: 'inside element',
+          test: function(){
+            var template = createTemplate(
+              '<span>' +
+                '<b:style src="./style.css"/>' +
+              '</span>',
+              true
+            );
+
+            assert(template.decl_.warns.length === 1);
+            assert(/^Instruction tag <b:style> should place in /.test(String(template.decl_.warns[0])));
+          }
+        },
+        {
+          name: 'after text',
+          test: function(){
+            var template = createTemplate(
+              'hello world' +
+              '<b:style src="./style.css"/>',
+              true
+            );
+
+            assert(template.decl_.warns.length === 1);
+            assert(/^Instruction tag <b:style> should place in /.test(String(template.decl_.warns[0])));
+          }
+        },
+        {
+          name: 'after <b:include>',
+          test: function(){
+            var include = createTemplate('<span/>');
+            var template = createTemplate(
+              '<b:include src="#' + include.templateId + '"/>' +
+              '<b:style src="./style.css"/>',
+              true
+            );
+
+            assert(template.decl_.warns.length === 1);
+            assert(/^Instruction tag <b:style> should place in /.test(String(template.decl_.warns[0])));
+          }
+        }
+      ]
     }
   ]
 };

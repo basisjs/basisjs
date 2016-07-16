@@ -24,30 +24,34 @@ var CONTENT_PRIORITY = consts.CONTENT_PRIORITY;
 var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
 var resourceHash = utils.resourceHash;
-var addUnique = utils.addUnique;
 var getTokenName = utils.getTokenName;
 var refList = utils.refList;
 var bindingList = utils.bindingList;
 var addTokenRef = utils.addTokenRef;
-var removeTokenRef = utils.removeTokenRef;
 var normalizeRefs = utils.normalizeRefs;
+// var addUnique = utils.addUnique;
+// var removeTokenRef = utils.removeTokenRef;
 
 var applyAttrs = attrUtils.applyAttrs;
 
 var styleNamespaceIsolate = styleUtils.styleNamespaceIsolate;
 var isolateTokens = styleUtils.isolateTokens;
 
+/** @cut */ var topLevelInstructions = ['define', 'isolate', 'l10n', 'style'];
+/** @cut */ var humanTopLevelInstrcutionList = topLevelInstructions.map(function(name){
+/** @cut */   return '<b:' + name + '>';
+/** @cut */ }).join(', ').replace(/, (<b:[a-z]+>)$/, ' and $1');
 var elementHandlers = {
   content: require('./declaration/element/b-content.js'),
   define: require('./declaration/element/b-define.js'),
-  // import: require('./declaration/element/b-import.js'),
   include: require('./declaration/element/b-include.js'),
   isolate: require('./declaration/element/b-isolate.js'),
   l10n: require('./declaration/element/b-l10n.js'),
   style: require('./declaration/element/b-style.js'),
   svg: require('./declaration/element/b-svg.js'),
-  // template: require('./declaration/element/b-template.js'),
   text: require('./declaration/element/b-text.js')
+  // import: require('./declaration/element/b-import.js'),
+  // template: require('./declaration/element/b-template.js'),
 };
 
 // TODO: remove
@@ -80,61 +84,71 @@ var makeDeclaration = (function(){
       switch (token.type)
       {
         case TYPE_ELEMENT:
-          var name = getTokenName(token);
-
           // special elements (basis namespace)
           if (token.prefix == 'b')
           {
-            if (elementHandlers.hasOwnProperty(token.name))
-              elementHandlers[token.name](template, options, token, result);
-            /** @cut */ else
-            /** @cut */   utils.addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + token.name + '>', token.loc);
+            /** @cut */ if (topLevelInstructions.indexOf(token.name) === -1)
+            /** @cut */   options.allowTopInstruction = false;
+            /** @cut */ else if (!options.allowTopInstruction)
+            /** @cut */   utils.addTemplateWarn(template, options, 'Instruction tag <b:' + token.name + '> should place in the beginning of template on top level before any markup and instructions except ' + humanTopLevelInstrcutionList + '. Currently it works but will be ignored in future.', token.loc);
+
+            if (!elementHandlers.hasOwnProperty(token.name))
+            {
+              /** @cut */ utils.addTemplateWarn(template, options, 'Unknown instruction tag: <b:' + token.name + '>', token.loc);
+              continue;
+            }
+
+            elementHandlers[token.name](template, options, token, result);
 
             // don't add to declaration
             continue;
           }
 
-          if (hasOwnProperty.call(options.templates, name))
-          {
-            var decl = options.templates[name];
-            var declTokens = cloneDecl(decl.tokens);
-            var tokenRefMap = normalizeRefs(declTokens);
+          /** @cut */ options.allowTopInstruction = false;
 
-            template.includes.push({
-              token: token,
-              resource: null, // TODO
-              nested: decl.includes
-            });
+          // <b:template>/<b:import> part
+          // var name = getTokenName(token);
+          // if (hasOwnProperty.call(options.templates, name))
+          // {
+          //   var decl = options.templates[name];
+          //   var declTokens = cloneDecl(decl.tokens);
+          //   var tokenRefMap = normalizeRefs(declTokens);
 
-            if (decl.deps)
-              addUnique(template.deps, decl.deps);
+          //   template.includes.push({
+          //     token: token,
+          //     resource: null, // TODO
+          //     nested: decl.includes
+          //   });
 
-            if (decl.resources)
-              addUnique(template.resources, decl.resources);
+          //   if (decl.deps)
+          //     addUnique(template.deps, decl.deps);
 
-            if (decl.warns)
-              template.warns.push.apply(template.warns, decl.warns);
+          //   if (decl.resources)
+          //     addUnique(template.resources, decl.resources);
 
-            /** @cut */ if (decl.removals)
-            /** @cut */   template.removals.push.apply(template.removals, decl.removals);
+          //   if (decl.warns)
+          //     template.warns.push.apply(template.warns, decl.warns);
 
-            // FIXME
-            // var styleNSIsolate = {
-            //   /** @cut */ map: options.styleNSIsolateMap,
-            //   prefix: genIsolateMarker()
-            // };
+          //   /** @cut */ if (decl.removals)
+          //   /** @cut */   template.removals.push.apply(template.removals, decl.removals);
 
-            // for (var key in decl.styleNSPrefix)
-            //   template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
-            //     /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
-            //   });
+          //   // FIXME
+          //   // var styleNSIsolate = {
+          //   //   /** @cut */ map: options.styleNSIsolateMap,
+          //   //   prefix: genIsolateMarker()
+          //   // };
 
-            if (tokenRefMap.element)
-              removeTokenRef(tokenRefMap.element.node, 'element');
+          //   // for (var key in decl.styleNSPrefix)
+          //   //   template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
+          //   //     /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+          //   //   });
 
-            result.push.apply(result, declTokens);
-            continue;
-          }
+          //   if (tokenRefMap.element)
+          //     removeTokenRef(tokenRefMap.element.node, 'element');
+
+          //   result.push.apply(result, declTokens);
+          //   continue;
+          // }
 
           item = [
             1,                       // TOKEN_TYPE = 0
@@ -186,6 +200,7 @@ var makeDeclaration = (function(){
           continue;
       }
 
+      /** @cut */ options.allowTopInstruction = false;
       /** @cut */ utils.addTokenLocation(template, options, item, token);
       /** @cut */ item.sourceToken = token;
 
@@ -370,6 +385,7 @@ var makeDeclaration = (function(){
     options.dictURI = sourceUrl  // resolve l10n dictionary url
       ? basis.path.resolve(sourceUrl)
       : baseURI || '';
+    /** @cut */ options.allowTopInstruction = true;
     /** @cut */ options.styleNSIsolateMap = {};
     // force fetch locations and ranges in dev mode for debug and build purposes
     /** @cut */ options.loc = true;

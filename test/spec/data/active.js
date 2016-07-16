@@ -417,4 +417,4 @@ module.exports = {
       ]
     }
   ]
-}
+};
