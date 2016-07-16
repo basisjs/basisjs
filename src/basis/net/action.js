@@ -98,10 +98,8 @@ function create(config){
     }
 
     requestData = basis.object.complete(
-      basis.object.slice(config, ['body', 'contentType', 'encoding']),
+      basis.object.slice(config, ['body']),
       {
-        contentType: 'application/json',
-        encoding: 'utf8',
         origin: dataInstance,
         bodyContext: {
           context: dataInstance,

@@ -532,7 +532,7 @@
     // transport properties
     asynchronous: true,
     method: 'GET',
-    contentType: 'application/x-www-form-urlencoded',
+    contentType: 'application/json',
     encoding: null,
     requestHeaders: basis.Class.extensibleProperty(),
     responseType: '',
