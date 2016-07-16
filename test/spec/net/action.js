@@ -11,7 +11,7 @@ module.exports = {
       name: 'set correct state on abort',
       test: function(done){
         createAction({
-          url: 'data:text/plain,',
+          url: 'fixture/foo.json',
           stateOnAbort: STATE.ERROR,
           handler: {
             readyStateChanged: function(transport, request){
@@ -31,13 +31,11 @@ module.exports = {
       test: function(done){
         var foo = new DataObject({
           syncAction: createAction({
-            url: 'data:application/json,{"test":"success"}',
+            url: 'fixture/foo.json',
             success: function(data){
-              debugger;
               this.update(data);
             },
             complete: function(){
-              debugger;
               assert.async(function(){
                 assert.visited(['processing', 'ready']);
                 done();
