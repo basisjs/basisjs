@@ -255,12 +255,12 @@ var view = new Node({
         }
 
         var content = node.data.content;
-        var ranges = node.data.ranges;
+        var markup = node.data.markup;
         var color = '';
         var offset = 0;
         var res = '';
 
-        for (var i = 0, range; range = ranges[i]; i++)
+        for (var i = 0, range; range = markup[i]; i++)
         {
           if (range[0] !== offset)
             res += wrap(color, content.substring(offset, range[0]));
@@ -268,7 +268,7 @@ var view = new Node({
           if (range[0] !== range[1])
             res += wrap(range[2], content.substring(range[0], range[1]));
           else
-            res += '<span style="background-color: ' + color + '" class="warning" title="' + escapeHtml(range[2]) + '" event-click="openFile" data-loc="' + escapeHtml(range[3]) + '"></span>';
+            res += '<span style="background-color: ' + range[2] + '" class="warning" title="' + escapeHtml(range[3]) + '" event-click="openFile" data-loc="' + escapeHtml(range[4]) + '"></span>';
 
           offset = range[1];
         }
@@ -372,6 +372,30 @@ function addRange(ranges, range){
   return ranges;
 }
 
+function insertPoint(ranges, point){
+  var start = point[0];
+
+  for (var i = start; i >= 0; i--)
+    if (i in ranges)
+    {
+      var range = ranges[i];
+
+      point[2] = range[2];
+
+      if (range[1] > start)
+      {
+        addRange(ranges, [start, range[1], range[2]]);
+        range[1] = start;
+      }
+
+      break;
+    }
+}
+
+function rangeSorting(a, b){
+  return a[0] - b[0] || (a[1] - a[0]) - (b[1] - b[0]);
+}
+
 declToken.attach(function(decl){
   var children = [];
   var code = '';
@@ -396,22 +420,6 @@ declToken.attach(function(decl){
       var resource = inc.resource;
       var source = String(resource.bindingBridge ? resource.bindingBridge.get(resource) : resource);
       var warnFilter = inc === root ? undefined : inc.token;
-      var warnings = (decl.warns || [])
-        .filter(function(warn){
-          return warn.source === warnFilter;
-        })
-        .map(function(warn){
-          var parts = (warn.loc || '').split(':');
-          var point = { line: Number(parts[1]), column: Number(parts[2]) };
-          return {
-            range: convertToRange(source, point, point).concat(
-              String(warn),
-              warn.loc.charAt(0) === ':' ? '' : warn.loc
-            ),
-            loc: warn.loc,
-            message: String(warn)
-          };
-        });
 
       var ranges = [
           [0, source.length, this.colorMap.get(resource.url || '', 'red')]
@@ -437,15 +445,53 @@ declToken.attach(function(decl){
             );
           }, this)
         )
-        .concat(
-          warnings.map(function(warn){
-            return warn.range;
-          })
-        )
-        .sort(function(a, b){
-          return a[0] - b[0] || (a[1] - a[0]) - (b[1] - b[0]);
-        })
+        .sort(rangeSorting)
         .reduce(addRange, {});
+
+      var warnings = (decl.warns || [])
+        .filter(function(warn){
+          return warn.source === warnFilter;
+        })
+        .reduce(function(map, warn){
+          var parts = (warn.loc || '').split(':');
+          var point = { line: Number(parts[1]), column: Number(parts[2]) };
+          var range = convertToRange(source, point, point);
+          var record = range.concat(
+            '',
+            String(warn),
+            warn.loc.charAt(0) === ':' ? '' : warn.loc
+          );
+
+          insertPoint(ranges, record);
+
+          if (!map[range[0]])
+            map[range[0]] = [record];
+          else
+            map[range[0]].push(record);
+
+          return map;
+        }, {});
+
+      var markup = [];
+
+      for (var i = 0; i < source.length; i++)
+      {
+        if (warnings[i])
+          markup.push.apply(markup, warnings[i]);
+
+        if (ranges[i])
+        {
+          var range = ranges[i];
+          var trailingSpaces = source.substring(range[0], range[1]).match(/\n\s+$/);
+
+          if (trailingSpaces)
+            range[1] -= trailingSpaces[0].length;
+
+          // don't add zero-length ranges
+          if (range[0] !== range[1])
+            markup.push(range);
+        }
+      }
 
       return {
         data: {
@@ -453,23 +499,7 @@ declToken.attach(function(decl){
           content: resource.bindingBridge ? resource.bindingBridge.get(resource) : resource,
           color: this.colorMap.get(resource.url || '', 'red'),
           warnings: warnings,
-          ranges: basis.array.sort(Object.keys(ranges), Number).map(function(index){
-            return ranges[index];
-          }).filter(function(range){
-            // remove trailing spaces
-            var trailingSpaces = source.substring(range[0], range[1]).match(/\n\s+$/);
-
-            if (trailingSpaces)
-            {
-              range[1] -= trailingSpaces[0].length;
-
-              // drop range if become zero-length
-              if (range[0] === range[1])
-                return false;
-            }
-
-            return true;
-          })
+          markup: markup
         },
         childNodes: inc.nested.map(processInclude, this)
       };
