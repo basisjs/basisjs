@@ -256,7 +256,7 @@ var view = new Node({
 
         var content = node.data.content;
         var ranges = node.data.ranges;
-        var color = node.data.color;
+        var color = '';
         var offset = 0;
         var res = '';
 
@@ -334,18 +334,38 @@ function addRange(ranges, range){
   }
   else
   {
+    // new range on the same position as existing one
     var length = end - start;
     var existsLength = existsRange[1] - existsRange[0];
+
     if (length > existsLength)
     {
+      // 1: xxxxx
+      // 2: yyyyyyyy
+      // =
+      //    xxxxx
+      //         yyyy
       range[0] += existsLength;
       addRange(ranges, range);
     }
     else if (length < existsLength)
     {
+      // 1: xxxxxxxx
+      // 2: yyyyy
+      // =
+      //         xxx
+      //    yyyyy
       ranges[start] = range;
       existsRange[0] += length;
       addRange(ranges, existsRange);
+    }
+    else
+    {
+      // 1: xxxxx
+      // 2: yyyyy
+      // =
+      //    yyyyy
+      ranges[start] = range;
     }
   }
 
@@ -374,7 +394,7 @@ declToken.attach(function(decl){
     code = bb.children.join('\n');
     children = [root].map(function processInclude(inc){
       var resource = inc.resource;
-      var source = resource.bindingBridge ? resource.bindingBridge.get(resource) : resource;
+      var source = String(resource.bindingBridge ? resource.bindingBridge.get(resource) : resource);
       var warnFilter = inc === root ? undefined : inc.token;
       var warnings = (decl.warns || [])
         .filter(function(warn){
@@ -384,7 +404,7 @@ declToken.attach(function(decl){
           var parts = (warn.loc || '').split(':');
           var point = { line: Number(parts[1]), column: Number(parts[2]) };
           return {
-            range: convertToRange(String(source), point, point).concat(
+            range: convertToRange(source, point, point).concat(
               String(warn),
               warn.loc.charAt(0) === ':' ? '' : warn.loc
             ),
@@ -393,7 +413,9 @@ declToken.attach(function(decl){
           };
         });
 
-      var rangesMap = []
+      var ranges = [
+          [0, source.length, this.colorMap.get(resource.url || '', 'red')]
+        ]
         .concat(
           decl.styles.filter(function(style){
             return style.includeToken === inc.token && !style.resource && !style.namespace;
@@ -431,8 +453,22 @@ declToken.attach(function(decl){
           content: resource.bindingBridge ? resource.bindingBridge.get(resource) : resource,
           color: this.colorMap.get(resource.url || '', 'red'),
           warnings: warnings,
-          ranges: basis.array.sort(Object.keys(rangesMap), Number).map(function(index){
-            return rangesMap[index];
+          ranges: basis.array.sort(Object.keys(ranges), Number).map(function(index){
+            return ranges[index];
+          }).filter(function(range){
+            // remove trailing spaces
+            var trailingSpaces = source.substring(range[0], range[1]).match(/\n\s+$/);
+
+            if (trailingSpaces)
+            {
+              range[1] -= trailingSpaces[0].length;
+
+              // drop range if become zero-length
+              if (range[0] === range[1])
+                return false;
+            }
+
+            return true;
           })
         },
         childNodes: inc.nested.map(processInclude, this)
