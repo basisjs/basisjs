@@ -15,7 +15,6 @@
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var keys = basis.object.keys;
   var extend = basis.object.extend;
-  var complete = basis.object.complete;
   var $self = basis.fn.$self;
   var arrayFrom = basis.array.from;
 
@@ -1199,6 +1198,16 @@
       {
         this.all = new ReadOnlyEntitySet(config.all);
         this.all.wrapper = wrapper;
+        this.all.set = function(data){
+          if (Array.isArray(data))
+            data = data.map(function(item){
+              return item instanceof EntityClass === false
+                ? wrapper.reader(item)
+                : item;
+            });
+
+          return setAndDestroyRemoved.call(this, data);
+        }.bind(this.all);
       }
 
       // singleton
@@ -1335,19 +1344,6 @@
         if (this.fields[name] !== calcFieldWrapper)
           EntityClass.prototype['set_' + name] = getFieldSetter(name);
       }
-
-      // define all.set type instance collection
-      if (this.all)
-        this.all.set = function(data){
-          if (Array.isArray(data))
-            data = data.map(function(item){
-              return item instanceof EntityClass === false
-                ? wrapper.reader(item)
-                : item;
-            });
-
-          return setAndDestroyRemoved.call(this, data);
-        }.bind(this.all);
 
       // reg entity type
       entityTypes.push(this);
