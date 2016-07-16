@@ -19,33 +19,26 @@ module.exports = {
         {
           name: 'Should call every callback when fulfilled',
           test: function(done){
-            var passed = {};
-
             createAction({
               fn: resolvedFn,
               start: function(){
                 assert(this instanceof DataObject);
-                passed.start = true;
+                visit('start');
               },
               success: function(data){
                 assert(this instanceof DataObject);
                 assert(String(this.state) == STATE.PROCESSING);
                 assert(data == 'success');
-                passed.success = true;
-              },
-              failure: function(){
-                assert('', 'Failure callback must not be called!');
+                visit('success');
               },
               complete: function(){
                 assert(this instanceof DataObject);
                 assert(String(this.state) == STATE.READY);
-                passed.complete = true;
+                visit('complete');
               }
             }).call(new DataObject).then(function(data){
               assert(data == 'success');
-              assert(passed.start);
-              assert(passed.success);
-              assert(passed.complete);
+              assert.visited(['start', 'success', 'complete']);
               done();
             });
           }
@@ -53,33 +46,26 @@ module.exports = {
         {
           name: 'Should call every callback when rejected',
           test: function(done){
-            var passed = {};
-
             createAction({
               fn: rejectedFn,
               start: function(){
                 assert(this instanceof DataObject);
-                passed.start = true;
+                visit('start');
               },
               failure: function(error){
                 assert(this instanceof DataObject);
                 assert(String(this.state) == STATE.PROCESSING);
                 assert(error == 'fail');
-                passed.failure = true;
-              },
-              success: function(){
-                assert('', 'Success callback must not be called!');
+                visit('failure');
               },
               complete: function(){
                 assert(this instanceof DataObject);
                 assert(String(this.state) == STATE.ERROR);
-                passed.complete = true;
+                visit('complete');
               }
             }).call(new DataObject).catch(function(error){
               assert(error == 'fail');
-              assert(passed.start);
-              assert(passed.failure);
-              assert(passed.complete);
+              assert.visited(['start', 'failure', 'complete']);
               done();
             });
           }
