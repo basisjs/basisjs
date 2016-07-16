@@ -90,7 +90,7 @@ var makeDeclaration = (function(){
             /** @cut */ if (topLevelInstructions.indexOf(token.name) === -1)
             /** @cut */   options.allowTopInstruction = false;
             /** @cut */ else if (!options.allowTopInstruction)
-            /** @cut */   utils.addTemplateWarn(template, options, 'Instruction tag <b:' + token.name + '> should place in the beginning of template on top level before any markup and instructions except ' + humanTopLevelInstrcutionList + '. Currently it works but will be ignored in future.', token.loc);
+            /** @cut */   utils.addTemplateWarn(template, options, 'Instruction tag <b:' + token.name + '> should be placed in the beginning of template before any markup or instructions other than ' + humanTopLevelInstrcutionList + '. Currently it may works but will be ignored in future.', token.loc);
 
             if (!elementHandlers.hasOwnProperty(token.name))
             {
