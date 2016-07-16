@@ -40,13 +40,13 @@ var isolateTokens = styleUtils.isolateTokens;
 var elementHandlers = {
   content: require('./declaration/element/b-content.js'),
   define: require('./declaration/element/b-define.js'),
-  import: require('./declaration/element/b-import.js'),
+  // import: require('./declaration/element/b-import.js'),
   include: require('./declaration/element/b-include.js'),
   isolate: require('./declaration/element/b-isolate.js'),
   l10n: require('./declaration/element/b-l10n.js'),
   style: require('./declaration/element/b-style.js'),
   svg: require('./declaration/element/b-svg.js'),
-  template: require('./declaration/element/b-template.js'),
+  // template: require('./declaration/element/b-template.js'),
   text: require('./declaration/element/b-text.js')
 };
 
