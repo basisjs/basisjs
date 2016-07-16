@@ -466,6 +466,50 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'special tags inside <b:include> should insert into <b:content>',
+      test: [
+        {
+          name: '<b:include>',
+          test: function(){
+            var a = createTemplate('<span title="a"><b:content/></span>');
+            var b = createTemplate('<span title="b"/>');
+            var c = createTemplate(
+              '<b:include src="#' + a.templateId + '">' +
+                '<b:include src="#' + b.templateId + '"/>' +
+              '</b:include>'
+            );
+
+            assert(text(c) === '<span title="a"><span title="b"></span></span>');
+          }
+        },
+        {
+          name: '<b:content>',
+          test: function(){
+            var a = createTemplate(
+              '<span title="a">' +
+                '<b:content>' +
+                  'should be replaced' +
+                '</b:content>' +
+              '</span>'
+            );
+            var b = createTemplate(
+              '<b:include src="#' + a.templateId + '">' +
+                'Hello&#32;' +
+                '<b:content/>' +
+              '</b:include>'
+            );
+            var c = createTemplate(
+              '<b:include src="#' + b.templateId + '">' +
+                'world!!' +
+              '</b:include>'
+            );
+
+            assert(text(c) === '<span title="a">Hello world!!</span>');
+          }
+        }
+      ]
     }
   ]
 };

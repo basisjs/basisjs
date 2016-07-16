@@ -29,6 +29,7 @@ var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
+var specialTagsAsRegular = ['include', 'content'];
 /** @cut */ var attributesWhitelist = ['src', 'no-style', 'isolate', 'options'];
 var attributeToInstructionMap = {
   'class': {     // <b:include class=".."> -> <b:append-class value="..">
@@ -244,7 +245,7 @@ module.exports = function(template, options, token, result){
 
   for (var key in decl.styleNSPrefix)
     template.styleNSPrefix[styleNSIsolate.prefix + key] = basis.object.merge(decl.styleNSPrefix[key], {
-      /** @cut */ used: hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
+      /** @cut */ used: Object.prototype.hasOwnProperty.call(options.styleNSIsolateMap, styleNSIsolate.prefix + key)
     });
 
   // isolate
@@ -298,7 +299,7 @@ module.exports = function(template, options, token, result){
   for (var j = 0, child; child = instructions[j]; j++)
   {
     // process special elements (basis namespace)
-    if (child.type == TYPE_ELEMENT && child.prefix == 'b')
+    if (child.type == TYPE_ELEMENT && child.prefix == 'b' && specialTagsAsRegular.indexOf(child.name) === -1)
     {
       var childAttrs = getTokenAttrValues(child);
       var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';

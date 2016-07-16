@@ -365,6 +365,25 @@ module.exports = {
       ]
     },
     {
+      name: 'nested content',
+      test: [
+        {
+          name: '<b:include> inside <b:include>',
+          test: function(){
+            var a = createTemplate('<span title="a"/>');
+            var b = createTemplate('<span title="b"/>');
+            var c = createTemplate(
+              '<b:include src="#' + a.templateId + '">' +
+                '<b:include src="#' + b.templateId + '"/>' +
+              '</b:include>'
+            );
+
+            assert(text(c) === '<span title="a"></span><span title="b"></span>');
+          }
+        }
+      ]
+    },
+    {
       name: 'Subtree mofication',
       test: [
         require('./b-include/b-replace.js'),
