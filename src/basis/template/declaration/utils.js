@@ -1,12 +1,4 @@
 var arrayAdd = basis.array.add;
-var walk = require('./ast.js').walk;
-var consts = require('../const.js');
-var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
-var TYPE_CONTENT = consts.TYPE_CONTENT;
-var CONTENT_PRIORITY = consts.CONTENT_PRIORITY;
-var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
-var TOKEN_REFS = consts.TOKEN_REFS;
-
 
 //
 // common
