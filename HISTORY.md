@@ -1,3 +1,62 @@
+## 1.8.0 (July 17, 2016)
+
+### Core
+
+- Implemented `basis.resource.buildCloak()` to hide resources that should be used in development mode only
+- Changed `basis.fn.publicCallback()` to return result of wrapped function
+- Implemented `basis.dev.patchFactory()` to patch factory's returning value location to location of factory definition
+
+### Template
+
+- Refactored `basis.template.makeDeclaration()` and work will continue
+- Implemented [`<b:content>`](https://github.com/basisjs/articles/blob/master/ru-RU/template/b-content.md) to specify default insertion point in template
+- Fixed incorrect `<b:text>` content trimming
+- Implemented declaration AST walker `basis.template.declatation.walk()`
+- Reworked `<b:include>`'s attributes processing
+    - Apply attributes in order they declared in template source
+    - Added warning for unknown attributes
+    - Converting all attributes into equivalent instructions except `role`
+    - Changed `ref` attribute logic to work as `<b:add-ref>` instruction
+    - Fixed extra slash in path adding by `role` attribute
+    - Fixed issue when `<b:show>`, `<b:hide>`, `<b:visible>` or `<b:hidden>` instruction with static value doesn't override opposite setting with binding
+- Changed `ref` attribute to be optional for `<b:remove-ref>`
+- Renamed `<b:set-role>`'s `value` attribute to `name`
+- Fixed crash on using inline style with `options` attribute (@istrel, #75)
+- Fixed tokenizer to return range for whole tag not for open tag only
+- Added warning on duplicate namespaces for `<b:style>`
+- Added warning for `<b:style>`, `<b:define>`, `<b:l10n>` and `<b:isolate>` when used not in the beginning of template
+
+### Data
+
+- Improved `basis.data.AbstractData` to support a `Promise` as `syncAction()` result and synchronizing its state with data object state
+- Implemented `basis.entity.Type.all.set(data)` method that works as `setAndDestroyRemoved()` method but apply `reader()` for passed data and binded to `Type.all`
+- Removed `basis.data.value.Property` class
+- Fixed various factory location problem
+- Added wraping indexes by proxy (development mode only)
+
+### Devpanel
+
+- Data flow
+    - Fixed connections drawing on target value changing
+    - Correctly show view for dataset at any node (previously shows only for source nodes)
+    - Fixed issue when popup shows old graph after re-open popup for the same value
+    - Better `IndexWrapper` and `Value.query()` graphs
+- Template inspector
+    - Added clickable warnings in template sources (click by warning opens location in editor)
+    - Added support for `<b:content>`
+    - Fixed coloring of template source ranges
+
+## Other
+
+- Fixed event extension in `basis.dom.event` it depends on event type now (@smelukov, #69)
+- Improved `basis.date.format()` function to return formatting function when first argument is a string, i.e. now possible to do `format('%Y/%D/%M')(new Date())`
+- Removed warning and fallback for `basis.net.ajax.Request#getResponseError()`
+- Fixed `abort` processing in `basis.net.ajax` by using `onabort` event
+- Fixed regression of `basis.ui.scroller.ScrollPanel` introduced in previous version (@naorunaoru, #79)
+- Fixed `Value.query('childNodes.length')` for `basis.ui.Node` instances to work as expected
+- Reworked `tour` and now its viewer is using on [site](http://basisjs.com) as examples viewer
+- Dropped `basis/patch`
+
 ## 1.7.0 (June 24, 2016)
 
 ### Core
