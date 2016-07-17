@@ -9,6 +9,7 @@ var utils = require('./declaration/utils.js');
 var refUtils = require('./declaration/refs.js');
 var styleUtils = require('./declaration/style.js');
 var attrUtils = require('./declaration/attr.js');
+var walk = require('./declaration/ast.js').walk;
 
 var TYPE_ELEMENT = consts.TYPE_ELEMENT;
 var TYPE_ATTRIBUTE = consts.TYPE_ATTRIBUTE;
@@ -235,27 +236,25 @@ var makeDeclaration = (function(){
     return value;
   }
 
-  function applyDefines(tokens, template, options, stIdx){
-    for (var i = stIdx || 0, token; token = tokens[i]; i++)
-    {
-      var tokenType = token[TOKEN_TYPE];
-      var bindings = token[TOKEN_BINDINGS];
+  function applyDefines(ast, template, options){
+    walk(ast, function(nodeType, node){
+      var bindings = node[TOKEN_BINDINGS];
 
-      switch (tokenType)
+      switch (nodeType)
       {
         case TYPE_ELEMENT:
-          applyDefines(token, template, options, ELEMENT_ATTRIBUTES_AND_CHILDREN);
+          applyDefines(node, template, options, ELEMENT_ATTRIBUTES_AND_CHILDREN);
           break;
 
         case TYPE_TEXT:
           if (bindings)
           {
             var binding = absl10n(bindings, options.dictURI, template.l10n);
-            token[TOKEN_BINDINGS] = binding || 0;
+            node[TOKEN_BINDINGS] = binding || 0;
             if (binding === false)
             {
-              /** @cut */ utils.addTemplateWarn(template, options, 'Dictionary for l10n binding on text node can\'t be resolved: {' + bindings + '}', token.loc);
-              token[TEXT_VALUE] = '{' + bindings + '}';
+              /** @cut */ utils.addTemplateWarn(template, options, 'Dictionary for l10n binding on text node can\'t be resolved: {' + bindings + '}', node.loc);
+              node[TEXT_VALUE] = '{' + bindings + '}';
             }
           }
           break;
@@ -269,7 +268,7 @@ var makeDeclaration = (function(){
               var binding = absl10n(array[j], options.dictURI, template.l10n);   // TODO: move l10n binding process in separate function
               if (binding === false)
               {
-                /** @cut */ utils.addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', token.loc);
+                /** @cut */ utils.addTemplateWarn(template, options, 'Dictionary for l10n binding on attribute can\'t be resolved: {' + array[j] + '}', node.loc);
 
                 // make l10n binding static, i.e.
                 //   [['l10n:unresolved', 'x'], [0, '-', 1]]
@@ -288,7 +287,7 @@ var makeDeclaration = (function(){
                 array.splice(j, 1);
 
                 if (!array.length)
-                  token[TOKEN_BINDINGS] = 0;
+                  node[TOKEN_BINDINGS] = 0;
               }
               else
                 array[j] = binding;
@@ -328,14 +327,14 @@ var makeDeclaration = (function(){
 
             if (options.optimizeSize)
             {
-              var valueIdx = ATTR_VALUE_INDEX[tokenType];
-              if (!token[valueIdx])
-                token.length = valueIdx;
+              var valueIdx = ATTR_VALUE_INDEX[nodeType];
+              if (!node[valueIdx])
+                node.length = valueIdx;
             }
           }
           break;
       }
-    }
+    });
   }
 
   function findNonSpecialToken(tokens){
@@ -703,7 +702,7 @@ resource('../template.js').ready(function(exports){
 module.exports = {
   VERSION: 3,
   makeDeclaration: makeDeclaration,
-  walk: require('./declaration/ast.js').walk,
+  walk: walk,
   getDeclFromSource: getDeclFromSource,
   setIsolatePrefixGenerator: function(fn){
     genIsolateMarker = fn;

@@ -219,6 +219,58 @@ module.exports = {
       ]
     },
     {
+      name: 'definitions should apply for <b:content>\'s content',
+      test: [
+        {
+          name: 'l10n',
+          test: function(){
+            var dictUrl = basis.resource('./test.l10n').url;
+            var template = createTemplate(
+              '<b:l10n src="./test.l10n"/>' +
+              '{l10n:test}' +
+              '<b:content>' +
+                '{l10n:test}' +
+              '</b:content>'
+            );
+
+            assert(text(template) === '{test@' + dictUrl + '}{test@' + dictUrl + '}');
+          }
+        },
+        {
+          name: '<b:define>',
+          test: function(){
+            var template = createTemplate(
+              '<b:define name="test" type="bool"/>' +
+              '<span class="t-{test}"/>' +
+              '<b:content>' +
+                '<span class="t-{test}"/>' +
+              '</b:content>'
+            );
+
+            assert(text(template, { test: 1 }) === text('<span class="t-test"/><span class="t-test"/>'));
+          }
+        },
+        {
+          name: '<b:define>',
+          test: function(){
+            var template = createTemplate(
+              '<b:style ns="foo"></b:style>' +
+              '<span class="foo:test"/>' +
+              '<b:content>' +
+                '<span class="foo:test"/>' +
+              '</b:content>'
+            );
+            var instance = template.createInstance();
+            var className = instance.element.className;
+
+            assert(className !== 'foo:test');
+            assert(/^\S+test$/.test(className));
+            assert(text(instance) === text('<span class="' + className + '"/><span class="' + className + '"/>'));
+          }
+        }
+      ]
+    },
+    {
       name: 'multiple b:content declarations',
       test: [
         {
