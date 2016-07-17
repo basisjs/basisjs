@@ -170,7 +170,7 @@ module.exports = {
             );
 
             assert(template.decl_.warns.length === 1);
-            assert(/^Instruction tag <b:style> should place in /.test(String(template.decl_.warns[0])));
+            assert(/^Instruction tag <b:style> should be placed in /.test(String(template.decl_.warns[0])));
           }
         },
         {
@@ -183,7 +183,7 @@ module.exports = {
             );
 
             assert(template.decl_.warns.length === 1);
-            assert(/^Instruction tag <b:style> should place in /.test(String(template.decl_.warns[0])));
+            assert(/^Instruction tag <b:style> should be placed in /.test(String(template.decl_.warns[0])));
           }
         },
         {
@@ -197,7 +197,7 @@ module.exports = {
             );
 
             assert(template.decl_.warns.length === 1);
-            assert(/^Instruction tag <b:style> should place in /.test(String(template.decl_.warns[0])));
+            assert(/^Instruction tag <b:style> should be placed in /.test(String(template.decl_.warns[0])));
           }
         }
       ]

@@ -11,6 +11,27 @@ var ABSTRACTDATA_ACTIVE_SYNC_HANDLER = {
   }
 };
 
+function callSyncAction(object){
+  var syncResult = object.syncAction();
+
+  // if syncAction return a Promise-like value try to sync state with it
+  if (syncResult && typeof syncResult.then == 'function')
+  {
+    var syncAction = object.syncAction;
+
+    if (object.state != STATE.PROCESSING)
+      object.setState(STATE.PROCESSING);
+
+    syncResult.then(function(){
+      if (object.syncAction === syncAction && object.state == STATE.PROCESSING)
+        object.setState(STATE.READY);
+    }, function(e){
+      if (object.syncAction === syncAction && object.state == STATE.PROCESSING)
+        object.setState(STATE.ERROR, e);
+    });
+  }
+}
+
 /**
 * Base class for any data type class.
 * @class
@@ -98,7 +119,7 @@ var AbstractData = Emitter.subclass({
   syncEvents: basis.Class.oneFunctionProperty(
     function(){
       if (this.isSyncRequired())
-        this.syncAction();
+        callSyncAction(this);
     },
     {
       stateChanged: true,
@@ -302,7 +323,7 @@ var AbstractData = Emitter.subclass({
       if (!oldAction)
         this.addHandler(this.syncEvents);
       if (this.isSyncRequired())
-        this.syncAction();
+        callSyncAction(this);
     }
     else
     {
