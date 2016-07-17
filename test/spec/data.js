@@ -7,6 +7,7 @@ module.exports = {
     require('./data/subscription.js'),
     require('./data/value.js'),
     require('./data/object.js'),
-    require('./data/dataset.js')
+    require('./data/dataset.js'),
+    require('./data/action.js')
   ]
 };
