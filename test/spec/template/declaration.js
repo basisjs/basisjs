@@ -4,11 +4,9 @@ module.exports = {
     {
       name: 'empty declaration',
       test: function(){
-        var tokens = JSON.stringify(
-          nsTemplate.makeDeclaration('').tokens
-        );
+        var tokens = makeDeclarationAstString('');
 
-        assert(tokens === '[[3,0,["element"],""],[9,0]]');
+        assert(tokens === '[[3,0,["element"]],[9,0]]');
       }
     },
     {
@@ -17,12 +15,10 @@ module.exports = {
         {
           name: 'when remove reference binding shouldn\'t be lost',
           test: function(){
-            var tokens = JSON.stringify(
-              nsTemplate.makeDeclaration(
-                '<div{ref}>' +
-                  '<div{ref}/>' +
-                '</div>'
-              ).tokens
+            var tokens = makeDeclarationAstString(
+              '<div{ref}>' +
+                '<div{ref}/>' +
+              '</div>'
             );
 
             assert(tokens === '[[1,"ref",["element"],"div",[1,1,["ref"],"div"]],[9,0]]');
@@ -31,14 +27,12 @@ module.exports = {
         {
           name: 'single reference',
           test: function(){
-            var tokens = JSON.stringify(
-              nsTemplate.makeDeclaration(
-                '<div>' +
-                  '<div{foo}/>' +
-                  '{bar}' +
-                  '<!--{baz}-->' +
-                '</div>'
-              ).tokens
+            var tokens = makeDeclarationAstString(
+              '<div>' +
+                '<div{foo}/>' +
+                '{bar}' +
+                '<!--{baz}-->' +
+              '</div>'
             );
 
             assert(tokens === '[[1,0,["element"],"div",[1,1,["foo"],"div"],[3,1,["bar"]],[8,1,["baz"]]],[9,0]]');
@@ -47,14 +41,12 @@ module.exports = {
         {
           name: 'multiple references',
           test: function(){
-            var tokens = JSON.stringify(
-              nsTemplate.makeDeclaration(
-                '<div>' +
-                  '<div{foo|a}/>' +
-                  '{bar|b}' +
-                  '<!--{baz|c}-->' +
-                '</div>'
-              ).tokens
+            var tokens = makeDeclarationAstString(
+              '<div>' +
+                '<div{foo|a}/>' +
+                '{bar|b}' +
+                '<!--{baz|c}-->' +
+              '</div>'
             );
 
             assert(tokens === '[[1,0,["element"],"div",[1,1,["foo","a"],"div"],[3,1,["bar","b"]],[8,1,["baz","c"]]],[9,0]]');
@@ -68,14 +60,12 @@ module.exports = {
         {
           name: 'should add references to element',
           test: function(){
-            var tokens = JSON.stringify(
-              nsTemplate.makeDeclaration(
-                '<div{ref}>' +
-                  '<div b:ref="ref"/>' +
-                  '<div b:ref="foo bar"/>' +
-                  '<div b:ref="baz"/>' +
-                '</div>'
-              ).tokens
+            var tokens = makeDeclarationAstString(
+              '<div{ref}>' +
+                '<div b:ref="ref"/>' +
+                '<div b:ref="foo bar"/>' +
+                '<div b:ref="baz"/>' +
+              '</div>'
             );
 
             assert(tokens === '[[1,"ref",["element"],"div",[1,1,["ref"],"div"],[1,1,["foo","bar"],"div"],[1,1,["baz"],"div"]],[9,0]]');
@@ -84,12 +74,10 @@ module.exports = {
         {
           name: 'should override references set by `<element{ref}>`',
           test: function(){
-            var tokens = JSON.stringify(
-              nsTemplate.makeDeclaration(
-                '<div>' +
-                  '<div{a} b:ref="b"/>' +
-                '</div>'
-              ).tokens
+            var tokens = makeDeclarationAstString(
+              '<div>' +
+                '<div{a} b:ref="b"/>' +
+              '</div>'
             );
 
             assert(tokens === '[[1,0,["element"],"div",[1,1,["a","b"],"div"]],[9,0]]');
@@ -98,13 +86,104 @@ module.exports = {
         {
           name: 'should keep {element} reference when override references',
           test: function(){
-            var tokens = JSON.stringify(
-              nsTemplate.makeDeclaration(
-                '<div b:ref="b"/>'
-              ).tokens
+            var tokens = makeDeclarationAstString(
+              '<div b:ref="b"/>'
             );
 
             assert(tokens === '[[1,1,["b","element"],"div"],[9,0]]');
+          }
+        }
+      ]
+    },
+    {
+      name: 'implicit element reference',
+      test: [
+        {
+          name: 'element',
+          test: function(){
+            var tokens = makeDeclarationAstString('<div/>');
+
+            assert(tokens === '[[1,0,["element"],"div"],[9,0]]');
+          }
+        },
+        {
+          name: 'element with binding',
+          test: function(){
+            var tokens = makeDeclarationAstString('<div{foo}/>');
+
+            assert(tokens === '[[1,1,["foo","element"],"div"],[9,0]]');
+          }
+        },
+        {
+          name: 'text node',
+          test: function(){
+            var tokens = makeDeclarationAstString('text');
+
+            assert(tokens === '[[3,0,["element"],"text"],[9,0]]');
+          }
+        },
+        {
+          name: 'text node with binding',
+          test: function(){
+            var tokens = makeDeclarationAstString('{foo}');
+
+            assert(tokens === '[[3,1,["foo","element"]],[9,0]]');
+          }
+        },
+        {
+          name: 'should not add to comment',
+          test: function(){
+            var tokens = makeDeclarationAstString('<!--comment-->');
+
+            assert(tokens === '[[3,0,["element"]],[8,0,0,"comment"],[9,0]]');
+          }
+        },
+        {
+          name: 'should ignore comments',
+          test: function(){
+            var tokens = makeDeclarationAstString('<!--comment--><!--comment--><div/>');
+
+            assert(tokens === '[[8,0,0,"comment"],[8,0,0,"comment"],[1,0,["element"],"div"],[9,0]]');
+          }
+        },
+        {
+          name: 'comment with binding',
+          test: function(){
+            var tokens = makeDeclarationAstString('<!--{foo}-->');
+
+            assert(tokens === '[[8,1,["foo","element"]],[9,0]]');
+          }
+        }
+      ]
+    },
+    {
+      name: 'comment',
+      test: [
+        {
+          name: 'should not remove comments',
+          test: function(){
+            var tokens = makeDeclarationAstString(
+              '<!-- comment -->' +
+              '<div><!-- comment --></div>' +
+              '<!-- comment -->'
+            );
+
+            assert(tokens === '[[8,0,0," comment "],[1,0,["element"],"div",[8,0,0," comment "]],[8,0,0," comment "],[9,0]]');
+
+          }
+        },
+        {
+          name: 'comments with no refs/bindings should be removed when optimizeSize: true',
+          test: function(){
+            var tokens = makeDeclarationAstString(
+              '<!-- remove me -->' +
+              '<div><!-- remove me --></div>' +
+              '<!-- remove me -->',
+              null,
+              { optimizeSize: true }
+            );
+
+            assert(tokens === '[[1,0,["element"],"div"],[9,0]]');
           }
         }
       ]

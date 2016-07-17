@@ -19,6 +19,7 @@ var TYPE_COMMENT = consts.TYPE_COMMENT;
 var TYPE_CONTENT = consts.TYPE_CONTENT;
 var TOKEN_TYPE = consts.TOKEN_TYPE;
 var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
+var TOKEN_REFS = consts.TOKEN_REFS;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
 var TEXT_VALUE = consts.TEXT_VALUE;
@@ -337,22 +338,25 @@ var makeDeclaration = (function(){
     });
   }
 
-  function findNonSpecialToken(tokens){
-    function find(tokens, offset){
-      for (var i = offset; i < tokens.length; i++)
+  function findElementCandidateNode(ast){
+    function find(node, offset){
+      for (var i = offset; i < node.length; i++)
       {
-        var token = tokens[i];
-        var type = token[TOKEN_TYPE];
+        var child = node[i];
+        var type = child[TOKEN_TYPE];
         var result;
 
         if (type == TYPE_ELEMENT ||
-            type == TYPE_TEXT ||
-            type == TYPE_COMMENT)
-          return token;
+            type == TYPE_TEXT)
+          return child;
+
+        if (type == TYPE_COMMENT)
+          if (child[TOKEN_REFS] || child[TOKEN_BINDINGS])
+            return child;
 
         if (type == TYPE_CONTENT)
         {
-          result = find(token, CONTENT_CHILDREN);
+          result = find(child, CONTENT_CHILDREN);
           if (result)
             return result;
         }
@@ -361,7 +365,7 @@ var makeDeclaration = (function(){
       return null;
     }
 
-    return find(tokens, 0);
+    return find(ast, 0);
   }
 
   return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
@@ -456,7 +460,7 @@ var makeDeclaration = (function(){
 
     // normalize refs and find first non special node
     var tokenRefMap = normalizeRefs(result.tokens);
-    var elementToken = findNonSpecialToken(result.tokens);
+    var elementCandidateNode = findElementCandidateNode(result.tokens);
     var contentNodeRef = tokenRefMap[':content'];
 
     // downgrade explicit high priority content to normal explicit
@@ -484,15 +488,15 @@ var makeDeclaration = (function(){
     });
 
     // there must be at least one normal node in result
-    if (!elementToken)
+    if (!elementCandidateNode)
     {
-      elementToken = [TYPE_TEXT, 0, 0, ''];
-      result.tokens.unshift(elementToken);
+      elementCandidateNode = [TYPE_TEXT, 0, 0];
+      result.tokens.unshift(elementCandidateNode);
     }
 
     // add explicit element ref if it doesn't exist yet
     if (!tokenRefMap.element)
-      addTokenRef(elementToken, 'element');
+      addTokenRef(elementCandidateNode, 'element');
 
     // deal with defines
     applyDefines(result.tokens, result, options);

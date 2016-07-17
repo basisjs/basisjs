@@ -22,6 +22,12 @@ module.exports = {
 
       return expected;
     }
+
+    function makeDeclarationAstString(){
+      return JSON.stringify(
+        nsTemplate.makeDeclaration.apply(this, arguments).tokens
+      );
+    }
   },
 
   test: [
