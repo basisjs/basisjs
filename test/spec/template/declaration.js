@@ -2,18 +2,112 @@ module.exports = {
   name: 'declaration',
   test: [
     {
-      name: 'when remove reference binding shouldn\'t be lost',
+      name: 'empty declaration',
       test: function(){
         var tokens = JSON.stringify(
-          nsTemplate.makeDeclaration(
-            '<div{ref}>' +
-              '<div{ref}/>' +
-            '</div>'
-          ).tokens
+          nsTemplate.makeDeclaration('').tokens
         );
 
-        assert(tokens === '[[1,"ref",["element"],"div",[1,1,["ref"],"div"]],[9,0]]');
+        assert(tokens === '[[3,0,["element"],""],[9,0]]');
       }
+    },
+    {
+      name: 'references and bindings',
+      test: [
+        {
+          name: 'when remove reference binding shouldn\'t be lost',
+          test: function(){
+            var tokens = JSON.stringify(
+              nsTemplate.makeDeclaration(
+                '<div{ref}>' +
+                  '<div{ref}/>' +
+                '</div>'
+              ).tokens
+            );
+
+            assert(tokens === '[[1,"ref",["element"],"div",[1,1,["ref"],"div"]],[9,0]]');
+          }
+        },
+        {
+          name: 'single reference',
+          test: function(){
+            var tokens = JSON.stringify(
+              nsTemplate.makeDeclaration(
+                '<div>' +
+                  '<div{foo}/>' +
+                  '{bar}' +
+                  '<!--{baz}-->' +
+                '</div>'
+              ).tokens
+            );
+
+            assert(tokens === '[[1,0,["element"],"div",[1,1,["foo"],"div"],[3,1,["bar"]],[8,1,["baz"]]],[9,0]]');
+          }
+        },
+        {
+          name: 'multiple references',
+          test: function(){
+            var tokens = JSON.stringify(
+              nsTemplate.makeDeclaration(
+                '<div>' +
+                  '<div{foo|a}/>' +
+                  '{bar|b}' +
+                  '<!--{baz|c}-->' +
+                '</div>'
+              ).tokens
+            );
+
+            assert(tokens === '[[1,0,["element"],"div",[1,1,["foo","a"],"div"],[3,1,["bar","b"]],[8,1,["baz","c"]]],[9,0]]');
+          }
+        }
+      ]
+    },
+    {
+      name: 'b:ref',
+      test: [
+        {
+          name: 'should add references to element',
+          test: function(){
+            var tokens = JSON.stringify(
+              nsTemplate.makeDeclaration(
+                '<div{ref}>' +
+                  '<div b:ref="ref"/>' +
+                  '<div b:ref="foo bar"/>' +
+                  '<div b:ref="baz"/>' +
+                '</div>'
+              ).tokens
+            );
+
+            assert(tokens === '[[1,"ref",["element"],"div",[1,1,["ref"],"div"],[1,1,["foo","bar"],"div"],[1,1,["baz"],"div"]],[9,0]]');
+          }
+        },
+        {
+          name: 'should override references set by `<element{ref}>`',
+          test: function(){
+            var tokens = JSON.stringify(
+              nsTemplate.makeDeclaration(
+                '<div>' +
+                  '<div{a} b:ref="b"/>' +
+                '</div>'
+              ).tokens
+            );
+
+            assert(tokens === '[[1,0,["element"],"div",[1,1,["a","b"],"div"]],[9,0]]');
+          }
+        },
+        {
+          name: 'should keep {element} reference when override references',
+          test: function(){
+            var tokens = JSON.stringify(
+              nsTemplate.makeDeclaration(
+                '<div b:ref="b"/>'
+              ).tokens
+            );
+
+            assert(tokens === '[[1,1,["b","element"],"div"],[9,0]]');
+          }
+        }
+      ]
     },
     {
       name: 'the same style from different includes should produce single resource',

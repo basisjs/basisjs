@@ -22,7 +22,7 @@ function addTokenRef(token, refName){
 
   arrayAdd(token[TOKEN_REFS], refName);
 
-  if (refName != 'element')
+  if (refName != 'element' && !token[TOKEN_BINDINGS])
     token[TOKEN_BINDINGS] = token[TOKEN_REFS].length == 1 ? refName : 0;
 }
 

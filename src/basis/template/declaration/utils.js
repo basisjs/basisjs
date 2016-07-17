@@ -29,7 +29,7 @@ function getTokenName(token){
 function bindingList(token){
   var refs = token.refs;
 
-  return refs && refs.length == 1 ? refs[0] : 0;
+  return refs && refs.length ? refs[0] : 0;
 }
 
 function getTokenAttrValues(token){
