@@ -156,13 +156,9 @@
  /**
   * readyState change handler
   * private method
-  * @function readyStateChangeHandler
   */
   function readyStateChangeHandler(readyState){
     var xhr = this.xhr;
-    var newState;
-    var newStateData;
-    var aborted;
 
     // reset send delay timer
     this.sendDelayTimer_ = clearTimeout(this.sendDelayTimer_);
@@ -173,7 +169,7 @@
     if (typeof readyState != 'number')
       readyState = xhr.readyState;
 
-    // BUGFIX: IE & Gecko fire OPEN readystate twice
+    // BUGFIX: IE & Gecko fire OPEN readyState twice
     if (readyState == this.prevReadyState_)
       return;
 
@@ -187,56 +183,61 @@
 
     if (readyState == STATE_DONE)
     {
-      this.clearTimeout();
-
       // clean event handler
       xhr.onreadystatechange = basis.fn.$undef;
+      // xhr.onabort = basis.fn.$undef;
 
-      aborted = xhr.status == 0;
-      if (!aborted && !xhr.responseType)
-        aborted = typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders());
+      // delay process response since abort event fires after readyStateChanged
+      this.clearTimeout();
+      this.timer_ = setTimeout(processResponse.bind(this), 10);
 
-      if (aborted)
-      {
-        this.emit_abort();
-        newState = this.stateOnAbort;
-      }
-      else
-      {
-        this.processResponse();
+      return;
+    }
 
-        // dispatch events
-        if (this.isSuccessful())
-        {
-          newState = STATE.READY;
+    // set new state
+    this.setState(STATE.PROCESSING);
+  }
 
-          this.emit_success(this.getResponseData());
-        }
-        else
-        {
-          newState = STATE.ERROR;
-          newStateData = this.getResponseError();
+  function processResponse(){
+    var newState;
+    var newStateData;
 
-          // NOTE: for backward capability of deprecated behaviour
-          // should be removed in future (deprecated in 1.2.0)
-          if (!newStateData && this.data.error)
-          {
-            /** @cut */ basis.dev.warn('Request#getResponseError should not update request data, but returns error data. Please, fix your method implementation, as data updating is deprecated behaviour.');
-            newStateData = this.data.error;
-          }
+    this.clearTimeout();
 
-          this.emit_failure(newStateData);
-        }
-      }
+    this.processResponse();
 
-      // dispatch complete event
-      this.emit_complete(this);
+    // dispatch events
+    if (this.isSuccessful())
+    {
+      newState = STATE.READY;
+
+      this.emit_success(this.getResponseData());
     }
     else
-      newState = STATE.PROCESSING;
+    {
+      newState = STATE.ERROR;
+      newStateData = this.getResponseError();
+
+      this.emit_failure(newStateData);
+    }
+
+    // dispatch complete event
+    this.emit_complete();
 
     // set new state
     this.setState(newState, newStateData);
+  }
+
+  function abortHandler(){
+    this.clearTimeout();
+
+    this.emit_abort();
+
+    // dispatch complete event
+    this.emit_complete(this);
+
+    // set new state
+    this.setState(this.stateOnAbort);
   }
 
 
@@ -380,6 +381,7 @@
 
       // set ready state change handler
       xhr.onreadystatechange = readyStateChangeHandler.bind(this);
+      xhr.onabort = abortHandler.bind(this);
 
       // catch state change for 'loading' in synchronous mode
       if (!requestData.asynchronous)
