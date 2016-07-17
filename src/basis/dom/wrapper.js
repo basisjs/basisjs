@@ -623,7 +623,10 @@
     propertyDescriptors: {
       owner: 'ownerChanged',
       parentNode: 'parentChanged',
-      childNodes: 'childNodesModified',
+      childNodes: {
+        nested: ['length'],
+        events: 'childNodesModified'
+      },
       childNodesState: 'childNodesStateChanged',
       dataSource: 'dataSourceChanged',
       'getChildNodesDataset()': true,
