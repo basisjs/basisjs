@@ -893,6 +893,17 @@
           var path1 = path[++index];
           var fullPath = path0 + '.' + path1;
 
+          if (Array.isArray(descriptor.nested) && descriptor.nested.indexOf(path1) == -1)
+          {
+            /** @cut */ var warnMessage = 'Property can\'t to be observable: ';
+            /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+            /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length + 1) +
+            /** @cut */   basis.string.repeat('^', path1.length) + '\n' +
+            /** @cut */   'Owner has a limited set of observable properties: ' + descriptor.nested.join(', ')
+            /** @cut */ );
+            return;
+          }
+
           pathFragment = queryNestedFunctionCache[fullPath];
 
           if (!pathFragment)
