@@ -3,10 +3,12 @@ var Node = require('basis.ui').Node;
 
 module.exports = Node.subclass({
   mode: 'vertical',
+  previewSize: undefined,
 
   template: resource('./template/viewer.tmpl'),
   binding: {
     mode: 'mode',
+    previewSize: 'previewSize',
     files: 'satellite:',
     editor: 'satellite:',
     preview: 'satellite:'

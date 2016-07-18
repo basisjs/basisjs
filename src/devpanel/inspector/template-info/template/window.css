@@ -13,6 +13,8 @@
   transform: translateZ(0);
   background: rgba(0, 0, 0, .2);
   overflow: auto;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 12px;
 }
 .window__wrapper:before
 {
@@ -71,7 +73,7 @@
 {
   padding-bottom: 1px;
 }
-.source-title
+.header
 {
   font-size: 12px;
   padding: 3px 3ex;
@@ -80,6 +82,9 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.source-title
+{
   color: #666;
 }
 .source-title_isFile
@@ -90,6 +95,14 @@
 .source-title_isFile:hover
 {
   color: #A00;
+}
+.warnings
+{
+  padding-left: 18px;
+  background: url(warning.png) no-repeat left center;
+  min-height: 16px;
+  display: inline-block;
+  color: #A82;
 }
 .button
 {

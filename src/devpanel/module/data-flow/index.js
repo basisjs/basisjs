@@ -2,7 +2,6 @@ var Node = require('basis.ui').Node;
 var jsSourcePopup = require('../js-source-popup/index.js');
 var createEvent = require('basis.event').create;
 var getBoundingRect = require('basis.layout').getBoundingRect;
-var resize = require('basis.dom.resize');
 var jsSourceTimer;
 
 var FlowNode = Node.subclass({

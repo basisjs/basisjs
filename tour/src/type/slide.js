@@ -37,7 +37,7 @@ Slide.linkWithResource = function(resource){
       prev = item;
     }
 
-    Slide.all.setAndDestroyRemoved(data);
+    Slide.all.set(data);
   }).fetch();
 };
 

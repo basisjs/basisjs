@@ -1,4 +1,5 @@
 var consts = require('basis.template.const');
+var convertToRange = require('basis.utils.source').convertToRange;
 var Node = require('basis.ui').Node;
 var fileAPI = require('../../api/file.js');
 var declToken = new basis.Token();
@@ -54,17 +55,17 @@ function getTokenAttrs(token){
   return result;
 }
 
-var buildHtml = function(tokens, parent, colorMap){
+function escapeHtml(str){
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;');
+}
+
+var buildHtml = function(tokens, parent, colorMap, offset){
   function expression(binding){
     return binding[1].map(function(sb){
       return typeof sb == 'number' ? '<span class="refs">{' + this[sb] + '}</span>' : sb;
     }, binding[0]).join('');
-  }
-
-  function escapeHtml(str){
-    return String(str || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;');
   }
 
   function markSource(loc, str){
@@ -127,7 +128,7 @@ var buildHtml = function(tokens, parent, colorMap){
     colorMap: colorMap
   };
 
-  for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
+  for (var i = offset || 0, token; token = tokens[i]; i++)
   {
     switch (token[consts.TOKEN_TYPE])
     {
@@ -135,7 +136,7 @@ var buildHtml = function(tokens, parent, colorMap){
         var tagName = token[consts.ELEMENT_NAME];
 
         // precess for children and attributes
-        var res = buildHtml(token, true, colorMap);
+        var res = buildHtml(token, true, colorMap, consts.ELEMENT_ATTRIBUTES_AND_CHILDREN);
 
         // add to result
         var html = '&lt;' + tagName + refs(token);
@@ -149,6 +150,21 @@ var buildHtml = function(tokens, parent, colorMap){
           html += '>\n' +
             '  ' + res.children.join('\n').replace(/\n/g, '\n  ') + '\n' +
             '&lt;/' + tagName + '>';
+
+        addToResult(result.children, token, html);
+
+        break;
+
+      case consts.TYPE_CONTENT:
+        var res = buildHtml(token, true, colorMap, consts.CONTENT_CHILDREN);
+        var html;
+
+        if (!res.children.length)
+          html = '&lt;b:content/>';
+        else
+          html = '&lt;b:content>\n' +
+            '  ' + res.children.join('\n').replace(/\n/g, '\n  ') + '\n' +
+            '&lt;/b:content>';
 
         addToResult(result.children, token, html);
 
@@ -239,32 +255,146 @@ var view = new Node({
         }
 
         var content = node.data.content;
-        var ranges = node.data.ranges;
-        var color = node.data.color;
+        var markup = node.data.markup;
+        var color = '';
         var offset = 0;
         var res = '';
 
-        for (var i = 0, range; range = ranges[i]; i++)
+        for (var i = 0, range; range = markup[i]; i++)
         {
-          res +=
-            wrap(color, content.substring(offset, range[0])) +
-            wrap(range[2], content.substring(range[0], range[1]));
+          if (range[0] !== offset)
+            res += wrap(color, content.substring(offset, range[0]));
+
+          if (range[0] !== range[1])
+            res += wrap(range[2], content.substring(range[0], range[1]));
+          else
+            res += '<span style="background-color: ' + range[2] + '" class="warning" title="' + escapeHtml(range[3]) + '" event-click="openFile" data-loc="' + escapeHtml(range[4]) + '"></span>';
 
           offset = range[1];
         }
 
         return res + wrap(color, content.substring(offset));
       },
-      color: 'data:'
+      warningCount: 'data:warnings.length'
     },
     action: {
-      openFile: function(){
-        if (this.data.url)
-          fileAPI.openFile(this.data.url);
+      openFile: function(e){
+        var loc = e.sender.getAttribute('data-loc');
+        if (loc)
+          fileAPI.openFile(loc);
       }
     }
   }
 });
+
+function addRange(ranges, range){
+  var start = range[0];
+  var end = range[1];
+  var existsRange = ranges[start];
+
+  if (!existsRange)
+  {
+    ranges[start] = range;
+    for (var i = start - 1; i >= 0; i--)
+      if (i in ranges)
+      {
+        var prevRange = ranges[i];
+
+        if (prevRange[1] < start)
+        {
+          // no intersection, nothing to do here since everything is ok
+          // 1: xxxxx
+          // 2:      yyyyy
+          // =
+          //    xxxxxyyyyy
+          break;
+        }
+
+        if (prevRange[1] <= end)
+        {
+          // intersection -> change previous range
+          // 1: xxxxxxx
+          // 2:      yyyyy
+          // =
+          //    xxxxxyyyyy
+          prevRange[1] = start;
+        }
+        else if (prevRange[1] > end)
+        {
+          // intersection -> split previous range
+          // 1: xxxxxxxxxxxxx
+          // 2:      yyyyy
+          // =
+          //    xxxxxyyyyyxxx
+          addRange(ranges, [end, prevRange[1], prevRange[2]]);
+          prevRange[1] = start;
+        }
+        break;
+      }
+  }
+  else
+  {
+    // new range on the same position as existing one
+    var length = end - start;
+    var existsLength = existsRange[1] - existsRange[0];
+
+    if (length > existsLength)
+    {
+      // 1: xxxxx
+      // 2: yyyyyyyy
+      // =
+      //    xxxxx
+      //         yyyy
+      range[0] += existsLength;
+      addRange(ranges, range);
+    }
+    else if (length < existsLength)
+    {
+      // 1: xxxxxxxx
+      // 2: yyyyy
+      // =
+      //         xxx
+      //    yyyyy
+      ranges[start] = range;
+      existsRange[0] += length;
+      addRange(ranges, existsRange);
+    }
+    else
+    {
+      // 1: xxxxx
+      // 2: yyyyy
+      // =
+      //    yyyyy
+      ranges[start] = range;
+    }
+  }
+
+  return ranges;
+}
+
+function insertPoint(ranges, point){
+  var start = point[0];
+
+  for (var i = start; i >= 0; i--)
+    if (i in ranges)
+    {
+      var range = ranges[i];
+
+      point[2] = range[2];
+
+      if (range[1] > start)
+      {
+        addRange(ranges, [start, range[1], range[2]]);
+        range[1] = start;
+      }
+
+      break;
+    }
+}
+
+function rangeSorting(a, b){
+  return a[0] - b[0] || (a[1] - a[0]) - (b[1] - b[0]);
+}
 
 declToken.attach(function(decl){
   var children = [];
@@ -279,7 +409,7 @@ declToken.attach(function(decl){
     var root = {
       token: null,
       src: null,
-      resource: basis.object.extend(new basis.Token(decl.tokens.source_), {
+      resource: basis.object.extend(new basis.Token(decl.tokens.source_ || ''), {
         url: decl.sourceUrl || ''
       }),
       nested: decl.includes
@@ -288,36 +418,88 @@ declToken.attach(function(decl){
     code = bb.children.join('\n');
     children = [root].map(function processInclude(inc){
       var resource = inc.resource;
+      var source = String(resource.bindingBridge ? resource.bindingBridge.get(resource) : resource);
+      var warnFilter = inc === root ? undefined : inc.token;
+
+      var ranges = [
+          [0, source.length, this.colorMap.get(resource.url || '', 'red')]
+        ]
+        .concat(
+          decl.styles.filter(function(style){
+            return style.includeToken === inc.token && !style.resource && !style.namespace;
+          }).map(function(style){
+            return style.styleToken.range;
+          })
+        )
+        .concat(
+          decl.removals.filter(function(removal){
+            return removal.includeToken === inc.token && removal.token.sourceToken;
+          }).map(function(removal){
+            return removal.node.sourceToken.range;
+          })
+        )
+        .concat(
+          inc.nested.map(function(item){
+            return getTokenAttrs(item.token).src.valueRange.concat(
+              this.colorMap.get(item.resource.url || item.resource)
+            );
+          }, this)
+        )
+        .sort(rangeSorting)
+        .reduce(addRange, {});
+
+      var warnings = (decl.warns || [])
+        .filter(function(warn){
+          return warn.source === warnFilter;
+        })
+        .reduce(function(map, warn){
+          var parts = (warn.loc || '').split(':');
+          var point = { line: Number(parts[1]), column: Number(parts[2]) };
+          var range = convertToRange(source, point, point);
+          var record = range.concat(
+            '',
+            String(warn),
+            warn.loc.charAt(0) === ':' ? '' : warn.loc
+          );
+
+          insertPoint(ranges, record);
+
+          if (!map[range[0]])
+            map[range[0]] = [record];
+          else
+            map[range[0]].push(record);
+
+          return map;
+        }, {});
+
+      var markup = [];
+
+      for (var i = 0; i < source.length; i++)
+      {
+        if (warnings[i])
+          markup.push.apply(markup, warnings[i]);
+
+        if (ranges[i])
+        {
+          var range = ranges[i];
+          var trailingSpaces = source.substring(range[0], range[1]).match(/\n\s+$/);
+
+          if (trailingSpaces)
+            range[1] -= trailingSpaces[0].length;
+
+          // don't add zero-length ranges
+          if (range[0] !== range[1])
+            markup.push(range);
+        }
+      }
+
       return {
         data: {
           url: resource.url,
           content: resource.bindingBridge ? resource.bindingBridge.get(resource) : resource,
           color: this.colorMap.get(resource.url || '', 'red'),
-          ranges: []
-            .concat(
-              decl.styles.filter(function(style){
-                return style.includeToken === inc.token && !style.resource && !style.namespace;
-              }).map(function(style){
-                return style.styleToken.range;
-              })
-            )
-            .concat(
-              decl.removals.filter(function(removal){
-                return removal.includeToken === inc.token && removal.token.sourceToken;
-              }).map(function(removal){
-                return removal.token.sourceToken.range;
-              })
-            )
-            .concat(
-              inc.nested.map(function(item){
-                return getTokenAttrs(item.token).src.valueRange.concat(
-                  this.colorMap.get(item.resource.url || item.resource)
-                );
-              }, this)
-            )
-            .sort(function(a, b){
-              return a[0] - b[0];
-            })
+          warnings: warnings,
+          markup: markup
         },
         childNodes: inc.nested.map(processInclude, this)
       };

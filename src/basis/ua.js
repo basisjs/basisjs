@@ -7,7 +7,6 @@
   var opera = global.opera;
   var versions = {};
   var answers = {};
-  var browserName = 'unknown';
   var browserPrettyName = 'unknown';
   var browserNames = {
     'MSIE':        ['Internet Explorer', 'msie', 'ie'],
@@ -48,7 +47,6 @@
       var version   = opera && typeof opera.version == 'function' ? opera.version() : RegExp.$1;
       var verNumber = versionToInt(version);
 
-      browserName = names[0] + verNumber;
       browserPrettyName = names[0] + ' ' + version;
 
       for (var j = 0; j < names.length; j++)

@@ -7,7 +7,7 @@ module.exports = {
         var a = createTemplate('<span title="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="class"/></b:include>');
 
-        this.is(text('<span title="a"/>'), text(b));
+        assert(text(b) === text('<span title="a"/>'));
       }
     },
     {
@@ -16,7 +16,7 @@ module.exports = {
         var a = createTemplate('<span title="a"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="title"/></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
       }
     },
     {
@@ -25,7 +25,7 @@ module.exports = {
         var a = createTemplate('<span class="a b"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="class"/></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
       }
     },
     {
@@ -34,7 +34,7 @@ module.exports = {
         var a = createTemplate('<span id="foo"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="id"/></b:include>');
 
-        this.is(text('<span/>'), text(b));
+        assert(text(b) === text('<span/>'));
       }
     },
     {
@@ -43,7 +43,7 @@ module.exports = {
         var a = createTemplate('<span event-click="click"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="event-click"/></b:include>');
 
-        this.is(text('<span{field}/>'), text(b));
+        assert(text(b) === text('<span{field}/>'));
       }
     },
     {
@@ -52,7 +52,7 @@ module.exports = {
         var a = createTemplate('<span style="width: 100px;"/>');
         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="style"/></b:include>');
 
-        this.is(text('<span{field}/>'), text(b));
+        assert(text(b) === text('<span{field}/>'));
       }
     }
   ]

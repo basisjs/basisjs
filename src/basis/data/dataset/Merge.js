@@ -16,11 +16,11 @@ SUBSCRIPTION.add(
 
       if (array = delta.inserted)
         for (var i = 0, item; item = array[i]; i++)
-          SUBSCRIPTION.link('source', object, array[i]);
+          SUBSCRIPTION.link('source', object, item);
 
       if (array = delta.deleted)
         for (var i = 0, item; item = array[i]; i++)
-          SUBSCRIPTION.unlink('source', object, array[i]);
+          SUBSCRIPTION.unlink('source', object, item);
     }
   },
   function(action, object){

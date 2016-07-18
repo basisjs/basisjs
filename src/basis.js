@@ -37,7 +37,7 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.7.0';
+  var VERSION = '1.8.1';
 
   var global = Function('return this')();
   var process = global.process;
@@ -2335,6 +2335,7 @@
 
   extend(getResource, {
     resolveURI: resolveResourceFilename,
+    buildCloak: getResource,  // hide resource declaration from builder
     isResource: function(value){
       return value ? resources[value.url] === value : false;
     },
@@ -3883,7 +3884,7 @@
   var devInfoResolver = (function(){
     /** @cut */ var getExternalInfo = $undef;
     var fixSourceOffset = $self;
-    var set = function(target, key, info){};
+    var set = function(/*target, key, info*/){};
     var patch = function(target, key, patch){
       /** @cut */ var oldInfo = get(target, key);
       /** @cut */

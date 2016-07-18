@@ -33,10 +33,14 @@
   height: 30%;
   margin-top: 5px;
 }
+.preview:not(.preview_horizontal)
+{
+  width: auto !important;
+}
 .preview_horizontal
 {
   margin-top: 33px;
   margin-left: 5px;
-  height: auto;
+  height: auto !important;
   width: 40%;
 }

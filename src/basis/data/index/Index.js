@@ -259,7 +259,7 @@ function removeDatasetIndex(dataset, index){
     index.removeHandler(DATASET_INDEX_HANDLER, dataset);
 
     // if any index in dataset nothing to do
-    for (var key in indexes)
+    for (var index in indexes)
       return;
 
     // if no indexes - delete indexes storage and remove handlers

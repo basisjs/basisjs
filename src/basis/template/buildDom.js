@@ -15,6 +15,7 @@ var TYPE_ATTRIBUTE_STYLE = consts.TYPE_ATTRIBUTE_STYLE;
 var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
 var TYPE_TEXT = consts.TYPE_TEXT;
 var TYPE_COMMENT = consts.TYPE_COMMENT;
+var TYPE_CONTENT = consts.TYPE_CONTENT;
 var TOKEN_TYPE = consts.TOKEN_TYPE;
 var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
 var TOKEN_REFS = consts.TOKEN_REFS;
@@ -23,6 +24,7 @@ var ATTR_VALUE = consts.ATTR_VALUE;
 var ATTR_VALUE_INDEX = consts.ATTR_VALUE_INDEX;
 var ELEMENT_NAME = consts.ELEMENT_NAME;
 var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
+var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 var TEXT_VALUE = consts.TEXT_VALUE;
 var COMMENT_VALUE = consts.COMMENT_VALUE;
 var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
@@ -245,10 +247,7 @@ function setAttribute(node, name, value){
     node.setAttribute(name, value);
 }
 
-var buildDOM = function(tokens, parent){
-  var result = parent || document.createDocumentFragment();
-  var offset = parent ? ELEMENT_ATTRIBUTES_AND_CHILDREN : 0;
-
+var buildDOM = function(tokens, offset, result){
   for (var i = offset, token; token = tokens[i]; i++)
   {
     var tokenType = token[TOKEN_TYPE];
@@ -262,11 +261,15 @@ var buildDOM = function(tokens, parent){
           : document.createElement(tagName);
 
         // precess for children and attributes
-        buildDOM(token, element);
+        buildDOM(token, ELEMENT_ATTRIBUTES_AND_CHILDREN, element);
 
         // add to result
         result.appendChild(element);
 
+        break;
+
+      case TYPE_CONTENT:
+        buildDOM(token, CONTENT_CHILDREN, result);
         break;
 
       case TYPE_ATTRIBUTE:
@@ -343,13 +346,17 @@ var buildDOM = function(tokens, parent){
     }
   }
 
+  return result;
+};
+
+module.exports = function(tokens){
+  var result = buildDOM(tokens, 0, document.createDocumentFragment());
+
   // if there is only one root node, document fragment isn't required
-  if (!parent && tokens.length == 1)
+  if (result.childNodes.length === 1)
     // remove single child otherwise reference dom fragment will has parent
     // but not its clones
     result = result.removeChild(result.firstChild);
 
   return result;
 };
-
-module.exports = buildDOM;
