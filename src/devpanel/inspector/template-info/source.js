@@ -409,7 +409,7 @@ declToken.attach(function(decl){
     var root = {
       token: null,
       src: null,
-      resource: basis.object.extend(new basis.Token(decl.tokens.source_), {
+      resource: basis.object.extend(new basis.Token(decl.tokens.source_ || ''), {
         url: decl.sourceUrl || ''
       }),
       nested: decl.includes

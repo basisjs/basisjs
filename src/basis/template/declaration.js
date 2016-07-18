@@ -451,8 +451,7 @@ var makeDeclaration = (function(){
     includeStack.pop();
 
     // store source for debug
-    /** @cut */ if (source_)
-    /** @cut */   result.tokens.source_ = source_;
+    /** @cut */ result.tokens.source_ = (source_ !== undefined ? source_ : source && source.source_) || '';
 
     // add implicit <b:content> to the end
     // it will be removed during normalization if explicit exists
