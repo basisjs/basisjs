@@ -103,11 +103,7 @@
     }
   });
 
-
-  function getSourceByPath(){
-    var path = basis.array(arguments).join('.');
-    var source;
-
+  function normalizePath(path){
     if (path.indexOf('@') == -1)
     {
       if (path in sourceReferenceByPath == false)
@@ -123,8 +119,15 @@
         sourceReferenceByPath[path] = templateName + '@' + url;
       }
 
-      path = sourceReferenceByPath[path];
+      return sourceReferenceByPath[path];
     }
+
+    return path;
+  }
+
+  function getSourceByPath(){
+    var path = normalizePath(basis.array(arguments).join('.'));
+    var source;
 
     if (sourceByPath[path] instanceof SourceWrapper)
     {
@@ -659,6 +662,7 @@
     define: baseTheme.define,
 
     get: getSourceByPath,
+    normalizePath: normalizePath,
     getPathList: function(){
       return basis.object.keys(sourceByPath);
     }
