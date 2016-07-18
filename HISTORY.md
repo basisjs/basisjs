@@ -1,3 +1,11 @@
+## 1.8.1 (July 18, 2016)
+
+- Fixed exception when using `b:ref` attribute in templates
+- Fixed template issue when value in reference list not used as binding (changes make sense for multi-references nodes only)
+- Fixed `<b:define>` apply to descendant nodes of `<b:content>`
+- Fixed edge case with comments when implicit `element` reference added to comment node with no refs and bindings but in production those nodes are remove
+- Fixed exception in devpanel template inspector when template source is empty string
+
 ## 1.8.0 (July 17, 2016)
 
 ### Core
