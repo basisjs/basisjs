@@ -687,11 +687,11 @@ function getDeclFromSource(source, baseURI, clone, options){
   }
   else
   {
-    if (typeof result != 'object' || !Array.isArray(result.tokens))
+    if (result && (typeof result != 'object' || !Array.isArray(result.tokens)))
       result = String(result);
   }
 
-  if (typeof result == 'string')
+  if (!result || typeof result == 'string')
     result = makeDeclaration(result, baseURI, options, sourceUrl, source);
 
   return result;
