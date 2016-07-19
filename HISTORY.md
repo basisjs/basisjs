@@ -1,3 +1,10 @@
+## 1.8.3 (July 19, 2016)
+
+- Fixed issues with `undefined` or `null` as template source (now it converts to empty string)
+- Fixed using `basis.template.SourceWrapper` as cell template value in `basis.ui.table`
+- Fixed navigation up from `basis.dom.wrapper.PartitionNode` instance to parent in template inspector
+- Added the button to navigate up to group node in template inspector
+
 ## 1.8.2 (July 19, 2016)
 
 - Fixed issue with build when using `invert` binding in template
