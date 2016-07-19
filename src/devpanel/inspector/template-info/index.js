@@ -107,14 +107,24 @@ var captureEvents = [
   'mouseleave'
 ];
 
+function up(upNode){
+  if (upNode && upNode.element)
+    selectedDomNode.set(upNode.element);
+}
+
 var view = new Window({
   modal: true,
   visible: selectedDomNode.as(Boolean),
   template: resource('./template/window.tmpl'),
   binding: {
-    upName: selectedObject.as(function(object){
-      if (object)
-        return object.parentNode ? 'parent' : object.owner ? 'owner' : '';
+    hasParent: selectedObject.as(function(object){
+      return Boolean(object && object.parentNode);
+    }),
+    hasOwner: selectedObject.as(function(object){
+      return Boolean(object && object.owner);
+    }),
+    hasGroup: selectedObject.as(function(object){
+      return Boolean(object && object.groupNode);
     }),
     sourceTitle: selectedTemplate.as(function(template){
       if (template)
@@ -143,18 +153,27 @@ var view = new Window({
     bindings: 'satellite:'
   },
   action: {
-    up: function(){
+    upParent: function(){
       var object = selectedObject.value;
-      if (object)
+      if (object && object.parentNode)
       {
-        var upNode = object.parentNode || object.owner;
+        var upNode = object.parentNode;
 
         if (upNode instanceof inspectBasisGroupingNode)
           upNode = upNode.owner;
 
-        if (upNode && upNode.element)
-          selectedDomNode.set(upNode.element);
+        up(upNode);
       }
+    },
+    upOwner: function(){
+      var object = selectedObject.value;
+      if (object && object.owner)
+        up(object.owner);
+    },
+    upGroup: function(){
+      var object = selectedObject.value;
+      if (object && object.groupNode)
+        up(object.groupNode);
     },
     close: function(){
       selectedDomNode.set();

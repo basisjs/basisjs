@@ -111,19 +111,18 @@
   line-height: 1.2;
   font-size: 12px;
 }
-.button_up
+.up-buttons
 {
-  position: relative;
-  left: -3px;
-  padding-left: 6px;
   display: inline-block;
-  visibility: hidden;
-  cursor: pointer;
+  margin-left: -6px;
   float: left;
 }
-.button_up.button_upName
+.button_up
 {
-  visibility: visible;
+  padding-left: 6px;
+  margin-right: 3px;
+  display: inline-block;
+  cursor: pointer;
 }
 .button_up:hover
 {
