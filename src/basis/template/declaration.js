@@ -369,8 +369,7 @@ var makeDeclaration = (function(){
   }
 
   return function makeDeclaration(source, baseURI, options, sourceUrl, sourceOrigin){
-    var warns = [];
-    /** @cut */ var source_;
+    /** @cut */ var source_ = source;
 
     // make copy of options (as modify it) and normalize
     options = basis.object.slice(options);
@@ -419,21 +418,21 @@ var makeDeclaration = (function(){
 
       l10n: [],
 
-      warns: warns
+      warns: []
     };
 
     /** @cut */ result.removals = [];
     /** @cut */ result.states = {};
 
+    if (!source)
+      source = '';
+
     // tokenize source if needed
     if (!Array.isArray(source))
-    {
-      /** @cut */ source_ = source;
-      source = tokenize(String(source), {
+      source = tokenize(String(source || ''), {
         loc: !!options.loc,
         range: !!options.range
       });
-    }
 
     // copy tokenizer warnings to template if any
     /** @cut */ if (source.warns)
@@ -451,7 +450,7 @@ var makeDeclaration = (function(){
     includeStack.pop();
 
     // store source for debug
-    /** @cut */ result.tokens.source_ = (source_ !== undefined ? source_ : source && source.source_) || '';
+    /** @cut */ result.tokens.source_ = source_ !== undefined ? source_ : source && source.source_;
 
     // add implicit <b:content> to the end
     // it will be removed during normalization if explicit exists
@@ -510,13 +509,15 @@ var makeDeclaration = (function(){
       isolateTokens(result.tokens, result.isolate || '', result, options);
 
       // isolate removed tokens, since devtools may process them
-      /** @cut */ result.warns = [];
       /** @cut */ if (result.removals)
+      /** @cut */ {
+      /** @cut */   var warns = result.warns;
+      /** @cut */   result.warns = [];
       /** @cut */   result.removals.forEach(function(item){
       /** @cut */     isolateTokens([item.token], result.isolate || '', result, options);
       /** @cut */   });
-      /** @cut */ result.warns = warns;
-
+      /** @cut */   result.warns = warns;
+      /** @cut */ }
 
       // check for unused namespaces
       /** @cut */ for (var key in result.styleNSPrefix)
@@ -632,7 +633,7 @@ var makeDeclaration = (function(){
     /** @cut */     utils.addTemplateWarn(result, options, 'Unused define: ' + key, define.loc);
     /** @cut */ }
 
-    if (!warns.length)
+    if (!result.warns.length)
       result.warns = false;
 
     return result;
