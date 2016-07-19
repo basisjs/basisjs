@@ -2,12 +2,33 @@ module.exports = {
   name: 'declaration',
   test: [
     {
-      name: 'empty declaration',
-      test: function(){
-        var tokens = makeDeclarationAstString('');
+      name: 'value as source edge cases',
+      test: [
+        {
+          name: 'empty string',
+          test: function(){
+            var tokens = makeDeclarationAstString('');
 
-        assert(tokens === '[[3,0,["element"]],[9,0]]');
-      }
+            assert(tokens === '[[3,0,["element"]],[9,0]]');
+          }
+        },
+        {
+          name: 'undefined',
+          test: function(){
+            var tokens = makeDeclarationAstString();
+
+            assert(tokens === '[[3,0,["element"]],[9,0]]');
+          }
+        },
+        {
+          name: 'null',
+          test: function(){
+            var tokens = makeDeclarationAstString(null);
+
+            assert(tokens === '[[3,0,["element"]],[9,0]]');
+          }
+        }
+      ]
     },
     {
       name: 'references and bindings',

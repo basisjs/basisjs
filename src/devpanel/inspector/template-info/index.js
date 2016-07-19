@@ -2,6 +2,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
+var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
 
 var fileAPI = require('../../api/file.js');
 var parseDom = require('./parse-dom.js');
@@ -85,9 +86,9 @@ selectedDomNode.attach(function(node){
 
   var nodes = parseDom(node);
   var templateId = nodes[0][inspectBasisTemplateMarker];
-  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId);
-  var object = inspectBasisTemplate.resolveObjectById(templateId);
-  var actions = object ? object.action || {} : {};
+  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId) || {};
+  var object = inspectBasisTemplate.resolveObjectById(templateId) || {};
+  var actions = object.action || {};
   var bindings = debugInfo.bindings || [];
 
   view.setChildNodes(buildTree(nodes, bindings, actions, function(node){
@@ -106,14 +107,24 @@ var captureEvents = [
   'mouseleave'
 ];
 
+function up(upNode){
+  if (upNode && upNode.element)
+    selectedDomNode.set(upNode.element);
+}
+
 var view = new Window({
   modal: true,
   visible: selectedDomNode.as(Boolean),
   template: resource('./template/window.tmpl'),
   binding: {
-    upName: selectedObject.as(function(object){
-      if (object)
-        return object.parentNode ? 'parent' : object.owner ? 'owner' : '';
+    hasParent: selectedObject.as(function(object){
+      return Boolean(object && object.parentNode);
+    }),
+    hasOwner: selectedObject.as(function(object){
+      return Boolean(object && object.owner);
+    }),
+    hasGroup: selectedObject.as(function(object){
+      return Boolean(object && object.groupNode);
     }),
     sourceTitle: selectedTemplate.as(function(template){
       if (template)
@@ -142,10 +153,27 @@ var view = new Window({
     bindings: 'satellite:'
   },
   action: {
-    up: function(){
+    upParent: function(){
       var object = selectedObject.value;
-      if (object)
-        selectedDomNode.set((object.parentNode || object.owner).element);
+      if (object && object.parentNode)
+      {
+        var upNode = object.parentNode;
+
+        if (upNode instanceof inspectBasisGroupingNode)
+          upNode = upNode.owner;
+
+        up(upNode);
+      }
+    },
+    upOwner: function(){
+      var object = selectedObject.value;
+      if (object && object.owner)
+        up(object.owner);
+    },
+    upGroup: function(){
+      var object = selectedObject.value;
+      if (object && object.groupNode)
+        up(object.groupNode);
     },
     close: function(){
       selectedDomNode.set();

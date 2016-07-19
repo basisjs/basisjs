@@ -15,7 +15,11 @@
         </div>
         <div class="content">
           <div class="toolbar">
-            <span class="button button_up button_{upName}" style="margin-left: -3px;" event-click="up">&#x2191; {upName}</span>
+            <span class="up-buttons">
+              <span b:show="{hasParent}" class="button button_up button_{upName}" event-click="upParent">&#x2191; parent</span>
+              <span b:show="{hasOwner}" class="button button_up button_{upName}" event-click="upOwner">&#x2191; owner</span>
+              <span b:show="{hasGroup}" class="button button_up button_{upName}" event-click="upGroup">&#x2191; group</span>
+            </span>
             <!-- <span class="button button_source">source</span> -->
             <div class="header">
               <span class="source-title source-title_{isFile}" event-click="openSource" title="{sourceTitle}">

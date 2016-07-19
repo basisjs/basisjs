@@ -513,10 +513,13 @@
             if (cellTemplate instanceof basisTemplate.Template)
               cellTemplateRef = '#' + cellTemplate.templateId;
             else
-              if (typeof cellTemplate == 'function' && cellTemplate.url)
-                cellTemplateRef = cellTemplate.url;
+              if (cellTemplate instanceof basisTemplate.SourceWrapper)
+                cellTemplateRef = cellTemplate.path;
               else
-                cellTemplateRef = null;
+                if (typeof cellTemplate == 'function' && cellTemplate.url)
+                  cellTemplateRef = cellTemplate.url;
+                else
+                  cellTemplateRef = null;
           }
 
 

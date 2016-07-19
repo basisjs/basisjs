@@ -418,7 +418,7 @@ declToken.attach(function(decl){
     code = bb.children.join('\n');
     children = [root].map(function processInclude(inc){
       var resource = inc.resource;
-      var source = String(resource.bindingBridge ? resource.bindingBridge.get(resource) : resource);
+      var source = String((resource.bindingBridge ? resource.bindingBridge.get(resource) : resource) || '');
       var warnFilter = inc === root ? undefined : inc.token;
 
       var ranges = [
@@ -459,7 +459,7 @@ declToken.attach(function(decl){
           var record = range.concat(
             '',
             String(warn),
-            warn.loc.charAt(0) === ':' ? '' : warn.loc
+            !warn.loc || warn.loc.charAt(0) === ':' ? '' : warn.loc
           );
 
           insertPoint(ranges, record);
@@ -496,7 +496,7 @@ declToken.attach(function(decl){
       return {
         data: {
           url: resource.url,
-          content: resource.bindingBridge ? resource.bindingBridge.get(resource) : resource,
+          content: source,
           color: this.colorMap.get(resource.url || '', 'red'),
           warnings: warnings,
           markup: markup
