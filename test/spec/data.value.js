@@ -6,7 +6,6 @@ module.exports = {
     var basis = window.basis.createSandbox();
 
     var Value = basis.require('basis.data').Value;
-    var Property = basis.require('basis.data.value').Property;
     var ObjectSet = basis.require('basis.data.value').ObjectSet;
     var Expression = basis.require('basis.data.value').Expression;
   },
@@ -19,8 +18,8 @@ module.exports = {
           name: 'test #1',
           test: function(done){
             var s = new ObjectSet();
-            s.a = new Property(1);
-            s.b = new Property(2);
+            s.a = new Value({ value: 1 });
+            s.b = new Value({ value: 2 });
 
             var updateCount = 0;
             s.add(s.a);
@@ -50,8 +49,8 @@ module.exports = {
           name: 'destroyed property unlink',
           test: function(){
             var s = new ObjectSet();
-            s.a = new Property(1);
-            s.b = new Property(2);
+            s.a = new Value({ value: 1 });
+            s.b = new Value({ value: 2 });
 
             var updateCount = 0;
             s.add(s.a);
@@ -77,8 +76,8 @@ module.exports = {
           test: function(){
             var result = 0;
             var s = new ObjectSet();
-            s.a = new Property(1),
-            s.b = new Property(2);
+            s.a = new Value({ value: 1 }),
+            s.b = new Value({ value: 2 });
 
             s.addHandler({
               change: function(){

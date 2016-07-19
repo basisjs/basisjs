@@ -201,6 +201,27 @@ module.exports = {
       ]
     },
     {
+      name: 'reactive values',
+      test: [
+        {
+          name: 'Value.query(\'childNodes.length\')',
+          test: function(){
+            var node = new Node({
+              childFactory: nodeFactory
+            });
+
+            Value.query(node, 'childNodes.length').link(null, visit);
+
+            node.appendChild({});
+            node.clear();
+            node.setChildNodes([{}, {}, {}]);
+
+            assert.visited([0, 1, 0, 3]);
+          }
+        }
+      ]
+    },
+    {
       name: 'Owner',
       test: [
         {

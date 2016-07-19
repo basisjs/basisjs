@@ -2,6 +2,54 @@ module.exports = {
   name: '<b:define>',
   test: [
     {
+      name: 'should warn on wrong place',
+      test: [
+        {
+          name: 'inside element',
+          test: function(){
+            var template = createTemplate(
+              '<span class="{foo}">' +
+                '<b:define name="foo" type="bool"/>' +
+              '</span>',
+              true
+            );
+
+            assert(template.decl_.warns.length === 1);
+            assert(/^Instruction tag <b:define> should be placed in /.test(String(template.decl_.warns[0])));
+          }
+        },
+        {
+          name: 'after text',
+          test: function(){
+            var template = createTemplate(
+              'hello world' +
+              '<b:define name="foo" type="bool"/>' +
+              '<span class="{foo}"/>',
+              true
+            );
+
+            assert(template.decl_.warns.length === 1);
+            assert(/^Instruction tag <b:define> should be placed in /.test(String(template.decl_.warns[0])));
+          }
+        },
+        {
+          name: 'after <b:include>',
+          test: function(){
+            var include = createTemplate('<span/>');
+            var template = createTemplate(
+              '<b:include src="#' + include.templateId + '"/>' +
+              '<b:define name="foo" type="bool"/>' +
+              '<span class="{foo}"/>',
+              true
+            );
+
+            assert(template.decl_.warns.length === 1);
+            assert(/^Instruction tag <b:define> should be placed in /.test(String(template.decl_.warns[0])));
+          }
+        }
+      ]
+    },
+    {
       name: 'should warn on bindings with no <b:define>',
       test: [
         {

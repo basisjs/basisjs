@@ -15,7 +15,6 @@
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var keys = basis.object.keys;
   var extend = basis.object.extend;
-  var complete = basis.object.complete;
   var $self = basis.fn.$self;
   var arrayFrom = basis.array.from;
 
@@ -1196,9 +1195,20 @@
       // wrapper and all instances set
       this.wrapper = wrapper;
       if ('all' in config == false || config.all || config.singleton)
-        this.all = new ReadOnlyEntitySet(complete({
-          wrapper: wrapper
-        }, config.all));
+      {
+        this.all = new ReadOnlyEntitySet(config.all);
+        this.all.wrapper = wrapper;
+        this.all.set = function(data){
+          if (Array.isArray(data))
+            data = data.map(function(item){
+              return item instanceof EntityClass === false
+                ? wrapper.reader(item)
+                : item;
+            });
+
+          return setAndDestroyRemoved.call(this, data);
+        }.bind(this.all);
+      }
 
       // singleton
       this.singleton = !!config.singleton;
@@ -1318,8 +1328,9 @@
       /** @cut */   basis.dev.warn('basis.entity: default instance state can\'t be defined via type config anymore, use Type.extendClass({ state: .. }) instead');
 
       // create entity class
-      this.entityClass = createEntityClass(this, this.all, this.fields, this.slots);
-      this.entityClass.extend({
+      var EntityClass = createEntityClass(this, this.all, this.fields, this.slots);
+      this.entityClass = EntityClass;
+      EntityClass.extend({
         entityType: this,
         type: wrapper,
         typeName: this.name,
@@ -1329,9 +1340,9 @@
 
       for (var name in this.fields)
       {
-        this.entityClass.prototype['get_' + name] = getFieldGetter(name);
+        EntityClass.prototype['get_' + name] = getFieldGetter(name);
         if (this.fields[name] !== calcFieldWrapper)
-          this.entityClass.prototype['set_' + name] = getFieldSetter(name);
+          EntityClass.prototype['set_' + name] = getFieldSetter(name);
       }
 
       // reg entity type

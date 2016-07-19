@@ -26,7 +26,6 @@ function getTop(font, baseline){
   var image = ctx.getImageData(0, 0, width, HEIGHT);
   var count = image.width * image.height * 4;
   var data = image.data;
-  var line = 'unknown';
 
   for (var i = 3; i < count; i += 4)
     if (data[i])

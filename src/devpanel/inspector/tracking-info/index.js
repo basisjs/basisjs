@@ -140,7 +140,7 @@ var captureEvents = [
   'mouseleave'
 ];
 
-var view = new Window({
+new Window({
   modal: true,
   moveable: false,
   visible: selectedDomNode.as(Boolean),

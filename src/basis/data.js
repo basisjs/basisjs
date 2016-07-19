@@ -418,14 +418,7 @@
       }
 
       // return getComputeValue;
-      return chainValueFactory(function factory(object){
-        var value = getComputeValue(object);
-
-        /** @cut */ if (PROXY_SUPPORT)
-        /** @cut */   basis.dev.setInfo(value = devWrap(value), 'loc', basis.dev.getInfo(factory, 'loc'));
-
-        return value;
-      });
+      return chainValueFactory(getComputeValue);
     },
 
    /**
@@ -521,8 +514,21 @@
       /** @cut */ basis.dev.setInfo(result, 'sourceInfo', {
       /** @cut */   type: 'Value#as',
       /** @cut */   source: this,
+      /** @cut */   sourceTarget: this.value,
       /** @cut */   transform: fn
       /** @cut */ });
+
+      /** @cut */ if (fn.retarget)
+      /** @cut */ {
+      /** @cut */   result.proxy = function(value){
+      /** @cut */     value = fn(value);
+      /** @cut */     basis.dev.patchInfo(result, 'sourceInfo', {
+      /** @cut */       sourceTarget: value
+      /** @cut */     });
+      /** @cut */     return value;
+      /** @cut */   };
+      /** @cut */   result.proxy[GETTER_ID] = fn[GETTER_ID]; // set the same GETTER_ID for correct search in links_
+      /** @cut */ }
 
       this.link(result, valueSyncAs, true, result.destroy);
 
@@ -887,6 +893,17 @@
           var path1 = path[++index];
           var fullPath = path0 + '.' + path1;
 
+          if (Array.isArray(descriptor.nested) && descriptor.nested.indexOf(path1) == -1)
+          {
+            /** @cut */ var warnMessage = 'Property can\'t to be observable: ';
+            /** @cut */ basis.dev.warn(warnMessage + path.join('.') + '\n' +
+            /** @cut */   basis.string.repeat(' ', warnMessage.length + path.slice(0, index).join('.').length + 1) +
+            /** @cut */   basis.string.repeat('^', path1.length) + '\n' +
+            /** @cut */   'Owner has a limited set of observable properties: ' + descriptor.nested.join(', ')
+            /** @cut */ );
+            return;
+          }
+
           pathFragment = queryNestedFunctionCache[fullPath];
 
           if (!pathFragment)
@@ -896,7 +913,7 @@
               return object ? object[path1] : undefined;
             };
 
-            /** @cut */ pathFragment.getDevSource = function(object){
+            /** @cut */ pathFragment.getDevSource = function(){
             /** @cut */   return basis.getter(fullPath);
             /** @cut */ };
 
@@ -946,6 +963,8 @@
       // use basis.getter here because `as()` uses cache using
       // function source, but all those closures will have the same source
       result = queryAsFunctionCache[path] = basis.getter(fn);
+
+      /** @cut */ result.retarget = true;
     }
 
     return result;
@@ -988,6 +1007,8 @@
   //
 
   function chainValueFactory(fn){
+    /** @cut */ fn = basis.dev.patchFactory(fn);
+
     fn.factory = FACTORY;
     fn.deferred = valueDeferredFactory;
     fn.compute = valueComputeFactory;
@@ -1014,6 +1035,7 @@
 
     return chainValueFactory(function(sourceValue){
       var value = factory(sourceValue);
+
       return value
         ? value.compute(events, getter)(sourceValue)
         : value;
@@ -1023,59 +1045,42 @@
   function valueAsFactory(getter){
     var factory = this;
 
-    return chainValueFactory(function asFactory(value){
+    return chainValueFactory(function(value){
       value = factory(value);
 
-      if (value)
-        value = value.as(getter);
-
-      /** @cut */ if (PROXY_SUPPORT && value)
-      /** @cut */   basis.dev.setInfo(value, 'loc', basis.dev.getInfo(asFactory, 'loc'));
-
-      return value;
+      return value
+        ? value.as(getter)
+        : value;
     });
   }
 
   function valuePipeFactory(events, getter){
     var factory = this;
 
-    return chainValueFactory(function pipeFactory(value){
+    return chainValueFactory(function(value){
       value = factory(value);
 
-      if (value)
-        value = value.pipe(events, getter);
-
-      /** @cut */ if (PROXY_SUPPORT && value)
-      /** @cut */   basis.dev.setInfo(value, 'loc', basis.dev.getInfo(pipeFactory, 'loc'));
-
-      return value;
+      return value
+        ? value.pipe(events, getter)
+        : value;
     });
   }
 
   function valueQueryFactory(path){
     var factory = this;
 
-    return chainValueFactory(function queryFactory(value){
+    return chainValueFactory(function(value){
       value = factory(value);
 
-      if (value)
-        value = value.query(path);
-
-      /** @cut */ if (PROXY_SUPPORT && value)
-      /** @cut */   basis.dev.setInfo(value, 'loc', basis.dev.getInfo(queryFactory, 'loc'));
-
-      return value;
+      return value
+        ? value.query(path)
+        : value;
     });
   }
 
   Value.factory = function(events, getter){
     return chainValueFactory(function factory(object){
-      var value = Value.from(object, events, getter);
-
-      /** @cut */ if (PROXY_SUPPORT && value)
-      /** @cut */   basis.dev.setInfo(value, 'loc', basis.dev.getInfo(factory, 'loc'));
-
-      return value;
+      return Value.from(object, events, getter);
     });
   };
 

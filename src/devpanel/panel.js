@@ -64,6 +64,7 @@ var currentInspectorName = currentInspector.as(function(inspector){
 var isOnline;
 var permamentFiles = [];
 var permamentFilesCount = new Value({ value: 0 });
+var basisjsToolsFileSync = global.basisjsToolsFileSync;
 
 if (typeof basisjsToolsFileSync != 'undefined')
 {

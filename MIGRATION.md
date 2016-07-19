@@ -1,3 +1,10 @@
+## 1.7.0 → 1.8.0
+
+Remove
+
+  - `basis.data.value.Property`
+  - fallback for `basis.net.ajax.Request#getResponseError()` when error stores in `data` property
+
 ## 1.6.0 → 1.7.0
 
 Might break

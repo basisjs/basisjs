@@ -8,6 +8,7 @@ var MARKER = 'basisTemplateId_' + basis.genUID();
 /** @const */ var TYPE_ATTRIBUTE_EVENT = 6;
 /** @const */ var TYPE_TEXT = 3;
 /** @const */ var TYPE_COMMENT = 8;
+/** @const */ var TYPE_CONTENT = 9;
 
 // references on fields in declaration
 /** @const */ var TOKEN_TYPE = 0;
@@ -31,6 +32,11 @@ var ATTR_VALUE_INDEX = {
   5: ATTR_VALUE - 1,
   6: 2
 };
+var CLASS_BINDING_ENUM = 1;
+var CLASS_BINDING_BOOL = 2;
+var CLASS_BINDING_INVERT = 3;
+var CLASS_BINDING_EQUAL = 4;
+var CLASS_BINDING_NOTEQUAL = 5;
 
 /** @const */ var ELEMENT_NAME = 3;
 /** @const */ var ELEMENT_ATTRIBUTES_AND_CHILDREN = 4;
@@ -38,11 +44,9 @@ var ATTR_VALUE_INDEX = {
 /** @const */ var TEXT_VALUE = 3;
 /** @const */ var COMMENT_VALUE = 3;
 
-var CLASS_BINDING_ENUM = 1;
-var CLASS_BINDING_BOOL = 2;
-var CLASS_BINDING_INVERT = 3;
-var CLASS_BINDING_EQUAL = 4;
-var CLASS_BINDING_NOTEQUAL = 5;
+/** @const */ var CONTENT_CHILDREN = 2;  // [type, priority, ...children]
+/** @const */ var CONTENT_PRIORITY = 1;
+
 
 // test for browser (IE) normalize text nodes during cloning
 var document = global.document;
@@ -68,6 +72,7 @@ module.exports = {
   TYPE_ATTRIBUTE_EVENT: TYPE_ATTRIBUTE_EVENT,
   TYPE_TEXT: TYPE_TEXT,
   TYPE_COMMENT: TYPE_COMMENT,
+  TYPE_CONTENT: TYPE_CONTENT,
   TOKEN_TYPE: TOKEN_TYPE,
   TOKEN_BINDINGS: TOKEN_BINDINGS,
   TOKEN_REFS: TOKEN_REFS,
@@ -80,6 +85,8 @@ module.exports = {
   ELEMENT_ATTRIBUTES_AND_CHILDREN: ELEMENT_ATTRIBUTES_AND_CHILDREN,
   TEXT_VALUE: TEXT_VALUE,
   COMMENT_VALUE: COMMENT_VALUE,
+  CONTENT_CHILDREN: CONTENT_CHILDREN,
+  CONTENT_PRIORITY: CONTENT_PRIORITY,
 
   CLASS_BINDING_ENUM: CLASS_BINDING_ENUM,
   CLASS_BINDING_BOOL: CLASS_BINDING_BOOL,

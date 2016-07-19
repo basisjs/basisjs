@@ -131,7 +131,7 @@ module.exports = {
             {
               var info = fnInfo(functions[i]);
               assert('', info.args);
-              assert(info.name == 'anonymous');
+              assert(info.name == (functions[i].name || 'anonymous'));
               assert(info.getter == false);
               assert(info.body == normalizeOffset(functions[i].toString()).replace(/^[^\{]+\{/, '').replace(/\}[^}]*$/, ''));
             }

@@ -1,0 +1,75 @@
+.sidebar
+{
+  float: right;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 35%;
+  height: 100%;
+  padding-left: 5px;
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 50%;
+}
+.sidebar .Basis-Resizer
+{
+  height: 100%;
+  width: 5px;
+  left: -2px;
+  top: 0;
+}
+
+.nav
+{
+  padding-bottom: 5px;
+  overflow: hidden;
+    -webkit-user-select: none;
+  user-select: none;
+  display: flex;
+  align-items: top;
+}
+.title
+{
+  flex: 1;
+  font-size: 20px;
+  padding: 3px 0 0 3px;
+  display: inline-block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.description
+{
+  flex: 1;
+  background: rgba(255, 255, 255, .75);
+  border-radius: 3px;
+  padding: 15px;
+  overflow: auto;
+  line-height: 1.6;
+}
+.description H2
+{
+  margin-top: 0;
+}
+.description I
+{
+  white-space: nowrap;
+  font-style: normal;
+  border: 1px solid #DDD;
+  border-radius: 3px;
+  background: #F8F8F8;
+  padding: 0px 3px 1px;
+}
+.description PRE
+{
+  font-family: 'source-code-pro', Menlo, Consolas, 'Courier New', monospace;
+  line-height: 1.5;
+  font-size: 12px;
+}
+
+.slideCounter
+{
+  font-size: 150%;
+  float: right;
+}

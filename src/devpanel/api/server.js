@@ -4,7 +4,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 // new basisjs-tools
 if (typeof basisjsToolsFileSync != 'undefined')
 {
-  basisjsToolsFileSync.isOnline.attach(function(isOnline){
+  global.basisjsToolsFileSync.isOnline.attach(function(isOnline){
     transport.sendData('serverStatus', isOnline);
   });
 }
@@ -25,14 +25,9 @@ module.exports = {
     var isOnline;
 
     if (typeof basisjsToolsFileSync != 'undefined')
-    {
-      isOnline = basisjsToolsFileSync.isOnline.value;
-    }
-    else
-      if (inspectBasis.devtools)
-      {
-        isOnline = inspectBasis.devtools.serverState && inspectBasis.devtools.serverState.data.isOnline;
-      }
+      isOnline = global.basisjsToolsFileSync.isOnline.value;
+    else if (inspectBasis.devtools)
+      isOnline = inspectBasis.devtools.serverState && inspectBasis.devtools.serverState.data.isOnline;
 
     transport.sendData('serverStatus', isOnline || false);
   }
