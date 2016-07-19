@@ -1,3 +1,7 @@
+## 1.8.2 (July 19, 2016)
+
+- Fixed issue with build when using `invert` binding in template
+
 ## 1.8.1 (July 18, 2016)
 
 - Fixed exception when using `b:ref` attribute in templates
