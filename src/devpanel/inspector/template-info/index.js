@@ -2,6 +2,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
+var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
 
 var fileAPI = require('../../api/file.js');
 var parseDom = require('./parse-dom.js');
@@ -85,9 +86,9 @@ selectedDomNode.attach(function(node){
 
   var nodes = parseDom(node);
   var templateId = nodes[0][inspectBasisTemplateMarker];
-  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId);
-  var object = inspectBasisTemplate.resolveObjectById(templateId);
-  var actions = object ? object.action || {} : {};
+  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId) || {};
+  var object = inspectBasisTemplate.resolveObjectById(templateId) || {};
+  var actions = object.action || {};
   var bindings = debugInfo.bindings || [];
 
   view.setChildNodes(buildTree(nodes, bindings, actions, function(node){
@@ -145,7 +146,15 @@ var view = new Window({
     up: function(){
       var object = selectedObject.value;
       if (object)
-        selectedDomNode.set((object.parentNode || object.owner).element);
+      {
+        var upNode = object.parentNode || object.owner;
+
+        if (upNode instanceof inspectBasisGroupingNode)
+          upNode = upNode.owner;
+
+        if (upNode && upNode.element)
+          selectedDomNode.set(upNode.element);
+      }
     },
     close: function(){
       selectedDomNode.set();

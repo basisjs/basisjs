@@ -22,9 +22,9 @@ function getBindingsFromNode(node){
   if (node)
   {
     var id = node[inspectBasisTemplateMarker];
-    var object = inspectBasisTemplate.resolveObjectById(id);
+    var object = inspectBasisTemplate.resolveObjectById(id) || {};
     var objectBinding = object.binding;
-    var debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+    var debugInfo = inspectBasisTemplate.getDebugInfoById(id) || {};
     var usedValues = debugInfo.values;
     var rawValues = debugInfo.rawValues;
 
