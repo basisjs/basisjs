@@ -1,0 +1,31 @@
+{
+  "name": "basisjs",
+  "title": "basis.js",
+  "description": "JavaScript framework to build single-page applications",
+  "version": "0.9.13",
+  "author": "Roman Dvornov <rdvornov@gmail.com>",
+  "license": "MIT",
+  "main": "src/basis.js",
+  "homepage": "http://basisjs.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/basisjs/basisjs.git"
+  },
+  "keywords": [
+    "javascript",
+    "framework"
+  ],
+  "bugs": {
+    "url": "https://github.com/basisjs/basisjs/issues"
+  },
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "codestyle": "node node_modules/jscs/bin/jscs .",
+    "lint": "npm run codestyle && node node_modules/basisjs-tools-build/bin/lint test/all.html --js-cut-dev",
+    "basisjs-tools-lint": "node node_modules/basisjs-tools-build/bin/lint test/all.html --js-cut-dev",
+    "travis": "npm run lint && npm run test",
+    "test": "node node_modules/karma/bin/karma start karma.conf.js"
+  }
+}

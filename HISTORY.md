@@ -1,3 +1,8 @@
+## 0.9.13 (october 6, 2014)
+
+- FIX: remove usage of `createAttributeNS`/`setAttributeNodeNS` in `basis.xml` and `basis.net.soap` as candidate for remove from DOM (methods are removed in Chrome 35 canary)
+- FIX: fix internal `binarySearchIntervalPos` in `basis.ui.calendar`
+
 ## 0.9.12 (december 23, 2013)
 
 - FIX: hot fix for `basis.router`
