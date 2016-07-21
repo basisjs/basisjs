@@ -16,6 +16,7 @@
   var TYPE_ATTRIBUTE_EVENT = consts.TYPE_ATTRIBUTE_EVENT;
   var TYPE_TEXT = consts.TYPE_TEXT;
   var TYPE_COMMENT = consts.TYPE_COMMENT;
+  var TYPE_CONTENT = consts.TYPE_CONTENT;
 
   var TOKEN_TYPE = consts.TOKEN_TYPE;
   var TOKEN_BINDINGS = consts.TOKEN_BINDINGS;
@@ -26,6 +27,7 @@
 
   var ELEMENT_NAME = consts.ELEMENT_NAME;
   var ELEMENT_ATTRIBUTES_AND_CHILDREN = consts.ELEMENT_ATTRIBUTES_AND_CHILDREN;
+  var CONTENT_CHILDREN = consts.CONTENT_CHILDREN;
 
   var CLASS_BINDING_ENUM = consts.CLASS_BINDING_ENUM;
   var CLASS_BINDING_BOOL = consts.CLASS_BINDING_BOOL;
@@ -46,6 +48,35 @@
       return false;
     }
   })();
+
+  function cleanSpecial(tokens, offset){
+    var result = [];
+
+    for (var i = 0; i < tokens.length; i++)
+    {
+      if (i < offset) {
+        result.push(tokens[i]);
+        continue;
+      }
+
+      var token = tokens[i];
+      switch (token[TOKEN_TYPE])
+      {
+        case TYPE_ELEMENT:
+          result.push(cleanSpecial(token, ELEMENT_ATTRIBUTES_AND_CHILDREN));
+          break;
+
+        case TYPE_CONTENT:
+          result.push.apply(result, cleanSpecial(token, CONTENT_CHILDREN).slice(CONTENT_CHILDREN));
+          break;
+
+        default:
+          result.push(token);
+      }
+    }
+
+    return result;
+  }
 
 
  /**
@@ -854,6 +885,9 @@
 
     if (fn)
       return fn;
+
+    // clean special instructions from AST
+    tokens = cleanSpecial(tokens, 0);
 
     // build functions
     var paths = buildPathes(tokens, '_', noTextBug);

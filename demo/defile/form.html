@@ -3,7 +3,7 @@
 <html>
 
 <head>
-  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <meta charset="utf-8">
 
   <title>Basis.js demos: Forms</title>
 
@@ -57,7 +57,7 @@
 
     var DOM = basis.require('basis.dom');
     var Event = basis.require('basis.dom.event');
-    var Property = basis.require('basis.data.value').Property;
+    var Value = basis.require('basis.data').Value;
     var nsData = basis.require('basis.data');
     var nsForm = basis.require('basis.ui.form');
     var nsField = basis.require('basis.ui.field');
@@ -116,7 +116,7 @@
       container: createBlock('Select Field')
     });
 
-    var property = new Property(1);
+    var property = new Value({ value: 1 });
 
     new nsField.Combobox({
       childNodes: [

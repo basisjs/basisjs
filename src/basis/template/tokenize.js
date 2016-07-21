@@ -543,7 +543,10 @@ function tokenize(source, options){
           /** @cut */ result.warns.push(['Wrong close tag: ' + source.substr(startPos - 2, m[0].length + 2), lastTag.children[lastTag.children.length - 1]]);
         }
         else
+        {
+          lastTag.range.end_ = startPos + m[0].length;
           lastTag = tagStack.pop();
+        }
 
         state = TEXT;
         break;
@@ -741,7 +744,7 @@ function tokenize(source, options){
   /** @cut */   result.warns.push(['No close tag for <' + (lastTag.prefix ? lastTag.prefix + ':' : '') + lastTag.name + '>', lastTag]);
   /** @cut */
   /** @cut */ if (!result.warns.length)
-  /** @cut */   delete result.warns;
+  /** @cut */   result.warns = false;
 
   result.templateTokens = true;
 

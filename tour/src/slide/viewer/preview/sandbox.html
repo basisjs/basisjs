@@ -1,0 +1,133 @@
+<!doctype html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>basis.js tour sandbox</title>
+
+  <style>
+    BODY
+    {
+      font-family: Tahoma, Verdana, Arial, sans;
+      font-size: small;
+    }
+    #basis-tour-console
+    {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      max-height: 75%;
+      border-top: 2px solid #BA6;
+      background: rgba(255, 255, 225, .85);
+    }
+    #basis-tour-console:before
+    {
+      content: 'Console';
+      background: white;
+      position: absolute;
+      top: 0px;
+      padding: 0 5px;
+      right: 3px;
+      font-size: 10px;
+    }
+    .basis-tour-message
+    {
+      padding: 2px 4px;
+      border-bottom: 1px solid rgba(187, 170, 102, 0.25);
+    }
+    .basis-tour-message_warn,
+    .basis-tour-message_error
+    {
+      color: #D00;
+    }
+    .basis-tour-message_info
+    {
+      color: orange;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    window.onerror = function(message){
+      if (!window.console)
+        document.write(message);
+      else
+        console.error(message);
+    };
+
+    window.console = (function(console){
+      var methods = ['log', 'warn', 'info', 'error'];
+      var virtualConsole;
+
+      if (!console)
+        return;
+
+      var F = function(){};
+      F.prototype = console;
+      var res = new F;  // inherit all non-wrap methods of console
+
+      function tourConsoleMessage(value, type){
+        if (!virtualConsole)
+        {
+          virtualConsole = document.createElement('div');
+          virtualConsole.id = 'basis-tour-console';
+          document.body.appendChild(virtualConsole);
+        }
+
+        var el = document.createElement('div');
+        el.className = 'basis-tour-message basis-tour-message_' + type;
+        el.appendChild(document.createTextNode(String(value)));
+        virtualConsole.appendChild(el);
+      }
+
+      function wrapMethod(methodName){
+        return function(){
+          tourConsoleMessage(Array.prototype.slice.call(arguments).join(' '), methodName);
+          if (console)
+            Function.prototype.apply.call(console[methodName], console, arguments);
+        };
+      }
+
+      for (var i = 0, method; method = methods[i++];) {
+        res[method] = wrapMethod(method);
+      }
+
+      return res;
+    })(window.console);
+  </script>
+  <script>
+    (function(){
+      var callbackNameMatch = location.search.match(/[\?&]cb=([^&]+)/);
+      var callbackName = callbackNameMatch ? callbackNameMatch[1] : 'launcherCallback';
+
+      if (!top[callbackName])
+        return;
+
+      var resources = top[callbackName](function(filename, content){
+        basis.resource(basis.path.resolve(filename)).update(content);
+      });
+
+      if (window.__resources__)
+      {
+        for (var key in resources)
+          window.__resources__[key] = resources[key];
+      }
+      else
+      {
+        window.__resources__ = resources;
+      }
+    })();
+  </script>
+  <script src="../../../../../src/basis.js" basis-config="devpanel: false"></script>
+  <script>
+    basis.ready(function(){
+      try {
+        basis.resource('./app.js').fetch();
+      } catch(e) {
+        console.warn(e.message || e);
+      }
+    });
+  </script>
+</body>
+</html>

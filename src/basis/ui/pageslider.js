@@ -33,7 +33,7 @@
       position: 'left',
       offset: 'offsetLeft',
       size: 'offsetWidth',
-      currentVelocity: 'currentVilocityX',
+      currentVelocity: 'currentVelocityX',
       viewport: 'viewportX',
       setPosition: 'setPositionX',
       addPosition: 'addPositionX'
@@ -42,7 +42,7 @@
       position: 'top',
       offset: 'offsetTop',
       size: 'offsetHeight',
-      currentVelocity: 'currentVilocityY',
+      currentVelocity: 'currentVelocityY',
       viewport: 'viewportY',
       setPosition: 'setPositionY',
       addPosition: 'addPositionY'

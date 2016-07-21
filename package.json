@@ -2,7 +2,7 @@
   "name": "basisjs",
   "title": "basis.js",
   "description": "JavaScript framework to build single-page applications",
-  "version": "1.7.0-next",
+  "version": "1.8.3",
   "author": "Roman Dvornov <rdvornov@gmail.com>",
   "license": "MIT",
   "main": "src/basis.js",
@@ -24,18 +24,38 @@
       "url": "https://github.com/basisjs/basisjs/blob/master/LICENSE"
     }
   ],
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "node": true,
+      "mocha": true,
+      "es6": true
+    },
+    "globals": {
+      "basis": true,
+      "resource": true,
+      "assert": true
+    },
+    "rules": {
+      "no-undef": 2,
+      "no-unused-vars": [2, {"vars": "all", "args": "after-used"}]
+    }
+  },
   "dependencies": {},
   "devDependencies": {
     "basisjs-tools-build": "basisjs/basisjs-tools-build",
     "basisjs-tools-instrumenter": "~1.0.3",
-    "jscs": "1.11.0",
+    "jscs": "~3.0.0",
     "karma": "^0.12.31",
     "karma-firefox-launcher": "^0.1.4",
-    "karma-yatra": "0.0.1",
-    "yatra": "^1.0.3"
+    "karma-yatra": "~1.0.0",
+    "yatra": "~1.2.0"
   },
   "scripts": {
-    "lint": "node node_modules/jscs/bin/jscs . && node node_modules/basisjs-tools-build/bin/lint test/all.html --js-cut-dev",
-    "test": "npm run lint && node node_modules/karma/bin/karma start karma.conf.js"
+    "codestyle": "node node_modules/jscs/bin/jscs .",
+    "lint": "npm run codestyle && node node_modules/basisjs-tools-build/bin/lint test/all.html --js-cut-dev",
+    "basisjs-tools-lint": "node node_modules/basisjs-tools-build/bin/lint test/all.html --js-cut-dev",
+    "travis": "npm run lint && npm run test",
+    "test": "node node_modules/karma/bin/karma start karma.conf.js"
   }
 }

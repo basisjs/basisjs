@@ -1,0 +1,55 @@
+.preview
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  background: white;
+  overflow: hidden;
+  border-radius: 3px;
+  min-width: 100px;
+  min-height: 100px;
+}
+.reloaded-label
+{
+  position: absolute;
+  z-index: 10;
+  top: 1px;
+  right: 1px;
+  padding: 2px 6px 3px;
+  
+  border: 1px solid white;
+  background: black;
+  background: rgba(0,0,0,.75);
+  color: white;
+
+  font-size: 90%;
+
+  visibility: hidden;
+  opacity: 0;
+  -webkit-transition: opacity .25s 1.5s, visibility .25s 1.5s;
+}
+.reloaded-label_reloaded
+{
+  visibility: visible;
+  opacity: 1;
+  -webkit-transition: none;
+}
+.preview-iframe
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: white;
+}
+.Basis-Resizer
+{
+  height: 5px;
+  width: 100%;
+  top: -2px;
+}

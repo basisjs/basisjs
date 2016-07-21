@@ -292,12 +292,12 @@
         var array;
 
         if (array = delta.inserted)
-          for (var i = 0, item; item = array[i]; i++)
-            SUBSCRIPTION.link('child', object, array[i]);
+          for (var i = 0, child; child = array[i]; i++)
+            SUBSCRIPTION.link('child', object, child);
 
         if (array = delta.deleted)
-          for (var i = 0, item; item = array[i]; i++)
-            SUBSCRIPTION.unlink('child', object, array[i]);
+          for (var i = 0, child; child = array[i]; i++)
+            SUBSCRIPTION.unlink('child', object, child);
       }
     },
     function(action, object){
@@ -623,7 +623,10 @@
     propertyDescriptors: {
       owner: 'ownerChanged',
       parentNode: 'parentChanged',
-      childNodes: 'childNodesModified',
+      childNodes: {
+        nested: ['length'],
+        events: 'childNodesModified'
+      },
       childNodesState: 'childNodesStateChanged',
       dataSource: 'dataSourceChanged',
       'getChildNodesDataset()': true,

@@ -1,3 +1,4 @@
+/** @cut */ var devWrap = require('basis.data').devWrap;
 var Value = require('basis.data').Value;
 
 /**
@@ -240,6 +241,8 @@ function getDatasetIndex(dataset, IndexClass){
     indexes[indexId] = index;
     applyIndexDelta(index, dataset.getItems());
   }
+  /** @cut */ else
+  /** @cut */   index = devWrap(index);
 
   return index;
 }
@@ -256,7 +259,7 @@ function removeDatasetIndex(dataset, index){
     index.removeHandler(DATASET_INDEX_HANDLER, dataset);
 
     // if any index in dataset nothing to do
-    for (var key in indexes)
+    for (var index in indexes)
       return;
 
     // if no indexes - delete indexes storage and remove handlers

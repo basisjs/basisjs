@@ -262,16 +262,19 @@
 
       // make a hash
       var chunk = dwords.length >> 4;
+      var offset = 0;
       while (chunk--)
       {
         for (var i = 0; i < 64; i++)
         {
-          A[0] = add(rotateLeft(add(A[0], F[i >> 4](A[1], A[2], A[3]), dwords[I[i]], K[i]), S[i]), A[1]);
+          A[0] = add(rotateLeft(add(A[0], F[i >> 4](A[1], A[2], A[3]), dwords[offset + I[i]], K[i]), S[i]), A[1]);
           A.unshift(A.pop());
         }
 
         for (var i = 0; i < 4; i++)
           A[i] = stored[i] = add(A[i], stored[i]);
+
+        offset += 16;
       }
 
       // return md5 hash bytes array

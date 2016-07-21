@@ -1,5 +1,4 @@
 var Value = require('basis.data').Value;
-var Node = require('basis.ui').Node;
 var Popup = require('basis.ui.popup').Popup;
 var getColoredSource = require('basis.utils.source').getColoredSource;
 

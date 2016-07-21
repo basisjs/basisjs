@@ -2,12 +2,12 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
+var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
 
 var fileAPI = require('../../api/file.js');
 var parseDom = require('./parse-dom.js');
 var buildTree = require('./build-tree.js');
 var Dataset = require('basis.data').Dataset;
-var Node = require('basis.ui').Node;
 var Window = require('basis.ui.window').Window;
 var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
 var sourceView = require('./source.js');
@@ -86,9 +86,9 @@ selectedDomNode.attach(function(node){
 
   var nodes = parseDom(node);
   var templateId = nodes[0][inspectBasisTemplateMarker];
-  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId);
-  var object = inspectBasisTemplate.resolveObjectById(templateId);
-  var actions = object ? object.action || {} : {};
+  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId) || {};
+  var object = inspectBasisTemplate.resolveObjectById(templateId) || {};
+  var actions = object.action || {};
   var bindings = debugInfo.bindings || [];
 
   view.setChildNodes(buildTree(nodes, bindings, actions, function(node){
@@ -107,14 +107,24 @@ var captureEvents = [
   'mouseleave'
 ];
 
+function up(upNode){
+  if (upNode && upNode.element)
+    selectedDomNode.set(upNode.element);
+}
+
 var view = new Window({
   modal: true,
   visible: selectedDomNode.as(Boolean),
   template: resource('./template/window.tmpl'),
   binding: {
-    upName: selectedObject.as(function(object){
-      if (object)
-        return object.parentNode ? 'parent' : object.owner ? 'owner' : '';
+    hasParent: selectedObject.as(function(object){
+      return Boolean(object && object.parentNode);
+    }),
+    hasOwner: selectedObject.as(function(object){
+      return Boolean(object && object.owner);
+    }),
+    hasGroup: selectedObject.as(function(object){
+      return Boolean(object && object.groupNode);
     }),
     sourceTitle: selectedTemplate.as(function(template){
       if (template)
@@ -122,7 +132,10 @@ var view = new Window({
     }),
     isFile: selectedTemplate.as(function(template){
       if (template)
-        return !!template.source.url;
+        return Boolean(template.source.url);
+    }),
+    warningCount: sourceView.decl.as(function(decl){
+      return decl && decl.warns ? decl.warns.length : 0;
     }),
     objectClassName: selectedObject.as(function(object){
       if (object)
@@ -140,13 +153,27 @@ var view = new Window({
     bindings: 'satellite:'
   },
   action: {
-    up: function(){
+    upParent: function(){
       var object = selectedObject.value;
-      if (object)
-        selectedDomNode.set((object.parentNode || object.owner).element);
+      if (object && object.parentNode)
+      {
+        var upNode = object.parentNode;
+
+        if (upNode instanceof inspectBasisGroupingNode)
+          upNode = upNode.owner;
+
+        up(upNode);
+      }
     },
-    down: function(e){
-      //if (e.sender.title)
+    upOwner: function(){
+      var object = selectedObject.value;
+      if (object && object.owner)
+        up(object.owner);
+    },
+    upGroup: function(){
+      var object = selectedObject.value;
+      if (object && object.groupNode)
+        up(object.groupNode);
     },
     close: function(){
       selectedDomNode.set();
@@ -173,14 +200,12 @@ var view = new Window({
       jsSourcePopup.hide();
     },
     toggleSource: function(){
-      var object = selectedObject.value;
       showSource.set(!showSource.value);
     },
     logInfo: function(){
       var object = selectedObject.value;
-      var result = {};
-      var debugInfo = '<no info>';
-      var values = '<no info>';
+      var debugInfo = null;
+      var values = null;
 
       if (selectedDomNode.value)
       {
@@ -188,7 +213,9 @@ var view = new Window({
         var objectBinding = object ? object.binding : {};
 
         debugInfo = inspectBasisTemplate.getDebugInfoById(id);
-        values = (debugInfo || {}).values || null;
+
+        if (debugInfo)
+          values = debugInfo.values || null;
 
         if (values)
           values = basis.object.slice(values, basis.object.keys(objectBinding));
@@ -202,7 +229,7 @@ var view = new Window({
           values: values
         }
       };
-      console.log($basisjsInfo);
+      console.log(global.$basisjsInfo);
     }
   },
 

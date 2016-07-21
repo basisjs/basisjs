@@ -5,9 +5,9 @@
     }
   },
   "ru-RU": {
-    "text": "<b:include src=\"ru.tmpl\"/>"
+    "text": "<b:include src=\"./ru.tmpl\"/>"
   },
   "en-US": {
-    "text": "<b:include src=\"en.tmpl\"/>"
+    "text": "<b:include src=\"./en.tmpl\"/>"
   }
 }

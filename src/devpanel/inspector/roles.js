@@ -1,6 +1,5 @@
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var inspectBasis = require('devpanel').inspectBasis;
-var inspectBasisUI = inspectBasis.require('basis.ui');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisTracker = inspectBasis.require('basis.tracker');

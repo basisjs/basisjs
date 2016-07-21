@@ -5,7 +5,6 @@
   line-height: 16px;
   padding-top: 12px;
   position: relative;
-  overflow: hidden;
   white-space: nowrap;
 }
 
@@ -86,13 +85,15 @@
   margin-left: 30px;
   margin-top: -4px;
 }
-.hasLocation
+.hasLocation,
+.value_hasLocation.value_noClassName
 {
   text-decoration: underline;
   transition: .25s color;
   cursor: pointer;
 }
-.hasLocation:hover
+.hasLocation:hover,
+.value_hasLocation.value_noClassName:hover
 {
   color: #A00;
 }

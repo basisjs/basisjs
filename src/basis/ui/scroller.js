@@ -740,7 +740,6 @@
       var scroller = this.scroller;
 
       if (
-          this.minPositionX &&
           this.maxPositionX &&
           this.scrollX &&
           (scroller.viewportX < this.minPositionX || scroller.viewportX > this.maxPositionX)
@@ -751,7 +750,6 @@
       }
 
       if (
-          this.minPositionY &&
           this.maxPositionY &&
           this.scrollY &&
           (scroller.viewportY < this.minPositionY || scroller.viewportY > this.maxPositionY)

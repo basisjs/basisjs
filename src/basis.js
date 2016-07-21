@@ -37,7 +37,7 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.7.0-dev';
+  var VERSION = '1.8.3';
 
   var global = Function('return this')();
   var process = global.process;
@@ -570,6 +570,7 @@
     var result = function(value){
       return fn(value);
     };
+    /** @cut */ result = devInfoResolver.patchFactory(result);
     result.factory = FACTORY;
 
     return result;
@@ -601,7 +602,7 @@
         global[name] = undefined;
       }
 
-      fn.apply(this, arguments);
+      return fn.apply(this, arguments);
     };
 
     return name;
@@ -2333,6 +2334,7 @@
 
   extend(getResource, {
     resolveURI: resolveResourceFilename,
+    buildCloak: getResource,  // hide resource declaration from builder
     isResource: function(value){
       return value ? resources[value.url] === value : false;
     },
@@ -2491,9 +2493,8 @@
     /** @cut */   var marker = basis.genUID();
     /** @cut */   SOURCE_OFFSET = new Function(args, marker).toString().split(marker)[0].split(/\n/).length - 1;
     /** @cut */ }
-    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1); // function wrapper prefix lines + 'use strict' line
-    /** @cut */ if (!/\/\/# sourceURL=[^\r\n]+[\s]*$/.test(body))
-    /** @cut */   body += '\n\n//# sourceURL=' + pathUtils.origin + sourceURL;
+    /** @cut */ body = devInfoResolver.fixSourceOffset(body, SOURCE_OFFSET + 1) + // function wrapper prefix lines + 'use strict' line
+    /** @cut */        '\n//# sourceURL=' + pathUtils.origin + sourceURL;
 
     try {
       return new Function(args,
@@ -3911,17 +3912,14 @@
   var devInfoResolver = (function(){
     /** @cut */ var getExternalInfo = $undef;
     var fixSourceOffset = $self;
-    var set = function(target, key, info){};
+    var set = function(/*target, key, info*/){};
     var patch = function(target, key, patch){
       /** @cut */ var oldInfo = get(target, key);
       /** @cut */
-      /** @cut */ if (!oldInfo || typeof oldInfo != 'object')
-      /** @cut */ {
+      /** @cut */ if (oldInfo)
+      /** @cut */   extend(oldInfo, patch);
+      /** @cut */ else
       /** @cut */   set(target, key, patch);
-      /** @cut */   return;
-      /** @cut */ }
-      /** @cut */
-      /** @cut */ extend(oldInfo, patch);
     };
     var get = function(target, key){
       /** @cut */ var externalInfo = getExternalInfo(target);
@@ -3932,6 +3930,16 @@
       /** @cut */   var info = merge(externalInfo, ownInfo);
       /** @cut */   return key ? info[key] : info;
       /** @cut */ }
+    };
+    var patchFactory = function(factory){
+      /** @cut */ return function locationAnchor(target){
+      /** @cut */   var value = factory(target);
+      /** @cut */
+      /** @cut */   if (value)
+      /** @cut */     set(value, 'loc', get(locationAnchor, 'loc'));
+      /** @cut */
+      /** @cut */   return value;
+      /** @cut */ };
     };
 
     /** @cut */ // old Firefox has bugs in WeakMap implementation, don't use dev info for them
@@ -3964,6 +3972,7 @@
       fixSourceOffset: fixSourceOffset,
       setInfo: set,
       patchInfo: patch,
+      patchFactory: patchFactory,
       getInfo: get
     };
   })();

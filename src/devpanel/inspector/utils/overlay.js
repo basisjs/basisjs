@@ -53,7 +53,7 @@ var observer = (function(){
   }
 })();
 
-var updateOnScroll = function(e){
+var updateOnScroll = function(){
   var scrollElement = document.compatMode == 'CSS1Compat'
     ? document.documentElement
     : document.body;

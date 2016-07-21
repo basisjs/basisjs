@@ -1,3 +1,138 @@
+## 1.8.3 (July 19, 2016)
+
+- Fixed issues with `undefined` or `null` as template source (now it converts to empty string)
+- Fixed using `basis.template.SourceWrapper` as cell template value in `basis.ui.table`
+- Fixed navigation up from `basis.dom.wrapper.PartitionNode` instance to parent in template inspector
+- Added the button to navigate up to group node in template inspector
+
+## 1.8.2 (July 19, 2016)
+
+- Fixed issue with build when using `invert` binding in template
+
+## 1.8.1 (July 18, 2016)
+
+- Fixed exception when using `b:ref` attribute in templates
+- Fixed template issue when value in reference list not used as binding (changes make sense for multi-references nodes only)
+- Fixed `<b:define>` apply to descendant nodes of `<b:content>`
+- Fixed edge case with comments when implicit `element` reference added to comment node with no refs and bindings but in production those nodes are remove
+- Fixed exception in devpanel template inspector when template source is empty string
+
+## 1.8.0 (July 17, 2016)
+
+### Core
+
+- Implemented `basis.resource.buildCloak()` to hide resources that should be used in development mode only
+- Changed `basis.fn.publicCallback()` to return result of wrapped function
+- Implemented `basis.dev.patchFactory()` to patch factory's returning value location to location of factory definition
+
+### Template
+
+- Refactored `basis.template.makeDeclaration()` and work will continue
+- Implemented [`<b:content>`](https://github.com/basisjs/articles/blob/master/ru-RU/template/b-content.md) to specify default insertion point in template
+- Fixed incorrect `<b:text>` content trimming
+- Implemented declaration AST walker `basis.template.declatation.walk()`
+- Reworked `<b:include>`'s attributes processing
+    - Apply attributes in order they declared in template source
+    - Added warning for unknown attributes
+    - Converting all attributes into equivalent instructions except `role`
+    - Changed `ref` attribute logic to work as `<b:add-ref>` instruction
+    - Fixed extra slash in path adding by `role` attribute
+    - Fixed issue when `<b:show>`, `<b:hide>`, `<b:visible>` or `<b:hidden>` instruction with static value doesn't override opposite setting with binding
+- Changed `ref` attribute to be optional for `<b:remove-ref>`
+- Renamed `<b:set-role>`'s `value` attribute to `name`
+- Fixed crash on using inline style with `options` attribute (@istrel, #75)
+- Fixed tokenizer to return range for whole tag not for open tag only
+- Added warning on duplicate namespaces for `<b:style>`
+- Added warning for `<b:style>`, `<b:define>`, `<b:l10n>` and `<b:isolate>` when used not in the beginning of template
+
+### Data
+
+- Improved `basis.data.AbstractData` to support a `Promise` as `syncAction()` result and synchronizing its state with data object state
+- Implemented `basis.entity.Type.all.set(data)` method that works as `setAndDestroyRemoved()` method but apply `reader()` for passed data and binded to `Type.all`
+- Removed `basis.data.value.Property` class
+- Fixed various factory location problem
+- Added wraping indexes by proxy (development mode only)
+
+### Devpanel
+
+- Data flow
+    - Fixed connections drawing on target value changing
+    - Correctly show view for dataset at any node (previously shows only for source nodes)
+    - Fixed issue when popup shows old graph after re-open popup for the same value
+    - Better `IndexWrapper` and `Value.query()` graphs
+- Template inspector
+    - Added clickable warnings in template sources (click by warning opens location in editor)
+    - Added support for `<b:content>`
+    - Fixed coloring of template source ranges
+
+## Other
+
+- Fixed event extension in `basis.dom.event` it depends on event type now (@smelukov, #69)
+- Improved `basis.date.format()` function to return formatting function when first argument is a string, i.e. now possible to do `format('%Y/%D/%M')(new Date())`
+- Removed warning and fallback for `basis.net.ajax.Request#getResponseError()`
+- Fixed `abort` processing in `basis.net.ajax` by using `onabort` event
+- Fixed regression of `basis.ui.scroller.ScrollPanel` introduced in previous version (@naorunaoru, #79)
+- Fixed `Value.query('childNodes.length')` for `basis.ui.Node` instances to work as expected
+- Reworked `tour` and now its viewer is using on [site](http://basisjs.com) as examples viewer
+- Dropped `basis/patch`
+
+## 1.7.0 (June 24, 2016)
+
+### Core
+
+- Added `SVG` as new resource type, which automatically inject to document when call `startUse()` method like `CSS` resources (@tyanas)
+- Implemented `basis.dev.patchInfo()` to patch dev info instead of rewriting
+- Always add `sourceURL` to wrapped modules source
+
+### Data
+
+- Implemented `Value#query()` and `Value.factory#query()`
+- Fixed `basis.data.dataset.Slice` index to be stable for `NaN` values
+- Fixed `basis.data.SourceDataset#setSource()` issue when new source mutates on linking (e.g. via `syncAction`)
+- Added `VectorFn` and `fnConstructor` to export of `basis.data.vector` (#68, @istrel)
+
+### Template
+
+- `<b:svg>` support to simplify injection of `<svg><use xlink:href=".."></svg>` to layout (@tyanas)
+- Added automatic injection of `cursor: pointer` to style for elements with mouse events on touch devices to make mouse events work on iOS (#63, @istrel)
+- Added resource resolve warnings to template warnings list with reference to AST token
+- Reworked resource processing in declaration
+- Corrected relative path resolving in markup tokens (relative to source file)
+- Fixed comment processing inside blocks in `isolateCss()`
+- Fixed exception when apply isolation in build version of basis.js
+
+### l10n
+
+- Implemented dictionary patching via `l10n: { patch: .. }` in `basis-config` (@BobbyZee)
+- Ignore wrong types in `_meta` as more predictable behaviour (`default` type was set before)
+- Added token source information and some debug info in dictionaries (make sense on dictionary merge when patching)
+- Reworked token types and dictionary content update mechanics
+
+### Other
+
+- Changed container for root element of popups (`basis.ui.popup`) to mitigate layout problems in `Firefox`. Now it's a common container again not a document's body (@naorunaoru)
+- Corrected calculations of min/max delta for `basis.dragdrop.MoveableElement` (@wuzyk)
+- Fixed duplicate callback invocation in `basis.net.service` (#57, @BobbyZee)
+- Added `requestData` as argument into `Service#signature` to simplify re-signing of requests after the session will be unfrozen (@BobbyZee)
+- Changed severity for messages about rejecting the request in `basis.net.action` (@BobbyZee)
+- Fixed edge cases in `basis.ui.scroller` (#59, @naorunaoru)
+- Fixed edge case for range calculate in `basis.utils.source.convertToRange()`
+- Fixed `basis.crypt.md5()` for messages longest than 32 chars
+- Implemented `Field#required` and related changes (@istrel)
+  - Conditional required via `Field#required` property
+  - Automatically attach/detach `Validator.Required` depending on `required` property value
+  - Added `Field#validatorsChanged` event that triggers on validators changing
+  - Added `prepend` argument for `Field#attachValidator()` method to place validator in beginning
+
+### devpanel
+
+- Implemented representation of FRP trasformations graph named as `Data flow`. Currently for reactive bindings only. For some examples see demo: `demo/data/data-flow.html` (@tyanas)
+- Added touch support in template inspector (@tyanas)
+- Added `basis.l10n` token info popup on token hover
+- Added opening token value location in editor
+- Fixed exception in grid inspector when measuring text is zero width (@naorunaoru)
+- Fixed namespace and source output in template info popup
+
 ## 1.6.0 (January 21, 2016)
 
 - fix duplicate var declarations (thanks to new linter's check in `basisjs-tools`)

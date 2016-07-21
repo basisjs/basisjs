@@ -11,6 +11,8 @@ module.exports = {
     var fromISOString = basis.require('basis.date').fromISOString;
     var toISOString = basis.require('basis.date').toISOString;
     var toISODateString = basis.require('basis.date').toISODateString;
+    var format = basis.require('basis.date').format;
+    var add = basis.require('basis.date').add;
 
     function toUTC(date){
       date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
@@ -190,6 +192,39 @@ module.exports = {
         assert(isoStr, d2.toISOString());
         assert(d2 - d === 0);
       }
+    },
+    {
+      name: 'format()',
+      test: [
+        {
+          name: 'regular usage',
+          test: function(){
+            var localDate = fromISOString('2007-01-01T01:02:03.123Z');
+            add(localDate, 'minute', localDate.getTimezoneOffset());
+            assert(format(localDate, '%Y-%M-%DT%H:%I:%S.%Z') === '2007-01-01T01:02:03.123');
+          }
+        },
+        {
+          name: 'regular usage UTC',
+          test: function(){
+            assert(format(fromISOString('2007-01-01T01:02:03.123Z'), '%Y-%M-%DT%H:%I:%S.%Z', true) === '2007-01-01T01:02:03.123');
+          }
+        },
+        {
+          name: 'as formatter',
+          test: function(){
+            var localDate = fromISOString('2007-01-01T01:02:03.123Z');
+            add(localDate, 'minute', localDate.getTimezoneOffset());
+            assert(format('%Y-%M-%DT%H:%I:%S.%Z')(localDate) === '2007-01-01T01:02:03.123');
+          }
+        },
+        {
+          name: 'as formatter UTC',
+          test: function(){
+            assert(format('%Y-%M-%DT%H:%I:%S.%Z', true)(fromISOString('2007-01-01T01:02:03.123Z')) === '2007-01-01T01:02:03.123');
+          }
+        }
+      ]
     }
   ]
 };

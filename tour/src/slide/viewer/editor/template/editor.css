@@ -1,0 +1,28 @@
+.slide-code-editor
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  overflow: hidden;
+  border-radius: 3px;
+  min-width: 100px;
+  min-height: 100px;
+}
+
+.slide-code-editor .CodeMirror
+{
+  height: 100%;
+  font-family: 'source-code-pro', Menlo, Consolas, 'Courier New', monospace;
+  line-height: 1.5;
+  font-size: 13px;
+  /*font-weight: 300;*/
+}
+
+.slide-code-editor .CodeMirror-lines
+{
+  padding: 4px 2px;
+}
+

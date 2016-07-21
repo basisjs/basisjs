@@ -676,10 +676,9 @@ module.exports = {
           childFactory: nodeFactory
         });
 
-        var eventCount = 0;
         node.addHandler({
           childNodesModified: function(){
-            eventCount++;
+            visit();
           }
         });
 
@@ -690,7 +689,7 @@ module.exports = {
         node.setDataSource(bar);
         assert(node.childNodes.length === 3);
         assert(node.dataSource === bar);
-        assert(eventCount === 0);
+        assert.visited([]); // no childNodesModified events
       }
     },
     {
@@ -709,10 +708,9 @@ module.exports = {
           childFactory: nodeFactory
         });
 
-        var eventCount = 0;
         node.addHandler({
           childNodesModified: function(){
-            eventCount++;
+            visit();
           }
         });
 
@@ -722,10 +720,12 @@ module.exports = {
         node.setDataSource(bar);
         assert(node.childNodes.length === 5);
         assert(node.dataSource === bar);
+        assert(visit.list().length === 2);
 
         node.setDataSource(baz); // should be no exception
         assert(node.childNodes.length === 0);
         assert(node.dataSource === baz);
+        assert(visit.list().length === 3);
       }
     },
     {
@@ -744,10 +744,9 @@ module.exports = {
           childFactory: nodeFactory
         });
 
-        var eventCount = 0;
         node.addHandler({
           childNodesModified: function(){
-            eventCount++;
+            visit();
           }
         });
 
@@ -757,10 +756,12 @@ module.exports = {
         node.setDataSource(bar); // should be no exception
         assert(node.childNodes.length === 4);
         assert(node.dataSource === bar);
+        assert(visit.list().length === 2);
 
         node.setDataSource(baz);
         assert(node.childNodes.length === 0);
         assert(node.dataSource === baz);
+        assert(visit.list().length === 3);
       }
     },
     {
@@ -780,10 +781,9 @@ module.exports = {
           childFactory: nodeFactory
         });
 
-        var eventCount = 0;
         node.addHandler({
           childNodesModified: function(){
-            eventCount++;
+            visit();
           }
         });
 
@@ -793,10 +793,12 @@ module.exports = {
         datasetValue.set(bar);  // should be no exception
         assert(node.childNodes.length === 4);
         assert(node.dataSource === bar);
+        assert(visit.list().length === 2);
 
         datasetValue.set(baz);
         assert(node.childNodes.length === 0);
         assert(node.dataSource === baz);
+        assert(visit.list().length === 3);
       }
     },
     {
@@ -813,14 +815,12 @@ module.exports = {
         {
           name: 'if true, child nodes produced by dataSource should be destroyed when remove from dataSource',
           test: function(){
-            var objectDestroyCount = 0;
-            var nodeDestroyCount = 0;
             var dataset = new Dataset({
               items: basis.array.create(3, function(){
                 return new DataObject({
                   handler: {
                     destroy: function(){
-                      objectDestroyCount++;
+                      visit('object');
                     }
                   }
                 });
@@ -831,7 +831,7 @@ module.exports = {
               childClass: Node.subclass({
                 handler: {
                   destroy: function(){
-                    nodeDestroyCount++;
+                    visit('node');
                   }
                 }
               }),
@@ -841,28 +841,24 @@ module.exports = {
             });
 
             assert(dataset.itemCount === 3);
-            assert(objectDestroyCount === 0);
             assert(node.childNodes.length === 3);
-            assert(nodeDestroyCount === 0);
+            assert.visited([]);
 
             dataset.clear();
             assert(dataset.itemCount === 0);
-            assert(objectDestroyCount === 0);
             assert(node.childNodes.length === 0);
-            assert(nodeDestroyCount === 3);
+            assert.visited(['node', 'node', 'node']);
           }
         },
         {
           name: 'if true, child nodes produced by dataSource should be destroyed on dataSource change',
           test: function(){
-            var objectDestroyCount = 0;
-            var nodeDestroyCount = 0;
             var dataset = new Dataset({
               items: basis.array.create(3, function(){
                 return new DataObject({
                   handler: {
                     destroy: function(){
-                      objectDestroyCount++;
+                      visit('object');
                     }
                   }
                 });
@@ -873,7 +869,7 @@ module.exports = {
               childClass: Node.subclass({
                 handler: {
                   destroy: function(){
-                    nodeDestroyCount++;
+                    visit('node');
                   }
                 }
               }),
@@ -883,15 +879,13 @@ module.exports = {
             });
 
             assert(dataset.itemCount === 3);
-            assert(objectDestroyCount === 0);
             assert(node.childNodes.length === 3);
-            assert(nodeDestroyCount === 0);
+            assert.visited([]);
 
             node.setDataSource();
             assert(dataset.itemCount === 3);
-            assert(objectDestroyCount === 0);
             assert(node.childNodes.length === 0);
-            assert(nodeDestroyCount === 3);
+            assert.visited(['node', 'node', 'node']);
           }
         },
         {

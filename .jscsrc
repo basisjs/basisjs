@@ -15,8 +15,8 @@
     "disallowEmptyBlocks": true,
 
     "requireSpacesInsideObjectBrackets": "all",
-    "disallowSpacesInsideArrayBrackets": true,
-    "disallowSpacesInsideParentheses": true,
+    // "disallowSpacesInsideArrayBrackets": true,
+    // "disallowSpacesInsideParentheses": true,
 
     "disallowSpaceAfterObjectKeys": true,
 
@@ -37,7 +37,7 @@
 
     "disallowMultipleLineStrings": true,
     "validateQuoteMarks": "'",
-    "requireSemicolon": true,
+    "requireSemicolons": true,
 
     "disallowMixedSpacesAndTabs": true,
     "disallowTrailingWhitespace": true,
@@ -59,7 +59,7 @@
         "demo/seedrandom.js",
         "demo/apps/todomvc/assets/**",
         "scripts/jscs/**",
-        "tour/lib/**",
+        "tour/src/slide/viewer/editor/codemirror/**",
         "node_modules/**",
         "build/**",
         "**/build/**"

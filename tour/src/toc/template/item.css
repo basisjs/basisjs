@@ -1,0 +1,20 @@
+.item
+{
+  padding: .75em 1em;
+  background: white;
+  margin: 1px;
+  cursor: pointer;
+}
+.item:first-child
+{
+  border-radius: 5px 5px 0 0;
+}
+.item:last-child
+{
+  border-radius: 0 0 5px 5px;
+}
+
+.item:hover
+{
+  background: #ffce54;
+}
