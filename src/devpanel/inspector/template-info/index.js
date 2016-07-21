@@ -10,7 +10,8 @@ var buildTree = require('./build-tree.js');
 var Dataset = require('basis.data').Dataset;
 var Window = require('basis.ui.window').Window;
 var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
-var sourceView = require('./source.js');
+var sourceDecl = require('./source.js').decl;
+var sourceView = require('./view-source.js');
 var jsSourcePopup = require('../../module/js-source-popup/index.js');
 var showSource = new basis.Token(false);
 var selectedDomNode = new basis.Token();
@@ -40,7 +41,7 @@ selectedTemplate
     return template;
   })
   .attach(function(template){
-    sourceView.decl.set(template ? template.decl_ : null);
+    sourceDecl.set(template ? template.decl_ : null);
   });
 
 function syncSelectedNode(){
@@ -134,7 +135,7 @@ var view = new Window({
       if (template)
         return Boolean(template.source.url);
     }),
-    warningCount: sourceView.decl.as(function(decl){
+    warningCount: sourceDecl.as(function(decl){
       return decl && decl.warns ? decl.warns.length : 0;
     }),
     objectClassName: selectedObject.as(function(object){
@@ -225,7 +226,7 @@ var view = new Window({
         object: object,
         template: {
           debugInfo: debugInfo,
-          declaration: sourceView.decl.value || '<no info>',
+          declaration: sourceDecl.value || '<no info>',
           values: values
         }
       };

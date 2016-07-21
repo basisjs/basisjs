@@ -1,9 +1,6 @@
 var consts = require('basis.template.const');
 var convertToRange = require('basis.utils.source').convertToRange;
-var Node = require('basis.ui').Node;
-var fileAPI = require('../../api/file.js');
 var declToken = new basis.Token();
-var declCodeToken = new basis.Token('');
 
 var colors = [
   'rgb(234, 196, 247)',
@@ -61,7 +58,7 @@ function escapeHtml(str){
     .replace(/</g, '&lt;');
 }
 
-var buildHtml = function(tokens, parent, colorMap, offset){
+function buildHtmlTree(tokens, parent, colorMap, offset){
   function expression(binding){
     return binding[1].map(function(sb){
       return typeof sb == 'number' ? '<span class="refs">{' + this[sb] + '}</span>' : sb;
@@ -108,7 +105,7 @@ var buildHtml = function(tokens, parent, colorMap, offset){
           value = expression(bindings);
       }
 
-    addToResult(result.attrs, token, name + '="' + value + '"');
+    addToResult(result.attrs, token, name + (value ? '="' + value + '"' : ''));
   }
 
   function refs(token){
@@ -136,7 +133,7 @@ var buildHtml = function(tokens, parent, colorMap, offset){
         var tagName = token[consts.ELEMENT_NAME];
 
         // precess for children and attributes
-        var res = buildHtml(token, true, colorMap, consts.ELEMENT_ATTRIBUTES_AND_CHILDREN);
+        var res = buildHtmlTree(token, true, colorMap, consts.ELEMENT_ATTRIBUTES_AND_CHILDREN);
 
         // add to result
         var html = '&lt;' + tagName + refs(token);
@@ -156,7 +153,7 @@ var buildHtml = function(tokens, parent, colorMap, offset){
         break;
 
       case consts.TYPE_CONTENT:
-        var res = buildHtml(token, true, colorMap, consts.CONTENT_CHILDREN);
+        var res = buildHtmlTree(token, true, colorMap, consts.CONTENT_CHILDREN);
         var html;
 
         if (!res.children.length)
@@ -176,14 +173,9 @@ var buildHtml = function(tokens, parent, colorMap, offset){
         var eventName = attrName.replace(/^event-/, '');
 
         if (eventName != attrName)
-        {
           setEventAttribute(eventName, attrValue, token);
-        }
         else
-        {
-          if (attrValue || token[consts.TOKEN_BINDINGS])
-            setAttribute(attrName, attrValue || '', token);
-        }
+          setAttribute(attrName, attrValue || '', token);
 
         break;
 
@@ -224,68 +216,6 @@ var buildHtml = function(tokens, parent, colorMap, offset){
 
   return result;
 };
-
-var view = new Node({
-  decl: declToken,
-  template: resource('./template/source/main.tmpl'),
-  binding: {
-    code: declCodeToken
-  },
-  childClass: {
-    childClass: basis.Class.SELF,
-    template: resource('./template/source/template.tmpl'),
-    binding: {
-      url: 'data:',
-      caption: {
-        events: 'update',
-        getter: function(node){
-          return node.data.url || '[inline]';
-        }
-      },
-      content: function(node){
-        function wrap(color, str){
-          if (!str)
-            return '';
-
-          str = str.replace(/</g, '&lt;');
-
-          return color
-            ? '<span style="background: ' + color + '">' + str + '</span>'
-            : str;
-        }
-
-        var content = node.data.content;
-        var markup = node.data.markup;
-        var color = '';
-        var offset = 0;
-        var res = '';
-
-        for (var i = 0, range; range = markup[i]; i++)
-        {
-          if (range[0] !== offset)
-            res += wrap(color, content.substring(offset, range[0]));
-
-          if (range[0] !== range[1])
-            res += wrap(range[2], content.substring(range[0], range[1]));
-          else
-            res += '<span style="background-color: ' + range[2] + '" class="warning" title="' + escapeHtml(range[3]) + '" event-click="openFile" data-loc="' + escapeHtml(range[4]) + '"></span>';
-
-          offset = range[1];
-        }
-
-        return res + wrap(color, content.substring(offset));
-      },
-      warningCount: 'data:warnings.length'
-    },
-    action: {
-      openFile: function(e){
-        var loc = e.sender.getAttribute('data-loc');
-        if (loc)
-          fileAPI.openFile(loc);
-      }
-    }
-  }
-});
 
 function addRange(ranges, range){
   var start = range[0];
@@ -396,16 +326,13 @@ function rangeSorting(a, b){
   return a[0] - b[0] || (a[1] - a[0]) - (b[1] - b[0]);
 }
 
-declToken.attach(function(decl){
-  var children = [];
-  var code = '';
-
+var declSourceToken = declToken.as(function(decl){
   if (decl)
   {
     var colorMap = new ColorMap([decl.sourceUrl].concat(decl.deps.map(function(dep){
       return dep.url;
     })).filter(Boolean));
-    var bb = buildHtml(decl.tokens, false, colorMap);
+    var source = buildHtmlTree(decl.tokens, false, colorMap).children.join('\n');
     var root = {
       token: null,
       src: null,
@@ -415,14 +342,13 @@ declToken.attach(function(decl){
       nested: decl.includes
     };
 
-    code = bb.children.join('\n');
-    children = [root].map(function processInclude(inc){
+    var sourceTree = [root].map(function processInclude(inc){
       var resource = inc.resource;
       var source = String((resource.bindingBridge ? resource.bindingBridge.get(resource) : resource) || '');
       var warnFilter = inc === root ? undefined : inc.token;
 
       var ranges = [
-          [0, source.length, this.colorMap.get(resource.url || '', 'red')]
+          [0, source.length, colorMap.get(resource.url || '', 'red')]
         ]
         .concat(
           decl.styles.filter(function(style){
@@ -441,9 +367,9 @@ declToken.attach(function(decl){
         .concat(
           inc.nested.map(function(item){
             return getTokenAttrs(item.token).src.valueRange.concat(
-              this.colorMap.get(item.resource.url || item.resource)
+              colorMap.get(item.resource.url || item.resource)
             );
-          }, this)
+          })
         )
         .sort(rangeSorting)
         .reduce(addRange, {});
@@ -497,18 +423,24 @@ declToken.attach(function(decl){
         data: {
           url: resource.url,
           content: source,
-          color: this.colorMap.get(resource.url || '', 'red'),
+          color: colorMap.get(resource.url || '', 'red'),
           warnings: warnings,
           markup: markup
         },
-        childNodes: inc.nested.map(processInclude, this)
+        childNodes: inc.nested.map(processInclude)
       };
-    }, bb);
+    });
+
+    return JSON.stringify({
+      source: source,
+      tree: sourceTree
+    });
   }
 
-  declCodeToken.set(code);
-  view.setChildNodes(children);
+  return '{}';
+});
 
-}, view);
-
-module.exports = view;
+module.exports = {
+  decl: declToken,
+  source: declSourceToken
+};
