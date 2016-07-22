@@ -5,13 +5,14 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
 
 var fileAPI = require('../../api/file.js');
-var parseDom = require('./parse-dom.js');
-var buildTree = require('./build-tree.js');
+var parseDom = require('./dom-parse.js');
+var buildTree = require('./dom-build-tree.js');
 var Dataset = require('basis.data').Dataset;
 var Window = require('basis.ui.window').Window;
 var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
 var sourceDecl = require('./source.js').decl;
 var sourceView = require('./view-source.js');
+var domTree = require('./view-dom.js');
 var jsSourcePopup = require('../../module/js-source-popup/index.js');
 var showSource = new basis.Token(false);
 var selectedDomNode = new basis.Token();
@@ -83,7 +84,7 @@ selectedDomNode.attach(function(node){
 
 selectedDomNode.attach(function(node){
   if (!node)
-    return view.clear();
+    return domTree.clear();
 
   var nodes = parseDom(node);
   var templateId = nodes[0][inspectBasisTemplateMarker];
@@ -91,10 +92,11 @@ selectedDomNode.attach(function(node){
   var object = inspectBasisTemplate.resolveObjectById(templateId) || {};
   var actions = object.action || {};
   var bindings = debugInfo.bindings || [];
+  var dom = buildTree(nodes, bindings, actions);
 
-  view.setChildNodes(buildTree(nodes, bindings, actions, function(node){
-    selectedDomNode.set(node);
-  }));
+  domTree.show(JSON.stringify(dom.tree), function(id){
+    selectedDomNode.set(dom.map[id]);
+  });
 });
 
 var captureEvents = [
@@ -113,7 +115,7 @@ function up(upNode){
     selectedDomNode.set(upNode.element);
 }
 
-var view = new Window({
+module.exports = new Window({
   modal: true,
   visible: selectedDomNode.as(Boolean),
   template: resource('./template/window.tmpl'),
@@ -149,6 +151,7 @@ var view = new Window({
     objectLocation: selectedObject.as(function(object){
       return inspectBasis.dev.getInfo(object, 'loc');
     }),
+    domTree: domTree,
     source: sourceView,
     showSource: showSource,
     bindings: 'satellite:'
