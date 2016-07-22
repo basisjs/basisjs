@@ -12,7 +12,7 @@ function valueToString(val){
   return String(val);
 }
 
-function getBindingsFromNode(node){
+module.exports = function getBindingsFromNode(node){
   var items = [];
 
   if (node)
@@ -33,7 +33,8 @@ function getBindingsFromNode(node){
 
         items.push({
           name: key,
-          realValue: rawValues[key],
+          // need for data-flow
+          // realValue: rawValues[key],
           value: valueToString(value),
           isReactive: isReactive,
           used: used,
@@ -44,8 +45,4 @@ function getBindingsFromNode(node){
   }
 
   return items;
-}
-
-module.exports = {
-  getBindingsFromNode: getBindingsFromNode
 };

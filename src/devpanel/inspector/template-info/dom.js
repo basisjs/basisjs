@@ -1,4 +1,50 @@
 var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisTemplate = inspectBasis.require('basis.template');
+var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
+
+function parseDom(node){
+  var root = node;
+  var cursor = root.firstChild;
+  var nodes = [root, [], {}];
+  var nodesCursor = nodes;
+  var nodesStack = [nodesCursor];
+  var candidate;
+
+  while (cursor && cursor !== root)
+  {
+    var node = [cursor, [], {}];
+    nodesCursor[1].push(node);
+
+    if (!cursor[inspectBasisTemplateMarker])
+    {
+      if (cursor.firstChild)
+      {
+        cursor = cursor.firstChild;
+        nodesStack.push(nodesCursor);
+        nodesCursor = node;
+        continue;
+      }
+    }
+    else
+    {
+      node[2].nestedView = true;
+    }
+
+    candidate = cursor.nextSibling;
+
+    while (!candidate && cursor.parentNode !== root)
+    {
+      cursor = cursor.parentNode;
+      nodesCursor = nodesStack.pop();
+      if (cursor !== root)
+        candidate = cursor.nextSibling;
+    }
+
+    cursor = candidate;
+  }
+
+  return nodes;
+}
 
 function buildAttribute(attr, attrBindings, actions){
   var value = [{
@@ -110,7 +156,7 @@ function buildAttribute(attr, attrBindings, actions){
   };
 }
 
-module.exports = function buildDomTree(item, bindings, actions){
+module.exports = function buildDomTree(rootNode){
   function findBinding(node){
     return basis.array.search(bindings, node, 'dom');
   }
@@ -217,7 +263,18 @@ module.exports = function buildDomTree(item, bindings, actions){
   }
 
   var domNodesMap = {};
-  var tree = createNode(item);
+  var tree = null;
+
+  if (rootNode)
+  {
+    var templateId = rootNode[inspectBasisTemplateMarker];
+    var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId) || {};
+    var bindings = debugInfo.bindings || [];
+    var object = inspectBasisTemplate.resolveObjectById(templateId) || {};
+    var actions = object.action || {};
+
+    tree = createNode(parseDom(rootNode));
+  }
 
   return {
     map: domNodesMap,

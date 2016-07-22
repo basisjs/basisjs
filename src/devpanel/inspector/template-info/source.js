@@ -1,6 +1,5 @@
 var consts = require('basis.template.const');
 var convertToRange = require('basis.utils.source').convertToRange;
-var declToken = new basis.Token();
 
 var colors = [
   'rgb(234, 196, 247)', // repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(255,255,255,.25) 6px, rgba(255,255,255,.25) 12px, transparent 12px) fixed',
@@ -326,7 +325,7 @@ function rangeSorting(a, b){
   return a[0] - b[0] || (a[1] - a[0]) - (b[1] - b[0]);
 }
 
-var declSourceToken = declToken.as(function(decl){
+module.exports = function buildSourceTreeFromDecl(decl){
   if (decl)
   {
     var colorMap = new ColorMap([decl.sourceUrl].concat(decl.deps.map(function(dep){
@@ -438,9 +437,4 @@ var declSourceToken = declToken.as(function(decl){
   }
 
   return {};
-});
-
-module.exports = {
-  decl: declToken,
-  source: declSourceToken
 };

@@ -5,26 +5,27 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
 
 var Expression = require('basis.data.value').Expression;
-var parseDom = require('./dom-parse.js');
-var buildTree = require('./dom-build-tree.js');
-var getBindingsFromNode = require('./bindings.js').getBindingsFromNode;
-var selectedTemplateDecl = require('./source.js').decl;
-var sourceSource = require('./source.js').source;
+var buildDomTree = require('./dom.js');
+var getBindingsFromNode = require('./bindings.js');
+var buildSourceTreeFromDecl = require('./source.js');
 
 var selectedDomNode = new basis.Token();
-var selectedObject = selectedDomNode.as(function(node){
-  return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
-});
-var selectedTemplate = selectedDomNode.as(function(node){
-  var template = node ? inspectBasisTemplate.resolveTemplateById(node[inspectBasisTemplateMarker]) : null;
-  if (this.value)
-    this.value.bindingBridge.detach(this.value, syncSelectedNode);
-  if (template)
-    template.bindingBridge.attach(template, syncSelectedNode);
-  return template;
-});
+var selectedObject = selectedDomNode
+  .as(function(node){
+    return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
+  });
 
-selectedTemplate
+var selectedTemplate = selectedDomNode
+  .as(function(node){
+    var template = node ? inspectBasisTemplate.resolveTemplateById(node[inspectBasisTemplateMarker]) : null;
+    if (this.value)
+      this.value.bindingBridge.detach(this.value, syncSelectedNode);
+    if (template)
+      template.bindingBridge.attach(template, syncSelectedNode);
+    return template;
+  });
+
+var selectedTemplateDecl = selectedTemplate
   .as(function(template){
     if (this.value)
       this.value.bindingBridge.detach(this.value, this.apply, this);
@@ -32,8 +33,10 @@ selectedTemplate
       template.bindingBridge.attach(template, this.apply, this);
     return template;
   })
-  .attach(function(template){
-    selectedTemplateDecl.set(template ? template.decl_ : null);
+  // use separate convertions because template can to not change
+  // but decl change
+  .as(function(template){
+    return template ? template.decl_ : null;
   });
 
 function syncSelectedNode(){
@@ -108,29 +111,21 @@ var bindingView = require('./view-bindings.js');
 var sourceView = require('./view-source.js');
 var view = require('./view-main.js');
 
-selectedDomNode.attach(function(node){
-  if (!node)
-    return domTree.clear();
-
-  var nodes = parseDom(node);
-  var templateId = nodes[0][inspectBasisTemplateMarker];
-  var debugInfo = inspectBasisTemplate.getDebugInfoById(templateId) || {};
-  var object = inspectBasisTemplate.resolveObjectById(templateId) || {};
-  var actions = object.action || {};
-  var bindings = debugInfo.bindings || [];
-  var dom = buildTree(nodes, bindings, actions);
-
-  domTree.show(JSON.stringify(dom.tree), function(id){
-    selectedDomNode.set(dom.map[id]);
+selectedDomNode
+  .as(buildDomTree)
+  .attach(function(data){
+    domTree.show(JSON.stringify(data.tree), function(id){
+      selectedDomNode.set(data.map[id]);
+    });
   });
-});
 
 selectedDomNode
   .as(getBindingsFromNode)
   .as(JSON.stringify)
   .attach(bindingView.show, bindingView);
 
-sourceSource
+selectedTemplateDecl
+  .as(buildSourceTreeFromDecl)
   .as(JSON.stringify)
   .attach(sourceView.show, sourceView);
 
