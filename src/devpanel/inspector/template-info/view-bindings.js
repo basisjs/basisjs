@@ -1,10 +1,15 @@
+var wrap = require('basis.data').wrap;
 var Node = require('basis.ui').Node;
 var fileAPI = require('../../api/file.js');
-var hoveredBinding = require('./binding.js').hover;
+var hoveredBinding = require('./bindings.js').hover;
 var jsSourcePopup = require('../../module/js-source-popup/index.js');
 var dataFlowPopup = require('./data-flow-popup.js');
 
+var Value = require('basis.data').Value;
+var hoveredBinding = new Value();
+
 module.exports = new Node({
+  hover: hoveredBinding,
   sorting: 'data.name',
   grouping: {
     rule: 'data.used',
@@ -57,5 +62,9 @@ module.exports = new Node({
           fileAPI.openFile(this.data.loc);
       }
     }
+  },
+  show: function(data){
+    data = JSON.parse(data);
+    this.setChildNodes(wrap(data, true));
   }
 });

@@ -2,10 +2,6 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 
-var wrap = require('basis.data').wrap;
-var Value = require('basis.data').Value;
-var hoveredBinding = new Value();
-
 function valueToString(val){
   if (typeof val == 'string')
     return '\'' + val.replace(/\'/g, '\\\'') + '\'';
@@ -47,10 +43,9 @@ function getBindingsFromNode(node){
       }
   }
 
-  return wrap(items, true);
+  return items;
 }
 
 module.exports = {
-  hover: hoveredBinding,
   getBindingsFromNode: getBindingsFromNode
 };

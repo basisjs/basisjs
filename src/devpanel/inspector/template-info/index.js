@@ -4,17 +4,13 @@ var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
 
-var fileAPI = require('../../api/file.js');
+var Expression = require('basis.data.value').Expression;
 var parseDom = require('./dom-parse.js');
 var buildTree = require('./dom-build-tree.js');
-var Dataset = require('basis.data').Dataset;
-var Window = require('basis.ui.window').Window;
-var getBindingsFromNode = require('./binding.js').getBindingsFromNode;
-var sourceDecl = require('./source.js').decl;
-var sourceView = require('./view-source.js');
-var domTree = require('./view-dom.js');
-var jsSourcePopup = require('../../module/js-source-popup/index.js');
-var showSource = new basis.Token(false);
+var getBindingsFromNode = require('./bindings.js').getBindingsFromNode;
+var selectedTemplateDecl = require('./source.js').decl;
+var sourceSource = require('./source.js').source;
+
 var selectedDomNode = new basis.Token();
 var selectedObject = selectedDomNode.as(function(node){
   return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
@@ -27,11 +23,6 @@ var selectedTemplate = selectedDomNode.as(function(node){
     template.bindingBridge.attach(template, syncSelectedNode);
   return template;
 });
-var bindingDataset = new Dataset();
-
-selectedDomNode
-  .as(getBindingsFromNode)
-  .attach(bindingDataset.set, bindingDataset);
 
 selectedTemplate
   .as(function(template){
@@ -42,7 +33,7 @@ selectedTemplate
     return template;
   })
   .attach(function(template){
-    sourceDecl.set(template ? template.decl_ : null);
+    selectedTemplateDecl.set(template ? template.decl_ : null);
   });
 
 function syncSelectedNode(){
@@ -82,6 +73,41 @@ selectedDomNode.attach(function(node){
     });
 });
 
+var captureEvents = [
+  'click',
+  'mousedown',
+  'mouseup',
+  'mousemove',
+  'mouseout',
+  'mouseover',
+  'mouseenter',
+  'mouseleave'
+];
+
+selectedDomNode.attach(function(node){
+  if (node)
+    captureEvents.forEach(function(eventName){
+      inspectBasisDomEvent.captureEvent(eventName, function(){});
+    });
+  else
+    captureEvents.forEach(function(eventName){
+      inspectBasisDomEvent.releaseEvent(eventName);
+    });
+});
+
+
+function up(upNode){
+  if (upNode && upNode.element)
+    selectedDomNode.set(upNode.element);
+}
+
+// === attach data to view
+
+var domTree = require('./view-dom.js');
+var bindingView = require('./view-bindings.js');
+var sourceView = require('./view-source.js');
+var view = require('./view-main.js');
+
 selectedDomNode.attach(function(node){
   if (!node)
     return domTree.clear();
@@ -99,171 +125,105 @@ selectedDomNode.attach(function(node){
   });
 });
 
-var captureEvents = [
-  'click',
-  'mousedown',
-  'mouseup',
-  'mousemove',
-  'mouseout',
-  'mouseover',
-  'mouseenter',
-  'mouseleave'
-];
+selectedDomNode
+  .as(getBindingsFromNode)
+  .as(JSON.stringify)
+  .attach(bindingView.show, bindingView);
 
-function up(upNode){
-  if (upNode && upNode.element)
-    selectedDomNode.set(upNode.element);
-}
+sourceSource
+  .as(JSON.stringify)
+  .attach(sourceView.show, sourceView);
 
-module.exports = new Window({
-  modal: true,
-  visible: selectedDomNode.as(Boolean),
-  template: resource('./template/window.tmpl'),
-  binding: {
-    hasParent: selectedObject.as(function(object){
-      return Boolean(object && object.parentNode);
-    }),
-    hasOwner: selectedObject.as(function(object){
-      return Boolean(object && object.owner);
-    }),
-    hasGroup: selectedObject.as(function(object){
-      return Boolean(object && object.groupNode);
-    }),
-    sourceTitle: selectedTemplate.as(function(template){
-      if (template)
-        return template.source.url || '[inline]';
-    }),
-    isFile: selectedTemplate.as(function(template){
-      if (template)
-        return Boolean(template.source.url);
-    }),
-    warningCount: sourceDecl.as(function(decl){
-      return decl && decl.warns ? decl.warns.length : 0;
-    }),
-    objectClassName: selectedObject.as(function(object){
-      if (object)
-        return object.constructor.className || '';
-    }),
-    objectId: selectedObject.as(function(object){
-      if (object)
-        return object.basisObjectId;
-    }),
-    objectLocation: selectedObject.as(function(object){
-      return inspectBasis.dev.getInfo(object, 'loc');
-    }),
-    domTree: domTree,
-    source: sourceView,
-    showSource: showSource,
-    bindings: 'satellite:'
-  },
-  action: {
-    upParent: function(){
-      var object = selectedObject.value;
-      if (object && object.parentNode)
-      {
-        var upNode = object.parentNode;
+new Expression(
+  selectedDomNode,
+  selectedObject,
+  selectedTemplate,
+  selectedTemplateDecl,
+  function(target, object, template, decl){
+    var data = {
+      hasTarget: Boolean(target),
+      hasParent: false,
+      hasOwner: false,
+      hasGroup: false,
+      objectClassName: null,
+      objectId: null,
+      objectLocation: null,
+      url: template ? template.source.url : null,
+      warningCount: decl && decl.warns ? decl.warns.length : 0
+    };
 
-        if (upNode instanceof inspectBasisGroupingNode)
-          upNode = upNode.owner;
+    if (object)
+    {
+      data.hasParent = Boolean(object.parentNode);
+      data.hasOwner = Boolean(object.owner);
+      data.hasGroup = Boolean(object.groupNode);
+      data.objectId = object.basisObjectId;
+      data.objectClassName = object.constructor.className || '';
+      data.objectLocation = inspectBasis.dev.getInfo(object, 'loc');
+    }
 
-        up(upNode);
-      }
-    },
-    upOwner: function(){
-      var object = selectedObject.value;
-      if (object && object.owner)
-        up(object.owner);
-    },
-    upGroup: function(){
-      var object = selectedObject.value;
-      if (object && object.groupNode)
-        up(object.groupNode);
-    },
-    close: function(){
-      selectedDomNode.set();
-    },
-    openSource: function(){
-      var template = selectedTemplate.value;
-      if (template && template.source.url)
-        fileAPI.openFile(template.source.url);
-    },
-    openObjectLocation: function(){
-      var loc = inspectBasis.dev.getInfo(selectedObject.value, 'loc');
-      if (loc)
-        fileAPI.openFile(loc);
-    },
-    enterObjectLocation: function(e){
-      var loc = inspectBasis.dev.getInfo(selectedObject.value, 'loc');
-      if (loc)
-      {
-        jsSourcePopup.loc.set(loc);
-        jsSourcePopup.show(e.actionTarget);
-      }
-    },
-    leaveObjectLocation: function(){
-      jsSourcePopup.hide();
-    },
-    toggleSource: function(){
-      showSource.set(!showSource.value);
-    },
-    logInfo: function(){
-      var object = selectedObject.value;
-      var debugInfo = null;
-      var values = null;
+    return data;
+  })
+  .as(JSON.stringify)
+  .link(view, view.set);
 
-      if (selectedDomNode.value)
-      {
-        var id = selectedDomNode.value[inspectBasisTemplateMarker];
-        var objectBinding = object ? object.binding : {};
+view.api = {
+  upParent: function(){
+    var object = selectedObject.value;
+    if (object && object.parentNode)
+    {
+      var upNode = object.parentNode;
 
-        debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+      if (upNode instanceof inspectBasisGroupingNode)
+        upNode = upNode.owner;
 
-        if (debugInfo)
-          values = debugInfo.values || null;
-
-        if (values)
-          values = basis.object.slice(values, basis.object.keys(objectBinding));
-      }
-
-      global.$basisjsInfo = {
-        object: object,
-        template: {
-          debugInfo: debugInfo,
-          declaration: sourceDecl.value || '<no info>',
-          values: values
-        }
-      };
-      console.log(global.$basisjsInfo);
+      up(upNode);
     }
   },
-
-  satellite: {
-    bindings: {
-      dataSource: bindingDataset,
-      instance: resource('./binding-list.js')
-    }
+  upOwner: function(){
+    var object = selectedObject.value;
+    if (object && object.owner)
+      up(object.owner);
   },
-
-  realign: function(){},
-  setZIndex: function(){},
-  init: function(){
-    Window.prototype.init.call(this);
-    this.dde.fixLeft = false;
-    this.dde.fixTop = false;
+  upGroup: function(){
+    var object = selectedObject.value;
+    if (object && object.groupNode)
+      up(object.groupNode);
   },
+  dropTarget: function(){
+    selectedDomNode.set();
+  },
+  logInfo: function(){
+    var object = selectedObject.value;
+    var debugInfo = null;
+    var values = null;
 
-  handler: {
-    open: function(){
-      captureEvents.forEach(function(eventName){
-        inspectBasisDomEvent.captureEvent(eventName, function(){});
-      });
-    },
-    close: function(){
-      captureEvents.forEach(function(eventName){
-        inspectBasisDomEvent.releaseEvent(eventName);
-      });
+    if (selectedDomNode.value)
+    {
+      var id = selectedDomNode.value[inspectBasisTemplateMarker];
+      var objectBinding = object ? object.binding : {};
+
+      debugInfo = inspectBasisTemplate.getDebugInfoById(id);
+
+      if (debugInfo)
+        values = debugInfo.values || null;
+
+      if (values)
+        values = basis.object.slice(values, basis.object.keys(objectBinding));
     }
+
+    global.$basisjsInfo = {
+      object: object,
+      template: {
+        debugInfo: debugInfo,
+        declaration: selectedTemplateDecl.value || '<no info>',
+        values: values
+      }
+    };
+    console.log(global.$basisjsInfo);
   }
-});
+};
+
+// =====
 
 module.exports = selectedDomNode;

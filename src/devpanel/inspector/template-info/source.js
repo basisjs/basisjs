@@ -3,7 +3,7 @@ var convertToRange = require('basis.utils.source').convertToRange;
 var declToken = new basis.Token();
 
 var colors = [
-  'rgb(234, 196, 247)',
+  'rgb(234, 196, 247)', // repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(255,255,255,.25) 6px, rgba(255,255,255,.25) 12px, transparent 12px) fixed',
   'rgb(182, 207, 182)',
   'rgb(240, 230, 162)',
   'rgb(247, 196, 196)',
@@ -408,7 +408,7 @@ var declSourceToken = declToken.as(function(decl){
         if (ranges[i])
         {
           var range = ranges[i];
-          var trailingSpaces = source.substring(range[0], range[1]).match(/\n\s+$/);
+          var trailingSpaces = source.substring(range[0], range[1]).match(/[\r\n]+\s+$/);
 
           if (trailingSpaces)
             range[1] -= trailingSpaces[0].length;
@@ -431,13 +431,13 @@ var declSourceToken = declToken.as(function(decl){
       };
     });
 
-    return JSON.stringify({
+    return {
       source: source,
       tree: sourceTree
-    });
+    };
   }
 
-  return '{}';
+  return {};
 });
 
 module.exports = {
