@@ -20,7 +20,7 @@
   var events = {};
   var warnOnDestroyWhileDestroing = function(){
     /** @cut */ basis.dev.warn('Invoke `destroy` method is prohibited during object destroy.');
-  };  
+  };
   var warnOnDestroy = function(){
     /** @cut */ basis.dev.warn('Object had been destroyed before. Destroy method must not be called more than once.');
   };
