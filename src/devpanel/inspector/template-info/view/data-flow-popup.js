@@ -1,8 +1,8 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var Value = require('basis.data').Value;
 var Popup = require('basis.ui.popup').Popup;
-var Flow = require('../../module/data-flow/index.js');
-var fileAPI = require('../../api/file.js');
+var Flow = require('../../../module/data-flow/index.js');
+var fileAPI = require('../../../api/file.js');
 var buildTree = Flow.createTreeBuilder({
   sandbox: inspectBasis
 });

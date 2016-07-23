@@ -1,8 +1,7 @@
 var wrap = require('basis.data').wrap;
 var Node = require('basis.ui').Node;
-var fileAPI = require('../../api/file.js');
-var hoveredBinding = require('./bindings.js').hover;
-var jsSourcePopup = require('../../module/js-source-popup/index.js');
+var fileAPI = require('../../../api/file.js');
+var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var dataFlowPopup = require('./data-flow-popup.js');
 
 var Value = require('basis.data').Value;

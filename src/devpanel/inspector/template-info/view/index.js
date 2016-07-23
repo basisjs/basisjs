@@ -1,10 +1,10 @@
 var Value = require('basis.data').Value;
 var Window = require('basis.ui.window').Window;
-var jsSourcePopup = require('../../module/js-source-popup/index.js');
-var domTree = require('./view-dom.js');
-var bindingView = require('./view-bindings.js');
-var sourceView = require('./view-source.js');
-var fileAPI = require('../../api/file.js');
+var jsSourcePopup = require('../../../module/js-source-popup/index.js');
+var fileAPI = require('../../../api/file.js');
+var domTree = require('./dom.js');
+var bindingView = require('./bindings.js');
+var sourceView = require('./source.js');
 
 module.exports = new Window({
   modal: true,

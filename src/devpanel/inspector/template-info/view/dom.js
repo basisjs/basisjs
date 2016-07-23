@@ -1,9 +1,9 @@
-var fileAPI = require('../../api/file.js');
 var Node = require('basis.ui').Node;
-var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
-var hoveredBinding = require('./view-bindings.js').hover;
-var jsSourcePopup = require('../../module/js-source-popup/index.js');
+var fileAPI = require('../../../api/file.js');
+var jsSourcePopup = require('../../../module/js-source-popup/index.js');
+var hoveredBinding = require('./bindings.js').hover;
 var templateSwitcher = require('basis.template').switcher;
+var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var NodeClassByType = {};
 
 function childFactory(config){
@@ -57,8 +57,8 @@ var ValuePart = DOMNode.subclass({
   type: 'static',
   template: templateSwitcher(function(node){
     return node.type == 'static'
-      ? resource('./template/tree/attribute-value-static.tmpl')
-      : resource('./template/tree/attribute-value.tmpl');
+      ? resource('./template/dom/attribute-value-static.tmpl')
+      : resource('./template/dom/attribute-value.tmpl');
   }),
   binding: {
     type: 'type',
@@ -75,7 +75,7 @@ var ValuePart = DOMNode.subclass({
 });
 
 var Attribute = DOMNode.subclass({
-  template: resource('./template/tree/attritube.tmpl'),
+  template: resource('./template/dom/attritube.tmpl'),
   binding: {
     name: 'name'
   },
@@ -83,7 +83,7 @@ var Attribute = DOMNode.subclass({
 });
 
 NodeClassByType.element = DOMNode.subclass({
-  template: resource('./template/tree/element.tmpl'),
+  template: resource('./template/dom/element.tmpl'),
   binding: {
     name: 'name',
     binding: 'bindingName',
@@ -99,7 +99,7 @@ NodeClassByType.element = DOMNode.subclass({
   satellite: {
     attributes: {
       instance: Node.subclass({
-        template: resource('./template/tree/attritubes.tmpl'),
+        template: resource('./template/dom/attritubes.tmpl'),
         childClass: Attribute
       }),
       config: function(owner){
@@ -112,7 +112,7 @@ NodeClassByType.element = DOMNode.subclass({
 });
 
 NodeClassByType.text = DOMNode.subclass({
-  template: resource('./template/tree/text.tmpl'),
+  template: resource('./template/dom/text.tmpl'),
   binding: {
     value: 'value',
     binding: 'bindingName',
@@ -122,7 +122,7 @@ NodeClassByType.text = DOMNode.subclass({
 });
 
 NodeClassByType.comment = DOMNode.subclass({
-  template: resource('./template/tree/comment.tmpl'),
+  template: resource('./template/dom/comment.tmpl'),
   binding: {
     value: 'value',
     binding: 'bindingName',

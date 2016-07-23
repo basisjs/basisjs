@@ -1,80 +1,11 @@
 var inspectBasis = require('devpanel').inspectBasis;
-var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
+var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
 
-var Expression = require('basis.data.value').Expression;
-var buildDomTree = require('./dom.js');
-var getBindingsFromNode = require('./bindings.js');
-var buildSourceTreeFromDecl = require('./source.js');
-
-var selectedDomNode = new basis.Token();
-var selectedObject = selectedDomNode
-  .as(function(node){
-    return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
-  });
-
-var selectedTemplate = selectedDomNode
-  .as(function(node){
-    var template = node ? inspectBasisTemplate.resolveTemplateById(node[inspectBasisTemplateMarker]) : null;
-    if (this.value)
-      this.value.bindingBridge.detach(this.value, syncSelectedNode);
-    if (template)
-      template.bindingBridge.attach(template, syncSelectedNode);
-    return template;
-  });
-
-var selectedTemplateDecl = selectedTemplate
-  .as(function(template){
-    if (this.value)
-      this.value.bindingBridge.detach(this.value, this.apply, this);
-    if (template)
-      template.bindingBridge.attach(template, this.apply, this);
-    return template;
-  })
-  // use separate convertions because template can to not change
-  // but decl change
-  .as(function(template){
-    return template ? template.decl_ : null;
-  });
-
-function syncSelectedNode(){
-  var element = selectedObject.value && selectedObject.value.element;
-
-  if (selectedDomNode.value === element)
-    selectedDomNode.apply();
-  else
-    selectedDomNode.set(element);
-}
-
-// dom mutation observer
-var observer = (function(){
-  var names = ['MutationObserver', 'WebKitMutationObserver'];
-
-  for (var i = 0, name; name = names[i]; i++)
-  {
-    var ObserverClass = global[name];
-    if (typeof ObserverClass == 'function')
-      return new ObserverClass(syncSelectedNode);
-  }
-
-  // fallback for case if MutationObserver doesn't support
-  setInterval(syncSelectedNode, 100);
-})();
-
-selectedDomNode.attach(function(node){
-  if (observer)
-    observer.disconnect();
-
-  if (observer && node)
-    observer.observe(node, {
-      subtree: true,
-      attributes: true,
-      characterData: true,
-      childList: true
-    });
-});
+var data = require('./data/index.js');
+var view = require('./view/index.js');
 
 var captureEvents = [
   'click',
@@ -87,7 +18,7 @@ var captureEvents = [
   'mouseleave'
 ];
 
-selectedDomNode.attach(function(node){
+data.input.attach(function(node){
   if (node)
     captureEvents.forEach(function(eventName){
       inspectBasisDomEvent.captureEvent(eventName, function(){});
@@ -101,17 +32,15 @@ selectedDomNode.attach(function(node){
 
 function up(upNode){
   if (upNode && upNode.element)
-    selectedDomNode.set(upNode.element);
+    data.input.set(upNode.element);
 }
 
 // === attach data to view
 
-var view = require('./view-main.js');
-
 view.api = {
   select: function(){},
   upParent: function(){
-    var object = selectedObject.value;
+    var object = data.output.value.object;
     if (object && object.parentNode)
     {
       var upNode = object.parentNode;
@@ -123,26 +52,26 @@ view.api = {
     }
   },
   upOwner: function(){
-    var object = selectedObject.value;
+    var object = data.output.value.object;
     if (object && object.owner)
       up(object.owner);
   },
   upGroup: function(){
-    var object = selectedObject.value;
+    var object = data.output.value.object;
     if (object && object.groupNode)
       up(object.groupNode);
   },
   dropTarget: function(){
-    selectedDomNode.set();
+    data.input.set();
   },
   logInfo: function(){
-    var object = selectedObject.value;
+    var object = data.output.value.object;
     var debugInfo = null;
     var values = null;
 
-    if (selectedDomNode.value)
+    if (data.input.value)
     {
-      var id = selectedDomNode.value[inspectBasisTemplateMarker];
+      var id = data.input.value[inspectBasisTemplateMarker];
       var objectBinding = object ? object.binding : {};
 
       debugInfo = inspectBasisTemplate.getDebugInfoById(id);
@@ -158,7 +87,7 @@ view.api = {
       object: object,
       template: {
         debugInfo: debugInfo,
-        declaration: selectedTemplateDecl.value || '<no info>',
+        declaration: data.output.value.decl || '<no info>',
         values: values
       }
     };
@@ -166,52 +95,12 @@ view.api = {
   }
 };
 
-new Expression(
-  selectedDomNode,
-  selectedObject,
-  selectedTemplate,
-  selectedTemplateDecl,
-  function(node, object, template, decl){
-    var dom = buildDomTree(node);
-    var bindings = getBindingsFromNode(node);
-    var sourceTree = buildSourceTreeFromDecl(decl);
-
-    view.api.select = function(id){
-      selectedDomNode.set(dom.map[id]);
-    };
-
-    var data = {
-      domTree: dom.tree,
-      bindings: bindings,
-      source: sourceTree.source,
-      sourceTree: sourceTree.tree,
-
-      hasTarget: Boolean(node),
-      hasParent: false,
-      hasOwner: false,
-      hasGroup: false,
-      objectClassName: null,
-      objectId: null,
-      objectLocation: null,
-      url: template ? template.source.url : null,
-      warningCount: decl && decl.warns ? decl.warns.length : 0
-    };
-
-    if (object)
-    {
-      data.hasParent = Boolean(object.parentNode);
-      data.hasOwner = Boolean(object.owner);
-      data.hasGroup = Boolean(object.groupNode);
-      data.objectId = object.basisObjectId;
-      data.objectClassName = object.constructor.className || '';
-      data.objectLocation = inspectBasis.dev.getInfo(object, 'loc');
-    }
-
-    return data;
-  })
-  .as(JSON.stringify)
-  .link(view, view.set);
+data.output
+  .link(null, function(output){
+    view.api.select = output.selectNodeById;
+    view.set(JSON.stringify(output.data));
+  });
 
 // =====
 
-module.exports = selectedDomNode;
+module.exports = data.input;
