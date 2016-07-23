@@ -20,10 +20,19 @@ function colorizeFragment(color, str){
 }
 
 var view = new Node({
+  autoDelegate: true,
+  handler: {
+    update: function(sender, delta){
+      if ('sourceTree' in delta)
+        this.setChildNodes(this.data.sourceTree);
+    }
+  },
+
   template: resource('./template/source/main.tmpl'),
   binding: {
-    code: source
+    compiledSource: 'data:source'
   },
+
   childClass: {
     childClass: basis.Class.SELF,
     template: resource('./template/source/template.tmpl'),
@@ -65,11 +74,6 @@ var view = new Node({
           fileAPI.openFile(loc);
       }
     }
-  },
-  show: function(data){
-    data = JSON.parse(data);
-    source.set(data.source);
-    this.setChildNodes(data.tree);
   }
 });
 

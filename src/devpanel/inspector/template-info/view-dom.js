@@ -131,10 +131,15 @@ NodeClassByType.comment = DOMNode.subclass({
 });
 
 module.exports = new Node({
+  autoDelegate: true,
+  handler: {
+    update: function(sender, delta){
+      if ('domTree' in delta)
+        this.setChildNodes(this.data.domTree);
+    }
+  },
   childFactory: childFactory,
-  show: function(data, selectDomNode){
-    data = JSON.parse(data);
-    this.selectDomNode = selectDomNode;
-    this.setChildNodes(data);
+  selectDomNode: function(id){
+    module.exports.owner.api.select(id);
   }
 });

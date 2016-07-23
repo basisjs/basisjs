@@ -10,6 +10,15 @@ var hoveredBinding = new Value();
 
 module.exports = new Node({
   hover: hoveredBinding,
+
+  autoDelegate: true,
+  handler: {
+    update: function(sender, delta){
+      if ('bindings' in delta)
+        this.setChildNodes(wrap(this.data.bindings, true));
+    }
+  },
+
   sorting: 'data.name',
   grouping: {
     rule: 'data.used',
@@ -62,9 +71,5 @@ module.exports = new Node({
           fileAPI.openFile(this.data.loc);
       }
     }
-  },
-  show: function(data){
-    data = JSON.parse(data);
-    this.setChildNodes(wrap(data, true));
   }
 });

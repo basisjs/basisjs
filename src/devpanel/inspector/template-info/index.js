@@ -106,63 +106,10 @@ function up(upNode){
 
 // === attach data to view
 
-var domTree = require('./view-dom.js');
-var bindingView = require('./view-bindings.js');
-var sourceView = require('./view-source.js');
 var view = require('./view-main.js');
 
-selectedDomNode
-  .as(buildDomTree)
-  .attach(function(data){
-    domTree.show(JSON.stringify(data.tree), function(id){
-      selectedDomNode.set(data.map[id]);
-    });
-  });
-
-selectedDomNode
-  .as(getBindingsFromNode)
-  .as(JSON.stringify)
-  .attach(bindingView.show, bindingView);
-
-selectedTemplateDecl
-  .as(buildSourceTreeFromDecl)
-  .as(JSON.stringify)
-  .attach(sourceView.show, sourceView);
-
-new Expression(
-  selectedDomNode,
-  selectedObject,
-  selectedTemplate,
-  selectedTemplateDecl,
-  function(target, object, template, decl){
-    var data = {
-      hasTarget: Boolean(target),
-      hasParent: false,
-      hasOwner: false,
-      hasGroup: false,
-      objectClassName: null,
-      objectId: null,
-      objectLocation: null,
-      url: template ? template.source.url : null,
-      warningCount: decl && decl.warns ? decl.warns.length : 0
-    };
-
-    if (object)
-    {
-      data.hasParent = Boolean(object.parentNode);
-      data.hasOwner = Boolean(object.owner);
-      data.hasGroup = Boolean(object.groupNode);
-      data.objectId = object.basisObjectId;
-      data.objectClassName = object.constructor.className || '';
-      data.objectLocation = inspectBasis.dev.getInfo(object, 'loc');
-    }
-
-    return data;
-  })
-  .as(JSON.stringify)
-  .link(view, view.set);
-
 view.api = {
+  select: function(){},
   upParent: function(){
     var object = selectedObject.value;
     if (object && object.parentNode)
@@ -218,6 +165,52 @@ view.api = {
     console.log(global.$basisjsInfo);
   }
 };
+
+new Expression(
+  selectedDomNode,
+  selectedObject,
+  selectedTemplate,
+  selectedTemplateDecl,
+  function(node, object, template, decl){
+    var dom = buildDomTree(node);
+    var bindings = getBindingsFromNode(node);
+    var sourceTree = buildSourceTreeFromDecl(decl);
+
+    view.api.select = function(id){
+      selectedDomNode.set(dom.map[id]);
+    };
+
+    var data = {
+      domTree: dom.tree,
+      bindings: bindings,
+      source: sourceTree.source,
+      sourceTree: sourceTree.tree,
+
+      hasTarget: Boolean(node),
+      hasParent: false,
+      hasOwner: false,
+      hasGroup: false,
+      objectClassName: null,
+      objectId: null,
+      objectLocation: null,
+      url: template ? template.source.url : null,
+      warningCount: decl && decl.warns ? decl.warns.length : 0
+    };
+
+    if (object)
+    {
+      data.hasParent = Boolean(object.parentNode);
+      data.hasOwner = Boolean(object.owner);
+      data.hasGroup = Boolean(object.groupNode);
+      data.objectId = object.basisObjectId;
+      data.objectClassName = object.constructor.className || '';
+      data.objectLocation = inspectBasis.dev.getInfo(object, 'loc');
+    }
+
+    return data;
+  })
+  .as(JSON.stringify)
+  .link(view, view.set);
 
 // =====
 

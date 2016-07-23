@@ -189,7 +189,7 @@ module.exports = function buildDomTree(rootNode){
           ? basis.array(node.attributes).map(function(attr){
               return {
                 name: attr.name,
-                childNodes: [
+                childNodes: !attr.value ? [] : [
                   {
                     type: 'static',
                     value: attr.value
