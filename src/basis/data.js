@@ -670,6 +670,7 @@
 
   var ReadOnlyValue = Class(Value, {
     className: namespace + '.ReadOnlyValue',
+    setNullOnEmitterDestroy: false,
     set: basis.fn.$false
   });
 
@@ -700,7 +701,6 @@
   */
   var DeferredValue = Class(ReadOnlyValue, {
     className: namespace + '.DeferredValue',
-    setNullOnEmitterDestroy: false,
     source: null,
 
     init: function(){
@@ -781,11 +781,14 @@
         result = valueFromMap[id] = new ReadOnlyValue({
           proxy: basis.getter(getter),
           value: obj,
-          handler: {
-            destroy: function(){
-              valueFromMap[id] = null;
+          emit_destroy: function(){
+            if (id in valueFromMap)
+            {
+              delete valueFromMap[id];
               obj.removeHandler(handler, this);
             }
+
+            ReadOnlyValue.prototype.emit_destroy.call(this);
           }
         });
 
@@ -797,8 +800,11 @@
         /** @cut */ });
 
         handler.destroy = function(){
-          valueFromMap[id] = null;
-          this.destroy();
+          if (id in valueFromMap)
+          {
+            delete valueFromMap[id];
+            this.destroy();
+          }
         };
 
         obj.addHandler(handler, result);
