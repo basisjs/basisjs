@@ -6,13 +6,23 @@ this.inspectBasis = inspectBasis;
 if (!inspectBasis)
   throw new Error('inspect basis.js instance doesn\'t found');
 
+if (global.sessionStorage)
+{
+  this.processId = global.sessionStorage.getItem('basisjsProcessId');
+  if (!this.processId)
+  {
+    this.processId = basis.genUID();
+    global.sessionStorage.setItem('basisjsProcessId', this.processId);
+  }
+}
+
 // much strict template isolation, to prevent style mix with inspecting basis app styles,
 // as isolation prefixes based on template id in dev mode
 require('basis.template').Template.extend({
   isolatePrefix_: false,
   getIsolatePrefix: function(){
     if (!this.isolatePrefix_)
-      this.isolatePrefix_ = basis.genUID().replace(/^[^a-z]/i, 'i$&') + '__';
+      this.isolatePrefix_ = basis.genUID() + '__';
     return this.isolatePrefix_;
   }
 });

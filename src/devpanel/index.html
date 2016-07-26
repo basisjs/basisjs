@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<body>
+  <script src="../../src/basis.js" basis-config=""></script>
+  <script>
+    var view = basis.require('./inspector/template-info/view/index.js');
+    basis.require('basis.app').create(view);
+    basis.ready(function(){
+      setTimeout(function(){
+        socket.on('template-inspector', function(data){
+          view.set(data);
+        });
+      }, 200);
+    });
+  </script>
+</body>
+</html>

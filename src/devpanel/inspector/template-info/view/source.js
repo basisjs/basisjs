@@ -1,5 +1,5 @@
 var Node = require('basis.ui').Node;
-var fileAPI = require('../../api/file.js');
+// var fileAPI = require('../../api/file.js');
 
 function escapeHtml(str){
   return String(str || '')

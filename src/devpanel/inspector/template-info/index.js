@@ -98,7 +98,12 @@ view.api = {
 data.output
   .link(null, function(output){
     view.api.select = output.selectNodeById;
-    view.set(JSON.stringify(output.data));
+    view.set(JSON.parse(JSON.stringify(output.data)));
+  });
+
+data.output
+  .link(null, function(data){
+    socket.emit('template-inspector', data.data);
   });
 
 // =====

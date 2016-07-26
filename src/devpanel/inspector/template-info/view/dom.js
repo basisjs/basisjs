@@ -1,5 +1,5 @@
 var Node = require('basis.ui').Node;
-var fileAPI = require('../../../api/file.js');
+// var fileAPI = require('../../../api/file.js');
 var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var hoveredBinding = require('./bindings.js').hover;
 var templateSwitcher = require('basis.template').switcher;
