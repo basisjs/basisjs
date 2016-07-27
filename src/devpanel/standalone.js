@@ -1,9 +1,15 @@
-var view = basis.require('./inspector/template-info/view/index.js');
-basis.require('basis.app').create(view);
+var View = require('./inspector/template-info/view/index.js');
+var createRemoteApi = require('./inspector/template-info/createRemoteApi.js');
+
 basis.ready(function(){
   setTimeout(function(){
-    socket.on('template-inspector', function(data){
-      view.set(data);
+    socket.on('basisjs.devpanel.data', function(data){
+      if (data.type === 'template')
+        view.set(data.payload);
+    });
+
+    var view = new View({
+      api: createRemoteApi(socket)
     });
   }, 200);
 });

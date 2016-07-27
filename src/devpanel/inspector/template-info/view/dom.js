@@ -1,5 +1,4 @@
 var Node = require('basis.ui').Node;
-// var fileAPI = require('../../../api/file.js');
 var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var hoveredBinding = require('./bindings.js').hover;
 var templateSwitcher = require('basis.template').switcher;
@@ -10,6 +9,7 @@ function childFactory(config){
   var ChildClass = NodeClassByType[config.type] || this.childClass;
 
   return new ChildClass(basis.object.merge(config, {
+    api: this.api || this.target.api,
     selectDomNode: this.selectDomNode
   }));
 }
@@ -38,7 +38,7 @@ var DOMNode = Node.subclass({
       if (this.nestedView && this.domNode)
       {
         hoveredBinding.set();
-        this.selectDomNode(this.domNode);
+        this.api.select(this.domNode);
       }
     }
   },
@@ -69,7 +69,7 @@ var ValuePart = DOMNode.subclass({
   action: {
     openLoc: function(){
       if (this.loc)
-        fileAPI.openFile(this.loc);
+        this.target.openFile(this.loc);
     }
   }
 });
@@ -130,16 +130,13 @@ NodeClassByType.comment = DOMNode.subclass({
   }
 });
 
-module.exports = new Node({
+module.exports = Node.subclass({
   autoDelegate: true,
+  childFactory: childFactory,
   handler: {
     update: function(sender, delta){
       if ('domTree' in delta)
         this.setChildNodes(this.data.domTree);
     }
-  },
-  childFactory: childFactory,
-  selectDomNode: function(id){
-    module.exports.owner.api.select(id);
   }
 });

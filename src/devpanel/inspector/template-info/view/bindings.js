@@ -1,13 +1,12 @@
 var wrap = require('basis.data').wrap;
 var Node = require('basis.ui').Node;
-// var fileAPI = require('../../../api/file.js');
 var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 // var dataFlowPopup = require('./data-flow-popup.js');
 
 var Value = require('basis.data').Value;
 var hoveredBinding = new Value();
 
-module.exports = new Node({
+var View = Node.subclass({
   hover: hoveredBinding,
 
   autoDelegate: true,
@@ -67,8 +66,12 @@ module.exports = new Node({
       },
       pickValue: function(){
         if (this.data.loc)
-          fileAPI.openFile(this.data.loc);
+          this.parentNode.target.api.openFile(this.data.loc);
       }
     }
   }
 });
+
+View.hover = hoveredBinding;
+
+module.exports = View;
