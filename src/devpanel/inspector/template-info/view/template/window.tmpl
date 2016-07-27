@@ -1,11 +1,12 @@
 <b:style src="./window.css"/>
 <b:isolate/>
 <b:define name="upName" type="bool"/>
+<b:define name="mode" type="enum" values="app"/>
 
 <div class="window__wrapper" event-click="close" event-mousedown="stop-propagation prevent-default" basis-devpanel-ignore>
-  <div{ddelement|ddtrigger} class="window">
-    <div class="window__inner" event-click="stop-propagation">
-      <div class="window__inner-wrapper">
+  <div{ddelement|ddtrigger} class="window window_{mode}">
+    <div class="window__inner-wrapper window__inner-wrapper_{mode}" event-click="stop-propagation">
+      <div class="window__inner window__inner_{mode}">
         <div class="sidebar">
           <div class="info-links">
             <span class="log__link" event-click="logInfo" title="Output various runtime information about instance and template in console save it as $basisjsInfo">console.log(info)</span>

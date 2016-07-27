@@ -9,7 +9,14 @@ basis.ready(function(){
     });
 
     var view = new View({
-      api: createRemoteApi(socket)
+      mode: 'app',
+      api: createRemoteApi(socket),
+      zIndex: 1000
     });
+
+    // TODO: remove, it's a hack
+    var el = document.getElementById('Basis-WindowStack');
+    el.style.position = 'relative';
+    el.style.zIndex = 0;
   }, 200);
 });

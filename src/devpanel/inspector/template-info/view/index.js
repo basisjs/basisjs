@@ -10,6 +10,7 @@ module.exports = Window.subclass({
   modal: true,
   visible: Value.query('data.hasTarget').as(Boolean),
   showSource: new basis.Token(false),
+  mode: 'default',
 
   satellite: {
     domTree: DomTree,
@@ -19,6 +20,7 @@ module.exports = Window.subclass({
 
   template: resource('./template/window.tmpl'),
   binding: {
+    mode: 'mode',
     showSource: 'showSource',
     domTree: 'satellite:',
     bindings: 'satellite:',
