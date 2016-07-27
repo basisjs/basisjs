@@ -44,7 +44,7 @@
   "dependencies": {},
   "devDependencies": {
     "basisjs-tools-build": "basisjs/basisjs-tools-build",
-    "basisjs-tools-instrumenter": "~1.0.3",
+    "basisjs-tools-instrumenter": "~2.0.0",
     "jscs": "~3.0.0",
     "karma": "^0.12.31",
     "karma-firefox-launcher": "^0.1.4",
