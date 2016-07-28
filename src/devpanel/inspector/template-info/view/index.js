@@ -1,5 +1,6 @@
 var Value = require('basis.data').Value;
 var Window = require('basis.ui.window').Window;
+var templateSwitcher = require('basis.template').switcher;
 var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var DomTree = require('./dom.js');
 var BindingView = require('./bindings.js');
@@ -18,7 +19,11 @@ module.exports = Window.subclass({
     source: SourceView
   },
 
-  template: resource('./template/window.tmpl'),
+  template: templateSwitcher(function(node){
+    return node.mode === 'standalone'
+      ? resource('./template/standalone.tmpl')
+      : resource('./template/window.tmpl');
+  }),
   binding: {
     mode: 'mode',
     showSource: 'showSource',

@@ -1,0 +1,25 @@
+.layout
+{
+  position: fixed;
+  /*z-index: 10001;*/
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 12px;
+}
+.main
+{
+  display: flex;
+  padding: 5px 10px 10px;
+}
+
+.source-toggle-button
+{
+  background: #CCC;
+  text-align: center;
+  padding: 6px;
+  cursor: pointer;
+}

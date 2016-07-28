@@ -75,4 +75,4 @@ module.exports = function createLocalAPI(data, inspectBasis){
       console.log(global.$basisjsInfo);
     }
   };
-}
+};
