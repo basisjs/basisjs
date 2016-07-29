@@ -85,6 +85,7 @@
   /** @cut */ {
   /** @cut */   var devWrapMap = new WeakMap();
   /** @cut */   var devWrap = function(value){
+  /** @cut */     value = devWrapMap.has(value) ? devWrapMap.get(value) : value; // prevent value deep wrapping
   /** @cut */     var result = new Proxy(value, {});
   /** @cut */     devWrapMap.set(result, value);
   /** @cut */     return result;
