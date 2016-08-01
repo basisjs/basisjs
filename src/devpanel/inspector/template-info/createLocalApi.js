@@ -52,7 +52,7 @@ module.exports = function createLocalAPI(data, inspectBasis){
 
       if (data.input.value)
       {
-        var info = inspectBasisTemplate.resolveInfoByNode(data.input.value);
+        var info = inspectBasisTemplate.resolveTemplateInfoByNode(data.input.value);
         var objectBinding = object ? object.binding : {};
 
         debugInfo = info.debug || null;
