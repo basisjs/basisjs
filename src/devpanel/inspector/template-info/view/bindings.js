@@ -13,7 +13,7 @@ var View = Node.subclass({
   handler: {
     update: function(sender, delta){
       if ('bindings' in delta)
-        this.setChildNodes(wrap(this.data.bindings, true));
+        this.setChildNodes(wrap(this.data.bindings));
     }
   },
 

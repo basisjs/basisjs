@@ -19,7 +19,7 @@
 {
   color: #888;
 }
-.binding:last-child .caption:after
+.binding:last-child:after
 {
   content: '';
 }
