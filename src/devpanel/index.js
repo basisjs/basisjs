@@ -86,8 +86,16 @@ function init(){
     });
   }
 
+  // temporary here
   if (global.basisjsToolsFileSync && typeof global.basisjsToolsFileSync.initDevtool === 'function')
-    basisjsToolsFileSync.initDevtool();
+  {
+    if (global.basisjsToolsFileSync.isOnline.value)
+      basisjsToolsFileSync.initDevtool();
+    global.basisjsToolsFileSync.isOnline.attach(function(online){
+      if (online)
+        basisjsToolsFileSync.initDevtool();
+    });
+  }
 
   basis.dev.log('basis devpanel inited');
 }

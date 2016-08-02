@@ -31,6 +31,6 @@ basis.ready(function(){
   }, 200);
 
   basis.teardown(function(){
-    socket.off('basisjs.devpanel.data', sync);
+    socket.off();
   });
 });
