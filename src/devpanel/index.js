@@ -87,13 +87,18 @@ function init(){
   }
 
   // temporary here
-  if (global.basisjsToolsFileSync && typeof global.basisjsToolsFileSync.initDevtool === 'function')
+  if (global.basisjsToolsFileSync && typeof basisjsToolsFileSync.initDevtool === 'function')
   {
-    if (global.basisjsToolsFileSync.isOnline.value)
-      basisjsToolsFileSync.initDevtool();
-    global.basisjsToolsFileSync.isOnline.attach(function(online){
+    var devtoolApi = {
+      getInspectorUI: function(callback){
+        basisjsToolsFileSync.getBundle(__dirname, callback);
+      }
+    };
+    if (basisjsToolsFileSync.isOnline.value)
+      basisjsToolsFileSync.initDevtool(devtoolApi);
+    basisjsToolsFileSync.isOnline.attach(function(online){
       if (online)
-        basisjsToolsFileSync.initDevtool();
+        basisjsToolsFileSync.initDevtool(devtoolApi);
     });
   }
 
