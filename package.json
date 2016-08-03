@@ -56,6 +56,8 @@
     "lint": "npm run codestyle && node node_modules/basisjs-tools-build/bin/lint test/all.html --js-cut-dev",
     "basisjs-tools-lint": "node node_modules/basisjs-tools-build/bin/lint test/all.html --js-cut-dev",
     "travis": "npm run lint && npm run test",
-    "test": "node node_modules/karma/bin/karma start karma.conf.js"
+    "test": "node node_modules/karma/bin/karma start karma.conf.js",
+    "build": "node node_modules/basisjs-tools-build/bin/build --pack",
+    "prepublish": "npm run build"
   }
 }

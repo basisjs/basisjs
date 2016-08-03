@@ -91,7 +91,10 @@ function init(){
   {
     basisjsToolsFileSync.initDevtool({
       getInspectorUI: function(callback){
-        basisjsToolsFileSync.getBundle(__dirname, callback);
+        basisjsToolsFileSync.getBundle({
+          build: asset('../../dist/devtool.js'),
+          filename: __dirname
+        }, callback);
       }
     });
   }
