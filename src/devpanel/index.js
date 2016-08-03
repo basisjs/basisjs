@@ -89,16 +89,10 @@ function init(){
   // temporary here
   if (global.basisjsToolsFileSync && typeof basisjsToolsFileSync.initDevtool === 'function')
   {
-    var devtoolApi = {
+    basisjsToolsFileSync.initDevtool({
       getInspectorUI: function(callback){
         basisjsToolsFileSync.getBundle(__dirname, callback);
       }
-    };
-    if (basisjsToolsFileSync.isOnline.value)
-      basisjsToolsFileSync.initDevtool(devtoolApi);
-    basisjsToolsFileSync.isOnline.attach(function(online){
-      if (online)
-        basisjsToolsFileSync.initDevtool(devtoolApi);
     });
   }
 
