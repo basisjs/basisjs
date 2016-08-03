@@ -12,7 +12,7 @@ basis.ready(function(){
   var view;
 
   setTimeout(function(){
-    socket.on('basisjs.devpanel.data', sync);
+    socket.on('devtool:session data', sync);
     view = new View({
       modal: false,
       mode: 'standalone',

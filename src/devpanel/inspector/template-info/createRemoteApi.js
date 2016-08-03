@@ -1,7 +1,7 @@
 module.exports = function createRemoteApi(socket){
   function createRemoteMethod(method){
     return function(){
-      socket.emit('basisjs.devpanel.command', {
+      socket.emit('devtool:session command', {
         target: 'template-inspector',
         method: method,
         args: basis.array(arguments)

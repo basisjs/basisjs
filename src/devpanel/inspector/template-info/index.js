@@ -35,7 +35,7 @@ data.output
 
 // transport
 function sendDataToClient(data){
-  socket.emit('basisjs.devpanel.data', {
+  socket.emit('devtool:session data', {
     type: 'template',
     payload: data.data
   });
@@ -43,7 +43,7 @@ function sendDataToClient(data){
 
 data.output.link(null, sendDataToClient);
 
-socket.on('basisjs.devpanel.command', function(command){
+socket.on('devtool:session command', function(command){
   if (command && command.target === 'template-inspector')
   {
     if (command.method === 'init')
