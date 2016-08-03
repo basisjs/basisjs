@@ -90,8 +90,8 @@ function init(){
   if (global.basisjsToolsFileSync && typeof basisjsToolsFileSync.initDevtool === 'function')
   {
     basisjsToolsFileSync.initDevtool({
-      getInspectorUI: function(callback){
-        basisjsToolsFileSync.getBundle({
+      getInspectorUI: function(dev, callback){
+        basisjsToolsFileSync.getBundle(dev ? __dirname : {
           build: asset('../../dist/devtool.js'),
           filename: __dirname
         }, callback);
