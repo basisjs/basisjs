@@ -6,7 +6,7 @@ var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var NativeDomNode = global.Node;
 var fileAPI = require('../api/file.js');
 var Value = require('basis.data').Value;
-var colorPicker = require('./colorPicker.js');
+var genColor = require('./utils/color.js').genColor;
 var transport = require('../api/transport.js');
 var Overlay = require('./utils/overlay.js');
 var Balloon = require('basis.ui.popup').Balloon;
@@ -14,7 +14,7 @@ var Balloon = require('basis.ui.popup').Balloon;
 var dictionaryColor = {};
 function getColorForDictionary(dictionaryName){
   if (!dictionaryColor[dictionaryName])
-    dictionaryColor[dictionaryName] = colorPicker.getColor().join(', ');
+    dictionaryColor[dictionaryName] = genColor().join(', ');
 
   return dictionaryColor[dictionaryName];
 }

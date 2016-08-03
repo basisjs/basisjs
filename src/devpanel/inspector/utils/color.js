@@ -38,7 +38,7 @@ function hsv2rgb(h, s, v){
 }
 
 module.exports = {
-  getColor: function(){
+  genColor: function(){
     var h = (Math.random() + GOLDEN_RATIO_CONJUGATE) % 1;
 
     return hsv2rgb(h, 0.7, 0.95);
