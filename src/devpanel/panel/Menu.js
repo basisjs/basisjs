@@ -2,8 +2,8 @@ var Node = require('basis.ui').Node;
 var domEventUtils = require('basis.dom.event');
 
 var templates = require('basis.template').define('app.menu', {
-  View: resource('./template/view.tmpl'),
-  Item: resource('./template/item.tmpl')
+  View: resource('./template/menu.tmpl'),
+  Item: resource('./template/menu-item.tmpl')
 });
 
 module.exports = Node.subclass({

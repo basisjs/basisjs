@@ -10,11 +10,11 @@ var Expression = require('basis.data.value').Expression;
 var count = require('basis.data.index').count;
 var Node = require('basis.ui').Node;
 var MoveableElement = require('basis.dragdrop').MoveableElement;
-var l10nInspector = resource('./inspector/l10n.js');
-var templateInspector = resource('./inspector/template.js');
-var heatInspector = resource('./inspector/heatmap.js');
-var gridInspector = resource('./inspector/grid.js');
-var rolesInspector = resource('./inspector/roles.js');
+var l10nInspector = resource('../inspector/l10n.js');
+var templateInspector = resource('../inspector/template.js');
+var heatInspector = resource('../inspector/heatmap.js');
+var gridInspector = resource('../inspector/grid.js');
+var rolesInspector = resource('../inspector/roles.js');
 
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');

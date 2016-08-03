@@ -12,13 +12,13 @@
   box-shadow:
     0 0 7px 1px rgba(0, 0, 0, 0),
     0 0 0px 1px rgba(255, 255, 255, .75);
-  
+
   font-family: Arial;
   font-size: 12px;
   line-height: normal;
   color: white;
   text-align: center;
-  
+
   cursor: pointer;
 
   transition: box-shadow .15s, background .15s, opacity .15s, border-color .15s;
@@ -83,7 +83,7 @@
 
 .panel__button_template
 {
-  background-image: url(img/inspect-template.png); 
+  background-image: url(img/inspect-template.png);
 }
 .panel__button_l10n
 {
