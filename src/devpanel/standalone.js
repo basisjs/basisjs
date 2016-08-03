@@ -16,8 +16,7 @@ basis.ready(function(){
     view = new View({
       modal: false,
       mode: 'standalone',
-      api: createRemoteApi(socket),
-      zIndex: 1000
+      api: createRemoteApi(socket)
     });
 
     // temporary solution
@@ -29,8 +28,4 @@ basis.ready(function(){
       }
     });
   }, 200);
-
-  basis.teardown(function(){
-    socket.off();
-  });
 });

@@ -21,13 +21,13 @@ function sendDataToClient(data){
 data.output.link(null, sendDataToClient);
 
 socket.on('devtool:session command', function(command){
-  if (command && command.target === 'template-inspector')
-  {
-    if (command.method === 'init')
-      sendDataToClient(data.output.value);
-    else if (api.hasOwnProperty(command.method))
-      api[command.method].apply(null, command.args);
-  }
+  if (command && command.target !== 'template-inspector')
+    return;
+
+  if (command.method === 'init')
+    sendDataToClient(data.output.value);
+  else if (api.hasOwnProperty(command.method))
+    api[command.method].apply(null, command.args);
 });
 
 // view
