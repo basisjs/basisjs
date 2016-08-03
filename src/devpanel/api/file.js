@@ -128,6 +128,11 @@ module.exports = {
         file.save(content);
     }
   },
+  isOpenFileSupported: function(){
+    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
+
+    return Boolean(basisjsTools && typeof basisjsTools.openFile == 'function');
+  },
   openFile: function(filename){
     var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
 

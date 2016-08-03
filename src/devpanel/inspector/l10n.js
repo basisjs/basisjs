@@ -71,10 +71,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
       }),
       openFileSupported: {
         events: 'delegateChanged update',
-        getter: function(){
-          var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
-          return basisjsTools && typeof basisjsTools.openFile == 'function';
-        }
+        getter: fileAPI.isOpenFileSupported
       }
     },
     handler: {
