@@ -18,7 +18,6 @@ var rolesInspector = resource('../inspector/roles.js');
 
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
-//var fileInspector = resource('./module/fileInspector/fileInspector.js');
 
 var inspectors = new Dataset();
 var inspectMode = count(inspectors, 'update', 'data.mode').as(Boolean);
@@ -174,9 +173,6 @@ var panel = new Node({
       activateInspector(rolesInspector, e);
       rolesInspector().pickMode.set(false);
     },
-    // inspectFile: function(){
-    //   fileInspector().toggle();
-    // },
     storePosition: function(){
       if (localStorage)
         localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
