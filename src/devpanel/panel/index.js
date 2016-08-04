@@ -10,27 +10,21 @@ var Expression = require('basis.data.value').Expression;
 var count = require('basis.data.index').count;
 var Node = require('basis.ui').Node;
 var MoveableElement = require('basis.dragdrop').MoveableElement;
+
+var isOnline = require('../basisjs-tools-sync.js').isOnline;
+var remoteInspectors = require('../basisjs-tools-sync.js').remoteInspectors;
+var permanentFilesChangedCount = require('../basisjs-tools-sync.js').permanentFilesChangedCount;
+var themeList = require('./themeList.js');
+var cultureList = require('./cultureList.js');
+
 var l10nInspector = resource('../inspector/l10n.js');
 var templateInspector = resource('../inspector/template.js');
 var heatInspector = resource('../inspector/heatmap.js');
 var gridInspector = resource('../inspector/grid.js');
 var rolesInspector = resource('../inspector/roles.js');
-
-var themeList = require('./themeList.js');
-var cultureList = require('./cultureList.js');
-
 var inspectors = new Dataset();
 var inspectMode = count(inspectors, 'update', 'data.mode').as(Boolean);
-var currentInspector = new Value({
-  handler: {
-    change: function(sender, oldValue){
-      if (oldValue)
-        oldValue.stopInspect();
-      if (this.value)
-        this.value.startInspect();
-    }
-  }
-});
+var currentInspector = new Value();
 var currentInspectorName = currentInspector.as(function(inspector){
   return inspector ? inspector.name : '';
 });
@@ -55,53 +49,17 @@ var currentInspectorName = currentInspector.as(function(inspector){
   });
 });
 
+currentInspector.link(null, function(newInspector, oldInspector){
+  if (oldInspector)
+    oldInspector.stopInspect();
+  if (newInspector)
+    newInspector.startInspect();
+});
+
 
 //
 // panel
 //
-
-var isOnline;
-var remoteInspectors;
-var permamentFiles = [];
-var permamentFilesCount = new Value({ value: 0 });
-var basisjsToolsFileSync = global.basisjsToolsFileSync;
-
-if (typeof basisjsToolsFileSync != 'undefined')
-{
-  // new basisjs-tools
-  isOnline = new basis.Token(basisjsToolsFileSync.isOnline.value);
-  basisjsToolsFileSync.isOnline.attach(isOnline.set, isOnline);
-  remoteInspectors = new basis.Token(basisjsToolsFileSync.remoteInspectors.value);
-  basisjsToolsFileSync.remoteInspectors.attach(remoteInspectors.set, remoteInspectors);
-
-  basisjsToolsFileSync.notifications.attach(function(eventName, filename, content){
-    var ext = basis.path.extname(filename);
-
-    if (typeof content == 'string' && basis.resource.isResolved(filename))
-      basis.resource(filename).update(content);
-
-    if (eventName == 'new' || ext in inspectBasis.resource.extensions == false)
-      return;
-
-    if (inspectBasis.resource.extensions[ext].permanent && inspectBasis.resource.isResolved(filename))
-    {
-      basis.setImmediate(function(){
-        if (inspectBasis.resource(filename).hasChanges())
-          basis.array.add(permamentFiles, filename);
-        else
-          basis.array.remove(permamentFiles, filename);
-
-        permamentFilesCount.set(permamentFiles.length);
-      });
-    }
-  });
-}
-else
-{
-  // old basisjs-tools
-  isOnline = inspectBasis.devtools && Value.from(inspectBasis.devtools.serverState, 'update', 'data.isOnline');
-  remoteInspectors = new basis.Token(0);
-}
 
 function activateInspector(inspector, e){
   cultureList.setDelegate();
@@ -134,7 +92,7 @@ var panel = new Node({
     cultureList: cultureList,
     isOnline: isOnline,
     hasRemoteInspectors: remoteInspectors.as(Boolean),
-    permanentFilesChangedCount: permamentFilesCount,
+    permanentFilesChangedCount: permanentFilesChangedCount,
     inspectMode: inspectMode,
     inspector: currentInspectorName,
     inspectorId: new Expression(currentInspectorName, rolesInspector().pickMode, function(inspectorName, pickMode){

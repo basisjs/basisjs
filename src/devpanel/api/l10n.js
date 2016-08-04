@@ -60,7 +60,7 @@ module.exports = {
   },
 
   saveDictionary: function(data){
-    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
+    var basisjsTools = global.basisjsToolsFileSync;
 
     if (!basisjsTools)
       return;

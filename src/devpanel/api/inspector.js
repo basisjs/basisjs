@@ -1,22 +1,22 @@
-var transport = require('./transport.js');
+var sendData = require('./transport.js').sendData;
 var l10nInspector = require('../inspector/l10n.js');
 var templateInspector = require('../inspector/template.js');
 
 l10nInspector.inspectMode.link(null, function(active){
-  transport.sendData(active ? 'startInspect' : 'endInspect', 'l10n');
+  sendData(active ? 'startInspect' : 'endInspect', 'l10n');
 }, true);
 
 templateInspector.inspectMode.link(null, function(active){
-  transport.sendData(active ? 'startInspect' : 'endInspect', 'template');
+  sendData(active ? 'startInspect' : 'endInspect', 'template');
 }, true);
 
 module.exports = {
   getInspectMode: function(){
     if (l10nInspector.isActive())
-      transport.sendData('startInspect', 'l10n');
+      sendData('startInspect', 'l10n');
 
     if (templateInspector.isActive())
-      transport.sendData('startInspect', 'template');
+      sendData('startInspect', 'template');
   },
   l10nStartInspect: function(){
     l10nInspector.startInspect();

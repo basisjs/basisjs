@@ -68,10 +68,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
         var type = data.computed.getType();
         return type != 'default' ? type : '';
       }),
-      openFileSupported: {
-        events: 'delegateChanged update',
-        getter: fileAPI.isOpenFileSupported
-      }
+      openFileSupported: fileAPI.isOpenFileSupported
     },
     handler: {
       delegateChanged: function(){

@@ -1,16 +1,22 @@
-var transport = require('./transport.js');
-var sendData = transport.sendData;
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
-
-var IS_FILE_ALLOWED_REGEX = /\.(tmpl|css|l10n)$/;
+var sendData = require('./transport.js').sendData;
+var File = require('../basisjs-tools-sync.js').File;
 
 function sendFile(file){
-  var data = basis.object.slice(file.data);
+  var data = {
+    filename: file.data.filename,
+    content: file.data.content
+  };
 
-  if (basis.path.extname(file.data.filename) == '.tmpl' && file.data.content)
+  if (basis.path.extname(data.filename) == '.tmpl')
   {
-    data.declaration = inspectBasisTemplate.makeDeclaration(file.data.content, basis.path.dirname(basis.path.resolve(file.data.filename)) + '/', {}, file.data.filename);
+    data.declaration = inspectBasisTemplate.makeDeclaration(
+      data.content,
+      basis.path.dirname(basis.path.resolve(data.filename)) + '/',
+      {},
+      data.filename
+    );
     data.resources = data.declaration.resources.map(function(resource){
       return resource.url;
     });
@@ -25,120 +31,68 @@ function sendFile(file){
 var FILE_HANDLER = {
   update: function(object, delta){
     if ('content' in delta && this.data.content !== null)
-      sendFile(object);
+      sendFile(this);
   }
 };
 var FILE_LIST_HANDLER = {
   itemsChanged: function(dataset, delta){
     var data = {};
-    if (delta.inserted)
-    {
-      data.inserted = [];
-      var fileData;
-      for (var i = 0, object; object = delta.inserted[i]; i++)
-      {
-        if (IS_FILE_ALLOWED_REGEX.test(object.data.filename))
-        {
-          fileData = basis.object.slice(object.data);
-          delete fileData.content;
 
-          data.inserted.push(fileData);
-          object.addHandler(FILE_HANDLER);
-        }
-      }
-    }
+    if (delta.inserted)
+      data.inserted = delta.inserted.map(function(item){
+        item.addHandler(FILE_HANDLER);
+        return item.data.filename;
+      });
 
     if (delta.deleted)
-    {
-      data.deleted = [];
+      data.deleted = delta.deleted.map(function(item){
+        item.removeHandler(FILE_HANDLER);
+        return item.data.filename;
+      });
 
-      for (var i = 0, object; object = delta.deleted[i]; i++)
-      {
-        if (IS_FILE_ALLOWED_REGEX.test(object.data.filename))
-        {
-          data.deleted.push(object.data.filename);
-          object.removeHandler(FILE_HANDLER);
-        }
-      }
-    }
-
-    if ((data.inserted && data.inserted.length) || (data.deleted && data.deleted.length))
+    if (data.inserted || data.deleted)
       sendData('filesChanged', data);
   }
 };
 
-if (inspectBasis.devtools)
-{
-  var files = inspectBasis.devtools.files;
-  files.addHandler(FILE_LIST_HANDLER);
-  FILE_LIST_HANDLER.itemsChanged.call(files, files, {
-    inserted: files.getItems()
-  });
-}
+File.all.addHandler(FILE_LIST_HANDLER);
+File.all.forEach(function(file){
+  file.addHandler(FILE_HANDLER);
+});
 
 //
 // exports
 //
 module.exports = {
   getFileList: function(){
-    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
-
-    if (basisjsTools)
-      sendData('filesChanged', {
-        inserted: !inspectBasis.devtools
-          // new basisjs-tools
-          ? basisjsTools.getFiles().map(function(file){
-              return {
-                filename: file.filename
-              };
-            })
-          // old basisjs-tools
-          : basisjsTools.files.getItems().map(function(file){
-              return {
-                filename: file.data.filename
-              };
-            })
-      });
+    sendData('filesChanged', {
+      inserted: File.all.getValues('data.filename')
+    });
   },
   createFile: function(filename){
-    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
-
-    if (basisjsTools)
-      basisjsTools.createFile(filename);
+    File({
+      filename: filename,
+      content: ''
+    }).save();
   },
   readFile: function(filename){
-    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
+    var file = File(filename, true);
 
-    if (basisjsTools)
-    {
-      var file = basisjsTools.getFile(filename, true);
-      if (typeof file.data.content == 'string')
-        sendFile(file);
-      else
-        file.read();
-    }
+    if (typeof file.data.content == 'string')
+      sendFile(file);
+    else
+      file.read();
   },
   saveFile: function(filename, content){
-    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
-
-    if (basisjsTools)
-    {
-      var file = basisjsTools.getFile(filename);
-      if (file)
-        file.save(content);
-    }
+    File({
+      filename: filename,
+      content: content
+    }).save();
   },
   isOpenFileSupported: function(){
-    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
-
-    return Boolean(basisjsTools && typeof basisjsTools.openFile == 'function');
+    return File.openFileSupported;
   },
   openFile: function(filename){
-    var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
-
-    if (basisjsTools && typeof basisjsTools.openFile == 'function')
-    {
-      basisjsTools.openFile(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
-    }
+    File.open(basis.path.resolve(filename.replace(/(:\d+:\d+):\d+:\d+$/, '$1')));
   }
 };

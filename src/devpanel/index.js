@@ -31,7 +31,7 @@ function init(){
   inspectBasis.appCP = basis.object.merge(
     {
       getFileGraph: function(){
-        var basisjsTools = global.basisjsToolsFileSync || basis.devtools;
+        var basisjsTools = global.basisjsToolsFileSync;
 
         if (basisjsTools)
           basisjsTools.getFileGraph(function(err, data){
@@ -57,37 +57,26 @@ function init(){
   //require('./view/ui/index.js');
 
   // setup live update
-  if (inspectBasis.devtools)
-  {
-    var FILE_HANDLER = {
-      update: function(sender, delta){
-        if ('filename' in delta || 'content' in delta)
-          if (!basis.resource.isDefined || basis.resource.isDefined(this.data.filename, true))
-            basis.resource(this.data.filename).update(this.data.content);
-      }
-    };
-    inspectBasis.devtools.files.addHandler({
-      itemsChanged: function(sender, delta){
-        if (delta.inserted)
-          delta.inserted.forEach(function(file){
-            file.addHandler(FILE_HANDLER);
-          });
-      }
-    });
-  }
+  // if (inspectBasis.devtools)
+  // {
+  //   var FILE_HANDLER = {
+  //     update: function(sender, delta){
+  //       if ('filename' in delta || 'content' in delta)
+  //         if (!basis.resource.isDefined || basis.resource.isDefined(this.data.filename, true))
+  //           basis.resource(this.data.filename).update(this.data.content);
+  //     }
+  //   };
+  //   inspectBasis.devtools.files.addHandler({
+  //     itemsChanged: function(sender, delta){
+  //       if (delta.inserted)
+  //         delta.inserted.forEach(function(file){
+  //           file.addHandler(FILE_HANDLER);
+  //         });
+  //     }
+  //   });
+  // }
 
-  // temporary here
-  if (global.basisjsToolsFileSync && typeof basisjsToolsFileSync.initDevtool === 'function')
-  {
-    basisjsToolsFileSync.initDevtool({
-      getInspectorUI: function(dev, callback){
-        basisjsToolsFileSync.getBundle(dev ? asset('./standalone.html') : {
-          build: asset('../../dist/devtool.js'),
-          filename: asset('./standalone.html')
-        }, callback);
-      }
-    });
-  }
+  require('./basisjs-tools-sync.js');
 
   basis.dev.log('basis devpanel inited');
 }

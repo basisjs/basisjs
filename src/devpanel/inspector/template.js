@@ -153,10 +153,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
       templateOpenSpecialKey: function(){
         return /^mac/i.test(navigator.platform) ? 'cmd' : 'ctrl';
       },
-      openFileSupported: {
-        events: 'delegateChanged update',
-        getter: fileAPI.isOpenFileSupported
-      },
+      openFileSupported: fileAPI.isOpenFileSupported,
       instanceNamespace: {
         events: 'delegateChanged update',
         getter: function(node){

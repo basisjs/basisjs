@@ -3,7 +3,7 @@ var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
 var Value = require('basis.data').Value;
 var Expression = require('basis.data.value').Expression;
-var remoteInspectors = new Value({ value: 0 });
+var remoteInspectors = require('../../basisjs-tools-sync.js').remoteInspectors;
 
 var View = require('./view/index.js');
 var data = require('./data/index.js');
@@ -73,11 +73,5 @@ new Expression(data.input, remoteInspectors, function(input, inspectors){
     oldView.set({ hasTarget: false });
   }
 });
-
-if (typeof basisjsToolsFileSync != 'undefined')
-{
-  remoteInspectors.set(basisjsToolsFileSync.remoteInspectors.value);
-  basisjsToolsFileSync.remoteInspectors.attach(remoteInspectors.set, remoteInspectors);
-}
 
 module.exports = data.input;
