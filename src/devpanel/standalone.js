@@ -1,7 +1,7 @@
 var Value = require('basis.data').Value;
 var Node = require('basis.ui').Node;
-var View = require('./inspector/template-info/view/index.js');
-var createRemoteApi = require('./inspector/template-info/createRemoteApi.js');
+var View = require('./view/template-info/view/index.js');
+var createRemoteApi = require('./view/template-info/createRemoteApi.js');
 
 basis.ready(function(){
   function sync(data){

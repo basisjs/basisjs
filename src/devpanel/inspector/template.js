@@ -12,7 +12,7 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var templateInfo = resource('./template-info/index.js');
+var templateInfo = resource('../view/template-info/index.js');
 
 var inspectDepth = 0;
 var inspectMode = new Value({ value: false });
@@ -138,7 +138,7 @@ var pickupTarget = new Value({
 var nodeInfoPopup = basis.fn.lazyInit(function(){
   return new Balloon({
     dir: 'left bottom left top',
-    template: resource('./template/template_hintPopup.tmpl'),
+    template: resource('./template/popup.tmpl'),
     autorotate: [
       'left top left bottom',
       //'center center center center',

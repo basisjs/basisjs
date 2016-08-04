@@ -1,10 +1,10 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisConfig = inspectBasis.config.devpanel;
 var Value = require('basis.data').Value;
-var Overlay = require('./utils/overlay.js');
+var Overlay = require('./common/overlay.js');
 var getOffset = require('basis.layout').getOffset;
 var getComputedStyle = require('basis.dom.computedStyle').get;
-var getBaseline = require('./utils/baseline.js');
+var getBaseline = require('./common/baseline.js');
 var gridSize;
 
 if (inspectBasisConfig)
@@ -13,7 +13,7 @@ if (inspectBasisConfig)
 var overlay = new Overlay({
   processTextLines: true,
 
-  template: resource('./template/grid/overlay.tmpl'),
+  template: resource('./grid/overlay.tmpl'),
   binding: {
     gridSize: function(){
       return gridSize;
@@ -24,7 +24,7 @@ var overlay = new Overlay({
   },
 
   childClass: {
-    template: resource('./template/grid/token.tmpl'),
+    template: resource('./grid/token.tmpl'),
     binding: {
       settings: {
         events: 'update',

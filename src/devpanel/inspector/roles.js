@@ -4,9 +4,9 @@ var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisTracker = inspectBasis.require('basis.tracker');
 var getTrackInfo = inspectBasisTracker.getInfo;
-var trackingInfo = resource('./tracking-info/index.js');
+var trackingInfo = resource('../view/tracking-info/index.js');
 
-var Overlay = require('./utils/overlay.js');
+var Overlay = require('./common/overlay.js');
 var Value = require('basis.data').Value;
 var Node = require('basis.ui').Node;
 var events = [
@@ -76,9 +76,9 @@ function getActions(domNode, events){
 }
 
 var eventLog = new Node({
-  template: resource('./template/roles/event-log.tmpl'),
+  template: resource('./roles/event-log.tmpl'),
   childClass: {
-    template: resource('./template/roles/event-log-entry.tmpl'),
+    template: resource('./roles/event-log-entry.tmpl'),
     binding: {
       event: 'data:',
       selector: 'data:',
@@ -106,14 +106,14 @@ inspectBasisTracker.attach(function(event){
 var overlay = new Overlay({
   pickMode: new basis.Token(false),
 
-  template: resource('./template/roles/overlay.tmpl'),
+  template: resource('./roles/overlay.tmpl'),
   binding: {
     pickMode: 'pickMode',
     eventLog: eventLog
   },
 
   childClass: {
-    template: resource('./template/roles/token.tmpl'),
+    template: resource('./roles/token.tmpl'),
     binding: {
       hasActions: 'data:',
       missedActions: 'data:',

@@ -54,7 +54,7 @@ function init(){
   // init interface
   require('./panel/index.js');
   // temporary here
-  //require('./module/ui/index.js');
+  //require('./view/ui/index.js');
 
   // setup live update
   if (inspectBasis.devtools)
@@ -81,9 +81,9 @@ function init(){
   {
     basisjsToolsFileSync.initDevtool({
       getInspectorUI: function(dev, callback){
-        basisjsToolsFileSync.getBundle(dev ? __dirname : {
+        basisjsToolsFileSync.getBundle(dev ? asset('./standalone.html') : {
           build: asset('../../dist/devtool.js'),
-          filename: __dirname
+          filename: asset('./standalone.html')
         }, callback);
       }
     });

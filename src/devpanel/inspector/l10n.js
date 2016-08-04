@@ -6,8 +6,8 @@ var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var NativeDomNode = global.Node;
 var fileAPI = require('../api/file.js');
 var Value = require('basis.data').Value;
-var genColor = require('./utils/color.js').genColor;
-var Overlay = require('./utils/overlay.js');
+var genColor = require('./common/color.js').genColor;
+var Overlay = require('./common/overlay.js');
 var Balloon = require('basis.ui.popup').Balloon;
 
 var dictionaryColor = {};
@@ -31,7 +31,7 @@ function tokenBinding(fn){
 var nodeInfoPopup = basis.fn.lazyInit(function(){
   return new Balloon({
     dir: 'left bottom left top',
-    template: resource('./l10n/token_hintPopup.tmpl'),
+    template: resource('./l10n/popup.tmpl'),
     autorotate: [
       'left top left bottom',
       'right bottom right top',
@@ -88,7 +88,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 });
 
 var overlay = new Overlay({
-  template: resource('./template/l10n/overlay.tmpl'),
+  template: resource('./l10n/overlay.tmpl'),
   muteEvents: {
     click: true,
     mousedown: true,
@@ -96,7 +96,7 @@ var overlay = new Overlay({
   },
 
   childClass: {
-    template: resource('./template/l10n/token.tmpl'),
+    template: resource('./l10n/token.tmpl'),
     binding: {
       color: 'data:'
     },
