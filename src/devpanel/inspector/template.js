@@ -12,7 +12,6 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var transport = require('../api/transport.js');
 var templateInfo = resource('./template-info/index.js');
 
 var inspectDepth = 0;
@@ -78,20 +77,13 @@ function pickHandler(event){
         else
         {
           templateInfo().set(object.element);
-          transport.sendData('pickTemplate', {
-            filename: source.url
-          });
         }
       }
     }
     else
     {
       templateInfo().set(inspectBasisTemplate.resolveObjectById(templateId).element);
-      transport.sendData('pickTemplate', {
-        content: typeof source == 'string' ? source : ''
-      });
     }
-
   }
 }
 
@@ -295,7 +287,6 @@ function startInspect(){
     inspectBasisEvent.captureEvent('click', pickHandler);
 
     inspectMode.set(true);
-    transport.sendData('startInspect', 'template');
   }
 }
 
@@ -312,7 +303,6 @@ function stopInspect(){
     inspectBasisEvent.releaseEvent('click');
 
     inspectMode.set(false);
-    transport.sendData('endInspect', 'template');
     pickupTarget.set();
   }
 }

@@ -7,7 +7,6 @@ var NativeDomNode = global.Node;
 var fileAPI = require('../api/file.js');
 var Value = require('basis.data').Value;
 var genColor = require('./utils/color.js').genColor;
-var transport = require('../api/transport.js');
 var Overlay = require('./utils/overlay.js');
 var Balloon = require('basis.ui.popup').Balloon;
 
@@ -94,14 +93,6 @@ var overlay = new Overlay({
     click: true,
     mousedown: true,
     mouseup: true
-  },
-  handler: {
-    activeChanged: function(){
-      if (this.active)
-        transport.sendData('startInspect', 'l10n');
-      else
-        transport.sendData('endInspect', 'l10n');
-    }
   },
 
   childClass: {
