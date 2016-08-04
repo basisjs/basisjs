@@ -1315,7 +1315,7 @@
 
     // extend by default settings
     complete(config, {
-      implicitExt: NODE_ENV ? true : 'warn'  // true, false, 'warn'
+      implicitExt: NODE_ENV ? true : false  // true, false, 'warn'
     });
 
     // warn about extProto in basis-config, this option was removed in 1.3.0
