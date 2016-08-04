@@ -109,7 +109,12 @@ function activateInspector(inspector, e){
   e.die();
   inspectBasisDomEvent.captureEvent('click', function(){
     inspectBasisDomEvent.releaseEvent('click');
-    currentInspector.set(inspector());
+
+    // set new inspector or drop old one if inspector is the same
+    var newInspector = inspector();
+    currentInspector.set(
+      currentInspector.value !== newInspector ? newInspector : null
+    );
   });
 }
 
