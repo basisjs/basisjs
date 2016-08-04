@@ -1,9 +1,11 @@
 var inspectBasis = require('devpanel').inspectBasis;
+var inspectBasisResource = inspectBasis.resource;
 var entity = require('basis.entity');
 var basisData = require('basis.data');
 var STATE = basisData.STATE;
 var Value = basisData.Value;
 
+var features = new basis.Token([]);
 var isOnline = new Value({ value: false });
 var remoteInspectors = new Value({ value: 0 });
 var permanentFilesChangedCount = new Value({ value: 0 });
@@ -16,7 +18,7 @@ var File = entity.createType('File', {
     return typeof value == 'string' ? value : null;
   }
 });
-File.openFileSupported = false;
+File.openFileSupported = new Value({ value: false });
 File.open = function(){
   basis.dev.warn('basis.devpanel: open file in editor is not supported by server');
 };
@@ -90,10 +92,10 @@ function processNotificationQueue(){
     // trace only update and delete
     var ext = basis.path.extname(filename);
 
-    if (ext in inspectBasis.resource.extensions &&
-        inspectBasis.resource.extensions[ext].permanent &&
-        inspectBasis.resource.isResolved(filename) &&
-        inspectBasis.resource(filename).hasChanges())
+    if (inspectBasisResource.extensions[ext] &&
+        inspectBasisResource.extensions[ext].permanent &&
+        inspectBasisResource.isResolved(filename) &&
+        inspectBasisResource(filename).hasChanges())
       basis.array.add(permanentFiles, filename);
     else
       basis.array.remove(permanentFiles, filename);
@@ -111,6 +113,11 @@ function processNotificationQueue(){
 // run via basis.ready to ensure basisjsToolsFileSync is loaded
 //
 basis.ready(function(){
+  function link(basisValue, btValue){
+    btValue.attach(basisValue.set, basisValue);
+    basisValue.set(btValue.value);
+  }
+
   var basisjsTools = global.basisjsToolsFileSync;
 
   if (!basisjsTools)
@@ -138,22 +145,25 @@ basis.ready(function(){
     notificationsQueue.push({
       action: action,
       filename: filename,
-      file: basisjsTools.getFile(filename, true),
       content: content
     });
   });
 
-  // sync open file
-  File.openFileSupported = true;  // TODO: get support state from basisjsTools
-  File.open = basisjsTools.openFile;
-
   // sync isOnline
-  basisjsTools.isOnline.attach(isOnline.set, isOnline);
-  isOnline.set(basisjsTools.isOnline.value);
+  link(isOnline, basisjsTools.isOnline);
+  link(remoteInspectors, basisjsTools.remoteInspectors);
 
-  // sync remoteInspectors
-  basisjsTools.remoteInspectors.attach(remoteInspectors.set, remoteInspectors);
-  remoteInspectors.set(basisjsTools.remoteInspectors.value);
+  File.open = basisjsTools.openFile;
+  File.openFileSupported.set(typeof File.open == 'function');
+
+  // sync features
+  if (basisjsTools.features)
+  {
+    link(features, basisjsTools.features);
+    link(File.openFileSupported, features.as(function(list){
+      return list.indexOf('file:open') !== -1;
+    }));
+  }
 
   // initDevtool
   if (typeof basisjsTools.initDevtool === 'function')
