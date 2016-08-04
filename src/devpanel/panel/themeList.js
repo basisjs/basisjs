@@ -1,32 +1,30 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
+var Value = require('basis.data').Value;
 var Menu = require('./Menu.js');
+var currentTheme = new Value();
 
-var view = new Menu({
-  selection: {
-    handler: {
-      itemsChanged: function(){
-        inspectBasisTemplate.setTheme(this.pick().value);
+inspectBasisTemplate.onThemeChange(currentTheme.set, currentTheme, true);
+
+module.exports = new Menu({
+  currentTheme: currentTheme,
+  childClass: {
+    binding: {
+      title: 'value',
+      selected: currentTheme.compute(function(node, value){
+        return node.value == value;
+      })
+    },
+    action: {
+      select: function(){
+        inspectBasisTemplate.setTheme(this.value);
       }
     }
   },
-  childClass: {
-    binding: {
-      title: 'value'
-    }
-  },
+
   childNodes: inspectBasisTemplate.getThemeList().map(function(themeName){
     return {
-      value: themeName,
-      selected: inspectBasisTemplate.currentTheme().name == themeName
+      value: themeName
     };
   })
 });
-
-inspectBasisTemplate.onThemeChange(function(themeName){
-  var item = view.getChild(themeName, 'value');
-  if (item)
-    item.select();
-}, null, true);
-
-module.exports = view;

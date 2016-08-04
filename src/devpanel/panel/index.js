@@ -128,7 +128,7 @@ var panel = new Node({
 
   binding: {
     activated: 'activated',
-    themeName: 'themeName',
+    themeName: themeList.currentTheme,
     themeList: themeList,
     cultureName: inspectBasisL10n.culture,
     cultureList: cultureList,
@@ -205,14 +205,6 @@ var panel = new Node({
     this.dde = null;
 
     Node.prototype.destroy.call(this);
-  }
-});
-
-themeList.selection.addHandler({
-  itemsChanged: function(){
-    var theme = this.pick();
-    panel.themeName = theme.value;
-    panel.updateBind('themeName');
   }
 });
 

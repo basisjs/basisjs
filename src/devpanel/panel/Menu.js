@@ -43,9 +43,11 @@ module.exports = Node.subclass({
     domEventUtils.addGlobalHandler('click', this.hide, this);
   },
   hide: function(){
-    this.opened = false;
-    this.updateBind('opened');
-    domEventUtils.removeGlobalHandler('click', this.hide, this);
-    this.setDelegate();
+    setTimeout(function(){
+      this.opened = false;
+      this.updateBind('opened');
+      domEventUtils.removeGlobalHandler('click', this.hide, this);
+      this.setDelegate();
+    }.bind(this), 10);
   }
 });

@@ -22,8 +22,7 @@ module.exports = new Menu({
 
   childNodes: inspectBasisL10n.getCultureList().map(function(culture){
     return {
-      value: culture,
-      country: culture.split('-').pop()
+      value: culture
     };
   })
 });
