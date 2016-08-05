@@ -3860,7 +3860,7 @@
 
 
   //
-  // export names
+  // Development stuff
   //
 
   var devInfoResolver = (function(){
@@ -3931,10 +3931,39 @@
     };
   })();
 
+  // set up file sync if available (dev mode only)
+  /** @cut */ var attachFileSyncRetry = 50;
+  /** @cut */ ready(function attachFileSync(){
+  /** @cut */   var basisjsTools = global.basisjsToolsFileSync;
+  /** @cut */
+  /** @cut */   if (!basisjsTools)
+  /** @cut */   {
+  /** @cut */     if (attachFileSyncRetry < 500)
+  /** @cut */       setTimeout(attachFileSync, attachFileSyncRetry);
+  /** @cut */     attachFileSyncRetry += 100;
+  /** @cut */     return;
+  /** @cut */   }
+  /** @cut */
+  /** @cut */   basisjsTools.notifications.attach(function(action, filename, content){
+  /** @cut */     if (action == 'update')
+  /** @cut */     {
+  /** @cut */       if (filename in resources)
+  /** @cut */         resources[filename].update(content);
+  /** @cut */       if (filename in resourceContentCache)
+  /** @cut */         resourceContentCache[filename] = content;
+  /** @cut */     }
+  /** @cut */   });
+  /** @cut */ });
+
+
+  //
   // create and extend basis namespace
+  //
+
   var basis = getNamespace('basis').extend({
     /** @cut */ filename_: basisFilename,
     /** @cut */ processConfig: processConfig,
+    /** @cut */ selfFileSync: true,  // TODO: remove when basisjs-tools stops patching basis.js for file sync
 
     // properties and settings
     version: VERSION,
