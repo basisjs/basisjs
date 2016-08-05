@@ -1,15 +1,16 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
+var Value = require('basis.data').Value;
 var Expression = require('basis.data.value').Expression;
-var remoteInspectors = require('../../basisjs-tools-sync.js').remoteInspectors;
+var remote = require('../../basisjs-tools-sync.js').remoteInspectors;
 
 var View = require('./view/index.js');
 var data = require('./data/index.js');
 
 require('api')
   .local(require('./api.js'), data, inspectBasis)
-  .channel(data.output.as(basis.getter('data')), remoteInspectors.send);
+  .channel(data.output.as(basis.getter('data')), remote.send);
 
 // view
 var captureEvents = [
@@ -33,9 +34,15 @@ var blockEvents = function(node){
     });
 };
 
-new Expression(data.input, remoteInspectors, function(input, inspectors){
-  return input && !inspectors;
+new Expression(data.input, remote, function(input, remote){
+  return {
+    input: input,
+    remote: remote
+  };
 })
+  .link(new Value(), function(value, oldValue){
+    this.set(value.input && !value.remote && (!oldValue || value.input !== oldValue.input));
+  })
   .as(function(showView){
     return showView ? new View() : null;
   })
