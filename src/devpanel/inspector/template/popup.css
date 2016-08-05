@@ -13,7 +13,7 @@
   font-family: Tahoma, Verdana, Arial, sans-serif;
   line-height: 1.5;
   transition: all .05s;
-  z-index: 10001 !important;
+  z-index: 10002 !important;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, .25);
 }
 

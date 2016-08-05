@@ -1,0 +1,28 @@
+HTML,
+BODY
+{
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 12px;
+}
+
+.app
+{
+  outline: 1px solid red;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.toolbar
+{
+  background: #EEE;
+  border-bottom: 1px solid #DDD;
+  padding: 6px;
+}
+.content
+{
+  flex: 1;
+  position: relative;
+}
