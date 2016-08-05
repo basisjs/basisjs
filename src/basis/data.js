@@ -486,6 +486,9 @@
       if (!fn || fn === $self)
         return this;
 
+      if (typeof fn == 'string')
+        fn = basis.getter(fn);
+
       if (this.links_)
       {
         // try to find value with the same function

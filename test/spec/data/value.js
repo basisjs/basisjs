@@ -196,6 +196,24 @@ module.exports = {
               }
             },
             {
+              name: 'string argument should converts to getter and returns the same result',
+              test: function(){
+                var testValue = new Value();
+                var a = testValue.as('data.foo');
+                var b = testValue.as('data.bar');
+                var c = testValue.as('data.foo');
+                var d = testValue.as(basis.getter('data.foo'));
+
+                assert(a instanceof ReadOnlyValue);
+                assert(b instanceof ReadOnlyValue);
+                assert(c instanceof ReadOnlyValue);
+                assert(d instanceof ReadOnlyValue);
+                assert(!isEqual(a, b));
+                assert(isEqual(a, c));
+                assert(isEqual(a, d));
+              }
+            },
+            {
               name: 'common case',
               test: function(){
                 var testValue = new Value({ value: 3 });
