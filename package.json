@@ -34,6 +34,7 @@
     "globals": {
       "basis": true,
       "resource": true,
+      "asset": true,
       "assert": true
     },
     "rules": {
