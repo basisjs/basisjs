@@ -5,6 +5,8 @@ var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var DomTree = require('./dom.js');
 var BindingView = require('./bindings.js');
 var SourceView = require('./source.js');
+var fileApi = require('api').ns('file');
+var templateApi = require('../api.js');
 
 module.exports = Window.subclass({
   target: true,
@@ -53,24 +55,24 @@ module.exports = Window.subclass({
   },
   action: {
     upParent: function(){
-      this.api.upParent();
+      templateApi.upParent();
     },
     upOwner: function(){
-      this.api.upOwner();
+      templateApi.upOwner();
     },
     upGroup: function(){
-      this.api.upGroup();
+      templateApi.upGroup();
     },
     close: function(){
-      this.api.dropTarget();
+      templateApi.dropTarget();
     },
     openSource: function(){
       if (this.data.url)
-        this.target.api.openFile(this.data.url);
+        fileApi.open(this.data.url);
     },
     openObjectLocation: function(){
       if (this.data.objectLocation)
-        this.target.api.openFile(this.data.objectLocation);
+        fileApi.open(this.data.objectLocation);
     },
     enterObjectLocation: function(e){
       if (this.data.objectLocation)
@@ -86,7 +88,7 @@ module.exports = Window.subclass({
       this.showSource.set(!this.showSource.value);
     },
     logInfo: function(){
-      this.api.logInfo();
+      templateApi.logInfo();
     }
   },
 
@@ -96,7 +98,9 @@ module.exports = Window.subclass({
     Window.prototype.init.call(this);
     this.dde.fixLeft = false;
     this.dde.fixTop = false;
-    this.api.init();
+
+    templateApi.channel.link(this, this.set);
+    templateApi.init();
   },
   set: function(data){
     this.update(data);

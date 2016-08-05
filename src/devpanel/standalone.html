@@ -1,6 +1,12 @@
 <!doctype html>
 <html>
 <body>
-  <script src="../../src/basis.js" basis-config="noConflict: true, autoload: 'standalone.js'"></script>
+  <script src="../../src/basis.js" basis-config="
+    noConflict: true,
+    autoload: 'standalone.js',
+    modules: {
+      api: './api/index.js'
+    }
+  "></script>
 </body>
 </html>

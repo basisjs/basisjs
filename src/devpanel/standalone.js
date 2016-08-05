@@ -1,22 +1,18 @@
 var Value = require('basis.data').Value;
 var Node = require('basis.ui').Node;
 var View = require('./view/template-info/view/index.js');
-var createRemoteApi = require('./view/template-info/createRemoteApi.js');
+
 
 basis.ready(function(){
-  function sync(data){
-    if (data.type === 'template')
-      view.set(data.payload);
-  }
-
   var view;
 
   setTimeout(function(){
-    socket.on('devtool:session data', sync);
+    require('./api/file_.js');
+    require('api').remote(socket);
+
     view = new View({
       modal: false,
-      mode: 'standalone',
-      api: createRemoteApi(socket)
+      mode: 'standalone'
     });
 
     // temporary solution

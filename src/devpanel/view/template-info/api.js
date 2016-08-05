@@ -1,26 +1,20 @@
-module.exports = function createLocalAPI(data, inspectBasis){
-  var inspectBasisTemplate = inspectBasis.require('basis.template');
-  var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
-  var fileAPI = require('../../api/file.js');
+function up(data, upNode){
+  if (upNode && upNode.element)
+    data.input.set(upNode.element);
+}
 
-  function up(upNode){
-    if (upNode && upNode.element)
-      data.input.set(upNode.element);
-  }
-
-  return {
-    init: function(){
-      // nothing to do
-    },
-    openFile: function(loc){
-      fileAPI.openFile(loc);
-    },
-    select: function(id){
+module.exports = require('api').extend('template', {
+  select: function(data){
+    return function(id){
       var selectNodeById = data.output.value.selectNodeById;
       if (typeof selectNodeById == 'function')
         selectNodeById(id);
-    },
-    upParent: function(){
+    };
+  },
+  upParent: function(data, inspectBasis){
+    var inspectBasisGroupingNode = inspectBasis.require('basis.dom.wrapper').GroupingNode;
+
+    return function(){
       var object = data.output.value.object;
       if (object && object.parentNode)
       {
@@ -29,23 +23,33 @@ module.exports = function createLocalAPI(data, inspectBasis){
         if (upNode instanceof inspectBasisGroupingNode)
           upNode = upNode.owner;
 
-        up(upNode);
+        up(data, upNode);
       }
-    },
-    upOwner: function(){
+    };
+  },
+  upOwner: function(data){
+    return function(){
       var object = data.output.value.object;
       if (object && object.owner)
-        up(object.owner);
-    },
-    upGroup: function(){
+        up(data, object.owner);
+    };
+  },
+  upGroup: function(data){
+    return function(){
       var object = data.output.value.object;
       if (object && object.groupNode)
-        up(object.groupNode);
-    },
-    dropTarget: function(){
+        up(data,object.groupNode);
+    };
+  },
+  dropTarget: function(data){
+    return function(){
       data.input.set();
-    },
-    logInfo: function(){
+    };
+  },
+  logInfo: function(data, inspectBasis){
+    var inspectBasisTemplate = inspectBasis.require('basis.template');
+
+    return function(){
       var object = data.output.value.object;
       var debugInfo = null;
       var values = null;
@@ -73,6 +77,6 @@ module.exports = function createLocalAPI(data, inspectBasis){
         }
       };
       console.log(global.$basisjsInfo);
-    }
-  };
-};
+    };
+  }
+});

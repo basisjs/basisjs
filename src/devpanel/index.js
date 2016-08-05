@@ -20,6 +20,10 @@ require('basis.template').Template.extend({
 
 // init devpanel
 function init(){
+  // temporary
+  require('api')
+    .local(require('./api/file_.js'), require('./api/file.js'));
+
   // init transport
   var transport = require('./api/transport.js');
   module.transferEl = transport.transferEl;
@@ -55,26 +59,6 @@ function init(){
   require('./panel/index.js');
   // temporary here
   //require('./view/ui/index.js');
-
-  // setup live update
-  // if (inspectBasis.devtools)
-  // {
-  //   var FILE_HANDLER = {
-  //     update: function(sender, delta){
-  //       if ('filename' in delta || 'content' in delta)
-  //         if (!basis.resource.isDefined || basis.resource.isDefined(this.data.filename, true))
-  //           basis.resource(this.data.filename).update(this.data.content);
-  //     }
-  //   };
-  //   inspectBasis.devtools.files.addHandler({
-  //     itemsChanged: function(sender, delta){
-  //       if (delta.inserted)
-  //         delta.inserted.forEach(function(file){
-  //           file.addHandler(FILE_HANDLER);
-  //         });
-  //     }
-  //   });
-  // }
 
   require('./basisjs-tools-sync.js');
 

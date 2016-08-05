@@ -1,6 +1,7 @@
 var wrap = require('basis.data').wrap;
 var Node = require('basis.ui').Node;
 var jsSourcePopup = require('../../../module/js-source-popup/index.js');
+var fileApi = require('api').ns('file');
 // var dataFlowPopup = require('./data-flow-popup.js');
 
 var Value = require('basis.data').Value;
@@ -66,7 +67,7 @@ var View = Node.subclass({
       },
       pickValue: function(){
         if (this.data.loc)
-          this.parentNode.target.api.openFile(this.data.loc);
+          fileApi.open(this.data.loc);
       }
     }
   }

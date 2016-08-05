@@ -2,16 +2,14 @@ var Node = require('basis.ui').Node;
 var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var hoveredBinding = require('./bindings.js').hover;
 var templateSwitcher = require('basis.template').switcher;
+var templateApi = require('../api.js');
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var NodeClassByType = {};
 
 function childFactory(config){
   var ChildClass = NodeClassByType[config.type] || this.childClass;
 
-  return new ChildClass(basis.object.merge(config, {
-    api: this.api || this.target.api,
-    selectDomNode: this.selectDomNode
-  }));
+  return new ChildClass(config);
 }
 
 var DOMNode = Node.subclass({
@@ -38,7 +36,7 @@ var DOMNode = Node.subclass({
       if (this.nestedView && this.domNode)
       {
         hoveredBinding.set();
-        this.api.select(this.domNode);
+        templateApi.select(this.domNode);
       }
     }
   },

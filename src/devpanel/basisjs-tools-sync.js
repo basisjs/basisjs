@@ -2,6 +2,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisResource = inspectBasis.resource;
 var entity = require('basis.entity');
 var basisData = require('basis.data');
+var api = require('./api/index.js');
 var STATE = basisData.STATE;
 var Value = basisData.Value;
 
@@ -168,6 +169,12 @@ basis.ready(function(){
   // initDevtool
   if (typeof basisjsTools.initDevtool === 'function')
     basisjsTools.initDevtool({
+      command: function(command){
+        if (!api.ns(command.ns).hasOwnProperty(command.method))
+          return console.warn('[basis.devpanel] Unknown devtool remote command:', command);
+
+        api.ns(command.ns)[command.method].apply(null, command.args);
+      },
       getInspectorUI: function(dev, callback){
         basisjsTools.getBundle(dev ? asset('./standalone.html') : {
           build: asset('../../dist/devtool.js'),

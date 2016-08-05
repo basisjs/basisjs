@@ -1,4 +1,5 @@
 var Node = require('basis.ui').Node;
+var fileApi = require('api').ns('file');
 
 function escapeHtml(str){
   return String(str || '')
@@ -69,7 +70,7 @@ var view = new Node({
       openFile: function(e){
         var loc = e.sender.getAttribute('data-loc');
         if (loc)
-          this.target.api.openFile(loc);
+          fileApi.open(loc);
       }
     }
   }
