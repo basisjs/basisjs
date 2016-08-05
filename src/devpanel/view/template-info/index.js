@@ -9,7 +9,7 @@ var data = require('./data/index.js');
 
 require('api')
   .local(require('./api.js'), data, inspectBasis)
-  .channel(data.output.as(basis.getter('data')));
+  .channel(data.output.as(basis.getter('data')), remoteInspectors.send);
 
 // view
 var captureEvents = [

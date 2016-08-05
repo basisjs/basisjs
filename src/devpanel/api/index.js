@@ -1,31 +1,19 @@
 var Value = require('basis.data').Value;
 var api = {};
 
-function createInputChannel(socket, ns){
-  var channel = new Value();
-
-  api[ns].init = createRemoteMethod(socket, ns, 'init');
-  socket.on('devtool:session data', function(data){
-    if (data.type === ns)
-      channel.set(data.payload);
-  });
-
-  return channel;
-}
-function createOutputChannel(ns, channel){
-  function sendDataToClient(data){
-    // if (remoteInspectors.value)
-    socket.emit('devtool:session data', {
+function createOutputChannel(ns, channel, send){
+  function sendData(data){
+    send({
       type: ns,
       payload: data
     });
   }
 
-  channel.link(null, sendDataToClient);
+  channel.link(null, sendData);
 
   api[ns].channel = channel;
   api[ns].init = function(){
-    sendDataToClient(channel.value);
+    sendData(channel.value);
   };
 
   return channel;
@@ -39,9 +27,22 @@ function initAsLocal(methods){
   return methods;
 }
 
-function createRemoteMethod(socket, ns, method){
+function createInputChannel(ns, send, subscribe){
+  var channel = new Value();
+
+  api[ns].init = createRemoteMethod(ns, send, 'init');
+  api[ns].channel = channel;
+  subscribe(function(data){
+    if (data.type === ns)
+      channel.set(data.payload);
+  });
+
+  return channel;
+}
+
+function createRemoteMethod(ns, send, method){
   return function(){
-    socket.emit('devtool:session command', {
+    send({
       ns: ns,
       method: method,
       args: basis.array(arguments)
@@ -49,35 +50,44 @@ function createRemoteMethod(socket, ns, method){
   };
 }
 
-function initAsRemote(socket){
-  for (var ns in api)
-  {
-    for (var method in api[ns])
-      if (method !== 'channel')
-        api[ns][method] = createRemoteMethod(socket, ns, method);
+function initAsRemote(ns, send, subscribe){
+  for (var method in api[ns])
+    if (method !== 'channel')
+      api[ns][method] = createRemoteMethod(ns, send, method);
 
-    api[ns].channel = createInputChannel(socket, ns);
-  }
-
-  return api;
+  createInputChannel(ns, send, subscribe);
 }
 
 function getNamespace(name){
   if (!api[name])
     api[name] = {
       init: function(){},
-      channel: function(channel){
-        return createOutputChannel(name, channel);
+      channel: function(channel, sendData){
+        return createOutputChannel(name, channel, sendData);
       }
     };
   return api[name];
 }
 
+function define(ns, extension){
+  return basis.object.complete(getNamespace(ns), extension);
+}
+
 module.exports = {
+  define: define,
+  ns: getNamespace,
   local: initAsLocal,
-  remote: initAsRemote,
-  extend: function(ns, extension){
-    return basis.object.complete(getNamespace(ns), extension);
-  },
-  ns: getNamespace
+  remote: function(send, subscribe){
+    for (var ns in api)
+      initAsRemote(ns, send, subscribe);
+
+    // patch define method to convert methods to remote calls
+    module.exports.define = function(ns, extension){
+      var methods = define(ns, extension);
+      initAsRemote(ns, send, subscribe);
+      return methods;
+    };
+
+    return api;
+  }
 };

@@ -3,7 +3,7 @@ function up(data, upNode){
     data.input.set(upNode.element);
 }
 
-module.exports = require('api').extend('template', {
+module.exports = require('api').define('template', {
   select: function(data){
     return function(id){
       var selectNodeById = data.output.value.selectNodeById;

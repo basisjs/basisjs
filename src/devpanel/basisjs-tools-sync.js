@@ -8,7 +8,12 @@ var Value = basisData.Value;
 
 var features = new basis.Token([]);
 var isOnline = new Value({ value: false });
-var remoteInspectors = new Value({ value: 0 });
+var remoteInspectors = new Value({
+  value: 0,
+  send: function(){
+    basis.dev.warn('Send to remoteInspectors#send inspectors is not inited');
+  }
+});
 var permanentFilesChangedCount = new Value({ value: 0 });
 var permanentFiles = [];
 var notificationsQueue = [];
@@ -167,14 +172,9 @@ basis.ready(function(){
   }
 
   // initDevtool
-  if (typeof basisjsTools.initDevtool === 'function')
-    basisjsTools.initDevtool({
-      command: function(command){
-        if (!api.ns(command.ns).hasOwnProperty(command.method))
-          return console.warn('[basis.devpanel] Unknown devtool remote command:', command);
-
-        api.ns(command.ns)[command.method].apply(null, command.args);
-      },
+  if (typeof basisjsTools.initRemoteDevtoolAPI === 'function')
+  {
+    var remoteApi = basisjsTools.initRemoteDevtoolAPI({
       getInspectorUI: function(dev, callback){
         basisjsTools.getBundle(dev ? asset('./standalone.html') : {
           build: asset('../../dist/devtool.js'),
@@ -182,6 +182,21 @@ basis.ready(function(){
         }, callback);
       }
     });
+
+    // subscribe to data from remote devtool
+    remoteApi.subscribe(function(command){
+      if (!api.ns(command.ns).hasOwnProperty(command.method))
+        return console.warn('[basis.devpanel] Unknown devtool remote command:', command);
+
+      api.ns(command.ns)[command.method].apply(null, command.args);
+    });
+
+    // context free send method
+    remoteInspectors.send = function(){
+      if (remoteInspectors.value > 0)
+        remoteApi.send.apply(null, arguments);
+    };
+  }
 });
 
 module.exports = {
