@@ -55,8 +55,8 @@ var ValuePart = DOMNode.subclass({
   type: 'static',
   template: templateSwitcher(function(node){
     return node.type == 'static'
-      ? resource('./template/dom/attribute-value-static.tmpl')
-      : resource('./template/dom/attribute-value.tmpl');
+      ? resource('./dom/attribute-value-static.tmpl')
+      : resource('./dom/attribute-value.tmpl');
   }),
   binding: {
     type: 'type',
@@ -73,7 +73,7 @@ var ValuePart = DOMNode.subclass({
 });
 
 var Attribute = DOMNode.subclass({
-  template: resource('./template/dom/attritube.tmpl'),
+  template: resource('./dom/attritube.tmpl'),
   binding: {
     name: 'name'
   },
@@ -81,7 +81,7 @@ var Attribute = DOMNode.subclass({
 });
 
 NodeClassByType.element = DOMNode.subclass({
-  template: resource('./template/dom/element.tmpl'),
+  template: resource('./dom/element.tmpl'),
   binding: {
     name: 'name',
     binding: 'bindingName',
@@ -97,7 +97,7 @@ NodeClassByType.element = DOMNode.subclass({
   satellite: {
     attributes: {
       instance: Node.subclass({
-        template: resource('./template/dom/attritubes.tmpl'),
+        template: resource('./dom/attritubes.tmpl'),
         childClass: Attribute
       }),
       config: function(owner){
@@ -110,7 +110,7 @@ NodeClassByType.element = DOMNode.subclass({
 });
 
 NodeClassByType.text = DOMNode.subclass({
-  template: resource('./template/dom/text.tmpl'),
+  template: resource('./dom/text.tmpl'),
   binding: {
     value: 'value',
     binding: 'bindingName',
@@ -120,7 +120,7 @@ NodeClassByType.text = DOMNode.subclass({
 });
 
 NodeClassByType.comment = DOMNode.subclass({
-  template: resource('./template/dom/comment.tmpl'),
+  template: resource('./dom/comment.tmpl'),
   binding: {
     value: 'value',
     binding: 'bindingName',

@@ -27,14 +27,14 @@ var view = new Node({
     }
   },
 
-  template: resource('./template/source/main.tmpl'),
+  template: resource('./source/main.tmpl'),
   binding: {
     compiledSource: 'data:source'
   },
 
   childClass: {
     childClass: basis.Class.SELF,
-    template: resource('./template/source/template.tmpl'),
+    template: resource('./source/template.tmpl'),
     binding: {
       url: 'data:',
       caption: {

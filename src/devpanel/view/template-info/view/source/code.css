@@ -44,7 +44,7 @@
   margin: -3px 0;
   border-radius: 5px;
   content: '';
-  background: url(../warning.png) no-repeat;
+  background: url(warning.png) no-repeat;
 }
 .code [class="warning"]:hover:after
 {

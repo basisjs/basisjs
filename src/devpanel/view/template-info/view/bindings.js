@@ -22,7 +22,7 @@ var View = Node.subclass({
   grouping: {
     rule: 'data.used',
     childClass: {
-      template: resource('./template/bindings/group.tmpl'),
+      template: resource('./bindings/group.tmpl'),
       binding: {
         name: function(node){
           return node.data.id ? 'used' : 'notUsed';
@@ -34,7 +34,7 @@ var View = Node.subclass({
     }
   },
   childClass: {
-    template: resource('./template/bindings/binding.tmpl'),
+    template: resource('./bindings/binding.tmpl'),
     binding: {
       name: 'data:',
       value: 'data:',

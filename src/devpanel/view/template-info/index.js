@@ -44,7 +44,7 @@ new Expression(data.input, remote, function(input, remote){
     this.set(value.input && !value.remote && (!oldValue || value.input !== oldValue.input));
   })
   .as(function(showView){
-    return showView ? new View() : null;
+    return showView ? new View({ container: document.body }) : null;
   })
   .link(null, function(view, oldView){
     if (view)

@@ -1,6 +1,4 @@
-var Value = require('basis.data').Value;
-var Window = require('basis.ui.window').Window;
-var templateSwitcher = require('basis.template').switcher;
+var Node = require('basis.ui').Node;
 var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var DomTree = require('./dom.js');
 var BindingView = require('./bindings.js');
@@ -8,12 +6,15 @@ var SourceView = require('./source.js');
 var fileApi = require('api').ns('file');
 var templateApi = require('../api.js');
 
-module.exports = Window.subclass({
-  target: true,
-  modal: true,
-  visible: Value.query('data.hasTarget').as(Boolean),
+var templates = require('basis.template').define('devpanel.template-info', {
+  main: resource('./main/window.tmpl')
+});
+require('basis.template').theme('standalone').define('devpanel.template-info', {
+  main: resource('./main/standalone.tmpl')
+});
+
+module.exports = Node.subclass({
   showSource: new basis.Token(false),
-  mode: 'default',
 
   satellite: {
     domTree: DomTree,
@@ -21,18 +22,19 @@ module.exports = Window.subclass({
     source: SourceView
   },
 
-  template: templateSwitcher(function(node){
-    return node.mode === 'standalone'
-      ? resource('./template/standalone.tmpl')
-      : resource('./template/window.tmpl');
-  }),
+  template: templates.main,
   binding: {
-    mode: 'mode',
     showSource: 'showSource',
     domTree: 'satellite:',
     bindings: 'satellite:',
     source: 'satellite:',
 
+    hasSubject: {
+      events: 'update',
+      getter: function(node){
+        return Boolean(node.data.hasTarget);
+      }
+    },
     hasParent: 'data:',
     hasOwner: 'data:',
     hasGroup: 'data:',
@@ -92,17 +94,10 @@ module.exports = Window.subclass({
     }
   },
 
-  realign: function(){},
-  setZIndex: function(){},
   init: function(){
-    Window.prototype.init.call(this);
-    this.dde.fixLeft = false;
-    this.dde.fixTop = false;
+    Node.prototype.init.call(this);
 
-    templateApi.channel.link(this, this.set);
+    templateApi.channel.link(this, this.update);
     templateApi.init();
-  },
-  set: function(data){
-    this.update(data);
   }
 });
