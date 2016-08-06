@@ -1,8 +1,8 @@
 var wrap = require('basis.data').wrap;
 var Node = require('basis.ui').Node;
-var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var templateApi = require('../api.js');
 var fileApi = require('api').ns('file');
+var jsSourcePopup = resource('./js-source-popup.js');
 var dataFlowPopup = resource('./data-flow-popup.js');
 
 var Value = require('basis.data').Value;
@@ -54,13 +54,13 @@ var View = Node.subclass({
 
         if (this.data.loc)
         {
-          jsSourcePopup.loc.set(this.data.loc);
-          jsSourcePopup.show(e.actionTarget);
+          templateApi.setSourceFragment(this.data.loc);
+          jsSourcePopup().show(e.actionTarget);
         }
       },
       leave: function(){
         hoveredBinding.set();
-        jsSourcePopup.hide();
+        jsSourcePopup().hide();
       },
       showResolve: function(e){
         templateApi.setDataFlowValue(this.data.realValue);

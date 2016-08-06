@@ -8,7 +8,7 @@ module.exports = new Popup({
   },
 
   dir: 'right center left center',
-  zIndex: 65000,
+  zIndex: 10001,
   setZIndex: function(){
     this.element.style.zIndex = this.zIndex;
   }

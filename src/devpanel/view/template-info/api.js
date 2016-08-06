@@ -4,6 +4,9 @@ function up(data, upNode){
 }
 
 module.exports = require('api').define('template', {
+  setSourceFragment: function(){
+    return require('../js-source/index.js').set;
+  },
   setDataFlowValue: function(data){
     return function(id){
       var setDataFlowValue = data.output.value.setDataFlowValue;

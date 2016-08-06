@@ -1,3 +1,5 @@
 module.exports = require('api').define('data-flow', {
-  // no methods yet
+  setSourceFragment: function(){
+    return require('../js-source/index.js').set;
+  },
 });

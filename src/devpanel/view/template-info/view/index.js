@@ -1,5 +1,5 @@
 var Node = require('basis.ui').Node;
-var jsSourcePopup = require('../../../module/js-source-popup/index.js');
+var jsSourcePopup = resource('./js-source-popup.js');
 var DomTree = require('./dom.js');
 var BindingView = require('./bindings.js');
 var SourceView = require('./source.js');
@@ -79,12 +79,12 @@ module.exports = Node.subclass({
     enterObjectLocation: function(e){
       if (this.data.objectLocation)
       {
-        jsSourcePopup.loc.set(this.data.objectLocation);
-        jsSourcePopup.show(e.actionTarget);
+        templateApi.setSourceFragment(this.data.objectLocation);
+        jsSourcePopup().show(e.actionTarget);
       }
     },
     leaveObjectLocation: function(){
-      jsSourcePopup.hide();
+      jsSourcePopup().hide();
     },
     toggleSource: function(){
       this.showSource.set(!this.showSource.value);

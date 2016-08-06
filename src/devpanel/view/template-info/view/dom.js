@@ -1,7 +1,7 @@
 var Node = require('basis.ui').Node;
-var jsSourcePopup = require('../../../module/js-source-popup/index.js');
-var hoveredBinding = require('./bindings.js').hover;
 var templateSwitcher = require('basis.template').switcher;
+var hoveredBinding = require('./bindings.js').hover;
+var jsSourcePopup = resource('./js-source-popup.js');
 var templateApi = require('../api.js');
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var NodeClassByType = {};
@@ -22,15 +22,16 @@ var DOMNode = Node.subclass({
     enter: function(){
       if (this.bindingName)
         hoveredBinding.set(this.bindingName);
+
       if (this.loc)
       {
-        jsSourcePopup.loc.set(this.loc);
-        jsSourcePopup.show(this.element);
+        templateApi.setSourceFragment(this.loc);
+        jsSourcePopup().show(this.element);
       }
     },
     leave: function(){
       hoveredBinding.set();
-      jsSourcePopup.hide();
+      jsSourcePopup().hide();
     },
     inspect: function(){
       if (this.nestedView && this.domNode)

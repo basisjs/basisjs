@@ -9,7 +9,10 @@ var getBindingsFromNode = require('./bindings.js');
 var buildSourceTreeFromDecl = require('./source.js');
 var dataFlow = require('../../data-flow/index.js');
 
-var selectedDomNode = new Value();
+var input = new Value(); // use Value since to be consistent
+var selectedDomNode = new basis.Token(); // use basis.Token since we need trigger recalculations for the same value
+input.link(selectedDomNode, selectedDomNode.set);
+
 var selectedObject = selectedDomNode
   .as(function(node){
     return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
@@ -45,7 +48,7 @@ function syncSelectedNode(){
   if (selectedDomNode.value === element)
     selectedDomNode.apply();
   else
-    selectedDomNode.set(element);
+    input.set(element);
 }
 
 // dom mutation observer
@@ -63,7 +66,7 @@ var observer = (function(){
   setInterval(syncSelectedNode, 100);
 })();
 
-selectedDomNode.link(null, function(node){
+selectedDomNode.attach(function(node){
   if (observer)
     observer.disconnect();
 
@@ -122,12 +125,12 @@ var output = new Expression(
         dataFlow.set(bindings.map[id]);
       },
       selectNodeById: function(id){
-        selectedDomNode.set(dom.map[id]);
+        input.set(dom.map[id]);
       }
     };
   });
 
 module.exports = {
-  input: selectedDomNode,
+  input: input,
   output: output
 };

@@ -1,7 +1,8 @@
 var Node = require('basis.ui').Node;
 var getBoundingRect = require('basis.layout').getBoundingRect;
 var createTreeBuilder = require('../data/build-tree.js');
-var jsSourcePopup = require('../../../module/js-source-popup/index.js');
+var dataFlowApi = require('../api.js');
+var jsSourcePopup = resource('./js-source-popup.js');
 var jsSourceTimer;
 
 function raw(property){
@@ -46,13 +47,13 @@ var FlowNode = Node.subclass({
     },
     leaveLoc: function(){
       clearTimeout(jsSourceTimer);
-      jsSourcePopup.hide();
+      jsSourcePopup().hide();
     },
   },
   enterLoc: function(loc, element){
-    jsSourcePopup.loc.set(loc);
+    dataFlowApi.setSourceFragment(loc);
     jsSourceTimer = setTimeout(function(){
-      jsSourcePopup.show(element);
+      jsSourcePopup().show(element);
     }, 150);
   },
   open: function(loc){
