@@ -176,8 +176,8 @@ basis.ready(function(){
   {
     var remoteApi = basisjsTools.initRemoteDevtoolAPI({
       getInspectorUI: function(dev, callback){
-        // if (dev)
-        //   return callback(null, 'url', basis.path.origin + basis.path.resolve(__dirname, 'standalone.html'));
+        if (dev)
+          return callback(null, 'url', basis.path.origin + basis.path.resolve(__dirname, 'standalone.html'));
 
         basisjsTools.getBundle(dev ? asset('./standalone.html') : {
           build: asset('../../dist/devtool.js'),
