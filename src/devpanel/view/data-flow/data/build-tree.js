@@ -12,6 +12,24 @@ function getNodeType(value, resolvers){
   return resolvers.isDataset(value) ? 'set' : null;
 }
 
+function getDatasetInfo(dataset){
+  return {
+    itemCount: dataset.itemCount,
+    items: dataset.getValues(function(item){
+      return {
+        id: item.basisObjectId,
+        className: item.constructor && item.constructor.className
+      };
+    })
+  };
+}
+
+function fetchRawValue(value){
+  if (value && value.bindingBridge)
+    return value.bindingBridge.get(value);
+  return value;
+}
+
 function rawValue(value, resolvers){
   var type;
   var valueStr;
@@ -49,7 +67,8 @@ function rawValue(value, resolvers){
   return {
     type: type,
     nodeType: getNodeType(value, resolvers),
-    value: value,
+    basisObjectId: (value && value.basisObjectId) || null,
+    // value: value,
     str: valueStr
   };
 }
@@ -76,9 +95,12 @@ function inspectValue(value, resolvers, map, sourceTarget, parentLoc){
       nodeType: raw.nodeType,
       source: true,
       marker: marker,
-      value: value,
+      // value: value,
+      className: (value && value.constructor && value.constructor.className) || '',
+      _basisObjectId: (value && value.basisObjectId) || null,
       raw: raw,
-      loc: valueLoc
+      loc: valueLoc,
+      extra: raw.nodeType == 'set' ? getDatasetInfo(fetchRawValue(value)) : null
     }];
   }
 
@@ -118,9 +140,12 @@ function inspectValue(value, resolvers, map, sourceTarget, parentLoc){
           })
         : ''),
     transformLoc: fnLoc,
-    value: value,
+    // value: value,
+    className: (value && value.constructor && value.constructor.className) || '',
+    _basisObjectId: (value && value.basisObjectId) || null,
     raw: raw,
-    loc: valueLoc
+    loc: valueLoc,
+    extra: raw.nodeType == 'set' ? getDatasetInfo(fetchRawValue(value)) : null
   });
 
   return nodes;

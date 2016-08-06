@@ -13,7 +13,8 @@ function valueToString(val){
 }
 
 module.exports = function getBindingsFromNode(node){
-  var items = [];
+  var list = [];
+  var map = {};
 
   if (node)
   {
@@ -30,11 +31,12 @@ module.exports = function getBindingsFromNode(node){
         var used = Object.prototype.hasOwnProperty.call(usedValues, key);
         var value = used ? usedValues[key] : undefined;
         var isReactive = rawValues ? value !== rawValues[key] : false;
+        var realValueId = basis.genUID();
 
-        items.push({
+        map[realValueId] = rawValues[key];
+        list.push({
           name: key,
-          // need for data-flow
-          // realValue: rawValues[key],
+          realValue: realValueId,
           value: valueToString(value),
           isReactive: isReactive,
           used: used,
@@ -44,5 +46,8 @@ module.exports = function getBindingsFromNode(node){
       }
   }
 
-  return items;
+  return {
+    list: list,
+    map: map
+  };
 };

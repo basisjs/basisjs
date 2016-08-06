@@ -4,6 +4,13 @@ function up(data, upNode){
 }
 
 module.exports = require('api').define('template', {
+  setDataFlowValue: function(data){
+    return function(id){
+      var setDataFlowValue = data.output.value.setDataFlowValue;
+      if (typeof setDataFlowValue == 'function')
+        setDataFlowValue(id);
+    };
+  },
   select: function(data){
     return function(id){
       var selectNodeById = data.output.value.selectNodeById;

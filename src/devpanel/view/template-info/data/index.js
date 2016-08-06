@@ -2,12 +2,14 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 
+var Value = require('basis.data').Value;
 var Expression = require('basis.data.value').Expression;
 var buildDomTree = require('./dom.js');
 var getBindingsFromNode = require('./bindings.js');
 var buildSourceTreeFromDecl = require('./source.js');
+var dataFlow = require('../../data-flow/index.js');
 
-var selectedDomNode = new basis.Token();
+var selectedDomNode = new Value();
 var selectedObject = selectedDomNode
   .as(function(node){
     return node ? inspectBasisTemplate.resolveObjectById(node[inspectBasisTemplateMarker]) : null;
@@ -61,7 +63,7 @@ var observer = (function(){
   setInterval(syncSelectedNode, 100);
 })();
 
-selectedDomNode.attach(function(node){
+selectedDomNode.link(null, function(node){
   if (observer)
     observer.disconnect();
 
@@ -86,7 +88,7 @@ var output = new Expression(
 
     var data = {
       domTree: dom.tree,
-      bindings: bindings,
+      bindings: bindings.list,
       source: sourceTree.source,
       sourceTree: sourceTree.tree,
 
@@ -116,6 +118,9 @@ var output = new Expression(
       template: template,
       decl: decl,
       data: data,
+      setDataFlowValue: function(id){
+        dataFlow.set(bindings.map[id]);
+      },
       selectNodeById: function(id){
         selectedDomNode.set(dom.map[id]);
       }

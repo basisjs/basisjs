@@ -1,8 +1,14 @@
 var Node = require('basis.ui').Node;
-var jsSourcePopup = require('../js-source-popup/index.js');
-var createEvent = require('basis.event').create;
 var getBoundingRect = require('basis.layout').getBoundingRect;
+var createTreeBuilder = require('../data/build-tree.js');
+var jsSourcePopup = require('../../../module/js-source-popup/index.js');
 var jsSourceTimer;
+
+function raw(property){
+  return function(node){
+    return node.raw && node.raw[property];
+  };
+}
 
 var FlowNode = Node.subclass({
   className: 'FlowNode',
@@ -16,22 +22,9 @@ var FlowNode = Node.subclass({
     loc: 'loc',
     fn: 'transform',
     fnLoc: 'transformLoc',
-    className: function(node){
-      var value = node.value;
-
-      if (value && typeof value == 'object' && value.constructor)
-        return value.constructor.className || '';
-
-      return '';
-    },
-    id: function(node){
-      var value = node.raw && node.raw.value;
-
-      return (value && value.basisObjectId) || '';
-    },
-    value: function(node){
-      return node.raw && node.raw.str;
-    }
+    className: 'className',
+    id: '_basisObjectId',
+    value: raw('str')
   },
   action: {
     open: function(){
@@ -41,9 +34,7 @@ var FlowNode = Node.subclass({
       this.open(this.transformLoc);
     },
     enterLocNoClassName: function(e){
-      var value = this.value;
-
-      if (value && typeof value == 'object' && value.constructor)
+      if (!this.raw || this.raw.className)
         return;
 
       if (this.loc)
@@ -83,40 +74,28 @@ var SetFlowNode = FlowNode.subclass({
   template: resource('./template/set.tmpl'),
   binding: {
     value: function(node){
-      return '{ ' + node.raw.value.itemCount + (node.raw.value.itemCount > 1 ? ' items' : ' item') + ' }';
+      return '{ ' + node.extra.itemCount + (node.extra.itemCount > 1 ? ' items' : ' item') + ' }';
     },
     hasMoreItems: function(node){
-      return Math.max(0, node.raw.value ? node.raw.value.itemCount - 2 : 0);
+      return Math.max(0, node.extra.itemCount ? node.extra.itemCount - 2 : 0);
     }
   },
   childClass: {
     template: resource('./template/set-item.tmpl'),
     binding: {
-      className: function(node){
-        var object = node.data.object;
-
-        if (object && typeof object == 'object' && object.constructor)
-          return object.constructor.className || '';
-
-        return '';
-      },
-      id: function(node){
-        var object = node.data.object;
-
-        return (object && object.basisObjectId) || '';
-      }
+      id: 'data:id',
+      className: 'data:className'
     }
   },
   init: function(){
     FlowNode.prototype.init.call(this);
 
-    this.setChildNodes(this.raw.value.top(2).map(function(object){
-      return {
-        data: {
-          object: object
-        }
-      };
-    }));
+    if (this.extra)
+      this.setChildNodes(this.extra.items.slice(0, 2).map(function(data){
+        return {
+          data: data
+        };
+      }));
   }
 });
 
@@ -278,12 +257,13 @@ var FlowView = Flow.subclass({
         }
       },
       updateConnectors: function(){
-        this.setChildNodes(this.owner && this.owner.inDocument ? collectConnections(this.owner, null, null, this.element, []) : []);
+        if (this.childNodes)
+          this.setChildNodes(this.owner && this.owner.inDocument ? collectConnections(this.owner, null, null, this.element, []) : []);
       }
     })
   }
 });
 
-FlowView.createTreeBuilder = require('./build-tree.js');
+FlowView.createTreeBuilder = createTreeBuilder;
 
 module.exports = FlowView;

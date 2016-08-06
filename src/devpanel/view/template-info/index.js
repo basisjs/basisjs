@@ -1,8 +1,7 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
-var Value = require('basis.data').Value;
-var Expression = require('basis.data.value').Expression;
+var createDynamicView = require('../utils.js').createDynamicView;
 var remote = require('../../basisjs-tools-sync.js').remoteInspectors;
 
 var View = require('./view/index.js');
@@ -23,39 +22,27 @@ var captureEvents = [
   'mouseenter',
   'mouseleave'
 ];
-var blockEvents = function(node){
-  if (node)
+
+var view = createDynamicView(data.input, View, {
+  container: document.body
+});
+
+view.link(null, function(view, oldView){
+  if (view)
+  {
     captureEvents.forEach(function(eventName){
       inspectBasisDomEvent.captureEvent(eventName, function(){});
     });
-  else
+  }
+  else if (oldView)
+  {
     captureEvents.forEach(function(eventName){
       inspectBasisDomEvent.releaseEvent(eventName);
     });
+  }
+});
+
+module.exports = {
+  view: view,
+  set: data.input.set.bind(data.input)
 };
-
-new Expression(data.input, remote, function(input, remote){
-  return {
-    input: input,
-    remote: remote
-  };
-})
-  .link(new Value(), function(value, oldValue){
-    this.set(value.input && !value.remote && (!oldValue || value.input !== oldValue.input));
-  })
-  .as(function(showView){
-    return showView ? new View({ container: document.body }) : null;
-  })
-  .link(null, function(view, oldView){
-    if (view)
-    {
-      data.input.attach(blockEvents);
-    }
-    else if (oldView)
-    {
-      data.input.detach(blockEvents);
-      oldView.destroy();
-    }
-  });
-
-module.exports = data.input;
