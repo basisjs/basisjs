@@ -13,8 +13,9 @@ require('api').remote(
   devtool.subscribe
 );
 
-require('basis.app').create(
-  new Node({
+require('basis.app').create({
+  title: 'Remote basis.js devtools',
+  element: new Node({
     template: resource('./template/app.tmpl'),
     binding: {
       view: 'satellite:'
@@ -23,4 +24,4 @@ require('basis.app').create(
       view: View
     }
   })
-);
+});
