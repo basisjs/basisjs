@@ -51,26 +51,33 @@ function init(){
     require('./api/server.js'),
     require('./api/file.js'),
     require('./api/l10n.js'),
-    require('./api/ui.js'),
     require('./api/inspector.js')
   );
 
   // init interface
   require('./panel/index.js');
+
   // temporary here
-  //require('./view/ui/index.js');
-
-  require('./basisjs-tools-sync.js');
-
-  basis.dev.log('basis devpanel inited');
+  require('./view/template-info/index.js');
+  require('./view/ui/index.js');
 }
 
 // everything ok, init on dom ready
-basis.ready(function(){
-  if (!inspectBasis.devtools)
-    // if inspectBasis.devtools is not defined, than init with 500 ms delay
-    // to give a chance basisjs-tools script is loaded (as it load async/defered and doesn't fire appropriate event)
-    setTimeout(init, 500);
-  else
-    init();
+var attachFileSyncRetry = 50;
+basis.ready(function attachFileSync(){
+  var basisjsTools = global.basisjsToolsFileSync;
+
+  if (!basisjsTools)
+  {
+    if (attachFileSyncRetry < 500)
+      setTimeout(attachFileSync, attachFileSyncRetry);
+    else
+      basis.dev.warn('basisjsToolsFileSync doesn\'t detected – devpanel unavailable');
+
+    attachFileSyncRetry += 100;
+    return;
+  }
+
+  require('./basisjs-tools-sync.js');
+  basis.ready(init);
 });

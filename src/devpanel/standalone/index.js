@@ -1,5 +1,6 @@
+var Value = require('basis.data').Value;
+var KeyObjectMap = require('basis.data').KeyObjectMap;
 var Node = require('basis.ui').Node;
-var View = require('../view/template-info/view/index.js');
 var initDevtoolApi = location.hash.substr(1);
 var devtool = typeof top[initDevtoolApi] === 'function' ? top[initDevtoolApi]() : null;
 
@@ -13,15 +14,36 @@ require('api').remote(
   devtool.subscribe
 );
 
+var lazyView = new KeyObjectMap({
+  create: function(tab){
+    return new(tab.view());
+  }
+});
+
 require('basis.app').create({
   title: 'Remote basis.js devtools',
   element: new Node({
     template: resource('./template/app.tmpl'),
     binding: {
+      tabs: 'satellite:',
       view: 'satellite:'
     },
     satellite: {
-      view: View
+      view: Value.query('satellite.tabs.selection.pick()').as(lazyView.resolve.bind(lazyView)),
+      tabs: new Node({
+        template: resource('./template/tabs.tmpl'),
+        selection: true,
+        childClass: {
+          template: resource('./template/tab.tmpl'),
+          binding: {
+            caption: 'caption'
+          }
+        },
+        childNodes: [
+          { caption: 'Template', view: resource('../view/template-info/view/index.js'), selected: true },
+          { caption: 'UI', view: resource('../view/ui/view/index.js') }
+        ]
+      })
     }
   })
 });

@@ -9,10 +9,10 @@ function createOutputChannel(ns, channel, send){
     });
   }
 
-  channel.link(null, sendData);
+  channel.link(null, sendData, true);
 
   api[ns].channel = channel;
-  api[ns].init = function(){
+  api[ns].init = api[ns].init || function(){
     sendData(channel.value);
   };
 
@@ -61,7 +61,7 @@ function initAsRemote(ns, send, subscribe){
 function getNamespace(name){
   if (!api[name])
     api[name] = {
-      init: function(){},
+      // init: function(){},
       channel: function(channel, sendData){
         return createOutputChannel(name, channel, sendData);
       }
