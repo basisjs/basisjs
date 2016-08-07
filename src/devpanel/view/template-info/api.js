@@ -26,11 +26,12 @@ module.exports = require('api').define('template', {
 
     return function(){
       var object = data.output.value.object;
+
       if (object && object.parentNode)
       {
         var upNode = object.parentNode;
 
-        if (upNode instanceof inspectBasisGroupingNode)
+        while (upNode && upNode instanceof inspectBasisGroupingNode)
           upNode = upNode.owner;
 
         up(data, upNode);
