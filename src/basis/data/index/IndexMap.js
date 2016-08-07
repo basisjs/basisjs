@@ -202,6 +202,7 @@ module.exports = SourceDataset.subclass({
             data[key] = sourceObject.data[key];
 
       member = new this.itemClass({
+        source: sourceObject,
         data: data,
         // proxy update to sourceObject
         update: sourceObject.update.bind(sourceObject)
