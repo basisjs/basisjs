@@ -1,0 +1,152 @@
+.warning
+{
+  margin: 4px 22px 6px 4ex;
+  line-height: 1.4;
+  /*counter-increment: pos;*/
+}
+/*.message:before
+{
+  display: inline-block;
+  content: counter(pos) '.';
+  color: #CCC;
+  width: 3ex;
+  text-align: right;
+  vertical-align: baseline;
+  margin-left: -4ex;
+  margin-right: 1ex;
+}*/
+.message
+{
+  color: #444;
+  white-space: pre-wrap;
+}
+.message-start
+{
+  color: black;
+}
+.message-start-text_linkOnStart,
+.message-start-link
+{
+  display: none;
+}
+.message-start-link_linkOnStart
+{
+  display: inline;
+  text-decoration: underline;
+  text-decoration-color: rgba(100, 100, 100, .33);
+  cursor: pointer;
+}
+.message-start-link_linkOnStart:hover
+{
+  text-decoration-color: #E00;
+  color: #D00;
+}
+.message-details
+{
+  color: #666;
+}
+.message-details_loc
+{
+  text-decoration: underline;
+  text-decoration-color: rgba(100, 100, 100, .33);
+  cursor: pointer;
+}
+.message-details_loc:hover
+{
+  text-decoration-color: #E00;
+  color: #D00;
+}
+.message_fatal .message-start,
+.message_fatal .message-details
+{
+  color: #D00;
+}
+.message_fatal:before
+{
+  content: 'FATAL';
+  background: #D54;
+  color: white;
+  font-size: 80%;
+  padding: 2px 6px;
+  margin-right: 1ex;
+  border-radius: 3px;
+}
+
+.theme
+{
+  display: none;
+}
+.theme.theme
+{
+  display: inline-block;
+  background: #EEE;
+  color: #777;
+  font-size: 80%;
+  padding: 2px 6px;
+  margin-right: 1ex;
+  border-radius: 3px;
+}
+
+.loc-list
+{
+  display: none;
+  color: #AAA;
+  padding-left: 1.5ex;
+}
+.loc-list_childCount
+{
+  display: inline;
+}
+
+.loc-list .promo
+{
+  color: #EEE;
+  display: none;
+  cursor: pointer;
+}
+.loc-list .promo SPAN
+{
+  color: #AAA;
+  text-decoration: underline;
+  text-decoration-color: rgba(100, 100, 100, .33);
+}
+.loc-list .promo SPAN:hover
+{
+  text-decoration-color: #E00;
+  color: #D00;
+}
+.loc-list .promo_collapsed
+{
+  display: inline;
+}
+.loc-list .list_collapsed
+{
+  display: none;
+}
+
+.isolate
+{
+  background: #ACA;
+  color: white;
+  padding: 2px;
+  margin: -2px 2px;
+  position: relative;
+  top: -1px;
+  border-radius: 50%;
+  font-family: consolas, monaco, monospace;
+  font-size: 10px;
+  line-height: 1;
+  width: 10px;
+  text-align: center;
+  cursor: help;
+  opacity: .65;
+  display: none;
+}
+.isolate:hover
+{
+  opacity: 1;
+}
+.isolate_isolated
+{
+  display: inline-block;
+}

@@ -14,8 +14,8 @@ var splitByParent = new Split({
 });
 
 
-var Value = require('basis.data').Value;
-var getBoundingRect = require('basis.layout').getBoundingRect;
+// var Value = require('basis.data').Value;
+// var getBoundingRect = require('basis.layout').getBoundingRect;
 // var hoverTimer;
 // var hoverView = new Value();
 // var overlay = document.createElement('div');

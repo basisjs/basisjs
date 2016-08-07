@@ -58,6 +58,7 @@ function init(){
   require('./panel/index.js');
 
   // temporary here
+  require('./view/warnings/index.js');
   require('./view/template-info/index.js');
   require('./view/ui/index.js');
 }

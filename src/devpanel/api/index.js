@@ -2,11 +2,11 @@ var Value = require('basis.data').Value;
 var api = {};
 
 function createOutputChannel(ns, channel, send){
-  function sendData(data){
+  function sendData(data, callback){
     send({
       type: ns,
       payload: data
-    });
+    }, callback);
   }
 
   channel.link(null, sendData, true);
@@ -42,11 +42,17 @@ function createInputChannel(ns, send, subscribe){
 
 function createRemoteMethod(ns, send, method){
   return function(){
+    var args = basis.array(arguments);
+    var callback;
+
+    if (args.length > 0 && typeof args[args.length - 1] === 'function')
+      callback = args.pop();
+
     send({
       ns: ns,
       method: method,
-      args: basis.array(arguments)
-    });
+      args: args
+    }, callback);
   };
 }
 

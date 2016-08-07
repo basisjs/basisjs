@@ -1,0 +1,33 @@
+.group
+{
+  padding: 5px 0;
+}
+
+.title
+{
+  padding: 2px 6px 4px 4ex;
+  font-size: 100%;
+}
+.title:before
+{
+  display: inline-block;
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #F0B0A0;
+  border-radius: 50%;
+  vertical-align: baseline;
+  margin-left: -18px;
+  margin-right: 10px;
+}
+
+.title-button_hasFilename
+{
+  text-decoration: underline;
+  color: #A00;
+  cursor: pointer;
+}
+.title-button_hasFilename:hover
+{
+  color: #D00;
+}

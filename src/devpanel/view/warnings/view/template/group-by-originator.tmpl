@@ -1,0 +1,12 @@
+<b:isolate/>
+<b:style src="./group-by-originator.css"/>
+<b:define name="isolated" type="bool"/>
+
+<div class="originator originator_{hasFilename}">
+  <div class="title title_{hasFilename}">
+    Originated by
+    &#x20;
+    <span class="title-button" event-click="open">{title}</span>
+  </div>
+  <div{childNodesElement} class="items_{hasFilename}"/>
+</div>

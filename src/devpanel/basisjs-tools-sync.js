@@ -11,7 +11,7 @@ var isOnline = new Value({ value: false });
 var remoteInspectors = new Value({
   value: 0,
   send: function(){
-    basis.dev.warn('Send to remoteInspectors#send inspectors is not inited');
+    basis.dev.warn('[basis.devpanel] Can\'t send anything since remoteInspectors#send() is not inited yet');
   }
 });
 var permanentFilesChangedCount = new Value({ value: 0 });
@@ -26,7 +26,10 @@ var File = entity.createType('File', {
 });
 File.openFileSupported = new Value({ value: false });
 File.open = function(){
-  basis.dev.warn('basis.devpanel: open file in editor is not supported by server');
+  basis.dev.warn('[basis.devpanel] Open file in editor is not supported by server');
+};
+File.getAppProfile = function(){
+  basis.dev.warn('[basis.devpanel] Can\'t fetch app profile since File.getAppProfile() is not inited yet');
 };
 File.extendClass(function(super_, current_){
   return {
@@ -34,7 +37,7 @@ File.extendClass(function(super_, current_){
     read: function(){
       if (!this.file)
       {
-        basis.dev.warn('basis.devpanel: file can\'t be read, no basisjsToolsFileSync file associated');
+        basis.dev.warn('[basis.devpanel] File can\'t be read, no basisjsToolsFileSync file associated');
         return;
       }
 
@@ -46,7 +49,7 @@ File.extendClass(function(super_, current_){
     save: function(content){
       if (!this.file)
       {
-        basis.dev.warn('basis.devpanel: file can\'t be saved, no basisjsToolsFileSync file associated');
+        basis.dev.warn('[basis.devpanel] file can\'t be saved, no basisjsToolsFileSync file associated');
         return;
       }
 
@@ -128,7 +131,7 @@ basis.ready(function(){
 
   if (!basisjsTools)
   {
-    basis.dev.warn('basis.devpanel: basisjsToolsFileSync not found');
+    basis.dev.warn('[basis.devpanel] basisjsToolsFileSync is not found');
     return;
   }
 
@@ -160,7 +163,8 @@ basis.ready(function(){
   link(remoteInspectors, basisjsTools.remoteInspectors);
 
   File.open = basisjsTools.openFile;
-  File.openFileSupported.set(typeof File.open == 'function');
+  File.openFileSupported.set(typeof File.open == 'function'); // TODO: remove when basisjs-tools released with features
+  File.getAppProfile = basisjsTools.getAppProfile;
 
   // sync features
   if (basisjsTools.features)
@@ -189,11 +193,11 @@ basis.ready(function(){
     });
 
     // subscribe to data from remote devtool
-    remoteApi.subscribe(function(command){
+    remoteApi.subscribe(function(command, callback){
       if (!api.ns(command.ns).hasOwnProperty(command.method))
         return console.warn('[basis.devpanel] Unknown devtool remote command:', command);
 
-      api.ns(command.ns)[command.method].apply(null, command.args);
+      api.ns(command.ns)[command.method].apply(null, command.args.concat(callback));
     });
 
     // context free send method

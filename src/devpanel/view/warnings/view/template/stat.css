@@ -1,0 +1,12 @@
+.stat
+{
+  position: absolute;
+  right: 25px;
+  top: 3px;
+  background: rgba(255, 255, 255, .85);
+  border: 1px solid white;
+  margin: 1px;
+  color: #888;
+  border-radius: 4px;
+  overflow: hidden;
+}
