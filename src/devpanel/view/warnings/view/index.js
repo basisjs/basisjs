@@ -1,4 +1,5 @@
 var STATE = require('basis.data').STATE;
+var Value = require('basis.data').Value;
 var DataObject = require('basis.data').Object;
 var Node = require('basis.ui').Node;
 var KeyObjectMap = require('basis.data').KeyObjectMap;
@@ -22,18 +23,21 @@ var fatalWarnings = new Filter({
 });
 
 var StatItem = Node.subclass({
+  fatal: false,
   template: resource('./template/stat-item.tmpl'),
   binding: {
+    fatal: 'fatal',
     caption: {
       events: 'update',
       getter: function(node){
-        return node.data.title ? node.data.title.replace('.', '') : 'other';
+        var title = node.caption || node.data.title;
+        return title ? title.replace('.', '') : 'other';
       }
     },
     count: {
       events: 'delegateChanged',
       getter: function(node){
-        return count(node.delegate);
+        return count(node.dataset || node.delegate);
       }
     }
   }
@@ -44,73 +48,35 @@ var stat = new Node({
   binding: {
     total: 'satellite:',
     fatal: 'satellite:',
-    hasWarnings: {
-      events: 'update',
-      getter: function(node){
-        return node.data.total > 0;
-      }
-    }
+    hasWarnings: count(Warning.all)
   },
   dataSource: warningsByType,
   childClass: StatItem,
   sorting: 'data.title',
   selection: true,
-  data: {
-    total: count(Warning.all),
-    fatal: count(fatalWarnings)
-  },
   satellite: {
     total: {
       delegate: basis.fn.$self,
-      instance: StatItem.subclass({
+      instance: new StatItem({
         dataset: Warning.all,
-        binding: {
-          caption: basis.fn.$const('Total'),
-          count: 'data:total'
-        }
+        caption: 'Total'
       })
     },
     fatal: {
-      existsIf: function(owner){
-        return owner.data.fatal;
-      },
+      existsIf: count(fatalWarnings),
       delegate: basis.fn.$self,
-      instance: StatItem.subclass({
+      instance: new StatItem({
         dataset: fatalWarnings,
-        binding: {
-          caption: basis.fn.$const('Fatal'),
-          count: 'data:fatal',
-          fatal: basis.fn.$true
-        }
+        caption: 'Fatal',
+        fatal: true
       })
     }
   }
 });
 StatItem.prototype.contextSelection = stat.selection;
-stat.satellite.total.select();
-stat.selection.addHandler({
-  datasetChanged: function(selection){
-    var selected = selection.pick();
-    if (selected)
-      view.setDataSource(selected.dataset || selected.delegate);
-    else
-      selection.set([stat.satellite.total]);
-  }
-});
-
-Warning.all.addHandler({
-  itemsChanged: function(){
-    stat.update({
-      total: Warning.all.itemCount
-    });
-  }
-});
-fatalWarnings.addHandler({
-  itemsChanged: function(){
-    stat.update({
-      fatal: fatalWarnings.itemCount
-    });
-  }
+Value.query(stat, 'selection.pick()').link(stat.selection, function(selected){
+  if (!selected)
+      this.set([stat.satellite.total]);
 });
 
 function processMessage(node){
@@ -148,9 +114,10 @@ var groupMap = new KeyObjectMap({
 });
 
 module.exports = Node.subclass({
-  container: document.body,
   active: true,
-  dataSource: Warning.all,
+  dataSource: Value.query(stat, 'selection.pick()').as(function(selected){
+    return selected ? selected.dataset || selected.delegate : Warning.all;
+  }),
 
   template: resource('./template/view.tmpl'),
   binding: {
@@ -188,7 +155,7 @@ module.exports = Node.subclass({
       },
       action: {
         open: function(){
-          if (this.data.id)
+          if (this.data.originator)
             fileApi.open(this.data.originator);
         }
       }
@@ -310,7 +277,6 @@ module.exports = Node.subclass({
     },
     init: function(){
       Node.prototype.init.call(this);
-      view = this;
       this.syncLocList();
     }
   }

@@ -1,6 +1,7 @@
 .stat
 {
   position: absolute;
+  z-index: 1;
   right: 25px;
   top: 3px;
   background: rgba(255, 255, 255, .85);
