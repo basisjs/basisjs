@@ -16,7 +16,8 @@ BODY
 }
 .toolbar
 {
-  padding: 0 8px;
+  display: flex;
+  padding: 0 0 0 8px;
   background: #F8F8F8;
   border-bottom: 1px solid #DDD;
 }

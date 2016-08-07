@@ -18,11 +18,11 @@ require('basis.app').create({
   element: new Node({
     template: resource('./template/app.tmpl'),
     binding: {
-      tabs: 'satellite:',
+      appProfileButton: require('./app-profile-button.js'),
+      tabs: require('./tabs.js'),
       view: 'satellite:'
     },
     satellite: {
-      tabs: require('./tabs.js'),
       view: require('./tabs.js').selectedTabView
     }
   })

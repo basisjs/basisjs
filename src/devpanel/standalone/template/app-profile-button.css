@@ -1,0 +1,31 @@
+.wrapper
+{
+  flex: 1;
+  display: flex;
+  line-height: 1;
+  align-items: center;
+}
+.error
+{
+  flex: 1;
+  text-align: right;
+  color: #D00;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.button
+{
+  cursor: pointer;
+  display: inline-block;
+  border: 1px solid #CCC;
+  padding: 5px;
+  margin: 0 2px 0 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .7);
+  color: #444;
+}
+.button_disabled
+{
+  cursor: default;
+}

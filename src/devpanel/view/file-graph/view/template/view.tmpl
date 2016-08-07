@@ -1,8 +1,11 @@
 <b:isolate/>
-<b:style src="./view.css" />
+<b:style src="./view.css"/>
+<b:define name="processing" from="state" type="enum" values="processing"/>
 
 <div class="view">
-  <!--{details}-->
+  <div class="spinner spinner_{processing}">
+    Fetching application profile...
+  </div>
   <div class="content">
     <!--{fileStat}-->
   </div>

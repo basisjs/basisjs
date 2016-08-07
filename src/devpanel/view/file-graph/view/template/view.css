@@ -7,6 +7,21 @@
   bottom: 0;
 }
 
+.spinner
+{
+  display: none;
+  position: absolute;
+  z-index: 1;
+  margin: 18px;
+  padding: 2px;
+  background: rgba(255, 255, 255, .75);
+  color: #888;
+}
+.spinner_processing
+{
+  display: block;
+}
+
 .content
 {
   overflow: hidden;

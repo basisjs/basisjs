@@ -7,7 +7,6 @@ var storage = global.localStorage || {};
 
 // main view
 var tabs = new Node({
-  template: resource('./template/tabs.tmpl'),
   selection: true,
   childClass: {
     template: defineTemplate('app.ui.tab', resource('./template/tab.tmpl')),
