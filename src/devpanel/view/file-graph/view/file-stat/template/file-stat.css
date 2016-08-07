@@ -1,0 +1,26 @@
+.file-stat
+{
+  z-index: 1000;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  padding: 10px 10px 5px;
+  background: #E0E0E0;
+  background: rgba(0, 0, 0, .6);
+  color: white;
+  border-radius: 3px;
+  font-size: 85%;
+}
+
+.header
+{
+  border-bottom: 1px solid white;
+  margin-bottom: .25em;
+}
+
+.file-type-all_noSelected
+{
+  cursor: default;
+  background: #444;
+  background: rgba(0, 0, 0, .3);
+}

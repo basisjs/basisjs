@@ -1,7 +1,5 @@
-var Value = require('basis.data').Value;
 var entity = require('basis.entity');
 var AppProfile = require('./app-profile.js');
-var DatasetWrapper = require('basis.data').DatasetWrapper;
 
 function nullOrString(value){
   return typeof value == 'string' ? value : null;
@@ -26,18 +24,6 @@ var Warning = entity.createType({
   }
 });
 
-var trigger = new DatasetWrapper({
-  delegate: AppProfile(),
-  handler: {
-    update: function(sender, delta){
-      if ('warns' in delta)
-        Warning.all.set(this.data.warns || []);
-    }
-  }
-});
-Warning.all.setState(Value.state(AppProfile()));
-Warning.all.setSyncAction(function(){
-  trigger.setActive(true);
-});
+AppProfile.linkDataset('warns', Warning.all);
 
 module.exports = Warning;

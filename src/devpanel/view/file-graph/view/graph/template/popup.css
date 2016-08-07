@@ -1,0 +1,16 @@
+.popup
+{
+  pointer-events: none;
+  opacity: .8;
+}
+
+.path
+{
+  font-size: 80%;
+  text-align: center;
+}
+.name
+{
+  text-align: center;
+  padding: 4px 0 2px;
+}

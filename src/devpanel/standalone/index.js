@@ -43,7 +43,8 @@ require('basis.app').create({
         childNodes: [
           { caption: 'Template', view: resource('../view/template-info/view/index.js') },
           { caption: 'UI', view: resource('../view/ui/view/index.js') },
-          { caption: 'Warnings', selected: true, view: resource('../view/warnings/view/index.js') }
+          { caption: 'Warnings', view: resource('../view/warnings/view/index.js') },
+          { caption: 'File graph', selected: true, view: resource('../view/file-graph/view/index.js') }
         ]
       })
     }
