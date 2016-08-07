@@ -9,6 +9,7 @@ if (!devtool)
 
 require('basis.template').setTheme('standalone');
 require('../api/file_.js');
+require('../api/app.js');
 require('api').remote(
   devtool.send,
   devtool.subscribe

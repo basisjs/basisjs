@@ -21,8 +21,8 @@ require('basis.template').Template.extend({
 // init devpanel
 function init(){
   // temporary
-  require('api')
-    .local(require('./api/file_.js'), require('./api/file.js'));
+  require('api').local(require('./api/file_.js'), require('./api/file.js'));
+  require('api').local(require('./api/app.js'));
 
   // init transport
   var transport = require('./api/transport.js');
@@ -58,7 +58,6 @@ function init(){
   require('./panel/index.js');
 
   // temporary here
-  require('./view/warnings/index.js');
   require('./view/template-info/index.js');
   require('./view/ui/index.js');
 }

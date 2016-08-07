@@ -5,7 +5,7 @@ var KeyObjectMap = require('basis.data').KeyObjectMap;
 var Split = require('basis.data.dataset').Split;
 var Filter = require('basis.data.dataset').Filter;
 var count = require('basis.data.index').count;
-var Warning = require('./warning-type.js');
+var Warning = require('type').Warning;
 var fileApi = require('api').ns('file');
 var view;
 

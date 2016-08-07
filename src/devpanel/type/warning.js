@@ -1,6 +1,6 @@
 var Value = require('basis.data').Value;
 var entity = require('basis.entity');
-var AppProfile = require('./app-profile-type.js');
+var AppProfile = require('./app-profile.js');
 var DatasetWrapper = require('basis.data').DatasetWrapper;
 
 function nullOrString(value){

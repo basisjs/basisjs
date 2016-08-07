@@ -1,6 +1,6 @@
-module.exports = require('api').define('app-profile', {
-  getAppProfile: function(remote){
-    var File = remote.File;
+module.exports = require('api').define('app', {
+  getAppProfile: function(){
+    var File = require('type').File;
     return function(callback){
       File.getAppProfile(function(err, profile){
         if (typeof profile == 'string')
