@@ -7,56 +7,19 @@ var uiApi = require('../api.js');
 var fileApi = require('api').ns('file');
 var instances = new Dataset();
 var instanceMap = {};
+var hoverTimer;
 
 var splitByParent = new Split({
   source: instances,
   rule: 'data.parent'
 });
 
-
-// var Value = require('basis.data').Value;
-// var getBoundingRect = require('basis.layout').getBoundingRect;
-// var hoverTimer;
-// var hoverView = new Value();
-// var overlay = document.createElement('div');
-// overlay.style.position = 'absolute';
-// overlay.style.transition = 'all .05s';
-// overlay.style.zIndex = 10000;
-// overlay.style.background = 'rgba(110, 163, 217, .7)';
-// overlay.style.pointerEvents = 'none';
-// var hoverEl = new Value({
-//   handler: {
-//     change: function(){
-//       if (this.value)
-//       {
-//         var rect = getBoundingRect(this.value);
-//         if (rect)
-//         {
-//           overlay.style.left = rect.left + 'px';
-//           overlay.style.top = rect.top + 'px';
-//           overlay.style.width = rect.width + 'px';
-//           overlay.style.height = rect.height + 'px';
-//           document.body.appendChild(overlay);
-//           return;
-//         }
-//       }
-
-//       if (overlay.parentNode)
-//         overlay.parentNode.removeChild(overlay);
-//     }
-//   }
-// });
-
-// hoverView.link(hoverEl, function(value){
-//   this.set(value ? value.data.instance.element : null);
-// });
-
 var ViewNode = Node.subclass({
   template: resource('./template/item.tmpl'),
   collapsed: true,
   binding: {
-    id: 'data.id',
-    loc: 'data.loc',
+    id: 'data:',
+    loc: 'data:',
     namespace: 'namespace',
     name: 'mainName',
     satelliteName: 'data:',
@@ -81,13 +44,13 @@ var ViewNode = Node.subclass({
       fileApi.open(this.data.loc);
     },
     enter: function(){
-      // hoverView.set(this);
-      // clearTimeout(hoverTimer);
+      uiApi.hover(this.data.id);
+      clearTimeout(hoverTimer);
     },
     leave: function(){
-      // hoverTimer = setTimeout(function(){
-      //   hoverView.set(null);
-      // }, 50);
+      hoverTimer = setTimeout(function(){
+        uiApi.hover(null);
+      }, 50);
     }
   },
   childClass: basis.Class.SELF,

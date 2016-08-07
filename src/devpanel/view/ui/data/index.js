@@ -147,6 +147,7 @@ inspectBasisUI.debug_getInstances().map(function(instance){
 });
 
 module.exports = {
+  map: instanceMap,
   instances: allInstances,
   input: input,
   output: input

@@ -67,7 +67,6 @@ function initAsRemote(ns, send, subscribe){
 function getNamespace(name){
   if (!api[name])
     api[name] = {
-      // init: function(){},
       channel: function(channel, sendData){
         return createOutputChannel(name, channel, sendData);
       }

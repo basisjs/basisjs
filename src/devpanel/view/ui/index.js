@@ -1,5 +1,5 @@
 var remote = require('../../basisjs-tools-sync.js').remoteInspectors;
-var View = require('./view/index.js');
+// var View = require('./view/index.js');
 var data = require('./data/index.js');
 
 require('api')
