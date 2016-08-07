@@ -1,6 +1,6 @@
 module.exports = require('api').define('app-profile', {
-  getAppProfile: function(){
-    var File = require('../../basisjs-tools-sync.js').File;
+  getAppProfile: function(remote){
+    var File = remote.File;
     return function(callback){
       File.getAppProfile(function(err, profile){
         if (typeof profile == 'string')

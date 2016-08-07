@@ -5,10 +5,12 @@
 <b:define name="childCount" type="bool"/>
 <b:define name="collapsed" type="bool"/>
 <b:define name="isolated" type="bool"/>
+<b:define name="fatal" type="bool"/>
+<b:define name="linkOnStart" type="bool"/>
 
 <div class="warning">
   <div class="message message_{fatal}">
-    <span class="theme {theme}">{theme}</span>
+    <span class="theme" b:show="{theme}">{theme}</span>
     <span class="message-start">
       <span class="message-start-text_{linkOnStart}">
         {messageStart}
