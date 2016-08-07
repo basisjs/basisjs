@@ -5,7 +5,7 @@ module.exports = require('api').define('ui', {
     };
   },
   hover: function(){
-    var overlay = require('./data/overlay.js');
+    var overlay = basis.resource.buildCloak(__dirname + '/data/overlay.js').fetch();
     return function(id){
       overlay.set(id);
     };
