@@ -94,7 +94,6 @@ var svgGraphics = new Node({
   template: resource('./template/graph.tmpl'),
   binding: {
     matrix: function(node){
-      console.log(node.actualScale);
       return 'matrix(' + [
         node.actualScale, 0, 0,
         node.actualScale, node.offsetX, node.offsetY

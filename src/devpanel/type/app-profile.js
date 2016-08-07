@@ -29,7 +29,7 @@ var AppProfile = entity.createType({
 AppProfile.linkDataset = function(property, dataset, fn){
   dataset.setActive(basis.PROXY);
   dataset.setState(Value.state(new DatasetWrapper({
-    active: Value.from(dataset, 'active'),
+    active: Value.query(dataset, 'active'),
     delegate: AppProfile()
   })));
 
