@@ -1,6 +1,6 @@
 var Node = require('basis.ui').Node;
 var initDevtoolApi = location.hash.substr(1);
-var devtool = typeof top[initDevtoolApi] === 'function' ? top[initDevtoolApi]() : null;
+var devtool = typeof parent[initDevtoolApi] === 'function' ? parent[initDevtoolApi]() : null;
 
 if (!devtool)
   throw new Error('Devtool init handler is missed (should be present in location hash)');
