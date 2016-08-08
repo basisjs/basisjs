@@ -80,13 +80,12 @@ var panel = new Node({
   container: document.body,
 
   activated: false,
-  themeName: inspectBasisTemplate.currentTheme().name,
 
   template: resource('./template/panel.tmpl'),
 
   binding: {
     activated: 'activated',
-    themeName: themeList.currentTheme,
+    themeName: inspectBasisTemplate.theme,
     themeList: themeList,
     cultureName: inspectBasisL10n.culture,
     cultureList: cultureList,
