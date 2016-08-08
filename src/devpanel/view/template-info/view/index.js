@@ -28,6 +28,9 @@ module.exports = Node.subclass({
     domTree: 'satellite:',
     bindings: 'satellite:',
     source: 'satellite:',
+    remoteUrl: function(node){
+      return node.getRemoteUrl ? node.getRemoteUrl() : null;
+    },
 
     hasSubject: {
       events: 'update',
@@ -56,6 +59,9 @@ module.exports = Node.subclass({
     }
   },
   action: {
+    openRemote: function(){
+      window.open(this.getRemoteUrl(), 'basisjs.remote.devtool', 'resizable,scrollbars,status');
+    },
     upParent: function(){
       templateApi.upParent();
     },

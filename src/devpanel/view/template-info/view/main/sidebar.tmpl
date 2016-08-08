@@ -1,7 +1,10 @@
 <b:style src="./sidebar.css"/>
 
 <div class="sidebar">
-  <span class="log__link" event-click="logInfo" title="Output various runtime information about instance and template in console save it as $basisjsInfo">console.log(info)</span>
+  <!-- <span class="link" event-click="openRemote" target="_blank" b:show="{remoteUrl}">
+    Open remote inspector
+  </span> -->
+  <span class="link log-link" event-click="logInfo" title="Output various runtime information about instance and template in console save it as $basisjsInfo">console.log(info)</span>
   <b:include src="./object-info.tmpl" isolate/>
   <!--{bindings}-->
 </div>

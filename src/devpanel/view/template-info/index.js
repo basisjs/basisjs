@@ -24,7 +24,8 @@ var captureEvents = [
 ];
 
 var view = createDynamicView(data.input, View, {
-  container: document.body
+  container: document.body,
+  getRemoteUrl: remote.getRemoteUrl
 });
 
 view.link(null, function(view, oldView){

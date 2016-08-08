@@ -9,6 +9,7 @@ var features = new basis.Token([]);
 var isOnline = new Value({ value: false });
 var remoteInspectors = new Value({
   value: 0,
+  getRemoteUrl: String,
   send: function(){
     basis.dev.warn('[basis.devpanel] Can\'t send anything since remoteInspectors#send() is not inited yet');
   }
@@ -152,6 +153,8 @@ basis.ready(function(){
       if (remoteInspectors.value > 0)
         remoteApi.send.apply(null, arguments);
     };
+
+    remoteInspectors.getRemoteUrl = remoteApi.getRemoteUrl;
   }
 });
 
