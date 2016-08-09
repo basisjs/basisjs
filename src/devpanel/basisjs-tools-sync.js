@@ -18,6 +18,17 @@ var permanentFilesChangedCount = new Value({ value: 0 });
 var permanentFiles = [];
 var notificationsQueue = [];
 
+function getInspectorUIBundle(){
+  basis.dev.warn('[basis.devpanel] Method to retrieve Remote Inspector UI bundle is not implemented');
+}
+
+function getInspectorUI(dev, callback){
+  if (dev)
+    return callback(null, 'url', basis.path.origin + basis.path.resolve(__dirname, 'standalone.html'));
+
+  getInspectorUIBundle(dev, callback);
+}
+
 function processNotificationQueue(){
   // aggregate files changes
   Dataset.setAccumulateState(true);
@@ -83,6 +94,17 @@ basis.ready(function(){
     return;
   }
 
+
+  // get ui method
+  getInspectorUIBundle = function(dev, callback){
+    basisjsTools.getBundle(dev ? asset('./standalone.html') : {
+      build: asset('../../dist/devtool.js'),
+      filename: asset('./standalone.html')
+    }, function(err, script){
+      callback(err, 'script', script);
+    });
+  };
+
   // sync files
   File.extendClass(function(super_, current_){
     return {
@@ -127,17 +149,7 @@ basis.ready(function(){
   if (typeof basisjsTools.initRemoteDevtoolAPI === 'function')
   {
     var remoteApi = basisjsTools.initRemoteDevtoolAPI({
-      getInspectorUI: function(dev, callback){
-        if (dev)
-          return callback(null, 'url', basis.path.origin + basis.path.resolve(__dirname, 'standalone.html'));
-
-        basisjsTools.getBundle(dev ? asset('./standalone.html') : {
-          build: asset('../../dist/devtool.js'),
-          filename: asset('./standalone.html')
-        }, function(err, script){
-          callback(err, 'script', script);
-        });
-      }
+      getInspectorUI: getInspectorUI
     });
 
     // subscribe to data from remote devtool
@@ -161,6 +173,7 @@ basis.ready(function(){
 module.exports = {
   isOnline: isOnline,
   remoteInspectors: remoteInspectors,
+  getInspectorUI: getInspectorUI,
   permanentFilesChangedCount: permanentFilesChangedCount,
   File: File
 };

@@ -26,7 +26,6 @@ function init(){
 
   // init transport
   var transport = require('./api/transport.js');
-  module.transferEl = transport.transferEl;
 
   // make devpanel allowed for inspected basis.js
   inspectBasis.devpanel = module;
