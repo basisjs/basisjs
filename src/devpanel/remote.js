@@ -44,6 +44,9 @@ basisjsToolsSync.onInit(function(basisjsToolsApi){
     // inspectors count
     link(remoteInspectors, basisjsToolsApi.remoteInspectors);
 
+    // TODO: set features list
+    // remoteApi.setFeatures([]);
+
     // subscribe to data from remote devtools & context free send method
     remoteApi.subscribe(processCommand);
     remoteInspectors.send = function(){

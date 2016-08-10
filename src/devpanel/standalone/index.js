@@ -5,6 +5,11 @@ var devtool = typeof parent[initDevtoolApi] === 'function' ? parent[initDevtoolA
 if (!devtool)
   throw new Error('Devtool init handler is missed (should be present in location hash)');
 
+// devtool
+//   .on('connect', function(){ console.log('connected'); })
+//   .on('disconnect', function(){ console.log('disconnected'); })
+//   .on('features', function(features){ console.log('features', features); });
+
 require('basis.template').setTheme('standalone');
 require('../api/file.js');
 require('../api/app.js');
