@@ -1,9 +1,16 @@
 var Value = require('basis.data').Value;
 var Expression = require('basis.data.value').Expression;
-var remote = require('../basisjs-tools-sync.js').remoteInspectors;
+var remote = require('../remote.js');
+var hasRemote = new Expression(
+  remote.remoteInspectors,
+  remote.devtools,
+  function(inspectors, plugin){
+    return Boolean(inspectors || plugin);
+  }
+);
 
 function createDynamicView(input, Class, config){
-  var view = new Expression(input, remote, function(input, remote){
+  var view = new Expression(input, hasRemote, function(input, remote){
     return {
       input: input,
       remote: remote

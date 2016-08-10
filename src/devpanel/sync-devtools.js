@@ -1,48 +1,68 @@
 var DEBUG = false;
-var basisjsTools = require('../basisjs-tools-sync.js');
 var document = global.document;
+var basisjsTools = require('./sync-basisjs-tools.js');
+var connected = new basis.Token(false);
 var inputChannelId = 'basisjsDevpanel:' + basis.genUID();
 var outputChannelId;
+var initCallbacks = [];
 var callbacks = {};
 var subscribers = [];
-var online = new basis.Token(false);
+var inited = false;
 var send;
 
-var sendData = function(){
-  if (!send)
-    basis.dev.warn('[basisjs.devpanel] Cross-process messaging is not inited');
+var getInspectorUI = function(){
+  basis.dev.warn('[basisjs.devpanel] getInspectorUI() is not implemented');
 };
 var subscribe = function(fn){
   subscribers.push(fn);
 };
+var send = function(){
+  if (!inited)
+    basis.dev.warn('[basisjs.devpanel] Cross-process messaging is not inited');
+};
+
+function init(callback){
+  if (inited)
+    callback({
+      connected: connected,
+      subscribe: subscribe,
+      send: send
+    });
+  else
+    initCallbacks.push(callback);
+}
+
+function emitEvent(channelId, data){
+  if (DEBUG)
+    console.log('[basisjs.devpanel] emit event', channelId, data);
+
+  document.dispatchEvent(new CustomEvent(channelId, {
+    detail: data
+  }));
+}
+
+function wrapCallback(callback){
+  return function(){
+    emitEvent(outputChannelId, {
+      event: 'callback',
+      callback: callback,
+      data: basis.array(arguments)
+    });
+  };
+}
+
+function handshake(){
+  emitEvent('basisjs-devpanel:init', {
+    input: inputChannelId,
+    output: outputChannelId
+  });
+}
 
 if (document.createEvent)
 {
-  function emitEvent(channelId, data){
-    if (DEBUG)
-      console.log('[basisjs.devpanel] emit event', channelId, data);
-
-    document.dispatchEvent(new CustomEvent(channelId, {
-      detail: data
-    }));
-  }
-
-  function wrapCallback(callback){
-    return function(){
-      emitEvent(outputChannelId, {
-        event: 'callback',
-        callback: callback,
-        data: basis.array(arguments)
-      });
-    };
-  }
-
-  function handshake(){
-    emitEvent('basisjs-devpanel:init', {
-      input: inputChannelId,
-      output: outputChannelId
-    });
-  }
+  basisjsTools.onInit(function(basisjsToolsApi){
+    getInspectorUI = basisjsToolsApi.getInspectorUI;
+  });
 
   document.addEventListener('basisjs-devpanel:connect', function(e){
     if (outputChannelId)
@@ -55,7 +75,7 @@ if (document.createEvent)
       handshake();
 
     send = function(){
-      // console.log('[devpanel] send to plugin', arguments);
+      // console.log('[devpanel] send to devtools', arguments);
       var args = basis.array(arguments);
       var callback = false;
 
@@ -71,22 +91,26 @@ if (document.createEvent)
         data: args
       });
     };
+
+    // invoke onInit callbacks
+    inited = true;
+    initCallbacks.splice(0).forEach(init);
   });
 
-  // plugin -> devpanel
+  // devtools -> devpanel
   document.addEventListener(inputChannelId, function(e){
     var data = e.detail;
 
     if (DEBUG)
-      console.log('[basisjs.devpanel] recieve from plugin', data.event, data);
+      console.log('[basisjs.devpanel] recieve from devtools', data.event, data);
 
     switch (data.event) {
       case 'connect':
-        online.set(true);
+        connected.set(true);
         break;
 
       case 'disconnect':
-        online.set(false);
+        connected.set(false);
         break;
 
       case 'callback':
@@ -97,9 +121,6 @@ if (document.createEvent)
         }
         break;
 
-      case 'getInspectorUI':
-        basisjsTools.getInspectorUI(false, data.callback ? wrapCallback(data.callback) : function(){});
-        break;
 
       case 'data':
         var args = basis.array(data.data);
@@ -111,11 +132,10 @@ if (document.createEvent)
         subscribers.forEach(function(item){
           item.apply(null, args);
         });
-
         break;
 
       case 'getInspectorUI':
-        basisjsTools.getInspectorUI();
+        getInspectorUI(false, data.callback ? wrapCallback(data.callback) : Function);
         break;
 
       default:
@@ -127,16 +147,15 @@ if (document.createEvent)
 }
 else
 {
-  var sendData = function(){
+  send = function(){
     if (!send)
       basis.dev.warn('[basisjs.devpanel] Cross-process messaging is not supported');
   };
 }
 
 module.exports = {
-  online: online,
+  onInit: init,
+  connected: connected,
   subscribe: subscribe,
-  send: sendData,
-  // TODO: deprecated - remove
-  sendData: sendData
+  send: send
 };

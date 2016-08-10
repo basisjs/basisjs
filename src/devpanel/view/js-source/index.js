@@ -1,4 +1,4 @@
-var remote = require('../../basisjs-tools-sync.js').remoteInspectors;
+var remote = require('../../remote.js');
 var data = require('./data/index.js');
 
 require('api')

@@ -2,19 +2,17 @@ var Value = require('basis.data').Value;
 var api = {};
 
 function createOutputChannel(ns, channel, send){
-  function sendData(data, callback){
+  function sendData(){
     send({
       type: ns,
-      payload: data
-    }, callback);
+      payload: channel.value
+    });
   }
 
   channel.link(null, sendData, true);
 
   api[ns].channel = channel;
-  api[ns].init = api[ns].init || function(){
-    sendData(channel.value);
-  };
+  api[ns].init = api[ns].init || sendData;
 
   return channel;
 }

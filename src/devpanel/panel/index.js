@@ -11,9 +11,10 @@ var count = require('basis.data.index').count;
 var Node = require('basis.ui').Node;
 var MoveableElement = require('basis.dragdrop').MoveableElement;
 
-var isOnline = require('../basisjs-tools-sync.js').isOnline;
-var remoteInspectors = require('../basisjs-tools-sync.js').remoteInspectors;
-var permanentFilesChangedCount = require('../basisjs-tools-sync.js').permanentFilesChangedCount;
+var isOnline = require('../sync-basisjs-tools.js').online;
+var remoteInspectors = require('../remote.js').remoteInspectors;
+var devtools = require('../remote.js').devtools;
+var File = require('type').File;
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
 
@@ -90,8 +91,13 @@ var panel = new Node({
     cultureName: inspectBasisL10n.culture,
     cultureList: cultureList,
     isOnline: isOnline,
-    hasRemoteInspectors: remoteInspectors.as(Boolean),
-    permanentFilesChangedCount: permanentFilesChangedCount,
+    remote: new Expression(remoteInspectors, devtools, function(inspectors, devtool){
+      if (inspectors && devtool)
+        return 'remote-and-devtool';
+      if (inspectors || devtool)
+        return inspectors ? 'remote' : 'devtool';
+    }),
+    permanentFilesChangedCount: File.permanentChangedCount,
     inspectMode: inspectMode,
     inspector: currentInspectorName,
     inspectorId: new Expression(currentInspectorName, rolesInspector().pickMode, function(inspectorName, pickMode){

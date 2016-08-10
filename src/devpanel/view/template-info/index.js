@@ -2,7 +2,7 @@ var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
 var createDynamicView = require('../utils.js').createDynamicView;
-var remote = require('../../basisjs-tools-sync.js').remoteInspectors;
+var remote = require('../../remote.js');
 
 var View = require('./view/index.js');
 var data = require('./data/index.js');

@@ -8,6 +8,8 @@ var File = entity.createType('File', {
     return typeof value == 'string' ? value : null;
   }
 });
+
+File.permanentChangedCount = new Value({ value: 0 });
 File.openFileSupported = new Value({ value: false });
 File.open = function(){
   basis.dev.warn('[basis.devpanel] Open file in editor is not supported by server');
@@ -15,6 +17,7 @@ File.open = function(){
 File.getAppProfile = function(){
   basis.dev.warn('[basis.devpanel] Can\'t fetch app profile since File.getAppProfile() is not inited yet');
 };
+
 File.extendClass(function(super_, current_){
   return {
     file: null,

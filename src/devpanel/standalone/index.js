@@ -6,7 +6,7 @@ if (!devtool)
   throw new Error('Devtool init handler is missed (should be present in location hash)');
 
 require('basis.template').setTheme('standalone');
-require('../api/file_.js');
+require('../api/file.js');
 require('../api/app.js');
 require('api').remote(
   devtool.send,

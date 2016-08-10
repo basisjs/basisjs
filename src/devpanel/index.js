@@ -20,38 +20,9 @@ require('basis.template').Template.extend({
 
 // init devpanel
 function init(){
-  // temporary
-  require('api').local(require('./api/file_.js'), require('./api/file.js'));
+  // init API
+  require('api').local(require('./api/file.js'), require('type:file.js'));
   require('api').local(require('./api/app.js'));
-
-  // init transport
-  var transport = require('./api/transport.js');
-
-  // make devpanel allowed for inspected basis.js
-  inspectBasis.devpanel = module;
-
-  // prepare API object
-  inspectBasis.appCP = basis.object.merge(
-    {
-      getFileGraph: function(){
-        var basisjsTools = global.basisjsToolsFileSync;
-
-        if (basisjsTools)
-          basisjsTools.getFileGraph(function(err, data){
-            transport.sendData('fileGraph', {
-              data: data,
-              err: err
-            });
-          });
-      }
-    },
-
-    require('./api/version.js'),
-    require('./api/server.js'),
-    require('./api/file.js'),
-    require('./api/l10n.js'),
-    require('./api/inspector.js')
-  );
 
   // init interface
   require('./panel/index.js');
@@ -77,6 +48,6 @@ basis.ready(function attachFileSync(){
     return;
   }
 
-  require('./basisjs-tools-sync.js');
+  require('./remote.js');
   basis.ready(init);
 });

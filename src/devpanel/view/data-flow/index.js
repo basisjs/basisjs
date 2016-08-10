@@ -1,4 +1,4 @@
-var remote = require('../../basisjs-tools-sync.js').remoteInspectors;
+var remote = require('../../remote.js');
 var createDynamicView = require('../utils.js').createDynamicView;
 
 var View = require('./view/index.js');
