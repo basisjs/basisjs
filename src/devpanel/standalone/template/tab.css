@@ -1,0 +1,18 @@
+.tab
+{
+  display: inline-block;
+  padding: 8px 10px;
+  color: #666;
+  line-height: 1;
+  cursor: pointer;
+}
+.tab:hover
+{
+  background: #EEE;
+}
+.tab_selected
+{
+  color: #444;
+  border-bottom: 2px solid rgba(13, 119, 251, 0.38);
+  margin-bottom: -1px;
+}

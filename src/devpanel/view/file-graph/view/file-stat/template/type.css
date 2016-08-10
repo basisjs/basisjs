@@ -1,0 +1,25 @@
+.type
+{
+  padding: .25em 5px .35em;
+  margin: 0 -5px 1px;
+  min-width: 120px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.type:hover
+{
+  background: #444;
+  background-color: rgba(0,0,0,.3);
+}
+.selected
+{
+  cursor: default;
+  background: #444;
+  background: rgba(0,0,0,.3);
+}
+
+.count
+{
+  float: right;
+  margin-left: 2ex;
+}

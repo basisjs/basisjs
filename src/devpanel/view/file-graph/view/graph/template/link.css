@@ -1,0 +1,6 @@
+.graph-link
+{
+  stroke: rgba(128, 128, 128, .25);
+  stroke-width: 2px;
+  marker-end: url(#graph-line-end);
+}

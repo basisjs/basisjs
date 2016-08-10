@@ -54,7 +54,8 @@
       },
       {
         "title": "Router",
-        "url": "common/router.html"
+        "url": "common/router.html",
+        "image": "res/img/noimg.png"
       }
     ]
   },
@@ -101,7 +102,8 @@
       },
       {
         "title": "Data flow",
-        "url": "data/data-flow.html"
+        "url": "data/data-flow.html",
+        "image": "res/img/noimg.png"
       }
     ]
   },

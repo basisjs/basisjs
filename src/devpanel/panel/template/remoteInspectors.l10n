@@ -1,0 +1,9 @@
+{
+  "en-US": {
+    "listeners": {
+      "remote": "remote inspectors",
+      "devtool": "devtools",
+      "remote-and-devtool": "remote inspectors and devtools"
+    }
+  }
+}

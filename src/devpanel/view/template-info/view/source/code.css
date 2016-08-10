@@ -1,0 +1,52 @@
+.code
+{
+  position: relative;
+  padding: 6px;
+  background: white;
+  background: rgba(255, 255, 255, .95);
+  border-radius: 2px;
+  box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, .3);
+
+  font-family: Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 22px;
+  white-space: pre-wrap;
+}
+.code-title
+{
+  margin-top: -4px;
+  margin-bottom: 4px;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  text-align: center;
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 1);
+
+  font-family: Tahoma, Verdana, Arial, serif;
+  color: #666;
+}
+.code SPAN
+{
+  padding: 3px 0;
+}
+.code [class="warning"]
+{
+  padding-right: 1px;
+  padding-left: 1px;
+  cursor: pointer;
+}
+.code [class="warning"]:after
+{
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin: -3px 0;
+  border-radius: 5px;
+  content: '';
+  background: url(warning.png) no-repeat;
+}
+.code [class="warning"]:hover:after
+{
+  background-color: rgba(0, 0, 0, .2);
+}

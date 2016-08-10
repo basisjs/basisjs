@@ -1,0 +1,21 @@
+<b:style src="./content.css"/>
+<b:define name="upName" type="bool"/>
+<b:define name="isFile" type="bool"/>
+
+<div class="content">
+  <div class="toolbar">
+    <span class="up-buttons">
+      <span b:show="{hasParent}" class="button button_up button_{upName}" event-click="upParent">&#x2191; parent</span>
+      <span b:show="{hasOwner}" class="button button_up button_{upName}" event-click="upOwner">&#x2191; owner</span>
+      <span b:show="{hasGroup}" class="button button_up button_{upName}" event-click="upGroup">&#x2191; group</span>
+    </span>
+    <div class="header">
+      <span class="source-title source-title_{isFile}" event-click="openSource" title="{sourceTitle}">
+        {sourceTitle}
+      </span> <span class="warnings" b:show="{warningCount}">{warningCount}</span>
+    </div>
+  </div>
+  <div{childNodesElement} class="code">
+    <!--{domTree}-->
+  </div>
+</div>

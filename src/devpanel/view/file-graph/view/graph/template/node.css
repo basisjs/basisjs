@@ -1,0 +1,49 @@
+.graph-node
+{
+  stroke: white;
+  stroke-width: 2px;
+  fill: #EEE;
+  transition: fill .25s;
+}
+
+.type_html.matched
+{
+  fill: #FF0000;
+}
+.type_script.matched
+{
+  fill: #99BBCC;
+}
+.type_style.matched
+{
+  fill: #FF69B4;
+}
+.type_template.matched
+{
+  fill: #88CC88;
+}
+.type_l10n.matched
+{
+  fill: orange;
+}
+.type_image.matched
+{
+  fill: #87CEEB;
+}
+.type_json.matched
+{
+  fill: gray;
+}
+.type_font.matched
+{
+  fill: #4169E1;
+}
+
+.hasSelected
+{
+  fill: #EEE !important;
+}
+.selected
+{
+  fill: red !important;
+}

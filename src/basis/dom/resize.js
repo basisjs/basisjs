@@ -70,9 +70,8 @@
       // compatability with IE9, which does not react to changes in
       // the `src` attribute when it is a `javascript:` URL, for
       // some reason
-      if (sensor.contentWindow) {
+      if (sensor.contentWindow)
         sensor.contentWindow.location = STUB_DOCUMENT_SRC;
-      }
 
       if (sensor.attachEvent) // IE8 don't fire load event otherwise
         sensor.attachEvent('onload', init);

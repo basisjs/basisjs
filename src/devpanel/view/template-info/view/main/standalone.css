@@ -1,0 +1,26 @@
+.layout
+{
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 12px;
+}
+.main
+{
+  display: flex;
+  padding: 5px 10px 10px;
+}
+
+.no-subject
+{
+  color: #AAA;
+  text-align: center;
+  font: 20px Arial;
+  padding: 40px;
+}
+
+.source-toggle-button
+{
+  background: #CCC;
+  text-align: center;
+  padding: 6px;
+  cursor: pointer;
+}

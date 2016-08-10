@@ -590,7 +590,7 @@
       /** @cut */ while (cursor = cursor.links_)
       /** @cut */   if (cursor.context === context && cursor.fn === fn)
       /** @cut */   {
-      /** @cut */     basis.dev.warn(this.constructor.className + '#attach: Duplicate link pair context-fn');
+      /** @cut */     basis.dev.warn(this.constructor.className + '#link: Duplicate link pair context-fn');
       /** @cut */     break;
       /** @cut */   }
 

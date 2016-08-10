@@ -70,7 +70,7 @@
     mousewheel: ['wheel', 'mousewheel', 'DOMMouseScroll']
   };
 
-  var DEPRECATED = /^(returnValue|keyLocation|layerX|layerY|webkitMovementX|webkitMovementY)$/;
+  var DEPRECATED = /^(returnValue|keyLocation|layerX|layerY|webkitMovementX|webkitMovementY|keyIdentifier)$/;
 
   var KEYBOARD_EVENTS = [
     'keyup',
