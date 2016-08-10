@@ -2,6 +2,7 @@ var DEBUG = false;
 var document = global.document;
 var basisjsTools = require('./sync-basisjs-tools.js');
 var connected = new basis.Token(false);
+var features = new basis.Token([]);
 var inputChannelId = 'basisjsDevpanel:' + basis.genUID();
 var outputChannelId;
 var initCallbacks = [];
@@ -24,6 +25,7 @@ var send = function(){
 function init(callback){
   if (inited)
     callback({
+      setFeatures: features.set.bind(features),
       connected: connected,
       subscribe: subscribe,
       send: send
@@ -54,7 +56,8 @@ function wrapCallback(callback){
 function handshake(){
   emitEvent('basisjs-devpanel:init', {
     input: inputChannelId,
-    output: outputChannelId
+    output: outputChannelId,
+    features: features.value
   });
 }
 
@@ -91,6 +94,14 @@ if (document.createEvent)
         data: args
       });
     };
+
+    // send features to devtools
+    features.attach(function(features){
+      emitEvent(outputChannelId, {
+        event: 'features',
+        data: [features]
+      });
+    });
 
     // invoke onInit callbacks
     inited = true;

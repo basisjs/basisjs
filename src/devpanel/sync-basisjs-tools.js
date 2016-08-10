@@ -6,7 +6,7 @@ var File = require('type').File;
 var initCallbacks = [];
 var basisjsTools = null;
 
-var features = new basis.Token([]);
+var features = new Value({ value: [] });
 var online = new Value({ value: false });
 var permanentFiles = [];
 var notificationsQueue = [];
@@ -14,7 +14,8 @@ var notificationsQueue = [];
 function init(callback){
   if (basisjsTools)
     callback(basis.object.merge(basisjsTools, {
-      getInspectorUI: getInspectorUI
+      getInspectorUI: getInspectorUI,
+      features: features
     }));
   else
     initCallbacks.push(callback);
@@ -140,9 +141,9 @@ basis.ready(function(){
   if (basisjsTools.features)
   {
     link(features, basisjsTools.features);
-    link(File.openFileSupported, features.as(function(list){
-      return list.indexOf('file:open') !== -1;
-    }));
+    features.link(File.openFileSupported, function(list){
+      this.set(list.indexOf('file:open') !== -1);
+    });
   }
 
   // invoke onInit callbacks
