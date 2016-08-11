@@ -1,4 +1,7 @@
 var Value = require('basis.data').Value;
+var session = new Value();
+var connected = new Value({ value: false });
+var features = new Value({ value: [] });
 var api = {};
 
 // init default APIs
@@ -16,7 +19,9 @@ function createOutputChannel(ns, channel, send){
   channel.link(null, sendData, true);
 
   api[ns].channel = channel;
-  api[ns].init = api[ns].init || sendData;
+  api[ns].init = api[ns].init || function(callback){
+    callback(channel.value);
+  };
 
   return channel;
 }
@@ -81,6 +86,10 @@ function define(ns, extension){
 }
 
 module.exports = {
+  session: session,
+  connected: connected,
+  features: features,
+
   define: define,
   ns: getNamespace,
   local: initAsLocal,

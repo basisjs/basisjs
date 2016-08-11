@@ -3,6 +3,7 @@ var jsSourcePopup = resource('./js-source-popup.js');
 var DomTree = require('./dom.js');
 var BindingView = require('./bindings.js');
 var SourceView = require('./source.js');
+var api = require('api');
 var fileApi = require('api').ns('file');
 var templateApi = require('../api.js');
 
@@ -104,6 +105,9 @@ module.exports = Node.subclass({
     Node.prototype.init.call(this);
 
     templateApi.channel.link(this, this.update);
-    templateApi.init();
+    api.connected.link(this, function(connected){
+      if (connected)
+        templateApi.init(this.update.bind(this));
+    });
   }
 });

@@ -1,13 +1,57 @@
 var DataObject = require('basis.data').Object;
+var KeyObjectMap = require('basis.data').KeyObjectMap;
 var Dataset = require('basis.data').Dataset;
 var Split = require('basis.data.dataset').Split;
 var Node = require('basis.ui').Node;
 var count = require('basis.data.index').count;
+var api = require('api');
 var uiApi = require('../api.js');
 var fileApi = require('api').ns('file');
 var instances = new Dataset();
 var instanceMap = {};
 var hoverTimer;
+
+function processData(data){
+  if (!data)
+    return;
+
+  var inserted = data.updated;
+  var deleted = data.deleted;
+
+  if (inserted)
+    inserted.forEach(function(item){
+      if (item.id in instanceMap === false)
+        instanceMap[item.id] = new DataObject({ data: item });
+      else
+        instanceMap[item.id].update(item);
+    });
+
+  if (deleted)
+    deleted.forEach(function(id){
+      delete instanceMap[id];
+    });
+
+  instances.setAndDestroyRemoved(basis.object.values(instanceMap));
+}
+
+function initData(data){
+  var old = instanceMap;
+
+  instanceMap = {};
+  data.instances.forEach(function(item){
+    if (item.id in old)
+    {
+      instanceMap[item.id] = old[item.id];
+      instanceMap[item.id].update(item);
+    }
+    else
+    {
+      instanceMap[item.id] = new DataObject({ data: item });
+    }
+  });
+
+  instances.setAndDestroyRemoved(basis.object.values(instanceMap));
+}
 
 var splitByParent = new Split({
   source: instances,
@@ -15,8 +59,9 @@ var splitByParent = new Split({
 });
 
 var ViewNode = Node.subclass({
-  template: resource('./template/item.tmpl'),
   collapsed: true,
+
+  template: resource('./template/item.tmpl'),
   binding: {
     id: 'data:',
     loc: 'data:',
@@ -53,7 +98,11 @@ var ViewNode = Node.subclass({
       }, 50);
     }
   },
+
   childClass: basis.Class.SELF,
+  childFactory: function(config){
+    return map.resolve(config.delegate);
+  },
   sorting: function(node){
     return node.data.childIndex == -1
       ? node.data.satelliteName || node.data.role
@@ -138,6 +187,11 @@ var ViewNode = Node.subclass({
   }
 });
 
+var map = new KeyObjectMap({
+  create: function(delegate){
+    return new ViewNode({ delegate: delegate });
+  }
+});
 var templates = require('basis.template').define('devpanel.ui', {
   view: resource('./template/view.tmpl')
 });
@@ -152,36 +206,20 @@ module.exports = Node.subclass({
     withLoc: count(instances, 'data.loc')
   },
 
-  childClass: ViewNode,
   dataSource: splitByParent.getSubset(null, true),
+  childClass: ViewNode,
+  childFactory: function(config){
+    return map.resolve(config.delegate);
+  },
   sorting: 'data.id',
 
   init: function(){
     Node.prototype.init.call(this);
 
-    uiApi.channel.link(null, function(packet){
-      if (!packet)
-        return;
-
-      var inserted = packet.instances || packet.updated;
-      var deleted = packet.deleted;
-
-      if (inserted)
-        inserted.forEach(function(item){
-          if (item.id in instanceMap === false)
-            instanceMap[item.id] = new DataObject({ data: item });
-          else
-            instanceMap[item.id].update(item);
-        });
-
-      if (deleted)
-        deleted.forEach(function(id){
-          delete instanceMap[id];
-        });
-
-      instances.setAndDestroyRemoved(basis.object.values(instanceMap));
+    uiApi.channel.link(this, processData);
+    api.connected.link(this, function(connected){
+      if (connected)
+        uiApi.init(initData);
     });
-
-    uiApi.init();
   }
 });

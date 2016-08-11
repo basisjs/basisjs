@@ -3,12 +3,11 @@ var inspectBasisResource = inspectBasis.resource;
 var Value = require('basis.data').Value;
 var Dataset = require('basis.data').Dataset;
 var File = require('type').File;
-var devtools = require('type').Devtools();
+var connected = require('api').connected;
+var features = require('api').features;
 var initCallbacks = [];
 var basisjsTools = null;
 
-var features = new Value({ value: [] });
-var online = new Value({ value: false });
 var permanentFiles = [];
 var notificationsQueue = [];
 
@@ -109,7 +108,7 @@ basis.ready(function(){
   };
 
   // sync online
-  link(online, basisjsTools.isOnline);
+  link(connected, basisjsTools.isOnline);
 
   // sync files
   File.extendClass(function(super_, current_){
@@ -141,8 +140,7 @@ basis.ready(function(){
   // sync features
   if (basisjsTools.features)
   {
-    basisjsTools.features.attach(devtools.set.bind(devtools, 'features'), devtools);
-    devtools.set('features', basisjsTools.features.value);
+    link(features, basisjsTools.features);
     features.link(File.openFileSupported, function(list){
       this.set(list.indexOf('file:open') !== -1);
     });
@@ -154,6 +152,6 @@ basis.ready(function(){
 
 module.exports = {
   onInit: init,
-  online: online,
+  online: connected,
   getInspectorUI: getInspectorUI
 };

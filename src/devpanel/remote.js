@@ -3,7 +3,6 @@ var basisjsToolsSync = require('./sync-basisjs-tools.js');
 var pluginSync = require('./sync-devtools.js');
 var api = require('./api/index.js');
 
-var features = Value.query(require('type').Devtools(), 'data.features');
 var remoteInspectors = new Value({
   value: 0,
   send: function(){
@@ -46,7 +45,7 @@ basisjsToolsSync.onInit(function(basisjsToolsApi){
     link(remoteInspectors, basisjsToolsApi.remoteInspectors);
 
     // sync features list
-    features.link(remoteApi, remoteApi.setFeatures);
+    api.features.link(remoteApi, remoteApi.setFeatures);
 
     // subscribe to data from remote devtools & context free send method
     remoteApi.subscribe(processCommand);
@@ -65,7 +64,7 @@ pluginSync.onInit(function(pluginApi){
   link(devtools, pluginApi.connected);
 
   // sync features list
-  features.link(pluginApi, pluginApi.setFeatures);
+  api.features.link(pluginApi, pluginApi.setFeatures);
 
   // subscribe to data from devtools & context free send method
   pluginApi.subscribe(processCommand);

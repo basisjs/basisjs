@@ -22,15 +22,12 @@ require('basis.template').Template.extend({
 function init(){
   var api = require('api');
 
-  // init API
+  // setup API
   api.local(api.ns('file'));
   api.local(api.ns('app'));
 
-  // setup devtool
-  require('type').Devtools({
-    connected: true,
-    session: basis.genUID()
-  });
+  api.connected.set(true);
+  api.session.set(basis.genUID());
 
   // init interface
   require('./panel/index.js');

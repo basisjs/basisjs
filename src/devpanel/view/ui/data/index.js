@@ -160,6 +160,8 @@ module.exports = {
     .as(JSON.stringify)
     .as(JSON.parse),
   init: function(){
+    updateInfo();
+
     return {
       type: 'init',
       instances: basis.object.iterate(instanceMap, function(id, model){
