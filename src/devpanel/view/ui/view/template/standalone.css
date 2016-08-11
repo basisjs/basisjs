@@ -1,6 +1,14 @@
 .view
 {
   padding: 4px;
+  transition: all .5s 2s;
+}
+.view_disconnected
+{
+  pointer-events: none;
+  opacity: .25;
+  -webkit-filter: grayscale();
+  filter: grayscale();
 }
 .header
 {

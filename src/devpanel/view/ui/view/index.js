@@ -200,8 +200,11 @@ require('basis.template').theme('standalone').define('devpanel.ui', {
 });
 
 module.exports = Node.subclass({
+  disabled: api.connected.as(basis.bool.invert),
+
   template: templates.view,
   binding: {
+    connected: api.connected,
     instanceCount: count(instances),
     withLoc: count(instances, 'data.loc')
   },

@@ -1,4 +1,5 @@
 <b:isolate/>
 <b:style src="./standalone.css"/>
+<b:define name="disconnected" from="connected" type="invert"/>
 
-<b:include src="./view.tmpl" no-style/>
+<b:include src="./view.tmpl" class="view_{disconnected}" no-style/>

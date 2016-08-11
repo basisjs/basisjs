@@ -1,7 +1,8 @@
 <b:l10n src="./window.l10n"/>
 <b:style src="./standalone.css"/>
+<b:define name="disconnected" from="connected" type="invert"/>
 
-<div class="layout" event-mousedown="stop-propagation prevent-default" basis-devpanel-ignore>
+<div class="view view_{disconnected}" event-mousedown="stop-propagation prevent-default" basis-devpanel-ignore>
   <div class="no-subject" b:hide="{hasSubject}">
     Component is not selected
   </div>

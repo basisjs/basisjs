@@ -16,6 +16,7 @@ require('basis.template').theme('standalone').define('devpanel.template-info', {
 
 module.exports = Node.subclass({
   showSource: new basis.Token(false),
+  disabled: api.connected.as(basis.bool.invert),
 
   satellite: {
     domTree: DomTree,
@@ -25,6 +26,7 @@ module.exports = Node.subclass({
 
   template: templates.main,
   binding: {
+    connected: api.connected,
     showSource: 'showSource',
     domTree: 'satellite:',
     bindings: 'satellite:',
