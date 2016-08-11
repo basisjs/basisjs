@@ -3,6 +3,7 @@ var inspectBasisResource = inspectBasis.resource;
 var Value = require('basis.data').Value;
 var Dataset = require('basis.data').Dataset;
 var File = require('type').File;
+var devtools = require('type').Devtools();
 var initCallbacks = [];
 var basisjsTools = null;
 
@@ -140,7 +141,8 @@ basis.ready(function(){
   // sync features
   if (basisjsTools.features)
   {
-    link(features, basisjsTools.features);
+    basisjsTools.features.attach(devtools.set.bind(devtools, 'features'), devtools);
+    devtools.set('features', basisjsTools.features.value);
     features.link(File.openFileSupported, function(list){
       this.set(list.indexOf('file:open') !== -1);
     });

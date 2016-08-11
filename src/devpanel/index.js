@@ -24,6 +24,12 @@ function init(){
   require('api').local(require('./api/file.js'), require('type:file.js'));
   require('api').local(require('./api/app.js'));
 
+  // setup devtool
+  require('type').Devtools({
+    connected: true,
+    session: basis.genUID()
+  });
+
   // init interface
   require('./panel/index.js');
 

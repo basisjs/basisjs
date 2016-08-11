@@ -1,21 +1,22 @@
 var Node = require('basis.ui').Node;
-var initDevtoolApi = location.hash.substr(1);
-var devtool = typeof parent[initDevtoolApi] === 'function' ? parent[initDevtoolApi]() : null;
+var devtools = require('type').Devtools();
+var getRemoteAPI = location.hash.substr(1);
+var remoteAPI = typeof parent[getRemoteAPI] === 'function' ? parent[getRemoteAPI]() : null;
 
-if (!devtool)
+if (!remoteAPI)
   throw new Error('Devtool init handler is missed (should be present in location hash)');
 
-// devtool
-//   .on('connect', function(){ console.log('connected'); })
-//   .on('disconnect', function(){ console.log('disconnected'); })
-//   .on('features', function(features){ console.log('features', features); });
+remoteAPI
+  .subscribe('session', devtools.set.bind(devtools, 'session'))
+  .subscribe('connection', devtools.set.bind(devtools, 'connected'))
+  .subscribe('features', devtools.set.bind(devtools, 'features'));
 
 require('basis.template').setTheme('standalone');
 require('../api/file.js');
 require('../api/app.js');
 require('api').remote(
-  devtool.send,
-  devtool.subscribe
+  remoteAPI.send,
+  remoteAPI.subscribe
 );
 
 require('basis.app').create({
