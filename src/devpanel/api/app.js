@@ -1,4 +1,4 @@
-module.exports = require('api').define('app', {
+module.exports = {
   getAppProfile: function(){
     var File = require('type').File;
     return function(callback){
@@ -11,4 +11,4 @@ module.exports = require('api').define('app', {
       });
     };
   }
-});
+};

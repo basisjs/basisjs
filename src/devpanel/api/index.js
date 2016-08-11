@@ -1,6 +1,10 @@
 var Value = require('basis.data').Value;
 var api = {};
 
+// init default APIs
+define('file', require('./file.js'));
+define('app', require('./app.js'));
+
 function createOutputChannel(ns, channel, send){
   function sendData(){
     send({

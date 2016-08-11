@@ -12,8 +12,6 @@ remoteAPI
   .subscribe('features', devtools.set.bind(devtools, 'features'));
 
 require('basis.template').setTheme('standalone');
-require('../api/file.js');
-require('../api/app.js');
 require('api').remote(
   remoteAPI.send,
   remoteAPI.subscribe

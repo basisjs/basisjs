@@ -20,9 +20,11 @@ require('basis.template').Template.extend({
 
 // init devpanel
 function init(){
+  var api = require('api');
+
   // init API
-  require('api').local(require('./api/file.js'), require('type:file.js'));
-  require('api').local(require('./api/app.js'));
+  api.local(api.ns('file'));
+  api.local(api.ns('app'));
 
   // setup devtool
   require('type').Devtools({
@@ -33,7 +35,7 @@ function init(){
   // init interface
   require('./panel/index.js');
 
-  // temporary here
+  // temporary here (to provide data)
   require('./view/template-info/index.js');
   require('./view/ui/index.js');
 }
