@@ -3,7 +3,6 @@ var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 
 var Node = global.Node;
-var Value = require('basis.data').Value;
 var Overlay = require('./common/overlay.js');
 var children = new basis.Token();
 var maxUpdates = require('basis.data.index')
@@ -63,9 +62,5 @@ module.exports = {
   },
   stopInspect: function(){
     overlay.deactivate();
-  },
-  inspectMode: Value.from(overlay, 'activeChanged', 'active'),
-  isActive: function(){
-    return overlay.active;
   }
 };

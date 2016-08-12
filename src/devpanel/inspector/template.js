@@ -14,8 +14,9 @@ var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 var document = global.document;
 var templateInfo = resource('../view/template-info/index.js');
 
+var inspect = require('api').inspect;
+var inspecting = false;
 var inspectDepth = 0;
-var inspectMode = new Value({ value: false });
 
 var overlay = domUtils.createElement({
   css: {
@@ -42,7 +43,7 @@ function pickHandler(event){
 
   if (event.mouseRight)
   {
-    stopInspect();
+    inspect.set(false);
     return;
   }
 
@@ -53,7 +54,7 @@ function pickHandler(event){
   {
     var source = template.source;
 
-    stopInspect();
+    inspect.set(false);
 
     if (source.url)
     {
@@ -269,7 +270,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 });
 
 function startInspect(){
-  if (!inspectMode.value)
+  if (!inspecting)
   {
     if (templateInfo.isResolved())
       templateInfo().set();
@@ -283,12 +284,12 @@ function startInspect(){
     inspectBasisEvent.captureEvent('contextmenu', stopInspect);
     inspectBasisEvent.captureEvent('click', pickHandler);
 
-    inspectMode.set(true);
+    inspecting = true;
   }
 }
 
 function stopInspect(){
-  if (inspectMode.value)
+  if (inspecting)
   {
     domEventUtils.removeGlobalHandler('mousemove', mousemoveHandler);
     domEventUtils.removeGlobalHandler('mousewheel', mouseWheelHandler);
@@ -299,7 +300,7 @@ function stopInspect(){
     inspectBasisEvent.releaseEvent('contextmenu');
     inspectBasisEvent.releaseEvent('click');
 
-    inspectMode.set(false);
+    inspecting = false;
     pickupTarget.set();
   }
 }
@@ -369,9 +370,5 @@ function mouseWheelHandler(event){
 module.exports = {
   name: 'Template',
   startInspect: startInspect,
-  stopInspect: stopInspect,
-  inspectMode: inspectMode,
-  isActive: function(){
-    return inspectMode.value;
-  }
+  stopInspect: stopInspect
 };

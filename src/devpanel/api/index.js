@@ -2,11 +2,17 @@ var Value = require('basis.data').Value;
 var session = new Value();
 var connected = new Value({ value: false });
 var features = new Value({ value: [] });
+var inspect = new Value({
+  proxy: function(value){
+    return value || false;
+  }
+});
 var api = {};
 
 // init default APIs
 define('file', require('./file.js'));
 define('app', require('./app.js'));
+define('inspect', require('./inspect.js'));
 
 function createOutputChannel(ns, channel, send){
   function sendData(){
@@ -89,6 +95,7 @@ module.exports = {
   session: session,
   connected: connected,
   features: features,
+  inspect: inspect,
 
   define: define,
   ns: getNamespace,

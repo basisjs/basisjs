@@ -17,14 +17,30 @@ require('api').remote(
   remoteAPI.subscribe
 );
 
+api.ns('inspect').channel.link(api.inspect, api.inspect.set);
+api.connected.link(null, function(connected){
+  if (connected)
+    api.ns('inspect').init(function(mode){
+      api.inspect.set(mode);
+    });
+});
+
 require('basis.app').create({
   title: 'Remote basis.js devtools',
   element: new Node({
+    disabled: api.inspect.as(Boolean),
     template: resource('./template/app.tmpl'),
     binding: {
+      inspect: api.inspect,
       appProfileButton: require('./app-profile-button.js'),
       tabs: require('./tabs.js'),
       view: 'satellite:'
+    },
+    action: {
+      pickTemplate: function(){
+        var mode = api.inspect.value;
+        api.ns('inspect').inspect(mode !== 'template' ? 'template' : false);
+      }
     },
     satellite: {
       view: require('./tabs.js').selectedTabView

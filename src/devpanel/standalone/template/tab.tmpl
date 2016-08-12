@@ -1,7 +1,8 @@
 <b:isolate/>
 <b:style src="./tab.css"/>
 <b:define name="selected" type="bool"/>
+<b:define name="disabled" type="bool"/>
 
-<span class="tab tab_{selected}" event-click="select">
+<span class="tab tab_{selected} tab_{disabled}" event-click="select">
   {caption}
 </span>

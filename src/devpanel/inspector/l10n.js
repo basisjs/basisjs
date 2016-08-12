@@ -5,7 +5,6 @@ var inspectBasisL10n = inspectBasis.require('basis.l10n');
 
 var NativeDomNode = global.Node;
 var fileAPI = require('../api/file.js');
-var Value = require('basis.data').Value;
 var genColor = require('./common/color.js').genColor;
 var Overlay = require('./common/overlay.js');
 var Balloon = require('basis.ui.popup').Balloon;
@@ -178,9 +177,5 @@ module.exports = {
   },
   stopInspect: function(){
     overlay.deactivate();
-  },
-  inspectMode: Value.from(overlay, 'activeChanged', 'active'),
-  isActive: function(){
-    return overlay.active;
   }
 };

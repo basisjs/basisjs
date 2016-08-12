@@ -1,0 +1,18 @@
+.button
+{
+  display: inline-block;
+  padding: 14px 16px;
+  background: url(pick-template.png) no-repeat center;
+  opacity: .6;
+  cursor: pointer;
+}
+.button_template,
+.button:hover
+{
+  opacity: 1;
+}
+
+.button_template
+{
+  background-color: #EEE;
+}

@@ -1,6 +1,5 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisConfig = inspectBasis.config.devpanel;
-var Value = require('basis.data').Value;
 var Overlay = require('./common/overlay.js');
 var getOffset = require('basis.layout').getOffset;
 var getComputedStyle = require('basis.dom.computedStyle').get;
@@ -124,9 +123,5 @@ module.exports = {
   },
   stopInspect: function(){
     overlay.deactivate();
-  },
-  inspectMode: Value.from(overlay, 'activeChanged', 'active'),
-  isActive: function(){
-    return overlay.active;
   }
 };

@@ -3,11 +3,7 @@ var inspectBasisL10n = inspectBasis.require('basis.l10n');
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
 
-var Value = require('basis.data').Value;
-var Dataset = require('basis.data').Dataset;
-var DataObject = require('basis.data').Object;
 var Expression = require('basis.data.value').Expression;
-var count = require('basis.data.index').count;
 var Node = require('basis.ui').Node;
 var MoveableElement = require('basis.dragdrop').MoveableElement;
 
@@ -18,62 +14,24 @@ var File = require('type').File;
 var themeList = require('./themeList.js');
 var cultureList = require('./cultureList.js');
 
-var l10nInspector = resource('../inspector/l10n.js');
-var templateInspector = resource('../inspector/template.js');
-var heatInspector = resource('../inspector/heatmap.js');
-var gridInspector = resource('../inspector/grid.js');
-var rolesInspector = resource('../inspector/roles.js');
-var inspectors = new Dataset();
-var inspectMode = count(inspectors, 'update', 'data.mode').as(Boolean);
-var currentInspector = new Value();
-var currentInspectorName = currentInspector.as(function(inspector){
-  return inspector ? inspector.name : '';
-});
-
-[
-  l10nInspector,
-  templateInspector,
-  heatInspector,
-  gridInspector,
-  rolesInspector
-].forEach(function(inspectorRes){
-  inspectorRes.ready(function(inspector){
-    inspectors.add(inspector.inspectMode.link(new DataObject, function(value){
-      if (value)
-        currentInspector.set(inspector);
-      else
-        if (currentInspector.value === inspector)
-          currentInspector.set();
-
-      this.update({ mode: value });
-    }));
-  });
-});
-
-currentInspector.link(null, function(newInspector, oldInspector){
-  if (oldInspector)
-    oldInspector.stopInspect();
-  if (newInspector)
-    newInspector.startInspect();
-});
+var inspectMode = require('api').inspect;
+var inspector = require('../inspector/index.js');
+var currentInspectorName = inspector.currentName;
 
 
 //
 // panel
 //
 
-function activateInspector(inspector, e){
+function activateInspector(mode, e){
   cultureList.setDelegate();
   themeList.setDelegate();
   e.die();
   inspectBasisDomEvent.captureEvent('click', function(){
     inspectBasisDomEvent.releaseEvent('click');
 
-    // set new inspector or drop old one if inspector is the same
-    var newInspector = inspector();
-    currentInspector.set(
-      currentInspector.value !== newInspector ? newInspector : null
-    );
+    // set new mode or drop old one if mode is the same
+    inspectMode.set(inspectMode.value !== mode ? mode : null);
   });
 }
 
@@ -100,14 +58,6 @@ var panel = new Node({
     permanentFilesChangedCount: File.permanentChangedCount,
     inspectMode: inspectMode,
     inspector: currentInspectorName,
-    inspectorId: new Expression(currentInspectorName, rolesInspector().pickMode, function(inspectorName, pickMode){
-      inspectorName = inspectorName ? inspectorName.replace(/\s/g, '').toLowerCase() : '';
-
-      if (inspectorName == 'roles')
-        return pickMode ? 'pickRoles' : 'roles';
-
-      return inspectorName;
-    }),
     grid: function(){
       var config = inspectBasis.config.devpanel;
       return Number(config && config.grid) || 0;
@@ -116,37 +66,37 @@ var panel = new Node({
 
   action: {
     showThemes: function(){
+      inspectMode.set();
       themeList.setDelegate(this);
     },
     showCultures: function(){
+      inspectMode.set();
       cultureList.setDelegate(this);
     },
     inspectTemplate: function(e){
-      activateInspector(templateInspector, e);
+      activateInspector('template', e);
     },
     inspectl10n: function(e){
-      activateInspector(l10nInspector, e);
+      activateInspector('l10n', e);
     },
     inspectHeat: function(e){
-      activateInspector(heatInspector, e);
+      activateInspector('heatmap', e);
     },
     inspectGrid: function(e){
-      activateInspector(gridInspector, e);
+      activateInspector('grid', e);
     },
     inspectPickRoles: function(e){
-      activateInspector(rolesInspector, e);
-      rolesInspector().pickMode.set(true);
+      activateInspector('pick-roles', e);
     },
     inspectRoles: function(e){
-      activateInspector(rolesInspector, e);
-      rolesInspector().pickMode.set(false);
+      activateInspector('roles', e);
     },
     storePosition: function(){
       if (localStorage)
         localStorage['basis-devpanel'] = parseInt(this.element.style.left) + ';' + parseInt(this.element.style.top);
     },
     cancelInspect: function(){
-      currentInspector.set();
+      inspectMode.set();
     },
     reload: function(){
       global.location.reload();

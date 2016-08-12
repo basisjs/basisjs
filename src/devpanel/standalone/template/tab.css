@@ -5,6 +5,7 @@
   color: #666;
   line-height: 1;
   cursor: pointer;
+  border-bottom: 1px solid transparent;
 }
 .tab:hover
 {
@@ -15,4 +16,12 @@
   color: #444;
   border-bottom: 2px solid rgba(13, 119, 251, 0.38);
   margin-bottom: -1px;
+}
+.tab_disabled,
+.tab_disabled:hover
+{
+  color: #AAA;
+  background: transparent;
+  cursor: default;
+  transition: all .25s;
 }

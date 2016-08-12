@@ -21,10 +21,16 @@ require('basis.template').Template.extend({
 // init devpanel
 function init(){
   var api = require('api');
+  var remote = require('./remote.js');
 
   // setup API
   api.local(api.ns('file'));
   api.local(api.ns('app'));
+  api.local(api.ns('inspect'))
+     .channel(api.inspect, remote.send);
+  api.inspect.link(null, function(x){
+    console.log('inspect channel', x);
+  });
 
   api.connected.set(true);
   api.session.set(basis.genUID());

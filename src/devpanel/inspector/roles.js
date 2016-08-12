@@ -5,9 +5,9 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 var inspectBasisTracker = inspectBasis.require('basis.tracker');
 var getTrackInfo = inspectBasisTracker.getInfo;
 var trackingInfo = resource('../view/tracking-info/index.js');
+var inspectMode = require('api').inspect;
 
 var Overlay = require('./common/overlay.js');
-var Value = require('basis.data').Value;
 var Node = require('basis.ui').Node;
 var events = [
   'click',
@@ -104,7 +104,9 @@ inspectBasisTracker.attach(function(event){
 });
 
 var overlay = new Overlay({
-  pickMode: new basis.Token(false),
+  pickMode: inspectMode.as(function(value){
+    return value === 'pick-roles';
+  }),
 
   template: resource('./roles/overlay.tmpl'),
   binding: {
@@ -216,7 +218,7 @@ var overlay = new Overlay({
   }
 });
 
-overlay.pickMode.attach(function(pickMode){
+overlay.pickMode.link(overlay, function(pickMode){
   var events = {};
 
   if (pickMode)
@@ -226,7 +228,7 @@ overlay.pickMode.attach(function(pickMode){
       mouseup: true
     };
 
-  overlay.setMuteEvents(events);
+  this.setMuteEvents(events);
 });
 
 //
@@ -240,10 +242,5 @@ module.exports = {
   },
   stopInspect: function(){
     overlay.deactivate();
-  },
-  inspectMode: Value.from(overlay, 'activeChanged', 'active'),
-  pickMode: overlay.pickMode,
-  isActive: function(){
-    return overlay.active;
   }
 };

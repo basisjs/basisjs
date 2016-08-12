@@ -11,6 +11,12 @@ module.exports = new Node({
   }),
   template: resource('./template/app-profile-button.tmpl'),
   binding: {
+    processing: {
+      events: 'stateChanged',
+      getter: function(node){
+        return node.state == STATE.PROCESSING;
+      }
+    },
     error: {
       events: 'stateChanged',
       getter: function(node){

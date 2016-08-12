@@ -17,7 +17,7 @@ BODY
 .toolbar
 {
   display: flex;
-  padding: 0 0 0 8px;
+  padding: 0;
   background: #F8F8F8;
   border-bottom: 1px solid #DDD;
 }
@@ -26,4 +26,10 @@ BODY
   flex: 1;
   position: relative;
   overflow: auto;
+}
+.content_disabled
+{
+  opacity: .4;
+  -webkit-filter: grayscale();
+  transition: all .25s;
 }
