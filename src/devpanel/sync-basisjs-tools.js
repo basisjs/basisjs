@@ -1,6 +1,7 @@
+var INSPECTOR_URL = asset('./standalone/index.html');
+var INSPECTOR_BUILD_URL = asset('../../dist/devtool.js');
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisResource = inspectBasis.resource;
-var Value = require('basis.data').Value;
 var Dataset = require('basis.data').Dataset;
 var File = require('type').File;
 var connected = require('api').connected;
@@ -25,11 +26,17 @@ function getInspectorUIBundle(){
   basis.dev.warn('[basis.devpanel] Method to retrieve Remote Inspector UI bundle is not implemented');
 }
 
-function getInspectorUI(dev, callback){
-  if (dev)
-    return callback(null, 'url', basis.path.origin + basis.path.resolve(__dirname, 'standalone.html'));
+function getInspectorUI(settings, callback){
+  var accept = basis.array(settings && settings.accept);
+  var dev = Boolean(settings && settings.dev);
 
-  getInspectorUIBundle(dev, callback);
+  if (dev && accept.indexOf('url') !== -1)
+    return callback(null, 'url', basis.path.origin + INSPECTOR_URL);
+
+  getInspectorUIBundle({
+    dev: dev,
+    accept: accept
+  }, callback);
 }
 
 function link(basisValue, btValue){
@@ -98,10 +105,10 @@ basis.ready(function(){
   }
 
   // get ui method
-  getInspectorUIBundle = function(dev, callback){
-    basisjsTools.getBundle(dev ? asset('./standalone.html') : {
-      build: asset('../../dist/devtool.js'),
-      filename: asset('./standalone.html')
+  getInspectorUIBundle = function(settings, callback){
+    basisjsTools.getBundle(settings.dev ? INSPECTOR_URL : {
+      build: INSPECTOR_BUILD_URL,
+      filename: INSPECTOR_URL
     }, function(err, script){
       callback(err, 'script', script);
     });
