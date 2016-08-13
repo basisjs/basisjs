@@ -1,3 +1,4 @@
+var api = require('api');
 var Value = require('basis.data').Value;
 var KeyObjectMap = require('basis.data').KeyObjectMap;
 var Node = require('basis.ui').Node;
@@ -33,6 +34,11 @@ Value.query(tabs, 'selection.pick()').link(tabs, function(selected){
     this.selection.set(this.firstChild);
 });
 
+api.inspect.link(tabs, function(mode){
+  if (mode === 'template')
+    this.firstChild.select();
+});
+
 // resolve lazy view
 var lazyView = new KeyObjectMap({
   create: function(tab){
@@ -43,7 +49,5 @@ var lazyView = new KeyObjectMap({
 tabs.selectedTabView = Value
   .query(tabs, 'selection.pick()')
   .as(lazyView.resolve.bind(lazyView));
-
-window.xx =  tabs.selectedTabView;
 
 module.exports = tabs;
