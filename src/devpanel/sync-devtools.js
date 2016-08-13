@@ -146,7 +146,10 @@ if (document.createEvent)
         break;
 
       case 'getInspectorUI':
-        getInspectorUI(false, data.callback ? wrapCallback(data.callback) : Function);
+        getInspectorUI(
+          basis.array(data.data)[0] || false,
+          data.callback ? wrapCallback(data.callback) : Function
+        );
         break;
 
       default:
