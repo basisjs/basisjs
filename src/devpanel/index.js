@@ -28,9 +28,6 @@ function init(){
   api.local(api.ns('app'));
   api.local(api.ns('inspect'))
      .channel(api.inspect, remote.send);
-  api.inspect.link(null, function(x){
-    console.log('inspect channel', x);
-  });
 
   api.connected.set(true);
   api.session.set(basis.genUID());
