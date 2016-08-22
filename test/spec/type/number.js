@@ -14,7 +14,7 @@ module.exports = {
       NaN,
       Infinity,
       undefined
-    ]
+    ];
   },
   test: [
     {
@@ -41,7 +41,9 @@ module.exports = {
           assert(warned);
         });
 
-        assert(type.number(null, 42) === 42);
+        catchWarnings(function(){
+          assert(type.number(null, 42) === 42);
+        });
       }
     },
     {
@@ -99,14 +101,16 @@ module.exports = {
             {
               name: 'behaves like nullable version',
               test: function(){
-                var transform = type.number.nullable.default('def');
+                var transform = type.number.nullable.default(96);
 
-                nonNumbersExceptNull.concat([
-                  null,
-                  2.3,
-                  '1234.56'
-                ]).forEach(function(value){
-                  assert(transform(value, 23) === type.number.nullable(value, 23));
+                catchWarnings(function(){
+                  nonNumbersExceptNull.concat([
+                    null,
+                    2.3,
+                    '1234.56'
+                  ]).forEach(function(value){
+                    assert(transform(value, 23) === type.number.nullable(value, 23));
+                  });
                 });
               }
             },
@@ -144,14 +148,16 @@ module.exports = {
         {
           name: 'behaves like usual version',
           test: function(){
-            var transform = type.number.default('def');
+            var transform = type.number.default(96);
 
-            nonNumbersExceptNull.concat([
-              null,
-              2.3,
-              '1234.56'
-            ]).forEach(function(value){
-              assert(transform(value, 23) === type.number(value, 23));
+            catchWarnings(function(){
+              nonNumbersExceptNull.concat([
+                null,
+                2.3,
+                '1234.56'
+              ]).forEach(function(value){
+                assert(transform(value, 23) === type.number(value, 23));
+              });
             });
           }
         },
@@ -170,7 +176,7 @@ module.exports = {
         {
           name: 'ignores default value if it is incorrect',
           test: function(){
-            nonNumbersExceptNull.concat([null]).forEach(function(incorrectValue) {
+            nonNumbersExceptNull.concat([null]).forEach(function(incorrectValue){
               var transform;
               var warned = catchWarnings(function(){
                 transform = type.number.default(incorrectValue);

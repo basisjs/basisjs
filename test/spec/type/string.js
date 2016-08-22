@@ -41,7 +41,9 @@ module.exports = {
           assert(warned);
         });
 
-        assert(type.string(null, 'previous') === 'previous');
+        catchWarnings(function(){
+          assert(type.string(null, 'previous') === 'previous');
+        });
       }
     },
     {
@@ -101,12 +103,14 @@ module.exports = {
               test: function(){
                 var transform = type.string.nullable.default('def');
 
-                nonStringsExceptNull.concat([
-                  null,
-                  '',
-                  'basis'
-                ]).forEach(function(value){
-                  assert(transform(value, 'prev') === type.string.nullable(value, 'prev'));
+                catchWarnings(function(){
+                  nonStringsExceptNull.concat([
+                    null,
+                    '',
+                    'basis'
+                  ]).forEach(function(value){
+                    assert(transform(value, 'prev') === type.string.nullable(value, 'prev'));
+                  });
                 });
               }
             },
@@ -140,12 +144,14 @@ module.exports = {
           test: function(){
             var transform = type.string.default('def');
 
-            nonStringsExceptNull.concat([
-              null,
-              '',
-              'basis',
-            ]).forEach(function(value){
-              assert(transform(value, 'prev') === type.string(value, 'prev'));
+            catchWarnings(function(){
+              nonStringsExceptNull.concat([
+                null,
+                '',
+                'basis',
+              ]).forEach(function(value){
+                assert(transform(value, 'prev') === type.string(value, 'prev'));
+              });
             });
           }
         },
