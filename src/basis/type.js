@@ -160,6 +160,54 @@ int.default = intTransform;
 int.nullable = nullableIntTransform(null);
 int.nullable.default = nullableIntTransform;
 
+function arrayTransform(defaultValue) {
+  if (!Array.isArray(defaultValue))
+  {
+    /** @cut */ basis.dev.warn('type.array.default expected array as default value but got ' + defaultValue + '. Falling back to type.array');
+    return array;
+  }
+
+  return function(value, oldValue){
+    if (Array.isArray(value))
+      return value;
+
+    if (value === DEFAULT_VALUE)
+      return defaultValue;
+
+    /** @cut */ basis.dev.warn('type.array expected array but got ' + value);
+
+    return oldValue;
+  };
+}
+
+function nullableArrayTransform(defaultValue) {
+  if (defaultValue !== null && !Array.isArray(defaultValue))
+  {
+    /** @cut */ basis.dev.warn('type.array.nullable.default expected array as default value but got ' + defaultValue + '. Falling back to type.array.nullable');
+    return array.nullable;
+  }
+
+  return function(value, oldValue){
+    if (Array.isArray(value))
+      return value;
+
+    if (value === null)
+      return null;
+
+    if (value === DEFAULT_VALUE)
+      return defaultValue;
+
+    /** @cut */ basis.dev.warn('type.array expected array or null but got ' + value);
+
+    return oldValue;
+  };
+}
+
+var array = arrayTransform([]);
+array.default = arrayTransform;
+array.nullable = nullableArrayTransform(null);
+array.nullable.default = nullableArrayTransform;
+
 function enumeration(values) {
   if (!Array.isArray(values))
   {
@@ -205,5 +253,6 @@ module.exports = {
   number: number,
   int: int,
   enumeration: enumeration,
+  array: array,
   DEFAULT_VALUE: DEFAULT_VALUE
 };
