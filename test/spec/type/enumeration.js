@@ -7,7 +7,7 @@ module.exports = {
   },
   test: [
     {
-      name: 'accepts native and stringified ints',
+      name: 'accepts enumerated values',
       test: function(){
         var pluralEnum = type.enumeration(['first', 'second', 'third']);
 
