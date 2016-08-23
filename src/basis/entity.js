@@ -32,6 +32,12 @@
   var Split = basisDataset.Split;
   var setAccumulateState = Dataset.setAccumulateState;
 
+  var basisType = require('basis.type');
+  var defineType = basisType.defineType;
+  var getTypeByName = basisType.getTypeByName;
+  var getTypeByNameIfDefined = basisType.getTypeByNameIfDefined;
+  var validateScheme = basisType.validateScheme;
+
   var NULL_INFO = {};
 
   var entityTypes = [];
@@ -61,57 +67,8 @@
     return name + (untitledNames[name]++);
   }
 
-  // types map
-  var namedTypes = {};
+  // indexes map
   var namedIndexes = {};
-  var deferredTypeDef = {};
-
-  function resolveType(typeName, type){
-    var list = deferredTypeDef[typeName];
-
-    if (list)
-    {
-      for (var i = 0, def; def = list[i]; i++)
-      {
-        var typeHost = def[0];
-        var fieldName = def[1];
-
-        typeHost[fieldName] = type;
-      }
-
-      delete deferredTypeDef[typeName];
-    }
-
-    namedTypes[typeName] = type;
-  }
-
-  function getTypeByName(typeName, typeHost, field){
-    if (namedTypes[typeName])
-      return namedTypes[typeName];
-
-    var list = deferredTypeDef[typeName];
-
-    if (!list)
-      list = deferredTypeDef[typeName] = [];
-
-    list.push([typeHost, field]);
-
-    return function(value, oldValue){
-      var Type = namedTypes[typeName];
-
-      if (Type)
-        return Type(value, oldValue);
-
-      /** @cut */ if (arguments.length && value != null) // don't warn on default value calculation and wrapper call for null
-      /** @cut */   basis.dev.warn(namespace + ': type `' + typeName + '` is not defined for `' + field + '`, but function called');
-    };
-  }
-
-  function validateScheme(){
-    for (var typeName in deferredTypeDef)
-      basis.dev.warn(namespace + ': type `' + typeName + '` is not defined, but used by ' + deferredTypeDef[typeName].length + ' type(s)');
-  }
-
 
   //
   // Index
@@ -541,9 +498,9 @@
       if (!wrapper)
         wrapper = $self;
 
-      if (!name || namedTypes[name])
+      if (!name || getTypeByNameIfDefined(name))
       {
-        /** @cut */ if (namedTypes[name]) basis.dev.warn(namespace + ': Duplicate entity set type name `' + this.name + '`, name ignored');
+        /** @cut */ if (getTypeByNameIfDefined(name)) basis.dev.warn(namespace + ': Duplicate entity set type name `' + this.name + '`, name ignored');
         name = getUntitledName('UntitledEntitySetType');
       }
 
@@ -576,7 +533,7 @@
         EntitySetClass.prototype.wrapper = getTypeByName(wrapper, EntitySetClass.prototype, 'wrapper');
 
       // resolve type name
-      resolveType(name, result);
+      defineType(name, result);
 
       // extend result with additional properties
       extend(result, {
@@ -737,7 +694,7 @@
       var name = entityType.name;
 
       // resolve type by name
-      resolveType(name, result);
+      defineType(name, result);
 
       // extend result with additional properties
       extend(result, {
@@ -1165,9 +1122,9 @@
     init: function(config, wrapper){
       // process name
       this.name = config.name;
-      if (!this.name || namedTypes[this.name])
+      if (!this.name || getTypeByNameIfDefined(this.name))
       {
-        /** @cut */ if (namedTypes[this.name])
+        /** @cut */ if (getTypeByNameIfDefined(this.name))
         /** @cut */   basis.dev.warn(namespace + ': Duplicate type name `' + this.name + '`, name ignored');
         this.name = getUntitledName('UntitledEntityType');
       }
@@ -1974,7 +1931,7 @@
     validate: validateScheme,
 
     getTypeByName: function(typeName){
-      return namedTypes[typeName];
+      return getTypeByNameIfDefined(typeName);
     },
     getIndexByName: function(name){
       return namedIndexes[name];
@@ -1984,19 +1941,19 @@
       var EntityClass;
 
       if (typeof type == 'string')
-        type = namedTypes[type];
+        type = getTypeByNameIfDefined(type);
 
       EntityClass = type && type.type && type.type.entityClass;
 
       return value && EntityClass ? value instanceof EntityClass : false;
     },
     get: function(typeName, value){      // works like Type.get(value)
-      var Type = namedTypes[typeName];
+      var Type = getTypeByNameIfDefined(typeName);
       if (Type)
         return Type.get(value);
     },
     resolve: function(typeName, value){  // works like Type(value)
-      var Type = namedTypes[typeName];
+      var Type = getTypeByNameIfDefined(typeName);
       if (Type)
         return Type(value);
     },
