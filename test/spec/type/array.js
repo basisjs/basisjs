@@ -58,8 +58,17 @@ module.exports = {
           [],
           [null, 2]
         ].forEach(function(correctValue){
-          assert(type.array(correctValue, []) === type.array(correctValue));
+          assert(type.array(correctValue, [1]) === type.array(correctValue));
         });
+      }
+    },
+    {
+      name: 'returns previous value if it is array with the same contents',
+      test: function(){
+        var previous = [null, undefined, 2, 'str'];
+        var targetAr = [null, undefined, 2, 'str'];
+
+        assert(type.array(targetAr, previous) === previous);
       }
     },
     {
@@ -100,6 +109,15 @@ module.exports = {
 
               assert(warned);
             });
+          }
+        },
+        {
+          name: 'returns previous value if it is array with the same contents',
+          test: function(){
+            var previous = [null, undefined, 2, 'str'];
+            var targetAr = [null, undefined, 2, 'str'];
+
+            assert(type.array.nullable(targetAr, previous) === previous);
           }
         },
         {

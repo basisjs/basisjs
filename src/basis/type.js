@@ -162,6 +162,17 @@ int.default = intTransform;
 int.nullable = nullableIntTransform(null);
 int.nullable.default = nullableIntTransform;
 
+function equalArrays(a, b){
+  if (a === b) return true;
+  if (a.length != b.length) return false;
+
+  for (var i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false;
+  }
+
+  return true;
+}
+
 function arrayTransform(defaultValue) {
   if (!Array.isArray(defaultValue))
   {
@@ -171,7 +182,7 @@ function arrayTransform(defaultValue) {
 
   return function(value, oldValue){
     if (Array.isArray(value))
-      return value;
+      return oldValue && equalArrays(value, oldValue) ? oldValue : value;
 
     if (value === DEFAULT_VALUE)
       return defaultValue;
@@ -191,7 +202,7 @@ function nullableArrayTransform(defaultValue) {
 
   return function(value, oldValue){
     if (Array.isArray(value))
-      return value;
+      return oldValue && equalArrays(value, oldValue) ? oldValue : value;
 
     if (value === null)
       return null;
@@ -199,7 +210,7 @@ function nullableArrayTransform(defaultValue) {
     if (value === DEFAULT_VALUE)
       return defaultValue;
 
-    /** @cut */ basis.dev.warn('type.array expected array or null but got ' + value);
+    /** @cut */ basis.dev.warn('type.array.nullable expected array or null but got ' + value);
 
     return oldValue;
   };
@@ -285,7 +296,7 @@ function dateTransform(defaultValue){
     var dateObject = toDate(value, defaultValue);
 
     if (dateObject === undefined){
-      /** @cut */ basis.dev.warn('type.date.default expected ISO string, number, date or null but got ' + value);
+      /** @cut */ basis.dev.warn('type.date expected ISO string, number, date or null but got ' + value);
       return oldValue;
     }
 
