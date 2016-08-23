@@ -162,12 +162,15 @@ int.default = intTransform;
 int.nullable = nullableIntTransform(null);
 int.nullable.default = nullableIntTransform;
 
-function equalArrays(a, b){
-  if (a === b) return true;
-  if (a.length != b.length) return false;
+function equalArrays(a, b) {
+  if (a === b)
+    return true;
+  if (a.length != b.length)
+    return false;
 
   for (var i = 0; i < a.length; ++i) {
-    if (a[i] !== b[i]) return false;
+    if (a[i] !== b[i])
+      return false;
   }
 
   return true;
@@ -220,6 +223,64 @@ var array = arrayTransform([]);
 array.default = arrayTransform;
 array.nullable = nullableArrayTransform(null);
 array.nullable.default = nullableArrayTransform;
+
+function isObject(value) {
+  if (!value)
+    return false;
+
+  if (Array.isArray(value))
+    return false;
+
+  return typeof value === 'object';
+}
+
+function objectTransform(defaultValue) {
+  if (!isObject(defaultValue))
+  {
+    /** @cut */ basis.dev.warn('type.object.default expected object as default value but got ' + defaultValue + '. Falling back to type.object');
+    return object;
+  }
+
+  return function(value, oldValue){
+    if (value === DEFAULT_VALUE)
+      return defaultValue;
+
+    if (isObject(value))
+      return value;
+
+    /** @cut */ basis.dev.warn('type.object expected object but got ' + value);
+
+    return oldValue;
+  };
+}
+
+function nullableObjectTransform(defaultValue) {
+  if (defaultValue !== null && !isObject(defaultValue))
+  {
+    /** @cut */ basis.dev.warn('type.object.nullable.default expected object as default value but got ' + defaultValue + '. Falling back to type.object.nullable');
+    return object.nullable;
+  }
+
+  return function(value, oldValue){
+    if (value === DEFAULT_VALUE)
+      return defaultValue;
+
+    if (isObject(value))
+      return value;
+
+    if (value === null)
+      return null;
+
+    /** @cut */ basis.dev.warn('type.object.nullable expected object or null but got ' + value);
+
+    return oldValue;
+  };
+}
+
+var object = objectTransform({});
+object.default = objectTransform;
+object.nullable = nullableObjectTransform(null);
+object.nullable.default = nullableObjectTransform;
 
 function enumeration(values) {
   if (!Array.isArray(values))
@@ -316,6 +377,7 @@ module.exports = {
   int: int,
   enumeration: enumeration,
   array: array,
+  object: object,
   date: date,
   DEFAULT_VALUE: DEFAULT_VALUE
 };

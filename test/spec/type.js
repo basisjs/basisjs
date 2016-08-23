@@ -6,6 +6,7 @@ module.exports = {
     require('./type/int.js'),
     require('./type/enumeration.js'),
     require('./type/array.js'),
+    require('./type/object.js'),
     require('./type/date.js')
   ]
 };
