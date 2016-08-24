@@ -2,6 +2,7 @@ var Node = require('basis.ui').Node;
 var getBoundingRect = require('basis.layout').getBoundingRect;
 var createTreeBuilder = require('../data/build-tree.js');
 var dataFlowApi = require('../api.js');
+var fileApi = require('api').ns('file');
 var jsSourcePopup = resource('./js-source-popup.js');
 var jsSourceTimer;
 
@@ -58,15 +59,7 @@ var FlowNode = Node.subclass({
   },
   open: function(loc){
     if (loc)
-    {
-      var cursor = this;
-
-      while (cursor && !cursor.fileAPI)
-        cursor = cursor.parentNode;
-
-      if (cursor && cursor.fileAPI)
-        cursor.fileAPI.openFile(loc);
-    }
+      fileApi.open(loc);
   }
 });
 
