@@ -34,29 +34,25 @@ function link(reactive, btValue){
 
 // init basisjs-tools
 basisjsToolsSync.onInit(function(basisjsToolsApi){
-  // initDevtool
-  if (typeof basisjsToolsApi.initRemoteDevtoolAPI === 'function')
-  {
-    var remoteApi = basisjsToolsApi.initRemoteDevtoolAPI({
-      getInspectorUI: basisjsToolsApi.getInspectorUI
-    });
+  if (typeof basisjsToolsApi.initRemoteDevtoolAPI !== 'function')
+    return;
 
-    // inspectors count
-    link(remoteInspectors, basisjsToolsApi.remoteInspectors);
+  var remoteApi = basisjsToolsApi.initRemoteDevtoolAPI({
+    getInspectorUI: basisjsToolsApi.getInspectorUI
+  });
 
-    // sync features list
-    api.features.link(remoteApi, remoteApi.setFeatures);
+  // inspectors count
+  link(remoteInspectors, basisjsToolsApi.remoteInspectors);
 
-    // subscribe to data from remote devtools & context free send method
-    remoteApi.subscribe(processCommand);
-    remoteInspectors.send = function(){
-      if (remoteInspectors.value > 0)
-        remoteApi.send.apply(null, arguments);
-    };
+  // sync features list
+  api.features.link(remoteApi, remoteApi.setFeatures);
 
-    // import getRemoteUrl if possible
-    getRemoteUrl = remoteApi.getRemoteUrl || getRemoteUrl;
-  }
+  // subscribe to data from remote devtools & context free send method
+  remoteApi.subscribe(processCommand);
+  remoteInspectors.send = remoteApi.send;
+
+  // import getRemoteUrl if possible
+  getRemoteUrl = remoteApi.getRemoteUrl || getRemoteUrl;
 });
 
 // init devtools
@@ -68,10 +64,7 @@ pluginSync.onInit(function(pluginApi){
 
   // subscribe to data from devtools & context free send method
   pluginApi.subscribe(processCommand);
-  devtools.send = function(){
-    if (devtools.value)
-      pluginApi.send.apply(null, arguments);
-  };
+  devtools.send = pluginApi.send;
 });
 
 module.exports = {
@@ -81,7 +74,10 @@ module.exports = {
     return getRemoteUrl();
   },
   send: function(){
-    remoteInspectors.send.apply(null, arguments);
-    devtools.send.apply(null, arguments);
+    if (remoteInspectors.value > 0)
+      remoteInspectors.send.apply(null, arguments);
+
+    if (devtools.value)
+      devtools.send.apply(null, arguments);
   }
 };
