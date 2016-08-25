@@ -93,6 +93,10 @@ module.exports = {
       name: 'returns previous value if result is the same',
       test: function(){
         var date = new Date();
+        // Old versions of Firefox during copying date via `new Date(date)`
+        // sets milliseconds to 0 and therefore test fails
+        date.setMilliseconds(0);
+
         [
           date.toISOString(),
           new Date(date),
@@ -137,6 +141,9 @@ module.exports = {
             var transform = type.date.default(new Date(1, 1, 1));
 
             var date = new Date();
+            // Old versions of Firefox during copying date via `new Date(date)`
+            // sets milliseconds to 0 and therefore test fails
+            date.setMilliseconds(0);
             [
               date.toISOString(),
               new Date(date),
