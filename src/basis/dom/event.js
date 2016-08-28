@@ -81,64 +81,44 @@
     'keyIdentifier'
   ];
 
-  var KEYBOARD_EVENTS = [
-    'keydown',
-    'keypress',
-    'keyup'
-  ];
-
-  var MOUSE_EVENTS = [
-    'click',
-    'dblclick',
-    'mousedown',
-    'mouseup',
-    'mouseover',
-    'mousemove',
-    'mouseout',
-    'mouseenter',
-    'mouseleave'
-  ].concat(BROWSER_EVENTS.mousewheel);
-
-  var TOUCH_EVENTS = [
-    'touchstart',
-    'touchmove',
-    'touchend',
-    'touchcancel'
-  ];
-
-  var POINTER_EVENTS = [
-    'pointerover',
-    'pointerenter',
-    'pointerdown',
-    'pointermove',
-    'pointerup',
-    'pointercancel',
-    'pointerout',
-    'pointerleave'
-  ];
+  var TYPE_KEYBOARD = 0;
+  var TYPE_MOUSE = 1;
+  var TYPE_TOUCH = 2;
+  var TYPE_POINTER = 3;
 
   var INPUT_TYPE = {
-    KEYBOARD: 0,
-    MOUSE: 1,
-    TOUCH: 2,
-    POINTER: 3
+    keydown:       TYPE_KEYBOARD,
+    keypress:      TYPE_KEYBOARD,
+    keyup:         TYPE_KEYBOARD,
+
+    click:         TYPE_MOUSE,
+    dblclick:      TYPE_MOUSE,
+    mousedown:     TYPE_MOUSE,
+    mouseup:       TYPE_MOUSE,
+    mouseover:     TYPE_MOUSE,
+    mousemove:     TYPE_MOUSE,
+    mouseout:      TYPE_MOUSE,
+    mouseenter:    TYPE_MOUSE,
+    mouseleave:    TYPE_MOUSE,
+
+    touchstart:    TYPE_TOUCH,
+    touchmove:     TYPE_TOUCH,
+    touchend:      TYPE_TOUCH,
+    touchcancel:   TYPE_TOUCH,
+
+    pointerover:   TYPE_POINTER,
+    pointerenter:  TYPE_POINTER,
+    pointerdown:   TYPE_POINTER,
+    pointermove:   TYPE_POINTER,
+    pointerup:     TYPE_POINTER,
+    pointercancel: TYPE_POINTER,
+    pointerout:    TYPE_POINTER,
+    pointerleave:  TYPE_POINTER
   };
 
-  function inputType(event){
-    var type = event.type;
-
-    if (KEYBOARD_EVENTS.indexOf(type) != -1)
-      return INPUT_TYPE.KEYBOARD;
-
-    if (MOUSE_EVENTS.indexOf(type) != -1)
-      return INPUT_TYPE.MOUSE;
-
-    if (TOUCH_EVENTS.indexOf(type) != -1)
-      return INPUT_TYPE.TOUCH;
-
-    if (POINTER_EVENTS.indexOf(type) != -1)
-      return INPUT_TYPE.POINTER;
-  };
+  extend(INPUT_TYPE, BROWSER_EVENTS.mousewheel.reduce(function(result, eventName){
+    return result[eventName] = TYPE_MOUSE, result;
+  }, {}));
 
  /**
   * @param {string} eventName
@@ -189,16 +169,16 @@
         path: event.path ? basis.array(event.path) : getPath(target)
       });
 
-      switch (inputType(event))
+      switch (INPUT_TYPE[event.type])
       {
-        case INPUT_TYPE.KEYBOARD:
+        case TYPE_KEYBOARD:
           extend(this, {
             key: key(event),
             charCode: charCode(event)
           });
           break;
 
-        case INPUT_TYPE.MOUSE:
+        case TYPE_MOUSE:
           extend(this, {
             mouseLeft: mouseButton(event, MOUSE_LEFT),
             mouseMiddle: mouseButton(event, MOUSE_MIDDLE),
@@ -213,7 +193,7 @@
           });
           break;
 
-        case INPUT_TYPE.TOUCH:
+        case TYPE_TOUCH:
           extend(this, {
             touchX: touchX(event),
             touchY: touchY(event),
@@ -228,7 +208,7 @@
           });
           break;
 
-        case INPUT_TYPE.POINTER:
+        case TYPE_POINTER:
           extend(this, {
             pointerX: mouseX(event),
             pointerY: mouseY(event),
