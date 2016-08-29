@@ -8,7 +8,6 @@ var Filter = require('basis.data.dataset').Filter;
 var count = require('basis.data.index').count;
 var Warning = require('type').Warning;
 var fileApi = require('api').ns('file');
-var view;
 
 var warningsByType = new Split({
   source: Warning.all,
@@ -131,7 +130,7 @@ module.exports = Node.subclass({
   },
 
   grouping: {
-    groupGetter: function(child){
+    rule: function(child){
       return groupMap.resolve(child);
     },
     sorting: 'data.id || "-"',
@@ -161,7 +160,7 @@ module.exports = Node.subclass({
       }
     },
     grouping: {
-      groupGetter: function(child){
+      rule: function(child){
         return child.data.file;
       },
       sorting: 'data.title || "-"',
