@@ -3,7 +3,6 @@ module.exports = {
   init: function(){
     var type = basis.require('basis.type');
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
-    var DEFAULT_VALUE = type.DEFAULT_VALUE;
   },
   test: [
     {
@@ -18,7 +17,7 @@ module.exports = {
       name: 'is first item by default',
       test: function(){
         var strangeEnum = type.enumeration([3, 4, 5, null]);
-        assert(strangeEnum(DEFAULT_VALUE) === 3);
+        assert(strangeEnum.DEFAULT_VALUE === 3);
       }
     },
     {
@@ -57,7 +56,7 @@ module.exports = {
         var warned = catchWarnings(function(){
           var emptyEnum = type.enumeration([]);
 
-          assert(emptyEnum(DEFAULT_VALUE) === null);
+          assert(emptyEnum.DEFAULT_VALUE === null);
         });
 
         assert(warned);
@@ -69,7 +68,7 @@ module.exports = {
         var warned = catchWarnings(function(){
           var emptyEnum = type.enumeration([]);
 
-          assert(emptyEnum(DEFAULT_VALUE) === null);
+          assert(emptyEnum.DEFAULT_VALUE === null);
         });
 
         assert(warned);
@@ -96,12 +95,12 @@ module.exports = {
           }
         },
         {
-          name: 'returns default value',
+          name: 'sets default value',
           test: function(){
             var enumeration = type.enumeration([true, false, 'any']);
             var enumWithDefault = enumeration.default('any');
 
-            assert(enumWithDefault(DEFAULT_VALUE) === 'any');
+            assert(enumWithDefault.DEFAULT_VALUE === 'any');
           }
         },
         {
@@ -115,7 +114,7 @@ module.exports = {
             });
 
             assert(warned);
-            assert(transform(DEFAULT_VALUE) === true);
+            assert(transform.DEFAULT_VALUE === true);
           }
         }
       ]

@@ -1,13 +1,9 @@
-var DEFAULT_VALUE = require('./DEFAULT_VALUE.js');
 var fromISOString = require('basis.date').fromISOString;
 
 var ISO_REGEXP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
 var PARTIAL_ISO_REGEXP = /^\d{4}-\d{2}-\d{2}$/;
 
-function toDate(value, defaultValue) {
-  if (value === DEFAULT_VALUE)
-    return defaultValue;
-
+function toDate(value) {
   if (value === null)
     return null;
 
@@ -32,7 +28,7 @@ function dateTransform(defaultValue){
     return date;
   }
 
-  return function(value, oldValue){
+  var transform = function(value, oldValue){
     var dateObject = toDate(value, defaultValue);
 
     if (dateObject === undefined){
@@ -45,6 +41,10 @@ function dateTransform(defaultValue){
 
     return dateObject;
   };
+
+  transform.DEFAULT_VALUE = defaultValue;
+
+  return transform;
 }
 
 var date = dateTransform(null);

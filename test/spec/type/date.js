@@ -3,7 +3,6 @@ module.exports = {
   init: function(){
     var type = basis.require('basis.type');
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
-    var DEFAULT_VALUE = type.DEFAULT_VALUE;
 
     var nonDatesExceptNull = [
       '123,45',
@@ -58,7 +57,7 @@ module.exports = {
     {
       name: 'is null by default',
       test: function(){
-        assert(type.date(DEFAULT_VALUE) === null);
+        assert(type.date.DEFAULT_VALUE === null);
       }
     },
     {
@@ -129,10 +128,10 @@ module.exports = {
           }
         },
         {
-          name: 'returns default value',
+          name: 'sets default value',
           test: function(){
             var date = new Date();
-            assert(type.date.default(date)(DEFAULT_VALUE) === date);
+            assert(type.date.default(date).DEFAULT_VALUE === date);
           }
         },
         {
@@ -157,14 +156,14 @@ module.exports = {
           name: 'accepts timestamps defaults',
           test: function(){
             var timestamp = -777870000000;
-            assert(type.date.default(timestamp)(DEFAULT_VALUE).getTime() === timestamp);
+            assert(type.date.default(timestamp).DEFAULT_VALUE.getTime() === timestamp);
           }
         },
         {
           name: 'accepts ISO strings defaults',
           test: function(){
             var iso = '2012-05-30T21:00:00.000Z';
-            assert(type.date.default(iso)(DEFAULT_VALUE).toISOString() === iso);
+            assert(type.date.default(iso).DEFAULT_VALUE.toISOString() === iso);
           }
         },
         {
@@ -177,7 +176,7 @@ module.exports = {
               });
 
               assert(warned);
-              assert(transform(DEFAULT_VALUE) === null);
+              assert(transform.DEFAULT_VALUE === null);
             });
           }
         }

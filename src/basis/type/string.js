@@ -1,51 +1,47 @@
-var DEFAULT_VALUE = require('./DEFAULT_VALUE.js');
+function stringTransform(defaultValue, nullable) {
+  /** @cut */ var transformName = nullable ? 'basis.type.string.nullable' : 'basis.type.string';
 
-function stringTransform(defaultValue) {
-  if (typeof defaultValue !== 'string')
+  if (nullable)
   {
-    /** @cut */ basis.dev.warn('basis.type.string.default expected string as default value but got ' + defaultValue + '. Falling back to basis.type.string');
-    return string;
+    if (defaultValue !== null && typeof defaultValue !== 'string')
+    {
+      /** @cut */ basis.dev.warn(transformName + '.default expected string or null as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      return string.nullable;
+    }
+  }
+  else
+  {
+    if (typeof defaultValue !== 'string')
+    {
+      /** @cut */ basis.dev.warn(transformName + '.default expected string as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      return string;
+    }
   }
 
-  return function(value, oldValue){
+  var transform = function(value, oldValue){
     if (typeof value === 'string')
       return value;
 
-    if (value === DEFAULT_VALUE)
-      return defaultValue;
-
-    /** @cut */ basis.dev.warn('basis.type.string expected string but got ' + value);
-
-    return oldValue;
-  };
-}
-
-function nullableStringTransform(defaultValue) {
-  if (defaultValue !== null && typeof defaultValue !== 'string')
-  {
-    /** @cut */ basis.dev.warn('basis.type.string.nullable.default expected string as default value but got ' + defaultValue + '. Falling back to basis.type.string.nullable');
-    return string.nullable;
-  }
-
-  return function(value, oldValue){
-    if (typeof value === 'string')
-      return value;
-
-    if (value === null)
+    if (nullable && value === null)
       return null;
 
-    if (value === DEFAULT_VALUE)
-      return defaultValue;
-
-    /** @cut */ basis.dev.warn('basis.type.string expected string or null but got ' + value);
+    /** @cut */ basis.dev.warn(transformName + ' expected string or null but got ' + value);
 
     return oldValue;
   };
+
+  transform.DEFAULT_VALUE = defaultValue;
+
+  return transform;
 }
 
-var string = stringTransform('');
-string['default'] = stringTransform;
-string.nullable = nullableStringTransform(null);
-string.nullable['default'] = nullableStringTransform;
+var string = stringTransform('', false);
+string['default'] = function(defaultValue){
+  return stringTransform(defaultValue, false);
+};
+string.nullable = stringTransform(null, true);
+string.nullable['default'] = function(defaultValue){
+  return stringTransform(defaultValue, true);
+};
 
 module.exports = string;

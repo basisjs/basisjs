@@ -1,5 +1,3 @@
-var DEFAULT_VALUE = require('./DEFAULT_VALUE.js');
-
 function enumeration(values) {
   if (!Array.isArray(values))
   {
@@ -17,13 +15,12 @@ function enumeration(values) {
     if (values.indexOf(value) !== -1)
       return value;
 
-    if (value === DEFAULT_VALUE)
-      return values[0];
-
     /** @cut */ basis.dev.warn('basis.type.enum expected one of values from the list (' + values + ') but got ' + value);
 
     return oldValue;
   };
+
+  transform.DEFAULT_VALUE = values[0];
 
   transform['default'] = function(defaultValue){
     if (values.indexOf(defaultValue) === -1)
@@ -32,9 +29,13 @@ function enumeration(values) {
       return transform;
     }
 
-    return function(value){
-      return value === DEFAULT_VALUE ? defaultValue : transform.apply(this, arguments);
+    var transformWithDefaultValue = function(){
+      return transform.apply(this, arguments);
     };
+
+    transformWithDefaultValue.DEFAULT_VALUE = defaultValue;
+
+    return transformWithDefaultValue;
   };
 
   return transform;

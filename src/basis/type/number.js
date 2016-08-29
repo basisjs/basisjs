@@ -1,59 +1,53 @@
-var DEFAULT_VALUE = require('./DEFAULT_VALUE.js');
-
 function isNumber(value) {
   return value === 0 || typeof value !== 'object' && isFinite(value);
 }
 
-function numberTransform(defaultValue) {
-  if (!isNumber(defaultValue))
+function numberTransform(defaultValue, nullable) {
+  /** @cut */ var transformName = nullable ? 'basis.type.number.nullable' : 'basis.type.number';
+
+  if (nullable)
   {
-    /** @cut */ basis.dev.warn('basis.type.number.default expected number as default value but got ' + defaultValue + '. Falling back to basis.type.number');
-    return number;
+    if (defaultValue !== null && !isNumber(defaultValue))
+    {
+      /** @cut */ basis.dev.warn(transformName + '.default expected number or null as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      return number.nullable;
+    }
   }
-
-  defaultValue = Number(defaultValue);
-
-  return function(value, oldValue){
-    if (isNumber(value))
-      return Number(value);
-
-    if (value === DEFAULT_VALUE)
-      return defaultValue;
-
-    /** @cut */ basis.dev.warn('basis.type.number expected number but got ' + value);
-
-    return oldValue;
-  };
-}
-
-function nullableNumberTransform(defaultValue) {
-  if (defaultValue !== null && !isNumber(defaultValue))
+  else
   {
-    /** @cut */ basis.dev.warn('basis.type.number.nullable.default expected number or null as default value but got ' + defaultValue + '. Falling back to basis.type.number.nullable');
-    return number.nullable;
+    if (!isNumber(defaultValue))
+    {
+      /** @cut */ basis.dev.warn(transformName + '.default expected number as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      return number;
+    }
   }
 
   defaultValue = defaultValue === null ? null : Number(defaultValue);
 
-  return function(value, oldValue){
+  var transform = function(value, oldValue){
     if (isNumber(value))
       return Number(value);
 
-    if (value === null)
+    if (nullable && value === null)
       return null;
 
-    if (value === DEFAULT_VALUE)
-      return defaultValue;
-
-    /** @cut */ basis.dev.warn('basis.type.number expected number or null but got ' + value);
+    /** @cut */ basis.dev.warn(transformName + ' expected number but got ' + value);
 
     return oldValue;
   };
+
+  transform.DEFAULT_VALUE = defaultValue;
+
+  return transform;
 }
 
-var number = numberTransform(0);
-number['default'] = numberTransform;
-number.nullable = nullableNumberTransform(null);
-number.nullable['default'] = nullableNumberTransform;
+var number = numberTransform(0, false);
+number['default'] = function(defaultValue){
+  return numberTransform(defaultValue, false);
+};
+number.nullable = numberTransform(null, true);
+number.nullable['default'] = function(defaultValue){
+  return numberTransform(defaultValue, true);
+};
 
 module.exports = number;

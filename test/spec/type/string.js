@@ -3,7 +3,6 @@ module.exports = {
   init: function(){
     var type = basis.require('basis.type');
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
-    var DEFAULT_VALUE = type.DEFAULT_VALUE;
 
     var nonStringsExceptNull = [
       2,
@@ -27,7 +26,7 @@ module.exports = {
     {
       name: 'is empty string by default',
       test: function(){
-        assert(type.string(DEFAULT_VALUE) === '');
+        assert(type.string.DEFAULT_VALUE === '');
       }
     },
     {
@@ -80,7 +79,7 @@ module.exports = {
         {
           name: 'is null by default',
           test: function(){
-            assert(type.string.nullable(DEFAULT_VALUE) === null);
+            assert(type.string.nullable.DEFAULT_VALUE === null);
           }
         },
         {
@@ -115,9 +114,9 @@ module.exports = {
               }
             },
             {
-              name: 'returns default value',
+              name: 'sets default value',
               test: function(){
-                assert(type.string.nullable.default('defValue')(DEFAULT_VALUE) === 'defValue');
+                assert(type.string.nullable.default('defValue').DEFAULT_VALUE === 'defValue');
               }
             },
             {
@@ -129,7 +128,7 @@ module.exports = {
                 });
 
                 assert(warned);
-                assert(transform(DEFAULT_VALUE) === null);
+                assert(transform.DEFAULT_VALUE === null);
               }
             }
           ]
@@ -156,9 +155,9 @@ module.exports = {
           }
         },
         {
-          name: 'returns default value',
+          name: 'sets default value',
           test: function(){
-            assert(type.string.default('defValue')(DEFAULT_VALUE) === 'defValue');
+            assert(type.string.default('defValue').DEFAULT_VALUE === 'defValue');
           }
         },
         {
@@ -170,7 +169,7 @@ module.exports = {
             });
 
             assert(warned);
-            assert(transform(DEFAULT_VALUE) === '');
+            assert(transform.DEFAULT_VALUE === '');
           }
         }
       ]

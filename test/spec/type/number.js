@@ -3,7 +3,6 @@ module.exports = {
   init: function(){
     var type = basis.require('basis.type');
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
-    var DEFAULT_VALUE = type.DEFAULT_VALUE;
 
     var nonNumbersExceptNull = [
       '123,45',
@@ -27,7 +26,7 @@ module.exports = {
     {
       name: 'is 0 by default',
       test: function(){
-        assert(type.number(DEFAULT_VALUE) === 0);
+        assert(type.number.DEFAULT_VALUE === 0);
       }
     },
     {
@@ -80,7 +79,7 @@ module.exports = {
         {
           name: 'is null by default',
           test: function(){
-            assert(type.number.nullable(DEFAULT_VALUE) === null);
+            assert(type.number.nullable.DEFAULT_VALUE === null);
           }
         },
         {
@@ -115,15 +114,15 @@ module.exports = {
               }
             },
             {
-              name: 'returns default value',
+              name: 'sets default value',
               test: function(){
-                assert(type.number.nullable.default(1)(DEFAULT_VALUE) === 1);
+                assert(type.number.nullable.default(1).DEFAULT_VALUE === 1);
               }
             },
             {
               name: 'accepts stringified defaults',
               test: function(){
-                assert(type.number.nullable.default('777')(DEFAULT_VALUE) === 777);
+                assert(type.number.nullable.default('777').DEFAULT_VALUE === 777);
               }
             },
             {
@@ -135,7 +134,7 @@ module.exports = {
                 });
 
                 assert(warned);
-                assert(transform(DEFAULT_VALUE) === null);
+                assert(transform.DEFAULT_VALUE === null);
               }
             }
           ]
@@ -162,15 +161,15 @@ module.exports = {
           }
         },
         {
-          name: 'returns default value',
+          name: 'sets default value',
           test: function(){
-            assert(type.number.default(1)(DEFAULT_VALUE) === 1);
+            assert(type.number.default(1).DEFAULT_VALUE === 1);
           }
         },
         {
           name: 'accepts stringified defaults',
           test: function(){
-            assert(type.number.default('123')(DEFAULT_VALUE) === 123);
+            assert(type.number.default('123').DEFAULT_VALUE === 123);
           }
         },
         {
@@ -183,7 +182,7 @@ module.exports = {
               });
 
               assert(warned);
-              assert(transform(DEFAULT_VALUE) === 0);
+              assert(transform.DEFAULT_VALUE === 0);
             });
           }
         }

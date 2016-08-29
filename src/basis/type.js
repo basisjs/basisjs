@@ -80,8 +80,6 @@ module.exports = {
   object: require('./type/object.js'),
   date: require('./type/date.js'),
 
-  DEFAULT_VALUE: require('./type/DEFAULT_VALUE.js'),
-
   validate: validateScheme,
   getTypeByName: getTypeByName,
   getTypeByNameIfDefined: getTypeByNameIfDefined,

@@ -3,7 +3,6 @@ module.exports = {
   init: function(){
     var type = basis.require('basis.type');
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
-    var DEFAULT_VALUE = type.DEFAULT_VALUE;
 
     var nonObjects = [
       2,
@@ -30,7 +29,7 @@ module.exports = {
     {
       name: 'is empty object by default',
       test: function(){
-        assert({}, type.object(DEFAULT_VALUE));
+        assert({}, type.object.DEFAULT_VALUE);
       }
     },
     {
@@ -86,7 +85,7 @@ module.exports = {
         {
           name: 'is null by default',
           test: function(){
-            assert(type.object.nullable(DEFAULT_VALUE) === null);
+            assert(type.object.nullable.DEFAULT_VALUE === null);
           }
         },
         {
@@ -124,10 +123,10 @@ module.exports = {
               }
             },
             {
-              name: 'returns default value',
+              name: 'sets default value',
               test: function(){
                 var defValue = { any: 'any' };
-                assert(type.object.nullable.default(defValue)(DEFAULT_VALUE) === defValue);
+                assert(type.object.nullable.default(defValue).DEFAULT_VALUE === defValue);
               }
             },
             {
@@ -139,7 +138,7 @@ module.exports = {
                 });
 
                 assert(warned);
-                assert(transform(DEFAULT_VALUE) === null);
+                assert(transform.DEFAULT_VALUE === null);
               }
             }
           ]
@@ -168,11 +167,11 @@ module.exports = {
           }
         },
         {
-          name: 'returns default value',
+          name: 'sets default value',
           test: function(){
             var defValue = { one: 1 };
 
-            assert(type.object.default(defValue)(DEFAULT_VALUE) === defValue);
+            assert(type.object.default(defValue).DEFAULT_VALUE === defValue);
           }
         },
         {
@@ -185,7 +184,7 @@ module.exports = {
               });
 
               assert(warned);
-              assert(transform(DEFAULT_VALUE), {});
+              assert(transform.DEFAULT_VALUE, {});
             });
           }
         }
