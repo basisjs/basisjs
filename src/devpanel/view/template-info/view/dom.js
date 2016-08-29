@@ -3,6 +3,7 @@ var templateSwitcher = require('basis.template').switcher;
 var hoveredBinding = require('./bindings.js').hover;
 var jsSourcePopup = resource('./js-source-popup.js');
 var templateApi = require('../api.js');
+var fileApi = require('api').ns('file');
 var SINGLETON = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source'];
 var NodeClassByType = {};
 
@@ -68,7 +69,7 @@ var ValuePart = DOMNode.subclass({
   action: {
     openLoc: function(){
       if (this.loc)
-        this.target.openFile(this.loc);
+        fileApi.open(this.loc);
     }
   }
 });
