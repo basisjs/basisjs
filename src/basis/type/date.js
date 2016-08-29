@@ -28,7 +28,7 @@ function dateTransform(defaultValue){
 
   if (defaultValue === undefined)
   {
-    /** @cut */ basis.dev.warn('type.date.default expected ISO string, number, date or null as default value but got ' + defaultValue + '. Falling back to type.date');
+    /** @cut */ basis.dev.warn('basis.type.date.default expected ISO string, number, date or null as default value but got ' + defaultValue + '. Falling back to basis.type.date');
     return date;
   }
 
@@ -36,7 +36,7 @@ function dateTransform(defaultValue){
     var dateObject = toDate(value, defaultValue);
 
     if (dateObject === undefined){
-      /** @cut */ basis.dev.warn('type.date expected ISO string, number, date or null but got ' + value);
+      /** @cut */ basis.dev.warn('basis.type.date expected ISO string, number, date or null but got ' + value);
       return oldValue;
     }
 
@@ -48,6 +48,6 @@ function dateTransform(defaultValue){
 }
 
 var date = dateTransform(null);
-date.default = dateTransform;
+date['default'] = dateTransform;
 
 module.exports = date;

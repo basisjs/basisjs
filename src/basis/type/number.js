@@ -7,7 +7,7 @@ function isNumber(value) {
 function numberTransform(defaultValue) {
   if (!isNumber(defaultValue))
   {
-    /** @cut */ basis.dev.warn('type.number.default expected number as default value but got ' + defaultValue + '. Falling back to type.number');
+    /** @cut */ basis.dev.warn('basis.type.number.default expected number as default value but got ' + defaultValue + '. Falling back to basis.type.number');
     return number;
   }
 
@@ -20,7 +20,7 @@ function numberTransform(defaultValue) {
     if (value === DEFAULT_VALUE)
       return defaultValue;
 
-    /** @cut */ basis.dev.warn('type.number expected number but got ' + value);
+    /** @cut */ basis.dev.warn('basis.type.number expected number but got ' + value);
 
     return oldValue;
   };
@@ -29,7 +29,7 @@ function numberTransform(defaultValue) {
 function nullableNumberTransform(defaultValue) {
   if (defaultValue !== null && !isNumber(defaultValue))
   {
-    /** @cut */ basis.dev.warn('type.number.nullable.default expected number or null as default value but got ' + defaultValue + '. Falling back to type.number.nullable');
+    /** @cut */ basis.dev.warn('basis.type.number.nullable.default expected number or null as default value but got ' + defaultValue + '. Falling back to basis.type.number.nullable');
     return number.nullable;
   }
 
@@ -45,15 +45,15 @@ function nullableNumberTransform(defaultValue) {
     if (value === DEFAULT_VALUE)
       return defaultValue;
 
-    /** @cut */ basis.dev.warn('type.number expected number or null but got ' + value);
+    /** @cut */ basis.dev.warn('basis.type.number expected number or null but got ' + value);
 
     return oldValue;
   };
 }
 
 var number = numberTransform(0);
-number.default = numberTransform;
+number['default'] = numberTransform;
 number.nullable = nullableNumberTransform(null);
-number.nullable.default = nullableNumberTransform;
+number.nullable['default'] = nullableNumberTransform;
 
 module.exports = number;

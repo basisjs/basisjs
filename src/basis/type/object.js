@@ -13,7 +13,7 @@ function isObject(value) {
 function objectTransform(defaultValue) {
   if (!isObject(defaultValue))
   {
-    /** @cut */ basis.dev.warn('type.object.default expected object as default value but got ' + defaultValue + '. Falling back to type.object');
+    /** @cut */ basis.dev.warn('basis.type.object.default expected object as default value but got ' + defaultValue + '. Falling back to basis.type.object');
     return object;
   }
 
@@ -24,7 +24,7 @@ function objectTransform(defaultValue) {
     if (isObject(value))
       return value;
 
-    /** @cut */ basis.dev.warn('type.object expected object but got ' + value);
+    /** @cut */ basis.dev.warn('basis.type.object expected object but got ' + value);
 
     return oldValue;
   };
@@ -33,7 +33,7 @@ function objectTransform(defaultValue) {
 function nullableObjectTransform(defaultValue) {
   if (defaultValue !== null && !isObject(defaultValue))
   {
-    /** @cut */ basis.dev.warn('type.object.nullable.default expected object as default value but got ' + defaultValue + '. Falling back to type.object.nullable');
+    /** @cut */ basis.dev.warn('basis.type.object.nullable.default expected object as default value but got ' + defaultValue + '. Falling back to basis.type.object.nullable');
     return object.nullable;
   }
 
@@ -47,15 +47,15 @@ function nullableObjectTransform(defaultValue) {
     if (value === null)
       return null;
 
-    /** @cut */ basis.dev.warn('type.object.nullable expected object or null but got ' + value);
+    /** @cut */ basis.dev.warn('basis.type.object.nullable expected object or null but got ' + value);
 
     return oldValue;
   };
 }
 
 var object = objectTransform({});
-object.default = objectTransform;
+object['default'] = objectTransform;
 object.nullable = nullableObjectTransform(null);
-object.nullable.default = nullableObjectTransform;
+object.nullable['default'] = nullableObjectTransform;
 
 module.exports = object;

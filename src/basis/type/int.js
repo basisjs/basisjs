@@ -11,7 +11,7 @@ function Int(value) {
 function intTransform(defaultValue) {
   if (!isNumber(defaultValue))
   {
-    /** @cut */ basis.dev.warn('type.int.default expected number as default value but got ' + defaultValue + '. Falling back to type.int');
+    /** @cut */ basis.dev.warn('basis.type.int.default expected number as default value but got ' + defaultValue + '. Falling back to basis.type.int');
     return int;
   }
 
@@ -24,7 +24,7 @@ function intTransform(defaultValue) {
     if (value === DEFAULT_VALUE)
       return defaultValue;
 
-    /** @cut */ basis.dev.warn('type.int expected int but got ' + value);
+    /** @cut */ basis.dev.warn('basis.type.int expected int but got ' + value);
 
     return oldValue;
   };
@@ -33,7 +33,7 @@ function intTransform(defaultValue) {
 function nullableIntTransform(defaultValue) {
   if (defaultValue !== null && !isNumber(defaultValue))
   {
-    /** @cut */ basis.dev.warn('type.int.nullable.default expected number or null as default value but got ' + defaultValue + '. Falling back to type.int.nullable');
+    /** @cut */ basis.dev.warn('basis.type.int.nullable.default expected number or null as default value but got ' + defaultValue + '. Falling back to basis.type.int.nullable');
     return int.nullable;
   }
 
@@ -49,15 +49,15 @@ function nullableIntTransform(defaultValue) {
     if (value === DEFAULT_VALUE)
       return defaultValue;
 
-    /** @cut */ basis.dev.warn('type.int expected int or null but got ' + value);
+    /** @cut */ basis.dev.warn('basis.type.int expected int or null but got ' + value);
 
     return oldValue;
   };
 }
 
 var int = intTransform(0);
-int.default = intTransform;
+int['default'] = intTransform;
 int.nullable = nullableIntTransform(null);
-int.nullable.default = nullableIntTransform;
+int.nullable['default'] = nullableIntTransform;
 
 module.exports = int;
