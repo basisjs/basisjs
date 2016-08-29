@@ -87,25 +87,34 @@
   var TYPE_POINTER = 3;
 
   var INPUT_TYPE = {
-    keydown:       TYPE_KEYBOARD,
-    keypress:      TYPE_KEYBOARD,
-    keyup:         TYPE_KEYBOARD,
+    // keyboard events
+    keydown:  TYPE_KEYBOARD,
+    keypress: TYPE_KEYBOARD,
+    keyup:    TYPE_KEYBOARD,
 
-    click:         TYPE_MOUSE,
-    dblclick:      TYPE_MOUSE,
-    mousedown:     TYPE_MOUSE,
-    mouseup:       TYPE_MOUSE,
-    mouseover:     TYPE_MOUSE,
-    mousemove:     TYPE_MOUSE,
-    mouseout:      TYPE_MOUSE,
-    mouseenter:    TYPE_MOUSE,
-    mouseleave:    TYPE_MOUSE,
+    // mouse events
+    click:      TYPE_MOUSE,
+    dblclick:   TYPE_MOUSE,
+    mousedown:  TYPE_MOUSE,
+    mouseup:    TYPE_MOUSE,
+    mouseover:  TYPE_MOUSE,
+    mousemove:  TYPE_MOUSE,
+    mouseout:   TYPE_MOUSE,
+    mouseenter: TYPE_MOUSE,
+    mouseleave: TYPE_MOUSE,
 
-    touchstart:    TYPE_TOUCH,
-    touchmove:     TYPE_TOUCH,
-    touchend:      TYPE_TOUCH,
-    touchcancel:   TYPE_TOUCH,
+    // mouse scroll events
+    wheel:          TYPE_MOUSE,
+    mousewheel:     TYPE_MOUSE,
+    DOMMouseScroll: TYPE_MOUSE,
 
+    // touch events
+    touchstart:  TYPE_TOUCH,
+    touchmove:   TYPE_TOUCH,
+    touchend:    TYPE_TOUCH,
+    touchcancel: TYPE_TOUCH,
+
+    // pointer events
     pointerover:   TYPE_POINTER,
     pointerenter:  TYPE_POINTER,
     pointerdown:   TYPE_POINTER,
@@ -115,10 +124,6 @@
     pointerout:    TYPE_POINTER,
     pointerleave:  TYPE_POINTER
   };
-
-  extend(INPUT_TYPE, BROWSER_EVENTS.mousewheel.reduce(function(result, eventName){
-    return result[eventName] = TYPE_MOUSE, result;
-  }, {}));
 
  /**
   * @param {string} eventName
