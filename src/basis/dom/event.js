@@ -6,6 +6,7 @@
   var namespace = 'basis.dom.event';
 
   var document = global.document;
+  var extend = basis.object.extend;
   var $null = basis.fn.$null;
   var arrayFrom = basis.array.from;
   var globalEvents = {};
@@ -70,33 +71,59 @@
     mousewheel: ['wheel', 'mousewheel', 'DOMMouseScroll']
   };
 
-  var DEPRECATED = /^(returnValue|keyLocation|layerX|layerY|webkitMovementX|webkitMovementY|keyIdentifier)$/;
-
-  var KEYBOARD_EVENTS = [
-    'keyup',
-    'keydown',
-    'keypress'
+  var DEPRECATED_PROPERTIES = [
+    'returnValue',
+    'keyLocation',
+    'layerX',
+    'layerY',
+    'webkitMovementX',
+    'webkitMovementY',
+    'keyIdentifier'
   ];
 
-  var MOUSE_EVENTS = [
-    'click',
-    'dblclick',
-    'mousedown',
-    'mouseup',
-    'mouseover',
-    'mousemove',
-    'mouseout',
-    'mouseenter',
-    'mouseleave'
-  ].concat(BROWSER_EVENTS.mousewheel);
+  var TYPE_KEYBOARD = 0;
+  var TYPE_MOUSE = 1;
+  var TYPE_TOUCH = 2;
+  var TYPE_POINTER = 3;
 
-  function isKeyboardEvent(event) {
-    return KEYBOARD_EVENTS.indexOf(event.type) != -1;
-  }
+  var INPUT_TYPE = {
+    // keyboard events
+    keydown:  TYPE_KEYBOARD,
+    keypress: TYPE_KEYBOARD,
+    keyup:    TYPE_KEYBOARD,
 
-  function isMouseEvent(event) {
-    return MOUSE_EVENTS.indexOf(event.type) != -1;
-  }
+    // mouse events
+    click:      TYPE_MOUSE,
+    dblclick:   TYPE_MOUSE,
+    mousedown:  TYPE_MOUSE,
+    mouseup:    TYPE_MOUSE,
+    mouseover:  TYPE_MOUSE,
+    mousemove:  TYPE_MOUSE,
+    mouseout:   TYPE_MOUSE,
+    mouseenter: TYPE_MOUSE,
+    mouseleave: TYPE_MOUSE,
+
+    // mouse scroll events
+    wheel:          TYPE_MOUSE,
+    mousewheel:     TYPE_MOUSE,
+    DOMMouseScroll: TYPE_MOUSE,
+
+    // touch events
+    touchstart:  TYPE_TOUCH,
+    touchmove:   TYPE_TOUCH,
+    touchend:    TYPE_TOUCH,
+    touchcancel: TYPE_TOUCH,
+
+    // pointer events
+    pointerover:   TYPE_POINTER,
+    pointerenter:  TYPE_POINTER,
+    pointerdown:   TYPE_POINTER,
+    pointermove:   TYPE_POINTER,
+    pointerup:     TYPE_POINTER,
+    pointercancel: TYPE_POINTER,
+    pointerout:    TYPE_POINTER,
+    pointerleave:  TYPE_POINTER
+  };
 
  /**
   * @param {string} eventName
@@ -134,12 +161,12 @@
 
       for (var name in event)
         /** prevent warnings on deprecated properties */
-        if (!DEPRECATED.test(name) && (event.type != 'progress' || (name != 'totalSize' && name != 'position')))
+        if (DEPRECATED_PROPERTIES.indexOf(name) == -1 && (event.type != 'progress' || (name != 'totalSize' && name != 'position')))
           if (typeof event[name] != 'function' && name in this == false)
             this[name] = event[name];
 
       var target = sender(event);
-      basis.object.extend(this, {
+      extend(this, {
         event_: event,
 
         sender: target,
@@ -147,23 +174,55 @@
         path: event.path ? basis.array(event.path) : getPath(target)
       });
 
-      if (isKeyboardEvent(event))
+      switch (INPUT_TYPE[event.type])
       {
-        basis.object.extend(this, {
-          key: key(event),
-          charCode: charCode(event)
-        });
-      }
-      else if (isMouseEvent(event))
-      {
-        basis.object.extend(this, {
-          mouseLeft: mouseButton(event, MOUSE_LEFT),
-          mouseMiddle: mouseButton(event, MOUSE_MIDDLE),
-          mouseRight: mouseButton(event, MOUSE_RIGHT),
-          mouseX: mouseX(event),
-          mouseY: mouseY(event),
-          wheelDelta: wheelDelta(event)
-        });
+        case TYPE_KEYBOARD:
+          extend(this, {
+            key: key(event),
+            charCode: charCode(event)
+          });
+          break;
+
+        case TYPE_MOUSE:
+          extend(this, {
+            mouseLeft: mouseButton(event, MOUSE_LEFT),
+            mouseMiddle: mouseButton(event, MOUSE_MIDDLE),
+            mouseRight: mouseButton(event, MOUSE_RIGHT),
+            mouseX: mouseX(event),
+            mouseY: mouseY(event),
+            wheelDelta: wheelDelta(event),
+
+            // for common interface
+            pointerX: mouseX(event),
+            pointerY: mouseY(event)
+          });
+          break;
+
+        case TYPE_TOUCH:
+          extend(this, {
+            touchX: touchX(event),
+            touchY: touchY(event),
+
+            // for backward capability
+            mouseX: touchX(event),
+            mouseY: touchY(event),
+
+            // for common interface
+            pointerX: touchX(event),
+            pointerY: touchY(event)
+          });
+          break;
+
+        case TYPE_POINTER:
+          extend(this, {
+            pointerX: mouseX(event),
+            pointerY: mouseY(event),
+
+            // for backward capability
+            mouseX: mouseX(event),
+            mouseY: mouseY(event)
+          });
+          break;
       }
     },
     stopBubble: function(){
@@ -289,16 +348,13 @@
   * @return {number}
   */
   function mouseX(event){
-    if (event.changedTouches)               // touch device
-      return event.changedTouches[0].pageX;
+    if ('pageX' in event)
+      return event.pageX;
     else
-      if ('pageX' in event)                 // all others
-        return event.pageX;
-      else
-        return 'clientX' in event
-          ? event.clientX +
-              (document.compatMode == 'CSS1Compat' ? document.documentElement.scrollLeft : document.body.scrollLeft)
-          : 0;
+      return 'clientX' in event
+        ? event.clientX +
+            (document.compatMode == 'CSS1Compat' ? document.documentElement.scrollLeft : document.body.scrollLeft)
+        : 0;
   }
 
  /**
@@ -307,19 +363,36 @@
   * @return {number}
   */
   function mouseY(event){
-    if (event.changedTouches)             // touch device
-      return event.changedTouches[0].pageY;
+    if ('pageY' in event)
+      return event.pageY;
     else
-      if ('pageY' in event)               // all others
-        return event.pageY;
-      else
-        return 'clientY' in event
-          ? event.clientY +
-              (document.compatMode == 'CSS1Compat' ? document.documentElement.scrollTop : document.body.scrollTop)
-          : 0;
+      return 'clientY' in event
+        ? event.clientY +
+            (document.compatMode == 'CSS1Compat' ? document.documentElement.scrollTop : document.body.scrollTop)
+        : 0;
+  }
+
+  /**
+  * Returns touch horizontal page coordinate.
+  * @param {Event} event
+  * @return {number}
+  */
+  function touchX(event){
+    if (event.changedTouches)
+      return event.changedTouches[0].pageX;
   }
 
  /**
+  * Returns touch vertical page coordinate.
+  * @param {Event} event
+  * @return {number}
+  */
+  function touchY(event){
+    if (event.changedTouches)
+      return event.changedTouches[0].pageY;
+  }
+
+  /**
   * Returns mouse wheel delta.
   * @param {Event} event
   * @return {number} -1, 0, 1
@@ -787,6 +860,8 @@
     mouseX: wrapEventFunction(mouseX),
     mouseY: wrapEventFunction(mouseY),
     wheelDelta: wrapEventFunction(wheelDelta),
+    touchX: wrapEventFunction(touchX),
+    touchY: wrapEventFunction(touchY),
 
     // attach & detach event handler helpers
     addGlobalHandler: addGlobalHandler,
