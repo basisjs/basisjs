@@ -29,6 +29,28 @@ module.exports = {
           }
         },
         {
+          name: 'corner case',
+          test: function(){
+            var toStringType = type.getTypeByName('toString');
+
+            var warned = catchWarnings(function(){
+              toStringType({});
+            });
+
+            assert(warned);
+            assert(type.getTypeByNameIfDefined('toString') === undefined);
+
+            type.defineType('toString', basis.fn.$self);
+
+            var warnedAgain = catchWarnings(function(){
+              toStringType({});
+            });
+
+            assert(!warnedAgain);
+            assert(type.getTypeByNameIfDefined('toString') === basis.fn.$self);
+          }
+        },
+        {
           name: 'deferred type definition',
           test: function(){
             var DeferredType = type.getTypeByName('DeferredType');

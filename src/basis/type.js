@@ -7,7 +7,7 @@ var pendingTypeNames = {};
 
 function defineType(typeName, type){
   /** @cut */ if (typeof typeName !== 'string')
-    /** @cut */   basis.dev.warn(namespace + ': defineType expects a string as a type name. `' + typeName + '` is not a string');
+  /** @cut */   basis.dev.warn(namespace + ': defineType expects a string as a type name. `' + typeName + '` is not a string');
 
   var list = deferredTypeDef[typeName];
 
@@ -33,7 +33,7 @@ function defineType(typeName, type){
 }
 
 function getTypeByName(typeName, typeHost, field){
-  if (namedTypes[typeName])
+  if (namedTypes.hasOwnProperty(typeName))
     return namedTypes[typeName];
 
   if (typeHost && field)
@@ -49,7 +49,7 @@ function getTypeByName(typeName, typeHost, field){
     pendingTypeNames[typeName] = true;
 
   return function(value, oldValue){
-    var Type = namedTypes[typeName];
+    var Type = namedTypes.hasOwnProperty(typeName) ? namedTypes[typeName] : null;
 
     if (Type)
       return Type(value, oldValue);
@@ -60,7 +60,8 @@ function getTypeByName(typeName, typeHost, field){
 }
 
 function getTypeByNameIfDefined(typeName){
-  return namedTypes[typeName];
+  if (namedTypes.hasOwnProperty(typeName))
+    return namedTypes[typeName];
 }
 
 function validateScheme(){
