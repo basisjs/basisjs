@@ -2,10 +2,6 @@ function isNumber(value) {
   return value === 0 || typeof value !== 'object' && isFinite(value);
 }
 
-function Int(value) {
-  return parseInt(value, 10);
-}
-
 function intTransform(defaultValue, nullable) {
   /** @cut */ var transformName = nullable ? 'basis.type.int.nullable' : 'basis.type.int';
 
@@ -26,11 +22,11 @@ function intTransform(defaultValue, nullable) {
     }
   }
 
-  defaultValue = defaultValue === null ? null : Int(defaultValue);
+  defaultValue = defaultValue === null ? null : parseInt(defaultValue, 10);
 
   var transform = function(value, oldValue){
     if (isNumber(value))
-      return Int(value);
+      return parseInt(value, 10);
 
     if (nullable && value === null)
       return null;
