@@ -6,10 +6,7 @@ function enumeration(values) {
   }
 
   if (!values.length)
-  {
-    /** @cut */ basis.dev.warn('basis.type.enum constructor expected non-empty array but got empty. Falling back to [null]');
-    values = [null];
-  }
+    throw new Error('basis.type.enum constructor expected non-empty array but got empty.');
 
   var transform = function(value, oldValue){
     if (values.indexOf(value) !== -1)

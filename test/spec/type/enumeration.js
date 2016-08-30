@@ -51,24 +51,29 @@ module.exports = {
       }
     },
     {
-      name: 'falling back to [null] and warns when empty array passed',
+      name: 'throws when empty array passed',
       test: function(){
-        var warned = catchWarnings(function(){
-          var emptyEnum = type.enumeration([]);
+        var thrown;
 
-          assert(emptyEnum.DEFAULT_VALUE === null);
-        });
+        try {
+          type.enumeration([]);
 
-        assert(warned);
+          thrown = false;
+        } catch(e) {
+          thrown = true;
+        }
+
+        assert(thrown);
       }
     },
     {
-      name: 'wrapping non-array argument into array and warns',
+      name: 'wraps non-array argument into array and warns',
       test: function(){
         var warned = catchWarnings(function(){
-          var emptyEnum = type.enumeration([]);
+          var nonArray = {}
+          var emptyEnum = type.enumeration(nonArray);
 
-          assert(emptyEnum.DEFAULT_VALUE === null);
+          assert(emptyEnum.DEFAULT_VALUE === nonArray);
         });
 
         assert(warned);
