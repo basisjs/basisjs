@@ -53,17 +53,9 @@ module.exports = {
     {
       name: 'throws when empty array passed',
       test: function(){
-        var thrown;
-
-        try {
+        assert.exception(function(){
           type.enumeration([]);
-
-          thrown = false;
-        } catch(e) {
-          thrown = true;
-        }
-
-        assert(thrown);
+        });
       }
     },
     {
