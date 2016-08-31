@@ -1,4 +1,32 @@
-var fromISOString = require('basis.date').fromISOString;
+var reIsoStringSplit = /\D/;
+var reIsoTimezoneDesignator = /(.{10,})([\-\+]\d{1,2}):?(\d{1,2})?$/;
+var fromISOString = (function(){
+  function fastDateParse(y, m, d, h, i, s, ms){
+    var date = new Date(y, m - 1, d, h || 0, 0, s || 0, ms ? ms.substr(0, 3) : 0);
+    date.setMinutes((i || 0) - tz - date.getTimezoneOffset());
+    return date;
+  }
+
+  var tz;
+  return function(isoDateString){
+    tz = 0;
+    return fastDateParse.apply(
+      null,
+      String(isoDateString || '')
+        .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
+          // designator formats:
+          //   <datetime>Z
+          //   <datetime>±hh:mm
+          //   <datetime>±hhmm
+          //   <datetime>±hh
+          // http://en.wikipedia.org/wiki/ISO_8601#Time_zone_designators
+          tz = Number(h || 0) * 60 + Number(i || 0);
+          return pre;
+        })
+        .split(reIsoStringSplit)
+    );
+  };
+})();
 
 var ISO_REGEXP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
 var PARTIAL_ISO_REGEXP = /^\d{4}-\d{2}-\d{2}$/;
@@ -46,7 +74,7 @@ function dateTransform(defaultValue, nullable){
 
     if (dateObject === undefined){
       /** @cut */ basis.dev.warn('basis.type.date expected ISO string, number, date or null but got ' + value);
-      return oldValue;
+      return oldValue || transform.DEFAULT_VALUE;
     }
 
     if (dateObject && oldValue && dateObject.getTime() === oldValue.getTime())

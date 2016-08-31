@@ -133,7 +133,21 @@ module.exports = {
           }
         },
         {
-          name: 'everything non-array become null',
+          name: 'set null',
+          test: function(){
+            var T = nsEntity.createType({
+              fields: {
+                array: Array
+              }
+            });
+            var obj = T({ array: [1, 2, 3] });
+            obj.set('array', null);
+
+            assert(obj.data.array === null);
+          }
+        },
+        {
+          name: 'everything non-array just be ignored',
           test: function(){
             var a = [1, 2, 3];
 
@@ -144,35 +158,40 @@ module.exports = {
             });
             var obj = T({ array: a });
 
-            assert(typeof obj.set('array', null) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', undefined);
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', undefined) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', true);
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', true) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', 'whatever');
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', 'whatever') === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', 123);
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', 123) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', {});
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', {}) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', function(){});
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', function(){}) === 'object');
-            assert(obj.data.array === null);
-
-            assert(obj.set('array', 'whatever') === false);
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', 'whatever');
+            }));
+            assert(obj.data.array === a);
           }
         },
         {

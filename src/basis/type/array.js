@@ -41,7 +41,7 @@ function arrayTransform(defaultValue, nullable) {
 
     /** @cut */ basis.dev.warn('basis.type.array.nullable expected array or null but got ' + value);
 
-    return oldValue;
+    return oldValue || transform.DEFAULT_VALUE;
   };
 
   transform.DEFAULT_VALUE = defaultValue;

@@ -37,6 +37,8 @@
   var getTypeByName = basisType.getTypeByName;
   var getTypeByNameIfDefined = basisType.getTypeByNameIfDefined;
   var validateScheme = basisType.validateScheme;
+  var nullableArray = basisType.array.nullable;
+  var nullableDate = basisType.date.nullable;
 
   var NULL_INFO = {};
 
@@ -837,67 +839,6 @@
     return fn.apply(null, values);
   }
 
-  function arrayField(newArray, oldArray){
-    if (!Array.isArray(newArray))
-      return null;
-
-    if (!Array.isArray(oldArray) || newArray.length != oldArray.length)
-      return newArray || null;
-
-    for (var i = 0; i < newArray.length; i++)
-      if (newArray[i] !== oldArray[i])
-        return newArray;
-
-    return oldArray;
-  }
-
-  var reIsoStringSplit = /\D/;
-  var reIsoTimezoneDesignator = /(.{10,})([\-\+]\d{1,2}):?(\d{1,2})?$/;
-  var fromISOString = (function(){
-    function fastDateParse(y, m, d, h, i, s, ms){
-      var date = new Date(y, m - 1, d, h || 0, 0, s || 0, ms ? ms.substr(0, 3) : 0);
-      date.setMinutes((i || 0) - tz - date.getTimezoneOffset());
-      return date;
-    }
-
-    var tz;
-    return function(isoDateString){
-      tz = 0;
-      return fastDateParse.apply(
-        null,
-        String(isoDateString || '')
-          .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
-            // designator formats:
-            //   <datetime>Z
-            //   <datetime>±hh:mm
-            //   <datetime>±hhmm
-            //   <datetime>±hh
-            // http://en.wikipedia.org/wiki/ISO_8601#Time_zone_designators
-            tz = Number(h || 0) * 60 + Number(i || 0);
-            return pre;
-          })
-          .split(reIsoStringSplit)
-      );
-    };
-  })();
-
-  function dateField(value, oldValue){
-    if (typeof value == 'string' && value)
-      return fromISOString(value);
-
-    if (typeof value == 'number' && isNaN(value) == false)
-      return new Date(value);
-
-    if (value == null)
-      return null;
-
-    if (value && value.constructor === Date)
-      return value;
-
-    /** @cut */ basis.dev.warn('basis.entity: Bad value for Date field, value ignored');
-    return oldValue || null;
-  }
-
   function addField(entityType, name, config){
     // normalize config
     if (typeof config == 'string' ||
@@ -951,10 +892,10 @@
       }
 
       if (config.type === Array)
-        config.type = arrayField;
+        config.type = nullableArray;
 
       if (config.type === Date)
-        config.type = dateField;
+        config.type = nullableDate;
 
       // if type still is not a function - ignore it
       if (typeof config.type != 'function')
@@ -1561,8 +1502,8 @@
         var result;
         var rollbackData = this.modified;
 
-        if (valueWrapper === arrayField && rollbackData && key in rollbackData)
-          value = arrayField(value, rollbackData[key]);
+        if (valueWrapper === nullableArray && rollbackData && key in rollbackData)
+          value = nullableArray(value, rollbackData[key]);
 
         var newValue = valueWrapper(value, this.data[key]);
         var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
@@ -1972,8 +1913,8 @@
     CalculateField: CalculateField,
     ConcatStringField: ConcatStringField,
     calc: CalculateField,
-    arrayField: arrayField,
-    dateField: dateField,
+    arrayField: nullableArray,
+    dateField: nullableDate,
 
     EntityType: EntityTypeWrapper,
     Entity: createEntityClass,
