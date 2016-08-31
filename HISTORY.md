@@ -1,3 +1,7 @@
+## 1.9.2 (August 31, 2016)
+
+- Fixed `.npmignore` not to ignore `src/devpanel/standalone/index.html`
+
 ## 1.9.1 (August 31, 2016)
 
 ### Devtools
