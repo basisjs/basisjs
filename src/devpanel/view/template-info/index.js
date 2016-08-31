@@ -45,7 +45,7 @@ view.link(null, function(view, oldView){
 
 data.output.addHandler({
   change: function(){
-    window._0 = (this.value.object);
+    window._0 = this.value.object;
   }
 });
 
