@@ -62,7 +62,7 @@ module.exports = {
       name: 'wraps non-array argument into array and warns',
       test: function(){
         var warned = catchWarnings(function(){
-          var nonArray = {}
+          var nonArray = {};
           var emptyEnum = type.enumeration(nonArray);
 
           assert(emptyEnum.DEFAULT_VALUE === nonArray);
