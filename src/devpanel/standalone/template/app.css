@@ -11,11 +11,14 @@ BODY
 .app
 {
   height: 100%;
+  display: -webkit-flex;
   display: flex;
+  -webkit-flex-direction: column;
   flex-direction: column;
 }
 .toolbar
 {
+  display: -webkit-flex;
   display: flex;
   padding: 0;
   background: #F8F8F8;
@@ -23,6 +26,7 @@ BODY
 }
 .content
 {
+  -webkit-flex: 1;
   flex: 1;
   position: relative;
   overflow: auto;

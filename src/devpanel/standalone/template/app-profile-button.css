@@ -1,12 +1,15 @@
 .wrapper
 {
+  -webkit-flex: 1;
   flex: 1;
+  display: -webkit-flex;
   display: flex;
   line-height: 1;
   align-items: center;
 }
 .error
 {
+  -webkit-flex: 1;
   flex: 1;
   text-align: right;
   color: #D00;
