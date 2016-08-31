@@ -1,5 +1,5 @@
 var MAX_HISTORY_SIZE = 4;
-var PRECEDING_SYMBOL = '_';
+var PREFIX = '$b';
 var history = [];
 
 function initGlobalElements(data){
@@ -13,7 +13,7 @@ function initGlobalElements(data){
       history.length = MAX_HISTORY_SIZE;
 
       history.forEach(function(element, position){
-        window[PRECEDING_SYMBOL + position] = element;
+        global[PREFIX + position] = element;
       });
     }
   });
