@@ -43,6 +43,12 @@ view.link(null, function(view, oldView){
   }
 });
 
+data.output.addHandler({
+  change: function(){
+    window._0 = (this.value.object);
+  }
+});
+
 module.exports = {
   view: view,
   set: data.input.set.bind(data.input)
