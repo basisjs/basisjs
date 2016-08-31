@@ -5,7 +5,7 @@
  * @author Andrei Kashcha (aka anvaka) / http://anvaka.blogspot.com
  *
  * Patches:
- *   - use el.getBoundingClientRect() in Utils.getDimension() instead of el.clientWidth/el.clientHeight
+ *   - use el.getBoundingClientRect() in Utils.getDimension() instead of el.clientWidth/el.clientHeight (https://bugzilla.mozilla.org/show_bug.cgi?id=874811)
  */
 var Viva={};Viva.Graph=Viva.Graph||{};Viva.Graph.version="1.0.0.42";Viva.lazyExtend=function(b,c){var a;b||(b={});if(c)for(a in c)if(c.hasOwnProperty(a)){var d=b.hasOwnProperty(a),e=typeof c[a];d&&typeof b[a]===e?"object"===e&&(b[a]=Viva.lazyExtend(b[a],c[a])):b[a]=c[a]}return b};
 Viva.random=function(){function b(){var a=4022871197,b=function(b){var d;b=b.toString();for(d=0;d<b.length;d++){a+=b.charCodeAt(d);var c=.02519603282416938*a;a=c>>>0;c-=a;c*=a;a=c>>>0;c-=a;a+=4294967296*c}return 2.3283064365386963E-10*(a>>>0)};b.version="Mash 0.9";return b}var c=new function(a){return function(a){var c=0,h=58,f=119,g=178,l,m,k=[],n=b();0===a.length&&(a=[+new Date]);for(l=0;256>l;l++)k[l]=n(" "),k[l]-=4.76837158203125E-7*n(" "),0>k[l]&&(k[l]+=1);for(m=0;m<a.length;m++)for(l=0;256>
