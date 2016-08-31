@@ -11,6 +11,9 @@ require('api')
   .local(require('./api.js'), data, inspectBasis)
   .channel(data.output.as('data'), remote.send);
 
+require('./globalElements.js')
+  .init(data);
+
 // view
 var captureEvents = [
   'click',
@@ -40,12 +43,6 @@ view.link(null, function(view, oldView){
     captureEvents.forEach(function(eventName){
       inspectBasisDomEvent.releaseEvent(eventName);
     });
-  }
-});
-
-data.output.addHandler({
-  change: function(){
-    window._0 = this.value.object;
   }
 });
 
