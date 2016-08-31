@@ -1,3 +1,16 @@
+## 1.9.1 (August 31, 2016)
+
+### Devtools
+
+- Fixed warning grouping by source file
+- Fixed spinner overlay after first profile loading on warnings view
+- Fixed opening file in editor by click in template DOM tree view
+- Fixed file graph alignment to center in `Firefox`
+- Fixed edge arrows in file graph in `Firefox`
+- Fixed stanalone toolbar layout for old Webkit browsers (flexbox prefix issue)
+- Fixed issue with old location in `Edge` when stanalone loads in iframe with new `src` (using `window.name` as workaround)
+- Fixed various source warnings
+
 ## 1.9.0 (August 29, 2016)
 
 Work in this release was focused on reworking devpanel and inspectors to support remote inspection. Starting this version UI may to be transferred into any WebView as all-sufficient bundle that communicate with app to get data and pass commands to it. It's dramatically simplify developing and debugging of devtools and provides common UX for any remote tool developer uses (on page tools, another tab, browser plugin, embedded WebView etc).
