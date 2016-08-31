@@ -1,6 +1,6 @@
 var Node = require('basis.ui').Node;
 var api = require('api');
-var getRemoteAPI = location.hash.substr(1);
+var getRemoteAPI = window.name || location.hash.substr(1);
 var remoteAPI = typeof parent[getRemoteAPI] === 'function' ? parent[getRemoteAPI]() : null;
 
 if (!remoteAPI)
