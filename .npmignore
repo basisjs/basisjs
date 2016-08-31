@@ -7,8 +7,9 @@
 /test
 /tmp
 /tour
-.*
-basis.config
-bower.json
-index.html
-karma.conf.js
+/.*
+/basis.config
+/bower.json
+/index.html
+/karma.conf.js
+/release.md
