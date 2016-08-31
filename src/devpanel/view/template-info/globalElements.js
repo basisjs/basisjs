@@ -18,6 +18,5 @@ function initGlobalElements(data){
 }
 
 module.exports = {
-  init: initGlobalElements,
-  history: history
+  init: initGlobalElements
 };
