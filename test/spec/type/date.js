@@ -49,15 +49,9 @@ module.exports = {
       }
     },
     {
-      name: 'accepts null',
+      name: 'is zero date by default',
       test: function(){
-        assert(type.date(null) === null);
-      }
-    },
-    {
-      name: 'is null by default',
-      test: function(){
-        assert(type.date.DEFAULT_VALUE === null);
+        assert(new Date(0), type.date.DEFAULT_VALUE);
       }
     },
     {
@@ -65,7 +59,7 @@ module.exports = {
       test: function(){
         var previous = new Date();
 
-        nonDatesExceptNull.forEach(function(incorrectValue){
+        nonDatesExceptNull.concat([null]).forEach(function(incorrectValue){
           var warned = catchWarnings(function(){
             assert(type.date(incorrectValue, previous) === previous);
           });
@@ -81,7 +75,7 @@ module.exports = {
 
         [
           new Date(),
-          null,
+          '2012-12-21',
           234
         ].forEach(function(correctValue){
           assert(type.date(correctValue, previous), type.date(correctValue));
@@ -104,6 +98,109 @@ module.exports = {
           assert(type.date(dateRepresentation, date) === date);
         });
       }
+    },
+    {
+      name: 'nullable',
+      test: [
+        {
+          name: 'accepts correct values',
+          test: function(){
+            [
+              1234,
+              '2012-05-30T21:00:00.000Z',
+              '2012-12-21',
+              new Date()
+            ].forEach(function(correctValue){
+              assert(type.date.nullable(correctValue, new Date()), type.date(correctValue));
+            });
+          }
+        },
+        {
+          name: 'accepts null',
+          test: function(){
+            assert(type.date.nullable(null, new Date()) === null);
+          }
+        },
+        {
+          name: 'is null by default',
+          test: function(){
+            assert(type.date.nullable.DEFAULT_VALUE === null);
+          }
+        },
+        {
+          name: 'ignores incorrect values',
+          test: function(){
+            var previous = new Date();
+
+            nonDatesExceptNull.forEach(function(incorrectValue){
+              var warned = catchWarnings(function(){
+                assert(type.date.nullable(incorrectValue, previous) === previous);
+              });
+
+              assert(warned);
+            });
+          }
+        },
+        {
+          name: 'default',
+          test: [
+            {
+              name: 'behaves like nullable version',
+              test: function(){
+                var defaultDate = new Date(123);
+                var previousDate = new Date(456);
+
+                var transform = type.date.nullable.default(defaultDate);
+
+                catchWarnings(function(){
+                  nonDatesExceptNull.concat([
+                    null,
+                    1234,
+                    '2012-05-30T21:00:00.000Z',
+                    '2012-12-21',
+                    new Date()
+                  ]).forEach(function(value){
+                    assert(transform(value, previousDate), type.date.nullable(value, previousDate));
+                  });
+                });
+              }
+            },
+            {
+              name: 'sets default value',
+              test: function(){
+                var date = new Date();
+                assert(type.date.nullable.default(date).DEFAULT_VALUE === date);
+              }
+            },
+            {
+              name: 'accepts timestamps defaults',
+              test: function(){
+                var timestamp = -777870000000;
+                assert(type.date.nullable.default(timestamp).DEFAULT_VALUE.getTime() === timestamp);
+              }
+            },
+            {
+              name: 'accepts ISO strings defaults',
+              test: function(){
+                var iso = '2012-05-30T21:00:00.000Z';
+                assert(type.date.nullable.default(iso).DEFAULT_VALUE.toISOString() === iso);
+              }
+            },
+            {
+              name: 'ignores default value if it is incorrect',
+              test: function(){
+                var transform;
+                var warned = catchWarnings(function(){
+                  transform = type.date.nullable.default({});
+                });
+
+                assert(warned);
+                assert(transform.DEFAULT_VALUE === null);
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       name: 'default',
@@ -169,6 +266,8 @@ module.exports = {
         {
           name: 'ignores default value if it is incorrect',
           test: function(){
+            var defaultDate = new Date(0);
+
             nonDatesExceptNull.forEach(function(incorrectValue){
               var transform;
               var warned = catchWarnings(function(){
@@ -176,7 +275,7 @@ module.exports = {
               });
 
               assert(warned);
-              assert(transform.DEFAULT_VALUE === null);
+              assert(defaultDate, transform.DEFAULT_VALUE);
             });
           }
         }

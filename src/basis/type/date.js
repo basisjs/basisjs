@@ -4,9 +4,6 @@ var ISO_REGEXP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
 var PARTIAL_ISO_REGEXP = /^\d{4}-\d{2}-\d{2}$/;
 
 function toDate(value) {
-  if (value === null)
-    return null;
-
   if (typeof value === 'number' && isFinite(value))
     return new Date(value);
 
@@ -19,17 +16,33 @@ function toDate(value) {
   return undefined;
 }
 
-function dateTransform(defaultValue){
-  defaultValue = toDate(defaultValue);
+function dateTransform(defaultValue, nullable){
+  /** @cut */ var transformName = nullable ? 'basis.type.date.nullable' : 'basis.type.date';
 
-  if (defaultValue === undefined)
+  var defaultValueAsDate = toDate(defaultValue);
+
+  if (nullable)
   {
-    /** @cut */ basis.dev.warn('basis.type.date.default expected ISO string, number, date or null as default value but got ' + defaultValue + '. Falling back to basis.type.date');
-    return date;
+    if (defaultValue !== null && defaultValueAsDate === undefined)
+    {
+      /** @cut */ basis.dev.warn(transformName + '.default ISO string, number or date object as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      return date.nullable;
+    }
+  }
+  else
+  {
+    if (defaultValueAsDate === undefined)
+    {
+      /** @cut */ basis.dev.warn(transformName + '.default ISO string, number, date object or null as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      return date;
+    }
   }
 
   var transform = function(value, oldValue){
-    var dateObject = toDate(value, defaultValue);
+    if (nullable && value === null)
+      return null;
+
+    var dateObject = toDate(value);
 
     if (dateObject === undefined){
       /** @cut */ basis.dev.warn('basis.type.date expected ISO string, number, date or null but got ' + value);
@@ -42,12 +55,18 @@ function dateTransform(defaultValue){
     return dateObject;
   };
 
-  transform.DEFAULT_VALUE = defaultValue;
+  transform.DEFAULT_VALUE = defaultValueAsDate || null;
 
   return transform;
 }
 
-var date = dateTransform(null);
-date['default'] = dateTransform;
+var date = dateTransform(new Date(0), false);
+date['default'] = function(defaultValue){
+  return dateTransform(defaultValue, false);
+};
+date.nullable = dateTransform(null, true);
+date.nullable['default'] = function(defaultValue){
+  return dateTransform(defaultValue, true);
+};
 
 module.exports = date;
