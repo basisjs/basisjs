@@ -9,18 +9,11 @@
   -webkit-filter: grayscale();
   filter: grayscale();
 }
+
 .main
 {
   display: flex;
   padding: 5px 10px 10px;
-}
-
-.disconnected
-{
-  pointer-events: none;
-  opacity: .25;
-  -webkit-filter: grayscale();
-  filter: grayscale();
 }
 
 .no-subject

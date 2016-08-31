@@ -1,7 +1,8 @@
 var Node = require('basis.ui').Node;
 var api = require('api');
+var host = global.parent;
 var getRemoteAPI = window.name || location.hash.substr(1);
-var remoteAPI = typeof parent[getRemoteAPI] === 'function' ? parent[getRemoteAPI]() : null;
+var remoteAPI = typeof host[getRemoteAPI] === 'function' ? host[getRemoteAPI]() : null;
 
 if (!remoteAPI)
   throw new Error('Devtool init handler is missed (should be present in location hash)');

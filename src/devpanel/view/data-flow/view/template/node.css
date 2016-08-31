@@ -141,11 +141,6 @@
   opacity: 1;
 }
 
-.marker
-{
-  color: #999;
-  margin-left: 1ex;
-}
 .description
 {
   font-size: 11px;
@@ -204,21 +199,4 @@
   color: black;
   background: #F0E8C8;
   padding: 2px 2px 2px 2px;
-}
-
-.loc-wrapper
-{
-  color: #ccc;
-  font-size: 11px;
-}
-
-.loc
-{
-  text-decoration: underline;
-  cursor: pointer;
-  color: #999;
-}
-.loc:hover
-{
-  color: #333;
 }

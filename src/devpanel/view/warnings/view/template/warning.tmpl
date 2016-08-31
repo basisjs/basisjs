@@ -1,7 +1,6 @@
 <b:isolate/>
 <b:style src="./warning.css"/>
 <b:define name="loc" type="bool"/>
-<b:define name="theme" type="bool"/>
 <b:define name="childCount" type="bool"/>
 <b:define name="collapsed" type="bool"/>
 <b:define name="isolated" type="bool"/>
@@ -29,7 +28,7 @@
     </span> -->
     <span class="loc-list loc-list_{childCount}">
       <span class="promo promo_{collapsed}">(<span event-click="expand">{childCount} more occurences</span>)</span>
-      <span class="list list_{collapsed}"><!--{childNodesHere}--></span>
+      <span b:hide="{collapsed}"><!--{childNodesHere}--></span>
     </span>
   </div>
 </div>

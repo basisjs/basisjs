@@ -1,3 +1,4 @@
+var hasOwnProperty = Object.prototype.hasOwnProperty;
 var Node = require('basis.ui').Node;
 var templateSwitcher = require('basis.template').switcher;
 var hoveredBinding = require('./bindings.js').hover;
