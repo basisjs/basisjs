@@ -5,6 +5,7 @@
   display: -webkit-flex;
   display: flex;
   line-height: 1;
+  -webkit-align-items: center;
   align-items: center;
 }
 .error
