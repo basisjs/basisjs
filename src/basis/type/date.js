@@ -7,7 +7,7 @@ function toDate(value) {
   if (typeof value === 'number' && isFinite(value))
     return new Date(value);
 
-  if (typeof value === 'string' && (value.match(ISO_REGEXP) || value.match(PARTIAL_ISO_REGEXP)))
+  if (typeof value === 'string' && (ISO_REGEXP.test(value) || PARTIAL_ISO_REGEXP.test(value)))
     return fromISOString(value);
 
   if (value instanceof Date)
