@@ -7,7 +7,9 @@
 }
 .binding_used
 {
+  display: -webkit-flex;
   display: flex;
+  -webkit-align-items: baseline;
   align-items: baseline;
 }
 .binding:not(.binding_used):after
@@ -75,6 +77,7 @@
 }
 .value
 {
+  -webkit-flex: 1;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;

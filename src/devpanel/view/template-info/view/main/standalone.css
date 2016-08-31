@@ -12,6 +12,7 @@
 
 .main
 {
+  display: -webkit-flex;
   display: flex;
   padding: 5px 10px 10px;
 }
