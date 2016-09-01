@@ -1,5 +1,6 @@
 .items
 {
+  display: -webkit-inline-flex;
   display: inline-flex;
   vertical-align: middle;
   padding: 3px;

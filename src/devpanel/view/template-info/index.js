@@ -11,6 +11,9 @@ require('api')
   .local(require('./api.js'), data, inspectBasis)
   .channel(data.output.as('data'), remote.send);
 
+require('./globalElements.js')
+  .init(data);
+
 // view
 var captureEvents = [
   'click',
