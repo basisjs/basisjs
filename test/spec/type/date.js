@@ -5,8 +5,7 @@ module.exports = {
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
 
     var nonDatesExceptNull = [
-      '123,45',
-      'hello',
+      '',
       {},
       { foo: 'bar' },
       [],
@@ -46,6 +45,21 @@ module.exports = {
         var actualIsoPart = date.toISOString().substr(0, 10);
 
         assert(actualIsoPart === partialIso);
+      }
+    },
+    {
+      name: 'warns about non ISO strings but try to parse',
+      test: function(){
+        [
+          '123,45',
+          'hello'
+        ].forEach(function(nonIsoString){
+          var warned = catchWarnings(function(){
+            assert(type.date(nonIsoString) instaceof Date);
+          });
+
+          assert(warned);
+        });
       }
     },
     {
@@ -158,6 +172,8 @@ module.exports = {
                     1234,
                     '2012-05-30T21:00:00.000Z',
                     '2012-12-21',
+                    '1234.5',
+                    'whatever',
                     new Date()
                   ]).forEach(function(value){
                     assert(transform(value, previousDate), type.date.nullable(value, previousDate));

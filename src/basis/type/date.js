@@ -35,8 +35,13 @@ function toDate(value) {
   if (typeof value === 'number' && isFinite(value))
     return new Date(value);
 
-  if (typeof value === 'string' && (ISO_REGEXP.test(value) || PARTIAL_ISO_REGEXP.test(value)))
+  if (value && typeof value === 'string')
+  {
+    /** @cut */ if (!ISO_REGEXP.test(value) && !PARTIAL_ISO_REGEXP.test(value))
+    /** @cut */   basis.dev.warn('basis.type.date expected ISO string but got ' + value + '. Try to parse as ISO string anyway')
+
     return fromISOString(value);
+  }
 
   if (value instanceof Date)
     return value;
