@@ -1,0 +1,18 @@
+<b:style src="./binding.css"/>
+<b:isolate/>
+<b:define name="used" type="bool"/>
+<b:define name="loc" type="bool"/>
+<b:define name="nestedView" type="bool"/>
+<b:define name="highlight" type="bool"/>
+
+<div class="binding binding_{used}">
+  <span class="caption caption_{used} caption_{nestedView} caption_{highlight}" event-click="pickValue" event-mouseenter="enter" event-mouseleave="leave">
+    <span class="link_{loc}">{name}</span>
+  </span>
+  <span event-click="showResolve" b:show="{isReactive}" class="reactive reactive_{highlight}" title="Value was resolved from another value">
+    R
+  </span>
+  <span b:show="{used}" class="value">
+    {value}
+  </span>
+</div>

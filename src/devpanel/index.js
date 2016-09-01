@@ -12,7 +12,7 @@ require('basis.template').Template.extend({
   isolatePrefix_: false,
   getIsolatePrefix: function(){
     if (!this.isolatePrefix_)
-      this.isolatePrefix_ = basis.genUID().replace(/^[^a-z]/i, 'i$&') + '__';
+      this.isolatePrefix_ = basis.genUID() + '__';
     return this.isolatePrefix_;
   }
 });
@@ -20,71 +20,42 @@ require('basis.template').Template.extend({
 
 // init devpanel
 function init(){
-  // init transport
-  var transport = require('./api/transport.js');
-  module.transferEl = transport.transferEl;
+  var api = require('api');
+  var remote = require('./remote.js');
 
-  // make devpanel allowed for inspected basis.js
-  inspectBasis.devpanel = module;
+  // setup API
+  api.local(api.ns('file'));
+  api.local(api.ns('app'));
+  api.local(api.ns('inspect'))
+     .channel(api.inspect, remote.send);
 
-  // prepare API object
-  inspectBasis.appCP = basis.object.merge(
-    {
-      getFileGraph: function(){
-        var basisjsTools = global.basisjsToolsFileSync || basis.devtools;
-
-        if (basisjsTools)
-          basisjsTools.getFileGraph(function(err, data){
-            transport.sendData('fileGraph', {
-              data: data,
-              err: err
-            });
-          });
-      }
-    },
-
-    require('./api/version.js'),
-    require('./api/server.js'),
-    require('./api/file.js'),
-    require('./api/l10n.js'),
-    require('./api/ui.js'),
-    require('./api/inspector.js')
-  );
+  api.connected.set(true);
+  api.session.set(basis.genUID());
 
   // init interface
-  require('./panel.js');
-  // temporary here
-  //require('./module/ui/index.js');
+  require('./panel/index.js');
 
-  // setup live update
-  if (inspectBasis.devtools)
-  {
-    var FILE_HANDLER = {
-      update: function(sender, delta){
-        if ('filename' in delta || 'content' in delta)
-          if (!basis.resource.isDefined || basis.resource.isDefined(this.data.filename, true))
-            basis.resource(this.data.filename).update(this.data.content);
-      }
-    };
-    inspectBasis.devtools.files.addHandler({
-      itemsChanged: function(sender, delta){
-        if (delta.inserted)
-          delta.inserted.forEach(function(file){
-            file.addHandler(FILE_HANDLER);
-          });
-      }
-    });
-  }
-
-  basis.dev.log('basis devpanel inited');
+  // temporary here (to provide data)
+  require('./view/template-info/index.js');
+  require('./view/ui/index.js');
 }
 
 // everything ok, init on dom ready
-basis.ready(function(){
-  if (!inspectBasis.devtools)
-    // if inspectBasis.devtools is not defined, than init with 500 ms delay
-    // to give a chance basisjs-tools script is loaded (as it load async/defered and doesn't fire appropriate event)
-    setTimeout(init, 500);
-  else
-    init();
+var attachFileSyncRetry = 50;
+basis.ready(function attachFileSync(){
+  var basisjsTools = global.basisjsToolsFileSync;
+
+  if (!basisjsTools)
+  {
+    if (attachFileSyncRetry < 500)
+      setTimeout(attachFileSync, attachFileSyncRetry);
+    else
+      basis.dev.warn('basisjsToolsFileSync doesn\'t detected – devpanel unavailable');
+
+    attachFileSyncRetry += 100;
+    return;
+  }
+
+  require('./remote.js');
+  basis.ready(init);
 });

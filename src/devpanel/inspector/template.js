@@ -12,11 +12,11 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 var inspectBasisEvent = inspectBasis.require('basis.dom.event');
 
 var document = global.document;
-var transport = require('../api/transport.js');
-var templateInfo = resource('./template-info/index.js');
+var templateInfo = resource('../view/template-info/index.js');
 
+var inspect = require('api').inspect;
+var inspecting = false;
 var inspectDepth = 0;
-var inspectMode = new Value({ value: false });
 
 var overlay = domUtils.createElement({
   css: {
@@ -43,7 +43,7 @@ function pickHandler(event){
 
   if (event.mouseRight)
   {
-    stopInspect();
+    inspect.set(false);
     return;
   }
 
@@ -54,7 +54,7 @@ function pickHandler(event){
   {
     var source = template.source;
 
-    stopInspect();
+    inspect.set(false);
 
     if (source.url)
     {
@@ -78,20 +78,13 @@ function pickHandler(event){
         else
         {
           templateInfo().set(object.element);
-          transport.sendData('pickTemplate', {
-            filename: source.url
-          });
         }
       }
     }
     else
     {
       templateInfo().set(inspectBasisTemplate.resolveObjectById(templateId).element);
-      transport.sendData('pickTemplate', {
-        content: typeof source == 'string' ? source : ''
-      });
     }
-
   }
 }
 
@@ -146,7 +139,7 @@ var pickupTarget = new Value({
 var nodeInfoPopup = basis.fn.lazyInit(function(){
   return new Balloon({
     dir: 'left bottom left top',
-    template: resource('./template/template_hintPopup.tmpl'),
+    template: resource('./template/popup.tmpl'),
     autorotate: [
       'left top left bottom',
       //'center center center center',
@@ -161,13 +154,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
       templateOpenSpecialKey: function(){
         return /^mac/i.test(navigator.platform) ? 'cmd' : 'ctrl';
       },
-      openFileSupported: {
-        events: 'delegateChanged update',
-        getter: function(){
-          var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
-          return basisjsTools && typeof basisjsTools.openFile == 'function';
-        }
-      },
+      openFileSupported: fileAPI.isOpenFileSupported,
       instanceNamespace: {
         events: 'delegateChanged update',
         getter: function(node){
@@ -283,7 +270,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 });
 
 function startInspect(){
-  if (!inspectMode.value)
+  if (!inspecting)
   {
     if (templateInfo.isResolved())
       templateInfo().set();
@@ -297,13 +284,12 @@ function startInspect(){
     inspectBasisEvent.captureEvent('contextmenu', stopInspect);
     inspectBasisEvent.captureEvent('click', pickHandler);
 
-    inspectMode.set(true);
-    transport.sendData('startInspect', 'template');
+    inspecting = true;
   }
 }
 
 function stopInspect(){
-  if (inspectMode.value)
+  if (inspecting)
   {
     domEventUtils.removeGlobalHandler('mousemove', mousemoveHandler);
     domEventUtils.removeGlobalHandler('mousewheel', mouseWheelHandler);
@@ -314,8 +300,7 @@ function stopInspect(){
     inspectBasisEvent.releaseEvent('contextmenu');
     inspectBasisEvent.releaseEvent('click');
 
-    inspectMode.set(false);
-    transport.sendData('endInspect', 'template');
+    inspecting = false;
     pickupTarget.set();
   }
 }
@@ -385,9 +370,5 @@ function mouseWheelHandler(event){
 module.exports = {
   name: 'Template',
   startInspect: startInspect,
-  stopInspect: stopInspect,
-  inspectMode: inspectMode,
-  isActive: function(){
-    return inspectMode.value;
-  }
+  stopInspect: stopInspect
 };

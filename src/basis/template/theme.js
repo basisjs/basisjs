@@ -344,6 +344,7 @@
         {
           currentThemeName = name;
           syncCurrentTheme();
+          basis.Token.prototype.set.call(getTheme, currentThemeName);
 
           for (var i = 0, handler; handler = themeChangeHandlers[i]; i++)
             handler.fn.call(handler.context, name);
@@ -371,6 +372,12 @@
     return themeInterface;
   }
 
+  function setTheme(name){
+    return getTheme(name).apply();
+  }
+
+  basis.object.extend(getTheme, new basis.Token(currentThemeName));
+  getTheme.set = setTheme;
 
   function onThemeChange(fn, context, fire){
     themeChangeHandlers.push({
@@ -406,9 +413,7 @@
     currentTheme: function(){
       return themes[currentThemeName].theme;
     },
-    setTheme: function(name){
-      return getTheme(name).apply();
-    },
+    setTheme: setTheme,
     onThemeChange: onThemeChange,
 
     define: baseTheme.define,

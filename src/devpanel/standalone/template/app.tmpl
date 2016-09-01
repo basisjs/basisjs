@@ -1,0 +1,14 @@
+<b:isolate/>
+<b:style src="./app.css"/>
+<b:define name="disabled" type="bool"/>
+
+<div class="app">
+  <div class="toolbar">
+    <b:include src="./pick-template-button.tmpl"/>
+    <!--{tabs}-->
+    <!--{appProfileButton}-->
+  </div>
+  <div class="content content_{disabled}">
+    <!--{view}-->
+  </div>
+</div>

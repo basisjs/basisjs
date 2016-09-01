@@ -1,0 +1,34 @@
+<b:isolate/>
+<b:style src="./warning.css"/>
+<b:define name="loc" type="bool"/>
+<b:define name="childCount" type="bool"/>
+<b:define name="collapsed" type="bool"/>
+<b:define name="isolated" type="bool"/>
+<b:define name="fatal" type="bool"/>
+<b:define name="linkOnStart" type="bool"/>
+
+<div class="warning">
+  <div class="message message_{fatal}">
+    <span class="theme" b:show="{theme}">{theme}</span>
+    <span class="message-start">
+      <span class="message-start-text_{linkOnStart}">
+        {messageStart}
+      </span>
+      <span class="message-start-link message-start-link_{linkOnStart}" event-click="openLoc" title="{loc}">
+        {messageStart}
+      </span>
+    </span>
+    <span class="isolate isolate_{isolated}" title="Isolate prefix {isolated}">i</span>
+    &#x20;
+    <span class="message-details message-details_{loc}" event-click="openLoc" title="{loc}">
+      {messageDetails}
+    </span>
+    <!-- <span class="loc loc_{loc}">
+      [<span class="loc-button" event-click="openLoc" title="{loc}">{locShort}</span>]
+    </span> -->
+    <span class="loc-list loc-list_{childCount}">
+      <span class="promo promo_{collapsed}">(<span event-click="expand">{childCount} more occurences</span>)</span>
+      <span b:hide="{collapsed}"><!--{childNodesHere}--></span>
+    </span>
+  </div>
+</div>

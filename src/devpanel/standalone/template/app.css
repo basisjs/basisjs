@@ -1,0 +1,39 @@
+HTML,
+BODY
+{
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  font-size: 12px;
+}
+
+.app
+{
+  height: 100%;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+}
+.toolbar
+{
+  display: -webkit-flex;
+  display: flex;
+  padding: 0;
+  background: #F8F8F8;
+  border-bottom: 1px solid #DDD;
+}
+.content
+{
+  -webkit-flex: 1;
+  flex: 1;
+  position: relative;
+  overflow: auto;
+}
+.content_disabled
+{
+  opacity: .4;
+  -webkit-filter: grayscale();
+  transition: all .25s;
+}

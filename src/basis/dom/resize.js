@@ -2,11 +2,16 @@
   var document = global.document;
   var resizeHandlers = 'basisjsResizeHandlers' + basis.genUID();
   var getComputedStyle = require('basis.dom.computedStyle').get;
+  var STUB_DOCUMENT = '<html></html>';
+  var STUB_DOCUMENT_SRC = 'javascript:"' + STUB_DOCUMENT + '"';
 
   function createSensorProto(name){
     var sensorProto = document.createElement(name);
     sensorProto.setAttribute('data-dev-role', 'basis.dom.resize.sensor');
+    sensorProto.setAttribute('scrolling', 'no');
     sensorProto.setAttribute('tabindex', '-1');
+    sensorProto.setAttribute('srcdoc', STUB_DOCUMENT);
+    sensorProto.setAttribute('src', STUB_DOCUMENT_SRC);
     sensorProto.setAttribute('style', [
       'display:block',
       'pointer-events:none',
@@ -25,8 +30,7 @@
     return sensorProto;
   }
 
-  var iframeSensorProto = createSensorProto('iframe');
-  //var objectSensorProto = createSensorProto('object');
+  var iframeSensorProto = createSensorProto('iframe'); // using <object> looks the same, but has issues in old IE
 
   function addResizeListener(element, fn, context){
     var events = element[resizeHandlers];
@@ -59,18 +63,15 @@
         handler();
       };
 
-      // using <object> version
-      // looks the same, but has issues in old IE
-      // if (!element.attachEvent)
-      // {
-      //   var sensor = objectSensorProto.cloneNode();
-      //   sensor.onload = init;
-      //   sensor.type = 'text/html';
-      //   sensor.data = 'about:blank';
-      //   element.appendChild(sensor);
-      // }
-
       var sensor = iframeSensorProto.cloneNode();
+
+      // https://github.com/jugglinmike/srcdoc-polyfill/blob/master/srcdoc-polyfill.js
+      // Explicitly set the iFrame's window.location for
+      // compatability with IE9, which does not react to changes in
+      // the `src` attribute when it is a `javascript:` URL, for
+      // some reason
+      if (sensor.contentWindow)
+        sensor.contentWindow.location = STUB_DOCUMENT_SRC;
 
       if (sensor.attachEvent) // IE8 don't fire load event otherwise
         sensor.attachEvent('onload', init);

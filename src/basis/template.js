@@ -575,6 +575,18 @@
     /** @cut dev mode only */ getTemplateCount: function(){
     /** @cut dev mode only */   return templateList.length;
     /** @cut dev mode only */ },
+    resolveTemplateInfoByNode: function(node){
+      while (node)
+      {
+        if (node[consts.MARKER])
+          return store.resolveInfoById(node[consts.MARKER]);
+
+        node = node.parentNode;
+      }
+
+      return null;
+    },
+    resolveInfoById: store.resolveInfoById,
     resolveTemplateById: store.resolveTemplateById,
     resolveObjectById: store.resolveObjectById,
     resolveTmplById: store.resolveTmplById,

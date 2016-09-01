@@ -81,7 +81,7 @@ module.exports = {
                 setTimeout(function(){
                   assert(foo.state == STATE.READY);
                   done();
-                }, 10);
+                }, 30);
               }
             },
             {
@@ -107,7 +107,7 @@ module.exports = {
                   assert(foo.state == STATE.ERROR);
                   assert(foo.state.data == error);
                   done();
-                }, 10);
+                }, 30);
               }
             }
           ]

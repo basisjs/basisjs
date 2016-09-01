@@ -5,16 +5,14 @@ var inspectBasisL10n = inspectBasis.require('basis.l10n');
 
 var NativeDomNode = global.Node;
 var fileAPI = require('../api/file.js');
-var Value = require('basis.data').Value;
-var colorPicker = require('./colorPicker.js');
-var transport = require('../api/transport.js');
-var Overlay = require('./utils/overlay.js');
+var genColor = require('./common/color.js').genColor;
+var Overlay = require('./common/overlay.js');
 var Balloon = require('basis.ui.popup').Balloon;
 
 var dictionaryColor = {};
 function getColorForDictionary(dictionaryName){
   if (!dictionaryColor[dictionaryName])
-    dictionaryColor[dictionaryName] = colorPicker.getColor().join(', ');
+    dictionaryColor[dictionaryName] = genColor().join(', ');
 
   return dictionaryColor[dictionaryName];
 }
@@ -32,7 +30,7 @@ function tokenBinding(fn){
 var nodeInfoPopup = basis.fn.lazyInit(function(){
   return new Balloon({
     dir: 'left bottom left top',
-    template: resource('./l10n/token_hintPopup.tmpl'),
+    template: resource('./l10n/popup.tmpl'),
     autorotate: [
       'left top left bottom',
       'right bottom right top',
@@ -69,13 +67,7 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
         var type = data.computed.getType();
         return type != 'default' ? type : '';
       }),
-      openFileSupported: {
-        events: 'delegateChanged update',
-        getter: function(){
-          var basisjsTools = global.basisjsToolsFileSync || inspectBasis.devtools;
-          return basisjsTools && typeof basisjsTools.openFile == 'function';
-        }
-      }
+      openFileSupported: fileAPI.isOpenFileSupported
     },
     handler: {
       delegateChanged: function(){
@@ -92,23 +84,15 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
 });
 
 var overlay = new Overlay({
-  template: resource('./template/l10n/overlay.tmpl'),
+  template: resource('./l10n/overlay.tmpl'),
   muteEvents: {
     click: true,
     mousedown: true,
     mouseup: true
   },
-  handler: {
-    activeChanged: function(){
-      if (this.active)
-        transport.sendData('startInspect', 'l10n');
-      else
-        transport.sendData('endInspect', 'l10n');
-    }
-  },
 
   childClass: {
-    template: resource('./template/l10n/token.tmpl'),
+    template: resource('./l10n/token.tmpl'),
     binding: {
       color: 'data:'
     },
@@ -193,9 +177,5 @@ module.exports = {
   },
   stopInspect: function(){
     overlay.deactivate();
-  },
-  inspectMode: Value.from(overlay, 'activeChanged', 'active'),
-  isActive: function(){
-    return overlay.active;
   }
 };

@@ -62,6 +62,7 @@
         "tour/src/slide/viewer/editor/codemirror/**",
         "node_modules/**",
         "build/**",
+        "dist/**",
         "**/build/**"
     ]
 }

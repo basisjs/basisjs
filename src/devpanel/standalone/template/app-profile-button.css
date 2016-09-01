@@ -1,0 +1,39 @@
+.wrapper
+{
+  -webkit-flex: 1;
+  flex: 1;
+  display: -webkit-flex;
+  display: flex;
+  line-height: 1;
+  -webkit-align-items: center;
+  align-items: center;
+}
+.error
+{
+  -webkit-flex: 1;
+  flex: 1;
+  text-align: right;
+  color: #D00;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.button
+{
+  cursor: pointer;
+  display: inline-block;
+  border: 1px solid rgba(200, 200, 200, 1);
+  padding: 5px;
+  margin: 0 2px 0 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .7);
+  color: #444;
+}
+.button_disabled
+{
+  cursor: default;
+  color: #999;
+  border-color: rgba(200, 200, 200, .5);
+  background: rgba(255, 255, 255, .25);
+  transition: all .25s;
+}

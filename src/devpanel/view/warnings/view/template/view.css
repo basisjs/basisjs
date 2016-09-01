@@ -1,0 +1,43 @@
+.view
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.spinner
+{
+  display: none;
+  position: absolute;
+  z-index: 2;
+  padding: 20px;
+  color: #888;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: white;
+}
+.spinner_processing
+{
+  display: block;
+}
+
+.no-warnings
+{
+  font-size: 200%;
+  color: #8A8;
+  padding: 20px;
+}
+
+.warnings
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+}

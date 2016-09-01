@@ -588,7 +588,7 @@ var makeDeclaration = (function(){
           });
 
           var sourceResource = basis.resource(url).ready(function(cssResource){
-            var isolated = isolateCss(cssResource.cssText || '', isolate, true);
+            var isolated = isolateCss((cssResource && cssResource.cssText) || '', isolate, true);
 
             /** @cut */ if (typeof global.btoa == 'function')
             /** @cut */   isolated.css += '\n/*# sourceMappingURL=data:application/json;base64,' +

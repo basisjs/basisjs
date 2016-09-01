@@ -6,7 +6,7 @@
   <title>Basis.js index page</title>
 </head>
 <body>
-  <ul>
+  <ul id="menu">
     <li><a href="demo">Demo</a></li>
     <li><a href="docs">Docs</a></li>
     <li><a href="test">Test suite</a></li>
@@ -15,5 +15,31 @@
     <li><a href="https://github.com/basisjs/basisjs">Source code</a> (github.com)</li>
     <li><a href="http://basisjs.com/">Site</a></li>
   </ul>
+  <script>
+    var attachDevServerRetry = 50;
+    window.onload = function attachFileSync(){
+      var basisjsTools = window.basisjsToolsFileSync;
+
+      if (!basisjsTools)
+      {
+        if (attachDevServerRetry < 500)
+          setTimeout(attachFileSync, attachDevServerRetry);
+        else
+          console.warn('basisjsToolsFileSync doesn\'t detected');
+
+        attachDevServerRetry += 100;
+        return;
+      }
+
+      if (typeof basisjsTools.getRemoteUrl == 'function')
+      {
+        var menu = document.getElementById('menu');
+        var item = document.createElement('li');
+        item.innerHTML = '<a href="' + basisjsTools.getRemoteUrl() + '">Remote devtools</a>';
+        menu.appendChild(document.createElement('hr'));
+        menu.appendChild(item);
+      }
+    };
+  </script>
 </body>
 </html>

@@ -85,6 +85,7 @@
   /** @cut */ {
   /** @cut */   var devWrapMap = new WeakMap();
   /** @cut */   var devWrap = function(value){
+  /** @cut */     value = devWrapMap.has(value) ? devWrapMap.get(value) : value; // prevent value deep wrapping
   /** @cut */     var result = new Proxy(value, {});
   /** @cut */     devWrapMap.set(result, value);
   /** @cut */     return result;
@@ -485,6 +486,9 @@
       if (!fn || fn === $self)
         return this;
 
+      if (typeof fn == 'string')
+        fn = basis.getter(fn);
+
       if (this.links_)
       {
         // try to find value with the same function
@@ -586,7 +590,7 @@
       /** @cut */ while (cursor = cursor.links_)
       /** @cut */   if (cursor.context === context && cursor.fn === fn)
       /** @cut */   {
-      /** @cut */     basis.dev.warn(this.constructor.className + '#attach: Duplicate link pair context-fn');
+      /** @cut */     basis.dev.warn(this.constructor.className + '#link: Duplicate link pair context-fn');
       /** @cut */     break;
       /** @cut */   }
 
@@ -670,6 +674,7 @@
 
   var ReadOnlyValue = Class(Value, {
     className: namespace + '.ReadOnlyValue',
+    setNullOnEmitterDestroy: false,
     set: basis.fn.$false
   });
 
@@ -700,7 +705,6 @@
   */
   var DeferredValue = Class(ReadOnlyValue, {
     className: namespace + '.DeferredValue',
-    setNullOnEmitterDestroy: false,
     source: null,
 
     init: function(){
@@ -781,11 +785,14 @@
         result = valueFromMap[id] = new ReadOnlyValue({
           proxy: basis.getter(getter),
           value: obj,
-          handler: {
-            destroy: function(){
-              valueFromMap[id] = null;
+          emit_destroy: function(){
+            if (id in valueFromMap)
+            {
+              delete valueFromMap[id];
               obj.removeHandler(handler, this);
             }
+
+            ReadOnlyValue.prototype.emit_destroy.call(this);
           }
         });
 
@@ -797,8 +804,11 @@
         /** @cut */ });
 
         handler.destroy = function(){
-          valueFromMap[id] = null;
-          this.destroy();
+          if (id in valueFromMap)
+          {
+            delete valueFromMap[id];
+            this.destroy();
+          }
         };
 
         obj.addHandler(handler, result);

@@ -643,7 +643,7 @@ module.exports = {
       name: 'dataSource should has actual value when all old dataset items are removed',
       test: function(){
         var dataset = new Dataset({
-          items: basis.data.wrap(basis.array.create(3), true)
+          items: wrapData(basis.array.create(3), true)
         });
         var node = new Node({
           dataSource: dataset,
@@ -665,7 +665,7 @@ module.exports = {
       name: 'should not emit childNodesModified when new datasset has the same items as previous',
       test: function(){
         var foo = new Dataset({
-          items: basis.data.wrap(basis.array.create(3), true)
+          items: wrapData(basis.array.create(3), true)
         });
         var bar = new Dataset({
           items: foo.getItems()
@@ -696,10 +696,10 @@ module.exports = {
       name: 'dataSource change issue: dataset(N) -> dataset(M) -> dataset(0)',
       test: function(){
         var foo = new Dataset({
-          items: basis.data.wrap(basis.array.create(3), true)
+          items: wrapData(basis.array.create(3), true)
         });
         var bar = new Dataset({
-          items: basis.data.wrap(basis.array.create(5), true)
+          items: wrapData(basis.array.create(5), true)
         });
         var baz = new Dataset({});
 
@@ -732,10 +732,10 @@ module.exports = {
       name: 'dataSource change issue: when new dataSource items intersects with old dataSource and some items from old dataSource should be removed',
       test: function(){
         var foo = new Dataset({
-          items: basis.data.wrap(basis.array.create(3), true)
+          items: wrapData(basis.array.create(3), true)
         });
         var bar = new Dataset({
-          items: foo.getItems().slice(1).concat(basis.data.wrap(basis.array.create(2), true))
+          items: foo.getItems().slice(1).concat(wrapData(basis.array.create(2), true))
         });
         var baz = new Dataset({});
 
@@ -768,10 +768,10 @@ module.exports = {
       name: 'dataSource change issue: when new dataSource items intersects with old dataSource and some items from old dataSource should be removed but dataSource specified via bb-value',
       test: function(){
         var foo = new Dataset({
-          items: basis.data.wrap(basis.array.create(3), true)
+          items: wrapData(basis.array.create(3), true)
         });
         var bar = new Dataset({
-          items: foo.getItems().slice(1).concat(basis.data.wrap(basis.array.create(2), true))
+          items: foo.getItems().slice(1).concat(wrapData(basis.array.create(2), true))
         });
         var baz = new Dataset({});
 

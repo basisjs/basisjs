@@ -2333,6 +2333,89 @@ module.exports = {
           ]
         }
       ]
+    },
+    {
+      name: 'edge cases',
+      test: [
+        {
+          name: 'should no warnings on node destroy with satellite that has a Value.from() instances',
+          test: function(){
+            var node = new Node({
+              satellite: {
+                foo: new Node()
+              }
+            });
+
+            Value.from(node.satellite.foo, 'ownerChanged', 'owner');
+
+            var warn = basis.dev.warn;
+            var warning = false;
+            try {
+              basis.dev.warn = function(message){
+                warning = message;
+              };
+
+              node.destroy();
+            } finally {
+              basis.dev.warn = warn;
+            }
+
+            assert(warning === false);
+          }
+        },
+        {
+          name: 'should no warnings on node destroy with satellite that has a Value.from().pipe() instances',
+          test: function(){
+            var node = new Node({
+              satellite: {
+                foo: new Node()
+              }
+            });
+
+            Value.from(node, 'satelliteChanged', 'satellite.foo').pipe('update', 'data.data');
+
+            var warn = basis.dev.warn;
+            var warning = false;
+            try {
+              basis.dev.warn = function(message){
+                warning = message;
+              };
+
+              node.satellite.foo.destroy();
+            } finally {
+              basis.dev.warn = warn;
+            }
+
+            assert(warning === false);
+          }
+        },
+        {
+          name: 'should no warnings on node destroy with satellite that has a Value.from().pipe() instances',
+          test: function(){
+            var node = new Node({
+              childNodes: [
+                new Node({
+                  selected: Value.factory('update', 'data.foo')
+                })
+              ]
+            });
+
+            var warn = basis.dev.warn;
+            var warning = false;
+            try {
+              basis.dev.warn = function(message){
+                warning = message;
+              };
+
+              node.firstChild.destroy();
+            } finally {
+              basis.dev.warn = warn;
+            }
+
+            assert(warning === false);
+          }
+        }
+      ]
     }
   ]
 };

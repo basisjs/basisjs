@@ -1,0 +1,37 @@
+.sidebar
+{
+  display: inline-block;
+  vertical-align: top;
+  height: 100%;
+  max-width: 300px;
+  border-right: 1px solid #EEE;
+  margin-right: 10px;
+  padding-right: 10px;
+  white-space: normal;
+}
+
+.link
+{
+  color: red;
+  padding-top: 0px;
+  text-decoration: underline;
+  color: #666;
+  cursor: pointer;
+}
+.link:hover
+{
+  color: #A00;
+}
+
+.log-link
+{
+  float: right;
+  margin-left: 1ex;
+}
+
+@supports (display:flex) {
+  .sidebar
+  {
+    height: auto;
+  }
+}

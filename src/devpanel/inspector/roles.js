@@ -4,10 +4,10 @@ var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
 var inspectBasisTracker = inspectBasis.require('basis.tracker');
 var getTrackInfo = inspectBasisTracker.getInfo;
-var trackingInfo = resource('./tracking-info/index.js');
+var trackingInfo = resource('../view/tracking-info/index.js');
+var inspectMode = require('api').inspect;
 
-var Overlay = require('./utils/overlay.js');
-var Value = require('basis.data').Value;
+var Overlay = require('./common/overlay.js');
 var Node = require('basis.ui').Node;
 var events = [
   'click',
@@ -76,9 +76,9 @@ function getActions(domNode, events){
 }
 
 var eventLog = new Node({
-  template: resource('./template/roles/event-log.tmpl'),
+  template: resource('./roles/event-log.tmpl'),
   childClass: {
-    template: resource('./template/roles/event-log-entry.tmpl'),
+    template: resource('./roles/event-log-entry.tmpl'),
     binding: {
       event: 'data:',
       selector: 'data:',
@@ -104,16 +104,18 @@ inspectBasisTracker.attach(function(event){
 });
 
 var overlay = new Overlay({
-  pickMode: new basis.Token(false),
+  pickMode: inspectMode.as(function(value){
+    return value === 'pick-roles';
+  }),
 
-  template: resource('./template/roles/overlay.tmpl'),
+  template: resource('./roles/overlay.tmpl'),
   binding: {
     pickMode: 'pickMode',
     eventLog: eventLog
   },
 
   childClass: {
-    template: resource('./template/roles/token.tmpl'),
+    template: resource('./roles/token.tmpl'),
     binding: {
       hasActions: 'data:',
       missedActions: 'data:',
@@ -216,7 +218,7 @@ var overlay = new Overlay({
   }
 });
 
-overlay.pickMode.attach(function(pickMode){
+overlay.pickMode.link(overlay, function(pickMode){
   var events = {};
 
   if (pickMode)
@@ -226,7 +228,7 @@ overlay.pickMode.attach(function(pickMode){
       mouseup: true
     };
 
-  overlay.setMuteEvents(events);
+  this.setMuteEvents(events);
 });
 
 //
@@ -240,10 +242,5 @@ module.exports = {
   },
   stopInspect: function(){
     overlay.deactivate();
-  },
-  inspectMode: Value.from(overlay, 'activeChanged', 'active'),
-  pickMode: overlay.pickMode,
-  isActive: function(){
-    return overlay.active;
   }
 };

@@ -110,7 +110,11 @@
       }
     };
 
-    if (config.constructor !== Object)
+    if (typeof config === 'function' && !basis.fn.isFactory(config))
+      config = {
+        init: config
+      };
+    else if (config.constructor !== Object)
       config = {
         element: config
       };

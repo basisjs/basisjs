@@ -1,0 +1,21 @@
+.loc
+{
+  display: none;
+  color: #EEE;
+}
+.loc_loc
+{
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.loc-button
+{
+  text-decoration: underline;
+  color: #A00;
+  cursor: pointer;
+}
+.loc-button:hover
+{
+  color: #D00;
+}

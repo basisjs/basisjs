@@ -1,3 +1,68 @@
+## 1.9.2 (August 31, 2016)
+
+- Fixed `.npmignore` not to ignore `src/devpanel/standalone/index.html`
+
+## 1.9.1 (August 31, 2016)
+
+### Devtools
+
+- Fixed warning grouping by source file
+- Fixed spinner overlay after first profile loading on warnings view
+- Fixed opening file in editor by click in template DOM tree view
+- Fixed file graph alignment to center in `Firefox`
+- Fixed edge arrows in file graph in `Firefox`
+- Fixed stanalone toolbar layout for old Webkit browsers (flexbox prefix issue)
+- Fixed issue with old location in `Edge` when stanalone loads in iframe with new `src` (using `window.name` as workaround)
+- Fixed various source warnings
+
+## 1.9.0 (August 29, 2016)
+
+Work in this release was focused on reworking devpanel and inspectors to support remote inspection. Starting this version UI may to be transferred into any WebView as all-sufficient bundle that communicate with app to get data and pass commands to it. It's dramatically simplify developing and debugging of devtools and provides common UX for any remote tool developer uses (on page tools, another tab, browser plugin, embedded WebView etc).
+Currently most important work on devtools platform has been done. In future versions devtools will be extended to support more features and better application state representation.
+
+### Core
+
+- Disabled `implicitExt` in `basis-config` (i.e. `basis-config="explicitExt:false"` by default now)
+- Core is now sync files update with dev-server by itself (it makes work file sync with `noConflict:true`)
+
+### Data
+
+- Improved `basis.data.Value#as()` method to convert string parameter to function via `basis.getter()`
+- Fixed value deep wrapping by `basis.data.devWrap()`
+- Added reference to source object for `basis.data.index.IndexMap` members
+
+### Template
+
+- Implemented `basis.template.resolveInfoByNode()` and `basis.template.resolveInfoById()` functions to simplify access to template instance description
+- Made `basis.template.theme` a `basis.Token`-like to compliment `basis.l10n.culture`
+- Fixed edge case when source of isolated style is reset
+
+### Devtools
+
+- Reworked to work on page and as remote tool
+    - UI can to be build to bundle now
+    - Improved transport protocols with dev-server and plugins
+    - Drop legacy functionality
+    - Various improvements and fixes
+- Implemented basic UI tree viewer
+- Implemented app warnings viewer
+- Implemented app file graph viewer
+
+### Other
+
+- Changed `basis.app` to accept non-factory functions as valid value for `create` method
+- Changed `basis.dom.resize` to use `srcdoc` and `src` to prevent net activity blinking on `IFRAME`'s document load (#92)
+- Relaxing some checks for `basis.ui.scroller` (@naorunaoru, #98)
+- Fixed typo in `basis.ui.pageslider` (@wuzyk, #88)
+- Fixed issue with scrolling on `basis.ui.slider` on touch devices (@fateevv, #97)
+- Extended `basis.dom.event` to support touch and pointer events (@fateevv, #99)
+- Fixed warning in `basis.dom.event` about deprecated `keyIdentifier`
+- Fixed wrong warnings (#93)
+    - `Emitter` instances don't warn on handler removing when already destroyed since it all its handlers already dropped
+    - `ReadOnlyValue` instances don't add destroy handler on its value since they can't drop value anyway (and shouldn't)
+    - Prevented double handler removing for `Value.from()` instances
+- Added link to remote devtool on index page if supported
+
 ## 1.8.3 (July 19, 2016)
 
 - Fixed issues with `undefined` or `null` as template source (now it converts to empty string)

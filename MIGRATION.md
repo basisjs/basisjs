@@ -1,3 +1,11 @@
+## 1.8.0 → 1.9.0
+
+Might break
+
+  - `implicitExt` is disabled by default (use `true` or `"warn"` value in `basis-config` to return old behaviour, but better way is not using `explicitExt` since it will be removed in future releases)
+  - `basisjs-tools` 1.10.0 is required
+  - `Basis.js Tools` [Chrome plugin](https://chrome.google.com/webstore/detail/basisjs-tools/paeokpmlopbdaancddhdhmfepfhcbmek) 2.0.0 is required
+
 ## 1.7.0 → 1.8.0
 
 Remove

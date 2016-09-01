@@ -1,0 +1,13 @@
+<b:isolate/>
+<b:style src="./app-profile-button.css"/>
+<b:define name="disabled" type="bool"/>
+
+<div class="wrapper">
+  <div class="error" title="{error}" b:visible="{error}">
+    {error}
+  </div>
+  <span class="button button_{disabled}" event-click="update">
+    <span b:hide="{processing}">Update app profile</span>
+    <span b:show="{processing}">Fetching...</span>
+  </span>
+</div>

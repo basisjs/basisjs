@@ -18,6 +18,9 @@
 
   var NULL_HANDLER = {};
   var events = {};
+  var warnOnDestroyWhileDestroing = function(){
+    /** @cut */ basis.dev.warn('Invoke `destroy` method is prohibited during object destroy.');
+  };
   var warnOnDestroy = function(){
     /** @cut */ basis.dev.warn('Object had been destroyed before. Destroy method must not be called more than once.');
   };
@@ -264,6 +267,11 @@
     * @param {object=} context Context object.
     */
     removeHandler: function(callbacks, context){
+      // avoid warnings on trying to remove handler for destroyed instance
+      // since it droped all handlers
+      if (this.destroy === warnOnDestroy)
+        return;
+
       var cursor = this;
       var prev;
 
@@ -291,13 +299,16 @@
     */
     destroy: function(){
       // warn on destroy method call (only in debug mode)
-      this.destroy = warnOnDestroy;
+      this.destroy = warnOnDestroyWhileDestroing;
 
       // fire object destroy event handlers
       this.emit_destroy();
 
       // drop event handlers if any
       this.handler = null;
+
+      // no more events possible
+      this.destroy = warnOnDestroy;
     }
   });
 

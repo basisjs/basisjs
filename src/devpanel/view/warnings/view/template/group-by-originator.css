@@ -1,0 +1,35 @@
+.originator
+{
+  padding: 5px 0;
+}
+.originator_hasFilename
+{
+  margin-left: 4ex;
+}
+
+.title
+{
+  padding: 0 6px 4px 0;
+  font-size: 90%;
+  color: #AAA;
+  display: none;
+}
+.title_hasFilename
+{
+  display: block;
+}
+
+.title-button
+{
+  text-decoration: underline;
+  color: #999;
+  cursor: pointer;
+}
+.title-button:hover
+{
+  color: #D00;
+}
+.items_hasFilename
+{
+  margin-left: -4ex;
+}

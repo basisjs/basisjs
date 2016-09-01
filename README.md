@@ -1,6 +1,7 @@
 # basis.js
 
-[![npm](https://img.shields.io/npm/v/basisjs.svg)](https://www.npmjs.com/package/basisjs) [![bower](https://img.shields.io/bower/v/basisjs.svg)](https://github.com/basisjs/basisjs) [![Build Status](https://travis-ci.org/basisjs/basisjs.svg?branch=master)](https://travis-ci.org/basisjs/basisjs)
+[![npm](https://img.shields.io/npm/v/basisjs.svg)](https://www.npmjs.com/package/basisjs)
+[![Build Status](https://travis-ci.org/basisjs/basisjs.svg?branch=master)](https://travis-ci.org/basisjs/basisjs)
 [![Join the chat at https://gitter.im/basisjs/basisjs](https://badges.gitter.im/basisjs/basisjs.svg)](https://gitter.im/basisjs/basisjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [Версия на русском](README.ru.md) (более полная и подробная)
@@ -22,17 +23,10 @@ You can compare performance of `basis.js` with other frameworks by some syntheti
 > npm install basisjs
 ```
 
-or
-
-```
-> bower install basisjs
-```
-
 or use build as [library](https://github.com/basisjs/basis-library)
 
 ```
 > npm install basis-library
-> bower install basis-library
 ```
 
 Library version can be fetched from CDN: [https://cdnjs.com/libraries/basis.js](https://cdnjs.com/libraries/basis.js)
