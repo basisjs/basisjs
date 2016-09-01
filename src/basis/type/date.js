@@ -28,8 +28,8 @@ var fromISOString = (function(){
   };
 })();
 
-var ISO_REGEXP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
-var PARTIAL_ISO_REGEXP = /^\d{4}-\d{2}-\d{2}$/;
+/** @cut */ var ISO_REGEXP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
+/** @cut */ var PARTIAL_ISO_REGEXP = /^\d{4}-\d{2}-\d{2}$/;
 
 function toDate(value) {
   if (typeof value === 'number' && isFinite(value))
@@ -38,7 +38,7 @@ function toDate(value) {
   if (value && typeof value === 'string')
   {
     /** @cut */ if (!ISO_REGEXP.test(value) && !PARTIAL_ISO_REGEXP.test(value))
-    /** @cut */   basis.dev.warn('basis.type.date expected ISO string but got ' + value + '. Try to parse as ISO string anyway')
+    /** @cut */   basis.dev.warn('basis.type.date expected ISO string but got ' + value + '. Try to parse as ISO string anyway');
 
     return fromISOString(value);
   }

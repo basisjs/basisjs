@@ -55,7 +55,7 @@ module.exports = {
           'hello'
         ].forEach(function(nonIsoString){
           var warned = catchWarnings(function(){
-            assert(type.date(nonIsoString) instaceof Date);
+            assert(type.date(nonIsoString) instanceof Date);
           });
 
           assert(warned);
