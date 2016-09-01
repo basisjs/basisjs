@@ -1,49 +1,71 @@
+var Value = require('basis.data').Value;
+var MapFilter = require('basis.data.dataset').MapFilter;
+var Filter = require('basis.data.dataset').Filter;
 var Split = require('basis.data.dataset').Split;
 var count = require('basis.data.index').count;
 var Node = require('basis.ui').Node;
-var File = require('type').AppFile;
+var AppFile = require('type').AppFile;
+var RuntimeFile = require('type').RuntimeFile;
 
+var activatedFilesSlots = new MapFilter({
+  source: new Filter({
+    source: RuntimeFile.all,
+    rule: 'data.resolved'
+  }),
+  map: function(runtimeFile){
+    return AppFile.getSlot(runtimeFile.data.filename);
+  }
+});
+var activatedFiles = new MapFilter({
+  source: activatedFilesSlots,
+  ruleEvents: 'targetChanged',
+  map: function(slot){
+    return slot.target;
+  }
+});
 var fileByType = new Split({
-  source: File.files,
+  source: AppFile.files,
   rule: 'data.type'
 });
 
-module.exports = new Node({
-  dataSource: fileByType,
+var Item = Node.subclass({
+  selected: Value.query(AppFile.matched, 'dataset').compute(function(node, dataset){
+    return (node.dataset || node.delegate) === dataset;
+  }),
 
-  template: resource('./template/file-stat.tmpl'),
+  template: resource('./template/type.tmpl'),
   binding: {
-    totalCount: count(File.files),
-    noSelected: function(node){
-      return count(node.selection).as(basis.bool.invert);
+    type: function(node){
+      return node.caption || node.data.id;
+    },
+    count: function(node){
+      return count(node.dataset || node.delegate);
     }
   },
   action: {
-    resetSelection: function(){
-      this.selection.clear();
+    select: function(){
+      AppFile.matched.setDataset(this.dataset || this.delegate);
     }
+  }
+});
+
+module.exports = new Node({
+  template: resource('./template/file-stat.tmpl'),
+  binding: {
+    activatedFiles: 'satellite:',
+    allFiles: 'satellite:'
   },
 
-  listen: {
-    selection: {
-      itemsChanged: function(selection){
-        var selected = selection.pick();
-        File.matched.setDataset(selected ? selected.delegate : null);
-      }
-    }
-  },
-
-  selection: true,
-  childClass: {
-    template: resource('./template/type.tmpl'),
-    binding: {
-      type: 'data:title',
-      count: {
-        events: 'delegateChanged',
-        getter: function(node){
-          return count(node.delegate);
-        }
-      }
-    }
+  dataSource: fileByType,
+  childClass: Item,
+  satellite: {
+    activatedFiles: new Item({
+      dataset: activatedFiles,
+      caption: 'activated files'
+    }),
+    allFiles: new Item({
+      dataset: AppFile.all,
+      caption: 'all files'
+    })
   }
 });

@@ -13,28 +13,32 @@ var File = entity.createType('AppFile', {
     return result != filename ? result : '';
   }),
   name: entity.calc('filename', function(filename){
-    return (filename || '').split(/\//).pop();
-  }),
-  matched: Boolean
+    return basis.path.basename(filename);
+  })
 });
 
-File.matched = new DatasetWrapper();
+File.matched = new DatasetWrapper({
+  dataset: File.all
+});
+
 AppProfile.linkDataset('files', File.all, function(files){
   return files.reduce(function(files, file){
-    var parts = file.name.split('/');
-    var path = '';
-    var name;
-    var first = true;
+    var filename = basis.path.resolve('/.', file.name);
 
-    while (name = parts.shift())
+    files.push({
+      filename: filename,
+      type: file.type
+    });
+
+    while (filename = basis.path.dirname(filename))
     {
-      path += (first ? '' : '/') + name;
-      first = false;
       files.push({
-        filename: path,
-        type: file.type,
-        isDir: !!parts.length
+        filename: filename,
+        isDir: true
       });
+
+      if (filename === '/')
+        break;
     }
 
     return files;

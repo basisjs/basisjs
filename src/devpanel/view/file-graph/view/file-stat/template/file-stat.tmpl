@@ -5,10 +5,6 @@
 <div class="file-stat">
   <div class="header">File type statistics</div>
   <!--{childNodesHere}-->
-  <b:include src="./type.tmpl">
-    <b:class value="file-type-all_{noSelected}"/>
-    <b:set-attr name="event-click" value="resetSelection"/>
-    <b:replace ref="type">all files</b:replace>
-    <b:replace ref="count">{totalCount}</b:replace>
-  </b:include>
+  <!--{activatedFiles}-->
+  <!--{allFiles}-->
 </div>

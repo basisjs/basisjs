@@ -41,10 +41,12 @@ var GraphNode = Node.subclass({
     y: coord('y'),
     type: 'data:',
     hasSelected: Value.query('parentNode.selection.itemCount').as(Boolean),
-    matched: Value
-      .from(File.matched, 'itemsChanged', 'dataset')
-      .compute(function(node, dataset){
-        return !dataset || dataset.has(node.target);
+    matched: Value.query(File.matched, 'dataset')
+      .pipe('itemsChanged', function(dataset){
+        return basis.array((dataset || File.all).getItems());
+      })
+      .compute(function(node, matched){
+        return matched.indexOf(node.target) !== -1;
       })
   },
   action: {
@@ -332,7 +334,6 @@ var speedSlider = new Slider({
     setTimeout(popNode, speedSlider.value);
   })();
 })();
-
 
 module.exports = new Node({
   template: resource('./template/view.tmpl'),
