@@ -79,7 +79,7 @@ function dateTransform(defaultValue, nullable){
 
     if (dateObject === undefined){
       /** @cut */ basis.dev.warn('basis.type.date expected ISO string, number, date or null but got ' + value);
-      return oldValue || transform.DEFAULT_VALUE;
+      return oldValue;
     }
 
     if (dateObject && oldValue && dateObject.getTime() === oldValue.getTime())

@@ -815,12 +815,15 @@
 
         args.push(name, fname);
         values.push(defValue, fields[key]);
+
+        var newValueArgument =
+          'has.call(data,' + escapedKey + ')' +
+            '?' + 'data[' + escapedKey + ']' +
+            ':' + name + (typeof defValue == 'function' ? '(data)' : '');
+        var oldValueArgument = defValue !== undefined && typeof defValue !== 'function' ? ',' + name : '';
+
         obj.push(escapedKey + ':' +
-          fname + '(' +
-            'has.call(data,' + escapedKey + ')' +
-              '?' + 'data[' + escapedKey + ']' +
-              ':' + name + (typeof defValue == 'function' ? '(data)' : '') +
-            ')'
+          fname + '(' + newValueArgument + oldValueArgument + ')'
         );
       }
 
@@ -842,12 +845,20 @@
   function addField(entityType, name, config){
     // normalize config
     if (typeof config == 'string' ||
-        Array.isArray(config) ||
-        (typeof config == 'function' && config.calc !== config))
+        Array.isArray(config))
     {
       config = {
         type: config
       };
+    }
+    else if (typeof config == 'function' && config.calc !== config)
+    {
+      config = {
+        type: config
+      };
+
+      if ('DEFAULT_VALUE' in config.type)
+        config.defValue = config.type.DEFAULT_VALUE;
     }
     else
     {
@@ -892,10 +903,16 @@
       }
 
       if (config.type === Array)
+      {
         config.type = nullableArray;
+        config.defValue = nullableArray.DEFAULT_VALUE;
+      }
 
       if (config.type === Date)
+      {
         config.type = nullableDate;
+        config.defValue = nullableDate.DEFAULT_VALUE;
+      }
 
       // if type still is not a function - ignore it
       if (typeof config.type != 'function')

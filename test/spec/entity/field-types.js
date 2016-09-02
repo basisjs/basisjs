@@ -529,6 +529,79 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'custom basis.type-like transform',
+      beforeEach: function(){
+        var boolOrNull = function(newValue, oldValue){
+          switch (newValue) {
+            case true:
+            case false:
+            case null:
+              return newValue;
+            default:
+              return oldValue;
+          }
+        };
+
+        var defValue = {};
+        defValue.circularReference = defValue;
+
+        boolOrNull.DEFAULT_VALUE = defValue;
+
+        var T = nsEntity.createType({
+          fields: {
+            value: boolOrNull
+          }
+        });
+      },
+      test: [
+        {
+          name: 'set correct values on init',
+          test: function(){
+            assert(T({ value: null }).data.value === null);
+            assert(T({ value: false }).data.value === false);
+            assert(T({ value: true }).data.value === true);
+          }
+        },
+        {
+          name: 'set correct values on update',
+          test: function(){
+            // null
+            var instance = T({ value: false });
+            instance.set('value', true);
+            assert(instance.data.value === true);
+            instance.set('value', null);
+            assert(instance.data.value === null);
+          }
+        },
+        {
+          name: 'set wrong values on init',
+          test: function(){
+            var T = nsEntity.createType({
+              fields: {
+                value: boolOrNull
+              }
+            });
+
+            assert(T({ value: {} }).data.value === defValue);
+            assert(T({ value: [] }).data.value === defValue);
+            assert(T({ value: function(){} }).data.value === defValue);
+            assert(T({ value: '' }).data.value === defValue);
+            assert(T({ value: NaN }).data.value === defValue);
+          }
+        },
+        {
+          name: 'set wrong values',
+          test: function(){
+            assert(T({ value: true }).set('value', {}) === false);
+            assert(T({ value: true }).set('value', []) === false);
+            assert(T({ value: true }).set('value', function(){}) === false);
+            assert(T({ value: true }).set('value', '') === false);
+            assert(T({ value: true }).set('value', NaN) === false);
+          }
+        }
+      ]
     }
   ]
 },
