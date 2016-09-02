@@ -64,7 +64,7 @@ module.exports = new Node({
       caption: 'activated files'
     }),
     allFiles: new Item({
-      dataset: AppFile.all,
+      dataset: AppFile.files,
       caption: 'all files'
     })
   }
