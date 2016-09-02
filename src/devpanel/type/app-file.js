@@ -23,7 +23,7 @@ File.matched = new DatasetWrapper({
 
 AppProfile.linkDataset('files', File.all, function(files){
   return files.reduce(function(files, file){
-    var filename = basis.path.resolve('/.', file.name);
+    var filename = basis.path.resolve('/', file.name);
 
     files.push({
       filename: filename,

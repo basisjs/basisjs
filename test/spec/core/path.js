@@ -198,6 +198,7 @@ module.exports = {
         assert(basis.path.resolve('a/b/c/', '../../..') == basis.path.baseURI.replace(/\/$/, ''));
         assert(basis.path.resolve('.') == basis.path.baseURI.replace(/\/$/, ''));
         assert(basis.path.resolve('/some/dir', '.', '/absolute/') == '/absolute');
+        assert(basis.path.resolve('/', 'dir/file.ext') == '/dir/file.ext');
       }
     }
   ]

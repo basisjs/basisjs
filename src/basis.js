@@ -1164,6 +1164,8 @@
 
         if (!absoluteFound)
           path.unshift(baseURI == '/' ? '' : baseURI);
+        else if (path.length && path[0] == '/')
+          path[0] = '';
 
         return utils.normalize(path.join('/'));
       },

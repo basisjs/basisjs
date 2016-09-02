@@ -9,8 +9,8 @@ var FileLink = entity.createType('AppFileLink', {
 AppProfile.linkDataset('links', FileLink.all, function(links){
   return links.map(function(link){
     return {
-      from: basis.path.resolve('/.', link[0]),
-      to: basis.path.resolve('/.', link[1])
+      from: basis.path.resolve('/', link[0]),
+      to: basis.path.resolve('/', link[1])
     };
   });
 });
