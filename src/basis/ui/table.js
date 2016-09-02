@@ -314,6 +314,7 @@
           {
             headerConfig.colSorting = sorting;
             headerConfig.defaultOrder = colConfig.defaultOrder;
+            headerConfig.order = headerConfig.defaultOrder;
 
             if (colConfig.autosorting || sorting === ownerSorting)
               autoSorting.push(headerConfig);
