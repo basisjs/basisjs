@@ -39,6 +39,7 @@
   var validateScheme = basisType.validateScheme;
   var nullableArray = basisType.array.nullable;
   var nullableDate = basisType.date.nullable;
+  var enumeration = basisType.enumeration;
 
   var NULL_INFO = {};
 
@@ -877,29 +878,9 @@
       {
         var values = config.type.slice(); // make copy of array to make it stable
 
-        /** @cut */ if (!values.length)
-        /** @cut */   basis.dev.warn('Empty array set as type definition for ' + entityType.name + '#field.' + name + ', is it a bug?');
-
-        if (values.length == 1)
-        {
-          config.type = basis.fn.$const(values[0]);
-          config.defValue = values[0];
-        }
-        else
-        {
-          var defaultValue;
-          config.type = function(value, oldValue){
-            var exists = value === defaultValue || values.indexOf(value) != -1;
-
-            /** @cut */ if (!exists)
-            /** @cut */   basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + name + ' (new value ignored).\nVariants:', values, '\nIgnored value:', value);
-
-            return exists ? value : oldValue === undefined ? defaultValue : oldValue;
-          };
-
-          defaultValue = values.indexOf(config.defValue) != -1 ? config.defValue : values[0];
-          config.defValue = defaultValue;
-        }
+        config.type = enumeration(values);
+        if (values.indexOf(config.defValue) == -1)
+          config.defValue = config.type.DEFAULT_VALUE;
       }
 
       if (config.type === Array)
