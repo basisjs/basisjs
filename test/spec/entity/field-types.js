@@ -592,6 +592,37 @@ module.exports = {
           }
         },
         {
+          name: 'set wrong values on init - specification via type config with default value',
+          test: function(){
+            var T = nsEntity.createType({
+              fields: {
+                value: {
+                  type: boolOrNull
+                }
+              }
+            });
+
+            assert(T({ value: {} }).data.value === defValue);
+          }
+        },
+        {
+          name: 'set wrong values on init - specification via type config without default value',
+          test: function(){
+            var customDefault = {};
+
+            var T = nsEntity.createType({
+              fields: {
+                value: {
+                  type: boolOrNull,
+                  defValue: customDefault
+                }
+              }
+            });
+
+            assert(T({ value: [] }).data.value === customDefault);
+          }
+        },
+        {
           name: 'set wrong values',
           test: function(){
             assert(T({ value: true }).set('value', {}) === false);

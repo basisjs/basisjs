@@ -846,20 +846,12 @@
   function addField(entityType, name, config){
     // normalize config
     if (typeof config == 'string' ||
-        Array.isArray(config))
+        Array.isArray(config) ||
+        (typeof config == 'function' && config.calc !== config))
     {
       config = {
         type: config
       };
-    }
-    else if (typeof config == 'function' && config.calc !== config)
-    {
-      config = {
-        type: config
-      };
-
-      if ('DEFAULT_VALUE' in config.type)
-        config.defValue = config.type.DEFAULT_VALUE;
     }
     else
     {
@@ -921,7 +913,15 @@
       entityType.aliases[name] = name;
     }
 
-    entityType.defaults[name] = 'defValue' in config ? config.defValue : wrapper();
+    if (!('defValue' in config) && typeof config.type === 'function' && 'DEFAULT_VALUE' in config.type)
+      config.defValue = config.type.DEFAULT_VALUE;
+
+    if ('defValue' in config)
+      entityType.defaults[name] = config.defValue;
+    else if ('DEFAULT_VALUE' in wrapper)
+      entityType.defaults[name] = wrapper.DEFAULT_VALUE;
+    else
+      entityType.defaults[name] = wrapper();
 
     if (!fieldDestroyHandlers[name])
       fieldDestroyHandlers[name] = {
