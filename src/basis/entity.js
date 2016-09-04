@@ -886,13 +886,13 @@
       if (config.type === Array)
       {
         config.type = nullableArray;
-        config.defValue = nullableArray.DEFAULT_VALUE;
+        config.defValue = null;
       }
 
       if (config.type === Date)
       {
         config.type = nullableDate;
-        config.defValue = nullableDate.DEFAULT_VALUE;
+        config.defValue = null;
       }
 
       // if type still is not a function - ignore it
