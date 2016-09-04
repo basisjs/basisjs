@@ -5,7 +5,7 @@ function stringTransform(defaultValue, nullable) {
   {
     if (defaultValue !== null && typeof defaultValue !== 'string')
     {
-      /** @cut */ basis.dev.warn(transformName + '.default expected string or null as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      /** @cut */ basis.dev.warn(transformName + '.default expected string or null as default value but got ', defaultValue, '. Falling back to ' + transformName);
       return string.nullable;
     }
   }
@@ -13,7 +13,7 @@ function stringTransform(defaultValue, nullable) {
   {
     if (typeof defaultValue !== 'string')
     {
-      /** @cut */ basis.dev.warn(transformName + '.default expected string as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      /** @cut */ basis.dev.warn(transformName + '.default expected string as default value but got ', defaultValue, '. Falling back to ' + transformName);
       return string;
     }
   }
@@ -25,7 +25,7 @@ function stringTransform(defaultValue, nullable) {
     if (nullable && value === null)
       return null;
 
-    /** @cut */ basis.dev.warn(transformName + ' expected string or null but got ' + value);
+    /** @cut */ basis.dev.warn(transformName + ' expected string or null but got ', value);
 
     return oldValue;
   };

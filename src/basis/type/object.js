@@ -15,7 +15,7 @@ function objectTransform(defaultValue, nullable) {
   {
     if (defaultValue !== null && !isObject(defaultValue))
     {
-      /** @cut */ basis.dev.warn(transformName + '.default expected object or null as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      /** @cut */ basis.dev.warn(transformName + '.default expected object or null as default value but got ', defaultValue, '. Falling back to ' + transformName);
       return object.nullable;
     }
   }
@@ -23,7 +23,7 @@ function objectTransform(defaultValue, nullable) {
   {
     if (!isObject(defaultValue))
     {
-      /** @cut */ basis.dev.warn(transformName + '.default expected object as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      /** @cut */ basis.dev.warn(transformName + '.default expected object as default value but got ', defaultValue, '. Falling back to ' + transformName);
       return object;
     }
   }
@@ -35,7 +35,7 @@ function objectTransform(defaultValue, nullable) {
     if (nullable && value === null)
       return null;
 
-    /** @cut */ basis.dev.warn(transformName + ' expected object but got ' + value);
+    /** @cut */ basis.dev.warn(transformName + ' expected object but got ', value);
 
     return oldValue;
   };

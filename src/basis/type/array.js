@@ -19,7 +19,7 @@ function arrayTransform(defaultValue, nullable) {
   {
     if (defaultValue !== null && !Array.isArray(defaultValue))
     {
-      /** @cut */ basis.dev.warn(transformName + '.default expected array or null as default value but got ' + defaultValue + '. Falling back to ' + defaultValue);
+      /** @cut */ basis.dev.warn(transformName + '.default expected array or null as default value but got ', defaultValue, '. Falling back to ', defaultValue);
       return array.nullable;
     }
   }
@@ -27,7 +27,7 @@ function arrayTransform(defaultValue, nullable) {
   {
     if (!Array.isArray(defaultValue))
     {
-      /** @cut */ basis.dev.warn(transformName + '.default expected array as default value but got ' + defaultValue + '. Falling back to ' + defaultValue);
+      /** @cut */ basis.dev.warn(transformName + '.default expected array as default value but got ', defaultValue, '. Falling back to ', defaultValue);
       return array;
     }
   }
@@ -39,7 +39,7 @@ function arrayTransform(defaultValue, nullable) {
     if (nullable && value === null)
       return null;
 
-    /** @cut */ basis.dev.warn('basis.type.array.nullable expected array or null but got ' + value);
+    /** @cut */ basis.dev.warn('basis.type.array.nullable expected array or null but got ', value);
 
     return oldValue;
   };

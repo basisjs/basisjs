@@ -38,7 +38,7 @@ function toDate(value) {
   if (value && typeof value === 'string')
   {
     /** @cut */ if (!ISO_REGEXP.test(value) && !PARTIAL_ISO_REGEXP.test(value))
-    /** @cut */   basis.dev.warn('basis.type.date expected ISO string but got ' + value + '. Try to parse as ISO string anyway');
+    /** @cut */   basis.dev.warn('basis.type.date expected ISO string but got ', value, '. Try to parse as ISO string anyway');
 
     return fromISOString(value);
   }
@@ -58,7 +58,7 @@ function dateTransform(defaultValue, nullable){
   {
     if (defaultValue !== null && defaultValueAsDate === undefined)
     {
-      /** @cut */ basis.dev.warn(transformName + '.default ISO string, number or date object as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      /** @cut */ basis.dev.warn(transformName + '.default ISO string, number or date object as default value but got ', defaultValue, '. Falling back to ' + transformName);
       return date.nullable;
     }
   }
@@ -66,7 +66,7 @@ function dateTransform(defaultValue, nullable){
   {
     if (defaultValueAsDate === undefined)
     {
-      /** @cut */ basis.dev.warn(transformName + '.default ISO string, number, date object or null as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      /** @cut */ basis.dev.warn(transformName + '.default ISO string, number, date object or null as default value but got ', defaultValue, '. Falling back to ' + transformName);
       return date;
     }
   }
@@ -78,7 +78,7 @@ function dateTransform(defaultValue, nullable){
     var dateObject = toDate(value);
 
     if (dateObject === undefined){
-      /** @cut */ basis.dev.warn('basis.type.date expected ISO string, number, date or null but got ' + value);
+      /** @cut */ basis.dev.warn('basis.type.date expected ISO string, number, date or null but got ', value);
       return oldValue;
     }
 

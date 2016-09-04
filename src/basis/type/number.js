@@ -9,7 +9,7 @@ function numberTransform(defaultValue, nullable) {
   {
     if (defaultValue !== null && !isNumber(defaultValue))
     {
-      /** @cut */ basis.dev.warn(transformName + '.default expected number or null as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      /** @cut */ basis.dev.warn(transformName + '.default expected number or null as default value but got ', defaultValue, '. Falling back to ' + transformName);
       return number.nullable;
     }
   }
@@ -17,7 +17,7 @@ function numberTransform(defaultValue, nullable) {
   {
     if (!isNumber(defaultValue))
     {
-      /** @cut */ basis.dev.warn(transformName + '.default expected number as default value but got ' + defaultValue + '. Falling back to ' + transformName);
+      /** @cut */ basis.dev.warn(transformName + '.default expected number as default value but got ', defaultValue, '. Falling back to ' + transformName);
       return number;
     }
   }
@@ -31,7 +31,7 @@ function numberTransform(defaultValue, nullable) {
     if (nullable && value === null)
       return null;
 
-    /** @cut */ basis.dev.warn(transformName + ' expected number but got ' + value);
+    /** @cut */ basis.dev.warn(transformName + ' expected number but got ', value);
 
     return oldValue;
   };

@@ -1,7 +1,7 @@
 function enumeration(values) {
   if (!Array.isArray(values))
   {
-    /** @cut */ basis.dev.warn('basis.type.enum constructor expected array but got ' + values + '. Wrapping into array');
+    /** @cut */ basis.dev.warn('basis.type.enum constructor expected array but got ', values, '. Wrapping into array');
     values = [values];
   }
 
@@ -12,7 +12,7 @@ function enumeration(values) {
     if (values.indexOf(value) !== -1)
       return value;
 
-    /** @cut */ basis.dev.warn('basis.type.enum expected one of values from the list (' + values + ') but got ' + value);
+    /** @cut */ basis.dev.warn('basis.type.enum expected one of values from the list ', values, ' but got ', value);
 
     return oldValue;
   };
@@ -22,7 +22,7 @@ function enumeration(values) {
   transform['default'] = function(defaultValue){
     if (values.indexOf(defaultValue) === -1)
     {
-      /** @cut */ basis.dev.warn('basis.type.enum.default expected one of values from the list (' + values + ') but got ' + defaultValue + '. Ignoring default value');
+      /** @cut */ basis.dev.warn('basis.type.enum.default expected one of values from the list ', values, ' but got ', defaultValue, '. Ignoring default value');
       return transform;
     }
 
