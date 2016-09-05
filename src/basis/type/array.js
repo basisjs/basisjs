@@ -49,8 +49,17 @@ function arrayTransform(defaultValue, nullable) {
   return transform;
 }
 
-var array = arrayTransform([], false);
-/** @cut */ array = arrayTransform(Object.freeze([]), false);
+var defValue = [];
+/** @cut */ if (typeof Object.freeze === 'function')
+/** @cut */   Object.freeze(defValue);
+/** @cut */ if (typeof Proxy === 'function')
+/** @cut */   defValue = new Proxy(defValue, {
+/** @cut */     set: function(){
+/** @cut */       basis.dev.warn('Found trial to modify basis.type.array default value. Ignoring');
+/** @cut */     }
+/** @cut */   });
+
+var array = arrayTransform(defValue, false);
 array['default'] = function(defaultValue){
   return arrayTransform(defaultValue, false);
 };

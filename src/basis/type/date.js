@@ -93,8 +93,17 @@ function dateTransform(defaultValue, nullable){
   return transform;
 }
 
-var date = dateTransform(new Date(0), false);
-/** @cut */ date = dateTransform(Object.freeze(new Date(0)), false);
+var defValue = new Date(0);
+/** @cut */ if (typeof Object.freeze === 'function')
+/** @cut */   Object.freeze(defValue);
+/** @cut */ if (typeof Proxy === 'function')
+/** @cut */   defValue = new Proxy(defValue, {
+/** @cut */     set: function(){
+/** @cut */       basis.dev.warn('Found trial to modify basis.type.date default value. Ignoring');
+/** @cut */     }
+/** @cut */   });
+
+var date = dateTransform(defValue, false);
 date['default'] = function(defaultValue){
   return dateTransform(defaultValue, false);
 };

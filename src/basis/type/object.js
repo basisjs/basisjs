@@ -45,8 +45,17 @@ function objectTransform(defaultValue, nullable) {
   return transform;
 }
 
-var object = objectTransform({}, false);
-/** @cut */ object = objectTransform(Object.freeze({}), false);
+var defValue = {};
+/** @cut */ if (typeof Object.freeze === 'function')
+/** @cut */   Object.freeze(defValue);
+/** @cut */ if (typeof Proxy === 'function')
+/** @cut */   defValue = new Proxy(defValue, {
+/** @cut */     set: function(){
+/** @cut */       basis.dev.warn('Found trial to modify basis.type.object default value. Ignoring');
+/** @cut */     }
+/** @cut */   });
+
+var object = objectTransform(defValue, false);
 object['default'] = function(defaultValue){
   return objectTransform(defaultValue, false);
 };
