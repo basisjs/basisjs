@@ -51,7 +51,7 @@ var defValue = {};
 /** @cut */ if (typeof Proxy === 'function')
 /** @cut */   defValue = new Proxy(defValue, {
 /** @cut */     set: function(){
-/** @cut */       basis.dev.warn('Attempt to modify basis.type.object read-only default value. Ignoring');
+/** @cut */       basis.dev.warn('Ignored attempt to modify basis.type.object read-only default value');
 /** @cut */     }
 /** @cut */   });
 
