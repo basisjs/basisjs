@@ -55,7 +55,7 @@ var defValue = [];
 /** @cut */ if (typeof Proxy === 'function')
 /** @cut */   defValue = new Proxy(defValue, {
 /** @cut */     set: function(){
-/** @cut */       basis.dev.warn('Found trial to modify basis.type.array default value. Ignoring');
+/** @cut */       basis.dev.warn('Attempt to modify basis.type.array read-only default value. Ignoring');
 /** @cut */     }
 /** @cut */   });
 

@@ -99,7 +99,7 @@ var defValue = new Date(0);
 /** @cut */ if (typeof Proxy === 'function')
 /** @cut */   defValue = new Proxy(defValue, {
 /** @cut */     set: function(){
-/** @cut */       basis.dev.warn('Found trial to modify basis.type.date default value. Ignoring');
+/** @cut */       basis.dev.warn('Attempt to modify basis.type.date read-only default value. Ignoring');
 /** @cut */     }
 /** @cut */   });
 
