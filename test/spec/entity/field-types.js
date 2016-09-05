@@ -133,7 +133,21 @@ module.exports = {
           }
         },
         {
-          name: 'everything non-array become null',
+          name: 'set null',
+          test: function(){
+            var T = nsEntity.createType({
+              fields: {
+                array: Array
+              }
+            });
+            var obj = T({ array: [1, 2, 3] });
+            obj.set('array', null);
+
+            assert(obj.data.array === null);
+          }
+        },
+        {
+          name: 'everything non-array just be ignored',
           test: function(){
             var a = [1, 2, 3];
 
@@ -144,35 +158,40 @@ module.exports = {
             });
             var obj = T({ array: a });
 
-            assert(typeof obj.set('array', null) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', undefined);
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', undefined) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', true);
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', true) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', 'whatever');
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', 'whatever') === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', 123);
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', 123) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', {});
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', {}) === 'object');
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', function(){});
+            }));
+            assert(obj.data.array === a);
 
-            assert(typeof obj.set('array', a) === 'object');
-            assert(typeof obj.set('array', function(){}) === 'object');
-            assert(obj.data.array === null);
-
-            assert(obj.set('array', 'whatever') === false);
-            assert(obj.data.array === null);
+            assert(catchWarnings(function(){
+              obj.set('array', 'whatever');
+            }));
+            assert(obj.data.array === a);
           }
         },
         {
@@ -507,6 +526,110 @@ module.exports = {
             assert(T({ date: date }).set('date', NaN) === false);
             assert(T({ date: date }).set('date', true) === false);
             assert(T({ date: date }).set('date', false) === false);
+          }
+        }
+      ]
+    },
+    {
+      name: 'custom basis.type-like transform',
+      beforeEach: function(){
+        var boolOrNull = function(newValue, oldValue){
+          switch (newValue) {
+            case true:
+            case false:
+            case null:
+              return newValue;
+            default:
+              return oldValue;
+          }
+        };
+
+        var defValue = {};
+        defValue.circularReference = defValue;
+
+        boolOrNull.DEFAULT_VALUE = defValue;
+
+        var T = nsEntity.createType({
+          fields: {
+            value: boolOrNull
+          }
+        });
+      },
+      test: [
+        {
+          name: 'set correct values on init',
+          test: function(){
+            assert(T({ value: null }).data.value === null);
+            assert(T({ value: false }).data.value === false);
+            assert(T({ value: true }).data.value === true);
+          }
+        },
+        {
+          name: 'set correct values on update',
+          test: function(){
+            // null
+            var instance = T({ value: false });
+            instance.set('value', true);
+            assert(instance.data.value === true);
+            instance.set('value', null);
+            assert(instance.data.value === null);
+          }
+        },
+        {
+          name: 'set wrong values on init',
+          test: function(){
+            var T = nsEntity.createType({
+              fields: {
+                value: boolOrNull
+              }
+            });
+
+            assert(T({ value: {} }).data.value === defValue);
+            assert(T({ value: [] }).data.value === defValue);
+            assert(T({ value: function(){} }).data.value === defValue);
+            assert(T({ value: '' }).data.value === defValue);
+            assert(T({ value: NaN }).data.value === defValue);
+          }
+        },
+        {
+          name: 'set wrong values on init - specification via type config with default value',
+          test: function(){
+            var T = nsEntity.createType({
+              fields: {
+                value: {
+                  type: boolOrNull
+                }
+              }
+            });
+
+            assert(T({ value: {} }).data.value === defValue);
+          }
+        },
+        {
+          name: 'set wrong values on init - specification via type config without default value',
+          test: function(){
+            var customDefault = {};
+
+            var T = nsEntity.createType({
+              fields: {
+                value: {
+                  type: boolOrNull,
+                  defValue: customDefault
+                }
+              }
+            });
+
+            assert(T({ value: [] }).data.value === customDefault);
+          }
+        },
+        {
+          name: 'set wrong values',
+          test: function(){
+            assert(T({ value: true }).set('value', {}) === false);
+            assert(T({ value: true }).set('value', []) === false);
+            assert(T({ value: true }).set('value', function(){}) === false);
+            assert(T({ value: true }).set('value', '') === false);
+            assert(T({ value: true }).set('value', NaN) === false);
           }
         }
       ]

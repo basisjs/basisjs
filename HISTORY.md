@@ -574,7 +574,7 @@ Initial work on new module `basis.tracker` for unobtrusive event tracking.
 - IMPROVE: special case for `tabindex` attribute
 - IMPROVE: don't extend `Node` prototype with `contains` polyfill
 - IMPROVE: prohibit node binding on `{element}`
-- IMPROVE: start use proto cloning on second template instace creation only (reduce number of `DOM` nodes when template uses only once)
+- IMPROVE: start use proto cloning on second template instance creation only (reduce number of `DOM` nodes when template uses only once)
 - IMPROVE: don't wrap `l10n` token content by `<span>`
 - FIX: issue with `l10n` tokens attribute expression (template function compilation bug)
 - FIX: safe markup token value check (no more exception on token value change in dictionary)

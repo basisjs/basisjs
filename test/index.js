@@ -25,7 +25,8 @@ module.exports = {
     require('./spec/cssom.js'),
     require('./spec/layout.js'),
     require('./spec/utils.info.js'),
-    require('./spec/tracker.js')
+    require('./spec/tracker.js'),
+    require('./spec/type.js')
   ]
 };
 
