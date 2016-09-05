@@ -39,7 +39,7 @@
   var validateScheme = basisType.validateScheme;
   var nullableArray = basisType.array.nullable;
   var nullableDate = basisType.date.nullable;
-  var enumeration = basisType.enumeration;
+  var typeEnum = basisType['enum'];
 
   var NULL_INFO = {};
 
@@ -870,7 +870,7 @@
       {
         var values = config.type.slice(); // make copy of array to make it stable
 
-        config.type = enumeration(values);
+        config.type = typeEnum(values);
         if (values.indexOf(config.defValue) == -1)
           config.defValue = config.type.DEFAULT_VALUE;
       }

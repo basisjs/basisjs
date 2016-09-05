@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'type.enumeration',
+  name: 'type.enum',
   init: function(){
     var type = basis.require('basis.type');
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
@@ -8,7 +8,7 @@ module.exports = {
     {
       name: 'accepts enumerated values',
       test: function(){
-        var pluralEnum = type.enumeration(['first', 'second', 'third']);
+        var pluralEnum = type.enum(['first', 'second', 'third']);
 
         assert(pluralEnum('second') === 'second');
       }
@@ -16,14 +16,14 @@ module.exports = {
     {
       name: 'is first item by default',
       test: function(){
-        var strangeEnum = type.enumeration([3, 4, 5, null]);
+        var strangeEnum = type.enum([3, 4, 5, null]);
         assert(strangeEnum.DEFAULT_VALUE === 3);
       }
     },
     {
       name: 'ignores missing items',
       test: function(){
-        var boolEnum = type.enumeration([true, false, 'any']);
+        var boolEnum = type.enum([true, false, 'any']);
         [
           'an',
           0,
@@ -41,7 +41,7 @@ module.exports = {
     {
       name: 'ignores previous value if can transform new value',
       test: function(){
-        var boolEnum = type.enumeration([true, false, 'any']);
+        var boolEnum = type.enum([true, false, 'any']);
         [
           true,
           false
@@ -54,7 +54,7 @@ module.exports = {
       name: 'throws when empty array passed',
       test: function(){
         assert.exception(function(){
-          type.enumeration([]);
+          type.enum([]);
         });
       }
     },
@@ -63,7 +63,7 @@ module.exports = {
       test: function(){
         var warned = catchWarnings(function(){
           var nonArray = {};
-          var emptyEnum = type.enumeration(nonArray);
+          var emptyEnum = type.enum(nonArray);
 
           assert(emptyEnum.DEFAULT_VALUE === nonArray);
         });
@@ -77,7 +77,7 @@ module.exports = {
         {
           name: 'behaves like usual version',
           test: function(){
-            var enumeration = type.enumeration([true, false, 'any']);
+            var enumeration = type.enum([true, false, 'any']);
             var enumWithDefault = enumeration.default('any');
 
             catchWarnings(function(){
@@ -94,7 +94,7 @@ module.exports = {
         {
           name: 'sets default value',
           test: function(){
-            var enumeration = type.enumeration([true, false, 'any']);
+            var enumeration = type.enum([true, false, 'any']);
             var enumWithDefault = enumeration.default('any');
 
             assert(enumWithDefault.DEFAULT_VALUE === 'any');
@@ -103,7 +103,7 @@ module.exports = {
         {
           name: 'ignores default value if it is incorrect',
           test: function(){
-            var enumeration = type.enumeration([true, false, 'any']);
+            var enumeration = type.enum([true, false, 'any']);
             var enumWithIncorrectDefault;
 
             var warned = catchWarnings(function(){
