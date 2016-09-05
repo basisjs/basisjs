@@ -46,6 +46,7 @@ function objectTransform(defaultValue, nullable) {
 }
 
 var object = objectTransform({}, false);
+/** @cut */ object = objectTransform(Object.freeze({}), false);
 object['default'] = function(defaultValue){
   return objectTransform(defaultValue, false);
 };

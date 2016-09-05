@@ -50,6 +50,7 @@ function arrayTransform(defaultValue, nullable) {
 }
 
 var array = arrayTransform([], false);
+/** @cut */ array = arrayTransform(Object.freeze([]), false);
 array['default'] = function(defaultValue){
   return arrayTransform(defaultValue, false);
 };

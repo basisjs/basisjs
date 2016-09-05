@@ -94,6 +94,7 @@ function dateTransform(defaultValue, nullable){
 }
 
 var date = dateTransform(new Date(0), false);
+/** @cut */ date = dateTransform(Object.freeze(new Date(0)), false);
 date['default'] = function(defaultValue){
   return dateTransform(defaultValue, false);
 };
