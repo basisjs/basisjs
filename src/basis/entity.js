@@ -36,7 +36,7 @@
   var defineType = basisType.defineType;
   var getTypeByName = basisType.getTypeByName;
   var getTypeByNameIfDefined = basisType.getTypeByNameIfDefined;
-  var validateScheme = basisType.validateScheme;
+  var validateScheme = basisType.validate;
   var nullableArray = basisType.array.nullable;
   var nullableDate = basisType.date.nullable;
   var typeEnum = basisType['enum'];
