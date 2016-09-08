@@ -51,16 +51,7 @@
 
 
   function getDegree(number){
-    number = Math.abs(number);
-    if (Math.abs(number) > 1)
-    {
-      return String(Math.floor(number)).length - 1;
-    }
-    else
-    {
-      var m = String(number).match(/0\.(0+)?[^0]/);
-      return (m ? -m[1].length : 0) - 1;
-    }
+    return number && Math.floor(Math.log(Math.abs(number)) / Math.LN10);
   }
 
   function hex2(num){
@@ -646,7 +637,8 @@
         var tw;
         for (var i = 0; i <= partCount; i++)
         {
-          var text = String(basis.number.group(Math.round(minValue + gridPart * i)));
+          var labelValue = minValue + gridPart * i;
+          var text = basis.number.group(Math.round(labelValue * 1e10) / 1e10);
           tw = context.measureText(valueLabels[i]).width;
           valueLabels[i] = {
             text: text,
@@ -931,11 +923,13 @@
     },
     getMinGridValue: function(){
       var minValue = this.min == 'auto' ? this.getMinValue() : this.min;
-      return Math.floor(Math.ceil(minValue) / Math.pow(10, getDegree(minValue))) * Math.pow(10, getDegree(minValue));
+      var fraction = Math.pow(10, getDegree(minValue));
+      return Math.floor(minValue / fraction) * fraction;
     },
     getMaxGridValue: function(){
       var maxValue = this.max == 'auto' ? this.getMaxValue() : this.max;
-      return Math.ceil(Math.ceil(maxValue) / Math.pow(10, getDegree(maxValue))) * Math.pow(10, getDegree(maxValue));
+      var fraction = Math.pow(10, getDegree(maxValue));
+      return Math.ceil(maxValue / fraction) * fraction;
     },
     getGridPart: function(minGridValue, maxGridValue){
       var MIN_PART_COUNT = 2;
@@ -985,7 +979,6 @@
         else
           result = count;
       }
-
 
       return range / Math.max(MIN_PART_COUNT, result);
     },
