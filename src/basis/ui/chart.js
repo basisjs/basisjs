@@ -923,7 +923,7 @@
     },
     getMinGridValue: function(){
       var minValue = this.min == 'auto' ? this.getMinValue() : this.min;
-      var fraction = Math.pow(10, getDegree(minValue))
+      var fraction = Math.pow(10, getDegree(minValue));
       return Math.floor(minValue / fraction) * fraction;
     },
     getMaxGridValue: function(){
