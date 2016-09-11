@@ -420,6 +420,7 @@ module.exports = {
   getPathByNode: getPathByNode,
   isPathMatchSelector: isPathMatchSelector,
   getCssSelectorFromPath: getCssSelectorFromPath,
+  setDeep: setDeep,
 
   loadMap: loadMap,
   attach: function(fn, context){
