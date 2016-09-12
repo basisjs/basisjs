@@ -362,6 +362,26 @@ function registrateSelector(selector, eventName, data){
   });
 }
 
+function addDispatcher(dispatcher, events, transformer){
+  dispatcher.addHandler({
+    '*': function(event){
+      if (events.indexOf(event.type) != -1)
+      {
+        var eventName = event.type;
+        var selectorList = getSelectorList(eventName);
+
+        selectorList.forEach(function(item){
+          var data = transformer(event, item);
+
+          if (data) {
+            track(data);
+          }
+        });
+      }
+    }
+  });
+}
+
 function loadMap(map){
   if (!map)
   {
@@ -423,6 +443,7 @@ module.exports = {
   setDeep: setDeep,
 
   loadMap: loadMap,
+  addDispatcher: addDispatcher,
   attach: function(fn, context){
     tracker.attach(fn, context);
   },

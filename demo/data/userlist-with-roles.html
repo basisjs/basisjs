@@ -92,11 +92,33 @@
     var tracker = basis.require('basis.tracker');
     var transportDispatcher = basis.require('basis.net').transportDispatcher;
 
-    tracker.attach(function(info) {
+    function trackItem(event, item) {
+      var eventName = event.type;
+      var request = event.args[1];
+
+      if (item.selectorStr == request.requestData.url)
+      {
+        var data = item.data.track ? item.data.track(request) : item.data;
+
+        data.url = item.selectorStr;
+
+        return {
+          type: 'neeet',
+          path: [request.requestData.url],
+          event: eventName,
+          data: data
+        };
+      }
+
+      return;
+    }
+
+    tracker.attach(function(info){
       console.log('tracked data', info);
     });
 
-    tracker.loadMap(basis.require('./userlist-with-roles-tracking-map.js'), transportDispatcher);
+    tracker.loadMap(basis.require('./userlist-with-roles-tracking-map.js'));
+    tracker.addDispatcher(transportDispatcher, ['success'], trackItem);
 
     // create service to load data
     var service = new Service();
