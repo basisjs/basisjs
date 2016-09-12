@@ -363,7 +363,7 @@ function registrateSelector(selector, eventName, data){
 }
 
 function addDispatcher(dispatcher, events, transformer){
-  if (!hasOwnProperty.call(dispatcher, 'addHandler') || typeof dispatcher.addHandler != 'function')
+  if (dispatcher && typeof dispatcher.addHandler != 'function')
   {
     /** @cut */ basis.dev.warn('First argument should have `addHandler` method');
     return;

@@ -7,6 +7,8 @@ module.exports = {
     var isPathMatchSelector = basis.require('basis.tracker').isPathMatchSelector;
     var setDeep = basis.require('basis.tracker').setDeep;
     var addDispatcher = basis.require('basis.tracker').addDispatcher;
+    var Emitter = basis.require('basis.event').Emitter;
+    var demoDispatcher = new Emitter();
   },
   test: [
     {
@@ -118,24 +120,28 @@ module.exports = {
         {
           name: 'First argument should have `addHandler` method',
           test: function(){
+            assert(addDispatcher() == undefined);
             assert(addDispatcher({}) == undefined);
             assert(addDispatcher({ addHandler: null }) == undefined);
+
+            assert(addDispatcher(demoDispatcher, [], function(){}) == true);
+
           }
         },
         {
           name: 'Second argument should be a list of events',
           test: function(){
-            assert(addDispatcher({ addHandler: function(){} }, undefined)  == undefined);
-            assert(addDispatcher({ addHandler: function(){} }, 'click', function(){})  == true);
-            assert(addDispatcher({ addHandler: function(){} }, ['success', 'failure'], function(){})  == true);
+            assert(addDispatcher(demoDispatcher, undefined)  == undefined);
+            assert(addDispatcher(demoDispatcher, 'click', function(){})  == true);
+            assert(addDispatcher(demoDispatcher, ['success', 'failure'], function(){})  == true);
           }
         },
         {
           name: 'Third argument should be a function',
           test: function(){
-            assert(addDispatcher({ addHandler: function(){} }, [])  == undefined);
-            assert(addDispatcher({ addHandler: function(){} }, [], {})  == undefined);
-            assert(addDispatcher({ addHandler: function(){} }, [], function(){})  == true);
+            assert(addDispatcher(demoDispatcher, [])  == undefined);
+            assert(addDispatcher(demoDispatcher, [], {})  == undefined);
+            assert(addDispatcher(demoDispatcher, [], function(){})  == true);
           }
         }
       ]
