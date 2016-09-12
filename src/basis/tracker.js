@@ -363,6 +363,27 @@ function registrateSelector(selector, eventName, data){
 }
 
 function addDispatcher(dispatcher, events, transformer){
+  if (!hasOwnProperty.call(dispatcher, 'addHandler') || typeof dispatcher.addHandler != 'function')
+  {
+    /** @cut */ basis.dev.warn('First argument should have `addHandler` method');
+    return;
+  }
+
+  if (typeof events == 'string')
+    events = [events];
+
+  if (!Array.isArray(events))
+  {
+    /** @cut */ basis.dev.warn('Second argument should be a list of events');
+    return;
+  }
+
+  if (typeof transformer != 'function')
+  {
+    /** @cut */ basis.dev.warn('Third argument should be a function');
+    return;
+  }
+
   dispatcher.addHandler({
     '*': function(event){
       if (events.indexOf(event.type) != -1)
@@ -380,6 +401,8 @@ function addDispatcher(dispatcher, events, transformer){
       }
     }
   });
+
+  return true;
 }
 
 function loadMap(map){
