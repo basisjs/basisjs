@@ -28,7 +28,7 @@ var fromISOString = (function(){
   };
 })();
 
-/** @cut */ var ISO_REGEXP = /\d{4}-\d{2}-\d{2}(T|\s)\d{2}:\d{2}:\d{2}(\.\d+)?(([+-]\d{2}(:\d{2})?)|Z)/;
+/** @cut */ var ISO_REGEXP = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(([+-]\d{2}(:\d{2})?)|Z)?$/;
 /** @cut */ var PARTIAL_ISO_REGEXP = /^\d{4}-\d{2}-\d{2}$/;
 
 function toDate(value) {
