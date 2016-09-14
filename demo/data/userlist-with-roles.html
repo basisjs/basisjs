@@ -1,0 +1,219 @@
+﻿<!doctype html>
+
+<html>
+
+<head>
+  <meta charset="utf-8">
+
+  <title>Basis.js demos: Sync datasets with server data</title>
+
+  <style id="demo-css" type="text/css">
+    HTML,
+    BODY
+    {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #UserList
+    {
+      background: white;
+      margin: 10px;
+      height: 450px;
+      width: 300px;
+      overflow: auto;
+      border: 1px solid #888;
+      position: relative;
+    }
+    #UserList .user
+    {
+      margin: 1px;
+      padding: .2em .5ex;
+    }
+    #UserList .user:hover
+    {
+      background: #E8E8E8;
+    }
+    #UserList .selected
+    {
+      background: gold !important;
+    }
+
+    .Basis-Label-Processing
+    {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      background: gold;
+      font-size: 85%;
+      padding: 2px 4px;
+      border-radius: 4px;
+        -moz-border-radius: 4px;
+    }
+    .PartitionNode-Title
+    {
+      border-top: 1px solid #888;
+      background: #E0E0E0;
+      border-bottom: 1px solid #888;
+      padding: .5ex .2em;
+    }
+
+    TEXTAREA
+    {
+      width: 60%;
+      height: 8em;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY,
+    TABLE *
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <div id="demo-container" role-marker="userlist"></div>
+
+  <script id="demo-javascript" type="text/javascript">
+    var entity = basis.require('basis.entity');
+    var UINode = basis.require('basis.ui').Node;
+    var Service = basis.require('basis.net.service').Service;
+    var tracker = basis.require('basis.tracker');
+    var transportDispatcher = basis.require('basis.net').transportDispatcher;
+
+    tracker.attach(function(info) {
+      console.log('tracked data', info);
+    });
+
+    tracker.loadMap(basis.require('./userlist-with-roles-tracking-map.js'), transportDispatcher);
+
+    // create service to load data
+    var service = new Service();
+
+    // define data types
+
+    var UserGroup = entity.createType('UserGroup', {
+      groupId: entity.IntId,
+      title: String
+    });
+
+    // define sync action to load data
+    UserGroup.all.setSyncAction(service.createAction({
+      url: '../res/data/groups.json',
+      success: function(data){
+        this.setAndDestroyRemoved(UserGroup.readList(data));
+      }
+    }));
+
+    var User = entity.createType({
+      name: 'User',
+      fields: {
+        userId: entity.IntId,
+        group: 'UserGroup',
+        title: String
+      },
+      aliases: {
+        groupId: 'group'
+      },
+      all: { // we also can define settings for all in data type definition
+        syncAction: service.createAction({
+          url: '../res/data/users.json',
+          success: function(data){
+            this.setAndDestroyRemoved(User.readList(data));
+          }
+        })
+      }
+    });
+
+    // create controls
+
+    new UINode({
+      role: 'update',
+      container: document.getElementById('demo-container'),
+      template: '<button event-click="update" b:role>Update</button>',
+      action: {
+        update: function(){
+          UserGroup.all.deprecate();
+          User.all.deprecate();
+        }
+      }
+    });
+
+    //
+    // User list
+    //
+
+    var tree = new UINode({
+      container: document.getElementById('demo-container'),
+      template: '<div id="UserList"/>',
+
+      dataSource: User.all,
+      active: true,
+
+      selection: {
+        multiple: true
+      },
+
+      childClass: {
+        role: 'user',
+        roleId: 'userId',
+        template:
+          '<div class="user {selected}" event-click="select" b:role>' +
+            '{title} <span b:role="more">...</span>' +
+          '</div>',
+        action: {
+          select: function(event){
+            this.select(event.ctrlKey || event.metaKey);
+          }
+        },
+        binding: {
+          userId: 'data:',
+          title: 'data:'
+        }
+      },
+
+      sorting: 'data.title',
+      grouping: {
+        dataSource: UserGroup.all,
+        active: true,
+
+        rule: 'data.group',
+        sorting: 'data.title',
+
+        childClass: {
+          role: 'group',
+          roleId: 'groupId',
+          template:
+            '<div class="PartitionNode">' +
+              '<div class="PartitionNode-Title" event-click="selectAll" title="Click to select all users in group" b:role>' +
+                '{title} <span b:role="more">...</span>' +
+              '</div>' +
+            '</div>',
+          action: {
+            selectAll: function(){
+              this.parentNode.owner.selection.set(this.nodes);
+            }
+          },
+          binding: {
+            groupId: 'data:',
+            title: 'data:'
+          }
+        }
+      }
+    });
+
+  </script>
+</body>
+
+</html>

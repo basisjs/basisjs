@@ -234,6 +234,24 @@ function escapeQuotes(value){
   return String(value).replace(/\"/g, '\\"');
 }
 
+function setDeep(obj, sample, value){
+  // search for the first key in `obj` (`obj` can be a nested object)
+  // and replace a value of the finded key with `value`
+  for (var key in obj)
+  {
+    if (hasOwnProperty.call(obj, key))
+    {
+      if (obj[key] === sample)
+      {
+        obj[key] = value;
+        return;
+      }
+      else if (typeof obj[key] === 'object')
+        return setDeep(obj[key], sample, value);
+    }
+  }
+}
+
 function getCssSelectorFromPath(path, selector){
   return parsePath(path).map(function(role){
     if (!role.role)
@@ -279,15 +297,26 @@ function getSelectorList(eventName){
           return res;
         }, []);
 
+        // if there is at least one `role-marker` attribute in the DOM [x]path for the clicked (or hovered or `event`ed) element
+        // then lets search a matching selector in our loaded track map
         if (path.length)
           selectorList.forEach(function(item){
             if (isPathMatchSelector(path, item.selector))
+              var data = basis.object.slice(item.data);
+
+              // roleId can be data generated
+              if (item.selectorStr.indexOf('*') !== -1) {
+                var roleId = path[path.length - 1].roleId;
+
+                setDeep(data, '*', roleId);
+              }
+
               track({
                 type: 'ui',
                 path: stringifyPath(path),
                 selector: stringifyPath(item.selector),
                 event: event.type,
-                data: item.data
+                data: data
               });
           });
       });
@@ -391,6 +420,7 @@ module.exports = {
   getPathByNode: getPathByNode,
   isPathMatchSelector: isPathMatchSelector,
   getCssSelectorFromPath: getCssSelectorFromPath,
+  setDeep: setDeep,
 
   loadMap: loadMap,
   attach: function(fn, context){

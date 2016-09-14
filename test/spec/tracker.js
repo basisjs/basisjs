@@ -5,6 +5,7 @@ module.exports = {
     basis = window.basis.createSandbox();
 
     var isPathMatchSelector = basis.require('basis.tracker').isPathMatchSelector;
+    var setDeep = basis.require('basis.tracker').setDeep;
   },
   test: [
     {
@@ -80,6 +81,32 @@ module.exports = {
 
             for (var i = 0, test; test = nonmatch[i]; i++)
               assert(isPathMatchSelector(test.path, test.selector) === false);
+          }
+        }
+      ]
+    },
+    {
+      name: 'setDeep',
+      test: [
+        {
+          name: 'replace any roleId with matched roleId',
+          test: function(){
+            var sample = '*';
+            var value = 123;
+            var examples = [
+              [{ foo: sample }, { foo: value }],
+              [{ foo: { bar: sample } }, { foo: { bar: value } }],
+              [{ foo: { bar: { qux: sample } } }, { foo: { bar: { qux: value } } }],
+              [{ foo: { bar: sample }, baz: sample }, { foo: { bar: value }, baz: sample }],
+              [{ foo: { bar: { qux: sample } }, baz: sample }, { foo: { bar: { qux: value } }, baz: sample }],
+              [{ baz: sample, foo: { bar: { qux: sample } } }, { baz: value, foo: { bar: { qux: sample } } }]
+            ];
+
+            for (var i = 0, test; test = examples[i]; i++)
+            {
+              setDeep(test[0], sample, value);
+              assert(JSON.stringify(test[0]) === JSON.stringify(test[1]));
+            }
           }
         }
       ]
