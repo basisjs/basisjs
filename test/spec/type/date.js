@@ -52,13 +52,34 @@ module.exports = {
       test: function(){
         [
           '123,45',
-          'hello'
+          'hello',
+          '2012-05-30T21:00:00.000Z hello',
+          'hi 2012-05-30T21:00:00.000Z'
         ].forEach(function(nonIsoString){
           var warned = catchWarnings(function(){
             assert(type.date(nonIsoString) instanceof Date);
           });
 
           assert(warned);
+        });
+      }
+    },
+    {
+      name: 'do not warns about ISO strings',
+      test: function(){
+        [
+          '2016-10-05T10:56:09+03:00',
+          '2016-09-12T13:10:27Z',
+          '2016-09-02 15:18:26.709375+03',
+          '2016-03-01 18:42:33+03',
+          '2016-03-01 18:42:33+03:00',
+          '2016-03-01 18:42:33'
+        ].forEach(function(isoString){
+          var warned = catchWarnings(function(){
+            type.date(isoString);
+          });
+
+          assert(!warned);
         });
       }
     },
