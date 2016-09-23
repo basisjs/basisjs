@@ -362,6 +362,49 @@ function registrateSelector(selector, eventName, data){
   });
 }
 
+function addDispatcher(dispatcher, events, transformer){
+  if (dispatcher && typeof dispatcher.addHandler != 'function')
+  {
+    /** @cut */ basis.dev.warn('First argument should have `addHandler` method');
+    return;
+  }
+
+  if (typeof events == 'string')
+    events = [events];
+
+  if (!Array.isArray(events))
+  {
+    /** @cut */ basis.dev.warn('Second argument should be a list of events');
+    return;
+  }
+
+  if (typeof transformer != 'function')
+  {
+    /** @cut */ basis.dev.warn('Third argument should be a function');
+    return;
+  }
+
+  dispatcher.addHandler({
+    '*': function(event){
+      if (events.indexOf(event.type) != -1)
+      {
+        var eventName = event.type;
+        var selectorList = getSelectorList(eventName);
+
+        selectorList.forEach(function(item){
+          var data = transformer(event, item);
+
+          if (data) {
+            track(data);
+          }
+        });
+      }
+    }
+  });
+
+  return true;
+}
+
 function loadMap(map){
   if (!map)
   {
@@ -423,6 +466,7 @@ module.exports = {
   setDeep: setDeep,
 
   loadMap: loadMap,
+  addDispatcher: addDispatcher,
   attach: function(fn, context){
     tracker.attach(fn, context);
   },
