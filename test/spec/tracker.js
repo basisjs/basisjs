@@ -4,9 +4,11 @@ module.exports = {
   init: function(){
     basis = window.basis.createSandbox();
 
+    var createEvent = basis.require('basis.event').create;
     var isPathMatchSelector = basis.require('basis.tracker').isPathMatchSelector;
     var setDeep = basis.require('basis.tracker').setDeep;
     var addDispatcher = basis.require('basis.tracker').addDispatcher;
+    var loadMap = basis.require('basis.tracker').loadMap;
     var Emitter = basis.require('basis.event').Emitter;
     var demoDispatcher = new Emitter();
   },
@@ -115,7 +117,7 @@ module.exports = {
       ]
     },
     {
-      name: 'addDispatcher',
+      name: 'addDispatcher arguments',
       test: [
         {
           name: 'First argument should have `addHandler` method',
@@ -142,6 +144,45 @@ module.exports = {
             assert(addDispatcher(demoDispatcher, [])  == undefined);
             assert(addDispatcher(demoDispatcher, [], {})  == undefined);
             assert(addDispatcher(demoDispatcher, [], function(){})  == true);
+          }
+        }
+      ]
+    },
+    {
+      name: 'addDispatcher',
+      test: [
+        {
+          name: 'Test success event tracking',
+          test: function(){
+            var demoDispatcher = new Emitter({
+              emit_success: createEvent('success'),
+              emit_failure: createEvent('failure')
+            });
+
+            loadMap({
+              'foo': {
+                  success: {
+                      id: 'foo request'
+                  }
+              }
+            });
+
+            var transformerEvent;
+            var transformerItem;
+            var transformer = function(event, item){
+              transformerEvent = event;
+              transformerItem = item;
+            };
+
+            addDispatcher(demoDispatcher, ['success'], transformer);
+
+            var successArg = { foo: 'bar' };
+
+            demoDispatcher.emit_success(successArg);
+
+            assert(transformerEvent.type === 'success');
+            assert(transformerEvent.args[1] === successArg);
+            assert(transformerItem.data.id === 'foo request');
           }
         }
       ]
