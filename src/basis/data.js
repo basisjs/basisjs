@@ -1994,7 +1994,7 @@
       }
 
       // remove old items
-      if (items = delta.deleted)
+      if ((items = delta.deleted) && this.items_)
       {
         while (object = items[deleteCount])
         {

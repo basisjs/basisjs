@@ -18,6 +18,7 @@ module.exports = {
 
     var helpers = basis.require('./helpers/events.js').createAPI(basis.require('basis.event').Emitter);
     var eventCount = helpers.eventCount;
+    var resetEvents = helpers.resetEvents;
   },
 
   test: [
@@ -296,6 +297,30 @@ module.exports = {
           }
         },
         {
+          name: 'destroy inside accumulate state',
+          test: function(){
+            var obj = new DataObject({
+                data: {
+                  hello: 'world'
+                }
+            });
+
+            var objDataset = new Dataset({
+                items: [
+                    obj
+                ]
+            });
+
+            resetEvents();
+
+            Dataset.setAccumulateState(true);
+            objDataset.destroy();
+            Dataset.setAccumulateState(false);
+
+            assert(eventCount(objDataset, 'itemsChanged') == 1);
+          }
+        },
+        {
           name: 'edge cases',
           test: [
             {
@@ -342,6 +367,8 @@ module.exports = {
                 var a = new DataObject();
                 var b = new DataObject();
                 var c = new DataObject();
+
+                resetEvents();
 
                 Dataset.setAccumulateState(true);
                 dataset.add([a, b, c]);

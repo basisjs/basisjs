@@ -8,6 +8,10 @@ function createAPI(Class){
     eventsMap[this.basisObjectId].push(event);
   };
 
+  var resetEvents = function(){
+    eventsMap = {};
+  };
+
   var getEvents = function(object, type){
     var events = eventsMap[object.basisObjectId];
 
@@ -32,6 +36,7 @@ function createAPI(Class){
   };
 
   return {
+    resetEvents: resetEvents,
     eventCount: eventCount,
     getLastEvent: getLastEvent
   };
