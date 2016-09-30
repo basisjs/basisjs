@@ -311,6 +311,10 @@
       setAndDestroyRemoved: setAndDestroyRemoved,
 
       destroy: function(){
+        this.forEach(function(item){
+          item.rollback();
+        });
+
         super_.destroy.call(this);
 
         this.name = null;
@@ -1775,6 +1779,13 @@
           if (id != null)
             updateIndex(indexDescriptor.index, this, id, null);
         }
+
+        // destroy inner entity sets
+        basis.object.keys(entityType.fields).forEach(function(fieldName){
+          if (this.data[fieldName] instanceof EntitySet) {
+            this.data[fieldName].destroy();
+          }
+        }, this);
 
         // delete from all entity type list (is it right order?)
         if (all && all.has(this))

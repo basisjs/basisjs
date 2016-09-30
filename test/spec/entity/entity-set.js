@@ -585,6 +585,33 @@ module.exports = {
           ]
         }
       ]
+    },
+    {
+      name: 'Behaviours',
+      test: [
+        {
+          name: 'destroy inner datasets and rollback their items',
+          test: function(){
+            var entityTypeName = basis.genUID();
+            var entityType = nsEntity.createType(entityTypeName, { field1: String });
+
+            var entitySetType = nsEntity.createSetType(entityTypeName + 'Set', entityType);
+            var entityType2Name = basis.genUID();
+            var entityType2 = nsEntity.createType(entityType2Name, { field1: entitySetType });
+
+            var instance = entityType2({ field1: [{ field1: 'first' }, { field1: 'second' }] });
+            var dataset = instance.data.field1;
+            var firstItem = dataset.pick();
+
+            assert(dataset.getValues('data.field1'), ['first', 'second']);
+            firstItem.set('field1', 'third', true);
+            assert(dataset.getValues('data.field1'), ['third', 'second']);
+            instance.destroy();
+            assert(!dataset.itemCount);
+            assert(firstItem.data.field1 == 'first');
+          }
+        }
+      ]
     }
   ]
 };
