@@ -298,7 +298,7 @@ module.exports = {
         },
         {
           name: 'destroy inside accumulate state',
-          test: function(){
+          beforeEach: function(){
             var obj = new DataObject({
                 data: {
                   hello: 'world'
@@ -312,13 +312,34 @@ module.exports = {
             });
 
             resetEvents();
+          },
+          test: [
+            {
+              name: 'flushes event cache for dataset',
+              test: function(){
+                Dataset.setAccumulateState(true);
+                objDataset.destroy();
 
-            Dataset.setAccumulateState(true);
-            objDataset.destroy();
-            Dataset.setAccumulateState(false);
+                assert(eventCount(objDataset, 'itemsChanged') == 1);
 
-            assert(eventCount(objDataset, 'itemsChanged') == 1);
-          }
+                Dataset.setAccumulateState(false);
+
+                assert(eventCount(objDataset, 'itemsChanged') == 1);
+              }
+            },
+            {
+              name: 'emitting changes after destroy is noop',
+              test: function(){
+                Dataset.setAccumulateState(true);
+                objDataset.destroy();
+                objDataset.emit_itemsChanged({ inserted: [obj] });
+                Dataset.setAccumulateState(false);
+
+                assert(objDataset.getItems().length === 0);
+                assert(eventCount(objDataset, 'itemsChanged') == 1);
+              }
+            }
+          ]
         },
         {
           name: 'edge cases',

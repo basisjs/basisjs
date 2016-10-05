@@ -2095,6 +2095,8 @@
     * @destructor
     */
     destroy: function(){
+      Dataset.preventAccumulations(this);
+
       // inherit
       AbstractData.prototype.destroy.call(this);
 
@@ -2436,7 +2438,8 @@
   // Accumulate dataset changes
   //
 
-  Dataset.setAccumulateState = (function(){
+  (function(){
+    var PREVENT_ACCUMULATIONS = {};
     var proto = ReadOnlyDataset.prototype;
     var eventCache = {};
     var setStateCount = 0;
@@ -2444,6 +2447,9 @@
     var realEvent;
 
     function flushCache(cache){
+      if (cache === PREVENT_ACCUMULATIONS)
+        return;
+
       realEvent.call(cache.dataset, cache);
     }
 
@@ -2480,6 +2486,9 @@
       var inserted = delta.inserted;
       var deleted = delta.deleted;
       var cache = eventCache[datasetId];
+
+      if (cache === PREVENT_ACCUMULATIONS)
+        return;
 
       if ((inserted && deleted) || (cache && cache.mixed))
       {
@@ -2594,7 +2603,15 @@
       flushAllDataset();
     }
 
-    return function(state){
+    Dataset.preventAccumulations = function(dataset){
+      if (setStateCount) {
+        var entry = eventCache[dataset.basisObjectId];
+        eventCache[dataset.basisObjectId] = PREVENT_ACCUMULATIONS;
+        flushCache(entry);
+      }
+    };
+
+    Dataset.setAccumulateState = function(state){
       if (state)
       {
         if (setStateCount == 0)
