@@ -2447,9 +2447,6 @@
     var realEvent;
 
     function flushCache(cache){
-      if (cache === PREVENT_ACCUMULATIONS)
-        return;
-
       realEvent.call(cache.dataset, cache);
     }
 
@@ -2460,7 +2457,8 @@
         if (entry)
         {
           eventCacheCopy[datasetId] = null;
-          flushCache(entry);
+          if (entry !== PREVENT_ACCUMULATIONS)
+            flushCache(entry);
         }
       }
 
@@ -2604,10 +2602,12 @@
     }
 
     Dataset.preventAccumulations = function(dataset){
-      if (setStateCount) {
-        var entry = eventCache[dataset.basisObjectId];
+      var entry = eventCache[dataset.basisObjectId];
+      if (entry && entry !== PREVENT_ACCUMULATIONS)
+      {
+        var cache = eventCache[dataset.basisObjectId];
+        realEvent.call(cache.dataset, cache);
         eventCache[dataset.basisObjectId] = PREVENT_ACCUMULATIONS;
-        flushCache(entry);
       }
     };
 
