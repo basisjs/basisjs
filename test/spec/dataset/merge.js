@@ -485,6 +485,28 @@ module.exports = {
                 assert(merge.has(foo) === true);
                 assert(merge.has(bar) === true);
               }
+            },
+            {
+              name: 'add and remove in accumulate state',
+              test: function(){
+                var merge = new Merge({
+                  sources: [
+                    fooDataset,
+                    barDataset
+                  ]
+                });
+                var baz = new DataObject({ data: { text: 'baz' } });
+
+                Dataset.setAccumulateState(true);
+                fooDataset.add(baz);
+                fooDataset.remove(foo);
+                Dataset.setAccumulateState(false);
+
+                assert(merge.itemCount === 2);
+                assert(merge.has(foo) === false);
+                assert(merge.has(bar) === true);
+                assert(merge.has(baz) === true);
+              }
             }
           ]
         }
