@@ -76,6 +76,10 @@
         "url": "data/userlist.html"
       },
       {
+        "title": "Sync datasets with server data (tracking)",
+        "url": "data/userlist-with-roles.html"
+      },
+      {
         "title": "Using of datasets",
         "url": "defile/dataset.html",
         "wow": "Datasets help to automate various operations on data object sets like union of set, subtract, split set for subsets and so on. Look how easy it is."

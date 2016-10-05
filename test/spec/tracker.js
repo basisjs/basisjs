@@ -4,8 +4,13 @@ module.exports = {
   init: function(){
     basis = window.basis.createSandbox();
 
+    var createEvent = basis.require('basis.event').create;
     var isPathMatchSelector = basis.require('basis.tracker').isPathMatchSelector;
     var setDeep = basis.require('basis.tracker').setDeep;
+    var addDispatcher = basis.require('basis.tracker').addDispatcher;
+    var loadMap = basis.require('basis.tracker').loadMap;
+    var Emitter = basis.require('basis.event').Emitter;
+    var demoDispatcher = new Emitter();
   },
   test: [
     {
@@ -107,6 +112,77 @@ module.exports = {
               setDeep(test[0], sample, value);
               assert(JSON.stringify(test[0]) === JSON.stringify(test[1]));
             }
+          }
+        }
+      ]
+    },
+    {
+      name: 'addDispatcher arguments',
+      test: [
+        {
+          name: 'First argument should have `addHandler` method',
+          test: function(){
+            assert(addDispatcher() == undefined);
+            assert(addDispatcher({}) == undefined);
+            assert(addDispatcher({ addHandler: null }) == undefined);
+
+            assert(addDispatcher(demoDispatcher, [], function(){}) == true);
+
+          }
+        },
+        {
+          name: 'Second argument should be a list of events',
+          test: function(){
+            assert(addDispatcher(demoDispatcher, undefined)  == undefined);
+            assert(addDispatcher(demoDispatcher, 'click', function(){})  == true);
+            assert(addDispatcher(demoDispatcher, ['success', 'failure'], function(){})  == true);
+          }
+        },
+        {
+          name: 'Third argument should be a function',
+          test: function(){
+            assert(addDispatcher(demoDispatcher, [])  == undefined);
+            assert(addDispatcher(demoDispatcher, [], {})  == undefined);
+            assert(addDispatcher(demoDispatcher, [], function(){})  == true);
+          }
+        }
+      ]
+    },
+    {
+      name: 'addDispatcher',
+      test: [
+        {
+          name: 'Test success event tracking',
+          test: function(){
+            var demoDispatcher = new Emitter({
+              emit_success: createEvent('success'),
+              emit_failure: createEvent('failure')
+            });
+
+            loadMap({
+              'foo': {
+                  success: {
+                      id: 'foo request'
+                  }
+              }
+            });
+
+            var transformerEvent;
+            var transformerItem;
+            var transformer = function(event, item){
+              transformerEvent = event;
+              transformerItem = item;
+            };
+
+            addDispatcher(demoDispatcher, ['success'], transformer);
+
+            var successArg = { foo: 'bar' };
+
+            demoDispatcher.emit_success(successArg);
+
+            assert(transformerEvent.type === 'success');
+            assert(transformerEvent.args[1] === successArg);
+            assert(transformerItem.data.id === 'foo request');
           }
         }
       ]
