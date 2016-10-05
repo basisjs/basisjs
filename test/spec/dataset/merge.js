@@ -415,27 +415,25 @@ module.exports = {
         },
         {
           name: 'setAccumulateState',
+          beforeEach: function(){
+            var foo = new DataObject({ data: { text: 'foo' } });
+            var bar = new DataObject({ data: { text: 'bar' } });
+
+            var fooDataset = new Dataset({
+              items: [
+                foo
+              ]
+            });
+            var barDataset = new Dataset({
+              items: [
+                bar
+              ]
+            });
+          },
           test: [
             {
               name: 'create merge in accumulate state',
               test: function(){
-                function obj(text) {
-                  return new DataObject({ data: { text: text } });
-                }
-                var foo = obj('foo');
-                var bar = obj('bar');
-
-                var fooDataset = new Dataset({
-                  items: [
-                    foo
-                  ]
-                });
-                var barDataset = new Dataset({
-                  items: [
-                    bar
-                  ]
-                });
-
                 Dataset.setAccumulateState(true);
                 var merge = new Merge({
                   sources: [
@@ -453,23 +451,6 @@ module.exports = {
             {
               name: 'create merge and delete items in accumulate state',
               test: function(){
-                function obj(text) {
-                  return new DataObject({ data: { text: text } });
-                }
-                var foo = obj('foo');
-                var bar = obj('bar');
-
-                var fooDataset = new Dataset({
-                  items: [
-                    foo
-                  ]
-                });
-                var barDataset = new Dataset({
-                  items: [
-                    bar
-                  ]
-                });
-
                 Dataset.setAccumulateState(true);
                 var merge = new Merge({
                   sources: [
@@ -477,7 +458,6 @@ module.exports = {
                     barDataset
                   ]
                 });
-                debugger;
                 merge.setRule(Merge.INTERSECTION);
                 Dataset.setAccumulateState(false);
 
@@ -485,6 +465,26 @@ module.exports = {
                 assert(merge.has(foo) === false);
                 assert(merge.has(bar) === false);
               },
+            },
+            {
+              name: 'create merge and change rules in accumulate state',
+              test: function(){
+                var merge = new Merge({
+                  sources: [
+                    fooDataset,
+                    barDataset
+                  ]
+                });
+
+                Dataset.setAccumulateState(true);
+                merge.setRule(Merge.INTERSECTION);
+                merge.setRule(Merge.UNION);
+                Dataset.setAccumulateState(false);
+
+                assert(merge.itemCount === 2);
+                assert(merge.has(foo) === true);
+                assert(merge.has(bar) === true);
+              }
             }
           ]
         }
