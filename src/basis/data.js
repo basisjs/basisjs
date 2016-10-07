@@ -1994,7 +1994,7 @@
       }
 
       // remove old items
-      if ((items = delta.deleted) && this.items_)
+      if (items = delta.deleted)
       {
         while (object = items[deleteCount])
         {
@@ -2361,6 +2361,8 @@
     * @destructor
     */
     destroy: function(){
+      Dataset.flushDataset(this);
+
       this.clear();
 
       // inherit
@@ -2600,6 +2602,13 @@
       proto.emit_itemsChanged = realEvent;
       flushAllDataset();
     }
+
+    Dataset.flushDataset = function(dataset){
+      var cache = eventCache[dataset.basisObjectId];
+      if (cache)
+        flushCache(cache);
+      eventCache[dataset.basisObjectId] = null;
+    };
 
     Dataset.preventAccumulations = function(dataset){
       var entry = eventCache[dataset.basisObjectId];

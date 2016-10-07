@@ -338,6 +338,39 @@ module.exports = {
                 assert(objDataset.getItems().length === 0);
                 assert(eventCount(objDataset, 'itemsChanged') == 1);
               }
+            },
+            {
+              name: 'add items to dataset in accumulate state before destroy',
+              test: function(){
+                var existed = new DataObject({ name: 'existed' });
+                var added = new DataObject({ name: 'added' });
+
+                var items = [];
+
+                var dataset = new Dataset({
+                  items: [
+                    existed
+                  ],
+                  handler: {
+                    'itemsChanged': function(s, delta){
+                      if (delta.inserted)
+                        items = items.concat(delta.inserted);
+
+                      if (delta.deleted)
+                        delta.deleted.forEach(function(itemToDelete){
+                          basis.array.remove(items, itemToDelete);
+                        });
+                    }
+                  }
+                });
+
+                Dataset.setAccumulateState(true);
+                dataset.add(added);
+                dataset.destroy();
+                Dataset.setAccumulateState(false);
+
+                assert(items.length === 0);
+              }
             }
           ]
         },
