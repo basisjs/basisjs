@@ -12,11 +12,13 @@ var eventMap = {};
 
 var VISIBLE_CHECK_INTERVAL = 250;
 
+/** @cut */ var namespace = 'basis.tracker';
+
 function track(event){
   try {
     tracker.set(event);
   } catch(e) {
-    /** @cut */ basis.dev.error('Error during tracking event processing', event, e);
+    /** @cut */ basis.dev.error(namespace + '.track(): Error during tracking event processing', event, e);
   }
 }
 
@@ -346,7 +348,7 @@ function registrateSelector(selector, eventName, data){
 
   if (basis.array.search(selectorList, selectorStr, 'selectorStr'))
   {
-    /** @cut */ basis.dev.warn('Duplicate selector for event `' + eventName + '`:' + selector);
+    /** @cut */ basis.dev.warn(namespace + '.registrateSelector(): Duplicate selector for event `' + eventName + '`:' + selector);
     return;
   }
 
@@ -362,10 +364,52 @@ function registrateSelector(selector, eventName, data){
   });
 }
 
+function addDispatcher(dispatcher, events, transformer){
+  if (!dispatcher || typeof dispatcher.addHandler != 'function')
+  {
+    /** @cut */ basis.dev.warn(namespace + '.addDispatcher(): First argument should have `addHandler` method');
+    return;
+  }
+
+  if (typeof events == 'string')
+    events = events.split(/\s+/);
+
+  if (!Array.isArray(events))
+  {
+    /** @cut */ basis.dev.warn(namespace + '.addDispatcher(): Second argument should be a list of events');
+    return;
+  }
+
+  if (typeof transformer != 'function')
+  {
+    /** @cut */ basis.dev.warn(namespace + '.addDispatcher(): Third argument should be a function');
+    return;
+  }
+
+  dispatcher.addHandler({
+    '*': function(event){
+      if (events.indexOf(event.type) != -1)
+      {
+        var eventName = event.type;
+        var selectorList = getSelectorList(eventName);
+
+        selectorList.forEach(function(item){
+          var data = transformer(event, item);
+
+          if (data)
+            track(data);
+        });
+      }
+    }
+  });
+
+  return true;
+}
+
 function loadMap(map){
   if (!map)
   {
-    /** @cut */ basis.dev.warn('Wrong value for map');
+    /** @cut */ basis.dev.warn(namespace + '.loadMap(): Wrong value for map');
     return;
   }
 
@@ -375,7 +419,7 @@ function loadMap(map){
 
     if (!eventsMap)
     {
-      /** @cut */ basis.dev.warn('Value of map should be an object for path: ' + key);
+      /** @cut */ basis.dev.warn(namespace + '.loadMap(): Value of map should be an object for path: ' + key);
       continue;
     }
 
@@ -423,6 +467,7 @@ module.exports = {
   setDeep: setDeep,
 
   loadMap: loadMap,
+  addDispatcher: addDispatcher,
   attach: function(fn, context){
     tracker.attach(fn, context);
   },
