@@ -2095,8 +2095,6 @@
     * @destructor
     */
     destroy: function(){
-      Dataset.preventAccumulations(this);
-
       // inherit
       AbstractData.prototype.destroy.call(this);
 
@@ -2361,7 +2359,7 @@
     * @destructor
     */
     destroy: function(){
-      Dataset.flushDataset(this);
+      Dataset.preventAccumulations(this);
 
       this.clear();
 
@@ -2488,7 +2486,10 @@
       var cache = eventCache[datasetId];
 
       if (cache === PREVENT_ACCUMULATIONS)
+      {
+        realEvent.call(dataset, delta);
         return;
+      }
 
       if ((inserted && deleted) || (cache && cache.mixed))
       {
@@ -2603,21 +2604,11 @@
       flushAllDataset();
     }
 
-    Dataset.flushDataset = function(dataset){
-      var cache = eventCache[dataset.basisObjectId];
-      if (cache)
-        flushCache(cache);
-      eventCache[dataset.basisObjectId] = null;
-    };
-
     Dataset.preventAccumulations = function(dataset){
-      var entry = eventCache[dataset.basisObjectId];
-      if (entry && entry !== PREVENT_ACCUMULATIONS)
-      {
-        var cache = eventCache[dataset.basisObjectId];
+      var cache = eventCache[dataset.basisObjectId];
+      if (cache && cache !== PREVENT_ACCUMULATIONS)
         realEvent.call(cache.dataset, cache);
-        eventCache[dataset.basisObjectId] = PREVENT_ACCUMULATIONS;
-      }
+      eventCache[dataset.basisObjectId] = PREVENT_ACCUMULATIONS;
     };
 
     Dataset.setAccumulateState = function(state){
