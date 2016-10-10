@@ -2611,13 +2611,10 @@
     };
 
     Dataset.preventAccumulations = function(dataset){
-      var entry = eventCache[dataset.basisObjectId];
-      if (entry && entry !== PREVENT_ACCUMULATIONS)
-      {
-        var cache = eventCache[dataset.basisObjectId];
+      var cache = eventCache[dataset.basisObjectId];
+      if (cache && cache !== PREVENT_ACCUMULATIONS)
         realEvent.call(cache.dataset, cache);
-        eventCache[dataset.basisObjectId] = PREVENT_ACCUMULATIONS;
-      }
+      eventCache[dataset.basisObjectId] = PREVENT_ACCUMULATIONS;
     };
 
     Dataset.setAccumulateState = function(state){

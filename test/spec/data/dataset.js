@@ -311,6 +311,8 @@ module.exports = {
                 ]
             });
 
+            // resetting events counter needed to omit counting previous events
+            // and events generated during init
             resetEvents();
           },
           test: [
@@ -422,6 +424,7 @@ module.exports = {
                 var b = new DataObject();
                 var c = new DataObject();
 
+                // resetting events counter needed to omit counting previous events
                 resetEvents();
 
                 Dataset.setAccumulateState(true);
