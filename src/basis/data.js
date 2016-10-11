@@ -2337,6 +2337,8 @@
     * Removes all items from dataset.
     */
     clear: function(){
+      Dataset.flushDataset(this);
+
       var deleted = this.getItems();
       var listenHandler = this.listen.item;
       var delta;
@@ -2361,8 +2363,6 @@
     * @destructor
     */
     destroy: function(){
-      Dataset.flushDataset(this);
-
       this.clear();
 
       // inherit
