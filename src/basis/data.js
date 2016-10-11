@@ -2337,7 +2337,7 @@
     * Removes all items from dataset.
     */
     clear: function(){
-      Dataset.flushDataset(this);
+      Dataset.flushChanges(this);
 
       var deleted = this.getItems();
       var listenHandler = this.listen.item;
@@ -2603,7 +2603,7 @@
       flushAllDataset();
     }
 
-    Dataset.flushDataset = function(dataset){
+    Dataset.flushChanges = function(dataset){
       var cache = eventCache[dataset.basisObjectId];
       if (cache)
         flushCache(cache);
