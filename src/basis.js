@@ -1299,7 +1299,7 @@
         if (!basisFilename)
         {
           basisFilename = pathUtils.normalize(scripts[0].src);
-          /** @cut */ consoleMethods.warn('basis-config: no `basis-config` marker in any script tag. All paths will be resolved relative to `src` from the first `script` tag.');
+          /** @cut */ consoleMethods.warn('basis-config: no `basis-config` marker on any script tag is found. All paths will be resolved relative to `src` from the first `script` tag.');
         }
       }
     }
