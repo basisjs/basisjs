@@ -2487,9 +2487,6 @@
       var deleted = delta.deleted;
       var cache = eventCache[datasetId];
 
-      if (cache === PREVENT_ACCUMULATIONS)
-        return;
-
       if ((inserted && deleted) || (cache && cache.mixed))
       {
         if (cache)

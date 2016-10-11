@@ -330,18 +330,6 @@ module.exports = {
               }
             },
             {
-              name: 'emitting changes after destroy is noop',
-              test: function(){
-                Dataset.setAccumulateState(true);
-                objDataset.destroy();
-                objDataset.emit_itemsChanged({ inserted: [obj] });
-                Dataset.setAccumulateState(false);
-
-                assert(objDataset.getItems().length === 0);
-                assert(eventCount(objDataset, 'itemsChanged') == 1);
-              }
-            },
-            {
               name: 'add items to dataset in accumulate state before destroy',
               test: function(){
                 var existed = new DataObject({ name: 'existed' });
