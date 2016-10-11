@@ -98,6 +98,7 @@ var MERGE_DATASET_HANDLER = {
           // register in source map
           memberMap[objectId] = {
             count: 1,
+            isMember: false,
             object: object
           };
         }
@@ -244,14 +245,20 @@ var Merge = ReadOnlyDataset.subclass({
       memberCounter = memberMap[objectId];
       isMember = sourceCount && memberCounter.count && rule(memberCounter.count, sourceCount);
 
-      if (isMember != objectId in this.items_)
+      if (isMember != memberCounter.isMember)
       {
         if (isMember)
+        {
           // not in items -> insert
+          memberCounter.isMember = true;
           inserted.push(memberCounter.object);
+        }
         else
+        {
           // already in items -> delete
+          memberCounter.isMember = false;
           deleted.push(memberCounter.object);
+        }
       }
 
       if (memberCounter.count == 0)
@@ -291,6 +298,7 @@ var Merge = ReadOnlyDataset.subclass({
         // add to source map
         memberMap[objectId] = {
           count: 1,
+          isMember: false,
           object: dataset.items_[objectId]
         };
       }

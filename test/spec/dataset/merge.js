@@ -14,6 +14,7 @@ module.exports = {
 
     var ReadOnlyDataset = basis.require('basis.data').ReadOnlyDataset;
     var Value = basis.require('basis.data').Value;
+    var DataObject = basis.require('basis.data').Object;
     var Dataset = basis.require('basis.data').Dataset;
     var Merge = basis.require('basis.data.dataset').Merge;
 
@@ -411,6 +412,103 @@ module.exports = {
             assert(merge.itemCount == 0);
             assert(merge.sources.length == 0);
           }
+        },
+        {
+          name: 'setAccumulateState',
+          beforeEach: function(){
+            var foo = new DataObject({ data: { text: 'foo' } });
+            var bar = new DataObject({ data: { text: 'bar' } });
+
+            var fooDataset = new Dataset({
+              items: [
+                foo
+              ]
+            });
+            var barDataset = new Dataset({
+              items: [
+                bar
+              ]
+            });
+          },
+          test: [
+            {
+              name: 'create merge in accumulate state',
+              test: function(){
+                Dataset.setAccumulateState(true);
+                var merge = new Merge({
+                  sources: [
+                    fooDataset,
+                    barDataset
+                  ]
+                });
+                Dataset.setAccumulateState(false);
+
+                assert(merge.itemCount === 2);
+                assert(merge.has(foo) === true);
+                assert(merge.has(bar) === true);
+              },
+            },
+            {
+              name: 'create merge and delete items in accumulate state',
+              test: function(){
+                Dataset.setAccumulateState(true);
+                var merge = new Merge({
+                  sources: [
+                    fooDataset,
+                    barDataset
+                  ]
+                });
+                merge.setRule(Merge.INTERSECTION);
+                Dataset.setAccumulateState(false);
+
+                assert(merge.itemCount === 0);
+                assert(merge.has(foo) === false);
+                assert(merge.has(bar) === false);
+              },
+            },
+            {
+              name: 'create merge and change rules in accumulate state',
+              test: function(){
+                var merge = new Merge({
+                  sources: [
+                    fooDataset,
+                    barDataset
+                  ]
+                });
+
+                Dataset.setAccumulateState(true);
+                merge.setRule(Merge.INTERSECTION);
+                merge.setRule(Merge.UNION);
+                Dataset.setAccumulateState(false);
+
+                assert(merge.itemCount === 2);
+                assert(merge.has(foo) === true);
+                assert(merge.has(bar) === true);
+              }
+            },
+            {
+              name: 'add and remove in accumulate state',
+              test: function(){
+                var merge = new Merge({
+                  sources: [
+                    fooDataset,
+                    barDataset
+                  ]
+                });
+                var baz = new DataObject({ data: { text: 'baz' } });
+
+                Dataset.setAccumulateState(true);
+                fooDataset.add(baz);
+                fooDataset.remove(foo);
+                Dataset.setAccumulateState(false);
+
+                assert(merge.itemCount === 2);
+                assert(merge.has(foo) === false);
+                assert(merge.has(bar) === true);
+                assert(merge.has(baz) === true);
+              }
+            }
+          ]
         }
       ]
     },
