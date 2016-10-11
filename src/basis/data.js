@@ -2095,6 +2095,8 @@
     * @destructor
     */
     destroy: function(){
+      Dataset.preventAccumulations(this);
+
       // inherit
       AbstractData.prototype.destroy.call(this);
 
@@ -2335,6 +2337,8 @@
     * Removes all items from dataset.
     */
     clear: function(){
+      Dataset.flushChanges(this);
+
       var deleted = this.getItems();
       var listenHandler = this.listen.item;
       var delta;
@@ -2436,7 +2440,8 @@
   // Accumulate dataset changes
   //
 
-  Dataset.setAccumulateState = (function(){
+  (function(){
+    var PREVENT_ACCUMULATIONS = {};
     var proto = ReadOnlyDataset.prototype;
     var eventCache = {};
     var setStateCount = 0;
@@ -2454,7 +2459,8 @@
         if (entry)
         {
           eventCacheCopy[datasetId] = null;
-          flushCache(entry);
+          if (entry !== PREVENT_ACCUMULATIONS)
+            flushCache(entry);
         }
       }
 
@@ -2594,7 +2600,21 @@
       flushAllDataset();
     }
 
-    return function(state){
+    Dataset.flushChanges = function(dataset){
+      var cache = eventCache[dataset.basisObjectId];
+      if (cache)
+        flushCache(cache);
+      eventCache[dataset.basisObjectId] = null;
+    };
+
+    Dataset.preventAccumulations = function(dataset){
+      var cache = eventCache[dataset.basisObjectId];
+      if (cache && cache !== PREVENT_ACCUMULATIONS)
+        realEvent.call(cache.dataset, cache);
+      eventCache[dataset.basisObjectId] = PREVENT_ACCUMULATIONS;
+    };
+
+    Dataset.setAccumulateState = function(state){
       if (state)
       {
         if (setStateCount == 0)
