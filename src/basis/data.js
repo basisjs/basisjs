@@ -2092,15 +2092,6 @@
     },
 
    /**
-    * Flush dataset accumulate state cache (if exists).
-    * @param {*} source
-    * @private
-    */
-    flushChanges_: function(){
-      Dataset.flushChanges(this);
-    },
-
-   /**
     * @destructor
     */
     destroy: function(){
@@ -2346,7 +2337,7 @@
     * Removes all items from dataset.
     */
     clear: function(){
-      this.flushChanges_();
+      Dataset.flushChanges(this);
 
       var deleted = this.getItems();
       var listenHandler = this.listen.item;
