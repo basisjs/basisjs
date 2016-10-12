@@ -4,7 +4,6 @@ var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
 var getDelta = require('./getDelta.js');
 var SUBSCRIPTION = require('../subscription.js');
 
-
 SUBSCRIPTION.addProperty('minuend');
 SUBSCRIPTION.addProperty('subtrahend');
 
@@ -16,6 +15,8 @@ var SUBTRACTDATASET_MINUEND_HANDLER = {
   itemsChanged: function(dataset, delta){
     if (!this.subtrahend)
       return;
+
+    this.flushChanges_();
 
     var newDelta = getDelta(
       /* inserted */ delta.inserted && delta.inserted.filter(datasetAbsentFilter, this.subtrahend),
@@ -35,6 +36,8 @@ var SUBTRACTDATASET_SUBTRAHEND_HANDLER = {
   itemsChanged: function(dataset, delta){
     if (!this.minuend)
       return;
+
+    this.flushChanges_();
 
     var newDelta = getDelta(
       /* inserted */ delta.deleted  && delta.deleted.filter(this.minuend.has, this.minuend),
