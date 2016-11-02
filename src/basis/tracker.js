@@ -303,7 +303,7 @@ function getSelectorList(eventName){
         // then lets search a matching selector in our loaded track map
         if (path.length)
           selectorList.forEach(function(item){
-            if (isPathMatchSelector(path, item.selector))
+            if (isPathMatchSelector(path, item.selector)) {
               var data = basis.object.slice(item.data);
 
               // roleId can be data generated
@@ -320,6 +320,7 @@ function getSelectorList(eventName){
                 event: event.type,
                 data: data
               });
+            }
           });
       });
   }
