@@ -66,6 +66,10 @@
       width: 60%;
       height: 8em;
     }
+    .demo-input
+    {
+      margin: 10px;
+    }
   </style>
   <!--[if lt IE 7]>
   <style type="text/css">
@@ -170,6 +174,14 @@
           User.all.deprecate();
         }
       }
+    });
+
+    // Demo input
+
+    new UINode({
+      role: 'demo-input',
+      container: document.getElementById('demo-container'),
+      template: '<div class="demo-input"><input type="text" placeholder="Demo Input" b:role/></div>'
     });
 
     //

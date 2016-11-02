@@ -304,13 +304,25 @@ function getSelectorList(eventName){
         if (path.length)
           selectorList.forEach(function(item){
             if (isPathMatchSelector(path, item.selector)) {
-              var data = basis.object.slice(item.data);
+              if (event.type == 'input') {
+                var keys = Object.keys(item.data);
+                var data = {};
 
-              // roleId can be data generated
-              if (item.selectorStr.indexOf('*') !== -1) {
-                var roleId = path[path.length - 1].roleId;
+                for (var i = 0; i < keys.length; i++) {
+                  data[ keys[i] ] = JSON.parse(JSON.stringify(item.data[ keys[i] ]));
+                  if (!data[keys[i]].params)
+                    data[keys[i]].params = {};
+                  data[keys[i]].params.value = event.target.value;
+                }
+              } else {
+                var data = JSON.parse(JSON.stringify(item.data));
 
-                setDeep(data, '*', roleId);
+                // roleId can be data generated
+                if (item.selectorStr.indexOf('*') !== -1) {
+                  var roleId = path[path.length - 1].roleId;
+
+                  setDeep(data, '*', roleId);
+                }
               }
 
               track({
