@@ -321,7 +321,7 @@ function getSelectorList(eventName){
                   data[keys[i]].params.value = event.target.value;
                 }
 
-                inputTimeout = setTimeout(function() {
+                inputTimeout = setTimeout(function(){
                   track({
                     type: 'ui',
                     path: stringifyPath(path),
@@ -330,7 +330,8 @@ function getSelectorList(eventName){
                     data: data
                   });
                 }, INPUT_DEBOUNCE_TIMEOUT);
-              } else {
+              }
+              else {
                 var data = JSON.parse(JSON.stringify(item.data));
 
                 // roleId can be data generated
