@@ -278,11 +278,15 @@ function getCssSelectorFromPath(path, selector){
   }).join(' ');
 }
 
+var INPUT_DEBOUNCE_TIMEOUT = 1000;
+var INPUT_EVENTS = ['keyup', 'keydown', 'input'];
+
 function getSelectorList(eventName){
   if (hasOwnProperty.call(eventMap, eventName))
     return eventMap[eventName];
 
   var selectorList = eventMap[eventName] = [];
+  var inputTimeout = null;
 
   switch (eventName) {
     case 'show':
@@ -303,8 +307,10 @@ function getSelectorList(eventName){
         // then lets search a matching selector in our loaded track map
         if (path.length)
           selectorList.forEach(function(item){
-            if (isPathMatchSelector(path, item.selector)) {
-              if (event.type == 'input') {
+            if (isPathMatchSelector(path, item.selector))
+              if (INPUT_EVENTS.indexOf(event.type) != -1) {
+                clearTimeout(inputTimeout);
+
                 var keys = Object.keys(item.data);
                 var data = {};
 
@@ -314,6 +320,16 @@ function getSelectorList(eventName){
                     data[keys[i]].params = {};
                   data[keys[i]].params.value = event.target.value;
                 }
+
+                inputTimeout = setTimeout(function() {
+                  track({
+                    type: 'ui',
+                    path: stringifyPath(path),
+                    selector: stringifyPath(item.selector),
+                    event: event.type,
+                    data: data
+                  });
+                }, INPUT_DEBOUNCE_TIMEOUT);
               } else {
                 var data = JSON.parse(JSON.stringify(item.data));
 
@@ -323,16 +339,15 @@ function getSelectorList(eventName){
 
                   setDeep(data, '*', roleId);
                 }
-              }
 
-              track({
-                type: 'ui',
-                path: stringifyPath(path),
-                selector: stringifyPath(item.selector),
-                event: event.type,
-                data: data
-              });
-            }
+                track({
+                  type: 'ui',
+                  path: stringifyPath(path),
+                  selector: stringifyPath(item.selector),
+                  event: event.type,
+                  data: data
+                });
+              }
           });
       });
   }
