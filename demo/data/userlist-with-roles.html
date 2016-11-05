@@ -97,7 +97,6 @@
     var transportDispatcher = basis.require('basis.net').transportDispatcher;
 
     function trackItem(event, item) {
-      var eventName = event.type;
       var request = event.args[1];
 
       if (item.selectorStr == request.requestData.url)
@@ -109,7 +108,7 @@
         return {
           type: 'net',
           path: [request.requestData.url],
-          event: eventName,
+          event: event.type,
           data: data
         };
       }
@@ -179,9 +178,9 @@
     // Demo input
 
     new UINode({
-      role: 'demo-input',
+      role: 'input',
       container: document.getElementById('demo-container'),
-      template: '<div class="demo-input"><input type="text" placeholder="Demo Input" b:role/></div>'
+      template: '<div class="demo-input"><input type="text" placeholder="Demo Input" b:role="demo"/> <input type="text" placeholder="Concurent Input" b:role="concurent"/></div>'
     });
 
     //

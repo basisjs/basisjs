@@ -307,20 +307,12 @@ function getSelectorList(eventName){
         // then lets search a matching selector in our loaded track map
         if (path.length)
           selectorList.forEach(function(item){
-            if (isPathMatchSelector(path, item.selector))
+            if (isPathMatchSelector(path, item.selector)) {
+              var data = basis.object.extend({}, item.data);
+
               if (INPUT_EVENTS.indexOf(event.type) != -1) {
                 clearTimeout(inputTimeout);
-
-                var keys = Object.keys(item.data);
-                var data = {};
-
-                for (var i = 0; i < keys.length; i++) {
-                  data[ keys[i] ] = JSON.parse(JSON.stringify(item.data[ keys[i] ]));
-                  if (!data[keys[i]].params)
-                    data[keys[i]].params = {};
-                  data[keys[i]].params.value = event.target.value;
-                }
-
+                data.inputValue = event.target.value;
                 inputTimeout = setTimeout(function(){
                   track({
                     type: 'ui',
@@ -332,13 +324,25 @@ function getSelectorList(eventName){
                 }, INPUT_DEBOUNCE_TIMEOUT);
               }
               else {
-                var data = JSON.parse(JSON.stringify(item.data));
-
                 // roleId can be data generated
                 if (item.selectorStr.indexOf('*') !== -1) {
                   var roleId = path[path.length - 1].roleId;
+                  var i = Object.keys(data).length;
 
-                  setDeep(data, '*', roleId);
+                  for (var key in data)
+                    if (hasOwnProperty.call(data, key)) {
+                      if (data[key] === '*') {
+                        data[key] = roleId;
+                        break;
+                      }
+                      i--;
+                    }
+
+                  if (i == 0) {
+                    data = JSON.parse(JSON.stringify(item.data));
+                    setDeep(data, '*', roleId);
+                  }
+
                 }
 
                 track({
@@ -349,6 +353,7 @@ function getSelectorList(eventName){
                   data: data
                 });
               }
+            }
           });
       });
   }
