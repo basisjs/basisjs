@@ -18,7 +18,7 @@ function colorizeFragment(color, str){
     : str;
 }
 
-var view = new Node({
+module.exports = Node.subclass({
   autoDelegate: true,
   handler: {
     update: function(sender, delta){
@@ -75,5 +75,3 @@ var view = new Node({
     }
   }
 });
-
-module.exports = view;
