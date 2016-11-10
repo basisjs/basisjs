@@ -9,6 +9,40 @@ module.exports = {
             }
         }
     },
+    'input/demo': {
+        focus: {
+            customTracking: {
+                id: 'focus demo input'
+            }
+        },
+        input: {
+            customTracking: {
+                id: 'input demo input',
+            }
+        },
+        blur: {
+            customTracking: {
+                id: 'blur demo input'
+            }
+        }
+    },
+    'input/concurent': {
+        focus: {
+            customTracking: {
+                id: 'focus concurent input'
+            }
+        },
+        input: {
+            customTracking: {
+                id: 'input concurent input',
+            }
+        },
+        blur: {
+            customTracking: {
+                id: 'blur concurent input'
+            }
+        }
+    },
     '../res/data/groups.json': {
         success: {
             id: 'Load groups'
