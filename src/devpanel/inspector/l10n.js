@@ -4,7 +4,8 @@ var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MA
 var inspectBasisL10n = inspectBasis.require('basis.l10n');
 
 var NativeDomNode = global.Node;
-var fileAPI = require('../api/file.js');
+var fileAPI = require('api').ns('file');
+var inspect = require('api').inspect;
 var genColor = require('./common/color.js').genColor;
 var Overlay = require('./common/overlay.js');
 var Balloon = require('basis.ui.popup').Balloon;
@@ -112,7 +113,9 @@ var overlay = new Overlay({
 
         var loc = descriptor.loc || descriptor.source;
         if (loc)
-          fileAPI.openFile(loc);
+          fileAPI.open(loc);
+
+        inspect.set(false);
       }
     }
   },

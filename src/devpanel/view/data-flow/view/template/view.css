@@ -1,4 +1,5 @@
 .view
 {
   position: relative;
+  display: table-cell;
 }

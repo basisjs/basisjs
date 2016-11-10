@@ -223,15 +223,15 @@ var JsonParser = (function () {
             value: function _testKeyword() {
                 var _this = this;
 
-                var matched = Object.keys(keywordsTokens).find(function (name) {
+                var matched = Object.keys(keywordsTokens).filter(function (name) {
                     return name === _this.source.substr(_this.index, name.length);
                 });
 
-                if (matched) {
+                if (matched.length) {
                     var _length = matched.length;
                     this.index += _length;
                     this.column += _length;
-                    this.currentToken = keywordsTokens[matched];
+                    this.currentToken = keywordsTokens[matched[0]];
                     return true;
                 } else {
                     return false;

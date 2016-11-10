@@ -18,6 +18,18 @@ var inspectMode = require('api').inspect;
 var inspector = require('../inspector/index.js');
 var currentInspectorName = inspector.currentName;
 
+var KEY_ESC = 27;
+var cancelInspectModeOnEsc = function(event){
+  if (event.keyCode == KEY_ESC)
+    inspectMode.set(false);
+};
+
+inspectMode.link(null, function(mode){
+  if (mode)
+    inspectBasisDomEvent.addGlobalHandler('keydown', cancelInspectModeOnEsc);
+  else
+    inspectBasisDomEvent.removeGlobalHandler('keydown', cancelInspectModeOnEsc);
+});
 
 //
 // panel
