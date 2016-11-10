@@ -309,7 +309,7 @@ function getSelectorList(eventName){
           selectorList.forEach(function(item){
             if (isPathMatchSelector(path, item.selector))
             {
-              var data = basis.object.extend({}, item.data);
+              var data = basis.object.slice(item.data);
 
               if (INPUT_EVENTS.indexOf(event.type) != -1)
               {
@@ -331,23 +331,22 @@ function getSelectorList(eventName){
                 if (item.selectorStr.indexOf('*') !== -1)
                 {
                   var roleId = path[path.length - 1].roleId;
-                  var wasNotReplaced = true;
+                  var starWasFound = false;
 
                   for (var key in data)
                     if (hasOwnProperty.call(data, key))
                       if (data[key] === '*')
                       {
                         data[key] = roleId;
-                        wasNotReplaced = false;
+                        starWasFound = true;
                         break;
                       }
 
-                  if (wasNotReplaced)
+                  if (!starWasFound)
                   {
                     data = JSON.parse(JSON.stringify(item.data));
                     setDeep(data, '*', roleId);
                   }
-
                 }
 
                 track({
