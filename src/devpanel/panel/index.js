@@ -19,10 +19,16 @@ var inspector = require('../inspector/index.js');
 var currentInspectorName = inspector.currentName;
 
 var KEY_ESC = 27;
-
-inspectBasisDomEvent.captureEvent('keydown', function(event){
+var keydownHandler = function(event){
   if (event.keyCode == KEY_ESC)
     inspectMode.set(false);
+};
+
+inspectMode.link(null, function(mode){
+  if (mode)
+    inspectBasisDomEvent.addGlobalHandler('keydown', keydownHandler);
+  else
+    inspectBasisDomEvent.removeGlobalHandler('keydown', keydownHandler);
 });
 
 //
