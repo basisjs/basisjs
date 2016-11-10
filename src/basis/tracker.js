@@ -307,7 +307,8 @@ function getSelectorList(eventName){
         // then lets search a matching selector in our loaded track map
         if (path.length)
           selectorList.forEach(function(item){
-            if (isPathMatchSelector(path, item.selector)) {
+            if (isPathMatchSelector(path, item.selector))
+            {
               var data = basis.object.extend({}, item.data);
 
               if (INPUT_EVENTS.indexOf(event.type) != -1)
