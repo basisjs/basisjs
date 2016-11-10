@@ -4,11 +4,9 @@ var history = [];
 
 var ELEMENT_DESTROY_HANDLER = {
   destroy: function(){
-    for (var position = 0; position < history.length; position++){
-      if (history[position] == this){
+    for (var position = 0; position < history.length; position++)
+      if (history[position] == this)
         global[PREFIX + position] = history[position] = null;
-      }
-    }
   }
 };
 
@@ -17,19 +15,18 @@ function initGlobalElements(data){
     change: function(){
       var addCandidate = this.value.object;
 
-      if (!addCandidate || history[0] == addCandidate){
+      if (!addCandidate || history[0] == addCandidate)
         return;
-      }
 
       history.unshift(addCandidate);
       addCandidate.addHandler(ELEMENT_DESTROY_HANDLER);
 
-      if (history.length > MAX_HISTORY_SIZE){
+      if (history.length > MAX_HISTORY_SIZE)
+      {
         var deleteCandidate = history.pop();
 
-        if (deleteCandidate){
+        if (deleteCandidate)
           deleteCandidate.removeHandler(ELEMENT_DESTROY_HANDLER);
-        }
       }
 
       history.forEach(function(element, position){
