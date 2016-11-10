@@ -38,9 +38,17 @@ function emitEvent(channelId, data){
   if (DEBUG)
     console.log('[basisjs.devpanel] emit event', channelId, data);
 
-  document.dispatchEvent(new CustomEvent(channelId, {
-    detail: data
-  }));
+  // IE does not support CustomEvent constructor
+  if (typeof document.createEvent == 'function'){
+    var evt = document.createEvent('CustomEvent');
+    evt.initCustomEvent(channelId, false, false, data);
+    document.dispatchEvent(evt);
+  }
+  else {
+    document.dispatchEvent(new CustomEvent(channelId, {
+      detail: data
+    }));
+  }
 }
 
 function wrapCallback(callback){
