@@ -40,9 +40,9 @@ function emitEvent(channelId, data){
 
   // IE does not support CustomEvent constructor
   if (typeof document.createEvent == 'function'){
-    var evt = document.createEvent('CustomEvent');
-    evt.initCustomEvent(channelId, false, false, data);
-    document.dispatchEvent(evt);
+    var event = document.createEvent('CustomEvent');
+    event.initCustomEvent(channelId, false, false, data);
+    document.dispatchEvent(event);
   }
   else {
     document.dispatchEvent(new CustomEvent(channelId, {
