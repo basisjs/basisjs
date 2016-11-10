@@ -310,7 +310,8 @@ function getSelectorList(eventName){
             if (isPathMatchSelector(path, item.selector)) {
               var data = basis.object.extend({}, item.data);
 
-              if (INPUT_EVENTS.indexOf(event.type) != -1) {
+              if (INPUT_EVENTS.indexOf(event.type) != -1)
+              {
                 clearTimeout(inputTimeout);
                 data.inputValue = event.target.value;
                 inputTimeout = setTimeout(function(){
@@ -323,22 +324,25 @@ function getSelectorList(eventName){
                   });
                 }, INPUT_DEBOUNCE_TIMEOUT);
               }
-              else {
+              else
+              {
                 // roleId can be data generated
-                if (item.selectorStr.indexOf('*') !== -1) {
+                if (item.selectorStr.indexOf('*') !== -1)
+                {
                   var roleId = path[path.length - 1].roleId;
-                  var i = Object.keys(data).length;
+                  var wasNotReplaced = true;
 
                   for (var key in data)
-                    if (hasOwnProperty.call(data, key)) {
-                      if (data[key] === '*') {
+                    if (hasOwnProperty.call(data, key))
+                      if (data[key] === '*')
+                      {
                         data[key] = roleId;
+                        wasNotReplaced = false;
                         break;
                       }
-                      i--;
-                    }
 
-                  if (i == 0) {
+                  if (wasNotReplaced)
+                  {
                     data = JSON.parse(JSON.stringify(item.data));
                     setDeep(data, '*', roleId);
                   }
