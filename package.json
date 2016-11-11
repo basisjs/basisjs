@@ -47,8 +47,8 @@
     "basisjs-tools-build": "basisjs/basisjs-tools-build",
     "basisjs-tools-instrumenter": "~2.0.0",
     "jscs": "~3.0.0",
-    "karma": "^0.12.31",
-    "karma-firefox-launcher": "^0.1.4",
+    "karma": "^1.3.0",
+    "karma-firefox-launcher": "^1.0.0",
     "karma-yatra": "~1.0.0",
     "yatra": "~1.2.0"
   },
