@@ -10,6 +10,7 @@ module.exports = {
     var DOM = basis.require('basis.dom');
     var AbstractNode = basis.require('basis.dom.wrapper').AbstractNode;
     var Node = basis.require('basis.dom.wrapper').Node;
+    var SatellitesDataset = basis.require('basis.dom.wrapper').SatellitesDataset;
     var Selection = basis.require('basis.dom.wrapper').Selection;
     var wrapData = basis.require('basis.data').wrap;
     var Value = basis.require('basis.data').Value;
@@ -18,6 +19,12 @@ module.exports = {
     var DatasetWrapper = basis.require('basis.data').DatasetWrapper;
     var READY = basis.require('basis.data').STATE.READY;
     var AUTO = '__auto__';
+
+    function getSatelliteList(node) {
+      return basis.object.values(node.satellite).filter(function(satellite){
+        return satellite instanceof AbstractNode;
+      });
+    }
 
     Node.extend({
       listen: basis.object.extend({

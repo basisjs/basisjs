@@ -285,6 +285,30 @@ module.exports = {
             assert(bar.satellite.foo === undefined);
             assert('foo' in bar.satellite == false);
           }
+        },
+        {
+          name: 'getSatellitesDataset must return satellite dataset',
+          test: function(){
+            var MyNode = Node.subclass({
+              satellite: {
+                foo: Node,
+                bar: Node,
+                baz: Node
+              }
+            });
+
+            var someNode = new MyNode();
+            var satelliteDataset = someNode.getSatellitesDataset();
+
+            assert(satelliteDataset instanceof SatellitesDataset);
+            assert(getSatelliteList(someNode), satelliteDataset.getItems());
+
+            someNode.satellite.foo.destroy();
+            assert(getSatelliteList(someNode), satelliteDataset.getItems());
+
+            someNode.destroy();
+            assert(!satelliteDataset.itemCount);
+          }
         }
       ]
     },
