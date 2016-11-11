@@ -137,6 +137,7 @@ var overlay = new Overlay({
     action: {
       showPath: function(){
         trackingInfo().set(this.domNode);
+        inspectMode.set(false);
         overlay.deactivate();
       }
     }
