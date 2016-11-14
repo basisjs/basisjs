@@ -1,3 +1,47 @@
+## 1.10.0 (November 14, 2016)
+
+### Core
+
+- Implemented new module [`basis.type`](https://github.com/basisjs/articles/blob/master/ru-RU/basis.type.md) (#100, @istrel)
+- Added warning when no `basis-config` marker is found (#120, @tyanas)
+- Fixed edge case for `basis.path.resolve()` when base path is `/` (@lahmatiy)
+
+### Data
+
+- Fixed behaviour on dataset reseting by flushing accumulated dataset changes on `basis.data.Dataset#clear()` (#116, @istrel)
+- Fixed issues on dataset destroy in accumulate state by flushing accumulated changes and prevent further `itemsChanged` events on `AbstractDataset#destroy()` (#116, @istrel)
+- Fixed `basis.data.dataset.Merge` create behavior in accumulate state (#118, @istrel)
+- Fixed `basis.data.dataset.Subtract` behavior in accumulate state (#121, @istrel)
+
+### UI
+
+- Implemented `AbstractNode#getSatellitesDataset()` method (#95, @smelukov)
+- Make charts work correctly with fractional numbers (#107, @wuzyk)
+- Fixed setting `defaultOrder` for auto-sorting header cell of `basis.ui.table` (#105, @lahmatiy)
+
+### Devtools
+
+- Added `window.$b0..$b3` references to selected object (and previously selected) in template viewer (#103, @naorunaoru)
+- Added ability to cancel inspect mode by `ESC` (#129, @smelukov)
+- Fixed layout by adding missing flexbox prefixes (#104, @smelukov)
+- Fixed `show source` fails (#108, @smelukov)
+- Fixed total file count in file graph statistics (@lahmatiy)
+- Fixed issue when inspect mode doesn't cancel after a role is selected (#131, @smelukov)
+- Fixed open file calls (#129, @smelukov)
+- Fixed issue when inspect mode doesn't cancel after a l10n token is selected (#129, @smelukov)
+- Fixed source panel visibility reset on the inspector closing (#129, @smelukov)
+- Fixed issues for IE (#129, @smelukov)
+- Fixed data flow connector drawing issue (#114, @smelukov)
+
+### Other
+
+- Implemented `roleId` tracking (#110, @tyanas)
+- Implemented network activity tracking (#115, @tyanas)
+- Implemented user input with roles tracking (#122, #124, @tyanas)
+- Added `requestUrl` to `requestData` of `basis.net.soap.Request` (#109, @fateevv)
+- Added roles to `basis.ui.slider.Slider` component (#125, @MammaSonnim)
+- Fixed `node.js` 7 issue (bump karma version to use new version of `socket.io`) (#133, @smelukov)
+
 ## 1.9.2 (August 31, 2016)
 
 - Fixed `.npmignore` not to ignore `src/devpanel/standalone/index.html`
