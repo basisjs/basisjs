@@ -18,7 +18,7 @@ module.exports = {
           'baz[3]': type.string.nullable,
           'basis js': type.string.nullable
         };
-        var route = router.route('foo/:bar/:baz/(:spam)/(:end)/', {
+        var route = router.route('foo/:bar/:baz(/:spam)(/:end)(/)', {
           params: params
         });
       },
