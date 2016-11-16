@@ -15,7 +15,6 @@ require('basis.template').theme('standalone').define('devpanel.template-info', {
 });
 
 module.exports = Node.subclass({
-  showSource: new basis.Token(false),
   disabled: api.connected.as(basis.bool.invert),
 
   satellite: {
@@ -106,10 +105,16 @@ module.exports = Node.subclass({
   init: function(){
     Node.prototype.init.call(this);
 
+    this.showSource = new basis.Token(false);
     templateApi.channel.link(this, this.update);
     api.connected.link(this, function(connected){
       if (connected)
         templateApi.init(this.update.bind(this));
     });
+  },
+  destroy: function(){
+    this.showSource.destroy();
+    this.showSource = null;
+    Node.prototype.destroy.call(this);
   }
 });

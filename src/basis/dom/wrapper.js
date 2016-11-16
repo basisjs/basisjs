@@ -66,6 +66,7 @@
   };
 
   var childNodesDatasetMap = {};
+  var satellitesDatasetMap = {};
 
   function warnOnDataSourceItemNodeDestoy(){
     /** @cut */ basis.dev.warn(namespace + ': node can\'t be destroyed as representing dataSource item, destroy delegate item or remove it from dataSource first');
@@ -1320,6 +1321,16 @@
     */
     getChildNodesDataset: function(){
       return childNodesDatasetMap[this.basisObjectId] || new ChildNodesDataset({
+        sourceNode: this
+      });
+    },
+
+   /**
+    * Returns
+    * @return {basis.dom.wrapper.ChildNodesDataset}
+    */
+    getSatellitesDataset: function(){
+      return satellitesDatasetMap[this.basisObjectId] || new SatellitesDataset({
         sourceNode: this
       });
     },
@@ -3304,6 +3315,27 @@
     }
   };
 
+  var SATELLITEDATASET_HANDLER = {
+    satelliteChanged: function(sender, name, oldSatellite){
+      var delta = {};
+
+      if (sender.satellite[name])
+      {
+        delta.inserted = [sender.satellite[name]];
+      }
+
+      if (oldSatellite)
+      {
+        delta.deleted = [oldSatellite];
+      }
+
+      this.emit_itemsChanged(delta);
+    },
+    destroy: function(){
+      this.destroy();
+    }
+  };
+
  /**
   * You should avoid to create instances of this class using `new` operator,
   * use basis.dom.wrapper.AbstractNode#getChildNodesDataset method instead.
@@ -3344,6 +3376,57 @@
     destroy: function(){
       this.sourceNode.removeHandler(CHILDNODESDATASET_HANDLER, this);
       delete childNodesDatasetMap[this.sourceNode.basisObjectId];
+
+      // inherit
+      ReadOnlyDataset.prototype.destroy.call(this);
+    }
+  });
+
+  var SatellitesDataset = basis.Class(ReadOnlyDataset, {
+    className: '.SatellitesDataset',
+
+    /**
+    * @type {basis.dom.wrapper.AbstractNode}
+    */
+    sourceNode: null,
+
+    /**
+    * @constructor
+    */
+    init: function(){
+      ReadOnlyDataset.prototype.init.call(this);
+
+      var sourceNode = this.sourceNode;
+
+      // add to map
+      satellitesDatasetMap[sourceNode.basisObjectId] = this;
+
+      var satellites = [];
+
+      for (var satelliteName in sourceNode.satellite)
+        if (sourceNode.satellite.hasOwnProperty(satelliteName))
+        {
+          var node = sourceNode.satellite[satelliteName];
+          if (node instanceof AbstractNode)
+            satellites.push(node);
+        }
+
+      // add existing nodes
+      if (satellites.length)
+        this.emit_itemsChanged({
+          inserted: satellites
+        });
+
+      // add handler for changes listening
+      sourceNode.addHandler(SATELLITEDATASET_HANDLER, this);
+    },
+
+    /**
+    * @destructor
+    */
+    destroy: function(){
+      this.sourceNode.removeHandler(SATELLITEDATASET_HANDLER, this);
+      delete satellitesDatasetMap[this.sourceNode.basisObjectId];
 
       // inherit
       ReadOnlyDataset.prototype.destroy.call(this);
@@ -3474,6 +3557,7 @@
 
     // datasets
     ChildNodesDataset: ChildNodesDataset,
+    SatellitesDataset: SatellitesDataset,
     Selection: Selection,
     nullSelection: new ReadOnlyDataset
   };

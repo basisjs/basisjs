@@ -278,11 +278,15 @@ function getCssSelectorFromPath(path, selector){
   }).join(' ');
 }
 
+var INPUT_DEBOUNCE_TIMEOUT = 1000;
+var INPUT_EVENTS = ['keyup', 'keydown', 'input'];
+
 function getSelectorList(eventName){
   if (hasOwnProperty.call(eventMap, eventName))
     return eventMap[eventName];
 
   var selectorList = eventMap[eventName] = [];
+  var inputTimeout = null;
 
   switch (eventName) {
     case 'show':
@@ -304,22 +308,56 @@ function getSelectorList(eventName){
         if (path.length)
           selectorList.forEach(function(item){
             if (isPathMatchSelector(path, item.selector))
+            {
               var data = basis.object.slice(item.data);
 
-              // roleId can be data generated
-              if (item.selectorStr.indexOf('*') !== -1) {
-                var roleId = path[path.length - 1].roleId;
-
-                setDeep(data, '*', roleId);
+              if (INPUT_EVENTS.indexOf(event.type) != -1)
+              {
+                clearTimeout(inputTimeout);
+                data.inputValue = event.target.value;
+                inputTimeout = setTimeout(function(){
+                  track({
+                    type: 'ui',
+                    path: stringifyPath(path),
+                    selector: stringifyPath(item.selector),
+                    event: event.type,
+                    data: data
+                  });
+                }, INPUT_DEBOUNCE_TIMEOUT);
               }
+              else
+              {
+                // roleId can be data generated
+                if (item.selectorStr.indexOf('*') !== -1)
+                {
+                  var roleId = path[path.length - 1].roleId;
+                  var starWasFound = false;
 
-              track({
-                type: 'ui',
-                path: stringifyPath(path),
-                selector: stringifyPath(item.selector),
-                event: event.type,
-                data: data
-              });
+                  for (var key in data)
+                    if (hasOwnProperty.call(data, key))
+                      if (data[key] === '*')
+                      {
+                        data[key] = roleId;
+                        starWasFound = true;
+                        break;
+                      }
+
+                  if (!starWasFound)
+                  {
+                    data = JSON.parse(JSON.stringify(item.data));
+                    setDeep(data, '*', roleId);
+                  }
+                }
+
+                track({
+                  type: 'ui',
+                  path: stringifyPath(path),
+                  selector: stringifyPath(item.selector),
+                  event: event.type,
+                  data: data
+                });
+              }
+            }
           });
       });
   }
