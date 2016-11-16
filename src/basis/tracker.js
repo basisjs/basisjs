@@ -279,7 +279,7 @@ function getCssSelectorFromPath(path, selector){
 }
 
 var INPUT_DEBOUNCE_TIMEOUT = 1000;
-var INPUT_EVENTS = ['keyup', 'keydown', 'input'];
+var INPUT_EVENTS = ['keyup', 'keydown', 'keypress', 'input'];
 
 function getSelectorList(eventName){
   if (hasOwnProperty.call(eventMap, eventName))
