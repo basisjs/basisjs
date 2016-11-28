@@ -1,6 +1,6 @@
 var DEBUG = false;
 var document = global.document;
-var basisjsTools = require('./sync-basisjs-tools.js');
+var getRemoteUI = require('./getRemoteUI.js');
 var connected = new basis.Token(false);
 var features = new basis.Token([]);
 var inputChannelId = 'basisjsDevpanel:' + basis.genUID();
@@ -11,9 +11,6 @@ var subscribers = [];
 var inited = false;
 var send;
 
-var getInspectorUI = function(){
-  basis.dev.warn('[basisjs.devpanel] getInspectorUI() is not implemented');
-};
 var subscribe = function(fn){
   subscribers.push(fn);
 };
@@ -71,10 +68,6 @@ function handshake(){
 
 if (document.createEvent)
 {
-  basisjsTools.onInit(function(basisjsToolsApi){
-    getInspectorUI = basisjsToolsApi.getInspectorUI;
-  });
-
   document.addEventListener('basisjs-devpanel:connect', function(e){
     if (outputChannelId)
       return;
@@ -153,8 +146,9 @@ if (document.createEvent)
         });
         break;
 
-      case 'getInspectorUI':
-        getInspectorUI(
+      case 'getInspectorUI': // legacy
+      case 'getRemoteUI':
+        getRemoteUI(
           basis.array(data.data)[0] || false,
           data.callback ? wrapCallback(data.callback) : Function
         );

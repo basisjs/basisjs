@@ -7,7 +7,7 @@ var Expression = require('basis.data.value').Expression;
 var Node = require('basis.ui').Node;
 var MoveableElement = require('basis.dragdrop').MoveableElement;
 
-var isOnline = require('../sync-basisjs-tools.js').online;
+var isOnline = require('../sync/sync-basisjs-tools.js').online;
 var remoteInspectors = require('../remote.js').remoteInspectors;
 var devtools = require('../remote.js').devtools;
 var File = require('type').File;
