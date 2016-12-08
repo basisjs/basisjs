@@ -47,44 +47,44 @@
   //
 
   function routeEnter(route, nonInitedOnly){
-    var callbacks = arrayFrom(route.callbacks);
+    var callbacks = arrayFrom(route.callbacks_);
     for (var i = 0, item; item = callbacks[i]; i++)
       if ((!nonInitedOnly || !item.enterInited) && item.callback.enter)
       {
         item.enterInited = true;
         item.callback.enter.call(item.context);
-        /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: item, route: route.token });
+        /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: item, route: route });
       }
   }
 
   function routeLeave(route){
-    var callbacks = arrayFrom(route.callbacks);
+    var callbacks = arrayFrom(route.callbacks_);
     for (var i = 0, item; item = callbacks[i]; i++)
       if (item.callback.leave)
       {
         item.callback.leave.call(item.context);
-        /** @cut */ log.push('\n', { type: 'leave', path: route.id, cb: item, route: route.token });
+        /** @cut */ log.push('\n', { type: 'leave', path: route.id, cb: item, route: route });
       }
   }
 
   function routeMatch(route, nonInitedOnly){
-    var callbacks = arrayFrom(route.callbacks);
+    var callbacks = arrayFrom(route.callbacks_);
     for (var i = 0, item; item = callbacks[i]; i++)
       if ((!nonInitedOnly || !item.matchInited) && item.callback.match)
       {
         item.matchInited = true;
-        item.callback.match.apply(item.context, route.matched);
-        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route.token, args: route.matched });
+        item.callback.match.apply(item.context, route.matched_);
+        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route, args: route.matched_ });
       }
   }
 
   var initSchedule = basis.asap.schedule(function(token){
     var route = get(token);
 
-    if (route.matched)
+    if (route.token.matched_)
     {
-      routeEnter(route, true);
-      routeMatch(route, true);
+      routeEnter(route.token, true);
+      routeMatch(route.token, true);
 
       /** @cut */ flushLog(namespace + ': init callbacks for route `' + route.id + '`');
     }
@@ -99,16 +99,47 @@
 
     path: null,
     matched: null,
+    matched_: null,
+    params: null,
     params_: null,
     names_: null,
 
-    init: function(names, path){
+    init: function(regexp, path){
       basis.Token.prototype.init.call(this, null);
 
       this.path = path;
       this.matched = this.as(Boolean);
-      this.names_ = Array.isArray(names) ? names : [];
+      this.names_ = Array.isArray(regexp.params) ? regexp.params : [];
+      this.regexp_ = regexp;
       this.params_ = {};
+      this.callbacks_ = [];
+    },
+    matches_: function(path){
+      return path.match(this.regexp_);
+    },
+    processLocation_: function(newPath){
+      initSchedule.remove(this);
+
+      var match = this.matches_(newPath);
+
+      if (match)
+      {
+        if (!this.matched_)
+          routeEnter(this);
+
+        this.matched_ = arrayFrom(match, 1);
+        this.set(this.matched_);
+        routeMatch(this);
+      }
+      else
+      {
+        if (this.matched_)
+        {
+          this.set(null);
+          routeLeave(this);
+          this.matched_ = null;
+        }
+      }
     },
     param: function(nameOrIdx){
       var idx = typeof nameOrIdx == 'number' ? nameOrIdx : this.names_.indexOf(nameOrIdx);
@@ -120,11 +151,17 @@
 
       return this.params_[idx];
     },
-    set: function(value){
+    set: function(value, query){
+      var queryParams = queryToParams(query);
+
       if (value)
       {
         // make a copy of value, it also converts value to object (as value is array of matches)
         value = basis.object.slice(value);
+
+        for (var key in queryParams)
+          if (this.params[key])
+            value[key] = queryParams[key];
 
         // extend object with named values
         for (var key in value)
@@ -134,12 +171,40 @@
 
       basis.Token.prototype.set.call(this, value);
     },
-
     add: function(callback, context){
       return add(this, callback, context);
     },
     remove: function(callback, context){
       remove(this, callback, context);
+    }
+  });
+
+  var ParametrizedRoute = Route.subclass({
+    init: function(regexp, path, config){
+      Route.prototype.init.apply(this, arguments);
+
+      if (config.params)
+      {
+        this.params = {};
+
+        basis.object.iterate(config.params, function(key){
+          this.params[key] = this.as(function(values){
+            if (!values)
+              return null;
+
+            if (values[key] == null)
+              return null;
+
+            return decodeURIComponent(values[key]);
+          });
+        }, this);
+      }
+    },
+    matches_: function(newLocation){
+      var pathAndQuery = newLocation.split('?');
+      var newPath = pathAndQuery[0];
+
+      return newPath.match(this.regexp_);
     }
   });
 
@@ -303,6 +368,25 @@
     });
   }
 
+  function queryToParams(query) {
+    if (!query)
+      return {};
+
+    var result = {};
+
+    var pairs = query.split('&');
+    for (var i = 0; i < pairs.length; i++)
+    {
+      var pair = pairs[i].split('=');
+      var key = decodeURIComponent(pair[0]);
+      var value = decodeURIComponent(pair[1]);
+
+      result[key] = value;
+    }
+
+    return result;
+  }
+
  /**
   * Process current location
   */
@@ -311,10 +395,6 @@
 
     if (newPath != currentPath)
     {
-      var inserted = [];
-      var deleted = [];
-      var matched = [];
-
       // check for recursion
       if (preventRecursion(newPath))
         return;
@@ -326,45 +406,7 @@
       for (var path in routes)
       {
         var route = routes[path];
-        var match = newPath.match(route.regexp);
-
-        route.inited = true;
-        initSchedule.remove(route.token);
-
-        if (match)
-        {
-          if (!route.matched)
-            inserted.push(route);
-
-          route.matched = arrayFrom(match, 1);
-          matched.push(route);
-        }
-        else
-        {
-          if (route.matched)
-          {
-            deleted.push(route);
-            route.matched = null;
-          }
-        }
-      }
-
-      // callback off for previous matched
-      for (var i = 0, route; route = deleted[i]; i++)
-      {
-        route.token.set(null);
-        routeLeave(route);
-      }
-
-      // callback off for previous matched
-      for (var i = 0, route; route = inserted[i]; i++)
-        routeEnter(route);
-
-      // callback for matched
-      for (var i = 0, route; route = matched[i]; i++)
-      {
-        route.token.set(route.matched);
-        routeMatch(route);
+        route.token.processLocation_(newPath);
       }
 
       /** @cut */ flushLog(namespace + ': hash changed to "' + newPath + '"');
@@ -374,10 +416,10 @@
       for (var path in routes)
       {
         var route = routes[path];
-        if (route.matched)
+        if (route.token.matched_)
         {
-          routeEnter(route, true);
-          routeMatch(route, true);
+          routeEnter(route.token, true);
+          routeMatch(route.token, true);
         }
       }
 
@@ -385,39 +427,47 @@
     }
   }
 
+  function createRoute(regexp, path, config) {
+    if (config)
+      return new ParametrizedRoute(regexp, path, config);
+    else
+      return new Route(regexp, path);
+  }
+
  /**
   * Returns route descriptor
   */
-  function get(path, autocreate){
+  function get(path, autocreate, config){
     if (path instanceof Route)
       path = path.path;
 
     var route = routes[path];
+
+    config = config || {};
 
     if (!route && autocreate)
     {
       var regexp = Object.prototype.toString.call(path) == '[object RegExp]'
         ? path
         : pathToRegExp(path);
-      var token = new Route(regexp.params, path);
+      var token = createRoute(regexp, path, config);
 
       route = routes[path] = {
         id: path,
         regexp: regexp,
         enterInited: false,
         matchInited: false,
-        matched: null,
         token: token,
-        callbacks: []
+        parseQueryParams: Boolean(config.params)
       };
 
       if (typeof currentPath == 'string')
       {
-        var match = currentPath.match(route.regexp);
+        var match = route.token.matches_(currentPath);
         if (match)
         {
           match = arrayFrom(match, 1);
-          route.matched = match;
+          route.token.matched_ = match;
           route.token.set(match);
         }
       }
@@ -432,8 +482,7 @@
   function add(path, callback, context){
     var route = get(path, true);
 
-    route.callbacks.push({
-      inited: false,
+    route.token.callbacks_.push({
       cb_: callback,
       context: context,
       callback: typeof callback != 'function' ? callback || {} : {
@@ -455,12 +504,12 @@
     if (!route)
       return;
 
-    for (var i = 0, cb; cb = route.callbacks[i]; i++)
+    for (var i = 0, cb; cb = route.token.callbacks_[i]; i++)
       if (cb.cb_ === callback && cb.context === context)
       {
-        route.callbacks.splice(i, 1);
+        route.token.callbacks_.splice(i, 1);
 
-        if (route.matched && callback && callback.leave)
+        if (route.token.matched_ && callback && callback.leave)
         {
           callback.leave.call(context);
 
@@ -471,7 +520,7 @@
           /** @cut */   );
         }
 
-        if (!route.callbacks.length)
+        if (!route.token.callbacks_.length)
         {
           var token = route.token;
 
@@ -518,7 +567,7 @@
 
     add: add,
     remove: remove,
-    route: function(path){
-      return get(path, true).token;
+    route: function(path, config){
+      return get(path, true, config).token;
     }
   };

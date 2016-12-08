@@ -1,5 +1,6 @@
 module.exports = {
   name: 'new router',
+  sandbox: true,
   test: [
     {
       name: 'parse',
@@ -26,7 +27,8 @@ module.exports = {
         {
           name: 'without optional args',
           test: function(){
-            location.hash = 'foo/1/2';
+            router.navigate('foo/1/2');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params.spam.value === null);
@@ -36,7 +38,8 @@ module.exports = {
         {
           name: 'parsing encoded values',
           test: function(){
-            location.hash = 'foo/1/basis%20js';
+            router.navigate('foo/1/basis%20js');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === 'basis js');
             assert(route.params.spam.value === null);
@@ -46,7 +49,8 @@ module.exports = {
         {
           name: 'one optional value',
           test: function(){
-            location.hash = 'foo/1/2/3';
+            router.navigate('foo/1/2/3');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params.spam.value === '3');
@@ -56,7 +60,8 @@ module.exports = {
         {
           name: 'all optional values',
           test: function(){
-            location.hash = 'foo/1/2/3/4';
+            router.navigate('foo/1/2/3/4');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params.spam.value === '3');
@@ -66,7 +71,8 @@ module.exports = {
         {
           name: 'query values',
           test: function(){
-            location.hash = 'foo/1/2/3/4?basis%20js=%7B%7D';
+            router.navigate('foo/1/2/3/4?basis%20js=%7B%7D');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params.spam.value === '3');
@@ -77,7 +83,8 @@ module.exports = {
         {
           name: 'optional param defined by query value',
           test: function(){
-            location.hash = 'foo/1/2?spam=3&stuff=4';
+            router.navigate('foo/1/2?spam=3&stuff=4');
+            assert(route.matched.value);
             assert(route.params.spam.value === '3');
             assert(route.params.end.value === null);
             assert(route.params.stuff.value === '4');
@@ -86,7 +93,8 @@ module.exports = {
         {
           name: 'optional param defined by query value',
           test: function(){
-            location.hash = 'foo/1/2?spam=3&stuff=4';
+            router.navigate('foo/1/2?spam=3&stuff=4');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params.spam.value === '3');
@@ -97,7 +105,8 @@ module.exports = {
         {
           name: 'optional param defined by usual and via query value',
           test: function(){
-            location.hash = 'foo/1/2/3?spam=4';
+            router.navigate('foo/1/2/3?spam=4');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params.spam.value === '3');
@@ -107,7 +116,8 @@ module.exports = {
         {
           name: 'required param defined via query value',
           test: function(){
-            location.hash = 'foo/1/2?bar=3';
+            router.navigate('foo/1/2?bar=3');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
           }
@@ -115,7 +125,8 @@ module.exports = {
         {
           name: 'query params with brackets',
           test: function(){
-            location.hash = 'foo/1/2?baz[3]=5';
+            router.navigate('foo/1/2?baz[3]=5');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params['baz[3]'].value === '5');
@@ -124,7 +135,7 @@ module.exports = {
         {
           name: 'nontrivial symbols in values',
           test: function(){
-            locaion.hash = 'foo/1/2?json={a:4}';
+            router.navigate('foo/1/2?json={a:4}');
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params.json.value === '{a:4}');
@@ -133,7 +144,8 @@ module.exports = {
         {
           name: 'query params: corner cases',
           test: function(){
-            location.hash = 'foo/1/2?stuff&spam=3&end=';
+            router.navigate('foo/1/2?stuff&spam=3&end=');
+            assert(route.matched.value);
             assert(route.params.bar.value === '1');
             assert(route.params.baz.value === '2');
             assert(route.params.spam.value === '3');

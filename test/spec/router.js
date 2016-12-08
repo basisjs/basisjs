@@ -10,7 +10,6 @@ module.exports = {
   },
 
   test: [
-    require('./router/new.js'),
     {
       name: 'checkUrl',
       test: function(){
