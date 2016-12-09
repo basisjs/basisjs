@@ -73,15 +73,15 @@
       if ((!nonInitedOnly || !item.matchInited) && item.callback.match)
       {
         item.matchInited = true;
-        item.callback.match.apply(item.context, route.matched_);
-        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route, args: route.matched_ });
+        item.callback.match.apply(item.context, route.value);
+        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route, args: route.value });
       }
   }
 
   var initSchedule = basis.asap.schedule(function(token){
     var route = get(token);
 
-    if (route.token.matched_)
+    if (route.token.value)
     {
       routeEnter(route.token, true);
       routeMatch(route.token, true);
@@ -99,7 +99,6 @@
 
     path: null,
     matched: null,
-    matched_: null,
     params: null,
     params_: null,
     names_: null,
@@ -115,29 +114,29 @@
       this.callbacks_ = [];
     },
     matches_: function(path){
-      return path.match(this.regexp_);
+      return {
+        pathMatch: path.match(this.regexp_),
+        query: null
+      };
     },
     processLocation_: function(newPath){
       initSchedule.remove(this);
 
       var match = this.matches_(newPath);
 
-      if (match)
+      if (match.pathMatch)
       {
-        if (!this.matched_)
+        if (!this.value)
           routeEnter(this);
-
-        this.matched_ = arrayFrom(match, 1);
-        this.set(this.matched_);
+        this.set(arrayFrom(match.pathMatch, 1), match.query);
         routeMatch(this);
       }
       else
       {
-        if (this.matched_)
+        if (this.value)
         {
           this.set(null);
           routeLeave(this);
-          this.matched_ = null;
         }
       }
     },
@@ -157,7 +156,7 @@
       if (value)
       {
         // make a copy of value, it also converts value to object (as value is array of matches)
-        value = basis.object.slice(value);
+        value = value.slice(0);
 
         for (var key in queryParams)
           if (this.params[key])
@@ -203,8 +202,12 @@
     matches_: function(newLocation){
       var pathAndQuery = newLocation.split('?');
       var newPath = pathAndQuery[0];
+      var newQuery = pathAndQuery[1];
 
-      return newPath.match(this.regexp_);
+      return {
+        pathMatch: newPath.match(this.regexp_),
+        query: newQuery
+      };
     }
   });
 
@@ -416,7 +419,7 @@
       for (var path in routes)
       {
         var route = routes[path];
-        if (route.token.matched_)
+        if (route.token.value)
         {
           routeEnter(route.token, true);
           routeMatch(route.token, true);
@@ -463,11 +466,10 @@
 
       if (typeof currentPath == 'string')
       {
-        var match = route.token.matches_(currentPath);
+        var match = route.token.matches_(currentPath).pathMatch;
         if (match)
         {
           match = arrayFrom(match, 1);
-          route.token.matched_ = match;
           route.token.set(match);
         }
       }
@@ -509,7 +511,7 @@
       {
         route.token.callbacks_.splice(i, 1);
 
-        if (route.token.matched_ && callback && callback.leave)
+        if (route.token.value && callback && callback.leave)
         {
           callback.leave.call(context);
 
