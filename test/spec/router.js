@@ -98,18 +98,6 @@ module.exports = {
       }
     },
     {
-      name: 'params - corner case',
-      test: function(){
-        var length;
-
-        router.add('param/:length', function(length){
-          length = Number(length);
-        });
-        router.navigate('param/9');
-        assert(length === 9);
-      }
-    },
-    {
       name: 'route',
       test: [
         {

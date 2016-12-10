@@ -165,7 +165,8 @@
         // extend object with named values
         for (var key in value)
           if (key in this.names_)
-            value[this.names_[key]] = value[key];
+            if (value[key] || typeof value[this.names_[key]] == 'undefined')
+              value[this.names_[key]] = value[key];
       }
 
       basis.Token.prototype.set.call(this, value);
