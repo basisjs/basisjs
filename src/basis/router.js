@@ -78,6 +78,23 @@
       }
   }
 
+  var routesToLeave = [];
+  var routesToEnter = [];
+  var routesToMatch = [];
+  function flushRouteEvents() {
+    for (var i = 0; i < routesToLeave.length; i++)
+      routeLeave(routesToLeave[i]);
+    routesToLeave.length = 0;
+
+    for (var i = 0; i < routesToEnter.length; i++)
+      routeEnter(routesToEnter[i]);
+    routesToEnter.length = 0;
+
+    for (var i = 0; i < routesToMatch.length; i++)
+      routeMatch(routesToMatch[i]);
+    routesToMatch.length = 0;
+  }
+
   var initSchedule = basis.asap.schedule(function(token){
     var route = get(token);
 
@@ -127,16 +144,16 @@
       if (match.pathMatch)
       {
         if (!this.value)
-          routeEnter(this);
+          routesToEnter.push(this);
         this.set(arrayFrom(match.pathMatch, 1), match.query);
-        routeMatch(this);
+        routesToMatch.push(this);
       }
       else
       {
         if (this.value)
         {
           this.set(null);
-          routeLeave(this);
+          routesToLeave.push(this);
         }
       }
     },
@@ -412,6 +429,8 @@
         var route = routes[path];
         route.token.processLocation_(newPath);
       }
+
+      flushRouteEvents();
 
       /** @cut */ flushLog(namespace + ': hash changed to "' + newPath + '"');
     }

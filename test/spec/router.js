@@ -50,7 +50,6 @@ module.exports = {
       name: 'callbacks',
       test: function(){
         router.stop();  // router starts by default
-        var checker = 0;
         var log = [];
 
         router.add('foo', function(){
@@ -77,6 +76,33 @@ module.exports = {
 
         router.navigate('bar');
         assert(['foo', 'foo2', 'bar'], log);
+      }
+    },
+    {
+      name: 'callbacks - enter/leave order',
+      test: function(){
+        var log = [];
+
+        router.add('foo', {
+          enter: function(){
+            log.push('enter foo');
+          },
+          leave: function(){
+            log.push('leave foo');
+          }
+        });
+        router.add('bar', {
+          enter: function(){
+            log.push('enter bar');
+          },
+          leave: function(){
+            log.push('leave bar');
+          }
+        });
+
+        router.navigate('bar');
+        router.navigate('foo');
+        assert(['enter bar', 'leave bar', 'enter foo'], log);
       }
     },
     {
