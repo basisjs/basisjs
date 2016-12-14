@@ -151,6 +151,24 @@ module.exports = {
             assert(route.params.spam.value === '3');
             assert(route.params.end.value === '');
           }
+        },
+        {
+          name: 'parsing on start',
+          test: function(){
+            location.hash = 'foo/one?baz=two';
+
+            router.checkUrl();
+
+            var simpleRoute = router.route('foo/:bar', {
+              params: {
+                bar: type.string.nullable,
+                baz: type.string.nullable
+              }
+            });
+
+            assert(simpleRoute.params.bar.value === 'one');
+            assert(simpleRoute.params.baz.value === 'two');
+          }
         }
       ]
     }

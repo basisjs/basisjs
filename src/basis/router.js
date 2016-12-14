@@ -480,19 +480,11 @@
         regexp: regexp,
         enterInited: false,
         matchInited: false,
-        token: token,
-        parseQueryParams: Boolean(config.params)
+        token: token
       };
 
       if (typeof currentPath == 'string')
-      {
-        var match = route.token.matches_(currentPath).pathMatch;
-        if (match)
-        {
-          match = arrayFrom(match, 1);
-          route.token.set(match);
-        }
-      }
+        route.token.processLocation_(currentPath);
     }
 
     return route;
