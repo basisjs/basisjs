@@ -1,0 +1,241 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta charset="utf-8">
+
+  <title>Basis.js demos: Drag&amp;Drop</title>
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .DemoBlock
+    {
+      background: white;
+      border: 1px solid #D0D0D0;
+      border-radius: 3px;
+      padding: 15px;
+      margin: 0 0 .5em;
+      position: relative;
+    }
+    .DemoBlock H2
+    {
+      font-size: 80%;
+      font-weight: normal;
+      background: #EEE;
+      margin: -15px -15px 10px -15px;
+      padding: 2px 2px 2px 1.5em;
+    }
+
+    .container
+    {
+      border: 1px solid green;
+      padding: 10px;
+      overflow: hidden;
+    }
+    .box
+    {
+      display: inline-block;
+      vertical-align: middle;
+      width: 100px;
+      height: 100px;
+      margin: 10px;
+      border: 1px solid #888;
+      background: #F0F0F0;
+      position: relative;
+      transition: left .2s ease-out, top .2s ease-out;
+    }
+    .dragging
+    {
+      outline: 2px solid red;
+      transition: none;
+      z-index: 10;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+
+    var Node = basis.require('basis.ui').Node;
+    var MoveableElement = basis.require('basis.dragdrop').MoveableElement;
+    var getBoundingRect = basis.require('basis.layout').getBoundingRect;
+
+    var draggable = new MoveableElement({
+      handler: {
+        start: function(){
+          this.element.classList.add('dragging');
+        },
+        drag: function(sender, data){
+          var deltaX = data.deltaX;
+          var deltaY = data.deltaY;
+          var correctionX = -(data.axisX.value + deltaX);
+          var correctionY = -(data.axisY.value + deltaY);
+          var draggingBox = getBoundingRect(this.element);
+          var draggingElement = this.element;
+          var draggingNode;
+          var lines = [];
+          var line;
+
+          var boxes = view.childNodes.map(function(child, idx){
+            var box = getBoundingRect(child.element);
+
+            if (child.element === draggingElement)
+            {
+              draggingNode = child;
+              // correction for dragging element
+              box.left += correctionX;
+              box.right += correctionX;
+              box.top += correctionY;
+              box.bottom += correctionY;
+              box.dragging = true;
+            }
+
+            box.order = idx + 1;
+
+            return box;
+          });
+
+          // sort boxes by top, and generate lines
+          basis.array.sort(boxes, 'top').forEach(function(box){
+            if (!line || box.top > line.bottom)
+            {
+              line = {
+                top: box.top,
+                bottom: box.bottom
+              };
+              lines.push(line);
+            }
+            else
+            {
+              line.top = Math.min(line.top, box.top);
+              line.bottom = Math.max(line.bottom, box.bottom);
+            }
+
+            box.line = line;
+            if (box.dragging)
+              draggingBox.line = line;
+          });
+
+          // choose the line
+          filterLine = deltaY < 0
+            ? lines.filter(function(line){
+                return line.bottom - (line.bottom - line.top) / 3 > draggingBox.top;
+              })[0]
+            : lines.filter(function(line){
+                return line.top + (line.bottom - line.top) / 3 < draggingBox.bottom;
+              }).pop();
+
+          // filter boxes by line and sort by x
+          boxes = basis.array.sort(boxes.filter(function(box){
+            return box.line === filterLine;
+          }), 'x');
+
+          // try to find closest box
+          box = deltaX < 0
+            ? boxes.filter(function(box){
+                return box.right - box.width / 3 > draggingBox.left;
+              })[0]
+            : boxes.filter(function(box){
+                return box.left + box.width / 3 < draggingBox.right;
+              }).pop();
+
+          // if no box and next line, try put at the end
+          if (!box && filterLine.top > draggingBox.line.top)
+            box = boxes.pop();
+
+          // if box found, make updates
+          if (box)
+          {
+            // update order for dragging node
+            draggingNode.update({
+              order: box.order + (draggingNode.data.order > box.order ? -.5 : .5)
+            });
+            // update order for all nodes in childNodes order
+            view.childNodes.forEach(function(child, idx){
+              child.update({ order: idx + 1 });
+            });
+
+            // correction for dragging element on it's new position
+            var newBox = getBoundingRect(this.element);
+            data.axisX.value += draggingBox.left - newBox.left;
+            data.axisX.applyDelta(draggingElement, deltaX);
+            data.axisY.value += draggingBox.top - newBox.top;
+            data.axisY.applyDelta(draggingElement, deltaY);
+          }
+        },
+        over: function(){
+          this.element.classList.remove('dragging');
+          this.element.style.left = 0;
+          this.element.style.top = 0;
+        }
+      }
+    });
+
+    var view = new Node({
+      container: document.getElementById('demo-container'),
+      template: '<div class="container"/>',
+      sorting: 'data.order',
+      childClass: {
+        template:
+          '<div class="box" event-mouseenter="makeDraggable" event-mouseleave="stopDraggable" style="height: {height}px">' +
+            '{num} [{order}]' +
+          '</div>',
+        binding: {
+          num: 'data:',
+          order: 'data:',
+          height: 'data:'
+        },
+        action: {
+          makeDraggable: function(){
+            if (!draggable.element)
+            {
+              draggable.setBase(this.parentNode.element);
+              draggable.setElement(this.element);
+              this.element.style.background = 'gold';
+            }
+          },
+          stopDraggable: function(){
+            if (draggable.isDragging())
+              return;
+
+            if (draggable.element)
+              draggable.element.style.background = '';
+            draggable.setElement();
+          }
+        }
+      },
+      childNodes: basis.array.create(10, function(idx){
+        return {
+          data: {
+            num: idx + 1,
+            order: idx + 1,
+            height: 50 + (idx % 5) * 10
+          }
+        };
+      })
+    });
+  </script>
+</body>
+
+</html>

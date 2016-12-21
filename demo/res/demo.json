@@ -53,6 +53,11 @@
         "url": "common/satellite.html"
       },
       {
+        "title": "Drag&Drop",
+        "url": "common/dragdrop.html",
+        "image": "res/img/noimg.png"
+      },
+      {
         "title": "Router",
         "url": "common/router.html",
         "image": "res/img/noimg.png"
