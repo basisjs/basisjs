@@ -18,7 +18,7 @@ var SOURCE_INDEXWRAPPER_HANDLER = {
 /**
 * @function
 */
-function getIndexConstructor(BaseClass, getter, events){
+function getIndexConstructor(BaseClass, events, getter){
   if (!Class.isClass(BaseClass) || !BaseClass.isSubclassOf(Index))
     throw 'Wrong class for index constructor';
 
@@ -75,7 +75,7 @@ module.exports = function createIndexConstructor(IndexClass, defGetter){
       events = '';
     }
 
-    var indexConstructor = getIndexConstructor(IndexClass, getter || defGetter, events);
+    var indexConstructor = getIndexConstructor(IndexClass, events, getter || defGetter);
 
     if (!source)
       return indexConstructor;
