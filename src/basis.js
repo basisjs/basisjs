@@ -3761,6 +3761,7 @@
   // SVG resource
   //
 
+  var svgStorageElement = null;
   var SvgResource = (function(){
    /**
     * Helper functions for path resolving
@@ -3796,13 +3797,12 @@
       if (!this.element)
       {
         this.element = document.createElement('span');
-        this.element.style.cssText = 'display:none';
 
         /** @cut */ this.element.setAttribute('src', this.url);
       }
 
       // add element to document
-      documentInterface.body.add(this.element);
+      svgStorageElement.appendChild(this.element);
 
       this.syncSvgText();
 
@@ -3827,6 +3827,14 @@
       init: function(url){
         this.url = url;
         this.baseURI = pathUtils.dirname(url) + '/';
+
+        if (!svgStorageElement)
+        {
+          svgStorageElement = document.createElement('span');
+          /** @cut */ svgStorageElement.setAttribute('title', 'svg symbol storage');
+          svgStorageElement.style.cssText = 'position: absolute !important';
+          documentInterface.body.add(svgStorageElement);
+        }
       },
 
       toString: function(){
@@ -3866,13 +3874,13 @@
 
           // remove element if nobody use it
           if (!this.inUse && this.element)
-            documentInterface.remove(this.element);
+            svgStorageElement.removeChild(this.element);
         }
       },
 
       destroy: function(){
         if (this.element)
-          documentInterface.remove(this.element);
+          svgStorageElement.removeChild(this.element);
 
         this.element = null;
         this.svgText = null;
