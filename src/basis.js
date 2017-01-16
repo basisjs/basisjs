@@ -3827,7 +3827,6 @@
       init: function(url){
         this.url = url;
         this.baseURI = pathUtils.dirname(url) + '/';
-
       },
 
       toString: function(){
@@ -3864,7 +3863,6 @@
           }
           documentInterface.body.ready(injectSvg, this);
         }
-
 
         this.inUse += 1;
       },
