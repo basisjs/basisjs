@@ -3828,13 +3828,6 @@
         this.url = url;
         this.baseURI = pathUtils.dirname(url) + '/';
 
-        if (!svgStorageElement)
-        {
-          svgStorageElement = document.createElement('span');
-          /** @cut */ svgStorageElement.setAttribute('title', 'svg symbol storage');
-          svgStorageElement.style.cssText = 'position:absolute!important;width:0;height:0;overflow:hidden';
-          documentInterface.body.add(svgStorageElement);
-        }
       },
 
       toString: function(){
@@ -3861,7 +3854,17 @@
 
       startUse: function(){
         if (!this.inUse)
+        {
+          if (!svgStorageElement)
+          {
+            svgStorageElement = document.createElement('span');
+            /** @cut */ svgStorageElement.setAttribute('title', 'svg symbol storage');
+            svgStorageElement.style.cssText = 'position:absolute!important;width:0;height:0;overflow:hidden';
+            documentInterface.body.add(svgStorageElement);
+          }
           documentInterface.body.ready(injectSvg, this);
+        }
+
 
         this.inUse += 1;
       },
