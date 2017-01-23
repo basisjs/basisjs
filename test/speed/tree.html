@@ -120,21 +120,16 @@
   <script type="text/javascript">
 
     (function(){
-      basis.require('basis.dom');
-      basis.require('basis.dom.event');
-      basis.require('basis.ui.tree');
-      basis.require('basis.ui.button');
-      basis.require('basis.utils.benchmark');
-
-      var DOM = basis.dom;
-      var Event = basis.dom.event;
+      var DOM = basis.require('basis.dom');
+      var Event = basis.require('basis.dom.event');
 
       var gString = basis.require('./generator.js').string;
-      var getTime = basis.utils.benchmark.time;
+      var getTime = basis.require('basis.utils.benchmark').time;
 
-      var Tree = basis.ui.tree.Tree;
-      var TreeNode = basis.ui.tree.Node;
-      var TreeFolder = basis.ui.tree.Folder;
+      var Tree = basis.require('basis.ui.tree').Tree;
+      var TreeNode = basis.require('basis.ui.tree').Node;
+      var TreeFolder = basis.require('basis.ui.tree').Folder;
+      var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
 
       function setNodeCount(value){
         value = Number(value) || 0;
@@ -142,7 +137,7 @@
         DOM.get('nodeCount').value = value;
       }
 
-      var genButtonPanel = new basis.ui.button.ButtonPanel({
+      var genButtonPanel = new ButtonPanel({
         container: document.getElementById('nodeCount').parentNode,
         childNodes: [1, 10, 100, 250, 500, 1000, 2000, 5000].map(function(count){
           return {

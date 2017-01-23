@@ -1,27 +1,18 @@
-
-    basis.require('basis.date');
-    basis.require('basis.cssom');
-    basis.require('basis.dom');
-    basis.require('basis.dom.event');
-    basis.require('basis.data');
-    basis.require('basis.entity');
-    basis.require('basis.utils.benchmark');
-
     var MAX_COUNT = 3000;
     var MAX_COUNT_QUATER = MAX_COUNT >> 2;
     var PROFILE = false;
 
-    var DOM = basis.dom;
-    var Data = basis.data;
-    var nsEntity = basis.entity;
+    var DOM = basis.require('basis.dom');
+    var nsEntity = basis.require('basis.entity');
+    var Collection = nsEntity.Collection;
+    var Emitter = basis.require('basis.event').Emitter;
 
-    var getter = basis.getter;
     var arrayFrom = basis.array.from;
-    var getTime = basis.utils.benchmark.time;
+    var getTime = basis.require('basis.utils.benchmark').time;
 
     var eventStat = {};
 
-    basis.event.Emitter.prototype.debug_emit = function(event){
+    Emitter.prototype.debug_emit = function(event){
       eventStat[event.type] = (eventStat[event.type] || 0) + 1;
     };
 
@@ -325,11 +316,11 @@
       if (PROFILE) console.profile();
       run1(function(){
         run1(function(){
-          var c1 = new basis.entity.Collection({
+          var c1 = new Collection({
             source: Transfer.all,
             rule: 'getId()%2'
           });
-          var c2 = new basis.entity.Collection({
+          var c2 = new Collection({
             source: User.all,
             rule: 'getId()%2'
           });
