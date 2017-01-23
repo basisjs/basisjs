@@ -67,17 +67,12 @@
   <script type="text/javascript">
 
     (function(){
-      basis.require('basis.dom');
-      basis.require('basis.dom.event');
-      basis.require('basis.data.index');
-      basis.require('basis.ui.field');
-      basis.require('basis.ui.table');
-      basis.require('basis.utils.benchmark');
-
       var generator = basis.require('./generator.js');
-      var DOM = basis.dom;
-      var Event = basis.dom.event;
-      var getTime = basis.utils.benchmark.time;
+      var DOM = basis.require('basis.dom');
+      var Event = basis.require('basis.dom.event');
+      var getTime = basis.require('basis.utils.benchmark').time;
+      var Table = basis.require('basis.ui.table').Table;
+      var MatchInput = basis.require('basis.ui.field').MatchInput;
 
       setRowCount = function(value){
         DOM.get('rowCount').value = value;
@@ -119,7 +114,7 @@
         sorting: 'data.title'
       };
 
-      TestTable = new basis.ui.table.Table({
+      TestTable = new Table({
         container: document.body,
         template: '<b:include src="basis.ui.table.Table" id="table"/>',
 
@@ -257,7 +252,7 @@
         setRowCount(10);
       });
 
-      var field = new basis.ui.field.MatchInput({
+      var field = new MatchInput({
         matchFilter: {
           node: TestTable,
           textNodeGetter: 'element.childNodes[5].firstChild'

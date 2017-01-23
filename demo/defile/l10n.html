@@ -33,25 +33,26 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.l10n');
-    basis.require('basis.ui.button');
+    var l10n = basis.require('basis.l10n');
+    var Node = basis.require('basis.ui').Node;
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
     /** @cut */ basis.require('basis.devpanel');
 
-    basis.l10n.setCultureList('en-US ru-RU uk-UA');
+    l10n.setCultureList('en-US ru-RU uk-UA');
 
-    new basis.ui.button.ButtonPanel({
+    new ButtonPanel({
       container: document.getElementById('demo-container'),
-      childNodes: basis.l10n.getCultureList().map(function(culture){
+      childNodes: l10n.getCultureList().map(function(culture){
         return {
           caption: culture || 'Default (English)',
           click: function(){
-            basis.l10n.setCulture(culture);
+            l10n.setCulture(culture);
           }
         };
       })
     });
 
-    var dict = basis.l10n.dictionary('./l10n.l10n');
+    var dict = l10n.dictionary('./l10n.l10n');
 
     // var testNode = new basis.ui.Node({
     //   container: document.getElementById('demo-container'),
@@ -75,7 +76,7 @@
     //   }
     // });
 
-    var node = new basis.ui.Node({
+    var node = new Node({
       container: document.getElementById('demo-container'),
       template: basis.resource('./l10n_simple.tmpl'),
       binding: {
