@@ -204,15 +204,15 @@
       {
         this.params = {};
 
-        basis.object.iterate(config.params, function(key){
+        basis.object.iterate(config.params, function(key, transform){
           this.params[key] = this.as(function(values){
             if (!values)
               return null;
 
             if (values[key] == null)
-              return null;
+              return transform.DEFAULT_VALUE;
 
-            return decodeURIComponent(values[key]);
+            return transform(decodeURIComponent(values[key]));
           });
         }, this);
       }
