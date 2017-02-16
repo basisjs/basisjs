@@ -167,17 +167,11 @@
 
       return this.params_[idx];
     },
-    set: function(value, query){
-      var queryParams = queryToParams(query);
-
+    set: function(value){
       if (value)
       {
         // make a copy of value, it also converts value to object (as value is array of matches)
         value = value.slice(0);
-
-        for (var key in queryParams)
-          if (this.params[key])
-            value[key] = queryParams[key];
 
         // extend object with named values
         for (var key in value)
@@ -197,8 +191,12 @@
   });
 
   var ParametrizedRoute = Route.subclass({
+    decode: basis.fn.$undef,
     init: function(regexp, path, config){
       Route.prototype.init.apply(this, arguments);
+
+      if (config.decode)
+        this.decode = config.decode;
 
       if (config.params)
       {
@@ -209,13 +207,44 @@
             if (!values)
               return null;
 
-            if (values[key] == null)
-              return transform.DEFAULT_VALUE;
+            if (values[key] == null) {
+              return 'DEFAULT_VALUE' in transform ? transform.DEFAULT_VALUE : transform();
+            }
 
-            return transform(decodeURIComponent(values[key]));
+            return transform(values[key]);
           });
         }, this);
       }
+    },
+    destroy: function(){
+      delete routes[this.path];
+    },
+    set: function(value, query){
+      var paramsFromQuery = queryToParams(query);
+
+      if (value)
+      {
+        var paramsFromUrl = this.paramsArrayToObject_(value);
+        var allParams = {};
+
+        // preserve only params specified in config.params
+        for (var paramName in this.params)
+          allParams[paramName] = paramsFromUrl[paramName] || paramsFromQuery[paramName];
+
+        this.decode(allParams);
+      }
+
+      basis.Token.prototype.set.call(this, allParams);
+    },
+    paramsArrayToObject_: function(arr){
+      var result = {};
+
+      for (var paramIdx in arr)
+        if (paramIdx in this.names_)
+          if (arr[paramIdx])
+            result[this.names_[paramIdx]] = decodeURIComponent(arr[paramIdx]);
+
+      return result;
     },
     matches_: function(newLocation){
       var pathAndQuery = newLocation.split('?');
@@ -465,8 +494,6 @@
       path = path.path;
 
     var route = routes[path];
-
-    config = config || {};
 
     if (!route && autocreate)
     {

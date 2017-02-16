@@ -38,9 +38,9 @@ module.exports = {
         {
           name: 'parsing encoded values',
           test: function(){
-            router.navigate('foo/1/basis%20js');
+            router.navigate('foo/1%20and%202/basis%20js');
             assert(route.matched.value);
-            assert(route.params.bar.value === '1');
+            assert(route.params.bar.value === '1 and 2');
             assert(route.params.baz.value === 'basis js');
             assert(route.params.spam.value === null);
             assert(route.params.end.value === null);
@@ -179,12 +179,16 @@ module.exports = {
         var type = basis.require('basis.type');
 
         var params = {
-          custom: function(newValue, prevValue) {
+          custom: function(newValue, prevValue){
             if (newValue === 'secret') {
               return 'correct';
-            } else {
+            }
+ else {
               return 'incorrect';
             }
+          },
+          optional: function(value){
+            return value || 42;
           },
           str: type.string,
           number: type.number.default(1)
@@ -196,20 +200,74 @@ module.exports = {
       test: [
         {
           name: 'simple case',
-          test: function() {
-            router.navigate('secret/some-str/52');
+          test: function(){
+            router.navigate('secret/some-str/52?optional=opt');
 
             assert(route.params.custom.value === 'correct');
             assert(route.params.str.value === 'some-str');
             assert(route.params.number.value === 52);
+            assert(route.params.optional.value === 'opt');
           }
         },
         {
           name: 'default value',
-          test: function() {
+          test: function(){
             router.navigate('secret/some-str');
 
             assert(route.params.number.value === 1);
+            assert(route.params.optional.value === 42);
+          }
+        }
+      ]
+    },
+    {
+      name: 'decode',
+      init: function(){
+        var router = basis.require('basis.router');
+        var type = basis.require('basis.type');
+
+        var params = {
+          obj: type.object,
+          plainArray: type.array,
+          numArray: type.array,
+          str: type.string
+        };
+      },
+      afterEach: function(){
+        route.destroy();
+      },
+      test: [
+        {
+          name: 'simple case',
+          test: function(){
+            var route = router.route(':str/:obj', {
+              params: params,
+              decode: function(config){
+                config.obj = JSON.parse(config.obj);
+                config.plainArray = config.plainArray.split(',');
+                config.numArray = config.numArray.split(':').map(Number);
+              }
+            });
+            // encoded - obj={"a":"b"}&plainArray=a,b,c&numArray=1:2:3
+            router.navigate('some-str/%7B%22a%22%3A%22b%22%7D?plainArray=a%2Cb%2Cc&numArray=1%3A2%3A3');
+
+            assert(route.params.str.value == 'some-str');
+            assert({ a: 'b' }, route.params.obj.value);
+            assert(['a', 'b', 'c'], route.params.plainArray.value);
+            assert([1, 2, 3], route.params.numArray.value);
+          }
+        },
+        {
+          name: 'no extra params',
+          test: function(){
+            var route = router.route(':str/:obj', {
+              params: params,
+              decode: function(config){
+                assert(!('extra' in config));
+              }
+            });
+            // encoded - obj={"a":"b"}&plainArray=a,b,c&numArray=1:2:3
+            router.navigate('some-str/stuff?extra=ext');
           }
         }
       ]
