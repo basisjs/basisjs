@@ -13,6 +13,7 @@
   var location = global.location;
   var document = global.document;
   var eventUtils = require('basis.dom.event');
+  var parsePath = require('./router/ast.js').parsePath;
 
   // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
   var docMode = document.documentMode;
@@ -236,6 +237,9 @@
 
       basis.Token.prototype.set.call(this, allParams);
     },
+    getPath: function(){
+      return 'foo';
+    },
     paramsArrayToObject_: function(arr){
       var result = {};
 
@@ -257,95 +261,6 @@
       };
     }
   });
-
-
- /**
-  * Convert string to regexp
-  */
-  function pathToRegExp(route){
-    var value = String(route || '');
-    var params = [];
-
-    function findWord(offset){
-      return value.substr(offset).match(/^\w+/);
-    }
-
-    function parse(offset, stopChar){
-      var result = '';
-      var res;
-
-      for (var i = offset; i < value.length; i++)
-      {
-        var c = value.charAt(i);
-        switch (c)
-        {
-          case stopChar:
-            return {
-              result: result,
-              offset: i
-            };
-
-          case '\\':
-            result += '\\' + value.charAt(++i);
-            break;
-
-          case '|':  // allow | inside braces
-            result += stopChar != ')' ? '\\|' : '|';
-            break;
-
-          case '(':  // optional: (something) -> (?:something)?
-            if (res = parse(i + 1, ')'))
-            {
-              i = res.offset;
-              result += '(?:' + res.result + ')?';
-            }
-            else
-            {
-              result += '\\(';
-            }
-
-            break;
-
-          case ':':  // named:   :name -> ([^/]+)
-            if (res = findWord(i + 1))
-            {
-              i += res[0].length;
-              result += '([^\/]+)';
-              params.push(res[0]);
-            }
-            else
-            {
-              result += ':';
-            }
-
-            break;
-
-          case '*':  // splat:   *name -> (.*?)
-            if (res = findWord(i + 1))
-            {
-              i += res[0].length;
-              result += '(.*?)';
-              params.push(res[0]);
-            }
-            else
-            {
-              result += '\\*';
-            }
-
-            break;
-
-          default:
-            result += basis.string.forRegExp(c);
-        }
-      }
-
-      return stopChar ? null : result;
-    }
-
-    var regexp = new RegExp('^' + parse(0) + '$', 'i');
-    regexp.params = params;
-    return regexp;
-  }
 
  /**
   * Start router
@@ -497,9 +412,10 @@
 
     if (!route && autocreate)
     {
-      var regexp = Object.prototype.toString.call(path) == '[object RegExp]'
-        ? path
-        : pathToRegExp(path);
+      var parseInfo = Object.prototype.toString.call(path) == '[object RegExp]'
+        ? { regexp: path, AST: null }
+        : parsePath(path);
+      var regexp = parseInfo.regexp;
       var token = createRoute(regexp, path, config);
 
       route = routes[path] = {

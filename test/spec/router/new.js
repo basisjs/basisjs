@@ -271,6 +271,8 @@ module.exports = {
           }
         }
       ]
-    }
+    },
+    require('./getPath.js'),
+    require('./ast.js')
   ]
 };
