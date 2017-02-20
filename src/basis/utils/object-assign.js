@@ -1,4 +1,6 @@
 // ES6 Object.assign polyfill
+// jscs:disable
+
 if (!Object.assign) {
     Object.defineProperty(Object, 'assign', {
         enumerable: false,
