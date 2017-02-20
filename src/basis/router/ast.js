@@ -170,7 +170,66 @@ function parsePath(route){
   };
 }
 
+function stringifyGroup(group, values, areModified) {
+  for(var i = 0; i < group.options.length; i++) {
+    var option = group.options[i];
+    var stringifiedOption = stringifyNodes(option.children, values, areModified, true);
+
+    if (stringifiedOption.modifiedParamsWritten) {
+      return stringifiedOption;
+    }
+  }
+
+  return {
+    result: '',
+    modifiedParamsWritten: false
+  };
+}
+
+function stringifyNodes(nodes, values, areModified) {
+  var result = '';
+  var groupResult;
+  var modifiedParamsWritten = false;
+
+  nodes.forEach(function(node) {
+    switch (node.type) {
+      case TYPE.WORD:
+        result += node.name;
+        break;
+      case TYPE.PLAIN_PARAM:
+        result += encodeURIComponent(values[node.name]);
+        if (areModified[node.name]) {
+          modifiedParamsWritten = true;
+        }
+        break;
+      case TYPE.ANY_PARAM:
+        result += values[node.name];
+        if (areModified[node.name]) {
+          modifiedParamsWritten = true;
+        }
+        break;
+      case TYPE.GROUP:
+        var groupStringifyResult = stringifyGroup(node, values, areModified);
+        if (groupStringifyResult.modifiedParamsWritten) {
+          result += groupStringifyResult.result;
+          modifiedParamsWritten = true;
+        }
+        break;
+    }
+  });
+
+  return {
+    result: result,
+    modifiedParamsWritten: modifiedParamsWritten
+  };
+}
+
+function stringify() {
+  return stringifyNodes.apply(this, arguments).result;
+}
+
 module.exports = {
   parsePath: parsePath,
+  stringify: stringify,
   TYPE: TYPE
 };

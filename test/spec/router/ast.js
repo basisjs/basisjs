@@ -4,10 +4,11 @@
 // GROUP(options)
 
 module.exports = {
-  name: 'parsePath AST',
+  name: 'AST',
   init: function(){
     var AST = basis.require('basis.router.ast');
     var parsePath = AST.parsePath;
+    var stringify = AST.stringify;
 
     function plain(name) {
       return { type: AST.TYPE.PLAIN_PARAM, name: name };
@@ -34,156 +35,408 @@ module.exports = {
   },
   test: [
     {
-      name: 'simple case',
-      test: function(){
-        var actual = ast('foo/:bar/*baz');
-        var expected = str([
-          word('foo/'),
-          plain('bar'),
-          word('/'),
-          any('baz')
-        ]);
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'word with extra chars',
-      test: function(){
-        var actual = ast('/[]?{}/:bar/|+-.^');
-        var expected = str([
-          word('/[]?{}/'),
-          plain('bar'),
-          word('/|+-.^')
-        ]);
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'group with one child',
-      test: function(){
-        var actual = ast('page/sub(/)(:rest)(complex/*sub)');
-        var expected = str([
-          word('page/sub'),
-          group(
-            option(
-              word('/')
-            )
-          ),
-          group(
-            option(
-              plain('rest')
-            )
-          ),
-          group(
-            option(
-              word('complex/'),
-              any('sub')
-            )
-          )
-        ]);
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'word with non-closing bracket',
-      test: function(){
-        var actual = ast('page/sub)(');
-        var expected = str([
-          word('page/sub)(')
-        ]);
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'group with multiple options',
-      test: function(){
-        var actual = ast('page/(:foo|bar|*baz)/end');
-        var expected = str([
-          word('page/'),
-          group(
-            option(
-              plain('foo')
-            ),
-            option(
-              word('bar')
-            ),
-            option(
+      name: 'parsePath',
+      test: [
+        {
+          name: 'simple case',
+          test: function(){
+            var actual = ast('foo/:bar/*baz');
+            var expected = str([
+              word('foo/'),
+              plain('bar'),
+              word('/'),
               any('baz')
-            )
-          ),
-          word('/end')
-        ]);
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'recursive group',
-      test: function(){
-        var actual = ast('page/(:foo|(bar|:spam(/))|*baz)/end');
-        var expected = str([
-          word('page/'),
-          group(
-            option(
-              plain('foo')
-            ),
-            option(
+            ]);
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'word with extra chars',
+          test: function(){
+            var actual = ast('/[]?{}/:bar/|+-.^');
+            var expected = str([
+              word('/[]?{}/'),
+              plain('bar'),
+              word('/|+-.^')
+            ]);
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'group with one child',
+          test: function(){
+            var actual = ast('page/sub(/)(:rest)(complex/*sub)');
+            var expected = str([
+              word('page/sub'),
               group(
+                option(
+                  word('/')
+                )
+              ),
+              group(
+                option(
+                  plain('rest')
+                )
+              ),
+              group(
+                option(
+                  word('complex/'),
+                  any('sub')
+                )
+              )
+            ]);
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'word with non-closing bracket',
+          test: function(){
+            var actual = ast('page/sub)(');
+            var expected = str([
+              word('page/sub)(')
+            ]);
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'group with multiple options',
+          test: function(){
+            var actual = ast('page/(:foo|bar|*baz)/end');
+            var expected = str([
+              word('page/'),
+              group(
+                option(
+                  plain('foo')
+                ),
                 option(
                   word('bar')
                 ),
                 option(
-                  plain('spam'),
+                  any('baz')
+                )
+              ),
+              word('/end')
+            ]);
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'recursive group',
+          test: function(){
+            var actual = ast('page/(:foo|(bar|:spam(/))|*baz)/end');
+            var expected = str([
+              word('page/'),
+              group(
+                option(
+                  plain('foo')
+                ),
+                option(
                   group(
                     option(
-                      word('/')
+                      word('bar')
+                    ),
+                    option(
+                      plain('spam'),
+                      group(
+                        option(
+                          word('/')
+                        )
+                      )
                     )
                   )
+                ),
+                option(
+                  any('baz')
+                )
+              ),
+              word('/end')
+            ]);
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'escaping',
+          test: function(){
+            var actual = ast('page\\/\\(\\:foo\\|bar\\|\\*baz\\)\\/\\end\\\\');
+            var expected = str([
+              word('page/(:foo|bar|*baz)/end\\')
+            ]);
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'regexp - groups and params',
+          test: function(){
+            var actual = parsePath('page/(:foo|(bar|:spam(/))|*baz)/end').regexp;
+            var expected = /^page\/(?:([^\/]+)|(?:bar|([^\/]+)(?:\/)?)?|(.*?))?\/end$/i.toString();
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'regexp - escaping',
+          test: function(){
+            // page\/\(\:foo\|bar\|\*baz\)\/\end\\
+            var actual = parsePath('page\\/\\(\\:foo\\|bar\\|\\*baz\\)\\/\\end\\\\').regexp;
+            var expected = /^page\/\(\:foo\|bar\|\*baz\)\/\end\\$/i.toString();
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'regexp - symbols',
+          test: function(){
+            var actual = parsePath('/[]?{}/:bar/|+-.^').regexp;
+            var expected = /^\/\[\]\?\{\}\/([^\/]+)\/\|\+\-\.\^$/i.toString();
+            assert(actual == expected);
+          }
+        }
+      ]
+    },
+    {
+      name: 'stringify',
+      test: [
+        {
+          name: 'word',
+          test: function() {
+            var actual = stringify([
+              word('myword')
+            ], {}, {});
+            var expected = 'myword';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'plain param',
+          test: function() {
+            var actual = stringify([
+              plain('plainParam')
+            ], {
+              plainParam: 'plainParam value'
+            }, {
+              plainParam: true // plainParam has modified value
+            });
+            var expected = 'plainParam%20value';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'any param',
+          test: function() {
+            var actual = stringify([
+              any('anyParam')
+            ], {
+              anyParam: 'anyParam/value'
+            }, {
+              anyParam: true // anyParam has modified value
+            });
+            var expected = 'anyParam/value';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'omits optional group without params',
+          test: function() {
+            var actual = stringify([
+              word('begin'),
+              group(
+                option(
+                  word('/end')
                 )
               )
-            ),
-            option(
-              any('baz')
-            )
-          ),
-          word('/end')
-        ]);
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'escaping',
-      test: function(){
-        var actual = ast('page\\/\\(\\:foo\\|bar\\|\\*baz\\)\\/\\end\\\\');
-        var expected = str([
-          word('page/(:foo|bar|*baz)/end\\')
-        ]);
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'regexp - groups and params',
-      test: function(){
-        var actual = parsePath('page/(:foo|(bar|:spam(/))|*baz)/end').regexp;
-        var expected = /^page\/(?:([^\/]+)|(?:bar|([^\/]+)(?:\/)?)?|(.*?))?\/end$/i.toString();
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'regexp - escaping',
-      test: function(){
-        // page\/\(\:foo\|bar\|\*baz\)\/\end\\
-        var actual = parsePath('page\\/\\(\\:foo\\|bar\\|\\*baz\\)\\/\\end\\\\').regexp;
-        var expected = /^page\/\(\:foo\|bar\|\*baz\)\/\end\\$/i.toString();
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'regexp - symbols',
-      test: function(){
-        var actual = parsePath('/[]?{}/:bar/|+-.^').regexp;
-        var expected = /^\/\[\]\?\{\}\/([^\/]+)\/\|\+\-\.\^$/i.toString();
-        assert(actual == expected);
-      }
+            ], {}, {});
+            var expected = 'begin';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'writes optional group with plain param',
+          test: function() {
+            var actual = stringify([
+              word('begin'),
+              group(
+                option(
+                  word('/'),
+                  plain('id')
+                )
+              )
+            ], {
+              id: 24
+            }, {
+              id: true // id has modified value
+            });
+            var expected = 'begin/24';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'writes optional group with any param',
+          test: function() {
+            var actual = stringify([
+              word('begin'),
+              group(
+                option(
+                  word('/'),
+                  any('id')
+                )
+              )
+            ], {
+              id: 42
+            }, {
+              id: true // id has modified value
+            });
+            var expected = 'begin/42';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'omits optional group with plain param with default value',
+          test: function() {
+            var actual = stringify([
+              word('begin'),
+              group(
+                option(
+                  word('/'),
+                  plain('id')
+                )
+              )
+            ], {
+              id: -1
+            }, {
+              id: false // id has default value
+            });
+            var expected = 'begin';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'omits optional group with any param with default value - recursive',
+          test: function() {
+            var actual = stringify([
+              word('begin'),
+              group(
+                option(
+                  word('/'),
+                  plain('id')
+                )
+              )
+            ], {
+              id: 1
+            }, {
+              id: false // id has default value
+            });
+            var expected = 'begin';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'omits optional group with multiple options if there is no params between them',
+          test: function() {
+            var actual = stringify([
+              word('page/'),
+              group(
+                option(
+                  word('foo')
+                ),
+                option(
+                  word('bar')
+                ),
+                option(
+                  word('baz')
+                )
+              )
+            ], {}, {});
+            var expected = 'page/';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'omits optional group with multiple options if there is no nondefault params',
+          test: function() {
+            var actual = stringify([
+              word('page/'),
+              group(
+                option(
+                  word('foo')
+                ),
+                option(
+                  plain('plainParam')
+                ),
+                option(
+                  any('anyParam')
+                )
+              )
+            ], {
+              plainParam: 'plain',
+              anyParam: 'any'
+            }, {
+              plainParam: false, // plainParam has default value
+              anyParam: false // anyParam has default value
+            });
+            var expected = 'page/';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'writes optional group with specified param only',
+          test: function() {
+            var actual = stringify([
+              word('page/'),
+              group(
+                option(
+                  word('foo')
+                ),
+                option(
+                  plain('plainParam')
+                ),
+                option(
+                  any('anyParam')
+                )
+              )
+            ], {
+              plainParam: 'plain',
+              anyParam: 'any'
+            }, {
+              plainParam: false, // plainParam has default value
+              anyParam: true // anyParam has default value
+            });
+            var expected = 'page/any';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'writes optional group with specified param only - recursive',
+          test: function() {
+            var actual = stringify([
+              word('page/'),
+              group(
+                option(
+                  word('foo')
+                ),
+                option(
+                  group(
+                    option(
+                      word('bar')
+                    ),
+                    option(
+                      plain('plainParam')
+                    )
+                  )
+                ),
+                option(
+                  any('anyParam')
+                )
+              )
+            ], {
+              plainParam: 'plain',
+              anyParam: 'any'
+            }, {
+              plainParam: true, // plainParam has default value
+              anyParam: true // anyParam has default value
+            });
+            var expected = 'page/plain';
+            assert(actual == expected);
+          }
+        }
+      ]
     }
   ]
 };
