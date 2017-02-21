@@ -196,7 +196,7 @@ module.exports = {
       test: [
         {
           name: 'word',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('myword')
             ], {}, {});
@@ -206,7 +206,7 @@ module.exports = {
         },
         {
           name: 'plain param',
-          test: function() {
+          test: function(){
             var actual = stringify([
               plain('plainParam')
             ], {
@@ -220,7 +220,7 @@ module.exports = {
         },
         {
           name: 'any param',
-          test: function() {
+          test: function(){
             var actual = stringify([
               any('anyParam')
             ], {
@@ -228,13 +228,13 @@ module.exports = {
             }, {
               anyParam: true // anyParam has modified value
             });
-            var expected = 'anyParam/value';
+            var expected = 'anyParam%2Fvalue';
             assert(actual == expected);
           }
         },
         {
           name: 'omits optional group without params',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('begin'),
               group(
@@ -248,28 +248,8 @@ module.exports = {
           }
         },
         {
-          name: 'writes optional group with plain param',
-          test: function() {
-            var actual = stringify([
-              word('begin'),
-              group(
-                option(
-                  word('/'),
-                  plain('id')
-                )
-              )
-            ], {
-              id: 24
-            }, {
-              id: true // id has modified value
-            });
-            var expected = 'begin/24';
-            assert(actual == expected);
-          }
-        },
-        {
           name: 'writes optional group with any param',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('begin'),
               group(
@@ -289,7 +269,7 @@ module.exports = {
         },
         {
           name: 'omits optional group with plain param with default value',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('begin'),
               group(
@@ -309,7 +289,7 @@ module.exports = {
         },
         {
           name: 'omits optional group with any param with default value - recursive',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('begin'),
               group(
@@ -329,7 +309,7 @@ module.exports = {
         },
         {
           name: 'omits optional group with multiple options if there is no params between them',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('page/'),
               group(
@@ -350,7 +330,7 @@ module.exports = {
         },
         {
           name: 'omits optional group with multiple options if there is no nondefault params',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('page/'),
               group(
@@ -377,7 +357,7 @@ module.exports = {
         },
         {
           name: 'writes optional group with specified param only',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('page/'),
               group(
@@ -404,7 +384,7 @@ module.exports = {
         },
         {
           name: 'writes optional group with specified param only - recursive',
-          test: function() {
+          test: function(){
             var actual = stringify([
               word('page/'),
               group(
@@ -427,12 +407,28 @@ module.exports = {
               )
             ], {
               plainParam: 'plain',
-              anyParam: 'any'
+              anyParam: 'any param'
             }, {
               plainParam: true, // plainParam has default value
               anyParam: true // anyParam has default value
             });
-            var expected = 'page/plain';
+            var expected = 'page/plain?anyParam=any%20param';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'writes multiple optional params to query',
+          test: function(){
+            var actual = stringify([
+              word('page/')
+            ], {
+              plainParam: 'plain',
+              anyParam: 'any param'
+            }, {
+              plainParam: true, // plainParam has default value
+              anyParam: true // anyParam has default value
+            });
+            var expected = 'page/?plainParam=plain&anyParam=any%20param';
             assert(actual == expected);
           }
         }

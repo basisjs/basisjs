@@ -171,7 +171,7 @@ function parsePath(route){
 }
 
 function stringifyGroup(group, values, areModified) {
-  for(var i = 0; i < group.options.length; i++) {
+  for (var i = 0; i < group.options.length; i++) {
     var option = group.options[i];
     var stringifiedOption = stringifyNodes(option.children, values, areModified, true);
 
@@ -182,37 +182,38 @@ function stringifyGroup(group, values, areModified) {
 
   return {
     result: '',
-    modifiedParamsWritten: false
+    modifiedParamsWritten: null
   };
 }
 
 function stringifyNodes(nodes, values, areModified) {
   var result = '';
-  var groupResult;
-  var modifiedParamsWritten = false;
+  var modifiedParamsWritten = null;
 
-  nodes.forEach(function(node) {
+  function markAsWritten(paramName) {
+    if (!modifiedParamsWritten) {
+      modifiedParamsWritten = {};
+    }
+    modifiedParamsWritten[paramName] = true;
+  }
+
+  nodes.forEach(function(node){
     switch (node.type) {
       case TYPE.WORD:
         result += node.name;
         break;
       case TYPE.PLAIN_PARAM:
+      case TYPE.ANY_PARAM:
         result += encodeURIComponent(values[node.name]);
         if (areModified[node.name]) {
-          modifiedParamsWritten = true;
-        }
-        break;
-      case TYPE.ANY_PARAM:
-        result += values[node.name];
-        if (areModified[node.name]) {
-          modifiedParamsWritten = true;
+          markAsWritten(node.name);
         }
         break;
       case TYPE.GROUP:
         var groupStringifyResult = stringifyGroup(node, values, areModified);
         if (groupStringifyResult.modifiedParamsWritten) {
           result += groupStringifyResult.result;
-          modifiedParamsWritten = true;
+          basis.object.iterate(groupStringifyResult.modifiedParamsWritten, markAsWritten);
         }
         break;
     }
@@ -224,8 +225,29 @@ function stringifyNodes(nodes, values, areModified) {
   };
 }
 
-function stringify() {
-  return stringifyNodes.apply(this, arguments).result;
+function stringify(nodes, values, areModified) {
+  var stringifyPathResult = stringifyNodes.apply(this, arguments);
+  var modifiedParamsWritten = stringifyPathResult.modifiedParamsWritten;
+  var result = stringifyPathResult.result;
+  var query = [];
+
+  basis.object.iterate(values, function(key, value){
+    if (modifiedParamsWritten && modifiedParamsWritten[key]) {
+      return;
+    }
+
+    if (!areModified[key]) {
+      return;
+    }
+
+    query.push(key + '=' + encodeURIComponent(value));
+  });
+
+  if (query.length) {
+    result += '?' + query.join('&');
+  }
+
+  return result;
 }
 
 module.exports = {
