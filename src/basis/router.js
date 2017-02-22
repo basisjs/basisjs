@@ -14,6 +14,7 @@
   var document = global.document;
   var eventUtils = require('basis.dom.event');
   var parsePath = require('./router/ast.js').parsePath;
+  var stringify = require('./router/ast.js').stringify;
 
   // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
   var docMode = document.documentMode;
@@ -117,15 +118,20 @@
 
     path: null,
     matched: null,
-    params: null,
-    params_: null,
+    ast_: null,
     names_: null,
+    regexp_: null,
+    params_: null,
+    callbacks_: null,
 
-    init: function(regexp, path){
+    init: function(parseInfo, path){
+      var regexp = parseInfo.regexp;
+
       basis.Token.prototype.init.call(this, null);
 
       this.path = path;
       this.matched = this.as(Boolean);
+      this.ast_ = parseInfo.AST;
       this.names_ = Array.isArray(regexp.params) ? regexp.params : [];
       this.regexp_ = regexp;
       this.params_ = {};
@@ -192,12 +198,21 @@
   });
 
   var ParametrizedRoute = Route.subclass({
+    params: null,
     decode: basis.fn.$undef,
-    init: function(regexp, path, config){
+    encode: basis.fn.$undef,
+    paramsConfig_: null,
+
+    init: function(parseInfo, path, config){
       Route.prototype.init.apply(this, arguments);
+
+      this.paramsConfig_ = config.params;
 
       if (config.decode)
         this.decode = config.decode;
+
+      if (config.encode)
+        this.encode = config.encode;
 
       if (config.params)
       {
@@ -237,8 +252,26 @@
 
       basis.Token.prototype.set.call(this, allParams);
     },
-    getPath: function(){
-      return 'foo';
+    getPath: function(params){
+      params = params ? basis.object.slice(params) : {};
+
+      this.encode(params);
+
+      return stringify(this.ast_, params, this.areModified_(params));
+    },
+    areModified_: function(params) {
+      var result = {};
+
+      basis.object.iterate(this.params, function(key) {
+        if (key in params) {
+          var defValue = this.paramsConfig_[key].DEFAULT_VALUE;
+          result[key] = (params[key] !== defValue);
+        } else {
+          result[key] = false;
+        }
+      }, this);
+
+      return result;
     },
     paramsArrayToObject_: function(arr){
       var result = {};
@@ -394,11 +427,11 @@
     }
   }
 
-  function createRoute(regexp, path, config) {
+  function createRoute(parseInfo, path, config) {
     if (config)
-      return new ParametrizedRoute(regexp, path, config);
+      return new ParametrizedRoute(parseInfo, path, config);
     else
-      return new Route(regexp, path);
+      return new Route(parseInfo, path);
   }
 
  /**
@@ -415,12 +448,11 @@
       var parseInfo = Object.prototype.toString.call(path) == '[object RegExp]'
         ? { regexp: path, AST: null }
         : parsePath(path);
-      var regexp = parseInfo.regexp;
-      var token = createRoute(regexp, path, config);
+      var token = createRoute(parseInfo, path, config);
 
       route = routes[path] = {
         id: path,
-        regexp: regexp,
+        regexp: parseInfo.regexp,
         enterInited: false,
         matchInited: false,
         token: token
