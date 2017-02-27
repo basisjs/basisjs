@@ -248,7 +248,7 @@ module.exports = {
                 config.numArray = config.numArray.split(':').map(Number);
               }
             });
-            // encoded - obj={"a":"b"}&plainArray=a,b,c&numArray=1:2:3
+            // encoded - some-str/{"a":"b"}?plainArray=a,b,c&numArray=1:2:3
             router.navigate('some-str/%7B%22a%22%3A%22b%22%7D?plainArray=a%2Cb%2Cc&numArray=1%3A2%3A3');
 
             assert(route.params.str.value == 'some-str');
@@ -266,8 +266,49 @@ module.exports = {
                 assert(!('extra' in config));
               }
             });
-            // encoded - obj={"a":"b"}&plainArray=a,b,c&numArray=1:2:3
             router.navigate('some-str/stuff?extra=ext');
+          }
+        }
+      ]
+    },
+    {
+      name: 'cases of routes reusage/creation',
+      beforeEach: function(){
+        var router = basis.require('basis.router');
+        var type = basis.require('basis.type');
+      },
+      test: [
+        {
+          name: 'parametrized route with the same path creates different object',
+          test: function(){
+            var route = router.route('some/path', {
+              params: {
+                str: type.string
+              }
+            });
+            var differentRoute = router.route('some/path', {
+              params: {
+                num: type.number
+              }
+            });
+
+            assert(route !== differentRoute);
+          }
+        },
+        {
+          name: 'creating plain route after parametrized route with the same path creates different object',
+          test: function(){
+            var router = basis.require('basis.router');
+            var type = basis.require('basis.type');
+
+            var route = router.route('another/path', {
+              params: {
+                str: type.string
+              }
+            });
+            var differentRoute = router.route('another/path');
+
+            assert(route !== differentRoute);
           }
         }
       ]

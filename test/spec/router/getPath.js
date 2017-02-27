@@ -39,7 +39,7 @@ module.exports = {
     // },
     {
       name: 'drops defaults',
-      test: function() {
+      test: function(){
         var route = router.route('page/(:num)(/)', {
           params: {
             str: type.string.default('def'),
@@ -57,14 +57,14 @@ module.exports = {
     },
     {
       name: 'custom encode',
-      test: function() {
+      test: function(){
         var route = router.route('page/:obj', {
           params: {
             obj: type.object,
             arr: type.array,
             num: type.number
           },
-          encode: function(params) {
+          encode: function(params){
             params.arr = params.arr.join(',');
 
             params.obj = JSON.stringify(params.obj);
@@ -72,7 +72,7 @@ module.exports = {
         });
 
         var expected = 'page/%7B%22foo%22%3A%22bar%22%7D?arr=1%2C35&num=25';
-        var actual = route.getPath({ obj: { foo: 'bar' }, arr: [1, 35], num: 25 })
+        var actual = route.getPath({ obj: { foo: 'bar' }, arr: [1, 35], num: 25 });
 
         assert(actual == expected);
       }

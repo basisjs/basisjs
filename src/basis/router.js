@@ -23,7 +23,8 @@
   var CHECK_INTERVAL = 50;
 
   var arrayFrom = basis.array.from;
-  var routes = {};
+  var routesByObjectId = {};
+  var plainRoutesByPath = {};
   var started = false;
   var currentPath;
   var timer;
@@ -98,14 +99,12 @@
   }
 
   var initSchedule = basis.asap.schedule(function(token){
-    var route = get(token);
-
-    if (route.token.value)
+    if (token.value)
     {
-      routeEnter(route.token, true);
-      routeMatch(route.token, true);
+      routeEnter(token, true);
+      routeMatch(token, true);
 
-      /** @cut */ flushLog(namespace + ': init callbacks for route `' + route.id + '`');
+      /** @cut */ flushLog(namespace + ': init callbacks for route `' + token.path + '`');
     }
   });
 
@@ -233,7 +232,7 @@
       }
     },
     destroy: function(){
-      delete routes[this.path];
+      delete routesByObjectId[this.basisObjectId];
     },
     set: function(value, query){
       var paramsFromQuery = queryToParams(query);
@@ -259,14 +258,15 @@
 
       return stringify(this.ast_, params, this.areModified_(params));
     },
-    areModified_: function(params) {
+    areModified_: function(params){
       var result = {};
 
-      basis.object.iterate(this.params, function(key) {
+      basis.object.iterate(this.params, function(key){
         if (key in params) {
           var defValue = this.paramsConfig_[key].DEFAULT_VALUE;
           result[key] = (params[key] !== defValue);
-        } else {
+        }
+ else {
           result[key] = false;
         }
       }, this);
@@ -401,9 +401,9 @@
       currentPath = newPath;
 
       // update route states
-      for (var path in routes)
+      for (var objectId in routesByObjectId)
       {
-        var route = routes[path];
+        var route = routesByObjectId[objectId];
         route.token.processLocation_(newPath);
       }
 
@@ -413,9 +413,9 @@
     }
     else
     {
-      for (var path in routes)
+      for (var objectId in routesByObjectId)
       {
-        var route = routes[path];
+        var route = routesByObjectId[objectId];
         if (route.token.value)
         {
           routeEnter(route.token, true);
@@ -437,11 +437,15 @@
  /**
   * Returns route descriptor
   */
-  function get(path, autocreate, config){
+  function get(params){
+    var path = params.path;
+    var autocreate = params.autocreate;
+    var config = params.config;
+
     if (path instanceof Route)
       path = path.path;
 
-    var route = routes[path];
+    var route = plainRoutesByPath[path];
 
     if (!route && autocreate)
     {
@@ -449,14 +453,18 @@
         ? { regexp: path, AST: null }
         : parsePath(path);
       var token = createRoute(parseInfo, path, config);
+      var isParametrizedRoute = token instanceof ParametrizedRoute;
 
-      route = routes[path] = {
+      route = routesByObjectId[token.basisObjectId] = {
         id: path,
         regexp: parseInfo.regexp,
         enterInited: false,
         matchInited: false,
         token: token
       };
+
+      if (!isParametrizedRoute)
+        plainRoutesByPath[path] = route;
 
       if (typeof currentPath == 'string')
         route.token.processLocation_(currentPath);
@@ -469,7 +477,10 @@
   * Add path to be handled
   */
   function add(path, callback, context){
-    var route = get(path, true);
+    var route = get({
+      path: path,
+      autocreate: true
+    });
 
     route.token.callbacks_.push({
       cb_: callback,
@@ -487,8 +498,10 @@
  /**
   * Remove handler for path
   */
-  function remove(path, callback, context){
-    var route = get(path);
+  function remove(route, callback, context){
+    var route = get({
+      path: route
+    });
 
     if (!route)
       return;
@@ -515,7 +528,7 @@
 
           // check no attaches to route token
           if ((!token.handler || !token.handler.handler) && !token.matched.handler)
-            delete routes[route.id];
+            delete routesByObjectId[route.id];
         }
 
         break;
@@ -557,6 +570,10 @@
     add: add,
     remove: remove,
     route: function(path, config){
-      return get(path, true, config).token;
+      return get({
+        path: path,
+        autocreate: true,
+        config: config
+      }).token;
     }
   };
