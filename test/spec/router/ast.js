@@ -376,7 +376,7 @@ module.exports = {
               anyParam: 'any'
             }, {
               plainParam: false, // plainParam has default value
-              anyParam: true // anyParam has default value
+              anyParam: true // anyParam has modified value
             });
             var expected = 'page/any';
             assert(actual == expected);
@@ -409,8 +409,8 @@ module.exports = {
               plainParam: 'plain',
               anyParam: 'any param'
             }, {
-              plainParam: true, // plainParam has default value
-              anyParam: true // anyParam has default value
+              plainParam: true, // plainParam has modified value
+              anyParam: true // anyParam has modified value
             });
             var expected = 'page/plain?anyParam=any%20param';
             assert(actual == expected);
@@ -425,10 +425,101 @@ module.exports = {
               plainParam: 'plain',
               anyParam: 'any param'
             }, {
-              plainParam: true, // plainParam has default value
-              anyParam: true // anyParam has default value
+              plainParam: true, // plainParam has modified value
+              anyParam: true // anyParam has modified value
             });
             var expected = 'page/?plainParam=plain&anyParam=any%20param';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'writes optional groups with default params in case they precedes a nondefault param',
+          test: function(){
+            var actual = stringify([
+              word('page/'),
+              group(
+                option(
+                  plain('first'),
+                  word('/')
+                )
+              ),
+              group(
+                option(
+                  plain('second'),
+                  word('/')
+                )
+              ),
+              group(
+                option(
+                  plain('third'),
+                  word('/')
+                )
+              ),
+              group(
+                option(
+                  plain('fourth'),
+                  word('/')
+                )
+              )
+            ], {
+              first: 1,
+              second: 2,
+              third: 3,
+              fourth: 4
+            }, {
+              first: false, // first has default value
+              second: false, // second has default value
+              third: true, // third has modified value
+              fourth: false // fourth has default value
+            });
+
+            var expected = 'page/1/2/3/';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'writes optional group with default params in case they precedes a required plain param',
+          test: function(){
+            var actual = stringify([
+              word('page/'),
+              group(
+                option(
+                  plain('first'),
+                  word('/')
+                )
+              ),
+              plain('second')
+            ], {
+              first: 1,
+              second: 2
+            }, {
+              first: false, // first has default value
+              second: false // second has default value
+            });
+
+            var expected = 'page/1/2';
+            assert(actual == expected);
+          }
+        },
+        {
+          name: 'writes optional group with default params in case they precedes a word',
+          test: function(){
+            var actual = stringify([
+              word('page/'),
+              group(
+                option(
+                  plain('first'),
+                  word('/')
+                )
+              ),
+              word('second')
+            ], {
+              first: 1
+            }, {
+              first: false // first has default value
+            });
+
+            var expected = 'page/1/second';
             assert(actual == expected);
           }
         }

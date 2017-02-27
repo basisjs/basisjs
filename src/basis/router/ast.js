@@ -171,6 +171,8 @@ function parsePath(route){
 }
 
 function stringifyGroup(group, values, areModified) {
+  var defaultResult = null;
+
   for (var i = 0; i < group.options.length; i++) {
     var option = group.options[i];
     var stringifiedOption = stringifyNodes(option.children, values, areModified, true);
@@ -178,15 +180,18 @@ function stringifyGroup(group, values, areModified) {
     if (stringifiedOption.modifiedParamsWritten) {
       return stringifiedOption;
     }
+ else if (!defaultResult) {
+      defaultResult = stringifiedOption;
+    }
   }
 
-  return {
-    result: '',
-    modifiedParamsWritten: null
-  };
+  return defaultResult;
 }
 
 function stringifyNodes(nodes, values, areModified) {
+  // Part of string complying to default params,
+  // which should be written if they precede a modified one
+  var trailingDefaults = '';
   var result = '';
   var modifiedParamsWritten = null;
 
@@ -197,14 +202,19 @@ function stringifyNodes(nodes, values, areModified) {
     modifiedParamsWritten[paramName] = true;
   }
 
+  function append(value) {
+    result += trailingDefaults + value;
+    trailingDefaults = '';
+  }
+
   nodes.forEach(function(node){
     switch (node.type) {
       case TYPE.WORD:
-        result += node.name;
+        append(node.name);
         break;
       case TYPE.PLAIN_PARAM:
       case TYPE.ANY_PARAM:
-        result += encodeURIComponent(values[node.name]);
+        append(encodeURIComponent(values[node.name]));
         if (areModified[node.name]) {
           markAsWritten(node.name);
         }
@@ -212,8 +222,11 @@ function stringifyNodes(nodes, values, areModified) {
       case TYPE.GROUP:
         var groupStringifyResult = stringifyGroup(node, values, areModified);
         if (groupStringifyResult.modifiedParamsWritten) {
-          result += groupStringifyResult.result;
+          append(groupStringifyResult.result);
           basis.object.iterate(groupStringifyResult.modifiedParamsWritten, markAsWritten);
+        }
+ else {
+          trailingDefaults += groupStringifyResult.result;
         }
         break;
     }
