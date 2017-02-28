@@ -31,7 +31,8 @@ function parsePath(route){
       i = res.offset;
       result += res.result;
 
-      if (res.stoppedAt == ')') {
+      if (res.stoppedAt == ')')
+      {
         return {
           type: TYPE.GROUP,
           options: options,
@@ -55,7 +56,8 @@ function parsePath(route){
     var AST = [];
 
     function putCurrentWord() {
-      if (curWord) {
+      if (curWord)
+      {
         AST.push({
           type: TYPE.WORD,
           name: curWord
@@ -177,12 +179,10 @@ function stringifyGroup(group, values, areModified) {
     var option = group.options[i];
     var stringifiedOption = stringifyNodes(option.children, values, areModified, true);
 
-    if (stringifiedOption.modifiedParamsWritten) {
+    if (stringifiedOption.modifiedParamsWritten)
       return stringifiedOption;
-    }
- else if (!defaultResult) {
+    else if (!defaultResult)
       defaultResult = stringifiedOption;
-    }
   }
 
   return defaultResult;
@@ -196,7 +196,8 @@ function stringifyNodes(nodes, values, areModified) {
   var modifiedParamsWritten = null;
 
   function markAsWritten(paramName) {
-    if (!modifiedParamsWritten) {
+    if (!modifiedParamsWritten)
+    {
       modifiedParamsWritten = {};
     }
     modifiedParamsWritten[paramName] = true;
@@ -215,13 +216,13 @@ function stringifyNodes(nodes, values, areModified) {
       case TYPE.PLAIN_PARAM:
       case TYPE.ANY_PARAM:
         append(encodeURIComponent(values[node.name]));
-        if (areModified[node.name]) {
+        if (areModified[node.name])
           markAsWritten(node.name);
-        }
         break;
       case TYPE.GROUP:
         var groupStringifyResult = stringifyGroup(node, values, areModified);
-        if (groupStringifyResult.modifiedParamsWritten) {
+        if (groupStringifyResult.modifiedParamsWritten)
+        {
           append(groupStringifyResult.result);
           basis.object.iterate(groupStringifyResult.modifiedParamsWritten, markAsWritten);
         }
@@ -245,20 +246,17 @@ function stringify(nodes, values, areModified) {
   var query = [];
 
   basis.object.iterate(values, function(key, value){
-    if (modifiedParamsWritten && modifiedParamsWritten[key]) {
+    if (modifiedParamsWritten && modifiedParamsWritten[key])
       return;
-    }
 
-    if (!areModified[key]) {
+    if (!areModified[key])
       return;
-    }
 
     query.push(key + '=' + encodeURIComponent(value));
   });
 
-  if (query.length) {
+  if (query.length)
     result += '?' + query.join('&');
-  }
 
   return result;
 }
