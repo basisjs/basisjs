@@ -471,7 +471,6 @@
       var isParametrizedRoute = token instanceof ParametrizedRoute;
 
       route = routesByObjectId[token.basisObjectId] = {
-        regexp: parseInfo.regexp,
         enterInited: false,
         matchInited: false,
         token: token
