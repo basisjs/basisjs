@@ -233,6 +233,9 @@ module.exports = {
           str: type.string
         };
       },
+      beforeEach: function(){
+        router.navigate('');
+      },
       afterEach: function(){
         route.destroy();
       },
@@ -260,13 +263,13 @@ module.exports = {
         {
           name: 'no extra params',
           test: function(){
-            var route = router.route(':str/:obj', {
+            var route = router.route(':str/', {
               params: params,
               decode: function(config){
                 assert(!('extra' in config));
               }
             });
-            router.navigate('some-str/stuff?extra=ext');
+            router.navigate('some-str/?extra=ext');
           }
         }
       ]

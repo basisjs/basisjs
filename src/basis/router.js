@@ -525,6 +525,7 @@
       return;
 
     for (var i = 0, cb; cb = route.token.callbacks_[i]; i++)
+    {
       if (cb.cb_ === callback && cb.context === context)
       {
         route.token.callbacks_.splice(i, 1);
@@ -552,7 +553,8 @@
         break;
       }
 
-    /** @cut */ basis.dev.warn(namespace + ': no callback removed', { callback: callback, context: context });
+      /** @cut */ basis.dev.warn(namespace + ': no callback removed', { callback: callback, context: context });
+    }
   }
 
  /**
