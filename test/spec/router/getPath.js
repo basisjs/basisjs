@@ -3,6 +3,7 @@ module.exports = {
   init: function(){
     var router = basis.require('basis.router');
     var type = basis.require('basis.type');
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
   },
   test: [
     {
@@ -24,19 +25,14 @@ module.exports = {
           params: {
             str: type.string,
             num: type.number,
-            bool: type.string
+            bool: basis.fn.$self
           }
         });
 
         assert(route.getPath({ str: 'some', num: 4, bool: true }) == 'foo/some/4?bool=true');
       }
     },
-    // {
-    //   name: 'transforms params',
-    //   test: function() {
 
-    //   }
-    // },
     {
       name: 'drops defaults',
       test: function(){
@@ -78,7 +74,84 @@ module.exports = {
       }
     },
     {
-      name: 'hard cases of stringify'
+      name: 'transforms params',
+      test: function(){
+        var route = router.route('tea/:double/:wrapped', {
+          params: {
+            wrapped: function(value){
+              return '_' + value + '_';
+            },
+            double: function(num){
+              return num * 2;
+            },
+            obj: type.object
+          },
+          encode: function(params){
+            params.obj = JSON.stringify(params.obj);
+          }
+        });
+
+        var expected = 'tea/6/_w_?obj=%7B%7D';
+        var actual = route.getPath({ wrapped: 'w', double: 3, obj: {} });
+
+        assert(actual == expected);
+      }
+    },
+    {
+      name: 'fills defaults if needed',
+      test: function(){
+        var route = router.route('coffee/:num', {
+          params: {
+            num: type.number
+          }
+        });
+
+        var expected = 'coffee/0';
+        var actual = route.getPath();
+
+        assert(actual == expected);
+      }
+    },
+    {
+      name: 'fills defaults if needed - custom transform',
+      test: function(){
+        var route = router.route('coffee/:custom', {
+          params: {
+            custom: function(value){
+              if (value === 'secret') {
+                return 'correct';
+              }
+ else {
+                return 'incorrect';
+              }
+            }
+          }
+        });
+
+        var expected = 'coffee/incorrect';
+        var actual = route.getPath();
+
+        assert(actual == expected);
+      }
+    },
+    {
+      name: 'params not stated in params',
+      test: function(){
+        var route = router.route('coffee/', {
+          params: {
+            uno: type.number
+          }
+        });
+
+        var expected = 'coffee/';
+        var warned = catchWarnings(function(){
+          var actual = route.getPath({ different: 25 });
+
+          assert(actual == expected);
+        });
+
+        assert(warned);
+      }
     }
     // {
     //   name: 'empty string',

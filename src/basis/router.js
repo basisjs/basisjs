@@ -205,7 +205,10 @@
     init: function(parseInfo, path, config){
       Route.prototype.init.apply(this, arguments);
 
+      var defaults = this.getDefaults_(config.params);
+
       this.paramsConfig_ = config.params;
+      this.defaults_ = defaults;
 
       if (config.decode)
         this.decode = config.decode;
@@ -213,23 +216,19 @@
       if (config.encode)
         this.encode = config.encode;
 
-      if (config.params)
-      {
-        this.params = {};
+      this.params = {};
+      basis.object.iterate(config.params, function(key, transform){
+        this.params[key] = this.as(function(values){
+          if (!values)
+            return null;
 
-        basis.object.iterate(config.params, function(key, transform){
-          this.params[key] = this.as(function(values){
-            if (!values)
-              return null;
+          if (values[key] == null) {
+            return defaults[key];
+          }
 
-            if (values[key] == null) {
-              return 'DEFAULT_VALUE' in transform ? transform.DEFAULT_VALUE : transform();
-            }
-
-            return transform(values[key]);
-          });
-        }, this);
-      }
+          return transform(values[key]);
+        });
+      }, this);
     },
     destroy: function(){
       delete routesByObjectId[this.basisObjectId];
@@ -251,24 +250,43 @@
 
       basis.Token.prototype.set.call(this, allParams);
     },
-    getPath: function(params){
-      params = params ? basis.object.slice(params) : {};
+    getPath: function(specifiedParams){
+      var params = {};
 
+      specifiedParams = specifiedParams || {};
+
+      /** @cut */ basis.object.iterate(specifiedParams, function(key){
+      /** @cut */   if (!(key in this.paramsConfig_))
+      /** @cut */     basis.dev.warn(namespace + ': found param ' + key + ' not specified in config - ignoring', { params: this.paramsConfig_ });
+      /** @cut */ }, this);
+
+      basis.object.iterate(this.paramsConfig_, function(key, transform){
+        if (key in specifiedParams)
+          params[key] = transform(specifiedParams[key]);
+        else
+          params[key] = this.defaults_[key];
+      }, this);
       this.encode(params);
 
       return stringify(this.ast_, params, this.areModified_(params));
     },
+    getDefaults_: function(paramsConfig){
+      var result = {};
+
+      basis.object.iterate(paramsConfig, function(key, transform){
+        if ('DEFAULT_VALUE' in transform)
+          result[key] = transform.DEFAULT_VALUE;
+        else
+          result[key] = transform();
+      });
+
+      return result;
+    },
     areModified_: function(params){
       var result = {};
 
-      basis.object.iterate(this.params, function(key){
-        if (key in params) {
-          var defValue = this.paramsConfig_[key].DEFAULT_VALUE;
-          result[key] = (params[key] !== defValue);
-        }
- else {
-          result[key] = false;
-        }
+      basis.object.iterate(this.paramsConfig_, function(key){
+        result[key] = (params[key] !== this.defaults_[key]);
       }, this);
 
       return result;

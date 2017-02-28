@@ -293,6 +293,9 @@ module.exports = {
             });
 
             assert(route !== differentRoute);
+
+            route.destroy();
+            differentRoute.destroy();
           }
         },
         {
