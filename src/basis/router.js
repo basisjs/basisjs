@@ -56,7 +56,7 @@
       {
         item.enterInited = true;
         item.callback.enter.call(item.context);
-        /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: item, route: route });
+        /** @cut */ log.push('\n', { type: 'enter', path: route.path, cb: item, route: route });
       }
   }
 
@@ -66,7 +66,7 @@
       if (item.callback.leave)
       {
         item.callback.leave.call(item.context);
-        /** @cut */ log.push('\n', { type: 'leave', path: route.id, cb: item, route: route });
+        /** @cut */ log.push('\n', { type: 'leave', path: route.path, cb: item, route: route });
       }
   }
 
@@ -77,7 +77,7 @@
       {
         item.matchInited = true;
         item.callback.match.apply(item.context, route.value);
-        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route, args: route.value });
+        /** @cut */ log.push('\n', { type: 'match', path: route.path, cb: item, route: route, args: route.value });
       }
   }
 
@@ -229,9 +229,6 @@
           return transform(values[key]);
         });
       }, this);
-    },
-    destroy: function(){
-      delete routesByObjectId[this.basisObjectId];
     },
     set: function(value, query){
       var paramsFromQuery = queryToParams(query);
@@ -474,7 +471,6 @@
       var isParametrizedRoute = token instanceof ParametrizedRoute;
 
       route = routesByObjectId[token.basisObjectId] = {
-        id: path,
         regexp: parseInfo.regexp,
         enterInited: false,
         matchInited: false,
@@ -537,7 +533,7 @@
           /** @cut */ if (module.exports.debug)
           /** @cut */   basis.dev.info(
           /** @cut */     namespace + ': add handler for route `' + path + '`\n',
-          /** @cut */     { type: 'leave', path: route.id, cb: callback.leave, route: route.token }
+          /** @cut */     { type: 'leave', path: route.token.path, cb: callback.leave, route: route.token }
           /** @cut */   );
         }
 
@@ -547,7 +543,12 @@
 
           // check no attaches to route token
           if ((!token.handler || !token.handler.handler) && !token.matched.handler)
-            delete routesByObjectId[route.id];
+          {
+            delete routesByObjectId[token.basisObjectId];
+
+            if (!(token instanceof ParametrizedRoute))
+              delete plainRoutesByPath[token.path];
+          }
         }
 
         break;

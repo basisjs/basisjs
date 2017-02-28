@@ -237,7 +237,7 @@ module.exports = {
         router.navigate('');
       },
       afterEach: function(){
-        route.destroy();
+        route.remove();
       },
       test: [
         {
