@@ -5,6 +5,7 @@ var createEvent = require('basis.event').create;
 var createRuleEvents = require('./createRuleEvents.js');
 var getDelta = require('./getDelta.js');
 var DataObject = require('basis.data').Object;
+var isEqual = require('basis.data').isEqual;
 var setAccumulateState = require('basis.data').Dataset.setAccumulateState;
 var SourceDataset = require('./SourceDataset.js');
 
@@ -19,7 +20,7 @@ var MAPFILTER_SOURCEOBJECT_UPDATE = function(sourceObject){
   var curMember = sourceMap.member;
 
   // if member ref is changed
-  if (curMember !== newMember)
+  if (!isEqual(curMember, newMember))
   {
     var memberMap = this.members_;
     var delta;
@@ -320,7 +321,7 @@ module.exports = SourceDataset.subclass({
       if (newMember instanceof DataObject == false || this.filter(newMember))
         newMember = null;
 
-      if (curMember != newMember)
+      if (!isEqual(curMember, newMember))
       {
         sourceObjectInfo.member = newMember;
 
