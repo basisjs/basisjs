@@ -147,6 +147,99 @@ module.exports = {
         }
       ]
     },
+    {
+      name: 'setting reactive param',
+      init: function(){
+        var router = basis.require('basis.router');
+        var type = basis.require('basis.type');
+      },
+      afterEach: function(){
+        route.remove();
+      },
+      test: [
+        {
+          name: 'simple case',
+          test: function(){
+            var route = router.route('page(/:str)', {
+              params: {
+                str: type.string
+              }
+            });
+
+            router.navigate('page');
+
+            route.params.str.set('some other');
+
+            assert(location.hash === '#page/some%20other');
+          }
+        },
+        {
+          name: 'setting already modified route',
+          test: function(){
+            var route = router.route(':first(/:second)(/:third)', {
+              params: {
+                first: type.string,
+                second: type.string,
+                third: type.string
+              }
+            });
+
+            router.navigate('foo/bar/baz');
+
+            route.params.first.set('spam');
+
+            assert(location.hash === '#spam/bar/baz');
+          }
+        },
+        {
+          name: 'it should fire only one location change on multiple params update',
+          test: function(){
+            var route = router.route(':first(/:second)(/:third)', {
+              params: {
+                first: type.string,
+                second: type.string,
+                third: type.string
+              }
+            });
+
+            router.navigate('foo/bar/baz');
+
+            var counter = 0;
+            var handler = function(first, second, third){
+              counter++;
+            };
+            route.add(handler);
+
+            route.params.first.set('first');
+            route.params.second.set('second');
+            route.params.third.set('third');
+
+            route.remove(handler);
+
+            assert(counter === 1);
+
+            assert(location.hash === '#first/second/third');
+          }
+        },
+        {
+          name: 'transforms params passing previous value',
+          test: function(){
+            var route = router.route('page/:str', {
+              params: {
+                str: type.string
+              }
+            });
+
+            router.navigate('page/some');
+
+            route.params.str.set(true);
+
+            assert(route.params.str.value === 'some');
+            assert(location.hash === '#page/some');
+          }
+        }
+      ]
+    },
     require('./parse.js'),
     require('./getPath.js'),
     require('./ast.js')

@@ -153,29 +153,25 @@ module.exports = {
 
         assert(warned);
       }
+    },
+    {
+      name: 'incorrect value for param',
+      test: function(){
+        var route = router.route('something/:real', {
+          params: {
+            real: type.number
+          }
+        });
+
+        router.navigate('something/3');
+
+        var expected = 'something/0';
+        catchWarnings(function(){
+          var actual = route.getPath({ real: new Date() });
+
+          assert(actual == expected);
+        });
+      }
     }
-    // {
-    //   name: 'empty string',
-    //   test: function() {
-    //     var params = {
-    //       custom: function(newValue, prevValue){
-    //         if (newValue === 'secret') {
-    //           return 'correct';
-    //         }
-    // else {
-    //           return 'incorrect';
-    //         }
-    //       },
-    //       optional: function(value){
-    //         return value || 42;
-    //       },
-    //       str: type.string,
-    //       number: type.number.default(1)
-    //     };
-    //     var route = router.route(':custom/:str(/:number)(/)', {
-    //       params: params
-    //     });
-    //   }
-    // }
   ]
 };

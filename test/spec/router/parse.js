@@ -165,6 +165,28 @@ module.exports = {
         assert(simpleRoute.params.bar.value === 'one');
         assert(simpleRoute.params.baz.value === 'two');
       }
+    },
+    {
+      name: 'fallback to prev value in case of incorrect parsing',
+      test: function(){
+        var simpleRoute = router.route('my/:num', {
+          params: {
+            num: type.number
+          }
+        });
+
+        router.navigate('my/stuff');
+
+        assert(simpleRoute.params.num.value === 0);
+
+        router.navigate('my/3');
+
+        assert(simpleRoute.params.num.value === 3);
+
+        router.navigate('my/NaN');
+
+        assert(simpleRoute.params.num.value === 3);
+      }
     }
   ]
 };

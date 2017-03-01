@@ -167,6 +167,7 @@ function parsePath(route){
   var regexp = new RegExp('^' + parsingResult.regexpStr + '$', 'i');
   regexp.params = params;
   return {
+    path: route,
     regexp: regexp,
     AST: parsingResult.AST
   };

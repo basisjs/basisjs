@@ -108,8 +108,7 @@
     }
   });
 
-
- /**
+  /**
   * @class
   */
   var Route = basis.Token.subclass({
@@ -123,12 +122,12 @@
     params_: null,
     callbacks_: null,
 
-    init: function(parseInfo, path){
+    init: function(parseInfo){
       var regexp = parseInfo.regexp;
 
       basis.Token.prototype.init.call(this, null);
 
-      this.path = path;
+      this.path = parseInfo.path;
       this.matched = this.as(Boolean);
       this.ast_ = parseInfo.AST;
       this.names_ = Array.isArray(regexp.params) ? regexp.params : [];
@@ -202,13 +201,12 @@
     encode: basis.fn.$undef,
     paramsConfig_: null,
 
-    init: function(parseInfo, path, config){
+    init: function(parseInfo, config){
       Route.prototype.init.apply(this, arguments);
 
-      var defaults = this.getDefaults_(config.params);
-
       this.paramsConfig_ = config.params;
-      this.defaults_ = defaults;
+      this.defaults_ = this.getDefaults_(config.params);
+      this.paramsStore_ = basis.object.slice(this.defaults_);
 
       if (config.decode)
         this.decode = config.decode;
@@ -217,18 +215,43 @@
         this.encode = config.encode;
 
       this.params = {};
-      basis.object.iterate(config.params, function(key, transform){
-        this.params[key] = this.as(function(values){
-          if (!values)
-            return null;
-
-          if (values[key] == null) {
-            return defaults[key];
-          }
-
-          return transform(values[key]);
-        });
+      basis.object.iterate(config.params, function(key){
+        this.params[key] = this.constructParam_(key);
       }, this);
+    },
+    constructParam_: function(key){
+      var transform = this.paramsConfig_[key];
+      var defaults = this.defaults_;
+      var token = new basis.Token(null);
+      var originalSet = token.set;
+      var paramsStore = this.paramsStore_;
+
+      function computeNewValue(values) {
+        if (!values)
+          return null;
+
+        if (values[key] == null) {
+          return defaults[key];
+        }
+
+        return transform(values[key], paramsStore[key]);
+      }
+
+      this.attach(function(values){
+        var newValue = computeNewValue(values);
+        paramsStore[key] = newValue;
+        originalSet.call(token, newValue);
+      }, this);
+
+      token.set = function(value){
+        var newParams = basis.object.slice(paramsStore);
+
+        newParams[key] = transform(value, paramsStore[key]);
+
+        navigate(this.getPath(newParams));
+      }.bind(this);
+
+      return token;
     },
     set: function(value, query){
       var paramsFromQuery = queryToParams(query);
@@ -259,7 +282,7 @@
 
       basis.object.iterate(this.paramsConfig_, function(key, transform){
         if (key in specifiedParams)
-          params[key] = transform(specifiedParams[key]);
+          params[key] = transform(specifiedParams[key], this.defaults_[key]);
         else
           params[key] = this.defaults_[key];
       }, this);
@@ -442,11 +465,11 @@
     }
   }
 
-  function createRoute(parseInfo, path, config) {
+  function createRoute(parseInfo, config) {
     if (config)
-      return new ParametrizedRoute(parseInfo, path, config);
+      return new ParametrizedRoute(parseInfo, config);
     else
-      return new Route(parseInfo, path);
+      return new Route(parseInfo);
   }
 
  /**
@@ -457,16 +480,16 @@
     var config = params.config;
 
     if (path instanceof Route)
-      path = path.path;
+      return path;
 
     var route = plainRoutesByPath[path];
 
     if (!route && params.autocreate)
     {
       var parseInfo = Object.prototype.toString.call(path) == '[object RegExp]'
-        ? { regexp: path, AST: null }
+        ? { path: path, regexp: path, AST: null }
         : parsePath(path);
-      route = createRoute(parseInfo, path, config);
+      route = createRoute(parseInfo, config);
       routesByObjectId[route.basisObjectId] = route;
 
       var isParametrizedRoute = route instanceof ParametrizedRoute;
