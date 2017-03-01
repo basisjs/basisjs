@@ -98,13 +98,13 @@
     routesToMatch.length = 0;
   }
 
-  var initSchedule = basis.asap.schedule(function(token){
-    if (token.value)
+  var initSchedule = basis.asap.schedule(function(route){
+    if (route.value)
     {
-      routeEnter(token, true);
-      routeMatch(token, true);
+      routeEnter(route, true);
+      routeMatch(route, true);
 
-      /** @cut */ flushLog(namespace + ': init callbacks for route `' + token.path + '`');
+      /** @cut */ flushLog(namespace + ': init callbacks for route `' + route.path + '`');
     }
   });
 
@@ -419,7 +419,7 @@
       for (var objectId in routesByObjectId)
       {
         var route = routesByObjectId[objectId];
-        route.token.processLocation_(newPath);
+        route.processLocation_(newPath);
       }
 
       flushRouteEvents();
@@ -431,10 +431,10 @@
       for (var objectId in routesByObjectId)
       {
         var route = routesByObjectId[objectId];
-        if (route.token.value)
+        if (route.value)
         {
-          routeEnter(route.token, true);
-          routeMatch(route.token, true);
+          routeEnter(route, true);
+          routeMatch(route, true);
         }
       }
 
@@ -454,7 +454,6 @@
   */
   function get(params){
     var path = params.path;
-    var autocreate = params.autocreate;
     var config = params.config;
 
     if (path instanceof Route)
@@ -462,25 +461,20 @@
 
     var route = plainRoutesByPath[path];
 
-    if (!route && autocreate)
+    if (!route && params.autocreate)
     {
       var parseInfo = Object.prototype.toString.call(path) == '[object RegExp]'
         ? { regexp: path, AST: null }
         : parsePath(path);
-      var token = createRoute(parseInfo, path, config);
-      var isParametrizedRoute = token instanceof ParametrizedRoute;
+      route = createRoute(parseInfo, path, config);
+      routesByObjectId[route.basisObjectId] = route;
 
-      route = routesByObjectId[token.basisObjectId] = {
-        enterInited: false,
-        matchInited: false,
-        token: token
-      };
-
+      var isParametrizedRoute = route instanceof ParametrizedRoute;
       if (!isParametrizedRoute)
         plainRoutesByPath[path] = route;
 
       if (typeof currentPath == 'string')
-        route.token.processLocation_(currentPath);
+        route.processLocation_(currentPath);
     }
 
     return route;
@@ -495,7 +489,7 @@
       autocreate: true
     });
 
-    route.token.callbacks_.push({
+    route.callbacks_.push({
       cb_: callback,
       context: context,
       callback: typeof callback != 'function' ? callback || {} : {
@@ -503,9 +497,9 @@
       }
     });
 
-    initSchedule.add(route.token);
+    initSchedule.add(route);
 
-    return route.token;
+    return route;
   }
 
  /**
@@ -519,34 +513,32 @@
     if (!route)
       return;
 
-    for (var i = 0, cb; cb = route.token.callbacks_[i]; i++)
+    for (var i = 0, cb; cb = route.callbacks_[i]; i++)
     {
       if (cb.cb_ === callback && cb.context === context)
       {
-        route.token.callbacks_.splice(i, 1);
+        route.callbacks_.splice(i, 1);
 
-        if (route.token.value && callback && callback.leave)
+        if (route.value && callback && callback.leave)
         {
           callback.leave.call(context);
 
           /** @cut */ if (module.exports.debug)
           /** @cut */   basis.dev.info(
           /** @cut */     namespace + ': add handler for route `' + path + '`\n',
-          /** @cut */     { type: 'leave', path: route.token.path, cb: callback.leave, route: route.token }
+          /** @cut */     { type: 'leave', path: route.path, cb: callback.leave, route: route }
           /** @cut */   );
         }
 
-        if (!route.token.callbacks_.length)
+        if (!route.callbacks_.length)
         {
-          var token = route.token;
-
-          // check no attaches to route token
-          if ((!token.handler || !token.handler.handler) && !token.matched.handler)
+          // check no attaches to route
+          if ((!route.handler || !route.handler.handler) && !route.matched.handler)
           {
-            delete routesByObjectId[token.basisObjectId];
+            delete routesByObjectId[route.basisObjectId];
 
-            if (!(token instanceof ParametrizedRoute))
-              delete plainRoutesByPath[token.path];
+            if (!(route instanceof ParametrizedRoute))
+              delete plainRoutesByPath[route.path];
           }
         }
 
@@ -594,6 +586,6 @@
         path: path,
         autocreate: true,
         config: config
-      }).token;
+      });
     }
   };
