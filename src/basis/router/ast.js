@@ -226,7 +226,8 @@ function stringifyNodes(nodes, values, areModified) {
           append(groupStringifyResult.result);
           basis.object.iterate(groupStringifyResult.modifiedParamsWritten, markAsWritten);
         }
- else {
+        else
+        {
           trailingDefaults += groupStringifyResult.result;
         }
         break;

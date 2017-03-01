@@ -121,7 +121,8 @@ module.exports = {
               if (value === 'secret') {
                 return 'correct';
               }
- else {
+              else
+              {
                 return 'incorrect';
               }
             }

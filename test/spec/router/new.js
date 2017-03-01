@@ -180,12 +180,10 @@ module.exports = {
 
         var params = {
           custom: function(newValue, prevValue){
-            if (newValue === 'secret') {
+            if (newValue === 'secret')
               return 'correct';
-            }
- else {
+            else
               return 'incorrect';
-            }
           },
           optional: function(value){
             return value || 42;
