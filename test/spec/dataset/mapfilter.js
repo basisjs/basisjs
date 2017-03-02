@@ -4,25 +4,21 @@ module.exports = {
     var MapFilter = basis.require('basis.data.dataset').MapFilter;
     var Dataset = basis.require('basis.data').Dataset;
     var DataObject = basis.require('basis.data').Object;
-    var entity = basis.require('basis.entity');
-    var GroupEntity = entity.createType('GroupEntity', {
-      name: entity.StringId
-    });
-    var UserEntity = entity.createType('UserEntity', {
-      name: entity.StringId,
-      fullName: String,
-      group: GroupEntity,
-      friend: function(friend) {
-        return friend ? UserEntity(friend) : null;
-      }
-    });
+    var devWrap = basis.require('basis.data').devWrap;
+    var helpers = basis.require('./helpers/dataset.js');
+    var range = helpers.range;
 
-    function createUser(name, group, friend) {
-      return UserEntity({ name: name, group: group, friend: friend });
-    }
+    function generateDataset(elements, map) {
+      map = map || basis.fn.$self;
 
-    function createGroup(name) {
-      return GroupEntity({ name: name });
+      return new Dataset({
+        syncAction: function(){
+          this.set(range(1, elements)
+            .map(function(value){
+              return map(new DataObject({ data: { value: value } }));
+            }));
+        }
+      });
     }
   },
   test: [
@@ -33,7 +29,7 @@ module.exports = {
 
         function generateDataset() {
           return new Dataset({
-            syncAction: function(data){
+            syncAction: function(){
               this.set([
                 new DataObject({ data: { views: idx++ } })
               ]);
@@ -56,114 +52,88 @@ module.exports = {
     },
     {
       name: 'mapping',
-      test: function() {
+      test: function(){
         var result = new MapFilter({
-          source: UserEntity.all,
-          map: function(obj) {
-            return obj.data.group;
+          active: true,
+          map: function(obj){
+            return obj.data.sub;
           }
         });
 
-        createGroup('group1');
-        createGroup('group2');
-        createUser('user1', 'group1', 'user2');
-        createUser('user2', 'group2', 'user1');
-
-        assert(GroupEntity.all.getValues(), result.getValues());
-
-        result.setMap(function(obj) {
-          return obj.data.friend;
-        });
-        assert(UserEntity.all.getValues('data.friend'), result.getValues());
+        result.setSource(generateDataset(5, function(value){
+          return new DataObject({ data: { sub: value } });
+        }));
+        assert([1, 2, 3, 4, 5], result.getValues('data.value'));
       }
     },
     {
       name: 'filtering',
-      test: function() {
+      test: function(){
         var result = new MapFilter({
-          source: UserEntity.all,
-          map: function(obj) {
-            return obj.data.group;
+          active: true,
+          map: function(obj){
+            return obj.data.sub;
           },
-          filter: function(obj) {
-            return obj.data.name == 'group2'; // inverted logic - not like Array#filter
+          filter: function(obj){
+            return obj.data.value <= 2; // inverted logic - not like Array#filter
           }
         });
 
-        assert(['group1'], result.getValues('data.name'));
+        result.setSource(generateDataset(5, function(value){
+          return new DataObject({ data: { sub: value } });
+        }));
+        assert([3, 4, 5], result.getValues('data.value'));
 
-        result.setFilter(function(obj) {
-          return obj.data.name == 'group1';
+        result.setFilter(function(obj){
+          return obj.data.value <= 3; // inverted logic - not like Array#filter
         });
-        assert(['group2'], result.getValues('data.name'));
+        assert([4, 5], result.getValues('data.value'));
       }
     },
     {
       name: 'filtering with objects update',
-      test: function() {
+      test: function(){
         var result = new MapFilter({
-          source: UserEntity.all,
-          map: function(obj) {
-            return obj.data.group;
+          active: true,
+          map: function(obj){
+            return obj.data.sub;
           },
-          filter: function(obj) {
-            return obj.data.name == 'group2'; // inverted logic - not like Array#filter
+          filter: function(obj){
+            return obj.data.value <= 2; // inverted logic - not like Array#filter
           }
         });
 
-        assert(['group1'], result.getValues('data.name'));
+        result.setSource(generateDataset(5, function(value){
+          return new DataObject({ data: { sub: value } });
+        }));
+        assert([3, 4, 5], result.getValues('data.value'));
 
-        GroupEntity('group1').update({ name: 'group3' });
-        assert(['group3'], result.getValues('data.name'));
-
-        GroupEntity('group3').update({ name: 'group1' });
-        assert(['group1'], result.getValues('data.name'));
+        result.source.getItems()[2].data.sub.update({ value: 10 });
+        assert([10, 4, 5], result.getValues('data.value'));
       }
     },
     {
-      name: 'mapping with set update',
-      test: function() {
-        UserEntity.all.setAndDestroyRemoved([
-          { name: 'user1', group: 'group1' },
-          { name: 'user2', group: 'group2' },
-          { name: 'user3', group: 'group2' }
-        ]);
-
+      name: 'filtering proxy objects',
+      test: function(){
+        var elementToUpdate;
         var result = new MapFilter({
-          source: UserEntity.all,
-          map: function(obj) {
-            return obj.data.group;
+          active: true,
+          map: function(obj){
+            return obj.data.sub;
+          },
+          filter: function(obj){
+            return obj.data.value <= 2; // inverted logic - not like Array#filter
           }
         });
 
-        UserEntity.all.setAndDestroyRemoved([
-          { name: 'user1', group: 'group1' },
-          { name: 'user2', group: 'group2' }
-        ]);
-        assert(['group1', 'group2'], result.getValues('data.name'));
-      }
-    },
-    {
-      name: 'mapping with set update (buggy case with wrapped objects)',
-      test: function() {
-        UserEntity.all.setAndDestroyRemoved([
-          { name: 'user1', group: { name: 'group1' } },
-          { name: 'user2', group: { name: 'group2' } },
-          { name: 'user3', group: { name: 'group2' } }
-        ]);
+        result.setSource(generateDataset(5, function(value){
+          return new DataObject({ data: { sub: value } });
+        }), true);
+        assert([3, 4, 5], result.getValues('data.value'));
 
-        var result = new MapFilter({
-          source: UserEntity.all,
-          map: function(obj) {
-            return obj.data.group;
-          }
-        });
-
-        UserEntity.all.setAndDestroyRemoved([
-          { name: 'user1', group: { name: 'group1' } },
-          { name: 'user2', group: { name: 'group2' } }
-        ]);
-        assert(['group1', 'group2'], result.getValues('data.name'));
+        elementToUpdate = result.source.getItems()[2];
+        elementToUpdate.update({ sub: devWrap(elementToUpdate.data.sub) });
+        assert([3, 4, 5], result.getValues('data.value'));
       }
     }
   ]
