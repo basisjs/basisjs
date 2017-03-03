@@ -1,3 +1,13 @@
+## 1.10.1 (March 3, 2017)
+
+- Changed injection of `SVG` by `basis.resource()`, now it's storing `SVG` in invisible container to avoid browser specific bugs (@tyanas, #141)
+- Added `keypress` to input event list in `basis.tracker` (@MammaSonnim, #134)
+- Added role to `basis.ui.ScrollPanel` (@MammaSonnim, #136)
+- Implemented missed `ruleEvents` for `basis.data.vector.Vector` (@lahmatiy)
+- Fixed arguments order for `basis.data.index.percentOfSum()` (@lahmatiy)
+- Fixed object comparation in `MapFilter` by using safe `isEqual()` function (@smelukov, #148)
+- Fixed object comparation in `Extract` by using safe `isEqual()` function (@smelukov, #149)
+
 ## 1.10.0 (November 14, 2016)
 
 ### Core
