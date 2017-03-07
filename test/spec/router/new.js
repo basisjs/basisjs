@@ -170,7 +170,9 @@ module.exports = {
 
             route.params.str.set('some other');
 
-            assert(location.hash === '#page/some%20other');
+            assert.async(function(){
+              assert(location.hash === '#page/some%20other');
+            });
           }
         },
         {
@@ -188,7 +190,9 @@ module.exports = {
 
             route.params.first.set('spam');
 
-            assert(location.hash === '#spam/bar/baz');
+            assert.async(function(){
+              assert(location.hash === '#spam/bar/baz');
+            });
           }
         },
         {
@@ -210,15 +214,19 @@ module.exports = {
             };
             route.add(handler);
 
-            route.params.first.set('first');
-            route.params.second.set('second');
-            route.params.third.set('third');
+            assert.async(function(){
+              assert(counter === 1);
 
-            route.remove(handler);
+              route.params.first.set('first');
+              route.params.second.set('second');
+              route.params.third.set('third');
 
-            assert(counter === 1);
+              assert.async(function(){
+                assert(location.hash === '#first/second/third');
 
-            assert(location.hash === '#first/second/third');
+                route.remove(handler);
+              });
+            });
           }
         },
         {

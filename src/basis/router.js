@@ -108,6 +108,10 @@
     }
   });
 
+  var flushSchedule = basis.asap.schedule(function(route){
+    route.flush();
+  });
+
   /**
   * @class
   */
@@ -244,11 +248,9 @@
       }, this);
 
       token.set = function(value){
-        var newParams = basis.object.slice(paramsStore);
+        paramsStore[key] = transform(value, paramsStore[key]);
 
-        newParams[key] = transform(value, paramsStore[key]);
-
-        navigate(this.getPath(newParams));
+        flushSchedule.add(this);
       }.bind(this);
 
       return token;
@@ -289,6 +291,9 @@
       this.encode(params);
 
       return stringify(this.ast_, params, this.areModified_(params));
+    },
+    flush: function(){
+      navigate(this.getPath(this.paramsStore_));
     },
     getDefaults_: function(paramsConfig){
       var result = {};
