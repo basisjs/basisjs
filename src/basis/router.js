@@ -320,7 +320,7 @@
 
       this.pendingDelta_ = null;
 
-      navigate(this.getPath(this.paramsStore_));
+      navigate(this.getPath(this.paramsStore_), true);
     },
     getDefaults_: function(paramsConfig){
       var result = {};
