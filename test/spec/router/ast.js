@@ -168,7 +168,7 @@ module.exports = {
           name: 'regexp - groups and params',
           test: function(){
             var actual = parsePath('page/(:foo|(bar|:spam(/))|*baz)/end').regexp;
-            var expected = /^page\/(?:([^\/]+)|(?:bar|([^\/]+)(?:\/)?)?|(.*?))?\/end$/i.toString();
+            var expected = /^page\/(?:([^/]+)|(?:bar|([^/]+)(?:\/)?)?|(.*?))?\/end$/i.toString();
             assert(actual == expected);
           }
         },
@@ -185,7 +185,7 @@ module.exports = {
           name: 'regexp - symbols',
           test: function(){
             var actual = parsePath('/[]?{}/:bar/|+-.^').regexp;
-            var expected = /^\/\[\]\?\{\}\/([^\/]+)\/\|\+\-\.\^$/i.toString();
+            var expected = /^\/\[\]\?\{\}\/([^/]+)\/\|\+\-\.\^$/i.toString();
             assert(actual == expected);
           }
         }
