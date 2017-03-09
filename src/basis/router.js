@@ -204,6 +204,7 @@
     decode: basis.fn.$undef,
     encode: basis.fn.$undef,
     paramsConfig_: null,
+    pendingDelta_: null,
 
     init: function(parseInfo, config){
       Route.prototype.init.apply(this, arguments);
@@ -211,10 +212,10 @@
       this.paramsConfig_ = config.params;
       this.defaults_ = this.getDefaults_(config.params);
       this.paramsStore_ = basis.object.slice(this.defaults_);
+      this.pendingDelta_ = null;
 
       if (config.decode)
         this.decode = config.decode;
-
       if (config.encode)
         this.encode = config.encode;
 
@@ -248,9 +249,29 @@
       }, this);
 
       token.set = function(value){
-        paramsStore[key] = transform(value, paramsStore[key]);
+        var newValue = transform(value, paramsStore[key]);
 
-        flushSchedule.add(this);
+        if (newValue !== paramsStore[key])
+          if (this.pendingDelta_ && key in this.pendingDelta_ && this.pendingDelta_[key] === newValue)
+          {
+            delete this.pendingDelta_[key];
+
+            if (!basis.object.keys(this.pendingDelta_).length)
+            {
+              this.pendingDelta_ = null;
+              flushSchedule.remove(this);
+            }
+          }
+          else
+          {
+            if (!this.pendingDelta_)
+              this.pendingDelta_ = {};
+
+            this.pendingDelta_[key] = paramsStore[key];
+            flushSchedule.add(this);
+          }
+
+        paramsStore[key] = newValue;
       }.bind(this);
 
       return token;
@@ -293,6 +314,12 @@
       return stringify(this.ast_, params, this.areModified_(params));
     },
     flush: function(){
+      for (var i = 0, item; item = this.callbacks_[i]; i++)
+        if (item.callback.paramsChanged)
+          item.callback.paramsChanged.call(item.context, this.pendingDelta_);
+
+      this.pendingDelta_ = null;
+
       navigate(this.getPath(this.paramsStore_));
     },
     getDefaults_: function(paramsConfig){
