@@ -200,6 +200,8 @@
   });
 
   var ParametrizedRoute = Route.subclass({
+    className: namespace + '.ParametrizedRoute',
+
     params: null,
     decode: basis.fn.$undef,
     encode: basis.fn.$undef,
