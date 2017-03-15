@@ -102,6 +102,32 @@ module.exports = {
 
         route.destroy();
       }
+    },
+    {
+      name: 'setting params when not matched - warning and ignore',
+      test: function(){
+        var route = router.route('page/:str', {
+          params: {
+            str: type.string
+          }
+        });
+
+        router.navigate('something-different');
+
+        assert(route.params.str.value === '');
+
+        var warned = catchWarnings(function(){
+          route.params.str.set('str');
+        });
+
+        assert.async(function(){
+          assert(warned);
+          assert(route.params.str.value === '');
+          assert(location.hash === '#something-different');
+
+          route.destroy();
+        });
+      }
     }
   ]
 };

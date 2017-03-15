@@ -263,6 +263,12 @@
       }, this);
 
       token.set = function(value){
+        if (!this.matched.value)
+        {
+          /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: this.paramsConfig_ });
+          return;
+        }
+
         var newValue = transform(value, paramsStore[key]);
 
         if (newValue !== paramsStore[key])
