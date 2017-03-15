@@ -17,13 +17,12 @@ module.exports = {
         });
 
         var CONTEXT = {};
-        var HANDLER = {
+        route.add({
           paramsChanged: function(delta){
             assert(this === CONTEXT);
             lastDelta = delta;
           }
-        };
-        route.add(HANDLER, CONTEXT);
+        }, CONTEXT);
 
         router.navigate('offers/?page=4');
 
@@ -32,7 +31,7 @@ module.exports = {
         assert.async(function(){
           assert({ query: '' }, lastDelta);
 
-          route.remove(HANDLER);
+          route.destroy();
 
           done();
         });
@@ -50,12 +49,11 @@ module.exports = {
           }
         });
 
-        var HANDLER = {
+        route.add({
           paramsChanged: function(delta){
             lastDelta = delta;
           }
-        };
-        route.add(HANDLER);
+        });
 
         router.navigate('offers/?first=1&second=2');
 
@@ -72,7 +70,7 @@ module.exports = {
           assert.async(function(){
             assert({ first: 10 }, lastDelta);
 
-            route.remove(HANDLER);
+            route.destroy();
 
             done();
           });
@@ -89,12 +87,11 @@ module.exports = {
           }
         });
 
-        var HANDLER = {
+        route.add({
           paramsChanged: function(delta){
             called = true;
           }
-        };
-        route.add(HANDLER);
+        });
 
         router.navigate('offers/');
 
@@ -104,7 +101,7 @@ module.exports = {
         assert.async(function(){
           assert(called === false);
 
-          route.remove(HANDLER);
+          route.destroy();
 
           done();
         });

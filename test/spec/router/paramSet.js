@@ -3,6 +3,7 @@ module.exports = {
   init: function(){
     var router = basis.require('basis.router');
     var type = basis.require('basis.type');
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
   },
   test: [
     {
@@ -92,7 +93,9 @@ module.exports = {
 
         router.navigate('page/some');
 
-        route.params.str.set(true);
+        catchWarnings(function(){
+          route.params.str.set(true);
+        });
 
         assert(route.params.str.value === 'some');
         assert(location.hash === '#page/some');

@@ -169,13 +169,16 @@ module.exports = {
     {
       name: 'fallback to prev value in case of incorrect parsing',
       test: function(){
+        var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
         var simpleRoute = router.route('my/:num', {
           params: {
             num: type.number
           }
         });
 
-        router.navigate('my/stuff');
+        catchWarnings(function(){
+          router.navigate('my/stuff');
+        });
 
         assert(simpleRoute.params.num.value === 0);
 
@@ -183,7 +186,9 @@ module.exports = {
 
         assert(simpleRoute.params.num.value === 3);
 
-        router.navigate('my/NaN');
+        catchWarnings(function(){
+          router.navigate('my/NaN');
+        });
 
         assert(simpleRoute.params.num.value === 3);
       }
