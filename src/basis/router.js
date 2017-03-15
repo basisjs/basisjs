@@ -376,6 +376,20 @@
         pathMatch: newPath.match(this.regexp_),
         query: newQuery
       };
+    },
+    destroy: function(){
+      this.paramsConfig_ = null;
+      this.defaults_ = null;
+      this.paramsStore_ = null;
+      this.decode = null;
+      this.encode = null;
+      this.params = null;
+
+      flushSchedule.remove(this);
+
+      delete routesByObjectId[this.basisObjectId];
+
+      Route.prototype.destroy.apply(this, arguments);
     }
   });
 

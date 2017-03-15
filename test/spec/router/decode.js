@@ -15,7 +15,7 @@ module.exports = {
     router.navigate('');
   },
   afterEach: function(){
-    route.remove();
+    route.destroy();
   },
   test: [
     {

@@ -96,6 +96,7 @@ module.exports = {
         assert(warned);
       }
     },
+    require('./destroy.js'),
     require('./transform.js'),
     require('./decode.js'),
     require('./paramSet.js'),

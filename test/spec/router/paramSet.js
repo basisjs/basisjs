@@ -4,9 +4,6 @@ module.exports = {
     var router = basis.require('basis.router');
     var type = basis.require('basis.type');
   },
-  afterEach: function(){
-    route.remove();
-  },
   test: [
     {
       name: 'simple case',
@@ -23,6 +20,8 @@ module.exports = {
 
         assert.async(function(){
           assert(location.hash === '#page/some%20other');
+
+          route.destroy();
         });
       }
     },
@@ -43,6 +42,8 @@ module.exports = {
 
         assert.async(function(){
           assert(location.hash === '#spam/bar/baz');
+
+          route.destroy();
         });
       }
     },
@@ -75,7 +76,7 @@ module.exports = {
           assert.async(function(){
             assert(location.hash === '#first/second/third');
 
-            route.remove(handler);
+            route.destroy();
           });
         });
       }
@@ -95,6 +96,8 @@ module.exports = {
 
         assert(route.params.str.value === 'some');
         assert(location.hash === '#page/some');
+
+        route.destroy();
       }
     }
   ]
