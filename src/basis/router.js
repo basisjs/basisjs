@@ -212,7 +212,6 @@
       this.paramsConfig_ = config.params;
       this.defaults_ = this.getDefaults_(config.params);
       this.paramsStore_ = basis.object.slice(this.defaults_);
-      this.pendingDelta_ = null;
 
       if (config.decode)
         this.decode = config.decode;
@@ -227,15 +226,12 @@
     constructParam_: function(key){
       var transform = this.paramsConfig_[key];
       var defaults = this.defaults_;
-      var token = new basis.Token(null);
+      var token = new basis.Token(defaults[key]);
       var originalSet = token.set;
       var paramsStore = this.paramsStore_;
 
       function computeNewValue(values) {
-        if (!values)
-          return null;
-
-        if (values[key] == null) {
+        if (!values || values[key] == null) {
           return defaults[key];
         }
 

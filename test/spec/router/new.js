@@ -47,6 +47,34 @@ module.exports = {
         }
       ]
     },
+    {
+      name: 'default values when not matched',
+      test: function(){
+        var router = basis.require('basis.router');
+        var type = basis.require('basis.type');
+
+        var route = router.route('a/', {
+          params: {
+            num: type.number.default(42)
+          }
+        });
+
+        router.navigate('b/');
+
+        assert(route.matched.value === false);
+        assert(route.params.num.value === 42);
+
+        router.navigate('a/?num=5');
+
+        assert(route.matched.value === true);
+        assert(route.params.num.value === 5);
+
+        router.navigate('c/');
+
+        assert(route.matched.value === false);
+        assert(route.params.num.value === 42);
+      }
+    },
     require('./transform.js'),
     require('./decode.js'),
     require('./paramSet.js'),
