@@ -167,8 +167,8 @@ module.exports = {
         {
           name: 'regexp - groups and params',
           test: function(){
-            var actual = parsePath('page/(:foo|(bar|:spam(/))|*baz)/end').regexp;
-            var expected = /^page\/(?:([^/]+)|(?:bar|([^/]+)(?:\/)?)?|(.*?))?\/end$/i.toString();
+            var actual = parsePath('page/(:foo|(bar|:spam(/))|*baz)/end').regexp.toString();
+            var expected = new RegExp('^page\/(?:([^/]+)|(?:bar|([^/]+)(?:\/)?)?|(.*?))?\/end$', 'i').toString();
             assert(actual == expected);
           }
         },
@@ -176,16 +176,16 @@ module.exports = {
           name: 'regexp - escaping',
           test: function(){
             // page\/\(\:foo\|bar\|\*baz\)\/\end\\
-            var actual = parsePath('page\\/\\(\\:foo\\|bar\\|\\*baz\\)\\/\\end\\\\').regexp;
-            var expected = /^page\/\(\:foo\|bar\|\*baz\)\/\end\\$/i.toString();
+            var actual = parsePath('page\\/\\(\\:foo\\|bar\\|\\*baz\\)\\/\\end\\\\').regexp.toString();
+            var expected = new RegExp('^page\\/\\(\\:foo\\|bar\\|\\*baz\\)\\/\\end\\\\$', 'i').toString();
             assert(actual == expected);
           }
         },
         {
           name: 'regexp - symbols',
           test: function(){
-            var actual = parsePath('/[]?{}/:bar/|+-.^').regexp;
-            var expected = /^\/\[\]\?\{\}\/([^/]+)\/\|\+\-\.\^$/i.toString();
+            var actual = parsePath('/[]?{}/:bar/|+-.^').regexp.toString();
+            var expected = new RegExp('^\\/\\[\\]\\?\\{\\}\\/([^/]+)\\/\\|\\+\\-\\.\\^$', 'i').toString();
             assert(actual == expected);
           }
         }
