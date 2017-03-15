@@ -8,7 +8,6 @@ module.exports = {
       bar: type.string.nullable,
       baz: type.string.nullable,
       spam: type.string.nullable,
-      end: type.string.nullable,
       stuff: type.string.nullable,
       json: type.string.nullable,
       end: type.string.nullable,

@@ -17,10 +17,10 @@ module.exports = {
 
         router.navigate('page');
 
-        route.params.str.set('some other');
+        route.params.str.set('someother');
 
         assert.async(function(){
-          assert(location.hash === '#page/some%20other');
+          assert(location.hash === '#page/someother');
 
           route.destroy();
         });
