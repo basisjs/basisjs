@@ -209,8 +209,8 @@
     init: function(parseInfo, config){
       Route.prototype.init.apply(this, arguments);
 
-      this.paramsConfig_ = config.params;
-      this.defaults_ = this.getDefaults_(config.params);
+      this.paramsConfig_ = this.verifyParamsConfig_(config.params);
+      this.defaults_ = this.getDefaults_(this.paramsConfig_);
       this.paramsStore_ = basis.object.slice(this.defaults_);
 
       if (config.decode)
@@ -219,9 +219,27 @@
         this.encode = config.encode;
 
       this.params = {};
-      basis.object.iterate(config.params, function(key){
+      basis.object.iterate(this.paramsConfig_, function(key){
         this.params[key] = this.constructParam_(key);
       }, this);
+    },
+    verifyParamsConfig_: function(paramsConfig){
+      var result = {};
+
+      basis.object.iterate(paramsConfig, function(key, transform){
+        if (typeof transform === 'function')
+        {
+          result[key] = transform;
+        }
+        else
+        {
+          result[key] = basis.fn.$self;
+
+          /** @cut */ basis.dev.warn(namespace + ': expected param ' + key + ' to be function, but got ', transform, ' using basis.fn.$self instead');
+        }
+      });
+
+      return result;
     },
     constructParam_: function(key){
       var transform = this.paramsConfig_[key];

@@ -3,11 +3,11 @@ module.exports = {
   sandbox: true,
   test: [
     {
-      name: 'cases of routes reusage/creation',
-      beforeEach: function(){
+      init: function(){
         var router = basis.require('basis.router');
         var type = basis.require('basis.type');
       },
+      name: 'cases of routes reusage/creation',
       test: [
         {
           name: 'parametrized route with the same path creates different object',
@@ -73,6 +73,27 @@ module.exports = {
 
         assert(route.matched.value === false);
         assert(route.params.num.value === 42);
+      }
+    },
+    {
+      name: 'warns when transform is not a function',
+      test: function(){
+        var router = basis.require('basis.router');
+        var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
+
+        var warned = catchWarnings(function(){
+          var route = router.route('a/', {
+            params: {
+              nonFn: true
+            }
+          });
+
+          router.navigate('a/?nonFn=str');
+
+          assert(route.params.nonFn.value === 'str');
+        });
+
+        assert(warned);
       }
     },
     require('./transform.js'),
