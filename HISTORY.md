@@ -1,3 +1,7 @@
+## 1.10.2 (March 16, 2017)
+
+- Fixed wrong warning on successful route handler removal (#151)
+
 ## 1.10.1 (March 3, 2017)
 
 - Changed injection of `SVG` by `basis.resource()`, now it's storing `SVG` in invisible container to avoid browser specific bugs (@tyanas, #141)
