@@ -48,6 +48,9 @@
   //
   // apply route changes
   //
+  var ROUTE_ENTER = 1;
+  var ROUTE_MATCH = 2;
+  var ROUTE_LEAVE = 4;
 
   function routeEnter(route, nonInitedOnly){
     var callbacks = arrayFrom(route.callbacks_);
@@ -79,23 +82,6 @@
         item.callback.match.apply(item.context, arrayFrom(route.value));
         /** @cut */ log.push('\n', { type: 'match', path: route.path, cb: item, route: route, args: route.value });
       }
-  }
-
-  var routesToLeave = [];
-  var routesToEnter = [];
-  var routesToMatch = [];
-  function flushRouteEvents() {
-    for (var i = 0; i < routesToLeave.length; i++)
-      routeLeave(routesToLeave[i]);
-    routesToLeave.length = 0;
-
-    for (var i = 0; i < routesToEnter.length; i++)
-      routeEnter(routesToEnter[i]);
-    routesToEnter.length = 0;
-
-    for (var i = 0; i < routesToMatch.length; i++)
-      routeMatch(routesToMatch[i]);
-    routesToMatch.length = 0;
   }
 
   var initSchedule = basis.asap.schedule(function(route){
@@ -148,23 +134,29 @@
     processLocation_: function(newPath){
       initSchedule.remove(this);
 
+      var resultFlags = 0;
       var match = this.matches_(newPath);
 
       if (match.pathMatch)
       {
         if (!this.value)
-          routesToEnter.push(this);
+          resultFlags |= ROUTE_ENTER;
+
         this.setMatch_(arrayFrom(match.pathMatch, 1), match.query);
-        routesToMatch.push(this);
+
+        resultFlags |= ROUTE_MATCH;
       }
       else
       {
         if (this.value)
         {
           this.setMatch_(null);
-          routesToLeave.push(this);
+
+          resultFlags |= ROUTE_LEAVE;
         }
       }
+
+      return resultFlags;
     },
     param: function(nameOrIdx){
       var idx = typeof nameOrIdx == 'number' ? nameOrIdx : this.names_.indexOf(nameOrIdx);
@@ -518,12 +510,29 @@
       // save current path
       currentPath = newPath;
 
-      // update route states
+      var routesToLeave = [];
+      var routesToEnter = [];
+      var routesToMatch = [];
+
       allRoutes.forEach(function(route){
-        route.processLocation_(newPath);
+        var flags = route.processLocation_(newPath);
+
+        if (flags & ROUTE_LEAVE)
+          routesToLeave.push(route);
+        if (flags & ROUTE_ENTER)
+          routesToEnter.push(route);
+        if (flags & ROUTE_MATCH)
+          routesToMatch.push(route);
       });
 
-      flushRouteEvents();
+      for (var i = 0; i < routesToLeave.length; i++)
+        routeLeave(routesToLeave[i]);
+
+      for (var i = 0; i < routesToEnter.length; i++)
+        routeEnter(routesToEnter[i]);
+
+      for (var i = 0; i < routesToMatch.length; i++)
+        routeMatch(routesToMatch[i]);
 
       /** @cut */ flushLog(namespace + ': hash changed to "' + newPath + '"');
     }
@@ -575,7 +584,14 @@
         plainRoutesByPath[path] = route;
 
       if (typeof currentPath == 'string')
-        route.processLocation_(currentPath);
+      {
+        var flags = route.processLocation_(currentPath);
+
+        if (flags & ROUTE_ENTER)
+          routeEnter(route);
+        if (flags & ROUTE_MATCH)
+          routeMatch(route);
+      }
     }
 
     return route;
