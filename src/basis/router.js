@@ -261,7 +261,7 @@
 
       this.attach(function(values){
         var newValue;
-        if (values && values[key] != null)
+        if (values && key in values)
           newValue = transform(values[key], paramsStore[key]);
         else
           newValue = defaults[key];
@@ -314,7 +314,10 @@
 
         // preserve only params specified in config.params
         for (var paramName in this.params)
-          allParams[paramName] = paramsFromPath[paramName] || paramsFromQuery[paramName];
+          if (paramName in paramsFromPath)
+            allParams[paramName] = paramsFromPath[paramName];
+          else if (paramName in paramsFromQuery)
+            allParams[paramName] = paramsFromQuery[paramName];
 
         this.decode(allParams);
       }

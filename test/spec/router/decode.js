@@ -49,6 +49,30 @@ module.exports = {
       }
     },
     {
+      name: 'null and undefined go through transforms',
+      test: function(){
+        var route = router.route('base/', {
+          params: {
+            toBeNull: function(value){
+              return value === null ? 'correct' : 'incorrect';
+            },
+            toBeUndefined: function(value){
+              return arguments.length > 1 && value === undefined ? 'correct' : 'incorrect';
+            }
+          },
+          decode: function(params){
+            params.toBeNull = null;
+            params.toBeUndefined = undefined;
+          }
+        });
+
+        router.navigate('base/');
+
+        assert(route.params.toBeNull.value === 'correct');
+        assert(route.params.toBeUndefined.value === 'correct');
+      }
+    },
+    {
       name: 'not a function',
       test: function(){
         var route;
