@@ -252,7 +252,7 @@ function stringify(nodes, values, areModified) {
     if (!areModified[key])
       return;
 
-    query.push(key + '=' + encodeURIComponent(value));
+    query.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
   });
 
   if (query.length)

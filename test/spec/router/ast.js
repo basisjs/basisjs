@@ -433,6 +433,20 @@ module.exports = {
           }
         },
         {
+          name: 'writes multiple optional params to query',
+          test: function(){
+            var actual = stringify([
+              word('page/')
+            ], {
+              'basis js': 'framework'
+            }, {
+              'basis js': true // 'basis js' has modified value
+            });
+            var expected = 'page/?basis%20js=framework';
+            assert(actual == expected);
+          }
+        },
+        {
           name: 'writes optional groups with default params in case they precedes a nondefault param',
           test: function(){
             var actual = stringify([
