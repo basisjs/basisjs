@@ -74,6 +74,28 @@ module.exports = {
       }
     },
     {
+      name: 'encode not a function',
+      test: function(){
+        var route;
+        var warned = catchWarnings(function(){
+          route = router.route(':str/', {
+            params: {
+              str: type.string,
+              query: type.string
+            },
+            encode: 2
+          });
+        });
+
+        assert(warned);
+
+        var expected = 'foo/?query=abc';
+        var actual = route.getPath({ str: 'foo', query: 'abc' });
+
+        assert(actual == expected);
+      }
+    },
+    {
       name: 'transforms params',
       test: function(){
         var route = router.route('tea/:double/:wrapped', {

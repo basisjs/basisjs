@@ -216,9 +216,27 @@
       this.paramsStore_ = basis.object.slice(this.defaults_);
 
       if (config.decode)
-        this.decode = config.decode;
+      {
+        if (typeof config.decode === 'function')
+        {
+          this.decode = config.decode;
+        }
+        else
+        {
+          /** @cut */ basis.dev.warn(namespace + ': expected decode to be function, but got ', config.decode, ' - ignore');
+        }
+      }
       if (config.encode)
-        this.encode = config.encode;
+      {
+        if (typeof config.encode === 'function')
+        {
+          this.encode = config.encode;
+        }
+        else
+        {
+          /** @cut */ basis.dev.warn(namespace + ': expected encode to be function, but got ', config.encode, ' - ignore');
+        }
+      }
 
       this.params = {};
       for (var key in this.paramsConfig_)

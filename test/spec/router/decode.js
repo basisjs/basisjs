@@ -3,6 +3,7 @@ module.exports = {
   init: function(){
     var router = basis.require('basis.router');
     var type = basis.require('basis.type');
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
 
     var params = {
       obj: type.object,
@@ -10,9 +11,6 @@ module.exports = {
       numArray: type.array,
       str: type.string
     };
-  },
-  beforeEach: function(){
-    router.navigate('');
   },
   afterEach: function(){
     route.destroy();
@@ -48,6 +46,28 @@ module.exports = {
           }
         });
         router.navigate('some-str/?extra=ext');
+      }
+    },
+    {
+      name: 'not a function',
+      test: function(){
+        var route;
+        var warned = catchWarnings(function(){
+          route = router.route(':str/', {
+            params: {
+              str: type.string,
+              query: type.string
+            },
+            decode: 2
+          });
+        });
+
+        assert(warned);
+
+        router.navigate('foo/?query=abc');
+
+        assert(route.params.str.value === 'foo');
+        assert(route.params.query.value === 'abc');
       }
     }
   ]
