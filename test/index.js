@@ -9,7 +9,6 @@ module.exports = {
     require('./spec/crypt.js'),
     require('./spec/ua.js'),
     require('./spec/router.js'),
-    require('./spec/router/parametrized.js'),
     require('./spec/l10n.js'),
     require('./spec/data.js'),
     require('./spec/data.object.js'),
