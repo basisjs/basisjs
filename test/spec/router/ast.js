@@ -27,7 +27,7 @@ module.exports = {
     }
 
     function ast(path) {
-      return JSON.stringify(parsePath(path).AST);
+      return JSON.stringify(parsePath(path).ast);
     }
     function str(obj) {
       return JSON.stringify(obj);

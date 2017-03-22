@@ -133,8 +133,8 @@
 
       this.path = parseInfo.path;
       this.matched = this.as(Boolean);
-      this.ast_ = parseInfo.AST;
-      this.names_ = Array.isArray(regexp.params) ? regexp.params : [];
+      this.ast_ = parseInfo.ast;
+      this.names_ = parseInfo.params;
       this.regexp_ = regexp;
       this.params_ = {};
       this.callbacks_ = [];
@@ -250,16 +250,13 @@
       var originalSet = token.set;
       var paramsStore = this.paramsStore_;
 
-      function computeNewValue(values) {
-        if (!values || values[key] == null) {
-          return defaults[key];
-        }
-
-        return transform(values[key], paramsStore[key]);
-      }
-
       this.attach(function(values){
-        var newValue = computeNewValue(values);
+        var newValue;
+        if (values && values[key] != null)
+          newValue = transform(values[key], paramsStore[key]);
+        else
+          newValue = defaults[key];
+
         paramsStore[key] = newValue;
         originalSet.call(token, newValue);
       }, this);
@@ -360,7 +357,7 @@
       var result = {};
 
       basis.object.iterate(this.paramsConfig_, function(key){
-        result[key] = (params[key] !== this.defaults_[key]);
+        result[key] = params[key] !== this.defaults_[key];
       }, this);
 
       return result;
@@ -555,13 +552,12 @@
     if (!route && params.autocreate)
     {
       var parseInfo = Object.prototype.toString.call(path) == '[object RegExp]'
-        ? { path: path, regexp: path, AST: null }
+        ? { path: path, regexp: path, ast: null }
         : parsePath(path);
       route = createRoute(parseInfo, config);
       routesByObjectId[route.basisObjectId] = route;
 
-      var isParametrizedRoute = route instanceof ParametrizedRoute;
-      if (!isParametrizedRoute)
+      if (route instanceof ParametrizedRoute == false)
         plainRoutesByPath[path] = route;
 
       if (typeof currentPath == 'string')

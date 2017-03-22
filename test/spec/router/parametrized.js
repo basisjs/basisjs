@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'new router',
+  name: 'parametrized router',
   sandbox: true,
   test: [
     {

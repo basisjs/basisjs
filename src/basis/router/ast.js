@@ -26,7 +26,7 @@ function parsePath(route){
     while (res = getOption(i)) {
       options.push({
         type: TYPE.GROUP_OPTION,
-        children: res.AST
+        children: res.ast
       });
       i = res.offset;
       result += res.result;
@@ -53,12 +53,12 @@ function parsePath(route){
     var result = '';
     var res;
     var curWord = '';
-    var AST = [];
+    var ast = [];
 
     function putCurrentWord() {
       if (curWord)
       {
-        AST.push({
+        ast.push({
           type: TYPE.WORD,
           name: curWord
         });
@@ -78,7 +78,7 @@ function parsePath(route){
             result: result,
             offset: i,
             stoppedAt: c,
-            AST: AST
+            ast: ast
           };
 
         case '\\':
@@ -98,7 +98,7 @@ function parsePath(route){
             i = res.offset;
             result += '(?:' + res.result + ')?';
             putCurrentWord();
-            AST.push({
+            ast.push({
               type: TYPE.GROUP,
               options: res.options
             });
@@ -118,7 +118,7 @@ function parsePath(route){
             i += res[0].length;
             result += '([^\/]+)';
             params.push(res[0]);
-            AST.push({
+            ast.push({
               type: TYPE.PLAIN_PARAM,
               name: res[0]
             });
@@ -137,7 +137,7 @@ function parsePath(route){
             i += res[0].length;
             result += '(.*?)';
             params.push(res[0]);
-            AST.push({
+            ast.push({
               type: TYPE.ANY_PARAM,
               name: res[0]
             });
@@ -159,17 +159,17 @@ function parsePath(route){
 
     return stopChar ? null : {
       regexpStr: result,
-      AST: AST
+      ast: ast
     };
   }
 
   var parsingResult = parse(0);
   var regexp = new RegExp('^' + parsingResult.regexpStr + '$', 'i');
-  regexp.params = params;
   return {
     path: route,
     regexp: regexp,
-    AST: parsingResult.AST
+    params: params,
+    ast: parsingResult.ast
   };
 }
 
@@ -198,9 +198,7 @@ function stringifyNodes(nodes, values, areModified) {
 
   function markAsWritten(paramName) {
     if (!modifiedParamsWritten)
-    {
       modifiedParamsWritten = {};
-    }
     modifiedParamsWritten[paramName] = true;
   }
 
