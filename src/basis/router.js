@@ -76,7 +76,7 @@
       if ((!nonInitedOnly || !item.matchInited) && item.callback.match)
       {
         item.matchInited = true;
-        item.callback.match.apply(item.context, route.value);
+        item.callback.match.apply(item.context, arrayFrom(route.value));
         /** @cut */ log.push('\n', { type: 'match', path: route.path, cb: item, route: route, args: route.value });
       }
   }
@@ -221,9 +221,8 @@
         this.encode = config.encode;
 
       this.params = {};
-      basis.object.iterate(this.paramsConfig_, function(key){
+      for (var key in this.paramsConfig_)
         this.params[key] = this.constructParam_(key);
-      }, this);
     },
     verifyParamsConfig_: function(paramsConfig){
       var result = {};
@@ -317,10 +316,9 @@
 
       specifiedParams = specifiedParams || {};
 
-      /** @cut */ basis.object.iterate(specifiedParams, function(key){
+      /** @cut */ for (var key in specifiedParams)
       /** @cut */   if (!(key in this.paramsConfig_))
       /** @cut */     basis.dev.warn(namespace + ': found param ' + key + ' not specified in config - ignoring', { params: this.paramsConfig_ });
-      /** @cut */ }, this);
 
       basis.object.iterate(this.paramsConfig_, function(key, transform){
         if (key in specifiedParams)
@@ -356,9 +354,8 @@
     areModified_: function(params){
       var result = {};
 
-      basis.object.iterate(this.paramsConfig_, function(key){
+      for (var key in this.paramsConfig_)
         result[key] = params[key] !== this.defaults_[key];
-      }, this);
 
       return result;
     },
