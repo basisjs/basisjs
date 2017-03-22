@@ -154,14 +154,14 @@
       {
         if (!this.value)
           routesToEnter.push(this);
-        this.set(arrayFrom(match.pathMatch, 1), match.query);
+        this.setMatch_(arrayFrom(match.pathMatch, 1), match.query);
         routesToMatch.push(this);
       }
       else
       {
         if (this.value)
         {
-          this.set(null);
+          this.setMatch_(null);
           routesToLeave.push(this);
         }
       }
@@ -176,20 +176,20 @@
 
       return this.params_[idx];
     },
-    set: function(value){
-      if (value)
+    setMatch_: function(match){
+      if (match)
       {
-        // make a copy of value, it also converts value to object (as value is array of matches)
-        value = value.slice(0);
+        // make a copy of match, it also converts match to object (as match is array of matches)
+        match = match.slice(0);
 
         // extend object with named values
-        for (var key in value)
+        for (var key in match)
           if (key in this.names_)
-            if (value[key] || typeof value[this.names_[key]] == 'undefined')
-              value[this.names_[key]] = value[key];
+            if (match[key] || typeof match[this.names_[key]] == 'undefined')
+              match[this.names_[key]] = match[key];
       }
 
-      basis.Token.prototype.set.call(this, value);
+      this.set(match);
     },
     add: function(callback, context){
       return add(this, callback, context);
@@ -295,22 +295,22 @@
 
       return token;
     },
-    set: function(value, query){
+    setMatch_: function(pathMatch, query){
       var paramsFromQuery = queryToParams(query);
 
-      if (value)
+      if (pathMatch)
       {
-        var paramsFromUrl = this.paramsArrayToObject_(value);
+        var paramsFromPath = this.paramsArrayToObject_(pathMatch);
         var allParams = {};
 
         // preserve only params specified in config.params
         for (var paramName in this.params)
-          allParams[paramName] = paramsFromUrl[paramName] || paramsFromQuery[paramName];
+          allParams[paramName] = paramsFromPath[paramName] || paramsFromQuery[paramName];
 
         this.decode(allParams);
       }
 
-      basis.Token.prototype.set.call(this, allParams);
+      this.set(allParams);
     },
     getPath: function(specifiedParams){
       var params = {};
