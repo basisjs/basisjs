@@ -44,6 +44,22 @@ module.exports = {
 
             assert(route !== differentRoute);
           }
+        },
+        {
+          name: 'creating parametrized route after plain route with the same path creates different object',
+          test: function(){
+            var router = basis.require('basis.router');
+            var type = basis.require('basis.type');
+
+            var route = router.route('another/path');
+            var differentRoute = router.route('another/path', {
+              params: {
+                str: type.string
+              }
+            });
+
+            assert(route !== differentRoute);
+          }
         }
       ]
     },

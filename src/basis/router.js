@@ -558,7 +558,10 @@
     if (path instanceof Route)
       return path;
 
-    var route = plainRoutesByPath[path];
+    var route;
+    // If there is no config specified - it should be a plain route, so we try to reuse it
+    if (!config)
+      route = plainRoutesByPath[path];
 
     if (!route && params.autocreate)
     {
