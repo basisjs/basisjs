@@ -23,7 +23,7 @@
   var CHECK_INTERVAL = 50;
 
   var arrayFrom = basis.array.from;
-  var routesByObjectId = {};
+  var allRoutes = [];
   var plainRoutesByPath = {};
   var started = false;
   var currentPath;
@@ -389,7 +389,7 @@
 
       flushSchedule.remove(this);
 
-      delete routesByObjectId[this.basisObjectId];
+      basis.array.remove(allRoutes, this);
 
       Route.prototype.destroy.apply(this, arguments);
     }
@@ -501,11 +501,9 @@
       currentPath = newPath;
 
       // update route states
-      for (var objectId in routesByObjectId)
-      {
-        var route = routesByObjectId[objectId];
+      allRoutes.forEach(function(route){
         route.processLocation_(newPath);
-      }
+      });
 
       flushRouteEvents();
 
@@ -513,15 +511,13 @@
     }
     else
     {
-      for (var objectId in routesByObjectId)
-      {
-        var route = routesByObjectId[objectId];
+      allRoutes.forEach(function(route){
         if (route.value)
         {
           routeEnter(route, true);
           routeMatch(route, true);
         }
-      }
+      });
 
       /** @cut */ flushLog(namespace + ': checkUrl()');
     }
@@ -552,7 +548,7 @@
         ? { path: path, regexp: path, ast: null }
         : parsePath(path);
       route = createRoute(parseInfo, config);
-      routesByObjectId[route.basisObjectId] = route;
+      allRoutes.push(route);
 
       if (route instanceof ParametrizedRoute == false)
         plainRoutesByPath[path] = route;
@@ -619,7 +615,7 @@
           // check no attaches to route
           if ((!route.handler || !route.handler.handler) && !route.matched.handler)
           {
-            delete routesByObjectId[route.basisObjectId];
+            basis.array.remove(allRoutes, route);
 
             if (!(route instanceof ParametrizedRoute))
               delete plainRoutesByPath[route.path];
