@@ -112,6 +112,30 @@ module.exports = {
         assert(warned);
       }
     },
+    {
+      name: 'navigate',
+      test: function(){
+        var router = basis.require('basis.router');
+        var type = basis.require('basis.type');
+
+        var route = router.route('page/:str', {
+          params: {
+            str: type.string
+          }
+        });
+
+        router.navigate('something-different');
+
+        route.navigate({
+          str: 'str'
+        });
+
+        assert(route.params.str.value === 'str');
+        assert(location.hash === '#page/str');
+
+        route.destroy();
+      }
+    },
     require('./destroy.js'),
     require('./transform.js'),
     require('./decode.js'),

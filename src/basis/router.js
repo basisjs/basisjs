@@ -345,6 +345,9 @@
 
       this.flush(replace);
     },
+    navigate: function(params, replace){
+      navigate(this.getPath(params), replace);
+    },
     getPath: function(specifiedParams){
       var params = {};
 
