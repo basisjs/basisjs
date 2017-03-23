@@ -177,8 +177,7 @@
         // extend object with named values
         for (var key in match)
           if (key in this.names_)
-            if (match[key] || typeof match[this.names_[key]] == 'undefined')
-              match[this.names_[key]] = match[key];
+            match[this.names_[key]] = match[key];
       }
 
       this.set(match);
