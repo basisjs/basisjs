@@ -115,6 +115,7 @@ module.exports = {
     require('./destroy.js'),
     require('./transform.js'),
     require('./decode.js'),
+    require('./update.js'),
     require('./paramSet.js'),
     require('./paramsChanged.js'),
     require('./parse.js'),

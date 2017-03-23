@@ -7,7 +7,7 @@ module.exports = {
   test: [
     {
       name: 'simple case',
-      test: function(done){
+      test: function(){
         var lastDelta;
         var route = router.route('offers/', {
           params: {
@@ -32,14 +32,12 @@ module.exports = {
           assert({ query: '' }, lastDelta);
 
           route.destroy();
-
-          done();
         });
       }
     },
     {
       name: 'should be called with delta',
-      test: function(done){
+      test: function(){
         var lastDelta;
         var route = router.route('offers/', {
           params: {
@@ -71,15 +69,13 @@ module.exports = {
             assert({ first: 10 }, lastDelta);
 
             route.destroy();
-
-            done();
           });
         });
       }
     },
     {
       name: 'should not be called if was not changed actually',
-      test: function(done){
+      test: function(){
         var called = false;
         var route = router.route('offers/', {
           params: {
@@ -102,8 +98,6 @@ module.exports = {
           assert(called === false);
 
           route.destroy();
-
-          done();
         });
       }
     }

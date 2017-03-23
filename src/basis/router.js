@@ -95,7 +95,7 @@
   });
 
   var flushSchedule = basis.asap.schedule(function(route){
-    route.flush();
+    route.flush(true);
   });
 
   /**
@@ -324,6 +324,27 @@
 
       this.set(allParams);
     },
+    update: function(params, replace){
+      if (!this.matched.value)
+      {
+        /** @cut */ basis.dev.warn(namespace + ': trying to update when route not matched - ignoring', { path: this.path, params: params });
+
+        return;
+      }
+
+      basis.object.iterate(params, function(key, newValue){
+        if (key in this.params)
+        {
+          this.params[key].set(newValue);
+        }
+        else
+        {
+          /** @cut */ basis.dev.warn(namespace + ': found param ' + key + ' not specified in config - ignoring', { params: this.paramsConfig_ });
+        }
+      }, this);
+
+      this.flush(replace);
+    },
     getPath: function(specifiedParams){
       var params = {};
 
@@ -343,14 +364,14 @@
 
       return stringify(this.ast_, params, this.areModified_(params));
     },
-    flush: function(){
+    flush: function(replace){
       for (var i = 0, item; item = this.callbacks_[i]; i++)
         if (item.callback.paramsChanged)
           item.callback.paramsChanged.call(item.context, this.pendingDelta_);
 
       this.pendingDelta_ = null;
 
-      navigate(this.getPath(this.paramsStore_), true);
+      navigate(this.getPath(this.paramsStore_), replace);
     },
     getDefaults_: function(paramsConfig){
       var result = {};
