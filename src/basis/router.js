@@ -601,7 +601,7 @@
     if (!route && params.autocreate)
     {
       var parseInfo = Object.prototype.toString.call(path) == '[object RegExp]'
-        ? { path: path, regexp: path, ast: null }
+        ? { path: path, regexp: path, ast: null, params: [] }
         : parsePath(path);
       route = createRoute(parseInfo, config);
       allRoutes.push(route);

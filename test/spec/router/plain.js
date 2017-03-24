@@ -319,6 +319,20 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'regular expression route',
+      test: function(){
+        var checker = 0;
+
+        router.add(/^tost(\w+)$/, function(){
+          checker++;
+        });
+        location.hash = 'tostobar';
+        router.checkUrl();
+
+        assert(checker === 1);
+      }
     }
   ]
 };
