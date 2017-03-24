@@ -53,6 +53,11 @@
         "url": "common/satellite.html"
       },
       {
+        "title": "Drag&Drop",
+        "url": "common/dragdrop.html",
+        "image": "res/img/noimg.png"
+      },
+      {
         "title": "Router",
         "url": "common/router.html",
         "image": "res/img/noimg.png"
@@ -74,6 +79,10 @@
       {
         "title": "Sync datasets with server data",
         "url": "data/userlist.html"
+      },
+      {
+        "title": "Sync datasets with server data (tracking)",
+        "url": "data/userlist-with-roles.html"
       },
       {
         "title": "Using of datasets",

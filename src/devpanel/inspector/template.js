@@ -5,7 +5,7 @@ var getBoundingRect = require('basis.layout').getBoundingRect;
 var Value = require('basis.data').Value;
 var Balloon = require('basis.ui.popup').Balloon;
 
-var fileAPI = require('../api/file.js');
+var fileAPI = require('api').ns('file');
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisTemplate = inspectBasis.require('basis.template');
 var inspectBasisTemplateMarker = inspectBasis.require('basis.template.const').MARKER;
@@ -60,7 +60,7 @@ function pickHandler(event){
     {
       if (event.ctrlKey || event.metaKey)
       {
-        fileAPI.openFile(source.url);
+        fileAPI.open(source.url);
       }
       else
       {
@@ -71,7 +71,7 @@ function pickHandler(event){
           var info = inspectBasis.dev.getInfo(object);
 
           if (info && info.loc)
-            fileAPI.openFile(info.loc);
+            fileAPI.open(info.loc);
           else
             console.info('Object create location doesn\'t resolved:', object, info);
         }

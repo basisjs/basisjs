@@ -56,7 +56,7 @@
     });
   }
 
-  function percentOfSum(getter, events){
+  function percentOfSum(events, getter){
     var sumIndex = IndexedCalc.getId('sum');
     var indexes = {};
 

@@ -8,14 +8,13 @@
 </head>
 
 <body>
-  <script src="../src/basis.js"></script>
+  <script src="../src/basis.js" basis-config></script>
   <script>
     if (this.top === this)
       location.href = '../node_modules/yatra/reporter.html?page=' + location.pathname;
 
     window.loadTests = (function(){
       var originalJsWrapper = basis.resource.extensions['.js'];
-      var loadTestsToRunner;
 
       function addLoc(cursor, filename, content, fileMap){
         if (Array.isArray(cursor))
@@ -73,8 +72,7 @@
       });
 
       return function(loadTests){
-        loadTestsToRunner = loadTests;
-        loadTestsToRunner(basis.require('./index.js'), function(topic, data){
+        loadTests(basis.require('./index.js'), function(topic, data){
           switch (topic)
           {
             case 'loc':

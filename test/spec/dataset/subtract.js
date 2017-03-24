@@ -434,6 +434,67 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'accumulate state',
+      beforeEach: function(){
+        var oldOne = new DataObject({ name: 'oldOne' });
+        var oldTwo = new DataObject({ name: 'oldTwo' });
+        var newOne = new DataObject({ name: 'newOne' });
+        var newTwo = new DataObject({ name: 'newTwo' });
+      },
+      test: [
+        {
+          name: 'replace fully both datasets with full intersection',
+          test: function(){
+            var oldOne = new DataObject({ name: 'oldOne' });
+            var newOne = new DataObject({ name: 'newOne' });
+            var minuend = new Dataset({
+              items: [oldOne]
+            });
+            var subtrahend = new Dataset({
+              items: [oldOne]
+            });
+            var subtract = new Subtract({
+              minuend: minuend,
+              subtrahend: subtrahend
+            });
+
+            Dataset.setAccumulateState(true);
+            subtrahend.set([newOne]);
+            minuend.set([newOne]);
+            Dataset.setAccumulateState(false);
+
+            assert([], subtract.getItems().map(basis.getter('name')));
+            assert(subtract.itemCount == 0);
+          }
+        },
+        {
+          name: 'replace fully both datasets with full intersection - different order',
+          test: function(){
+            var oldOne = new DataObject({ name: 'oldOne' });
+            var newOne = new DataObject({ name: 'newOne' });
+            var minuend = new Dataset({
+              items: [oldOne]
+            });
+            var subtrahend = new Dataset({
+              items: [oldOne]
+            });
+            var subtract = new Subtract({
+              minuend: minuend,
+              subtrahend: subtrahend
+            });
+
+            Dataset.setAccumulateState(true);
+            minuend.set([newOne]);
+            subtrahend.set([newOne]);
+            Dataset.setAccumulateState(false);
+
+            assert([], subtract.getItems().map(basis.getter('name')));
+            assert(subtract.itemCount == 0);
+          }
+        }
+      ]
     }
   ]
 };

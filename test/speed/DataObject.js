@@ -2,15 +2,10 @@
   'use strict';
 
   basis.ready(function(){
-    basis.require('basis.dom');
-    basis.require('basis.dom.event');
-    basis.require('basis.data');
-    basis.require('basis.utils.benchmark');
-
-    var createElement = basis.dom.createElement;
-    var DOM = basis.dom;
-    var DataObject = basis.data.Object;
-    var time = basis.utils.benchmark.time;
+    var createElement = basis.require('basis.dom').createElement;
+    var DOM = basis.require('basis.dom');
+    var DataObject = basis.require('basis.data').Object;
+    var benchmark = basis.require('basis.utils.benchmark');
 
     var TEST_REPEAT_COUNT = 3;
     var TEST_COUNT = 10000;
@@ -28,7 +23,7 @@
     var totalsDom;
 
     function speedTest(name, count, func){
-      var res = basis.utils.benchmark.test(count, func);
+      var res = benchmark.test(count, func);
       var stat = funcs[func] || (funcs[func] = {});
 
       if (!stat.name)

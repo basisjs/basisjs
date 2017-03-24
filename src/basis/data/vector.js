@@ -19,7 +19,7 @@
   var DataObject = basisData.Object;
   var Slot = basisData.Slot;
   var SourceDataset = require('basis.data.dataset').SourceDataset;
-
+  var createRuleEvents = require('./dataset/createRuleEvents.js');
 
 
   //
@@ -245,20 +245,18 @@
     };
   }
 
-  var VECTOR_ITEM_HANDLER = {
-    update: function(object){
-      var sourceObjectInfo = this.sourceMap_[object.basisObjectId];
-      var key = this.rule(object);
+  var VECTOR_SOURCEOBJECT_UPDATE = function(object){
+    var sourceObjectInfo = this.sourceMap_[object.basisObjectId];
+    var key = this.rule(object);
 
-      if (sourceObjectInfo.key !== key)
-      {
-        var delta = changeSourceObjectKey(this, key, sourceObjectInfo, true);
-        if (delta = getDelta(delta.inserted && [delta.inserted], delta.deleted && [delta.deleted]))
-          this.emit_itemsChanged(delta);
-      }
-      else
-        recalcSourceObject(this, sourceObjectInfo);
+    if (sourceObjectInfo.key !== key)
+    {
+      var delta = changeSourceObjectKey(this, key, sourceObjectInfo, true);
+      if (delta = getDelta(delta.inserted && [delta.inserted], delta.deleted && [delta.deleted]))
+        this.emit_itemsChanged(delta);
     }
+    else
+      recalcSourceObject(this, sourceObjectInfo);
   };
 
   var VECTOR_SOURCE_HANDLER = {
@@ -311,7 +309,7 @@
           member.count++;
 
           // add handler
-          object.addHandler(VECTOR_ITEM_HANDLER, this);
+          object.addHandler(this.ruleEvents, this);
 
           var updateData = {};
           for (var calcName in calcs)
@@ -339,7 +337,7 @@
           delete member[objectId];
 
           // remove handler
-          object.removeHandler(VECTOR_ITEM_HANDLER, this);
+          object.removeHandler(this.ruleEvents, this);
 
           // process member
           if (--member.count == 0)
@@ -392,6 +390,7 @@
     slots_: null,
 
     rule: defaultRule,
+    ruleEvents: createRuleEvents(VECTOR_SOURCEOBJECT_UPDATE, 'update'),
 
     emit_itemsChanged: function(delta){
       SourceDataset.prototype.emit_itemsChanged.call(this, delta);

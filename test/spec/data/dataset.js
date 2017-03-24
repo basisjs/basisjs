@@ -18,6 +18,7 @@ module.exports = {
 
     var helpers = basis.require('./helpers/events.js').createAPI(basis.require('basis.event').Emitter);
     var eventCount = helpers.eventCount;
+    var resetEvents = helpers.resetEvents;
   },
 
   test: [
@@ -296,6 +297,74 @@ module.exports = {
           }
         },
         {
+          name: 'destroy inside accumulate state',
+          beforeEach: function(){
+            var obj = new DataObject({
+                data: {
+                  hello: 'world'
+                }
+            });
+
+            var objDataset = new Dataset({
+                items: [
+                    obj
+                ]
+            });
+
+            // resetting events counter needed to omit counting previous events
+            // and events generated during init
+            resetEvents();
+          },
+          test: [
+            {
+              name: 'flushes event cache for dataset',
+              test: function(){
+                Dataset.setAccumulateState(true);
+                objDataset.destroy();
+
+                assert(eventCount(objDataset, 'itemsChanged') == 1);
+
+                Dataset.setAccumulateState(false);
+
+                assert(eventCount(objDataset, 'itemsChanged') == 1);
+              }
+            },
+            {
+              name: 'add items to dataset in accumulate state before destroy',
+              test: function(){
+                var existed = new DataObject({ name: 'existed' });
+                var added = new DataObject({ name: 'added' });
+
+                var items = [];
+
+                var dataset = new Dataset({
+                  items: [
+                    existed
+                  ],
+                  handler: {
+                    'itemsChanged': function(s, delta){
+                      if (delta.inserted)
+                        items = items.concat(delta.inserted);
+
+                      if (delta.deleted)
+                        delta.deleted.forEach(function(itemToDelete){
+                          basis.array.remove(items, itemToDelete);
+                        });
+                    }
+                  }
+                });
+
+                Dataset.setAccumulateState(true);
+                dataset.add(added);
+                dataset.destroy();
+                Dataset.setAccumulateState(false);
+
+                assert(items.length === 0);
+              }
+            }
+          ]
+        },
+        {
           name: 'edge cases',
           test: [
             {
@@ -342,6 +411,9 @@ module.exports = {
                 var a = new DataObject();
                 var b = new DataObject();
                 var c = new DataObject();
+
+                // resetting events counter needed to omit counting previous events
+                resetEvents();
 
                 Dataset.setAccumulateState(true);
                 dataset.add([a, b, c]);

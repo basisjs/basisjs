@@ -12,11 +12,13 @@ var eventMap = {};
 
 var VISIBLE_CHECK_INTERVAL = 250;
 
+/** @cut */ var namespace = 'basis.tracker';
+
 function track(event){
   try {
     tracker.set(event);
   } catch(e) {
-    /** @cut */ basis.dev.error('Error during tracking event processing', event, e);
+    /** @cut */ basis.dev.error(namespace + '.track(): Error during tracking event processing', event, e);
   }
 }
 
@@ -276,11 +278,15 @@ function getCssSelectorFromPath(path, selector){
   }).join(' ');
 }
 
+var INPUT_DEBOUNCE_TIMEOUT = 1000;
+var INPUT_EVENTS = ['keyup', 'keydown', 'keypress', 'input'];
+
 function getSelectorList(eventName){
   if (hasOwnProperty.call(eventMap, eventName))
     return eventMap[eventName];
 
   var selectorList = eventMap[eventName] = [];
+  var inputTimeout = null;
 
   switch (eventName) {
     case 'show':
@@ -302,22 +308,56 @@ function getSelectorList(eventName){
         if (path.length)
           selectorList.forEach(function(item){
             if (isPathMatchSelector(path, item.selector))
+            {
               var data = basis.object.slice(item.data);
 
-              // roleId can be data generated
-              if (item.selectorStr.indexOf('*') !== -1) {
-                var roleId = path[path.length - 1].roleId;
-
-                setDeep(data, '*', roleId);
+              if (INPUT_EVENTS.indexOf(event.type) != -1)
+              {
+                clearTimeout(inputTimeout);
+                data.inputValue = event.target.value;
+                inputTimeout = setTimeout(function(){
+                  track({
+                    type: 'ui',
+                    path: stringifyPath(path),
+                    selector: stringifyPath(item.selector),
+                    event: event.type,
+                    data: data
+                  });
+                }, INPUT_DEBOUNCE_TIMEOUT);
               }
+              else
+              {
+                // roleId can be data generated
+                if (item.selectorStr.indexOf('*') !== -1)
+                {
+                  var roleId = path[path.length - 1].roleId;
+                  var starWasFound = false;
 
-              track({
-                type: 'ui',
-                path: stringifyPath(path),
-                selector: stringifyPath(item.selector),
-                event: event.type,
-                data: data
-              });
+                  for (var key in data)
+                    if (hasOwnProperty.call(data, key))
+                      if (data[key] === '*')
+                      {
+                        data[key] = roleId;
+                        starWasFound = true;
+                        break;
+                      }
+
+                  if (!starWasFound)
+                  {
+                    data = JSON.parse(JSON.stringify(item.data));
+                    setDeep(data, '*', roleId);
+                  }
+                }
+
+                track({
+                  type: 'ui',
+                  path: stringifyPath(path),
+                  selector: stringifyPath(item.selector),
+                  event: event.type,
+                  data: data
+                });
+              }
+            }
           });
       });
   }
@@ -346,7 +386,7 @@ function registrateSelector(selector, eventName, data){
 
   if (basis.array.search(selectorList, selectorStr, 'selectorStr'))
   {
-    /** @cut */ basis.dev.warn('Duplicate selector for event `' + eventName + '`:' + selector);
+    /** @cut */ basis.dev.warn(namespace + '.registrateSelector(): Duplicate selector for event `' + eventName + '`:' + selector);
     return;
   }
 
@@ -362,10 +402,52 @@ function registrateSelector(selector, eventName, data){
   });
 }
 
+function addDispatcher(dispatcher, events, transformer){
+  if (!dispatcher || typeof dispatcher.addHandler != 'function')
+  {
+    /** @cut */ basis.dev.warn(namespace + '.addDispatcher(): First argument should have `addHandler` method');
+    return;
+  }
+
+  if (typeof events == 'string')
+    events = events.split(/\s+/);
+
+  if (!Array.isArray(events))
+  {
+    /** @cut */ basis.dev.warn(namespace + '.addDispatcher(): Second argument should be a list of events');
+    return;
+  }
+
+  if (typeof transformer != 'function')
+  {
+    /** @cut */ basis.dev.warn(namespace + '.addDispatcher(): Third argument should be a function');
+    return;
+  }
+
+  dispatcher.addHandler({
+    '*': function(event){
+      if (events.indexOf(event.type) != -1)
+      {
+        var eventName = event.type;
+        var selectorList = getSelectorList(eventName);
+
+        selectorList.forEach(function(item){
+          var data = transformer(event, item);
+
+          if (data)
+            track(data);
+        });
+      }
+    }
+  });
+
+  return true;
+}
+
 function loadMap(map){
   if (!map)
   {
-    /** @cut */ basis.dev.warn('Wrong value for map');
+    /** @cut */ basis.dev.warn(namespace + '.loadMap(): Wrong value for map');
     return;
   }
 
@@ -375,7 +457,7 @@ function loadMap(map){
 
     if (!eventsMap)
     {
-      /** @cut */ basis.dev.warn('Value of map should be an object for path: ' + key);
+      /** @cut */ basis.dev.warn(namespace + '.loadMap(): Value of map should be an object for path: ' + key);
       continue;
     }
 
@@ -423,6 +505,7 @@ module.exports = {
   setDeep: setDeep,
 
   loadMap: loadMap,
+  addDispatcher: addDispatcher,
   attach: function(fn, context){
     tracker.attach(fn, context);
   },

@@ -2,10 +2,10 @@
   <b:style src="./Slider.css"/>
   <b:define name="isEmptyRange" type="bool"/>
 
-	<div class="Basis-Slider Basis-Slider-MinMaxOutside {isEmptyRange}" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">
+	<div class="Basis-Slider Basis-Slider-MinMaxOutside {isEmptyRange}" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0" b:role>
     <div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>
     <div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>
-    <div class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">
+    <div class="Basis-Slider-ScrollbarContainer" event-click="jumpTo" b:role="control">
   	  <!--{marks}-->
       <div{scrollbar} class="Basis-Slider-Scrollbar">
         <div{valueBar} class="Basis-Slider-ValueBar" style="left: {thumbPos}%">
