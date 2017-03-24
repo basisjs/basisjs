@@ -418,8 +418,8 @@
       if (!this.itemCount)
         return this.add(data);
 
-      if (!data || !data.length)
-        return this.clear();
+      if (this.localId && (!data || !data.length))
+        this.clear();
 
       return setAndDestroyRemoved.call(this, data);
     },

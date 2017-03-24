@@ -103,6 +103,22 @@ module.exports = {
           }
         },
         {
+          name: 'EntityType#setAndDestroyRemoved should destroy entities when reset an set',
+          test: function(){
+            var entityType = nsEntity.createType(null, { id: nsEntity.NumberId });
+            var entityTypeSet = nsEntity.createSetType(entityType);
+            var set = entityTypeSet([{ id: 1 }, { id: 2 }]);
+
+            assert(entityType.all.itemCount === 2);
+            assert(set.itemCount === 2);
+
+            set.setAndDestroyRemoved();
+
+            assert(entityType.all.itemCount === 0);
+            assert(set.itemCount === 0);
+          }
+        },
+        {
           name: 'EntityType.all.set()',
           test: [
             {

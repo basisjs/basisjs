@@ -2,7 +2,7 @@
   "name": "basisjs",
   "title": "basis.js",
   "description": "JavaScript framework to build single-page applications",
-  "version": "1.10.0",
+  "version": "1.10.2",
   "author": "Roman Dvornov <rdvornov@gmail.com>",
   "license": "MIT",
   "main": "src/basis.js",
@@ -58,6 +58,7 @@
     "basisjs-tools-lint": "node node_modules/basisjs-tools-build/bin/lint test/all.html --js-cut-dev",
     "travis": "npm run lint && npm run test",
     "test": "node node_modules/karma/bin/karma start karma.conf.js",
+    "test:watch": "node node_modules/karma/bin/karma start --auto-watch --no-single-run karma.conf.js",
     "build": "node node_modules/basisjs-tools-build/bin/build --pack",
     "prepublish": "npm run build"
   }

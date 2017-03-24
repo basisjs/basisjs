@@ -3,6 +3,7 @@ var $undef = basis.fn.$undef;
 var arrayFrom = basis.array.from;
 var createEvent = require('basis.event').create;
 var DataObject = require('basis.data').Object;
+var isEqual = require('basis.data').isEqual;
 var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
 var SourceDataset = require('./SourceDataset.js');
 var createRuleEvents = require('./createRuleEvents.js');
@@ -17,7 +18,7 @@ var EXTRACT_SOURCEOBJECT_UPDATE = function(sourceObject){
   var deleted;
   var delta;
 
-  if (newValue === oldValue)
+  if (isEqual(newValue, oldValue))
     return;
 
   if (newValue instanceof DataObject || newValue instanceof ReadOnlyDataset)
@@ -188,7 +189,7 @@ function removeFromExtract(extract, items, ref){
     // remove reference from object
     for (var cursor = sourceObjectInfo, prevCursor = sourceObjectInfo; cursor = cursor.ref;)
     {
-      if (cursor.object === ref)
+      if (isEqual(cursor.object, ref))
       {
         prevCursor.ref = cursor.ref;
         break;
@@ -318,7 +319,7 @@ module.exports = SourceDataset.subclass({
         var newValue = this.rule(sourceObject) || null;
         var oldValue = sourceObjectInfo.value;
 
-        if (newValue === oldValue)
+        if (isEqual(newValue, oldValue))
           continue;
 
         if (newValue instanceof DataObject || newValue instanceof ReadOnlyDataset)
