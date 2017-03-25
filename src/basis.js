@@ -2584,8 +2584,10 @@
         function(path){
           return requireNamespace(path, baseURL);
         },
-        function(path){
-          return resolveResourceFilename(path, baseURL, 'asset(\'{url}\')');
+        function(path, inline){
+          return inline
+            ? getResourceContent(resolveResourceFilename(path, baseURL, 'asset(\'{url}\',true)'))
+            : resolveResourceFilename(path, baseURL, 'asset(\'{url}\')');
         }
       );
     }
@@ -4022,8 +4024,10 @@
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
-    asset: function(path){
-      return resolveResourceFilename(path, null, 'basis.asset(\'{url}\')');
+    asset: function(path, inline){
+      return inline
+        ? getResourceContent(resolveResourceFilename(path, null, 'basis.asset(\'{url}\')'))
+        : resolveResourceFilename(path, null, 'basis.asset(\'{url}\')');
     },
 
     // timers
