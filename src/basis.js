@@ -2585,7 +2585,7 @@
           return requireNamespace(path, baseURL);
         },
         function(path, inline){
-          return inline
+          return inline === true
             ? getResourceContent(resolveResourceFilename(path, baseURL, 'asset(\'{url}\',true)'))
             : resolveResourceFilename(path, baseURL, 'asset(\'{url}\')');
         }
@@ -4025,7 +4025,7 @@
     require: requireNamespace,
     resource: getResource,
     asset: function(path, inline){
-      return inline
+      return inline === true
         ? getResourceContent(resolveResourceFilename(path, null, 'basis.asset(\'{url}\')'))
         : resolveResourceFilename(path, null, 'basis.asset(\'{url}\')');
     },
