@@ -109,37 +109,6 @@ module.exports = {
 
         route.destroy();
       }
-    },
-    {
-      name: 'triggers paramsChanged event',
-      test: function(){
-        var lastDelta;
-        var route = router.route('offers/', {
-          params: {
-            first: type.number,
-            second: type.number,
-            third: type.number
-          }
-        });
-
-        route.add({
-          paramsChanged: function(delta){
-            lastDelta = delta;
-          }
-        });
-
-        router.navigate('offers/?first=1&second=2');
-
-        route.update({
-          first: 10,
-          second: 2,
-          third: 24
-        });
-
-        assert({ first: 1, third: 0 }, lastDelta);
-
-        route.destroy();
-      }
     }
   ]
 };

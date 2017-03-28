@@ -54,10 +54,10 @@ module.exports = {
         var route = router.route('base/', {
           params: {
             toBeNull: function(value){
-              return value === null ? 'correct' : 'incorrect';
+              return value === null || value === 'correct' ? 'correct' : 'incorrect';
             },
             toBeUndefined: function(value){
-              return arguments.length > 1 && value === undefined ? 'correct' : 'incorrect';
+              return arguments.length > 1 && value === undefined || value === 'correct'  ? 'correct' : 'incorrect';
             }
           },
           decode: function(params){

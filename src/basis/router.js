@@ -196,6 +196,7 @@
     params: null,
     decode: basis.fn.$undef,
     encode: basis.fn.$undef,
+    normalize: basis.fn.$undef,
     paramsConfig_: null,
     pendingDelta_: null,
 
@@ -228,10 +229,10 @@
           /** @cut */ basis.dev.warn(namespace + ': expected encode to be function, but got ', config.encode, ' - ignore');
         }
       }
+      if (config.normalize)
+        this.normalize = config.normalize;
 
-      this.params = {};
-      for (var key in this.paramsConfig_)
-        this.params[key] = this.constructParam_(key);
+      this.constructParams_();
     },
     verifyParamsConfig_: function(paramsConfig){
       var result = {};
@@ -251,57 +252,72 @@
 
       return result;
     },
-    constructParam_: function(key){
-      var transform = this.paramsConfig_[key];
-      var defaults = this.defaults_;
-      var token = new basis.Token(defaults[key]);
-      var originalSet = token.set;
-      var paramsStore = this.paramsStore_;
+    constructParams_: function(){
+      this.params = {};
 
       this.attach(function(values){
-        var newValue;
-        if (values && key in values)
-          newValue = transform(values[key], paramsStore[key]);
-        else
-          newValue = defaults[key];
+        var nextParams = basis.object.slice(this.defaults_);
 
-        paramsStore[key] = newValue;
-        originalSet.call(token, newValue);
+        // Run through params transforms in order to transform decoded values to typed values
+        basis.object.iterate(this.paramsConfig_, function(key, transform){
+          if (values && key in values)
+            nextParams[key] = transform(values[key], this.paramsStore_[key]);
+          else
+            nextParams[key] = this.defaults_[key];
+        }, this);
+
+        var delta = this.calculateDelta_(nextParams, this.paramsStore_);
+
+        this.normalize(nextParams, delta);
+
+        // Run through params transforms, because normalize may spoil some params
+        basis.object.iterate(this.paramsConfig_, function(key, transform){
+          if (key in nextParams)
+            nextParams[key] = transform(nextParams[key], this.paramsStore_[key]);
+          else
+            nextParams[key] = this.defaults_[key];
+        }, this);
+
+        this.paramsStore_ = nextParams;
+
+        this.nextParamsStore_ = basis.object.slice(this.paramsStore_);
+
+        for (var key in this.paramsConfig_)
+          basis.Token.prototype.set.call(this.params[key], nextParams[key]);
       }, this);
 
-      token.set = function(value){
-        if (!this.matched.value)
+      basis.object.iterate(this.paramsConfig_, function(key, transform){
+        var token = new basis.Token(this.defaults_[key]);
+
+        token.set = function(value){
+          if (!this.matched.value)
+          {
+            /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: this.paramsConfig_ });
+            return;
+          }
+
+          flushSchedule.add(this);
+
+          var newValue = transform(value, this.paramsStore_[key]);
+
+          this.nextParamsStore_[key] = newValue;
+        }.bind(this);
+
+        this.params[key] = token;
+      }, this);
+    },
+    calculateDelta_: function(next, prev){
+      var delta = null;
+
+      basis.object.iterate(prev, function(key, prevValue){
+        if (prevValue !== next[key])
         {
-          /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: this.paramsConfig_ });
-          return;
+          delta = delta || {};
+          delta[key] = prevValue;
         }
+      });
 
-        var newValue = transform(value, paramsStore[key]);
-
-        if (newValue !== paramsStore[key])
-          if (this.pendingDelta_ && key in this.pendingDelta_ && this.pendingDelta_[key] === newValue)
-          {
-            delete this.pendingDelta_[key];
-
-            if (!basis.object.keys(this.pendingDelta_).length)
-            {
-              this.pendingDelta_ = null;
-              flushSchedule.remove(this);
-            }
-          }
-          else
-          {
-            if (!this.pendingDelta_)
-              this.pendingDelta_ = {};
-
-            this.pendingDelta_[key] = paramsStore[key];
-            flushSchedule.add(this);
-          }
-
-        paramsStore[key] = newValue;
-      }.bind(this);
-
-      return token;
+      return delta;
     },
     setMatch_: function(pathMatch, query){
       var paramsFromQuery = queryToParams(query);
@@ -367,13 +383,7 @@
       return stringify(this.ast_, params, this.areModified_(params));
     },
     flush: function(replace){
-      for (var i = 0, item; item = this.callbacks_[i]; i++)
-        if (item.callback.paramsChanged)
-          item.callback.paramsChanged.call(item.context, this.pendingDelta_);
-
-      this.pendingDelta_ = null;
-
-      navigate(this.getPath(this.paramsStore_), replace);
+      navigate(this.getPath(this.nextParamsStore_), replace);
     },
     getDefaults_: function(paramsConfig){
       var result = {};

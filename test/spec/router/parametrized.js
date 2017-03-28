@@ -141,7 +141,7 @@ module.exports = {
     require('./decode.js'),
     require('./update.js'),
     require('./paramSet.js'),
-    require('./paramsChanged.js'),
+    require('./normalize.js'),
     require('./parse.js'),
     require('./getPath.js'),
     require('./ast.js')

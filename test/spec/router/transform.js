@@ -6,7 +6,7 @@ module.exports = {
 
     var params = {
       custom: function(newValue, prevValue){
-        if (newValue === 'secret')
+        if (newValue === 'secret' || newValue === 'correct')
           return 'correct';
         else
           return 'incorrect';
