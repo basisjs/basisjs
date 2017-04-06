@@ -13,6 +13,8 @@
   var location = global.location;
   var document = global.document;
   var eventUtils = require('basis.dom.event');
+  var parsePath = require('./router/ast.js').parsePath;
+  var stringify = require('./router/ast.js').stringify;
 
   // documentMode logic from YUI to filter out IE8 Compat Mode which false positives
   var docMode = document.documentMode;
@@ -21,7 +23,8 @@
   var CHECK_INTERVAL = 50;
 
   var arrayFrom = basis.array.from;
-  var routes = {};
+  var allRoutes = [];
+  var plainRoutesByPath = {};
   var started = false;
   var currentPath;
   var timer;
@@ -45,53 +48,57 @@
   //
   // apply route changes
   //
+  var ROUTE_ENTER = 1;
+  var ROUTE_MATCH = 2;
+  var ROUTE_LEAVE = 4;
 
   function routeEnter(route, nonInitedOnly){
-    var callbacks = arrayFrom(route.callbacks);
+    var callbacks = arrayFrom(route.callbacks_);
     for (var i = 0, item; item = callbacks[i]; i++)
       if ((!nonInitedOnly || !item.enterInited) && item.callback.enter)
       {
         item.enterInited = true;
         item.callback.enter.call(item.context);
-        /** @cut */ log.push('\n', { type: 'enter', path: route.id, cb: item, route: route.token });
+        /** @cut */ log.push('\n', { type: 'enter', path: route.path, cb: item, route: route });
       }
   }
 
   function routeLeave(route){
-    var callbacks = arrayFrom(route.callbacks);
+    var callbacks = arrayFrom(route.callbacks_);
     for (var i = 0, item; item = callbacks[i]; i++)
       if (item.callback.leave)
       {
         item.callback.leave.call(item.context);
-        /** @cut */ log.push('\n', { type: 'leave', path: route.id, cb: item, route: route.token });
+        /** @cut */ log.push('\n', { type: 'leave', path: route.path, cb: item, route: route });
       }
   }
 
   function routeMatch(route, nonInitedOnly){
-    var callbacks = arrayFrom(route.callbacks);
+    var callbacks = arrayFrom(route.callbacks_);
     for (var i = 0, item; item = callbacks[i]; i++)
       if ((!nonInitedOnly || !item.matchInited) && item.callback.match)
       {
         item.matchInited = true;
-        item.callback.match.apply(item.context, route.matched);
-        /** @cut */ log.push('\n', { type: 'match', path: route.id, cb: item, route: route.token, args: route.matched });
+        item.callback.match.apply(item.context, arrayFrom(route.value));
+        /** @cut */ log.push('\n', { type: 'match', path: route.path, cb: item, route: route, args: route.value });
       }
   }
 
-  var initSchedule = basis.asap.schedule(function(token){
-    var route = get(token);
-
-    if (route.matched)
+  var initSchedule = basis.asap.schedule(function(route){
+    if (route.value)
     {
       routeEnter(route, true);
       routeMatch(route, true);
 
-      /** @cut */ flushLog(namespace + ': init callbacks for route `' + route.id + '`');
+      /** @cut */ flushLog(namespace + ': init callbacks for route `' + route.path + '`');
     }
   });
 
+  var flushSchedule = basis.asap.schedule(function(route){
+    route.flush(true);
+  });
 
- /**
+  /**
   * @class
   */
   var Route = basis.Token.subclass({
@@ -99,16 +106,57 @@
 
     path: null,
     matched: null,
-    params_: null,
+    ast_: null,
     names_: null,
+    regexp_: null,
+    params_: null,
+    callbacks_: null,
 
-    init: function(names, path){
+    init: function(parseInfo){
+      var regexp = parseInfo.regexp;
+
       basis.Token.prototype.init.call(this, null);
 
-      this.path = path;
+      this.path = parseInfo.path;
       this.matched = this.as(Boolean);
-      this.names_ = Array.isArray(names) ? names : [];
+      this.ast_ = parseInfo.ast;
+      this.names_ = parseInfo.params;
+      this.regexp_ = regexp;
       this.params_ = {};
+      this.callbacks_ = [];
+    },
+    matches_: function(path){
+      return {
+        pathMatch: path.match(this.regexp_),
+        query: null
+      };
+    },
+    processLocation_: function(newPath){
+      initSchedule.remove(this);
+
+      var resultFlags = 0;
+      var match = this.matches_(newPath);
+
+      if (match.pathMatch)
+      {
+        if (!this.value)
+          resultFlags |= ROUTE_ENTER;
+
+        this.setMatch_(arrayFrom(match.pathMatch, 1), match.query);
+
+        resultFlags |= ROUTE_MATCH;
+      }
+      else
+      {
+        if (this.value)
+        {
+          this.setMatch_(null);
+
+          resultFlags |= ROUTE_LEAVE;
+        }
+      }
+
+      return resultFlags;
     },
     param: function(nameOrIdx){
       var idx = typeof nameOrIdx == 'number' ? nameOrIdx : this.names_.indexOf(nameOrIdx);
@@ -120,21 +168,20 @@
 
       return this.params_[idx];
     },
-    set: function(value){
-      if (value)
+    setMatch_: function(match){
+      if (match)
       {
-        // make a copy of value, it also converts value to object (as value is array of matches)
-        value = basis.object.slice(value);
+        // make a copy of match, it also converts match to object (as match is array of matches)
+        match = match.slice(0);
 
         // extend object with named values
-        for (var key in value)
+        for (var key in match)
           if (key in this.names_)
-            value[this.names_[key]] = value[key];
+            match[this.names_[key]] = match[key];
       }
 
-      basis.Token.prototype.set.call(this, value);
+      this.set(match);
     },
-
     add: function(callback, context){
       return add(this, callback, context);
     },
@@ -143,94 +190,263 @@
     }
   });
 
+  var ParametrizedRoute = Route.subclass({
+    className: namespace + '.ParametrizedRoute',
 
- /**
-  * Convert string to regexp
-  */
-  function pathToRegExp(route){
-    var value = String(route || '');
-    var params = [];
+    params: null,
+    decode: basis.fn.$undef,
+    encode: basis.fn.$undef,
+    normalize: basis.fn.$undef,
+    paramsConfig_: null,
+    pendingDelta_: null,
 
-    function findWord(offset){
-      return value.substr(offset).match(/^\w+/);
-    }
+    init: function(parseInfo, config){
+      Route.prototype.init.apply(this, arguments);
 
-    function parse(offset, stopChar){
-      var result = '';
-      var res;
+      this.paramsConfig_ = this.verifyParamsConfig_(config.params);
+      this.defaults_ = this.getDefaults_(this.paramsConfig_);
+      this.paramsStore_ = basis.object.slice(this.defaults_);
 
-      for (var i = offset; i < value.length; i++)
+      if (config.decode)
       {
-        var c = value.charAt(i);
-        switch (c)
+        if (typeof config.decode === 'function')
         {
-          case stopChar:
-            return {
-              result: result,
-              offset: i
-            };
-
-          case '\\':
-            result += '\\' + value.charAt(++i);
-            break;
-
-          case '|':  // allow | inside braces
-            result += stopChar != ')' ? '\\|' : '|';
-            break;
-
-          case '(':  // optional: (something) -> (?:something)?
-            if (res = parse(i + 1, ')'))
-            {
-              i = res.offset;
-              result += '(?:' + res.result + ')?';
-            }
-            else
-            {
-              result += '\\(';
-            }
-
-            break;
-
-          case ':':  // named:   :name -> ([^/]+)
-            if (res = findWord(i + 1))
-            {
-              i += res[0].length;
-              result += '([^\/]+)';
-              params.push(res[0]);
-            }
-            else
-            {
-              result += ':';
-            }
-
-            break;
-
-          case '*':  // splat:   *name -> (.*?)
-            if (res = findWord(i + 1))
-            {
-              i += res[0].length;
-              result += '(.*?)';
-              params.push(res[0]);
-            }
-            else
-            {
-              result += '\\*';
-            }
-
-            break;
-
-          default:
-            result += basis.string.forRegExp(c);
+          this.decode = config.decode;
+        }
+        else
+        {
+          /** @cut */ basis.dev.warn(namespace + ': expected decode to be function, but got ', config.decode, ' - ignore');
         }
       }
+      if (config.encode)
+      {
+        if (typeof config.encode === 'function')
+        {
+          this.encode = config.encode;
+        }
+        else
+        {
+          /** @cut */ basis.dev.warn(namespace + ': expected encode to be function, but got ', config.encode, ' - ignore');
+        }
+      }
+      if (config.normalize)
+        this.normalize = config.normalize;
 
-      return stopChar ? null : result;
+      this.constructParams_();
+    },
+    verifyParamsConfig_: function(paramsConfig){
+      var result = {};
+
+      basis.object.iterate(paramsConfig, function(key, transform){
+        if (typeof transform === 'function')
+        {
+          result[key] = transform;
+        }
+        else
+        {
+          result[key] = basis.fn.$self;
+
+          /** @cut */ basis.dev.warn(namespace + ': expected param ' + key + ' to be function, but got ', transform, ' using basis.fn.$self instead');
+        }
+      });
+
+      return result;
+    },
+    constructParams_: function(){
+      this.params = {};
+
+      this.attach(function(values){
+        for (var key in this.paramsConfig_)
+          if (values && key in values)
+            basis.Token.prototype.set.call(this.params[key], values[key]);
+          else
+            basis.Token.prototype.set.call(this.params[key], this.defaults_[key]);
+      }, this);
+
+      basis.object.iterate(this.paramsConfig_, function(key, transform){
+        var token = new basis.Token(this.defaults_[key]);
+
+        token.set = function(value){
+          if (!this.matched.value)
+          {
+            /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: this.paramsConfig_ });
+            return;
+          }
+
+          flushSchedule.add(this);
+
+          var newValue = transform(value, this.paramsStore_[key]);
+
+          this.nextParamsStore_[key] = newValue;
+        }.bind(this);
+
+        this.params[key] = token;
+      }, this);
+    },
+    calculateDelta_: function(next, prev){
+      var delta = null;
+
+      basis.object.iterate(prev, function(key, prevValue){
+        if (prevValue !== next[key])
+        {
+          delta = delta || {};
+          delta[key] = prevValue;
+        }
+      });
+
+      return delta;
+    },
+    setMatch_: function(pathMatch, query){
+      var paramsFromQuery = queryToParams(query);
+
+      if (!pathMatch)
+      {
+        this.set(null);
+
+        return;
+      }
+
+      var paramsFromPath = this.paramsArrayToObject_(pathMatch);
+      var values = {};
+
+      // preserve only params specified in config.params
+      for (var paramName in this.params)
+        if (paramName in paramsFromPath)
+          values[paramName] = paramsFromPath[paramName];
+        else if (paramName in paramsFromQuery)
+          values[paramName] = paramsFromQuery[paramName];
+
+      this.decode(values);
+
+      var nextParams = basis.object.slice(this.defaults_);
+
+      // Run through params transforms in order to transform decoded values to typed values
+      basis.object.iterate(this.paramsConfig_, function(key, transform){
+        if (values && key in values)
+          nextParams[key] = transform(values[key], this.paramsStore_[key]);
+        else
+          nextParams[key] = this.defaults_[key];
+      }, this);
+
+      var delta = this.calculateDelta_(nextParams, this.paramsStore_);
+
+      this.normalize(nextParams, delta);
+
+      // Run through params transforms, because normalize may spoil some params
+      basis.object.iterate(this.paramsConfig_, function(key, transform){
+        if (key in nextParams)
+          nextParams[key] = transform(nextParams[key], this.paramsStore_[key]);
+        else
+          nextParams[key] = this.defaults_[key];
+      }, this);
+
+      this.paramsStore_ = nextParams;
+
+      this.nextParamsStore_ = basis.object.slice(this.paramsStore_);
+
+      this.set(this.paramsStore_);
+    },
+    update: function(params, replace){
+      if (!this.matched.value)
+      {
+        /** @cut */ basis.dev.warn(namespace + ': trying to update when route not matched - ignoring', { path: this.path, params: params });
+
+        return;
+      }
+
+      basis.object.iterate(params, function(key, newValue){
+        if (key in this.params)
+        {
+          this.params[key].set(newValue);
+        }
+        else
+        {
+          /** @cut */ basis.dev.warn(namespace + ': found param ' + key + ' not specified in config - ignoring', { params: this.paramsConfig_ });
+        }
+      }, this);
+
+      this.flush(replace);
+    },
+    navigate: function(params, replace){
+      navigate(this.getPath(params), replace);
+    },
+    getPath: function(specifiedParams){
+      var params = {};
+
+      specifiedParams = specifiedParams || {};
+
+      /** @cut */ for (var key in specifiedParams)
+      /** @cut */   if (!(key in this.paramsConfig_))
+      /** @cut */     basis.dev.warn(namespace + ': found param ' + key + ' not specified in config - ignoring', { params: this.paramsConfig_ });
+
+      basis.object.iterate(this.paramsConfig_, function(key, transform){
+        if (key in specifiedParams)
+          params[key] = transform(specifiedParams[key], this.defaults_[key]);
+        else
+          params[key] = this.defaults_[key];
+      }, this);
+      this.encode(params);
+
+      return stringify(this.ast_, params, this.areModified_(params));
+    },
+    flush: function(replace){
+      navigate(this.getPath(this.nextParamsStore_), replace);
+    },
+    getDefaults_: function(paramsConfig){
+      var result = {};
+
+      basis.object.iterate(paramsConfig, function(key, transform){
+        if ('DEFAULT_VALUE' in transform)
+          result[key] = transform.DEFAULT_VALUE;
+        else
+          result[key] = transform();
+      });
+
+      return result;
+    },
+    areModified_: function(params){
+      var result = {};
+
+      for (var key in this.paramsConfig_)
+        result[key] = params[key] !== this.defaults_[key];
+
+      return result;
+    },
+    paramsArrayToObject_: function(arr){
+      var result = {};
+
+      for (var paramIdx in arr)
+        if (paramIdx in this.names_)
+          if (arr[paramIdx])
+            result[this.names_[paramIdx]] = decodeURIComponent(arr[paramIdx]);
+
+      return result;
+    },
+    matches_: function(newLocation){
+      var pathAndQuery = newLocation.split('?');
+      var newPath = pathAndQuery[0];
+      var newQuery = pathAndQuery[1];
+
+      return {
+        pathMatch: newPath.match(this.regexp_),
+        query: newQuery
+      };
+    },
+    destroy: function(){
+      this.paramsConfig_ = null;
+      this.defaults_ = null;
+      this.paramsStore_ = null;
+      this.decode = null;
+      this.encode = null;
+      this.params = null;
+
+      flushSchedule.remove(this);
+
+      basis.array.remove(allRoutes, this);
+
+      Route.prototype.destroy.apply(this, arguments);
     }
-
-    var regexp = new RegExp('^' + parse(0) + '$', 'i');
-    regexp.params = params;
-    return regexp;
-  }
+  });
 
  /**
   * Start router
@@ -303,6 +519,25 @@
     });
   }
 
+  function queryToParams(query) {
+    if (!query)
+      return {};
+
+    var result = {};
+
+    var pairs = query.split('&');
+    for (var i = 0; i < pairs.length; i++)
+    {
+      var pair = pairs[i].split('=');
+      var key = decodeURIComponent(pair[0]);
+      var value = decodeURIComponent(pair[1]);
+
+      result[key] = value;
+    }
+
+    return result;
+  }
+
  /**
   * Process current location
   */
@@ -311,10 +546,6 @@
 
     if (newPath != currentPath)
     {
-      var inserted = [];
-      var deleted = [];
-      var matched = [];
-
       // check for recursion
       if (preventRecursion(newPath))
         return;
@@ -322,104 +553,87 @@
       // save current path
       currentPath = newPath;
 
-      // update route states
-      for (var path in routes)
-      {
-        var route = routes[path];
-        var match = newPath.match(route.regexp);
+      var routesToLeave = [];
+      var routesToEnter = [];
+      var routesToMatch = [];
 
-        route.inited = true;
-        initSchedule.remove(route.token);
+      allRoutes.forEach(function(route){
+        var flags = route.processLocation_(newPath);
 
-        if (match)
-        {
-          if (!route.matched)
-            inserted.push(route);
+        if (flags & ROUTE_LEAVE)
+          routesToLeave.push(route);
+        if (flags & ROUTE_ENTER)
+          routesToEnter.push(route);
+        if (flags & ROUTE_MATCH)
+          routesToMatch.push(route);
+      });
 
-          route.matched = arrayFrom(match, 1);
-          matched.push(route);
-        }
-        else
-        {
-          if (route.matched)
-          {
-            deleted.push(route);
-            route.matched = null;
-          }
-        }
-      }
+      for (var i = 0; i < routesToLeave.length; i++)
+        routeLeave(routesToLeave[i]);
 
-      // callback off for previous matched
-      for (var i = 0, route; route = deleted[i]; i++)
-      {
-        route.token.set(null);
-        routeLeave(route);
-      }
+      for (var i = 0; i < routesToEnter.length; i++)
+        routeEnter(routesToEnter[i]);
 
-      // callback off for previous matched
-      for (var i = 0, route; route = inserted[i]; i++)
-        routeEnter(route);
-
-      // callback for matched
-      for (var i = 0, route; route = matched[i]; i++)
-      {
-        route.token.set(route.matched);
-        routeMatch(route);
-      }
+      for (var i = 0; i < routesToMatch.length; i++)
+        routeMatch(routesToMatch[i]);
 
       /** @cut */ flushLog(namespace + ': hash changed to "' + newPath + '"');
     }
     else
     {
-      for (var path in routes)
-      {
-        var route = routes[path];
-        if (route.matched)
+      allRoutes.forEach(function(route){
+        if (route.value)
         {
           routeEnter(route, true);
           routeMatch(route, true);
         }
-      }
+      });
 
       /** @cut */ flushLog(namespace + ': checkUrl()');
     }
   }
 
+  function createRoute(parseInfo, config) {
+    if (config)
+      return new ParametrizedRoute(parseInfo, config);
+    else
+      return new Route(parseInfo);
+  }
+
  /**
   * Returns route descriptor
   */
-  function get(path, autocreate){
+  function get(params){
+    var path = params.path;
+    var config = params.config;
+
     if (path instanceof Route)
-      path = path.path;
+      return path;
 
-    var route = routes[path];
+    var route;
+    // If there is no config specified - it should be a plain route, so we try to reuse it
+    if (!config)
+      route = plainRoutesByPath[path];
 
-    if (!route && autocreate)
+    if (!route && params.autocreate)
     {
-      var regexp = Object.prototype.toString.call(path) == '[object RegExp]'
-        ? path
-        : pathToRegExp(path);
-      var token = new Route(regexp.params, path);
+      var parseInfo = Object.prototype.toString.call(path) == '[object RegExp]'
+        ? { path: path, regexp: path, ast: null, params: [] }
+        : parsePath(path);
+      route = createRoute(parseInfo, config);
+      allRoutes.push(route);
 
-      route = routes[path] = {
-        id: path,
-        regexp: regexp,
-        enterInited: false,
-        matchInited: false,
-        matched: null,
-        token: token,
-        callbacks: []
-      };
+      if (route instanceof ParametrizedRoute == false)
+        plainRoutesByPath[path] = route;
 
       if (typeof currentPath == 'string')
       {
-        var match = currentPath.match(route.regexp);
-        if (match)
-        {
-          match = arrayFrom(match, 1);
-          route.matched = match;
-          route.token.set(match);
-        }
+        var flags = route.processLocation_(currentPath);
+
+        if (flags & ROUTE_ENTER)
+          routeEnter(route);
+        if (flags & ROUTE_MATCH)
+          routeMatch(route);
       }
     }
 
@@ -430,10 +644,12 @@
   * Add path to be handled
   */
   function add(path, callback, context){
-    var route = get(path, true);
+    var route = get({
+      path: path,
+      autocreate: true
+    });
 
-    route.callbacks.push({
-      inited: false,
+    route.callbacks_.push({
       cb_: callback,
       context: context,
       callback: typeof callback != 'function' ? callback || {} : {
@@ -441,49 +657,56 @@
       }
     });
 
-    initSchedule.add(route.token);
+    initSchedule.add(route);
 
-    return route.token;
+    return route;
   }
 
  /**
   * Remove handler for path
   */
-  function remove(path, callback, context){
-    var route = get(path);
+  function remove(route, callback, context){
+    var route = get({
+      path: route
+    });
 
     if (!route)
       return;
 
-    for (var i = 0, cb; cb = route.callbacks[i]; i++)
+    for (var i = 0, cb; cb = route.callbacks_[i]; i++)
+    {
       if (cb.cb_ === callback && cb.context === context)
       {
-        route.callbacks.splice(i, 1);
+        route.callbacks_.splice(i, 1);
 
-        if (route.matched && callback && callback.leave)
+        if (route.value && callback && callback.leave)
         {
           callback.leave.call(context);
 
           /** @cut */ if (module.exports.debug)
           /** @cut */   basis.dev.info(
           /** @cut */     namespace + ': add handler for route `' + path + '`\n',
-          /** @cut */     { type: 'leave', path: route.id, cb: callback.leave, route: route.token }
+          /** @cut */     { type: 'leave', path: route.path, cb: callback.leave, route: route }
           /** @cut */   );
         }
 
-        if (!route.callbacks.length)
+        if (!route.callbacks_.length)
         {
-          var token = route.token;
+          // check no attaches to route
+          if ((!route.handler || !route.handler.handler) && !route.matched.handler)
+          {
+            basis.array.remove(allRoutes, route);
 
-          // check no attaches to route token
-          if ((!token.handler || !token.handler.handler) && !token.matched.handler)
-            delete routes[route.id];
+            if (!(route instanceof ParametrizedRoute))
+              delete plainRoutesByPath[route.path];
+          }
         }
 
         return;
       }
 
-    /** @cut */ basis.dev.warn(namespace + ': no callback removed', { callback: callback, context: context });
+      /** @cut */ basis.dev.warn(namespace + ': no callback removed', { callback: callback, context: context });
+    }
   }
 
  /**
@@ -518,7 +741,11 @@
 
     add: add,
     remove: remove,
-    route: function(path){
-      return get(path, true).token;
+    route: function(path, config){
+      return get({
+        path: path,
+        autocreate: true,
+        config: config
+      });
     }
   };
