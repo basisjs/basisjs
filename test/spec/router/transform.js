@@ -31,6 +31,11 @@ module.exports = {
         assert(route.params.str.value === 'some-str');
         assert(route.params.number.value === 52);
         assert(route.params.optional.value === 'opt');
+
+        assert(route.value.custom === 'correct');
+        assert(route.value.str === 'some-str');
+        assert(route.value.number === 52);
+        assert(route.value.optional === 'opt');
       }
     },
     {
@@ -40,6 +45,9 @@ module.exports = {
 
         assert(route.params.number.value === 1);
         assert(route.params.optional.value === 42);
+
+        assert(route.value.number === 1);
+        assert(route.value.optional === 42);
       }
     }
   ]

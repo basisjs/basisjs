@@ -256,34 +256,11 @@
       this.params = {};
 
       this.attach(function(values){
-        var nextParams = basis.object.slice(this.defaults_);
-
-        // Run through params transforms in order to transform decoded values to typed values
-        basis.object.iterate(this.paramsConfig_, function(key, transform){
-          if (values && key in values)
-            nextParams[key] = transform(values[key], this.paramsStore_[key]);
-          else
-            nextParams[key] = this.defaults_[key];
-        }, this);
-
-        var delta = this.calculateDelta_(nextParams, this.paramsStore_);
-
-        this.normalize(nextParams, delta);
-
-        // Run through params transforms, because normalize may spoil some params
-        basis.object.iterate(this.paramsConfig_, function(key, transform){
-          if (key in nextParams)
-            nextParams[key] = transform(nextParams[key], this.paramsStore_[key]);
-          else
-            nextParams[key] = this.defaults_[key];
-        }, this);
-
-        this.paramsStore_ = nextParams;
-
-        this.nextParamsStore_ = basis.object.slice(this.paramsStore_);
-
         for (var key in this.paramsConfig_)
-          basis.Token.prototype.set.call(this.params[key], nextParams[key]);
+          if (values && key in values)
+            basis.Token.prototype.set.call(this.params[key], values[key]);
+          else
+            basis.Token.prototype.set.call(this.params[key], this.defaults_[key]);
       }, this);
 
       basis.object.iterate(this.paramsConfig_, function(key, transform){
@@ -322,22 +299,52 @@
     setMatch_: function(pathMatch, query){
       var paramsFromQuery = queryToParams(query);
 
-      if (pathMatch)
+      if (!pathMatch)
       {
-        var paramsFromPath = this.paramsArrayToObject_(pathMatch);
-        var allParams = {};
+        this.set(null);
 
-        // preserve only params specified in config.params
-        for (var paramName in this.params)
-          if (paramName in paramsFromPath)
-            allParams[paramName] = paramsFromPath[paramName];
-          else if (paramName in paramsFromQuery)
-            allParams[paramName] = paramsFromQuery[paramName];
-
-        this.decode(allParams);
+        return;
       }
 
-      this.set(allParams);
+      var paramsFromPath = this.paramsArrayToObject_(pathMatch);
+      var values = {};
+
+      // preserve only params specified in config.params
+      for (var paramName in this.params)
+        if (paramName in paramsFromPath)
+          values[paramName] = paramsFromPath[paramName];
+        else if (paramName in paramsFromQuery)
+          values[paramName] = paramsFromQuery[paramName];
+
+      this.decode(values);
+
+      var nextParams = basis.object.slice(this.defaults_);
+
+      // Run through params transforms in order to transform decoded values to typed values
+      basis.object.iterate(this.paramsConfig_, function(key, transform){
+        if (values && key in values)
+          nextParams[key] = transform(values[key], this.paramsStore_[key]);
+        else
+          nextParams[key] = this.defaults_[key];
+      }, this);
+
+      var delta = this.calculateDelta_(nextParams, this.paramsStore_);
+
+      this.normalize(nextParams, delta);
+
+      // Run through params transforms, because normalize may spoil some params
+      basis.object.iterate(this.paramsConfig_, function(key, transform){
+        if (key in nextParams)
+          nextParams[key] = transform(nextParams[key], this.paramsStore_[key]);
+        else
+          nextParams[key] = this.defaults_[key];
+      }, this);
+
+      this.paramsStore_ = nextParams;
+
+      this.nextParamsStore_ = basis.object.slice(this.paramsStore_);
+
+      this.set(this.paramsStore_);
     },
     update: function(params, replace){
       if (!this.matched.value)

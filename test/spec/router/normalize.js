@@ -114,6 +114,8 @@ module.exports = {
 
             assert(route.params.num.value === 25);
 
+            assert(route.value.num === 25);
+
             route.destroy();
           }
         },
@@ -137,6 +139,10 @@ module.exports = {
             assert(route.params.num.value === 1);
             assert(route.params.numWithDefault.value === 42);
 
+            assert(route.value.str === 'foo');
+            assert(route.value.num === 1);
+            assert(route.value.numWithDefault === 42);
+
             route.destroy();
           }
         },
@@ -159,6 +165,8 @@ module.exports = {
             router.navigate('f/?str=next&num=1');
 
             assert(route.params.str.value === 'prev');
+
+            assert(route.value.str === 'prev');
 
             route.destroy();
           }
