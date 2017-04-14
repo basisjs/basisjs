@@ -322,7 +322,7 @@
 
       // Run through params transforms in order to transform decoded values to typed values
       basis.object.iterate(this.paramsConfig_, function(key, transform){
-        if (values && key in values)
+        if (key in values)
           nextParams[key] = transform(values[key], this.paramsStore_[key]);
         else
           nextParams[key] = this.defaults_[key];
