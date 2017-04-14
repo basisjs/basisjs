@@ -128,6 +128,32 @@ module.exports = {
           route.destroy();
         });
       }
+    },
+    {
+      name: 'setting params on going route away',
+      test: function(){
+        var route = router.route('num/:num', {
+          params: {
+            num: type.number.nullable
+          }
+        });
+
+        router.navigate('num/42');
+
+        route.params.num.attach(function(num){
+          if (!num) {
+            route.params.num.set(1);
+          }
+        });
+
+        catchWarnings(function(){
+          router.navigate('different-route/');
+        });
+
+        assert.async(function(){
+          assert(location.hash === '#different-route/');
+        });
+      }
     }
   ]
 };

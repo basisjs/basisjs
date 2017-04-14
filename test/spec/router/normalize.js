@@ -162,8 +162,10 @@ module.exports = {
               }
             });
 
-            router.navigate('f/?str=prev');
-            router.navigate('f/?str=next&num=1');
+            catchWarnings(function(){
+              router.navigate('f/?str=prev');
+              router.navigate('f/?str=next&num=1');
+            });
 
             assert(route.params.str.value === 'prev');
 

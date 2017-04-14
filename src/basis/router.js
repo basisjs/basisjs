@@ -197,8 +197,10 @@
     decode: basis.fn.$undef,
     encode: basis.fn.$undef,
     normalize: basis.fn.$undef,
+    defaults_: null,
     paramsConfig_: null,
-    pendingDelta_: null,
+    paramsStore_: null,
+    nextParamsStore_: null,
 
     init: function(parseInfo, config){
       Route.prototype.init.apply(this, arguments);
@@ -276,7 +278,7 @@
         var token = new basis.Token(this.defaults_[key]);
 
         token.set = function(value){
-          if (!this.matched.value)
+          if (!this.value)
           {
             /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: this.paramsConfig_ });
             return;
@@ -356,7 +358,7 @@
       this.set(this.paramsStore_);
     },
     update: function(params, replace){
-      if (!this.matched.value)
+      if (!this.value)
       {
         /** @cut */ basis.dev.warn(namespace + ': trying to update when route not matched - ignoring', { path: this.path, params: params });
 
