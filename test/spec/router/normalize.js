@@ -3,6 +3,7 @@ module.exports = {
   init: function(){
     var router = basis.require('basis.router');
     var type = basis.require('basis.type');
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
   },
   test: [
     {
@@ -169,6 +170,28 @@ module.exports = {
             assert(route.value.str === 'prev');
 
             route.destroy();
+          }
+        },
+        {
+          name: 'not a function',
+          test: function(){
+            var route;
+            var warned = catchWarnings(function(){
+              route = router.route(':str/', {
+                params: {
+                  str: type.string,
+                  query: type.string
+                },
+                normalize: 2
+              });
+            });
+
+            assert(warned);
+
+            router.navigate('foo/?query=abc');
+
+            assert(route.params.str.value === 'foo');
+            assert(route.params.query.value === 'abc');
           }
         }
       ]

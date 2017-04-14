@@ -230,7 +230,16 @@
         }
       }
       if (config.normalize)
-        this.normalize = config.normalize;
+      {
+        if (typeof config.normalize === 'function')
+        {
+          this.normalize = config.normalize;
+        }
+        else
+        {
+          /** @cut */ basis.dev.warn(namespace + ': expected normalize to be function, but got ', config.normalize, ' - ignore');
+        }
+      }
 
       this.constructParams_();
     },
