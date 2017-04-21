@@ -136,6 +136,31 @@ module.exports = {
         route.destroy();
       }
     },
+    {
+      name: 'linking to reactive param values',
+      test: function() {
+        var router = basis.require('basis.router');
+        var type = basis.require('basis.type');
+
+        var route = router.route('param/:str', {
+          params: {
+            str: type.string
+          }
+        });
+
+        var str = null;
+
+        route.params.str.link(null, function(strValue) {
+          str = strValue;
+        });
+
+        assert(str === '');
+
+        router.navigate('param/str');
+
+        assert(str === 'str');
+      }
+    },
     require('./destroy.js'),
     require('./transform.js'),
     require('./decode.js'),

@@ -122,7 +122,7 @@ module.exports = {
 
         router.navigate('num/42');
 
-        route.params.num.attach(function(num){
+        route.params.num.link(null, function(num){
           if (!num) {
             route.update({
               num: 2,

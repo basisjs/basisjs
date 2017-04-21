@@ -13,6 +13,7 @@
   var location = global.location;
   var document = global.document;
   var eventUtils = require('basis.dom.event');
+  var Value = require('basis.data').Value;
   var parsePath = require('./router/ast.js').parsePath;
   var stringify = require('./router/ast.js').stringify;
 
@@ -269,15 +270,17 @@
       this.attach(function(values){
         for (var key in this.paramsConfig_)
           if (values && key in values)
-            basis.Token.prototype.set.call(this.params[key], values[key]);
+            Value.prototype.set.call(this.params[key], values[key]);
           else
-            basis.Token.prototype.set.call(this.params[key], this.defaults_[key]);
+            Value.prototype.set.call(this.params[key], this.defaults_[key]);
       }, this);
 
       basis.object.iterate(this.paramsConfig_, function(key, transform){
-        var token = new basis.Token(this.defaults_[key]);
+        var paramValue = new Value({
+          value: this.defaults_[key]
+        });
 
-        token.set = function(value){
+        paramValue.set = function(value){
           if (!this.value)
           {
             /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: this.paramsConfig_ });
@@ -291,7 +294,7 @@
           this.nextParamsStore_[key] = newValue;
         }.bind(this);
 
-        this.params[key] = token;
+        this.params[key] = paramValue;
       }, this);
     },
     calculateDelta_: function(next, prev){
