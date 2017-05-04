@@ -138,7 +138,7 @@ module.exports = {
     },
     {
       name: 'linking to reactive param values',
-      test: function() {
+      test: function(){
         var router = basis.require('basis.router');
         var type = basis.require('basis.type');
 
@@ -150,7 +150,7 @@ module.exports = {
 
         var str = null;
 
-        route.params.str.link(null, function(strValue) {
+        route.params.str.link(null, function(strValue){
           str = strValue;
         });
 

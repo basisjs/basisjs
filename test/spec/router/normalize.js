@@ -197,6 +197,34 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'silently replaces url after normalize',
+      test: function(){
+        var route = router.route('haha(/)', {
+          params: {
+            str: type.string,
+            num: type.number
+          },
+          normalize: function(params){
+            params.num = 25;
+          }
+        });
+        var matchCounter = 0;
+        route.add(function(){
+          matchCounter++;
+        });
+        matchCounter = 0;
+
+        router.navigate('haha/');
+
+        assert.async(function(){
+          assert(location.hash === '#haha?num=25');
+          assert(matchCounter === 1);
+
+          route.destroy();
+        });
+      }
     }
   ]
 };

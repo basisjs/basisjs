@@ -359,6 +359,8 @@
       this.nextParamsStore_ = basis.object.slice(this.paramsStore_);
 
       this.set(this.paramsStore_);
+
+      silentReplace(this.getCurrentPath_());
     },
     update: function(params, replace){
       if (!this.value)
@@ -404,7 +406,10 @@
       return stringify(this.ast_, params, this.areModified_(params));
     },
     flush: function(replace){
-      navigate(this.getPath(this.nextParamsStore_), replace);
+      navigate(this.getCurrentPath_(), replace);
+    },
+    getCurrentPath_: function(){
+      return this.getPath(this.nextParamsStore_);
     },
     getDefaults_: function(paramsConfig){
       var result = {};
@@ -734,6 +739,12 @@
 
     if (started)
       checkUrl();
+  }
+
+  function silentReplace(path) {
+    currentPath = path;
+
+    location.replace(location.pathname + '#' + path);
   }
 
 
