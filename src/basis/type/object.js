@@ -40,6 +40,21 @@ function objectTransform(defaultValue, nullable) {
     return oldValue;
   };
 
+  transform.serialize = function(value){
+    try {
+      return JSON.stringify(value);
+    } catch(e) {
+      return JSON.stringify(defaultValue);
+    }
+  };
+  transform.deserialize = function(value){
+    try {
+      return JSON.parse(value);
+    } catch(e) {
+      return defaultValue;
+    }
+  };
+
   transform.DEFAULT_VALUE = defaultValue;
 
   return transform;
