@@ -4,31 +4,56 @@ module.exports = {
     var router = basis.require('basis.router');
     var type = basis.require('basis.type');
     var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
-
-    var params = {
-      obj: type.object,
-      plainArray: type.array,
-      numArray: type.array,
-      str: type.string
-    };
   },
   afterEach: function(){
     route.destroy();
   },
   test: [
     {
-      name: 'simple case',
+      name: 'decodes param which has deserialize property',
       test: function(){
-        var route = router.route(':str/:obj', {
-          params: params,
-          decode: function(config){
-            config.obj = JSON.parse(config.obj);
-            config.plainArray = config.plainArray.split(',');
-            config.numArray = config.numArray.split(':').map(Number);
+        var customNumber = function(value){
+          return Number(value);
+        };
+        customNumber.deserialize = function(value){
+          switch (value) {
+            case 'one':
+              return '1';
+            case 'two':
+              return '2';
+            default:
+              return '0';
+          }
+        };
+
+        var route = router.route(':str/:prop', {
+          params: {
+            str: type.string,
+            prop: customNumber
           }
         });
-        // encoded - some-str/{"a":"b"}?plainArray=a,b,c&numArray=1:2:3
-        router.navigate('some-str/%7B%22a%22%3A%22b%22%7D?plainArray=a%2Cb%2Cc&numArray=1%3A2%3A3');
+
+        router.navigate('str/one');
+
+        assert(route.params.str.value == 'str');
+        assert(route.params.prop.value == 1);
+      }
+    },
+    {
+      name: 'decodes objects, arrays and dates',
+      test: function(){
+        var params = {
+          obj: type.object,
+          plainArray: type.array,
+          numArray: type.array,
+          str: type.string
+        };
+
+        var route = router.route(':str/:obj', {
+          params: params
+        });
+        // encoded - some-str/{"a":"b"}?plainArray=["a","b","c"]&numArray=[1,2,3]
+        router.navigate('some-str/%7B%22a%22%3A%22b%22%7D?plainArray=%5B%22a%22%2C%22b%22%2C%22c%22%5D&numArray=%5B1%2C2%2C3%5D');
 
         assert(route.params.str.value == 'some-str');
         assert({ a: 'b' }, route.params.obj.value);
@@ -37,52 +62,20 @@ module.exports = {
       }
     },
     {
-      name: 'no extra params',
+      name: 'deserialize is not a function',
       test: function(){
-        var route = router.route(':str/', {
-          params: params,
-          decode: function(config){
-            assert(!('extra' in config));
-          }
-        });
-        router.navigate('some-str/?extra=ext');
-      }
-    },
-    {
-      name: 'null and undefined go through transforms',
-      test: function(){
-        var route = router.route('base/', {
-          params: {
-            toBeNull: function(value){
-              return value === null || value === 'correct' ? 'correct' : 'incorrect';
-            },
-            toBeUndefined: function(value){
-              return arguments.length > 1 && value === undefined || value === 'correct'  ? 'correct' : 'incorrect';
-            }
-          },
-          decode: function(params){
-            params.toBeNull = null;
-            params.toBeUndefined = undefined;
-          }
-        });
+        function customString(v) {
+          return String(v);
+        }
+        customString.deserialize = 2;
 
-        router.navigate('base/');
-
-        assert(route.params.toBeNull.value === 'correct');
-        assert(route.params.toBeUndefined.value === 'correct');
-      }
-    },
-    {
-      name: 'not a function',
-      test: function(){
         var route;
         var warned = catchWarnings(function(){
           route = router.route(':str/', {
             params: {
               str: type.string,
-              query: type.string
-            },
-            decode: 2
+              query: customString
+            }
           });
         });
 
