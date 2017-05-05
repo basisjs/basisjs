@@ -8,17 +8,64 @@ var hasOwnProperty = Object.prototype.hasOwnProperty;
 var eventUtils = require('basis.dom.event');
 var getComputedStyle = require('basis.dom.computedStyle').get;
 var getBoundingRect = require('basis.layout').getBoundingRect;
+
+/**
+ * The Map object is a simple key/value map. Any value (both objects and primitive values) may be used as either a key or a value.
+ * @external Map
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map}
+ */
+
+/**
+ * @typedef {TrackingDataObject}
+ * @property {string} type 'ui|net',
+ * @property {string} path result of `stringifyPath` function,
+ * @property {string} event browser event.type or SHOW_EVENT,
+ * @property {string=} path Real path in DOM, stringifyPath(getPathByNode(visibleElement)),
+ * @property {string=} selector Custom path from loaded tracking maps, selector.selectorStr = stringifyPath(selector),
+ * @property {Object=} data custom data
+ * @property {string=} action first argument in PartitionNode.templateAction, like 'scrollTo'
+ */
+
+/**
+ * This token is used to pass some data about an event to a custom functions through an `attach` method.
+ * The value of this token can be changed only by `track` function here.
+ * @private
+ */
 var tracker = new basis.Token();
+
+/**
+ * All selectors from tracking maps, that are loaded with `loadMap` method.
+ * Maps a selector string to a list of tracking objects as described in custom tracking maps.
+ * @private
+ * @type Map
+ */
 var selectorMap = {};
+
+/**
+ * Maps an event name to a list of tracking objects as described in custom tracking maps.
+ * Event names can be like these: `click`, `focus`, `input`, `blur`, `success`, etc.
+ * eventMap.show will be a list of tracking objects, and taht list has `visibility` property,
+ * eventMap.show.visibility is an object: custom selector string --> boolean
+ * @private
+ * @type Map
+ */
 var eventMap = {};
 
 var VISIBLE_CHECK_INTERVAL = 250;
+var SHOW_EVENT = 'show';
 
 var INPUT_DEBOUNCE_TIMEOUT = 1000;
 var INPUT_EVENTS = ['keyup', 'keydown', 'keypress', 'input']; // when a user is typing
 
+/**
+ * Maps an event name to a list of tracking objects
+ * @param {TrackingDataObject} event a tracking object
+ * @private
+ * @return
+ */
 function track(event){
   try {
+    // TODO look up for event.data.transformer before setting data
     tracker.set(event);
   } catch(e) {
     /** @cut */ basis.dev.error(namespace + '.track(): Error during tracking event processing', event, e);
@@ -84,10 +131,52 @@ function track(event){
 // });
 
 //
-// show event
+// `show` event
 //
 
+/**
+ * Transforms given path to a csc selector
+ * @param {string} path
+ * @param {string} selector
+ * @private
+ * @return {string}
+ */
+function getCssSelectorFromPath(path, selector){
+  return parsePath(path).map(function(role){
+    if (!role.role)
+      return '';
+
+    var start = escapeQuotes(role.role);
+    var end = (role.subrole ? '/' + escapeQuotes(role.subrole) : '') + '"]';
+
+    if (role.roleId)
+    {
+      if (selector && role.roleId == '*')
+        start = '[role-marker^="' + start + '("][role-marker$=")';
+      else
+        start = '[role-marker="' + start + '(' + escapeQuotes(role.roleId) + ')';
+    }
+    else
+    {
+      start = '[role-marker="' + start;
+    }
+
+    return start + end;
+  }).join(' ');
+}
+
+/**
+ * Tracks visibilty changes for nodes marked with show event in custom tracking maps
+ * @private
+ * @return
+ */
 function checkShow(){
+  /**
+   * Checks visibility of an element on a page in a browser
+   * @param {HTMLElement} element some DOM node
+   * @private
+   * @return {boolean}
+   */
   function isVisible(element){
     if (getComputedStyle(element, 'visibility') != 'visible')
       return false;
@@ -100,7 +189,7 @@ function checkShow(){
     return true;
   }
 
-  var list = getSelectorList('show');
+  var list = getSelectorList(SHOW_EVENT);
 
   for (var i = 0; i < list.length; i++)
   {
@@ -122,15 +211,22 @@ function checkShow(){
         type: 'ui',
         path: stringifyPath(getPathByNode(visibleElement)),
         selector: selector.selectorStr,
-        event: 'show',
+        event: SHOW_EVENT,
         data: selector.data
       });
   }
 }
 
+/**
+ * Search for the first key in `obj` (`obj` can be a nested object)
+ * and replaces a value of the finded key with `value`
+ * private except for tests
+ * @param {Object} obj any object
+ * @param {string} sample some stub like '*'
+ * @param {string} value a dynamic value
+ * @return
+ */
 function setDeep(obj, sample, value){
-  // search for the first key in `obj` (`obj` can be a nested object)
-  // and replace a value of the finded key with `value`
   for (var key in obj)
   {
     if (hasOwnProperty.call(obj, key))
@@ -146,10 +242,22 @@ function setDeep(obj, sample, value){
   }
 }
 
+/**
+ * Clean up string
+ * @param {string} value
+ * @private
+ * @return {string}
+ */
 function escapeQuotes(value){
   return String(value).replace(/\"/g, '\\"');
 }
 
+/**
+ * Fills up the eventMap, also adds a handler for each browser event, mentioned in custom tracking maps
+ * @param {string} eventName browser event.type or SHOW_EVENT
+ * @private
+ * @return {Array}
+ */
 function getSelectorList(eventName){
   if (hasOwnProperty.call(eventMap, eventName))
     return eventMap[eventName];
@@ -158,7 +266,7 @@ function getSelectorList(eventName){
   var inputTimeout = null;
 
   switch (eventName) {
-    case 'show':
+    case SHOW_EVENT:
       selectorList.visible = {};
       setInterval(checkShow, VISIBLE_CHECK_INTERVAL);
       break;
@@ -234,6 +342,12 @@ function getSelectorList(eventName){
   return selectorList;
 }
 
+/**
+ * if there is no such selector in the `selectorMap`, creates empty array
+ * @param {string} selector
+ * @private
+ * @return {Array}
+ */
 function getEventList(selector){
   var selectorStr = stringifyPath(selector);
 
@@ -248,6 +362,15 @@ function getEventList(selector){
   return eventList;
 }
 
+/**
+ * Adds some tracking data description to a selector list choosen by event name
+ * and vice versa – to an event list choosen by selector from the map
+ * @param {string} selector
+ * @param {string} eventName
+ * @param {Object} data custom tracking data from custom tracking maps
+ * @private
+ * @return
+ */
 function registrateSelector(selector, eventName, data){
   var selectorList = getSelectorList(eventName);
   var eventList = getEventList(selector);
@@ -277,6 +400,20 @@ function registrateSelector(selector, eventName, data){
 
 var roleRegExp = /^(.+?)(?:\((.+)\))?$/;
 var subroleRegExp = /\/([^\/\(\)]+)$/;
+
+/**
+ * @typedef {RoleObject}
+ * @property {string} role
+ * @property {string} roleId
+ * @property {string} subrole
+ */
+
+/**
+ * Parses a string to a role object.
+ * Is used in devpanel
+ * @param {string} str
+ * @return {RoleObject}
+ */
 function parseRole(str){
   var role = '';
   var roleId = '';
@@ -302,6 +439,12 @@ function parseRole(str){
   };
 }
 
+/**
+ * Inverse to parseRole function.
+ * Is used in devpanel.
+ * @param {string|RoleObject} role
+ * @return {string}
+ */
 function stringifyRole(role){
   if (typeof role == 'string')
     return role;
@@ -316,6 +459,12 @@ function stringifyRole(role){
   ].join('');
 }
 
+/**
+ * Parses a string or a list to a list of role objects.
+ * Private except for tests.
+ * @param {string|Array.<string>} value
+ * @return {Array.<RoleObject>}
+ */
 function parsePath(value){
   if (!Array.isArray(value))
     value = String(value || '').trim().split(/\s+/);
@@ -332,6 +481,12 @@ function parsePath(value){
   });
 }
 
+/**
+ * Inverse to parsePath function.
+ * Is used in devpanel.
+ * @param {string|Array.<RoleObject|string>} path
+ * @return {string}
+ */
 function stringifyPath(path){
   if (typeof path == 'string')
     return path;
@@ -339,6 +494,12 @@ function stringifyPath(path){
   return path.map(stringifyRole).join(' ');
 }
 
+/**
+ * private except for tests
+ * @param {Array.<RoleObject>} path
+ * @param {string|RoleObject} selector
+ * @return {boolean}
+ */
 function isPathMatchSelector(path, selector){
   function isMatch(path, selector){
     path = typeof path == 'string' ? parseRole(path) : path || '';
@@ -365,6 +526,12 @@ function isPathMatchSelector(path, selector){
   return selectorIndex === 0;
 }
 
+/**
+ * Relies on `selectorMap`
+ * Is used in devpanel.
+ * @param {string|Array.<RoleObject>} path
+ * @return {Array.<Object>|boolean} here Object is a tracking data object
+ */
 function getInfo(path){
   var result = [];
 
@@ -383,6 +550,12 @@ function getInfo(path){
   return result.length ? result : false;
 }
 
+/**
+ * Works similar to `parsePath` but for DOM nodes, not for strings
+ * Is used in devpanel.
+ * @param {HTMLElement} node
+ * @return {Array.<RoleObject>}
+ */
 function getPathByNode(node){
   var cursor = node;
   var path = [];
@@ -398,30 +571,11 @@ function getPathByNode(node){
   return path;
 }
 
-function getCssSelectorFromPath(path, selector){
-  return parsePath(path).map(function(role){
-    if (!role.role)
-      return '';
-
-    var start = escapeQuotes(role.role);
-    var end = (role.subrole ? '/' + escapeQuotes(role.subrole) : '') + '"]';
-
-    if (role.roleId)
-    {
-      if (selector && role.roleId == '*')
-        start = '[role-marker^="' + start + '("][role-marker$=")';
-      else
-        start = '[role-marker="' + start + '(' + escapeQuotes(role.roleId) + ')';
-    }
-    else
-    {
-      start = '[role-marker="' + start;
-    }
-
-    return start + end;
-  }).join(' ');
-}
-
+/**
+ * Registers all selectors from a given map
+ * @param {Map} map
+ * @return
+ */
 function loadMap(map){
   if (!map)
   {
@@ -451,6 +605,13 @@ function loadMap(map){
   }
 }
 
+/**
+ * A way to add custom data to a tracking data object
+ * @param {{ addHandler: function(object) }} dispatcher basis.net.transportDispatcher or another basis.event.Emitter or any object with addHandler function
+ * @param {string|Array} events list of events recognizable by `dispatcher`
+ * @param {function(event, item):object} transformer function should return a tracking data object
+ * @return {undefined|boolean}
+ */
 function addDispatcher(dispatcher, events, transformer){
   if (!dispatcher || typeof dispatcher.addHandler != 'function')
   {
@@ -494,15 +655,13 @@ function addDispatcher(dispatcher, events, transformer){
 }
 
 module.exports = {
-  parsePath: parsePath,
-  parseRole: parseRole,
-  stringifyPath: stringifyPath,
-  stringifyRole: stringifyRole,
+  /** @cut */ parseRole: parseRole,
+  /** @cut */ stringifyPath: stringifyPath,
+  /** @cut */ stringifyRole: stringifyRole,
 
-  getInfo: getInfo,
-  getPathByNode: getPathByNode,
-  isPathMatchSelector: isPathMatchSelector,
-  getCssSelectorFromPath: getCssSelectorFromPath,
+  /** @cut */ getInfo: getInfo,
+  /** @cut */ getPathByNode: getPathByNode,
+  /** @cut */ isPathMatchSelector: isPathMatchSelector,
   /** @cut */ setDeep: setDeep,
 
   loadMap: loadMap,
