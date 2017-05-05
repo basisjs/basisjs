@@ -2,7 +2,7 @@
 * @namespace basis.tracker
 */
 
-var namespace = 'basis.tracker';
+/** @cut */ var namespace = 'basis.tracker';
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var eventUtils = require('basis.dom.event');
@@ -691,7 +691,7 @@ module.exports = {
   /** @cut */ stringifyPath: stringifyPath,
   /** @cut */ stringifyRole: stringifyRole,
 
-  /** @cut */ getInfo: getInfo,
+  getInfo: getInfo,
   /** @cut */ getPathByNode: getPathByNode,
   /** @cut */ isPathMatchSelector: isPathMatchSelector,
   /** @cut */ setDeep: setDeep,
