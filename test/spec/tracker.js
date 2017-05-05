@@ -7,6 +7,7 @@ module.exports = {
     var createEvent = basis.require('basis.event').create;
     var isPathMatchSelector = basis.require('basis.tracker').isPathMatchSelector;
     var setDeep = basis.require('basis.tracker').setDeep;
+    var handleEventFor = basis.require('basis.tracker').handleEventFor;
     var addDispatcher = basis.require('basis.tracker').addDispatcher;
     var loadMap = basis.require('basis.tracker').loadMap;
     var Emitter = basis.require('basis.event').Emitter;
@@ -59,6 +60,20 @@ module.exports = {
           }
         },
         {
+          name: 'real cases - role match',
+          test: function(){
+            var match = [
+              {
+                path: [{ role: 'selector-wrap' }, { role: 'my-selector' }],
+                selector: [{ role: 'my-selector' }]
+              }
+            ];
+
+            for (var i = 0, test; test = match[i]; i++)
+              assert(isPathMatchSelector(test.path, test.selector) === true);
+          }
+        },
+        {
           name: 'simple cases - non-match',
           test: function(){
             var nonmatch = [
@@ -81,6 +96,24 @@ module.exports = {
               {
                 path: ['a', 'b', 'c', 'd'],
                 selector: ['x', 'a', 'b', 'd']
+              }
+            ];
+
+            for (var i = 0, test; test = nonmatch[i]; i++)
+              assert(isPathMatchSelector(test.path, test.selector) === false);
+          }
+        },
+        {
+          name: 'real cases - non-match',
+          test: function(){
+            var nonmatch = [
+              {
+                path: [{ role: 'my-selector' }],
+                selector: [{ role: 'my-selector', subrole: 'extra' }]
+              },
+              {
+                path: [{ role: 'my-selector', subrole: 'extra' }],
+                selector: [{ role: 'my-selector' }]
               }
             ];
 
@@ -112,6 +145,63 @@ module.exports = {
               setDeep(test[0], sample, value);
               assert(JSON.stringify(test[0]) === JSON.stringify(test[1]));
             }
+          }
+        }
+      ]
+    },
+    {
+      name: 'handleEventFor',
+      test: [
+        {
+          name: 'handleEventFor non input event',
+          test: function(){
+            var path = [{ role: 'wrap' }, { role: 'my-item-selector' }];
+            var item = {
+              selector: [{ role: 'my-item-selector' }],
+              selectorStr: 'my-item-selector',
+              data: {
+                foo: 'myItemDataFoo'
+              }
+            };
+            var event = {
+            };
+
+            var result = handleEventFor(path, item, event);
+            assert(result.async === undefined);
+            assert(typeof result.dataToTrack === 'object');
+            assert(result.dataToTrack.type === 'ui');
+            assert(result.dataToTrack.event === undefined);
+            assert(result.dataToTrack.path === 'wrap my-item-selector');
+            assert(result.dataToTrack.selector === item.selectorStr);
+            assert(JSON.stringify(result.dataToTrack.data) == JSON.stringify(item.data));
+          }
+        },
+        {
+          name: 'handleEventFor input event',
+          test: function(){
+            var path = [{ role: 'my-item-selector' }];
+            var item = {
+              selector: [{ role: 'my-item-selector' }],
+              selectorStr: 'my-item-selector',
+              data: {
+                foo: 'myItemDataFoo'
+              }
+            };
+            var event = {
+              type: 'keydown',
+              target: {
+                value: 'myEventTargetValue'
+              }
+            };
+
+            var result = handleEventFor(path, item, event);
+            assert(result.async === true);
+            assert(typeof result.dataToTrack === 'object');
+            assert(result.dataToTrack.type === 'ui');
+            assert(result.dataToTrack.event === 'keydown');
+            assert(result.dataToTrack.path === 'my-item-selector');
+            assert(result.dataToTrack.selector === item.selectorStr);
+            assert(result.dataToTrack.data.inputValue === event.target.value);
           }
         }
       ]
