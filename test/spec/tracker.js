@@ -203,6 +203,40 @@ module.exports = {
             assert(result.dataToTrack.selector === item.selectorStr);
             assert(result.dataToTrack.data.inputValue === event.target.value);
           }
+        },
+        {
+          name: 'handleEventFor with custom data transformer',
+          test: function(){
+            var path = [{ role: 'my-item-selector' }];
+            var item = {
+              selector: [{ role: 'my-item-selector' }],
+              selectorStr: 'my-item-selector',
+              data: {
+                foo: 'myItemDataFoo',
+                dataToTrackFn: function(data, event){
+                  return {
+                    foo: data.foo + ' ' + event.target.baseURI
+                  };
+                }
+              }
+            };
+            var event = {
+              type: 'click',
+              target: {
+                value: 'myEventTargetValue',
+                baseURI: 'example.com'
+              }
+            };
+
+            var result = handleEventFor(path, item, event);
+            assert(result.async === undefined);
+            assert(typeof result.dataToTrack === 'object');
+            assert(result.dataToTrack.type === 'ui');
+            assert(result.dataToTrack.event === 'click');
+            assert(result.dataToTrack.path === 'my-item-selector');
+            assert(result.dataToTrack.selector === item.selectorStr);
+            assert(result.dataToTrack.data.foo === 'myItemDataFoo example.com');
+          }
         }
       ]
     },

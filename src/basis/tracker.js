@@ -284,7 +284,7 @@ function handleEventFor(path, item, event){
         path: stringifyPath(path),
         selector: stringifyPath(item.selector),
         event: event.type,
-        data: data
+        data: typeof data.dataToTrackFn === 'function' ? data.dataToTrackFn(data, event) : data
       }
     };
   }
@@ -318,7 +318,7 @@ function handleEventFor(path, item, event){
         path: stringifyPath(path),
         selector: stringifyPath(item.selector),
         event: event.type,
-        data: data
+        data: typeof data.dataToTrackFn === 'function' ? data.dataToTrackFn(data, event) : data
       }
     };
   }
