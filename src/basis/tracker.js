@@ -55,7 +55,6 @@ var VISIBLE_CHECK_INTERVAL = 250;
 var SHOW_EVENT = 'show';
 
 var INPUT_DEBOUNCE_TIMEOUT = 1000;
-var INPUT_EVENTS = ['keyup', 'keydown', 'keypress', 'input']; // when a user is typing
 
 /**
  * Maps an event name to a list of tracking objects
@@ -129,6 +128,9 @@ function track(event){
 //     }
 //   });
 // });
+
+// 3. http://localhost:8123/demo/data/userlist-with-roles.html
+// Do test with this page.
 
 //
 // `show` event
@@ -253,6 +255,76 @@ function escapeQuotes(value){
 }
 
 /**
+ * Search for the first key in `obj` (`obj` can be a nested object)
+ * and replaces a value of the finded key with `value`
+ * private except for tests
+ * @param {Array.<RoleObject>} path
+ * @param {Object} item custom tracking data object from some tracking map
+ * @param {Object} item.data
+ * @param {Array.<string>} item.selector
+ * @param {string} item.selectorStr
+ * @param {DOMEvent} event
+ * @return {{ async: boolean, datatoTrack: TrackingDataObject }}
+ */
+function handleEventFor(path, item, event){
+  if (!isPathMatchSelector(path, item.selector))
+    return;
+
+  var data = basis.object.slice(item.data);
+  var INPUT_EVENTS = ['keyup', 'keydown', 'keypress', 'input']; // when a user is typing
+
+  if (INPUT_EVENTS.indexOf(event.type) != -1)
+  {
+    data.inputValue = event.target.value;
+
+    return {
+      async: true,
+      dataToTrack: {
+        type: 'ui',
+        path: stringifyPath(path),
+        selector: stringifyPath(item.selector),
+        event: event.type,
+        data: data
+      }
+    };
+  }
+  else
+  {
+    // roleId can be data generated
+    if (item.selectorStr.indexOf('*') !== -1)
+    {
+      var roleId = path[path.length - 1].roleId;
+      var starWasFound = false;
+
+      for (var key in data)
+        if (hasOwnProperty.call(data, key))
+          if (data[key] === '*')
+          {
+            data[key] = roleId;
+            starWasFound = true;
+            break;
+          }
+
+      if (!starWasFound)
+      {
+        data = JSON.parse(JSON.stringify(item.data));
+        setDeep(data, '*', roleId);
+      }
+    }
+
+    return {
+      dataToTrack: {
+        type: 'ui',
+        path: stringifyPath(path),
+        selector: stringifyPath(item.selector),
+        event: event.type,
+        data: data
+      }
+    };
+  }
+}
+
+/**
  * Fills up the eventMap, also adds a handler for each browser event, mentioned in custom tracking maps
  * @param {string} eventName browser event.type or SHOW_EVENT
  * @private
@@ -284,57 +356,17 @@ function getSelectorList(eventName){
         // then lets search a matching selector in our loaded track map
         if (path.length)
           selectorList.forEach(function(item){
-            if (isPathMatchSelector(path, item.selector))
-            {
-              var data = basis.object.slice(item.data);
-
-              if (INPUT_EVENTS.indexOf(event.type) != -1)
-              {
+            var result = handleEventFor(path, item, event);
+            if (result)
+              if (result.async) {
                 clearTimeout(inputTimeout);
-                data.inputValue = event.target.value;
                 inputTimeout = setTimeout(function(){
-                  track({
-                    type: 'ui',
-                    path: stringifyPath(path),
-                    selector: stringifyPath(item.selector),
-                    event: event.type,
-                    data: data
-                  });
+                  track(result.dataToTrack);
                 }, INPUT_DEBOUNCE_TIMEOUT);
               }
-              else
-              {
-                // roleId can be data generated
-                if (item.selectorStr.indexOf('*') !== -1)
-                {
-                  var roleId = path[path.length - 1].roleId;
-                  var starWasFound = false;
-
-                  for (var key in data)
-                    if (hasOwnProperty.call(data, key))
-                      if (data[key] === '*')
-                      {
-                        data[key] = roleId;
-                        starWasFound = true;
-                        break;
-                      }
-
-                  if (!starWasFound)
-                  {
-                    data = JSON.parse(JSON.stringify(item.data));
-                    setDeep(data, '*', roleId);
-                  }
-                }
-
-                track({
-                  type: 'ui',
-                  path: stringifyPath(path),
-                  selector: stringifyPath(item.selector),
-                  event: event.type,
-                  data: data
-                });
+              else {
+                track(result.dataToTrack);
               }
-            }
           });
       });
   }
@@ -393,10 +425,6 @@ function registrateSelector(selector, eventName, data){
     data: data
   });
 }
-
-//
-// main API
-//
 
 var roleRegExp = /^(.+?)(?:\((.+)\))?$/;
 var subroleRegExp = /\/([^\/\(\)]+)$/;
@@ -571,6 +599,10 @@ function getPathByNode(node){
   return path;
 }
 
+//
+// main API
+//
+
 /**
  * Registers all selectors from a given map
  * @param {Map} map
@@ -663,6 +695,7 @@ module.exports = {
   /** @cut */ getPathByNode: getPathByNode,
   /** @cut */ isPathMatchSelector: isPathMatchSelector,
   /** @cut */ setDeep: setDeep,
+  /** @cut */ handleEventFor: handleEventFor,
 
   loadMap: loadMap,
   addDispatcher: addDispatcher,
