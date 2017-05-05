@@ -1,6 +1,6 @@
 
  /**
-  * This namespace contains base classes and functions for data maintain.
+  * This namespace contains base classes and functions for data manipilation and data maintenance.
   *
   * Namespace overview:
   * - Const:

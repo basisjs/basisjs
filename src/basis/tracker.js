@@ -2,6 +2,8 @@
 * @namespace basis.tracker
 */
 
+var namespace = 'basis.tracker';
+
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var eventUtils = require('basis.dom.event');
 var getComputedStyle = require('basis.dom.computedStyle').get;
@@ -12,7 +14,8 @@ var eventMap = {};
 
 var VISIBLE_CHECK_INTERVAL = 250;
 
-/** @cut */ var namespace = 'basis.tracker';
+var INPUT_DEBOUNCE_TIMEOUT = 1000;
+var INPUT_EVENTS = ['keyup', 'keydown', 'keypress', 'input']; // when a user is typing
 
 function track(event){
   try {
@@ -22,7 +25,9 @@ function track(event){
   }
 }
 
-// ui activity
+// Examples:
+
+// 1. ui activity
 // resource('./ui.js').ready(function(exports){
 //   [exports.Node, exports.PartitionNode].forEach(function(Class){
 //     Class.extend(function(super_, current_){
@@ -60,7 +65,7 @@ function track(event){
 //   });
 // });
 
-// net activity
+// 2. net activity
 // resource('./net.js').ready(function(exports){
 //   var trackEvents = ['start', 'success', 'failure', 'abort'];
 
@@ -79,7 +84,7 @@ function track(event){
 // });
 
 //
-// show
+// show event
 //
 
 function checkShow(){
@@ -123,119 +128,6 @@ function checkShow(){
   }
 }
 
-//
-// main API
-//
-
-var roleRegExp = /^(.+?)(?:\((.+)\))?$/;
-var subroleRegExp = /\/([^\/\(\)]+)$/;
-function parseRole(str){
-  var role = '';
-  var roleId = '';
-  var subrole = '';
-  var m;
-
-  if (m = str.match(subroleRegExp))
-  {
-    subrole = m[1];
-    str = str.substr(0, str.length - m[0].length);
-  }
-
-  if (m = str.match(roleRegExp))
-  {
-    role = m[1] || '';
-    roleId = m[2] || '';
-  }
-
-  return {
-    role: role,
-    roleId: roleId,
-    subrole: subrole
-  };
-}
-
-function stringifyRole(role){
-  if (typeof role == 'string')
-    return role;
-
-  if (!role)
-    return '';
-
-  return [
-    role.role || '',
-    role.roleId ? '(' + role.roleId + ')' : '',
-    role.subrole ? '/' + role.subrole : ''
-  ].join('');
-}
-
-function parsePath(value){
-  if (!Array.isArray(value))
-    value = String(value || '').trim().split(/\s+/);
-
-  return value.map(function(part){
-    if (typeof part == 'string')
-      return parseRole(part);
-
-    return part || {
-      role: '',
-      roleId: '',
-      subrole: ''
-    };
-  });
-}
-
-function stringifyPath(path){
-  if (typeof path == 'string')
-    return path;
-
-  return path.map(stringifyRole).join(' ');
-}
-
-function isPathMatchSelector(path, selector){
-  function isMatch(path, selector){
-    path = typeof path == 'string' ? parseRole(path) : path || '';
-    selector = typeof selector == 'string' ? parseRole(selector) : selector || '';
-
-    return selector.role == path.role &&
-           (selector.roleId == '*' || selector.roleId == path.roleId) &&
-           selector.subrole == path.subrole;
-  }
-
-  var pathIndex = path.length;
-  var selectorIndex = selector.length;
-
-  if (!selectorIndex)
-    return true;
-
-  if (!isMatch(path[--pathIndex], selector[--selectorIndex]))
-    return false;
-
-  while (pathIndex > 0 && selectorIndex > 0)
-    if (!isMatch(path[--pathIndex], selector[--selectorIndex]))
-      selectorIndex++;
-
-  return selectorIndex === 0;
-}
-
-function getPathByNode(node){
-  var cursor = node;
-  var path = [];
-  var role;
-
-  while (cursor && cursor !== document)
-  {
-    if (role = cursor.getAttribute('role-marker'))
-      path.unshift(parseRole(role));
-    cursor = cursor.parentNode;
-  }
-
-  return path;
-}
-
-function escapeQuotes(value){
-  return String(value).replace(/\"/g, '\\"');
-}
-
 function setDeep(obj, sample, value){
   // search for the first key in `obj` (`obj` can be a nested object)
   // and replace a value of the finded key with `value`
@@ -254,32 +146,9 @@ function setDeep(obj, sample, value){
   }
 }
 
-function getCssSelectorFromPath(path, selector){
-  return parsePath(path).map(function(role){
-    if (!role.role)
-      return '';
-
-    var start = escapeQuotes(role.role);
-    var end = (role.subrole ? '/' + escapeQuotes(role.subrole) : '') + '"]';
-
-    if (role.roleId)
-    {
-      if (selector && role.roleId == '*')
-        start = '[role-marker^="' + start + '("][role-marker$=")';
-      else
-        start = '[role-marker="' + start + '(' + escapeQuotes(role.roleId) + ')';
-    }
-    else
-    {
-      start = '[role-marker="' + start;
-    }
-
-    return start + end;
-  }).join(' ');
+function escapeQuotes(value){
+  return String(value).replace(/\"/g, '\\"');
 }
-
-var INPUT_DEBOUNCE_TIMEOUT = 1000;
-var INPUT_EVENTS = ['keyup', 'keydown', 'keypress', 'input'];
 
 function getSelectorList(eventName){
   if (hasOwnProperty.call(eventMap, eventName))
@@ -402,6 +271,186 @@ function registrateSelector(selector, eventName, data){
   });
 }
 
+//
+// main API
+//
+
+var roleRegExp = /^(.+?)(?:\((.+)\))?$/;
+var subroleRegExp = /\/([^\/\(\)]+)$/;
+function parseRole(str){
+  var role = '';
+  var roleId = '';
+  var subrole = '';
+  var m;
+
+  if (m = str.match(subroleRegExp))
+  {
+    subrole = m[1];
+    str = str.substr(0, str.length - m[0].length);
+  }
+
+  if (m = str.match(roleRegExp))
+  {
+    role = m[1] || '';
+    roleId = m[2] || '';
+  }
+
+  return {
+    role: role,
+    roleId: roleId,
+    subrole: subrole
+  };
+}
+
+function stringifyRole(role){
+  if (typeof role == 'string')
+    return role;
+
+  if (!role)
+    return '';
+
+  return [
+    role.role || '',
+    role.roleId ? '(' + role.roleId + ')' : '',
+    role.subrole ? '/' + role.subrole : ''
+  ].join('');
+}
+
+function parsePath(value){
+  if (!Array.isArray(value))
+    value = String(value || '').trim().split(/\s+/);
+
+  return value.map(function(part){
+    if (typeof part == 'string')
+      return parseRole(part);
+
+    return part || {
+      role: '',
+      roleId: '',
+      subrole: ''
+    };
+  });
+}
+
+function stringifyPath(path){
+  if (typeof path == 'string')
+    return path;
+
+  return path.map(stringifyRole).join(' ');
+}
+
+function isPathMatchSelector(path, selector){
+  function isMatch(path, selector){
+    path = typeof path == 'string' ? parseRole(path) : path || '';
+    selector = typeof selector == 'string' ? parseRole(selector) : selector || '';
+
+    return selector.role == path.role &&
+           (selector.roleId == '*' || selector.roleId == path.roleId) &&
+           selector.subrole == path.subrole;
+  }
+
+  var pathIndex = path.length;
+  var selectorIndex = selector.length;
+
+  if (!selectorIndex)
+    return true;
+
+  if (!isMatch(path[--pathIndex], selector[--selectorIndex]))
+    return false;
+
+  while (pathIndex > 0 && selectorIndex > 0)
+    if (!isMatch(path[--pathIndex], selector[--selectorIndex]))
+      selectorIndex++;
+
+  return selectorIndex === 0;
+}
+
+function getInfo(path){
+  var result = [];
+
+  if (typeof path == 'string')
+    path = parsePath(path);
+
+  for (var key in selectorMap)
+    if (isPathMatchSelector(path, selectorMap[key].selector))
+      result.push.apply(result, selectorMap[key].map(function(item){
+        return basis.object.extend({
+          selector: selectorMap[key].selector,
+          selectorStr: selectorMap[key].selectorStr
+        }, item);
+      }));
+
+  return result.length ? result : false;
+}
+
+function getPathByNode(node){
+  var cursor = node;
+  var path = [];
+  var role;
+
+  while (cursor && cursor !== document)
+  {
+    if (role = cursor.getAttribute('role-marker'))
+      path.unshift(parseRole(role));
+    cursor = cursor.parentNode;
+  }
+
+  return path;
+}
+
+function getCssSelectorFromPath(path, selector){
+  return parsePath(path).map(function(role){
+    if (!role.role)
+      return '';
+
+    var start = escapeQuotes(role.role);
+    var end = (role.subrole ? '/' + escapeQuotes(role.subrole) : '') + '"]';
+
+    if (role.roleId)
+    {
+      if (selector && role.roleId == '*')
+        start = '[role-marker^="' + start + '("][role-marker$=")';
+      else
+        start = '[role-marker="' + start + '(' + escapeQuotes(role.roleId) + ')';
+    }
+    else
+    {
+      start = '[role-marker="' + start;
+    }
+
+    return start + end;
+  }).join(' ');
+}
+
+function loadMap(map){
+  if (!map)
+  {
+    /** @cut */ basis.dev.warn(namespace + '.loadMap(): Wrong value for map');
+    return;
+  }
+
+  for (var key in map)
+  {
+    var eventsMap = map[key];
+
+    if (!eventsMap)
+    {
+      /** @cut */ basis.dev.warn(namespace + '.loadMap(): Value of map should be an object for path: ' + key);
+      continue;
+    }
+
+    var selector = parsePath(key);
+    for (var events in eventsMap)
+    {
+      var data = eventsMap[events];
+
+      events.trim().split(/\s+/).forEach(function(eventName){
+        registrateSelector(selector, eventName, data);
+      });
+    }
+  }
+}
+
 function addDispatcher(dispatcher, events, transformer){
   if (!dispatcher || typeof dispatcher.addHandler != 'function')
   {
@@ -444,54 +493,6 @@ function addDispatcher(dispatcher, events, transformer){
   return true;
 }
 
-function loadMap(map){
-  if (!map)
-  {
-    /** @cut */ basis.dev.warn(namespace + '.loadMap(): Wrong value for map');
-    return;
-  }
-
-  for (var key in map)
-  {
-    var eventsMap = map[key];
-
-    if (!eventsMap)
-    {
-      /** @cut */ basis.dev.warn(namespace + '.loadMap(): Value of map should be an object for path: ' + key);
-      continue;
-    }
-
-    var selector = parsePath(key);
-    for (var events in eventsMap)
-    {
-      var data = eventsMap[events];
-
-      events.trim().split(/\s+/).forEach(function(eventName){
-        registrateSelector(selector, eventName, data);
-      });
-    }
-  }
-};
-
-function getInfo(path){
-  var result = [];
-
-  if (typeof path == 'string')
-    path = parsePath(path);
-
-  for (var key in selectorMap)
-    if (isPathMatchSelector(path, selectorMap[key].selector))
-      result.push.apply(result, selectorMap[key].map(function(item){
-        return basis.object.extend({
-          selector: selectorMap[key].selector,
-          selectorStr: selectorMap[key].selectorStr
-        }, item);
-      }));
-
-  return result.length ? result : false;
-}
-
-
 module.exports = {
   parsePath: parsePath,
   parseRole: parseRole,
@@ -502,7 +503,7 @@ module.exports = {
   getPathByNode: getPathByNode,
   isPathMatchSelector: isPathMatchSelector,
   getCssSelectorFromPath: getCssSelectorFromPath,
-  setDeep: setDeep,
+  /** @cut */ setDeep: setDeep,
 
   loadMap: loadMap,
   addDispatcher: addDispatcher,
