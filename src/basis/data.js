@@ -1638,8 +1638,31 @@
   var KEYOBJECTMAP_MEMBER_HANDLER = {
     destroy: function(){
       delete this.map[this.id];
+
+      //when destroying a map member, then remove handlers from an object key
+      //for prevent of a memory leak
+      if (this.key)
+        this.key.removeHandler(KEYOBJECTMAP_KEY_HANDLER, this);
     }
   };
+  var KEYOBJECTMAP_KEY_HANDLER = {
+    destroy: function(){
+      removeMemberFromKeyObjectMap(this);
+    }
+  };
+
+  function removeMemberFromKeyObjectMap(itemInfo){
+    delete itemInfo.map[itemInfo.id];
+
+    if (itemInfo.map.autoDestroyMembers)
+      itemInfo.item.destroy();
+    else
+    {
+      itemInfo.item.removeHandler(KEYOBJECTMAP_MEMBER_HANDLER, itemInfo);
+      if (itemInfo.key)
+        itemInfo.key.removeHandler(KEYOBJECTMAP_KEY_HANDLER, itemInfo);
+    }
+  }
 
  /**
   * @class
@@ -1661,7 +1684,7 @@
     resolve: function(object){
       return this.get(this.keyGetter(object), object);
     },
-    create: function(key/*, object*/){
+    create: function(key){
       var itemConfig;
 
       if (key instanceof DataObject)
@@ -1671,25 +1694,28 @@
       else
         itemConfig = {
           data: {
-            id: key,
-            title: key
+            value: key
           }
         };
 
       return new this.itemClass(itemConfig);
     },
     get: function(key, autocreate){
-      var itemId = key instanceof DataObject ? key.basisObjectId : key;
-      var itemInfo = this.map_[itemId];
+      var itemId = key.basisObjectId || key;
+      var itemInfo = this.map_ && this.map_[itemId];
 
       if (!itemInfo && autocreate)
       {
         itemInfo = this.map_[itemId] = {
           map: this.map_,
           id: itemId,
+          key: key instanceof Emitter ? key : null,
           item: this.create(key, autocreate)
         };
+
         itemInfo.item.addHandler(KEYOBJECTMAP_MEMBER_HANDLER, itemInfo);
+        if (itemInfo.key)
+          itemInfo.key.addHandler(KEYOBJECTMAP_KEY_HANDLER, itemInfo);
       }
 
       if (itemInfo)
@@ -1701,13 +1727,7 @@
       var map = this.map_;
       this.map_ = null;
       for (var itemId in map)
-      {
-        var itemInfo = map[itemId];
-        if (this.autoDestroyMembers)
-          itemInfo.item.destroy();
-        else
-          itemInfo.item.removeHandler(KEYOBJECTMAP_MEMBER_HANDLER, itemInfo);
-      }
+        removeMemberFromKeyObjectMap(map[itemId]);
     }
   });
 
