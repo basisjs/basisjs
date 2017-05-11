@@ -10,12 +10,6 @@ var getComputedStyle = require('basis.dom.computedStyle').get;
 var getBoundingRect = require('basis.layout').getBoundingRect;
 
 /**
- * The Map object is a simple key/value map. Any value (both objects and primitive values) may be used as either a key or a value.
- * @external Map
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map}
- */
-
-/**
  * @typedef {TrackingDataObject}
  * @property {string} type 'ui|net',
  * @property {string} path result of `stringifyPath` function,
@@ -37,7 +31,7 @@ var tracker = new basis.Token();
  * All selectors from tracking maps, that are loaded with `loadMap` method.
  * Maps a selector string to a list of tracking objects as described in custom tracking maps.
  * @private
- * @type Map
+ * @type Object
  */
 var selectorMap = {};
 
@@ -47,13 +41,12 @@ var selectorMap = {};
  * eventMap.show will be a list of tracking objects, and taht list has `visibility` property,
  * eventMap.show.visibility is an object: custom selector string --> boolean
  * @private
- * @type Map
+ * @type Object
  */
 var eventMap = {};
 
 var VISIBLE_CHECK_INTERVAL = 250;
 var SHOW_EVENT = 'show';
-
 var INPUT_DEBOUNCE_TIMEOUT = 1000;
 
 /**
@@ -137,7 +130,7 @@ function track(event){
 //
 
 /**
- * Transforms given path to a csc selector
+ * Transforms given path to a css selector
  * @param {string} path
  * @param {string} selector
  * @private
@@ -264,7 +257,7 @@ function escapeQuotes(value){
  * @param {Array.<string>} item.selector
  * @param {string} item.selectorStr
  * @param {DOMEvent} event
- * @return {{ async: boolean, datatoTrack: TrackingDataObject }}
+ * @return {{ debounce: boolean, dataToTrack: TrackingDataObject }}
  */
 function handleEventFor(path, item, event){
   if (!isPathMatchSelector(path, item.selector))
@@ -278,7 +271,7 @@ function handleEventFor(path, item, event){
     data.inputValue = event.target.value;
 
     return {
-      async: true,
+      debounce: true,
       dataToTrack: {
         type: 'ui',
         path: stringifyPath(path),
@@ -358,13 +351,15 @@ function getSelectorList(eventName){
           selectorList.forEach(function(item){
             var result = handleEventFor(path, item, event);
             if (result)
-              if (result.async) {
+              if (result.debounce)
+              {
                 clearTimeout(inputTimeout);
                 inputTimeout = setTimeout(function(){
                   track(result.dataToTrack);
                 }, INPUT_DEBOUNCE_TIMEOUT);
               }
-              else {
+              else
+              {
                 track(result.dataToTrack);
               }
           });
@@ -605,7 +600,7 @@ function getPathByNode(node){
 
 /**
  * Registers all selectors from a given map
- * @param {Map} map
+ * @param {Object} map
  * @return
  */
 function loadMap(map){

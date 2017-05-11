@@ -167,7 +167,7 @@ module.exports = {
             };
 
             var result = handleEventFor(path, item, event);
-            assert(result.async === undefined);
+            assert(result.debounce === undefined);
             assert(typeof result.dataToTrack === 'object');
             assert(result.dataToTrack.type === 'ui');
             assert(result.dataToTrack.event === undefined);
@@ -195,7 +195,7 @@ module.exports = {
             };
 
             var result = handleEventFor(path, item, event);
-            assert(result.async === true);
+            assert(result.debounce === true);
             assert(typeof result.dataToTrack === 'object');
             assert(result.dataToTrack.type === 'ui');
             assert(result.dataToTrack.event === 'keydown');
@@ -229,7 +229,7 @@ module.exports = {
             };
 
             var result = handleEventFor(path, item, event);
-            assert(result.async === undefined);
+            assert(result.debounce === undefined);
             assert(typeof result.dataToTrack === 'object');
             assert(result.dataToTrack.type === 'ui');
             assert(result.dataToTrack.event === 'click');
