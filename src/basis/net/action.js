@@ -1,198 +1,139 @@
+/**
+ * @namespace basis.net.action
+ */
 
- /**
-  * @namespace basis.net.action
-  */
+var AjaxTransport = require('basis.net.ajax').Transport;
+var Promise = require('basis.promise');
+var STATE = require('basis.data').STATE;
+var action = require('basis.data.action');
+var ORIGINAL_DEFAULT_CALLBACK = action.DEFAULT_CALLBACK;
+var ORIGINAL_CALLBACK_HANDLER = action.CALLBACK_HANDLER;
 
-
-  //
-  // import names
-  //
-
-  var STATE = require('basis.data').STATE;
-  var STATE_UNDEFINED = STATE.UNDEFINED;
-  var STATE_READY = STATE.READY;
-  var STATE_PROCESSING = STATE.PROCESSING;
-  var STATE_ERROR = STATE.ERROR;
-
-  var AjaxTransport = require('basis.net.ajax').Transport;
-  var Promise = require('basis.promise');
-
-
-  //
-  // main part
-  //
-
-  var nothingToDo = function(){};
-
-  // default transport handler
-  var CALLBACK_HANDLER = {
-    start: function(transport, request){
-      var origin = request.requestData.origin;
-
-      this.start.call(request.requestData.origin);
-
-      if (origin.state != STATE_PROCESSING)
-        origin.setState(STATE_PROCESSING);
-    },
-    success: function(transport, request, data){
-      var origin = request.requestData.origin;
-
-      this.success.call(origin, data);
-
-      if (origin.state == STATE_PROCESSING)
-        origin.setState(STATE_READY);
-    },
-    failure: function(transport, request, error){
-      var origin = request.requestData.origin;
-
-      this.failure.call(origin, error);
-
-      if (origin.state == STATE_PROCESSING)
-        origin.setState(STATE_ERROR, error);
-    },
-    abort: function(transport, request){
-      var origin = request.requestData.origin;
-
-      this.abort.call(origin);
-
-      if (origin.state == STATE_PROCESSING)
-        origin.setState(transport.stateOnAbort || request.stateOnAbort || STATE_UNDEFINED);
-    },
-    complete: function(transport, request){
-      this.complete.call(request.requestData.origin);
-    }
-  };
-
-  // default callbacks
-  var DEFAULT_CALLBACK = {
-    start: nothingToDo,
-    success: nothingToDo,
-    failure: nothingToDo,
-    abort: nothingToDo,
-    complete: nothingToDo
-  };
-
-  var PROMISE_REQUEST_HANDLER = {
-    success: function(request, data){
-      this.fulfill(data);
-    },
-    abort: function(){
-      this.reject('Request aborted');
-    },
-    failure: function(request, error){
-      this.reject(error);
-    },
-    complete: function(){
-      this.request.removeHandler(PROMISE_REQUEST_HANDLER, this);
-    }
-  };
-
- /**
-  * @function
-  */
-  function resolveTransport(config){
-    if (config.transport)
-      return config.transport;
-
-    if (config.service)
-      return config.service.createTransport(config);
-
-    if (config.createTransport)
-      return config.createTransport(config);
-
-    // fallback, create instance of basis.net.ajax.Transport by default, if no other options
-    return new AjaxTransport(config);
+var PROMISE_REQUEST_HANDLER = {
+  success: function(request, data){
+    this.fulfill(data);
+  },
+  abort: function(){
+    this.reject('Request aborted');
+  },
+  failure: function(request, error){
+    this.reject(error);
+  },
+  complete: function(){
+    this.request.removeHandler(PROMISE_REQUEST_HANDLER, this);
   }
+};
 
- /**
-  * Creates a function that init service transport if necessary and make a request.
-  * @function
-  */
-  function createAction(config){
-    // make a copy of config with defaults
-    config = basis.object.extend({
-      prepare: nothingToDo,
-      request: nothingToDo
-    }, config);
+/**
+ * @function
+ */
+function resolveTransport(config){
+  if (config.transport)
+    return config.transport;
 
-    // if body is function take in account special action context
-    if (typeof config.body == 'function')
-    {
-      var bodyFn = config.body;
-      config.body = function(){
+  if (config.service)
+    return config.service.createTransport(config);
+
+  if (config.createTransport)
+    return config.createTransport(config);
+
+  // fallback, create instance of basis.net.ajax.Transport by default, if no other options
+  return new AjaxTransport(config);
+}
+
+var DEFAULT_CALLBACK = basis.object.slice(ORIGINAL_DEFAULT_CALLBACK);
+basis.object.complete(DEFAULT_CALLBACK, { abort: basis.fn.$undef });
+
+var CALLBACK_HANDLER = {
+  start: function(transport, request){
+    ORIGINAL_CALLBACK_HANDLER.start.call(this, request.requestData.origin);
+  },
+  success: function(transport, request, data){
+    ORIGINAL_CALLBACK_HANDLER.success.call(this, request.requestData.origin, data);
+  },
+  failure: function(transport, request, error){
+    ORIGINAL_CALLBACK_HANDLER.failure.call(this, request.requestData.origin, error);
+  },
+  abort: function(transport, request){
+    var origin = request.requestData.origin;
+
+    this.abort.call(origin);
+
+    if (origin.state == STATE.PROCESSING)
+      origin.setState(transport.stateOnAbort || request.stateOnAbort || STATE.UNDEFINED);
+  },
+  complete: function(transport, request){
+    ORIGINAL_CALLBACK_HANDLER.complete.call(this, request.requestData.origin);
+  }
+};
+
+function create(config){
+  var fn;
+  var callback;
+  var getTransport = basis.fn.lazyInit(function(){
+    var transport = resolveTransport(config);
+
+    transport.addHandler(CALLBACK_HANDLER, callback);
+
+    return transport;
+  });
+
+  basis.object.complete(config, DEFAULT_CALLBACK);
+  callback = basis.object.splice(config, ['start', 'success', 'failure', 'abort', 'complete']);
+  fn = basis.object.complete(
+    basis.object.slice(config, ['prepare', 'request']), {
+      prepare: basis.fn.$undef,
+      request: basis.fn.$undef
+    });
+
+  return function action(){
+    var dataInstance = this;
+    var requestData;
+    var request;
+    var args = basis.array.from(arguments);
+
+    if (fn.prepare.apply(dataInstance, args)) {
+      /** @cut */ basis.dev.info('Prepare handler returns trulthy result. Operation aborted. Context: ', dataInstance);
+      return Promise.reject('Prepare handler returns trulthy result. Operation aborted. Context: ', dataInstance);
+    }
+
+    requestData = basis.object.complete(
+      basis.object.slice(config, ['body']),
+      {
+        origin: dataInstance,
+        bodyContext: {
+          context: dataInstance,
+          args: args
+        }
+      },
+      fn.request.apply(dataInstance, args)
+    );
+
+    if (typeof requestData.body == 'function') {
+      var bodyFn = requestData.body;
+
+      requestData.body = function(){
         return bodyFn.apply(this.context, this.args);
       };
     }
 
-    // splice properties
-    var fn = basis.object.splice(config, ['prepare', 'request']);
-    var callback = basis.object.merge(
-      DEFAULT_CALLBACK,
-      basis.object.splice(config, ['start', 'success', 'failure', 'abort', 'complete'])
-    );
+    // do a request
+    if (request = getTransport().request(requestData)) {
+      return new Promise(function(fulfill, reject){
+        request.addHandler(PROMISE_REQUEST_HANDLER, {
+          request: request,
+          fulfill: fulfill,
+          reject: reject
+        });
+      });
+    }
 
-    // lazy transport
-    var getTransport = basis.fn.lazyInit(function(){
-      var transport = resolveTransport(config);
-
-      transport.addHandler(CALLBACK_HANDLER, callback);
-
-      return transport;
-    });
-
-    return function action(){
-      // this - instance of AbstractData
-      if (this.state != STATE_PROCESSING)
-      {
-        if (fn.prepare.apply(this, arguments))
-        {
-          /** @cut */ basis.dev.info('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
-          return Promise.reject('Prepare handler returns trulthy result. Operation aborted. Context: ', this);
-        }
-
-        var request;
-        var requestData = basis.object.complete({
-          origin: this,
-          bodyContext: {
-            context: this,
-            args: basis.array(arguments)
-          }
-        }, fn.request.apply(this, arguments));
-
-        // if body is function take in account special action context
-        if (typeof requestData.body == 'function')
-        {
-          var bodyFn = requestData.body;
-          requestData.body = function(){
-            return bodyFn.apply(this.context, this.args);
-          };
-        }
-
-        // do a request
-        if (request = getTransport().request(requestData))
-          return new Promise(function(fulfill, reject){
-            request.addHandler(PROMISE_REQUEST_HANDLER, {
-              request: request,
-              fulfill: fulfill,
-              reject: reject
-            });
-          });
-
-        return Promise.reject('Request is not performed');
-      }
-      else
-      {
-        /** @cut */ basis.dev.warn('Context in processing state. Operation aborted. Context: ', this);
-        return Promise.reject('Context in processing state, request is not performed');
-      }
-    };
-  }
-
-
-  //
-  // export names
-  //
-
-  module.exports = {
-    create: createAction
+    return Promise.reject('Request is not performed');
   };
+}
+
+module.exports = {
+  create: create,
+  CALLBACK_HANDLER: CALLBACK_HANDLER,
+  DEFAULT_CALLBACK: DEFAULT_CALLBACK
+};
