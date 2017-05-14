@@ -213,7 +213,7 @@ module.exports = {
               selectorStr: 'my-item-selector',
               data: {
                 foo: 'myItemDataFoo',
-                dataToTrackFn: function(data, event){
+                transformWithUIEvent: function(data, event){
                   return {
                     foo: data.foo + ' ' + event.target.baseURI
                   };

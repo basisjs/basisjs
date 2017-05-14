@@ -277,7 +277,7 @@ function handleEventFor(path, item, event){
         path: stringifyPath(path),
         selector: stringifyPath(item.selector),
         event: event.type,
-        data: typeof data.dataToTrackFn === 'function' ? data.dataToTrackFn(data, event) : data
+        data: data.transformWithUIEvent(data, event)
       }
     };
   }
@@ -311,7 +311,7 @@ function handleEventFor(path, item, event){
         path: stringifyPath(path),
         selector: stringifyPath(item.selector),
         event: event.type,
-        data: typeof data.dataToTrackFn === 'function' ? data.dataToTrackFn(data, event) : data
+        data: data.transformWithUIEvent(data, event)
       }
     };
   }
@@ -408,6 +408,9 @@ function registrateSelector(selector, eventName, data){
     /** @cut */ basis.dev.warn(namespace + '.registrateSelector(): Duplicate selector for event `' + eventName + '`:' + selector);
     return;
   }
+
+  if (typeof data.transformWithUIEvent !== 'function')
+    data.transformWithUIEvent = basis.fn.$self;
 
   selectorList.push({
     selector: selector,

@@ -33,7 +33,7 @@ module.exports = {
             }
         },
         input: {
-            dataToTrackFn: function(data, event){
+            transformWithUIEvent: function(data, event){
                 return {
                     customTracking: {
                         id: 'input concurent input'
@@ -50,7 +50,7 @@ module.exports = {
     },
     'input/password': {
         input: {
-            dataToTrackFn: function(data){
+            transformWithUIEvent: function(data){
                 return {
                     customTracking: {
                         id: 'input password input'
