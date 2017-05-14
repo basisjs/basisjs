@@ -249,11 +249,12 @@ function escapeQuotes(value){
 
 /**
  * Search for the first key in `obj` (`obj` can be a nested object)
- * and replaces a value of the finded key with `value`
- * private except for tests
+ * and replaces a value of the finded key with `value`.
+ * Private except for tests.
  * @param {Array.<RoleObject>} path
  * @param {Object} item custom tracking data object from some tracking map
  * @param {Object} item.data
+ * @param {function()} item.data.transformWithUIEvent
  * @param {Array.<string>} item.selector
  * @param {string} item.selectorStr
  * @param {DOMEvent} event
@@ -283,6 +284,8 @@ function handleEventFor(path, item, event){
   }
   else
   {
+    data = data.transformWithUIEvent(data, event);
+
     // roleId can be data generated
     if (item.selectorStr.indexOf('*') !== -1)
     {
@@ -300,7 +303,7 @@ function handleEventFor(path, item, event){
 
       if (!starWasFound)
       {
-        data = JSON.parse(JSON.stringify(item.data));
+        data = JSON.parse(JSON.stringify(data));
         setDeep(data, '*', roleId);
       }
     }
@@ -311,7 +314,7 @@ function handleEventFor(path, item, event){
         path: stringifyPath(path),
         selector: stringifyPath(item.selector),
         event: event.type,
-        data: data.transformWithUIEvent(data, event)
+        data: data
       }
     };
   }

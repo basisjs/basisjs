@@ -160,6 +160,7 @@ module.exports = {
               selector: [{ role: 'my-item-selector' }],
               selectorStr: 'my-item-selector',
               data: {
+                transformWithUIEvent: basis.fn.$self,
                 foo: 'myItemDataFoo'
               }
             };
@@ -184,6 +185,7 @@ module.exports = {
               selector: [{ role: 'my-item-selector' }],
               selectorStr: 'my-item-selector',
               data: {
+                transformWithUIEvent: basis.fn.$self,
                 foo: 'myItemDataFoo'
               }
             };
