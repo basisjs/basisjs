@@ -33,13 +33,30 @@ module.exports = {
             }
         },
         input: {
-            customTracking: {
-                id: 'input concurent input',
+            transformWithUIEvent: function(data, event){
+                return {
+                    customTracking: {
+                        id: 'input concurent input'
+                    },
+                    inputValue: event.target.baseURI.indexOf('localhost') ? event.target.value : event.target.value.length
+                };
             }
         },
         blur: {
             customTracking: {
                 id: 'blur concurent input'
+            }
+        }
+    },
+    'input/password': {
+        input: {
+            transformWithUIEvent: function(data){
+                return {
+                    customTracking: {
+                        id: 'input password input'
+                    },
+                    inputValue: data.inputValue.length
+                };
             }
         }
     },
