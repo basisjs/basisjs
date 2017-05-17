@@ -1254,7 +1254,7 @@
       if (NODE_ENV)
       {
         // node.js env
-        basisFilename = process.basisjsFilename;
+        basisFilename = process.basisjsFilename || __filename.replace(/\\/g, '/');
 
         /** @cut */ if (process.basisjsConfig)
         /** @cut */ {
