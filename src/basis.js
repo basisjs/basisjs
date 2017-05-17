@@ -2164,13 +2164,9 @@
       else
       {
         try {
-          // try to use special read file function, it may be provided by parent module
-          /** @cut */ if (!process.basisjsReadFile)
-          /** @cut */   consoleMethods.warn('basis.resource: basisjsReadFile not found, file content couldn\'t to be read');
-
-          resourceContent = process.basisjsReadFile
+          resourceContent = typeof process.basisjsReadFile == 'function'
             ? process.basisjsReadFile(url)
-            : '';
+            : require('fs').readFileSync(url, 'utf-8');
         } catch(e){
           /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
