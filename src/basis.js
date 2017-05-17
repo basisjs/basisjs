@@ -4133,8 +4133,12 @@
   // extend exports when node.js environment
   //
 
-  if (NODE_ENV && exports)
-    exports.basis = basis;
+  if (NODE_ENV && typeof module != 'undefined' && module)
+  {
+    module.exports = basis;
+    // NOTE: for legacy reasons since basisjs-tools-build rely on it
+    module.exports.basis = basis;
+  }
 
 
   //
