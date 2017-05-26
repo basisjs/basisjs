@@ -2166,7 +2166,9 @@
         try {
           resourceContent = typeof process.basisjsReadFile == 'function'
             ? process.basisjsReadFile(url)
-            : require('fs').readFileSync(url, 'utf-8');
+              // use module.require() instead of require() to prevent Webpack warn
+              // about fail to resolve a module
+            : module.require('fs').readFileSync(url, 'utf-8');
         } catch(e){
           /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
