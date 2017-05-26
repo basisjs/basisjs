@@ -31,6 +31,8 @@ var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
 var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
 var ATTRIBUTE_MODE = /^(?:|append-|set-|remove-)(class|attr)$/;
 
+/** @cut to avoid warning about implicit global variable usage */ var __nodejsRequire;
+
 
 /**
  * Converts HTML tokens in string to UTF symbols.
