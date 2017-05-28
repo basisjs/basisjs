@@ -196,17 +196,12 @@
 
     params: null,
     normalize: basis.fn.$undef,
-    defaults_: null,
     paramsConfig_: null,
-    paramsStore_: null,
-    nextParamsStore_: null,
 
     init: function(parseInfo, config){
       Route.prototype.init.apply(this, arguments);
 
       this.paramsConfig_ = this.constructParamsConfig_(config.params);
-      this.defaults_ = this.getDefaults_(this.paramsConfig_);
-      this.paramsStore_ = basis.object.slice(this.defaults_);
 
       if (config.normalize)
       {
@@ -230,6 +225,12 @@
         {
           var deserialize;
           var serialize;
+          var defaultValue;
+
+          if ('DEFAULT_VALUE' in transform)
+            defaultValue = transform.DEFAULT_VALUE;
+          else
+            defaultValue = transform();
 
           if ('deserialize' in transform)
           {
@@ -270,7 +271,10 @@
           result[key] = {
             transform: transform,
             serialize: serialize,
-            deserialize: deserialize
+            deserialize: deserialize,
+            defaultValue: defaultValue,
+            currentValue: defaultValue,
+            nextValue: undefined
           };
         }
         else
@@ -278,7 +282,10 @@
           result[key] = {
             transform: basis.fn.$self,
             serialize: basis.fn.$self,
-            deserialize: basis.fn.$self
+            deserialize: basis.fn.$self,
+            defaultValue: undefined,
+            currentValue: undefined,
+            nextValue: undefined
           };
 
           /** @cut */ basis.dev.warn(namespace + ': expected param ' + key + ' to be function, but got ', transform, ' using basis.fn.$self instead');
@@ -291,16 +298,18 @@
       this.params = {};
 
       this.attach(function(values){
-        for (var key in this.paramsConfig_)
+        basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
           if (values && key in values)
             Value.prototype.set.call(this.params[key], values[key]);
           else
-            Value.prototype.set.call(this.params[key], this.defaults_[key]);
+            Value.prototype.set.call(this.params[key], paramConfig.defaultValue);
+        }, this);
+
       }, this);
 
       basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
         var paramValue = new Value({
-          value: this.defaults_[key]
+          value: paramConfig.defaultValue
         });
 
         paramValue.set = function(value){
@@ -312,22 +321,22 @@
 
           flushSchedule.add(this);
 
-          var newValue = paramConfig.transform(value, this.paramsStore_[key]);
+          var newValue = paramConfig.transform(value, paramConfig.currentValue);
 
-          this.nextParamsStore_[key] = newValue;
+          paramConfig.nextValue = newValue;
         }.bind(this);
 
         this.params[key] = paramValue;
       }, this);
     },
-    calculateDelta_: function(next, prev){
+    calculateDelta_: function(nextValues){
       var delta = null;
 
-      basis.object.iterate(prev, function(key, prevValue){
-        if (prevValue !== next[key])
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        if (paramConfig.currentValue !== nextValues[key])
         {
           delta = delta || {};
-          delta[key] = prevValue;
+          delta[key] = paramConfig.currentValue;
         }
       });
 
@@ -353,7 +362,7 @@
         else if (paramName in paramsFromQuery)
           values[paramName] = paramsFromQuery[paramName];
 
-      var nextParams = basis.object.slice(this.defaults_);
+      var nextParams = {};
 
       // Run through params transforms in order to transform decoded values to typed values
       basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
@@ -363,31 +372,37 @@
         if (key in values)
         {
           var parsedValue = deserialize(values[key]);
-          nextParams[key] = transform(parsedValue, this.paramsStore_[key]);
+          nextParams[key] = transform(parsedValue, paramConfig.currentValue);
         }
         else
         {
-          nextParams[key] = this.defaults_[key];
+          nextParams[key] = paramConfig.defaultValue;
         }
       }, this);
 
-      var delta = this.calculateDelta_(nextParams, this.paramsStore_);
+      var delta = this.calculateDelta_(nextParams);
 
       this.normalize(nextParams, delta);
 
       // Run through params transforms, because normalize may spoil some params
       basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        var newValue;
+
         if (key in nextParams)
-          nextParams[key] = paramConfig.transform(nextParams[key], this.paramsStore_[key]);
+          newValue = paramConfig.transform(nextParams[key], paramConfig.currentValue);
         else
-          nextParams[key] = this.defaults_[key];
+          newValue = paramConfig.defaultValue;
+
+        paramConfig.currentValue = newValue;
+        paramConfig.nextValue = newValue;
       }, this);
 
-      this.paramsStore_ = nextParams;
+      var newRouteValue = {};
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        newRouteValue[key] = paramConfig.currentValue;
+      });
 
-      this.nextParamsStore_ = basis.object.slice(this.paramsStore_);
-
-      this.set(this.paramsStore_);
+      this.set(newRouteValue);
 
       silentReplace(this.getCurrentPath_());
     },
@@ -426,9 +441,9 @@
 
       basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
         if (key in specifiedParams)
-          params[key] = paramConfig.transform(specifiedParams[key], this.defaults_[key]);
+          params[key] = paramConfig.transform(specifiedParams[key], paramConfig.defaultValue);
         else
-          params[key] = this.defaults_[key];
+          params[key] = paramConfig.defaultValue;
       }, this);
 
       var serialized = {};
@@ -442,27 +457,19 @@
       navigate(this.getCurrentPath_(), replace);
     },
     getCurrentPath_: function(){
-      return this.getPath(this.nextParamsStore_);
-    },
-    getDefaults_: function(paramsConfig){
-      var result = {};
-
-      basis.object.iterate(paramsConfig, function(key, paramConfig){
-        var transform = paramConfig.transform;
-
-        if ('DEFAULT_VALUE' in transform)
-          result[key] = transform.DEFAULT_VALUE;
-        else
-          result[key] = transform();
+      var paramsNextValues = {};
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        paramsNextValues[key] = paramConfig.nextValue;
       });
 
-      return result;
+      return this.getPath(paramsNextValues);
     },
     areModified_: function(params){
       var result = {};
 
-      for (var key in this.paramsConfig_)
-        result[key] = params[key] !== this.defaults_[key];
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        result[key] = params[key] !== paramConfig.defaultValue;
+      });
 
       return result;
     },
@@ -488,8 +495,6 @@
     },
     destroy: function(){
       this.paramsConfig_ = null;
-      this.defaults_ = null;
-      this.paramsStore_ = null;
       this.params = null;
 
       flushSchedule.remove(this);
