@@ -37,7 +37,7 @@
 ;(function createBasisInstance(context, __basisFilename, __config){
   'use strict';
 
-  var VERSION = '1.10.2';
+  var VERSION = '1.10.3';
 
   var global = Function('return this')();
   var process = global.process;
@@ -1254,7 +1254,7 @@
       if (NODE_ENV)
       {
         // node.js env
-        basisFilename = process.basisjsFilename;
+        basisFilename = process.basisjsFilename || __filename.replace(/\\/g, '/');
 
         /** @cut */ if (process.basisjsConfig)
         /** @cut */ {
@@ -2164,13 +2164,9 @@
       else
       {
         try {
-          // try to use special read file function, it may be provided by parent module
-          /** @cut */ if (!process.basisjsReadFile)
-          /** @cut */   consoleMethods.warn('basis.resource: basisjsReadFile not found, file content couldn\'t to be read');
-
-          resourceContent = process.basisjsReadFile
+          resourceContent = typeof process.basisjsReadFile == 'function'
             ? process.basisjsReadFile(url)
-            : '';
+            : require('fs').readFileSync(url, 'utf-8');
         } catch(e){
           /** @cut */ consoleMethods.error('basis.resource: Unable to load ' + url, e);
         }
@@ -2584,8 +2580,10 @@
         function(path){
           return requireNamespace(path, baseURL);
         },
-        function(path){
-          return resolveResourceFilename(path, baseURL, 'asset(\'{url}\')');
+        function(path, inline){
+          return inline === true
+            ? getResourceContent(resolveResourceFilename(path, baseURL, 'asset(\'{url}\',true)'))
+            : resolveResourceFilename(path, baseURL, 'asset(\'{url}\')');
         }
       );
     }
@@ -4022,8 +4020,10 @@
     namespace: getNamespace,
     require: requireNamespace,
     resource: getResource,
-    asset: function(path){
-      return resolveResourceFilename(path, null, 'basis.asset(\'{url}\')');
+    asset: function(path, inline){
+      return inline === true
+        ? getResourceContent(resolveResourceFilename(path, null, 'basis.asset(\'{url}\')'))
+        : resolveResourceFilename(path, null, 'basis.asset(\'{url}\')');
     },
 
     // timers
@@ -4133,8 +4133,12 @@
   // extend exports when node.js environment
   //
 
-  if (NODE_ENV && exports)
-    exports.basis = basis;
+  if (NODE_ENV && typeof module != 'undefined' && module)
+  {
+    module.exports = basis;
+    // NOTE: for legacy reasons since basisjs-tools-build rely on it
+    module.exports.basis = basis;
+  }
 
 
   //

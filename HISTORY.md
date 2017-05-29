@@ -1,3 +1,8 @@
+## 1.10.3 (May 17, 2017)
+
+- Fixed `basis.entity.EntitySet#setAndDestroyRemoved()` to destroy items when an empty array or null passed
+- Fixed using basis.js on node.js (#53)
+
 ## 1.10.2 (March 16, 2017)
 
 - Fixed wrong warning on successful route handler removal (#151)

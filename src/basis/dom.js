@@ -1,9 +1,9 @@
 
  /**
-  * This namespace provides functions for DOM manupulations - transerval,
-  * node creation, moving and test nodes. Most of functions are compatible with
-  * native and simulated (object that generaly has properties like firsChild,
-  * lastChild, parentNode etc) DOM structures.
+  * This namespace provides functions for DOM manipulations - traversal,
+  * node creation, moving and testing nodes. Most of these functions are compatible with
+  * native and simulated (an object that generally has properties like firstChild,
+  * lastChild, parentNode, etc.) DOM structures.
   *
   * Functions overview:
   * - Order & position functions:

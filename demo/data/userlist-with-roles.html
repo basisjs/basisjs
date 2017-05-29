@@ -180,7 +180,11 @@
     new UINode({
       role: 'input',
       container: document.getElementById('demo-container'),
-      template: '<div class="demo-input"><input type="text" placeholder="Demo Input" b:role="demo"/> <input type="text" placeholder="Concurent Input" b:role="concurent"/></div>'
+      template: '<div class="demo-input">'
+        + '<input type="text" placeholder="Demo Input" b:role="demo"/> '
+        + '<input type="text" placeholder="Concurent Input" b:role="concurent"/> '
+        + '<input type="password" placeholder="Hidden Input" b:role="password"/> '
+        + '</div>'
     });
 
     //
