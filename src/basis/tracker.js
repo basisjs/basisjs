@@ -271,6 +271,9 @@ function handleEventFor(path, item, event){
   {
     data.inputValue = event.target.value;
 
+    if (typeof data.transformWithUIEvent === 'function')
+      data = data.transformWithUIEvent(data, event);
+
     return {
       debounce: true,
       dataToTrack: {
@@ -278,13 +281,14 @@ function handleEventFor(path, item, event){
         path: stringifyPath(path),
         selector: stringifyPath(item.selector),
         event: event.type,
-        data: data.transformWithUIEvent(data, event)
+        data: data
       }
     };
   }
   else
   {
-    data = data.transformWithUIEvent(data, event);
+    if (typeof data.transformWithUIEvent === 'function')
+      data = data.transformWithUIEvent(data, event);
 
     // roleId can be data generated
     if (item.selectorStr.indexOf('*') !== -1)
@@ -411,9 +415,6 @@ function registrateSelector(selector, eventName, data){
     /** @cut */ basis.dev.warn(namespace + '.registrateSelector(): Duplicate selector for event `' + eventName + '`:' + selector);
     return;
   }
-
-  if (typeof data.transformWithUIEvent !== 'function')
-    data.transformWithUIEvent = basis.fn.$self;
 
   selectorList.push({
     selector: selector,

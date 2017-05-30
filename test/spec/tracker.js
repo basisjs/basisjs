@@ -312,6 +312,29 @@ module.exports = {
           }
         }
       ]
+    },
+    {
+      name: 'loadMap',
+      test: [
+        {
+          name: 'it properly handles string as event',
+          test: function(){
+            var thrown = false;
+
+            try {
+              loadMap({
+                'foo': {
+                    click: 'string'
+                }
+              });
+            } catch(e) {
+              thrown = true;
+            }
+
+            assert(thrown === false);
+          }
+        }
+      ]
     }
   ]
 };
