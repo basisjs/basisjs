@@ -295,39 +295,39 @@
       return result;
     },
     constructParams_: function(){
-      this.params = {};
+      var route = this;
 
-      this.attach(function(values){
-        basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+      route.params = {};
+
+      route.attach(function(values){
+        basis.object.iterate(route.paramsConfig_, function(key, paramConfig){
           if (values && key in values)
-            Value.prototype.set.call(this.params[key], values[key]);
+            Value.prototype.set.call(route.params[key], values[key]);
           else
-            Value.prototype.set.call(this.params[key], paramConfig.defaultValue);
-        }, this);
+            Value.prototype.set.call(route.params[key], paramConfig.defaultValue);
+        });
+      });
 
-      }, this);
-
-      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+      basis.object.iterate(route.paramsConfig_, function(key, paramConfig){
         var paramValue = new Value({
-          value: paramConfig.defaultValue
+          value: paramConfig.defaultValue,
+          set: function(value){
+            if (!route.value)
+            {
+              /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: route.paramsConfig_ });
+              return;
+            }
+
+            flushSchedule.add(route);
+
+            var newValue = paramConfig.transform(value, paramConfig.currentValue);
+
+            paramConfig.nextValue = newValue;
+          }
         });
 
-        paramValue.set = function(value){
-          if (!this.value)
-          {
-            /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: this.paramsConfig_ });
-            return;
-          }
-
-          flushSchedule.add(this);
-
-          var newValue = paramConfig.transform(value, paramConfig.currentValue);
-
-          paramConfig.nextValue = newValue;
-        }.bind(this);
-
-        this.params[key] = paramValue;
-      }, this);
+        route.params[key] = paramValue;
+      });
     },
     calculateDelta_: function(nextValues){
       var delta = null;
