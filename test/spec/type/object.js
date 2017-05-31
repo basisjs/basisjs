@@ -86,7 +86,11 @@ module.exports = {
             var a = {};
             a.a = a;
 
-            assert(type.object.serialize(a) === '{}');
+            var warned = catchWarnings(function(){
+              assert(type.object.serialize(a) === '{}');
+            });
+
+            assert(warned);
           }
         },
         {

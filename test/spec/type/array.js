@@ -93,7 +93,11 @@ module.exports = {
             var a = {};
             a.a = a;
 
-            assert(type.array.serialize([a]) === '[]');
+            var warned = catchWarnings(function(){
+              assert(type.array.serialize([a]) === '[]');
+            });
+
+            assert(warned);
           }
         },
         {

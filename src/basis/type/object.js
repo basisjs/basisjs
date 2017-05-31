@@ -44,6 +44,8 @@ function objectTransform(defaultValue, nullable) {
     try {
       return JSON.stringify(value);
     } catch(e) {
+      /** @cut */ basis.dev.warn(transformName + '.serialize got exception while stringifying', value, ' to JSON. Stringifying default value instead');
+
       return JSON.stringify(defaultValue);
     }
   };
