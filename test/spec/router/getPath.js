@@ -52,38 +52,60 @@ module.exports = {
       }
     },
     {
-      name: 'custom encode',
+      name: 'encodes param which has serialize property',
+      test: function(){
+        function customTransform(v){
+          return v && v.toLowerCase();
+        }
+        customTransform.serialize = function(v){
+          return '-' + v;
+        };
+
+        var route = router.route('page/:custom', {
+          params: {
+            str: type.string,
+            custom: customTransform
+          }
+        });
+
+        var expected = 'page/-custom?str=a';
+        var actual = route.getPath({ str: 'a', custom: 'CUSTOM' });
+
+        assert(actual == expected);
+      }
+    },
+    {
+      name: 'encodes objects and arrays',
       test: function(){
         var route = router.route('page/:obj', {
           params: {
             obj: type.object,
             arr: type.array,
             num: type.number
-          },
-          encode: function(params){
-            params.arr = params.arr.join(',');
-
-            params.obj = JSON.stringify(params.obj);
           }
         });
 
-        var expected = 'page/%7B%22foo%22%3A%22bar%22%7D?arr=1%2C35&num=25';
+        // 'page/{"foo":"bar"}?arr=[1,35]&num=25'
+        var expected = 'page/%7B%22foo%22%3A%22bar%22%7D?arr=%5B1%2C35%5D&num=25';
         var actual = route.getPath({ obj: { foo: 'bar' }, arr: [1, 35], num: 25 });
 
         assert(actual == expected);
       }
     },
     {
-      name: 'encode not a function',
+      name: 'serialize is not a function',
       test: function(){
-        var route;
+        function customTransform(v){
+          return v;
+        }
+        customTransform.serialize = 2;
+
         var warned = catchWarnings(function(){
           route = router.route(':str/', {
             params: {
-              str: type.string,
+              str: customTransform,
               query: type.string
-            },
-            encode: 2
+            }
           });
         });
 
@@ -91,30 +113,6 @@ module.exports = {
 
         var expected = 'foo/?query=abc';
         var actual = route.getPath({ str: 'foo', query: 'abc' });
-
-        assert(actual == expected);
-      }
-    },
-    {
-      name: 'transforms params',
-      test: function(){
-        var route = router.route('tea/:double/:wrapped', {
-          params: {
-            wrapped: function(value){
-              return '_' + value + '_';
-            },
-            double: function(num){
-              return num * 2;
-            },
-            obj: type.object
-          },
-          encode: function(params){
-            params.obj = JSON.stringify(params.obj);
-          }
-        });
-
-        var expected = 'tea/6/_w_?obj=%7B%7D';
-        var actual = route.getPath({ wrapped: 'w', double: 3, obj: {} });
 
         assert(actual == expected);
       }
@@ -140,7 +138,8 @@ module.exports = {
         var route = router.route('coffee/:custom', {
           params: {
             custom: function(value){
-              if (value === 'secret') {
+              if (value === 'secret')
+              {
                 return 'correct';
               }
               else

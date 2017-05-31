@@ -3,6 +3,7 @@ module.exports = {
   init: function(){
     var router = basis.require('basis.router');
     var type = basis.require('basis.type');
+    var catchWarnings = basis.require('./helpers/common.js').catchWarnings;
   },
   test: [
     {
@@ -161,8 +162,10 @@ module.exports = {
               }
             });
 
-            router.navigate('f/?str=prev');
-            router.navigate('f/?str=next&num=1');
+            catchWarnings(function(){
+              router.navigate('f/?str=prev');
+              router.navigate('f/?str=next&num=1');
+            });
 
             assert(route.params.str.value === 'prev');
 
@@ -170,8 +173,58 @@ module.exports = {
 
             route.destroy();
           }
+        },
+        {
+          name: 'not a function',
+          test: function(){
+            var route;
+            var warned = catchWarnings(function(){
+              route = router.route(':str/', {
+                params: {
+                  str: type.string,
+                  query: type.string
+                },
+                normalize: 2
+              });
+            });
+
+            assert(warned);
+
+            router.navigate('foo/?query=abc');
+
+            assert(route.params.str.value === 'foo');
+            assert(route.params.query.value === 'abc');
+          }
         }
       ]
+    },
+    {
+      name: 'silently replaces url after normalize',
+      test: function(){
+        var route = router.route('haha(/)', {
+          params: {
+            str: type.string,
+            num: type.number
+          },
+          normalize: function(params){
+            params.num = 25;
+          }
+        });
+        var matchCounter = 0;
+        route.add(function(){
+          matchCounter++;
+        });
+        matchCounter = 0;
+
+        router.navigate('haha/');
+
+        assert.async(function(){
+          assert(location.hash === '#haha?num=25');
+          assert(matchCounter === 1);
+
+          route.destroy();
+        });
+      }
     }
   ]
 };

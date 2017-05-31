@@ -2,7 +2,7 @@
   "name": "basisjs",
   "title": "basis.js",
   "description": "JavaScript framework to build single-page applications",
-  "version": "1.10.2",
+  "version": "1.10.3",
   "author": "Roman Dvornov <rdvornov@gmail.com>",
   "license": "MIT",
   "main": "src/basis.js",

@@ -13,6 +13,7 @@
   var location = global.location;
   var document = global.document;
   var eventUtils = require('basis.dom.event');
+  var Value = require('basis.data').Value;
   var parsePath = require('./router/ast.js').parsePath;
   var stringify = require('./router/ast.js').stringify;
 
@@ -194,57 +195,98 @@
     className: namespace + '.ParametrizedRoute',
 
     params: null,
-    decode: basis.fn.$undef,
-    encode: basis.fn.$undef,
     normalize: basis.fn.$undef,
     paramsConfig_: null,
-    pendingDelta_: null,
 
     init: function(parseInfo, config){
       Route.prototype.init.apply(this, arguments);
 
-      this.paramsConfig_ = this.verifyParamsConfig_(config.params);
-      this.defaults_ = this.getDefaults_(this.paramsConfig_);
-      this.paramsStore_ = basis.object.slice(this.defaults_);
+      this.paramsConfig_ = this.constructParamsConfig_(config.params);
 
-      if (config.decode)
-      {
-        if (typeof config.decode === 'function')
-        {
-          this.decode = config.decode;
-        }
-        else
-        {
-          /** @cut */ basis.dev.warn(namespace + ': expected decode to be function, but got ', config.decode, ' - ignore');
-        }
-      }
-      if (config.encode)
-      {
-        if (typeof config.encode === 'function')
-        {
-          this.encode = config.encode;
-        }
-        else
-        {
-          /** @cut */ basis.dev.warn(namespace + ': expected encode to be function, but got ', config.encode, ' - ignore');
-        }
-      }
       if (config.normalize)
-        this.normalize = config.normalize;
+      {
+        if (typeof config.normalize === 'function')
+        {
+          this.normalize = config.normalize;
+        }
+        else
+        {
+          /** @cut */ basis.dev.warn(namespace + ': expected normalize to be function, but got ', config.normalize, ' - ignore');
+        }
+      }
 
       this.constructParams_();
     },
-    verifyParamsConfig_: function(paramsConfig){
+    constructParamsConfig_: function(paramsConfig){
       var result = {};
 
       basis.object.iterate(paramsConfig, function(key, transform){
         if (typeof transform === 'function')
         {
-          result[key] = transform;
+          var deserialize;
+          var serialize;
+          var defaultValue;
+
+          if ('DEFAULT_VALUE' in transform)
+            defaultValue = transform.DEFAULT_VALUE;
+          else
+            defaultValue = transform();
+
+          if ('deserialize' in transform)
+          {
+            if (typeof transform.deserialize === 'function')
+            {
+              deserialize = transform.deserialize;
+            }
+            else
+            {
+              /** @cut */ basis.dev.warn(namespace + ': expected deserialize to be a function, but got ', deserialize, ' - ignore');
+
+              deserialize = basis.fn.$self;
+            }
+          }
+          else
+          {
+            deserialize = basis.fn.$self;
+          }
+
+          if ('serialize' in transform)
+          {
+            if (typeof transform.serialize === 'function')
+            {
+              serialize = transform.serialize;
+            }
+            else
+            {
+              /** @cut */ basis.dev.warn(namespace + ': expected serialize to be a function, but got ', serialize, ' - ignore');
+
+              serialize = basis.fn.$self;
+            }
+          }
+          else
+          {
+            serialize = basis.fn.$self;
+          }
+
+          result[key] = {
+            transform: transform,
+            serialize: serialize,
+            deserialize: deserialize,
+            defaultValue: defaultValue,
+            currentValue: defaultValue,
+            nextValue: undefined
+          };
         }
         else
         {
-          result[key] = basis.fn.$self;
+          result[key] = {
+            transform: basis.fn.$self,
+            serialize: basis.fn.$self,
+            deserialize: basis.fn.$self,
+            defaultValue: undefined,
+            currentValue: undefined,
+            nextValue: undefined
+          };
 
           /** @cut */ basis.dev.warn(namespace + ': expected param ' + key + ' to be function, but got ', transform, ' using basis.fn.$self instead');
         }
@@ -253,44 +295,48 @@
       return result;
     },
     constructParams_: function(){
-      this.params = {};
+      var route = this;
 
-      this.attach(function(values){
-        for (var key in this.paramsConfig_)
+      route.params = {};
+
+      route.attach(function(values){
+        basis.object.iterate(route.paramsConfig_, function(key, paramConfig){
           if (values && key in values)
-            basis.Token.prototype.set.call(this.params[key], values[key]);
+            Value.prototype.set.call(route.params[key], values[key]);
           else
-            basis.Token.prototype.set.call(this.params[key], this.defaults_[key]);
-      }, this);
+            Value.prototype.set.call(route.params[key], paramConfig.defaultValue);
+        });
+      });
 
-      basis.object.iterate(this.paramsConfig_, function(key, transform){
-        var token = new basis.Token(this.defaults_[key]);
+      basis.object.iterate(route.paramsConfig_, function(key, paramConfig){
+        var paramValue = new Value({
+          value: paramConfig.defaultValue,
+          set: function(value){
+            if (!route.value)
+            {
+              /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: route.paramsConfig_ });
+              return;
+            }
 
-        token.set = function(value){
-          if (!this.matched.value)
-          {
-            /** @cut */ basis.dev.warn(namespace + ': trying to set param ' + key + ' when route not matched - ignoring', { params: this.paramsConfig_ });
-            return;
+            flushSchedule.add(route);
+
+            var newValue = paramConfig.transform(value, paramConfig.currentValue);
+
+            paramConfig.nextValue = newValue;
           }
+        });
 
-          flushSchedule.add(this);
-
-          var newValue = transform(value, this.paramsStore_[key]);
-
-          this.nextParamsStore_[key] = newValue;
-        }.bind(this);
-
-        this.params[key] = token;
-      }, this);
+        route.params[key] = paramValue;
+      });
     },
-    calculateDelta_: function(next, prev){
+    calculateDelta_: function(nextValues){
       var delta = null;
 
-      basis.object.iterate(prev, function(key, prevValue){
-        if (prevValue !== next[key])
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        if (paramConfig.currentValue !== nextValues[key])
         {
           delta = delta || {};
-          delta[key] = prevValue;
+          delta[key] = paramConfig.currentValue;
         }
       });
 
@@ -316,38 +362,52 @@
         else if (paramName in paramsFromQuery)
           values[paramName] = paramsFromQuery[paramName];
 
-      this.decode(values);
-
-      var nextParams = basis.object.slice(this.defaults_);
+      var nextParams = {};
 
       // Run through params transforms in order to transform decoded values to typed values
-      basis.object.iterate(this.paramsConfig_, function(key, transform){
-        if (values && key in values)
-          nextParams[key] = transform(values[key], this.paramsStore_[key]);
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        var deserialize = paramConfig.deserialize;
+        var transform = paramConfig.transform;
+
+        if (key in values)
+        {
+          var parsedValue = deserialize(values[key]);
+          nextParams[key] = transform(parsedValue, paramConfig.currentValue);
+        }
         else
-          nextParams[key] = this.defaults_[key];
+        {
+          nextParams[key] = paramConfig.defaultValue;
+        }
       }, this);
 
-      var delta = this.calculateDelta_(nextParams, this.paramsStore_);
+      var delta = this.calculateDelta_(nextParams);
 
       this.normalize(nextParams, delta);
 
       // Run through params transforms, because normalize may spoil some params
-      basis.object.iterate(this.paramsConfig_, function(key, transform){
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        var newValue;
+
         if (key in nextParams)
-          nextParams[key] = transform(nextParams[key], this.paramsStore_[key]);
+          newValue = paramConfig.transform(nextParams[key], paramConfig.currentValue);
         else
-          nextParams[key] = this.defaults_[key];
+          newValue = paramConfig.defaultValue;
+
+        paramConfig.currentValue = newValue;
+        paramConfig.nextValue = newValue;
       }, this);
 
-      this.paramsStore_ = nextParams;
+      var newRouteValue = {};
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        newRouteValue[key] = paramConfig.currentValue;
+      });
 
-      this.nextParamsStore_ = basis.object.slice(this.paramsStore_);
+      this.set(newRouteValue);
 
-      this.set(this.paramsStore_);
+      silentReplace(this.getCurrentPath_());
     },
     update: function(params, replace){
-      if (!this.matched.value)
+      if (!this.value)
       {
         /** @cut */ basis.dev.warn(namespace + ': trying to update when route not matched - ignoring', { path: this.path, params: params });
 
@@ -379,36 +439,37 @@
       /** @cut */   if (!(key in this.paramsConfig_))
       /** @cut */     basis.dev.warn(namespace + ': found param ' + key + ' not specified in config - ignoring', { params: this.paramsConfig_ });
 
-      basis.object.iterate(this.paramsConfig_, function(key, transform){
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
         if (key in specifiedParams)
-          params[key] = transform(specifiedParams[key], this.defaults_[key]);
+          params[key] = paramConfig.transform(specifiedParams[key], paramConfig.defaultValue);
         else
-          params[key] = this.defaults_[key];
+          params[key] = paramConfig.defaultValue;
       }, this);
-      this.encode(params);
 
-      return stringify(this.ast_, params, this.areModified_(params));
-    },
-    flush: function(replace){
-      navigate(this.getPath(this.nextParamsStore_), replace);
-    },
-    getDefaults_: function(paramsConfig){
-      var result = {};
-
-      basis.object.iterate(paramsConfig, function(key, transform){
-        if ('DEFAULT_VALUE' in transform)
-          result[key] = transform.DEFAULT_VALUE;
-        else
-          result[key] = transform();
+      var serialized = {};
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        serialized[key] = paramConfig.serialize(params[key]);
       });
 
-      return result;
+      return stringify(this.ast_, serialized, this.areModified_(params));
+    },
+    flush: function(replace){
+      navigate(this.getCurrentPath_(), replace);
+    },
+    getCurrentPath_: function(){
+      var paramsNextValues = {};
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        paramsNextValues[key] = paramConfig.nextValue;
+      });
+
+      return this.getPath(paramsNextValues);
     },
     areModified_: function(params){
       var result = {};
 
-      for (var key in this.paramsConfig_)
-        result[key] = params[key] !== this.defaults_[key];
+      basis.object.iterate(this.paramsConfig_, function(key, paramConfig){
+        result[key] = params[key] !== paramConfig.defaultValue;
+      });
 
       return result;
     },
@@ -434,10 +495,6 @@
     },
     destroy: function(){
       this.paramsConfig_ = null;
-      this.defaults_ = null;
-      this.paramsStore_ = null;
-      this.decode = null;
-      this.encode = null;
       this.params = null;
 
       flushSchedule.remove(this);
@@ -720,6 +777,12 @@
 
     if (started)
       checkUrl();
+  }
+
+  function silentReplace(path) {
+    currentPath = path;
+
+    location.replace(location.pathname + '#' + path);
   }
 
 

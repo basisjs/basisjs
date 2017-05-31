@@ -135,6 +135,55 @@ module.exports = {
       }
     },
     {
+      name: 'serialize/deserialize',
+      test: [
+        {
+          name: 'serialize stringifies date',
+          test: function(){
+            assert(
+              type.date.serialize(new Date(725230800000)) === '725230800000'
+            );
+          }
+        },
+        {
+          name: 'serialize stringifies null',
+          test: function(){
+            assert(type.date.serialize(null) === 'null');
+          }
+        },
+        {
+          name: 'deserialize restores date',
+          test: function(){
+            var expected = new Date(725230800000);
+            var actual = type.date.deserialize('725230800000');
+
+            assert.deep(expected, actual);
+          }
+        },
+        {
+          name: 'deserialize restores zero date',
+          test: function(){
+            var expected = new Date(0);
+            var actual = type.date.deserialize('0');
+
+            assert.deep(expected, actual);
+          }
+        },
+        {
+          name: 'deserialize restores null',
+          test: function(){
+            assert(type.date.deserialize('null') === null);
+          }
+        },
+        {
+          name: 'deserialize returns default value in case of incorrect value',
+          test: function(){
+            assert(type.date.deserialize('not a date') === type.date.DEFAULT_VALUE);
+          }
+        }
+      ]
+    },
+    {
       name: 'nullable',
       test: [
         {

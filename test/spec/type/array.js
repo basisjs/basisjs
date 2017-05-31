@@ -71,6 +71,63 @@ module.exports = {
       }
     },
     {
+      name: 'serialize/deserialize',
+      test: [
+        {
+          name: 'serialize stringifies object to JSON',
+          test: function(){
+            assert(
+              type.array.serialize([null, 2, 'str']) === '[null,2,"str"]'
+            );
+          }
+        },
+        {
+          name: 'serialize stringifies null',
+          test: function(){
+            assert(type.array.serialize(null) === 'null');
+          }
+        },
+        {
+          name: 'serializes default value in case of circular references',
+          test: function(){
+            var a = {};
+            a.a = a;
+
+            var warned = catchWarnings(function(){
+              assert(type.array.serialize([a]) === '[]');
+            });
+
+            assert(warned);
+          }
+        },
+        {
+          name: 'deserialize restores array',
+          test: function(){
+            var expected = [null, 2, 'str'];
+            var actual = type.array.deserialize('[null,2,"str"]');
+
+            assert.deep(expected, actual);
+          }
+        },
+        {
+          name: 'deserialize restores null',
+          test: function(){
+            assert(type.array.deserialize('null') === null);
+          }
+        },
+        {
+          name: 'deserialize returns default value in case of incorrect value',
+          test: function(){
+            var warned = catchWarnings(function(){
+              assert(type.array.deserialize('[null,2,"st') === type.array.DEFAULT_VALUE);
+            });
+
+            assert(warned);
+          }
+        }
+      ]
+    },
+    {
       name: 'nullable',
       test: [
         {

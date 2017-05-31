@@ -109,6 +109,36 @@ module.exports = {
 
         route.destroy();
       }
+    },
+    {
+      name: 'update on going route away',
+      test: function(){
+        var route = router.route('num/:num', {
+          params: {
+            num: type.number.nullable,
+            str: type.string.nullable
+          }
+        });
+
+        router.navigate('num/42');
+
+        route.params.num.link(null, function(num){
+          if (!num) {
+            route.update({
+              num: 2,
+              str: '4'
+            });
+          }
+        });
+
+        catchWarnings(function(){
+          router.navigate('different-route/');
+        });
+
+        assert.async(function(){
+          assert(location.hash === '#different-route/');
+        });
+      }
     }
   ]
 };

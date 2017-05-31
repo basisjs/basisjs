@@ -88,6 +88,18 @@ function dateTransform(defaultValue, nullable){
     return dateObject;
   };
 
+  transform.serialize = function(value){
+    return value ? String(Number(value)) : 'null';
+  };
+  transform.deserialize = function(value){
+    if (value === 'null')
+      return null;
+
+    var timestamp = Number(value);
+
+    return timestamp ? new Date(timestamp) : defaultValue;
+  };
+
   transform.DEFAULT_VALUE = defaultValueAsDate || null;
 
   return transform;

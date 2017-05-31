@@ -44,6 +44,25 @@ function arrayTransform(defaultValue, nullable) {
     return oldValue;
   };
 
+  transform.serialize = function(value){
+    try {
+      return JSON.stringify(value);
+    } catch(e) {
+      /** @cut */ basis.dev.warn(transformName + '.serialize got exception while stringifying', value, ' to JSON. Stringifying default value instead');
+
+      return JSON.stringify(defaultValue);
+    }
+  };
+  transform.deserialize = function(value){
+    try {
+      return JSON.parse(value);
+    } catch(e) {
+      /** @cut */ basis.dev.warn(transformName + '.deserialize expected correct JSON, but got ', value, '. Falling back to default value');
+
+      return defaultValue;
+    }
+  };
+
   transform.DEFAULT_VALUE = defaultValue;
 
   return transform;
