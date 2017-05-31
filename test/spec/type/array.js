@@ -114,7 +114,11 @@ module.exports = {
         {
           name: 'deserialize returns default value in case of incorrect value',
           test: function(){
-            assert(type.array.deserialize('[null,2,"st') === type.array.DEFAULT_VALUE);
+            var warned = catchWarnings(function(){
+              assert(type.array.deserialize('[null,2,"st') === type.array.DEFAULT_VALUE);
+            });
+
+            assert(warned);
           }
         }
       ]

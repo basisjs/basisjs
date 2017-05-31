@@ -109,7 +109,11 @@ module.exports = {
         {
           name: 'deserialize returns default value in case of incorrect value',
           test: function(){
-            assert(type.object.deserialize('{"a":{"b') === type.object.DEFAULT_VALUE);
+            var warned = catchWarnings(function(){
+              assert(type.object.deserialize('{"a":{"b') === type.object.DEFAULT_VALUE);
+            });
+
+            assert(warned);
           }
         }
       ]

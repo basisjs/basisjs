@@ -51,6 +51,8 @@ function objectTransform(defaultValue, nullable) {
     try {
       return JSON.parse(value);
     } catch(e) {
+      /** @cut */ basis.dev.warn(transformName + '.deserialize expected correct JSON, but got ', value, '. Falling back to default value');
+
       return defaultValue;
     }
   };
