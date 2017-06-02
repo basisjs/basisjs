@@ -1,5 +1,15 @@
 .attribute
 {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+
+  -ms-word-break: break-all;
+  -webkit-word-break: break-all;
+  /* non-standard (more accuracy than break-all) */
+  -webkit-word-break: break-word;
+  word-break: break-all;
+  /* non-standard (more accuracy than break-all) */
+  word-break: break-word;
 }
 .name
 {
