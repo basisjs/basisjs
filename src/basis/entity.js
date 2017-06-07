@@ -1882,7 +1882,7 @@
       if (typeof type == 'string')
         type = getTypeByNameIfDefined(type);
 
-      EntityClass = type && type.type && type.type.entityClass;
+      EntityClass = type && type.type && (type.type.entitySetClass || type.type.entityClass);
 
       return value && EntityClass ? value instanceof EntityClass : false;
     },
