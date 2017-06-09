@@ -48,6 +48,7 @@ module.exports = {
   test: [
     require('./entity/create.js'),
     require('./entity/rollback.js'),
+    require('./entity/set.js'),
     require('./entity/index.js'),
     require('./entity/field-types.js'),
     require('./entity/entity-set.js'),

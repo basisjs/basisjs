@@ -1513,7 +1513,10 @@
                             !curValue ||
                              newValue.constructor !== Date ||
                              curValue.constructor !== Date ||
-                             +newValue !== +curValue);
+                             +newValue !== +curValue) &&
+                           // check for NaN
+                           (newValue === newValue ||
+                            curValue === curValue);
 
         // if value changed:
         // - update index for id field
