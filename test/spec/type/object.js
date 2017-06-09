@@ -62,6 +62,67 @@ module.exports = {
       }
     },
     {
+      name: 'serialize/deserialize',
+      test: [
+        {
+          name: 'serialize stringifies object to JSON',
+          test: function(){
+            assert(
+              type.object.serialize({
+                a: { b: 'c' }
+              }) === '{"a":{"b":"c"}}'
+            );
+          }
+        },
+        {
+          name: 'serialize stringifies null',
+          test: function(){
+            assert(type.object.serialize(null) === 'null');
+          }
+        },
+        {
+          name: 'serializes default value in case of circular references',
+          test: function(){
+            var a = {};
+            a.a = a;
+
+            var warned = catchWarnings(function(){
+              assert(type.object.serialize(a) === '{}');
+            });
+
+            assert(warned);
+          }
+        },
+        {
+          name: 'deserialize restores object',
+          test: function(){
+            var expected = {
+              a: { b: 'c' }
+            };
+            var actual = type.object.deserialize('{"a":{"b":"c"}}');
+
+            assert.deep(expected, actual);
+          }
+        },
+        {
+          name: 'deserialize restores null',
+          test: function(){
+            assert(type.object.deserialize('null') === null);
+          }
+        },
+        {
+          name: 'deserialize returns default value in case of incorrect value',
+          test: function(){
+            var warned = catchWarnings(function(){
+              assert(type.object.deserialize('{"a":{"b') === type.object.DEFAULT_VALUE);
+            });
+
+            assert(warned);
+          }
+        }
+      ]
+    },
+    {
       name: 'nullable',
       test: [
         {
