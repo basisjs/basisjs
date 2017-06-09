@@ -1,5 +1,6 @@
 var inspectBasis = require('devpanel').inspectBasis;
 var inspectBasisDomEvent = inspectBasis.require('basis.dom.event');
+var inspectMode = require('api').inspect;
 
 var createDynamicView = require('../utils.js').createDynamicView;
 var remote = require('../../remote.js');
@@ -38,7 +39,7 @@ view.link(null, function(view, oldView){
       inspectBasisDomEvent.captureEvent(eventName, function(){});
     });
   }
-  else if (oldView)
+  else if (oldView && !inspectMode.value)
   {
     captureEvents.forEach(function(eventName){
       inspectBasisDomEvent.releaseEvent(eventName);
