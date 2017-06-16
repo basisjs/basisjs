@@ -257,6 +257,14 @@ var makeDeclaration = (function(){
               /** @cut */ utils.addTemplateWarn(template, options, 'Dictionary for l10n binding on text node can\'t be resolved: {' + bindings + '}', node.loc);
               node[TEXT_VALUE] = '{' + bindings + '}';
             }
+            /** @cut */ else if (typeof binding === 'string')
+            /** @cut */ {
+            /** @cut */   var tokenNameParts = binding.match(/^l10n:(.+?)\.{(.+?)}@/);
+            /** @cut */   var stateName = tokenNameParts && tokenNameParts[2];
+            /** @cut */
+            /** @cut */   if (stateName && options.defines.hasOwnProperty(stateName))
+            /** @cut */     options.defines[tokenNameParts[2]].used = true;
+            /** @cut */ }
           }
           break;
 
