@@ -39,7 +39,13 @@
     },
     "rules": {
       "no-undef": 2,
-      "no-unused-vars": [2, {"vars": "all", "args": "after-used"}]
+      "no-unused-vars": [
+        2,
+        {
+          "vars": "all",
+          "args": "after-used"
+        }
+      ]
     }
   },
   "dependencies": {},
@@ -48,6 +54,7 @@
     "basisjs-tools-instrumenter": "~2.0.0",
     "jscs": "~3.0.0",
     "karma": "^1.3.0",
+    "karma-chrome-launcher": "^2.1.1",
     "karma-firefox-launcher": "^1.0.0",
     "karma-yatra": "~1.0.0",
     "yatra": "~1.4.0"

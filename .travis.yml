@@ -3,8 +3,7 @@ sudo: false
 node_js:
   - "6"
 script: "npm run travis"
-before_script:
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
+addons:
+  chrome: stable
 notifications:
   slack: basisjs:1P6GlAfiFonogcgzU2ROlXDt
