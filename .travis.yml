@@ -3,9 +3,10 @@ sudo: false
 node_js:
   - "6"
 script: "npm run travis"
+dist: trusty
 addons:
   chrome: stable
 before_install:
- - export CHROME_BIN=/usr/bin/google-chrome
+  - export CHROME_BIN=/usr/bin/google-chrome
 notifications:
   slack: basisjs:1P6GlAfiFonogcgzU2ROlXDt
