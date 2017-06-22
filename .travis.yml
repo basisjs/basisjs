@@ -5,5 +5,7 @@ node_js:
 script: "npm run travis"
 addons:
   chrome: stable
+before_install:
+ - export CHROME_BIN=/usr/bin/google-chrome
 notifications:
   slack: basisjs:1P6GlAfiFonogcgzU2ROlXDt
