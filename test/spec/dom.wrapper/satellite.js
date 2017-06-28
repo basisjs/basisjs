@@ -2353,6 +2353,25 @@ module.exports = {
                 assert(anotherNode.satellite.test === undefined);
                 assert(anotherNode.satellite[AUTO].test === undefined);
               }
+            },
+            {
+              name: 'transpiled es6 module resource as instance value',
+              test: function(){
+                var resource = basis.resource.virtual('js', function(exports, module){
+                  Object.defineProperty(module.exports, '__esModule', { value: true });
+                  module.exports.default = new Node();
+                });
+
+                var node = new Node({
+                  satellite: {
+                    foo: resource
+                  }
+                });
+
+                assert('foo' in node.satellite);
+                assert(node.satellite.foo instanceof Node);
+                assert(node.satellite.foo === resource.fetch().default);
+              }
             }
           ]
         }
