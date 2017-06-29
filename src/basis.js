@@ -1527,7 +1527,7 @@
     // test is toString property enumerable
     var TOSTRING_BUG = (function(){
       for (var key in { toString: 1 })
-        return false;
+        return !key;
       return true;
     })();
 
