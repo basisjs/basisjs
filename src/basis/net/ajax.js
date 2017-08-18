@@ -308,6 +308,7 @@
 
       return {
         code: 'SERVER_ERROR',
+        status: xhr.status,
         msg: msg,
         response: this.getResponseData()
       };
