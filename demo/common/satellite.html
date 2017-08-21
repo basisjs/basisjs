@@ -105,6 +105,16 @@
     {
       margin: .5em 0;
     }
+    #addGroupInput {
+      padding-top: 5px;
+    }
+    .groupHeader {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    #GroupList {
+      padding: 5px;
+    }
   </style>
   <!--[if lt IE 7]>
   <style type="text/css">
@@ -149,13 +159,14 @@
     });
 
     // data
+    var groupIdIdx = 1;
     UserGroup.all.setAndDestroyRemoved([
-      { groupId: 1, title: 'Red' },
-      { groupId: 2, title: 'Green' },
-      { groupId: 3, title: 'Blue' },
-      { groupId: 4, title: 'Black' },
-      { groupId: 5, title: 'White' },
-      { groupId: 6, title: 'Yellow' }
+      { groupId: groupIdIdx++, title: 'Red' },
+      { groupId: groupIdIdx++, title: 'Green' },
+      { groupId: groupIdIdx++, title: 'Blue' },
+      { groupId: groupIdIdx++, title: 'Black' },
+      { groupId: groupIdIdx++, title: 'White' },
+      { groupId: groupIdIdx++, title: 'Yellow' }
     ]);
 
     User.all.setAndDestroyRemoved([
@@ -174,7 +185,6 @@
       { userId: 14, groupId: 2, title: 'Monique Castellanos' },
       { userId: 15, groupId: 2, title: 'Bryan Waldo' }
     ].map(User.reader));
-
 
     var selectedGroup = new Dataset();
     var nonSelectedGroup = new Subtract({
@@ -256,8 +266,26 @@
 
     var groupList = new Node({
       container: document.getElementById('demo-container'),
-      template: '<div id="GroupList"/>',
-
+      template:
+      '<div id="GroupList">' +
+        '<div class="groupHeader">Group list</div>' +
+        '<div{childNodesElement}></div>' +
+        '<div id="addGroupInput">' +
+          '<div class="groupHeader">Adding group</div>' +
+          '<input{groupInput} />' +
+          '<button event-click="addGroup">Add group</button>' +
+        '</div>' +
+      '</div>',
+      action: {
+        addGroup: function(){
+          var inputValue = this.tmpl.groupInput.value;
+          if (inputValue) {
+            UserGroup({ groupId: groupIdIdx++, title: this.tmpl.groupInput.value });
+          } else {
+            alert('You must enter the value')
+          }
+        },
+      },
       dataSource: UserGroup.all,
       sorting: 'data.groupId',
       childClass: {
