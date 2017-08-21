@@ -159,13 +159,14 @@
     });
 
     // data
+    var groupIdIdx = 1;
     UserGroup.all.setAndDestroyRemoved([
-      { groupId: 1, title: 'Red' },
-      { groupId: 2, title: 'Green' },
-      { groupId: 3, title: 'Blue' },
-      { groupId: 4, title: 'Black' },
-      { groupId: 5, title: 'White' },
-      { groupId: 6, title: 'Yellow' }
+      { groupId: groupIdIdx++, title: 'Red' },
+      { groupId: groupIdIdx++, title: 'Green' },
+      { groupId: groupIdIdx++, title: 'Blue' },
+      { groupId: groupIdIdx++, title: 'Black' },
+      { groupId: groupIdIdx++, title: 'White' },
+      { groupId: groupIdIdx++, title: 'Yellow' }
     ]);
 
     User.all.setAndDestroyRemoved([
@@ -279,7 +280,7 @@
         addGroup: function(){
           var inputValue = this.tmpl.groupInput.value;
           if (inputValue) {
-            UserGroup({ title: this.tmpl.groupInput.value });
+            UserGroup({ groupId: groupIdIdx++, title: this.tmpl.groupInput.value });
           } else {
             alert('You must enter the value')
           }
