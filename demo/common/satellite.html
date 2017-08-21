@@ -191,15 +191,6 @@
       subtrahend: selectedGroup
     });
 
-    function isGroupExist(groupItems, title) {
-      for (var key in groupItems) {
-        if (groupItems[key].get('title') === title) {
-          return true;
-        };
-      }
-      return false;
-    }
-
     var groupPopup = new Menu({
       dataSource: nonSelectedGroup,
       sorting: basis.getter('data.title'),
@@ -287,12 +278,10 @@
       action: {
         addGroup: function(){
           var inputValue = this.tmpl.groupInput.value;
-          if (!inputValue) {
-            console.log('You must enter the value')
-          } else if (isGroupExist(UserGroup.all.items_, inputValue)) {
-            console.log('Group with name "' + inputValue + '" already exist')
-          } else {
+          if (inputValue) {
             UserGroup({ title: this.tmpl.groupInput.value });
+          } else {
+            alert('You must enter the value')
           }
         },
       },
