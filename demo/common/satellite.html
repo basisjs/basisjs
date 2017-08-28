@@ -140,16 +140,27 @@
     var Node = basis.require('basis.ui').Node;
     var Menu = basis.require('basis.ui.menu').Menu;
     var TextField = basis.require('basis.ui.field').Text;
+    var max = basis.require('basis.data.index').max;
 
     // define types
     var UserGroup = entity.createType('UserGroup', {
-      groupId: entity.IntId,
+      groupId: {
+        type: entity.IntId,
+        defValue: function() {
+          return max(UserGroup.all, 'data.groupId').value + 1 || 1;
+        }
+      },
       title: String
     });
 
     var User = entity.createType({
       fields: {
-        userId: entity.IntId,
+        userId: {
+          type: entity.IntId,
+          defValue: function() {
+            return max(User.all, 'data.userId').value + 1 || 1;
+          }
+        },
         group: UserGroup,
         title: String
       },
@@ -159,32 +170,31 @@
     });
 
     // data
-    var groupIdIdx = 1;
-    UserGroup.all.setAndDestroyRemoved([
-      { groupId: groupIdIdx++, title: 'Red' },
-      { groupId: groupIdIdx++, title: 'Green' },
-      { groupId: groupIdIdx++, title: 'Blue' },
-      { groupId: groupIdIdx++, title: 'Black' },
-      { groupId: groupIdIdx++, title: 'White' },
-      { groupId: groupIdIdx++, title: 'Yellow' }
-    ]);
+    [
+      { title: 'Red' },
+      { title: 'Green' },
+      { title: 'Blue' },
+      { title: 'Black' },
+      { title: 'White' },
+      { title: 'Yellow' }
+    ].map(UserGroup);
 
-    User.all.setAndDestroyRemoved([
-      { userId: 1,  groupId: 1, title: 'Norman Yuen' },
-      { userId: 2,  groupId: 2, title: 'Casto' },
-      { userId: 4,  groupId: 6, title: 'Jose Crutcher' },
-      { userId: 5,  groupId: 3, title: 'Ralph Peres' },
-      { userId: 6,  groupId: 5, title: 'Christopher Klaus' },
-      { userId: 7,  groupId: 5, title: 'Tanya Edison' },
-      { userId: 8,  groupId: 5, title: 'Paul Seger' },
-      { userId: 9,  groupId: 4, title: 'Norma Perri' },
-      { userId: 10, groupId: 4, title: 'Juan Ewing' },
-      { userId: 11, groupId: 4, title: 'Mark Luevano' },
-      { userId: 12, groupId: 4, title: 'Curtis Knoll' },
-      { userId: 13, groupId: 1, title: 'Terry Patterson' },
-      { userId: 14, groupId: 2, title: 'Monique Castellanos' },
-      { userId: 15, groupId: 2, title: 'Bryan Waldo' }
-    ].map(User.reader));
+    [
+      { groupId: 1, title: 'Norman Yuen' },
+      { groupId: 2, title: 'Casto' },
+      { groupId: 6, title: 'Jose Crutcher' },
+      { groupId: 3, title: 'Ralph Peres' },
+      { groupId: 5, title: 'Christopher Klaus' },
+      { groupId: 5, title: 'Tanya Edison' },
+      { groupId: 5, title: 'Paul Seger' },
+      { groupId: 4, title: 'Norma Perri' },
+      { groupId: 4, title: 'Juan Ewing' },
+      { groupId: 4, title: 'Mark Luevano' },
+      { groupId: 4, title: 'Curtis Knoll' },
+      { groupId: 1, title: 'Terry Patterson' },
+      { groupId: 2, title: 'Monique Castellanos' },
+      { groupId: 2, title: 'Bryan Waldo' }
+    ].map(User.reader).map(User);
 
     var selectedGroup = new Dataset();
     var nonSelectedGroup = new Subtract({
@@ -280,7 +290,7 @@
         addGroup: function(){
           var inputValue = this.tmpl.groupInput.value;
           if (inputValue) {
-            UserGroup({ groupId: groupIdIdx++, title: this.tmpl.groupInput.value });
+            UserGroup({ title: this.tmpl.groupInput.value });
           } else {
             alert('You must enter the value')
           }
