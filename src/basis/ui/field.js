@@ -1164,6 +1164,7 @@
 
             break;
           case event.KEY.ENTER:
+          case event.KEY.ESC:
             if (this.popup.visible)
               this.hide();
 
