@@ -1164,11 +1164,6 @@
 
             break;
           case event.KEY.ENTER:
-            if (this.popup.visible)
-              this.hide();
-
-            event.die();
-            break;
           case event.KEY.ESC:
             if (this.popup.visible)
               this.hide();
