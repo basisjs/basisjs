@@ -1169,6 +1169,12 @@
 
             event.die();
             break;
+          case event.KEY.ESC:
+            if (this.popup.visible)
+              this.hide();
+
+            event.die();
+            break;
         }
 
         this.emit_fieldKeydown(event);
