@@ -1,3 +1,24 @@
+## 1.11.0 (September 6, 2017)
+
+- Changed `basis.asset()` and `asset()` to take second argument `inline` (optional). When parameter is `true` (other values are treats as `false`) those functions return a resource content instead of resource reference. Good for file content inlining into JavaScript source. `basisjs-tools-build` 1.9.0+ is required to work propertly on build. (@lahmatiy)
+- Reworked `basis.router` to make possible to create a parametrized route via passing second argument to `basis.router.route()`. Many thanks to @istrel for his awesome work on the feature (#150, #153). Some highlight on new routes:
+    - Added `route.params` which contains typed reactive values two-way bound with location
+    - Added automatic parsing and stringifying of query params
+    - Added ability to normalize parameters via `normalize` param in route config
+    - Added method `getPath(params)` for getting url to route
+    - Added method `navigate(params, replace)` to navigate to the route
+    - Added method `update(params, replace)` for bulk update `route.params`
+- Tracker
+    - Allow transform event data via custom handler `transformWithUIEvent` (@tyanas, #154)
+    - Fixed `loadMap()` crash when tracked data is a string (@istrel, #155)
+- Devpanel
+    - Fixed global events releasing by devpanel when attempt to inspect a new template being in inspect mode (@smelukov, #157)
+    - Fixed long attribute value output in template viewer (@smelukov, #159)
+- Changed `basis.entity.is(value, type)` to work for `EntitySetType` instances (@rdvornov)
+- Changed `basis.ui.field.Combobox` to close its popup by Esc (@prostoandrei, #176)
+- Fixed styles `sourceUrl` resolving in template declaration info (@smelukov, #163)
+- Use headless Chrome for unit testing that makes results stable (@istrel)
+
 ## 1.10.3 (May 17, 2017)
 
 - Fixed `basis.entity.EntitySet#setAndDestroyRemoved()` to destroy items when an empty array or null passed
