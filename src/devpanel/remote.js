@@ -34,10 +34,10 @@ function link(reactive, btValue){
 
 // init basisjs-tools
 basisjsToolsSync.onInit(function(basisjsToolsApi){
-  if (typeof basisjsToolsApi.initRemoteDevtoolAPI !== 'function')
+  if (typeof basisjsToolsApi.initRemotePublisher !== 'function')
     return;
 
-  var remoteApi = basisjsToolsApi.initRemoteDevtoolAPI({
+  var remoteApi = basisjsToolsApi.initRemotePublisher({
     getInspectorUI: basisjsToolsApi.getInspectorUI
   });
 
