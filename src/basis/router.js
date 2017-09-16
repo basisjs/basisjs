@@ -762,7 +762,6 @@
         return;
       }
     }
-    
     /** @cut */ basis.dev.warn(namespace + ': no callback removed', { callback: callback, context: context });
   }
 
