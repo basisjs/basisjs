@@ -13,16 +13,16 @@
   var document = global.document;
   var cleaner = basis.cleaner;
 
-  var eventUtils = require('basis.dom.event');
+  var eventUtils = require('./dom/event.js');
   var addGlobalHandler = eventUtils.addGlobalHandler;
   var removeGlobalHandler = eventUtils.removeGlobalHandler;
 
-  var basisEvent = require('basis.event');
+  var basisEvent = require('./event.js');
   var Emitter = basisEvent.Emitter;
   var createEvent = basisEvent.create;
 
-  var getComputedStyle = require('basis.dom.computedStyle').get;
-  var basisLayout = require('basis.layout');
+  var getComputedStyle = require('./dom/computedStyle.js').get;
+  var basisLayout = require('./layout.js');
   var getBoundingRect = basisLayout.getBoundingRect;
   var getViewportRect = basisLayout.getViewportRect;
 

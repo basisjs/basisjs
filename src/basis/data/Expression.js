@@ -1,4 +1,4 @@
-var basisData = require('basis.data');
+var basisData = require('../data.js');
 var Value = basisData.Value;
 var ReadOnlyValue = basisData.ReadOnlyValue;
 

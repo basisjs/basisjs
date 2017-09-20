@@ -1,7 +1,7 @@
 var $undef = basis.fn.$undef;
-var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
-var DatasetWrapper = require('basis.data').DatasetWrapper;
-var KeyObjectMap = require('basis.data').KeyObjectMap;
+var ReadOnlyDataset = require('../../data.js').ReadOnlyDataset;
+var DatasetWrapper = require('../../data.js').DatasetWrapper;
+var KeyObjectMap = require('../../data.js').KeyObjectMap;
 var MapFilter = require('./MapFilter.js');
 var createKeyMap = require('./createKeyMap.js');
 

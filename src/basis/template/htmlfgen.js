@@ -4,8 +4,8 @@
   */
 
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var consts = require('basis.template.const');
-  var namespaces = require('basis.template.namespace');
+  var consts = require('./const.js');
+  var namespaces = require('./namespace.js');
 
   var MARKER = consts.MARKER;
 

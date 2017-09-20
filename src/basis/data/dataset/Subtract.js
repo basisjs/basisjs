@@ -1,9 +1,9 @@
-var createEvent = require('basis.event').create;
-var resolveDataset = require('basis.data').resolveDataset;
-var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
+var createEvent = require('../../event.js').create;
+var resolveDataset = require('../../data.js').resolveDataset;
+var ReadOnlyDataset = require('../../data.js').ReadOnlyDataset;
 var getDelta = require('./getDelta.js');
 var SUBSCRIPTION = require('../subscription.js');
-var Dataset = require('basis.data').Dataset;
+var Dataset = require('../../data.js').Dataset;
 
 SUBSCRIPTION.addProperty('minuend');
 SUBSCRIPTION.addProperty('subtrahend');

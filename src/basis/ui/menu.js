@@ -13,11 +13,11 @@
   var Class = basis.Class;
   var getter = basis.getter;
 
-  var basisUi = require('basis.ui');
+  var basisUi = require('../ui.js');
   var UINode = basisUi.Node;
   var UIPartitionNode = basisUi.PartitionNode;
   var UIGroupingNode = basisUi.GroupingNode;
-  var basisUiPopup = require('basis.ui.popup');
+  var basisUiPopup = require('./popup.js');
   var DIR = basisUiPopup.DIR;
   var Popup = basisUiPopup.Popup;
 
@@ -26,7 +26,7 @@
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     MenuItem: resource('./templates/menu/MenuItem.tmpl'),
     MenuItemSet: resource('./templates/menu/MenuItemSet.tmpl'),
     PartitionNode: resource('./templates/menu/PartitionNode.tmpl'),

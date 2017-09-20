@@ -23,16 +23,16 @@
   var nullGetter = basis.fn.nullGetter;
   var extend = basis.object.extend;
 
-  var basisEvent = require('basis.event');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
-  var basisDomWrapper = require('basis.dom.wrapper');
+  var basisDomWrapper = require('../dom/wrapper.js');
   var GroupingNode = basisDomWrapper.GroupingNode;
   var PartitionNode = basisDomWrapper.PartitionNode;
-  var basisUi = require('basis.ui');
+  var basisUi = require('../ui.js');
   var UINode = basisUi.Node;
   var UIPartitionNode = basisUi.PartitionNode;
   var UIGroupingNode = basisUi.GroupingNode;
-  var basisTemplate = require('basis.template');
+  var basisTemplate = require('../template.js');
 
 
   //

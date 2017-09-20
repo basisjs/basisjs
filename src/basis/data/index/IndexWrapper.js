@@ -1,6 +1,6 @@
-var Value = require('basis.data').Value;
+var Value = require('../../data.js').Value;
 var Index = require('./Index.js');
-var resolveDataset = require('basis.data').resolveDataset;
+var resolveDataset = require('../../data.js').resolveDataset;
 
 var INDEXWRAPPER_HANDLER = {
   destroy: function(){

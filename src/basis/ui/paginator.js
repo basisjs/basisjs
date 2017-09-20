@@ -10,19 +10,19 @@
   // import names
   //
 
-  var basisEvent = require('basis.event');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
-  var resolveValue = require('basis.data').resolveValue;
-  var getBoundingRect = require('basis.layout').getBoundingRect;
-  var DragDropElement = require('basis.dragdrop').DragDropElement;
-  var Node = require('basis.ui').Node;
+  var resolveValue = require('../data.js').resolveValue;
+  var getBoundingRect = require('../layout.js').getBoundingRect;
+  var DragDropElement = require('../dragdrop.js').DragDropElement;
+  var Node = require('../ui.js').Node;
 
 
   //
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Paginator: resource('./templates/paginator/Paginator.tmpl'),
     PaginatorNode: resource('./templates/paginator/PaginatorNode.tmpl')
   });

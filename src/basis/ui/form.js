@@ -11,17 +11,17 @@
   // import names
   //
 
-  var field = require('basis.ui.field');
-  var basisEvent = require('basis.event');
+  var field = require('./field.js');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
-  var Node = require('basis.ui').Node;
+  var Node = require('../ui.js').Node;
 
 
   //
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Form: resource('./templates/form/Form.tmpl'),
     FormContent: resource('./templates/form/FormContent.tmpl')
   });

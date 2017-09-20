@@ -12,12 +12,12 @@
 
   var document = global.document;
   var FormData = global.FormData;
-  var eventUtils = require('basis.dom.event'); // TODO
-  var STATE = require('basis.data').STATE;
-  var basisNet = require('basis.net');
+  var eventUtils = require('../dom/event.js'); // TODO
+  var STATE = require('../data.js').STATE;
+  var basisNet = require('../net.js');
   var AbstractTransport = basisNet.AbstractTransport;
   var AbstractRequest = basisNet.AbstractRequest;
-  var AjaxTransport = require('basis.net.ajax').Transport;
+  var AjaxTransport = require('./ajax.js').Transport;
 
 
   //

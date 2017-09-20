@@ -4,7 +4,7 @@
   */
 
   var document = global.document;
-  var basisEvent = require('basis.event');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
   var Emitter = basisEvent.Emitter;
 

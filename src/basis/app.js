@@ -3,7 +3,7 @@
   * @namespace basis.app
   */
 
-  var resolveValue = require('basis.data').resolveValue;
+  var resolveValue = require('./data.js').resolveValue;
   var document = global.document || {
     title: 'unknown'
   };

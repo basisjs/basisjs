@@ -1,4 +1,4 @@
-var basisEvent = require('basis.event');
+var basisEvent = require('../event.js');
 var Emitter = basisEvent.Emitter;
 var createEvent = basisEvent.create;
 var STATE = require('./state.js');

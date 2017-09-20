@@ -12,8 +12,8 @@
 
   var location = global.location;
   var document = global.document;
-  var eventUtils = require('basis.dom.event');
-  var Value = require('basis.data').Value;
+  var eventUtils = require('./dom/event.js');
+  var Value = require('./data.js').Value;
   var parsePath = require('./router/ast.js').parsePath;
   var stringify = require('./router/ast.js').stringify;
 

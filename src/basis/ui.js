@@ -13,12 +13,12 @@
   var document = global.document;
 
   var Class = basis.Class;
-  var createEvent = require('basis.event').create;
+  var createEvent = require('./event.js').create;
 
-  var HtmlTemplate = require('basis.template.html').Template;
-  var htmlTemplateIdMarker = require('basis.template.const').MARKER;
-  var TemplateSwitcher = require('basis.template').TemplateSwitcher;
-  var basisDomWrapper = require('basis.dom.wrapper');
+  var HtmlTemplate = require('./template/html.js').Template;
+  var htmlTemplateIdMarker = require('./template/const.js').MARKER;
+  var TemplateSwitcher = require('./template.js').TemplateSwitcher;
+  var basisDomWrapper = require('./dom/wrapper.js');
   var DWNode = basisDomWrapper.Node;
   var DWPartitionNode = basisDomWrapper.PartitionNode;
   var DWGroupingNode = basisDomWrapper.GroupingNode;

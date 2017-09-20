@@ -3,7 +3,7 @@
   * @namespace basis.utils.base64
   */
 
-  var utf16 = require('basis.utils.utf16');
+  var utf16 = require('./utf16.js');
 
   var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='.split('');
   var charIndex = chars.reduce(function(res, item, index){

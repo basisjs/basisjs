@@ -16,13 +16,13 @@
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
 
-  var basisNet = require('basis.net');
+  var basisNet = require('../net.js');
   var createTransportEvent = basisNet.createTransportEvent;
   var createRequestEvent = basisNet.createRequestEvent;
   var AbstractRequest = basisNet.AbstractRequest;
   var AbstractTransport = basisNet.AbstractTransport;
 
-  var STATE = require('basis.data').STATE;
+  var STATE = require('../data.js').STATE;
 
 
   //

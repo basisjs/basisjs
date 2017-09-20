@@ -11,19 +11,19 @@
   // import names
   //
 
-  var basisEvent = require('basis.event');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
-  var getBoundingRect = require('basis.layout').getBoundingRect;
-  var AbstractNode = require('basis.dom.wrapper').AbstractNode;
-  var DragDropElement = require('basis.dragdrop').DragDropElement;
-  var Node = require('basis.ui').Node;
+  var getBoundingRect = require('../layout.js').getBoundingRect;
+  var AbstractNode = require('../dom/wrapper.js').AbstractNode;
+  var DragDropElement = require('../dragdrop.js').DragDropElement;
+  var Node = require('../ui.js').Node;
 
 
   //
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Slider: resource('./templates/slider/Slider.tmpl'),
     MarkLayers: resource('./templates/slider/MarkLayers.tmpl'),
     MarkLayer: resource('./templates/slider/MarkLayer.tmpl'),

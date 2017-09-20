@@ -12,7 +12,7 @@
   //
 
   var Class = basis.Class;
-  var basisUi = require('basis.ui');
+  var basisUi = require('../ui.js');
   var Node = basisUi.Node;
   var ShadowNodeList = basisUi.ShadowNodeList;
 
@@ -21,7 +21,7 @@
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     TabControl: resource('./templates/tabs/TabControl.tmpl'),
     TabGroup: resource('./templates/tabs/TabGroup.tmpl'),
     Tab: resource('./templates/tabs/Tab.tmpl'),

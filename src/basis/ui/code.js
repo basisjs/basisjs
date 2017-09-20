@@ -4,8 +4,8 @@
   */
 
   var namespace = 'basis.ui.code';
-  var highlight = require('basis.utils.highlight').highlight;
-  var Node = require('basis.ui').Node;
+  var highlight = require('../utils/highlight.js').highlight;
+  var Node = require('../ui.js').Node;
 
  /**
   * @class

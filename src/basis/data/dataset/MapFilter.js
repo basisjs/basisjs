@@ -1,12 +1,12 @@
 var $self = basis.fn.$self;
 var $true = basis.fn.$true;
 var $false = basis.fn.$false;
-var createEvent = require('basis.event').create;
+var createEvent = require('../../event.js').create;
 var createRuleEvents = require('./createRuleEvents.js');
 var getDelta = require('./getDelta.js');
-var DataObject = require('basis.data').Object;
-var isEqual = require('basis.data').isEqual;
-var setAccumulateState = require('basis.data').Dataset.setAccumulateState;
+var DataObject = require('../../data.js').Object;
+var isEqual = require('../../data.js').isEqual;
+var setAccumulateState = require('../../data.js').Dataset.setAccumulateState;
 var SourceDataset = require('./SourceDataset.js');
 
 

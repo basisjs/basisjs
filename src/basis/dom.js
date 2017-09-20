@@ -40,7 +40,7 @@
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
-  var eventUtils = require('basis.dom.event');
+  var eventUtils = require('./dom/event.js');
   var cssom;
 
   basis.resource('basis:cssom.js').ready(function(exports){
@@ -676,7 +676,7 @@
       if (config.css)
       {
         if (!cssom)
-          cssom = require('basis.cssom');
+          cssom = require('./cssom.js');
         cssom.setStyle(element, config.css);
       }
 

@@ -12,9 +12,9 @@
 
   var Class = basis.Class;
 
-  var setStyle = require('basis.cssom').setStyle;
-  var createEvent = require('basis.event').create;
-  var Value = require('basis.data').Value;
+  var setStyle = require('./cssom.js').setStyle;
+  var createEvent = require('./event.js').create;
+  var Value = require('./data.js').Value;
 
 
   //

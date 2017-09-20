@@ -1,5 +1,5 @@
 var extend = basis.object.extend;
-var KeyObjectMap = require('basis.data').KeyObjectMap;
+var KeyObjectMap = require('../../data.js').KeyObjectMap;
 
 
 module.exports = function createKeyMap(config, keyGetter, ItemClass, SubsetClass){

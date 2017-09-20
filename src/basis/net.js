@@ -13,12 +13,12 @@
   var arrayFrom = basis.array.from;
   var objectSlice = basis.object.slice;
 
-  var basisEvent = require('basis.event');
+  var basisEvent = require('./event.js');
   var createEvent = basisEvent.create;
   var Emitter = basisEvent.Emitter;
 
-  var DataObject = require('basis.data').Object;
-  var STATE = require('basis.data').STATE;
+  var DataObject = require('./data.js').Object;
+  var STATE = require('./data.js').STATE;
 
 
  /**

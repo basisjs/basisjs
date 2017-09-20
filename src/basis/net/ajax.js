@@ -17,9 +17,9 @@
   var objectSlice = basis.object.slice;
   var objectMerge = basis.object.merge;
   var objectIterate = basis.object.iterate;
-  var ua = require('basis.ua');
+  var ua = require('../ua.js');
 
-  var basisNet = require('basis.net');
+  var basisNet = require('../net.js');
   var createTransportEvent = basisNet.createTransportEvent;
   var createRequestEvent = basisNet.createRequestEvent;
   var AbstractRequest = basisNet.AbstractRequest;
@@ -36,7 +36,7 @@
   // var STATE_LOADING = 3;
   /** @const */ var STATE_DONE = 4;
 
-  var STATE = require('basis.data').STATE;
+  var STATE = require('../data.js').STATE;
   var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.split(' ');
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
   var URL_METHOD_PREFIX = new RegExp('^(' + METHODS.join('|') + ')\\s+', 'i');

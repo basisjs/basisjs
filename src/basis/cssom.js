@@ -14,7 +14,7 @@
   var arrayFrom = basis.array.from;
   var camelize = basis.string.camelize;
   var Class = basis.Class;
-  var dom = require('basis.dom');
+  var dom = require('./dom.js');
   var DOMTokenList = global.DOMTokenList;
 
 

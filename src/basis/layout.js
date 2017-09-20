@@ -5,7 +5,7 @@
 
   var document = global.document;
   var documentElement = document.documentElement;
-  var getComputedStyle = require('basis.dom.computedStyle').get;
+  var getComputedStyle = require('./dom/computedStyle.js').get;
   var standartsMode = document.compatMode == 'CSS1Compat';
 
 

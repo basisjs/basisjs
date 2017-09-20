@@ -13,9 +13,9 @@
   var document = global.document;
   var XMLSerializer = global.XMLSerializer;
   var Class = basis.Class;
-  var browser = require('basis.ua');
+  var browser = require('./ua.js');
 
-  var domUtils = require('basis.dom');
+  var domUtils = require('./dom.js');
   var ELEMENT_NODE = domUtils.ELEMENT_NODE;
   var TEXT_NODE = domUtils.TEXT_NODE;
 

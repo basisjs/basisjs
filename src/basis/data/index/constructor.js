@@ -1,7 +1,7 @@
 var Class = basis.Class;
-var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
-var DatasetWrapper = require('basis.data').DatasetWrapper;
-var chainValueFactory = require('basis.data').chainValueFactory;
+var ReadOnlyDataset = require('../../data.js').ReadOnlyDataset;
+var DatasetWrapper = require('../../data.js').DatasetWrapper;
+var chainValueFactory = require('../../data.js').chainValueFactory;
 var Index = require('./Index.js');
 var IndexWrapper = require('./IndexWrapper.js');
 

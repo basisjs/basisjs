@@ -1,5 +1,5 @@
 var cleaner = basis.cleaner;
-var basisData = require('basis.data');
+var basisData = require('../data.js');
 var AbstractData = basisData.AbstractData;
 var Value = basisData.Value;
 var STATE = basisData.STATE;

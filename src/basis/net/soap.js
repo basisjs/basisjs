@@ -17,8 +17,8 @@
 
   var Class = basis.Class;
 
-  var DOM = require('basis.dom');
-  var XML = require('basis.xml');
+  var DOM = require('../dom.js');
+  var XML = require('../xml.js');
   var QName = XML.QName;
   var addNamespace = XML.addNamespace;
   var XML2Object = XML.XML2Object;
@@ -26,7 +26,7 @@
   var createElementNS = XML.createElementNS;
   var NAMESPACE = XML.NAMESPACE;
 
-  var basisNetAjax = require('basis.net.ajax');
+  var basisNetAjax = require('./ajax.js');
   var AjaxTransport = basisNetAjax.Transport;
   var AjaxRequest = basisNetAjax.Request;
 

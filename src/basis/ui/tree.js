@@ -30,9 +30,9 @@
   //
 
   var Class = basis.Class;
-  var DOM = require('basis.dom');
-  var createEvent = require('basis.event').create;
-  var basisUi = require('basis.ui');
+  var DOM = require('../dom.js');
+  var createEvent = require('../event.js').create;
+  var basisUi = require('../ui.js');
   var UINode = basisUi.Node;
   var UIPartitionNode = basisUi.PartitionNode;
   var UIGroupingNode = basisUi.GroupingNode;
@@ -42,7 +42,7 @@
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Tree: resource('./templates/tree/Tree.tmpl'),
     PartitionNode: resource('./templates/tree/PartitionNode.tmpl'),
     Node: resource('./templates/tree/Node.tmpl'),
