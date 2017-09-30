@@ -24,12 +24,12 @@ module.exports = new Node({
     toggle: function(){
       setAccumulateState(true);
       if (Task.all.itemCount === Task.completed.itemCount) {
-        Task.all.getItems().forEach(function(item){
+        Task.all.forEach(function(item){
           item.set('completed', false);
         });
       }
       else {
-        Task.active.getItems().forEach(function(item){
+        Task.active.forEach(function(item){
           item.set('completed', true);
         });
       }
