@@ -1,3 +1,8 @@
+## 1.11.1 (October 25, 2017)
+
+- Fixed wrongly placed warning in router, when no callback is removed from route (@sm0g, #179)
+- Fixed warning about using a `require` when using with webpack
+
 ## 1.11.0 (September 6, 2017)
 
 - Changed `basis.asset()` and `asset()` to take second argument `inline` (optional). When parameter is `true` (other values are treats as `false`) those functions return a resource content instead of resource reference. Good for file content inlining into JavaScript source. `basisjs-tools-build` 1.9.0+ is required to work propertly on build. (@lahmatiy)
