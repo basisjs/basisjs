@@ -2165,7 +2165,7 @@
       {
         try {
           if (typeof process.basisjsReadFile == 'function')
-            resourceContent = process.basisjsReadFile(url)
+            resourceContent = process.basisjsReadFile(url);
           else
           {
             // There is a trick to avoid warnings (bacause of using a `require`)
