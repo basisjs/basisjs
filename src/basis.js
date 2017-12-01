@@ -481,7 +481,7 @@
   var nullGetter = (function(){
     var nullGetter = function(){};
     nullGetter[getter.ID] = getter.ID + 'nullGetter';
-    nullGetter.__extend__ = getter,
+    nullGetter.__extend__ = getter;
     nullGetter.as = function(){
       return nullGetter;
     };
@@ -2165,7 +2165,7 @@
       {
         try {
           if (typeof process.basisjsReadFile == 'function')
-            resourceContent = process.basisjsReadFile(url)
+            resourceContent = process.basisjsReadFile(url);
           else
           {
             // There is a trick to avoid warnings (bacause of using a `require`)
