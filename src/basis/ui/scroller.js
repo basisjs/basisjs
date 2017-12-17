@@ -12,21 +12,21 @@
   //
 
   var document = global.document;
-  var Event = require('basis.dom.event');
-  var cssom = require('basis.cssom');
-  var anim = require('basis.animation');
-  var basisEvent = require('basis.event');
+  var Event = require('../dom/event.js');
+  var cssom = require('../cssom.js');
+  var anim = require('../animation.js');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
   var Emitter = basisEvent.Emitter;
-  var listenResize = require('basis.dom.resize').add;
-  var Node = require('basis.ui').Node;
+  var listenResize = require('../dom/resize.js').add;
+  var Node = require('../ui.js').Node;
 
 
   //
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Scrollbar: resource('./templates/scroller/Scrollbar.tmpl'),
     ScrollPanel: resource('./templates/scroller/ScrollPanel.tmpl'),
     ScrollGalleryItem: resource('./templates/scroller/ScrollGalleryItem.tmpl')

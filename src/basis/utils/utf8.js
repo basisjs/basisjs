@@ -3,7 +3,7 @@
   * @namespace basis.utils.utf8
   */
 
-  var utf16 = require('basis.utils.utf16');
+  var utf16 = require('./utf16.js');
   var chars = basis.array.create(255, function(i){
     return String.fromCharCode(i);
   });

@@ -1,7 +1,7 @@
-var createEvent = require('basis.event').create;
-var resolveDataset = require('basis.data').resolveDataset;
-var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
-var setAccumulateState = require('basis.data').Dataset.setAccumulateState;
+var createEvent = require('../../event.js').create;
+var resolveDataset = require('../../data.js').resolveDataset;
+var ReadOnlyDataset = require('../../data.js').ReadOnlyDataset;
+var setAccumulateState = require('../../data.js').Dataset.setAccumulateState;
 var SUBSCRIPTION = require('../subscription.js');
 
 SUBSCRIPTION.addProperty('source');

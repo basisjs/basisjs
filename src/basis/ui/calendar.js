@@ -12,11 +12,11 @@
   //
 
   var Class = basis.Class;
-  var dateUtils = require('basis.date');
+  var dateUtils = require('../date.js');
   var monthNumToRef = dateUtils.monthNumToAbbr;
-  var createEvent = require('basis.event').create;
-  var Value = require('basis.data').Value;
-  var basisUI = require('basis.ui');
+  var createEvent = require('../event.js').create;
+  var Value = require('../data.js').Value;
+  var basisUI = require('../ui.js');
   var Node = basisUI.Node;
   var ShadowNodeList = basisUI.ShadowNodeList;
 
@@ -34,9 +34,9 @@
   // definitions
   //
 
-  var dict = require('basis.l10n').dictionary(__filename);
+  var dict = require('../l10n.js').dictionary(__filename);
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Calendar: resource('./templates/calendar/Calendar.tmpl'),
     Section: resource('./templates/calendar/Section.tmpl'),
     SectionMonth: resource('./templates/calendar/SectionMonth.tmpl'),

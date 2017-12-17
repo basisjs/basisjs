@@ -7,8 +7,8 @@
   var createArray = basis.array.create;
   var repeatArray = basis.array.repeat;
   var flatten = basis.array.flatten;
-  var UTF16 = require('basis.utils.utf16');
-  var base64 = require('basis.utils.base64');
+  var UTF16 = require('./utils/utf16.js');
+  var base64 = require('./utils/base64.js');
 
 
   function rotateLeft(number, offset){

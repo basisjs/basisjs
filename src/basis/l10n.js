@@ -13,7 +13,7 @@
   var extend = basis.object.extend;
   var complete = basis.object.complete;
   var Class = basis.Class;
-  var Emitter = require('basis.event').Emitter;
+  var Emitter = require('./event.js').Emitter;
   var extensionJSON = basis.resource.extensions['.json'];
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var basisTokenPrototypeSet = basis.Token.prototype.set;

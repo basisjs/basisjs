@@ -14,22 +14,22 @@
   var document = global.document;
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
-  var resolveValue = require('basis.data').resolveValue;
-  var DOM = require('basis.dom');
-  var cssom = require('basis.cssom');
-  var createEvent = require('basis.event').create;
-  var Node = require('basis.ui').Node;
-  var ButtonPanel = require('basis.ui.button').ButtonPanel;
-  var MoveableElement = require('basis.dragdrop').MoveableElement;
+  var resolveValue = require('../data.js').resolveValue;
+  var DOM = require('../dom.js');
+  var cssom = require('../cssom.js');
+  var createEvent = require('../event.js').create;
+  var Node = require('../ui.js').Node;
+  var ButtonPanel = require('./button.js').ButtonPanel;
+  var MoveableElement = require('../dragdrop.js').MoveableElement;
 
 
   //
   // definitions
   //
 
-  var dict = require('basis.l10n').dictionary(__filename);
+  var dict = require('../l10n.js').dictionary(__filename);
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Blocker: resource('./templates/window/Blocker.tmpl'),
     Window: resource('./templates/window/Window.tmpl'),
     TitleButton: resource('./templates/window/TitleButton.tmpl'),

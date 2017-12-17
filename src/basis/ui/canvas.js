@@ -10,16 +10,16 @@
   // import names
   //
 
-  var createEvent = require('basis.event').create;
-  var dwNode = require('basis.dom.wrapper').Node;
-  var Node = require('basis.ui').Node;
+  var createEvent = require('../event.js').create;
+  var dwNode = require('../dom/wrapper.js').Node;
+  var Node = require('../ui.js').Node;
 
 
   //
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Canvas: resource('./templates/canvas/Canvas.tmpl')
   });
 

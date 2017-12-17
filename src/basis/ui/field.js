@@ -15,24 +15,24 @@
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
-  var DOM = require('basis.dom');
-  var basisEvent = require('basis.event');
+  var DOM = require('../dom.js');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
   var events = basisEvent.events;
 
-  var Value = require('basis.data').Value;
-  var UINode = require('basis.ui').Node;
-  var Popup = require('basis.ui.popup').Popup;
-  var resolveValue = require('basis.data').resolveValue;
+  var Value = require('../data.js').Value;
+  var UINode = require('../ui.js').Node;
+  var Popup = require('./popup.js').Popup;
+  var resolveValue = require('../data.js').resolveValue;
 
 
   //
   // definitions
   //
 
-  var dict = require('basis.l10n').dictionary(__filename);
+  var dict = require('../l10n.js').dictionary(__filename);
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Example: resource('./templates/field/Example.tmpl'),
     Description: resource('./templates/field/Description.tmpl'),
     Counter: resource('./templates/field/Counter.tmpl'),
@@ -62,7 +62,7 @@
     MatchInput: resource('./templates/field/MatchInput.tmpl')
   });
 
-  require('basis.template').define(namespace + '.native', {
+  require('../template.js').define(namespace + '.native', {
     text: resource('./templates/field/native-type-text.tmpl'),
     password: resource('./templates/field/native-type-password.tmpl'),
     textarea: resource('./templates/field/native-type-textarea.tmpl'),

@@ -1,10 +1,10 @@
 var Node = global.Node;
 var hasOwnProperty = Object.prototype.hasOwnProperty;
-var eventUtils = require('basis.dom.event');
-var resolveActionById = require('basis.template.store').resolveActionById;
+var eventUtils = require('../dom/event.js');
+var resolveActionById = require('./store.js').resolveActionById;
 
-var consts = require('basis.template.const');
-var namespaces = require('basis.template.namespace');
+var consts = require('./const.js');
+var namespaces = require('./namespace.js');
 
 var MARKER = consts.MARKER;
 var CLONE_NORMALIZATION_TEXT_BUG = consts.CLONE_NORMALIZATION_TEXT_BUG;

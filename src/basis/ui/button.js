@@ -11,15 +11,15 @@
   // import names
   //
 
-  var Node = require('basis.ui').Node;
-  var resolveValue = require('basis.data').resolveValue;
+  var Node = require('../ui.js').Node;
+  var resolveValue = require('../data.js').resolveValue;
 
 
   //
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Button: resource('./templates/button/Button.tmpl'),
     ButtonPanel: resource('./templates/button/ButtonPanel.tmpl'),
     ButtonGroup: resource('./templates/button/ButtonGroup.tmpl')

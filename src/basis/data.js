@@ -32,16 +32,16 @@
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
-  var STATE = require('basis.data.state');
-  var SUBSCRIPTION = require('basis.data.subscription');
-  var resolvers = require('basis.data.resolve');
+  var STATE = require('./data/state.js');
+  var SUBSCRIPTION = require('./data/subscription.js');
+  var resolvers = require('./data/resolve.js');
   var createResolveFunction = resolvers.createResolveFunction;
   var resolveValue = resolvers.resolveValue;
   var ResolveAdapter = resolvers.ResolveAdapter;
   var BBResolveAdapter = resolvers.BBResolveAdapter;
   var DEFAULT_CHANGE_ADAPTER_HANDLER = resolvers.DEFAULT_CHANGE_ADAPTER_HANDLER;
   var DEFAULT_DESTROY_ADAPTER_HANDLER = resolvers.DEFAULT_DESTROY_ADAPTER_HANDLER;
-  var basisEvent = require('basis.event');
+  var basisEvent = require('./event.js');
   var Emitter = basisEvent.Emitter;
   var createEvent = basisEvent.create;
   var createEventHandler = basisEvent.createHandler;

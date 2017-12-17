@@ -1,7 +1,7 @@
 
   var document = global.document;
   var resizeHandlers = 'basisjsResizeHandlers' + basis.genUID();
-  var getComputedStyle = require('basis.dom.computedStyle').get;
+  var getComputedStyle = require('./computedStyle.js').get;
   var STUB_DOCUMENT = '<html></html>';
   var STUB_DOCUMENT_SRC = 'javascript:"' + STUB_DOCUMENT + '"';
 

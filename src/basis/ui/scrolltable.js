@@ -12,18 +12,18 @@
   //
 
   var Class = basis.Class;
-  var domUtils = require('basis.dom');
+  var domUtils = require('../dom.js');
   var createElement = domUtils.createElement;
-  var cssom = require('basis.cssom');
-  var listenResize = require('basis.dom.resize').add;
-  var Table = require('basis.ui.table').Table;
+  var cssom = require('../cssom.js');
+  var listenResize = require('../dom/resize.js').add;
+  var Table = require('./table.js').Table;
 
 
   //
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     ScrollTable: resource('./templates/scrolltable/ScrollTable.tmpl')
   });
 

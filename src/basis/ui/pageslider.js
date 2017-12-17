@@ -10,16 +10,16 @@
   // import names
   //
 
-  var PageControl = require('basis.ui.tabs').PageControl;
-  var Scroller = require('basis.ui.scroller').Scroller;
-  var resize = require('basis.dom.resize');
+  var PageControl = require('./tabs.js').PageControl;
+  var Scroller = require('./scroller.js').Scroller;
+  var resize = require('../dom/resize.js');
 
 
   //
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     PageSlider: resource('./templates/pageslider/PageSlider.tmpl'),
     Page: resource('./templates/pageslider/Page.tmpl')
   });

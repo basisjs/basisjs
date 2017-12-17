@@ -22,14 +22,14 @@
   var objSlice = basis.object.slice;
   var oneFunctionProperty = basis.Class.oneFunctionProperty;
 
-  var getBoundingRect = require('basis.layout').getBoundingRect;
-  var domEventUtils = require('basis.dom.event');
-  var createEvent = require('basis.event').create;
-  var basisDomWrapper = require('basis.dom.wrapper');
+  var getBoundingRect = require('../layout.js').getBoundingRect;
+  var domEventUtils = require('../dom/event.js');
+  var createEvent = require('../event.js').create;
+  var basisDomWrapper = require('../dom/wrapper.js');
   var AbstractNode = basisDomWrapper.AbstractNode;
   var Node = basisDomWrapper.Node;
   var Selection = basisDomWrapper.Selection;
-  var basisUiCanvas = require('basis.ui.canvas');
+  var basisUiCanvas = require('./canvas.js');
   var Canvas = basisUiCanvas.Canvas;
   var AbstractCanvas = basisUiCanvas.AbstractCanvas;
 
@@ -38,7 +38,7 @@
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Chart: resource('./templates/chart/Chart.tmpl'),
     ChartSelection: resource('./templates/chart/ChartSelection.tmpl'),
     ChartViewer: resource('./templates/chart/ChartViewer.tmpl')

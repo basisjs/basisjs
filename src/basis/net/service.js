@@ -10,12 +10,12 @@
   // import names
   //
 
-  var basisEvent = require('basis.event');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
   var Emitter = basisEvent.Emitter;
 
-  var AjaxTransport = require('basis.net.ajax').Transport;
-  var createAction = require('basis.net.action').create;
+  var AjaxTransport = require('./ajax.js').Transport;
+  var createAction = require('./action.js').create;
 
 
  /**

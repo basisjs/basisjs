@@ -1,5 +1,5 @@
-/** @cut */ var devWrap = require('basis.data').devWrap;
-var Value = require('basis.data').Value;
+/** @cut */ var devWrap = require('../../data.js').devWrap;
+var Value = require('../../data.js').Value;
 
 /**
 * Base class for indexes.

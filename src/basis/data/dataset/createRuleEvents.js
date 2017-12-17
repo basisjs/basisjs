@@ -1,5 +1,5 @@
 var extend = basis.object.extend;
-var createEventHandler = require('basis.event').createHandler;
+var createEventHandler = require('../../event.js').createHandler;
 
 
 /**

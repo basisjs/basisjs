@@ -2608,6 +2608,7 @@
   var namespace2filename = {};
   var filename2namespace = {};
   var nsRootPath = {};
+  var pathToBasisDir = null;
 
   iterate(config.modules, function(name, module){
     nsRootPath[name] = module.path + '/';
@@ -2755,6 +2756,26 @@
           path += '.js';
 
         path = resolveResourceFilename(path, baseURI, 'basis.require(\'{url}\')');
+
+        if (config.implicitExt) {
+          // Resolve namespace when requiring basis files with relative paths
+          // for support of implicit extension of basis object with namespace
+          if (!pathToBasisDir) {
+            var pathToBasisJs = resolveNSFilename('basis');
+            pathToBasisDir = pathUtils.dirname(pathToBasisJs) + '/basis/';
+          }
+          var isBasisFile = path.substr(0, pathToBasisDir.length) == pathToBasisDir;
+          var isScript = extname == '.js' || !extname;
+          var basename = pathUtils.basename(path);
+          // Basis.js namespaces always start with a lowercase letter.
+          // For example basis/data.js is a namespace file, but basis/data/value/Expression.js is not.
+          var basenameStartsWithLow = basename[0] == basename[0].toLowerCase();
+          if (isBasisFile && isScript && basenameStartsWithLow) {
+            var fromBasisDir = path.substr(pathToBasisDir.length);
+            var namespace = 'basis.' + fromBasisDir.replace(/\.js$/, '').replace(/\//g, '.');
+            resolveNSFilename(namespace);
+          }
+        }
       }
     }
 

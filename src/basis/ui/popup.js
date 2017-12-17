@@ -16,15 +16,15 @@
   var document = global.document;
   var arrayFrom = basis.array.from;
 
-  var domUtils = require('basis.dom');
-  var eventUtils = require('basis.dom.event');
-  var cssom = require('basis.cssom');
-  var createEvent = require('basis.event').create;
-  var getComputedStyle = require('basis.dom.computedStyle').get;
-  var getOffsetParent = require('basis.layout').getOffsetParent;
-  var getBoundingRect = require('basis.layout').getBoundingRect;
-  var getViewportRect = require('basis.layout').getViewportRect;
-  var Node = require('basis.ui').Node;
+  var domUtils = require('../dom.js');
+  var eventUtils = require('../dom/event.js');
+  var cssom = require('../cssom.js');
+  var createEvent = require('../event.js').create;
+  var getComputedStyle = require('../dom/computedStyle.js').get;
+  var getOffsetParent = require('../layout.js').getOffsetParent;
+  var getBoundingRect = require('../layout.js').getBoundingRect;
+  var getViewportRect = require('../layout.js').getViewportRect;
+  var Node = require('../ui.js').Node;
   var CHECK_INTERVAL = 50;
 
 
@@ -32,7 +32,7 @@
   // definitions
   //
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Popup: resource('./templates/popup/Popup.tmpl'),
     Balloon: resource('./templates/popup/Balloon.tmpl'),
     popupManager: resource('./templates/popup/popupManager.tmpl')

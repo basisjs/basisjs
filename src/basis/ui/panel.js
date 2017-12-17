@@ -11,11 +11,11 @@
   //
 
   var document = global.document;
-  var listenResize = require('basis.dom.resize').add;
-  var computedStyle = require('basis.dom.computedStyle').get;
-  var Node = require('basis.ui').Node;
+  var listenResize = require('../dom/resize.js').add;
+  var computedStyle = require('../dom/computedStyle.js').get;
+  var Node = require('../ui.js').Node;
 
-  var templates = require('basis.template').define(namespace, {
+  var templates = require('../template.js').define(namespace, {
     Panel: resource('./templates/layout/VerticalPanel.tmpl'),
     Stack: resource('./templates/layout/VerticalPanelStack.tmpl')
   });

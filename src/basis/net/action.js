@@ -8,14 +8,14 @@
   // import names
   //
 
-  var STATE = require('basis.data').STATE;
+  var STATE = require('../data.js').STATE;
   var STATE_UNDEFINED = STATE.UNDEFINED;
   var STATE_READY = STATE.READY;
   var STATE_PROCESSING = STATE.PROCESSING;
   var STATE_ERROR = STATE.ERROR;
 
-  var AjaxTransport = require('basis.net.ajax').Transport;
-  var Promise = require('basis.promise');
+  var AjaxTransport = require('./ajax.js').Transport;
+  var Promise = require('../promise.js');
 
 
   //

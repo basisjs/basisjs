@@ -10,10 +10,10 @@
   // import names
   //
 
-  var createEvent = require('basis.event').create;
-  var SUBSCRIPTION = require('basis.data').SUBSCRIPTION;
-  var DataObject = require('basis.data').Object;
-  var resolveObject = require('basis.data').resolveObject;
+  var createEvent = require('../event.js').create;
+  var SUBSCRIPTION = require('../data.js').SUBSCRIPTION;
+  var DataObject = require('../data.js').Object;
+  var resolveObject = require('../data.js').resolveObject;
 
 
   // define new subscription type

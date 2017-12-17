@@ -14,13 +14,13 @@
   var Class = basis.Class;
   var cleaner = basis.cleaner;
   var path = basis.path;
-  var consts = require('basis.template.const');
-  var DECLARATION_VERSION = require('basis.template.declaration').VERSION;
-  var getDeclFromSource = require('basis.template.declaration').getDeclFromSource;
-  var makeDeclaration = require('basis.template.declaration').makeDeclaration;
-  var setIsolatePrefixGenerator = require('basis.template.declaration').setIsolatePrefixGenerator;
-  var store = require('basis.template.store');
-  var theme = require('basis.template.theme');
+  var consts = require('./template/const.js');
+  var DECLARATION_VERSION = require('./template/declaration.js').VERSION;
+  var getDeclFromSource = require('./template/declaration.js').getDeclFromSource;
+  var makeDeclaration = require('./template/declaration.js').makeDeclaration;
+  var setIsolatePrefixGenerator = require('./template/declaration.js').setIsolatePrefixGenerator;
+  var store = require('./template/store.js');
+  var theme = require('./template/theme.js');
   var getSourceByPath = theme.get;
 
 

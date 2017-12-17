@@ -1,9 +1,9 @@
 var arrayAdd = basis.array.add;
 var arrayRemove = basis.array.remove;
-var createEvent = require('basis.event').create;
-var Emitter = require('basis.event').Emitter;
-var resolveDataset = require('basis.data').resolveDataset;
-var ReadOnlyDataset = require('basis.data').ReadOnlyDataset;
+var createEvent = require('../../event.js').create;
+var Emitter = require('../../event.js').Emitter;
+var resolveDataset = require('../../data.js').resolveDataset;
+var ReadOnlyDataset = require('../../data.js').ReadOnlyDataset;
 var getDelta = require('./getDelta.js');
 var SUBSCRIPTION = require('../subscription.js');
 

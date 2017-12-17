@@ -18,21 +18,21 @@
   var $self = basis.fn.$self;
   var arrayFrom = basis.array.from;
 
-  var basisEvent = require('basis.event');
+  var basisEvent = require('./event.js');
   var Emitter = basisEvent.Emitter;
   var createEvent = basisEvent.create;
 
-  var basisData = require('basis.data');
+  var basisData = require('./data.js');
   var DataObject = basisData.Object;
   var Slot = basisData.Slot;
   var Dataset = basisData.Dataset;
   var ReadOnlyDataset = basisData.ReadOnlyDataset;
-  var basisDataset = require('basis.data.dataset');
+  var basisDataset = require('./data/dataset.js');
   var Filter = basisDataset.Filter;
   var Split = basisDataset.Split;
   var setAccumulateState = Dataset.setAccumulateState;
 
-  var basisType = require('basis.type');
+  var basisType = require('./type.js');
   var defineType = basisType.defineType;
   var getTypeByName = basisType.getTypeByName;
   var getTypeByNameIfDefined = basisType.getTypeByNameIfDefined;

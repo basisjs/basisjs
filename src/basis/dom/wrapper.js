@@ -28,10 +28,10 @@
   var $undef = basis.fn.$undef;
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
-  var basisEvent = require('basis.event');
+  var basisEvent = require('../event.js');
   var createEvent = basisEvent.create;
   var events = basisEvent.events;
-  var basisData = require('basis.data');
+  var basisData = require('../data.js');
   var resolveValue = basisData.resolveValue;
   var resolveDataset = basisData.resolveDataset;
   var createResolveFunction = basisData.createResolveFunction;

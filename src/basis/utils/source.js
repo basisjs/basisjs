@@ -1,5 +1,5 @@
-var base64 = require('basis.utils.base64');
-var highlight = require('basis.utils.highlight').highlight;
+var base64 = require('./base64.js');
+var highlight = require('./highlight.js').highlight;
 var sourceCache = {};
 
 function findSourceInMap(map, filename){

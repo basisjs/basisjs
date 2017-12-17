@@ -14,19 +14,19 @@
   var Node = global.Node;
   var camelize = basis.string.camelize;
 
-  var isMarkupToken = require('basis.l10n').isMarkupToken;
-  var isTokenHasPlaceholder = require('basis.l10n').isTokenHasPlaceholder;
-  var getL10nToken = require('basis.l10n').token;
-  var getFunctions = require('basis.template.htmlfgen').getFunctions;
+  var isMarkupToken = require('../l10n.js').isMarkupToken;
+  var isTokenHasPlaceholder = require('../l10n.js').isTokenHasPlaceholder;
+  var getL10nToken = require('../l10n.js').token;
+  var getFunctions = require('./htmlfgen.js').getFunctions;
 
-  var basisTemplate = require('basis.template');
+  var basisTemplate = require('../template.js');
   var TemplateSwitchConfig = basisTemplate.TemplateSwitchConfig;
   var TemplateSwitcher = basisTemplate.TemplateSwitcher;
   var Template = basisTemplate.Template;
   var getSourceByPath = basisTemplate.get;
 
-  var buildDOM = require('basis.template.buildDom');
-  var CLONE_NORMALIZATION_TEXT_BUG = require('basis.template.const').CLONE_NORMALIZATION_TEXT_BUG;
+  var buildDOM = require('./buildDom.js');
+  var CLONE_NORMALIZATION_TEXT_BUG = require('./const.js').CLONE_NORMALIZATION_TEXT_BUG;
 
 
   //

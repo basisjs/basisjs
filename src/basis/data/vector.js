@@ -15,10 +15,10 @@
   var $true = basis.fn.$true;
   var defaultRule = basis.getter($undef);
 
-  var basisData = require('basis.data');
+  var basisData = require('../data.js');
   var DataObject = basisData.Object;
   var Slot = basisData.Slot;
-  var SourceDataset = require('basis.data.dataset').SourceDataset;
+  var SourceDataset = require('./dataset.js').SourceDataset;
   var createRuleEvents = require('./dataset/createRuleEvents.js');
 
 

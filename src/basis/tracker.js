@@ -5,9 +5,9 @@
 /** @cut */ var namespace = 'basis.tracker';
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
-var eventUtils = require('basis.dom.event');
-var getComputedStyle = require('basis.dom.computedStyle').get;
-var getBoundingRect = require('basis.layout').getBoundingRect;
+var eventUtils = require('./dom/event.js');
+var getComputedStyle = require('./dom/computedStyle.js').get;
+var getBoundingRect = require('./layout.js').getBoundingRect;
 
 /**
  * @typedef {TrackingDataObject}

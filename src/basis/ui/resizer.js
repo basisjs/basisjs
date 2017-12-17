@@ -14,10 +14,10 @@
   var document = global.document;
   var parseFloat = global.parseFloat;
 
-  var cssom = require('basis.cssom');
-  var computedStyle = require('basis.dom.computedStyle').get;
-  var DragDropElement = require('basis.dragdrop').DragDropElement;
-  var Node = require('basis.ui').Node;
+  var cssom = require('../cssom.js');
+  var computedStyle = require('../dom/computedStyle.js').get;
+  var DragDropElement = require('../dragdrop.js').DragDropElement;
+  var Node = require('../ui.js').Node;
 
 
   //
