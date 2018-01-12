@@ -92,7 +92,7 @@
       var error;
 
       for (var i = 0, field; field = this.childNodes[i]; i++)
-        if (error = field.validate())
+        if (!field.isDisabled() && (error = field.validate()))
           errors.push(error);
 
       if (errors.length)
@@ -105,7 +105,7 @@
     },
     serialize: function(){
       return this.childNodes.reduce(function(result, field){
-        if (field.serializable && field.name)
+        if (field.serializable && field.name && !field.isDisabled())
           result[field.name] = field.getValue();
 
         return result;
