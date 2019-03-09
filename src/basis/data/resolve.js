@@ -78,6 +78,10 @@ function createResolveFunction(Class){
       source = resolve(newAdapter, resolveAdapterProxy, source.bindingBridge.get(source), 'next');
     }
 
+    // try to unwrap transpiled es6 module (__esModule - is a marker that babel inserts for es6 modules)
+    if (source && source.__esModule && source.default)
+      source = source.default;
+
     if (source instanceof Class == false)
       source = null;
 

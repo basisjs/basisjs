@@ -311,6 +311,46 @@ module.exports = {
         }
       ]
     },
+    {
+      name: 'Bindings',
+      test: [
+        {
+          name: 'resource as binding instance',
+          test: function(){
+            var resource = basis.resource.virtual('js', function(exports, module){
+              module.exports = new Node();
+            });
+
+            var node = new Node({
+              template: '<!--{x}-->',
+              binding: {
+                x: resource
+              }
+            });
+
+            assert(node.binding.x.getter(node) === resource.fetch().element);
+          }
+        },
+        {
+          name: 'transpiled es6-module resource as binding instance',
+          test: function(){
+            var resource = basis.resource.virtual('js', function(exports, module){
+              Object.defineProperty(module.exports, '__esModule', { value: true });
+              module.exports.default = new Node();
+            });
+
+            var node = new Node({
+              template: '<!--{x}-->',
+              binding: {
+                x: resource
+              }
+            });
+
+            assert(node.binding.x.getter(node) === resource.fetch().default.element);
+          }
+        }
+      ]
+    },
     require('./ui/field.js'),
     require('./ui/calendar.js')
   ]

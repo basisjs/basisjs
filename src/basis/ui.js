@@ -82,6 +82,10 @@
               if (resource)
               {
                 satellite = resource();
+                // try to unwrap transpiled es6 module (__esModule - is a marker that babel inserts for es6 modules)
+                if (satellite && satellite.__esModule && satellite.default)
+                  satellite = satellite.default;
+
                 if (satellite instanceof Node == false)
                   return;
                 resource = null;
