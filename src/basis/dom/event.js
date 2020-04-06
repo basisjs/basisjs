@@ -533,12 +533,14 @@
     }
     else
     {
-      if (noCaptureScheme)
+      if (noCaptureScheme) {
         // nothing to do, but it will provide observeGlobalEvents calls if other one doesn't
         addHandler(document, eventType, $null);
-      else
-        document.addEventListener(eventType, observeGlobalEvents, true);
-
+      } else {
+        //document.addEventListener(eventType, observeGlobalEvents, true);
+        // [Intervention] Unable to preventDefault inside passive event listener due to target being treated as passive. See https://www.chromestatus.com/features/6662647093133312
+        document.addEventListener(eventType, observeGlobalEvents, { passive: false, capture: true });
+      }
       handlers = globalHandlers[eventType] = [];
     }
 
